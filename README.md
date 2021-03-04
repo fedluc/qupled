@@ -11,7 +11,7 @@ stls solves the classical STLS approach as defined in by [Tanaka and Ichimaru](h
    necessary for the calculation of the static structure factor. The 
   iterative solution employs [mixing](https://aip.scitation.org/doi/abs/10.1063/1.1682399]) and is assumed converged if the condition 
   ||G<sub>i</sub>(x) - G<sub>i-1</sub>(x)|| < epsilon is satisfied between two successive iterations. Here G(x) is the 
-  static local field correction, epsilon is a tolerance specified in
+  static local field correction and epsilon is a tolerance specified in
   input. The output of the code consists of:
   
   * One text file with the static structure factor
