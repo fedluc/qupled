@@ -5,6 +5,7 @@
 #include <math.h>
 #include <omp.h>
 #include "stls.h"
+#include "stls_hnc.h"
 
 // ----------------------------------------
 // COMMAND LINE PARSER
@@ -168,7 +169,7 @@ int main (int argc, char **argv){
   arguments.ssf_file = "NO_FILE"; // File with static structure factor
   arguments.Theta = 1.0; // Quantum degeneracy parameter
   arguments.rs = 1.0; // Quantum coupling parameter
-  arguments.dx = 0.01; // Wave-vector grid resolution 
+  arguments.dx = 0.1; // Wave-vector grid resolution 
   arguments.err_min = 1e-5; // Minimum error for convergence
   arguments.a_mix = 0.1; // Mixing parameter for iterative procedure
   arguments.mu_lo = -10; // Initial guess for chemical potential (low bound)
@@ -198,7 +199,8 @@ int main (int argc, char **argv){
  
   // Solve STLS equation
   double start = omp_get_wtime();
-  solveSTLS(in);
+  //solve_stls(in, true, NULL, NULL, NULL, NULL, NULL, NULL);
+  solve_stls_hnc(in, true);
   double end = omp_get_wtime();
   printf("Solution of STLS equation complete. Elapsed time: %f seconds\n", end - start);
 

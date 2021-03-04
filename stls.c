@@ -19,7 +19,10 @@
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS EQUATIONS
 // -------------------------------------------------------------------
 
-void solveSTLS(input in) {
+void solve_stls(input in, bool verbose, 
+		double **xx_out, double **SS_out, 
+		double **SSHF_out, double **GG_out, 
+		double **GG_new_out, double **phi_out) {
 
   // Arrays for STLS solution
   double *xx = NULL; 
@@ -46,40 +49,41 @@ void solveSTLS(input in) {
   printf("Quantum degeneracy parameter: %f\n", in.Theta);
   printf("Quantum coupling parameter: %f\n", in.rs);
   printf("Chemical potential (low and high bound): %f %f\n",
-  	 in.mu_lo, in.mu_hi);
+	 in.mu_lo, in.mu_hi);
   printf("Wave-vector cutoff: %f\n", in.xmax);
   printf("Wave-vector resolutions: %f\n", in.dx);
   printf("Number of Matsubara frequencies: %d\n", in.nl);
   printf("Maximum number of iterations: %d\n", in.nIter);
   printf("Error for convergence: %.5e\n", in.err_min);
   printf("----------------------------------------------------\n");
+ 
 
   if (init_flag){
 
     // Chemical potential
-    printf("Chemical potential calculation: ");
+    if (verbose) printf("Chemical potential calculation: ");
     in.mu = compute_mu(in);
-    printf("Done. Chemical potential: %.8f\n", in.mu);
+    if (verbose) printf("Done. Chemical potential: %.8f\n", in.mu);
 
     // Wave-vector grid
-    printf("Wave-vector grid initialization: ");
+    if (verbose) printf("Wave-vector grid initialization: ");
     wave_vector_grid(xx, in);
-    printf("Done.\n");
+    if (verbose) printf("Done.\n");
     
     // Normalized ideal Lindhard density
-    printf("Normalized ideal Lindhard density calculation:\n");
-    compute_phi(phi, xx, in);
-    printf("Done.\n");
+    if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
+    compute_phi(phi, xx, in, verbose);
+    if (verbose) printf("Done.\n");
     
     // Static structure factor in the Hartree-Fock approximation
-    printf("Static structure factor in the Hartree-Fock approximation: ");
+    if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
     compute_ssfHF(SSHF, xx, in);
-    printf("Done.\n");
+    if (verbose) printf("Done.\n");
     
     // Leading term in the static structure factor
-    printf("Leading term in the static structure factor: ");
+    if (verbose) printf("Leading term in the static structure factor: ");
     compute_AA(AA, xx, in);
-    printf("Done.\n");
+    if (verbose) printf("Done.\n");
 
   }
 
@@ -91,7 +95,7 @@ void solveSTLS(input in) {
   compute_ssf(SS, SSHF, AA, GG, phi, xx, in);
   
   // SSF and SLFC via iterative procedure
-  printf("SSF and SLFC calculation...\n");
+  if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
   while (iter_counter < in.nIter && iter_err > in.err_min ) {
@@ -118,25 +122,37 @@ void solveSTLS(input in) {
     clock_t toc = clock();
     
     // Print diagnostic
-    printf("--- iteration %d ---\n", iter_counter);
-    printf("Elapsed time: %f seconds\n", ((double)toc - (double)tic) / CLOCKS_PER_SEC);
-    printf("Residual error: %.5e\n", iter_err);
-    
+    if (verbose) {
+      printf("--- iteration %d ---\n", iter_counter);
+      printf("Elapsed time: %f seconds\n", ((double)toc - (double)tic) / CLOCKS_PER_SEC);
+      printf("Residual error: %.5e\n", iter_err);
+    }
   }
-  printf("Done.\n");
+  if (verbose) printf("Done.\n");
   
   // Internal energy
-  printf("Internal energy: %f\n",compute_internal_energy(SS, xx, in));
+  if (verbose) printf("Internal energy: %f\n",compute_internal_energy(SS, xx, in));
   
-  // Output
-  printf("Writing output files...\n");
+  // Output to file
+  if (verbose) printf("Writing output files...\n");
   write_text(SS, GG, xx, in);
-  if (init_flag) write_bin(phi, SSHF, AA, in);
-  printf("Done.\n");
-  
-  // ------ Free memory ------
-  free_stls_arrays(xx, phi, AA, GG, GG_new, SS, SSHF);
+  if (init_flag) write_bin(phi, SSHF, AA, in); 
+  if (verbose) printf("Done.\n");
 
+  // Output to variable or free memory
+  if (xx_out != NULL) {
+    *xx_out = xx;
+    *SS_out = SS;
+    *SSHF_out = SSHF;
+    *GG_out = GG;
+    *GG_new_out = GG_new;
+    *phi_out = phi;
+  }
+  else{
+    free_stls_arrays(xx, phi, AA, GG, GG_new, SS, SSHF);
+  }
+ 
+ 
 }
 
 // -------------------------------------------------------------------
@@ -274,14 +290,14 @@ struct phixl_params {
 
 };
 
-void compute_phi(double *phi, double *xx,  input in) {
+void compute_phi(double *phi, double *xx,  input in, bool verbose) {
 
   // Temporary array to store results
   double *phil = malloc( sizeof(double) * in.nx);
   
   // Loop over the Matsubara frequency
   for (int ll=0; ll<in.nl; ll++){
-    printf("l = %d\n", ll);
+    if (verbose) printf("l = %d\n", ll);
     // Compute lindhard density
     compute_phil(phil, xx, ll, in);
     // Fill output array
@@ -668,7 +684,7 @@ void write_text(double *SS, double *GG, double *xx, input in){
     FILE* fid;
     
     // Output for SSF
-    fid = fopen("ssf.dat", "w");
+    fid = fopen("ssf_STLS.dat", "w");
     if (fid == NULL) {
         perror("Error while creating the output file for the static structure factor");
         exit(EXIT_FAILURE);
@@ -680,7 +696,7 @@ void write_text(double *SS, double *GG, double *xx, input in){
     fclose(fid);
 
     // Output for SLFC
-    fid = fopen("slfc.dat", "w");
+    fid = fopen("slfc_STLS.dat", "w");
     if (fid == NULL) {
         perror("Error while creating the output file for the static local field correction");
         exit(EXIT_FAILURE);
@@ -723,39 +739,26 @@ void write_bin(double *phi, double *SSHF, double *AA,  input in){
 
 }
 
-// read text file with SSF 
+// read text file with SSF and SLFC
 void read_text(double *SS, double *GG, double *xx, input in){
+  
+  /* FILE *fid; */
 
+  /* // Read files once to get the size  */
+  /* fid = fopen(filename, "r"); */
 
-    /* FILE* fid; */
-    
-    /* // Output for SSF */
-    /* fid = fopen("ssf.dat", "w"); */
-    /* if (fid == NULL) { */
-    /*     perror("Error while creating the output file for the static structure factor"); */
-    /*     exit(EXIT_FAILURE); */
-    /* } */
-    /* for (int ii = 0; ii < in.nx; ii++) */
-    /* { */
-    /*     fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]); */
-    /* } */
-    /* fclose(fid); */
-
-    /* // Output for SLFC */
-    /* fid = fopen("slfc.dat", "w"); */
-    /* if (fid == NULL) { */
-    /*     perror("Error while creating the output file for the static local field correction"); */
-    /*     exit(EXIT_FAILURE); */
-    /* } */
-    /* for (int ii = 0; ii < in.nx; ii++) */
-    /* { */
-    /*     fprintf(fid, "%.8e %.8e\n", xx[ii], GG[ii]); */
-    /* } */
-    /* fclose(fid); */
+  /* if (fid == NULL) { */
+  /*   perror("Error while opening ssf file"); */
+  /*   exit(EXIT_FAILURE); */
+  /* } */
+ 
+  
+ 
 
 }
+ 
 
-// read binary file with SSF 
+// read binary file with density response information
 void read_bin(input *in, double **xx, double **phi, 
 	      double **AA, double **GG, double **GG_new, 
 	      double **SS, double **SSHF){

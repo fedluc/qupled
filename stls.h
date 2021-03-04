@@ -1,6 +1,8 @@
 #ifndef STLS_H
 #define STLS_H
 
+#include <stdbool.h>
+
 typedef struct {
 
   char *phi_file;
@@ -21,7 +23,11 @@ typedef struct {
 
 } input;
 
-void solveSTLS(input in);
+
+void solve_stls(input in, bool verbose,
+                double **xx_out, double **SS_out,
+                double **SSHF_out, double **GG_out,
+                double **GG_new_out, double **phi_out);
 
 void alloc_stls_arrays(input in, double **xx, double **phi,
 		       double **AA,  double **GG, double **GG_new,
@@ -37,7 +43,7 @@ double normalization_condition(double mu, void *pp);
 
 void wave_vector_grid(double *xx, input in);
 
-void compute_phi(double *phi, double *xx, input in);
+void compute_phi(double *phi, double *xx, input in, bool verbose);
 
 void compute_phil(double *phil, double *xx, int ll, input in);
 
