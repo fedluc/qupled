@@ -1,8 +1,8 @@
 # STLS
 
 stls solves the classical STLS approach as defined in by [Tanaka and Ichimaru](https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278). The state 
-  point of interest is defined via the quantum degeneracy parameter
-  and via the quantum coupling parameters. The equation for the 
+  point of interest is defined via the quantum degeneracy parameter (Theta)
+  and via the quantum coupling parameters (r<sub>s</sub>). The equation for the 
   chemical potential is solved via bisection method for which two 
   initial guesses must be provided in input via the option `-g`.
   The STLS approach is solved iteratively on a wave-vector grid 
@@ -10,8 +10,8 @@ stls solves the classical STLS approach as defined in by [Tanaka and Ichimaru](h
   are specified in input together with number of Matsubara frequencies
    necessary for the calculation of the static structure factor. The 
   iterative solution employs [mixing](https://aip.scitation.org/doi/abs/10.1063/1.1682399]) and is assumed to have converged once the condition 
-  ||G_{i}(x) - G_{i-1}(x)|| < epsilon is satisfied. Here G(x) is the 
-  static local field correction and epsilon is a tolerance specified in
+  ||G<sub>i</sub>(x) - G<sub>i-1</sub>(x)|| < epsilon is satisfied between two successive iterations. Here G(x) is the 
+  static local field correction, epsilon is a tolerance specified in
   input. The output of the code consists of:
   
   * One text file with the static structure factor
