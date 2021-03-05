@@ -102,61 +102,120 @@ void solve_stls_hnc(input in, bool verbose) {
 
 struct slfcu_params {
 
-  double xx;
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
+  gsl_spline *slfc_sp_ptr;
+  gsl_interp_accel *slfc_acc_ptr;
+  gsl_spline *GGu_sp_ptr;
+  gsl_interp_accel *GGu_acc_ptr;
+  
 
 };
 
 struct slfcw_params {
 
   double xx;
+  double uu;
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
 
 };
 
 
-void compute_slfc_hnc(double *GG, double *SS, double *xx, input in) {
+void compute_slfc_hnc(double *GG_new, double *GG, double *SS, double *xx, input in) {
 
   double err;
   size_t nevals;
-  
+  double wmax, wmin;
+  double *GGu  = malloc( sizeof(double) * in.nx);
+
   // Declare accelerator and spline objects
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
+  gsl_spline *slfc_sp_ptr;
+  gsl_interp_accel *slfc_acc_ptr;
+  gsl_spline *GGu_sp_ptr;
+  gsl_interp_accel *GGu_acc_ptr;
   
   // Allocate the accelerator and the spline objects
   ssf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   ssf_acc_ptr = gsl_interp_accel_alloc();
+  slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  slfc_acc_ptr = gsl_interp_accel_alloc();
+  GGu_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  GGu_acc_ptr = gsl_interp_accel_alloc();
   
   // Initialize the spline
   gsl_spline_init(ssf_sp_ptr, xx, SS, in.nx);    
+  gsl_spline_init(slfc_sp_ptr, xx, GG, in.nx);    
 
   // Integration workspace
   gsl_integration_cquad_workspace *wsp
     = gsl_integration_cquad_workspace_alloc(in.nx);
 
   // Integration function
-  gsl_function ff_int;
-  ff_int.function = &slfc;
+  gsl_function fu_int, fw_int;
+  fu_int.function = &slfc_u;
+  fw_int.function = &slfc_w;
 
   // Static local field correction
-  for (int ii = 0; ii < in.nx; ii++) {
-    struct slfc_params slfcp = {xx[ii], ssf_sp_ptr, ssf_acc_ptr};
-    ff_int.params = &slfcp;
-    gsl_integration_cquad(&ff_int,
-  			  xx[0], xx[in.nx-1],
-  			  0.0, 1e-6,
-  			  wsp,
-  			  &GG[ii], &err, &nevals);
-    GG[ii] *= -3.0/4.0;
+  // Integration over u
+  for (int ii=0; ii<in.nx; ii++) {
+    
+    
+    if (xx[ii] > 0.0){
+      
+      // Integration over w
+      for (int jj=0; jj<in.nx; jj++){
+ 
+	if (xx[jj] == 0) {
+
+	  struct slfcw_params slfcwp = {xx[ii], xx[jj], ssf_sp_ptr, ssf_acc_ptr};
+	  wmin = xx[jj] - xx[ii];
+	  if (wmin < 0.0) wmin = -wmin;
+	  wmax = GSL_MIN(xx[in.nx-1], xx[jj]+xx[ii]);
+	  fw_int.params = &slfcwp;
+	  gsl_integration_cquad(&fw_int,
+				wmin, wmax,
+				0.0, 1e-6,
+				wsp,
+				&GGu[jj], &err, &nevals);
+
+	}
+	else GGu[jj] = 0.0; 
+
+	// Interpolate result of integration over w
+	gsl_spline_init(GGu_sp_ptr, xx, GGu, in.nx);    
+	  
+	// Evaluate integral over u
+	struct slfcu_params slfcup = {ssf_sp_ptr, ssf_acc_ptr,
+				      sflc_sp_ptr, slfc_acc_ptr,
+				      GGu_sp_ptr, GGu_sp_ptr};
+	fu_int.params = &slfcup;
+	gsl_integration_cquad(&fu_int,
+			      xx[0], xx[in.nx - 1],
+			      0.0, 1e-6,
+			      wsp,
+			      &GG_new[ii], &err, &nevals);
+	
+	GG[ii] *= -3.0/(8.0*xx[ii]);
+      }
+
+    }
+
+    else GG[ii] = 0.0;
+
   }
-  
+
   // Free memory
+  free(GGu);
   gsl_integration_cquad_workspace_free(wsp);
   gsl_spline_free(ssf_sp_ptr);
   gsl_interp_accel_free(ssf_acc_ptr);
+  gsl_spline_free(slfc_sp_ptr);
+  gsl_interp_accel_free(slfc_acc_ptr);
+  gsl_spline_free(GGu_sp_ptr);
+  gsl_interp_accel_free(GGu_acc_ptr);
 
 }
 
@@ -182,25 +241,17 @@ double slfc_u(double yy, void* pp) {
 
 }
 
-double slfc_w(double yy, void* pp) {
+double slfc_w(double ww, void* pp) {
 
     struct slfc_params* params = (struct slfc_params*)pp;
     double xx = (params->xx);
+    double uu = (params->uu);
     gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
     gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
-    double yy2 = yy * yy, xx2 = xx * xx;
-
-    if (xx > yy){
-      return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0) 
-	* (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(xx - yy)));
-    } 
-    else if (xx < yy) {
-      return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0) 
-	* (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(yy - xx)));
-    }
-    else {
-      	return 0;
-    }
+    double ww2 = ww * ww, xx2 = xx * xx, uu2 = uu*uu;
+    
+    return (ww2 - uu2 - xx2)*ww
+      *gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0)
 
 }
 
