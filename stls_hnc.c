@@ -32,7 +32,10 @@ void solve_stls_hnc(input in, bool verbose) {
 
   // Solve STLS equation for initial guess
   if (verbose) printf("Solution of classical STLS for initial guess:\n");
-  solve_stls(in, false, &xx, &SS, &SSHF, &GG, &GG_new, &phi); 
+  double a_mix_hold = in.a_mix;
+  in.a_mix = 0.1;
+  solve_stls(in, false, &xx, &SS, &SSHF, &GG, &GG_new, &phi);
+  in.a_mix = a_mix_hold;
   if (verbose) printf("Done.\n");
 
   /* // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC) */
@@ -46,7 +49,6 @@ void solve_stls_hnc(input in, bool verbose) {
   if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
-  in.a_mix = 1.0;
   while (iter_counter < in.nIter && iter_err > in.err_min ) {
     
     // Start timing
