@@ -30,11 +30,11 @@ void solve_stls(input in, bool verbose,
                 double **GG_new_out, double **phi_out);
 
 void alloc_stls_arrays(input in, double **xx, double **phi,
-		       double **AA,  double **GG, double **GG_new,
+		       double **GG, double **GG_new,
 		       double **SS, double **SSHF);
 
 void free_stls_arrays(double *xx, double *phi,
-                      double *AA,  double *GG, double *GG_new,
+                      double *GG, double *GG_new,
                       double *SS, double *SSHF);
 
 double compute_mu(input in);
@@ -65,9 +65,9 @@ void compute_AA(double *AA, double *xx,  input in);
 
 double Axl2(double xx, int ll, input in);
 
-void compute_ssf(double *SS, double *SSHF, double *AA,
-                 double *GG, double *phi, double *xx,
-                 input in);
+void compute_ssf(double *SS, double *SSHF,
+                 double *GG, double *phi, 
+		 double *xx, input in);
 
 void compute_slfc(double *GG, double *SS, 
 		  double *xx, input in);
@@ -82,13 +82,13 @@ double uex(double yy, void* pp);
 void write_text(double *SS, double *GG, 
 		double *xx, input in );
 
-void write_bin(double *phi, double *SSHF, double *AA, input in);
+void write_bin(double *phi, double *SSHF, input in);
 
 void read_text(double *SS, double *GG, 
 	       double *xx, input in);
 
 void read_bin(input *in, double **xx, double **phi,
-              double **AA, double **GG, double **GG_new,
+              double **GG, double **GG_new,
               double **SS, double **SSHF);
 
 #endif

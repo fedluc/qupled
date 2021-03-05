@@ -34,18 +34,26 @@ void solve_stls_hnc(input in, bool verbose) {
   if (verbose) printf("Solution of classical STLS for initial guess:\n");
   solve_stls(in, false, &xx, &SS, &SSHF, &GG, &GG_new, &phi); 
   if (verbose) printf("Done.\n");
-  
+
+  /* // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC) */
+  /* for (int ii=0; ii < in.nx; ii++) { */
+  /*   GG[ii] = 0.0; */
+  /*   GG_new[ii] = 0.0; */
+  /* } */
+  /* compute_ssf(SS, SSHF, GG, phi, xx, in); */
+
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
+  in.a_mix = 1.0;
   while (iter_counter < in.nIter && iter_err > in.err_min ) {
     
     // Start timing
     clock_t tic = clock();
     
     // Update SLFC
-    compute_slfc_hnc(GG_new, SS, xx, in);
+    compute_slfc_hnc(GG_new, GG, SS, xx, in);
     
     // Update diagnostic
     iter_err = 0.0;
@@ -57,7 +65,7 @@ void solve_stls_hnc(input in, bool verbose) {
     iter_err = sqrt(iter_err);
     
     // Update SSF
-    compute_ssf(SS, SSHF, AA, GG, phi, xx, in);
+    compute_ssf(SS, SSHF, GG, phi, xx, in);
     
     // End timing
     clock_t toc = clock();
@@ -76,21 +84,11 @@ void solve_stls_hnc(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text(SS, GG, xx, in);
-  if (init_flag) write_bin(phi, SSHF, AA, in);
+  write_text_hnc(SS, GG, xx, in);
   if (verbose) printf("Done.\n");
 
   // Output to variable or free memory
-  if (xx_out != NULL) {
-    xx_out = xx;
-    SS_out = SS;
-    SSHF_out = SSHF;
-    GG_out = GG;
-    phi_out = phi;
-  }
-  else{
-    free_stls_arrays(xx, phi, AA, GG, GG_new, SS, SSHF);
-  }
+  free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
  
  
 }
@@ -108,7 +106,8 @@ struct slfcu_params {
   gsl_interp_accel *slfc_acc_ptr;
   gsl_spline *GGu_sp_ptr;
   gsl_interp_accel *GGu_acc_ptr;
-  
+  double u_min_cut;
+  double u_max_cut;
 
 };
 
@@ -118,11 +117,14 @@ struct slfcw_params {
   double uu;
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
+  double w_min_cut;
+  double w_max_cut;
 
 };
 
 
-void compute_slfc_hnc(double *GG_new, double *GG, double *SS, double *xx, input in) {
+void compute_slfc_hnc(double *GG_new, double *GG, 
+		      double *SS, double *xx, input in) {
 
   double err;
   size_t nevals;
@@ -167,43 +169,47 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS, double *xx, input 
       
       // Integration over w
       for (int jj=0; jj<in.nx; jj++){
- 
-	if (xx[jj] == 0) {
+	
+	if (xx[jj] >  0.0) {
 
-	  struct slfcw_params slfcwp = {xx[ii], xx[jj], ssf_sp_ptr, ssf_acc_ptr};
+	  struct slfcw_params slfcwp = {xx[ii], xx[jj], 
+					ssf_sp_ptr, ssf_acc_ptr,
+					xx[0], xx[in.nx-1]};
 	  wmin = xx[jj] - xx[ii];
 	  if (wmin < 0.0) wmin = -wmin;
-	  wmax = GSL_MIN(xx[in.nx-1], xx[jj]+xx[ii]);
+	  wmax = GSL_MIN(xx[in.nx-1], xx[ii]+xx[jj]);
 	  fw_int.params = &slfcwp;
 	  gsl_integration_cquad(&fw_int,
 				wmin, wmax,
 				0.0, 1e-6,
 				wsp,
 				&GGu[jj], &err, &nevals);
-
 	}
+
 	else GGu[jj] = 0.0; 
 
-	// Interpolate result of integration over w
-	gsl_spline_init(GGu_sp_ptr, xx, GGu, in.nx);    
-	  
-	// Evaluate integral over u
-	struct slfcu_params slfcup = {ssf_sp_ptr, ssf_acc_ptr,
-				      sflc_sp_ptr, slfc_acc_ptr,
-				      GGu_sp_ptr, GGu_sp_ptr};
-	fu_int.params = &slfcup;
-	gsl_integration_cquad(&fu_int,
-			      xx[0], xx[in.nx - 1],
-			      0.0, 1e-6,
-			      wsp,
-			      &GG_new[ii], &err, &nevals);
-	
-	GG[ii] *= -3.0/(8.0*xx[ii]);
       }
+
+      // Interpolate result of integration over w
+      gsl_spline_init(GGu_sp_ptr, xx, GGu, in.nx);    
+      
+      // Evaluate integral over u
+      struct slfcu_params slfcup = {ssf_sp_ptr, ssf_acc_ptr,
+				    slfc_sp_ptr, slfc_acc_ptr,
+				    GGu_sp_ptr, GGu_acc_ptr,
+				    xx[0], xx[in.nx-1]};
+      fu_int.params = &slfcup;
+      gsl_integration_cquad(&fu_int,
+			    xx[0], xx[in.nx-1],
+			    0.0, 1e-6,
+			    wsp,
+			    &GG_new[ii], &err, &nevals);
+      
+      GG_new[ii] *= 3.0/(8.0*xx[ii]);
 
     }
 
-    else GG[ii] = 0.0;
+    else GG_new[ii] = 0.0;
 
   }
 
@@ -219,40 +225,42 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS, double *xx, input 
 
 }
 
-double slfc_u(double yy, void* pp) {
+double slfc_u(double uu, void* pp) {
 
-    struct slfc_params* params = (struct slfc_params*)pp;
-    double xx = (params->xx);
+    struct slfcu_params* params = (struct slfcu_params*)pp;
     gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
     gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
-    double yy2 = yy * yy, xx2 = xx * xx;
+    gsl_spline* slfc_sp_ptr = (params->slfc_sp_ptr);
+    gsl_interp_accel* slfc_acc_ptr = (params->slfc_acc_ptr);
+    gsl_spline* GGu_sp_ptr = (params->GGu_sp_ptr);
+    gsl_interp_accel* GGu_acc_ptr = (params->GGu_acc_ptr);
+    double u_min_cut = (params->u_min_cut);
+    double u_max_cut = (params->u_max_cut);
 
-    if (xx > yy){
-      return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0) 
-	* (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(xx - yy)));
-    } 
-    else if (xx < yy) {
-      return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0) 
-	* (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(yy - xx)));
-    }
-    else {
-      	return 0;
-    }
-
+    if (uu >= u_min_cut && uu <= u_max_cut)
+      return (1.0/uu) * gsl_spline_eval(GGu_sp_ptr, uu, GGu_acc_ptr)
+	*(1 - (gsl_spline_eval(ssf_sp_ptr, uu, ssf_acc_ptr) - 1.0)
+	  *(gsl_spline_eval(slfc_sp_ptr, uu, slfc_acc_ptr) - 1.0));
+    else 
+      return 0;
 }
 
 double slfc_w(double ww, void* pp) {
 
-    struct slfc_params* params = (struct slfc_params*)pp;
+    struct slfcw_params* params = (struct slfcw_params*)pp;
     double xx = (params->xx);
     double uu = (params->uu);
+    double w_min_cut = (params->w_min_cut);
+    double w_max_cut = (params->w_max_cut);
     gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
     gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
-    double ww2 = ww * ww, xx2 = xx * xx, uu2 = uu*uu;
+    double ww2 = ww*ww, xx2 = xx*xx, uu2 = uu*uu;
     
-    return (ww2 - uu2 - xx2)*ww
-      *gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0)
-
+    if (ww >= w_min_cut && ww <= w_max_cut)
+      return (ww2 - uu2 - xx2)*ww
+	*(gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0);
+    else 
+      return 0;
 }
 
 

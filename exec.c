@@ -49,7 +49,7 @@ static struct argp_option options[] = {
    "Quantum coupling parameter"},
   {"xcut",  'x', "50", 0,
    "Cutoff for wave-vector grid"},
-  {"dx",  'd', "0.01", 0,
+  {"dx",  'd', "0.1", 0,
    "Resolution for wave-vector grid"},
   {"nl",  'l', "1000", 0,
    "Number of Matsubara frequencies"},

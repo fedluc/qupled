@@ -27,7 +27,6 @@ void solve_stls(input in, bool verbose,
   // Arrays for STLS solution
   double *xx = NULL; 
   double *phi = NULL;
-  double *AA = NULL;
   double *GG = NULL;
   double *GG_new = NULL;
   double *SS = NULL;
@@ -37,11 +36,10 @@ void solve_stls(input in, bool verbose,
   bool init_flag = true;
   if (strcmp(in.phi_file,"NO_FILE") != 0) init_flag = false;
   if (init_flag) {
-    alloc_stls_arrays(in, &xx, &phi, &AA, &GG, &GG_new, 
-		      &SS, &SSHF);
+    alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
   }
   else {
-    read_bin(&in, &xx, &phi, &AA, &GG, &GG_new, &SS, &SSHF);
+    read_bin(&in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
   }
 
   // Print on screen the parameter used to solve the STLS equation
@@ -79,11 +77,6 @@ void solve_stls(input in, bool verbose,
     if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
     compute_ssfHF(SSHF, xx, in);
     if (verbose) printf("Done.\n");
-    
-    // Leading term in the static structure factor
-    if (verbose) printf("Leading term in the static structure factor: ");
-    compute_AA(AA, xx, in);
-    if (verbose) printf("Done.\n");
 
   }
 
@@ -92,7 +85,7 @@ void solve_stls(input in, bool verbose,
     GG[ii] = 0.0;
     GG_new[ii] = 1.0;
   }
-  compute_ssf(SS, SSHF, AA, GG, phi, xx, in);
+  compute_ssf(SS, SSHF, GG, phi, xx, in);
   
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF and SLFC calculation...\n");
@@ -116,7 +109,7 @@ void solve_stls(input in, bool verbose,
     iter_err = sqrt(iter_err);
     
     // Update SSF
-    compute_ssf(SS, SSHF, AA, GG, phi, xx, in);
+    compute_ssf(SS, SSHF, GG, phi, xx, in);
     
     // End timing
     clock_t toc = clock();
@@ -136,7 +129,7 @@ void solve_stls(input in, bool verbose,
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text(SS, GG, xx, in);
-  if (init_flag) write_bin(phi, SSHF, AA, in); 
+  if (init_flag) write_bin(phi, SSHF, in); 
   if (verbose) printf("Done.\n");
 
   // Output to variable or free memory
@@ -149,7 +142,7 @@ void solve_stls(input in, bool verbose,
     *phi_out = phi;
   }
   else{
-    free_stls_arrays(xx, phi, AA, GG, GG_new, SS, SSHF);
+    free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
   }
  
  
@@ -160,13 +153,12 @@ void solve_stls(input in, bool verbose,
 // -------------------------------------------------------------------
 
 void alloc_stls_arrays(input in, double **xx, double **phi, 
-		      double **AA,  double **GG, double **GG_new, 
-		      double **SS, double **SSHF){
+		       double **GG, double **GG_new, 
+		       double **SS, double **SSHF){
 
   *xx = malloc( sizeof(double) * in.nx);
   *phi = malloc( sizeof(double) * in.nx * in.nl);
   *SSHF = malloc( sizeof(double) * in.nx);
-  *AA = malloc( sizeof(double) * in.nx);
   *GG = malloc( sizeof(double) * in.nx);
   *GG_new = malloc( sizeof(double) * in.nx);
   *SS = malloc( sizeof(double) * in.nx);
@@ -174,13 +166,12 @@ void alloc_stls_arrays(input in, double **xx, double **phi,
 }
 
 void free_stls_arrays(double *xx, double *phi, 
-		      double *AA,  double *GG, double *GG_new, 
+		      double *GG, double *GG_new, 
 		      double *SS, double *SSHF){
 
   free(xx);
   free(phi);
   free(SSHF);
-  free(AA);
   free(SS);
   free(GG);
  
@@ -490,9 +481,8 @@ double Axl2(double xx, int ll, input in){
 }
 
 
-void compute_ssf(double *SS, double *SSHF, double *AA,
-		 double *GG, double *phi, double *xx,
-		  input in){
+void compute_ssf(double *SS, double *SSHF, double *GG, 
+		 double *phi, double *xx, input in){
 
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   /* double ff = 4.0*lambda*in.rs/M_PI; */
@@ -711,7 +701,7 @@ void write_text(double *SS, double *GG, double *xx, input in){
 
 
 // write binary file with density response
-void write_bin(double *phi, double *SSHF, double *AA,  input in){
+void write_bin(double *phi, double *SSHF, input in){
 
 
   // Open binary file
@@ -730,9 +720,6 @@ void write_bin(double *phi, double *SSHF, double *AA,  input in){
 
   // Static structure factor in the Hartree-Fock approximation
   fwrite(SSHF, sizeof(double), in.nx, fid);
-
-  // Leading term in the static structure factor
-  fwrite(AA, sizeof(double), in.nx, fid);
 
   // Close binary file
   fclose(fid);
@@ -760,13 +747,12 @@ void read_text(double *SS, double *GG, double *xx, input in){
 
 // read binary file with density response information
 void read_bin(input *in, double **xx, double **phi, 
-	      double **AA, double **GG, double **GG_new, 
+	      double **GG, double **GG_new, 
 	      double **SS, double **SSHF){
 
   // Variables
   double *xx_local = NULL; 
   double *phi_local = NULL;
-  double *AA_local = NULL;
   double *GG_local = NULL;
   double *GG_new_local = NULL;
   double *SS_local = NULL;
@@ -785,7 +771,7 @@ void read_bin(input *in, double **xx, double **phi,
   fread(&in_load, sizeof(input), 1, fid);
 
   // Allocate arrays
-  alloc_stls_arrays(in_load, &xx_local, &phi_local, &AA_local, 
+  alloc_stls_arrays(in_load, &xx_local, &phi_local, 
 		    &GG_local, &GG_new_local, &SS_local, 
 		    &SSHF_local);
 
@@ -801,9 +787,6 @@ void read_bin(input *in, double **xx, double **phi,
   // Static structure factor in the Hartree-Fock approximation
   fread(SSHF_local, sizeof(double), in_load.nx, fid);
 
-  // Leading term in the static structure factor
-  fread(AA_local, sizeof(double), in_load.nx, fid);
-
   // Close binary file
   fclose(fid);
   
@@ -816,7 +799,6 @@ void read_bin(input *in, double **xx, double **phi,
   in->mu = in_load.mu;
   *xx = xx_local;
   *phi = phi_local;
-  *AA = AA_local;
   *GG = GG_local;
   *GG_new = GG_new_local;
   *SS = SS_local;
