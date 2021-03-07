@@ -47,16 +47,18 @@ static struct argp_option options[] = {
    "Quantum degeneracy parameter"}, 
   {"rs",    'r', "1.0", 0,
    "Quantum coupling parameter"},
-  {"xcut",  'x', "50", 0,
+  {"xcut",  'x', "20", 0,
    "Cutoff for wave-vector grid"},
-  {"dx",  'd', "0.1", 0,
+  {"dx",  'd', "0.01", 0,
    "Resolution for wave-vector grid"},
-  {"nl",  'l', "1000", 0,
+  {"nl",  'l', "100", 0,
    "Number of Matsubara frequencies"},
   {"iter",  'i', "1000", 0,
    "Maximum number of iterations"},
-  {"err", 'e', "1e-5", 0,
-   "Minimum error for convergence"},
+  {"errIter", 'e', "1e-5", 0,
+   "Minimum error for convergence in the iterations"},
+  {"errInt", 'f', "1e-4", 0,
+   "Minimum error for convergence in the integrals"},
   {"mix", 'm', "0.1", 0,
    "Mixing parameter for iterative solution"},
   {"mg", 'g', "-10,10", 0,
@@ -77,7 +79,8 @@ struct arguments
   double Theta;
   double rs;
   double dx;
-  double err_min;
+  double err_min_iter;
+  double err_min_int;
   double a_mix;
   double mu_lo;
   double mu_hi;
@@ -103,7 +106,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
       arguments->dx = atof(arg);
       break;
     case 'e':
-      arguments->err_min = atof(arg);
+      arguments->err_min_iter = atof(arg);
+      break;
+    case 'f':
+      arguments->err_min_int = atof(arg);
       break;
     case 'g':
       value = strtok(NULL, ",");
@@ -169,13 +175,14 @@ int main (int argc, char **argv){
   arguments.ssf_file = "NO_FILE"; // File with static structure factor
   arguments.Theta = 1.0; // Quantum degeneracy parameter
   arguments.rs = 1.0; // Quantum coupling parameter
-  arguments.dx = 0.1; // Wave-vector grid resolution 
-  arguments.err_min = 1e-5; // Minimum error for convergence
+  arguments.dx = 0.01; // Wave-vector grid resolution 
+  arguments.err_min_iter = 1e-5; // Minimum error for convergence in the iterative procedure
+  arguments.err_min_int = 1e-4; // Minimum error for convergence in the integration
   arguments.a_mix = 0.1; // Mixing parameter for iterative procedure
   arguments.mu_lo = -10; // Initial guess for chemical potential (low bound)
   arguments.mu_hi = 10; // Initial guess for chemical potential (high bound)
-  arguments.xmax = 50; // Cutoff for wave-vector grid
-  arguments.nl = 1000; // Number of Matsubara frequencies
+  arguments.xmax = 20; // Cutoff for wave-vector grid
+  arguments.nl = 100; // Number of Matsubara frequencies
   arguments.nIter = 1000; // Number of iterations 
 
   // Parse command line
@@ -187,8 +194,9 @@ int main (int argc, char **argv){
   in.ssf_file = arguments.phi_file;
   in.Theta = arguments.Theta;
   in.rs = arguments.rs;
-  in.dx = arguments.dx;
-  in.err_min = arguments.err_min;
+  in.dx = arguments.dx; 
+  in.err_min_iter = arguments.err_min_iter;
+  in.err_min_int = arguments.err_min_int;
   in.a_mix = arguments.a_mix;
   in.mu_lo = arguments.mu_lo;
   in.mu_hi = arguments.mu_hi;
@@ -199,8 +207,8 @@ int main (int argc, char **argv){
  
   // Solve STLS equation
   double start = omp_get_wtime();
-  solve_stls(in, true, NULL, NULL, NULL, NULL, NULL, NULL);
-  //solve_stls_hnc(in, true);
+  //solve_stls(in, true, NULL, NULL, NULL, NULL, NULL, NULL);
+  solve_stls_hnc(in, true);
   double end = omp_get_wtime();
   printf("Solution of STLS equation complete. Elapsed time: %f seconds\n", end - start);
 

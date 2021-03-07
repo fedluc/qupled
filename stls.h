@@ -10,7 +10,8 @@ typedef struct {
   double Theta;
   double rs;
   double dx;
-  double err_min;
+  double err_min_iter;
+  double err_min_int;
   double a_mix;
   double mu_lo;
   double mu_hi;

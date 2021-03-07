@@ -52,7 +52,7 @@ void solve_stls(input in, bool verbose,
   printf("Wave-vector resolutions: %f\n", in.dx);
   printf("Number of Matsubara frequencies: %d\n", in.nl);
   printf("Maximum number of iterations: %d\n", in.nIter);
-  printf("Error for convergence: %.5e\n", in.err_min);
+  printf("Error for convergence: %.5e\n", in.err_min_iter);
   printf("----------------------------------------------------\n");
  
 
@@ -91,7 +91,7 @@ void solve_stls(input in, bool verbose,
   if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
-  while (iter_counter < in.nIter && iter_err > in.err_min ) {
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     
     // Start timing
     clock_t tic = clock();
@@ -325,7 +325,7 @@ void compute_phil(double *phil, double *xx,  int ll, input in) {
       ff_int.params = &phixlp;
       gsl_integration_cquad(&ff_int, 
 			    xx[0], xx[in.nx-1], 
-			    0.0, 1e-6, 
+			    0.0, in.err_min_int, 
 			    wsp, 
 			    &phil[ii], &err, &nevals);
     }
@@ -355,8 +355,14 @@ double phixl(double yy, void* pp) {
   double yy2 = yy*yy, xx2 = xx*xx, txy = 2*xx*yy, 
     tplT = 2*M_PI*ll*Theta, tplT2 = tplT*tplT;
   
-  return 1.0/(2*xx)*yy/(exp(yy2/Theta - mu) + 1.0)
-    *log(((xx2+txy)*(xx2+txy) + tplT2)/((xx2-txy)*(xx2-txy) + tplT2));
+  if (xx > 0.0) {
+    return 1.0/(2*xx)*yy/(exp(yy2/Theta - mu) + 1.0)
+      *log(((xx2+txy)*(xx2+txy) + tplT2)/((xx2-txy)*(xx2-txy) + tplT2));
+  }
+  else {
+    return 0;
+  }
+
 
 }
 
@@ -368,16 +374,23 @@ double phix0(double yy, void* pp) {
   double Theta = (params->Theta);
   double yy2 = yy*yy, xx2 = xx*xx, xy = xx*yy;
 
-  if (xx < 2*yy){
-    return 1.0/(Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(2*yy - xx)) + xy)
-      *yy/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0);    
-  }  
-  else if (xx > 2*yy){
-    return 1.0/(Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(xx - 2*yy)) + xy)
-      *yy/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0);
-  }   
-  else {
-    return 0;
+  if (xx > 0.0){
+
+    if (xx < 2*yy){
+      return 1.0/(Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(2*yy - xx)) + xy)
+        *yy/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0);
+    }
+    else if (xx > 2*yy){
+      return 1.0/(Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(xx - 2*yy)) + xy)
+        *yy/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0);
+    }
+    else {
+      return 1.0/(Theta)*yy2/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0);;
+    }
+  }
+
+  else{
+    return (2.0/Theta)*yy2/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0);
   }
 
 }
@@ -402,7 +415,7 @@ double ssfHF(double yy, void* pp) {
   double Theta = (params->Theta);
   double yy2 = yy*yy, ypx = yy + xx, ymx = yy - xx;
  
-  if (xx >= 0.01){
+  if (xx > 0.0){
     return -3.0*Theta/(4.0*xx)*yy/(exp(yy2/Theta - mu) + 1.0)
       *log((1 + exp(mu - ymx*ymx/Theta))/(1 + exp(mu - ypx*ypx/Theta)));
   }
@@ -419,7 +432,7 @@ void compute_ssfHF(double *SS,  double *xx,  input in){
 
   // Integration workspace
   gsl_integration_cquad_workspace *wsp
-    = gsl_integration_cquad_workspace_alloc(1000);
+    = gsl_integration_cquad_workspace_alloc(in.nx);
 
   // Integration function
   gsl_function ff_int;
@@ -433,12 +446,12 @@ void compute_ssfHF(double *SS,  double *xx,  input in){
     ff_int.params = &ssfHFp;
     gsl_integration_cquad(&ff_int,
 			  xx[0], xx[in.nx-1],
-			  0.0, 1e-6,
+			  0.0, in.err_min_int,
 			  wsp,
 			  &SS[ii], &err, &nevals);
- 
+
     SS[ii] += 1.0;
- 
+
   }
   
   // Free memory
@@ -558,7 +571,7 @@ void compute_slfc(double *GG, double *SS, double *xx, input in) {
     ff_int.params = &slfcp;
     gsl_integration_cquad(&ff_int,
   			  xx[0], xx[in.nx-1],
-  			  0.0, 1e-6,
+  			  0.0, in.err_min_int,
   			  wsp,
   			  &GG[ii], &err, &nevals);
     GG[ii] *= -3.0/4.0;
@@ -579,17 +592,26 @@ double slfc(double yy, void* pp) {
     gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
     double yy2 = yy * yy, xx2 = xx * xx;
 
-    if (xx > yy){
-      return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0) 
-	* (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(xx - yy)));
-    } 
-    else if (xx < yy) {
-      return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0) 
-	* (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(yy - xx)));
+    if (xx > 0.0 && yy > 0.0){
+
+      if (xx > yy){
+        return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0)
+          * (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(xx - yy)));
+      }
+      else if (xx < yy) {
+        return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0)
+          * (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(yy - xx)));
+      }
+      else {
+        return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0);
+      }
+
     }
     else {
-      	return 0;
+      return 0;
     }
+
+
 
 }
 
@@ -638,7 +660,7 @@ double compute_internal_energy(double *SS, double *xx,  input in) {
   ff_int.params = &uexp;  
   gsl_integration_cquad(&ff_int,
 			xx[0], xx[in.nx-1],
-			0.0, 1e-6,
+			0.0, in.err_min_int,
 			wsp,
 			&ie, &err, &neval);
   

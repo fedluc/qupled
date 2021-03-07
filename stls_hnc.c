@@ -38,18 +38,11 @@ void solve_stls_hnc(input in, bool verbose) {
   in.a_mix = a_mix_hold;
   if (verbose) printf("Done.\n");
 
-  /* // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC) */
-  /* for (int ii=0; ii < in.nx; ii++) { */
-  /*   GG[ii] = 0.0; */
-  /*   GG_new[ii] = 0.0; */
-  /* } */
-  /* compute_ssf(SS, SSHF, GG, phi, xx, in); */
-
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
-  while (iter_counter < in.nIter && iter_err > in.err_min ) {
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     
     // Start timing
     clock_t tic = clock();
@@ -154,8 +147,8 @@ void compute_slfc_hnc(double *GG_new, double *GG,
   gsl_spline_init(slfc_sp_ptr, xx, GG, in.nx);    
 
   // Integration workspace
-  gsl_integration_cquad_workspace *wsp
-    = gsl_integration_cquad_workspace_alloc(in.nx);
+  gsl_integration_romberg_workspace *wsp
+    = gsl_integration_romberg_alloc(10);
 
   // Integration function
   gsl_function fu_int, fw_int;
@@ -181,11 +174,15 @@ void compute_slfc_hnc(double *GG_new, double *GG,
 	  if (wmin < 0.0) wmin = -wmin;
 	  wmax = GSL_MIN(xx[in.nx-1], xx[ii]+xx[jj]);
 	  fw_int.params = &slfcwp;
-	  gsl_integration_cquad(&fw_int,
-				wmin, wmax,
-				0.0, 1e-6,
-				wsp,
-				&GGu[jj], &err, &nevals);
+	  /* gsl_integration_cquad(&fw_int, */
+	  /* 			wmin, wmax, */
+	  /* 			0.0, in.err_min_int, */
+	  /* 			wsp, */
+	  /* 			&GGu[jj], &err, &nevals); */
+	  gsl_integration_romberg(&fw_int,
+				  wmin, wmax,
+				  0.0, in.err_min_int,
+				  &GGu[jj], &nevals, wsp);
 	}
 
 	else GGu[jj] = 0.0; 
@@ -201,11 +198,15 @@ void compute_slfc_hnc(double *GG_new, double *GG,
 				    GGu_sp_ptr, GGu_acc_ptr,
 				    xx[0], xx[in.nx-1]};
       fu_int.params = &slfcup;
-      gsl_integration_cquad(&fu_int,
-			    xx[0], xx[in.nx-1],
-			    0.0, 1e-6,
-			    wsp,
-			    &GG_new[ii], &err, &nevals);
+      /* gsl_integration_cquad(&fu_int, */
+      /* 			    xx[0], xx[in.nx-1], */
+      /* 			    0.0, in.err_min_int, */
+      /* 			    wsp, */
+      /* 			    &GG_new[ii], &err, &nevals); */
+      gsl_integration_romberg(&fu_int,
+			      xx[0], xx[in.nx-1],
+			      0.0, in.err_min_int,
+			      &GG_new[ii], &nevals, wsp);
       
       GG_new[ii] *= 3.0/(8.0*xx[ii]);
 
@@ -217,7 +218,7 @@ void compute_slfc_hnc(double *GG_new, double *GG,
 
   // Free memory
   free(GGu);
-  gsl_integration_cquad_workspace_free(wsp);
+  gsl_integration_romberg_free(wsp);
   gsl_spline_free(ssf_sp_ptr);
   gsl_interp_accel_free(ssf_acc_ptr);
   gsl_spline_free(slfc_sp_ptr);
@@ -239,7 +240,7 @@ double slfc_u(double uu, void* pp) {
     double u_min_cut = (params->u_min_cut);
     double u_max_cut = (params->u_max_cut);
 
-    if (uu >= u_min_cut && uu <= u_max_cut)
+    if (uu >= u_min_cut && uu <= u_max_cut && uu > 0.0)
       return (1.0/uu) * gsl_spline_eval(GGu_sp_ptr, uu, GGu_acc_ptr)
 	*(1 - (gsl_spline_eval(ssf_sp_ptr, uu, ssf_acc_ptr) - 1.0)
 	  *(gsl_spline_eval(slfc_sp_ptr, uu, slfc_acc_ptr) - 1.0));
