@@ -11,7 +11,6 @@ typedef struct {
   double rs;
   double dx;
   double err_min_iter;
-  double err_min_int;
   double a_mix;
   double mu_lo;
   double mu_hi;
@@ -68,9 +67,7 @@ void compute_slfc(double *GG, double *SS,
 
 double slfc(double yy, double xx, double SS);
 
-double compute_internal_energy(double *SS, input in);
-
-double uex(double SS);
+double compute_uex(double *SS, input in);
 
 void write_text(double *SS, double *GG, 
 		double *xx, input in );

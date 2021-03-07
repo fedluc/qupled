@@ -5,9 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <gsl/gsl_math.h>
-#include <gsl/gsl_sf_trig.h>
-#include <gsl/gsl_errno.h> 
-#include <gsl/gsl_spline.h>
+#include <gsl/gsl_errno.h>
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_sf_gamma.h>
@@ -124,7 +122,7 @@ void solve_stls(input in, bool verbose,
   if (verbose) printf("Done.\n");
   
   // Internal energy
-  if (verbose) printf("Internal energy: %f\n",compute_internal_energy(SS, in));
+  if (verbose) printf("Internal energy: %f\n",compute_uex(SS, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
@@ -174,6 +172,7 @@ void free_stls_arrays(double *xx, double *phi,
   free(SSHF);
   free(SS);
   free(GG);
+  free(GG_new);
  
 }
 
@@ -192,8 +191,8 @@ double compute_mu(input in) {
   
   // Variables
   int max_iter = 100;
-  double mu_lo = -10.0;
-  double mu_hi = 10.0;
+  double mu_lo = in.mu_lo;
+  double mu_hi = in.mu_hi;
   double mu;
   int status, iter;
 
@@ -300,7 +299,7 @@ void compute_phil(double *phil, double *xx,  int ll, input in) {
     phil[ii] = 0.0;
     if (ll == 0){
       
-      for (int jj=0; jj<in.nx-1; jj++){
+      for (int jj=0; jj<in.nx; jj++){
     	phil[ii] += phix0(xx[jj], xx[ii], in);
       }
       phil[ii] *= in.dx;
@@ -308,7 +307,7 @@ void compute_phil(double *phil, double *xx,  int ll, input in) {
     }
     else {
 
-      for (int jj=0; jj<in.nx-1; jj++){
+      for (int jj=0; jj<in.nx; jj++){
     	phil[ii] += phixl(xx[jj], xx[ii], ll, in);
       }
       phil[ii] *= in.dx;
@@ -325,13 +324,8 @@ double phixl(double yy, double xx, int ll, input in) {
   double yy2 = yy*yy, xx2 = xx*xx, txy = 2*xx*yy, 
     tplT = 2*M_PI*ll*in.Theta, tplT2 = tplT*tplT;
   
-  if (xx > 0.0) {
-    return 1.0/(2*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
-      *log(((xx2+txy)*(xx2+txy) + tplT2)/((xx2-txy)*(xx2-txy) + tplT2));
-  }
-  else {
-    return 0;
-  }
+  return 1.0/(2*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
+    *log(((xx2+txy)*(xx2+txy) + tplT2)/((xx2-txy)*(xx2-txy) + tplT2));
 
 
 }
@@ -340,26 +334,19 @@ double phix0(double yy, double xx, input in) {
 
   double yy2 = yy*yy, xx2 = xx*xx, xy = xx*yy;
 
-  if (xx > 0.0){
-
-    if (xx < 2*yy){
-      return 1.0/(in.Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(2*yy - xx)) + xy)
-        *yy/(exp(yy2/in.Theta - in.mu) + exp(-yy2/in.Theta + in.mu) + 2.0);
-    }
-    else if (xx > 2*yy){
-      return 1.0/(in.Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(xx - 2*yy)) + xy)
-        *yy/(exp(yy2/in.Theta - in.mu) + exp(-yy2/in.Theta + in.mu) + 2.0);
-    }
-    else {
-      return 1.0/(in.Theta)*yy2/(exp(yy2/in.Theta - in.mu) 
-				 + exp(-yy2/in.Theta + in.mu) + 2.0);;
-    }
+  if (xx < 2*yy){
+    return 1.0/(in.Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(2*yy - xx)) + xy)
+      *yy/(exp(yy2/in.Theta - in.mu) + exp(-yy2/in.Theta + in.mu) + 2.0);
+  }
+  else if (xx > 2*yy){
+    return 1.0/(in.Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(xx - 2*yy)) + xy)
+      *yy/(exp(yy2/in.Theta - in.mu) + exp(-yy2/in.Theta + in.mu) + 2.0);
+  }
+  else {
+    return 1.0/(in.Theta)*yy2/(exp(yy2/in.Theta - in.mu) 
+			       + exp(-yy2/in.Theta + in.mu) + 2.0);;
   }
 
-  else{
-    return (2.0/in.Theta)*yy2/(exp(yy2/in.Theta - in.mu) 
-			       + exp(-yy2/in.Theta + in.mu) + 2.0);
-  }
 
 }
 
@@ -371,14 +358,9 @@ double ssfHF(double yy, double xx, input in) {
 
   double yy2 = yy*yy, ypx = yy + xx, ymx = yy - xx;
  
-  if (xx > 0.0){
-    return -3.0*in.Theta/(4.0*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
-      *log((1 + exp(in.mu - ymx*ymx/in.Theta))
-	   /(1 + exp(in.mu - ypx*ypx/in.Theta)));
-  }
-  else {
-    return -3.0/2.0*yy2/(1.0 + cosh(yy2/in.Theta - in.mu));
-  }
+  return -3.0*in.Theta/(4.0*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
+    *log((1 + exp(in.mu - ymx*ymx/in.Theta))
+	 /(1 + exp(in.mu - ypx*ypx/in.Theta)));
 
 }
 
@@ -388,7 +370,7 @@ void compute_ssfHF(double *SS,  double *xx,  input in){
   for (int ii = 0; ii < in.nx; ii++) {
 
     SS[ii] = 0.0;
-    for (int jj=0; jj<in.nx-1; jj++){
+    for (int jj=0; jj<in.nx; jj++){
       SS[ii] += ssfHF(xx[jj], xx[ii], in);
     }
     SS[ii] *= in.dx;
@@ -442,7 +424,7 @@ void compute_slfc(double *GG, double *SS, double *xx, input in) {
   for (int ii = 0; ii < in.nx; ii++) {
     
     GG[ii] = 0.0;
-    for (int jj=0; jj<in.nx-1; jj++){
+    for (int jj=0; jj<in.nx; jj++){
       GG[ii] += slfc(xx[jj], xx[ii], SS[jj]);
     }
     GG[ii] *= in.dx;
@@ -455,26 +437,17 @@ double slfc(double yy, double xx, double SS) {
 
     double yy2 = yy * yy, xx2 = xx * xx;
 
-    if (xx > 0.0 && yy > 0.0){
-
-      if (xx > yy){
-        return -3.0/4.0* yy2 * (SS - 1.0)
-	  * (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(xx - yy)));
-      }
-      else if (xx < yy) {
-        return -3.0/4.0* yy2 * (SS - 1.0)
-          * (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(yy - xx)));
-      }
-      else {
-        return yy2 * (SS - 1.0);
-      }
-
+    if (xx > yy){
+      return -3.0/4.0* yy2 * (SS - 1.0)
+	* (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(xx - yy)));
+    }
+    else if (xx < yy) {
+      return -3.0/4.0* yy2 * (SS - 1.0)
+	* (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(yy - xx)));
     }
     else {
-      return 0;
+      return yy2 * (SS - 1.0);
     }
-
-
 
 }
 
@@ -484,23 +457,15 @@ double slfc(double yy, double xx, double SS) {
 // FUNCTIONS USED TO COMPUTE THE INTERNAL ENERGY
 // -------------------------------------------------------------------
 
-struct uex_params {
-
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-
-};
-
-
-double compute_internal_energy(double *SS, input in) {
+double compute_uex(double *SS, input in) {
 
   double ie;
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);  
 
   // Internal energy
   ie = 0.0;
-  for (int jj=0; jj<in.nx-1; jj++){
-    ie += uex(SS[jj]);
+  for (int jj=0; jj<in.nx; jj++){
+    ie += SS[jj] - 1.0;
   }
   ie *= in.dx;
   
@@ -508,12 +473,6 @@ double compute_internal_energy(double *SS, input in) {
   return ie/(M_PI*in.rs*lambda);
 
 }
-
-double uex(double SS) {
-
-    return SS - 1;
-}
-
 
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT

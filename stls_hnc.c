@@ -5,10 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <gsl/gsl_math.h>
-#include <gsl/gsl_sf_trig.h>
 #include <gsl/gsl_errno.h> 
-#include <gsl/gsl_spline.h>
-#include <gsl/gsl_integration.h>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_fermi_dirac.h>
@@ -37,6 +34,9 @@ void solve_stls_hnc(input in, bool verbose) {
   solve_stls(in, false, &xx, &SS, &SSHF, &GG, &GG_new, &phi);
   in.a_mix = a_mix_hold;
   if (verbose) printf("Done.\n");
+  for (int ii=0; ii<in.nx; ii++){
+    GG[ii] = 0.0;
+  }
 
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF and SLFC calculation...\n");
@@ -75,7 +75,7 @@ void solve_stls_hnc(input in, bool verbose) {
   if (verbose) printf("Done.\n");
   
   // Internal energy
-  if (verbose) printf("Internal energy: %f\n",compute_internal_energy(SS, in));
+  if (verbose) printf("Internal energy: %f\n",compute_uex(SS, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
@@ -96,37 +96,41 @@ void solve_stls_hnc(input in, bool verbose) {
 void compute_slfc_hnc(double *GG_new, double *GG, 
 		      double *SS, double *xx, input in) {
 
-  double wmax, wmin;
-  double *GGu  = malloc( sizeof(double) * in.nx);
+  double kmax, kmin, fu, 
+    xx2, uu, uu2, ww2, ww;
 
   // Static local field correction
   for (int ii=0; ii<in.nx; ii++) {
    
+    xx2 = xx[ii]*xx[ii];
+    GG_new[ii] = 0.0;
     
+    for (int jj=0; jj<in.nx; jj++){
 
+      uu = xx[jj];
+      uu2 = uu*uu;
+      kmin = ii-jj;
+      if (kmin < 0) kmin = -kmin;
+      kmax = ii+jj;
+      if (kmax > in.nx) kmax = in.nx;
+      
+      fu = 0.0;
+      for (int kk=kmin; kk<kmax; kk++){
+
+	ww = xx[kk];
+	ww2 = ww*ww;
+	fu += (ww2 - uu2 - xx2) * ww * (SS[kk] - 1.0);
+	
+      }
+      
+      GG_new[ii] += (1.0 - (GG[jj] - 1.0) * (SS[jj] - 1.0))*in.dx*fu/uu;
+      
+    }
+    
+    GG_new[ii] *= 3.0*in.dx/(8.0*xx[ii]);
+    
   }
 
-}
-
-double slfc_u(double uu, void* pp) {
-
-    if (uu >= u_min_cut && uu <= u_max_cut && uu > 0.0)
-      return (1.0/uu) * gsl_spline_eval(GGu_sp_ptr, uu, GGu_acc_ptr)
-	*(1 - (gsl_spline_eval(ssf_sp_ptr, uu, ssf_acc_ptr) - 1.0)
-	  *(gsl_spline_eval(slfc_sp_ptr, uu, slfc_acc_ptr) - 1.0));
-    else 
-      return 0;
-}
-
-double slfc_w(double ww, void* pp) {
-
-    double ww2 = ww*ww, xx2 = xx*xx, uu2 = uu*uu;
-    
-    if (ww >= w_min_cut && ww <= w_max_cut)
-      return (ww2 - uu2 - xx2)*ww
-	*(gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0);
-    else 
-      return 0;
 }
 
 

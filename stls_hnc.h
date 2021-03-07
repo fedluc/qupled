@@ -12,7 +12,4 @@ void write_text_hnc(double *SS, double *GG,
 		    double *xx, input in );
 
 
-double slfc_u(double yy, void* pp);
-double slfc_w(double yy, void* pp);
-
 #endif
