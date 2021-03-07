@@ -124,7 +124,7 @@ void solve_stls(input in, bool verbose,
   if (verbose) printf("Done.\n");
   
   // Internal energy
-  if (verbose) printf("Internal energy: %f\n",compute_internal_energy(SS, xx, in));
+  if (verbose) printf("Internal energy: %f\n",compute_internal_energy(SS, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
@@ -252,9 +252,8 @@ double normalization_condition(double mu, void *pp) {
 // ------------------------------------------------------------------
 
 void wave_vector_grid(double *xx, input in){
-  
-  //xx[0] = in.dx;
-  xx[0] = 0.0;
+ 
+  xx[0] = in.dx/2.0;
   for (int ii=1; ii < in.nx; ii++) xx[ii] = xx[ii-1] + in.dx;
 
 }
@@ -271,15 +270,6 @@ int idx2(int xx, int yy, int x_size) {
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY
 // -------------------------------------------------------------------
-
-struct phixl_params {
-
-  double xx;
-  double mu;
-  double Theta;
-  double ll;
-
-};
 
 void compute_phi(double *phi, double *xx,  input in, bool verbose) {
 
@@ -304,59 +294,39 @@ void compute_phi(double *phi, double *xx,  input in, bool verbose) {
 
 void compute_phil(double *phil, double *xx,  int ll, input in) {
 
-  double err;
-  size_t nevals;
-  double plt = M_PI*ll*in.Theta, plt2 = plt*plt;
-
-  // Integration workspace 
-  gsl_integration_cquad_workspace *wsp 
-    = gsl_integration_cquad_workspace_alloc(1000);
-
-  // Integration function
-  gsl_function ff_int;
-  if (ll == 0) ff_int.function = &phix0;
-  else ff_int.function = &phixl;
-
   // Normalized ideal Lindhard density 
-  for (int ii = 0; ii < in.nx; ii++) {
-    
-    if (xx[ii] >= 0.01){
-      struct phixl_params phixlp = {xx[ii], in.mu, in.Theta, ll};
-      ff_int.params = &phixlp;
-      gsl_integration_cquad(&ff_int, 
-			    xx[0], xx[in.nx-1], 
-			    0.0, in.err_min_int, 
-			    wsp, 
-			    &phil[ii], &err, &nevals);
+  for (int ii = 0; ii<in.nx; ii++) {
+
+    phil[ii] = 0.0;
+    if (ll == 0){
+      
+      for (int jj=0; jj<in.nx-1; jj++){
+    	phil[ii] += phix0(xx[jj], xx[ii], in);
+      }
+      phil[ii] *= in.dx;
+      
     }
     else {
-      
-      if (ll ==0) phil[ii] = sqrt(in.Theta)*gsl_sf_gamma(0.5)
-		    *gsl_sf_fermi_dirac_mhalf(in.mu)/2.0;
 
-      else phil[ii] = xx[ii]*xx[ii]/(3*plt2);
+      for (int jj=0; jj<in.nx-1; jj++){
+    	phil[ii] += phixl(xx[jj], xx[ii], ll, in);
+      }
+      phil[ii] *= in.dx;
+      
 
     }
+    
   }
-
-  // Free memory
-  gsl_integration_cquad_workspace_free(wsp);
-  
   
 }
 
-double phixl(double yy, void* pp) {
+double phixl(double yy, double xx, int ll, input in) {
 
-  struct phixl_params *params = (struct phixl_params*)pp;
-  double xx = (params->xx);
-  double mu = (params->mu);
-  double Theta = (params->Theta);
-  double ll = (params->ll);
   double yy2 = yy*yy, xx2 = xx*xx, txy = 2*xx*yy, 
-    tplT = 2*M_PI*ll*Theta, tplT2 = tplT*tplT;
+    tplT = 2*M_PI*ll*in.Theta, tplT2 = tplT*tplT;
   
   if (xx > 0.0) {
-    return 1.0/(2*xx)*yy/(exp(yy2/Theta - mu) + 1.0)
+    return 1.0/(2*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
       *log(((xx2+txy)*(xx2+txy) + tplT2)/((xx2-txy)*(xx2-txy) + tplT2));
   }
   else {
@@ -366,31 +336,29 @@ double phixl(double yy, void* pp) {
 
 }
 
-double phix0(double yy, void* pp) {
+double phix0(double yy, double xx, input in) {
 
-  struct phixl_params *params = (struct phixl_params*)pp;
-  double xx = (params->xx);
-  double mu = (params->mu);
-  double Theta = (params->Theta);
   double yy2 = yy*yy, xx2 = xx*xx, xy = xx*yy;
 
   if (xx > 0.0){
 
     if (xx < 2*yy){
-      return 1.0/(Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(2*yy - xx)) + xy)
-        *yy/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0);
+      return 1.0/(in.Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(2*yy - xx)) + xy)
+        *yy/(exp(yy2/in.Theta - in.mu) + exp(-yy2/in.Theta + in.mu) + 2.0);
     }
     else if (xx > 2*yy){
-      return 1.0/(Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(xx - 2*yy)) + xy)
-        *yy/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0);
+      return 1.0/(in.Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(xx - 2*yy)) + xy)
+        *yy/(exp(yy2/in.Theta - in.mu) + exp(-yy2/in.Theta + in.mu) + 2.0);
     }
     else {
-      return 1.0/(Theta)*yy2/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0);;
+      return 1.0/(in.Theta)*yy2/(exp(yy2/in.Theta - in.mu) 
+				 + exp(-yy2/in.Theta + in.mu) + 2.0);;
     }
   }
 
   else{
-    return (2.0/Theta)*yy2/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0);
+    return (2.0/in.Theta)*yy2/(exp(yy2/in.Theta - in.mu) 
+			       + exp(-yy2/in.Theta + in.mu) + 2.0);
   }
 
 }
@@ -399,98 +367,35 @@ double phix0(double yy, void* pp) {
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
 
-struct ssfHF_params {
+double ssfHF(double yy, double xx, input in) {
 
-  double xx;
-  double mu;
-  double Theta;
-
-};
-
-double ssfHF(double yy, void* pp) {
-
-  struct phixl_params *params = (struct phixl_params*)pp;
-  double xx = (params->xx);
-  double mu = (params->mu);
-  double Theta = (params->Theta);
   double yy2 = yy*yy, ypx = yy + xx, ymx = yy - xx;
  
   if (xx > 0.0){
-    return -3.0*Theta/(4.0*xx)*yy/(exp(yy2/Theta - mu) + 1.0)
-      *log((1 + exp(mu - ymx*ymx/Theta))/(1 + exp(mu - ypx*ypx/Theta)));
+    return -3.0*in.Theta/(4.0*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
+      *log((1 + exp(in.mu - ymx*ymx/in.Theta))
+	   /(1 + exp(in.mu - ypx*ypx/in.Theta)));
   }
   else {
-    return -3.0/2.0*yy2/(1.0 + cosh(yy2/Theta - mu));
+    return -3.0/2.0*yy2/(1.0 + cosh(yy2/in.Theta - in.mu));
   }
 
 }
 
 void compute_ssfHF(double *SS,  double *xx,  input in){
 
-  double err;
-  size_t nevals;
-
-  // Integration workspace
-  gsl_integration_cquad_workspace *wsp
-    = gsl_integration_cquad_workspace_alloc(in.nx);
-
-  // Integration function
-  gsl_function ff_int;
-  ff_int.function = &ssfHF;
-
   // Static structure factor in the Hartree-Fock approximation
   for (int ii = 0; ii < in.nx; ii++) {
 
-
-    struct ssfHF_params ssfHFp = {xx[ii], in.mu, in.Theta};
-    ff_int.params = &ssfHFp;
-    gsl_integration_cquad(&ff_int,
-			  xx[0], xx[in.nx-1],
-			  0.0, in.err_min_int,
-			  wsp,
-			  &SS[ii], &err, &nevals);
-
+    SS[ii] = 0.0;
+    for (int jj=0; jj<in.nx-1; jj++){
+      SS[ii] += ssfHF(xx[jj], xx[ii], in);
+    }
+    SS[ii] *= in.dx;
     SS[ii] += 1.0;
 
   }
   
-  // Free memory
-  gsl_integration_cquad_workspace_free(wsp);
-
-}
-
-double csch2(double x){
-  double csch = 1.0/sinh(x);
-  return csch*csch;
-}
-
-double coth(double x){
-  return 1.0/tanh(x);
-}
-
-
-void compute_AA(double *AA, double *xx,  input in){
-
-  double fact1 = 2.0/(9.0*in.Theta*in.Theta);
-  double xx2, yy;
-  
-  for (int ii=0; ii<in.nx; ii++){
-    xx2 = xx[ii]*xx[ii];
-    yy = xx2/(2.0*in.Theta);
-    AA[ii] = fact1*(csch2(yy) + coth(yy)/yy);
-  }
-}
-
-double Axl2(double xx, int ll, input in){
-  
-  double xx2 = xx*xx;
-  double xx4 = xx2*xx2;
-  double tplT = 2*M_PI*ll*in.Theta;
-  double tplT2 = tplT*tplT;
-  double Axl = (4.0/3.0)*xx2/(tplT2 + xx4);
-  
-  return Axl*Axl;
-
 }
 
 
@@ -498,8 +403,6 @@ void compute_ssf(double *SS, double *SSHF, double *GG,
 		 double *phi, double *xx, input in){
 
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  /* double ff = 4.0*lambda*in.rs/M_PI; */
-  /* double ff3_2T = 3.0*in.Theta*ff/2.0; */
   double pilambda = M_PI*lambda;
   double ff = 4*lambda*lambda*in.rs;
   double ff3_2T = 3.0*in.Theta*ff/2.0;
@@ -508,7 +411,7 @@ void compute_ssf(double *SS, double *SSHF, double *GG,
 
     xx2 = xx[ii]*xx[ii];
     BB = 0.0;
-    if ( xx[ii] > 0.0){
+    if (xx[ii] > 0.0){
 
       for (int ll=0; ll<in.nl; ll++){
 	phixl = phi[idx2(ii,ll,in.nx)];
@@ -518,6 +421,7 @@ void compute_ssf(double *SS, double *SSHF, double *GG,
       }
 
       SS[ii] = SSHF[ii] - ff3_2T*(1- GG[ii])*BB;
+
     }
     else {
       SS[ii] = 0.0;
@@ -532,78 +436,37 @@ void compute_ssf(double *SS, double *SSHF, double *GG,
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 
-struct slfc_params {
-
-  double xx;
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-
-};
-
-
 void compute_slfc(double *GG, double *SS, double *xx, input in) {
-
-  double err;
-  size_t nevals;
-  
-  // Declare accelerator and spline objects
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-  
-  // Allocate the accelerator and the spline objects
-  ssf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-  ssf_acc_ptr = gsl_interp_accel_alloc();
-  
-  // Initialize the spline
-  gsl_spline_init(ssf_sp_ptr, xx, SS, in.nx);    
-
-  // Integration workspace
-  gsl_integration_cquad_workspace *wsp
-    = gsl_integration_cquad_workspace_alloc(in.nx);
-
-  // Integration function
-  gsl_function ff_int;
-  ff_int.function = &slfc;
 
   // Static local field correction
   for (int ii = 0; ii < in.nx; ii++) {
-    struct slfc_params slfcp = {xx[ii], ssf_sp_ptr, ssf_acc_ptr};
-    ff_int.params = &slfcp;
-    gsl_integration_cquad(&ff_int,
-  			  xx[0], xx[in.nx-1],
-  			  0.0, in.err_min_int,
-  			  wsp,
-  			  &GG[ii], &err, &nevals);
-    GG[ii] *= -3.0/4.0;
+    
+    GG[ii] = 0.0;
+    for (int jj=0; jj<in.nx-1; jj++){
+      GG[ii] += slfc(xx[jj], xx[ii], SS[jj]);
+    }
+    GG[ii] *= in.dx;
+
   }
   
-  // Free memory
-  gsl_integration_cquad_workspace_free(wsp);
-  gsl_spline_free(ssf_sp_ptr);
-  gsl_interp_accel_free(ssf_acc_ptr);
-
 }
 
-double slfc(double yy, void* pp) {
+double slfc(double yy, double xx, double SS) {
 
-    struct slfc_params* params = (struct slfc_params*)pp;
-    double xx = (params->xx);
-    gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
-    gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
     double yy2 = yy * yy, xx2 = xx * xx;
 
     if (xx > 0.0 && yy > 0.0){
 
       if (xx > yy){
-        return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0)
-          * (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(xx - yy)));
+        return -3.0/4.0* yy2 * (SS - 1.0)
+	  * (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(xx - yy)));
       }
       else if (xx < yy) {
-        return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0)
+        return -3.0/4.0* yy2 * (SS - 1.0)
           * (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(yy - xx)));
       }
       else {
-        return yy2 * (gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1.0);
+        return yy2 * (SS - 1.0);
       }
 
     }
@@ -629,58 +492,26 @@ struct uex_params {
 };
 
 
-double compute_internal_energy(double *SS, double *xx,  input in) {
+double compute_internal_energy(double *SS, input in) {
 
-  double err;
-  size_t neval;
   double ie;
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);  
-  
-  // Declare accelerator and spline objects
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-  
-  // Allocate the accelerator and the spline objects
-  ssf_sp_ptr = gsl_spline_alloc(gsl_interp_linear, in.nx);
-  ssf_acc_ptr = gsl_interp_accel_alloc();
-  
-  // Initialize the spline
-  gsl_spline_init(ssf_sp_ptr, xx, SS, in.nx);
-
-  // Integration workspace
-  gsl_integration_cquad_workspace *wsp
-    = gsl_integration_cquad_workspace_alloc(in.nx);
-
-  // Integration function
-  gsl_function ff_int;
-  ff_int.function = &uex;
 
   // Internal energy
-  struct uex_params uexp = {ssf_sp_ptr, ssf_acc_ptr};
-  ff_int.params = &uexp;  
-  gsl_integration_cquad(&ff_int,
-			xx[0], xx[in.nx-1],
-			0.0, in.err_min_int,
-			wsp,
-			&ie, &err, &neval);
+  ie = 0.0;
+  for (int jj=0; jj<in.nx-1; jj++){
+    ie += uex(SS[jj]);
+  }
+  ie *= in.dx;
   
-  // Free memory
-  gsl_integration_cquad_workspace_free(wsp);
-  gsl_spline_free(ssf_sp_ptr);
-  gsl_interp_accel_free(ssf_acc_ptr);
-
   // Output
   return ie/(M_PI*in.rs*lambda);
 
 }
 
-double uex(double yy, void* pp) {
+double uex(double SS) {
 
-    struct uex_params* params = (struct uex_params*)pp;
-    gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
-    gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
-
-    return gsl_spline_eval(ssf_sp_ptr, yy, ssf_acc_ptr) - 1;
+    return SS - 1;
 }
 
 

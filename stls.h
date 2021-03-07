@@ -48,23 +48,16 @@ void compute_phi(double *phi, double *xx, input in, bool verbose);
 
 void compute_phil(double *phil, double *xx, int ll, input in);
 
-double phixl(double yy, void* pp);
+double phixl(double yy, double xx, int ll, input in);
 
-double phix0(double yy, void* pp);
+double phix0(double yy, double xx, input in);
 
 int idx2(int xx, int yy, int x_size);
 
-double ssfHF(double yy, void* pp);
-
 void compute_ssfHF(double *SS,  double *xx, input in);
 
-double csch2(double x);
+double ssfHF(double yy, double xx, input in);
 
-double coth(double x);
-
-void compute_AA(double *AA, double *xx,  input in);
-
-double Axl2(double xx, int ll, input in);
 
 void compute_ssf(double *SS, double *SSHF,
                  double *GG, double *phi, 
@@ -73,12 +66,11 @@ void compute_ssf(double *SS, double *SSHF,
 void compute_slfc(double *GG, double *SS, 
 		  double *xx, input in);
 
-double slfc(double yy, void* pp);
+double slfc(double yy, double xx, double SS);
 
-double compute_internal_energy(double *SS, double *xx,
-                               input in);
+double compute_internal_energy(double *SS, input in);
 
-double uex(double yy, void* pp);
+double uex(double SS);
 
 void write_text(double *SS, double *GG, 
 		double *xx, input in );
