@@ -24,7 +24,9 @@ double psi_q(double qq, int ll, input in);
 
 double psi_w(double ww, double SS);
 
-void write_text_qstls(double *SS, double *GG,
-		      double *xx, input in );
+void compute_qstls_ssf(double *SS, double *SSHF, double *phi,
+                       double *psi, double *xx, input in);
+
+void write_text_qstls(double *SS, double *xx, input in );
 
 #endif

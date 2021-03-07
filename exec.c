@@ -6,6 +6,7 @@
 #include <omp.h>
 #include "stls.h"
 #include "stls_hnc.h"
+#include "qstls.h"
 
 // ----------------------------------------
 // COMMAND LINE PARSER
@@ -201,7 +202,8 @@ int main (int argc, char **argv){
   // Solve STLS equation
   double start = omp_get_wtime();
   //solve_stls(in, true, NULL, NULL, NULL, NULL, NULL, NULL);
-  solve_stls_hnc(in, true);
+  //solve_stls_hnc(in, true);
+  solve_qstls(in, true);
   double end = omp_get_wtime();
   printf("Solution of STLS equation complete. Elapsed time: %f seconds\n", end - start);
 

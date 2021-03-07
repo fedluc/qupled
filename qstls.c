@@ -26,12 +26,16 @@ void solve_qstls(input in, bool verbose) {
   double *SS = NULL;
   double *SS_new = NULL;
   double *SSHF = NULL;
+  double *GG = NULL;
+  double *GG_new = NULL;
 
   // Solve STLS equation for initial guess
   if (verbose) printf("Solution of classical STLS for initial guess:\n");
   double a_mix_hold = in.a_mix;
   in.a_mix = 0.1;
-  solve_stls(in, false, &xx, &SS, &SSHF, NULL, NULL, &phi);
+  solve_stls(in, false, &xx, &SS, &SSHF, &GG, &GG_new, &phi);
+  free(GG);
+  free(GG_new);
   in.a_mix = a_mix_hold;
   if (verbose) printf("Done.\n");
 
@@ -51,7 +55,7 @@ void solve_qstls(input in, bool verbose) {
     compute_psi(psi, xx, SS, in);
     
     // Update SSF
-    compute_ssf(SS_new, SSHF, phi, psi, xx, in);
+    compute_qstls_ssf(SS_new, SSHF, phi, psi, xx, in);
 
     // Update diagnostic
     iter_err = 0.0;
@@ -78,9 +82,9 @@ void solve_qstls(input in, bool verbose) {
   if (verbose) printf("Internal energy: %f\n",compute_uex(SS, in));
   
   // Output to file
-  /* if (verbose) printf("Writing output files...\n"); */
-  /* write_text_qstls(SS, GG, xx, in); */
-  /* if (verbose) printf("Done.\n"); */
+  if (verbose) printf("Writing output files...\n");
+  write_text_qstls(SS, xx, in);
+  if (verbose) printf("Done.\n");
 
   // Output to variable or free memory
   free_qstls_arrays(xx, phi, psi, SS, SS_new, SSHF);
@@ -125,6 +129,7 @@ void compute_psi(double *psi, double *xx,  double *SS, input in) {
 
   // Loop over the Matsubara frequency
   for (int ll=0; ll<in.nl; ll++){
+    printf("l = %d\n", ll);
     // Compute auxilliary response
     compute_psil(psil, xx, SS, ll, in);
     // Fill output array
@@ -151,7 +156,7 @@ void compute_psil(double *psil, double *xx, double *SS, int ll, input in) {
       
       fw = 0.0;
 
-      for (int kk=0; jj<in.nx; kk++){
+      for (int kk=0; kk<in.nx; kk++){
 
   	fq = 0.0;
 
@@ -161,7 +166,7 @@ void compute_psil(double *psil, double *xx, double *SS, int ll, input in) {
   	}
 
   	fw += fq*in.dx*psi_q(xx[kk], ll, in);
-	
+		  
       }
 
       psil[ii] += fw*in.dx*psi_w(xx[ii], SS[ii]);
@@ -176,38 +181,6 @@ void compute_psil(double *psil, double *xx, double *SS, int ll, input in) {
 }
 
 
-/* double psi_t(double tt, double qq, double ww,  */
-/* 	     double xx, int ll, input in){ */
-
-/*   double tt2 = tt*tt, xx2 = xx*xx, qq2 = qq*qq, */
-/*     txq = 2.0*xx*qq, tplT = 2*M_PI*ll*in.Theta, */
-/*     tplT2 = tplT*tplT, fact = 1.0/(2*tt + ww2 - xx2); */
-     
-/*   if (ll == 0){ */
-
-/*     if (tt > txq){ */
-/*       return fact * ((qq2 - tt2/(4.0*xx2))* */
-/* 		     log((tt + txq)/(tt - txq))  */
-/* 		     + qq*tt/xx); */
-/*     } */
-/*     else if (tt < txq){ */
-/*       return fact * ((qq2 - tt2/(4.0*xx2))* */
-/* 		     log((t + txq)/(txq - tt))  */
-/* 		     + qq*tt/xx); */
-/*     } */
-/*     else { */
-/*       return fact * 2.0 * qq2; */
-/*     } */
-
-/*   } */
-/*   else { */
-
-/*     return fact * log(((txq + tt)*(txq + tt) + tplT2) */
-/* 		      /((txq - tt)*(txq - tt) + tplT2)); */
-
-/*   } */
-
-/* } */
 
 double psi_u(double uu, double qq, double ww,
 	     double xx, int ll, input in){
@@ -217,24 +190,23 @@ double psi_u(double uu, double qq, double ww,
     tplT2 = tplT*tplT, xwu = xx*ww*uu, 
     tt = xx2 - xwu, tt2 = tt*tt, 
     fact = ww*xx/(ww2 + tt - xwu);
-  
+  double logarg;
+    
   if (ll == 0){
 
-    if (tt > txq){
-      return fact * ((qq2 - tt2/(4.0*xx2))*
-		     log((tt + txq)/(tt - txq))
-		     + qq*tt/xx);
-    }
-    else if (tt < txq){
-      return fact * ((qq2 - tt2/(4.0*xx2))*
-		     log((tt + txq)/(txq - tt))
-		     + qq*tt/xx);
+    if (tt == txq || tt == -txq) {
+      return fact * 2.0 * qq*tt/xx;
     }
     else {
-      return fact * 2.0 * qq2;
+      
+      logarg = (tt + txq)/(tt - txq);
+      if (logarg < 0) logarg = -logarg;
+      return fact * ((qq2 - tt2/(4.0*xx2))* 
+      		     log(logarg) + qq*tt/xx);
     }
 
   }
+
   else {
 
     return fact * log(((txq + tt)*(txq + tt) + tplT2)
@@ -269,12 +241,44 @@ double psi_w(double ww, double SS){
 }
 
 // -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
+// -------------------------------------------------------------------
+
+void compute_qstls_ssf(double *SS, double *SSHF, double *phi,
+		       double *psi, double *xx, input in){
+
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double pilambda = M_PI*lambda;
+  double ff = 4*lambda*lambda*in.rs;
+  double ff3_2T = 3.0*in.Theta*ff/2.0;
+  double xx2, BB, BB_tmp, phixl, psixl;
+  for (int ii=0; ii<in.nx; ii++){
+
+    xx2 = xx[ii]*xx[ii];
+    BB = 0.0;
+
+    for (int ll=0; ll<in.nl; ll++){
+      phixl = phi[idx2(ii,ll,in.nx)];
+      psixl = psi[idx2(ii,ll,in.nx)];
+      BB_tmp = phixl*(phixl - psixl)/
+	(pilambda*xx2 + ff*(phixl-psixl));
+      if (ll>0) BB_tmp *= 2.0;
+      BB += BB_tmp;
+    }
+    
+    SS[ii] = SSHF[ii] - ff3_2T*BB;
+
+  }
+
+}
+
+// -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
 
 // write text files with SSF and SLFC
-void write_text_qstls(double *SS, double *GG, double *xx, input in){
+void write_text_qstls(double *SS, double *xx, input in){
 
 
     FILE* fid;
@@ -288,18 +292,6 @@ void write_text_qstls(double *SS, double *GG, double *xx, input in){
     for (int ii = 0; ii < in.nx; ii++)
     {
         fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]);
-    }
-    fclose(fid);
-
-    // Output for SLFC
-    fid = fopen("slfc_QSTLS.dat", "w");
-    if (fid == NULL) {
-        perror("Error while creating the output file for the static local field correction");
-        exit(EXIT_FAILURE);
-    }
-    for (int ii = 0; ii < in.nx; ii++)
-    {
-        fprintf(fid, "%.8e %.8e\n", xx[ii], GG[ii]);
     }
     fclose(fid);
 
