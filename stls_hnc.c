@@ -70,6 +70,7 @@ void solve_stls_hnc(input in, bool verbose) {
       printf("--- iteration %d ---\n", iter_counter);
       printf("Elapsed time: %f seconds\n", ((double)toc - (double)tic) / CLOCKS_PER_SEC);
       printf("Residual error: %.5e\n", iter_err);
+      fflush(stdout);
     }
   }
   if (verbose) printf("Done.\n");
@@ -83,7 +84,8 @@ void solve_stls_hnc(input in, bool verbose) {
   if (verbose) printf("Done.\n");
 
   // Output to variable or free memory
-  free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
+  free_stls_arrays(xx, true, phi, true, GG, true, 
+		   GG_new, true, SS, true, SSHF, true);
  
  
 }

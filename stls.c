@@ -117,6 +117,7 @@ void solve_stls(input in, bool verbose,
       printf("--- iteration %d ---\n", iter_counter);
       printf("Elapsed time: %f seconds\n", ((double)toc - (double)tic) / CLOCKS_PER_SEC);
       printf("Residual error: %.5e\n", iter_err);
+      fflush(stdout);
     }
   }
   if (verbose) printf("Done.\n");
@@ -130,19 +131,39 @@ void solve_stls(input in, bool verbose,
   if (init_flag) write_bin(phi, SSHF, in); 
   if (verbose) printf("Done.\n");
 
-  // Output to variable or free memory
-  if (xx_out != NULL) {
+  // Output to variable
+  bool free_xx = true, free_SS = true, free_SSHF = true, 
+    free_GG = true, free_GG_new = true, free_phi = true;
+  if (xx_out != NULL){ 
     *xx_out = xx;
+    free_xx = false;
+  }
+  if (SS_out != NULL){
     *SS_out = SS;
+    free_SS = false;
+  }
+  if (SSHF_out != NULL){
     *SSHF_out = SSHF;
+    free_SSHF = false;
+  }
+  if (GG_out != NULL){
     *GG_out = GG;
+    free_GG = false;
+  }
+  if (GG_new_out != NULL){
     *GG_new_out = GG_new;
+    free_GG_new = false;
+  }
+  if (phi_out != NULL){
     *phi_out = phi;
+    free_phi = false;
   }
-  else{
-    free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
-  }
- 
+
+  // Free memory
+  free_stls_arrays(xx, free_xx, phi, free_phi, 
+		   GG, free_GG, GG_new, free_GG_new,
+		   SS, free_SS, SSHF, free_SSHF);
+
  
 }
 
@@ -163,16 +184,19 @@ void alloc_stls_arrays(input in, double **xx, double **phi,
   
 }
 
-void free_stls_arrays(double *xx, double *phi, 
-		      double *GG, double *GG_new, 
-		      double *SS, double *SSHF){
+void free_stls_arrays(double *xx, bool free_xx, 
+		      double *phi, bool free_phi, 
+		      double *GG, bool free_GG, 
+		      double *GG_new, bool free_GG_new, 
+		      double *SS, bool free_SS,
+		      double *SSHF, bool free_SSHF){
 
-  free(xx);
-  free(phi);
-  free(SSHF);
-  free(SS);
-  free(GG);
-  free(GG_new);
+  if (free_xx) free(xx);
+  if (free_phi) free(phi);
+  if (free_SSHF) free(SSHF);
+  if (free_SS) free(SS);
+  if (free_GG) free(GG);
+  if (free_GG_new) free(GG_new);
  
 }
 

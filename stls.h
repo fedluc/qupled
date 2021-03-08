@@ -33,9 +33,12 @@ void alloc_stls_arrays(input in, double **xx, double **phi,
 		       double **GG, double **GG_new,
 		       double **SS, double **SSHF);
 
-void free_stls_arrays(double *xx, double *phi,
-                      double *GG, double *GG_new,
-                      double *SS, double *SSHF);
+void free_stls_arrays(double *xx, bool free_xx,
+                      double *phi, bool free_phi,
+                      double *GG, bool free_GG,
+                      double *GG_new, bool free_GG_new,
+                      double *SS, bool free_SS,
+                      double *SSHF, bool free_SSHF);
 
 double compute_mu(input in);
 

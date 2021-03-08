@@ -74,6 +74,7 @@ void solve_qstls(input in, bool verbose) {
       printf("--- iteration %d ---\n", iter_counter);
       printf("Elapsed time: %f seconds\n", ((double)toc - (double)tic) / CLOCKS_PER_SEC);
       printf("Residual error: %.5e\n", iter_err);
+      fflush(stdout);
     }
   }
   if (verbose) printf("Done.\n");
