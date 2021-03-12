@@ -232,6 +232,7 @@ double compute_mu(input in) {
   gsl_root_fsolver_set(rs, &ff_root, mu_lo, mu_hi);
 
   // Solve normalization condition to find chemical potential
+  iter = 0;
   do
   {
     

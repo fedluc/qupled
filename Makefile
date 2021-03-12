@@ -1,6 +1,6 @@
 # Compiler 
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -O2
 
 # Include
 INCLUDE += -I/home/x_fedlu/gsl/include
