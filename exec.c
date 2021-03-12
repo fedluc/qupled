@@ -66,6 +66,8 @@ static struct argp_option options[] = {
    "Load density response from PHI_FILE"},
   {"uex", 'u', "NO_FILE", 0,
    "Compute internal energy from data in SSF_FILE"},
+  {"sol", 's', "STLS",0,
+   "Theory to be solved"},
   { 0 }
 };
 
@@ -74,7 +76,8 @@ struct arguments
 {
 
   char *phi_file;
-  char* ssf_file;
+  char *ssf_file;
+  char *theory; 
   double Theta;
   double rs;
   double dx;
@@ -86,7 +89,7 @@ struct arguments
   double xmax;
   int nl;
   int nIter;
- 
+  
 };
 
 
@@ -137,6 +140,9 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case 't':
       arguments->Theta = atof(arg);
       break;
+    case 's':
+      arguments->theory = arg;
+      break;
     case 'u':
       arguments->ssf_file = arg;
       break;
@@ -179,6 +185,7 @@ int main (int argc, char **argv){
   arguments.xmax = 20; // Cutoff for wave-vector grid
   arguments.nl = 100; // Number of Matsubara frequencies
   arguments.nIter = 1000; // Number of iterations 
+  arguments.theory = "STLS"; // Theory to solve
 
   // Parse command line
   argp_parse (&argp, argc, argv, 0, 0, &arguments);
@@ -199,11 +206,18 @@ int main (int argc, char **argv){
   in.nIter = arguments.nIter;
   in.nx = (int)floor(in.xmax/in.dx);
  
-  // Solve STLS equation
+  // Solve theory specified in input
   double start = omp_get_wtime();
-  //solve_stls(in, true, NULL, NULL, NULL, NULL, NULL, NULL);
-  //solve_stls_hnc(in, true);
-  solve_qstls(in, true);
+
+  if (strcmp(arguments.theory, "STLS") == 0)
+    solve_stls(in, true, NULL, NULL, NULL, NULL, NULL, NULL);
+  else if (strcmp(arguments.theory, "STLS-HNC") == 0)
+    solve_stls_hnc(in, true);
+  else if (strcmp(arguments.theory, "QSTLS") == 0)
+    solve_qstls(in, true);
+  else
+    printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC and QSTLS\n");
+
   double end = omp_get_wtime();
   printf("Solution of STLS equation complete. Elapsed time: %f seconds\n", end - start);
 
