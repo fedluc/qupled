@@ -1,14 +1,7 @@
 #include <stdio.h>
-#include <stdbool.h>
+#include <stdlib.h>
 #include <time.h>
-#include <getopt.h>
-#include <string.h>
-#include <errno.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_errno.h> 
-#include <gsl/gsl_roots.h>
-#include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_sf_fermi_dirac.h>
+#include <math.h>
 #include "stls.h"
 #include "qstls.h"
 
