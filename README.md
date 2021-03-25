@@ -1,6 +1,18 @@
 # STLS
 
-stls solves the classical STLS approach as defined in by [Tanaka and Ichimaru](https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278). The state 
+## Introduction
+stls computes the static structure factor and thermodynamic properties of quantum one component plasmas via theoretical approaches based on the dielectric formalism. The theoretical approaches which can be solved with stls include:
+
+* The classical STLS approach as discussed by [Tanaka and Ichimaru](https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278)
+* The classical STLS-HNC approach as discussed by [Tanaka](https://aip.scitation.org/doi/full/10.1063/1.4969071)
+* The quantum STLS appraoach as discussed by [Schweng](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037)
+
+## Limitations
+
+stls can only be employed to compute the static structure factor of finite-temperature systems. Calculations of ground state properties will be implemented in the future.
+
+<!--
+ The state 
   point of interest is defined via the quantum degeneracy parameter (Theta)
   and via the quantum coupling parameters (r<sub>s</sub>). The equation for the 
   chemical potential is solved via bisection method for which two 
@@ -24,3 +36,4 @@ stls solves the classical STLS approach as defined in by [Tanaka and Ichimaru](h
         degeneracy parameter, of the grid resolution and of the grid
         cutoff specified in input will be overwritten by the values
         contained in the density response file provided in input
+-->
