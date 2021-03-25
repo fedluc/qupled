@@ -85,7 +85,7 @@ void solve_stls_hnc(input in, bool verbose) {
 
 
 // -------------------------------------------------------------------
-// FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
+// FUNCTION USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 
 void compute_slfc_hnc(double *GG_new, double *GG, 
@@ -130,7 +130,7 @@ void compute_slfc_hnc(double *GG_new, double *GG,
 
 
 // -------------------------------------------------------------------
-// FUNCTIONS FOR OUTPUT AND INPUT
+// FUNCTION FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
 

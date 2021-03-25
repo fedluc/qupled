@@ -560,24 +560,6 @@ void write_bin(double *phi, double *SSHF, input in){
 
 }
 
-// read text file with SSF and SLFC
-void read_text(double *SS, double *GG, double *xx, input in){
-  
-  /* FILE *fid; */
-
-  /* // Read files once to get the size  */
-  /* fid = fopen(filename, "r"); */
-
-  /* if (fid == NULL) { */
-  /*   perror("Error while opening ssf file"); */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
- 
-  
- 
-
-}
- 
 
 // read binary file with density response information
 void read_bin(input *in, double **xx, double **phi, 

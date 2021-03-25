@@ -1,12 +1,10 @@
 #include <stdio.h>
-#include <stdbool.h>
+#include <stdlib.h>
 #include <time.h>
-#include <getopt.h>
+#include <math.h>
 #include <string.h>
 #include <errno.h>
-#include <gsl/gsl_math.h>
 #include <gsl/gsl_errno.h>
-#include <gsl/gsl_integration.h>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_fermi_dirac.h>
@@ -559,24 +557,6 @@ void write_bin(float *phi, float *SSHF, input in){
 
   // Close binary file
   fclose(fid);
-
-}
-
-// read text file with SSF and SLFC
-void read_text(float *SS, float *GG, float *xx, input in){
-  
-  /* FILE *fid; */
-
-  /* // Read files once to get the size  */
-  /* fid = fopen(filename, "r"); */
-
-  /* if (fid == NULL) { */
-  /*   perror("Error while opening ssf file"); */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
- 
-  
- 
 
 }
  

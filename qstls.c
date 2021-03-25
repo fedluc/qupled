@@ -7,7 +7,7 @@
 
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ITERATIVELY SOLVE THE STLS-HNC EQUATIONS
+// FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS EQUATIONS
 // -------------------------------------------------------------------
 
 void solve_qstls(input in, bool verbose) {
@@ -35,8 +35,8 @@ void solve_qstls(input in, bool verbose) {
   // Allocate arrays for qstls calculation
   alloc_qstls_arrays(in, &psi, &SS_new);  
   
-  // SSF and SLFC via iterative procedure
-  if (verbose) printf("SSF and SLFC calculation...\n");
+  // SSF via iterative procedure
+  if (verbose) printf("SSF calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
   while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
@@ -77,7 +77,7 @@ void solve_qstls(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_qstls(SS, xx, in);
+  write_text_qstls(SS, phi, psi, xx, in);
   if (verbose) printf("Done.\n");
 
   // Output to variable or free memory
@@ -271,8 +271,8 @@ void compute_qstls_ssf(double *SS, double *SSHF, double *phi,
 // -------------------------------------------------------------------
 
 
-// write text files with SSF and SLFC
-void write_text_qstls(double *SS, double *xx, input in){
+// write text files with SSF and density responses
+void write_text_qstls(double *SS, double *phi, double *psi, double *xx, input in){
 
 
     FILE* fid;
@@ -288,6 +288,35 @@ void write_text_qstls(double *SS, double *xx, input in){
         fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]);
     }
     fclose(fid);
+
+    // Output for normalized ideal lindhard density
+    fid = fopen("phi_QSTLS.dat", "w");
+    if (fid == NULL) {
+      perror("Error while creating the output file for the normalized ideal density");
+      exit(EXIT_FAILURE);
+    }
+    for (int ii=0; ii<in.nx; ii++){
+      for (int jj=0; jj<in.nl; jj++){
+        fprintf(fid, "%.8e ", phi[idx2(ii,jj,in.nx)]);
+      }
+      fprintf(fid,"\n");
+    }
+    fclose(fid);
+
+    // Output for auxilliary response
+    fid = fopen("psi_QSTLS.dat", "w");
+    if (fid == NULL) {
+      perror("Error while creating the output file for the auxilliary response");
+      exit(EXIT_FAILURE);
+    }
+    for (int ii=0; ii<in.nx; ii++){
+      for (int jj=0; jj<in.nl; jj++){
+        fprintf(fid, "%.8e ", psi[idx2(ii,jj,in.nx)]);
+      }
+      fprintf(fid,"\n");
+    }
+    fclose(fid);
+
 
 }
 

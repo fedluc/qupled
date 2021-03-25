@@ -27,7 +27,7 @@ all: $(EXECUTABLE)
 
 # Link
 $(EXECUTABLE): $(OBJS) $(CUOBJS)
-	 $(NVCC) $(LIB) $^ -o $@ -lgsl -lgslcblas -lm
+	 $(NVCC) $^ -o $@ -lgsl -lgslcblas -lm
 
 clean:
 	 rm *.o ${EXECUTABLE}

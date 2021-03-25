@@ -3,6 +3,10 @@
 
 #include "stls.h"
 
+// -------------------------------------------------------------------
+// FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS EQUATIONS
+// -------------------------------------------------------------------
+
 void solve_qstls(input in, bool verbose);
 
 #endif
