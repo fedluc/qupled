@@ -14,7 +14,7 @@ stls can only be employed to compute the static structure factor of finite-tempe
 
 ## Compiling
 
-The code can be compiled with the [make file](src/Makefile) provided in the source directory. Please note that in order to correctly compile the program it is necessary 
+The code can be compiled with gcc and with the [make file](src/Makefile) provided in the source directory. Please note that in order to correctly compile the program it is necessary 
 that the [GNU scientific library](https://www.gnu.org/software/gsl/) is installed and that the path to the library is included in the make file.
 
 ## Running 
@@ -31,7 +31,7 @@ Given a state point defined via the quantum degeneracy parameter (Theta) and via
 
 All the integrals which appear in the calculation of the static structure factor and of the internal energy are computed with a mid-point Riemann sum.
 
-stls accepts the following command line options (the same information can also be retrieved by running stls with the option `--help`) :
+The following command line options can be employed to control the calculations performed by stls (the same information can also be retrieved by running stls with the option `--help`) :
 
   * `-d` or `--dx` specifies the  resolution for wave-vector grid. Default `-d 0.01` or `--dx=0.01`
   * `-e` or `--errIter` specifies the minimum error for convergence in the iterative procedure used to compute the static structure factor.  Default `-e 1e-5` or `--errIter=1e-5`
@@ -42,25 +42,18 @@ stls accepts the following command line options (the same information can also b
   * `-p` or `--phi=FILE` specifies to load the normalized Lindhard density response from a file instead of computing it. The file with the density response must be a binary file produced by a previous run of stls (see the output section). Default `-p NO_FILE` or `--phi=NO_FILE` (no file is loaded and the normalized Lindhard density is computed from scratch).
   * `-r` or `--rs=1.0`    specifies the  quantum coupling parameter. Default `-r 1.0` or `--rs=1.0`.
   * `-s` or `--sol=STLS`   specifies which approach should be employed to compute the static structure factor. Accepted options are `STLS` (classical STLS approach), `STLS-HNC` (classical STLS-HNC approach) and `QSTLS` (quantum STLS approach). Default `-s STLS` or `--sol=STLS`.
-  * `-t` or `--Theta=1.0` specifies the           quantum degeneracy parameter. Default `-t 1e-5` or `--Theta=1e-5`.
-  * `-u` or `--uex=NO_FILE` specifies the         compute internal energy from data in SSF_FILE. Default `-u 1e-5` or `--uex=1e-5`.
-  * `-x` or `--xcut=20.48` specifies the          cutoff for wave-vector grid. Default `-x 1e-5` or `--xcut=1e-5`.
+  * `-t` or `--Theta=1.0` specifies the  quantum degeneracy parameter. Default `-t 1.0` or `--Theta=1.0`.
+  * `-x` or `--xcut=20.48` specifies the cutoff for wave-vector grid. Default `-x 20.48` or `--xcut=20.48`.
  
-
-  
-  
   ## Output 
   
-  The output of the code consists of:
+  stls produces the following output:
   
   * One text file with the static structure factor
-  * One text file with the static local field correction
-  * One binary file with the density response. Since the density
-        response depends only on Theta, this file can be stored and
-        provided in input for subsequent solutions of the STLS approach
-        with the same Theta (see option `-p`). It should be noted
-        that, if the option -p is used, the values of the quantum
-        degeneracy parameter, of the grid resolution and of the grid
-        cutoff specified in input will be overwritten by the values
-        contained in the density response file provided in input
--->
+  * One text file with the static local field correction 
+  * One text file with the dynamic local field correction (only for the quantum STLS approach)
+  * One binary file with the density response. Since the density response depends only on Theta, this file can be stored an provided in input for subsequent solutions of the STLS approach with the same Theta (see option `-p`). It should be noted that, if the option -p is used, the values of the quantum degeneracy parameter, of the grid resolution and of the grid cutoff specified in input will be overwritten by the values contained in the density response file provided in input
+
+## GPU 
+
+An implementation of the quantum STLS approach which can be run on graphics cards (GPU) is available in the folder [MOD_GPU](src/MOD_GPU). For the default parameters employed in stls, the GPU implementation is approximately two order of magnitude faster than the corresponding CPU version. However, all the calculations in the GPU implementation are performed in single precision. The GPU implementation can be compiled with a [dedicated make file](src/Makefile) and requires the nvcc compiler.
