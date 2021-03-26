@@ -14,7 +14,7 @@ stls can only be employed to compute the static structure factor of finite-tempe
 
 ## Compiling
 
-The code can be compiled with gcc and with the [make file](src/Makefile) provided in the source directory. Please note that in order to correctly compile the program it is necessary 
+The code can be compiled with gcc and with the [make file](Makefile) provided in the source directory. Please note that in order to correctly compile the program it is necessary 
 that the [GNU scientific library](https://www.gnu.org/software/gsl/) is installed and that the path to the library is included in the make file.
 
 ## Running 
@@ -56,4 +56,4 @@ The following command line options can be employed to control the calculations p
 
 ## GPU 
 
-An implementation of the quantum STLS approach which can be run on graphics cards (GPU) is available in the folder [MOD_GPU](src/MOD_GPU). For the default parameters employed in stls, the GPU implementation is approximately two order of magnitude faster than the corresponding CPU version. However, all the calculations in the GPU implementation are performed in single precision. The GPU implementation can be compiled with a [dedicated make file](src/Makefile) and requires the nvcc compiler.
+An implementation of the quantum STLS approach which can be run on graphics cards (GPU) is available in the folder [MOD_GPU](MOD_GPU). For the default parameters employed in stls, the GPU implementation is approximately two order of magnitude faster than the corresponding CPU version. However, all the calculations in the GPU implementation are performed in single precision. The GPU implementation can be compiled with a [dedicated make file](MOD_GPU/Makefile) and requires the nvcc compiler.
