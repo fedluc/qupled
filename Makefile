@@ -16,11 +16,11 @@ EXECUTABLE = stls
 all: $(EXECUTABLE)
 
 %.o: %.c
-	 $(CC) $(CFLAGS) $(INCLUDE) -c $<
+	 $(CC) $(CFLAGS) -fopenmp $(INCLUDE) -c $<
 
 # Link
 $(EXECUTABLE): $(OBJS)
-	 $(CC) $^ -o $@ -lgsl -lgslcblas -lm
+	 $(CC) -fopenmp $^ -o $@ -lgsl -lgslcblas -lm
 
 clean:
 	 rm *.o ${EXECUTABLE}

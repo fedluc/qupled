@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include <omp.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_sf_gamma.h>
@@ -48,6 +49,7 @@ void solve_stls(input in, bool verbose,
   printf("Number of Matsubara frequencies: %d\n", in.nl);
   printf("Maximum number of iterations: %d\n", in.nIter);
   printf("Error for convergence: %.5e\n", in.err_min_iter);
+  printf("Number of threads: %d", omp_get_num_threads());
   printf("----------------------------------------------------\n");
  
 
@@ -89,7 +91,7 @@ void solve_stls(input in, bool verbose,
   while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     
     // Start timing
-    clock_t tic = clock();
+    double tic = omp_get_wtime();
     
     // Update SLFC
     compute_slfc(GG_new, SS, xx, in);
@@ -107,12 +109,12 @@ void solve_stls(input in, bool verbose,
     compute_ssf(SS, SSHF, GG, phi, xx, in);
     
     // End timing
-    clock_t toc = clock();
+    double toc = omp_get_wtime();
     
     // Print diagnostic
     if (verbose) {
       printf("--- iteration %d ---\n", iter_counter);
-      printf("Elapsed time: %f seconds\n", ((double)toc - (double)tic) / CLOCKS_PER_SEC);
+      printf("Elapsed time: %f seconds\n", toc - tic);
       printf("Residual error: %.5e\n", iter_err);
       fflush(stdout);
     }
@@ -316,6 +318,7 @@ void compute_phi(double *phi, double *xx,  input in, bool verbose) {
 void compute_phil(double *phil, double *xx,  int ll, input in) {
 
   // Normalized ideal Lindhard density 
+  #pragma omp parallel for  
   for (int ii = 0; ii<in.nx; ii++) {
 
     phil[ii] = 0.0;
@@ -345,10 +348,9 @@ double phixl(double yy, double xx, int ll, input in) {
 
   double yy2 = yy*yy, xx2 = xx*xx, txy = 2*xx*yy, 
     tplT = 2*M_PI*ll*in.Theta, tplT2 = tplT*tplT;
-  
+
   return 1.0/(2*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
     *log(((xx2+txy)*(xx2+txy) + tplT2)/((xx2-txy)*(xx2-txy) + tplT2));
-
 
 }
 
@@ -407,29 +409,35 @@ void compute_ssf(double *SS, double *SSHF, double *GG,
 		 double *phi, double *xx, input in){
 
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  double pilambda = M_PI*lambda;
-  double ff = 4*lambda*lambda*in.rs;
-  double ff3_2T = 3.0*in.Theta*ff/2.0;
-  double xx2, BB, BB_tmp, phixl;
+  double ff = 4*lambda*in.rs/M_PI;
+  double xx2, BB, BB_tmp, BB_den, tplT, phixl, Axl;
+
   for (int ii=0; ii<in.nx; ii++){
 
     xx2 = xx[ii]*xx[ii];
     BB = 0.0;
-    if (xx[ii] > 0.0){
 
-      for (int ll=0; ll<in.nl; ll++){
-	phixl = phi[idx2(ii,ll,in.nx)];
-	BB_tmp = phixl*phixl/(pilambda*xx2 + ff*(1 - GG[ii])*phixl);
-	if (ll>0) BB_tmp *= 2.0;
-	BB += BB_tmp;
-      }
-
-      SS[ii] = SSHF[ii] - ff3_2T*(1- GG[ii])*BB;
-
+    for (int ll=0; ll<in.nl; ll++){
+      tplT = 2*M_PI*ll*in.Theta;
+      phixl = phi[idx2(ii,ll,in.nx)];
+      Axl = (4.0/3.0)*xx2/(tplT*tplT + xx2*xx2);
+      BB_den = 1.0 + ff/xx2*(1 - GG[ii])*phixl;
+      //BB_tmp = phixl*phixl/BB_den - Axl*Axl;
+      BB_tmp = phixl*phixl/BB_den;
+      if (ll>0) BB_tmp *= 2.0;
+      BB += BB_tmp;
+	
     }
-    else {
-      SS[ii] = 0.0;
-    }
+      
+    /* SS[ii] = SSHF[ii] */
+    /*   - 3.0/2.0*ff/xx2*in.Theta*(1- GG[ii])*BB */
+    /*   - 1.0/3.0*ff/xx2/in.Theta*(1 - GG[ii])* */
+    /*   (1.0/sinh(xx2/(2*in.Theta))* */
+    /*    1.0/sinh(xx2/(2*in.Theta)) + */
+    /*    2.0*in.Theta/xx2* */
+    /*    1.0/tanh(xx2/(2*in.Theta))); */
+    SS[ii] = SSHF[ii]
+      - 3.0/2.0*ff/xx2*in.Theta*(1- GG[ii])*BB;
 
   }
 
@@ -443,6 +451,7 @@ void compute_ssf(double *SS, double *SSHF, double *GG,
 void compute_slfc(double *GG, double *SS, double *xx, input in) {
 
   // Static local field correction
+  #pragma omp parallel for
   for (int ii = 0; ii < in.nx; ii++) {
     
     GG[ii] = 0.0;

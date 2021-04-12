@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <omp.h>
 #include "stls.h"
 #include "stls_hnc.h"
 
@@ -10,7 +11,7 @@
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS-HNC EQUATIONS
 // -------------------------------------------------------------------
 
-void solve_stls_hnc(input in, bool verbose) {
+void solve_stls_hnc(input in, bool verbose, bool iet) {
 
   // Arrays for STLS solution
   double *xx = NULL; 
@@ -19,6 +20,7 @@ void solve_stls_hnc(input in, bool verbose) {
   double *GG_new = NULL;
   double *SS = NULL;
   double *SSHF = NULL;
+  double *bf = NULL;
 
   // Solve STLS equation for initial guess
   if (verbose) printf("Solution of classical STLS for initial guess:\n");
@@ -31,6 +33,10 @@ void solve_stls_hnc(input in, bool verbose) {
     GG[ii] = 0.0;
   }
 
+  // Compute the bridge function term
+  bf = malloc( sizeof(double) * in.nx);
+  compute_bf(bf, xx, in, iet);
+   
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
@@ -38,7 +44,7 @@ void solve_stls_hnc(input in, bool verbose) {
   while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     
     // Start timing
-    clock_t tic = clock();
+    double tic = omp_get_wtime();
     
     // Update SLFC
     compute_slfc_hnc(GG_new, GG, SS, xx, in);
@@ -56,12 +62,12 @@ void solve_stls_hnc(input in, bool verbose) {
     compute_ssf(SS, SSHF, GG, phi, xx, in);
     
     // End timing
-    clock_t toc = clock();
+    double toc = omp_get_wtime();
     
     // Print diagnostic
     if (verbose) {
       printf("--- iteration %d ---\n", iter_counter);
-      printf("Elapsed time: %f seconds\n", ((double)toc - (double)tic) / CLOCKS_PER_SEC);
+      printf("Elapsed time: %f seconds\n", toc - tic);
       printf("Residual error: %.5e\n", iter_err);
       fflush(stdout);
     }
@@ -76,10 +82,10 @@ void solve_stls_hnc(input in, bool verbose) {
   write_text_hnc(SS, GG, xx, in);
   if (verbose) printf("Done.\n");
 
-  // Output to variable or free memory
+  // Free memory
   free_stls_arrays(xx, true, phi, true, GG, true, 
 		   GG_new, true, SS, true, SSHF, true);
- 
+  free(bf);
  
 }
 
@@ -95,6 +101,7 @@ void compute_slfc_hnc(double *GG_new, double *GG,
     xx2, uu, uu2, ww2, ww;
 
   // Static local field correction
+  #pragma omp parallel for
   for (int ii=0; ii<in.nx; ii++) {
    
     xx2 = xx[ii]*xx[ii];
@@ -128,6 +135,11 @@ void compute_slfc_hnc(double *GG_new, double *GG,
 
 }
 
+void compute_bf(double *bf, double *xx, input in, bool iet){
+
+  bf[0] = 0.0;
+
+}
 
 // -------------------------------------------------------------------
 // FUNCTION FOR OUTPUT AND INPUT

@@ -4,6 +4,7 @@
 #include <time.h>
 #include <argp.h>
 #include <math.h>
+#include <omp.h>
 #include "stls.h"
 #include "stls_hnc.h"
 #include "qstls.h"
@@ -44,6 +45,8 @@ static struct argp_option options[] = {
    "Compute internal energy from data in SSF_FILE"},
   {"sol", 's', "STLS",0,
    "Theory to be solved"},
+  {"omp", 'o', "1",0,
+   "Number of omp threads to use in the solution"},
   { 0 }
 };
 
@@ -65,7 +68,8 @@ struct arguments
   double xmax;
   int nl;
   int nIter;
-  
+  int nThreads;
+
 };
 
 
@@ -106,6 +110,9 @@ parse_opt (int key, char *arg, struct argp_state *state)
       break;
     case 'm':
       arguments->a_mix = atof(arg);
+      break;
+    case 'o':
+      arguments->nThreads = atoi(arg);
       break;
     case 'p':
       arguments->phi_file = arg;
@@ -162,7 +169,7 @@ int main (int argc, char **argv){
   arguments.nl = 128; // Number of Matsubara frequencies
   arguments.nIter = 1000; // Number of iterations
   arguments.theory = "STLS"; // Theory to solve
-
+  arguments.nThreads = 1; // Number of OMP threads to use in the solution
 
   // Parse command line
   argp_parse (&argp, argc, argv, 0, 0, &arguments);
@@ -182,23 +189,27 @@ int main (int argc, char **argv){
   in.nl = arguments.nl;
   in.nIter = arguments.nIter;
   in.nx = (int)floor(in.xmax/in.dx);
+
+  // Set number of threads for parallel calculations
+  omp_set_num_threads(arguments.nThreads);
  
   // Solve theory specified in input
-  clock_t tic = clock();
+  double tic = omp_get_wtime();
   if (strcmp(arguments.theory, "STLS") == 0)
     solve_stls(in, true, NULL, NULL, NULL, NULL, NULL, NULL);
   else if (strcmp(arguments.theory, "STLS-HNC") == 0)
-    solve_stls_hnc(in, true);
+    solve_stls_hnc(in, true, false);
+  else if (strcmp(arguments.theory, "STLS-IET") == 0)
+    solve_stls_hnc(in, true, true);
   else if (strcmp(arguments.theory, "QSTLS") == 0)
     solve_qstls(in, true);
   else
     printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC and QSTLS\n");
-  clock_t toc = clock();
-  printf("Solution complete. Elapsed time: %f seconds\n", ((double)toc - (double)tic) / CLOCKS_PER_SEC);
+  double toc = omp_get_wtime();
+  printf("Solution complete. Elapsed time: %f seconds\n", toc - tic);
 
 
 
   return 0;
 
 }
-
