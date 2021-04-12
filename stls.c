@@ -49,7 +49,7 @@ void solve_stls(input in, bool verbose,
   printf("Number of Matsubara frequencies: %d\n", in.nl);
   printf("Maximum number of iterations: %d\n", in.nIter);
   printf("Error for convergence: %.5e\n", in.err_min_iter);
-  printf("Number of threads: %d", omp_get_num_threads());
+  printf("Number of threads: %d\n", omp_get_max_threads());
   printf("----------------------------------------------------\n");
  
 
