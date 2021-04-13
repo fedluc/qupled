@@ -47,7 +47,7 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
     double tic = omp_get_wtime();
     
     // Update SLFC
-    compute_slfc_hnc(GG_new, GG, SS, xx, in);
+    compute_slfc_hnc(GG_new, GG, SS, bf, xx, in);
     
     // Update diagnostic
     iter_err = 0.0;
@@ -94,8 +94,8 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
 // FUNCTION USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 
-void compute_slfc_hnc(double *GG_new, double *GG, 
-		      double *SS, double *xx, input in) {
+void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
+		      double *bf, double *xx, input in) {
 
   double kmax, kmin, fu, 
     xx2, uu, uu2, ww2, ww;
@@ -125,11 +125,13 @@ void compute_slfc_hnc(double *GG_new, double *GG,
 	
       }
       
-      GG_new[ii] += (1.0 - (GG[jj] - 1.0) * (SS[jj] - 1.0))*in.dx*fu/uu;
+      GG_new[ii] += (1.0 - (GG[jj] - 1.0) * (SS[jj] - 1.0) 
+		     - bf[jj])*in.dx*fu/uu;
       
     }
     
     GG_new[ii] *= 3.0*in.dx/(8.0*xx[ii]);
+    GG_new[ii] += bf[ii];
     
   }
 
