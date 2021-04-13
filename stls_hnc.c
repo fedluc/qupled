@@ -137,7 +137,49 @@ void compute_slfc_hnc(double *GG_new, double *GG,
 
 void compute_bf(double *bf, double *xx, input in, bool iet){
 
-  bf[0] = 0.0;
+  double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double l2 = ll*ll, l3 = l2*ll, l4 = l3*ll, l5 = l4*ll, 
+    l6 = l5*ll, l7 = l6*ll, l8 = l7*ll;
+  double Gamma = 2*l2*in.rs/in.Theta;
+  double lnG = log(Gamma), lnG2 = lnG*lnG;
+  double b0 = 0.258 - 0.0612*lnG + 0.0123*lnG2 - 1.0/Gamma;
+  double b1 = 0.0269 + 0.0318*lnG + 0.00814*lnG2;
+  double c1 = 0.498 - 0.280*lnG + 0.0294*lnG2;
+  double c2 = -0.412 + 0.219*lnG + 0.0251*lnG2;
+  double c3 = 0.0988 - 0.0534*lnG + 0.00682*lnG2;
+  double b02 = b0*b0, b03 = b02*b0, b04 = b03*b0, b05 = b04*b0,
+    b06 = b05*b0, b07 = b06*b0, b08 = b07*b0;
+  double b12 = b1*b1, b13 = b12*b1, b14 = b13*b1, b15 = b14*b1,
+    b16 = b15*b1, b17 = b16*b1, b18 = b17*b1;
+  double b02_b12 = b02/b12, b03_b13 = b03/b13, b04_b14 = b04/b14,
+    b05_b15 = b05/b15, b06_b16 = b06/b16, b07_b17 = b07/b17, 
+    b08_b18 = b08/b18;
+  double ff = sqrt(M_PI)/(4.0*l2)*pow(b0/b1, 1.5);
+  double q2,q3,q4,q5,q6,q7,q8;
+  double bf1, bf2, bf3;
+
+  for (int ii=0; ii<in.nx; ii++){
+
+    if (iet){
+      q2 = xx[ii]*xx[ii];
+      q3 = q2*xx[ii];
+      q4 = q3*xx[ii];
+      q5 = q4*xx[ii];
+      q6 = q5*xx[ii];
+      q7 = q6*xx[ii]; 
+      q8 = q7*xx[ii];
+      bf1 = -b0 + c1/16.0*(60.0*b02_b12 - 20.0*b03_b13*q2/l2 + b04_b14*q4/l4);
+      bf2 = c2/64.0*(840.0*b03_b13 - 420.0*b04_b14*q2/l2 +
+		     42.0*b05_b15*q4/l4 - b06_b16*q6/l6);
+      bf3 = c3/256.0*(15120.0*b04_b14 - 10080.0*b05_b15*q2/l2 +
+		     1512.0*b06_b16*q4/l4 - 72.0*b07_b17*q6/l6 + 
+		     b08_b18*q8/l8);
+      bf[ii] = ff*q2*(bf1 + bf2 + bf3)*exp(-b0*q2/(4.0*b1*l2));
+    }
+    else 
+      bf[ii] = 0.0;
+      
+  }
 
 }
 
