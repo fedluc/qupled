@@ -24,7 +24,7 @@ void compute_bf(double *bf, double *xx, input in, bool iet);
 // -------------------------------------------------------------------
 
 void write_text_hnc(double *SS, double *GG,
-		    double *xx, input in );
+		    double *xx, input in, bool iet );
 
 
 #endif

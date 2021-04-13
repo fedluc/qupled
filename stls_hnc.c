@@ -79,7 +79,7 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_hnc(SS, GG, xx, in);
+  write_text_hnc(SS, GG, xx, in, iet);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -147,7 +147,7 @@ void compute_bf(double *bf, double *xx, input in, bool iet){
   double b0 = 0.258 - 0.0612*lnG + 0.0123*lnG2 - 1.0/Gamma;
   double b1 = 0.0269 + 0.0318*lnG + 0.00814*lnG2;
   double c1 = 0.498 - 0.280*lnG + 0.0294*lnG2;
-  double c2 = -0.412 + 0.219*lnG + 0.0251*lnG2;
+  double c2 = -0.412 + 0.219*lnG - 0.0251*lnG2;
   double c3 = 0.0988 - 0.0534*lnG + 0.00682*lnG2;
   double b02 = b0*b0, b03 = b02*b0, b04 = b03*b0, b05 = b04*b0,
     b06 = b05*b0, b07 = b06*b0, b08 = b07*b0;
@@ -191,13 +191,16 @@ void compute_bf(double *bf, double *xx, input in, bool iet){
 
 
 // write text files with SSF and SLFC
-void write_text_hnc(double *SS, double *GG, double *xx, input in){
+void write_text_hnc(double *SS, double *GG, double *xx, input in, bool iet){
 
 
     FILE* fid;
     
     // Output for SSF
-    fid = fopen("ssf_STLS_HNC.dat", "w");
+    if (iet)
+      fid = fopen("ssf_STLS_IET.dat", "w");
+    else
+      fid = fopen("ssf_STLS_HNC.dat", "w");
     if (fid == NULL) {
         perror("Error while creating the output file for the static structure factor");
         exit(EXIT_FAILURE);
@@ -209,7 +212,10 @@ void write_text_hnc(double *SS, double *GG, double *xx, input in){
     fclose(fid);
 
     // Output for SLFC
-    fid = fopen("slfc_STLS_HNC.dat", "w");
+    if (iet)
+      fid = fopen("slfc_STLS_IET.dat", "w");
+    else
+      fid = fopen("slfc_STLS_HNC.dat", "w");
     if (fid == NULL) {
         perror("Error while creating the output file for the static local field correction");
         exit(EXIT_FAILURE);

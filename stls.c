@@ -499,7 +499,7 @@ double compute_uex(double *SS, input in) {
     ie += SS[jj] - 1.0;
   }
   ie *= in.dx;
-  
+
   // Output
   return ie/(M_PI*in.rs*lambda);
 
