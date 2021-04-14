@@ -139,10 +139,11 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
 
 void compute_bf(double *bf, double *xx, input in, bool iet){
 
+  double scaling = 2.0;
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double l2 = ll*ll, l3 = l2*ll, l4 = l3*ll, l5 = l4*ll, 
     l6 = l5*ll, l7 = l6*ll, l8 = l7*ll;
-  double Gamma = 2*l2*in.rs/in.Theta;
+  double Gamma = scaling*2*l2*in.rs/in.Theta;
   double lnG = log(Gamma), lnG2 = lnG*lnG;
   double b0 = 0.258 - 0.0612*lnG + 0.0123*lnG2 - 1.0/Gamma;
   double b1 = 0.0269 + 0.0318*lnG + 0.00814*lnG2;
@@ -176,7 +177,7 @@ void compute_bf(double *bf, double *xx, input in, bool iet){
       bf3 = c3/256.0*(15120.0*b04_b14 - 10080.0*b05_b15*q2/l2 +
 		     1512.0*b06_b16*q4/l4 - 72.0*b07_b17*q6/l6 + 
 		     b08_b18*q8/l8);
-      bf[ii] = ff*q2*(bf1 + bf2 + bf3)*exp(-b0*q2/(4.0*b1*l2));
+      bf[ii] = scaling*ff*q2*(bf1 + bf2 + bf3)*exp(-b0*q2/(4.0*b1*l2));
     }
     else 
       bf[ii] = 0.0;
