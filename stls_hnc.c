@@ -79,7 +79,7 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_hnc(SS, GG, xx, in, iet);
+  write_text_hnc(SS, GG, phi, xx, in, iet);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -139,7 +139,7 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
 
 void compute_bf(double *bf, double *xx, input in, bool iet){
 
-  double scaling = 2.0;
+  double scaling = 1.0;
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double l2 = ll*ll, l3 = l2*ll, l4 = l3*ll, l5 = l4*ll, 
     l6 = l5*ll, l7 = l6*ll, l8 = l7*ll;
@@ -192,7 +192,7 @@ void compute_bf(double *bf, double *xx, input in, bool iet){
 
 
 // write text files with SSF and SLFC
-void write_text_hnc(double *SS, double *GG, double *xx, input in, bool iet){
+void write_text_hnc(double *SS, double *GG, double *phi, double *xx, input in, bool iet){
 
 
     FILE* fid;
@@ -224,6 +224,27 @@ void write_text_hnc(double *SS, double *GG, double *xx, input in, bool iet){
     for (int ii = 0; ii < in.nx; ii++)
     {
         fprintf(fid, "%.8e %.8e\n", xx[ii], GG[ii]);
+    }
+    fclose(fid);
+
+
+    // Output for static density response
+    if (iet)
+      fid = fopen("sdr_STLS_IET.dat", "w");
+    else
+      fid = fopen("sdr_STLS_HNC.dat", "w");
+    if (fid == NULL) {
+        perror("Error while creating the output file for the static density response");
+        exit(EXIT_FAILURE);
+    }
+    double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+    double ff = 4*lambda*in.rs/M_PI;
+    double sdr;
+    for (int ii = 0; ii < in.nx; ii++)
+    {
+      sdr = -(3.0/2.0)*in.Theta*phi[idx2(ii,0,in.nx)]/
+	(1.0 + ff/(xx[ii]*xx[ii])*(1.0 - GG[ii])*phi[idx2(ii,0,in.nx)]);
+      fprintf(fid, "%.8e %.8e\n", xx[ii], sdr);
     }
     fclose(fid);
 
