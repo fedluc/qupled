@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 #include <omp.h>
+#include <string.h>
 #include "stls.h"
 #include "stls_hnc.h"
 
@@ -23,27 +24,26 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
   double *bf = NULL;
 
   // Solve STLS equation for initial guess
-  if (verbose) printf("Solution of classical STLS for initial guess:\n");
-  double a_mix_hold = in.a_mix;
-  in.a_mix = 0.1;
-  solve_stls(in, false, &xx, &SS, &SSHF, &GG, &GG_new, &phi);
-  in.a_mix = a_mix_hold;
-  if (verbose) printf("Done.\n");
-  for (int ii=0; ii<in.nx; ii++){
-    GG[ii] = 0.0;
-  }
 
-  /* if (strcmp(in.guess_file,"NO_FILE")==0){ */
-   
-  /*   for (int ii=0; ii < in.nx; ii++) { */
-  /*     GG[ii] = 0.0; */
-  /*     GG_new[ii] = 1.0; */
-  /*   } */
-  /*   compute_ssf(SS, SSHF, GG, phi, xx, in); */
-  /* } */
-  /* else { */
-  /*   read_guess(SS, GG, in); */
-  /* } */
+  if (strcmp(in.guess_file,"NO_FILE")==0){
+
+    if (verbose) printf("Solution of classical STLS for initial guess:\n");
+    double a_mix_hold = in.a_mix;
+    in.a_mix = 0.1;
+    solve_stls(in, false, &xx, &SS, &SSHF, &GG, &GG_new, &phi);
+    in.a_mix = a_mix_hold;
+    if (verbose) printf("Done.\n");
+    for (int ii=0; ii<in.nx; ii++){
+      GG[ii] = 0.0;
+    }
+
+  }
+  else {
+    alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
+    read_guess(SS, GG, in);
+    // Remember to initialize the grid, the chemical potential calculation, and related stuff
+    // Write a dedicated function for this in the stls file
+  }
 
 
   // Compute the bridge function term
