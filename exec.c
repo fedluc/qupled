@@ -39,10 +39,8 @@ static struct argp_option options[] = {
    "Mixing parameter for iterative solution"},
   {"mg", 'g', "-10,10", 0,
    "Initial guess for chemical potential"},
-  {"phi", 'p', "NO_FILE", 0,
-   "Load density response from PHI_FILE"},
-  {"uex", 'u', "NO_FILE", 0,
-   "Compute internal energy from data in SSF_FILE"},
+  {"sg", 'f', "NO_FILE", 0,
+   "Load initial guess from file"},
   {"sol", 's', "STLS",0,
    "Theory to be solved"},
   {"omp", 'o', "1",0,
@@ -54,8 +52,7 @@ static struct argp_option options[] = {
 struct arguments
 {
 
-  char *phi_file;
-  char *ssf_file;
+  char *guess_file;
   char *theory; 
   double Theta;
   double rs;
@@ -90,6 +87,9 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case 'e':
       arguments->err_min_iter = atof(arg);
       break;
+    case 'f':
+      arguments->guess_file = arg;
+    break;
     case 'g':
       value = strtok(NULL, ",");
       if(value != NULL ) {
@@ -114,9 +114,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case 'o':
       arguments->nThreads = atoi(arg);
       break;
-    case 'p':
-      arguments->phi_file = arg;
-      break;
     case 'r':
       arguments->rs = atof(arg);
       break;
@@ -125,9 +122,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
       break;
     case 's':
       arguments->theory = arg;
-      break;
-    case 'u':
-      arguments->ssf_file = arg;
       break;
     case 'x':
       arguments->xmax = atof(arg);
@@ -156,8 +150,7 @@ int main (int argc, char **argv){
   struct arguments arguments;
 
   // Default values for optional arguments
-  arguments.phi_file = "NO_FILE"; // File with density response
-  arguments.ssf_file = "NO_FILE"; // File with static structure factor
+  arguments.guess_file = "NO_FILE"; // File with initial guess
   arguments.Theta = 1.0; // Quantum degeneracy parameter
   arguments.rs = 1.0; // Quantum coupling parameter
   arguments.dx = 0.01; // Wave-vector grid resolution
@@ -176,8 +169,7 @@ int main (int argc, char **argv){
 
   // Fill input structure
   input in;
-  in.phi_file = arguments.phi_file;
-  in.ssf_file = arguments.phi_file;
+  in.guess_file = arguments.guess_file;
   in.Theta = arguments.Theta;
   in.rs = arguments.rs;
   in.dx = arguments.dx; 
@@ -189,6 +181,7 @@ int main (int argc, char **argv){
   in.nl = arguments.nl;
   in.nIter = arguments.nIter;
   in.nx = (int)floor(in.xmax/in.dx);
+  in.theory = arguments.theory;
 
   // Set number of threads for parallel calculations
   omp_set_num_threads(arguments.nThreads);
@@ -204,7 +197,7 @@ int main (int argc, char **argv){
   else if (strcmp(arguments.theory, "QSTLS") == 0)
     solve_qstls(in, true);
   else
-    printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC and QSTLS\n");
+    printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC, STLS-IET and QSTLS\n");
   double toc = omp_get_wtime();
   printf("Solution complete. Elapsed time: %f seconds\n", toc - tic);
 

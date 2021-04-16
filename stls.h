@@ -9,8 +9,8 @@
 
 typedef struct {
 
-  char *phi_file;
-  char *ssf_file;
+  char *guess_file;
+  char *theory;
   double Theta;
   double rs;
   double dx;
@@ -117,13 +117,11 @@ double compute_uex(double *SS, input in);
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
-void write_text(double *SS, double *GG, 
-		double *xx, input in );
+void write_text(double *SS, double *GG, double *phi, 
+		 double *xx, input in);
 
-void write_bin(double *phi, double *SSHF, input in);
+void write_guess(double *SS, double *GG, input in);
 
-void read_bin(input *in, double **xx, double **phi,
-              double **GG, double **GG_new,
-              double **SS, double **SSHF);
+void read_guess(double *SS, double *GG, input in);
 
 #endif
