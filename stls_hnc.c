@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 #include <omp.h>
+#include <string.h>
 #include "stls.h"
 #include "stls_hnc.h"
 
@@ -22,20 +23,25 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
   double *SSHF = NULL;
   double *bf = NULL;
 
-  // Solve STLS equation for initial guess
-  if (verbose) printf("Solution of classical STLS for initial guess:\n");
-  double a_mix_hold = in.a_mix;
-  in.a_mix = 0.1;
-  solve_stls(in, false, &xx, &SS, &SSHF, &GG, &GG_new, &phi);
-  in.a_mix = a_mix_hold;
-  if (verbose) printf("Done.\n");
-  for (int ii=0; ii<in.nx; ii++){
-    GG[ii] = 0.0;
-  }
+  // Allocate arrays
+  alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
 
-  // Compute the bridge function term
+  // Initialize arrays that are not modified with the iterative procedure
+  init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
   bf = malloc( sizeof(double) * in.nx);
   compute_bf(bf, xx, in, iet);
+
+  // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
+  if (strcmp(in.guess_file,"NO_FILE")==0){
+    for (int ii=0; ii < in.nx; ii++) {
+      GG[ii] = 0.0;
+      GG_new[ii] = 1.0;
+    }
+    compute_ssf(SS, SSHF, GG, phi, xx, in);
+  }
+  else {
+    read_guess(SS, GG, in);
+  }
    
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF and SLFC calculation...\n");
@@ -79,12 +85,12 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_hnc(SS, GG, phi, xx, in, iet);
+  write_text(SS, GG, phi, xx, in);
+  write_guess(SS, GG, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
-  free_stls_arrays(xx, true, phi, true, GG, true, 
-		   GG_new, true, SS, true, SSHF, true);
+  free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
   free(bf);
  
 }
@@ -185,68 +191,3 @@ void compute_bf(double *bf, double *xx, input in, bool iet){
   }
 
 }
-
-// -------------------------------------------------------------------
-// FUNCTION FOR OUTPUT AND INPUT
-// -------------------------------------------------------------------
-
-
-// write text files with SSF and SLFC
-void write_text_hnc(double *SS, double *GG, double *phi, double *xx, input in, bool iet){
-
-
-    FILE* fid;
-    
-    // Output for SSF
-    if (iet)
-      fid = fopen("ssf_STLS_IET.dat", "w");
-    else
-      fid = fopen("ssf_STLS_HNC.dat", "w");
-    if (fid == NULL) {
-        perror("Error while creating the output file for the static structure factor");
-        exit(EXIT_FAILURE);
-    }
-    for (int ii = 0; ii < in.nx; ii++)
-    {
-        fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]);
-    }
-    fclose(fid);
-
-    // Output for SLFC
-    if (iet)
-      fid = fopen("slfc_STLS_IET.dat", "w");
-    else
-      fid = fopen("slfc_STLS_HNC.dat", "w");
-    if (fid == NULL) {
-        perror("Error while creating the output file for the static local field correction");
-        exit(EXIT_FAILURE);
-    }
-    for (int ii = 0; ii < in.nx; ii++)
-    {
-        fprintf(fid, "%.8e %.8e\n", xx[ii], GG[ii]);
-    }
-    fclose(fid);
-
-
-    // Output for static density response
-    if (iet)
-      fid = fopen("sdr_STLS_IET.dat", "w");
-    else
-      fid = fopen("sdr_STLS_HNC.dat", "w");
-    if (fid == NULL) {
-        perror("Error while creating the output file for the static density response");
-        exit(EXIT_FAILURE);
-    }
-    double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-    double ff = 4*lambda*in.rs/M_PI;
-    double sdr;
-    for (int ii = 0; ii < in.nx; ii++)
-    {
-      sdr = -(3.0/2.0)*in.Theta*phi[idx2(ii,0,in.nx)]/
-	(1.0 + ff/(xx[ii]*xx[ii])*(1.0 - GG[ii])*phi[idx2(ii,0,in.nx)]);
-      fprintf(fid, "%.8e %.8e\n", xx[ii], sdr);
-    }
-    fclose(fid);
-
-}
-

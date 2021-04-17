@@ -19,11 +19,4 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
 void compute_bf(double *bf, double *xx, input in, bool iet);
 
 
-// -------------------------------------------------------------------
-// FUNCTION FOR OUTPUT AND INPUT
-// -------------------------------------------------------------------
-
-void write_text_hnc(double *SS, double *GG, double *phi,
-		    double *xx, input in, bool iet );
-
 #endif

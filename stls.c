@@ -15,10 +15,7 @@
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS EQUATIONS
 // -------------------------------------------------------------------
 
-void solve_stls(input in, bool verbose, 
-		double **xx_out, double **SS_out, 
-		double **SSHF_out, double **GG_out, 
-		double **GG_new_out, double **phi_out) {
+void solve_stls(input in, bool verbose) {
 
   // Arrays for STLS solution
   double *xx = NULL; 
@@ -28,62 +25,25 @@ void solve_stls(input in, bool verbose,
   double *SS = NULL;
   double *SSHF = NULL;
 
-  // Start brand new calculation or load data from file
-  bool init_flag = true;
-  if (strcmp(in.phi_file,"NO_FILE") != 0) init_flag = false;
-  if (init_flag) {
-    alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
+  // Allocate arrays
+  alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
+
+  // Initialize arrays that are not modified with the iterative procedure
+  init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
+  
+  // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
+  if (strcmp(in.guess_file,"NO_FILE")==0){
+    for (int ii=0; ii < in.nx; ii++) {
+      GG[ii] = 0.0;
+      GG_new[ii] = 1.0;
+    }
+    compute_ssf(SS, SSHF, GG, phi, xx, in);
   }
   else {
-    read_bin(&in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
+    read_guess(SS, GG, in);
   }
 
-  // Print on screen the parameter used to solve the STLS equation
-  printf("------ Parameters used in the solution -------------\n");
-  printf("Quantum degeneracy parameter: %f\n", in.Theta);
-  printf("Quantum coupling parameter: %f\n", in.rs);
-  printf("Chemical potential (low and high bound): %f %f\n",
-	 in.mu_lo, in.mu_hi);
-  printf("Wave-vector cutoff: %f\n", in.xmax);
-  printf("Wave-vector resolutions: %f\n", in.dx);
-  printf("Number of Matsubara frequencies: %d\n", in.nl);
-  printf("Maximum number of iterations: %d\n", in.nIter);
-  printf("Error for convergence: %.5e\n", in.err_min_iter);
-  printf("Number of threads: %d\n", omp_get_max_threads());
-  printf("----------------------------------------------------\n");
- 
 
-  if (init_flag){
-
-    // Chemical potential
-    if (verbose) printf("Chemical potential calculation: ");
-    in.mu = compute_mu(in);
-    if (verbose) printf("Done. Chemical potential: %.8f\n", in.mu);
-
-    // Wave-vector grid
-    if (verbose) printf("Wave-vector grid initialization: ");
-    wave_vector_grid(xx, in);
-    if (verbose) printf("Done.\n");
-    
-    // Normalized ideal Lindhard density
-    if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
-    compute_phi(phi, xx, in, verbose);
-    if (verbose) printf("Done.\n");
-    
-    // Static structure factor in the Hartree-Fock approximation
-    if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
-    compute_ssfHF(SSHF, xx, in);
-    if (verbose) printf("Done.\n");
-
-  }
-
-  // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
-  for (int ii=0; ii < in.nx; ii++) {
-    GG[ii] = 0.0;
-    GG_new[ii] = 1.0;
-  }
-  compute_ssf(SS, SSHF, GG, phi, xx, in);
-  
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
@@ -93,6 +53,9 @@ void solve_stls(input in, bool verbose,
     // Start timing
     double tic = omp_get_wtime();
     
+    // Update SSF
+    compute_ssf(SS, SSHF, GG, phi, xx, in);
+
     // Update SLFC
     compute_slfc(GG_new, SS, xx, in);
     
@@ -103,11 +66,8 @@ void solve_stls(input in, bool verbose,
       iter_err += (GG_new[ii] - GG[ii]) * (GG_new[ii] - GG[ii]);
       GG[ii] = in.a_mix*GG_new[ii] + (1-in.a_mix)*GG[ii];
     }
-    iter_err = sqrt(iter_err);
-    
-    // Update SSF
-    compute_ssf(SS, SSHF, GG, phi, xx, in);
-    
+    iter_err = sqrt(iter_err);  
+   
     // End timing
     double toc = omp_get_wtime();
     
@@ -126,42 +86,12 @@ void solve_stls(input in, bool verbose,
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text(SS, GG, xx, in);
-  if (init_flag) write_bin(phi, SSHF, in); 
+  write_text(SS, GG, phi, xx, in);
+  write_guess(SS, GG, in); 
   if (verbose) printf("Done.\n");
 
-  // Output to variable
-  bool free_xx = true, free_SS = true, free_SSHF = true, 
-    free_GG = true, free_GG_new = true, free_phi = true;
-  if (xx_out != NULL){ 
-    *xx_out = xx;
-    free_xx = false;
-  }
-  if (SS_out != NULL){
-    *SS_out = SS;
-    free_SS = false;
-  }
-  if (SSHF_out != NULL){
-    *SSHF_out = SSHF;
-    free_SSHF = false;
-  }
-  if (GG_out != NULL){
-    *GG_out = GG;
-    free_GG = false;
-  }
-  if (GG_new_out != NULL){
-    *GG_new_out = GG_new;
-    free_GG_new = false;
-  }
-  if (phi_out != NULL){
-    *phi_out = phi;
-    free_phi = false;
-  }
-
   // Free memory
-  free_stls_arrays(xx, free_xx, phi, free_phi, 
-		   GG, free_GG, GG_new, free_GG_new,
-		   SS, free_SS, SSHF, free_SSHF);
+  free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
 
  
 }
@@ -183,20 +113,61 @@ void alloc_stls_arrays(input in, double **xx, double **phi,
   
 }
 
-void free_stls_arrays(double *xx, bool free_xx, 
-		      double *phi, bool free_phi, 
-		      double *GG, bool free_GG, 
-		      double *GG_new, bool free_GG_new, 
-		      double *SS, bool free_SS,
-		      double *SSHF, bool free_SSHF){
+void free_stls_arrays(double *xx, double *phi, double *GG, 
+		      double *GG_new, double *SS,
+		      double *SSHF){
 
-  if (free_xx) free(xx);
-  if (free_phi) free(phi);
-  if (free_SSHF) free(SSHF);
-  if (free_SS) free(SS);
-  if (free_GG) free(GG);
-  if (free_GG_new) free(GG_new);
+  free(xx);
+  free(phi);
+  free(SSHF);
+  free(SS);
+  free(GG);
+  free(GG_new);
  
+}
+
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO INITIALIZE ARRAYS
+// -------------------------------------------------------------------
+
+void init_fixed_stls_arrays(input *in, double *xx, 
+			    double *phi, double *SSHF, bool verbose){
+
+  // Print on screen the parameter used to solve the STLS equation
+  printf("------ Parameters used in the solution -------------\n");
+  printf("Quantum degeneracy parameter: %f\n", in->Theta);
+  printf("Quantum coupling parameter: %f\n", in->rs);
+  printf("Chemical potential (low and high bound): %f %f\n", 
+	 in->mu_lo, in->mu_hi);
+  printf("Wave-vector cutoff: %f\n", in->xmax);
+  printf("Wave-vector resolutions: %f\n", in->dx);
+  printf("Number of Matsubara frequencies: %d\n", in->nl);
+  printf("Maximum number of iterations: %d\n", in->nIter);
+  printf("Error for convergence: %.5e\n", in->err_min_iter);
+  printf("Number of threads: %d\n", omp_get_max_threads());
+  printf("----------------------------------------------------\n");
+ 
+  // Chemical potential
+  if (verbose) printf("Chemical potential calculation: ");
+  in->mu = compute_mu(*in);
+  if (verbose) printf("Done. Chemical potential: %.8f\n", in->mu);
+  
+  // Wave-vector grid
+  if (verbose) printf("Wave-vector grid initialization: ");
+  wave_vector_grid(xx, *in);
+  if (verbose) printf("Done.\n");
+  
+  // Normalized ideal Lindhard density
+  if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
+  compute_phi(phi, xx, *in, verbose);
+  if (verbose) printf("Done.\n");
+  
+  // Static structure factor in the Hartree-Fock approximation
+  if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
+  compute_ssfHF(SSHF, xx, *in);
+  if (verbose) printf("Done.\n");
+
 }
 
 
@@ -511,13 +482,15 @@ double compute_uex(double *SS, input in) {
 
 
 // write text files with SSF and SLFC
-void write_text(double *SS, double *GG, double *xx, input in){
+void write_text(double *SS, double *GG, double *phi, double *xx, input in){
 
 
     FILE* fid;
     
     // Output for SSF
-    fid = fopen("ssf_STLS.dat", "w");
+    char out_name[100];
+    sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
     if (fid == NULL) {
         perror("Error while creating the output file for the static structure factor");
         exit(EXIT_FAILURE);
@@ -529,7 +502,8 @@ void write_text(double *SS, double *GG, double *xx, input in){
     fclose(fid);
 
     // Output for SLFC
-    fid = fopen("slfc_STLS.dat", "w");
+    sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
     if (fid == NULL) {
         perror("Error while creating the output file for the static local field correction");
         exit(EXIT_FAILURE);
@@ -540,29 +514,51 @@ void write_text(double *SS, double *GG, double *xx, input in){
     }
     fclose(fid);
 
+    // Output for static density response
+    sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+      perror("Error while creating the output file for the static density response");
+      exit(EXIT_FAILURE);
+    }
+    double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+    double ff = 4*lambda*in.rs/M_PI;
+    double sdr;
+    for (int ii = 0; ii < in.nx; ii++)
+      {
+	sdr = -(3.0/2.0)*in.Theta*phi[idx2(ii,0,in.nx)]/
+	  (1.0 + ff/(xx[ii]*xx[ii])*(1.0 - GG[ii])*phi[idx2(ii,0,in.nx)]);
+	fprintf(fid, "%.8e %.8e\n", xx[ii], sdr);
+      }
+    fclose(fid);
+
+
 }
 
 
-// write binary file with density response
-void write_bin(double *phi, double *SSHF, input in){
+// write binary file to use as initial guess (or restart)
+void write_guess(double *SS, double *GG, input in){
 
+  // Name of output file
+  char out_name[100];
+  sprintf(out_name, "restart_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
 
   // Open binary file
   FILE *fid = NULL;
-  fid = fopen("dens_response.bin", "wb");
+  fid = fopen(out_name, "wb");
   if (fid == NULL) {
-    fprintf(stderr,"Error while creating file with density response");
+    fprintf(stderr,"Error while creating file for restart");
     exit(EXIT_FAILURE);
   }
 
-  // Input data
+  // Static structure factor 
   fwrite(&in, sizeof(input), 1, fid);
 
-  // Density response
-  fwrite(phi, sizeof(double), in.nx*in.nl, fid);
+  // Static structure factor 
+  fwrite(SS, sizeof(double), in.nx, fid);
 
-  // Static structure factor in the Hartree-Fock approximation
-  fwrite(SSHF, sizeof(double), in.nx, fid);
+  // Static local field correction
+  fwrite(GG, sizeof(double), in.nx, fid);
 
   // Close binary file
   fclose(fid);
@@ -570,63 +566,35 @@ void write_bin(double *phi, double *SSHF, input in){
 }
 
 
-// read binary file with density response information
-void read_bin(input *in, double **xx, double **phi, 
-	      double **GG, double **GG_new, 
-	      double **SS, double **SSHF){
+// read binary file to use as initial guess (or restart)
+void read_guess(double *SS, double *GG, input in){
 
   // Variables
-  double *xx_local = NULL; 
-  double *phi_local = NULL;
-  double *GG_local = NULL;
-  double *GG_new_local = NULL;
-  double *SS_local = NULL;
-  double *SSHF_local = NULL;
   input in_load;
 
   // Open binary file
   FILE *fid = NULL;
-  fid = fopen(in->phi_file, "rb");
+  fid = fopen(in.guess_file, "rb");
   if (fid == NULL) {
     fprintf(stderr,"Error while opening file with density response");
     exit(EXIT_FAILURE);
   }
 
-  // Input data from binary file
+  // Check that the data for the guess file is consistent
   fread(&in_load, sizeof(input), 1, fid);
-
-  // Allocate arrays
-  alloc_stls_arrays(in_load, &xx_local, &phi_local, 
-		    &GG_local, &GG_new_local, &SS_local, 
-		    &SSHF_local);
-
-  // Chemical potential
-  in_load.mu = compute_mu(in_load);
-
-  // Wave-vector grid
-  wave_vector_grid(xx_local, in_load);
+  if (in_load.nx != in.nx || in_load.dx != in.dx || in_load.xmax != in.xmax){
+    fprintf(stderr,"Grid from guess file is incompatible with input\n");
+    fclose(fid);
+    exit(EXIT_FAILURE);
+  }
   
-  // Density response
-  fread(phi_local, sizeof(double), in_load.nx*in_load.nl, fid);
+  // Static structure factor in the Hartree-Fock approximation
+  fread(SS, sizeof(double), in_load.nx, fid);
 
   // Static structure factor in the Hartree-Fock approximation
-  fread(SSHF_local, sizeof(double), in_load.nx, fid);
+  fread(GG, sizeof(double), in_load.nx, fid);
 
   // Close binary file
   fclose(fid);
-  
-  // Assign output
-  in->Theta = in_load.Theta;
-  in->dx = in_load.dx;
-  in->xmax = in_load.xmax;
-  in->nx = in_load.nx;
-  in->nl = in_load.nl;  
-  in->mu = in_load.mu;
-  *xx = xx_local;
-  *phi = phi_local;
-  *GG = GG_local;
-  *GG_new = GG_new_local;
-  *SS = SS_local;
-  *SSHF = SSHF_local;
 	    
 }
