@@ -52,6 +52,9 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
     // Start timing
     double tic = omp_get_wtime();
     
+    // Update SSF
+    compute_ssf(SS, SSHF, GG, phi, xx, in);
+    
     // Update SLFC
     compute_slfc_hnc(GG_new, GG, SS, bf, xx, in);
     
@@ -63,9 +66,6 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
       GG[ii] = in.a_mix*GG_new[ii] + (1-in.a_mix)*GG[ii];
     }
     iter_err = sqrt(iter_err);
-    
-    // Update SSF
-    compute_ssf(SS, SSHF, GG, phi, xx, in);
     
     // End timing
     double toc = omp_get_wtime();
