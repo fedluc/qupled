@@ -23,32 +23,25 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
   double *SSHF = NULL;
   double *bf = NULL;
 
-  // Solve STLS equation for initial guess
+  // Allocate arrays
+  alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
 
-  if (strcmp(in.guess_file,"NO_FILE")==0){
-
-    if (verbose) printf("Solution of classical STLS for initial guess:\n");
-    double a_mix_hold = in.a_mix;
-    in.a_mix = 0.1;
-    solve_stls(in, false, &xx, &SS, &SSHF, &GG, &GG_new, &phi);
-    in.a_mix = a_mix_hold;
-    if (verbose) printf("Done.\n");
-    for (int ii=0; ii<in.nx; ii++){
-      GG[ii] = 0.0;
-    }
-
-  }
-  else {
-    alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
-    read_guess(SS, GG, in);
-    // Remember to initialize the grid, the chemical potential calculation, and related stuff
-    // Write a dedicated function for this in the stls file
-  }
-
-
-  // Compute the bridge function term
+  // Initialize arrays that are not modified with the iterative procedure
+  init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
   bf = malloc( sizeof(double) * in.nx);
   compute_bf(bf, xx, in, iet);
+
+  // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
+  if (strcmp(in.guess_file,"NO_FILE")==0){
+    for (int ii=0; ii < in.nx; ii++) {
+      GG[ii] = 0.0;
+      GG_new[ii] = 1.0;
+    }
+    compute_ssf(SS, SSHF, GG, phi, xx, in);
+  }
+  else {
+    read_guess(SS, GG, in);
+  }
    
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF and SLFC calculation...\n");
@@ -97,8 +90,7 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
   if (verbose) printf("Done.\n");
 
   // Free memory
-  free_stls_arrays(xx, true, phi, true, GG, true, 
-		   GG_new, true, SS, true, SSHF, true);
+  free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
   free(bf);
  
 }

@@ -15,10 +15,7 @@
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS EQUATIONS
 // -------------------------------------------------------------------
 
-void solve_stls(input in, bool verbose, 
-		double **xx_out, double **SS_out, 
-		double **SSHF_out, double **GG_out, 
-		double **GG_new_out, double **phi_out) {
+void solve_stls(input in, bool verbose) {
 
   // Arrays for STLS solution
   double *xx = NULL; 
@@ -31,40 +28,9 @@ void solve_stls(input in, bool verbose,
   // Allocate arrays
   alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
 
-  // Print on screen the parameter used to solve the STLS equation
-  printf("------ Parameters used in the solution -------------\n");
-  printf("Quantum degeneracy parameter: %f\n", in.Theta);
-  printf("Quantum coupling parameter: %f\n", in.rs);
-  printf("Chemical potential (low and high bound): %f %f\n", in.mu_lo, in.mu_hi);
-  printf("Wave-vector cutoff: %f\n", in.xmax);
-  printf("Wave-vector resolutions: %f\n", in.dx);
-  printf("Number of Matsubara frequencies: %d\n", in.nl);
-  printf("Maximum number of iterations: %d\n", in.nIter);
-  printf("Error for convergence: %.5e\n", in.err_min_iter);
-  printf("Number of threads: %d\n", omp_get_max_threads());
-  printf("----------------------------------------------------\n");
- 
-  // Chemical potential
-  if (verbose) printf("Chemical potential calculation: ");
-  in.mu = compute_mu(in);
-  if (verbose) printf("Done. Chemical potential: %.8f\n", in.mu);
+  // Initialize arrays that are not modified with the iterative procedure
+  init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
   
-  // Wave-vector grid
-  if (verbose) printf("Wave-vector grid initialization: ");
-  wave_vector_grid(xx, in);
-  if (verbose) printf("Done.\n");
-  
-  // Normalized ideal Lindhard density
-  if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
-  compute_phi(phi, xx, in, verbose);
-  if (verbose) printf("Done.\n");
-  
-  // Static structure factor in the Hartree-Fock approximation
-  if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
-  compute_ssfHF(SSHF, xx, in);
-  if (verbose) printf("Done.\n");
-
-
   // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
   if (strcmp(in.guess_file,"NO_FILE")==0){
     for (int ii=0; ii < in.nx; ii++) {
@@ -124,38 +90,8 @@ void solve_stls(input in, bool verbose,
   write_guess(SS, GG, in); 
   if (verbose) printf("Done.\n");
 
-  // Output to variable
-  bool free_xx = true, free_SS = true, free_SSHF = true, 
-    free_GG = true, free_GG_new = true, free_phi = true;
-  if (xx_out != NULL){ 
-    *xx_out = xx;
-    free_xx = false;
-  }
-  if (SS_out != NULL){
-    *SS_out = SS;
-    free_SS = false;
-  }
-  if (SSHF_out != NULL){
-    *SSHF_out = SSHF;
-    free_SSHF = false;
-  }
-  if (GG_out != NULL){
-    *GG_out = GG;
-    free_GG = false;
-  }
-  if (GG_new_out != NULL){
-    *GG_new_out = GG_new;
-    free_GG_new = false;
-  }
-  if (phi_out != NULL){
-    *phi_out = phi;
-    free_phi = false;
-  }
-
   // Free memory
-  free_stls_arrays(xx, free_xx, phi, free_phi, 
-		   GG, free_GG, GG_new, free_GG_new,
-		   SS, free_SS, SSHF, free_SSHF);
+  free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
 
  
 }
@@ -177,20 +113,61 @@ void alloc_stls_arrays(input in, double **xx, double **phi,
   
 }
 
-void free_stls_arrays(double *xx, bool free_xx, 
-		      double *phi, bool free_phi, 
-		      double *GG, bool free_GG, 
-		      double *GG_new, bool free_GG_new, 
-		      double *SS, bool free_SS,
-		      double *SSHF, bool free_SSHF){
+void free_stls_arrays(double *xx, double *phi, double *GG, 
+		      double *GG_new, double *SS,
+		      double *SSHF){
 
-  if (free_xx) free(xx);
-  if (free_phi) free(phi);
-  if (free_SSHF) free(SSHF);
-  if (free_SS) free(SS);
-  if (free_GG) free(GG);
-  if (free_GG_new) free(GG_new);
+  free(xx);
+  free(phi);
+  free(SSHF);
+  free(SS);
+  free(GG);
+  free(GG_new);
  
+}
+
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO INITIALIZE ARRAYS
+// -------------------------------------------------------------------
+
+void init_fixed_stls_arrays(input *in, double *xx, 
+			    double *phi, double *SSHF, bool verbose){
+
+  // Print on screen the parameter used to solve the STLS equation
+  printf("------ Parameters used in the solution -------------\n");
+  printf("Quantum degeneracy parameter: %f\n", in->Theta);
+  printf("Quantum coupling parameter: %f\n", in->rs);
+  printf("Chemical potential (low and high bound): %f %f\n", 
+	 in->mu_lo, in->mu_hi);
+  printf("Wave-vector cutoff: %f\n", in->xmax);
+  printf("Wave-vector resolutions: %f\n", in->dx);
+  printf("Number of Matsubara frequencies: %d\n", in->nl);
+  printf("Maximum number of iterations: %d\n", in->nIter);
+  printf("Error for convergence: %.5e\n", in->err_min_iter);
+  printf("Number of threads: %d\n", omp_get_max_threads());
+  printf("----------------------------------------------------\n");
+ 
+  // Chemical potential
+  if (verbose) printf("Chemical potential calculation: ");
+  in->mu = compute_mu(*in);
+  if (verbose) printf("Done. Chemical potential: %.8f\n", in->mu);
+  
+  // Wave-vector grid
+  if (verbose) printf("Wave-vector grid initialization: ");
+  wave_vector_grid(xx, *in);
+  if (verbose) printf("Done.\n");
+  
+  // Normalized ideal Lindhard density
+  if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
+  compute_phi(phi, xx, *in, verbose);
+  if (verbose) printf("Done.\n");
+  
+  // Static structure factor in the Hartree-Fock approximation
+  if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
+  compute_ssfHF(SSHF, xx, *in);
+  if (verbose) printf("Done.\n");
+
 }
 
 

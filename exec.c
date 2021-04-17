@@ -7,7 +7,7 @@
 #include <omp.h>
 #include "stls.h"
 #include "stls_hnc.h"
-#include "qstls.h"
+//#include "qstls.h"
 
 // ----------------------------------------
 // COMMAND LINE PARSER
@@ -189,13 +189,14 @@ int main (int argc, char **argv){
   // Solve theory specified in input
   double tic = omp_get_wtime();
   if (strcmp(arguments.theory, "STLS") == 0)
-    solve_stls(in, true, NULL, NULL, NULL, NULL, NULL, NULL);
+    solve_stls(in, true);
   else if (strcmp(arguments.theory, "STLS-HNC") == 0)
     solve_stls_hnc(in, true, false);
   else if (strcmp(arguments.theory, "STLS-IET") == 0)
     solve_stls_hnc(in, true, true);
   else if (strcmp(arguments.theory, "QSTLS") == 0)
-    solve_qstls(in, true);
+    //solve_qstls(in, true);
+    printf("QSTLS is still not fully implemented\n");
   else
     printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC, STLS-IET and QSTLS\n");
   double toc = omp_get_wtime();

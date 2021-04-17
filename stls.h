@@ -31,10 +31,7 @@ typedef struct {
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS EQUATIONS
 // -------------------------------------------------------------------
 
-void solve_stls(input in, bool verbose,
-                double **xx_out, double **SS_out,
-                double **SSHF_out, double **GG_out,
-                double **GG_new_out, double **phi_out);
+void solve_stls(input in, bool verbose);
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
@@ -44,12 +41,17 @@ void alloc_stls_arrays(input in, double **xx, double **phi,
 		       double **GG, double **GG_new,
 		       double **SS, double **SSHF);
 
-void free_stls_arrays(double *xx, bool free_xx,
-                      double *phi, bool free_phi,
-                      double *GG, bool free_GG,
-                      double *GG_new, bool free_GG_new,
-                      double *SS, bool free_SS,
-                      double *SSHF, bool free_SSHF);
+void free_stls_arrays(double *xx, double *phi, double *GG,
+                      double *GG_new, double *SS,
+                      double *SSHF);
+
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO INITIALIZE ARRAYS
+// -------------------------------------------------------------------
+
+void init_fixed_stls_arrays(input *in, double *xx, 
+			    double *phi, double *SSHF, bool verbose);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE CHEMICAL POTENTIAL
