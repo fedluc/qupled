@@ -489,7 +489,7 @@ void write_text(double *SS, double *GG, double *phi, double *xx, input in){
     
     // Output for SSF
     char out_name[100];
-    sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
+    sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
         perror("Error while creating the output file for the static structure factor");
@@ -502,7 +502,7 @@ void write_text(double *SS, double *GG, double *phi, double *xx, input in){
     fclose(fid);
 
     // Output for SLFC
-    sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
+    sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
         perror("Error while creating the output file for the static local field correction");
@@ -515,7 +515,7 @@ void write_text(double *SS, double *GG, double *phi, double *xx, input in){
     fclose(fid);
 
     // Output for static density response
-    sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
+    sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
       perror("Error while creating the output file for the static density response");
