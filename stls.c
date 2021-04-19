@@ -481,7 +481,7 @@ double compute_uex(double *SS, input in) {
 // -------------------------------------------------------------------
 
 
-// write text files with SSF and SLFC
+// write text files for output
 void write_text(double *SS, double *GG, double *phi, double *xx, input in){
 
 
@@ -496,9 +496,8 @@ void write_text(double *SS, double *GG, double *phi, double *xx, input in){
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nx; ii++)
-    {
         fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]);
-    }
+
     fclose(fid);
 
     // Output for SLFC
@@ -509,9 +508,8 @@ void write_text(double *SS, double *GG, double *phi, double *xx, input in){
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nx; ii++)
-    {
         fprintf(fid, "%.8e %.8e\n", xx[ii], GG[ii]);
-    }
+
     fclose(fid);
 
     // Output for static density response
@@ -524,12 +522,26 @@ void write_text(double *SS, double *GG, double *phi, double *xx, input in){
     double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
     double ff = 4*lambda*in.rs/M_PI;
     double sdr;
-    for (int ii = 0; ii < in.nx; ii++)
-      {
+    for (int ii=0 ; ii<in.nx; ii++){
 	sdr = -(3.0/2.0)*in.Theta*phi[idx2(ii,0,in.nx)]/
 	  (1.0 + ff/(xx[ii]*xx[ii])*(1.0 - GG[ii])*phi[idx2(ii,0,in.nx)]);
 	fprintf(fid, "%.8e %.8e\n", xx[ii], sdr);
       }
+    fclose(fid);
+
+    // Output for ideal Lindhard density response
+    sprintf(out_name, "idr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+      perror("Error while creating the output file for the ");
+      exit(EXIT_FAILURE);
+    }
+    for (int ii=0; ii<in.nx; ii++){
+      for (int jj=0; jj<in.nl; jj++){
+        fprintf(fid, "%.8e ", phi[idx2(ii,jj,in.nx)]);
+      }
+      fprintf(fid,"\n");
+    }
     fclose(fid);
 
 
