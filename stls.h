@@ -120,7 +120,7 @@ double compute_uex(double *SS, input in);
 // -------------------------------------------------------------------
 
 void write_text(double *SS, double *GG, double *phi, 
-		 double *xx, input in);
+		double *SSHF, double *xx, input in);
 
 void write_guess(double *SS, double *GG, input in);
 

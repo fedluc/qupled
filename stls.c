@@ -86,7 +86,7 @@ void solve_stls(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text(SS, GG, phi, xx, in);
+  write_text(SS, GG, phi, SSHF, xx, in);
   write_guess(SS, GG, in); 
   if (verbose) printf("Done.\n");
 
@@ -482,7 +482,8 @@ double compute_uex(double *SS, input in) {
 
 
 // write text files for output
-void write_text(double *SS, double *GG, double *phi, double *xx, input in){
+void write_text(double *SS, double *GG, double *phi, 
+		double *SSHF, double *xx, input in){
 
 
     FILE* fid;
@@ -533,7 +534,7 @@ void write_text(double *SS, double *GG, double *phi, double *xx, input in){
     sprintf(out_name, "idr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-      perror("Error while creating the output file for the ");
+      perror("Error while creating the output file for the ideal density response");
       exit(EXIT_FAILURE);
     }
     for (int ii=0; ii<in.nx; ii++){
@@ -544,6 +545,17 @@ void write_text(double *SS, double *GG, double *phi, double *xx, input in){
     }
     fclose(fid);
 
+    // Output for static structure factor in the Hartree-Fock approximation
+    sprintf(out_name, "ssfHF_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+        perror("Error while creating the output file for the static structure factor (HF)");
+        exit(EXIT_FAILURE);
+    }
+    for (int ii = 0; ii < in.nx; ii++)
+        fprintf(fid, "%.8e %.8e\n", xx[ii], SSHF[ii]);
+
+    fclose(fid);
 
 }
 

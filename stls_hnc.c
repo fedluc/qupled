@@ -85,7 +85,7 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text(SS, GG, phi, xx, in);
+  write_text(SS, GG, phi, SSHF, xx, in);
   write_guess(SS, GG, in);
   if (verbose) printf("Done.\n");
 
