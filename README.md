@@ -48,12 +48,14 @@ The following command line options can be employed to control the calculations p
   
   stls produces the following output:
   
-  * One text file with the static structure factor (ssf_rs\*_theta\*_STLS.dat)
-  * One text file with the static local field correction 
-  * One text file with the static density response
-  * One text file with the normalized Lindhard density response
-  * One text file with the static structure factor within the Hartree-Fock approximation
-  * One binary file with the density response. Since the density response depends only on Theta, this file can be stored an provided in input for subsequent solutions of the STLS approach with the same Theta (see option `-p`). It should be noted that, if the option -p is used, the values of the quantum degeneracy parameter, of the grid resolution and of the grid cutoff specified in input will be overwritten by the values contained in the density response file provided in input
+  * One text file with the static structure factor (ssf_rs\*_theta\*\*_\*\*\*.dat)
+  * One text file with the static local field correction (slfc_rs\*_theta\*\*_\*\*\*.dat)
+  * One text file with the static density response (sdr_rs\*_theta\*\*_\*\*\*.dat)
+  * One text file with the normalized ideal Lindhard density response (idr_rs\*_theta\*\*_\*\*\*.dat)
+  * One text file with the static structure factor within the Hartree-Fock approximation (ssfHF_rs\*_theta\*\*_\*\*\*.dat)
+  * One binary file which can be used as an initial guess for subsequent calculations via the option `-f` (restart_rs\*_theta\*\*_\*\*\*.bin)
+
+In the above \* is corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter and \*\*\* to the dielectric approach that was solved. 
 
 ## Quantum STLS 
 
