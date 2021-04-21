@@ -48,7 +48,7 @@ The following command line options can be employed to control the calculations p
   
   stls produces the following output:
   
-  * One text file with the static structure factor (ssf_rs\*_theta\*\*_\*\*\*.dat)
+  * One text file with the static structure factor (ssf_rs\*_theta\*\*\_\*\*\*.dat)
   * One text file with the static local field correction (slfc_rs\*_theta\*\*_\*\*\*.dat)
   * One text file with the static density response (sdr_rs\*_theta\*\*_\*\*\*.dat)
   * One text file with the normalized ideal Lindhard density response (idr_rs\*_theta\*\*_\*\*\*.dat)
