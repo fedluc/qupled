@@ -23,7 +23,7 @@ Given a state point defined via the quantum degeneracy parameter (Theta) and via
 
 * The chemical potential is determined from the normalization condition for the Fermi-Dirac distribution function which is solved with a bisection method
 * The normalized Lindhard density response is computed for various values of the wave-vector and of the Matsubara frequency.
-* For the STLS and STLS-HNC approaches, the static structure factor together and the static local field correction are computed via an iterative solution which employs [mixing](https://aip.scitation.org/doi/abs/10.1063/1.1682399]) and is assumed converged if the condition 
+* The static structure factor and the static local field correction are computed via an iterative solution which employs [mixing](https://aip.scitation.org/doi/abs/10.1063/1.1682399]) and is assumed converged if the condition 
 ||G<sub>i</sub>(x) - G<sub>i-1</sub>(x)|| < epsilon is satisfied between two successive iterations. Here G(x) is the static local field correction and epsilon is a tolerance specified in input.
 * The internal energy is calculated by integrating the static structure factor
 
