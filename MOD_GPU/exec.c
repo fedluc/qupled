@@ -1,13 +1,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
-#include <time.h>
 #include <string.h>
+#include <time.h>
 #include <argp.h>
 #include <math.h>
-#include "stls.h"
-#include "stls_hnc.h"
-#include "qstls.h"
-
+#include "solvers.h"
+ 
 // ----------------------------------------
 // COMMAND LINE PARSER
 // ----------------------------------------
@@ -16,12 +14,10 @@
 static char doc[] =
   "The documentation is available at https://github.com/fedluc/STLS";
 
-
-
 // Optional arguments
 static struct argp_option options[] = {
   {"Theta",    't', "1.0", 0,
-   "Quantum degeneracy parameter"}, 
+   "Quantum degeneracy parameter"},
   {"rs",    'r', "1.0", 0,
    "Quantum coupling parameter"},
   {"xcut",  'x', "20.48", 0,
@@ -38,12 +34,12 @@ static struct argp_option options[] = {
    "Mixing parameter for iterative solution"},
   {"mg", 'g', "-10,10", 0,
    "Initial guess for chemical potential"},
-  {"phi", 'p', "NO_FILE", 0,
-   "Load density response from PHI_FILE"},
-  {"uex", 'u', "NO_FILE", 0,
-   "Compute internal energy from data in SSF_FILE"},
+  {"sg", 'f', "NO_FILE", 0,
+   "Load initial guess from file"},
   {"sol", 's', "STLS",0,
    "Theory to be solved"},
+  {"omp", 'o', "1",0,
+   "Number of omp threads to use in the solution"},
   { 0 }
 };
 
@@ -51,21 +47,21 @@ static struct argp_option options[] = {
 struct arguments
 {
 
-  char *phi_file;
-  char *ssf_file;
+  char *guess_file;
   char *theory; 
-  float Theta;
-  float rs;
-  float dx;
-  float err_min_iter;
-  float err_min_int;
-  float a_mix;
-  float mu_lo;
-  float mu_hi;
-  float xmax;
+  double Theta;
+  double rs;
+  double dx;
+  double err_min_iter;
+  double err_min_int;
+  double a_mix;
+  double mu_lo;
+  double mu_hi;
+  double xmax;
   int nl;
   int nIter;
-  
+  int nThreads;
+
 };
 
 
@@ -86,6 +82,9 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case 'e':
       arguments->err_min_iter = atof(arg);
       break;
+    case 'f':
+      arguments->guess_file = arg;
+    break;
     case 'g':
       value = strtok(NULL, ",");
       if(value != NULL ) {
@@ -107,8 +106,8 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case 'm':
       arguments->a_mix = atof(arg);
       break;
-    case 'p':
-      arguments->phi_file = arg;
+    case 'o':
+      arguments->nThreads = atoi(arg);
       break;
     case 'r':
       arguments->rs = atof(arg);
@@ -118,9 +117,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
       break;
     case 's':
       arguments->theory = arg;
-      break;
-    case 'u':
-      arguments->ssf_file = arg;
       break;
     case 'x':
       arguments->xmax = atof(arg);
@@ -149,27 +145,26 @@ int main (int argc, char **argv){
   struct arguments arguments;
 
   // Default values for optional arguments
-  arguments.phi_file = "NO_FILE"; // File with density response
-  arguments.ssf_file = "NO_FILE"; // File with static structure factor
+  arguments.guess_file = "NO_FILE"; // File with initial guess
   arguments.Theta = 1.0; // Quantum degeneracy parameter
   arguments.rs = 1.0; // Quantum coupling parameter
-  arguments.dx = 0.01; // Wave-vector grid resolution 
+  arguments.dx = 0.01; // Wave-vector grid resolution
   arguments.err_min_iter = 1e-5; // Minimum error for convergence in the iterative procedure
   arguments.a_mix = 0.1; // Mixing parameter for iterative procedure
   arguments.mu_lo = -10; // Initial guess for chemical potential (low bound)
   arguments.mu_hi = 10; // Initial guess for chemical potential (high bound)
   arguments.xmax = 20.48; // Cutoff for wave-vector grid
   arguments.nl = 128; // Number of Matsubara frequencies
-  arguments.nIter = 1000; // Number of iterations 
+  arguments.nIter = 1000; // Number of iterations
   arguments.theory = "STLS"; // Theory to solve
+  arguments.nThreads = 1; // Number of OMP threads to use in the solution
 
   // Parse command line
   argp_parse (&argp, argc, argv, 0, 0, &arguments);
 
   // Fill input structure
   input in;
-  in.phi_file = arguments.phi_file;
-  in.ssf_file = arguments.phi_file;
+  in.guess_file = arguments.guess_file;
   in.Theta = arguments.Theta;
   in.rs = arguments.rs;
   in.dx = arguments.dx; 
@@ -181,21 +176,28 @@ int main (int argc, char **argv){
   in.nl = arguments.nl;
   in.nIter = arguments.nIter;
   in.nx = (int)floor(in.xmax/in.dx);
+  in.theory = arguments.theory;
 
+  // Set number of threads for parallel calculations
+  if (arguments.nThreads > 1)
+    printf("OMP threads are not available for GPU calculations, default to 1\n");
+ 
   // Solve theory specified in input
   clock_t tic = clock();
   if (strcmp(arguments.theory, "STLS") == 0)
-    solve_stls(in, true, NULL, NULL, NULL, NULL, NULL, NULL);
+    solve_stls(in, true);
   else if (strcmp(arguments.theory, "STLS-HNC") == 0)
-    solve_stls_hnc(in, true);
+    solve_stls_hnc(in, true, false);
+  else if (strcmp(arguments.theory, "STLS-IET") == 0)
+    solve_stls_hnc(in, true, true);
   else if (strcmp(arguments.theory, "QSTLS") == 0)
-    solve_qstls(in, true);
+    //solve_qstls(in, true);
+    printf("QSTLS is still not fully implemented\n");
   else
-    printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC and QSTLS\n");
+    printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC, STLS-IET and QSTLS\n");
   clock_t toc = clock();
   printf("Solution complete. Elapsed time: %f seconds\n", ((double)toc - (double)tic) / CLOCKS_PER_SEC);
 
   return 0;
 
 }
-
