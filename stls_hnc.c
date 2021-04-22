@@ -163,7 +163,7 @@ void compute_bf(double *bf, double *xx, input in, bool iet){
   double b02_b12 = b02/b12, b03_b13 = b03/b13, b04_b14 = b04/b14,
     b05_b15 = b05/b15, b06_b16 = b06/b16, b07_b17 = b07/b17, 
     b08_b18 = b08/b18;
-  double ff;
+  double ff = 0.0;
   double q2,q3,q4,q5,q6,q7,q8;
   double bf1, bf2, bf3;
 
