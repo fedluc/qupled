@@ -1,3 +1,4 @@
+extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -6,7 +7,7 @@
 #include "solvers.h"
 #include "stls.h"
 #include "stls_hnc.h"
-
+}
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS-HNC EQUATIONS
@@ -28,7 +29,7 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
 
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
-  bf = malloc( sizeof(float) * in.nx);
+  bf = (float*)malloc( sizeof(float) * in.nx);
   compute_bf(bf, xx, in, iet);
 
   // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
@@ -104,7 +105,6 @@ void compute_slfc_hnc(float *GG_new, float *GG, float *SS,
 		      float *bf, float *xx, input in) {
 
   // Static local field correction
-  #pragma omp parallel for
   for (int ii=0; ii<in.nx; ii++) {
 
     float kmax, kmin, fu, 

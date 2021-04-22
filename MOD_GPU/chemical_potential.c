@@ -6,6 +6,7 @@
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_fermi_dirac.h>
 #include "solvers.h"
+#include "chemical_potential.h"
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE CHEMICAL POTENTIAL

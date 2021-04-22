@@ -1,3 +1,4 @@
+extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -6,7 +7,7 @@
 #include "solvers.h"
 #include "chemical_potential.h"
 #include "stls.h"
-
+}
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS EQUATIONS
@@ -142,7 +143,6 @@ void init_fixed_stls_arrays(input *in, float *xx,
   printf("Number of Matsubara frequencies: %d\n", in->nl);
   printf("Maximum number of iterations: %d\n", in->nIter);
   printf("Error for convergence: %.5e\n", in->err_min_iter);
-  printf("Number of threads: %d\n", omp_get_max_threads());
   printf("----------------------------------------------------\n");
  
   // Chemical potential
