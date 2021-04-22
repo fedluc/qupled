@@ -1,6 +1,8 @@
 #ifndef STLS_H
 #define STLS_H
 
+#include "solvers.h"
+
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
