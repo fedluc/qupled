@@ -103,12 +103,12 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
 void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
 		      double *bf, double *xx, input in) {
 
-  double kmax, kmin, fu, 
-    xx2, uu, uu2, ww2, ww;
-
   // Static local field correction
   #pragma omp parallel for
   for (int ii=0; ii<in.nx; ii++) {
+
+    double kmax, kmin, fu, 
+    xx2, uu, uu2, ww2, ww;
    
     xx2 = xx[ii]*xx[ii];
     GG_new[ii] = 0.0;
