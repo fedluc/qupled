@@ -34,4 +34,11 @@ typedef struct {
 void solve_stls(input in, bool verbose);
 
 
+// -------------------------------------------------------------------
+// FUNCTION USED TO ITERATIVELY SOLVE THE STLS-HNC EQUATIONS
+// -------------------------------------------------------------------
+
+void solve_stls_hnc(input in, bool verbose, bool iet);
+
+
 #endif

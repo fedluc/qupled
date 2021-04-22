@@ -48,7 +48,7 @@ void solve_stls(input in, bool verbose) {
   while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     
     // Start timing
-    float tic = omp_get_wtime();
+    clock_t tic = clock();
     
     // Update SSF
     compute_ssf(SS, SSHF, GG, phi, xx, in);
@@ -66,12 +66,12 @@ void solve_stls(input in, bool verbose) {
     iter_err = sqrt(iter_err);  
    
     // End timing
-    float toc = omp_get_wtime();
-    
+    clock_t tic = clock();
+
     // Print diagnostic
     if (verbose) {
       printf("--- iteration %d ---\n", iter_counter);
-      printf("Elapsed time: %f seconds\n", toc - tic);
+      printf("Elapsed time: %f seconds\n", ((float)toc - (float)tic) / CLOCKS_PER_SEC);
       printf("Residual error: %.5e\n", iter_err);
       fflush(stdout);
     }
@@ -101,12 +101,12 @@ void alloc_stls_arrays(input in, float **xx, float **phi,
 		       float **GG, float **GG_new, 
 		       float **SS, float **SSHF){
 
-  *xx = malloc( sizeof(float) * in.nx);
-  *phi = malloc( sizeof(float) * in.nx * in.nl);
-  *SSHF = malloc( sizeof(float) * in.nx);
-  *GG = malloc( sizeof(float) * in.nx);
-  *GG_new = malloc( sizeof(float) * in.nx);
-  *SS = malloc( sizeof(float) * in.nx);
+  *xx = (float*)malloc( sizeof(float) * in.nx);
+  *phi = (float*)malloc( sizeof(float) * in.nx * in.nl);
+  *SSHF = (float*)malloc( sizeof(float) * in.nx);
+  *GG = (float*)malloc( sizeof(float) * in.nx);
+  *GG_new = (float*)malloc( sizeof(float) * in.nx);
+  *SS = (float*)malloc( sizeof(float) * in.nx);
   
 }
 
@@ -265,7 +265,7 @@ int idx2(int xx, int yy, int x_size) {
 void compute_phi(float *phi, float *xx,  input in, bool verbose) {
 
   // Temporary array to store results
-  float *phil = malloc( sizeof(float) * in.nx);
+  float *phil = (float*)malloc( sizeof(float) * in.nx);
   
   // Loop over the Matsubara frequency
   for (int ll=0; ll<in.nl; ll++){
@@ -286,7 +286,6 @@ void compute_phi(float *phi, float *xx,  input in, bool verbose) {
 void compute_phil(float *phil, float *xx,  int ll, input in) {
 
   // Normalized ideal Lindhard density 
-  #pragma omp parallel for  
   for (int ii = 0; ii<in.nx; ii++) {
 
     phil[ii] = 0.0;
@@ -419,7 +418,6 @@ void compute_ssf(float *SS, float *SSHF, float *GG,
 void compute_slfc(float *GG, float *SS, float *xx, input in) {
 
   // Static local field correction
-  #pragma omp parallel for
   for (int ii = 0; ii < in.nx; ii++) {
     
     GG[ii] = 0.0;
