@@ -193,54 +193,69 @@ int idx2(int xx, int yy, int x_size) {
 
 void compute_phi(float *phi, float *xx,  input in, bool verbose) {
 
-  // Temporary array to store results
-  float *phil = (float*)malloc( sizeof(float) * in.nx);
-  
-  // Loop over the Matsubara frequency
-  for (int ll=0; ll<in.nl; ll++){
-    if (verbose) printf("l = %d\n", ll);
-    // Compute lindhard density
-    compute_phil(phil, xx, ll, in);
-    // Fill output array
-    for (int ii=0; ii<in.nx; ii++){
-      phi[idx2(ii,ll,in.nx)] = phil[ii];
-    }    
-  }
-  
-  // Free memory
-  free(phil);
+  // Threads and blocks
+  int threadLimitPerBlock = 1024;
+  int numberOfThreads = in.nx * in.nl;
+  int numberOfBlocks = (numberOfThreads/threadLimitPerBlock) + 1;
+  dim3 grid(numberOfBlocks, 1, 1);
+  dim3 block(threadLimitPerBlock, 1, 1);
 
+  // Arrays for device
+  float *d_phi = NULL;
+  float *d_xx = NULL;
+  cudaMalloc(&d_phi, sizeof(float) * in.nx * in.nl);
+  cudaMalloc(&d_xx, sizeof(float) * in.nx);
+
+  // Copy arrays to device
+  cudaMemcpy(d_phi, psi, sizeof(float) * in.nx *in.nl, 
+	     cudaMemcpyHostToDevice);
+  cudaMemcpy(d_xx, xx, sizeof(float) * in.nx, 
+	     cudaMemcpyHostToDevice);  
+
+  // Compute normalized ideal Lindhart density on device
+  compute_phil <<< grid, block >>> (d_phi, d_xx, ll, in);
+ 
+  // Copy solution from device 
+  cudaMemcpy(phi, d_phi, sizeof(float)*in.nx*in.nl, cudaMemcpyDeviceToHost);
+
+  // Free memory
+  cudaFree(d_phi);
+  cudaFree(d_xx);
+ 
 }
 
-void compute_phil(float *phil, float *xx,  int ll, input in) {
+__global__ void compute_phil(float *phil, float *xx,  int ll, input in) {
 
-  // Normalized ideal Lindhard density 
-  for (int ii = 0; ii<in.nx; ii++) {
+  int threadId = threadIdx.x + blockIdx.x * blockDim.x;
 
-    phil[ii] = 0.0;
-    if (ll == 0){
+  if (threadId >= in.nx*in.nl) return;
+
+  int ii = threadId % in.nx;
+  int ll = threadId % in.nl;
+
+  phil[threadId] = 0.0;
+  if (ll == 0){
       
-      for (int jj=0; jj<in.nx; jj++){
-    	phil[ii] += phix0(xx[jj], xx[ii], in);
-      }
-      phil[ii] *= in.dx;
-      
+    for (int jj=0; jj<in.nx; jj++){
+      phil[ii] += phix0(xx[jj], xx[ii], in);
     }
-    else {
-
-      for (int jj=0; jj<in.nx; jj++){
-    	phil[ii] += phixl(xx[jj], xx[ii], ll, in);
-      }
-      phil[ii] *= in.dx;
-      
-
-    }
+    phil[ii] *= in.dx;
     
   }
+  else {
+    
+    for (int jj=0; jj<in.nx; jj++){
+      phil[ii] += phixl(xx[jj], xx[ii], ll, in);
+    }
+    phil[ii] *= in.dx;
+    
+
+  }
+    
   
 }
 
-float phixl(float yy, float xx, int ll, input in) {
+__device__ float phixl(float yy, float xx, int ll, input in) {
 
   float yy2 = yy*yy, xx2 = xx*xx, txy = 2*xx*yy, 
     tplT = 2*M_PI*ll*in.Theta, tplT2 = tplT*tplT;
@@ -250,7 +265,7 @@ float phixl(float yy, float xx, int ll, input in) {
 
 }
 
-float phix0(float yy, float xx, input in) {
+__device__ float phix0(float yy, float xx, input in) {
 
   float yy2 = yy*yy, xx2 = xx*xx, xy = xx*yy;
 
@@ -273,33 +288,6 @@ float phix0(float yy, float xx, input in) {
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
-
-float ssfHF(float yy, float xx, input in) {
-
-  float yy2 = yy*yy, ypx = yy + xx, ymx = yy - xx;
- 
-  return -3.0*in.Theta/(4.0*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
-    *log((1 + exp(in.mu - ymx*ymx/in.Theta))
-	 /(1 + exp(in.mu - ypx*ypx/in.Theta)));
-
-}
-
-void compute_ssfHF(float *SS,  float *xx,  input in){
-
-  // Static structure factor in the Hartree-Fock approximation
-  for (int ii = 0; ii < in.nx; ii++) {
-
-    SS[ii] = 0.0;
-    for (int jj=0; jj<in.nx; jj++){
-      SS[ii] += ssfHF(xx[jj], xx[ii], in);
-    }
-    SS[ii] *= in.dx;
-    SS[ii] += 1.0;
-
-  }
-  
-}
-
 
 void compute_ssf(float *SS, float *SSHF, float *GG, 
 		 float *phi, float *xx, input in){
@@ -339,6 +327,32 @@ void compute_ssf(float *SS, float *SSHF, float *GG,
 
 }
 
+double ssfHF(double yy, double xx, input in) {
+
+  double yy2 = yy*yy, ypx = yy + xx, ymx = yy - xx;
+ 
+  return -3.0*in.Theta/(4.0*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
+    *log((1 + exp(in.mu - ymx*ymx/in.Theta))
+	 /(1 + exp(in.mu - ypx*ypx/in.Theta)));
+
+}
+
+void compute_ssfHF(double *SS,  double *xx,  input in){
+
+  // Static structure factor in the Hartree-Fock approximation
+  for (int ii = 0; ii < in.nx; ii++) {
+
+    SS[ii] = 0.0;
+    for (int jj=0; jj<in.nx; jj++){
+      SS[ii] += ssfHF(xx[jj], xx[ii], in);
+    }
+    SS[ii] *= in.dx;
+    SS[ii] += 1.0;
+
+  }
+  
+}
+ 
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
@@ -358,6 +372,7 @@ void compute_slfc(float *GG, float *SS, float *xx, input in) {
   }
   
 }
+
 
 float slfc(float yy, float xx, float SS) {
 
