@@ -111,6 +111,8 @@ struct slfcu_params {
   gsl_interp_accel *slfc_acc_ptr;
   gsl_spline *GGu_sp_ptr;
   gsl_interp_accel *GGu_acc_ptr;
+  gsl_spline *bf_sp_ptr;
+  gsl_interp_accel *bf_acc_ptr;
   double u_min_cut;
   double u_max_cut;
 
@@ -143,6 +145,8 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
   gsl_interp_accel *slfc_acc_ptr;
   gsl_spline *GGu_sp_ptr;
   gsl_interp_accel *GGu_acc_ptr;
+  gsl_spline *bf_sp_ptr;
+  gsl_interp_accel *bf_acc_ptr;
   
   // Allocate the accelerator and the spline objects
   ssf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
@@ -151,10 +155,13 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
   slfc_acc_ptr = gsl_interp_accel_alloc();
   GGu_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   GGu_acc_ptr = gsl_interp_accel_alloc();
+  bf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  bf_acc_ptr = gsl_interp_accel_alloc();
   
   // Initialize the spline
   gsl_spline_init(ssf_sp_ptr, xx, SS, in.nx);    
   gsl_spline_init(slfc_sp_ptr, xx, GG, in.nx);    
+  gsl_spline_init(bf_sp_ptr, xx, bf, in.nx);    
 
   // Integration workspace
   gsl_integration_cquad_workspace *wsp
@@ -202,6 +209,7 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
       struct slfcu_params slfcup = {ssf_sp_ptr, ssf_acc_ptr,
 				    slfc_sp_ptr, slfc_acc_ptr,
 				    GGu_sp_ptr, GGu_acc_ptr,
+				    bf_sp_ptr, bf_acc_ptr,
 				    xx[0], xx[in.nx-1]};
       fu_int.params = &slfcup;
       gsl_integration_cquad(&fu_int,
@@ -211,6 +219,7 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
 			    &GG_new[ii], &err, &nevals);
       
       GG_new[ii] *= 3.0/(8.0*xx[ii]);
+      GG_new[ii] += bf[ii];
 
     }
 
@@ -227,6 +236,8 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
   gsl_interp_accel_free(slfc_acc_ptr);
   gsl_spline_free(GGu_sp_ptr);
   gsl_interp_accel_free(GGu_acc_ptr);
+  gsl_spline_free(bf_sp_ptr);
+  gsl_interp_accel_free(bf_acc_ptr);
 
 }
 
@@ -239,12 +250,15 @@ double slfc_u(double uu, void* pp) {
   gsl_interp_accel* slfc_acc_ptr = (params->slfc_acc_ptr);
   gsl_spline* GGu_sp_ptr = (params->GGu_sp_ptr);
   gsl_interp_accel* GGu_acc_ptr = (params->GGu_acc_ptr);
+  gsl_spline* bf_sp_ptr = (params->bf_sp_ptr);
+  gsl_interp_accel* bf_acc_ptr = (params->bf_acc_ptr);
   double u_min_cut = (params->u_min_cut);
   double u_max_cut = (params->u_max_cut);
 
   if (uu >= u_min_cut && uu <= u_max_cut && uu > 0.0)
     return (1.0/uu) * gsl_spline_eval(GGu_sp_ptr, uu, GGu_acc_ptr)
-      *(1 - (gsl_spline_eval(ssf_sp_ptr, uu, ssf_acc_ptr) - 1.0)
+      *(-gsl_spline_eval(bf_sp_ptr, uu, bf_acc_ptr) + 1 
+	- (gsl_spline_eval(ssf_sp_ptr, uu, ssf_acc_ptr) - 1.0)
 	*(gsl_spline_eval(slfc_sp_ptr, uu, slfc_acc_ptr) - 1.0));
   else 
     return 0;

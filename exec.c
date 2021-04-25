@@ -186,7 +186,7 @@ int main (int argc, char **argv){
   // Set number of threads for parallel calculations
   omp_set_num_threads(arguments.nThreads);
  
-  // Solve theory specified in input
+  /* // Solve theory specified in input */
   double tic = omp_get_wtime();
   if (strcmp(arguments.theory, "STLS") == 0)
     solve_stls(in, true);

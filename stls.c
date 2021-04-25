@@ -731,6 +731,16 @@ void write_text(double *SS, double *GG, double *phi,
 
     fclose(fid);
 
+    // Output for the interaction energy
+    sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+        perror("Error while creating the output file for the interaction energy");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(fid, "%.8e\n", compute_uex(SS, xx, in));
+    fclose(fid);
+
 }
 
 
