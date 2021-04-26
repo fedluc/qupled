@@ -10,10 +10,6 @@
 void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
                       double *bf, double *xx, input in);
 
-double slfc_u(double uu, void* pp);
-
-double slfc_w(double ww, void* pp);
-
 void compute_bf(double *bf, double *xx, input in, bool iet);
 
 

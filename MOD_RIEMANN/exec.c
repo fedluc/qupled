@@ -182,9 +182,8 @@ int main (int argc, char **argv){
   in.theory = arguments.theory;
 
   // Set number of threads for parallel calculations
-  if (arguments.nThreads > 1)
-    printf("OMP threads are not available for calculations with adaptive quadrature, default to 1\n");
-
+  omp_set_num_threads(arguments.nThreads);
+ 
   // Solve theory specified in input
   double tic = omp_get_wtime();
   if (strcmp(arguments.theory, "STLS") == 0)

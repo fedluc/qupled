@@ -7,9 +7,9 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_integration.h>
 #include <string.h>
+#include "solvers.h"
 #include "stls.h"
 #include "stls_hnc.h"
-
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS-HNC EQUATIONS
@@ -113,8 +113,6 @@ struct slfcu_params {
   gsl_interp_accel *GGu_acc_ptr;
   gsl_spline *bf_sp_ptr;
   gsl_interp_accel *bf_acc_ptr;
-  double u_min_cut;
-  double u_max_cut;
 
 };
 
@@ -124,8 +122,6 @@ struct slfcw_params {
   double uu;
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
-  double w_min_cut;
-  double w_max_cut;
 
 };
 
@@ -184,8 +180,7 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
 	if (xx[jj] >  0.0) {
 
 	  struct slfcw_params slfcwp = {xx[ii], xx[jj], 
-					ssf_sp_ptr, ssf_acc_ptr,
-					xx[0], xx[in.nx-1]};
+					ssf_sp_ptr, ssf_acc_ptr};
 	  wmin = xx[jj] - xx[ii];
 	  if (wmin < 0.0) wmin = -wmin;
 	  wmax = GSL_MIN(xx[in.nx-1], xx[ii]+xx[jj]);
@@ -209,8 +204,7 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
       struct slfcu_params slfcup = {ssf_sp_ptr, ssf_acc_ptr,
 				    slfc_sp_ptr, slfc_acc_ptr,
 				    GGu_sp_ptr, GGu_acc_ptr,
-				    bf_sp_ptr, bf_acc_ptr,
-				    xx[0], xx[in.nx-1]};
+				    bf_sp_ptr, bf_acc_ptr};
       fu_int.params = &slfcup;
       gsl_integration_cquad(&fu_int,
 			    xx[0], xx[in.nx-1],
@@ -222,8 +216,8 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
       GG_new[ii] += bf[ii];
 
     }
-
-    else GG_new[ii] = 0.0;
+    else 
+      GG_new[ii] = 0.0;
 
   }
 
@@ -252,10 +246,8 @@ double slfc_u(double uu, void* pp) {
   gsl_interp_accel* GGu_acc_ptr = (params->GGu_acc_ptr);
   gsl_spline* bf_sp_ptr = (params->bf_sp_ptr);
   gsl_interp_accel* bf_acc_ptr = (params->bf_acc_ptr);
-  double u_min_cut = (params->u_min_cut);
-  double u_max_cut = (params->u_max_cut);
 
-  if (uu >= u_min_cut && uu <= u_max_cut && uu > 0.0)
+  if (uu > 0.0)
     return (1.0/uu) * gsl_spline_eval(GGu_sp_ptr, uu, GGu_acc_ptr)
       *(-gsl_spline_eval(bf_sp_ptr, uu, bf_acc_ptr) + 1 
 	- (gsl_spline_eval(ssf_sp_ptr, uu, ssf_acc_ptr) - 1.0)
@@ -269,17 +261,13 @@ double slfc_w(double ww, void* pp) {
   struct slfcw_params* params = (struct slfcw_params*)pp;
   double xx = (params->xx);
   double uu = (params->uu);
-  double w_min_cut = (params->w_min_cut);
-  double w_max_cut = (params->w_max_cut);
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
   double ww2 = ww*ww, xx2 = xx*xx, uu2 = uu*uu;
     
-  if (ww >= w_min_cut && ww <= w_max_cut)
-    return (ww2 - uu2 - xx2)*ww
-      *(gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0);
-  else 
-    return 0;
+  return (ww2 - uu2 - xx2)*ww
+    *(gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0);
+
 }
 
 

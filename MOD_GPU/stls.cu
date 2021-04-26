@@ -260,8 +260,13 @@ __device__ float phixl(float yy, float xx, int ll, input in) {
   float yy2 = yy*yy, xx2 = xx*xx, txy = 2*xx*yy, 
     tplT = 2*M_PI*ll*in.Theta, tplT2 = tplT*tplT;
 
-  return 1.0/(2*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
-    *log(((xx2+txy)*(xx2+txy) + tplT2)/((xx2-txy)*(xx2-txy) + tplT2));
+  if (xx > 0.0) {
+    return 1.0/(2*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
+      *log(((xx2+txy)*(xx2+txy) + tplT2)/((xx2-txy)*(xx2-txy) + tplT2));
+  }
+  else {
+    return 0;
+  }
 
 }
 
@@ -269,19 +274,26 @@ __device__ float phix0(float yy, float xx, input in) {
 
   float yy2 = yy*yy, xx2 = xx*xx, xy = xx*yy;
 
-  if (xx < 2*yy){
-    return 1.0/(in.Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(2*yy - xx)) + xy)
-      *yy/(exp(yy2/in.Theta - in.mu) + exp(-yy2/in.Theta + in.mu) + 2.0);
-  }
-  else if (xx > 2*yy){
-    return 1.0/(in.Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(xx - 2*yy)) + xy)
-      *yy/(exp(yy2/in.Theta - in.mu) + exp(-yy2/in.Theta + in.mu) + 2.0);
-  }
-  else {
-    return 1.0/(in.Theta)*yy2/(exp(yy2/in.Theta - in.mu) 
-			       + exp(-yy2/in.Theta + in.mu) + 2.0);;
+  if (xx > 0.0){
+
+    if (xx < 2*yy){
+      return 1.0/(in.Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(2*yy - xx)) + xy)
+        *yy/(exp(yy2/in.Theta - in.mu) + exp(-yy2/in.Theta + in.mu) + 2.0);
+    }
+    else if (xx > 2*yy){
+      return 1.0/(in.Theta*xx)*((yy2 - xx2/4.0)*log((2*yy + xx)/(xx - 2*yy)) + xy)
+        *yy/(exp(yy2/in.Theta - in.mu) + exp(-yy2/in.Theta + in.mu) + 2.0);
+    }
+    else {
+      return 1.0/(in.Theta)*yy2/(exp(yy2/in.Theta - in.mu)
+                                 + exp(-yy2/in.Theta + in.mu) + 2.0);;
+    }
   }
 
+  else{
+    return (2.0/in.Theta)*yy2/(exp(yy2/in.Theta - in.mu)
+                               + exp(-yy2/in.Theta + in.mu) + 2.0);
+  }
 
 }
 
@@ -294,50 +306,45 @@ void compute_ssf(float *SS, float *SSHF, float *GG,
 
   float lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   float ff = 4*lambda*in.rs/M_PI;
-  float xx2, BB, BB_tmp, BB_den, tplT, phixl, Axl;
+  float xx2, BB, BB_tmp, BB_den, phixl;
+  float tplT, Axl;
 
   for (int ii=0; ii<in.nx; ii++){
 
-    xx2 = xx[ii]*xx[ii];
-    BB = 0.0;
-
-    for (int ll=0; ll<in.nl; ll++){
-      tplT = 2*M_PI*ll*in.Theta;
-      phixl = phi[idx2(ii,ll,in.nx)];
-      Axl = (4.0/3.0)*xx2/(tplT*tplT + xx2*xx2);
-      BB_den = 1.0 + ff/xx2*(1 - GG[ii])*phixl;
-      //BB_tmp = phixl*phixl/BB_den - Axl*Axl;
-      BB_tmp = phixl*phixl/BB_den;
-      if (ll>0) BB_tmp *= 2.0;
-      BB += BB_tmp;
-	
-    }
+    if (xx[ii] > 0.0){
+      xx2 = xx[ii]*xx[ii];
+      BB = 0.0;
       
-    /* SS[ii] = SSHF[ii] */
-    /*   - 3.0/2.0*ff/xx2*in.Theta*(1- GG[ii])*BB */
-    /*   - 1.0/3.0*ff/xx2/in.Theta*(1 - GG[ii])* */
-    /*   (1.0/sinh(xx2/(2*in.Theta))* */
-    /*    1.0/sinh(xx2/(2*in.Theta)) + */
-    /*    2.0*in.Theta/xx2* */
-    /*    1.0/tanh(xx2/(2*in.Theta))); */
-    SS[ii] = SSHF[ii]
-      - 3.0/2.0*ff/xx2*in.Theta*(1- GG[ii])*BB;
-
+      for (int ll=0; ll<in.nl; ll++){
+	tplT = 2*M_PI*ll*in.Theta;
+	phixl = phi[idx2(ii,ll,in.nx)];
+	Axl = (4.0/3.0)*xx2/(tplT*tplT + xx2*xx2);
+	BB_den = 1.0 + ff/xx2*(1 - GG[ii])*phixl;
+	//BB_tmp = phixl*phixl/BB_den - Axl*Axl;
+	BB_tmp = phixl*phixl/BB_den;
+	if (ll>0) BB_tmp *= 2.0;
+	BB += BB_tmp;
+	
+      }
+      
+      /* SS[ii] = SSHF[ii] */
+      /*   - 3.0/2.0*ff/xx2*in.Theta*(1- GG[ii])*BB */
+      /*   - 1.0/3.0*ff/xx2/in.Theta*(1 - GG[ii])* */
+      /*   (1.0/sinh(xx2/(2*in.Theta))* */
+      /*    1.0/sinh(xx2/(2*in.Theta)) + */
+      /*    2.0*in.Theta/xx2* */
+      /*    1.0/tanh(xx2/(2*in.Theta))); */
+      SS[ii] = SSHF[ii]
+	- 3.0/2.0*ff/xx2*in.Theta*(1- GG[ii])*BB;
+      
+    }
+    else 
+      SS[ii] = 0.0;
   }
 
 }
 
-double ssfHF(double yy, double xx, input in) {
-
-  double yy2 = yy*yy, ypx = yy + xx, ymx = yy - xx;
- 
-  return -3.0*in.Theta/(4.0*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
-    *log((1 + exp(in.mu - ymx*ymx/in.Theta))
-	 /(1 + exp(in.mu - ypx*ypx/in.Theta)));
-
-}
-
-void compute_ssfHF(double *SS,  double *xx,  input in){
+void compute_ssfHF(float *SS,  float *xx,  input in){
 
   // Static structure factor in the Hartree-Fock approximation
   for (int ii = 0; ii < in.nx; ii++) {
@@ -353,6 +360,21 @@ void compute_ssfHF(double *SS,  double *xx,  input in){
   
 }
  
+float ssfHF(float yy, float xx, input in) {
+
+  float yy2 = yy*yy, ypx = yy + xx, ymx = yy - xx;
+ 
+  if (xx > 0.0){
+    return -3.0*in.Theta/(4.0*xx)*yy/(exp(yy2/in.Theta - in.mu) + 1.0)
+      *log((1 + exp(in.mu - ymx*ymx/in.Theta))
+           /(1 + exp(in.mu - ypx*ypx/in.Theta)));
+  }
+  else {
+    return -3.0/2.0*yy2/(1.0 + cosh(yy2/in.Theta - in.mu));
+  }
+
+
+}
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
@@ -376,19 +398,26 @@ void compute_slfc(float *GG, float *SS, float *xx, input in) {
 
 float slfc(float yy, float xx, float SS) {
 
-    float yy2 = yy * yy, xx2 = xx * xx;
+  float yy2 = yy * yy, xx2 = xx * xx;
 
+  if (xx > 0.0 && yy > 0.0){
+    
     if (xx > yy){
-      return -3.0/4.0* yy2 * (SS - 1.0)
+      return -(3.0/4.0) * yy2 * (SS - 1.0)
 	* (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(xx - yy)));
     }
     else if (xx < yy) {
-      return -3.0/4.0* yy2 * (SS - 1.0)
+      return -(3.0/4.0) * yy2 * (SS - 1.0)
 	* (1 + (xx2 - yy2)/(2*xx*yy)*log((xx + yy)/(yy - xx)));
     }
     else {
-      return yy2 * (SS - 1.0);
+      return -(3.0/4.0) * yy2 * (SS - 1.0);
     }
+    
+  }
+  else
+    return 0;
+  
 
 }
 

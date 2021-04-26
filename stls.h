@@ -1,37 +1,7 @@
 #ifndef STLS_H
 #define STLS_H
 
-#include <stdbool.h>
-
-// -------------------------------------------------------------------
-// STRUCTURE TO STORE THE INPUT PARAMETERS
-// -------------------------------------------------------------------
-
-typedef struct {
-
-  char *guess_file;
-  char *theory;
-  double Theta;
-  double rs;
-  double dx;
-  double err_min_iter;
-  double a_mix;
-  double mu_lo;
-  double mu_hi;
-  double mu;
-  double xmax;
-  int nl;
-  int nx;
-  int nIter;
-
-
-} input;
-
-// -------------------------------------------------------------------
-// FUNCTION USED TO ITERATIVELY SOLVE THE STLS EQUATIONS
-// -------------------------------------------------------------------
-
-void solve_stls(input in, bool verbose);
+#include "solvers.h"
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
@@ -53,20 +23,11 @@ void free_stls_arrays(double *xx, double *phi, double *GG,
 void init_fixed_stls_arrays(input *in, double *xx, 
 			    double *phi, double *SSHF, bool verbose);
 
-// -------------------------------------------------------------------
-// FUNCTION USED TO COMPUTE THE CHEMICAL POTENTIAL
-// -------------------------------------------------------------------
-
-double compute_mu(input in);
-
-double normalization_condition(double mu, void *pp);
-
 // ------------------------------------------------------------------
 // FUNCTION USED TO DEFINE THE WAVE-VECTOR GRID
 // ------------------------------------------------------------------
 
 void wave_vector_grid(double *xx, input in);
-
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ACCESS ONE ELEMENT OF A TWO-DIMENSIONAL ARRAY
@@ -91,13 +52,13 @@ double phix0(double yy, void *pp);
 // FUNCTIONS USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
 
-void compute_ssfHF(double *SS,  double *xx, input in);
-
-double ssfHF(double yy, void *pp);
-
 void compute_ssf(double *SS, double *SSHF,
                  double *GG, double *phi, 
 		 double *xx, input in);
+
+void compute_ssfHF(double *SS,  double *xx, input in);
+
+double ssfHF(double yy, void *pp);
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
