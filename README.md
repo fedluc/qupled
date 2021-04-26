@@ -29,7 +29,10 @@ Given a state point defined via the quantum degeneracy parameter (Theta) and via
 ||G<sub>i</sub>(x) - G<sub>i-1</sub>(x)|| < epsilon is satisfied between two successive iterations. Here G(x) is the static local field correction and epsilon is a tolerance specified in input.
 * The internal energy is calculated by integrating the static structure factor
 
-All the integrals which appear in the calculation of the static structure factor and of the internal energy are computed with a mid-point Riemann sum.
+The integrals which appear in the calculation of the static structure factor and of the internal energy can be computed with:
+
+* Doubly-adaptive Clenshaw-Curtis quadrature scheme as implemented in the [CQUAD](https://www.gnu.org/software/gsl/doc/html/integration.html) function of the GSL library. This is the defualt quadrature scheme that is adopted if no alternative quadrature scheme is specified at compilation time
+* 
 
 The following command line options can be employed to control the calculations performed by stls (the same information can also be retrieved by running stls with the option `--help`) :
 
