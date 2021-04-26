@@ -1,26 +1,21 @@
-# Compiler 
-CC = gcc
-CFLAGS = -Wall -O2 -std=gnu99
+# Default type of integration scheme
+ifndef $(ITG)
+ITG = cquad
+endif
 
-# Include
-INCLUDE += -I/home/x_fedlu/gsl/include
+# Name of output file
+ifndef $(EXE)
+EXE = stls
+endif
 
-# Files
-SRC = $(wildcard *.c)
-OBJS = $(patsubst %.c, %.o, $(SRC))
+# Run appropriate make files
+.PHONY : all
+all:
+	cd $(ITG) && make $@ EXE=$(EXE) && mv $(EXE) ..
 
-# Name of the executable
-EXECUTABLE = stls
 
-# Compile
-all: $(EXECUTABLE)
-
-%.o: %.c
-	 $(CC) $(CFLAGS) -fopenmp $(INCLUDE) -c $<
-
-# Link
-$(EXECUTABLE): $(OBJS)
-	 $(CC) -fopenmp $^ -o $@ -lgsl -lgslcblas -lm
-
+.PHONY : clean
 clean:
-	 rm *.o ${EXECUTABLE}
+	cd $(ITG) && make $@
+	rm $(EXE)
+

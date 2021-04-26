@@ -9,18 +9,15 @@ INCLUDE += -I/home/x_fedlu/gsl/include
 SRC = $(wildcard *.c)
 OBJS = $(patsubst %.c, %.o, $(SRC))
 
-# Name of the executable
-EXECUTABLE = stls
-
 # Compile
-all: $(EXECUTABLE)
+all: $(EXE)
 
 %.o: %.c
 	 $(CC) $(CFLAGS) -fopenmp $(INCLUDE) -c $<
 
 # Link
-$(EXECUTABLE): $(OBJS)
+$(EXE): $(OBJS)
 	 $(CC) -fopenmp $^ -o $@ -lgsl -lgslcblas -lm
 
 clean:
-	 rm *.o ${EXECUTABLE}
+	 rm *.o
