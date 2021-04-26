@@ -8,10 +8,15 @@ ifndef $(EXE)
 EXE = stls
 endif
 
+# Path for the GSL library
+ifndef $(GSL)
+GSL = -I/home/x_fedlu/gsl/include
+endif
+
 # Run appropriate make files
 .PHONY : all
 all:
-	cd $(ITG) && make $@ EXE=$(EXE) && mv $(EXE) ..
+	cd $(ITG) && make $@ EXE=$(EXE) GSL=$(GSL) && mv $(EXE) ..
 
 
 .PHONY : clean

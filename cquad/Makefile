@@ -3,7 +3,7 @@ CC = gcc
 CFLAGS = -Wall -O2 -std=gnu99
 
 # Include
-INCLUDE += -I/home/x_fedlu/gsl/include
+INCLUDE += $(GSL)
 
 # Files
 SRC = $(wildcard *.c)
