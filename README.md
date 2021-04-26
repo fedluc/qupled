@@ -14,7 +14,7 @@ stls can only be employed to compute the static structure factor of finite-tempe
 
 ## Compiling
 
-The code can be compiled with gcc and with the [make file](Makefile) provided in the source directory. Please note that in order to correctly compile the program it is necessary that the following libraries are installed
+The code can be compiled with gcc and with the [make file](Makefile) provided in the source directory. Please note that in order to correctly compile the code it is necessary that the following libraries are installed
 
 * [GNU scientific library](https://www.gnu.org/software/gsl/). This library must be explicitly included by calling `make GSL="PATH"`, where `PATH` is the path to the folder containing the header files of the library. Alternatively, it is possible to change the default value of the GSL variable in the Makefile and then to simply compile via `make`.
 * [OpenMP library](https://en.wikipedia.org/wiki/OpenMP). In most cases it is not necessary to explicitly include the path to this library. However, if this should be necessary, it should be possible to do so by modifying the `INCLUDE` variables which appear in the Makefiles in the [cquad](cquad) and [riemann](riemann) folders.
