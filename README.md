@@ -14,8 +14,10 @@ stls can only be employed to compute the static structure factor of finite-tempe
 
 ## Compiling
 
-The code can be compiled with gcc and with the [make file](Makefile) provided in the source directory. Please note that in order to correctly compile the program it is necessary 
-that the [GNU scientific library](https://www.gnu.org/software/gsl/) is installed and that the path to the library is included in the make file.
+The code can be compiled with gcc and with the [make file](Makefile) provided in the source directory. Please note that in order to correctly compile the program it is necessary that the following libraries are installed:
+
+* The [GNU scientific library](https://www.gnu.org/software/gsl/). The path for such library must also be explicitly included in the make file via the variable `INCLUDE`. 
+* The [OpenMP library](https://en.wikipedia.org/wiki/OpenMP). 
 
 ## Running 
 
@@ -27,7 +29,12 @@ Given a state point defined via the quantum degeneracy parameter (Theta) and via
 ||G<sub>i</sub>(x) - G<sub>i-1</sub>(x)|| < epsilon is satisfied between two successive iterations. Here G(x) is the static local field correction and epsilon is a tolerance specified in input.
 * The internal energy is calculated by integrating the static structure factor
 
-All the integrals which appear in the calculation of the static structure factor and of the internal energy are computed with a mid-point Riemann sum.
+The integrals which appear in the calculation of the static structure factor and of the internal energy can be computed with one of the following two methods
+
+* doubly-adaptive Clenshaw-Curtis rule as implemented in the [CQUAD function](https://www.gnu.org/software/gsl/doc/html/integration.html) of the GSL library 
+* mid-point Riemann sum. In this case the calculation of the integrals can be accelerated with the aid of the OMP threads (see option `-x`)
+
+The default behavior of the code is to use the doubly-adaptive Clenshaw-Curtis rule. In order to use the mid-point Riemann sum
 
 The following command line options can be employed to control the calculations performed by stls (the same information can also be retrieved by running stls with the option `--help`) :
 
@@ -38,7 +45,7 @@ The following command line options can be employed to control the calculations p
   * `-i` or `--iter`  specifies the maximum number of iterations to employ in the iterative procedure used to compute the static structure factor.  Default `-i 1000` or `--iter=1000`
   * `-l` or `--nl=128`  specifies the number of Matsubara frequencies.  Default `-l 128` or `--nl=128`.
   * `-m` or `--mix=0.1` specifies the mixing parameter for iterative solution.  Default `-m 0.1` or `--mix=0.1`.
-  * `-o` or `--omp=1` specifies how many omp threads to use for the parts of the code that can be executed in parallel. For single core calculations, 16 threads is usually a reasonable choice. Default `-o 1` or `--omp=1`.
+  * `-o` or `--omp=1` specifies how many omp threads to use for the parts of the code that can be executed in parallel. For single core calculations, 16 threads is usually a reasonable choice. NOTE: this option is only used if the integrations are performed via Riemann sums. Default `-o 1` or `--omp=1`.
   * `-r` or `--rs=1.0`    specifies the  quantum coupling parameter. Default `-r 1.0` or `--rs=1.0`.
   * `-s` or `--sol=STLS`   specifies which approach should be employed to compute the static structure factor. Accepted options are `STLS` (classical STLS approach), `STLS-HNC` (classical STLS-HNC approach) and `STLS-IET` (classical STLS-IET approach). Default `-s STLS` or `--sol=STLS`.
   * `-t` or `--Theta=1.0` specifies the  quantum degeneracy parameter. Default `-t 1.0` or `--Theta=1.0`.
