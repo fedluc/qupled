@@ -15,7 +15,9 @@ stls can only be employed to compute the static structure factor of finite-tempe
 ## Compiling
 
 The code can be compiled with gcc and with the [make file](Makefile) provided in the source directory. Please note that in order to correctly compile the program it is necessary 
-that the [GNU scientific library](https://www.gnu.org/software/gsl/) is installed and that the path to the library is included in the make file.
+that the following libraries are installed
+
+* [GNU scientific library](https://www.gnu.org/software/gsl/). This library must be explicitly included by calling `make GSL="PATH"`, where `PATH` is the path to the folder containing the header files of the library. Alternatively, it is possible to change the default value of the GSL variable in the Makefile and then to simply compile via `make`.
 
 ## Running 
 
