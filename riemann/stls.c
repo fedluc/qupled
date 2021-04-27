@@ -79,7 +79,7 @@ void solve_stls(input in, bool verbose) {
   if (verbose) printf("Done.\n");
   
   // Internal energy
-  if (verbose) printf("Internal energy: %f\n",compute_uex(SS, in));
+  if (verbose) printf("Internal energy: %.10f\n",compute_uex(SS, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
@@ -514,6 +514,17 @@ void write_text(double *SS, double *GG, double *phi,
 
     fclose(fid);
 
+    // Output for the interaction energy
+    sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+      perror("Error while creating the output file for the interaction energy");
+      exit(EXIT_FAILURE);
+    }
+    fprintf(fid, "%.8e\n", compute_uex(SS, xx, in));
+    fclose(fid);
+
+    
 }
 
 
