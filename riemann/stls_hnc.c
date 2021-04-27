@@ -81,7 +81,7 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
   if (verbose) printf("Done.\n");
   
   // Internal energy
-  if (verbose) printf("Internal energy: %f\n",compute_uex(SS, in));
+  if (verbose) printf("Internal energy: %.10f\n",compute_uex(SS, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
