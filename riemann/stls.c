@@ -521,7 +521,7 @@ void write_text(double *SS, double *GG, double *phi,
       perror("Error while creating the output file for the interaction energy");
       exit(EXIT_FAILURE);
     }
-    fprintf(fid, "%.8e\n", compute_uex(SS, xx, in));
+    fprintf(fid, "%.8e\n", compute_uex(SS, in));
     fclose(fid);
 
     
