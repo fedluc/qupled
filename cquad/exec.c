@@ -186,6 +186,8 @@ int main (int argc, char **argv){
     printf("OMP threads are not available for calculations with adaptive quadrature, default to 1\n");
 
   // Solve theory specified in input
+
+  // Start timing
   double tic = omp_get_wtime();
   if (strcmp(arguments.theory, "STLS") == 0)
     solve_stls(in, true);
@@ -197,8 +199,12 @@ int main (int argc, char **argv){
     //solve_qstls(in, true);
     printf("QSTLS is still not fully implemented\n");
   else
-    printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC, STLS-IET STLS-IET-2021 and QSTLS\n");
+    printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC, STLS-IET, STLS-IET-2021 and QSTLS\n");
+
+  // End timing 
   double toc = omp_get_wtime();
+
+  // Print conclusion message on screen
   printf("Solution complete. Elapsed time: %f seconds\n", toc - tic);
 
 
