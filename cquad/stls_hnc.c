@@ -471,7 +471,7 @@ double  rbfr(double rr, void *pp){
   blr = c0 * exp(-c1*rmc4*rmc4) * ( cos(c2*rmc4) + c3*exp(-4.0*rmc4) );
 
   // Full range fit
-  ff = 0.5 * ( 1.0 + erf(10*(rr - 1.55)) );
+  ff = 0.5 * ( 1.0 + erf(5.0*(rr - 1.55)) );
 
   return rr*((1 - ff)*bsr + ff*blr);
 
