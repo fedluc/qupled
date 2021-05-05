@@ -15,7 +15,7 @@
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS-HNC EQUATIONS
 // -------------------------------------------------------------------
 
-void solve_stls_hnc(input in, bool verbose, bool iet) {
+void solve_stls_hnc(input in, bool verbose) {
 
   // Arrays for STLS solution
   double *xx = NULL; 
@@ -32,7 +32,7 @@ void solve_stls_hnc(input in, bool verbose, bool iet) {
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
   bf = malloc( sizeof(double) * in.nx);
-  compute_bf(bf, xx, in, iet);
+  compute_bf(bf, xx, in);
 
   // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
   if (strcmp(in.guess_file,"NO_FILE")==0){
@@ -270,8 +270,33 @@ double slfc_w(double ww, void* pp) {
 
 }
 
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE BRIDGE FUNCTION TERM
+// -------------------------------------------------------------------
 
-void compute_bf(double *bf, double *xx, input in, bool iet){
+void compute_bf(double *bf, double *xx, input in){
+
+  if (strcmp(in.theory, "STLS-HNC") == 0)
+    bf_hnc(bf, xx, in);
+  else if (strcmp(in.theory, "STLS-IET") == 0)
+    bf_ocp_ichimaru(bf, xx, in);
+  else if (strcmp(in.theory, "STLS-IET-2021") == 0)
+    bf_ocp_2021(bf, xx, in);
+
+}
+
+
+// HNC bridge function  
+void bf_hnc(double *bf, double *xx, input in){
+
+  for (int ii=0; ii<in.nx; ii++){
+      bf[ii] = 0.0;      
+  }
+
+}
+ 
+// Bridge function from the parameterization of Ichimaru
+void bf_ocp_ichimaru(double *bf, double *xx, input in){
 
   double scaling = 1.0;
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
@@ -295,19 +320,18 @@ void compute_bf(double *bf, double *xx, input in, bool iet){
   double q2,q3,q4,q5,q6,q7,q8;
   double bf1, bf2, bf3;
 
-  if (iet){
-    if (b0/b1 >= 0.0)
-      ff = sqrt(M_PI)/(4.0*l2)*pow(b0/b1, 1.5);
-    else{
-      printf("Error: The STLS-IET scheme cannot be applied to this state point"
-	     "(Gamma = %.8f) because the bridge function term diverges\n", Gamma);
-      exit(EXIT_FAILURE);
-    }
+  if (b0/b1 <= 0.0 || Gamma < 5.25 || Gamma > 171.8){
+
+    printf("Error: The STLS-IET scheme cannot be applied to this state point"
+	   " because Gamma = %.8f falls outside the range of validty of the"
+	   " bridge function parameterization\n", Gamma);
+    exit(EXIT_FAILURE);
+
   }
 
+  ff = sqrt(M_PI)/(4.0*l2)*pow(b0/b1, 1.5);
   for (int ii=0; ii<in.nx; ii++){
 
-    if (iet){
       q2 = xx[ii]*xx[ii];
       q3 = q2*xx[ii];
       q4 = q3*xx[ii];
@@ -322,10 +346,127 @@ void compute_bf(double *bf, double *xx, input in, bool iet){
 		     1512.0*b06_b16*q4/l4 - 72.0*b07_b17*q6/l6 + 
 		     b08_b18*q8/l8);
       bf[ii] = scaling*ff*q2*(bf1 + bf2 + bf3)*exp(-b0*q2/(4.0*b1*l2));
-    }
-    else 
-      bf[ii] = 0.0;
-      
   }
+ 
+}
+
+// Bridge function from the parameterization of 2021
+
+struct bfr_params {
+
+  double Gamma;
+
+};
+
+
+void bf_ocp_2021(double *bf, double *xx, input in){
+
+  double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double l2 = ll*ll;
+  double Gamma = 2*l2*in.rs/in.Theta;
+
+  double err;
+  
+  // Integration workspace
+  gsl_integration_workspace *wsp 
+    = gsl_integration_workspace_alloc(1000);
+  gsl_integration_workspace *wspc 
+    = gsl_integration_workspace_alloc(1000);
+  gsl_integration_qawo_table *qtab
+    = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, 1000);
+  
+  // Integration function
+  gsl_function ff_int;
+  struct bfr_params rbfrp = {Gamma};
+  ff_int.function = &rbfr;
+  ff_int.params = &rbfrp;
+  
+  // Bridge function term (B(q)/U(q))
+  for (int ii = 0; ii < in.nx; ii++) {
+
+    // Set wave-vector 
+    gsl_integration_qawo_table_set(qtab, xx[ii], 1.0, GSL_INTEG_SINE);
+
+    // Fourier transform
+    gsl_integration_qawf(&ff_int, 
+			 0.0, 
+			 1e-10, 1000,
+			 wsp, wspc,
+			 qtab, 
+			 &bf[ii], &err);
+    bf[ii] *= xx[ii]/Gamma;
+
+  }
+
+  // Free memory
+  gsl_integration_workspace_free(wsp);
+  gsl_integration_workspace_free(wspc); 
+  gsl_integration_qawo_table_free(qtab);
+
+ 
+
+}
+
+double  rbfr(double rr, void *pp){
+
+  struct bfr_params *params = (struct bfr_params*)pp;
+  double Gamma = (params->Gamma);
+  double Gamma1_3 = pow(Gamma, 1./3.);
+  double lnG = log(Gamma), lnG2 = lnG*lnG, lnG3 = lnG2*lnG;
+  double a0 = Gamma * (0.076912 - 0.10465*lnG + 0.0056629*lnG2 
+		       + 0.00025656*lnG3);
+
+  double a2 = Gamma * (0.068045 - 0.036952*lnG + 0.048818*lnG2 
+		       - 0.0048985*lnG3);
+
+  double a3 = Gamma * (-0.30231 + 0.30457*lnG - 0.11424*lnG2 
+		       + 0.0095993*lnG3);
+
+  double a4 = Gamma * (0.25111 - 0.26800*lnG + 0.082268*lnG2 
+		       - 0.0064960*lnG3);
+
+  double a5 = Gamma * (-0.061894 + 0.066811*lnG - 0.019140*lnG2 
+		       + 0.0014743*lnG3);
+
+  double c0 = Gamma * (-0.050268 + 0.031034*lnG - 0.0068757*lnG2 
+		+ 0.00050888*lnG3);
+
+  double c1 = Gamma1_3 * (3.4822 - 1.2619*lnG + 0.13941*lnG2 
+		   - 0.0032411*lnG3);
+
+  double c2 = Gamma1_3 * (-0.040706 + 1.1212*lnG - 0.28601*lnG2 
+		   + 0.019751*lnG3);
+
+  double c3 = Gamma1_3 * (-11.058 + 8.2657*lnG - 1.7111*lnG2 
+		   + 0.11500*lnG3);
+
+  double c4 = Gamma1_3 * (0.90346 - 0.16822*lnG + 0.0043301*lnG2 
+		   + 0.00059130*lnG3);
+
+  double r2, r3, r4, r5, rmc4;
+  double bsr, blr, ff;
+
+  if (Gamma < 10.0 || Gamma > 171.8){
+
+    printf("Error: The STLS-IET scheme cannot be applied to this state point"
+	   " because Gamma = %.8f falls outside the range of validty of the"
+	   " bridge function parameterization\n", Gamma);
+    exit(EXIT_FAILURE);
+
+  }
+     
+  r2 = rr*rr;
+  r3 = r2*rr;
+  r4 = r3*rr;
+  r5 = r4*rr;
+  rmc4 = rr - c4;
+  if (rr < 3.0) // Cut short-range fit to avoid overflows
+    bsr = a0 + a2*r2 + a3*r3 + a4*r4 + a5*r5;
+  else
+    bsr = 0.0;
+  blr = c0 * exp(-c1*rmc4*rmc4) * ( cos(c2*rmc4) + c3*exp(-4.0*rmc4) ); 
+  ff = 0.5 * ( 1.0 + erf(20*(rr - 1.55)) );
+  
+  return rr*((1 - ff)*bsr + ff*blr);
 
 }

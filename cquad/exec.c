@@ -189,15 +189,15 @@ int main (int argc, char **argv){
   double tic = omp_get_wtime();
   if (strcmp(arguments.theory, "STLS") == 0)
     solve_stls(in, true);
-  else if (strcmp(arguments.theory, "STLS-HNC") == 0)
-    solve_stls_hnc(in, true, false);
-  else if (strcmp(arguments.theory, "STLS-IET") == 0)
-    solve_stls_hnc(in, true, true);
+  else if (strcmp(arguments.theory, "STLS-HNC") == 0 
+	   || strcmp(arguments.theory, "STLS-IET") == 0 
+	   || strcmp(arguments.theory, "STLS-IET-2021") == 0)
+    solve_stls_hnc(in, true);
   else if (strcmp(arguments.theory, "QSTLS") == 0)
     //solve_qstls(in, true);
     printf("QSTLS is still not fully implemented\n");
   else
-    printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC, STLS-IET and QSTLS\n");
+    printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC, STLS-IET STLS-IET-2021 and QSTLS\n");
   double toc = omp_get_wtime();
   printf("Solution complete. Elapsed time: %f seconds\n", toc - tic);
 
