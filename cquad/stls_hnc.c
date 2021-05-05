@@ -387,8 +387,8 @@ void bf_ocp_2021(double *bf, double *xx, input in){
   // Bridge function term (B(q)/U(q))
   for (int ii = 0; ii < in.nx; ii++) {
 
-    // Set wave-vector 
-    gsl_integration_qawo_table_set(qtab, xx[ii], 1.0, GSL_INTEG_SINE);
+    // Set wave-vector (divide xx[ii] by ll to convert to Wigner-Seitz units)
+    gsl_integration_qawo_table_set(qtab, xx[ii]/ll, 1.0, GSL_INTEG_SINE);
 
     // Fourier transform
     gsl_integration_qawf(&ff_int,
@@ -397,7 +397,7 @@ void bf_ocp_2021(double *bf, double *xx, input in){
     			 wsp, wspc,
     			 qtab,
     			 &bf[ii], &err);
-    bf[ii] *= xx[ii]/Gamma;
+    bf[ii] *= xx[ii]/Gamma/ll;
 
   }
 
