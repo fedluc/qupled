@@ -173,7 +173,7 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
   for (int ii=0; ii<in.nx; ii++) {
 
     if (xx[ii] > 0.0){
-      
+
       // Integration over w
       for (int jj=0; jj<in.nx; jj++){
 	
@@ -183,7 +183,10 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
 					ssf_sp_ptr, ssf_acc_ptr};
 	  wmin = xx[jj] - xx[ii];
 	  if (wmin < 0.0) wmin = -wmin;
-	  wmax = GSL_MIN(xx[in.nx-1], xx[ii]+xx[jj]);
+	  // NOTE: The upper cutoff is at qm - dq for numerical reasons;
+	  // The quadrature formula attemps a tiny extrapolation which causes 
+	  // the interpolation routine to crash. 
+	  wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
 	  fw_int.params = &slfcwp;
 	  gsl_integration_cquad(&fw_int,
 				wmin, wmax,
@@ -395,7 +398,6 @@ void bf_ocp_2021(double *bf, double *xx, input in){
     			 qtab,
     			 &bf[ii], &err);
     bf[ii] *= xx[ii]/Gamma;
-    
 
   }
 
@@ -469,7 +471,7 @@ double  rbfr(double rr, void *pp){
   blr = c0 * exp(-c1*rmc4*rmc4) * ( cos(c2*rmc4) + c3*exp(-4.0*rmc4) );
 
   // Full range fit
-  ff = 0.5 * ( 1.0 + erf(5*(rr - 1.55)) );
+  ff = 0.5 * ( 1.0 + erf(10*(rr - 1.55)) );
 
   return rr*((1 - ff)*bsr + ff*blr);
 
