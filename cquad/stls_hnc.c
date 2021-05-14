@@ -414,8 +414,9 @@ double  rbfr(double rr, void *pp){
 
   struct bfr_params *params = (struct bfr_params*)pp;
   double Gamma = (params->Gamma);
-  double Gamma1_3 = pow(Gamma, 1./3.);
-  double lnG = log(Gamma), lnG2 = lnG*lnG, lnG3 = lnG2*lnG;
+  double Gamma1_6 = pow(Gamma, 1./6.);
+  double lnG = log(Gamma), lnG2 = lnG*lnG; 
+  double  lnG3 = lnG2*lnG, lnG4 = lnG3*lnG;
   double a0 = Gamma * (0.076912 - 0.10465*lnG + 0.0056629*lnG2
   		       + 0.00025656*lnG3);
 
@@ -431,22 +432,19 @@ double  rbfr(double rr, void *pp){
   double a5 = Gamma * (-0.061894 + 0.066811*lnG - 0.019140*lnG2
   		       + 0.0014743*lnG3);
 
-  double c0 = Gamma * (-0.050268 + 0.031034*lnG - 0.0068757*lnG2
-  		+ 0.00050888*lnG3);
+  double c0 = Gamma * (0.25264 - 0.31615*lnG + 0.13135*lnG2 
+		       - 0.023044*lnG3 + 0.0014666*lnG4);
+ 
+  double c1 = Gamma1_6 * (-12.665 + 20.802*lnG - 9.6296*lnG2 
+			  + 1.7889*lnG3 - 0.11810*lnG4); 
 
-  double c1 = Gamma1_3 * (3.4822 - 1.2619*lnG + 0.13941*lnG2
-  		   - 0.0032411*lnG3);
+  double c2 = Gamma1_6 * (15.285 - 14.076*lnG + 5.7558*lnG2 
+			  - 1.0188*lnG3 + 0.06551*lnG4); 
 
-  double c2 = Gamma1_3 * (-0.040706 + 1.1212*lnG - 0.28601*lnG2
-  		   + 0.019751*lnG3);
+  double c3 = Gamma1_6 * (35.330 - 40.727*lnG + 16.690*lnG2 
+			  - 2.8905*lnG3 + 0.18243*lnG4);
 
-  double c3 = Gamma1_3 * (-11.058 + 8.2657*lnG - 1.7111*lnG2
-  		   + 0.11500*lnG3);
-
-  double c4 = Gamma1_3 * (0.90346 - 0.16822*lnG + 0.0043301*lnG2
-  		   + 0.00059130*lnG3);
-
-  double r2, r3, r4, r5, rmc4;
+  double r2, r3, r4, r5, rshift;
   double bsr, blr, ff;
 
   if (c1 < 0.0){
@@ -462,16 +460,16 @@ double  rbfr(double rr, void *pp){
   r3 = r2*rr;
   r4 = r3*rr;
   r5 = r4*rr;
-  rmc4 = rr - c4;
+  rshift = rr - 1.44;
 
   // Short range fit (cut to avoid numerical problems)
   bsr = a0 + a2*r2 + a3*r3 + a4*r4 + a5*r5;
 
   // Long range fit
-  blr = c0 * exp(-c1*rmc4*rmc4) * ( cos(c2*rmc4) + c3*exp(-4.0*rmc4) );
+  blr = c0 * exp(-c1*rshift) * exp(-0.3*r2) * ( cos(c2*rshift) + c3*exp(-3.5*rshift) );
 
   // Full range fit
-  ff = 0.5 * ( 1.0 + erf(5.0*(rr - 1.55)) );
+  ff = 0.5 * ( 1.0 + erf(5.0*(rr - 1.50)) );
 
   return rr*((1 - ff)*bsr + ff*blr);
 
