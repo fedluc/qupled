@@ -447,11 +447,11 @@ double  rbfr(double rr, void *pp){
   double r2, r3, r4, r5, rshift;
   double bsr, blr, ff;
 
-  if (c1 < 0.0){
+  if (Gamma < 5.0){
 
     printf("Error: The STLS-IET scheme cannot be applied to this state point"
 	   " because for Gamma = %.8f the bridge function parameterization"
-	   " diverges\n", Gamma);
+	   " is not applicable (Gamma must be larger or equal than 5.0)\n", Gamma);
     exit(EXIT_FAILURE);
 
   }
