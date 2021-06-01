@@ -1,0 +1,13 @@
+#ifndef QSTLS_H
+#define QSTLS_H
+
+#include "solvers.h"
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE ...
+// -------------------------------------------------------------------
+
+void compute_psi_xlw(double *psi_xlw, double *xx, input in);
+
+
+#endif
