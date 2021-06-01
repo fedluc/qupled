@@ -34,7 +34,7 @@ void solve_qstls(input in, bool verbose) {
 
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
-  
+  compute_psi_xlw(psi_xlw, xx, in);
 
   /* // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC) */
   /* if (strcmp(in.guess_file,"NO_FILE")==0){ */
@@ -128,29 +128,33 @@ struct psi_xlw_t_params {
 
 void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
 
-  double err;
-  size_t nevals;
-  double xx2, xw, tmax, tmin;
-  double *t_int  = malloc( sizeof(double) * in.nx);
-
-  // Declare accelerator and spline objects
-  gsl_spline *t_int_sp_ptr;
-  gsl_interp_accel *t_int_acc_ptr;
-  
-  // Allocate the accelerator and the spline objects
-  t_int_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-  t_int_acc_ptr = gsl_interp_accel_alloc();
-
-  // Integration workspace
-  gsl_integration_cquad_workspace *wsp
-  = gsl_integration_cquad_workspace_alloc(100);
-
   // Loop over xx (wave-vector)
-  for (int ii=0; ii<in.nx; ii++){
+  #pragma omp parallel for
+  for (int ii=0; ii<in.nx; ii++){    
+
+    printf("ii = %d\n", ii);
+
+    double err;
+    size_t nevals;
+    double xx2, xw, tmax, tmin;
+    double *t_int  = malloc( sizeof(double) * in.nx);
+
+    // Declare accelerator and spline objects
+    gsl_spline *t_int_sp_ptr;
+    gsl_interp_accel *t_int_acc_ptr;
+  
+    // Allocate the accelerator and the spline objects
+    t_int_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    t_int_acc_ptr = gsl_interp_accel_alloc();
+    
+    // Integration workspace
+    gsl_integration_cquad_workspace *wsp
+      = gsl_integration_cquad_workspace_alloc(100);
+
 
     // Loop over ll (Matsubara frequencies)
     for (int ll=0; ll<in.nl; ll++){
-      
+	
       // Integration function
       gsl_function ft_int, fq_int;
       if (ll == 0){
@@ -165,14 +169,14 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
       // Loop over w (wave-vector)
       for (int jj=0; jj<in.nx; jj++){
 
-	// Integration limits for the integration over t 
+	// Integration limits for the integration over t
 	xx2 = xx[ii]*xx[ii];
 	xw = xx[ii]*xx[jj];
 	tmin = xx2 - xw + in.dx; // +in.dx was added to avoid overflows
-	tmax = xx2 + xw;
+	tmax = xx2 + xw + in.dx;
 
 	// Construct integrand for the integral over q
-	for (int kk=0; kk<in.nx; ii++) {
+	for (int kk=0; kk<in.nx; kk++) {
 
 	  if (xx[kk] > 0.0){
 	    
@@ -202,14 +206,15 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
 			      &err, &nevals);
       }
     }
+
+    // Free memory
+    free(t_int);
+    gsl_integration_cquad_workspace_free(wsp);
+    gsl_spline_free(t_int_sp_ptr);
+    gsl_interp_accel_free(t_int_acc_ptr);
+
   }
 
-
-  // Free memory
-  free(t_int);
-  gsl_integration_cquad_workspace_free(wsp);
-  gsl_spline_free(t_int_sp_ptr);
-  gsl_interp_accel_free(t_int_acc_ptr);
 
 }
 
