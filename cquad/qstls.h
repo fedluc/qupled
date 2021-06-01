@@ -14,4 +14,8 @@ double psi_x0w_q(double uu, void* pp);
 double psi_xlw_t(double uu, void* pp);
 double psi_xlw_q(double uu, void* pp);
 
+
+int idx3(int xx, int yy, int zz,
+         int x_size, int y_size);
+
 #endif

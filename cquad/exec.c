@@ -196,8 +196,7 @@ int main (int argc, char **argv){
 	   || strcmp(arguments.theory, "STLS-IET-2021") == 0)
     solve_stls_hnc(in, true);
   else if (strcmp(arguments.theory, "QSTLS") == 0)
-    //solve_qstls(in, true);
-    printf("QSTLS is still not fully implemented\n");
+    solve_qstls(in, true);
   else
     printf("Error: unknown theory to be solved. Choose between: STLS, STLS-HNC, STLS-IET, STLS-IET-2021 and QSTLS\n");
 

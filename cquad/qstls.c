@@ -34,6 +34,7 @@ void solve_qstls(input in, bool verbose) {
 
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
+  
 
   /* // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC) */
   /* if (strcmp(in.guess_file,"NO_FILE")==0){ */
@@ -105,7 +106,7 @@ void solve_qstls(input in, bool verbose) {
 // FUNCTION USED TO COMPUTE THE ...
 // -------------------------------------------------------------------
 
-struct psi_xlw_q {
+struct psi_xlw_q_params {
 
   double mu;
   double Theta;
@@ -114,7 +115,7 @@ struct psi_xlw_q {
 
 };
 
-struct psi_xlw_t {
+struct psi_xlw_t_params {
 
   double Theta;
   double ww;
@@ -129,8 +130,8 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
 
   double err;
   size_t nevals;
-  double wmax, wmin;
-  double *GGu  = malloc( sizeof(double) * in.nx);
+  double xx2, xw, tmax, tmin;
+  double *t_int  = malloc( sizeof(double) * in.nx);
 
   // Declare accelerator and spline objects
   gsl_spline *t_int_sp_ptr;
@@ -161,114 +162,132 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
 	fq_int.function = &psi_xlw_q;
       }
 
-    }
+      // Loop over w (wave-vector)
+      for (int jj=0; jj<in.nx; jj++){
 
+	// Integration limits for the integration over t 
+	xx2 = xx[ii]*xx[ii];
+	xw = xx[ii]*xx[jj];
+	tmin = xx2 - xw + in.dx; // +in.dx was added to avoid overflows
+	tmax = xx2 + xw;
+
+	// Construct integrand for the integral over q
+	for (int kk=0; kk<in.nx; ii++) {
+
+	  if (xx[kk] > 0.0){
+	    
+	    // Integration over t
+	    struct psi_xlw_t_params ppt = {in.Theta,xx[jj],xx[ii],ll,xx[kk]};
+	    ft_int.params = &ppt;
+	    gsl_integration_cquad(&ft_int,
+				  tmin, tmax,
+				  0.0, 1e-5,
+				  wsp,
+				  &t_int[kk], &err, &nevals);
+	  }
+
+	  else t_int[kk] = 0.0;
+
+	}
+	gsl_spline_init(t_int_sp_ptr, xx, t_int, in.nx);
+      
+	// Integral over q
+	struct psi_xlw_q_params ppq = {in.mu,in.Theta,t_int_sp_ptr,t_int_acc_ptr};
+	fq_int.params = &ppq;
+	gsl_integration_cquad(&fq_int,
+			      xx[0], xx[in.nx-1],
+			      0.0, 1e-5,
+			      wsp,
+			      &psi_xlw[idx3(ii, ll, jj, in.nx, in.nl)],
+			      &err, &nevals);
+      }
+    }
   }
 
-  /* gsl_function fu_int, fw_int; */
-  /* fu_int.function = &slfc_u; */
-  /* fw_int.function = &slfc_w; */
 
-  /* // Static local field correction */
-  /* // Integration over u */
-  /* for (int ii=0; ii<in.nx; ii++) { */
-
-  /*   if (xx[ii] > 0.0){ */
-
-  /*     // Integration over w */
-  /*     for (int jj=0; jj<in.nx; jj++){ */
-	
-  /* 	if (xx[jj] >  0.0) { */
-
-  /* 	  struct slfcw_params slfcwp = {xx[ii], xx[jj],  */
-  /* 					ssf_sp_ptr, ssf_acc_ptr}; */
-  /* 	  wmin = xx[jj] - xx[ii]; */
-  /* 	  if (wmin < 0.0) wmin = -wmin; */
-  /* 	  // NOTE: The upper cutoff is at qm - dq for numerical reasons; */
-  /* 	  // The quadrature formula attemps a tiny extrapolation which causes  */
-  /* 	  // the interpolation routine to crash.  */
-  /* 	  wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]); */
-  /* 	  fw_int.params = &slfcwp; */
-  /* 	  gsl_integration_cquad(&fw_int, */
-  /* 				wmin, wmax, */
-  /* 				0.0, 1e-5, */
-  /* 				wsp, */
-  /* 				&GGu[jj], &err, &nevals); */
-
-  /* 	} */
-
-  /* 	else GGu[jj] = 0.0;  */
-
-  /*     } */
-
-  /*     // Interpolate result of integration over w */
-  /*     gsl_spline_init(GGu_sp_ptr, xx, GGu, in.nx);     */
-      
-  /*     // Evaluate integral over u */
-  /*     struct slfcu_params slfcup = {ssf_sp_ptr, ssf_acc_ptr, */
-  /* 				    slfc_sp_ptr, slfc_acc_ptr, */
-  /* 				    GGu_sp_ptr, GGu_acc_ptr, */
-  /* 				    bf_sp_ptr, bf_acc_ptr}; */
-  /*     fu_int.params = &slfcup; */
-  /*     gsl_integration_cquad(&fu_int, */
-  /* 			    xx[0], xx[in.nx-1], */
-  /* 			    0.0, 1e-5, */
-  /* 			    wsp, */
-  /* 			    &GG_new[ii], &err, &nevals); */
-      
-  /*     GG_new[ii] *= 3.0/(8.0*xx[ii]); */
-  /*     GG_new[ii] += bf[ii]; */
-
-  /*   } */
-  /*   else  */
-  /*     GG_new[ii] = 0.0; */
-
-  /* } */
-
-  /* // Free memory */
-  /* free(GGu); */
-  /* gsl_integration_cquad_workspace_free(wsp); */
-  /* gsl_spline_free(ssf_sp_ptr); */
-  /* gsl_interp_accel_free(ssf_acc_ptr); */
-  /* gsl_spline_free(slfc_sp_ptr); */
-  /* gsl_interp_accel_free(slfc_acc_ptr); */
-  /* gsl_spline_free(GGu_sp_ptr); */
-  /* gsl_interp_accel_free(GGu_acc_ptr); */
-  /* gsl_spline_free(bf_sp_ptr); */
-  /* gsl_interp_accel_free(bf_acc_ptr); */
+  // Free memory
+  free(t_int);
+  gsl_integration_cquad_workspace_free(wsp);
+  gsl_spline_free(t_int_sp_ptr);
+  gsl_interp_accel_free(t_int_acc_ptr);
 
 }
 
-double psi_x0w_t(double uu, void* pp) {
-  return 0;
-}
+double psi_x0w_t(double tt, void* pp) {
 
-double psi_x0w_q(double uu, void* pp) {
-  return 0;
-}
+  struct psi_xlw_t_params* params = (struct psi_xlw_t_params*)pp;
+  double xx = (params->xx);
+  double qq = (params->qq);
+  double ww = (params->ww);
+  double xx2 = xx*xx, ww2 = ww*ww, qq2 = qq*qq, 
+    tt2 = tt*tt, txq = 2.0*xx*qq;
+  double logarg;
 
-double psi_xlw_t(double uu, void* pp) {
-  return 0;
-}
-
-double psi_xlw_q(double uu, void* pp) {
-  return 0;
-}
-
-/* double slfc_w(double ww, void* pp) { */
-
-/*   struct slfcw_params* params = (struct slfcw_params*)pp; */
-/*   double xx = (params->xx); */
-/*   double uu = (params->uu); */
-/*   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr); */
-/*   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr); */
-/*   double ww2 = ww*ww, xx2 = xx*xx, uu2 = uu*uu; */
+  if (xx == 0 || qq == 0){
+    return 0;
+  }
+  else if  (tt == txq){
+    return 2.0*qq2/(ww2 + 2.0*txq - xx2);
+  }
+  else {
     
-/*   return (ww2 - uu2 - xx2)*ww */
-/*     *(gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0); */
+    logarg = (tt + txq)/(tt - txq);
+    if (logarg < 0.0) logarg = -logarg;
+    return 1.0/(2.0*tt + ww2 - xx2)*((qq2 - tt2/(4.0*xx2))
+				     *log(logarg) + qq*tt/xx);
+				     
+  }
 
-/* } */
+}
 
+double psi_x0w_q(double qq, void* pp) {
+
+  struct psi_xlw_q_params* params = (struct psi_xlw_q_params*)pp;
+  double mu = (params->mu);
+  double Theta = (params->Theta);
+  gsl_spline* t_int_sp_ptr = (params->t_int_sp_ptr);
+  gsl_interp_accel* t_int_acc_ptr = (params->t_int_acc_ptr);
+  double qq2 = qq*qq;
+  double fft = gsl_spline_eval(t_int_sp_ptr, qq, t_int_acc_ptr);
+
+  return qq/(exp(qq2/Theta - mu) + exp(-qq2/Theta + mu) + 2.0)*fft;
+
+}
+
+double psi_xlw_t(double tt, void* pp) {
+  
+  struct psi_xlw_t_params* params = (struct psi_xlw_t_params*)pp;
+  double xx = (params->xx);
+  double qq = (params->qq);
+  double ww = (params->ww);
+  double ll = (params->ll);
+  double Theta = (params->Theta);
+  double xx2 = xx*xx, ww2 = ww*ww, txq = 2.0*xx*qq, 
+    tplT = 2.0*M_PI*ll*Theta, tplT2 = tplT*tplT, 
+    txqpt = txq + tt, txqmt = txq - tt,
+    txqpt2 = txqpt*txqpt, txqmt2 = txqmt*txqmt,
+    logarg = (txqpt2 + tplT2)/(txqmt2 + tplT2);
+
+  if (xx == 0 || qq == 0)
+    return 0;
+  else
+    return 1.0/(2.0*tt + ww2 - xx2)*log(logarg);
+
+}
+
+double psi_xlw_q(double qq, void* pp) {
+  
+  struct psi_xlw_q_params* params = (struct psi_xlw_q_params*)pp;
+  double mu = (params->mu);
+  double Theta = (params->Theta);
+  gsl_spline* t_int_sp_ptr = (params->t_int_sp_ptr);
+  gsl_interp_accel* t_int_acc_ptr = (params->t_int_acc_ptr);
+  double qq2 = qq*qq;
+  double fft = gsl_spline_eval(t_int_sp_ptr, qq, t_int_acc_ptr);
+
+  return qq/(exp(qq2/Theta - mu) + 1.0)*fft;
+
+}
 
 
 // -------------------------------------------------------------------
