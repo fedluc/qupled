@@ -21,90 +21,94 @@ void solve_qstls(input in, bool verbose) {
   double *xx = NULL; 
   double *phi = NULL;
   double *GG = NULL;
-  double *GG_new = NULL;
+  double *SS_new = NULL;
   double *SS = NULL;
   double *SSHF = NULL;
   double *psi = NULL;
   double *psi_xlw = NULL;
 
   // Allocate arrays
-  alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
+  alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
   psi = malloc( sizeof(double) * in.nx * in.nl);  
   psi_xlw = malloc( sizeof(double) * in.nx * in.nl * in.nx);
 
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
+  if (verbose) printf("Fixed component of the auxiliary response function: ");  
   compute_psi_xlw(psi_xlw, xx, in);
+  if (verbose) printf("Done.\n");
 
-  /* // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC) */
-  /* if (strcmp(in.guess_file,"NO_FILE")==0){ */
-  /*   for (int ii=0; ii < in.nx; ii++) { */
-  /*     GG[ii] = 0.0; */
-  /*     GG_new[ii] = 1.0; */
-  /*   } */
-  /*   compute_ssf(SS, SSHF, GG, phi, xx, in); */
-  /* } */
-  /* else { */
-  /*   read_guess(SS, GG, in); */
-  /* } */
+  // Initial guess for Static structure factor (SSF) and for auxilliary response (DLFC)
+  if (strcmp(in.guess_file,"NO_FILE")==0){
+    for (int ii=0; ii<in.nx; ii++){
+      for (int ll=0; ll<in.nl; ll++){
+	psi[idx2(ii,ll,in.nx)] = 0.0;
+      }
+    }
+    compute_ssf_qstls(SS, SSHF, psi, phi, xx, in);
+  }
+  else {
+    read_guess(SS, GG, in);
+  }
    
-  /* // SSF and SLFC via iterative procedure */
-  /* if (verbose) printf("SSF and SLFC calculation...\n"); */
-  /* double iter_err = 1.0; */
-  /* int iter_counter = 0; */
-  /* while (iter_counter < in.nIter && iter_err > in.err_min_iter ) { */
+  // SSF and SLFC via iterative procedure
+  if (verbose) printf("SSF calculation...\n");
+  double iter_err = 1.0;
+  int iter_counter = 0;
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     
-  /*   // Start timing */
-  /*   double tic = omp_get_wtime(); */
+    // Start timing
+    double tic = omp_get_wtime();
     
-  /*   // Update SSF */
-  /*   compute_ssf(SS, SSHF, GG, phi, xx, in); */
+    // Update auxiliary function
+    compute_psi(psi, psi_xlw, SS, xx, in);
     
-  /*   // Update SLFC */
-  /*   compute_slfc_hnc(GG_new, GG, SS, bf, xx, in); */
+    // Update SSF
+    compute_ssf_qstls(SS_new, SSHF, psi, phi, xx, in);
     
-  /*   // Update diagnostic */
-  /*   iter_err = 0.0; */
-  /*   iter_counter++; */
-  /*   for (int ii=0; ii<in.nx; ii++) { */
-  /*     iter_err += (GG_new[ii] - GG[ii]) * (GG_new[ii] - GG[ii]); */
-  /*     GG[ii] = in.a_mix*GG_new[ii] + (1-in.a_mix)*GG[ii]; */
-  /*   } */
-  /*   iter_err = sqrt(iter_err); */
+    // Update diagnostic
+    iter_err = 0.0;
+    iter_counter++;
+    for (int ii=0; ii<in.nx; ii++) {
+      iter_err += (SS_new[ii] - SS[ii]) * (SS_new[ii] - SS[ii]);
+      GG[ii] = in.a_mix*SS_new[ii] + (1-in.a_mix)*SS[ii];
+    }
+    iter_err = sqrt(iter_err);
     
-  /*   // End timing */
-  /*   double toc = omp_get_wtime(); */
+    // End timing
+    double toc = omp_get_wtime();
     
-  /*   // Print diagnostic */
-  /*   if (verbose) { */
-  /*     printf("--- iteration %d ---\n", iter_counter); */
-  /*     printf("Elapsed time: %f seconds\n", toc - tic); */
-  /*     printf("Residual error: %.5e\n", iter_err); */
-  /*     fflush(stdout); */
-  /*   } */
-  /* } */
-  /* if (verbose) printf("Done.\n"); */
+    // Print diagnostic
+    if (verbose) {
+      printf("--- iteration %d ---\n", iter_counter);
+      printf("Elapsed time: %f seconds\n", toc - tic);
+      printf("Residual error: %.5e\n", iter_err);
+      fflush(stdout);
+    }
+  }
+  if (verbose) printf("Done.\n");
   
-  /* // Internal energy */
-  /* if (verbose) printf("Internal energy: %.10f\n",compute_uex(SS, xx, in)); */
+  // Internal energy
+  if (verbose) printf("Internal energy: %.10f\n",compute_uex(SS, xx, in));
   
-  /* // Output to file */
-  /* if (verbose) printf("Writing output files...\n"); */
-  /* write_text(SS, GG, phi, SSHF, xx, in); */
-  /* write_guess(SS, GG, in); */
-  /* if (verbose) printf("Done.\n"); */
+  // Output to file
+  if (verbose) printf("Writing output files...\n");
+  write_text(SS, GG, phi, SSHF, xx, in);
+  write_guess(SS, GG, in);
+  // THE OUTPUT ROUTINES MUST BE MODIFIED
+  if (verbose) printf("Done.\n");
 
   // Free memory
-  free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
+  free_stls_arrays(xx, phi, GG, SS_new, SS, SSHF);
   free(psi);
   free(psi_xlw);
 
 }
 
 
-// -------------------------------------------------------------------
-// FUNCTION USED TO COMPUTE THE ...
-// -------------------------------------------------------------------
+// ------------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE FIXED COMPONENT OF THE AUXILIARY RESPONSE
+// ------------------------------------------------------------------------
 
 struct psi_xlw_q_params {
 
@@ -131,8 +135,6 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
   // Loop over xx (wave-vector)
   #pragma omp parallel for
   for (int ii=0; ii<in.nx; ii++){    
-
-    printf("ii = %d\n", ii);
 
     double err;
     size_t nevals;
@@ -293,6 +295,129 @@ double psi_xlw_q(double qq, void* pp) {
   return qq/(exp(qq2/Theta - mu) + 1.0)*fft;
 
 }
+
+// ---------------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE
+// ---------------------------------------------------------------------------
+
+struct psiw_params {
+
+  gsl_spline *qt_int_sp_ptr;
+  gsl_interp_accel *qt_int_acc_ptr;
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+
+};
+
+
+void compute_psi(double *psi, double *psi_xlw, double *SS, 
+		 double *xx, input in){
+
+  double err;
+  size_t nevals;
+  double *qt_int  = malloc( sizeof(double) * in.nx);
+  
+  // Declare accelerator and spline objects
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+  gsl_spline *qt_int_sp_ptr;
+  gsl_interp_accel *qt_int_acc_ptr;
+  
+  // Allocate the accelerator and the spline objects
+  qt_int_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  qt_int_acc_ptr = gsl_interp_accel_alloc();
+  ssf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  ssf_acc_ptr = gsl_interp_accel_alloc();
+  
+  // Interpolate SSF
+  gsl_spline_init(ssf_sp_ptr, xx, SS, in.nx);
+
+  // Integration workspace
+  gsl_integration_cquad_workspace *wsp
+    = gsl_integration_cquad_workspace_alloc(100);
+	
+  // Integration function
+  gsl_function psiw_int;
+  psiw_int.function = &psiw;
+  
+  for (int ii=0; ii<in.nx; ii++){
+    for (int ll=0; ll<in.nl; ll++){
+
+      // Interpolate solution of q-t integration
+      for (int jj=0; jj<in.nl; jj++){
+	qt_int[jj] = psi_xlw[idx3(ii,ll,jj,in.nx,in.nl)];
+      }
+      gsl_spline_init(qt_int_sp_ptr, xx, qt_int, in.nx);
+
+      // Integral over w 
+      struct psiw_params ppw = {qt_int_sp_ptr,qt_int_acc_ptr,
+				ssf_sp_ptr, ssf_acc_ptr};
+      psiw_int.params = &ppw;
+      gsl_integration_cquad(&psiw_int,
+			    xx[0], xx[in.nx-1],
+			    0.0, 1e-5,
+			    wsp,
+			    &psi[idx2(ii,ll,in.nx)], 
+			    &err, &nevals);
+
+    }
+  }  
+
+}
+
+
+double psiw(double ww, void* pp) {
+  
+  struct psiw_params* params = (struct psiw_params*)pp;
+  gsl_spline* qt_int_sp_ptr = (params->qt_int_sp_ptr);
+  gsl_interp_accel* qt_int_acc_ptr = (params->qt_int_acc_ptr);
+  gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
+  gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
+
+  return ww*gsl_spline_eval(qt_int_sp_ptr, ww, qt_int_acc_ptr)
+    *(gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0);
+
+}
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
+// -------------------------------------------------------------------
+
+void compute_ssf_qstls(double *SS, double *SSHF, double *psi,
+		       double *phi, double *xx, input in){
+
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double ff = 4*lambda*in.rs/M_PI;
+  double xx2, BB, BB_tmp, BB_den, psixl, phixl;
+  
+  for (int ii=0; ii<in.nx; ii++){
+    
+    if (xx[ii] > 0.0){
+      
+      xx2 = xx[ii]*xx[ii];
+      BB = 0.0;
+      
+      for (int ll=0; ll<in.nl; ll++){
+	
+	psixl = psi[idx2(ii,ll,in.nx)];
+	phixl = phi[idx2(ii,ll,in.nx)];
+	BB_den = 1.0 + ff/xx2*(1.0 - psixl/phixl)*phixl;
+	BB_tmp = phixl*phixl*(1.0 - psixl/phixl)/BB_den;
+	if (ll>0) BB_tmp *= 2.0;
+	BB += BB_tmp;
+	
+      }
+      
+      SS[ii] = SSHF[ii] - 3.0/2.0*ff/xx2*in.Theta*BB;
+      
+    }
+    else
+      SS[ii] = 0.0;
+    
+  }
+  
+}
+
 
 
 // -------------------------------------------------------------------
