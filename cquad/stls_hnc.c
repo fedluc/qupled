@@ -279,12 +279,15 @@ double slfc_w(double ww, void* pp) {
 
 void compute_bf(double *bf, double *xx, input in){
 
-  if (strcmp(in.theory, "STLS-HNC") == 0)
+  if (in.theory_id == 2)
     bf_hnc(bf, xx, in);
-  else if (strcmp(in.theory, "STLS-IET") == 0)
+  else if (in.theory_id == 3)
     bf_ocp_ichimaru(bf, xx, in);
-  else if (strcmp(in.theory, "STLS-IET-2021") == 0)
+  else if (in.theory_id == 4)
     bf_ocp_2021(bf, xx, in);
+  else
+    printf("Error: unknown theory to be compute the bridge function."
+           "Choose between: STLS-HNC, STLS-IET and STLS-IET-2021");
 
 }
 

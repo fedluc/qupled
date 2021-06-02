@@ -23,6 +23,7 @@ typedef struct {
   int nl;
   int nx;
   int nIter;
+  int theory_id;
 
 
 } input;

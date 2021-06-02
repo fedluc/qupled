@@ -55,12 +55,11 @@ void solve_qstls(input in, bool verbose) {
 
   // Initialize QSTLS arrays that are not modified by the iterative procedure
   if (psi_xlw_init){
-    if (verbose) printf("Fixed component of the auxiliary response function: ");  
+    if (verbose) printf("Fixed component of the auxiliary response function: ");
     compute_psi_xlw(psi_xlw, xx, in);
     if (verbose) printf("Done.\n");
   }
-
-   
+ 
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF calculation...\n");
   double iter_err = 1.0;
@@ -166,7 +165,7 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
     #pragma omp for // Distribute for loop over the threads
     for (int ii=0; ii<in.nx; ii++){    
 
-      printf("ii = %d\n", ii);  
+      //printf("ii = %d\n", ii);  
       
       // Loop over ll (Matsubara frequencies)
       for (int ll=0; ll<in.nl; ll++){
@@ -584,6 +583,7 @@ void read_guess_dynamic(double *SS, double *psi_xlw,  input in,
 
   // Check that the data for the guess file is consistent
   fread(&in_load, sizeof(input), 1, fid);
+
   if (in_load.nx != in.nx || in_load.dx != in.dx || in_load.xmax != in.xmax){
     fprintf(stderr,"Grid from guess file is incompatible with input\n");
     fclose(fid);
@@ -594,9 +594,11 @@ void read_guess_dynamic(double *SS, double *psi_xlw,  input in,
   fread(SS, sizeof(double), in_load.nx, fid);
 
   // Fixed component of the auxiliary density response
-  if (in_load.Theta == in.Theta){
+  if (in_load.Theta == in.Theta
+      && in_load.nl == in.nl
+      && in_load.theory_id == in.theory_id){
     fread(psi_xlw, sizeof(double), in.nx * in.nl * in.nx, fid);
-    psi_xlw_init = false;
+    *psi_xlw_init = false;
   }
 
   // Close binary file

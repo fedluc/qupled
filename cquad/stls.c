@@ -311,7 +311,7 @@ double phix0(double yy, void *pp) {
 // -------------------------------------------------------------------
 
 void compute_ssf_static(double *SS, double *SSHF, double *GG, 
-		 double *phi, double *xx, input in){
+			double *phi, double *xx, input in){
 
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double ff = 4*lambda*in.rs/M_PI;
