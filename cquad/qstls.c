@@ -12,7 +12,7 @@
 #include "qstls.h"
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ITERATIVELY SOLVE THE STLS-HNC EQUATIONS
+// FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS EQUATIONS
 // -------------------------------------------------------------------
 
 void solve_qstls(input in, bool verbose) {
@@ -24,32 +24,42 @@ void solve_qstls(input in, bool verbose) {
   double *SS_new = NULL;
   double *SS = NULL;
   double *SSHF = NULL;
+
+  // Arrays for QSTLS solution
   double *psi = NULL;
   double *psi_xlw = NULL;
+  bool psi_xlw_init = true;
 
   // Allocate arrays
+  // Note: GG is not needed for QSTLS, but we keep it here so that
+  // we can reuse some stls routines 
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
   psi = malloc( sizeof(double) * in.nx * in.nl);  
   psi_xlw = malloc( sizeof(double) * in.nx * in.nl * in.nx);
 
-  // Initialize arrays that are not modified with the iterative procedure
+  // Initialize STLS arrays that are not modified by the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
-  if (verbose) printf("Fixed component of the auxiliary response function: ");  
-  compute_psi_xlw(psi_xlw, xx, in);
-  if (verbose) printf("Done.\n");
 
-  // Initial guess for Static structure factor (SSF) and for auxilliary response (DLFC)
+  // Initial guess
   if (strcmp(in.guess_file,"NO_FILE")==0){
     for (int ii=0; ii<in.nx; ii++){
       for (int ll=0; ll<in.nl; ll++){
 	psi[idx2(ii,ll,in.nx)] = 0.0;
       }
     }
-    compute_ssf_qstls(SS, SSHF, psi, phi, xx, in);
+    compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in);
   }
   else {
-    read_guess(SS, GG, in);
+    read_guess_dynamic(SS, psi_xlw, in, &psi_xlw_init);
   }
+
+  // Initialize QSTLS arrays that are not modified by the iterative procedure
+  if (psi_xlw_init){
+    if (verbose) printf("Fixed component of the auxiliary response function: ");  
+    compute_psi_xlw(psi_xlw, xx, in);
+    if (verbose) printf("Done.\n");
+  }
+
    
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF calculation...\n");
@@ -64,14 +74,14 @@ void solve_qstls(input in, bool verbose) {
     compute_psi(psi, psi_xlw, SS, xx, in);
     
     // Update SSF
-    compute_ssf_qstls(SS_new, SSHF, psi, phi, xx, in);
+    compute_ssf_dynamic(SS_new, SSHF, psi, phi, xx, in);
     
     // Update diagnostic
     iter_err = 0.0;
     iter_counter++;
     for (int ii=0; ii<in.nx; ii++) {
       iter_err += (SS_new[ii] - SS[ii]) * (SS_new[ii] - SS[ii]);
-      GG[ii] = in.a_mix*SS_new[ii] + (1-in.a_mix)*SS[ii];
+      SS[ii] = in.a_mix*SS_new[ii] + (1-in.a_mix)*SS[ii];
     }
     iter_err = sqrt(iter_err);
     
@@ -93,9 +103,8 @@ void solve_qstls(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text(SS, GG, phi, SSHF, xx, in);
-  write_guess(SS, GG, in);
-  // THE OUTPUT ROUTINES MUST BE MODIFIED
+  write_text_dynamic(SS, psi, phi, SSHF, xx, in);
+  write_guess_dynamic(SS, psi_xlw, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -132,19 +141,19 @@ struct psi_xlw_t_params {
 
 void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
 
-  // Loop over xx (wave-vector)
-  #pragma omp parallel for
-  for (int ii=0; ii<in.nx; ii++){    
+  // Parallel calculations
+  #pragma omp parallel
+  {  
 
     double err;
     size_t nevals;
     double xx2, xw, tmax, tmin;
     double *t_int  = malloc( sizeof(double) * in.nx);
-
+    
     // Declare accelerator and spline objects
     gsl_spline *t_int_sp_ptr;
     gsl_interp_accel *t_int_acc_ptr;
-  
+    
     // Allocate the accelerator and the spline objects
     t_int_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
     t_int_acc_ptr = gsl_interp_accel_alloc();
@@ -153,59 +162,65 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
     gsl_integration_cquad_workspace *wsp
       = gsl_integration_cquad_workspace_alloc(100);
 
+    // Loop over xx (wave-vector)
+    #pragma omp for // Distribute for loop over the threads
+    for (int ii=0; ii<in.nx; ii++){    
 
-    // Loop over ll (Matsubara frequencies)
-    for (int ll=0; ll<in.nl; ll++){
-	
-      // Integration function
-      gsl_function ft_int, fq_int;
-      if (ll == 0){
-	ft_int.function = &psi_x0w_t;
-	fq_int.function = &psi_x0w_q;
-      }
-      else {
-	ft_int.function = &psi_xlw_t;
-	fq_int.function = &psi_xlw_q;
-      }
-
-      // Loop over w (wave-vector)
-      for (int jj=0; jj<in.nx; jj++){
-
-	// Integration limits for the integration over t
-	xx2 = xx[ii]*xx[ii];
-	xw = xx[ii]*xx[jj];
-	tmin = xx2 - xw + in.dx; // +in.dx was added to avoid overflows
-	tmax = xx2 + xw + in.dx;
-
-	// Construct integrand for the integral over q
-	for (int kk=0; kk<in.nx; kk++) {
-
-	  if (xx[kk] > 0.0){
-	    
-	    // Integration over t
-	    struct psi_xlw_t_params ppt = {in.Theta,xx[jj],xx[ii],ll,xx[kk]};
-	    ft_int.params = &ppt;
-	    gsl_integration_cquad(&ft_int,
-				  tmin, tmax,
-				  0.0, 1e-5,
-				  wsp,
-				  &t_int[kk], &err, &nevals);
-	  }
-
-	  else t_int[kk] = 0.0;
-
-	}
-	gsl_spline_init(t_int_sp_ptr, xx, t_int, in.nx);
+      printf("ii = %d\n", ii);  
       
-	// Integral over q
-	struct psi_xlw_q_params ppq = {in.mu,in.Theta,t_int_sp_ptr,t_int_acc_ptr};
-	fq_int.params = &ppq;
-	gsl_integration_cquad(&fq_int,
-			      xx[0], xx[in.nx-1],
-			      0.0, 1e-5,
-			      wsp,
-			      &psi_xlw[idx3(ii, ll, jj, in.nx, in.nl)],
-			      &err, &nevals);
+      // Loop over ll (Matsubara frequencies)
+      for (int ll=0; ll<in.nl; ll++){
+	
+	// Integration function
+	gsl_function ft_int, fq_int;
+	if (ll == 0){
+	  ft_int.function = &psi_x0w_t;
+	  fq_int.function = &psi_x0w_q;
+	}
+	else {
+	  ft_int.function = &psi_xlw_t;
+	  fq_int.function = &psi_xlw_q;
+	}
+	
+	// Loop over w (wave-vector)
+	for (int jj=0; jj<in.nx; jj++){
+	  
+	  // Integration limits for the integration over t
+	  xx2 = xx[ii]*xx[ii];
+	  xw = xx[ii]*xx[jj];
+	  tmin = xx2 - xw + in.dx; // +in.dx was added to avoid overflows
+	  tmax = xx2 + xw + in.dx;
+	  
+	  // Construct integrand for the integral over q
+	  for (int kk=0; kk<in.nx; kk++) {
+	    
+	    if (xx[kk] > 0.0){
+	      
+	      // Integration over t
+	      struct psi_xlw_t_params ppt = {in.Theta,xx[jj],xx[ii],ll,xx[kk]};
+	      ft_int.params = &ppt;
+	      gsl_integration_cquad(&ft_int,
+				    tmin, tmax,
+				    0.0, 1e-5,
+				    wsp,
+				    &t_int[kk], &err, &nevals);
+	    }
+	    
+	    else t_int[kk] = 0.0;
+	    
+	  }
+	  gsl_spline_init(t_int_sp_ptr, xx, t_int, in.nx);
+	  
+	  // Integral over q
+	  struct psi_xlw_q_params ppq = {in.mu,in.Theta,t_int_sp_ptr,t_int_acc_ptr};
+	  fq_int.params = &ppq;
+	  gsl_integration_cquad(&fq_int,
+				xx[0], xx[in.nx-1],
+				0.0, 1e-5,
+				wsp,
+				&psi_xlw[idx3(ii, ll, jj, in.nx, in.nl)],
+				&err, &nevals);
+	}
       }
     }
 
@@ -214,10 +229,9 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
     gsl_integration_cquad_workspace_free(wsp);
     gsl_spline_free(t_int_sp_ptr);
     gsl_interp_accel_free(t_int_acc_ptr);
-
+    
   }
-
-
+  
 }
 
 double psi_x0w_t(double tt, void* pp) {
@@ -316,7 +330,8 @@ void compute_psi(double *psi, double *psi_xlw, double *SS,
   double err;
   size_t nevals;
   double *qt_int  = malloc( sizeof(double) * in.nx);
-  
+  double norm_fact;
+
   // Declare accelerator and spline objects
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
@@ -344,7 +359,7 @@ void compute_psi(double *psi, double *psi_xlw, double *SS,
     for (int ll=0; ll<in.nl; ll++){
 
       // Interpolate solution of q-t integration
-      for (int jj=0; jj<in.nl; jj++){
+      for (int jj=0; jj<in.nx; jj++){
 	qt_int[jj] = psi_xlw[idx3(ii,ll,jj,in.nx,in.nl)];
       }
       gsl_spline_init(qt_int_sp_ptr, xx, qt_int, in.nx);
@@ -359,9 +374,22 @@ void compute_psi(double *psi, double *psi_xlw, double *SS,
 			    wsp,
 			    &psi[idx2(ii,ll,in.nx)], 
 			    &err, &nevals);
+      
+      // Assign output
+      if (ll == 0) norm_fact = -3.0/(4.0*in.Theta);
+      else norm_fact = -3.0/8.0;
+      psi[idx2(ii,ll,in.nx)] *= norm_fact;
 
     }
   }  
+
+  // Free memory
+  free(qt_int);
+  gsl_integration_cquad_workspace_free(wsp);
+  gsl_spline_free(qt_int_sp_ptr);
+  gsl_interp_accel_free(qt_int_acc_ptr);
+  gsl_spline_free(ssf_sp_ptr);
+  gsl_interp_accel_free(ssf_acc_ptr);
 
 }
 
@@ -383,8 +411,8 @@ double psiw(double ww, void* pp) {
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
 
-void compute_ssf_qstls(double *SS, double *SSHF, double *psi,
-		       double *phi, double *xx, input in){
+void compute_ssf_dynamic(double *SS, double *SSHF, double *psi,
+			 double *phi, double *xx, input in){
 
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double ff = 4*lambda*in.rs/M_PI;
@@ -429,3 +457,149 @@ int idx3(int xx, int yy, int zz,
   return (zz * x_size * y_size) + (yy * x_size) + xx;
 }
 
+// -------------------------------------------------------------------
+// FUNCTIONS FOR OUTPUT AND INPUT
+// -------------------------------------------------------------------
+
+
+// write text files for output
+void write_text_dynamic(double *SS, double *psi, double *phi, 
+			double *SSHF, double *xx, input in){
+
+
+    FILE* fid;
+    
+    // Output for SSF
+    char out_name[100];
+    sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+        perror("Error while creating the output file for the static structure factor");
+        exit(EXIT_FAILURE);
+    }
+    for (int ii = 0; ii < in.nx; ii++)
+        fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]);
+
+    fclose(fid);
+
+    // Output for the auxiliary density response
+    sprintf(out_name, "adr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+      perror("Error while creating the output file for the auxiliary density response");
+      exit(EXIT_FAILURE);
+    }
+    for (int ii=0; ii<in.nx; ii++){
+      for (int jj=0; jj<in.nl; jj++){
+        fprintf(fid, "%.8e ", psi[idx2(ii,jj,in.nx)]);
+      }
+      fprintf(fid,"\n");
+    }
+    fclose(fid);
+
+    // Output for ideal Lindhard density response
+    sprintf(out_name, "idr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+      perror("Error while creating the output file for the ideal density response");
+      exit(EXIT_FAILURE);
+    }
+    for (int ii=0; ii<in.nx; ii++){
+      for (int jj=0; jj<in.nl; jj++){
+        fprintf(fid, "%.8e ", phi[idx2(ii,jj,in.nx)]);
+      }
+      fprintf(fid,"\n");
+    }
+    fclose(fid);
+
+    // Output for static structure factor in the Hartree-Fock approximation
+    sprintf(out_name, "ssfHF_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+        perror("Error while creating the output file for the static structure factor (HF)");
+        exit(EXIT_FAILURE);
+    }
+    for (int ii = 0; ii < in.nx; ii++)
+        fprintf(fid, "%.8e %.8e\n", xx[ii], SSHF[ii]);
+
+    fclose(fid);
+
+    // Output for the interaction energy
+    sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+        perror("Error while creating the output file for the interaction energy");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(fid, "%.8e\n", compute_uex(SS, xx, in));
+    fclose(fid);
+
+}
+
+
+// write binary file to use as initial guess (or restart)
+void write_guess_dynamic(double *SS, double *psi_xlw, input in){
+
+  // Name of output file
+  char out_name[100];
+  sprintf(out_name, "restart_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
+
+  // Open binary file
+  FILE *fid = NULL;
+  fid = fopen(out_name, "wb");
+  if (fid == NULL) {
+    fprintf(stderr,"Error while creating file for restart");
+    exit(EXIT_FAILURE);
+  }
+
+  // Input data
+  fwrite(&in, sizeof(input), 1, fid);
+
+  // Static structure factor 
+  fwrite(SS, sizeof(double), in.nx, fid);
+
+  // Fixed component of the auxiliary density response
+  fwrite(psi_xlw, sizeof(double), in.nx * in.nl * in.nx, fid);
+
+  // Close binary file
+  fclose(fid);
+
+}
+
+
+// read binary file to use as initial guess (or restart)
+void read_guess_dynamic(double *SS, double *psi_xlw,  input in, 
+			bool *psi_xlw_init){
+
+  // Variables
+  input in_load;
+
+  // Open binary file
+  FILE *fid = NULL;
+  fid = fopen(in.guess_file, "rb");
+  if (fid == NULL) {
+    fprintf(stderr,"Error while opening file with density response");
+    exit(EXIT_FAILURE);
+  }
+
+  // Check that the data for the guess file is consistent
+  fread(&in_load, sizeof(input), 1, fid);
+  if (in_load.nx != in.nx || in_load.dx != in.dx || in_load.xmax != in.xmax){
+    fprintf(stderr,"Grid from guess file is incompatible with input\n");
+    fclose(fid);
+    exit(EXIT_FAILURE);
+  }
+  
+  // Static structure factor
+  fread(SS, sizeof(double), in_load.nx, fid);
+
+  // Fixed component of the auxiliary density response
+  if (in_load.Theta == in.Theta){
+    fread(psi_xlw, sizeof(double), in.nx * in.nl * in.nx, fid);
+    psi_xlw_init = false;
+  }
+
+  // Close binary file
+  fclose(fid);
+	    
+}

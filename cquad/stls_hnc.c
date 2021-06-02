@@ -40,10 +40,10 @@ void solve_stls_hnc(input in, bool verbose) {
       GG[ii] = 0.0;
       GG_new[ii] = 1.0;
     }
-    compute_ssf(SS, SSHF, GG, phi, xx, in);
+    compute_ssf_static(SS, SSHF, GG, phi, xx, in);
   }
   else {
-    read_guess(SS, GG, in);
+    read_guess_static(SS, GG, in);
   }
    
   // SSF and SLFC via iterative procedure
@@ -56,7 +56,7 @@ void solve_stls_hnc(input in, bool verbose) {
     double tic = omp_get_wtime();
     
     // Update SSF
-    compute_ssf(SS, SSHF, GG, phi, xx, in);
+    compute_ssf_static(SS, SSHF, GG, phi, xx, in);
     
     // Update SLFC
     compute_slfc_hnc(GG_new, GG, SS, bf, xx, in);
@@ -88,8 +88,8 @@ void solve_stls_hnc(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text(SS, GG, phi, SSHF, xx, in);
-  write_guess(SS, GG, in);
+  write_text_static(SS, GG, phi, SSHF, xx, in);
+  write_guess_static(SS, GG, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
