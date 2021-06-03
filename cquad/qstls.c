@@ -481,6 +481,35 @@ void write_text_dynamic(double *SS, double *psi, double *phi,
 
     fclose(fid);
 
+    // Output for SLFC
+    sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+      perror("Error while creating the output file for the static local field correction");
+      exit(EXIT_FAILURE);
+    }
+    for (int ii = 0; ii < in.nx; ii++)
+      fprintf(fid, "%.8e %.8e\n", xx[ii], psi[idx2(ii,0,in.nx)]/phi[idx2(ii,0,in.nx)]);
+
+    fclose(fid);
+
+    // Output for static density response
+    sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+      perror("Error while creating the output file for the static density response");
+      exit(EXIT_FAILURE);
+    }
+    double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+    double ff = 4*lambda*in.rs/M_PI;
+    double sdr;
+    for (int ii=0 ; ii<in.nx; ii++){
+      sdr = -(3.0/2.0)*in.Theta*phi[idx2(ii,0,in.nx)]/
+	(1.0 + ff/(xx[ii]*xx[ii])*(phi[idx2(ii,0,in.nx)] - psi[idx2(ii,0,in.nx)]));
+      fprintf(fid, "%.8e %.8e\n", xx[ii], sdr);
+    }
+    fclose(fid);
+
     // Output for the auxiliary density response
     sprintf(out_name, "adr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
