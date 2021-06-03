@@ -165,7 +165,7 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
     #pragma omp for // Distribute for loop over the threads
     for (int ii=0; ii<in.nx; ii++){    
 
-      //printf("ii = %d\n", ii);  
+      printf("ii = %d\n", ii);  
       
       // Loop over ll (Matsubara frequencies)
       for (int ll=0; ll<in.nl; ll++){
@@ -187,9 +187,9 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
 	  // Integration limits for the integration over t
 	  xx2 = xx[ii]*xx[ii];
 	  xw = xx[ii]*xx[jj];
-	  tmin = xx2 - xw + in.dx; // +in.dx was added to avoid overflows
-	  tmax = xx2 + xw + in.dx;
-	  
+	  tmin = xx2 - xw;
+	  tmax = xx2 + xw;
+
 	  // Construct integrand for the integral over q
 	  for (int kk=0; kk<in.nx; kk++) {
 	    
@@ -254,7 +254,7 @@ double psi_x0w_t(double tt, void* pp) {
     logarg = (tt + txq)/(tt - txq);
     if (logarg < 0.0) logarg = -logarg;
     return 1.0/(2.0*tt + ww2 - xx2)*((qq2 - tt2/(4.0*xx2))
-				     *log(logarg) + qq*tt/xx);
+    				     *log(logarg) + qq*tt/xx);
 				     
   }
 
