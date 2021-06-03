@@ -165,7 +165,7 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
     #pragma omp for // Distribute for loop over the threads
     for (int ii=0; ii<in.nx; ii++){    
 
-      printf("ii = %d\n", ii);  
+      //printf("ii = %d\n", ii);  
       
       // Loop over ll (Matsubara frequencies)
       for (int ll=0; ll<in.nl; ll++){
