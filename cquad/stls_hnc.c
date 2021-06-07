@@ -131,7 +131,7 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
 
   double err;
   size_t nevals;
-  double wmax, wmin;
+  double wmax, wmin, GG_tmp;
   double *GGu  = malloc( sizeof(double) * in.nx);
 
   // Declare accelerator and spline objects
@@ -168,7 +168,10 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
   fu_int.function = &slfc_u;
   fw_int.function = &slfc_w;
 
-  // Static local field correction
+  // STLS component of the static local field correction
+  compute_slfc(GG_new, SS, xx, in);
+
+  // Non-STLS component of the static local field correction
   // Integration over u
   for (int ii=0; ii<in.nx; ii++) {
 
@@ -213,10 +216,9 @@ void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
 			    xx[0], xx[in.nx-1],
 			    0.0, 1e-5,
 			    wsp,
-			    &GG_new[ii], &err, &nevals);
+			    &GG_tmp, &err, &nevals);
       
-      GG_new[ii] *= 3.0/(8.0*xx[ii]);
-      GG_new[ii] += bf[ii];
+      GG_new[ii] += 3.0/(8.0*xx[ii])*GG_tmp + bf[ii];
 
     }
     else 
@@ -252,7 +254,7 @@ double slfc_u(double uu, void* pp) {
 
   if (uu > 0.0)
     return (1.0/uu) * gsl_spline_eval(GGu_sp_ptr, uu, GGu_acc_ptr)
-      *(-gsl_spline_eval(bf_sp_ptr, uu, bf_acc_ptr) + 1 
+      *(-gsl_spline_eval(bf_sp_ptr, uu, bf_acc_ptr) 
 	- (gsl_spline_eval(ssf_sp_ptr, uu, ssf_acc_ptr) - 1.0)
 	*(gsl_spline_eval(slfc_sp_ptr, uu, slfc_acc_ptr) - 1.0));
   else 
