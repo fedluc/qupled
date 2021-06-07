@@ -461,7 +461,6 @@ void compute_slfc(double *GG, double *SS, double *xx, input in) {
 			  0.0, 1e-5,
 			  wsp,
 			  &GG[ii], &err, &nevals);
-    GG[ii] *= -3.0/4.0;
   }
   
   // Free memory
