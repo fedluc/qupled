@@ -287,9 +287,13 @@ void compute_bf(double *bf, double *xx, input in){
     bf_ocp_ichimaru(bf, xx, in);
   else if (in.theory_id == 4)
     bf_ocp_2021(bf, xx, in);
-  else
+  else if (in.theory_id == 5)
+    bf_rescaled_ocp_2021(bf, xx, in);
+  else{
     printf("Error: unknown theory to be compute the bridge function."
-           "Choose between: STLS-HNC, STLS-IET and STLS-IET-2021");
+           "Choose between: STLS-HNC, STLS-IET, STLS-IET-2021 and STLS-RIET-2021");
+    exit(EXIT_FAILURE);
+  }
 
 }
 
@@ -372,6 +376,55 @@ void bf_ocp_2021(double *bf, double *xx, input in){
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double l2 = ll*ll;
   double Gamma = 2*l2*in.rs/in.Theta;
+
+  double err;
+  
+  // Integration workspace
+  gsl_integration_workspace *wsp 
+    = gsl_integration_workspace_alloc(1000);
+  gsl_integration_workspace *wspc 
+    = gsl_integration_workspace_alloc(1000);
+  gsl_integration_qawo_table *qtab
+    = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, 1000);
+  
+  // Integration function
+  gsl_function ff_int;
+  struct bfr_params rbfrp = {Gamma};
+  ff_int.function = &rbfr;
+  ff_int.params = &rbfrp;
+  
+  // Bridge function term (B(q)/U(q))
+  for (int ii = 0; ii < in.nx; ii++) {
+
+    // Set wave-vector (divide xx[ii] by ll to convert to Wigner-Seitz units)
+    gsl_integration_qawo_table_set(qtab, xx[ii]/ll, 1.0, GSL_INTEG_SINE);
+
+    // Fourier transform
+    gsl_integration_qawf(&ff_int,
+    			 0.0,
+    			 1e-10, 1000,
+    			 wsp, wspc,
+    			 qtab,
+    			 &bf[ii], &err);
+    bf[ii] *= xx[ii]/Gamma/ll;
+
+  }
+
+  // Free memory
+  gsl_integration_workspace_free(wsp);
+  gsl_integration_workspace_free(wspc); 
+  gsl_integration_qawo_table_free(qtab);
+
+ 
+
+}
+
+
+void bf_rescaled_ocp_2021(double *bf, double *xx, input in){
+
+  double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double l2 = ll*ll;
+  double Gamma = 2*l2*in.rs/sqrt(1 + in.Theta*in.Theta);
 
   double err;
   

@@ -26,6 +26,8 @@ void bf_ocp_ichimaru(double *bf, double *xx, input in);
 
 void bf_ocp_2021(double *bf, double *xx, input in);
 
+void bf_rescaled_ocp_2021(double *bf, double *xx, input in);
+
 double rbfr(double rr, void *pp);
 
 #endif

@@ -184,12 +184,14 @@ int main (int argc, char **argv){
   else if (strcmp(arguments.theory, "STLS-HNC") == 0) in.theory_id = 2;
   else if (strcmp(arguments.theory, "STLS-IET") == 0) in.theory_id = 3;
   else if (strcmp(arguments.theory, "STLS-IET-2021") == 0) in.theory_id = 4;
-  else if (strcmp(arguments.theory, "QSTLS") == 0) in.theory_id = 5;
-  else 
+  else if (strcmp(arguments.theory, "STLS-RIET-2021") == 0) in.theory_id = 5;
+  else if (strcmp(arguments.theory, "QSTLS") == 0) in.theory_id = 6;
+  else {
     printf("Error: unknown theory to be solved." 
 	   "Choose between: STLS, STLS-HNC, STLS-IET,"
-	   "STLS-IET-2021 and QSTLS\n");
-
+	   "STLS-IET-2021, STLS-RIET-2021 and QSTLS\n");
+    exit(EXIT_FAILURE);
+  }
 
   // Set number of threads for parallel calculations
   omp_set_num_threads(arguments.nThreads);
@@ -203,9 +205,10 @@ int main (int argc, char **argv){
     solve_stls(in, true);
   else if (in.theory_id == 2 || 
 	   in.theory_id == 3 ||
-	   in.theory_id == 4)
+	   in.theory_id == 4 ||
+           in.theory_id == 5)
     solve_stls_hnc(in, true);
-  else if (in.theory_id == 5)
+  else if (in.theory_id == 6)
     solve_qstls(in, true);
 
   // End timing 
