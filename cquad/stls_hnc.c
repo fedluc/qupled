@@ -89,6 +89,7 @@ void solve_stls_hnc(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_static(SS, GG, phi, SSHF, xx, in);
+  write_bf_static(bf, xx, in);
   write_guess_static(SS, GG, in);
   if (verbose) printf("Done.\n");
 
@@ -530,5 +531,31 @@ double  rbfr(double rr, void *pp){
   ff = 0.5 * ( 1.0 + erf(5.0*(rr - 1.50)) );
 
   return rr*((1 - ff)*bsr + ff*blr);
+
+}
+
+// -------------------------------------------------------------------
+// FUNCTIONS FOR OUTPUT AND INPUT
+// -------------------------------------------------------------------
+
+
+// write text files for output
+void write_bf_static(double *bf, double *xx, input in){
+
+
+  FILE* fid;
+
+  // Output for the bridge function
+  char out_name[100];
+  sprintf(out_name, "bf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    perror("Error while creating the output file for the bridge function");
+    exit(EXIT_FAILURE);
+  }
+  for (int ii = 0; ii < in.nx; ii++)
+    fprintf(fid, "%.8e %.8e\n", xx[ii], bf[ii]);
+
+  fclose(fid);
 
 }

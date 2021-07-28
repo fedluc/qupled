@@ -30,4 +30,10 @@ void bf_rescaled_ocp_2021(double *bf, double *xx, input in);
 
 double rbfr(double rr, void *pp);
 
+// -------------------------------------------------------------------
+// FUNCTIONS FOR OUTPUT AND INPUT
+// -------------------------------------------------------------------
+
+void write_bf_static(double *bf, double *xx, input in);
+
 #endif
