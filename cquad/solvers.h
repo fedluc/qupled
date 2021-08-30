@@ -48,5 +48,11 @@ void solve_stls_hnc(input in, bool verbose);
 
 void solve_qstls(input in, bool verbose);
 
+// -------------------------------------------------------------------
+// FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS-HNC EQUATIONS
+// -------------------------------------------------------------------
+
+void solve_qstls_hnc(input in, bool verbose);
+
 
 #endif

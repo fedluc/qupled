@@ -186,6 +186,8 @@ int main (int argc, char **argv){
   else if (strcmp(arguments.theory, "STLS-IET-2021") == 0) in.theory_id = 4;
   else if (strcmp(arguments.theory, "STLS-RIET-2021") == 0) in.theory_id = 5;
   else if (strcmp(arguments.theory, "QSTLS") == 0) in.theory_id = 6;
+  else if (strcmp(arguments.theory, "QSTLS-HNC") == 0) in.theory_id = 7;
+  else if (strcmp(arguments.theory, "QSTLS-IET-2021") == 0) in.theory_id = 8;
   else {
     printf("Error: unknown theory to be solved." 
 	   "Choose between: STLS, STLS-HNC, STLS-IET,"
@@ -210,6 +212,9 @@ int main (int argc, char **argv){
     solve_stls_hnc(in, true);
   else if (in.theory_id == 6)
     solve_qstls(in, true);
+  else if (in.theory_id == 7 ||
+	   in.theory_id == 8)
+    solve_qstls_hnc(in, true);
 
   // End timing 
   double toc = omp_get_wtime();
