@@ -136,9 +136,8 @@ void compute_psi_xluw(double *xx, input in) {
 
     double err;
     size_t nevals;
-    double wmax, wmin, psi_xluw;
-    int wmax_idx, wmin_idx;
-    
+    double psi_xluw;
+     
     // Integration workspace
     gsl_integration_cquad_workspace *wsp
       = gsl_integration_cquad_workspace_alloc(100);
@@ -172,19 +171,9 @@ void compute_psi_xluw(double *xx, input in) {
 	
     	// Loop over u (wave-vector)
     	for (int jj=0; jj<in.nx; jj++){
-	  
-  	  // Integration limits for the integration over w
-          wmin = xx[jj] - xx[ii];
-          if (wmin < 0.0) wmin = -wmin;
-          // NOTE: The upper cutoff is at qm - dq for numerical reasons;
-          // The quadrature formula attemps a tiny extrapolation which causes
-          // the interpolation routine to crash.
-          wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
-  	  wmin_idx = (int)((wmin-xx[0])/in.dx);
-  	  wmax_idx = (int)((wmax-xx[0])/in.dx);
 
   	  // Loop over w
-  	  for (int kk=wmin_idx; kk<=wmax_idx; kk++) {
+  	  for (int kk=0; kk<in.nx; kk++) {
 	    
   	    // Integral over y
   	    if (xx[ii] == 0.0 || xx[jj] == 0.0 || xx[kk] == 0.0){
@@ -206,7 +195,7 @@ void compute_psi_xluw(double *xx, input in) {
 	    // Write result to output file
 	    fwrite(&psi_xluw, sizeof(double), 1, fid);
 	    
-         }
+	  }
     	}
       }
 
@@ -267,105 +256,152 @@ double psi_xluw_y(double yy, void* pp) {
 
 }
 
-/* // --------------------------------------------------------------------------- */
-/* // FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE */
-/* // --------------------------------------------------------------------------- */
+// ---------------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE
+// ---------------------------------------------------------------------------
 
-/* struct psiw_params { */
+struct psiu_params {
 
-/*   gsl_spline *qt_int_sp_ptr; */
-/*   gsl_interp_accel *qt_int_acc_ptr; */
-/*   gsl_spline *ssf_sp_ptr; */
-/*   gsl_interp_accel *ssf_acc_ptr; */
+  gsl_spline *uint_sp_ptr;
+  gsl_interp_accel *uint_acc_ptr;
 
-/* }; */
+};
 
 
-/* void compute_psi_hnc(double *psi, double *psi_xlw, double *SS,  */
-/* 		     double *xx, input in){ */
+struct psiw_params {
 
-/*   double err; */
-/*   size_t nevals; */
-/*   double *qt_int  = malloc( sizeof(double) * in.nx); */
-/*   double norm_fact; */
+  gsl_spline *wint_sp_ptr;
+  gsl_interp_accel *wint_acc_ptr;
 
-/*   // Declare accelerator and spline objects */
-/*   gsl_spline *ssf_sp_ptr; */
-/*   gsl_interp_accel *ssf_acc_ptr; */
-/*   gsl_spline *qt_int_sp_ptr; */
-/*   gsl_interp_accel *qt_int_acc_ptr; */
+};
+
+void compute_psi_hnc(double *psi_new, double *psi, double *phi, 
+		     double *SS, double *xx, input in){
+
+  double err;
+  size_t nevals;
+  double wmax, wmin;
+  double *wint  = malloc( sizeof(double) * in.nx);
+  double *uint  = malloc( sizeof(double) * in.nx);
+
+  // Declare accelerator and spline objects
+  gsl_spline *wint_sp_ptr;
+  gsl_interp_accel *wint_acc_ptr;
+  gsl_spline *uint_sp_ptr;
+  gsl_interp_accel *uint_acc_ptr;
   
-/*   // Allocate the accelerator and the spline objects */
-/*   qt_int_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx); */
-/*   qt_int_acc_ptr = gsl_interp_accel_alloc(); */
-/*   ssf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx); */
-/*   ssf_acc_ptr = gsl_interp_accel_alloc(); */
-  
-/*   // Interpolate SSF */
-/*   gsl_spline_init(ssf_sp_ptr, xx, SS, in.nx); */
-
-/*   // Integration workspace */
-/*   gsl_integration_cquad_workspace *wsp */
-/*     = gsl_integration_cquad_workspace_alloc(100); */
+  // Allocate the accelerator and the spline objects
+  wint_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  wint_acc_ptr = gsl_interp_accel_alloc();
+  uint_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  uint_acc_ptr = gsl_interp_accel_alloc();
+   
+  // Integration workspace
+  gsl_integration_cquad_workspace *wsp
+    = gsl_integration_cquad_workspace_alloc(100);
 	
-/*   // Integration function */
-/*   gsl_function psiw_int; */
-/*   psiw_int.function = &psiw; */
-  
-/*   for (int ii=0; ii<in.nx; ii++){ */
-/*     for (int ll=0; ll<in.nl; ll++){ */
+  // Integration function
+  gsl_function fu_int, fwint;
+  fu_int.function = &psi_u_hnc;
+  fwint.function = &psi_w_hnc;
 
-/*       // Interpolate solution of q-t integration */
-/*       for (int jj=0; jj<in.nx; jj++){ */
-/* 	qt_int[jj] = psi_xlw[idx3(ii,ll,jj,in.nx,in.nl)]; */
-/*       } */
-/*       gsl_spline_init(qt_int_sp_ptr, xx, qt_int, in.nx); */
+  // Loop over xx (wave-vector)
+  for (int ii=0; ii<in.nx; ii++){
 
-/*       // Integral over w  */
-/*       struct psiw_params ppw = {qt_int_sp_ptr,qt_int_acc_ptr, */
-/* 				ssf_sp_ptr, ssf_acc_ptr}; */
-/*       psiw_int.params = &ppw; */
-/*       gsl_integration_cquad(&psiw_int, */
-/* 			    xx[0], xx[in.nx-1], */
-/* 			    0.0, 1e-5, */
-/* 			    wsp, */
-/* 			    &psi[idx2(ii,ll,in.nx)],  */
-/* 			    &err, &nevals); */
-      
-/*       // Assign output */
-/*       if (ll == 0) norm_fact = -3.0/(4.0*in.Theta); */
-/*       else norm_fact = -3.0/8.0; */
-/*       psi[idx2(ii,ll,in.nx)] *= norm_fact; */
+    // Open binary file with the fixed component of the auxilliary response function
+    char out_name[100];
+    sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f_%s.bin", in.Theta, xx[ii], in.theory);
+    FILE *fid = NULL;
+    fid = fopen(out_name, "rb");
+    if (fid == NULL) {
+      fprintf(stderr,"Error while reading file for fixed component of the auxilliary response function");
+      exit(EXIT_FAILURE);
+    }
 
-/*     } */
-/*   }   */
+    // Loop over the Matsubara frequencies
+    for (int ll=0; ll<in.nl; ll++){
 
-/*   // Free memory */
-/*   free(qt_int); */
-/*   gsl_integration_cquad_workspace_free(wsp); */
-/*   gsl_spline_free(qt_int_sp_ptr); */
-/*   gsl_interp_accel_free(qt_int_acc_ptr); */
-/*   gsl_spline_free(ssf_sp_ptr); */
-/*   gsl_interp_accel_free(ssf_acc_ptr); */
+      // Loop over u (wave-vector)
+      for (int jj=0; jj<in.nx; jj++){
 
-/* } */
+  	// Construct integrand over w
+  	for (int kk=0; kk<in.nx; kk++) {
+  	  fread(&wint[kk], sizeof(double), 1, fid);
+	  wint[kk] *= xx[kk]*SS[kk];
+  	}
+	gsl_spline_init(wint_sp_ptr, xx, wint, in.nx);
+
+	// Compute integral over w
+	struct psiw_params psiwp =  {wint_sp_ptr, wint_acc_ptr};
+  	wmin = xx[jj] - xx[ii];
+  	if (wmin < 0.0) wmin = -wmin;
+  	// NOTE: The upper cutoff is at qm - dq for numerical reasons;
+  	// The quadrature formula attemps a tiny extrapolation which causes
+  	// the interpolation routine to crash.
+  	wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
+	fwint.params = &psiwp;
+	gsl_integration_cquad(&fwint,
+			      wmin, wmax,
+			      0.0, 1e-5,
+			      wsp,
+			      &uint[jj], &err, &nevals);
+
+	// Construct integrand over u
+	if (xx[jj] > 0.0){
+	  uint[jj] *= (1.0/xx[jj])
+	    *(1 - (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])
+	     *(SS[jj]-1));
+	} 
+	else{
+	  uint[jj] = 0.0;
+	}
+
+      }
+
+      // Interpolate integrand over u
+      gsl_spline_init(uint_sp_ptr, xx, uint, in.nx);    
+
+      // Compute integral over u
+      struct psiu_params psiup = {uint_sp_ptr, uint_acc_ptr};
+      fu_int.params = &psiup;
+      gsl_integration_cquad(&fu_int,
+			    xx[0], xx[in.nx-1],
+			    0.0, 1e-5,
+			    wsp,
+			    &psi_new[idx2(ii,ll,in.nx)], &err, &nevals);
+
+    }
+  }
+
+  // Free memory
+  free(wint);
+  free(uint);
+  gsl_integration_cquad_workspace_free(wsp);
+  gsl_spline_free(uint_sp_ptr);
+  gsl_interp_accel_free(uint_acc_ptr);
+  gsl_spline_free(wint_sp_ptr);
+  gsl_interp_accel_free(wint_acc_ptr);
+
+}
 
 
-/* double psi_uw_hnc(double ww, void* pp) { */
-  
-/*   struct psiw_params* params = (struct psiw_params*)pp; */
-/*   gsl_spline* qt_int_sp_ptr = (params->qt_int_sp_ptr); */
-/*   gsl_interp_accel* qt_int_acc_ptr = (params->qt_int_acc_ptr); */
-/*   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr); */
-/*   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr); */
+double psi_u_hnc(double uu, void* pp) {
 
-/*   return ww*gsl_spline_eval(qt_int_sp_ptr, ww, qt_int_acc_ptr) */
-/*     *(gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0); */
+  struct psiu_params* params = (struct psiu_params*)pp;
+  gsl_spline* uint_sp_ptr = (params->uint_sp_ptr);
+  gsl_interp_accel* uint_acc_ptr = (params->uint_acc_ptr);
+ 
+  return gsl_spline_eval(uint_sp_ptr, uu, uint_acc_ptr);
 
-/* } */
+}
 
-// -------------------------------------------------------------------
-// FUNCTIONS FOR OUTPUT AND INPUT
-// -------------------------------------------------------------------
+double psi_w_hnc(double ww, void* pp) {
+
+  struct psiw_params* params = (struct psiw_params*)pp;
+  gsl_spline* wint_sp_ptr = (params->wint_sp_ptr);
+  gsl_interp_accel* wint_acc_ptr = (params->wint_acc_ptr);
+ 
+  return gsl_spline_eval(wint_sp_ptr, ww, wint_acc_ptr);
+}
 
 
