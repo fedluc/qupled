@@ -28,6 +28,7 @@ void solve_qstls_hnc(input in, bool verbose) {
 
   // Arrays for QSTLS solution
   double *psi = NULL;
+  double *psi_new = NULL;
   bool psi_xluw_init = true;
 
   // Allocate arrays
@@ -35,6 +36,7 @@ void solve_qstls_hnc(input in, bool verbose) {
   // we can reuse some stls routines 
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
   psi = malloc( sizeof(double) * in.nx * in.nl);  
+  psi_new = malloc( sizeof(double) * in.nx * in.nl);  
 
   // Initialize STLS arrays that are not modified by the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
@@ -52,62 +54,78 @@ void solve_qstls_hnc(input in, bool verbose) {
   /*   read_guess_dynamic(SS, psi_xlw, in, &psi_xlw_init); */
   /* } */
 
-  // Initialize QSTLS arrays that are not modified by the iterative procedure
-  if (psi_xluw_init){
-    if (verbose) printf("Fixed component of the auxiliary response function: ");
-    compute_psi_xluw(xx, in);
-    if (verbose) printf("Done.\n");
+  for (int ii=0; ii<in.nx; ii++){
+    for (int ll=0; ll<in.nl; ll++){
+      psi[idx2(ii,ll,in.nx)] = 0.0;
+    }
   }
- 
-  /* // SSF and SLFC via iterative procedure */
-  /* if (verbose) printf("SSF calculation...\n"); */
-  /* double iter_err = 1.0; */
-  /* int iter_counter = 0; */
-  /* while (iter_counter < in.nIter && iter_err > in.err_min_iter ) { */
-    
-  /*   // Start timing */
-  /*   double tic = omp_get_wtime(); */
-    
-  /*   // Update auxiliary function */
-  /*   compute_psi_hnc(psi, psi_xlw, SS, xx, in); */
-    
-  /*   // Update SSF */
-  /*   compute_ssf_dynamic(SS_new, SSHF, psi, phi, xx, in); */
-    
-  /*   // Update diagnostic */
-  /*   iter_err = 0.0; */
-  /*   iter_counter++; */
-  /*   for (int ii=0; ii<in.nx; ii++) { */
-  /*     iter_err += (SS_new[ii] - SS[ii]) * (SS_new[ii] - SS[ii]); */
-  /*     SS[ii] = in.a_mix*SS_new[ii] + (1-in.a_mix)*SS[ii]; */
-  /*   } */
-  /*   iter_err = sqrt(iter_err); */
-    
-  /*   // End timing */
-  /*   double toc = omp_get_wtime(); */
-    
-  /*   // Print diagnostic */
-  /*   if (verbose) { */
-  /*     printf("--- iteration %d ---\n", iter_counter); */
-  /*     printf("Elapsed time: %f seconds\n", toc - tic); */
-  /*     printf("Residual error: %.5e\n", iter_err); */
-  /*     fflush(stdout); */
-  /*   } */
+  compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in);
+
+  // Initialize QSTLS arrays that are not modified by the iterative procedure
+  /* if (psi_xluw_init){ */
+  /*   if (verbose) printf("Fixed component of the auxiliary response function: "); */
+  /*   compute_psi_xluw(xx, in); */
+  /*   if (verbose) printf("Done.\n"); */
   /* } */
-  /* if (verbose) printf("Done.\n"); */
+ 
+  // SSF and SLFC via iterative procedure
+  if (verbose) printf("SSF calculation...\n");
+  double iter_err = 1.0;
+  int iter_counter = 0;
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
+    
+    // Start timing
+    double tic = omp_get_wtime();
+    
+    // Update auxiliary function
+    compute_psi_hnc(psi_new, psi, phi, SS, xx, in);
+
+    // Update SSF
+    compute_ssf_dynamic(SS_new, SSHF, psi_new, phi, xx, in);
+
+    // Prepare auxiliary function for next iteration
+    for (int ii=0; ii<in.nx; ii++){
+      for (int ll=0; ll<in.nl; ll++){
+	psi[idx2(ii,ll,in.nx)] = psi_new[idx2(ii,ll,in.nx)];
+      }
+    }
+
+    // Update diagnostic
+    iter_err = 0.0;
+    iter_counter++;
+    for (int ii=0; ii<in.nx; ii++) {
+      iter_err += (SS_new[ii] - SS[ii]) * (SS_new[ii] - SS[ii]);
+      SS[ii] = in.a_mix*SS_new[ii] + (1-in.a_mix)*SS[ii];
+    }
+    iter_err = sqrt(iter_err);
+    
+    // End timing
+    double toc = omp_get_wtime();
+    
+    // Print diagnostic
+    if (verbose) {
+      printf("--- iteration %d ---\n", iter_counter);
+      printf("Elapsed time: %f seconds\n", toc - tic);
+      printf("Residual error: %.5e\n", iter_err);
+      fflush(stdout);
+    }
+
+  }
+  if (verbose) printf("Done.\n");
   
-  /* // Internal energy */
-  /* if (verbose) printf("Internal energy: %.10f\n",compute_uex(SS, xx, in)); */
+  // Internal energy
+  if (verbose) printf("Internal energy: %.10f\n",compute_uex(SS, xx, in));
   
-  /* // Output to file */
-  /* if (verbose) printf("Writing output files...\n"); */
-  /* write_text_dynamic(SS, psi, phi, SSHF, xx, in); */
-  /* write_guess_dynamic(SS, psi_xlw, in); */
-  /* if (verbose) printf("Done.\n"); */
+  // Output to file
+  if (verbose) printf("Writing output files...\n");
+  write_text_dynamic(SS, psi, phi, SSHF, xx, in);
+  //write_guess_dynamic(SS, psi_xlw, in);
+  if (verbose) printf("Done.\n");
 
   // Free memory
   free_stls_arrays(xx, phi, GG, SS_new, SS, SSHF);
   free(psi);
+  free(psi_new);
 
 }
 
@@ -278,110 +296,126 @@ struct psiw_params {
 void compute_psi_hnc(double *psi_new, double *psi, double *phi, 
 		     double *SS, double *xx, input in){
 
-  double err;
-  size_t nevals;
-  double wmax, wmin;
-  double *wint  = malloc( sizeof(double) * in.nx);
-  double *uint  = malloc( sizeof(double) * in.nx);
 
-  // Declare accelerator and spline objects
-  gsl_spline *wint_sp_ptr;
-  gsl_interp_accel *wint_acc_ptr;
-  gsl_spline *uint_sp_ptr;
-  gsl_interp_accel *uint_acc_ptr;
-  
-  // Allocate the accelerator and the spline objects
-  wint_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-  wint_acc_ptr = gsl_interp_accel_alloc();
-  uint_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-  uint_acc_ptr = gsl_interp_accel_alloc();
-   
-  // Integration workspace
-  gsl_integration_cquad_workspace *wsp
-    = gsl_integration_cquad_workspace_alloc(100);
+  // Parallel calculations
+  #pragma omp parallel
+  {  
+
+    double err;
+    size_t nevals;
+    double wmax, wmin;
+    double *wint  = malloc( sizeof(double) * in.nx);
+    double *uint  = malloc( sizeof(double) * in.nx);
+    
+    // Declare accelerator and spline objects
+    gsl_spline *wint_sp_ptr;
+    gsl_interp_accel *wint_acc_ptr;
+    gsl_spline *uint_sp_ptr;
+    gsl_interp_accel *uint_acc_ptr;
+    
+    // Allocate the accelerator and the spline objects
+    wint_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    wint_acc_ptr = gsl_interp_accel_alloc();
+    uint_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    uint_acc_ptr = gsl_interp_accel_alloc();
+    
+    // Integration workspace
+    gsl_integration_cquad_workspace *wsp
+      = gsl_integration_cquad_workspace_alloc(100);
+    
+    // Integration function
+    gsl_function fuint, fwint;
+    fuint.function = &psi_u_hnc;
+    fwint.function = &psi_w_hnc;
+    
+    // Loop over xx (wave-vector)
+    #pragma omp for // Distribute loops over the threads
+    for (int ii=0; ii<in.nx; ii++){
+      
+      // Open binary file with the fixed component of the auxilliary response function
+      char out_name[100];
+      sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f_%s.bin", in.Theta, xx[ii], in.theory);
+      FILE *fid = NULL;
+      fid = fopen(out_name, "rb");
+      if (fid == NULL) {
+	fprintf(stderr,"Error while reading file for fixed component of the auxilliary response function");
+	exit(EXIT_FAILURE);
+      }
+      
+      // Loop over the Matsubara frequencies
+      for (int ll=0; ll<in.nl; ll++){
 	
-  // Integration function
-  gsl_function fu_int, fwint;
-  fu_int.function = &psi_u_hnc;
-  fwint.function = &psi_w_hnc;
-
-  // Loop over xx (wave-vector)
-  for (int ii=0; ii<in.nx; ii++){
-
-    // Open binary file with the fixed component of the auxilliary response function
-    char out_name[100];
-    sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f_%s.bin", in.Theta, xx[ii], in.theory);
-    FILE *fid = NULL;
-    fid = fopen(out_name, "rb");
-    if (fid == NULL) {
-      fprintf(stderr,"Error while reading file for fixed component of the auxilliary response function");
-      exit(EXIT_FAILURE);
-    }
-
-    // Loop over the Matsubara frequencies
-    for (int ll=0; ll<in.nl; ll++){
-
-      // Loop over u (wave-vector)
-      for (int jj=0; jj<in.nx; jj++){
-
-  	// Construct integrand over w
-  	for (int kk=0; kk<in.nx; kk++) {
-  	  fread(&wint[kk], sizeof(double), 1, fid);
-	  wint[kk] *= xx[kk]*SS[kk];
-  	}
-	gsl_spline_init(wint_sp_ptr, xx, wint, in.nx);
-
-	// Compute integral over w
-	struct psiw_params psiwp =  {wint_sp_ptr, wint_acc_ptr};
-  	wmin = xx[jj] - xx[ii];
-  	if (wmin < 0.0) wmin = -wmin;
-  	// NOTE: The upper cutoff is at qm - dq for numerical reasons;
-  	// The quadrature formula attemps a tiny extrapolation which causes
-  	// the interpolation routine to crash.
-  	wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
-	fwint.params = &psiwp;
-	gsl_integration_cquad(&fwint,
-			      wmin, wmax,
+	// Loop over u (wave-vector)
+	for (int jj=0; jj<in.nx; jj++){
+	  
+	  // Construct integrand over w
+	  for (int kk=0; kk<in.nx; kk++) {
+	    fread(&wint[kk], sizeof(double), 1, fid);
+	    wint[kk] *= xx[kk]*(SS[kk]-1.0);
+	  }
+	  gsl_spline_init(wint_sp_ptr, xx, wint, in.nx);
+	  
+	  // Compute integral over w
+	  struct psiw_params psiwp =  {wint_sp_ptr, wint_acc_ptr};
+	  wmin = xx[jj] - xx[ii];
+	  if (wmin < 0.0) wmin = -wmin;
+	  // NOTE: The upper cutoff is at qm - dq for numerical reasons;
+	  // The quadrature formula attemps a tiny extrapolation which causes
+	  // the interpolation routine to crash.
+	  wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
+	  fwint.params = &psiwp;
+	  gsl_integration_cquad(&fwint,
+				wmin, wmax,
+				0.0, 1e-5,
+				wsp,
+				&uint[jj], &err, &nevals);
+	  
+	  // Construct integrand over u
+	  if (xx[jj] > 0.0){
+	    uint[jj] *= (1.0/xx[jj])
+	      *(1 - (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
+	  } 
+	  else{
+	    uint[jj] = 0.0;
+	  }
+	  
+	}
+	
+	// Interpolate integrand over u
+	gsl_spline_init(uint_sp_ptr, xx, uint, in.nx);    
+	
+	// Compute integral over u
+	struct psiu_params psiup = {uint_sp_ptr, uint_acc_ptr};
+	fuint.params = &psiup;
+	gsl_integration_cquad(&fuint,
+			      xx[0], xx[in.nx-1],
 			      0.0, 1e-5,
 			      wsp,
-			      &uint[jj], &err, &nevals);
-
-	// Construct integrand over u
-	if (xx[jj] > 0.0){
-	  uint[jj] *= (1.0/xx[jj])
-	    *(1 - (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])
-	     *(SS[jj]-1));
-	} 
-	else{
-	  uint[jj] = 0.0;
-	}
-
+			      &psi_new[idx2(ii,ll,in.nx)], &err, &nevals);
+	
+	if (ll == 0) 
+	  psi_new[idx2(ii,ll,in.nx)] *= -3.0/(4.0*in.Theta);
+	else
+	  psi_new[idx2(ii,ll,in.nx)] *= -3.0/8.0;
+	
       }
-
-      // Interpolate integrand over u
-      gsl_spline_init(uint_sp_ptr, xx, uint, in.nx);    
-
-      // Compute integral over u
-      struct psiu_params psiup = {uint_sp_ptr, uint_acc_ptr};
-      fu_int.params = &psiup;
-      gsl_integration_cquad(&fu_int,
-			    xx[0], xx[in.nx-1],
-			    0.0, 1e-5,
-			    wsp,
-			    &psi_new[idx2(ii,ll,in.nx)], &err, &nevals);
-
+      
+      // Close binary file for output
+      fclose(fid);
+      
     }
+    
+    // Free memory
+    free(wint);
+    free(uint);
+    gsl_integration_cquad_workspace_free(wsp);
+    gsl_spline_free(uint_sp_ptr);
+    gsl_interp_accel_free(uint_acc_ptr);
+    gsl_spline_free(wint_sp_ptr);
+    gsl_interp_accel_free(wint_acc_ptr);
+    
   }
-
-  // Free memory
-  free(wint);
-  free(uint);
-  gsl_integration_cquad_workspace_free(wsp);
-  gsl_spline_free(uint_sp_ptr);
-  gsl_interp_accel_free(uint_acc_ptr);
-  gsl_spline_free(wint_sp_ptr);
-  gsl_interp_accel_free(wint_acc_ptr);
-
+  
 }
 
 
