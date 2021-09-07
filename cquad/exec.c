@@ -191,7 +191,8 @@ int main (int argc, char **argv){
   else {
     printf("Error: unknown theory to be solved." 
 	   "Choose between: STLS, STLS-HNC, STLS-IET,"
-	   "STLS-IET-2021, STLS-RIET-2021 and QSTLS\n");
+	   "STLS-IET-2021, STLS-RIET-2021, QSTLS,"
+	   "QSTLS-HNC and QSTLS-IET-2021\n");
     exit(EXIT_FAILURE);
   }
 

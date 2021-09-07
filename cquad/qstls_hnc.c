@@ -11,6 +11,7 @@
 #include "stls.h"
 #include "qstls.h"
 #include "qstls_hnc.h"
+#include "stls_hnc.h"
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS EQUATIONS
@@ -29,6 +30,7 @@ void solve_qstls_hnc(input in, bool verbose) {
   // Arrays for QSTLS solution
   double *psi = NULL;
   double *psi_new = NULL;
+  double *bf = NULL;
   bool psi_xluw_init = true;
 
   // Allocate arrays
@@ -37,36 +39,31 @@ void solve_qstls_hnc(input in, bool verbose) {
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
   psi = malloc( sizeof(double) * in.nx * in.nl);  
   psi_new = malloc( sizeof(double) * in.nx * in.nl);  
+  bf = malloc(sizeof(double) * in.nx);
 
   // Initialize STLS arrays that are not modified by the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
+  compute_bf(bf, xx, in);
 
   // Initial guess
-  /* if (strcmp(in.guess_file,"NO_FILE")==0){ */
-  /*   for (int ii=0; ii<in.nx; ii++){ */
-  /*     for (int ll=0; ll<in.nl; ll++){ */
-  /* 	psi[idx2(ii,ll,in.nx)] = 0.0; */
-  /*     } */
-  /*   } */
-  /*   compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in); */
-  /* } */
-  /* else { */
-  /*   read_guess_dynamic(SS, psi_xlw, in, &psi_xlw_init); */
-  /* } */
-
-  for (int ii=0; ii<in.nx; ii++){
-    for (int ll=0; ll<in.nl; ll++){
-      psi[idx2(ii,ll,in.nx)] = 0.0;
+  if (strcmp(in.guess_file,"NO_FILE")==0){
+    for (int ii=0; ii<in.nx; ii++){
+      for (int ll=0; ll<in.nl; ll++){
+  	psi[idx2(ii,ll,in.nx)] = 0.0;
+      }
     }
+    compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in);
   }
-  compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in);
+  else {
+    psi_xluw_init = false;
+  }
 
   // Initialize QSTLS arrays that are not modified by the iterative procedure
-  /* if (psi_xluw_init){ */
-  /*   if (verbose) printf("Fixed component of the auxiliary response function: "); */
-  /*   compute_psi_xluw(xx, in); */
-  /*   if (verbose) printf("Done.\n"); */
-  /* } */
+  if (psi_xluw_init){
+    if (verbose) printf("Fixed component of the auxiliary response function: ");
+    compute_psi_xluw(xx, in);
+    if (verbose) printf("Done.\n");
+  }
  
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF calculation...\n");
@@ -78,7 +75,7 @@ void solve_qstls_hnc(input in, bool verbose) {
     double tic = omp_get_wtime();
     
     // Update auxiliary function
-    compute_psi_hnc(psi_new, psi, phi, SS, xx, in);
+    compute_psi_hnc(psi_new, psi, phi, SS, bf, xx, in);
 
     // Update SSF
     compute_ssf_dynamic(SS_new, SSHF, psi_new, phi, xx, in);
@@ -119,7 +116,6 @@ void solve_qstls_hnc(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_dynamic(SS, psi, phi, SSHF, xx, in);
-  //write_guess_dynamic(SS, psi_xlw, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -166,7 +162,7 @@ void compute_psi_xluw(double *xx, input in) {
 
       // Open binary file for output
       char out_name[100];
-      sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f_%s.bin", in.Theta, xx[ii], in.theory);
+      sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
       FILE *fid = NULL;
       fid = fopen(out_name, "wb");
       if (fid == NULL) {
@@ -294,7 +290,7 @@ struct psiw_params {
 };
 
 void compute_psi_hnc(double *psi_new, double *psi, double *phi, 
-		     double *SS, double *xx, input in){
+		     double *SS, double *bf, double *xx, input in){
 
 
   // Parallel calculations
@@ -334,7 +330,7 @@ void compute_psi_hnc(double *psi_new, double *psi, double *phi,
       
       // Open binary file with the fixed component of the auxilliary response function
       char out_name[100];
-      sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f_%s.bin", in.Theta, xx[ii], in.theory);
+      sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f_QSTLS-HNC.bin", in.Theta, xx[ii]);
       FILE *fid = NULL;
       fid = fopen(out_name, "rb");
       if (fid == NULL) {
@@ -373,7 +369,7 @@ void compute_psi_hnc(double *psi_new, double *psi, double *phi,
 	  // Construct integrand over u
 	  if (xx[jj] > 0.0){
 	    uint[jj] *= (1.0/xx[jj])
-	      *(1 - (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
+	      *(-bf[jj] + 1 - (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)]-1)*(SS[jj]-1));
 	  } 
 	  else{
 	    uint[jj] = 0.0;

@@ -18,7 +18,7 @@ double psi_xluw_y(double yy, void* pp);
 // ---------------------------------------------------------------------------
 
 void compute_psi_hnc(double *psi_new, double *psi, double *phi,
-                     double *SS, double *xx, input in);
+                     double *SS, double *bf, double *xx, input in);
 
 double psi_u_hnc(double uu, void* pp);
 
