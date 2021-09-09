@@ -17,8 +17,9 @@ double psi_xluw_y(double yy, void* pp);
 // FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE
 // ---------------------------------------------------------------------------
 
-void compute_psi_hnc(double *psi_new, double *psi, double *phi,
-                     double *SS, double *bf, double *xx, input in);
+void compute_psi_hnc(double *psi_new, double *psi, double *psi_xlw_qstls,
+                     double *phi, double *SS, double *bf, double *xx,
+                     input in);
 
 double psi_u_hnc(double uu, void* pp);
 

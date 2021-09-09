@@ -30,7 +30,9 @@ void solve_qstls_hnc(input in, bool verbose) {
   // Arrays for QSTLS solution
   double *psi = NULL;
   double *psi_new = NULL;
+  double *psi_qstls_xlw = NULL;
   double *bf = NULL;
+  bool psi_qstls_xlw_init = true;
   bool psi_xluw_init = true;
 
   // Allocate arrays
@@ -39,6 +41,7 @@ void solve_qstls_hnc(input in, bool verbose) {
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
   psi = malloc( sizeof(double) * in.nx * in.nl);  
   psi_new = malloc( sizeof(double) * in.nx * in.nl);  
+  psi_qstls_xlw = malloc( sizeof(double) * in.nx * in.nl * in.nx);  
   bf = malloc(sizeof(double) * in.nx);
 
   // Initialize STLS arrays that are not modified by the iterative procedure
@@ -55,10 +58,17 @@ void solve_qstls_hnc(input in, bool verbose) {
     compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in);
   }
   else {
-    psi_xluw_init = false;
+    // Implement guess from file and fixed components from file 
   }
 
   // Initialize QSTLS arrays that are not modified by the iterative procedure
+  if (psi_qstls_xlw_init){
+    if (verbose) printf("Fixed component of the qstls auxiliary response function: ");
+    compute_psi_xlw(psi_qstls_xlw, xx, in);
+    if (verbose) printf("Done.\n");
+  }
+
+  // Initialize QSTLS-HNC arrays that are not modified by the iterative procedure
   if (psi_xluw_init){
     if (verbose) printf("Fixed component of the auxiliary response function: ");
     compute_psi_xluw(xx, in);
@@ -75,7 +85,7 @@ void solve_qstls_hnc(input in, bool verbose) {
     double tic = omp_get_wtime();
     
     // Update auxiliary function
-    compute_psi_hnc(psi_new, psi, phi, SS, bf, xx, in);
+    compute_psi_hnc(psi_new, psi, psi_qstls_xlw, phi, SS, bf, xx, in);
 
     // Update SSF
     compute_ssf_dynamic(SS_new, SSHF, psi_new, phi, xx, in);
@@ -289,9 +299,13 @@ struct psiw_params {
 
 };
 
-void compute_psi_hnc(double *psi_new, double *psi, double *phi, 
-		     double *SS, double *bf, double *xx, input in){
+void compute_psi_hnc(double *psi_new, double *psi, double *psi_xlw_qstls, 
+		     double *phi, double *SS, double *bf, double *xx, 
+		     input in){
 
+
+  // QSTLS component of the auxilliary response function
+  compute_psi(psi_new, psi_xlw_qstls, SS, xx, in);
 
   // Parallel calculations
   #pragma omp parallel
@@ -299,6 +313,7 @@ void compute_psi_hnc(double *psi_new, double *psi, double *phi,
 
     double err;
     size_t nevals;
+    double psi_tmp;
     double wmax, wmin;
     double *wint  = malloc( sizeof(double) * in.nx);
     double *uint  = malloc( sizeof(double) * in.nx);
@@ -330,7 +345,7 @@ void compute_psi_hnc(double *psi_new, double *psi, double *phi,
       
       // Open binary file with the fixed component of the auxilliary response function
       char out_name[100];
-      sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f_QSTLS-HNC.bin", in.Theta, xx[ii]);
+      sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
       FILE *fid = NULL;
       fid = fopen(out_name, "rb");
       if (fid == NULL) {
@@ -369,7 +384,7 @@ void compute_psi_hnc(double *psi_new, double *psi, double *phi,
 	  // Construct integrand over u
 	  if (xx[jj] > 0.0){
 	    uint[jj] *= (1.0/xx[jj])
-	      *(-bf[jj] + 1 - (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)]-1)*(SS[jj]-1));
+	      *(-bf[jj] - (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)]-1)*(SS[jj]-1));
 	  } 
 	  else{
 	    uint[jj] = 0.0;
@@ -387,12 +402,12 @@ void compute_psi_hnc(double *psi_new, double *psi, double *phi,
 			      xx[0], xx[in.nx-1],
 			      0.0, 1e-5,
 			      wsp,
-			      &psi_new[idx2(ii,ll,in.nx)], &err, &nevals);
+			      &psi_tmp, &err, &nevals);
 	
 	if (ll == 0) 
-	  psi_new[idx2(ii,ll,in.nx)] *= -3.0/(4.0*in.Theta);
+	  psi_new[idx2(ii,ll,in.nx)] += -3.0/(4.0*in.Theta)*psi_tmp;
 	else
-	  psi_new[idx2(ii,ll,in.nx)] *= -3.0/8.0;
+	  psi_new[idx2(ii,ll,in.nx)] += -(3.0/8.0)*psi_tmp;
 	
       }
       
