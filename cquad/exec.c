@@ -15,33 +15,45 @@
 static char doc[] =
   "The documentation is available at https://github.com/fedluc/STLS";
 
-
+// Non-ascii characters to avoid using short options in the parser
+#define ARGUMENT_THETA_SHORT 0x80
+#define ARGUMENT_RS_SHORT 0x81
+#define ARGUMENT_XMAX_SHORT 0x82
+#define ARGUMENT_DX_SHORT 0x83
+#define ARGUMENT_NL_SHORT 0x84
+#define ARGUMENT_ITER_SHORT 0x85
+#define ARGUMENT_MIN_ERR_SHORT 0x86
+#define ARGUMENT_MIX_SHORT 0x87
+#define ARGUMENT_MU_GUESS_SHORT 0x88
+#define ARGUMENT_STLS_GUESS_SHORT 0x89
+#define ARGUMENT_THEORY_SHORT 0x90
+#define ARGUMENT_OMP_SHORT 0x91
 
 // Optional arguments
 static struct argp_option options[] = {
-  {"Theta",    't', "1.0", 0,
+  {"Theta", ARGUMENT_THETA_SHORT, "1.0", 0,
    "Quantum degeneracy parameter"},
-  {"rs",    'r', "1.0", 0,
+  {"rs", ARGUMENT_RS_SHORT, "1.0", 0,
    "Quantum coupling parameter"},
-  {"xcut",  'x', "20.48", 0,
+  {"xmax", ARGUMENT_XMAX_SHORT, "20.48", 0,
    "Cutoff for wave-vector grid"},
-  {"dx",  'd', "0.01", 0,
+  {"dx", ARGUMENT_DX_SHORT, "0.01", 0,
    "Resolution for wave-vector grid"},
-  {"nl",  'l', "128", 0,
+  {"nl", ARGUMENT_NL_SHORT, "128", 0,
    "Number of Matsubara frequencies"},
-  {"iter",  'i', "1000", 0,
+  {"iter", ARGUMENT_ITER_SHORT, "1000", 0,
    "Maximum number of iterations"},
-  {"errIter", 'e', "1e-5", 0,
+  {"min-err", ARGUMENT_MIN_ERR_SHORT, "1e-5", 0,
    "Minimum error for convergence in the iterations"},
-  {"mix", 'm', "0.1", 0,
+  {"mix", ARGUMENT_MIX_SHORT, "0.1", 0,
    "Mixing parameter for iterative solution"},
-  {"mg", 'g', "-10,10", 0,
+  {"mu-guess", ARGUMENT_MU_GUESS_SHORT, "-10,10", 0,
    "Initial guess for chemical potential"},
-  {"sg", 'f', "NO_FILE", 0,
+  {"stls-guess", ARGUMENT_STLS_GUESS_SHORT, "NO_FILE", 0,
    "Load initial guess from file"},
-  {"sol", 's', "STLS",0,
+  {"theory", ARGUMENT_THEORY_SHORT, "STLS",0,
    "Theory to be solved"},
-  {"omp", 'o', "1",0,
+  {"omp", ARGUMENT_OMP_SHORT, "1",0,
    "Number of omp threads to use in the solution"},
   { 0 }
 };
@@ -79,16 +91,16 @@ parse_opt (int key, char *arg, struct argp_state *state)
   switch (key)
     {
 
-    case 'd':
+    case ARGUMENT_DX_SHORT:
       arguments->dx = atof(arg);
       break;
-    case 'e':
+    case  ARGUMENT_MIN_ERR_SHORT:
       arguments->err_min_iter = atof(arg);
       break;
-    case 'f':
+    case  ARGUMENT_STLS_GUESS_SHORT:
       arguments->guess_file = arg;
     break;
-    case 'g':
+    case  ARGUMENT_MU_GUESS_SHORT:
       value = strtok(NULL, ",");
       if(value != NULL ) {
 	arguments->mu_lo = atof(value);
@@ -100,31 +112,30 @@ parse_opt (int key, char *arg, struct argp_state *state)
       }
       else exit(EXIT_FAILURE);
       break;
-    case 'i':
+    case ARGUMENT_ITER_SHORT:
       arguments->nIter = atoi(arg);
       break;
-    case 'l':
+    case ARGUMENT_NL_SHORT:
       arguments->nl = atoi(arg);
       break;
-    case 'm':
+    case ARGUMENT_MIX_SHORT:
       arguments->a_mix = atof(arg);
       break;
-    case 'o':
+    case ARGUMENT_OMP_SHORT:
       arguments->nThreads = atoi(arg);
       break;
-    case 'r':
+    case ARGUMENT_RS_SHORT:
       arguments->rs = atof(arg);
       break;
-    case 't':
+    case ARGUMENT_THETA_SHORT:
       arguments->Theta = atof(arg);
       break;
-    case 's':
+    case ARGUMENT_THEORY_SHORT:
       arguments->theory = arg;
       break;
-    case 'x':
+    case  ARGUMENT_XMAX_SHORT:
       arguments->xmax = atof(arg);
       break;
-
     case ARGP_KEY_ARG:
       if (state->arg_num > 0) 
         argp_usage (state);
@@ -181,18 +192,19 @@ int main (int argc, char **argv){
   in.nx = (int)floor(in.xmax/in.dx);
   in.theory = arguments.theory;
   if (strcmp(arguments.theory, "STLS") == 0) in.theory_id = 1;
-  else if (strcmp(arguments.theory, "STLS-HNC") == 0) in.theory_id = 2;
-  else if (strcmp(arguments.theory, "STLS-IET") == 0) in.theory_id = 3;
-  else if (strcmp(arguments.theory, "STLS-IET-2021") == 0) in.theory_id = 4;
-  else if (strcmp(arguments.theory, "STLS-RIET-2021") == 0) in.theory_id = 5;
+  else if (strcmp(arguments.theory, "STLS-IET-HNC") == 0) in.theory_id = 2;
+  else if (strcmp(arguments.theory, "STLS-IET-IOI") == 0) in.theory_id = 3;
+  else if (strcmp(arguments.theory, "STLS-IET-FLC") == 0) in.theory_id = 4;
+  else if (strcmp(arguments.theory, "STLS-RIET-FLC") == 0) in.theory_id = 5;
   else if (strcmp(arguments.theory, "QSTLS") == 0) in.theory_id = 6;
-  else if (strcmp(arguments.theory, "QSTLS-HNC") == 0) in.theory_id = 7;
-  else if (strcmp(arguments.theory, "QSTLS-IET-2021") == 0) in.theory_id = 8;
+  else if (strcmp(arguments.theory, "QSTLS-IET-HNC") == 0) in.theory_id = 7;
+  else if (strcmp(arguments.theory, "QSTLS-IET-IOI") == 0) in.theory_id = 8;
+  else if (strcmp(arguments.theory, "QSTLS-IET-FLC") == 0) in.theory_id = 9;
   else {
     printf("Error: unknown theory to be solved." 
-	   "Choose between: STLS, STLS-HNC, STLS-IET,"
-	   "STLS-IET-2021, STLS-RIET-2021, QSTLS,"
-	   "QSTLS-HNC and QSTLS-IET-2021\n");
+	   "Choose between: STLS, STLS-IET-HNC, STLS-IET-IOI,"
+	   "STLS-IET-FLC, STLS-RIET-FLC, QSTLS,"
+	   "QSTLS-IET-HNC and QSTLS-IET-FLC\n");
     exit(EXIT_FAILURE);
   }
 
