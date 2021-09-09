@@ -253,7 +253,8 @@ int main (int argc, char **argv){
   else if (in.theory_id == 6)
     solve_qstls(in, true);
   else if (in.theory_id == 7 ||
-	   in.theory_id == 8)
+	   in.theory_id == 8 ||
+	   in.theory_id == 9)
     solve_qstls_iet(in, true);
 
   // End timing 

@@ -32,8 +32,6 @@ void solve_qstls_iet(input in, bool verbose) {
   double *psi_new = NULL;
   double *psi_qstls_xlw = NULL;
   double *bf = NULL;
-  bool psi_qstls_xlw_init = true;
-  bool psi_xluw_init = true;
 
   // Allocate arrays
   // Note: GG is not needed for QSTLS, but we keep it here so that
@@ -58,18 +56,22 @@ void solve_qstls_iet(input in, bool verbose) {
     compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in);
   }
   else {
-    // Implement guess from file and fixed components from file 
+    read_guess_dynamic(SS, in);
   }
 
   // Initialize QSTLS arrays that are not modified by the iterative procedure
-  if (psi_qstls_xlw_init){
+  if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
     if (verbose) printf("Fixed component of the qstls auxiliary response function: ");
     compute_psi_xlw(psi_qstls_xlw, xx, in);
     if (verbose) printf("Done.\n");
   }
+  else {
+    read_fixed_qstls(psi_qstls_xlw, in);
+  }
+
 
   // Initialize QSTLS-IET arrays that are not modified by the iterative procedure
-  if (psi_xluw_init){
+  if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
     if (verbose) printf("Fixed component of the auxiliary response function: ");
     compute_psi_xluw(xx, in);
     if (verbose) printf("Done.\n");
@@ -126,12 +128,15 @@ void solve_qstls_iet(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_dynamic(SS, psi, phi, SSHF, xx, in);
+  write_fixed_qstls(psi_qstls_xlw, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
   free_stls_arrays(xx, phi, GG, SS_new, SS, SSHF);
   free(psi);
   free(psi_new);
+  free(psi_qstls_xlw);
+  free(bf);
 
 }
 

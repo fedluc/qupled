@@ -106,6 +106,7 @@ void solve_qstls(input in, bool verbose) {
   if (verbose) printf("Writing output files...\n");
   write_text_dynamic(SS, psi, phi, SSHF, xx, in);
   write_guess_dynamic(SS, in);
+  write_fixed_qstls(psi_xlw, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
