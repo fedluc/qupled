@@ -23,6 +23,7 @@ typedef struct {
   int nl;
   int nx;
   int nIter;
+  int theory_id;
 
 
 } input;
@@ -35,10 +36,23 @@ void solve_stls(input in, bool verbose);
 
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ITERATIVELY SOLVE THE STLS-HNC EQUATIONS
+// FUNCTION USED TO ITERATIVELY SOLVE THE STLS-IET EQUATIONS
 // -------------------------------------------------------------------
 
-void solve_stls_hnc(input in, bool verbose, bool iet);
+void solve_stls_iet(input in, bool verbose);
+
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS EQUATIONS
+// -------------------------------------------------------------------
+
+void solve_qstls(input in, bool verbose);
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS-IET EQUATIONS
+// -------------------------------------------------------------------
+
+void solve_qstls_iet(input in, bool verbose);
 
 
 #endif

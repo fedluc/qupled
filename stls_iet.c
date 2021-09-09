@@ -9,13 +9,13 @@
 #include <string.h>
 #include "solvers.h"
 #include "stls.h"
-#include "stls_hnc.h"
+#include "stls_iet.h"
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ITERATIVELY SOLVE THE STLS-HNC EQUATIONS
+// FUNCTION USED TO ITERATIVELY SOLVE THE STLS-IET EQUATIONS
 // -------------------------------------------------------------------
 
-void solve_stls_hnc(input in, bool verbose) {
+void solve_stls_iet(input in, bool verbose) {
 
   // Arrays for STLS solution
   double *xx = NULL; 
@@ -59,7 +59,7 @@ void solve_stls_hnc(input in, bool verbose) {
     compute_ssf_static(SS, SSHF, GG, phi, xx, in);
     
     // Update SLFC
-    compute_slfc_hnc(GG_new, GG, SS, bf, xx, in);
+    compute_slfc_iet(GG_new, GG, SS, bf, xx, in);
     
     // Update diagnostic
     iter_err = 0.0;
@@ -127,7 +127,7 @@ struct slfcw_params {
 };
 
 
-void compute_slfc_hnc(double *GG_new, double *GG, double *SS,
+void compute_slfc_iet(double *GG_new, double *GG, double *SS,
                       double *bf, double *xx, input in) {
 
   double err;
@@ -285,15 +285,15 @@ void compute_bf(double *bf, double *xx, input in){
   if (in.theory_id == 2 || in.theory_id == 7)
     bf_hnc(bf, xx, in);
   else if (in.theory_id == 3 || in.theory_id == 8)
-    bf_ocp_ichimaru(bf, xx, in);
+    bf_ocp_ioi(bf, xx, in);
   else if (in.theory_id == 4 || in.theory_id == 9)
-    bf_ocp_2021(bf, xx, in);
+    bf_ocp_lct(bf, xx, in);
   else if (in.theory_id == 5)
-    bf_rescaled_ocp_2021(bf, xx, in);
+    bf_rescaled_ocp_lct(bf, xx, in);
   else{
     printf("Error: unknown theory to be compute the bridge function."
-           "Choose between: STLS-IET-HNC, STLS-IET-IOI, STLS-IET-FLC, STLS-RIET-FLC,"
-	   "QSTLS-IET-HNC, QSTLS-IET-IOI, QSTLS-IET-FLC\n");
+           "Choose between: STLS-IET-HNC, STLS-IET-IOI, STLS-IET-LCT, STLS-RIET-LCT,"
+	   "QSTLS-IET-HNC, QSTLS-IET-IOI, QSTLS-IET-LCT\n");
     exit(EXIT_FAILURE);
   }
 
@@ -309,8 +309,8 @@ void bf_hnc(double *bf, double *xx, input in){
 
 }
  
-// Bridge function from the parameterization of Ichimaru
-void bf_ocp_ichimaru(double *bf, double *xx, input in){
+// Bridge function from the parameterization of Ichimaru and collaborators
+void bf_ocp_ioi(double *bf, double *xx, input in){
 
   double scaling = 1.0;
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
@@ -364,8 +364,7 @@ void bf_ocp_ichimaru(double *bf, double *xx, input in){
  
 }
 
-// Bridge function from the parameterization of 2021
-
+// Bridge function from the parameterization of Lucco Castello and Tolias
 struct bfr_params {
 
   double Gamma;
@@ -373,7 +372,7 @@ struct bfr_params {
 };
 
 
-void bf_ocp_2021(double *bf, double *xx, input in){
+void bf_ocp_lct(double *bf, double *xx, input in){
 
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double l2 = ll*ll;
@@ -422,7 +421,7 @@ void bf_ocp_2021(double *bf, double *xx, input in){
 }
 
 
-void bf_rescaled_ocp_2021(double *bf, double *xx, input in){
+void bf_rescaled_ocp_lct(double *bf, double *xx, input in){
 
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double l2 = ll*ll;

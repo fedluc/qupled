@@ -10,14 +10,14 @@
 #include "solvers.h"
 #include "stls.h"
 #include "qstls.h"
-#include "qstls_hnc.h"
-#include "stls_hnc.h"
+#include "qstls_iet.h"
+#include "stls_iet.h"
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS EQUATIONS
 // -------------------------------------------------------------------
 
-void solve_qstls_hnc(input in, bool verbose) {
+void solve_qstls_iet(input in, bool verbose) {
 
   // Arrays for STLS solution
   double *xx = NULL; 
@@ -68,7 +68,7 @@ void solve_qstls_hnc(input in, bool verbose) {
     if (verbose) printf("Done.\n");
   }
 
-  // Initialize QSTLS-HNC arrays that are not modified by the iterative procedure
+  // Initialize QSTLS-IET arrays that are not modified by the iterative procedure
   if (psi_xluw_init){
     if (verbose) printf("Fixed component of the auxiliary response function: ");
     compute_psi_xluw(xx, in);
@@ -85,7 +85,7 @@ void solve_qstls_hnc(input in, bool verbose) {
     double tic = omp_get_wtime();
     
     // Update auxiliary function
-    compute_psi_hnc(psi_new, psi, psi_qstls_xlw, phi, SS, bf, xx, in);
+    compute_psi_iet(psi_new, psi, psi_qstls_xlw, phi, SS, bf, xx, in);
 
     // Update SSF
     compute_ssf_dynamic(SS_new, SSHF, psi_new, phi, xx, in);
@@ -299,7 +299,7 @@ struct psiw_params {
 
 };
 
-void compute_psi_hnc(double *psi_new, double *psi, double *psi_xlw_qstls, 
+void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls, 
 		     double *phi, double *SS, double *bf, double *xx, 
 		     input in){
 
@@ -336,8 +336,8 @@ void compute_psi_hnc(double *psi_new, double *psi, double *psi_xlw_qstls,
     
     // Integration function
     gsl_function fuint, fwint;
-    fuint.function = &psi_u_hnc;
-    fwint.function = &psi_w_hnc;
+    fuint.function = &psi_u_iet;
+    fwint.function = &psi_w_iet;
     
     // Loop over xx (wave-vector)
     #pragma omp for // Distribute loops over the threads
@@ -430,7 +430,7 @@ void compute_psi_hnc(double *psi_new, double *psi, double *psi_xlw_qstls,
 }
 
 
-double psi_u_hnc(double uu, void* pp) {
+double psi_u_iet(double uu, void* pp) {
 
   struct psiu_params* params = (struct psiu_params*)pp;
   gsl_spline* uint_sp_ptr = (params->uint_sp_ptr);
@@ -440,7 +440,7 @@ double psi_u_hnc(double uu, void* pp) {
 
 }
 
-double psi_w_hnc(double ww, void* pp) {
+double psi_w_iet(double ww, void* pp) {
 
   struct psiw_params* params = (struct psiw_params*)pp;
   gsl_spline* wint_sp_ptr = (params->wint_sp_ptr);

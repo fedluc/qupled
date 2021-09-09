@@ -1,26 +1,26 @@
-# Default type of integration scheme
-ifndef $(ITG)
-ITG = cquad
-endif
+# Compiler 
+CC = gcc
+CFLAGS = -Wall -O2 -std=gnu99
+
+# Include
+INCLUDE += -I/home/x_fedlu/gsl/include
 
 # Name of output file
-ifndef $(EXE)
 EXE = stls
-endif
 
-# Path for the GSL library
-ifndef $(GSL)
-GSL = -I/home/x_fedlu/gsl/include
-endif
+# Files
+SRC = $(wildcard *.c)
+OBJS = $(patsubst %.c, %.o, $(SRC))
 
-# Run appropriate make files
-.PHONY : all
-all:
-	cd $(ITG) && make $@ EXE=$(EXE) GSL=$(GSL) && mv $(EXE) ..
+# Compile
+all: $(EXE)
 
+%.o: %.c
+	 $(CC) $(CFLAGS) -fopenmp $(INCLUDE) -c $<
 
-.PHONY : clean
+# Link
+$(EXE): $(OBJS)
+	 $(CC) -fopenmp $^ -o $@ -lgsl -lgslcblas -lm
+
 clean:
-	cd $(ITG) && make $@
-	rm $(EXE)
-
+	 rm *.o $(EXE)
