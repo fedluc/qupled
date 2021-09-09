@@ -28,6 +28,9 @@ static char doc[] =
 #define ARGUMENT_STLS_GUESS_SHORT 0x89
 #define ARGUMENT_THEORY_SHORT 0x90
 #define ARGUMENT_OMP_SHORT 0x91
+#define ARGUMENT_QSTLS_GUESS_SHORT 0x92
+#define ARGUMENT_QSTLS_FIXED_SHORT 0x93
+#define ARGUMENT_QSTLS_IET_FIXED_SHORT 0x94
 
 // Optional arguments
 static struct argp_option options[] = {
@@ -50,9 +53,15 @@ static struct argp_option options[] = {
   {"mu-guess", ARGUMENT_MU_GUESS_SHORT, "-10,10", 0,
    "Initial guess for chemical potential"},
   {"stls-guess", ARGUMENT_STLS_GUESS_SHORT, "NO_FILE", 0,
-   "Load initial guess from file"},
+   "Load initial guess from file for the stls and stls-iet schemes"},
+  {"qstls-guess", ARGUMENT_QSTLS_GUESS_SHORT, "NO_FILE", 0,
+   "Load initial guess from file for the qstls and qstls-iet schemes"},
+  {"qstls-fix", ARGUMENT_QSTLS_FIXED_SHORT, "NO_FILE", 0,
+   "Load fixed component of the density response function from file for the qslts scheme"},
+  {"qstls-iet-fix", ARGUMENT_QSTLS_IET_FIXED_SHORT, "NO_FILE", 0,
+   "Load fixed component of the density response function from file for the qslts-iet scheme"},
   {"theory", ARGUMENT_THEORY_SHORT, "STLS",0,
-   "Theory to be solved"},
+   "Scheme to be solved"},
   {"omp", ARGUMENT_OMP_SHORT, "1",0,
    "Number of omp threads to use in the solution"},
   { 0 }
@@ -62,7 +71,10 @@ static struct argp_option options[] = {
 struct arguments
 {
 
-  char *guess_file;
+  char *stls_guess_file;
+  char *qstls_guess_file;
+  char *qstls_fixed_file;
+  char *qstls_iet_fixed_file;
   char *theory; 
   double Theta;
   double rs;
@@ -98,8 +110,17 @@ parse_opt (int key, char *arg, struct argp_state *state)
       arguments->err_min_iter = atof(arg);
       break;
     case  ARGUMENT_STLS_GUESS_SHORT:
-      arguments->guess_file = arg;
-    break;
+      arguments->stls_guess_file = arg;
+      break;
+    case  ARGUMENT_QSTLS_GUESS_SHORT:
+      arguments->qstls_guess_file = arg;
+      break;
+    case  ARGUMENT_QSTLS_FIXED_SHORT:
+      arguments->qstls_fixed_file = arg;
+      break;
+    case  ARGUMENT_QSTLS_IET_FIXED_SHORT:
+      arguments->qstls_iet_fixed_file = arg;
+      break;
     case  ARGUMENT_MU_GUESS_SHORT:
       value = strtok(NULL, ",");
       if(value != NULL ) {
@@ -159,7 +180,10 @@ int main (int argc, char **argv){
   struct arguments arguments;
 
   // Default values for optional arguments
-  arguments.guess_file = "NO_FILE"; // File with initial guess
+  arguments.stls_guess_file = "NO_FILE"; // File with initial guess for STLS and STLS-IET schemes
+  arguments.qstls_guess_file = "NO_FILE"; // File with initial guess for QSTLS and QSTLS-IET schemes
+  arguments.qstls_fixed_file = "NO_FILE"; // File with fixed component of the density response for the QSTLS scheme
+  arguments.qstls_iet_fixed_file = "NO_FILE"; // File with fixed component of the density response for the QSTLS-IET scheme
   arguments.Theta = 1.0; // Quantum degeneracy parameter
   arguments.rs = 1.0; // Quantum coupling parameter
   arguments.dx = 0.01; // Wave-vector grid resolution
@@ -178,7 +202,10 @@ int main (int argc, char **argv){
 
   // Fill input structure
   input in;
-  in.guess_file = arguments.guess_file;
+  in.stls_guess_file = arguments.stls_guess_file;
+  in.qstls_guess_file = arguments.qstls_guess_file;
+  in.qstls_fixed_file = arguments.qstls_fixed_file;
+  in.qstls_iet_fixed_file = arguments.qstls_iet_fixed_file;
   in.Theta = arguments.Theta;
   in.rs = arguments.rs;
   in.dx = arguments.dx; 

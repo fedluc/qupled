@@ -33,7 +33,7 @@ void solve_stls(input in, bool verbose) {
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
   
   // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
-  if (strcmp(in.guess_file,"NO_FILE")==0){
+  if (strcmp(in.stls_guess_file,"NO_FILE")==0){
     for (int ii=0; ii < in.nx; ii++) {
       GG[ii] = 0.0;
       GG_new[ii] = 1.0;
@@ -584,7 +584,7 @@ void write_text_static(double *SS, double *GG, double *phi,
     sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the static structure factor");
+        perror("Error while creating the output file for the static structure factor\n");
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nx; ii++)
@@ -596,7 +596,7 @@ void write_text_static(double *SS, double *GG, double *phi,
     sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the static local field correction");
+        perror("Error while creating the output file for the static local field correction\n");
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nx; ii++)
@@ -608,7 +608,7 @@ void write_text_static(double *SS, double *GG, double *phi,
     sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-      perror("Error while creating the output file for the static density response");
+      perror("Error while creating the output file for the static density response\n");
       exit(EXIT_FAILURE);
     }
     double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
@@ -652,7 +652,7 @@ void write_text_static(double *SS, double *GG, double *phi,
     sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the interaction energy");
+        perror("Error while creating the output file for the interaction energy\n");
         exit(EXIT_FAILURE);
     }
     fprintf(fid, "%.8e\n", compute_uex(SS, xx, in));
@@ -672,7 +672,7 @@ void write_guess_static(double *SS, double *GG, input in){
   FILE *fid = NULL;
   fid = fopen(out_name, "wb");
   if (fid == NULL) {
-    fprintf(stderr,"Error while creating file for restart");
+    fprintf(stderr,"Error while creating file for initial guess or restart\n");
     exit(EXIT_FAILURE);
   }
 
@@ -699,9 +699,9 @@ void read_guess_static(double *SS, double *GG, input in){
 
   // Open binary file
   FILE *fid = NULL;
-  fid = fopen(in.guess_file, "rb");
+  fid = fopen(in.stls_guess_file, "rb");
   if (fid == NULL) {
-    fprintf(stderr,"Error while opening file with density response");
+    fprintf(stderr,"Error while opening file for initial guess or restart\n");
     exit(EXIT_FAILURE);
   }
 

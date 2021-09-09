@@ -9,7 +9,10 @@
 
 typedef struct {
 
-  char *guess_file;
+  char *stls_guess_file;
+  char *qstls_guess_file;
+  char *qstls_fixed_file;
+  char *qstls_iet_fixed_file;
   char *theory;
   double Theta;
   double rs;

@@ -35,7 +35,7 @@ void solve_stls_iet(input in, bool verbose) {
   compute_bf(bf, xx, in);
 
   // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
-  if (strcmp(in.guess_file,"NO_FILE")==0){
+  if (strcmp(in.stls_guess_file,"NO_FILE")==0){
     for (int ii=0; ii < in.nx; ii++) {
       GG[ii] = 0.0;
       GG_new[ii] = 1.0;

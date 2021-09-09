@@ -49,7 +49,7 @@ void solve_qstls_iet(input in, bool verbose) {
   compute_bf(bf, xx, in);
 
   // Initial guess
-  if (strcmp(in.guess_file,"NO_FILE")==0){
+  if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
     for (int ii=0; ii<in.nx; ii++){
       for (int ll=0; ll<in.nl; ll++){
   	psi[idx2(ii,ll,in.nx)] = 0.0;
@@ -384,7 +384,7 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
 	  // Construct integrand over u
 	  if (xx[jj] > 0.0){
 	    uint[jj] *= (1.0/xx[jj])
-	      *(-bf[jj] - (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)]-1)*(SS[jj]-1));
+	      *(bf[jj] + (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)]-1)*(SS[jj]-1));
 	  } 
 	  else{
 	    uint[jj] = 0.0;
@@ -405,9 +405,9 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
 			      &psi_tmp, &err, &nevals);
 	
 	if (ll == 0) 
-	  psi_new[idx2(ii,ll,in.nx)] += -3.0/(4.0*in.Theta)*psi_tmp;
+	  psi_new[idx2(ii,ll,in.nx)] += 3.0/(4.0*in.Theta)*psi_tmp;
 	else
-	  psi_new[idx2(ii,ll,in.nx)] += -(3.0/8.0)*psi_tmp;
+	  psi_new[idx2(ii,ll,in.nx)] += (3.0/8.0)*psi_tmp;
 	
       }
       
