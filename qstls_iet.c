@@ -388,7 +388,7 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
       	  fwint.params = &psiwp;
       	  gsl_integration_cquad(&fwint,
       				wmin, wmax,
-      				0.0, 1e-4,
+      				0.0, 1e-5,
       				wsp,
       				&uint[jj], &err, &nevals);
 	  
