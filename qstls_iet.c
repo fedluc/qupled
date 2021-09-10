@@ -56,7 +56,7 @@ void solve_qstls_iet(input in, bool verbose) {
     compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in);
   }
   else {
-    read_guess_dynamic(SS, in);
+    read_guess_dynamic(SS, psi, in);
   }
 
   // Initialize QSTLS arrays that are not modified by the iterative procedure
@@ -75,7 +75,6 @@ void solve_qstls_iet(input in, bool verbose) {
   if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
     if (verbose) printf("Fixed component of the auxiliary response function: ");
     compute_psi_xluw(xx, in);
-    in.qstls_iet_fixed_file = "";
     if (verbose) printf("Done.\n");
   }
  
@@ -130,6 +129,7 @@ void solve_qstls_iet(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_dynamic(SS, psi, phi, SSHF, xx, in);
+  write_guess_dynamic(SS, psi, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -378,28 +378,30 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
       	  gsl_spline_init(wint_sp_ptr, xx, wint, in.nx);
 	  
       	  // Compute integral over w
-      	  struct psiw_params psiwp =  {wint_sp_ptr, wint_acc_ptr};
-      	  wmin = xx[jj] - xx[ii];
-      	  if (wmin < 0.0) wmin = -wmin;
-      	  // NOTE: The upper cutoff is at qm - dq for numerical reasons;
-      	  // The quadrature formula attemps a tiny extrapolation which causes
-      	  // the interpolation routine to crash.
-      	  wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
-      	  fwint.params = &psiwp;
-      	  gsl_integration_cquad(&fwint,
-      				wmin, wmax,
-      				0.0, 1e-5,
-      				wsp,
-      				&uint[jj], &err, &nevals);
-	  
+	  if (xx[ii] == 0.0 || xx[jj] == 0.0){
+	    uint[jj] = 0.0;
+	  }
+	  else {
+
+	    struct psiw_params psiwp =  {wint_sp_ptr, wint_acc_ptr};
+	    wmin = xx[jj] - xx[ii];
+	    if (wmin < 0.0) wmin = -wmin;
+	    // NOTE: The upper cutoff is at qm - dq for numerical reasons;
+	    // The quadrature formula attemps a tiny extrapolation which causes
+	    // the interpolation routine to crash.
+	    wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
+	    fwint.params = &psiwp;
+	    gsl_integration_cquad(&fwint,
+				  wmin, wmax,
+				  0.0, 1e-5,
+				  wsp,
+				  &uint[jj], &err, &nevals);
+
       	  // Construct integrand over u
-      	  if (xx[jj] > 0.0){
       	    uint[jj] *= (1.0/xx[jj])
       	      *(bf[jj] + (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)]-1)*(SS[jj]-1));
-      	  }
-      	  else{
-      	    uint[jj] = 0.0;
-      	  }
+
+	  }
 	  
       	}
 	

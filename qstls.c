@@ -49,7 +49,7 @@ void solve_qstls(input in, bool verbose) {
     compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in);
   }
   else {
-    read_guess_dynamic(SS, in);
+    read_guess_dynamic(SS, psi, in);
   }
 
   // Initialize QSTLS arrays that are not modified by the iterative procedure
@@ -106,7 +106,7 @@ void solve_qstls(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_dynamic(SS, psi, phi, SSHF, xx, in);
-  write_guess_dynamic(SS, in);
+  write_guess_dynamic(SS, psi, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -574,7 +574,7 @@ void write_text_dynamic(double *SS, double *psi, double *phi,
 
 
 // write binary file to use as initial guess (or restart)
-void write_guess_dynamic(double *SS, input in){
+void write_guess_dynamic(double *SS, double *psi, input in){
 
   // Name of output file
   char out_name[100];
@@ -594,6 +594,9 @@ void write_guess_dynamic(double *SS, input in){
   // Static structure factor 
   fwrite(SS, sizeof(double), in.nx, fid);
 
+  // Auxilliary density response 
+  fwrite(psi, sizeof(double), in.nx*in.nl, fid);
+
   // Close binary file
   fclose(fid);
 
@@ -601,7 +604,7 @@ void write_guess_dynamic(double *SS, input in){
 
 
 // read binary file to use as initial guess (or restart)
-void read_guess_dynamic(double *SS, input in){
+void read_guess_dynamic(double *SS, double *psi, input in){
 
   // Variables
   input in_load;
@@ -622,9 +625,18 @@ void read_guess_dynamic(double *SS, input in){
     fclose(fid);
     exit(EXIT_FAILURE);
   }
+
+  if (in_load.nl != in.nl){
+    fprintf(stderr,"Number of Matsubara frequencies from guess file is incompatible with input\n");
+    fclose(fid);
+    exit(EXIT_FAILURE);
+  }
   
   // Static structure factor
   fread(SS, sizeof(double), in_load.nx, fid);
+  
+  // Auxilliary density response
+  fread(psi, sizeof(double), in_load.nx * in_load.nl, fid);
 
   // Close binary file
   fclose(fid);

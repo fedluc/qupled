@@ -49,9 +49,9 @@ int idx3(int xx, int yy, int zz,
 void write_text_dynamic(double *SS, double *psi, double *phi, 
 			double *SSHF, double *xx, input in);
 
-void write_guess_dynamic(double *SS, input in);
+void write_guess_dynamic(double *SS, double *psi, input in);
 
-void read_guess_dynamic(double *SS, input in);
+void read_guess_dynamic(double *SS, double *psi, input in);
 
 void write_fixed_qstls(double *psi_xlw, input in);
 
