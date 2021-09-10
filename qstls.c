@@ -56,6 +56,7 @@ void solve_qstls(input in, bool verbose) {
   if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
     if (verbose) printf("Fixed component of the auxiliary response function: ");
     compute_psi_xlw(psi_xlw, xx, in);
+    write_fixed_qstls(psi_xlw, in);
     if (verbose) printf("Done.\n");
   }
   else {
@@ -106,7 +107,6 @@ void solve_qstls(input in, bool verbose) {
   if (verbose) printf("Writing output files...\n");
   write_text_dynamic(SS, psi, phi, SSHF, xx, in);
   write_guess_dynamic(SS, in);
-  write_fixed_qstls(psi_xlw, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -665,7 +665,7 @@ void read_fixed_qstls(double *psi_xlw, input in){
 
   // Open binary file
   FILE *fid = NULL;
-  fid = fopen(in.qstls_guess_file, "rb");
+  fid = fopen(in.qstls_fixed_file, "rb");
   if (fid == NULL) {
     fprintf(stderr,"Error while opening file for initial guess or restart\n");
     exit(EXIT_FAILURE);

@@ -63,6 +63,7 @@ void solve_qstls_iet(input in, bool verbose) {
   if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
     if (verbose) printf("Fixed component of the qstls auxiliary response function: ");
     compute_psi_xlw(psi_qstls_xlw, xx, in);
+    write_fixed_qstls(psi_qstls_xlw, in);
     if (verbose) printf("Done.\n");
   }
   else {
@@ -74,6 +75,7 @@ void solve_qstls_iet(input in, bool verbose) {
   if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
     if (verbose) printf("Fixed component of the auxiliary response function: ");
     compute_psi_xluw(xx, in);
+    in.qstls_iet_fixed_file = "";
     if (verbose) printf("Done.\n");
   }
  
@@ -95,7 +97,7 @@ void solve_qstls_iet(input in, bool verbose) {
     // Prepare auxiliary function for next iteration
     for (int ii=0; ii<in.nx; ii++){
       for (int ll=0; ll<in.nl; ll++){
-	psi[idx2(ii,ll,in.nx)] = psi_new[idx2(ii,ll,in.nx)];
+    	psi[idx2(ii,ll,in.nx)] = psi_new[idx2(ii,ll,in.nx)];
       }
     }
 
@@ -128,7 +130,6 @@ void solve_qstls_iet(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_dynamic(SS, psi, phi, SSHF, xx, in);
-  write_fixed_qstls(psi_qstls_xlw, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -349,70 +350,75 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
     for (int ii=0; ii<in.nx; ii++){
       
       // Open binary file with the fixed component of the auxilliary response function
-      char out_name[100];
-      sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
+      char out_name[100000];
+      if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
+	sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
+      }
+      else{
+	sprintf(out_name, "%s/psi_fixed_theta%.3f_xx%.5f.bin", in.qstls_iet_fixed_file, in.Theta, xx[ii]);
+      }
       FILE *fid = NULL;
       fid = fopen(out_name, "rb");
       if (fid == NULL) {
-	fprintf(stderr,"Error while reading file for fixed component of the auxilliary response function");
+	fprintf(stderr,"Error while reading file for fixed component of the auxilliary response function\n");
 	exit(EXIT_FAILURE);
       }
       
       // Loop over the Matsubara frequencies
       for (int ll=0; ll<in.nl; ll++){
 	
-	// Loop over u (wave-vector)
-	for (int jj=0; jj<in.nx; jj++){
+      	// Loop over u (wave-vector)
+      	for (int jj=0; jj<in.nx; jj++){
 	  
-	  // Construct integrand over w
-	  for (int kk=0; kk<in.nx; kk++) {
-	    fread(&wint[kk], sizeof(double), 1, fid);
-	    wint[kk] *= xx[kk]*(SS[kk]-1.0);
-	  }
-	  gsl_spline_init(wint_sp_ptr, xx, wint, in.nx);
+      	  // Construct integrand over w
+      	  for (int kk=0; kk<in.nx; kk++) {
+      	    fread(&wint[kk], sizeof(double), 1, fid);
+      	    wint[kk] *= xx[kk]*(SS[kk]-1.0);
+      	  }
+      	  gsl_spline_init(wint_sp_ptr, xx, wint, in.nx);
 	  
-	  // Compute integral over w
-	  struct psiw_params psiwp =  {wint_sp_ptr, wint_acc_ptr};
-	  wmin = xx[jj] - xx[ii];
-	  if (wmin < 0.0) wmin = -wmin;
-	  // NOTE: The upper cutoff is at qm - dq for numerical reasons;
-	  // The quadrature formula attemps a tiny extrapolation which causes
-	  // the interpolation routine to crash.
-	  wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
-	  fwint.params = &psiwp;
-	  gsl_integration_cquad(&fwint,
-				wmin, wmax,
-				0.0, 1e-5,
-				wsp,
-				&uint[jj], &err, &nevals);
+      	  // Compute integral over w
+      	  struct psiw_params psiwp =  {wint_sp_ptr, wint_acc_ptr};
+      	  wmin = xx[jj] - xx[ii];
+      	  if (wmin < 0.0) wmin = -wmin;
+      	  // NOTE: The upper cutoff is at qm - dq for numerical reasons;
+      	  // The quadrature formula attemps a tiny extrapolation which causes
+      	  // the interpolation routine to crash.
+      	  wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
+      	  fwint.params = &psiwp;
+      	  gsl_integration_cquad(&fwint,
+      				wmin, wmax,
+      				0.0, 1e-4,
+      				wsp,
+      				&uint[jj], &err, &nevals);
 	  
-	  // Construct integrand over u
-	  if (xx[jj] > 0.0){
-	    uint[jj] *= (1.0/xx[jj])
-	      *(bf[jj] + (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)]-1)*(SS[jj]-1));
-	  } 
-	  else{
-	    uint[jj] = 0.0;
-	  }
+      	  // Construct integrand over u
+      	  if (xx[jj] > 0.0){
+      	    uint[jj] *= (1.0/xx[jj])
+      	      *(bf[jj] + (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)]-1)*(SS[jj]-1));
+      	  }
+      	  else{
+      	    uint[jj] = 0.0;
+      	  }
 	  
-	}
+      	}
 	
-	// Interpolate integrand over u
-	gsl_spline_init(uint_sp_ptr, xx, uint, in.nx);    
+      	// Interpolate integrand over u
+      	gsl_spline_init(uint_sp_ptr, xx, uint, in.nx);
 	
-	// Compute integral over u
-	struct psiu_params psiup = {uint_sp_ptr, uint_acc_ptr};
-	fuint.params = &psiup;
-	gsl_integration_cquad(&fuint,
-			      xx[0], xx[in.nx-1],
-			      0.0, 1e-5,
-			      wsp,
-			      &psi_tmp, &err, &nevals);
+      	// Compute integral over u
+      	struct psiu_params psiup = {uint_sp_ptr, uint_acc_ptr};
+      	fuint.params = &psiup;
+      	gsl_integration_cquad(&fuint,
+      			      xx[0], xx[in.nx-1],
+      			      0.0, 1e-5,
+      			      wsp,
+      			      &psi_tmp, &err, &nevals);
 	
-	if (ll == 0) 
-	  psi_new[idx2(ii,ll,in.nx)] += 3.0/(4.0*in.Theta)*psi_tmp;
-	else
-	  psi_new[idx2(ii,ll,in.nx)] += (3.0/8.0)*psi_tmp;
+      	if (ll == 0)
+      	  psi_new[idx2(ii,ll,in.nx)] += 3.0/(4.0*in.Theta)*psi_tmp;
+      	else
+      	  psi_new[idx2(ii,ll,in.nx)] += (3.0/8.0)*psi_tmp;
 	
       }
       
