@@ -31,8 +31,8 @@ double psiw(double ww, void* pp);
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
 
-void compute_ssf_dynamic(double *SS, double *SSHF, double *psi,
-			 double *phi, double *xx, input in);
+void compute_ssf_qstls(double *SS, double *SSHF, double *psi,
+		       double *phi, double *xx, input in);
 
 
 // -------------------------------------------------------------------
@@ -46,12 +46,12 @@ int idx3(int xx, int yy, int zz,
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
-void write_text_dynamic(double *SS, double *psi, double *phi, 
+void write_text_qstls(double *SS, double *psi, double *phi, 
 			double *SSHF, double *xx, input in);
 
-void write_guess_dynamic(double *SS, double *psi, input in);
+void write_guess_qstls(double *SS, double *psi, input in);
 
-void read_guess_dynamic(double *SS, double *psi, input in);
+void read_guess_qstls(double *SS, double *psi, input in);
 
 void write_fixed_qstls(double *psi_xlw, input in);
 

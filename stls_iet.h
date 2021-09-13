@@ -34,6 +34,6 @@ double rbfr(double rr, void *pp);
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
-void write_bf_static(double *bf, double *xx, input in);
+void write_bf(double *bf, double *xx, input in);
 
 #endif

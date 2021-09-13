@@ -38,10 +38,10 @@ void solve_stls(input in, bool verbose) {
       GG[ii] = 0.0;
       GG_new[ii] = 1.0;
     }
-    compute_ssf_static(SS, SSHF, GG, phi, xx, in);
+    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
   }
   else {
-    read_guess_static(SS, GG, in);
+    read_guess_stls(SS, GG, in);
   }
 
 
@@ -55,7 +55,7 @@ void solve_stls(input in, bool verbose) {
     double tic = omp_get_wtime();
     
     // Update SSF
-    compute_ssf_static(SS, SSHF, GG, phi, xx, in);
+    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
 
     // Update SLFC
     compute_slfc(GG_new, SS, xx, in);
@@ -87,8 +87,8 @@ void solve_stls(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_static(SS, GG, phi, SSHF, xx, in);
-  write_guess_static(SS, GG, in); 
+  write_text_stls(SS, GG, phi, SSHF, xx, in);
+  write_guess_stls(SS, GG, in); 
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -310,8 +310,8 @@ double phix0(double yy, void *pp) {
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
 
-void compute_ssf_static(double *SS, double *SSHF, double *GG, 
-			double *phi, double *xx, input in){
+void compute_ssf_stls(double *SS, double *SSHF, double *GG, 
+		      double *phi, double *xx, input in){
 
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double ff = 4*lambda*in.rs/M_PI;
@@ -573,7 +573,7 @@ double uex(double yy, void* pp) {
 
 
 // write text files for output
-void write_text_static(double *SS, double *GG, double *phi, 
+void write_text_stls(double *SS, double *GG, double *phi, 
 		       double *SSHF, double *xx, input in){
 
 
@@ -662,7 +662,7 @@ void write_text_static(double *SS, double *GG, double *phi,
 
 
 // write binary file to use as initial guess (or restart)
-void write_guess_static(double *SS, double *GG, input in){
+void write_guess_stls(double *SS, double *GG, input in){
 
   // Name of output file
   char out_name[100];
@@ -692,7 +692,7 @@ void write_guess_static(double *SS, double *GG, input in){
 
 
 // read binary file to use as initial guess (or restart)
-void read_guess_static(double *SS, double *GG, input in){
+void read_guess_stls(double *SS, double *GG, input in){
 
   // Variables
   input in_load;

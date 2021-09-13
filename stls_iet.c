@@ -40,10 +40,10 @@ void solve_stls_iet(input in, bool verbose) {
       GG[ii] = 0.0;
       GG_new[ii] = 1.0;
     }
-    compute_ssf_static(SS, SSHF, GG, phi, xx, in);
+    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
   }
   else {
-    read_guess_static(SS, GG, in);
+    read_guess_stls(SS, GG, in);
   }
    
   // SSF and SLFC via iterative procedure
@@ -56,7 +56,7 @@ void solve_stls_iet(input in, bool verbose) {
     double tic = omp_get_wtime();
     
     // Update SSF
-    compute_ssf_static(SS, SSHF, GG, phi, xx, in);
+    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
     
     // Update SLFC
     compute_slfc_iet(GG_new, GG, SS, bf, xx, in);
@@ -88,9 +88,9 @@ void solve_stls_iet(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_static(SS, GG, phi, SSHF, xx, in);
-  write_bf_static(bf, xx, in);
-  write_guess_static(SS, GG, in);
+  write_text_stls(SS, GG, phi, SSHF, xx, in);
+  write_bf(bf, xx, in);
+  write_guess_stls(SS, GG, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -540,7 +540,7 @@ double  rbfr(double rr, void *pp){
 
 
 // write text files for output
-void write_bf_static(double *bf, double *xx, input in){
+void write_bf(double *bf, double *xx, input in){
 
 
   FILE* fid;

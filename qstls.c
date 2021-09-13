@@ -46,10 +46,10 @@ void solve_qstls(input in, bool verbose) {
 	psi[idx2(ii,ll,in.nx)] = 0.0;
       }
     }
-    compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in);
+    compute_ssf_qstls(SS, SSHF, psi, phi, xx, in);
   }
   else {
-    read_guess_dynamic(SS, psi, in);
+    read_guess_qstls(SS, psi, in);
   }
 
   // Initialize QSTLS arrays that are not modified by the iterative procedure
@@ -76,7 +76,7 @@ void solve_qstls(input in, bool verbose) {
     compute_psi(psi, psi_xlw, SS, xx, in);
     
     // Update SSF
-    compute_ssf_dynamic(SS_new, SSHF, psi, phi, xx, in);
+    compute_ssf_qstls(SS_new, SSHF, psi, phi, xx, in);
     
     // Update diagnostic
     iter_err = 0.0;
@@ -105,8 +105,8 @@ void solve_qstls(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_dynamic(SS, psi, phi, SSHF, xx, in);
-  write_guess_dynamic(SS, psi, in);
+  write_text_qstls(SS, psi, phi, SSHF, xx, in);
+  write_guess_qstls(SS, psi, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -418,8 +418,8 @@ double psiw(double ww, void* pp) {
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
 
-void compute_ssf_dynamic(double *SS, double *SSHF, double *psi,
-			 double *phi, double *xx, input in){
+void compute_ssf_qstls(double *SS, double *SSHF, double *psi,
+		       double *phi, double *xx, input in){
 
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double ff = 4*lambda*in.rs/M_PI;
@@ -470,7 +470,7 @@ int idx3(int xx, int yy, int zz,
 
 
 // write text files for output
-void write_text_dynamic(double *SS, double *psi, double *phi, 
+void write_text_qstls(double *SS, double *psi, double *phi, 
 			double *SSHF, double *xx, input in){
 
 
@@ -574,7 +574,7 @@ void write_text_dynamic(double *SS, double *psi, double *phi,
 
 
 // write binary file to use as initial guess (or restart)
-void write_guess_dynamic(double *SS, double *psi, input in){
+void write_guess_qstls(double *SS, double *psi, input in){
 
   // Name of output file
   char out_name[100];
@@ -604,7 +604,7 @@ void write_guess_dynamic(double *SS, double *psi, input in){
 
 
 // read binary file to use as initial guess (or restart)
-void read_guess_dynamic(double *SS, double *psi, input in){
+void read_guess_qstls(double *SS, double *psi, input in){
 
   // Variables
   input in_load;

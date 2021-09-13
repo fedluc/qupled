@@ -53,10 +53,10 @@ void solve_qstls_iet(input in, bool verbose) {
   	psi[idx2(ii,ll,in.nx)] = 0.0;
       }
     }
-    compute_ssf_dynamic(SS, SSHF, psi, phi, xx, in);
+    compute_ssf_qstls_iet(SS, SSHF, psi, phi, bf, xx, in);
   }
   else {
-    read_guess_dynamic(SS, psi, in);
+    read_guess_qstls(SS, psi, in);
   }
 
   // Initialize QSTLS arrays that are not modified by the iterative procedure
@@ -91,7 +91,7 @@ void solve_qstls_iet(input in, bool verbose) {
     compute_psi_iet(psi_new, psi, psi_qstls_xlw, phi, SS, bf, xx, in);
 
     // Update SSF
-    compute_ssf_dynamic(SS_new, SSHF, psi_new, phi, xx, in);
+    compute_ssf_qstls_iet(SS_new, SSHF, psi_new, phi, bf, xx, in);
 
     // Prepare auxiliary function for next iteration
     for (int ii=0; ii<in.nx; ii++){
@@ -128,8 +128,9 @@ void solve_qstls_iet(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_dynamic(SS, psi, phi, SSHF, xx, in);
-  write_guess_dynamic(SS, psi, in);
+  write_text_qstls(SS, psi, phi, SSHF, xx, in);
+  write_guess_qstls(SS, psi, in);
+  write_bf(bf, xx, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -463,3 +464,42 @@ double psi_w_iet(double ww, void* pp) {
 }
 
 
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
+// -------------------------------------------------------------------
+
+void compute_ssf_qstls_iet(double *SS, double *SSHF, double *psi,
+			   double *phi, double *bf, double *xx, input in){
+
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double ff = 4*lambda*in.rs/M_PI;
+  double xx2, BB, BB_tmp, BB_den, psixl, phixl, bfphixl;
+
+  for (int ii=0; ii<in.nx; ii++){
+
+    if (xx[ii] > 0.0){
+
+      xx2 = xx[ii]*xx[ii];
+      BB = 0.0;
+
+      for (int ll=0; ll<in.nl; ll++){
+
+        psixl = psi[idx2(ii,ll,in.nx)];
+        phixl = phi[idx2(ii,ll,in.nx)];
+	bfphixl = (1-bf[ii])*phixl;
+        BB_den = 1.0 + ff/xx2*(1.0 - psixl/bfphixl)*bfphixl;
+        BB_tmp = phixl*bfphixl*(1.0 - psixl/bfphixl)/BB_den;
+        if (ll>0) BB_tmp *= 2.0;
+        BB += BB_tmp;
+
+      }
+
+      SS[ii] = SSHF[ii] - 3.0/2.0*ff/xx2*in.Theta*BB;
+
+    }
+    else
+      SS[ii] = 0.0;
+
+  }
+
+}

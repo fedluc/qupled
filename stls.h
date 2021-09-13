@@ -52,9 +52,9 @@ double phix0(double yy, void *pp);
 // FUNCTIONS USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
 
-void compute_ssf_static(double *SS, double *SSHF,
-			double *GG, double *phi, 
-			double *xx, input in);
+void compute_ssf_stls(double *SS, double *SSHF,
+		      double *GG, double *phi, 
+		      double *xx, input in);
 
 void compute_ssfHF(double *SS,  double *xx, input in);
 
@@ -81,11 +81,11 @@ double uex(double yy, void *pp);
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
-void write_text_static(double *SS, double *GG, double *phi, 
+void write_text_stls(double *SS, double *GG, double *phi, 
 		       double *SSHF, double *xx, input in);
 
-void write_guess_static(double *SS, double *GG, input in);
+void write_guess_stls(double *SS, double *GG, input in);
 
-void read_guess_static(double *SS, double *GG, input in);
+void read_guess_stls(double *SS, double *GG, input in);
 
 #endif

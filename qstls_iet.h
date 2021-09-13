@@ -26,7 +26,11 @@ double psi_u_iet(double uu, void* pp);
 double psi_w_iet(double ww, void* pp);
 
 // -------------------------------------------------------------------
-// FUNCTIONS FOR OUTPUT AND INPUT
+// FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
+
+void compute_ssf_qstls_iet(double *SS, double *SSHF, double *psi,
+			   double *phi, double *bf, double *xx, input in);
+
 
 #endif
