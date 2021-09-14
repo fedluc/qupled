@@ -705,7 +705,7 @@ void read_fixed_qstls(double *psi_xlw, input in){
   }
 
   // Fixed component of the auxiliary density response
-  fwrite(psi_xlw, sizeof(double), in.nx * in.nl * in.nx, fid);
+  fread(psi_xlw, sizeof(double), in.nx * in.nl * in.nx, fid);
 
   // Close binary file
   fclose(fid);

@@ -60,23 +60,22 @@ void solve_qstls_iet(input in, bool verbose) {
   }
 
   // Initialize QSTLS arrays that are not modified by the iterative procedure
+  if (verbose) printf("Fixed component of the qstls auxiliary response function: ");
   if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
-    if (verbose) printf("Fixed component of the qstls auxiliary response function: ");
     compute_psi_xlw(psi_qstls_xlw, xx, in);
     write_fixed_qstls(psi_qstls_xlw, in);
-    if (verbose) printf("Done.\n");
   }
   else {
     read_fixed_qstls(psi_qstls_xlw, in);
   }
-
+  if (verbose) printf("Done.\n");
 
   // Initialize QSTLS-IET arrays that are not modified by the iterative procedure
+  if (verbose) printf("Fixed component of the auxiliary response function: ");
   if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
-    if (verbose) printf("Fixed component of the auxiliary response function: ");
     compute_psi_xluw(xx, in);
-    if (verbose) printf("Done.\n");
   }
+  if (verbose) printf("Done.\n");
  
   // SSF and SLFC via iterative procedure
   if (verbose) printf("SSF calculation...\n");
@@ -486,15 +485,15 @@ void compute_ssf_qstls_iet(double *SS, double *SSHF, double *psi,
 
         psixl = psi[idx2(ii,ll,in.nx)];
         phixl = phi[idx2(ii,ll,in.nx)];
-	bfphixl = (1-bf[ii])*phixl;
+	bfphixl = (1.0 - bf[ii])*phixl;
         BB_den = 1.0 + ff/xx2*(1.0 - psixl/bfphixl)*bfphixl;
-        BB_tmp = phixl*bfphixl*(1.0 - psixl/bfphixl)/BB_den;
+        BB_tmp = phixl*phixl*(1.0 - psixl/bfphixl)/BB_den;
         if (ll>0) BB_tmp *= 2.0;
         BB += BB_tmp;
 
       }
 
-      SS[ii] = SSHF[ii] - 3.0/2.0*ff/xx2*in.Theta*BB;
+      SS[ii] = SSHF[ii] - 3.0/2.0*ff/xx2*in.Theta*(1.0-bf[ii])*BB;
 
     }
     else
