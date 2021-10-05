@@ -33,4 +33,13 @@ void compute_ssf_qstls_iet(double *SS, double *SSHF, double *psi,
 			   double *phi, double *bf, double *xx, input in);
 
 
+
+// -------------------------------------------------------------------
+// FUNCTIONS FOR OUTPUT AND INPUT
+// -------------------------------------------------------------------
+
+void write_text_qstls_iet(double *SS, double *psi, double *phi,
+                          double *SSHF, double *bf, double *xx,
+                          input in);
+
 #endif
