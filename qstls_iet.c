@@ -351,7 +351,7 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
       
       // Open binary file with the fixed component of the auxilliary response function
       char out_name[100000];
-      if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
+      if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
 	sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
       }
       else{
