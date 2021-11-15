@@ -565,6 +565,13 @@ void write_text_qstls_iet(double *SS, double *psi, double *phi,
     perror("Error while creating the output file for the auxiliary density response");
     exit(EXIT_FAILURE);
   }
+  for (int ii=0; ii<in.nx; ii++){
+    for (int jj=0; jj<in.nl; jj++){
+      fprintf(fid, "%.8e ", psi[idx2(ii,jj,in.nx)]);
+    }
+    fprintf(fid,"\n");
+  }
+  fclose(fid);
 
   // Output for ideal Lindhard density response
   sprintf(out_name, "idr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
