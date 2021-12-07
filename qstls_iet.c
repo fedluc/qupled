@@ -397,9 +397,10 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
 				  wsp,
 				  &uint[jj], &err, &nevals);
 
-      	  // Construct integrand over u
+      	  // Construct integrand over u ( the -1 is added because the qSTLS contribution is calculated separately)
       	    uint[jj] *= (1.0/xx[jj])
-      	      *(bf[jj] + (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)]-1)*(SS[jj]-1));
+      	      *( (-bf[jj]+1)*SS[jj] - 1 - 
+		 (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
 
 	  }
 	  
