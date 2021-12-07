@@ -419,9 +419,9 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
       			      &psi_tmp, &err, &nevals);
 	
       	if (ll == 0)
-      	  psi_new[idx2(ii,ll,in.nx)] += 3.0/(4.0*in.Theta)*psi_tmp;
+      	  psi_new[idx2(ii,ll,in.nx)] += -3.0/(4.0*in.Theta)*psi_tmp;
       	else
-      	  psi_new[idx2(ii,ll,in.nx)] += (3.0/8.0)*psi_tmp;
+      	  psi_new[idx2(ii,ll,in.nx)] += -(3.0/8.0)*psi_tmp;
 	
       }
       
