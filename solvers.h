@@ -27,6 +27,7 @@ typedef struct {
   int nx;
   int nIter;
   int theory_id;
+  int qstls_iet_dynamic;
 
 
 } input;
