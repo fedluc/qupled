@@ -31,42 +31,39 @@ static char doc[] =
 #define ARGUMENT_QSTLS_GUESS_SHORT 0x92
 #define ARGUMENT_QSTLS_FIXED_SHORT 0x93
 #define ARGUMENT_QSTLS_IET_FIXED_SHORT 0x94
-#define ARGUMENT_QSTLS_IET_DYNAMIC_SHORT 0x95
 
 // Optional arguments
 static struct argp_option options[] = {
   {"Theta", ARGUMENT_THETA_SHORT, "1.0", 0,
-     "Quantum degeneracy parameter"},
+   "Quantum degeneracy parameter"},
   {"rs", ARGUMENT_RS_SHORT, "1.0", 0,
-     "Quantum coupling parameter"},
+   "Quantum coupling parameter"},
   {"xmax", ARGUMENT_XMAX_SHORT, "20.48", 0,
-     "Cutoff for wave-vector grid"},
+   "Cutoff for wave-vector grid"},
   {"dx", ARGUMENT_DX_SHORT, "0.01", 0,
-     "Resolution for wave-vector grid"},
+   "Resolution for wave-vector grid"},
   {"nl", ARGUMENT_NL_SHORT, "128", 0,
-     "Number of Matsubara frequencies"},
+   "Number of Matsubara frequencies"},
   {"iter", ARGUMENT_ITER_SHORT, "1000", 0,
-     "Maximum number of iterations"},
+   "Maximum number of iterations"},
   {"min-err", ARGUMENT_MIN_ERR_SHORT, "1e-5", 0,
-     "Minimum error for convergence in the iterations"},
+   "Minimum error for convergence in the iterations"},
   {"mix", ARGUMENT_MIX_SHORT, "0.1", 0,
-     "Mixing parameter for iterative solution"},
+   "Mixing parameter for iterative solution"},
   {"mu-guess", ARGUMENT_MU_GUESS_SHORT, "-10,10", 0,
-     "Initial guess for chemical potential"},
+   "Initial guess for chemical potential"},
   {"stls-guess", ARGUMENT_STLS_GUESS_SHORT, "NO_FILE", 0,
-     "Load initial guess from file for the stls and stls-iet schemes"},
+   "Load initial guess from file for the stls and stls-iet schemes"},
   {"qstls-guess", ARGUMENT_QSTLS_GUESS_SHORT, "NO_FILE", 0,
-     "Load initial guess from file for the qstls and qstls-iet schemes"},
+   "Load initial guess from file for the qstls and qstls-iet schemes"},
   {"qstls-fix", ARGUMENT_QSTLS_FIXED_SHORT, "NO_FILE", 0,
-     "Load fixed component of the density response function from file for the qslts scheme"},
+   "Load fixed component of the density response function from file for the qslts scheme"},
   {"qstls-iet-fix", ARGUMENT_QSTLS_IET_FIXED_SHORT, "NO_FILE", 0,
-     "Load fixed component of the density response function from file for the qslts-iet scheme"},
-  {"qstls-iet-dynamic", ARGUMENT_QSTLS_IET_DYNAMIC_SHORT, "1", 0,
-     "Enable or disable dynamic approximation for qslts-iet scheme"},
+   "Load fixed component of the density response function from file for the qslts-iet scheme"},
   {"theory", ARGUMENT_THEORY_SHORT, "STLS",0,
-     "Scheme to be solved"},
+   "Scheme to be solved"},
   {"omp", ARGUMENT_OMP_SHORT, "1",0,
-     "Number of omp threads to use in the solution"},
+   "Number of omp threads to use in the solution"},
   { 0 }
 };
 
@@ -91,7 +88,6 @@ struct arguments
   int nl;
   int nIter;
   int nThreads;
-  int qstls_iet_dynamic;
 
 };
 
@@ -124,9 +120,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
       break;
     case  ARGUMENT_QSTLS_IET_FIXED_SHORT:
       arguments->qstls_iet_fixed_file = arg;
-      break;
-    case  ARGUMENT_QSTLS_IET_DYNAMIC_SHORT:
-      arguments->qstls_iet_dynamic = atoi(arg);
       break;
     case  ARGUMENT_MU_GUESS_SHORT:
       value = strtok(NULL, ",");
@@ -191,7 +184,6 @@ int main (int argc, char **argv){
   arguments.qstls_guess_file = "NO_FILE"; // File with initial guess for QSTLS and QSTLS-IET schemes
   arguments.qstls_fixed_file = "NO_FILE"; // File with fixed component of the density response for the QSTLS scheme
   arguments.qstls_iet_fixed_file = "NO_FILE"; // File with fixed component of the density response for the QSTLS-IET scheme
-  arguments.qstls_iet_dynamic = 1; // Enable or disable the dynamic approximation for the QSTLS-IET scheme
   arguments.Theta = 1.0; // Quantum degeneracy parameter
   arguments.rs = 1.0; // Quantum coupling parameter
   arguments.dx = 0.01; // Wave-vector grid resolution
@@ -214,7 +206,6 @@ int main (int argc, char **argv){
   in.qstls_guess_file = arguments.qstls_guess_file;
   in.qstls_fixed_file = arguments.qstls_fixed_file;
   in.qstls_iet_fixed_file = arguments.qstls_iet_fixed_file;
-  in.qstls_iet_dynamic = arguments.qstls_iet_dynamic;
   in.Theta = arguments.Theta;
   in.rs = arguments.rs;
   in.dx = arguments.dx; 

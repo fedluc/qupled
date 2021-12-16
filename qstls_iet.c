@@ -381,7 +381,6 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
 	  if (xx[ii] == 0.0 || xx[jj] == 0.0){
 	    uint[jj] = 0.0;
 	  }
-
 	  else {
 
 	    struct psiw_params psiwp =  {wint_sp_ptr, wint_acc_ptr};
@@ -398,21 +397,14 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
 				  wsp,
 				  &uint[jj], &err, &nevals);
 
-	    // Construct integrand over u ( the -1 is added because the qSTLS contribution is calculated separately)
-	    if (in.qstls_iet_dynamic == 1) {
-	      uint[jj] *= (1.0/xx[jj])
-		*( (-bf[jj]+1)*SS[jj] - 1 - 
-		   (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
-	    }
-	    else {
-	      uint[jj] *= (1.0/xx[jj])
-		*( (-bf[jj]+1)*SS[jj] - 1 - 
-		   (psi[idx2(jj,0,in.nx)]/phi[idx2(jj,0,in.nx)])*(SS[jj]-1));
-	    }
+      	  // Construct integrand over u ( the -1 is added because the qSTLS contribution is calculated separately)
+      	    uint[jj] *= (1.0/xx[jj])
+      	      *( (-bf[jj]+1)*SS[jj] - 1 - 
+		 (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
 
 	  }
 	  
-	}
+      	}
 	
       	// Interpolate integrand over u
       	gsl_spline_init(uint_sp_ptr, xx, uint, in.nx);
