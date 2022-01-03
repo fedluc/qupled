@@ -7,6 +7,6 @@
 // FUNCTION USED TO COMPUTE THE CHEMICAL POTENTIAL
 // -------------------------------------------------------------------
 
-double compute_mu(input in);
+double compute_chemical_potential(input in);
 
 #endif

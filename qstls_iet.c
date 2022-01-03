@@ -44,7 +44,7 @@ void solve_qstls_iet(input in, bool verbose) {
 
   // Initialize STLS arrays that are not modified by the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
-  compute_bf(bf, xx, in);
+ compute_bridge_function(bf, xx, in);
 
   // Initial guess
   if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
@@ -62,7 +62,7 @@ void solve_qstls_iet(input in, bool verbose) {
   // Initialize QSTLS arrays that are not modified by the iterative procedure
   if (verbose) printf("Fixed component of the qstls auxiliary response function: ");
   if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
-    compute_psi_xlw(psi_qstls_xlw, xx, in);
+    compute_adr_fixed(psi_qstls_xlw, xx, in);
     write_fixed_qstls(psi_qstls_xlw, in);
   }
   else {
@@ -123,13 +123,13 @@ void solve_qstls_iet(input in, bool verbose) {
   if (verbose) printf("Done.\n");
   
   // Internal energy
-  if (verbose) printf("Internal energy: %.10f\n",compute_uex(SS, xx, in));
+  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_qstls_iet(SS, psi, phi, SSHF, bf, xx, in);
   write_guess_qstls(SS, psi, in);
-  write_bf(bf, xx, in);
+  write_bridge_function(bf, xx, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -608,7 +608,7 @@ void write_text_qstls_iet(double *SS, double *psi, double *phi,
     perror("Error while creating the output file for the interaction energy");
     exit(EXIT_FAILURE);
   }
-  fprintf(fid, "%.8e\n", compute_uex(SS, xx, in));
+  fprintf(fid, "%.8e\n", compute_internal_energy(SS, xx, in));
   fclose(fid);
 
 }

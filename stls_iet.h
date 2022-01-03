@@ -10,23 +10,23 @@
 void compute_slfc_iet(double *GG_new, double *GG, double *SS,
                       double *bf, double *xx, input in);
 
-double slfc_u(double uu, void* pp);
+double slfc_partial_part1(double uu, void* pp);
 
-double slfc_w(double ww, void* pp);
+double slfc_partial_part2(double ww, void* pp);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE BRIDGE FUNCTION TERM
 // -------------------------------------------------------------------
 
-void compute_bf(double *bf, double *xx, input in);
+void compute_bridge_function(double *bf, double *xx, input in);
 
-void bf_hnc(double *bf, double *xx, input in);
+void bridge_function_hnc(double *bf, double *xx, input in);
 
-void bf_ocp_ioi(double *bf, double *xx, input in);
+void bridge_function_ocp_ioi(double *bf, double *xx, input in);
 
-void bf_ocp_lct(double *bf, double *xx, input in);
+void bridge_function_ocp_lct(double *bf, double *xx, input in);
 
-void bf_rescaled_ocp_lct(double *bf, double *xx, input in);
+void bridge_function_rescaled_ocp_lct(double *bf, double *xx, input in);
 
 double rbfr(double rr, void *pp);
 
@@ -34,6 +34,6 @@ double rbfr(double rr, void *pp);
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
-void write_bf(double *bf, double *xx, input in);
+void write_bridge_function(double *bf, double *xx, input in);
 
 #endif

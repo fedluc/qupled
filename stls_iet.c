@@ -32,21 +32,21 @@ void solve_stls_iet(input in, bool verbose) {
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
   bf = malloc( sizeof(double) * in.nx);
-  compute_bf(bf, xx, in);
+  compute_bridge_function(bf, xx, in);
 
-  // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
+  // Initial guess
   if (strcmp(in.stls_guess_file,"NO_FILE")==0){
     for (int ii=0; ii < in.nx; ii++) {
-      GG[ii] = 0.0;
+      GG[ii] = 0.0; // Static local field correction
       GG_new[ii] = 1.0;
     }
-    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
+    compute_ssf_stls(SS, SSHF, GG, phi, xx, in); // Static structure factor
   }
   else {
-    read_guess_stls(SS, GG, in);
+    read_guess_stls(SS, GG, in); // Read from file
   }
    
-  // SSF and SLFC via iterative procedure
+  // Iterations
   if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
@@ -55,10 +55,10 @@ void solve_stls_iet(input in, bool verbose) {
     // Start timing
     double tic = omp_get_wtime();
     
-    // Update SSF
+    // Update static structure factor
     compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
     
-    // Update SLFC
+    // Update static local field correction
     compute_slfc_iet(GG_new, GG, SS, bf, xx, in);
     
     // Update diagnostic
@@ -84,12 +84,12 @@ void solve_stls_iet(input in, bool verbose) {
   if (verbose) printf("Done.\n");
   
   // Internal energy
-  if (verbose) printf("Internal energy: %.10f\n",compute_uex(SS, xx, in));
+  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_stls(SS, GG, phi, SSHF, xx, in);
-  write_bf(bf, xx, in);
+  write_bridge_function(bf, xx, in);
   write_guess_stls(SS, GG, in);
   if (verbose) printf("Done.\n");
 
@@ -104,20 +104,20 @@ void solve_stls_iet(input in, bool verbose) {
 // FUNCTION USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 
-struct slfcu_params {
+struct slfc_partial_part1_params {
 
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
   gsl_spline *slfc_sp_ptr;
   gsl_interp_accel *slfc_acc_ptr;
-  gsl_spline *GGu_sp_ptr;
-  gsl_interp_accel *GGu_acc_ptr;
+  gsl_spline *GG_part1_sp_ptr;
+  gsl_interp_accel *GG_part1_acc_ptr;
   gsl_spline *bf_sp_ptr;
   gsl_interp_accel *bf_acc_ptr;
 
 };
 
-struct slfcw_params {
+struct slfc_partial_part2_params {
 
   double xx;
   double uu;
@@ -133,15 +133,15 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
   double err;
   size_t nevals;
   double wmax, wmin, GG_tmp;
-  double *GGu  = malloc( sizeof(double) * in.nx);
+  double *GG_part1  = malloc( sizeof(double) * in.nx);
 
   // Declare accelerator and spline objects
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
   gsl_spline *slfc_sp_ptr;
   gsl_interp_accel *slfc_acc_ptr;
-  gsl_spline *GGu_sp_ptr;
-  gsl_interp_accel *GGu_acc_ptr;
+  gsl_spline *GG_part1_sp_ptr;
+  gsl_interp_accel *GG_part1_acc_ptr;
   gsl_spline *bf_sp_ptr;
   gsl_interp_accel *bf_acc_ptr;
   
@@ -150,8 +150,8 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
   ssf_acc_ptr = gsl_interp_accel_alloc();
   slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   slfc_acc_ptr = gsl_interp_accel_alloc();
-  GGu_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-  GGu_acc_ptr = gsl_interp_accel_alloc();
+  GG_part1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  GG_part1_acc_ptr = gsl_interp_accel_alloc();
   bf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   bf_acc_ptr = gsl_interp_accel_alloc();
   
@@ -165,9 +165,9 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
   = gsl_integration_cquad_workspace_alloc(100);
 
   // Integration function
-  gsl_function fu_int, fw_int;
-  fu_int.function = &slfc_u;
-  fw_int.function = &slfc_w;
+  gsl_function fpart1_int, fpart2_int;
+  fpart1_int.function = &slfc_partial_part1;
+  fpart2_int.function = &slfc_partial_part2;
 
   // STLS component of the static local field correction
   compute_slfc(GG_new, SS, xx, in);
@@ -183,7 +183,7 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
 	
 	if (xx[jj] >  0.0) {
 
-	  struct slfcw_params slfcwp = {xx[ii], xx[jj], 
+	  struct slfc_partial_part2_params slfc_partial_part2_p = {xx[ii], xx[jj], 
 					ssf_sp_ptr, ssf_acc_ptr};
 	  wmin = xx[jj] - xx[ii];
 	  if (wmin < 0.0) wmin = -wmin;
@@ -191,29 +191,29 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
 	  // The quadrature formula attemps a tiny extrapolation which causes 
 	  // the interpolation routine to crash. 
 	  wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
-	  fw_int.params = &slfcwp;
-	  gsl_integration_cquad(&fw_int,
+	  fpart2_int.params = &slfc_partial_part2_p;
+	  gsl_integration_cquad(&fpart2_int,
 				wmin, wmax,
 				0.0, 1e-5,
 				wsp,
-				&GGu[jj], &err, &nevals);
+				&GG_part1[jj], &err, &nevals);
 
 	}
 
-	else GGu[jj] = 0.0; 
+	else GG_part1[jj] = 0.0; 
 
       }
 
       // Interpolate result of integration over w
-      gsl_spline_init(GGu_sp_ptr, xx, GGu, in.nx);    
+      gsl_spline_init(GG_part1_sp_ptr, xx, GG_part1, in.nx);    
       
       // Evaluate integral over u
-      struct slfcu_params slfcup = {ssf_sp_ptr, ssf_acc_ptr,
+      struct slfc_partial_part1_params slfc_partial_part1_p = {ssf_sp_ptr, ssf_acc_ptr,
 				    slfc_sp_ptr, slfc_acc_ptr,
-				    GGu_sp_ptr, GGu_acc_ptr,
+				    GG_part1_sp_ptr, GG_part1_acc_ptr,
 				    bf_sp_ptr, bf_acc_ptr};
-      fu_int.params = &slfcup;
-      gsl_integration_cquad(&fu_int,
+      fpart1_int.params = &slfc_partial_part1_p;
+      gsl_integration_cquad(&fpart1_int,
 			    xx[0], xx[in.nx-1],
 			    0.0, 1e-5,
 			    wsp,
@@ -228,33 +228,33 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
   }
 
   // Free memory
-  free(GGu);
+  free(GG_part1);
   gsl_integration_cquad_workspace_free(wsp);
   gsl_spline_free(ssf_sp_ptr);
   gsl_interp_accel_free(ssf_acc_ptr);
   gsl_spline_free(slfc_sp_ptr);
   gsl_interp_accel_free(slfc_acc_ptr);
-  gsl_spline_free(GGu_sp_ptr);
-  gsl_interp_accel_free(GGu_acc_ptr);
+  gsl_spline_free(GG_part1_sp_ptr);
+  gsl_interp_accel_free(GG_part1_acc_ptr);
   gsl_spline_free(bf_sp_ptr);
   gsl_interp_accel_free(bf_acc_ptr);
 
 }
 
-double slfc_u(double uu, void* pp) {
+double slfc_partial_part1(double uu, void* pp) {
 
-  struct slfcu_params* params = (struct slfcu_params*)pp;
+  struct slfc_partial_part1_params* params = (struct slfc_partial_part1_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
   gsl_spline* slfc_sp_ptr = (params->slfc_sp_ptr);
   gsl_interp_accel* slfc_acc_ptr = (params->slfc_acc_ptr);
-  gsl_spline* GGu_sp_ptr = (params->GGu_sp_ptr);
-  gsl_interp_accel* GGu_acc_ptr = (params->GGu_acc_ptr);
+  gsl_spline* GG_part1_sp_ptr = (params->GG_part1_sp_ptr);
+  gsl_interp_accel* GG_part1_acc_ptr = (params->GG_part1_acc_ptr);
   gsl_spline* bf_sp_ptr = (params->bf_sp_ptr);
   gsl_interp_accel* bf_acc_ptr = (params->bf_acc_ptr);
 
   if (uu > 0.0)
-    return (1.0/uu) * gsl_spline_eval(GGu_sp_ptr, uu, GGu_acc_ptr)
+    return (1.0/uu) * gsl_spline_eval(GG_part1_sp_ptr, uu, GG_part1_acc_ptr)
       *(-gsl_spline_eval(bf_sp_ptr, uu, bf_acc_ptr) 
 	- (gsl_spline_eval(ssf_sp_ptr, uu, ssf_acc_ptr) - 1.0)
 	*(gsl_spline_eval(slfc_sp_ptr, uu, slfc_acc_ptr) - 1.0));
@@ -262,9 +262,9 @@ double slfc_u(double uu, void* pp) {
     return 0;
 }
 
-double slfc_w(double ww, void* pp) {
+double slfc_partial_part2(double ww, void* pp) {
 
-  struct slfcw_params* params = (struct slfcw_params*)pp;
+  struct slfc_partial_part2_params* params = (struct slfc_partial_part2_params*)pp;
   double xx = (params->xx);
   double uu = (params->uu);
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
@@ -280,16 +280,16 @@ double slfc_w(double ww, void* pp) {
 // FUNCTION USED TO COMPUTE THE BRIDGE FUNCTION TERM
 // -------------------------------------------------------------------
 
-void compute_bf(double *bf, double *xx, input in){
+void compute_bridge_function(double *bf, double *xx, input in){
 
   if (in.theory_id == 2 || in.theory_id == 7)
-    bf_hnc(bf, xx, in);
+    bridge_function_hnc(bf, xx, in);
   else if (in.theory_id == 3 || in.theory_id == 8)
-    bf_ocp_ioi(bf, xx, in);
+    bridge_function_ocp_ioi(bf, xx, in);
   else if (in.theory_id == 4 || in.theory_id == 9)
-    bf_ocp_lct(bf, xx, in);
+    bridge_function_ocp_lct(bf, xx, in);
   else if (in.theory_id == 5)
-    bf_rescaled_ocp_lct(bf, xx, in);
+    bridge_function_rescaled_ocp_lct(bf, xx, in);
   else{
     printf("Error: unknown theory to be compute the bridge function."
            "Choose between: STLS-IET-HNC, STLS-IET-IOI, STLS-IET-LCT, STLS-RIET-LCT,"
@@ -301,7 +301,7 @@ void compute_bf(double *bf, double *xx, input in){
 
 
 // HNC bridge function  
-void bf_hnc(double *bf, double *xx, input in){
+void bridge_function_hnc(double *bf, double *xx, input in){
 
   for (int ii=0; ii<in.nx; ii++){
       bf[ii] = 0.0;      
@@ -310,7 +310,7 @@ void bf_hnc(double *bf, double *xx, input in){
 }
  
 // Bridge function from the parameterization of Ichimaru and collaborators
-void bf_ocp_ioi(double *bf, double *xx, input in){
+void bridge_function_ocp_ioi(double *bf, double *xx, input in){
 
   double scaling = 1.0;
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
@@ -372,7 +372,7 @@ struct bfr_params {
 };
 
 
-void bf_ocp_lct(double *bf, double *xx, input in){
+void bridge_function_ocp_lct(double *bf, double *xx, input in){
 
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double l2 = ll*ll;
@@ -421,7 +421,7 @@ void bf_ocp_lct(double *bf, double *xx, input in){
 }
 
 
-void bf_rescaled_ocp_lct(double *bf, double *xx, input in){
+void bridge_function_rescaled_ocp_lct(double *bf, double *xx, input in){
 
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double l2 = ll*ll;
@@ -540,7 +540,7 @@ double  rbfr(double rr, void *pp){
 
 
 // write text files for output
-void write_bf(double *bf, double *xx, input in){
+void write_bridge_function(double *bf, double *xx, input in){
 
 
   FILE* fid;

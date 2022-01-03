@@ -30,7 +30,7 @@ void solve_qstls(input in, bool verbose) {
   double *psi_xlw = NULL;
 
   // Allocate arrays
-  // Note: GG is not needed for QSTLS, but we keep it here so that
+  // Note: GG is not needed for qSTLS, but we keep it here so that
   // we can reuse some stls routines 
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
   psi = malloc( sizeof(double) * in.nx * in.nl);  
@@ -43,19 +43,19 @@ void solve_qstls(input in, bool verbose) {
   if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
     for (int ii=0; ii<in.nx; ii++){
       for (int ll=0; ll<in.nl; ll++){
-	psi[idx2(ii,ll,in.nx)] = 0.0;
+	psi[idx2(ii,ll,in.nx)] = 0.0; // Auxilliary density response
       }
     }
-    compute_ssf_qstls(SS, SSHF, psi, phi, xx, in);
+    compute_ssf_qstls(SS, SSHF, psi, phi, xx, in); // Static structure factor
   }
   else {
-    read_guess_qstls(SS, psi, in);
+    read_guess_qstls(SS, psi, in); // Read from file
   }
 
   // Initialize QSTLS arrays that are not modified by the iterative procedure
   if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
-    if (verbose) printf("Fixed component of the auxiliary response function: ");
-    compute_psi_xlw(psi_xlw, xx, in);
+    if (verbose) printf("Fixed component of the auxiliary density response function: ");
+    compute_adr_fixed(psi_xlw, xx, in);
     write_fixed_qstls(psi_xlw, in);
     if (verbose) printf("Done.\n");
   }
@@ -63,7 +63,7 @@ void solve_qstls(input in, bool verbose) {
     read_fixed_qstls(psi_xlw, in);
   }
  
-  // SSF and SLFC via iterative procedure
+  // Iterative procedure
   if (verbose) printf("SSF calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
@@ -72,10 +72,10 @@ void solve_qstls(input in, bool verbose) {
     // Start timing
     double tic = omp_get_wtime();
     
-    // Update auxiliary function
+    // Update auxiliary density response
     compute_psi(psi, psi_xlw, SS, xx, in);
     
-    // Update SSF
+    // Update static structure factor
     compute_ssf_qstls(SS_new, SSHF, psi, phi, xx, in);
     
     // Update diagnostic
@@ -101,7 +101,7 @@ void solve_qstls(input in, bool verbose) {
   if (verbose) printf("Done.\n");
   
   // Internal energy
-  if (verbose) printf("Internal energy: %.10f\n",compute_uex(SS, xx, in));
+  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
@@ -121,7 +121,7 @@ void solve_qstls(input in, bool verbose) {
 // FUNCTIONS USED TO COMPUTE THE FIXED COMPONENT OF THE AUXILIARY RESPONSE
 // ------------------------------------------------------------------------
 
-struct psi_xlw_q_params {
+struct adr_fixed_part1_params {
 
   double mu;
   double Theta;
@@ -130,7 +130,7 @@ struct psi_xlw_q_params {
 
 };
 
-struct psi_xlw_t_params {
+struct adr_fixed_part2_params {
 
   double Theta;
   double ww;
@@ -141,7 +141,7 @@ struct psi_xlw_t_params {
 };
 
 
-void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
+void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
 
   // Parallel calculations
   #pragma omp parallel
@@ -150,15 +150,15 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
     double err;
     size_t nevals;
     double xx2, xw, tmax, tmin;
-    double *t_int  = malloc( sizeof(double) * in.nx);
+    double *psi_fixed_part1  = malloc( sizeof(double) * in.nx);
     
     // Declare accelerator and spline objects
-    gsl_spline *t_int_sp_ptr;
-    gsl_interp_accel *t_int_acc_ptr;
+    gsl_spline *psi_fixed_part1_sp_ptr;
+    gsl_interp_accel *psi_fixed_part1_acc_ptr;
     
     // Allocate the accelerator and the spline objects
-    t_int_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    t_int_acc_ptr = gsl_interp_accel_alloc();
+    psi_fixed_part1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    psi_fixed_part1_acc_ptr = gsl_interp_accel_alloc();
     
     // Integration workspace
     gsl_integration_cquad_workspace *wsp
@@ -172,14 +172,14 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
       for (int ll=0; ll<in.nl; ll++){
 	
 	// Integration function
-	gsl_function ft_int, fq_int;
+	gsl_function func_part1, func_part2;
 	if (ll == 0){
-	  ft_int.function = &psi_x0w_t;
-	  fq_int.function = &psi_x0w_q;
+	  func_part1.function = &psi_x0w_q;
+	  func_part2.function = &psi_x0w_t;
 	}
 	else {
-	  ft_int.function = &psi_xlw_t;
-	  fq_int.function = &psi_xlw_q;
+	  func_part1.function = &adr_fixed_q;
+	  func_part2.function = &adr_fixed_t;
 	}
 	
 	// Loop over w (wave-vector)
@@ -197,38 +197,38 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
 	    if (xx[kk] > 0.0){
 	      
 	      // Integration over t
-	      struct psi_xlw_t_params ppt = {in.Theta,xx[jj],xx[ii],ll,xx[kk]};
-	      ft_int.params = &ppt;
-	      gsl_integration_cquad(&ft_int,
+	      struct adr_fixed_part2_params ppart2 = {in.Theta,xx[jj],xx[ii],ll,xx[kk]};
+	      func_part2.params = &ppart2;
+	      gsl_integration_cquad(&func_part2,
 				    tmin, tmax,
 				    0.0, 1e-5,
 				    wsp,
-				    &t_int[kk], &err, &nevals);
+				    &psi_fixed_part1[kk], &err, &nevals);
 	    }
 	    
-	    else t_int[kk] = 0.0;
+	    else psi_fixed_part1[kk] = 0.0;
 	    
 	  }
-	  gsl_spline_init(t_int_sp_ptr, xx, t_int, in.nx);
+	  gsl_spline_init(psi_fixed_part1_sp_ptr, xx, psi_fixed_part1, in.nx);
 	  
 	  // Integral over q
-	  struct psi_xlw_q_params ppq = {in.mu,in.Theta,t_int_sp_ptr,t_int_acc_ptr};
-	  fq_int.params = &ppq;
-	  gsl_integration_cquad(&fq_int,
+	  struct adr_fixed_part1_params ppart1 = {in.mu,in.Theta,psi_fixed_part1_sp_ptr,psi_fixed_part1_acc_ptr};
+	  func_part1.params = &ppart1;
+	  gsl_integration_cquad(&func_part1,
 				xx[0], xx[in.nx-1],
 				0.0, 1e-5,
 				wsp,
-				&psi_xlw[idx3(ii, ll, jj, in.nx, in.nl)],
+				&psi_fixed[idx3(ii, ll, jj, in.nx, in.nl)],
 				&err, &nevals);
 	}
       }
     }
 
     // Free memory
-    free(t_int);
+    free(psi_fixed_part1);
     gsl_integration_cquad_workspace_free(wsp);
-    gsl_spline_free(t_int_sp_ptr);
-    gsl_interp_accel_free(t_int_acc_ptr);
+    gsl_spline_free(psi_fixed_part1_sp_ptr);
+    gsl_interp_accel_free(psi_fixed_part1_acc_ptr);
     
   }
   
@@ -236,7 +236,7 @@ void compute_psi_xlw(double *psi_xlw, double *xx, input in) {
 
 double psi_x0w_t(double tt, void* pp) {
 
-  struct psi_xlw_t_params* params = (struct psi_xlw_t_params*)pp;
+  struct adr_fixed_part2_params* params = (struct adr_fixed_part2_params*)pp;
   double xx = (params->xx);
   double qq = (params->qq);
   double ww = (params->ww);
@@ -263,7 +263,7 @@ double psi_x0w_t(double tt, void* pp) {
 
 double psi_x0w_q(double qq, void* pp) {
 
-  struct psi_xlw_q_params* params = (struct psi_xlw_q_params*)pp;
+  struct adr_fixed_part1_params* params = (struct adr_fixed_part1_params*)pp;
   double mu = (params->mu);
   double Theta = (params->Theta);
   gsl_spline* t_int_sp_ptr = (params->t_int_sp_ptr);
@@ -275,9 +275,9 @@ double psi_x0w_q(double qq, void* pp) {
 
 }
 
-double psi_xlw_t(double tt, void* pp) {
+double adr_fixed_t(double tt, void* pp) {
   
-  struct psi_xlw_t_params* params = (struct psi_xlw_t_params*)pp;
+  struct adr_fixed_part2_params* params = (struct adr_fixed_part2_params*)pp;
   double xx = (params->xx);
   double qq = (params->qq);
   double ww = (params->ww);
@@ -296,9 +296,9 @@ double psi_xlw_t(double tt, void* pp) {
 
 }
 
-double psi_xlw_q(double qq, void* pp) {
+double adr_fixed_q(double qq, void* pp) {
   
-  struct psi_xlw_q_params* params = (struct psi_xlw_q_params*)pp;
+  struct adr_fixed_part1_params* params = (struct adr_fixed_part1_params*)pp;
   double mu = (params->mu);
   double Theta = (params->Theta);
   gsl_spline* t_int_sp_ptr = (params->t_int_sp_ptr);
@@ -567,7 +567,7 @@ void write_text_qstls(double *SS, double *psi, double *phi,
         perror("Error while creating the output file for the interaction energy");
         exit(EXIT_FAILURE);
     }
-    fprintf(fid, "%.8e\n", compute_uex(SS, xx, in));
+    fprintf(fid, "%.8e\n", compute_internal_energy(SS, xx, in));
     fclose(fid);
 
 }

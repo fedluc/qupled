@@ -40,13 +40,13 @@ int idx2(int xx, int yy, int x_size);
 // FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY
 // -------------------------------------------------------------------
 
-void compute_phi(double *phi, double *xx, input in, bool verbose);
+void compute_idr(double *phi, double *xx, input in, bool verbose);
 
-void compute_phil(double *phil, double *xx, int ll, input in);
+void compute_idr_one_frequency(double *phil, double *xx, int ll, input in);
 
-double phixl(double yy, void *pp);
+double idr_partial_xl(double yy, void *pp);
 
-double phix0(double yy, void *pp);
+double idr_partial_x0(double yy, void *pp);
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC STRUCTURE FACTOR
@@ -56,9 +56,9 @@ void compute_ssf_stls(double *SS, double *SSHF,
 		      double *GG, double *phi, 
 		      double *xx, input in);
 
-void compute_ssfHF(double *SS,  double *xx, input in);
+void compute_ssf_HF(double *SS,  double *xx, input in);
 
-double ssfHF(double yy, void *pp);
+double ssf_HF(double yy, void *pp);
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
@@ -73,7 +73,7 @@ double slfc(double yy, void *pp);
 // FUNCTIONS USED TO COMPUTE THE INTERNAL ENERGY
 // -------------------------------------------------------------------
 
-double compute_uex(double *SS, double *xx, input in);
+double compute_internal_energy(double *SS, double *xx, input in);
 
 double uex(double yy, void *pp);
 

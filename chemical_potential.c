@@ -28,7 +28,7 @@ double normalization_condition(double mu, void *pp) {
 
 }
 
-double compute_mu(input in) {
+double compute_chemical_potential(input in) {
   
   // Variables
   int max_iter = 100;

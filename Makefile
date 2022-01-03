@@ -3,7 +3,8 @@ CC = gcc
 CFLAGS = -Wall -O2 -std=gnu99
 
 # Include
-INCLUDE += -I/home/x_fedlu/gsl/include
+INCLUDE += -I/home/flc/nobackup/gsl/include
+LIB += -L/home/flc/nobackup/gsl/lib
 
 # Name of output file
 EXE = stls
@@ -20,7 +21,7 @@ all: $(EXE)
 
 # Link
 $(EXE): $(OBJS)
-	 $(CC) -fopenmp $^ -o $@ -lgsl -lgslcblas -lm
+	 $(CC) $(LIB) -fopenmp $^ -o $@ -lgsl -lgslcblas -lm
 
 clean:
 	 rm *.o $(EXE)

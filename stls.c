@@ -32,20 +32,20 @@ void solve_stls(input in, bool verbose) {
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
   
-  // Initial guess for Static structure factor (SSF) and static-local field correction (SLFC)
+  // Initial guess
   if (strcmp(in.stls_guess_file,"NO_FILE")==0){
     for (int ii=0; ii < in.nx; ii++) {
-      GG[ii] = 0.0;
+      GG[ii] = 0.0; // Static local field correction
       GG_new[ii] = 1.0;
     }
-    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
+    compute_ssf_stls(SS, SSHF, GG, phi, xx, in); // Static structure factor
   }
   else {
-    read_guess_stls(SS, GG, in);
+    read_guess_stls(SS, GG, in); // Read from file
   }
 
 
-  // SSF and SLFC via iterative procedure
+  // Iterative procedure
   if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
@@ -83,7 +83,7 @@ void solve_stls(input in, bool verbose) {
   if (verbose) printf("Done.\n");
   
   // Internal energy
-  if (verbose) printf("Internal energy: %.10f\n",compute_uex(SS, xx, in));
+  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
@@ -151,7 +151,7 @@ void init_fixed_stls_arrays(input *in, double *xx,
  
   // Chemical potential
   if (verbose) printf("Chemical potential calculation: ");
-  in->mu = compute_mu(*in);
+  in->mu = compute_chemical_potential(*in);
   if (verbose) printf("Done. Chemical potential: %.8f\n", in->mu);
   
   // Wave-vector grid
@@ -159,14 +159,14 @@ void init_fixed_stls_arrays(input *in, double *xx,
   wave_vector_grid(xx, *in);
   if (verbose) printf("Done.\n");
   
-  // Normalized ideal Lindhard density
+  // Normalized ideal Lindhard density response
   if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
-  compute_phi(phi, xx, *in, verbose);
+  compute_idr(phi, xx, *in, verbose);
   if (verbose) printf("Done.\n");
   
   // Static structure factor in the Hartree-Fock approximation
   if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
-  compute_ssfHF(SSHF, xx, *in);
+  compute_ssf_HF(SSHF, xx, *in);
   if (verbose) printf("Done.\n");
 
 }
@@ -204,7 +204,8 @@ struct phixl_params {
 
 };
 
-void compute_phi(double *phi, double *xx,  input in, bool verbose) {
+// Ideal density response for all matsubara frequencies specified in input
+void compute_idr(double *phi, double *xx,  input in, bool verbose) {
 
   // Temporary array to store results
   double *phil = malloc( sizeof(double) * in.nx);
@@ -213,7 +214,7 @@ void compute_phi(double *phi, double *xx,  input in, bool verbose) {
   for (int ll=0; ll<in.nl; ll++){
     if (verbose) printf("l = %d\n", ll);
     // Compute lindhard density
-    compute_phil(phil, xx, ll, in);
+    compute_idr_one_frequency(phil, xx, ll, in);
     // Fill output array
     for (int ii=0; ii<in.nx; ii++){
       phi[idx2(ii,ll,in.nx)] = phil[ii];
@@ -225,7 +226,8 @@ void compute_phi(double *phi, double *xx,  input in, bool verbose) {
 
 }
 
-void compute_phil(double *phil, double *xx,  int ll, input in) {
+// Ideal density response for one mastubara frequency
+void compute_idr_one_frequency(double *phil, double *xx,  int ll, input in) {
 
   double err;
   size_t nevals;
@@ -236,8 +238,8 @@ void compute_phil(double *phil, double *xx,  int ll, input in) {
 
   // Integration function
   gsl_function ff_int;
-  if (ll == 0) ff_int.function = &phix0;
-  else ff_int.function = &phixl;
+  if (ll == 0) ff_int.function = &idr_partial_x0;
+  else ff_int.function = &idr_partial_xl;
 
   // Normalized ideal Lindhard density 
   for (int ii = 0; ii < in.nx; ii++) {
@@ -257,7 +259,8 @@ void compute_phil(double *phil, double *xx,  int ll, input in) {
   
 }
 
-double phixl(double yy, void *pp) {
+// Partial ideal density response (frequency = l, vector = x)
+double idr_partial_xl(double yy, void *pp) {
 
   struct phixl_params *params = (struct phixl_params*)pp;
   double xx = (params->xx);
@@ -277,7 +280,9 @@ double phixl(double yy, void *pp) {
 
 }
 
-double phix0(double yy, void *pp) {
+
+// Partial ideal density response (frequency = 0, vector = x)
+double idr_partial_x0(double yy, void *pp) {
 
   struct phixl_params *params = (struct phixl_params*)pp;
   double xx = (params->xx);
@@ -310,6 +315,8 @@ double phix0(double yy, void *pp) {
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
 
+// Static structure factor from the fluctuation-dissipation theorem
+// (sum over matsubara frequencies)
 void compute_ssf_stls(double *SS, double *SSHF, double *GG, 
 		      double *phi, double *xx, input in){
 
@@ -355,7 +362,8 @@ void compute_ssf_stls(double *SS, double *SSHF, double *GG,
 
 }
 
-struct ssfHF_params {
+// Static structure factor within the Hartree-Fock approximation
+struct ssf_HF_params {
 
   double xx;
   double mu;
@@ -363,7 +371,7 @@ struct ssfHF_params {
 
 };
 
-void compute_ssfHF(double *SS,  double *xx,  input in){
+void compute_ssf_HF(double *SS,  double *xx,  input in){
 
   double err;
   size_t nevals;
@@ -374,14 +382,14 @@ void compute_ssfHF(double *SS,  double *xx,  input in){
 
   // Integration function
   gsl_function ff_int;
-  ff_int.function = &ssfHF;
+  ff_int.function = &ssf_HF;
 
   // Static structure factor in the Hartree-Fock approximation
   for (int ii = 0; ii < in.nx; ii++) {
 
 
-    struct ssfHF_params ssfHFp = {xx[ii], in.mu, in.Theta};
-    ff_int.params = &ssfHFp;
+    struct ssf_HF_params ssf_HF_p = {xx[ii], in.mu, in.Theta};
+    ff_int.params = &ssf_HF_p;
     gsl_integration_cquad(&ff_int,
 			  xx[0], xx[in.nx-1],
 			  0.0, 1e-5,
@@ -397,7 +405,7 @@ void compute_ssfHF(double *SS,  double *xx,  input in){
   
 }
 
-double ssfHF(double yy, void* pp) {
+double ssf_HF(double yy, void* pp) {
 
   struct phixl_params *params = (struct phixl_params*)pp;
   double xx = (params->xx);
@@ -512,7 +520,7 @@ struct uex_params {
 
 };
 
-double compute_uex(double *SS, double *xx,  input in) {
+double compute_internal_energy(double *SS, double *xx,  input in) {
 
   double err;
   size_t neval;
@@ -655,7 +663,7 @@ void write_text_stls(double *SS, double *GG, double *phi,
         perror("Error while creating the output file for the interaction energy\n");
         exit(EXIT_FAILURE);
     }
-    fprintf(fid, "%.8e\n", compute_uex(SS, xx, in));
+    fprintf(fid, "%.8e\n", compute_internal_energy(SS, xx, in));
     fclose(fid);
 
 }

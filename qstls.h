@@ -7,15 +7,15 @@
 // FUNCTIONS USED TO COMPUTE THE FIXED COMPONENT OF THE AUXILIARY RESPONSE
 // ------------------------------------------------------------------------
 
-void compute_psi_xlw(double *psi_xlw, double *xx, input in);
+void compute_adr_fixed(double *psi_xlw, double *xx, input in);
 
 double psi_x0w_t(double tt, void* pp);
 
 double psi_x0w_q(double qq, void* pp);
 
-double psi_xlw_t(double tt, void* pp);
+double adr_fixed_q(double qq, void* pp);
 
-double psi_xlw_q(double qq, void* pp);
+double adr_fixed_t(double tt, void* pp);
 
 // ---------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE
