@@ -40,7 +40,7 @@ Given a state point defined via the quantum degeneracy parameter (Theta) and via
 
 All the integrals are computed with the doubly-adaptive Clenshaw-Curtis quadrature scheme as implemented in the [CQUAD](https://www.gnu.org/software/gsl/doc/html/integration.html) function of the GSL library. Once the iterative procedure is completed, the results are written to a set of dedicated output files (see the section "Output")
 
-The following command line options can be employed to control the calculations performed by STLS (the same information can also be retrieved by running stls with the option `--help`) :
+The following command line options can be employed to control the calculations performed by STLS (the same information can also be retrieved by running STLS with the option `--help`) :
 
   * `--dx` specifies the  resolution for wave-vector grid. Default `--dx=0.01`
   * `--iter`  specifies the maximum number of iterations to employ in the iterative procedure used to compute the static structure factor.  Default `--iter=1000`
