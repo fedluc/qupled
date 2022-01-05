@@ -27,14 +27,14 @@ void solve_qstls(input in, bool verbose) {
 
   // Arrays for QSTLS solution
   double *psi = NULL;
-  double *psi_xlw = NULL;
+  double *psi_fixed = NULL;
 
   // Allocate arrays
   // Note: GG is not needed for qSTLS, but we keep it here so that
   // we can reuse some stls routines 
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
   psi = malloc( sizeof(double) * in.nx * in.nl);  
-  psi_xlw = malloc( sizeof(double) * in.nx * in.nl * in.nx);
+  psi_fixed = malloc( sizeof(double) * in.nx * in.nl * in.nx);
 
   // Initialize STLS arrays that are not modified by the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
@@ -55,12 +55,12 @@ void solve_qstls(input in, bool verbose) {
   // Initialize QSTLS arrays that are not modified by the iterative procedure
   if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
     if (verbose) printf("Fixed component of the auxiliary density response function: ");
-    compute_adr_fixed(psi_xlw, xx, in);
-    write_fixed_qstls(psi_xlw, in);
+    compute_adr_fixed(psi_fixed, xx, in);
+    write_fixed_qstls(psi_fixed, in);
     if (verbose) printf("Done.\n");
   }
   else {
-    read_fixed_qstls(psi_xlw, in);
+    read_fixed_qstls(psi_fixed, in);
   }
  
   // Iterative procedure
@@ -73,7 +73,7 @@ void solve_qstls(input in, bool verbose) {
     double tic = omp_get_wtime();
     
     // Update auxiliary density response
-    compute_psi(psi, psi_xlw, SS, xx, in);
+    compute_adr(psi, psi_fixed, SS, xx, in);
     
     // Update static structure factor
     compute_ssf_qstls(SS_new, SSHF, psi, phi, xx, in);
@@ -112,7 +112,7 @@ void solve_qstls(input in, bool verbose) {
   // Free memory
   free_stls_arrays(xx, phi, GG, SS_new, SS, SSHF);
   free(psi);
-  free(psi_xlw);
+  free(psi_fixed);
 
 }
 
@@ -125,8 +125,8 @@ struct adr_fixed_part1_params {
 
   double mu;
   double Theta;
-  gsl_spline *t_int_sp_ptr;
-  gsl_interp_accel *t_int_acc_ptr;
+  gsl_spline *psi_fixed_part1_sp_ptr;
+  gsl_interp_accel *psi_fixed_part1_acc_ptr;
 
 };
 
@@ -140,7 +140,7 @@ struct adr_fixed_part2_params {
 
 };
 
-
+// Fixed component of the auxiliary density response
 void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
 
   // Parallel calculations
@@ -172,14 +172,14 @@ void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
       for (int ll=0; ll<in.nl; ll++){
 	
 	// Integration function
-	gsl_function func_part1, func_part2;
+	gsl_function ff_int_part1, ff_int_part2;
 	if (ll == 0){
-	  func_part1.function = &psi_x0w_q;
-	  func_part2.function = &psi_x0w_t;
+	  ff_int_part1.function = &adr_fixed_part1_partial_xw0;
+	  ff_int_part2.function = &adr_fixed_part2_partial_xwq0;
 	}
 	else {
-	  func_part1.function = &adr_fixed_q;
-	  func_part2.function = &adr_fixed_t;
+	  ff_int_part1.function = &adr_fixed_part1_partial_xwl;
+	  ff_int_part2.function = &adr_fixed_part2_partial_xwql;
 	}
 	
 	// Loop over w (wave-vector)
@@ -198,8 +198,8 @@ void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
 	      
 	      // Integration over t
 	      struct adr_fixed_part2_params ppart2 = {in.Theta,xx[jj],xx[ii],ll,xx[kk]};
-	      func_part2.params = &ppart2;
-	      gsl_integration_cquad(&func_part2,
+	      ff_int_part2.params = &ppart2;
+	      gsl_integration_cquad(&ff_int_part2,
 				    tmin, tmax,
 				    0.0, 1e-5,
 				    wsp,
@@ -213,8 +213,8 @@ void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
 	  
 	  // Integral over q
 	  struct adr_fixed_part1_params ppart1 = {in.mu,in.Theta,psi_fixed_part1_sp_ptr,psi_fixed_part1_acc_ptr};
-	  func_part1.params = &ppart1;
-	  gsl_integration_cquad(&func_part1,
+	  ff_int_part1.params = &ppart1;
+	  gsl_integration_cquad(&ff_int_part1,
 				xx[0], xx[in.nx-1],
 				0.0, 1e-5,
 				wsp,
@@ -234,7 +234,63 @@ void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
   
 }
 
-double psi_x0w_t(double tt, void* pp) {
+
+// Partial auxiliary density response (vectors = {x,w}, frequency = l)
+double adr_fixed_part1_partial_xwl(double qq, void* pp) {
+  
+  struct adr_fixed_part1_params* params = (struct adr_fixed_part1_params*)pp;
+  double mu = (params->mu);
+  double Theta = (params->Theta);
+  gsl_spline* psi_fixed_part1_sp_ptr = (params->psi_fixed_part1_sp_ptr);
+  gsl_interp_accel* psi_fixed_part1_acc_ptr = (params->psi_fixed_part1_acc_ptr);
+  double qq2 = qq*qq;
+  double fft = gsl_spline_eval(psi_fixed_part1_sp_ptr, qq, psi_fixed_part1_acc_ptr);
+
+  return qq/(exp(qq2/Theta - mu) + 1.0)*fft;
+
+}
+
+
+// Partial auxiliary density response (vectors = {x,w}, frequency = 0)
+double adr_fixed_part1_partial_xw0(double qq, void* pp) {
+
+  struct adr_fixed_part1_params* params = (struct adr_fixed_part1_params*)pp;
+  double mu = (params->mu);
+  double Theta = (params->Theta);
+  gsl_spline* psi_fixed_part1_sp_ptr = (params->psi_fixed_part1_sp_ptr);
+  gsl_interp_accel* psi_fixed_part1_acc_ptr = (params->psi_fixed_part1_acc_ptr);
+  double qq2 = qq*qq;
+  double fft = gsl_spline_eval(psi_fixed_part1_sp_ptr, qq, psi_fixed_part1_acc_ptr);
+
+  return qq/(exp(qq2/Theta - mu) + exp(-qq2/Theta + mu) + 2.0)*fft;
+
+}
+
+
+// Partial auxiliary density response (vectors = {x,q,w}, frequency = l)
+double adr_fixed_part2_partial_xwql(double tt, void* pp) {
+  
+  struct adr_fixed_part2_params* params = (struct adr_fixed_part2_params*)pp;
+  double xx = (params->xx);
+  double qq = (params->qq);
+  double ww = (params->ww);
+  double ll = (params->ll);
+  double Theta = (params->Theta);
+  double xx2 = xx*xx, ww2 = ww*ww, txq = 2.0*xx*qq, 
+    tplT = 2.0*M_PI*ll*Theta, tplT2 = tplT*tplT, 
+    txqpt = txq + tt, txqmt = txq - tt,
+    txqpt2 = txqpt*txqpt, txqmt2 = txqmt*txqmt,
+    logarg = (txqpt2 + tplT2)/(txqmt2 + tplT2);
+
+  if (xx == 0 || qq == 0)
+    return 0;
+  else
+    return 1.0/(2.0*tt + ww2 - xx2)*log(logarg);
+
+}
+
+// Partial auxiliary density response (vectors = {x,q,w}, frequency = 0)
+double adr_fixed_part2_partial_xwq0(double tt, void* pp) {
 
   struct adr_fixed_part2_params* params = (struct adr_fixed_part2_params*)pp;
   double xx = (params->xx);
@@ -261,70 +317,21 @@ double psi_x0w_t(double tt, void* pp) {
 
 }
 
-double psi_x0w_q(double qq, void* pp) {
-
-  struct adr_fixed_part1_params* params = (struct adr_fixed_part1_params*)pp;
-  double mu = (params->mu);
-  double Theta = (params->Theta);
-  gsl_spline* t_int_sp_ptr = (params->t_int_sp_ptr);
-  gsl_interp_accel* t_int_acc_ptr = (params->t_int_acc_ptr);
-  double qq2 = qq*qq;
-  double fft = gsl_spline_eval(t_int_sp_ptr, qq, t_int_acc_ptr);
-
-  return qq/(exp(qq2/Theta - mu) + exp(-qq2/Theta + mu) + 2.0)*fft;
-
-}
-
-double adr_fixed_t(double tt, void* pp) {
-  
-  struct adr_fixed_part2_params* params = (struct adr_fixed_part2_params*)pp;
-  double xx = (params->xx);
-  double qq = (params->qq);
-  double ww = (params->ww);
-  double ll = (params->ll);
-  double Theta = (params->Theta);
-  double xx2 = xx*xx, ww2 = ww*ww, txq = 2.0*xx*qq, 
-    tplT = 2.0*M_PI*ll*Theta, tplT2 = tplT*tplT, 
-    txqpt = txq + tt, txqmt = txq - tt,
-    txqpt2 = txqpt*txqpt, txqmt2 = txqmt*txqmt,
-    logarg = (txqpt2 + tplT2)/(txqmt2 + tplT2);
-
-  if (xx == 0 || qq == 0)
-    return 0;
-  else
-    return 1.0/(2.0*tt + ww2 - xx2)*log(logarg);
-
-}
-
-double adr_fixed_q(double qq, void* pp) {
-  
-  struct adr_fixed_part1_params* params = (struct adr_fixed_part1_params*)pp;
-  double mu = (params->mu);
-  double Theta = (params->Theta);
-  gsl_spline* t_int_sp_ptr = (params->t_int_sp_ptr);
-  gsl_interp_accel* t_int_acc_ptr = (params->t_int_acc_ptr);
-  double qq2 = qq*qq;
-  double fft = gsl_spline_eval(t_int_sp_ptr, qq, t_int_acc_ptr);
-
-  return qq/(exp(qq2/Theta - mu) + 1.0)*fft;
-
-}
-
 // ---------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE
 // ---------------------------------------------------------------------------
 
-struct psiw_params {
+struct adr_params {
 
-  gsl_spline *qt_int_sp_ptr;
-  gsl_interp_accel *qt_int_acc_ptr;
+  gsl_spline *adr_fixed_sp_ptr;
+  gsl_interp_accel *adr_fixed_acc_ptr;
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
 
 };
 
 
-void compute_psi(double *psi, double *psi_xlw, double *SS, 
+void compute_adr(double *psi, double *psi_fixed, double *SS, 
 		 double *xx, input in){
   
   // Parallel calculations
@@ -333,18 +340,18 @@ void compute_psi(double *psi, double *psi_xlw, double *SS,
 
     double err;
     size_t nevals;
-    double *qt_int  = malloc( sizeof(double) * in.nx);
+    double *adr_fixed  = malloc( sizeof(double) * in.nx);
     double norm_fact;
     
     // Declare accelerator and spline objects
     gsl_spline *ssf_sp_ptr;
     gsl_interp_accel *ssf_acc_ptr;
-    gsl_spline *qt_int_sp_ptr;
-    gsl_interp_accel *qt_int_acc_ptr;
+    gsl_spline *adr_fixed_sp_ptr;
+    gsl_interp_accel *adr_fixed_acc_ptr;
   
     // Allocate the accelerator and the spline objects
-    qt_int_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    qt_int_acc_ptr = gsl_interp_accel_alloc();
+    adr_fixed_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    adr_fixed_acc_ptr = gsl_interp_accel_alloc();
     ssf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
     ssf_acc_ptr = gsl_interp_accel_alloc();
     
@@ -356,8 +363,8 @@ void compute_psi(double *psi, double *psi_xlw, double *SS,
       = gsl_integration_cquad_workspace_alloc(100);
     
     // Integration function
-    gsl_function psiw_int;
-    psiw_int.function = &psiw;
+    gsl_function ff_int;
+    ff_int.function = &adr_partial;
     
     #pragma omp for // Distribute for loop over the threads
     for (int ii=0; ii<in.nx; ii++){
@@ -365,15 +372,15 @@ void compute_psi(double *psi, double *psi_xlw, double *SS,
   
        // Interpolate solution of q-t integration
        for (int jj=0; jj<in.nx; jj++){
-	 qt_int[jj] = psi_xlw[idx3(ii,ll,jj,in.nx,in.nl)];
+	 adr_fixed[jj] = psi_fixed[idx3(ii,ll,jj,in.nx,in.nl)];
        }
-       gsl_spline_init(qt_int_sp_ptr, xx, qt_int, in.nx);
+       gsl_spline_init(adr_fixed_sp_ptr, xx, adr_fixed, in.nx);
 
        // Integral over w 
-       struct psiw_params ppw = {qt_int_sp_ptr,qt_int_acc_ptr,
-				ssf_sp_ptr, ssf_acc_ptr};
-       psiw_int.params = &ppw;
-       gsl_integration_cquad(&psiw_int,
+       struct adr_params ppw = {adr_fixed_sp_ptr,adr_fixed_acc_ptr,
+				       ssf_sp_ptr, ssf_acc_ptr};
+       ff_int.params = &ppw;
+       gsl_integration_cquad(&ff_int,
 			     xx[0], xx[in.nx-1],
 			     0.0, 1e-5,
 			     wsp,
@@ -389,10 +396,10 @@ void compute_psi(double *psi, double *psi_xlw, double *SS,
     }  
     
     // Free memory
-    free(qt_int);
+    free(adr_fixed);
     gsl_integration_cquad_workspace_free(wsp);
-    gsl_spline_free(qt_int_sp_ptr);
-    gsl_interp_accel_free(qt_int_acc_ptr);
+    gsl_spline_free(adr_fixed_sp_ptr);
+    gsl_interp_accel_free(adr_fixed_acc_ptr);
     gsl_spline_free(ssf_sp_ptr);
     gsl_interp_accel_free(ssf_acc_ptr);
     
@@ -401,15 +408,15 @@ void compute_psi(double *psi, double *psi_xlw, double *SS,
 }
 
 
-double psiw(double ww, void* pp) {
+double adr_partial(double ww, void* pp) {
   
-  struct psiw_params* params = (struct psiw_params*)pp;
-  gsl_spline* qt_int_sp_ptr = (params->qt_int_sp_ptr);
-  gsl_interp_accel* qt_int_acc_ptr = (params->qt_int_acc_ptr);
+  struct adr_params* params = (struct adr_params*)pp;
+  gsl_spline* adr_fixed_sp_ptr = (params->adr_fixed_sp_ptr);
+  gsl_interp_accel* adr_fixed_acc_ptr = (params->adr_fixed_acc_ptr);
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
 
-  return ww*gsl_spline_eval(qt_int_sp_ptr, ww, qt_int_acc_ptr)
+  return ww*gsl_spline_eval(adr_fixed_sp_ptr, ww, adr_fixed_acc_ptr)
     *(gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0);
 
 }
@@ -644,7 +651,7 @@ void read_guess_qstls(double *SS, double *psi, input in){
 }
 
 // write binary file to store the fixed component of the auxilliary density response
-void write_fixed_qstls(double *psi_xlw, input in){
+void write_fixed_qstls(double *psi_fixed, input in){
 
   // Name of output file
   char out_name[100];
@@ -662,7 +669,7 @@ void write_fixed_qstls(double *psi_xlw, input in){
   fwrite(&in, sizeof(input), 1, fid);
 
   // Fixed component of the auxiliary density response
-  fwrite(psi_xlw, sizeof(double), in.nx * in.nl * in.nx, fid);
+  fwrite(psi_fixed, sizeof(double), in.nx * in.nl * in.nx, fid);
 
   // Close binary file
   fclose(fid);
@@ -670,7 +677,7 @@ void write_fixed_qstls(double *psi_xlw, input in){
 }
 
 // read binary file with the fixed component of the auxilliary density response
-void read_fixed_qstls(double *psi_xlw, input in){
+void read_fixed_qstls(double *psi_fixed, input in){
 
   // Variables
   input in_load;
@@ -705,7 +712,7 @@ void read_fixed_qstls(double *psi_xlw, input in){
   }
 
   // Fixed component of the auxiliary density response
-  fread(psi_xlw, sizeof(double), in.nx * in.nl * in.nx, fid);
+  fread(psi_fixed, sizeof(double), in.nx * in.nl * in.nx, fid);
 
   // Close binary file
   fclose(fid);

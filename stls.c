@@ -195,7 +195,7 @@ int idx2(int xx, int yy, int x_size) {
 // FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY
 // -------------------------------------------------------------------
 
-struct phixl_params {
+struct idr_params {
 
   double xx;
   double mu;
@@ -244,7 +244,7 @@ void compute_idr_one_frequency(double *phil, double *xx,  int ll, input in) {
   // Normalized ideal Lindhard density 
   for (int ii = 0; ii < in.nx; ii++) {
     
-    struct phixl_params phixlp = {xx[ii], in.mu, in.Theta, ll};
+    struct idr_params phixlp = {xx[ii], in.mu, in.Theta, ll};
     ff_int.params = &phixlp;
     gsl_integration_cquad(&ff_int, 
 			  xx[0], xx[in.nx-1], 
@@ -262,7 +262,7 @@ void compute_idr_one_frequency(double *phil, double *xx,  int ll, input in) {
 // Partial ideal density response (frequency = l, vector = x)
 double idr_partial_xl(double yy, void *pp) {
 
-  struct phixl_params *params = (struct phixl_params*)pp;
+  struct idr_params *params = (struct idr_params*)pp;
   double xx = (params->xx);
   double mu = (params->mu);
   double Theta = (params->Theta);
@@ -284,7 +284,7 @@ double idr_partial_xl(double yy, void *pp) {
 // Partial ideal density response (frequency = 0, vector = x)
 double idr_partial_x0(double yy, void *pp) {
 
-  struct phixl_params *params = (struct phixl_params*)pp;
+  struct idr_params *params = (struct idr_params*)pp;
   double xx = (params->xx);
   double mu = (params->mu);
   double Theta = (params->Theta);
@@ -407,7 +407,7 @@ void compute_ssf_HF(double *SS,  double *xx,  input in){
 
 double ssf_HF(double yy, void* pp) {
 
-  struct phixl_params *params = (struct phixl_params*)pp;
+  struct idr_params *params = (struct idr_params*)pp;
   double xx = (params->xx);
   double mu = (params->mu);
   double Theta = (params->Theta);

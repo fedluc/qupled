@@ -311,7 +311,7 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
 
 
   // QSTLS component of the auxilliary response function
-  compute_psi(psi_new, psi_xlw_qstls, SS, xx, in);
+  compute_adr(psi_new, psi_xlw_qstls, SS, xx, in);
 
   // Parallel calculations
   #pragma omp parallel
