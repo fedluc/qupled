@@ -52,18 +52,16 @@ The following command line options can be employed to control the calculations p
   * `qstls-fix` specifies the name of the file used to load the fixed component of the auxiliary density response function. If a file name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the qSTLS scheme can be expected. Default `qslts-fix=NO_FILE` (no file is specified)
   * `qstls-guess` specifies the name of the file used as initial guess for the solution of the quantum schemes. If a file name is not specified, the iterative scheme is started by setting the auxiliary density response to zero (which is equivalent to set the dynamic local field correction to zero). Default `qslts-guess=NO_FILE` (no file is specified) 
   * `--rs`  specifies the  quantum coupling parameter. Default `--rs=1.0`.
-  * `stls-guess` specifies the name of the file used as initial guess for the solution of the classical schemes. If a file name is not specified, the iterative scheme is started by setting the static local field correction to zero. Default `slts-guess=NO_FILE` (no file is specified) 
+  * `--stls-guess` specifies the name of the file used as initial guess for the solution of the classical schemes. If a file name is not specified, the iterative scheme is started by setting the static local field correction to zero. Default `slts-guess=NO_FILE` (no file is specified) 
   * `--theory` specifies which scheme should be employed to compute the static structure factor. Default `--theory=STLS`. Accepted options are: 
      * `STLS` (classical STLS approach), 
      * `STLS-HNC` (classical STLS-HNC approach) 
      * `STLS-IET-IOI` (classical STLS-IET approach with the [IOI bridge function](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.46.1051))
-     * `STLS-IET-LCT` (classical STLS-IET approach with the [LCT bridge function](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.46.1051))
-     * `STLS-RIET-LCT` (classical STLS-IET approach with the [LCT bridge function](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.46.1051) with a rescaled coupling parameter defined according to [Bonitz](https://aip.scitation.org/doi/10.1063/1.5143225))
+     * `STLS-IET-LCT` (classical STLS-IET approach with the [LCT bridge function](https://arxiv.org/abs/2108.09574))
+     * `STLS-RIET-LCT` (classical STLS-IET approach with the [LCT bridge function](https://arxiv.org/abs/2108.09574) with a rescaled coupling parameter defined according to [Bonitz](https://aip.scitation.org/doi/10.1063/1.5143225))
      * `QSTLS` (quantum STLS scheme). 
-  
-  
-  * `-t` or `--Theta=1.0` specifies the  quantum degeneracy parameter. Default `-t 1.0` or `--Theta=1.0`.
-  * `-x` or `--xcut=20.48` specifies the cutoff for wave-vector grid. Default `-x 20.48` or `--xcut=20.48`.
+  * `--Theta` specifies the  quantum degeneracy parameter. Default `--Theta=1.0`.
+  * `--xmax` specifies the cutoff for wave-vector grid. Default `--xcut=20`.
  
   ## Output 
   
@@ -72,9 +70,12 @@ The following command line options can be employed to control the calculations p
   * One text file with the static structure factor (ssf_rs\*_theta\*\*\_\*\*\*.dat)
   * One text file with the static local field correction (slfc_rs\*_theta\*\*\_\*\*\*.dat)
   * One text file with the static density response (sdr_rs\*_theta\*\*\_\*\*\*.dat)
-  * One text file with the normalized ideal Lindhard density response (idr_rs\*_theta\*\*\_\*\*\*.dat)
+  * One text file with the ideal density response (idr_rs\*_theta\*\*\_\*\*\*.dat)
+  * One text file with the auxiliary density response (adr_rs\*_theta\*\*\_\*\*\*.dat, only for the quantum schemes)
   * One text file with the static structure factor within the Hartree-Fock approximation (ssfHF_rs\*_theta\*\*\_\*\*\*.dat)
   * One text file with the interaction energy (uint_rs\*_theta\*\*\_\*\*\*.dat)
-  * One binary file which can be used as an initial guess for subsequent calculations via the option `-f` (restart_rs\*_theta\*\*\_\*\*\*.bin)
-
-In the above \* is corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter and \*\*\* to the dielectric approach that was solved. 
+  * One binary file which can be used as an initial guess for subsequent calculations via the options `--stls-guess` and `--qstls-guess` (restart_rs\*_theta\*\*\_\*\*\*.bin)
+  * One binary file which can be used to avoid recomputing the fixed component of the auxiliary density response in the QSTLS scheme via the option `--qstls-fix` 
+  (fixed_rs\*_theta\*\*\_\*\*\*.bin)
+  
+In the above \* is corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter and \*\*\* to the dielectric scheme that was solved. 
