@@ -7,23 +7,23 @@
 // FUNCTIONS USED TO COMPUTE THE FIXED COMPONENT OF THE AUXILIARY RESPONSE
 // ------------------------------------------------------------------------
 
-void compute_psi_xluw(double *xx, input in);
+void compute_adr_iet_fixed(double *xx, input in);
 
-double psi_x0uw_y(double yy, void* pp);
+double adr_iet_fixed_partial_xuwl(double yy, void* pp);
 
-double psi_xluw_y(double yy, void* pp);
+double adr_iet_fixed_partial_xuw0(double yy, void* pp);
 
 // ---------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE
 // ---------------------------------------------------------------------------
 
-void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
+void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
                      double *phi, double *SS, double *bf, double *xx,
                      input in);
 
-double psi_u_iet(double uu, void* pp);
+double adr_iet_part1_partial(double uu, void* pp);
 
-double psi_w_iet(double ww, void* pp);
+double adr_iet_part2_partial(double ww, void* pp);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR

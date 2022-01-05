@@ -377,9 +377,9 @@ void compute_adr(double *psi, double *psi_fixed, double *SS,
        gsl_spline_init(adr_fixed_sp_ptr, xx, adr_fixed, in.nx);
 
        // Integral over w 
-       struct adr_params ppw = {adr_fixed_sp_ptr,adr_fixed_acc_ptr,
+       struct adr_params pp = {adr_fixed_sp_ptr,adr_fixed_acc_ptr,
 				       ssf_sp_ptr, ssf_acc_ptr};
-       ff_int.params = &ppw;
+       ff_int.params = &pp;
        gsl_integration_cquad(&ff_int,
 			     xx[0], xx[in.nx-1],
 			     0.0, 1e-5,

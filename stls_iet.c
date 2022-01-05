@@ -165,9 +165,9 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
   = gsl_integration_cquad_workspace_alloc(100);
 
   // Integration function
-  gsl_function fpart1_int, fpart2_int;
-  fpart1_int.function = &slfc_partial_part1;
-  fpart2_int.function = &slfc_partial_part2;
+  gsl_function ff_part1_int, ff_part2_int;
+  ff_part1_int.function = &slfc_partial_part1;
+  ff_part2_int.function = &slfc_partial_part2;
 
   // STLS component of the static local field correction
   compute_slfc(GG_new, SS, xx, in);
@@ -183,7 +183,7 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
 	
 	if (xx[jj] >  0.0) {
 
-	  struct slfc_partial_part2_params slfc_partial_part2_p = {xx[ii], xx[jj], 
+	  struct slfc_partial_part2_params pp_part2 = {xx[ii], xx[jj], 
 					ssf_sp_ptr, ssf_acc_ptr};
 	  wmin = xx[jj] - xx[ii];
 	  if (wmin < 0.0) wmin = -wmin;
@@ -191,8 +191,8 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
 	  // The quadrature formula attemps a tiny extrapolation which causes 
 	  // the interpolation routine to crash. 
 	  wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
-	  fpart2_int.params = &slfc_partial_part2_p;
-	  gsl_integration_cquad(&fpart2_int,
+	  ff_part2_int.params = &pp_part2;
+	  gsl_integration_cquad(&ff_part2_int,
 				wmin, wmax,
 				0.0, 1e-5,
 				wsp,
@@ -208,12 +208,12 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
       gsl_spline_init(GG_part1_sp_ptr, xx, GG_part1, in.nx);    
       
       // Evaluate integral over u
-      struct slfc_partial_part1_params slfc_partial_part1_p = {ssf_sp_ptr, ssf_acc_ptr,
+      struct slfc_partial_part1_params pp_part1 = {ssf_sp_ptr, ssf_acc_ptr,
 				    slfc_sp_ptr, slfc_acc_ptr,
 				    GG_part1_sp_ptr, GG_part1_acc_ptr,
 				    bf_sp_ptr, bf_acc_ptr};
-      fpart1_int.params = &slfc_partial_part1_p;
-      gsl_integration_cquad(&fpart1_int,
+      ff_part1_int.params = &pp_part1;
+      gsl_integration_cquad(&ff_part1_int,
 			    xx[0], xx[in.nx-1],
 			    0.0, 1e-5,
 			    wsp,

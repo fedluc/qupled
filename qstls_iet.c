@@ -30,7 +30,7 @@ void solve_qstls_iet(input in, bool verbose) {
   // Arrays for QSTLS solution
   double *psi = NULL;
   double *psi_new = NULL;
-  double *psi_qstls_xlw = NULL;
+  double *psi_fixed_qstls = NULL;
   double *bf = NULL;
 
   // Allocate arrays
@@ -39,12 +39,12 @@ void solve_qstls_iet(input in, bool verbose) {
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
   psi = malloc( sizeof(double) * in.nx * in.nl);  
   psi_new = malloc( sizeof(double) * in.nx * in.nl);  
-  psi_qstls_xlw = malloc( sizeof(double) * in.nx * in.nl * in.nx);  
+  psi_fixed_qstls = malloc( sizeof(double) * in.nx * in.nl * in.nx);  
   bf = malloc(sizeof(double) * in.nx);
 
   // Initialize STLS arrays that are not modified by the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
- compute_bridge_function(bf, xx, in);
+  compute_bridge_function(bf, xx, in);
 
   // Initial guess
   if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
@@ -62,18 +62,18 @@ void solve_qstls_iet(input in, bool verbose) {
   // Initialize QSTLS arrays that are not modified by the iterative procedure
   if (verbose) printf("Fixed component of the qstls auxiliary response function: ");
   if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
-    compute_adr_fixed(psi_qstls_xlw, xx, in);
-    write_fixed_qstls(psi_qstls_xlw, in);
+    compute_adr_fixed(psi_fixed_qstls, xx, in);
+    write_fixed_qstls(psi_fixed_qstls, in);
   }
   else {
-    read_fixed_qstls(psi_qstls_xlw, in);
+    read_fixed_qstls(psi_fixed_qstls, in);
   }
   if (verbose) printf("Done.\n");
 
   // Initialize QSTLS-IET arrays that are not modified by the iterative procedure
   if (verbose) printf("Fixed component of the auxiliary response function: ");
   if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
-    compute_psi_xluw(xx, in);
+    compute_adr_iet_fixed(xx, in);
   }
   if (verbose) printf("Done.\n");
  
@@ -87,7 +87,7 @@ void solve_qstls_iet(input in, bool verbose) {
     double tic = omp_get_wtime();
     
     // Update auxiliary function
-    compute_psi_iet(psi_new, psi, psi_qstls_xlw, phi, SS, bf, xx, in);
+    compute_adr_iet(psi_new, psi, psi_fixed_qstls, phi, SS, bf, xx, in);
 
     // Update SSF
     compute_ssf_qstls_iet(SS_new, SSHF, psi_new, phi, bf, xx, in);
@@ -136,7 +136,7 @@ void solve_qstls_iet(input in, bool verbose) {
   free_stls_arrays(xx, phi, GG, SS_new, SS, SSHF);
   free(psi);
   free(psi_new);
-  free(psi_qstls_xlw);
+  free(psi_fixed_qstls);
   free(bf);
 
 }
@@ -146,7 +146,7 @@ void solve_qstls_iet(input in, bool verbose) {
 // FUNCTIONS USED TO COMPUTE THE FIXED COMPONENT OF THE AUXILIARY RESPONSE
 // ------------------------------------------------------------------------
 
-struct psi_xluw_params {
+struct adr_iet_fixed_params {
 
   double mu;
   double Theta;
@@ -157,8 +157,8 @@ struct psi_xluw_params {
 
 };
 
-
-void compute_psi_xluw(double *xx, input in) {
+// Fixed component of the auxiliary density response within the QSTLS-IET scheme
+void compute_adr_iet_fixed(double *xx, input in) {
 
   // Parallel calculations
   #pragma omp parallel
@@ -166,7 +166,7 @@ void compute_psi_xluw(double *xx, input in) {
 
     double err;
     size_t nevals;
-    double psi_xluw;
+    double adr_iet_fixed;
      
     // Integration workspace
     gsl_integration_cquad_workspace *wsp
@@ -193,10 +193,10 @@ void compute_psi_xluw(double *xx, input in) {
     	// Integration function
     	gsl_function ff_int;
     	if (ll == 0){
-    	  ff_int.function = &psi_x0uw_y;
+    	  ff_int.function = &adr_iet_fixed_partial_xuw0;
     	}
     	else {
-    	  ff_int.function = &psi_xluw_y;
+    	  ff_int.function = &adr_iet_fixed_partial_xuwl;
     	}
 	
     	// Loop over u (wave-vector)
@@ -208,22 +208,22 @@ void compute_psi_xluw(double *xx, input in) {
   	    // Integral over y
   	    if (xx[ii] == 0.0 || xx[jj] == 0.0 || xx[kk] == 0.0){
   	      // No need to compute the integral over y in this cases
-  	      psi_xluw = 0.0;
+  	      adr_iet_fixed = 0.0;
   	    }
   	    else{
   	      // Compute the integral and store it
-  	      struct psi_xluw_params pp = {in.mu,in.Theta,ll,xx[ii],xx[jj],xx[kk]};
+  	      struct adr_iet_fixed_params pp = {in.mu,in.Theta,ll,xx[ii],xx[jj],xx[kk]};
   	      ff_int.params = &pp;
   	      gsl_integration_cquad(&ff_int,
   				    xx[0], xx[in.nx-1],
   				    0.0, 1e-5,
   				    wsp,
-  				    &psi_xluw,
+  				    &adr_iet_fixed,
   				    &err, &nevals);
            }
 	    
 	    // Write result to output file
-	    fwrite(&psi_xluw, sizeof(double), 1, fid);
+	    fwrite(&adr_iet_fixed, sizeof(double), 1, fid);
 	    
 	  }
     	}
@@ -241,32 +241,10 @@ void compute_psi_xluw(double *xx, input in) {
   
 }
 
-double psi_x0uw_y(double yy, void* pp) {
-
-  struct psi_xluw_params* params = (struct psi_xluw_params*)pp;
-  double mu = (params->mu);
-  double Theta = (params->Theta);
-  double xx = (params->xx);
-  double uu = (params->uu);
-  double ww = (params->ww);
-  double xx2 = xx*xx, ww2 =  ww*ww, uu2 = uu*uu, fxy = 4.0*xx*yy, 
-    yy2 = yy*yy, umwpx = uu2 - ww2 + xx2,
-    logarg = (umwpx + fxy)/(umwpx - fxy);
-
-  if (logarg < 0.0) logarg = -logarg;
-
-  if (xx == 0 || uu == 0 || ww == 0)
-    return 0;
-  else
-    return yy/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0)*
-      ((yy2 - umwpx*umwpx/(16.0*xx2))*log(logarg) + (yy/xx)*umwpx/2.0);
-
-}
-
-
-double psi_xluw_y(double yy, void* pp) {
+// Partial auxiliary density response (vectors = {x,u,w}, frequency = 0)
+double adr_iet_fixed_partial_xuwl(double yy, void* pp) {
   
-  struct psi_xluw_params* params = (struct psi_xluw_params*)pp;
+  struct adr_iet_fixed_params* params = (struct adr_iet_fixed_params*)pp;
   double mu = (params->mu);
   double Theta = (params->Theta);
   double ll = (params->ll);
@@ -286,32 +264,56 @@ double psi_xluw_y(double yy, void* pp) {
 
 }
 
+
+// Partial auxiliary density response (vectors = {x,u,w}, frequency = 0)
+double adr_iet_fixed_partial_xuw0(double yy, void* pp) {
+
+  struct adr_iet_fixed_params* params = (struct adr_iet_fixed_params*)pp;
+  double mu = (params->mu);
+  double Theta = (params->Theta);
+  double xx = (params->xx);
+  double uu = (params->uu);
+  double ww = (params->ww);
+  double xx2 = xx*xx, ww2 =  ww*ww, uu2 = uu*uu, fxy = 4.0*xx*yy, 
+    yy2 = yy*yy, umwpx = uu2 - ww2 + xx2,
+    logarg = (umwpx + fxy)/(umwpx - fxy);
+
+  if (logarg < 0.0) logarg = -logarg;
+
+  if (xx == 0 || uu == 0 || ww == 0)
+    return 0;
+  else
+    return yy/(exp(yy2/Theta - mu) + exp(-yy2/Theta + mu) + 2.0)*
+      ((yy2 - umwpx*umwpx/(16.0*xx2))*log(logarg) + (yy/xx)*umwpx/2.0);
+
+}
+
 // ---------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE
 // ---------------------------------------------------------------------------
 
-struct psiu_params {
+struct adr_iet_part1_params {
 
-  gsl_spline *uint_sp_ptr;
-  gsl_interp_accel *uint_acc_ptr;
-
-};
-
-
-struct psiw_params {
-
-  gsl_spline *wint_sp_ptr;
-  gsl_interp_accel *wint_acc_ptr;
+  gsl_spline *adr_part1_sp_ptr;
+  gsl_interp_accel *adr_part1_acc_ptr;
 
 };
 
-void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls, 
+
+struct adr_iet_part2_params {
+
+  gsl_spline *adr_part2_sp_ptr;
+  gsl_interp_accel *adr_part2_acc_ptr;
+
+};
+
+void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls, 
 		     double *phi, double *SS, double *bf, double *xx, 
 		     input in){
 
 
   // QSTLS component of the auxilliary response function
-  compute_adr(psi_new, psi_xlw_qstls, SS, xx, in);
+  compute_adr(psi_new, psi_fixed_qstls, SS, xx, in);
 
   // Parallel calculations
   #pragma omp parallel
@@ -321,29 +323,29 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
     size_t nevals;
     double psi_tmp;
     double wmax, wmin;
-    double *wint  = malloc( sizeof(double) * in.nx);
-    double *uint  = malloc( sizeof(double) * in.nx);
+    double *adr_part2  = malloc( sizeof(double) * in.nx);
+    double *adr_part1  = malloc( sizeof(double) * in.nx);
     
     // Declare accelerator and spline objects
-    gsl_spline *wint_sp_ptr;
-    gsl_interp_accel *wint_acc_ptr;
-    gsl_spline *uint_sp_ptr;
-    gsl_interp_accel *uint_acc_ptr;
+    gsl_spline *adr_part1_sp_ptr;
+    gsl_interp_accel *adr_part1_acc_ptr;
+    gsl_spline *adr_part2_sp_ptr;
+    gsl_interp_accel *adr_part2_acc_ptr;
     
     // Allocate the accelerator and the spline objects
-    wint_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    wint_acc_ptr = gsl_interp_accel_alloc();
-    uint_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    uint_acc_ptr = gsl_interp_accel_alloc();
+    adr_part1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    adr_part1_acc_ptr = gsl_interp_accel_alloc();
+    adr_part2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    adr_part2_acc_ptr = gsl_interp_accel_alloc();
     
     // Integration workspace
     gsl_integration_cquad_workspace *wsp
       = gsl_integration_cquad_workspace_alloc(100);
     
     // Integration function
-    gsl_function fuint, fwint;
-    fuint.function = &psi_u_iet;
-    fwint.function = &psi_w_iet;
+    gsl_function ff_part1_int, ff_part2_int;
+    ff_part1_int.function = &adr_iet_part1_partial;
+    ff_part2_int.function = &adr_iet_part2_partial;
     
     // Loop over xx (wave-vector)
     #pragma omp for // Distribute loops over the threads
@@ -372,33 +374,33 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
 	  
       	  // Construct integrand over w
       	  for (int kk=0; kk<in.nx; kk++) {
-      	    fread(&wint[kk], sizeof(double), 1, fid);
-      	    wint[kk] *= xx[kk]*(SS[kk]-1.0);
+      	    fread(&adr_part2[kk], sizeof(double), 1, fid);
+      	    adr_part2[kk] *= xx[kk]*(SS[kk]-1.0);
       	  }
-      	  gsl_spline_init(wint_sp_ptr, xx, wint, in.nx);
+      	  gsl_spline_init(adr_part2_sp_ptr, xx, adr_part2, in.nx);
 	  
       	  // Compute integral over w
 	  if (xx[ii] == 0.0 || xx[jj] == 0.0){
-	    uint[jj] = 0.0;
+	    adr_part1[jj] = 0.0;
 	  }
 	  else {
 
-	    struct psiw_params psiwp =  {wint_sp_ptr, wint_acc_ptr};
+	    struct adr_iet_part2_params pp_part2 =  {adr_part2_sp_ptr, adr_part2_acc_ptr};
 	    wmin = xx[jj] - xx[ii];
 	    if (wmin < 0.0) wmin = -wmin;
 	    // NOTE: The upper cutoff is at qm - dq for numerical reasons;
 	    // The quadrature formula attemps a tiny extrapolation which causes
 	    // the interpolation routine to crash.
 	    wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
-	    fwint.params = &psiwp;
-	    gsl_integration_cquad(&fwint,
+	    ff_part2_int.params = &pp_part2;
+	    gsl_integration_cquad(&ff_part2_int,
 				  wmin, wmax,
 				  0.0, 1e-5,
 				  wsp,
-				  &uint[jj], &err, &nevals);
+				  &adr_part1[jj], &err, &nevals);
 
       	  // Construct integrand over u ( the -1 is added because the qSTLS contribution is calculated separately)
-      	    uint[jj] *= (1.0/xx[jj])
+      	    adr_part1[jj] *= (1.0/xx[jj])
       	      *( (-bf[jj]+1)*SS[jj] - 1 - 
 		 (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
 
@@ -407,12 +409,12 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
       	}
 	
       	// Interpolate integrand over u
-      	gsl_spline_init(uint_sp_ptr, xx, uint, in.nx);
+      	gsl_spline_init(adr_part1_sp_ptr, xx, adr_part1, in.nx);
 	
       	// Compute integral over u
-      	struct psiu_params psiup = {uint_sp_ptr, uint_acc_ptr};
-      	fuint.params = &psiup;
-      	gsl_integration_cquad(&fuint,
+      	struct adr_iet_part1_params pp_part1 = {adr_part1_sp_ptr, adr_part1_acc_ptr};
+      	ff_part1_int.params = &pp_part1;
+      	gsl_integration_cquad(&ff_part1_int,
       			      xx[0], xx[in.nx-1],
       			      0.0, 1e-5,
       			      wsp,
@@ -431,36 +433,36 @@ void compute_psi_iet(double *psi_new, double *psi, double *psi_xlw_qstls,
     }
     
     // Free memory
-    free(wint);
-    free(uint);
+    free(adr_part2);
+    free(adr_part1);
     gsl_integration_cquad_workspace_free(wsp);
-    gsl_spline_free(uint_sp_ptr);
-    gsl_interp_accel_free(uint_acc_ptr);
-    gsl_spline_free(wint_sp_ptr);
-    gsl_interp_accel_free(wint_acc_ptr);
+    gsl_spline_free(adr_part1_sp_ptr);
+    gsl_interp_accel_free(adr_part1_acc_ptr);
+    gsl_spline_free(adr_part2_sp_ptr);
+    gsl_interp_accel_free(adr_part2_acc_ptr);
     
   }
   
 }
 
 
-double psi_u_iet(double uu, void* pp) {
+double adr_iet_part1_partial(double uu, void* pp) {
 
-  struct psiu_params* params = (struct psiu_params*)pp;
-  gsl_spline* uint_sp_ptr = (params->uint_sp_ptr);
-  gsl_interp_accel* uint_acc_ptr = (params->uint_acc_ptr);
+  struct adr_iet_part1_params* params = (struct adr_iet_part1_params*)pp;
+  gsl_spline* adr_part1_sp_ptr = (params->adr_part1_sp_ptr);
+  gsl_interp_accel* adr_part1_acc_ptr = (params->adr_part1_acc_ptr);
  
-  return gsl_spline_eval(uint_sp_ptr, uu, uint_acc_ptr);
+  return gsl_spline_eval(adr_part1_sp_ptr, uu, adr_part1_acc_ptr);
 
 }
 
-double psi_w_iet(double ww, void* pp) {
+double adr_iet_part2_partial(double ww, void* pp) {
 
-  struct psiw_params* params = (struct psiw_params*)pp;
-  gsl_spline* wint_sp_ptr = (params->wint_sp_ptr);
-  gsl_interp_accel* wint_acc_ptr = (params->wint_acc_ptr);
+  struct adr_iet_part2_params* params = (struct adr_iet_part2_params*)pp;
+  gsl_spline* adr_part2_sp_ptr = (params->adr_part2_sp_ptr);
+  gsl_interp_accel* adr_part2_acc_ptr = (params->adr_part2_acc_ptr);
  
-  return gsl_spline_eval(wint_sp_ptr, ww, wint_acc_ptr);
+  return gsl_spline_eval(adr_part2_sp_ptr, ww, adr_part2_acc_ptr);
 }
 
 
