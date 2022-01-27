@@ -288,12 +288,12 @@ void compute_bridge_function(double *bf, double *xx, input in){
     bridge_function_ocp_ioi(bf, xx, in);
   else if (in.theory_id == 4 || in.theory_id == 9)
     bridge_function_ocp_lct(bf, xx, in);
-  else if (in.theory_id == 5)
+  else if (in.theory_id == 5 || in.theory_id == 10)
     bridge_function_rescaled_ocp_lct(bf, xx, in);
   else{
     printf("Error: unknown theory to be compute the bridge function."
            "Choose between: STLS-IET-HNC, STLS-IET-IOI, STLS-IET-LCT, STLS-RIET-LCT,"
-	   "QSTLS-IET-HNC, QSTLS-IET-IOI, QSTLS-IET-LCT\n");
+	   "QSTLS-IET-HNC, QSTLS-IET-IOI, QSTLS-IET-LCT, QSTLS-RIET-LCT\n");
     exit(EXIT_FAILURE);
   }
 

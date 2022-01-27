@@ -227,11 +227,12 @@ int main (int argc, char **argv){
   else if (strcmp(arguments.theory, "QSTLS-IET-HNC") == 0) in.theory_id = 7;
   else if (strcmp(arguments.theory, "QSTLS-IET-IOI") == 0) in.theory_id = 8;
   else if (strcmp(arguments.theory, "QSTLS-IET-LCT") == 0) in.theory_id = 9;
+  else if (strcmp(arguments.theory, "QSTLS-RIET-LCT") == 0) in.theory_id = 10;
   else {
     printf("Error: unknown theory to be solved." 
 	   "Choose between: STLS, STLS-IET-HNC, STLS-IET-IOI,"
-	   "STLS-IET-LCT, STLS-RIET-LCT, QSTLS,"
-	   "QSTLS-IET-HNC and QSTLS-IET-LCT\n");
+	   "STLS-IET-LCT, STLS-RIET-LCT, QSTLS, QSTLS-IET-HNC,"
+	   "QSTLS-IET-IOI, QSTLS-IET-LCT and QSTLS-RIET-LCT\n");
     exit(EXIT_FAILURE);
   }
 
@@ -254,7 +255,8 @@ int main (int argc, char **argv){
     solve_qstls(in, true);
   else if (in.theory_id == 7 ||
 	   in.theory_id == 8 ||
-	   in.theory_id == 9)
+	   in.theory_id == 9 ||
+	   in.theory_id == 10)
     solve_qstls_iet(in, true);
 
   // End timing 
