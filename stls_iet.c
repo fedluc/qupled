@@ -425,8 +425,9 @@ void bridge_function_rescaled_ocp_lct(double *bf, double *xx, input in){
 
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double l2 = ll*ll;
-  double Gamma = 2*l2*in.rs/sqrt(1 + in.Theta*in.Theta);
-
+  double Gamma = 2*l2*in.rs/in.Theta;
+  double Gamma_bf = 2*l2*in.rs/sqrt(1 + in.Theta*in.Theta);
+  
   double err;
   
   // Integration workspace
@@ -439,7 +440,7 @@ void bridge_function_rescaled_ocp_lct(double *bf, double *xx, input in){
   
   // Integration function
   gsl_function ff_int;
-  struct bfr_params rbfrp = {Gamma};
+  struct bfr_params rbfrp = {Gamma_bf};
   ff_int.function = &rbfr;
   ff_int.params = &rbfrp;
   
