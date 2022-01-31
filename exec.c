@@ -31,8 +31,6 @@ static char doc[] =
 #define ARGUMENT_QSTLS_GUESS_SHORT 0x92
 #define ARGUMENT_QSTLS_FIXED_SHORT 0x93
 #define ARGUMENT_QSTLS_IET_FIXED_SHORT 0x94
-#define ARGUMENT_QSTLS_IET_STATIC_SHORT 0x95
-
 
 // Optional arguments
 static struct argp_option options[] = {
@@ -62,8 +60,6 @@ static struct argp_option options[] = {
    "Load fixed component of the density response function from file for the qslts scheme"},
   {"qstls-iet-fix", ARGUMENT_QSTLS_IET_FIXED_SHORT, "NO_FILE", 0,
    "Load fixed component of the density response function from file for the qslts-iet scheme"},
-  {"qstls-iet-static", ARGUMENT_QSTLS_IET_STATIC_SHORT, "0", 0,
-   "Use static approximation to compute the auxilliary density response for the qstls-iet scheme"},
   {"theory", ARGUMENT_THEORY_SHORT, "STLS",0,
    "Scheme to be solved"},
   {"omp", ARGUMENT_OMP_SHORT, "1",0,
@@ -92,7 +88,6 @@ struct arguments
   int nl;
   int nIter;
   int nThreads;
-  int qstls_iet_static;
 
 };
 
@@ -125,9 +120,6 @@ parse_opt (int key, char *arg, struct argp_state *state)
       break;
     case  ARGUMENT_QSTLS_IET_FIXED_SHORT:
       arguments->qstls_iet_fixed_file = arg;
-      break;
-    case  ARGUMENT_QSTLS_IET_STATIC_SHORT:
-      arguments->qstls_iet_static = atoi(arg);
       break;
     case  ARGUMENT_MU_GUESS_SHORT:
       value = strtok(NULL, ",");
@@ -192,7 +184,6 @@ int main (int argc, char **argv){
   arguments.qstls_guess_file = "NO_FILE"; // File with initial guess for QSTLS and QSTLS-IET schemes
   arguments.qstls_fixed_file = "NO_FILE"; // File with fixed component of the density response for the QSTLS scheme
   arguments.qstls_iet_fixed_file = "NO_FILE"; // File with fixed component of the density response for the QSTLS-IET scheme
-  arguments.qstls_iet_static = 0; // Static approximation for the auxiliary density response for the QSTLS-IET scheme (0 = off, 1 = on)
   arguments.Theta = 1.0; // Quantum degeneracy parameter
   arguments.rs = 1.0; // Quantum coupling parameter
   arguments.dx = 0.01; // Wave-vector grid resolution
@@ -215,7 +206,6 @@ int main (int argc, char **argv){
   in.qstls_guess_file = arguments.qstls_guess_file;
   in.qstls_fixed_file = arguments.qstls_fixed_file;
   in.qstls_iet_fixed_file = arguments.qstls_iet_fixed_file;
-  in.qstls_iet_static = arguments.qstls_iet_static;
   in.Theta = arguments.Theta;
   in.rs = arguments.rs;
   in.dx = arguments.dx; 

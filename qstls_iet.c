@@ -399,22 +399,10 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
 				  wsp,
 				  &adr_part1[jj], &err, &nevals);
 
-	    // Construct integrand over u ( the -1 is added because the qSTLS contribution is calculated separately)
-	    if (in.qstls_iet_static == 0){
-	      adr_part1[jj] *= (1.0/xx[jj])
-	                	*( (-bf[jj]+1)*SS[jj] - 1 - 
-				   (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
-	    }
-	    else if (in.qstls_iet_static == 1){
-	      adr_part1[jj] *= (1.0/xx[jj])
-	                	*( (-bf[jj]+1)*SS[jj] - 1 - 
-				   (psi[idx2(jj,0,in.nx)]/phi[idx2(jj,0,in.nx)])*(SS[jj]-1));
-	    }
-	    else{
-	      printf("Error: qstls_iet_static must be either 0 or 1\n");
-	      exit(EXIT_FAILURE);
-	    }
-	      
+      	  // Construct integrand over u ( the -1 is added because the qSTLS contribution is calculated separately)
+      	    adr_part1[jj] *= (1.0/xx[jj])
+      	      *( (-bf[jj]+1)*SS[jj] - 1 - 
+		 (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
 
 	  }
 	  
