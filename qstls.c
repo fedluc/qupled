@@ -712,6 +712,7 @@ void read_fixed_qstls(double *psi_fixed, input in){
   fread(&nl_file, sizeof(int), 1, fid);
   fread(&dx_file, sizeof(double), 1, fid);
   fread(&xmax_file, sizeof(double), 1, fid);
+  fread(&Theta_file, sizeof(double), 1, fid);
 
   if (nx_file != in.nx || dx_file != in.dx || xmax_file != in.xmax){
     fprintf(stderr,"Grid from fixed solution file is incompatible with input\n");

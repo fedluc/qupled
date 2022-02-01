@@ -670,8 +670,7 @@ void write_text_stls(double *SS, double *GG, double *phi,
 
 
 // write binary file to use as initial guess (or restart)
-void write_  fread(&in.dx, sizeof(double), 1, fid);
-fread(&in.xmax, sizeof(double), 1, fid);guess_stls(double *SS, double *GG, input in){
+void write_guess_stls(double *SS, double *GG, input in){
 
   // Name of output file
   char out_name[100];
