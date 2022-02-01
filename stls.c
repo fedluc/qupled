@@ -670,7 +670,8 @@ void write_text_stls(double *SS, double *GG, double *phi,
 
 
 // write binary file to use as initial guess (or restart)
-void write_guess_stls(double *SS, double *GG, input in){
+void write_  fread(&in.dx, sizeof(double), 1, fid);
+fread(&in.xmax, sizeof(double), 1, fid);guess_stls(double *SS, double *GG, input in){
 
   // Name of output file
   char out_name[100];
@@ -685,7 +686,9 @@ void write_guess_stls(double *SS, double *GG, input in){
   }
 
   // Input data
-  fwrite(&in, sizeof(input), 1, fid);
+  fwrite(&in.nx, sizeof(int), 1, fid);
+  fwrite(&in.dx, sizeof(double), 1, fid);
+  fwrite(&in.xmax, sizeof(double), 1, fid);
 
   // Static structure factor 
   fwrite(SS, sizeof(double), in.nx, fid);
@@ -703,7 +706,9 @@ void write_guess_stls(double *SS, double *GG, input in){
 void read_guess_stls(double *SS, double *GG, input in){
 
   // Variables
-  input in_load;
+  int nx_file;
+  double dx_file;
+  double xmax_file;
 
   // Open binary file
   FILE *fid = NULL;
@@ -713,19 +718,22 @@ void read_guess_stls(double *SS, double *GG, input in){
     exit(EXIT_FAILURE);
   }
 
-  // Check that the data for the guess file is consistent
-  fread(&in_load, sizeof(input), 1, fid);
-  if (in_load.nx != in.nx || in_load.dx != in.dx || in_load.xmax != in.xmax){
+  // Check that the data for the guess file is consisten
+  fread(&nx_file, sizeof(int), 1, fid);
+  fread(&dx_file, sizeof(double), 1, fid);
+  fread(&xmax_file, sizeof(double), 1, fid);
+
+  if (nx_file != in.nx || dx_file != in.dx || xmax_file != in.xmax){
     fprintf(stderr,"Grid from guess file is incompatible with input\n");
     fclose(fid);
     exit(EXIT_FAILURE);
   }
   
   // Static structure factor in the Hartree-Fock approximation
-  fread(SS, sizeof(double), in_load.nx, fid);
+  fread(SS, sizeof(double), nx_file, fid);
 
   // Static structure factor in the Hartree-Fock approximation
-  fread(GG, sizeof(double), in_load.nx, fid);
+  fread(GG, sizeof(double), nx_file, fid);
 
   // Close binary file
   fclose(fid);

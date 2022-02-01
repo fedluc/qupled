@@ -596,7 +596,10 @@ void write_guess_qstls(double *SS, double *psi, input in){
   }
 
   // Input data
-  fwrite(&in, sizeof(input), 1, fid);
+  fwrite(&in.nx, sizeof(int), 1, fid);
+  fwrite(&in.nl, sizeof(int), 1, fid);
+  fwrite(&in.dx, sizeof(double), 1, fid);
+  fwrite(&in.xmax, sizeof(double), 1, fid);
 
   // Static structure factor 
   fwrite(SS, sizeof(double), in.nx, fid);
@@ -614,7 +617,10 @@ void write_guess_qstls(double *SS, double *psi, input in){
 void read_guess_qstls(double *SS, double *psi, input in){
 
   // Variables
-  input in_load;
+  int nx_file;
+  int nl_file;
+  double dx_file;
+  double xmax_file;
 
   // Open binary file
   FILE *fid = NULL;
@@ -625,25 +631,28 @@ void read_guess_qstls(double *SS, double *psi, input in){
   }
 
   // Check that the data for the guess file is consistent
-  fread(&in_load, sizeof(input), 1, fid);
+  fread(&nx_file, sizeof(int), 1, fid);
+  fread(&nl_file, sizeof(int), 1, fid);
+  fread(&dx_file, sizeof(double), 1, fid);
+  fread(&xmax_file, sizeof(double), 1, fid);
 
-  if (in_load.nx != in.nx || in_load.dx != in.dx || in_load.xmax != in.xmax){
+  if (nx_file != in.nx || dx_file != in.dx || xmax_file != in.xmax){
     fprintf(stderr,"Grid from guess file is incompatible with input\n");
     fclose(fid);
     exit(EXIT_FAILURE);
   }
 
-  if (in_load.nl != in.nl){
+  if (nl_file != in.nl){
     fprintf(stderr,"Number of Matsubara frequencies from guess file is incompatible with input\n");
     fclose(fid);
     exit(EXIT_FAILURE);
   }
   
   // Static structure factor
-  fread(SS, sizeof(double), in_load.nx, fid);
+  fread(SS, sizeof(double), nx_file, fid);
   
   // Auxilliary density response
-  fread(psi, sizeof(double), in_load.nx * in_load.nl, fid);
+  fread(psi, sizeof(double), nx_file * nl_file, fid);
 
   // Close binary file
   fclose(fid);
@@ -666,7 +675,11 @@ void write_fixed_qstls(double *psi_fixed, input in){
   }
 
   // Input data
-  fwrite(&in, sizeof(input), 1, fid);
+  fwrite(&in.nx, sizeof(int), 1, fid);
+  fwrite(&in.nl, sizeof(int), 1, fid);
+  fwrite(&in.dx, sizeof(double), 1, fid);
+  fwrite(&in.xmax, sizeof(double), 1, fid);
+  fwrite(&in.Theta, sizeof(double), 1, fid);
 
   // Fixed component of the auxiliary density response
   fwrite(psi_fixed, sizeof(double), in.nx * in.nl * in.nx, fid);
@@ -680,7 +693,11 @@ void write_fixed_qstls(double *psi_fixed, input in){
 void read_fixed_qstls(double *psi_fixed, input in){
 
   // Variables
-  input in_load;
+  int nx_file;
+  int nl_file;
+  double dx_file;
+  double xmax_file;
+  double Theta_file;
 
   // Open binary file
   FILE *fid = NULL;
@@ -691,28 +708,31 @@ void read_fixed_qstls(double *psi_fixed, input in){
   }
 
   // Check that the data for the guess file is consistent
-  fread(&in_load, sizeof(input), 1, fid);
+  fread(&nx_file, sizeof(int), 1, fid);
+  fread(&nl_file, sizeof(int), 1, fid);
+  fread(&dx_file, sizeof(double), 1, fid);
+  fread(&xmax_file, sizeof(double), 1, fid);
 
-  if (in_load.nx != in.nx || in_load.dx != in.dx || in_load.xmax != in.xmax){
-    fprintf(stderr,"Grid from fixed solutin file is incompatible with input\n");
+  if (nx_file != in.nx || dx_file != in.dx || xmax_file != in.xmax){
+    fprintf(stderr,"Grid from fixed solution file is incompatible with input\n");
     fclose(fid);
     exit(EXIT_FAILURE);
   }
-  
-  if (in_load.nl != in.nl){
+
+  if (nl_file != in.nl){
     fprintf(stderr,"Number of Matsubara frequencies from fixed solution file is incompatible with input\n");
     fclose(fid);
     exit(EXIT_FAILURE);
   }
 
-  if (in_load.Theta != in.Theta){
+  if (Theta_file != in.Theta){
     fprintf(stderr,"Quantum degeneracy parameter from fixed solution file is incompatible with input\n");
     fclose(fid);
     exit(EXIT_FAILURE);
   }
 
   // Fixed component of the auxiliary density response
-  fread(psi_fixed, sizeof(double), in.nx * in.nl * in.nx, fid);
+  fread(psi_fixed, sizeof(double), nx_file * nl_file * nx_file, fid);
 
   // Close binary file
   fclose(fid);
