@@ -705,9 +705,12 @@ void write_guess_stls(double *SS, double *GG, input in){
 void read_guess_stls(double *SS, double *GG, input in){
 
   // Variables
+  int it_read;
+  int it_expected;
   int nx_file;
   double dx_file;
   double xmax_file;
+
 
   // Open binary file
   FILE *fid = NULL;
@@ -717,24 +720,51 @@ void read_guess_stls(double *SS, double *GG, input in){
     exit(EXIT_FAILURE);
   }
 
-  // Check that the data for the guess file is consisten
-  fread(&nx_file, sizeof(int), 1, fid);
-  fread(&dx_file, sizeof(double), 1, fid);
-  fread(&xmax_file, sizeof(double), 1, fid);
+  // Initialize number of items read from input file
+  it_read = 0;
 
-  if (nx_file != in.nx || dx_file != in.dx || xmax_file != in.xmax){
-    fprintf(stderr,"Grid from guess file is incompatible with input\n");
-    fclose(fid);
+  // Check that the data for the guess file is consistent
+  it_read += fread(&nx_file, sizeof(int), 1, fid);
+  it_read += fread(&dx_file, sizeof(double), 1, fid);
+  it_read += fread(&xmax_file, sizeof(double), 1, fid);
+  check_guess_stls(nx_file, dx_file, xmax_file, in);   
+  
+  // Static structure factor in the Hartree-Fock approximation
+  it_read += fread(SS, sizeof(double), nx_file, fid);
+
+  // Static structure factor in the Hartree-Fock approximation
+  it_read += fread(GG, sizeof(double), nx_file, fid);
+
+  // Check that all the expected items where read
+  it_expected = 2*nx_file + 3;
+  if (it_read != it_expected ) {
+    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+    fprintf(stderr,"%d Elements expected, %d elements read\n", it_read, it_expected);
     exit(EXIT_FAILURE);
   }
   
-  // Static structure factor in the Hartree-Fock approximation
-  fread(SS, sizeof(double), nx_file, fid);
-
-  // Static structure factor in the Hartree-Fock approximation
-  fread(GG, sizeof(double), nx_file, fid);
-
+  // Check for end of file
+  it_read = fread(&nx_file, sizeof(int), 1, fid); // Trigger end-of-file activation
+  if (!feof(fid)) {
+    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+    fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
+    exit(EXIT_FAILURE);
+  }
+  
   // Close binary file
   fclose(fid);
 	    
 }
+
+
+// Check consistency of the input data
+void check_guess_stls(int nx, double dx, double xmax, input in){
+
+  if (nx != in.nx || dx != in.dx || xmax != in.xmax){
+    fprintf(stderr,"Grid from guess file is incompatible with input\n");
+    exit(EXIT_FAILURE);
+  }
+  
+
+}
+

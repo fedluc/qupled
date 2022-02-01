@@ -617,6 +617,8 @@ void write_guess_qstls(double *SS, double *psi, input in){
 void read_guess_qstls(double *SS, double *psi, input in){
 
   // Variables
+  int it_read;
+  int it_expected;
   int nx_file;
   int nl_file;
   double dx_file;
@@ -630,11 +632,14 @@ void read_guess_qstls(double *SS, double *psi, input in){
     exit(EXIT_FAILURE);
   }
 
+  // Initialize number of items read from input file
+  it_read = 0;
+
   // Check that the data for the guess file is consistent
-  fread(&nx_file, sizeof(int), 1, fid);
-  fread(&nl_file, sizeof(int), 1, fid);
-  fread(&dx_file, sizeof(double), 1, fid);
-  fread(&xmax_file, sizeof(double), 1, fid);
+  it_read += fread(&nx_file, sizeof(int), 1, fid);
+  it_read += fread(&nl_file, sizeof(int), 1, fid);
+  it_read += fread(&dx_file, sizeof(double), 1, fid);
+  it_read += fread(&xmax_file, sizeof(double), 1, fid);
 
   if (nx_file != in.nx || dx_file != in.dx || xmax_file != in.xmax){
     fprintf(stderr,"Grid from guess file is incompatible with input\n");
@@ -649,10 +654,26 @@ void read_guess_qstls(double *SS, double *psi, input in){
   }
   
   // Static structure factor
-  fread(SS, sizeof(double), nx_file, fid);
+  it_read += fread(SS, sizeof(double), nx_file, fid);
   
   // Auxilliary density response
-  fread(psi, sizeof(double), nx_file * nl_file, fid);
+  it_read += fread(psi, sizeof(double), nx_file * nl_file, fid);
+
+  // Check that all the expected items where read
+  it_expected = nx_file + nl_file*nx_file + 4;
+  if (it_read != it_expected ) {
+    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+    fprintf(stderr,"%d Elements expected, %d elements read\n", it_read, it_expected);
+    exit(EXIT_FAILURE);
+  }
+
+  // Check for end of file
+  it_read = fread(&nx_file, sizeof(int), 1, fid); // Trigger end-of-file activation
+  if (!feof(fid)) {
+    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+    fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
+    exit(EXIT_FAILURE);
+  }
 
   // Close binary file
   fclose(fid);
@@ -693,6 +714,8 @@ void write_fixed_qstls(double *psi_fixed, input in){
 void read_fixed_qstls(double *psi_fixed, input in){
 
   // Variables
+  int it_read;
+  int it_expected;
   int nx_file;
   int nl_file;
   double dx_file;
@@ -707,12 +730,15 @@ void read_fixed_qstls(double *psi_fixed, input in){
     exit(EXIT_FAILURE);
   }
 
+  // Initialize number of items read from input file
+  it_read = 0;
+
   // Check that the data for the guess file is consistent
-  fread(&nx_file, sizeof(int), 1, fid);
-  fread(&nl_file, sizeof(int), 1, fid);
-  fread(&dx_file, sizeof(double), 1, fid);
-  fread(&xmax_file, sizeof(double), 1, fid);
-  fread(&Theta_file, sizeof(double), 1, fid);
+  it_read += fread(&nx_file, sizeof(int), 1, fid);
+  it_read += fread(&nl_file, sizeof(int), 1, fid);
+  it_read += fread(&dx_file, sizeof(double), 1, fid);
+  it_read += fread(&xmax_file, sizeof(double), 1, fid);
+  it_read += fread(&Theta_file, sizeof(double), 1, fid);
 
   if (nx_file != in.nx || dx_file != in.dx || xmax_file != in.xmax){
     fprintf(stderr,"Grid from fixed solution file is incompatible with input\n");
@@ -734,6 +760,22 @@ void read_fixed_qstls(double *psi_fixed, input in){
 
   // Fixed component of the auxiliary density response
   fread(psi_fixed, sizeof(double), nx_file * nl_file * nx_file, fid);
+
+  // Check that all the expected items where read
+  it_expected = nx_file*nl_file*nx_file + 5;
+  if (it_read != it_expected ) {
+    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+    fprintf(stderr,"%d Elements expected, %d elements read\n", it_read, it_expected);
+    exit(EXIT_FAILURE);
+  }
+
+  // Check for end of file
+  it_read = fread(&nx_file, sizeof(int), 1, fid); // Trigger end-of-file activation
+  if (!feof(fid)) {
+    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+    fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
+    exit(EXIT_FAILURE);
+  }
 
   // Close binary file
   fclose(fid);

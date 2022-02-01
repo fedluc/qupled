@@ -88,4 +88,6 @@ void write_guess_stls(double *SS, double *GG, input in);
 
 void read_guess_stls(double *SS, double *GG, input in);
 
+void check_guess_stls(int nx, double dx, double xmax, input in);
+
 #endif
