@@ -618,7 +618,6 @@ void read_guess_qstls(double *SS, double *psi, input in){
 
   // Variables
   int it_read;
-  int it_expected;
   int nx_file;
   int nl_file;
   double dx_file;
@@ -640,18 +639,9 @@ void read_guess_qstls(double *SS, double *psi, input in){
   it_read += fread(&nl_file, sizeof(int), 1, fid);
   it_read += fread(&dx_file, sizeof(double), 1, fid);
   it_read += fread(&xmax_file, sizeof(double), 1, fid);
-
-  if (nx_file != in.nx || dx_file != in.dx || xmax_file != in.xmax){
-    fprintf(stderr,"Grid from guess file is incompatible with input\n");
-    fclose(fid);
-    exit(EXIT_FAILURE);
-  }
-
-  if (nl_file != in.nl){
-    fprintf(stderr,"Number of Matsubara frequencies from guess file is incompatible with input\n");
-    fclose(fid);
-    exit(EXIT_FAILURE);
-  }
+  check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, in.Theta,
+		   in, it_read, 4, fid, true, true, false);
+  
   
   // Static structure factor
   it_read += fread(SS, sizeof(double), nx_file, fid);
@@ -660,20 +650,10 @@ void read_guess_qstls(double *SS, double *psi, input in){
   it_read += fread(psi, sizeof(double), nx_file * nl_file, fid);
 
   // Check that all the expected items where read
-  it_expected = nx_file + nl_file*nx_file + 4;
-  if (it_read != it_expected ) {
-    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
-    fprintf(stderr,"%d Elements expected, %d elements read\n", it_read, it_expected);
-    exit(EXIT_FAILURE);
-  }
-
-  // Check for end of file
-  it_read = fread(&nx_file, sizeof(int), 1, fid); // Trigger end-of-file activation
-  if (!feof(fid)) {
-    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
-    fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
-    exit(EXIT_FAILURE);
-  }
+  check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, in.Theta,
+		   in, it_read, nx_file + nl_file*nx_file + 4,
+		   fid, false, true, true);
+  
 
   // Close binary file
   fclose(fid);
@@ -715,7 +695,6 @@ void read_fixed_qstls(double *psi_fixed, input in){
 
   // Variables
   int it_read;
-  int it_expected;
   int nx_file;
   int nl_file;
   double dx_file;
@@ -739,45 +718,71 @@ void read_fixed_qstls(double *psi_fixed, input in){
   it_read += fread(&dx_file, sizeof(double), 1, fid);
   it_read += fread(&xmax_file, sizeof(double), 1, fid);
   it_read += fread(&Theta_file, sizeof(double), 1, fid);
-
-  if (nx_file != in.nx || dx_file != in.dx || xmax_file != in.xmax){
-    fprintf(stderr,"Grid from fixed solution file is incompatible with input\n");
-    fclose(fid);
-    exit(EXIT_FAILURE);
-  }
-
-  if (nl_file != in.nl){
-    fprintf(stderr,"Number of Matsubara frequencies from fixed solution file is incompatible with input\n");
-    fclose(fid);
-    exit(EXIT_FAILURE);
-  }
-
-  if (Theta_file != in.Theta){
-    fprintf(stderr,"Quantum degeneracy parameter from fixed solution file is incompatible with input\n");
-    fclose(fid);
-    exit(EXIT_FAILURE);
-  }
+  check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
+		   in, it_read, 5, fid, true, true, false);
+  
 
   // Fixed component of the auxiliary density response
-  fread(psi_fixed, sizeof(double), nx_file * nl_file * nx_file, fid);
+  it_read += fread(psi_fixed, sizeof(double), nx_file * nl_file * nx_file, fid);
 
-  // Check that all the expected items where read
-  it_expected = nx_file*nl_file*nx_file + 5;
-  if (it_read != it_expected ) {
-    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
-    fprintf(stderr,"%d Elements expected, %d elements read\n", it_read, it_expected);
-    exit(EXIT_FAILURE);
-  }
-
-  // Check for end of file
-  it_read = fread(&nx_file, sizeof(int), 1, fid); // Trigger end-of-file activation
-  if (!feof(fid)) {
-    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
-    fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
-    exit(EXIT_FAILURE);
-  }
-
+  // Check that all items where read and the end-of-file was reached
+  check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
+		   in, it_read, nx_file*nl_file*nx_file + 5, fid,
+		   false, true, true);
+  
   // Close binary file
   fclose(fid);
 	    
+}
+
+// Check consistency of the guess data
+void check_guess_qstls(int nx, double dx, double xmax, int nl,
+		       double Theta, input in, int it_read,
+		       int it_expected, FILE *fid, bool check_grid,
+		       bool check_items, bool check_eof){
+  
+  int buffer;
+  
+  // Check that the grid in the guess data is consistent with input
+  if (check_grid) {
+    
+    if (nx != in.nx || dx != in.dx || xmax != in.xmax){
+      fprintf(stderr,"Grid from guess file is incompatible with input\n");
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+    if (nl != in.nl){
+      fprintf(stderr,"Number of Matsubara frequencies from fixed solution file is incompatible with input\n");
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+    if (Theta != in.Theta){
+      fprintf(stderr,"Quantum degeneracy parameter from fixed solution file is incompatible with input\n");
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+    
+  }
+
+  // Check that all the expected items where read
+  if (check_items) {
+    if (it_read != it_expected ) {
+      fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+      fprintf(stderr,"%d Elements expected, %d elements read\n", it_read, it_expected);
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+  }
+  
+  // Check for end of file
+  if (check_eof){
+    it_read = fread(&buffer, sizeof(int), 1, fid); // Trigger end-of-file activation
+    if (!feof(fid)) {
+      fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+      fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+  }
+  
 }

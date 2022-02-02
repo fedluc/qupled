@@ -706,11 +706,9 @@ void read_guess_stls(double *SS, double *GG, input in){
 
   // Variables
   int it_read;
-  int it_expected;
   int nx_file;
   double dx_file;
   double xmax_file;
-
 
   // Open binary file
   FILE *fid = NULL;
@@ -727,44 +725,62 @@ void read_guess_stls(double *SS, double *GG, input in){
   it_read += fread(&nx_file, sizeof(int), 1, fid);
   it_read += fread(&dx_file, sizeof(double), 1, fid);
   it_read += fread(&xmax_file, sizeof(double), 1, fid);
-  check_guess_stls(nx_file, dx_file, xmax_file, in);   
+  check_guess_stls(nx_file, dx_file, xmax_file, in, it_read, 3,
+		   fid, true, true, false);   
   
   // Static structure factor in the Hartree-Fock approximation
   it_read += fread(SS, sizeof(double), nx_file, fid);
-
+  
   // Static structure factor in the Hartree-Fock approximation
   it_read += fread(GG, sizeof(double), nx_file, fid);
 
-  // Check that all the expected items where read
-  it_expected = 2*nx_file + 3;
-  if (it_read != it_expected ) {
-    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
-    fprintf(stderr,"%d Elements expected, %d elements read\n", it_read, it_expected);
-    exit(EXIT_FAILURE);
-  }
-  
-  // Check for end of file
-  it_read = fread(&nx_file, sizeof(int), 1, fid); // Trigger end-of-file activation
-  if (!feof(fid)) {
-    fprintf(stderr,"Error while reading file for initial guess or restart.\n");
-    fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
-    exit(EXIT_FAILURE);
-  }
-  
+  // Check that all items where read and the end-of-file was reached
+  check_guess_stls(nx_file, dx_file, xmax_file, in, it_read,
+		   2*nx_file + 3, fid, false, true, true);   
+ 
   // Close binary file
   fclose(fid);
 	    
 }
 
 
-// Check consistency of the input data
-void check_guess_stls(int nx, double dx, double xmax, input in){
+// Check consistency of the guess data
+void check_guess_stls(int nx, double dx, double xmax, input in,
+		      int it_read, int it_expected, FILE *fid,
+		      bool check_grid, bool check_items, bool check_eof){
 
-  if (nx != in.nx || dx != in.dx || xmax != in.xmax){
-    fprintf(stderr,"Grid from guess file is incompatible with input\n");
-    exit(EXIT_FAILURE);
+  int buffer;
+  
+  // Check that the grid in the guess data is consistent with input
+  if (check_grid) {
+    if (nx != in.nx || dx != in.dx || xmax != in.xmax){
+      fprintf(stderr,"Grid from guess file is incompatible with input\n");
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  // Check that all the expected items where read
+  if (check_items) {
+    if (it_read != it_expected ) {
+      fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+      fprintf(stderr,"%d Elements expected, %d elements read\n", it_read, it_expected);
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
   }
   
-
+  // Check for end of file
+  if (check_eof){
+    it_read = fread(&buffer, sizeof(int), 1, fid); // Trigger end-of-file activation
+    if (!feof(fid)) {
+      fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+      fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+  }
+  
+  
 }
 
