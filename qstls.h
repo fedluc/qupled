@@ -58,8 +58,8 @@ void write_fixed_qstls(double *psi_fixed, input in);
 void read_fixed_qstls(double *psi_fixed, input in);
 
 void check_guess_qstls(int nx, double dx, double xmax, int nl,
-		       double Theta, input in, int it_read,
-		       int it_expected, FILE *fid, bool check_grid,
+		       double Theta, input in, size_t it_read,
+		       size_t it_expected, FILE *fid, bool check_grid,
 		       bool check_items, bool check_eof);
 
 #endif

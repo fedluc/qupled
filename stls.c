@@ -705,7 +705,7 @@ void write_guess_stls(double *SS, double *GG, input in){
 void read_guess_stls(double *SS, double *GG, input in){
 
   // Variables
-  int it_read;
+  size_t it_read;
   int nx_file;
   double dx_file;
   double xmax_file;
@@ -746,7 +746,7 @@ void read_guess_stls(double *SS, double *GG, input in){
 
 // Check consistency of the guess data
 void check_guess_stls(int nx, double dx, double xmax, input in,
-		      int it_read, int it_expected, FILE *fid,
+		      size_t it_read, size_t it_expected, FILE *fid,
 		      bool check_grid, bool check_items, bool check_eof){
 
   int buffer;
@@ -764,7 +764,7 @@ void check_guess_stls(int nx, double dx, double xmax, input in,
   if (check_items) {
     if (it_read != it_expected ) {
       fprintf(stderr,"Error while reading file for initial guess or restart.\n");
-      fprintf(stderr,"%d Elements expected, %d elements read\n", it_read, it_expected);
+      fprintf(stderr,"%ld Elements expected, %ld elements read\n", it_read, it_expected);
       fclose(fid);
       exit(EXIT_FAILURE);
     }

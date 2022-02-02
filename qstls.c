@@ -617,7 +617,7 @@ void write_guess_qstls(double *SS, double *psi, input in){
 void read_guess_qstls(double *SS, double *psi, input in){
 
   // Variables
-  int it_read;
+  size_t it_read;
   int nx_file;
   int nl_file;
   double dx_file;
@@ -694,7 +694,7 @@ void write_fixed_qstls(double *psi_fixed, input in){
 void read_fixed_qstls(double *psi_fixed, input in){
 
   // Variables
-  int it_read;
+  size_t it_read;
   int nx_file;
   int nl_file;
   double dx_file;
@@ -737,8 +737,8 @@ void read_fixed_qstls(double *psi_fixed, input in){
 
 // Check consistency of the guess data
 void check_guess_qstls(int nx, double dx, double xmax, int nl,
-		       double Theta, input in, int it_read,
-		       int it_expected, FILE *fid, bool check_grid,
+		       double Theta, input in, size_t it_read,
+		       size_t it_expected, FILE *fid, bool check_grid,
 		       bool check_items, bool check_eof){
   
   int buffer;
@@ -768,7 +768,7 @@ void check_guess_qstls(int nx, double dx, double xmax, int nl,
   if (check_items) {
     if (it_read != it_expected ) {
       fprintf(stderr,"Error while reading file for initial guess or restart.\n");
-      fprintf(stderr,"%d Elements expected, %d elements read\n", it_read, it_expected);
+      fprintf(stderr,"%ld Elements expected, %ld elements read\n", it_read, it_expected);
       fclose(fid);
       exit(EXIT_FAILURE);
     }

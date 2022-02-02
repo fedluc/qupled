@@ -186,6 +186,12 @@ void compute_adr_iet_fixed(double *xx, input in) {
 	exit(EXIT_FAILURE);
       }
 
+      // Write input data to file
+      fwrite(&in.nx, sizeof(int), 1, fid);
+      fwrite(&in.nl, sizeof(int), 1, fid);
+      fwrite(&in.dx, sizeof(double), 1, fid);
+      fwrite(&in.xmax, sizeof(double), 1, fid);
+      fwrite(&in.Theta, sizeof(double), 1, fid);
       
       // Loop over ll (Matsubara frequencies)
       for (int ll=0; ll<in.nl; ll++){
@@ -353,18 +359,33 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
       
       // Open binary file with the fixed component of the auxilliary response function
       char out_name[100000];
+      size_t it_read = 0;
+      int nx_file;
+      int nl_file;
+      double dx_file;
+      double xmax_file;
+      double Theta_file;
+      FILE *fid = NULL;
       if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
 	sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
       }
       else{
 	sprintf(out_name, "%s/psi_fixed_theta%.3f_xx%.5f.bin", in.qstls_iet_fixed_file, in.Theta, xx[ii]);
       }
-      FILE *fid = NULL;
       fid = fopen(out_name, "rb");
       if (fid == NULL) {
 	fprintf(stderr,"Error while reading file for fixed component of the auxilliary response function\n");
 	exit(EXIT_FAILURE);
       }
+
+      // Check that the data for the binary file is consistent with input
+      it_read += fread(&nx_file, sizeof(int), 1, fid);
+      it_read += fread(&nl_file, sizeof(int), 1, fid);
+      it_read += fread(&dx_file, sizeof(double), 1, fid);
+      it_read += fread(&xmax_file, sizeof(double), 1, fid);
+      it_read += fread(&Theta_file, sizeof(double), 1, fid);
+      check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
+			in, it_read, 5, fid, true, true, false);
       
       // Loop over the Matsubara frequencies
       for (int ll=0; ll<in.nl; ll++){
@@ -426,6 +447,10 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
       	  psi_new[idx2(ii,ll,in.nx)] += -(3.0/8.0)*psi_tmp;
 	
       }
+
+      // Check that all the binary file was read
+      check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
+			in, it_read, 0, fid, false, false, true);
       
       // Close binary file for output
       fclose(fid);
