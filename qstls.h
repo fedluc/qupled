@@ -2,6 +2,7 @@
 #define QSTLS_H
 
 #include "solvers.h"
+#include "read_input.h"
 
 // ------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE FIXED COMPONENT OF THE AUXILIARY RESPONSE

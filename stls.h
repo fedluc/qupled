@@ -2,6 +2,7 @@
 #define STLS_H
 
 #include "solvers.h"
+#include "read_input.h"
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS

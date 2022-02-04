@@ -1,35 +1,35 @@
 #ifndef SOLVERS_H
 #define SOLVERS_H
 
-#include <stdbool.h>
+#include "read_input.h"
 
 // -------------------------------------------------------------------
 // STRUCTURE TO STORE THE INPUT PARAMETERS
 // -------------------------------------------------------------------
 
-typedef struct {
+/* typedef struct { */
 
-  char *stls_guess_file;
-  char *qstls_guess_file;
-  char *qstls_fixed_file;
-  char *qstls_iet_fixed_file;
-  char *theory;
-  double Theta;
-  double rs;
-  double dx;
-  double err_min_iter;
-  double a_mix;
-  double mu_lo;
-  double mu_hi;
-  double mu;
-  double xmax;
-  int nl;
-  int nx;
-  int nIter;
-  int theory_id;
+/*   char *stls_guess_file; */
+/*   char *qstls_guess_file; */
+/*   char *qstls_fixed_file; */
+/*   char *qstls_iet_fixed_file; */
+/*   char *theory; */
+/*   double Theta; */
+/*   double rs; */
+/*   double dx; */
+/*   double err_min_iter; */
+/*   double a_mix; */
+/*   double mu_lo; */
+/*   double mu_hi; */
+/*   double mu; */
+/*   double xmax; */
+/*   int nl; */
+/*   int nx; */
+/*   int nIter; */
+/*   int theory_id; */
 
 
-} input;
+/* } input; */
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS EQUATIONS

@@ -3,7 +3,6 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
-#include "solvers.h"
 #include "restart.h"
 #include "stls.h"
 #include "qstls.h"

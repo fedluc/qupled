@@ -2,6 +2,7 @@
 #define CHEMICAL_POTENTIAL_H
 
 #include "solvers.h"
+#include "read_input.h"
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE CHEMICAL POTENTIAL

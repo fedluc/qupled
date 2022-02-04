@@ -1,6 +1,7 @@
 #ifndef RESTART_H
 #define RESTART_H
 
+#include "read_input.h"
 
 // ---------------------------------------------------------------------
 // FUNCTION USED TO CONSTRUCT THE RESTART FILES FROM SIMULATION RESULTS
