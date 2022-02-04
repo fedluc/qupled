@@ -1,17 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <math.h>
 #include <string.h>
 #include "restart.h"
 #include "stls.h"
 #include "qstls.h"
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ...
+// FUNCTION USED TO WRITE BINARY FILES FOR GUESS (OR RESTART) STARTING
+// FROM TEXT FILES OBTAINED FROM A SIMULATION
 // -------------------------------------------------------------------
 
-// 
 void create_restart(input in){
 
   // Variables
@@ -26,12 +24,13 @@ void create_restart(input in){
   double *SS = NULL;
   double *SSHF = NULL;
   double *psi = NULL;
+  char out_name[100];
   
   // Get format of the data stored in the text files
-  get_restart_data_format(in.stls_guess_file, &n_lines_file1, &n_columns_file1);
-  get_restart_data_format(in.stls_guess_file, &n_lines_file2, &n_columns_file2);
+  get_restart_data_format(in.guess_file1, &n_lines_file1, &n_columns_file1);
+  get_restart_data_format(in.guess_file2, &n_lines_file2, &n_columns_file2);
 
-  // Update input structure based on the content of the text files 
+  // Update input structure based on the content of the text files
   set_nx_nl(n_lines_file1, n_lines_file2, n_columns_file1, n_columns_file2, &in);
 
   // Allocate stls arrays
@@ -39,28 +38,29 @@ void create_restart(input in){
 
   // Allocate additional qstsl arrays if necessary
   if(in.theory_id > 5) {
-    psi = malloc( sizeof(double) * in.nx * in.nl);  
+    psi = malloc( sizeof(double) * in.nx * in.nl);
   }
 
   // Get restart data
   if(in.theory_id <= 5) {
 
     // Static structure factor
-    get_restart_data(in.stls_guess_file, n_lines_file1, n_columns_file1, SS, xx, &in);
+    get_restart_data(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
     // Static local field correction
-    //get_restart_data(in.stls_guess_file, n_lines_file2, n_columns_file2, GG, xx, &in);
+    get_restart_data(in.guess_file2, n_lines_file2, n_columns_file2, GG, xx, &in);
 
   }
   else{
 
     // Static structure factor
-    get_restart_data(in.stls_guess_file, n_lines_file1, n_columns_file1, SS, xx, &in);
+    get_restart_data(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
     // Auxiliary density response
-    get_restart_data(in.stls_guess_file, n_lines_file2, n_columns_file2, GG, NULL, &in);
+    get_restart_data(in.guess_file2, n_lines_file2, n_columns_file2, psi, NULL, &in);
 
   }
   
   // Write restart files
+  sprintf(out_name, "restart_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
   if(in.theory_id <= 5) {
     write_guess_stls(SS, GG, in);
   }
@@ -68,6 +68,26 @@ void create_restart(input in){
     write_guess_qstls(SS, psi, in);
   }
 
+  
+  // Write concluding message on screen
+  printf("Binary files successfully created. See infomation below\n");
+  printf("Theory: %s\n", in.theory);
+  printf("Quantum coupling parameter: %f\n", in.rs);
+  printf("Quantum degeneracy parameter: %f\n", in.Theta);
+  printf("Number of grid points: %d\n", in.nx);
+  printf("Resolution for wave-vector grid: %f\n", in.dx);
+  printf("Cutoff for wave-vector grid: %f\n", in.xmax);
+  if(in.theory_id <= 5) {
+    printf("Source file for the static structure factor: %s\n", in.guess_file1);
+    printf("Source file for the static local field correction: %s\n", in.guess_file2);
+  }
+  else{
+    printf("Number of Matsubara frequencies: %d\n", in.nl);
+    printf("Source file for the static structure factor: %s\n", in.guess_file1);
+    printf("Source file for the static local field correction: %s\n", in.guess_file2);
+  }
+  printf("Output file: %s\n", out_name); 
+  
   // Free memory
   free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
   free(psi);
@@ -75,6 +95,9 @@ void create_restart(input in){
 }
   
 
+// -------------------------------------------------------------------
+// FUNCTION USED TO INFER THE FORMAT OF THE TEXT FILES
+// -------------------------------------------------------------------
 void get_restart_data_format(char * file_name, int *n_lines, int *n_columns){
 
   // Variables
@@ -83,8 +106,7 @@ void get_restart_data_format(char * file_name, int *n_lines, int *n_columns){
   char * value = NULL;
   size_t len = 0;
   ssize_t num_el;
-  ssize_t num_el_ref = -1;
-  
+  int n_columns_check;
   
   // Open file
   fid = NULL;
@@ -97,30 +119,27 @@ void get_restart_data_format(char * file_name, int *n_lines, int *n_columns){
   // Get number of lines
   *n_lines = 0;
   *n_columns = 0;
+  n_columns_check = 0;
   while ((num_el = getline(&line, &len, fid)) != -1) {
-
-    // Check that line format remains consistent
-    if (num_el_ref < 0) {
-      num_el_ref = num_el;
-    }
-    if (num_el != num_el_ref){
-      fprintf(stderr,"Error while reading file %s. Inconsistent file format. \n", file_name);
-      exit(EXIT_FAILURE);
-    }
 
     // Update line counter
     *n_lines += 1;
 
-    // Get number of columns (only done for the first line)
-    if (*n_lines == 1) {
-      value = strtok(line, " \n");
-      while(value != NULL){
-      	*n_columns += 1;
-      	value = strtok(NULL, " \n");
-      }
+    // Get number of columns and check that format remains consistent
+    value = strtok(line, " \n");
+    while(value != NULL){
+      if(*n_lines == 1) *n_columns += 1;
+      else n_columns_check += 1;
+      value = strtok(NULL, " \n");
     }
+    if (*n_lines > 1 && n_columns_check != *n_columns){
+      fprintf(stderr,"Error while reading line %d of file %s. Only %ld elements where read\n",
+	      *n_lines, file_name, num_el);
+      exit(EXIT_FAILURE);
+    }
+    n_columns_check = 0;
     
-    }
+  }
 
   // Close file 
   fclose(fid);
@@ -128,7 +147,10 @@ void get_restart_data_format(char * file_name, int *n_lines, int *n_columns){
 }
 
 
-
+// -------------------------------------------------------------------
+// FUNCTION USED TO SET THE PARAMETERS FOR THE GRID SIZE AND FOR THE
+// NUMBER OF MATSUBARA FREQUENCIES
+// -------------------------------------------------------------------
 void set_nx_nl(int nl1, int nl2, int nc1, int nc2, input *in){
 
   if (nl1 == nl2) {
@@ -141,11 +163,19 @@ void set_nx_nl(int nl1, int nl2, int nc1, int nc2, input *in){
     fprintf(stderr, "File: %s\n %d lines, %d columns\n", in->stls_guess_file, nl2, nc2);
     exit(EXIT_FAILURE);
   }
+
+  if (nc2>2 && in->theory_id <= 5){
+    fprintf(stderr, "Unexpected data format for %s theory files. "
+	   "Only two columns are expected, but %d where detected\n", in->theory, nc2);
+    exit(EXIT_FAILURE);
+  }
   
 }
 
 
-
+// -------------------------------------------------------------------
+// FUNCTION USED TO READ THE TEXT FILES
+// -------------------------------------------------------------------
 void get_restart_data(char *file_name, int n_lines, int n_columns,
 		      double *data, double *xx, input *in){
 
