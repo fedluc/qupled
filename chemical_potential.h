@@ -1,7 +1,6 @@
 #ifndef CHEMICAL_POTENTIAL_H
 #define CHEMICAL_POTENTIAL_H
 
-#include "solvers.h"
 #include "read_input.h"
 
 // -------------------------------------------------------------------

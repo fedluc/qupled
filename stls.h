@@ -1,7 +1,6 @@
 #ifndef STLS_H
 #define STLS_H
 
-#include "solvers.h"
 #include "read_input.h"
 
 // -------------------------------------------------------------------

@@ -1,7 +1,6 @@
 #ifndef QSTLS_H
 #define QSTLS_H
 
-#include "solvers.h"
 #include "read_input.h"
 
 // ------------------------------------------------------------------------

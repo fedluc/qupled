@@ -1,7 +1,7 @@
 #ifndef STLS_IET_H
 #define STLS_IET_H
 
-#include "solvers.h"
+#include "read_input.h"
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
