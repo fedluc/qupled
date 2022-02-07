@@ -416,11 +416,18 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
 				  wsp,
 				  &adr_part1[jj], &err, &nevals);
 
-      	  // Construct integrand over u ( the -1 is added because the qSTLS contribution is calculated separately)
-      	    adr_part1[jj] *= (1.0/xx[jj])
-      	      *( (-bf[jj]+1)*SS[jj] - 1 - 
-		 (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
-
+	    // Construct integrand over u ( the -1 is added because the qSTLS contribution is calculated separately)
+	    if (in.qstls_iet_static){ 
+	      adr_part1[jj] *= (1.0/xx[jj])
+		*( (-bf[jj]+1)*SS[jj] - 1 - 
+		   (psi[idx2(jj,0,in.nx)]/phi[idx2(jj,0,in.nx)])*(SS[jj]-1));
+	    }
+	    else {
+	      adr_part1[jj] *= (1.0/xx[jj])
+		*( (-bf[jj]+1)*SS[jj] - 1 - 
+		   (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
+	    }
+	    
 	  }
 	  
       	}

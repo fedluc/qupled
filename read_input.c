@@ -30,11 +30,11 @@ static char doc[] =
 #define ARGUMENT_QSTLS_GUESS_SHORT 0x92
 #define ARGUMENT_QSTLS_FIXED_SHORT 0x93
 #define ARGUMENT_QSTLS_IET_FIXED_SHORT 0x94
-#define ARGUMENT_DEBUG_SHORT 0x95
-#define ARGUMENT_GUESS_WRITE_SHORT 0x96
-#define ARGUMENT_GUESS_FILES_SHORT 0x97
-#define ARGUMENT_IET_MAPPING_SHORT 0x98
-
+#define ARGUMENT_QSTLS_IET_STATIC_SHORT 0x95
+#define ARGUMENT_DEBUG_SHORT 0x96
+#define ARGUMENT_GUESS_WRITE_SHORT 0x97
+#define ARGUMENT_GUESS_FILES_SHORT 0x98
+#define ARGUMENT_IET_MAPPING_SHORT 0x99
 
 // Optional arguments
 static struct argp_option options[] = {
@@ -77,6 +77,10 @@ static struct argp_option options[] = {
 
   {"qstls-iet-fix", ARGUMENT_QSTLS_IET_FIXED_SHORT, "NO_FILE", 0,
    "Load fixed component of the density response function from file for the qslts-iet scheme"},
+
+  {"qstls-iet-static", ARGUMENT_QSTLS_IET_FIXED_SHORT, "0", 0,
+   "Use static approximation to compute the auxiliary density response in the qstls-iet scheme"
+  " (0 = off, 1 = on)"},
 
   {"theory", ARGUMENT_THEORY_SHORT, "STLS",0,
    "Scheme to be solved"},
@@ -134,6 +138,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
       
     case  ARGUMENT_QSTLS_IET_FIXED_SHORT:
       in->qstls_iet_fixed_file = arg;
+      break;
+
+    case  ARGUMENT_QSTLS_IET_STATIC_SHORT:
+      in->qstls_iet_static = atoi(arg);
       break;
       
     case  ARGUMENT_MU_GUESS_SHORT:
@@ -252,6 +260,7 @@ void set_default_parse_opt(input *in){
   in->qstls_guess_file = "NO_FILE"; // File with initial guess for QSTLS and QSTLS-IET schemes
   in->qstls_fixed_file = "NO_FILE"; // File with fixed component of the density response for the QSTLS scheme
   in->qstls_iet_fixed_file = "NO_FILE"; // File with fixed component of the density response for the QSTLS-IET scheme
+  in->qstls_iet_static = 0; // Use static approximation to compute the auxiliary density response for the QSTLS-IET scheme
   in->Theta = 1.0; // Quantum degeneracy parameter
   in->rs = 1.0; // Quantum coupling parameter
   in->dx = 0.1; // Wave-vector grid resolution
@@ -290,6 +299,7 @@ void print_input(input *in){
   printf("File for initial guess (qSTLS): %s\n", in->qstls_guess_file);
   printf("File for fixed component (qSTLS): %s\n", in->qstls_fixed_file);
   printf("File for fixed component (qSTLS-IET): %s\n", in->qstls_iet_fixed_file);
+  printf("Static approximation (qSTLS-IET): %d\n", in->qstls_iet_static);
   printf("Theory: %s\n", in->theory);
   printf("Quantum degeneracy parameter: %f\n", in->Theta);
   printf("Quantum coupling parameter: %f\n", in->rs);

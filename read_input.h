@@ -10,6 +10,7 @@
 typedef struct {
 
   bool guess_write;
+  bool qstls_iet_static;
   char *guess_file1;
   char *guess_file2;
   char *iet_mapping;
