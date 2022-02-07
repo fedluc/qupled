@@ -21,7 +21,7 @@ void get_restart_data_format(char * file_name, int *n_lines, int *n_columns);
 // NUMBER OF MATSUBARA FREQUENCIES
 // -------------------------------------------------------------------
 
-void set_nx_nl(int nl1, int nl2, int nc1, int nc2, input *in);
+void set_nx_nl(int nl1, int nl2, int nc1, int nc2, bool is_qstls, input *in);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO READ THE TEXT FILES

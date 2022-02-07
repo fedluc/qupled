@@ -33,6 +33,7 @@ static char doc[] =
 #define ARGUMENT_DEBUG_SHORT 0x95
 #define ARGUMENT_GUESS_WRITE_SHORT 0x96
 #define ARGUMENT_GUESS_FILES_SHORT 0x97
+#define ARGUMENT_IET_MAPPING_SHORT 0x98
 
 
 // Optional arguments
@@ -91,6 +92,9 @@ static struct argp_option options[] = {
 
   {"guess-files", ARGUMENT_GUESS_FILES_SHORT, "NO_FILE,NO_FILE",0,
    "Text files to write binary restart files"},
+
+   {"iet-mapping", ARGUMENT_IET_MAPPING_SHORT, "standard",0,
+   "Mapping between quantum and classical state points for IET-based schemes"},
 
   { 0 }
   
@@ -203,6 +207,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
         argp_usage (state);
       break;
 
+    case ARGUMENT_IET_MAPPING_SHORT:
+      in->iet_mapping = arg;
+      break;
+      
     default:
       return ARGP_ERR_UNKNOWN;
       
@@ -228,9 +236,6 @@ void get_input(int argc, char **argv, input *in){
   // Get number of grid points
   get_nx(in);
   
-  // Assign a numerical id to the theory given in input
-  get_theory_id(in);
-
   // Debug input
   if(debug_input) print_input(in);
   
@@ -262,32 +267,9 @@ void set_default_parse_opt(input *in){
   in->guess_write = 0; // Flag to run in "write guess" mode
   in->guess_file1 = "NO_FILE"; // File of the first file used to construct the guess (static structure factor)
   in->guess_file2 = "NO_FILE"; // File of the second file used to construct the guess (static local field correction or auxiliary density response)
-    
+  in->iet_mapping = "standard"; // Mapping between the quantum and classical state points for the IET-based schemes
+      
   
-}
-
-// ------------------------------------------------------------------
-// FUNCTION TO ASSIGN A NUMERICAL ID TO THE THEORY SPECIFIED IN INPUT
-// ------------------------------------------------------------------
-void get_theory_id(input *in){
-
-  if (strcmp(in->theory, "STLS") == 0) in->theory_id = 1;
-  else if (strcmp(in->theory, "STLS-IET-HNC") == 0) in->theory_id = 2;
-  else if (strcmp(in->theory, "STLS-IET-IOI") == 0) in->theory_id = 3;
-  else if (strcmp(in->theory, "STLS-IET-LCT") == 0) in->theory_id = 4;
-  else if (strcmp(in->theory, "STLS-RIET-LCT") == 0) in->theory_id = 5;
-  else if (strcmp(in->theory, "QSTLS") == 0) in->theory_id = 6;
-  else if (strcmp(in->theory, "QSTLS-IET-HNC") == 0) in->theory_id = 7;
-  else if (strcmp(in->theory, "QSTLS-IET-IOI") == 0) in->theory_id = 8;
-  else if (strcmp(in->theory, "QSTLS-IET-LCT") == 0) in->theory_id = 9;
-  else if (strcmp(in->theory, "QSTLS-RIET-LCT") == 0) in->theory_id = 10;
-  else {
-    printf("Error: unknown theory to be solved. " 
-	   "Choose between: STLS, STLS-IET-HNC, STLS-IET-IOI,"
-	   "STLS-IET-LCT, STLS-RIET-LCT, QSTLS, QSTLS-IET-HNC,"
-	   "QSTLS-IET-IOI, QSTLS-IET-LCT and QSTLS-RIET-LCT\n");
-    exit(EXIT_FAILURE);
-  }
 }
 
 // ------------------------------------------------
@@ -321,10 +303,10 @@ void print_input(input *in){
   printf("Number of grid points: %d\n", in->nIter);  
   printf("Maximum number of iterations: %d\n", in->nIter);
   printf("Number of threads: %d\n", in->nThreads);
-  printf("Theory ID: %d\n", in->theory_id);
   printf("Write-guess mode: %d\n", in->guess_write);
   printf("Guess file 1: %s\n", in->guess_file1);
   printf("Guess file 2: %s\n", in->guess_file2);
+  printf("IET mapping: %s\n", in->iet_mapping);
   printf("-------------------------------------\n");
   
 }

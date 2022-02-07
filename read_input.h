@@ -12,6 +12,7 @@ typedef struct {
   bool guess_write;
   char *guess_file1;
   char *guess_file2;
+  char *iet_mapping;
   char *stls_guess_file;
   char *qstls_guess_file;
   char *qstls_fixed_file;
@@ -30,9 +31,7 @@ typedef struct {
   int nx;
   int nIter;
   int nThreads;
-  int theory_id;
-
-
+  
 } input;
 
 // ----------------------------------------
@@ -46,12 +45,6 @@ void get_input(int argc, char **argv, input *in);
 // -------------------------------------------------
 
 void set_default_parse_opt(input *in);
-
-// ------------------------------------------------------------------
-// FUNCTION TO ASSIGN A NUMERICAL ID TO THE THEORY SPECIFIED IN INPUT
-// ------------------------------------------------------------------
-
-void get_theory_id(input *in);
 
 // ------------------------------------------------
 // FUNCTION TO COMPUTE THE NUMBER OF GRID POINTS

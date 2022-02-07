@@ -13,6 +13,7 @@
 void create_restart(input in){
 
   // Variables
+  bool is_qstls;
   int n_lines_file1;
   int n_lines_file2;
   int n_columns_file1;
@@ -25,47 +26,53 @@ void create_restart(input in){
   double *SSHF = NULL;
   double *psi = NULL;
   char out_name[100];
+
+  // Check for which theory the restart file must be prepared
+  if (strstr(in.theory, "QSTLS") != NULL) is_qstls = true;
+  else is_qstls = false;
   
   // Get format of the data stored in the text files
   get_restart_data_format(in.guess_file1, &n_lines_file1, &n_columns_file1);
   get_restart_data_format(in.guess_file2, &n_lines_file2, &n_columns_file2);
 
   // Update input structure based on the content of the text files
-  set_nx_nl(n_lines_file1, n_lines_file2, n_columns_file1, n_columns_file2, &in);
+  set_nx_nl(n_lines_file1, n_lines_file2, n_columns_file1,
+	    n_columns_file2, is_qstls, &in);
 
   // Allocate stls arrays
   alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
 
   // Allocate additional qstsl arrays if necessary
-  if(in.theory_id > 5) {
+  if(is_qstls) {
     psi = malloc( sizeof(double) * in.nx * in.nl);
   }
 
   // Get restart data
-  if(in.theory_id <= 5) {
-
-    // Static structure factor
-    get_restart_data(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
-    // Static local field correction
-    get_restart_data(in.guess_file2, n_lines_file2, n_columns_file2, GG, xx, &in);
-
-  }
-  else{
+  if(is_qstls) {
 
     // Static structure factor
     get_restart_data(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
     // Auxiliary density response
     get_restart_data(in.guess_file2, n_lines_file2, n_columns_file2, psi, NULL, &in);
 
+
+  }
+  else{
+    
+    // Static structure factor
+    get_restart_data(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
+    // Static local field correction
+    get_restart_data(in.guess_file2, n_lines_file2, n_columns_file2, GG, xx, &in);
+
   }
   
   // Write restart files
   sprintf(out_name, "restart_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
-  if(in.theory_id <= 5) {
-    write_guess_stls(SS, GG, in);
+  if(is_qstls) {
+    write_guess_qstls(SS, psi, in);
   }
   else{
-    write_guess_qstls(SS, psi, in);
+    write_guess_stls(SS, GG, in);
   }
 
   
@@ -77,20 +84,20 @@ void create_restart(input in){
   printf("Number of grid points: %d\n", in.nx);
   printf("Resolution for wave-vector grid: %f\n", in.dx);
   printf("Cutoff for wave-vector grid: %f\n", in.xmax);
-  if(in.theory_id <= 5) {
+  if(is_qstls) {
+    printf("Number of Matsubara frequencies: %d\n", in.nl);
     printf("Source file for the static structure factor: %s\n", in.guess_file1);
     printf("Source file for the static local field correction: %s\n", in.guess_file2);
   }
   else{
-    printf("Number of Matsubara frequencies: %d\n", in.nl);
     printf("Source file for the static structure factor: %s\n", in.guess_file1);
-    printf("Source file for the static local field correction: %s\n", in.guess_file2);
+    printf("Source file for the static local field correction: %s\n", in.guess_file2); 
   }
   printf("Output file: %s\n", out_name); 
   
   // Free memory
   free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
-  free(psi);
+  if (is_qstls) free(psi);
   
 }
   
@@ -151,7 +158,7 @@ void get_restart_data_format(char * file_name, int *n_lines, int *n_columns){
 // FUNCTION USED TO SET THE PARAMETERS FOR THE GRID SIZE AND FOR THE
 // NUMBER OF MATSUBARA FREQUENCIES
 // -------------------------------------------------------------------
-void set_nx_nl(int nl1, int nl2, int nc1, int nc2, input *in){
+void set_nx_nl(int nl1, int nl2, int nc1, int nc2, bool is_qstls, input *in){
 
   if (nl1 == nl2) {
     in->nx = nl2;
@@ -164,7 +171,7 @@ void set_nx_nl(int nl1, int nl2, int nc1, int nc2, input *in){
     exit(EXIT_FAILURE);
   }
 
-  if (nc2>2 && in->theory_id <= 5){
+  if (nc2>2 && !is_qstls){
     fprintf(stderr, "Unexpected data format for %s theory files. "
 	   "Only two columns are expected, but %d where detected\n", in->theory, nc2);
     exit(EXIT_FAILURE);

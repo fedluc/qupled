@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 #include <omp.h>
+#include <string.h>
 #include <gsl/gsl_errno.h> 
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_integration.h>
@@ -282,18 +283,14 @@ double slfc_partial_part2(double ww, void* pp) {
 
 void compute_bridge_function(double *bf, double *xx, input in){
 
-  if (in.theory_id == 2 || in.theory_id == 7)
+  if (strstr(in.theory, "HNC") != NULL)
     bridge_function_hnc(bf, xx, in);
-  else if (in.theory_id == 3 || in.theory_id == 8)
+  else if (strstr(in.theory, "IOI") != NULL)
     bridge_function_ocp_ioi(bf, xx, in);
-  else if (in.theory_id == 4 || in.theory_id == 9)
+  else if (strstr(in.theory, "LCT") != NULL)
     bridge_function_ocp_lct(bf, xx, in);
-  else if (in.theory_id == 5 || in.theory_id == 10)
-    bridge_function_rescaled_ocp_lct(bf, xx, in);
   else{
-    printf("Error: unknown theory to be compute the bridge function."
-           "Choose between: STLS-IET-HNC, STLS-IET-IOI, STLS-IET-LCT, STLS-RIET-LCT,"
-	   "QSTLS-IET-HNC, QSTLS-IET-IOI, QSTLS-IET-LCT, QSTLS-RIET-LCT\n");
+    printf("Error: unknown theory to be compute the bridge function\n");
     exit(EXIT_FAILURE);
   }
 
@@ -312,11 +309,10 @@ void bridge_function_hnc(double *bf, double *xx, input in){
 // Bridge function from the parameterization of Ichimaru and collaborators
 void bridge_function_ocp_ioi(double *bf, double *xx, input in){
 
-  double scaling = 1.0;
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double l2 = ll*ll, l3 = l2*ll, l4 = l3*ll, l5 = l4*ll, 
     l6 = l5*ll, l7 = l6*ll, l8 = l7*ll;
-  double Gamma = scaling*2*l2*in.rs/in.Theta;
+  double Gamma = 2*l2*in.rs/in.Theta;
   double lnG = log(Gamma), lnG2 = lnG*lnG;
   double b0 = 0.258 - 0.0612*lnG + 0.0123*lnG2 - 1.0/Gamma;
   double b1 = 0.0269 + 0.0318*lnG + 0.00814*lnG2;
@@ -330,15 +326,30 @@ void bridge_function_ocp_ioi(double *bf, double *xx, input in){
   double b02_b12 = b02/b12, b03_b13 = b03/b13, b04_b14 = b04/b14,
     b05_b15 = b05/b15, b06_b16 = b06/b16, b07_b17 = b07/b17, 
     b08_b18 = b08/b18;
-  double ff = 0.0;
   double q2,q3,q4,q5,q6,q7,q8;
   double bf1, bf2, bf3;
+  double ff;
 
-  if (b0/b1 <= 0.0 || Gamma < 5.25 || Gamma > 171.8){
+  // Coupling parameter to compute the bridge function (depends on the mapping specified in input)
+  double Gamma_bf;
+  if (strcmp(in.iet_mapping, "standard") == 0)
+    Gamma_bf = Gamma;
+  else if (strcmp(in.iet_mapping, "sqrt") == 0)
+    Gamma_bf = 2*l2*in.rs/sqrt(1 + in.Theta*in.Theta);
+  else {
 
-    printf("Error: The STLS-IET scheme cannot be applied to this state point"
+    fprintf(stderr, "Error: Uknown quantum to classical mapping for IET schemes,"
+	   "choose between: standard and sqrt\n");
+    exit(EXIT_FAILURE);
+    
+  }
+	
+    
+  if (b0/b1 <= 0.0 || Gamma_bf < 5.25 || Gamma_bf > 171.8){
+
+    printf("Error: The IET schemes cannot be applied to this state point"
 	   " because Gamma = %.8f falls outside the range of validty of the"
-	   " bridge function parameterization\n", Gamma);
+	   " bridge function parameterization\n", Gamma_bf);
     exit(EXIT_FAILURE);
 
   }
@@ -359,7 +370,7 @@ void bridge_function_ocp_ioi(double *bf, double *xx, input in){
       bf3 = c3/256.0*(15120.0*b04_b14 - 10080.0*b05_b15*q2/l2 +
 		     1512.0*b06_b16*q4/l4 - 72.0*b07_b17*q6/l6 + 
 		     b08_b18*q8/l8);
-      bf[ii] = scaling*ff*q2*(bf1 + bf2 + bf3)*exp(-b0*q2/(4.0*b1*l2));
+      bf[ii] = (Gamma_bf/Gamma)*ff*q2*(bf1 + bf2 + bf3)*exp(-b0*q2/(4.0*b1*l2));
   }
  
 }
@@ -379,55 +390,21 @@ void bridge_function_ocp_lct(double *bf, double *xx, input in){
   double Gamma = 2*l2*in.rs/in.Theta;
 
   double err;
-  
-  // Integration workspace
-  gsl_integration_workspace *wsp 
-    = gsl_integration_workspace_alloc(1000);
-  gsl_integration_workspace *wspc 
-    = gsl_integration_workspace_alloc(1000);
-  gsl_integration_qawo_table *qtab
-    = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, 1000);
-  
-  // Integration function
-  gsl_function ff_int;
-  struct bfr_params rbfrp = {Gamma};
-  ff_int.function = &rbfr;
-  ff_int.params = &rbfrp;
-  
-  // Bridge function term (B(q)/U(q))
-  for (int ii = 0; ii < in.nx; ii++) {
 
-    // Set wave-vector (divide xx[ii] by ll to convert to Wigner-Seitz units)
-    gsl_integration_qawo_table_set(qtab, xx[ii]/ll, 1.0, GSL_INTEG_SINE);
 
-    // Fourier transform
-    gsl_integration_qawf(&ff_int,
-    			 0.0,
-    			 1e-10, 1000,
-    			 wsp, wspc,
-    			 qtab,
-    			 &bf[ii], &err);
-    bf[ii] *= xx[ii]/Gamma/ll;
-
+  // Coupling parameter to compute the bridge function (depends on the mapping specified in input)
+  double Gamma_bf;
+  if (strcmp(in.iet_mapping, "standard") == 0)
+    Gamma_bf = Gamma;
+  else if (strcmp(in.iet_mapping, "sqrt") == 0)
+    Gamma_bf = 2*l2*in.rs/sqrt(1 + in.Theta*in.Theta);
+  else {
+    
+    fprintf(stderr, "Error: Uknown quantum to classical mapping for IET schemes, "
+	   "choose between: standard and sqrt\n");
+    exit(EXIT_FAILURE);
+    
   }
-
-  // Free memory
-  gsl_integration_workspace_free(wsp);
-  gsl_integration_workspace_free(wspc); 
-  gsl_integration_qawo_table_free(qtab);
-
- 
-
-}
-
-
-void bridge_function_rescaled_ocp_lct(double *bf, double *xx, input in){
-
-  double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  double l2 = ll*ll;
-  double Gamma = 2*l2*in.rs/in.Theta;
-  double Gamma_bf = 2*l2*in.rs/sqrt(1 + in.Theta*in.Theta);
-  double err;
   
   // Integration workspace
   gsl_integration_workspace *wsp 
@@ -508,7 +485,7 @@ double  rbfr(double rr, void *pp){
 
   if (Gamma < 5.0){
 
-    printf("Error: The STLS-IET scheme cannot be applied to this state point"
+    printf("Error: The IET scheme cannot be applied to this state point"
 	   " because for Gamma = %.8f the bridge function parameterization"
 	   " is not applicable (Gamma must be larger or equal than 5.0)\n", Gamma);
     exit(EXIT_FAILURE);
