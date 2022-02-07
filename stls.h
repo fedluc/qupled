@@ -28,7 +28,7 @@ void init_fixed_stls_arrays(input *in, double *xx,
 // FUNCTION USED TO DEFINE THE WAVE-VECTOR GRID
 // ------------------------------------------------------------------
 
-void wave_vector_grid(double *xx, input in);
+void wave_vector_grid(double *xx, input *in);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ACCESS ONE ELEMENT OF A TWO-DIMENSIONAL ARRAY

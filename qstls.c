@@ -742,22 +742,28 @@ void check_guess_qstls(int nx, double dx, double xmax, int nl,
 		       bool check_items, bool check_eof){
   
   int buffer;
+  double tol = 1e-10;
   
   // Check that the grid in the guess data is consistent with input
   if (check_grid) {
     
-    if (nx != in.nx || dx != in.dx || xmax != in.xmax){
+    if (nx != in.nx || (dx-in.dx) > tol || (xmax-in.xmax) > tol){
       fprintf(stderr,"Grid from guess file is incompatible with input\n");
+      fprintf(stderr,"Grid points (nx) : %d (input), %d (file)\n", in.nx, nx);
+      fprintf(stderr,"Resolution (dx)  : %.16f (input), %.16f (file)\n", in.dx, dx);
+      fprintf(stderr,"Cutoff (xmax)    : %.16f (input), %.16f (file)\n", in.xmax, xmax);
       fclose(fid);
       exit(EXIT_FAILURE);
     }
     if (nl != in.nl){
       fprintf(stderr,"Number of Matsubara frequencies from fixed solution file is incompatible with input\n");
+      fprintf(stderr,"Matsubara frequencies (nl) : %d (input), %d (file)\n", in.nl, nl);
       fclose(fid);
       exit(EXIT_FAILURE);
     }
-    if (Theta != in.Theta){
+    if ((Theta-in.Theta) > tol){
       fprintf(stderr,"Quantum degeneracy parameter from fixed solution file is incompatible with input\n");
+      fprintf(stderr,"Degeneracy parameter (theta) : %f (input), %f (file)\n", in.Theta, Theta);
       fclose(fid);
       exit(EXIT_FAILURE);
     }
