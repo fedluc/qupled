@@ -332,10 +332,12 @@ void bridge_function_ocp_ioi(double *bf, double *xx, input in){
     Gamma_bf = Gamma;
   else if (strcmp(in.iet_mapping, "sqrt") == 0)
     Gamma_bf = 2*l2*in.rs/sqrt(1 + in.Theta*in.Theta);
+  else if (strcmp(in.iet_mapping, "linear") == 0)
+    Gamma_bf = 2*l2*in.rs/(1 + in.Theta);
   else {
 
     fprintf(stderr, "Error: Uknown quantum to classical mapping for IET schemes,"
-	   "choose between: standard and sqrt\n");
+	   "choose between: standard, sqrt and linear\n");
     exit(EXIT_FAILURE);
     
   }
@@ -394,14 +396,16 @@ void bridge_function_ocp_lct(double *bf, double *xx, input in){
     Gamma_bf = Gamma;
   else if (strcmp(in.iet_mapping, "sqrt") == 0)
     Gamma_bf = 2*l2*in.rs/sqrt(1 + in.Theta*in.Theta);
+  else if (strcmp(in.iet_mapping, "linear") == 0)
+    Gamma_bf = 2*l2*in.rs/(1 + in.Theta);
   else {
-    
-    fprintf(stderr, "Error: Uknown quantum to classical mapping for IET schemes, "
-	   "choose between: standard and sqrt\n");
+
+    fprintf(stderr, "Error: Uknown quantum to classical mapping for IET schemes,"
+	   "choose between: standard, sqrt and linear\n");
     exit(EXIT_FAILURE);
     
   }
-  
+
   // Integration workspace
   gsl_integration_workspace *wsp 
     = gsl_integration_workspace_alloc(1000);
