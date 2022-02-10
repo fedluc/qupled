@@ -42,7 +42,10 @@ All the integrals are computed with the doubly-adaptive Clenshaw-Curtis quadratu
 
 The following command line options can be employed to control the calculations performed by STLS (the same information can also be retrieved by running STLS with the option `--help`) :
 
+  * `--debug-input` can be used to print the content of the entire input structure to the screen, mainly useful for debugging purposes. The entire input structure is printed if "--debug-input=1" is specified, otherwise only a summary of the most relevant input parameters is printed. Default `--debug-input=0`
   * `--dx` specifies the  resolution for wave-vector grid. Default `--dx=0.01`
+  * `--guess-files` specifies the names of the two text files used to construct the binary files that can be supplied as an initial guess for the code. More information on the files for the initial guess are given in the section "Guess and restart". Default `--guess-files=NO_FILE,NO_FILE` (no files are specified)
+  * `--guess-write` can be used to run the code in "write-guess" mode by setting `--guess-write=1`. More information on what this means are given in the section "Guess and restart". Default `--guess-write=0` (the code runs in the normal mode and solves the theory specified by `--theory`)
   * `--iter`  specifies the maximum number of iterations to employ in the iterative procedure used to compute the static structure factor.  Default `--iter=1000`
   * `--min-err` specifies the minimum error for convergence in the iterative procedure used to compute the static structure factor.  Default `--min-err=1e-5`
   * `--mix` specifies the mixing parameter for iterative solution.  Default `--mix=0.1`.
