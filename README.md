@@ -42,20 +42,41 @@ All the integrals are computed with the doubly-adaptive Clenshaw-Curtis quadratu
 
 The following command line options can be employed to control the calculations performed by STLS (the same information can also be retrieved by running STLS with the option `--help`) :
 
-  * `--debug-input` can be used to print the content of the entire input structure to the screen, mainly useful for debugging purposes. The entire input structure is printed if "--debug-input=1" is specified, otherwise only a summary of the most relevant input parameters is printed. Default `--debug-input=0`
+  * `--debug-input` can be used to print the content of the entire input structure to the screen, mainly useful for debugging purposes. The entire input structure is printed if `--debug-input=1` is specified, otherwise only a summary of the most relevant input parameters is printed. Default `--debug-input=0`
+  
   * `--dx` specifies the  resolution for wave-vector grid. Default `--dx=0.01`
+  
   * `--guess-files` specifies the names of the two text files used to construct the binary files that can be supplied as an initial guess for the code. More information on the files for the initial guess are given in the section "Guess and restart". Default `--guess-files=NO_FILE,NO_FILE` (no files are specified)
-  * `--guess-write` can be used to run the code in "write-guess" mode by setting `--guess-write=1`. More information on what this means are given in the section "Guess and restart". Default `--guess-write=0` (the code runs in the normal mode and solves the theory specified by `--theory`)
+  
+  * `--guess-write` can be used to run the code in "guess" mode by setting `--guess-write=1`. More information on what this means is given in the section "Guess and restart". Default `--guess-write=0` (the code runs in the normal mode and solves the theory specified by `--theory`)
+  
+  * `--iet-mapping` specifies what mapping to use between classical state points specified by &Gamma; and quantum state points specified by (r<sub>s</sub>, &theta;) for the IET-based theories (STLS-IET, qSTLS-IET). Accepted options  are: 
+     * `standard` : &Gamma; = 2&lambda;<sup>2</sup>r<sub>s</sub>/&theta;
+     * `sqrt` : &Gamma; = 2&lambda;<sup>2</sup>r<sub>s</sub>/(1 + &theta;<sup>2</sup>)<sup>1/2</sup>
+     * `linear` : &Gamma; = 2&lambda;<sup>2</sup>r<sub>s</sub>/(1 + &theta;)
+
   * `--iter`  specifies the maximum number of iterations to employ in the iterative procedure used to compute the static structure factor.  Default `--iter=1000`
+  
   * `--min-err` specifies the minimum error for convergence in the iterative procedure used to compute the static structure factor.  Default `--min-err=1e-5`
-  * `--mix` specifies the mixing parameter for iterative solution.  Default `--mix=0.1`.
+  
+  * `--mix` specifies the mixing parameter for iterative solution.  Default `--mix=0.1`
+
   * `--mu-guess` specifies the initial guess for the bisection procedure used to compute the chemical potential.  Default `--mgu-guess=-10,10`
+  
   * `--nl`  specifies the number of Matsubara frequencies.  Default `--nl=128`.
+
   * `--omp` specifies how many omp threads to use for the parts of the code that can be executed in parallel. Since the classical schemes can usually be run efficiently with a single thread, parallelization is available only for the quantum schemes. Default `omp=1`
-  * `qstls-fix` specifies the name of the file used to load the fixed component of the auxiliary density response function. If a file name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the qSTLS scheme can be expected. It is useful to note that state points with the same degeneracy parameter share the same fixed component of the auxiliary density response. Default `qslts-fix=NO_FILE` (no file is specified)
-  * `qstls-guess` specifies the name of the file used as initial guess for the solution of the quantum schemes. If a file name is not specified, the iterative scheme is started by setting the auxiliary density response to zero (which is equivalent to set the dynamic local field correction to zero). Default `qslts-guess=NO_FILE` (no file is specified) 
+
+  * `qstls-fix` specifies the name of the binary file used to load the fixed component of the auxiliary density response function. If a file name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the qSTLS scheme can be expected. It is useful to note that state points with the same degeneracy parameter share the same fixed component of the auxiliary density response. Default `qslts-fix=NO_FILE` (no file is specified)
+
+  * `qstls-guess` specifies the name of the binary file used as initial guess for the solution of the quantum schemes. If a file name is not specified, the iterative scheme is started by setting the auxiliary density response to zero (which is equivalent to set the dynamic local field correction to zero). Default `qslts-guess=NO_FILE` (no file is specified) 
+
+  * `qstls-iet-fix` specifies the name of the folder containing the binary files used to load the fixed component of the auxiliary density response function. The files are assumed to have the name psi_fixed_theta\*_xx\**_.bin, where \* is the value of the quantum degeneracy parameter and \** is the value of the wave-vector. One file for each wave-vector is expected. If a folder name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the IET-qSTLS scheme can be expected. It is useful to note that state points with the same degeneracy parameter share the same fixed component of the auxiliary density response. Default `qslts-iet-fix=NO_FILE` (no folder is specified)
+
   * `--rs`  specifies the  quantum coupling parameter. Default `--rs=1.0`.
-  * `--stls-guess` specifies the name of the file used as initial guess for the solution of the classical schemes. If a file name is not specified, the iterative scheme is started by setting the static local field correction to zero. Default `slts-guess=NO_FILE` (no file is specified) 
+  
+  * `--stls-guess` specifies the name of the binary file used as initial guess for the solution of the classical schemes. If a file name is not specified, the iterative scheme is started by setting the static local field correction to zero. Default `slts-guess=NO_FILE` (no file is specified) 
+  
   * `--theory` specifies which scheme should be employed to compute the static structure factor. Default `--theory=STLS`. Accepted options are: 
      * `STLS` (classical STLS approach), 
      * `STLS-HNC` (classical STLS-HNC approach) 
@@ -63,8 +84,10 @@ The following command line options can be employed to control the calculations p
      * `STLS-IET-LCT` (classical STLS-IET approach with the [LCT bridge function](https://arxiv.org/abs/2108.09574))
      * `STLS-RIET-LCT` (classical STLS-IET approach with the [LCT bridge function](https://arxiv.org/abs/2108.09574) with a rescaled coupling parameter defined according to [Bonitz](https://aip.scitation.org/doi/10.1063/1.5143225))
      * `QSTLS` (quantum STLS scheme). 
-  * `--Theta` specifies the  quantum degeneracy parameter. Default `--Theta=1.0`.
-  * `--xmax` specifies the cutoff for wave-vector grid. Default `--xcut=20`.
+     
+  * `--Theta` specifies the  quantum degeneracy parameter. Default `--Theta=1.0`
+  
+  * `--xmax` specifies the cutoff for wave-vector grid. Default `--xcut=20`
  
   ## Output 
   
