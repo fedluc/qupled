@@ -4,11 +4,11 @@
 
 STLS can be used to compute the static and thermodynamic properties of quantum one component plasmas via theoretical approaches based on the dielectric formalism. The theoretical approaches which can be solved with STLS include:
 
-* The classical STLS approach as discussed by [Tanaka and Ichimaru](https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278)
-* The classical STLS-HNC approach as discussed by [Tanaka](https://aip.scitation.org/doi/full/10.1063/1.4969071)
-* The classical STLS-IET approach as discussed by [Tolias and collaborators](https://aip.scitation.org/doi/10.1063/5.0065988)
-* The quantum STLS (qSTLS) approach as discussed by [Schweng and Böhm](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037)
-* The quantum STLS-IET (qSTLS-IET) approach 
+* The classical STLS scheme as discussed by [Tanaka and Ichimaru](https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278)
+* The classical STLS-HNC scheme as discussed by [Tanaka](https://aip.scitation.org/doi/full/10.1063/1.4969071)
+* The classical STLS-IET scheme as discussed by [Tolias and collaborators](https://aip.scitation.org/doi/10.1063/5.0065988)
+* The quantum STLS (qSTLS) scheme as discussed by [Schweng and Böhm](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037)
+* The quantum qSTLS-IET approach 
  
 ## Limitations
 
@@ -47,9 +47,9 @@ The following command line options can be employed to control the calculations p
   
   * `--dx` specifies the  resolution for wave-vector grid. Default `--dx=0.01`
   
-  * `--guess-files` specifies the names of the two text files used to construct the binary files that can be supplied as an initial guess for the code. More information on the files for the initial guess are given in the section "Guess and restart". Default `--guess-files=NO_FILE,NO_FILE` (no files are specified)
+  * `--guess-files` specifies the names of the two text files used to construct the binary files that can be supplied as an initial guess for the code. More information on the files for the initial guess are given in the section **Guess and restart**. Default `--guess-files=NO_FILE,NO_FILE` (no files are specified)
   
-  * `--guess-write` can be used to run the code in "guess" mode by setting `--guess-write=1`. More information on what this means is given in the section "Guess and restart". Default `--guess-write=0` (the code runs in the normal mode and solves the theory specified by `--theory`)
+  * `--guess-write` can be used to run the code in "guess" mode by setting `--guess-write=1`. More information on what this means is given in the section **Guess and restart**. Default `--guess-write=0` (the code runs in the normal mode and solves the theory specified by `--theory`)
   
   * `--iet-mapping` specifies what mapping to use between classical state points specified by &Gamma; and quantum state points specified by (r<sub>s</sub>, &theta;) for the IET-based theories (STLS-IET, qSTLS-IET). Accepted options  are: 
      * `standard` : &Gamma; = 2&lambda;<sup>2</sup>r<sub>s</sub>/&theta;
@@ -100,14 +100,18 @@ The following command line options can be employed to control the calculations p
   * One text file with the static local field correction (slfc_rs\*\_theta\*\*\_\*\*\*_.dat)
   * One text file with the static density response (sdr_rs\*\_theta\*\*\_\*\*\*_.dat)
   * One text file with the ideal density response (idr_rs\*\_theta\*\*\_\*\*\*_.dat)
-  * One text file with the auxiliary density response (adr_rs\*\_theta\*\*\_\*\*\*_.dat, only for the quantum schemes)
   * One text file with the static structure factor within the Hartree-Fock approximation (ssfHF_rs\*\_theta\*\*\_\*\*\*_.dat)
   * One text file with the interaction energy (uint_rs\*\_theta\*\*\_\*\*\*_.dat)
   * One binary file which can be used as an initial guess for subsequent calculations via the options `--stls-guess` and `--qstls-guess` (restart_rs\*\_theta\*\*\_\*\*\*_.bin)
 
  For the quantum schemes, additional files are produced: 
  
-  * For the qSTLS scheme: One binary file which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS scheme via the option `--qstls-fix`  (fixed_rs\*\_theta\*\*\_\*\*\*_.bin)
-  * For the qSTLS-IET scheme: One binary file per wave-vector which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS-IET scheme via the option `--qstls-iet-fix`  (psi_fixed_theta\*\*\_xx\*\*\*\*.bin, for N wave-vectors N files are written)
+  * One text file with the auxiliary density response (adr_rs\*\_theta\*\*\_\*\*\*_.dat)
+  * One binary file which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS scheme via the option `--qstls-fix`  (fixed_rs\*\_theta\*\*\_\*\*\*.bin) **(only for the qSLTLS scheme)** 
+  * One binary file per wave-vector which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS-IET scheme via the option `--qstls-iet-fix`  (psi_fixed_theta\*\*\_xx\*\*\*\*.bin, for N wave-vectors N files are written) **(only for the qSTLS-IET scheme)**
   
 In the above \* is corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter, \*\*\* to the dielectric scheme that was solved and \*\*\*\* is the wave-vector value.
+
+## Guess and restart
+
+All the schemes solved by STLS are solved iteratively. In order to improve convergence, it is often beneficial to provide a suitable initial guess. This can be done via the options `stls-guess` and `qslts-guess`, that can be used to provide binary guess files which contain the initial guess (information on how to use these options is given in the section **Running**). The guess files for the classical schemes (STLS, STLS-HNC and STLS-IET) contain information regarding the static structure factor and the static local field correction, while the guess files for the quantum schemes (qSTLS, qSTLS-HNC and qSTLS-IET) contain information regarding the static structure factor and the auxiliary density response. Hence, guess files for classical and quantum scheme are not interchangeable. Obviously, the guess files can also be used as a restart point for all those calculations that were stopped before it was possible to achieve the desired level of accuracy (this can usually happen if the limit on the maximum number of iterations is hit before the error falls below the desider threshold).
