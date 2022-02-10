@@ -47,9 +47,9 @@ The following command line options can be employed to control the calculations p
   
   * `--dx` specifies the  resolution for wave-vector grid. Default `--dx=0.01`
   
-  * `--guess-files` specifies the names of the two text files used to construct the binary files that can be supplied as an initial guess for the code. More information on the files for the initial guess are given in the section **Guess and restart**. Default `--guess-files=NO_FILE,NO_FILE` (no files are specified)
+  * `--guess-files` specifies the names of the two text files used to construct the binary files that can be supplied as an initial guess for the code. More information on the files for the initial guess are given in the section [Guess and restart](https://github.com/fedluc/STLS/edit/master/README.md#guess-and-restart). Default `--guess-files=NO_FILE,NO_FILE` (no files are specified)
   
-  * `--guess-write` can be used to run the code in "guess" mode by setting `--guess-write=1`. More information on what this means is given in the section **Guess and restart**. Default `--guess-write=0` (the code runs in the normal mode and solves the theory specified by `--theory`)
+  * `--guess-write` can be used to run the code in "guess" mode by setting `--guess-write=1`. More information on what this means is given in the section [Guess and restart](https://github.com/fedluc/STLS/edit/master/README.md#guess-and-restart). Default `--guess-write=0` (the code runs in the normal mode and solves the theory specified by `--theory`)
   
   * `--iet-mapping` specifies what mapping to use between classical state points specified by &Gamma; and quantum state points specified by (r<sub>s</sub>, &theta;) for the IET-based theories (STLS-IET, qSTLS-IET). Accepted options  are: 
      * `standard` : &Gamma; = 2&lambda;<sup>2</sup>r<sub>s</sub>/&theta;
@@ -94,24 +94,32 @@ The following command line options can be employed to control the calculations p
  
   ## Output 
   
-  Regardless of the theory that is being solved, STLS produces the following output:
+  Regardless of the theory that is being solved, STLS produces the following output (in what follows, n<sub>x</sub> is the number of wave-vectors used in the solution and n<sub>l</sub> is the number of Matsubara frequencies):
   
-  * One text file with the static structure factor (ssf_rs\*\_theta\*\*\_\*\*\*_.dat)
-  * One text file with the static local field correction (slfc_rs\*\_theta\*\*\_\*\*\*_.dat)
-  * One text file with the static density response (sdr_rs\*\_theta\*\*\_\*\*\*_.dat)
-  * One text file with the ideal density response (idr_rs\*\_theta\*\*\_\*\*\*_.dat)
-  * One text file with the static structure factor within the Hartree-Fock approximation (ssfHF_rs\*\_theta\*\*\_\*\*\*_.dat)
-  * One text file with the interaction energy (uint_rs\*\_theta\*\*\_\*\*\*_.dat)
+  * One text file with the static structure factor (ssf_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
+  * One text file with the static local field correction (slfc_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
+  * One text file with the static density response (sdr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
+  * One text file with the ideal density response (idr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and n<sub>l</sub> columns
+  * One text file with the static structure factor within the Hartree-Fock approximation (ssfHF_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
+  * One text file with the interaction energy (uint_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
   * One binary file which can be used as an initial guess for subsequent calculations via the options `--stls-guess` and `--qstls-guess` (restart_rs\*\_theta\*\*\_\*\*\*_.bin)
 
  For the quantum schemes, additional files are produced: 
  
-  * One text file with the auxiliary density response (adr_rs\*\_theta\*\*\_\*\*\*_.dat)
+  * One text file with the auxiliary density response (adr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and n<sub>l</sub> columns
   * One binary file which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS scheme via the option `--qstls-fix`  (fixed_rs\*\_theta\*\*\_\*\*\*.bin) **(only for the qSLTLS scheme)** 
-  * One binary file per wave-vector which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS-IET scheme via the option `--qstls-iet-fix`  (psi_fixed_theta\*\*\_xx\*\*\*\*.bin, for N wave-vectors N files are written) **(only for the qSTLS-IET scheme)**
+  * One binary file per wave-vector which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS-IET scheme via the option `--qstls-iet-fix`  (psi_fixed_theta\*\*\_xx\*\*\*\*.bin, n<sub>x</sub> files are generated) **(only for the qSTLS-IET scheme)**
   
-In the above \* is corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter, \*\*\* to the dielectric scheme that was solved and \*\*\*\* is the wave-vector value.
+In the above \* corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter, \*\*\* to the dielectric scheme that was solved and \*\*\*\* is the wave-vector value.
 
 ## Guess and restart
 
-All the schemes solved by STLS are solved iteratively. In order to improve convergence, it is often beneficial to provide a suitable initial guess. This can be done via the options `stls-guess` and `qslts-guess`, that can be used to provide binary guess files which contain the initial guess (information on how to use these options is given in the section **Running**). The guess files for the classical schemes (STLS, STLS-HNC and STLS-IET) contain information regarding the static structure factor and the static local field correction, while the guess files for the quantum schemes (qSTLS, qSTLS-HNC and qSTLS-IET) contain information regarding the static structure factor and the auxiliary density response. Hence, guess files for classical and quantum scheme are not interchangeable. Obviously, the guess files can also be used as a restart point for all those calculations that were stopped before it was possible to achieve the desired level of accuracy (this can usually happen if the limit on the maximum number of iterations is hit before the error falls below the desider threshold).
+All the schemes solved by STLS are solved iteratively. In order to improve convergence, it is often beneficial to provide a suitable initial guess. This can be done via the options `stls-guess` and `qslts-guess`, that can be used to provide binary guess files which contain the initial guess (information on how to use these options is given in the section [Running](https://github.com/fedluc/STLS/edit/master/README.md#Running)). The guess files for the classical schemes (STLS, STLS-HNC and STLS-IET) contain information regarding the static structure factor and the static local field correction, while the guess files for the quantum schemes (qSTLS, qSTLS-HNC and qSTLS-IET) contain information regarding the static structure factor and the auxiliary density response. Hence, guess files for classical and quantum scheme are not interchangeable. The guess files can also be used as a restart point for all those calculations that were stopped before it was possible to achieve the desired level of accuracy. For instance, this could happen if the limit on the maximum number of iterations is hit before the error falls below the desider threshold.
+
+The binary files used as guess are writtent directly by the program upon completion (see section [Output](https://github.com/fedluc/STLS/edit/master/README.md#output)). However, should the binary files not be available, it is also possible to run STLS in the so-called "guess" mode in which the information necessary to construct the binary files is read from text files provided by the user. To run STLS in "guess" mode it is sufficient to set `--write-guess=1` and to provide the name of two text file via the option `--guess-files`. The format of the text files depends on the type of guess files that must be generated: 
+
+ * Guess files for the classical schemes: The first text file must contain the static structure factor, the second file must contain the static local field correction. The format of the files must be consistent with what described in the section [Output](https://github.com/fedluc/STLS/edit/master/README.md#output)
+
+* Guess files for the quantum schemes: The first text file must contain the static structure factor, the second file must contain the auxiliary density response. The format of the files must be consistent with what described in the section [Output](https://github.com/fedluc/STLS/edit/master/README.md#output)
+
+The information concerning the grid and number of Matsubara frequencies is inferred from the structure of the text files, but information concerning the state point and the scheme is obtained from the input parameters specified by the user. After reading the text files, STLS writes a binary file called fixed_rs\*\_theta\*\*\_\*\*\*.bin, where \*  corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter and \*\*\* to the dielectric scheme  specified in input. Upon completion, STLS writes a summary on the screen and terminates. It should be noted that, in "guess mode", STLS writs the guess files, but it does not perform any iterative calculation for the solution of the dielectric scheme prescribed in input.
