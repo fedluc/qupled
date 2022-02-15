@@ -12,7 +12,7 @@ STLS can be used to compute the static and thermodynamic properties of quantum o
  
 ## Limitations
 
-STLS can only be employed for finite-temperature systems. Calculations of ground state (zero temperature) properties will be implemented in the future.
+Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC, STLS-IET). Calculations of ground state properties for the quantum schemes (qSTLS and qSTLS-IET) will be implemented in the future.
 
 ## Compiling
 
