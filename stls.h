@@ -48,17 +48,37 @@ double idr_partial_xl(double yy, void *pp);
 
 double idr_partial_x0(double yy, void *pp);
 
-// -------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC STRUCTURE FACTOR
-// -------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 
 void compute_ssf_stls(double *SS, double *SSHF,
 		      double *GG, double *phi, 
 		      double *xx, input in);
 
-void compute_ssf_HF(double *SS,  double *xx, input in);
+// ---------------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE STATIC STRUCTURE FACTOR AT FINITE TEMPERATURE
+// ---------------------------------------------------------------------------
 
-double ssf_HF(double yy, void *pp);
+void compute_ssf_stls_finite_temperature(double *SS, double *SSHF,
+					 double *GG, double *phi, 
+					 double *xx, input in);
+
+void compute_ssf_HF_finite_temperature(double *SS,  double *xx, input in);
+
+double ssf_HF_finite_temperature(double yy, void *pp);
+
+// ---------------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE STATIC STRUCTURE FACTOR AT ZERO TEMPERATURE
+// ---------------------------------------------------------------------------
+
+void compute_ssf_stls_zero_temperature(double *SS, double *SSHF,
+				       double *GG, double *xx,
+				       input in);
+
+void compute_ssf_HF_zero_temperature(double *SS,  double *xx, input in);
+
+double ssf_stls_zero_temperature(double Omega, void* pp);
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION

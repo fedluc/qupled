@@ -146,9 +146,11 @@ void init_fixed_stls_arrays(input *in, double *xx,
   printf("----------------------------------------------------\n");
  
   // Chemical potential
-  if (verbose) printf("Chemical potential calculation: ");
-  in->mu = compute_chemical_potential(*in);
-  if (verbose) printf("Done. Chemical potential: %.8f\n", in->mu);
+  if (in->Theta > 0) {
+    if (verbose) printf("Chemical potential calculation: ");
+    in->mu = compute_chemical_potential(*in);
+    if (verbose) printf("Done. Chemical potential: %.8f\n", in->mu);
+  }
   
   // Wave-vector grid
   if (verbose) printf("Wave-vector grid initialization: ");
@@ -156,13 +158,20 @@ void init_fixed_stls_arrays(input *in, double *xx,
   if (verbose) printf("Done.\n");
   
   // Normalized ideal Lindhard density response
-  if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
-  compute_idr(phi, xx, *in, verbose);
-  if (verbose) printf("Done.\n");
+  if (in->Theta > 0) {
+    if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
+    compute_idr(phi, xx, *in, verbose);
+    if (verbose) printf("Done.\n");
+  }
   
   // Static structure factor in the Hartree-Fock approximation
   if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
-  compute_ssf_HF(SSHF, xx, *in);
+  if (in->Theta == 0) {
+    compute_ssf_HF_zero_temperature(SSHF, xx, *in);
+  }
+  else {
+    compute_ssf_HF_finite_temperature(SSHF, xx, *in);
+  }
   if (verbose) printf("Done.\n");
 
 }
@@ -190,9 +199,9 @@ int idx2(int xx, int yy, int x_size) {
 }
 
 
-// -------------------------------------------------------------------
-// FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY
-// -------------------------------------------------------------------
+// -------------------------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY AT FINITE TEMPERATURE
+// -------------------------------------------------------------------------------------
 
 struct idr_params {
 
@@ -211,7 +220,6 @@ void compute_idr(double *phi, double *xx,  input in, bool verbose) {
   
   // Loop over the Matsubara frequency
   for (int ll=0; ll<in.nl; ll++){
-    if (verbose) printf("l = %d\n", ll);
     // Compute lindhard density
     compute_idr_one_frequency(phil, xx, ll, in);
     // Fill output array
@@ -310,19 +318,93 @@ double idr_partial_x0(double yy, void *pp) {
 
 }
 
-// -------------------------------------------------------------------
+// -------------------------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY AT ZERO TEMPERATURE
+// -------------------------------------------------------------------------------------
+
+
+double idr_im_zero_temperature(double xx, double Omega) {
+
+  double x_2 = xx/2.0;
+  double Omega_2x = Omega/(2.0*xx);
+  double sum_factor = x_2 + Omega_2x;
+  double diff_factor = x_2 - Omega_2x;
+  double sum_factor2 = sum_factor*sum_factor;
+  double diff_factor2 = diff_factor*diff_factor;
+  double adder1 = 0.0;
+  double adder2 = 0.0;
+
+  if (sum_factor2 < 1.0) {
+    adder1 = 1 - sum_factor2;
+  }
+
+  if (diff_factor2 < 1.0) {
+    adder2 = 1 - diff_factor2;
+  }
+  
+  return -M_PI/(4.0*xx) * (adder1 - adder2);
+  
+}
+
+
+double idr_re_zero_temperature(double xx, double Omega) {
+
+  double x_2 = xx/2.0;
+  double Omega_2x = Omega/(2.0*xx);
+  double sum_factor = x_2 + Omega_2x;
+  double diff_factor = x_2 - Omega_2x;
+  double sum_factor2 = sum_factor*sum_factor;
+  double diff_factor2 = diff_factor*diff_factor;
+  double log_sum_arg;
+  double log_diff_arg;
+  double adder1 = 0.0;
+  double adder2 = 0.0;
+
+  if (sum_factor != 1) {
+    log_sum_arg = (sum_factor + 1.0)/(sum_factor - 1.0);
+    if (log_sum_arg < 0.0) log_sum_arg *= -1.0;
+    adder1 = 1.0/(4.0*xx)*(1.0 - sum_factor2)*log(log_sum_arg);
+  }
+
+  if (diff_factor != 1) {
+    log_diff_arg = (diff_factor + 1.0)/(diff_factor - 1.0);
+    if (log_diff_arg < 0.0) log_diff_arg *= -1.0;
+    adder2 = 1.0/(4.0*xx)*(1.0 - diff_factor2)*log(log_diff_arg);
+  }
+  
+  return 1.0/2.0 + adder1 + adder2;
+  
+}
+
+// --------------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
-// -------------------------------------------------------------------
+// --------------------------------------------------------------------------
 
 // Static structure factor from the fluctuation-dissipation theorem
-// (sum over matsubara frequencies)
 void compute_ssf_stls(double *SS, double *SSHF, double *GG, 
 		      double *phi, double *xx, input in){
+
+  if (in.Theta == 0) {
+    compute_ssf_stls_zero_temperature(SS, SSHF, GG, xx, in);
+  }
+  else {
+    compute_ssf_stls_finite_temperature(SS, SSHF, GG, phi, xx, in);
+  }
+
+}
+
+
+// --------------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR AT FINITE TEMPERATURE
+// --------------------------------------------------------------------------
+
+// Static structure factor from the sum over the Matsubara frequencies
+void compute_ssf_stls_finite_temperature(double *SS, double *SSHF, double *GG, 
+					 double *phi, double *xx, input in){
 
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double ff = 4*lambda*in.rs/M_PI;
   double xx2, BB, BB_tmp, BB_den, phixl;
-  //double Axl, tplT;
 
   for (int ii=0; ii<in.nx; ii++){
 
@@ -332,24 +414,14 @@ void compute_ssf_stls(double *SS, double *SSHF, double *GG,
       BB = 0.0;
       
       for (int ll=0; ll<in.nl; ll++){
-	//tplT = 2*M_PI*ll*in.Theta;
 	phixl = phi[idx2(ii,ll,in.nx)];
-	//Axl = (4.0/3.0)*xx2/(tplT*tplT + xx2*xx2);
 	BB_den = 1.0 + ff/xx2*(1 - GG[ii])*phixl;
-	//BB_tmp = phixl*phixl/BB_den - Axl*Axl;
 	BB_tmp = phixl*phixl/BB_den;
 	if (ll>0) BB_tmp *= 2.0;
 	BB += BB_tmp;
 	
       }
       
-      /* SS[ii] = SSHF[ii] */
-      /*   - 3.0/2.0*ff/xx2*in.Theta*(1- GG[ii])*BB */
-      /*   - 1.0/3.0*ff/xx2/in.Theta*(1 - GG[ii])* */
-      /*   (1.0/sinh(xx2/(2*in.Theta))* */
-      /*    1.0/sinh(xx2/(2*in.Theta)) + */
-      /*    2.0*in.Theta/xx2* */
-      /*    1.0/tanh(xx2/(2*in.Theta))); */
       SS[ii] = SSHF[ii]
 	- 3.0/2.0*ff/xx2*in.Theta*(1- GG[ii])*BB;
 
@@ -362,7 +434,7 @@ void compute_ssf_stls(double *SS, double *SSHF, double *GG,
 }
 
 // Static structure factor within the Hartree-Fock approximation
-struct ssf_HF_params {
+struct ssf_HF_finite_temperature_params {
 
   double xx;
   double mu;
@@ -370,7 +442,7 @@ struct ssf_HF_params {
 
 };
 
-void compute_ssf_HF(double *SS,  double *xx,  input in){
+void compute_ssf_HF_finite_temperature(double *SS,  double *xx,  input in){
 
   double err;
   size_t nevals;
@@ -381,13 +453,13 @@ void compute_ssf_HF(double *SS,  double *xx,  input in){
 
   // Integration function
   gsl_function ff_int;
-  ff_int.function = &ssf_HF;
+  ff_int.function = &ssf_HF_finite_temperature;
 
   // Static structure factor in the Hartree-Fock approximation
   for (int ii = 0; ii < in.nx; ii++) {
 
 
-    struct ssf_HF_params ssf_HF_p = {xx[ii], in.mu, in.Theta};
+    struct ssf_HF_finite_temperature_params ssf_HF_p = {xx[ii], in.mu, in.Theta};
     ff_int.params = &ssf_HF_p;
     gsl_integration_cquad(&ff_int,
 			  xx[0], xx[in.nx-1],
@@ -404,7 +476,7 @@ void compute_ssf_HF(double *SS,  double *xx,  input in){
   
 }
 
-double ssf_HF(double yy, void* pp) {
+double ssf_HF_finite_temperature(double yy, void* pp) {
 
   struct idr_params *params = (struct idr_params*)pp;
   double xx = (params->xx);
@@ -417,10 +489,108 @@ double ssf_HF(double yy, void* pp) {
       *log((1 + exp(mu - ymx*ymx/Theta))/(1 + exp(mu - ypx*ypx/Theta)));
   }
   else {
-    return -3.0/2.0*yy2/(1.0 + cosh(yy2/Theta - mu));
+    return -3.0*yy2/((1.0 + exp(yy2/Theta - mu))*(1.0 + exp(yy2/Theta - mu)));
   }
 
 }
+
+
+
+// ------------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR AT ZERO TEMPERATURE
+// ------------------------------------------------------------------------
+
+// Static structure factor from the integral over the frequencies
+struct ssf_stls_zero_temperature_params {
+
+  double xx;
+  double rs;
+  double GG;
+  
+};
+
+
+void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG, 
+				       double *xx, input in){
+
+  double err;
+  size_t nevals;
+
+  // Integration workspace
+  gsl_integration_cquad_workspace *wsp
+    = gsl_integration_cquad_workspace_alloc(100);
+  
+  // Integration function
+  gsl_function ff_int;
+  ff_int.function = &ssf_stls_zero_temperature;
+  
+  for (int ii=0; ii<in.nx; ii++){
+
+    if (xx[ii] > 0.0){
+
+      struct ssf_stls_zero_temperature_params ssf_p = {xx[ii], in.rs, GG[ii]};
+      ff_int.params = &ssf_p;
+      gsl_integration_cquad(&ff_int,
+      			    0.0, xx[ii]*100.0,
+      			    0.0, 1e-10,
+      			    wsp,
+      			    &SS[ii], &err, &nevals);
+
+    }
+    else {
+      SS[ii] = 0.0;
+    }
+
+    SS[ii] += SSHF[ii];
+    
+  }
+
+  // Free memory
+  gsl_integration_cquad_workspace_free(wsp);
+  
+}
+
+
+double ssf_stls_zero_temperature(double Omega, void* pp) {
+
+  struct ssf_stls_zero_temperature_params *params = (struct ssf_stls_zero_temperature_params*)pp;
+  double xx = (params->xx);
+  double rs = (params->rs);
+  double GG = (params->GG);
+  double xx2 = xx*xx;
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0); 
+  double ff = (4.0*lambda*rs)/(M_PI*xx2);
+  double phi0_im;
+  double phi0_re;
+  double fact_re, fact_re2;
+  double fact_im, fact_im2;
+
+  phi0_re = idr_re_zero_temperature(xx, Omega);
+  phi0_im = idr_im_zero_temperature(xx, Omega);
+
+  fact_re = 1 + ff*(1 - GG)*phi0_re;
+  fact_im = ff*(1 - GG)*phi0_im;
+  fact_re2 = fact_re*fact_re;
+  fact_im2 = fact_im*fact_im;
+
+  return 3.0/(2.0*M_PI)*phi0_im*(1.0/(fact_re2 + fact_im2) - 1.0);
+
+}
+
+// Static structure factor within the Hartree-Fock approximation
+void compute_ssf_HF_zero_temperature(double *SS,  double *xx,  input in){
+
+  for (int ii = 0; ii < in.nx; ii++) {
+    if (xx[ii] < 2.0) {
+      SS[ii] = (1.0/16.0)*xx[ii]*(12.0 - xx[ii]*xx[ii]);
+    }
+    else {
+      SS[ii] = 1.0;
+    }
+  }
+  
+}
+
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
