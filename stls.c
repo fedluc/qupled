@@ -55,7 +55,7 @@ void solve_stls(input in, bool verbose) {
 
     // Update SLFC
     compute_slfc(GG_new, SS, xx, in);
-    
+
     // Update diagnostic
     iter_err = 0.0;
     iter_counter++;
@@ -360,15 +360,15 @@ double idr_re_zero_temperature(double xx, double Omega) {
   double adder1 = 0.0;
   double adder2 = 0.0;
 
-  if (sum_factor != 1) {
+  if (sum_factor != 1.0) {
     log_sum_arg = (sum_factor + 1.0)/(sum_factor - 1.0);
-    if (log_sum_arg < 0.0) log_sum_arg *= -1.0;
+    if (log_sum_arg < 0.0) log_sum_arg = -log_sum_arg;
     adder1 = 1.0/(4.0*xx)*(1.0 - sum_factor2)*log(log_sum_arg);
   }
 
-  if (diff_factor != 1) {
+  if (diff_factor != 1.0) {
     log_diff_arg = (diff_factor + 1.0)/(diff_factor - 1.0);
-    if (log_diff_arg < 0.0) log_diff_arg *= -1.0;
+    if (log_diff_arg < 0.0) log_diff_arg = -log_diff_arg;
     adder2 = 1.0/(4.0*xx)*(1.0 - diff_factor2)*log(log_diff_arg);
   }
   
@@ -514,6 +514,8 @@ void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG,
 				       double *xx, input in){
 
   double err;
+  double int_lo;
+  double int_hi;
   size_t nevals;
 
   // Integration workspace
@@ -528,11 +530,17 @@ void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG,
 
     if (xx[ii] > 0.0){
 
+      // Integration limits
+      if (xx[ii] < 2.0) int_lo = 0.0;
+      else int_lo = xx[ii]*(xx[ii] - 2.0);
+      int_hi = xx[ii]*(2.0 + xx[ii]);
+
+      // Compute integral
       struct ssf_stls_zero_temperature_params ssf_p = {xx[ii], in.rs, GG[ii]};
       ff_int.params = &ssf_p;
       gsl_integration_cquad(&ff_int,
-      			    0.0, xx[ii]*100.0,
-      			    0.0, 1e-10,
+      			    int_lo, int_hi,
+      			    0.0, 1e-5,
       			    wsp,
       			    &SS[ii], &err, &nevals);
 
