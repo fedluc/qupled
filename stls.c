@@ -545,6 +545,7 @@ struct ssf_stls_zero_temperature_params {
 void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG, 
 				       double *xx, input in){
 
+  bool get_plasmon = true;
   double ssf_wp;
   double err;
   double int_lo;
@@ -578,7 +579,12 @@ void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG,
       			    &SS[ii], &err, &nevals);
 
       // Add plasmon contribution
-      ssf_wp = ssf_plasmon(xx[ii], in);
+      ssf_wp = 0.0;
+      if (get_plasmon) {
+	ssf_wp = ssf_plasmon(xx[ii], in);
+	printf("%f\n", ssf_wp);
+	if (ssf_wp < 0.0) get_plasmon = false;
+      };
       if (ssf_wp >= 0.0) SS[ii] += ssf_wp;
 
     }
@@ -713,13 +719,13 @@ double ssf_plasmon(double xx, input in) {
     w_min = gsl_min_fminimizer_minimum(mini);
     w_lo = gsl_min_fminimizer_x_lower(mini);
     w_hi = gsl_min_fminimizer_x_upper(mini);
-    status = gsl_min_test_interval(w_lo, w_hi, ROOTMIN_ABS_ERR, 0.0);
+    status = gsl_min_test_interval(w_lo, w_hi, 0.0, MIN_REL_ERR);
 
     // Update iteration counter
     iter++;
 
   }
-  while (status == GSL_CONTINUE && iter < ROOTMIN_MAX_ITER);
+  while (status == GSL_CONTINUE && iter < MIN_MAX_ITER);
 
   // Free memory
   gsl_min_fminimizer_free(mini);
@@ -728,7 +734,7 @@ double ssf_plasmon(double xx, input in) {
   eps_min = dr_mod_zero_temperature(w_min, &epsp);
   
   // Output
-  if (status == GSL_SUCCESS && eps_min < ROOTMIN_ABS_ERR) {
+  if (eps_min < ROOT_ABS_ERR) {
     return 1.5 / (ff*fabs(drp_re_zero_temperature(xx, w_min, in.rs)));
   } else {
     return -1; // No valid root was found
