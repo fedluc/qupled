@@ -35,6 +35,16 @@ typedef struct {
   
 } input;
 
+// -------------------------------------------------------------------
+// CONSTANTS FOR ROOT SOLVERS, MINIMIZATIONS AND QUADRATURES
+// -------------------------------------------------------------------
+
+static const int ROOTMIN_MAX_ITER = 10000;
+static const double ROOTMIN_REL_ERR = 1e-10;
+static const double ROOTMIN_ABS_ERR = 1e-10;
+static const double FOURIER_REL_ERR = 1e-10;
+static const double QUAD_REL_ERR = 1e-5;
+
 // ----------------------------------------
 // FUNCTION TO READ INPUT DATA
 // ----------------------------------------

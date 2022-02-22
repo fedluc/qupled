@@ -191,7 +191,7 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
 	  ff_part2_int.params = &pp_part2;
 	  gsl_integration_cquad(&ff_part2_int,
 				wmin, wmax,
-				0.0, 1e-5,
+				0.0, QUAD_REL_ERR,
 				wsp,
 				&GG_part1[jj], &err, &nevals);
 
@@ -212,7 +212,7 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
       ff_part1_int.params = &pp_part1;
       gsl_integration_cquad(&ff_part1_int,
 			    xx[0], xx[in.nx-1],
-			    0.0, 1e-5,
+			    0.0, QUAD_REL_ERR,
 			    wsp,
 			    &GG_tmp, &err, &nevals);
       
@@ -428,8 +428,8 @@ void bridge_function_ocp_lct(double *bf, double *xx, input in){
 
     // Fourier transform
     gsl_integration_qawf(&ff_int,
-    			 0.0,
-    			 1e-10, 1000,
+    			 0.0, FOURIER_REL_ERR,
+			 1000,
     			 wsp, wspc,
     			 qtab,
     			 &bf[ii], &err);

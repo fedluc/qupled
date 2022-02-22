@@ -3,6 +3,7 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_integration.h>
+#include <gsl/gsl_min.h>
 #include "solvers.h"
 #include "chemical_potential.h"
 #include "stls.h"
@@ -42,40 +43,40 @@ void solve_stls(input in, bool verbose) {
 
 
   // Iterative procedure
-  if (verbose) printf("SSF and SLFC calculation...\n");
-  double iter_err = 1.0;
-  int iter_counter = 0;
-  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
+  /* if (verbose) printf("SSF and SLFC calculation...\n"); */
+  /* double iter_err = 1.0; */
+  /* int iter_counter = 0; */
+  /* while (iter_counter < in.nIter && iter_err > in.err_min_iter ) { */
     
-    // Start timing
-    double tic = omp_get_wtime();
+  /*   // Start timing */
+  /*   double tic = omp_get_wtime(); */
     
-    // Update SSF
-    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
+  /*   // Update SSF */
+  /*   compute_ssf_stls(SS, SSHF, GG, phi, xx, in); */
 
-    // Update SLFC
-    compute_slfc(GG_new, SS, xx, in);
+  /*   // Update SLFC */
+  /*   compute_slfc(GG_new, SS, xx, in); */
 
-    // Update diagnostic
-    iter_err = 0.0;
-    iter_counter++;
-    for (int ii=0; ii<in.nx; ii++) {
-      iter_err += (GG_new[ii] - GG[ii]) * (GG_new[ii] - GG[ii]);
-      GG[ii] = in.a_mix*GG_new[ii] + (1-in.a_mix)*GG[ii];
-    }
-    iter_err = sqrt(iter_err);  
+  /*   // Update diagnostic */
+  /*   iter_err = 0.0; */
+  /*   iter_counter++; */
+  /*   for (int ii=0; ii<in.nx; ii++) { */
+  /*     iter_err += (GG_new[ii] - GG[ii]) * (GG_new[ii] - GG[ii]); */
+  /*     GG[ii] = in.a_mix*GG_new[ii] + (1-in.a_mix)*GG[ii]; */
+  /*   } */
+  /*   iter_err = sqrt(iter_err);   */
    
-    // End timing
-    double toc = omp_get_wtime();
+  /*   // End timing */
+  /*   double toc = omp_get_wtime(); */
     
-    // Print diagnostic
-    if (verbose) {
-      printf("--- iteration %d ---\n", iter_counter);
-      printf("Elapsed time: %f seconds\n", toc - tic);
-      printf("Residual error: %.5e\n", iter_err);
-      fflush(stdout);
-    }
-  }
+  /*   // Print diagnostic */
+  /*   if (verbose) { */
+  /*     printf("--- iteration %d ---\n", iter_counter); */
+  /*     printf("Elapsed time: %f seconds\n", toc - tic); */
+  /*     printf("Residual error: %.5e\n", iter_err); */
+  /*     fflush(stdout); */
+  /*   } */
+  /* } */
   if (verbose) printf("Done.\n");
   
   // Internal energy
@@ -255,7 +256,7 @@ void compute_idr_one_frequency(double *phil, double *xx,  int ll, input in) {
     ff_int.params = &phixlp;
     gsl_integration_cquad(&ff_int, 
 			  xx[0], xx[in.nx-1], 
-			  0.0, 1e-5, 
+			  0.0, QUAD_REL_ERR, 
 			  wsp, 
 			  &phil[ii], &err, &nevals);
 
@@ -323,6 +324,37 @@ double idr_partial_x0(double yy, void *pp) {
 // -------------------------------------------------------------------------------------
 
 
+// Real part of the ideal density response
+double idr_re_zero_temperature(double xx, double Omega) {
+
+  double x_2 = xx/2.0;
+  double Omega_2x = Omega/(2.0*xx);
+  double sum_factor = x_2 + Omega_2x;
+  double diff_factor = x_2 - Omega_2x;
+  double sum_factor2 = sum_factor*sum_factor;
+  double diff_factor2 = diff_factor*diff_factor;
+  double log_sum_arg;
+  double log_diff_arg;
+  double adder1 = 0.0;
+  double adder2 = 0.0;
+
+  if (sum_factor != 1.0) {
+    log_sum_arg = (sum_factor + 1.0)/(sum_factor - 1.0);
+    if (log_sum_arg < 0.0) log_sum_arg = -log_sum_arg;
+    adder1 = 1.0/(4.0*xx)*(1.0 - sum_factor2)*log(log_sum_arg);
+  }
+
+  if (diff_factor != 1.0 && diff_factor != -1.0) {
+    log_diff_arg = (diff_factor + 1.0)/(diff_factor - 1.0);
+    if (log_diff_arg < 0.0) log_diff_arg = -log_diff_arg;
+    adder2 = 1.0/(4.0*xx)*(1.0 - diff_factor2)*log(log_diff_arg);
+  }
+  
+  return 0.5 + adder1 + adder2;
+  
+}
+
+// Imaginary part of the ideal density response
 double idr_im_zero_temperature(double xx, double Omega) {
 
   double x_2 = xx/2.0;
@@ -347,14 +379,13 @@ double idr_im_zero_temperature(double xx, double Omega) {
 }
 
 
-double idr_re_zero_temperature(double xx, double Omega) {
+// Frequency derivative of the real part of the ideal density response
+double idrp_re_zero_temperature(double xx, double Omega) {
 
   double x_2 = xx/2.0;
   double Omega_2x = Omega/(2.0*xx);
   double sum_factor = x_2 + Omega_2x;
   double diff_factor = x_2 - Omega_2x;
-  double sum_factor2 = sum_factor*sum_factor;
-  double diff_factor2 = diff_factor*diff_factor;
   double log_sum_arg;
   double log_diff_arg;
   double adder1 = 0.0;
@@ -363,18 +394,19 @@ double idr_re_zero_temperature(double xx, double Omega) {
   if (sum_factor != 1.0) {
     log_sum_arg = (sum_factor + 1.0)/(sum_factor - 1.0);
     if (log_sum_arg < 0.0) log_sum_arg = -log_sum_arg;
-    adder1 = 1.0/(4.0*xx)*(1.0 - sum_factor2)*log(log_sum_arg);
+    adder1 = 1.0/(4.0*xx*xx)*(1.0 - sum_factor*log(log_sum_arg));
   }
 
-  if (diff_factor != 1.0) {
+  if (diff_factor != 1.0 && diff_factor != -1.0) {
     log_diff_arg = (diff_factor + 1.0)/(diff_factor - 1.0);
     if (log_diff_arg < 0.0) log_diff_arg = -log_diff_arg;
-    adder2 = 1.0/(4.0*xx)*(1.0 - diff_factor2)*log(log_diff_arg);
+    adder2 = -1.0/(4.0*xx*xx)*(1.0 - diff_factor*log(log_diff_arg));
   }
   
-  return 1.0/2.0 + adder1 + adder2;
+  return adder1 + adder2;
   
 }
+
 
 // --------------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
@@ -463,7 +495,7 @@ void compute_ssf_HF_finite_temperature(double *SS,  double *xx,  input in){
     ff_int.params = &ssf_HF_p;
     gsl_integration_cquad(&ff_int,
 			  xx[0], xx[in.nx-1],
-			  0.0, 1e-5,
+			  0.0, QUAD_REL_ERR,
 			  wsp,
 			  &SS[ii], &err, &nevals);
 
@@ -513,6 +545,7 @@ struct ssf_stls_zero_temperature_params {
 void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG, 
 				       double *xx, input in){
 
+  double ssf_wp;
   double err;
   double int_lo;
   double int_hi;
@@ -540,15 +573,20 @@ void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG,
       ff_int.params = &ssf_p;
       gsl_integration_cquad(&ff_int,
       			    int_lo, int_hi,
-      			    0.0, 1e-5,
+      			    0.0, QUAD_REL_ERR,
       			    wsp,
       			    &SS[ii], &err, &nevals);
+
+      // Add plasmon contribution
+      ssf_wp = ssf_plasmon(xx[ii], in);
+      if (ssf_wp >= 0.0) SS[ii] += ssf_wp;
 
     }
     else {
       SS[ii] = 0.0;
     }
 
+    // Add Hartree-Fock contribution
     SS[ii] += SSHF[ii];
     
   }
@@ -600,6 +638,138 @@ void compute_ssf_HF_zero_temperature(double *SS,  double *xx,  input in){
 }
 
 
+// Plasmon contribution to the static structure factor
+struct eps_params {
+
+  double xx;
+  double rs;
+
+};
+
+
+double ssf_plasmon(double xx, input in) {
+  
+  // Variables
+  double w_co = xx*xx + 2*xx;
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double ff = (4.0*lambda*in.rs)/(M_PI*xx*xx);
+  double dx;
+  double w_lo, w_min, w_hi;
+  double eps_lo, eps_min, eps_hi;
+  int status, iter;
+
+  // Set-up function
+  gsl_function ff_minimizer;
+  ff_minimizer.function = &dr_mod_zero_temperature;
+  struct eps_params epsp = {xx, in.rs};
+  ff_minimizer.params = &epsp;
+    
+  // Get approximate location of the mimimum (to initialize the minimizer)
+  dx = w_co;
+  w_lo = -dx;
+  w_min = 0.0;
+  w_hi = dx;
+  eps_lo = 0.0;
+  eps_min = 1.0;
+  eps_hi = 0.0;
+  while (eps_min > eps_lo || eps_min > eps_hi) {
+    w_lo = w_min;
+    w_min = w_hi;
+    w_hi += dx;
+    eps_lo = dr_mod_zero_temperature(w_lo, &epsp);
+    eps_min = dr_mod_zero_temperature(w_min, &epsp);
+    eps_hi = dr_mod_zero_temperature(w_hi, &epsp); 
+  }
+  
+  // Set-up minimizer
+  const gsl_min_fminimizer_type * minit = gsl_min_fminimizer_goldensection;
+  gsl_min_fminimizer * mini = gsl_min_fminimizer_alloc(minit);
+  gsl_min_fminimizer_set(mini, &ff_minimizer, w_min, w_lo, w_hi);
+
+  // Solve dispersion relation to find the plasmon frequency
+  iter = 0;
+  do
+  {
+    
+    // Solver iteration
+    status = gsl_min_fminimizer_iterate(mini);
+
+    // Get solver status
+    w_min = gsl_min_fminimizer_minimum(mini);
+    w_lo = gsl_min_fminimizer_x_lower(mini);
+    w_hi = gsl_min_fminimizer_x_upper(mini);
+    status = gsl_min_test_interval(w_lo, w_hi, ROOTMIN_ABS_ERR, 0.0);
+
+    // Update iteration counter
+    iter++;
+
+  }
+  while (status == GSL_CONTINUE && iter < ROOTMIN_MAX_ITER);
+
+  // Free memory
+  gsl_min_fminimizer_free(mini);
+
+  // Dielectric response at the minimum
+  eps_min = dr_mod_zero_temperature(w_min, &epsp);
+  
+  // Check value of the function at the minima and return accordingly
+  /* if (status == GSL_SUCCESS && eps_min < ROOTMIN_REL_ERR) { */
+  /*   printf("--------------------------------\n"); */
+  /*   printf("%f %f %.10f %.10f\n", xx, w_min, eps_min, 1.5/(ff*fabs(drp_re_zero_temperature(xx, w_min, in.rs)))); */
+  /* } */
+  if (status == GSL_SUCCESS && eps_min < ROOTMIN_ABS_ERR) {
+    return 1.5 / (ff*fabs(drp_re_zero_temperature(xx, w_min, in.rs)));
+  } else {
+    return -1; // No valid root was found
+  }
+  return 0;
+  
+}
+
+// Real part of the dielectric response
+double dr_re_zero_temperature(double xx, double Omega, double rs){
+
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0); 
+  double ff = (4.0*lambda*rs)/(M_PI*xx*xx);
+
+  return 1 + ff*idr_re_zero_temperature(xx,  Omega);
+    
+}
+
+// Imaginary part of the dielectric response
+double dr_im_zero_temperature(double xx, double Omega, double rs){
+
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0); 
+  double ff = (4.0*lambda*rs)/(M_PI*xx*xx);
+
+  return ff*idr_im_zero_temperature(xx,  Omega);
+    
+}
+
+// Modulus of the dielectric response
+double dr_mod_zero_temperature(double Omega, void *pp){
+
+  struct eps_params *params = (struct eps_params*)pp;
+  double xx = params->xx;
+  double rs = params->rs;
+
+  double eps_re = dr_re_zero_temperature(xx, Omega, rs); 
+  double eps_im = dr_im_zero_temperature(xx, Omega, rs);
+  
+  return sqrt(eps_re*eps_re + eps_im*eps_im);
+  
+}
+
+// Frequency derivative of the real part of the dielectric response
+double drp_re_zero_temperature(double xx, double Omega, double rs){
+
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0); 
+  double ff = (4.0*lambda*rs)/(M_PI*xx*xx);
+
+  return ff*idrp_re_zero_temperature(xx, Omega);
+    
+}
+ 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
@@ -643,7 +813,7 @@ void compute_slfc(double *GG, double *SS, double *xx, input in) {
     ff_int.params = &slfcp;
     gsl_integration_cquad(&ff_int,
 			  xx[0], xx[in.nx-1],
-			  0.0, 1e-5,
+			  0.0, QUAD_REL_ERR,
 			  wsp,
 			  &GG[ii], &err, &nevals);
   }
@@ -728,7 +898,7 @@ double compute_internal_energy(double *SS, double *xx,  input in) {
   ff_int.params = &uexp;  
   gsl_integration_cquad(&ff_int,
 			xx[0], xx[in.nx-1],
-			0.0, 1e-5,
+			0.0, QUAD_REL_ERR,
 			wsp,
 			&ie, &err, &neval);
   

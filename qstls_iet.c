@@ -218,7 +218,7 @@ void compute_adr_iet_fixed(double *xx, input in) {
   	      ff_int.params = &pp;
   	      gsl_integration_cquad(&ff_int,
   				    xx[0], xx[in.nx-1],
-  				    0.0, 1e-5,
+  				    0.0, QUAD_REL_ERR,
   				    wsp,
   				    &adr_iet_fixed,
   				    &err, &nevals);
@@ -412,7 +412,7 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
 	    ff_part2_int.params = &pp_part2;
 	    gsl_integration_cquad(&ff_part2_int,
 				  wmin, wmax,
-				  0.0, 1e-5,
+				  0.0, QUAD_REL_ERR,
 				  wsp,
 				  &adr_part1[jj], &err, &nevals);
 
@@ -440,7 +440,7 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
       	ff_part1_int.params = &pp_part1;
       	gsl_integration_cquad(&ff_part1_int,
       			      xx[0], xx[in.nx-1],
-      			      0.0, 1e-5,
+      			      0.0, QUAD_REL_ERR,
       			      wsp,
       			      &psi_tmp, &err, &nevals);
 	

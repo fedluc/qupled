@@ -197,7 +197,7 @@ void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
 	      ff_int_part2.params = &ppart2;
 	      gsl_integration_cquad(&ff_int_part2,
 				    tmin, tmax,
-				    0.0, 1e-5,
+				    0.0, QUAD_REL_ERR,
 				    wsp,
 				    &psi_fixed_part1[kk], &err, &nevals);
 	    }
@@ -212,7 +212,7 @@ void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
 	  ff_int_part1.params = &ppart1;
 	  gsl_integration_cquad(&ff_int_part1,
 				xx[0], xx[in.nx-1],
-				0.0, 1e-5,
+				0.0, QUAD_REL_ERR,
 				wsp,
 				&psi_fixed[idx3(ii, ll, jj, in.nx, in.nl)],
 				&err, &nevals);
@@ -378,7 +378,7 @@ void compute_adr(double *psi, double *psi_fixed, double *SS,
        ff_int.params = &pp;
        gsl_integration_cquad(&ff_int,
 			     xx[0], xx[in.nx-1],
-			     0.0, 1e-5,
+			     0.0, QUAD_REL_ERR,
 			     wsp,
 			     &psi[idx2(ii,ll,in.nx)], 
 			     &err, &nevals);

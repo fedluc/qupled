@@ -27,7 +27,6 @@ double normalization_condition(double mu, void *pp) {
 double compute_chemical_potential(input in) {
   
   // Variables
-  int max_iter = 100;
   double mu_lo = in.mu_lo;
   double mu_hi = in.mu_hi;
   double mu;
@@ -57,13 +56,13 @@ double compute_chemical_potential(input in) {
     mu_lo = gsl_root_fsolver_x_lower(rs);
     mu_hi = gsl_root_fsolver_x_upper(rs);
     status = gsl_root_test_interval (mu_lo, mu_hi,
-				     0, 1e-10);
+				     0, ROOTMIN_REL_ERR);
     
     // Update iteration counter
     iter++;
 
   }
-  while (status == GSL_CONTINUE && iter < max_iter);
+  while (status == GSL_CONTINUE && iter < ROOTMIN_MAX_ITER);
 
   // Free memory
   gsl_root_fsolver_free(rs);

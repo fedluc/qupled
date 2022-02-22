@@ -36,9 +36,9 @@ void wave_vector_grid(double *xx, input *in);
 int idx2(int xx, int yy, int x_size);
 
 
-// -------------------------------------------------------------------
-// FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY
-// -------------------------------------------------------------------
+// -------------------------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY AT FINITE TEMPERATURE
+// -------------------------------------------------------------------------------------
 
 void compute_idr(double *phi, double *xx, input in, bool verbose);
 
@@ -47,6 +47,16 @@ void compute_idr_one_frequency(double *phil, double *xx, int ll, input in);
 double idr_partial_xl(double yy, void *pp);
 
 double idr_partial_x0(double yy, void *pp);
+
+// -------------------------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY AT ZERO TEMPERATURE
+// -------------------------------------------------------------------------------------
+
+double idr_re_zero_temperature(double xx, double Omega);
+
+double idr_im_zero_temperature(double xx, double Omega);
+
+double idrp_re_zero_temperature(double xx, double Omega);
 
 // ---------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC STRUCTURE FACTOR
@@ -79,6 +89,16 @@ void compute_ssf_stls_zero_temperature(double *SS, double *SSHF,
 void compute_ssf_HF_zero_temperature(double *SS,  double *xx, input in);
 
 double ssf_stls_zero_temperature(double Omega, void* pp);
+
+double ssf_plasmon(double xx, input in);
+
+double dr_re_zero_temperature(double xx, double Omega, double rs);
+
+double dr_re_zero_temperature(double xx, double Omega, double rs);
+
+double dr_mod_zero_temperature(double Omega, void *pp);
+
+double drp_re_zero_temperature(double xx, double Omega, double rs);
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
