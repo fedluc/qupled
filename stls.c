@@ -663,7 +663,22 @@ double ssf_plasmon(double xx, input in) {
   ff_minimizer.function = &dr_mod_zero_temperature;
   struct eps_params epsp = {xx, in.rs};
   ff_minimizer.params = &epsp;
-    
+
+  // Approach: The zero of the dielectric response function, eps,  is found
+  // by looking for a zero of the modulo of the dielectric response function,
+  // (Re[eps]^2 + Im[eps]^2)^(1/2). This cannot be done with a simple
+  // bisection method because the modulo of the dielectric response never
+  // crosses zero and methods based on the derivative are not guaranteed to
+  // give a solution. Moreover, for some wave-vectors, the modulo of the
+  // dielectric function is never zero, no solutions can be found and any
+  // root finding algorithm is bound to be problematic. Since the zero of the
+  // function (Re[eps]^2 + Im[eps]^2)^(1/2) is also a minimum, a different
+  // approach is followed:  we first look for a minimum of the modulo of the
+  // dielectric response function and then, if at such minimum
+  // (Re[eps]^2 + Im[eps]^2)^(1/2) is also zero, then we take the frequency
+  // that minimizes (Re[eps]^2 + Im[eps]^2)^(1/2) to be also a zero of the
+  // dielectric function.
+  
   // Get approximate location of the mimimum (to initialize the minimizer)
   dx = w_co;
   w_lo = -dx;
@@ -686,7 +701,7 @@ double ssf_plasmon(double xx, input in) {
   gsl_min_fminimizer * mini = gsl_min_fminimizer_alloc(minit);
   gsl_min_fminimizer_set(mini, &ff_minimizer, w_min, w_lo, w_hi);
 
-  // Solve dispersion relation to find the plasmon frequency
+  // Refine minimum location
   iter = 0;
   do
   {
@@ -709,14 +724,10 @@ double ssf_plasmon(double xx, input in) {
   // Free memory
   gsl_min_fminimizer_free(mini);
 
-  // Dielectric response at the minimum
+  // Modulo of the dielectric response at the minimum
   eps_min = dr_mod_zero_temperature(w_min, &epsp);
   
-  // Check value of the function at the minima and return accordingly
-  /* if (status == GSL_SUCCESS && eps_min < ROOTMIN_REL_ERR) { */
-  /*   printf("--------------------------------\n"); */
-  /*   printf("%f %f %.10f %.10f\n", xx, w_min, eps_min, 1.5/(ff*fabs(drp_re_zero_temperature(xx, w_min, in.rs)))); */
-  /* } */
+  // Output
   if (status == GSL_SUCCESS && eps_min < ROOTMIN_ABS_ERR) {
     return 1.5 / (ff*fabs(drp_re_zero_temperature(xx, w_min, in.rs)));
   } else {
