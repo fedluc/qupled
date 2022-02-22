@@ -43,40 +43,40 @@ void solve_stls(input in, bool verbose) {
 
 
   // Iterative procedure
-  /* if (verbose) printf("SSF and SLFC calculation...\n"); */
-  /* double iter_err = 1.0; */
-  /* int iter_counter = 0; */
-  /* while (iter_counter < in.nIter && iter_err > in.err_min_iter ) { */
+  if (verbose) printf("SSF and SLFC calculation...\n");
+  double iter_err = 1.0;
+  int iter_counter = 0;
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     
-  /*   // Start timing */
-  /*   double tic = omp_get_wtime(); */
+    // Start timing
+    double tic = omp_get_wtime();
     
-  /*   // Update SSF */
-  /*   compute_ssf_stls(SS, SSHF, GG, phi, xx, in); */
+    // Update SSF
+    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
 
-  /*   // Update SLFC */
-  /*   compute_slfc(GG_new, SS, xx, in); */
+    // Update SLFC
+    compute_slfc(GG_new, SS, xx, in);
 
-  /*   // Update diagnostic */
-  /*   iter_err = 0.0; */
-  /*   iter_counter++; */
-  /*   for (int ii=0; ii<in.nx; ii++) { */
-  /*     iter_err += (GG_new[ii] - GG[ii]) * (GG_new[ii] - GG[ii]); */
-  /*     GG[ii] = in.a_mix*GG_new[ii] + (1-in.a_mix)*GG[ii]; */
-  /*   } */
-  /*   iter_err = sqrt(iter_err);   */
+    // Update diagnostic
+    iter_err = 0.0;
+    iter_counter++;
+    for (int ii=0; ii<in.nx; ii++) {
+      iter_err += (GG_new[ii] - GG[ii]) * (GG_new[ii] - GG[ii]);
+      GG[ii] = in.a_mix*GG_new[ii] + (1-in.a_mix)*GG[ii];
+    }
+    iter_err = sqrt(iter_err);
    
-  /*   // End timing */
-  /*   double toc = omp_get_wtime(); */
+    // End timing
+    double toc = omp_get_wtime();
     
-  /*   // Print diagnostic */
-  /*   if (verbose) { */
-  /*     printf("--- iteration %d ---\n", iter_counter); */
-  /*     printf("Elapsed time: %f seconds\n", toc - tic); */
-  /*     printf("Residual error: %.5e\n", iter_err); */
-  /*     fflush(stdout); */
-  /*   } */
-  /* } */
+    // Print diagnostic
+    if (verbose) {
+      printf("--- iteration %d ---\n", iter_counter);
+      printf("Elapsed time: %f seconds\n", toc - tic);
+      printf("Residual error: %.5e\n", iter_err);
+      fflush(stdout);
+    }
+  }
   if (verbose) printf("Done.\n");
   
   // Internal energy
