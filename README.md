@@ -39,7 +39,7 @@ Given a state point defined via the quantum degeneracy parameter (Theta) and via
   * The static structure factor and the part of the auxiliary density response that depends explicitly on the static structure factor are computed via an iterative solution which employs [mixing](https://aip.scitation.org/doi/abs/10.1063/1.1682399]) and is assumed converged if the condition 
 ||S<sub>i</sub>(x) - S<sub>i-1</sub>(x)|| < epsilon is satisfied between two successive iterations. Here S(x) is the static structure factor and epsilon is a tolerance specified in input.
 
-All the integrals are computed with the doubly-adaptive Clenshaw-Curtis quadrature scheme as implemented in the [CQUAD](https://www.gnu.org/software/gsl/doc/html/integration.html) function of the GSL library. Once the iterative procedure is completed, the results are written to a set of dedicated output files (see the section "Output")
+All the integrals are computed with the doubly-adaptive Clenshaw-Curtis quadrature scheme as implemented in the [CQUAD](https://www.gnu.org/software/gsl/doc/html/integration.html) function of the GSL library. Once the iterative procedure is completed, the results are written to a set of dedicated output files (see [Output](https://github.com/fedluc/STLS/edit/master/README.md#output))
 
 The following command line options can be employed to control the calculations performed by STLS (the same information can also be retrieved by running STLS with the option `--help`) :
 
@@ -52,7 +52,7 @@ The following command line options can be employed to control the calculations p
   * `--guess-write` can be used to run the code in "guess" mode by setting `--guess-write=1`. More information on what this means is given in the section [Guess and restart](https://github.com/fedluc/STLS/edit/master/README.md#guess-and-restart). Default `--guess-write=0` (the code runs in the normal mode and solves the theory specified by `--theory`)
   
   * `--iet-mapping` specifies what mapping to use between classical state points specified by &Gamma; and quantum state points specified by (r<sub>s</sub>, &theta;) for the IET-based theories (STLS-IET, qSTLS-IET). Default `--iet-mapping=standard`. Accepted options are: 
-     * `standard` : &Gamma; = 2&lambda;<sup>2</sup>r<sub>s</sub>/&theta;
+     * `standard` : &Gamma; = 2&lambda;<sup>2</sup>r<sub>s</sub>/&theta;  (NOTE: this cannot be used in the ground state)
      * `sqrt` : &Gamma; = 2&lambda;<sup>2</sup>r<sub>s</sub>/(1 + &theta;<sup>2</sup>)<sup>1/2</sup>
      * `linear` : &Gamma; = 2&lambda;<sup>2</sup>r<sub>s</sub>/(1 + &theta;)
 
@@ -92,6 +92,10 @@ The following command line options can be employed to control the calculations p
   
   * `--xmax` specifies the cutoff for wave-vector grid. Default `--xcut=20`
  
+  ## Constants
+  
+  The file [utils.h](https://github.com/fedluc/STLS/blob/master/utils.h) contains five constants defined at compile time which are used to define the relative errors and maximum number of iterations for the root solvers and quadrature schemes. For state points where it is hard to obtain convergence it can be useful to adjust the values of such constants.
+ 
   ## Output 
   
   Regardless of the theory that is being solved, STLS produces the following output (in what follows, n<sub>x</sub> is the number of wave-vectors used in the solution and n<sub>l</sub> is the number of Matsubara frequencies):
@@ -121,5 +125,5 @@ The binary files used as guess are writtent directly by the program upon complet
  * Guess files for the classical schemes: The first text file must contain the static structure factor, the second file must contain the static local field correction. The format of the files must be consistent with the one described in the section [Output](https://github.com/fedluc/STLS/edit/master/README.md#output)
 
 * Guess files for the quantum schemes: The first text file must contain the static structure factor, the second file must contain the auxiliary density response. The format of the files must be consistent with the one described in the section [Output](https://github.com/fedluc/STLS/edit/master/README.md#output)
-* 
+
 The information concerning the grid and number of Matsubara frequencies is inferred from the structure of the text files, but information concerning the state point and the scheme is obtained from the input parameters specified by the user. After reading the text files, STLS writes a binary file called fixed_rs\*\_theta\*\*\_\*\*\*.bin, where \*  corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter and \*\*\* to the dielectric scheme  specified in input. Upon completion, STLS writes a summary on the screen and terminates. It should be noted that, in "guess mode", STLS writs the guess files, but it does not perform any iterative calculation for the solution of the dielectric scheme prescribed in input.
