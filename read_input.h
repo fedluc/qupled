@@ -53,6 +53,12 @@ void set_default_parse_opt(input *in);
 
 void get_nx(input *in);
 
+// ------------------------------------------------------------
+// FUNCTION TO VERIFY THAT THE OPTIONS GIVEN IN INPUT ARE VALID
+// ------------------------------------------------------------
+
+void check_input(input *in);
+
 // ------------------------------------------------
 // FUNCTION TO DEBUG THE INPUT
 // ------------------------------------------------

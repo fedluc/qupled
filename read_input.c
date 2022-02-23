@@ -246,6 +246,9 @@ void get_input(int argc, char **argv, input *in){
   
   // Debug input
   if(debug_input) print_input(in);
+
+  // Verify input validity
+  check_input(in);
   
 }
 
@@ -288,6 +291,67 @@ void get_nx(input *in){
   in->nx = (int)floor(in->xmax/in->dx);
 }
 
+
+// ------------------------------------------------------------
+// FUNCTION TO VERIFY THAT THE OPTIONS GIVEN IN INPUT ARE VALID
+// ------------------------------------------------------------
+void check_input(input *in){
+
+  bool invalid_input = false;
+
+  if (in->dx <= 0.0) {
+    printf("The resolution of the wave vector grid must be larger than zero\n");
+    invalid_input = true;
+  }
+
+  if (in->xmax <= 0.0) {
+    printf("The cutoff of the wave vector grid must be larger than zero\n");
+    invalid_input = true;
+  }
+
+  if (in->nIter < 0.0) {
+    printf("The number of iterations must be a positive number\n");
+    invalid_input = true;
+  }
+
+  if (in->err_min_iter <= 0.0) {
+    printf("The minimum error for convergence must be larger than zero\n");
+    invalid_input = true;
+  }
+
+  if (in->a_mix <= 0.0) {
+    printf("The mixing parameter must be larger than 0.0\n");
+    invalid_input = true;
+  }
+
+  if (in->nl <= 0.0) {
+    printf("The number of Matsubara frequencies must be larger than zero\n");
+    invalid_input = true;
+  }
+
+  if (in->nl <= 0.0) {
+    printf("The number of OMP threads must be larger than zero\n");
+    invalid_input = true;
+  }
+
+  if (in->rs <= 0.0) {
+    printf("The quantum coupling parameter must be larger than zero\n");
+    invalid_input = true;
+  }
+
+  if (in->Theta < 0.0) {
+    printf("The quantum degeneracy parameter must be positive\n");
+    invalid_input = true;
+  }
+
+  if (strcmp(in->iet_mapping, "standard") ==  0 && in->Theta == 0.0) {
+    printf("The standard iet-mapping cannot be used in the ground state (theta = 0.0)\n");
+    invalid_input = true;
+  }
+
+  if (invalid_input) exit(EXIT_FAILURE);
+  
+}
 
 // ------------------------------------------------
 // FUNCTION TO DEBUG THE INPUT
