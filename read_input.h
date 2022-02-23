@@ -35,31 +35,6 @@ typedef struct {
   
 } input;
 
-// -------------------------------------------------------------------
-// CONSTANTS FOR ROOT SOLVERS, MINIMIZATIONS AND QUADRATURES
-// -------------------------------------------------------------------
-
-// Maximum number of iterations for the root solvers
-static const int ROOT_MAX_ITER = 1000;
-
-// Minimum relative error for the root solvers
-static const double ROOT_REL_ERR = 1e-10;
-
-// Minimum absolute error for the root solvers
-static const double ROOT_ABS_ERR = 1e-5;
-
-// Maximum number of iterations for the minimizers
-static const int MIN_MAX_ITER = 10000;
-
-// Minimum relative error for the mininimizers
-static const double MIN_REL_ERR = 1e-10;
-
-// Minimum relative error for the Fourier integrals
-static const double FOURIER_REL_ERR = 1e-10;
-
-// Minimum relative error for the numerical quadratures
-static const double QUAD_REL_ERR = 1e-5;
-
 // ----------------------------------------
 // FUNCTION TO READ INPUT DATA
 // ----------------------------------------

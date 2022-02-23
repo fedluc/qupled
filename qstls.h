@@ -36,13 +36,6 @@ void compute_ssf_qstls(double *SS, double *SSHF, double *psi,
 
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ACCESS ONE ELEMENT OF A THREE-DIMENSIONAL ARRAY
-// -------------------------------------------------------------------
-
-int idx3(int xx, int yy, int zz,
-         int x_size, int y_size);
-
-// -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 

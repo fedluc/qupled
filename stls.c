@@ -3,8 +3,9 @@
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_integration.h>
-#include <gsl/gsl_min.h>
+#include <gsl/gsl_roots.h>
 #include "solvers.h"
+#include "utils.h"
 #include "chemical_potential.h"
 #include "stls.h"
 
@@ -190,15 +191,6 @@ void wave_vector_grid(double *xx, input *in){
   in->xmax = xx[in->nx - 1];
 
 }
-
-// -------------------------------------------------------------------
-// FUNCTION USED TO ACCESS ONE ELEMENT OF A TWO-DIMENSIONAL ARRAY
-// -------------------------------------------------------------------
-
-int idx2(int xx, int yy, int x_size) {
-  return (yy * x_size) + xx;
-}
-
 
 // -------------------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY AT FINITE TEMPERATURE
@@ -545,7 +537,6 @@ struct ssf_stls_zero_temperature_params {
 void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG, 
 				       double *xx, input in){
 
-  bool get_plasmon = true;
   double ssf_wp;
   double err;
   double int_lo;
@@ -579,12 +570,7 @@ void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG,
       			    &SS[ii], &err, &nevals);
 
       // Add plasmon contribution
-      ssf_wp = 0.0;
-      if (get_plasmon) {
-	ssf_wp = ssf_plasmon(xx[ii], in);
-	printf("%f\n", ssf_wp);
-	if (ssf_wp < 0.0) get_plasmon = false;
-      };
+      ssf_wp = ssf_plasmon(xx[ii], GG[ii], in);
       if (ssf_wp >= 0.0) SS[ii] += ssf_wp;
 
     }
@@ -643,149 +629,143 @@ void compute_ssf_HF_zero_temperature(double *SS,  double *xx,  input in){
   
 }
 
-
-// Plasmon contribution to the static structure factor
 struct eps_params {
 
   double xx;
+  double GG;
   double rs;
 
 };
 
-
-double ssf_plasmon(double xx, input in) {
+// Plasmon contribution to the static structure factor
+double ssf_plasmon(double xx, double GG, input in) {
   
   // Variables
+  bool search_root = false;
   double w_co = xx*xx + 2*xx;
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double ff = (4.0*lambda*in.rs)/(M_PI*xx*xx);
-  double dx;
-  double w_lo, w_min, w_hi;
-  double eps_lo, eps_min, eps_hi;
+  double dw;
+  double w_lo, w_hi, wp;
+  double sign_lo, sign_hi;
   int status, iter;
-
-  // Set-up function
-  gsl_function ff_minimizer;
-  ff_minimizer.function = &dr_mod_zero_temperature;
-  struct eps_params epsp = {xx, in.rs};
-  ff_minimizer.params = &epsp;
-
-  // Approach: The zero of the dielectric response function, eps,  is found
-  // by looking for a zero of the modulo of the dielectric response function,
-  // (Re[eps]^2 + Im[eps]^2)^(1/2). This cannot be done with a simple
-  // bisection method because the modulo of the dielectric response never
-  // crosses zero and methods based on the derivative are not guaranteed to
-  // give a solution. Moreover, for some wave-vectors, the modulo of the
-  // dielectric function is never zero, no solutions can be found and any
-  // root finding algorithm is bound to be problematic. Since the zero of the
-  // function (Re[eps]^2 + Im[eps]^2)^(1/2) is also a minimum, a different
-  // approach is followed:  we first look for a minimum of the modulo of the
-  // dielectric response function and then, if at such minimum
-  // (Re[eps]^2 + Im[eps]^2)^(1/2) is also zero, then we take the frequency
-  // that minimizes (Re[eps]^2 + Im[eps]^2)^(1/2) to be also a zero of the
-  // dielectric function.
   
-  // Get approximate location of the mimimum (to initialize the minimizer)
-  dx = w_co;
-  w_lo = -dx;
-  w_min = 0.0;
-  w_hi = dx;
-  eps_lo = 0.0;
-  eps_min = 1.0;
-  eps_hi = 0.0;
-  while (eps_min > eps_lo || eps_min > eps_hi) {
-    w_lo = w_min;
-    w_min = w_hi;
-    w_hi += dx;
-    eps_lo = dr_mod_zero_temperature(w_lo, &epsp);
-    eps_min = dr_mod_zero_temperature(w_min, &epsp);
-    eps_hi = dr_mod_zero_temperature(w_hi, &epsp); 
+  // Set-up function
+  gsl_function ff_root;
+  ff_root.function = &drf_re_zero_temperature;
+  struct eps_params epsp = {xx, GG, in.rs};
+  ff_root.params = &epsp;
+ 
+  // Look for a region where the real part of the dielectric function changes sign
+  dw = w_co;
+  w_lo = w_co;
+  sign_lo = get_sign(drf_re_zero_temperature(w_lo, &epsp));
+  for (int ii=1; ii<1000; ii++) {
+    w_hi = w_lo + dw*ii;
+    sign_hi = get_sign(drf_re_zero_temperature(w_hi, &epsp));
+    if (sign_hi != sign_lo) {
+      search_root = true;
+      break;
+    }
+  }
+
+  // Return if no root can be found
+  if (!search_root) {
+    return 0;
   }
   
-  // Set-up minimizer
-  const gsl_min_fminimizer_type * minit = gsl_min_fminimizer_goldensection;
-  gsl_min_fminimizer * mini = gsl_min_fminimizer_alloc(minit);
-  gsl_min_fminimizer_set(mini, &ff_minimizer, w_min, w_lo, w_hi);
-
-  // Refine minimum location
+  // Set-up root solver
+  const gsl_root_fsolver_type * rst = gsl_root_fsolver_bisection;
+  gsl_root_fsolver * rs = gsl_root_fsolver_alloc(rst);
+  gsl_root_fsolver_set(rs, &ff_root, w_lo, w_hi);
+  
+  // Get root
   iter = 0;
   do
   {
     
     // Solver iteration
-    status = gsl_min_fminimizer_iterate(mini);
+    status = gsl_root_fsolver_iterate(rs);
 
     // Get solver status
-    w_min = gsl_min_fminimizer_minimum(mini);
-    w_lo = gsl_min_fminimizer_x_lower(mini);
-    w_hi = gsl_min_fminimizer_x_upper(mini);
-    status = gsl_min_test_interval(w_lo, w_hi, 0.0, MIN_REL_ERR);
-
+    wp = gsl_root_fsolver_root(rs);
+    w_lo = gsl_root_fsolver_x_lower(rs);
+    w_hi = gsl_root_fsolver_x_upper(rs);
+    status = gsl_root_test_interval (w_lo, w_hi,
+				     0, ROOT_REL_ERR);
+    
     // Update iteration counter
     iter++;
-
+    
   }
-  while (status == GSL_CONTINUE && iter < MIN_MAX_ITER);
+  while (status == GSL_CONTINUE && iter < ROOT_MAX_ITER);
 
   // Free memory
-  gsl_min_fminimizer_free(mini);
+  gsl_root_fsolver_free(rs);
 
-  // Modulo of the dielectric response at the minimum
-  eps_min = dr_mod_zero_temperature(w_min, &epsp);
+  // Stop if no root was found within the prescribed accuracy
+  if (status != GSL_SUCCESS) {
+    perror("The plasmon frequency could not be determined with the requested accuracy." 
+	   " Try to increase the value of the variable ROOT_REL_ERR.\n");
+    exit(EXIT_FAILURE);
+  }
   
   // Output
-  if (eps_min < ROOT_ABS_ERR) {
-    return 1.5 / (ff*fabs(drp_re_zero_temperature(xx, w_min, in.rs)));
-  } else {
-    return -1; // No valid root was found
-  }
-  return 0;
-  
+  return 1.5 / (ff*fabs(drfp_re_zero_temperature(xx, wp, GG, in.rs)));
+
 }
 
-// Real part of the dielectric response
-double dr_re_zero_temperature(double xx, double Omega, double rs){
+// NOTE: At the plasmon frequency, the imaginary part of the ideal
+// density response is zero. Hence, all the following definitions
+// for the dielectric function are constructed with the assumption
+// that the imaginary part of the ideal density response is zero
+// and should not be used for frequencies omega < 2*xx + xx^2 (with
+// xx a normalized wave-vector) where such approximation is not
+// valid
 
-  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0); 
-  double ff = (4.0*lambda*rs)/(M_PI*xx*xx);
-
-  return 1 + ff*idr_re_zero_temperature(xx,  Omega);
-    
-}
-
-// Imaginary part of the dielectric response
-double dr_im_zero_temperature(double xx, double Omega, double rs){
-
-  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0); 
-  double ff = (4.0*lambda*rs)/(M_PI*xx*xx);
-
-  return ff*idr_im_zero_temperature(xx,  Omega);
-    
-}
-
-// Modulus of the dielectric response
-double dr_mod_zero_temperature(double Omega, void *pp){
+// Real part of the dielectric response function 
+double drf_re_zero_temperature(double Omega, void *pp){
 
   struct eps_params *params = (struct eps_params*)pp;
   double xx = params->xx;
+  double GG = params->GG;
   double rs = params->rs;
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double ff = (4.0*lambda*rs)/(M_PI*xx*xx);
+  double phi0_re = idr_re_zero_temperature(xx, Omega);
+  double w_co = xx*xx + 2*xx; 
+    
+  if (Omega < w_co) {
+    perror("The dielectric response cannot be evaluated at the given frequency\n");
+    exit(EXIT_FAILURE);
+  }
 
-  double eps_re = dr_re_zero_temperature(xx, Omega, rs); 
-  double eps_im = dr_im_zero_temperature(xx, Omega, rs);
-  
-  return sqrt(eps_re*eps_re + eps_im*eps_im);
-  
+  return 1.0 + ff*phi0_re/(1.0 - ff*GG*phi0_re);
+
 }
 
-// Frequency derivative of the real part of the dielectric response
-double drp_re_zero_temperature(double xx, double Omega, double rs){
 
-  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0); 
+// Frequency derivative of the real part of the dielectric response function  
+double drfp_re_zero_temperature(double xx, double Omega, double GG, double rs){
+
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double ff = (4.0*lambda*rs)/(M_PI*xx*xx);
+  double phi0_re = idr_re_zero_temperature(xx, Omega);
+  double phi0p_re = idrp_re_zero_temperature(xx, Omega);
+  double denom = (1.0 - ff*GG*phi0_re);
+  double w_co = xx*xx + 2*xx;
 
-  return ff*idrp_re_zero_temperature(xx, Omega);
+  if (Omega < w_co) {
+    perror("The dielectric response cannot be evaluated at the given frequency\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  return ff*phi0p_re/(denom*denom);
+
+  
     
 }
+
  
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION

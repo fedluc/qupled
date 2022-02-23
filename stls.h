@@ -29,13 +29,6 @@ void init_fixed_stls_arrays(input *in, double *xx,
 
 void wave_vector_grid(double *xx, input *in);
 
-// -------------------------------------------------------------------
-// FUNCTION USED TO ACCESS ONE ELEMENT OF A TWO-DIMENSIONAL ARRAY
-// -------------------------------------------------------------------
-
-int idx2(int xx, int yy, int x_size);
-
-
 // -------------------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY AT FINITE TEMPERATURE
 // -------------------------------------------------------------------------------------
@@ -90,15 +83,12 @@ void compute_ssf_HF_zero_temperature(double *SS,  double *xx, input in);
 
 double ssf_stls_zero_temperature(double Omega, void* pp);
 
-double ssf_plasmon(double xx, input in);
+double ssf_plasmon(double xx, double GG, input in);
 
-double dr_re_zero_temperature(double xx, double Omega, double rs);
+double drf_re_zero_temperature(double xx, void* pp);
 
-double dr_re_zero_temperature(double xx, double Omega, double rs);
-
-double dr_mod_zero_temperature(double Omega, void *pp);
-
-double drp_re_zero_temperature(double xx, double Omega, double rs);
+double drfp_re_zero_temperature(double xx, double Omega,
+				double GG, double rs);
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION

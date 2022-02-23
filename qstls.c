@@ -4,6 +4,7 @@
 #include <gsl/gsl_integration.h>
 #include <string.h>
 #include "solvers.h"
+#include "utils.h"
 #include "stls.h"
 #include "qstls.h"
 
@@ -456,16 +457,6 @@ void compute_ssf_qstls(double *SS, double *SSHF, double *psi,
   
 }
 
-
-
-// -------------------------------------------------------------------
-// FUNCTION USED TO ACCESS ONE ELEMENT OF A THREE-DIMENSIONAL ARRAY
-// -------------------------------------------------------------------
-
-int idx3(int xx, int yy, int zz,
-         int x_size, int y_size) {
-  return (zz * x_size * y_size) + (yy * x_size) + xx;
-}
 
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT

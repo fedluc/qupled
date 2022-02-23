@@ -4,6 +4,7 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_integration.h>
 #include <string.h>
+#include "utils.h"
 #include "solvers.h"
 #include "stls.h"
 #include "stls_iet.h"

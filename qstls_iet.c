@@ -4,6 +4,7 @@
 #include <gsl/gsl_integration.h>
 #include <string.h>
 #include "solvers.h"
+#include "utils.h"
 #include "stls.h"
 #include "qstls.h"
 #include "qstls_iet.h"

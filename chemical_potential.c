@@ -2,6 +2,7 @@
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_fermi_dirac.h>
+#include "utils.h"
 #include "chemical_potential.h"
 
 // -------------------------------------------------------------------
