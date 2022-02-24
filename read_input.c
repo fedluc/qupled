@@ -35,6 +35,8 @@ static char doc[] =
 #define ARGUMENT_GUESS_WRITE_SHORT 0x97
 #define ARGUMENT_GUESS_FILES_SHORT 0x98
 #define ARGUMENT_IET_MAPPING_SHORT 0x99
+#define ARGUMENT_DRS_SHORT 0x100
+#define ARGUMENT_ALPHA_CSR_SHORT 0x101
 
 // Optional arguments
 static struct argp_option options[] = {
@@ -82,23 +84,29 @@ static struct argp_option options[] = {
    "Use static approximation to compute the auxiliary density response in the qstls-iet scheme"
   " (0 = off, 1 = on)"},
 
-  {"theory", ARGUMENT_THEORY_SHORT, "STLS",0,
+  {"theory", ARGUMENT_THEORY_SHORT, "STLS", 0,
    "Scheme to be solved"},
 
   {"omp", ARGUMENT_OMP_SHORT, "1",0,
    "Number of omp threads to use in the solution"},
 
-  {"debug-input", ARGUMENT_DEBUG_SHORT, "0",0,
+  {"debug-input", ARGUMENT_DEBUG_SHORT, "0", 0,
    "Print content of the input structure on screen (0 = off, 1 = on)"},
 
-  {"guess-write", ARGUMENT_GUESS_WRITE_SHORT, "0",0,
+  {"guess-write", ARGUMENT_GUESS_WRITE_SHORT, "0", 0,
    "Write binary restart files from text files (0 = off, 1 = on)"},
 
-  {"guess-files", ARGUMENT_GUESS_FILES_SHORT, "NO_FILE,NO_FILE",0,
+  {"guess-files", ARGUMENT_GUESS_FILES_SHORT, "NO_FILE,NO_FILE", 0,
    "Text files to write binary restart files"},
 
-   {"iet-mapping", ARGUMENT_IET_MAPPING_SHORT, "standard",0,
+  {"iet-mapping", ARGUMENT_IET_MAPPING_SHORT, "standard", 0,
    "Mapping between quantum and classical state points for IET-based schemes"},
+
+  {"vs-drs", ARGUMENT_DRS_SHORT, "0.01", 0,
+   "Resolution of the coupling parameter grid for the VS schemes"},
+
+  {"vs-alpha", ARGUMENT_ALPHA_CSR_SHORT, "0.5", 0,
+   "Initial guess for the free parameter in the VS schemes"},
 
   { 0 }
   
@@ -218,7 +226,15 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case ARGUMENT_IET_MAPPING_SHORT:
       in->iet_mapping = arg;
       break;
-      
+
+    case ARGUMENT_DRS_SHORT:
+      in->drs = atof(arg);
+      break;
+
+    case ARGUMENT_ALPHA_CSR_SHORT:
+      in->a_csr = atof(arg);
+      break;
+
     default:
       return ARGP_ERR_UNKNOWN;
       
@@ -242,7 +258,7 @@ void get_input(int argc, char **argv, input *in){
   argp_parse(&argp, argc, argv, 0, 0, in);
 
   // Get number of grid points
-  get_nx(in);
+  get_grid_size(in);
   
   // Debug input
   if(debug_input) print_input(in);
@@ -280,15 +296,17 @@ void set_default_parse_opt(input *in){
   in->guess_file1 = "NO_FILE"; // File of the first file used to construct the guess (static structure factor)
   in->guess_file2 = "NO_FILE"; // File of the second file used to construct the guess (static local field correction or auxiliary density response)
   in->iet_mapping = "standard"; // Mapping between the quantum and classical state points for the IET-based schemes
-      
+  in->drs = 0.01; // Resolution of the coupling parameter grid for the VS schemes
+  in->a_csr = 0.5; // Initial guess for the free parameter in the VS schemes
   
 }
 
 // ------------------------------------------------
 // FUNCTION TO COMPUTE THE NUMBER OF GRID POINTS
 // ------------------------------------------------
-void get_nx(input *in){
+void get_grid_size(input *in){
   in->nx = (int)floor(in->xmax/in->dx);
+  in->nrs = (int)floor((in->rs + in->drs)/in->drs);
 }
 
 
@@ -329,7 +347,7 @@ void check_input(input *in){
     invalid_input = true;
   }
 
-  if (in->nl <= 0.0) {
+  if (in->nThreads <= 0.0) {
     printf("The number of OMP threads must be larger than zero\n");
     invalid_input = true;
   }
@@ -344,11 +362,16 @@ void check_input(input *in){
     invalid_input = true;
   }
 
-  if (strcmp(in->iet_mapping, "standard") ==  0 && in->Theta == 0.0) {
-    printf("The standard iet-mapping cannot be used in the ground state (theta = 0.0)\n");
+  if (in->drs <= 0.0) {
+    printf("The resolution of the coupling parameter  grid must be larger than zero\n");
     invalid_input = true;
   }
 
+  if (in->a_csr <= 0.0) {
+    printf("The free parameter for the VS schemes must be larger than zero\n");
+    invalid_input = true;
+  }
+  
   if (invalid_input) exit(EXIT_FAILURE);
   
 }
@@ -381,6 +404,8 @@ void print_input(input *in){
   printf("Guess file 1: %s\n", in->guess_file1);
   printf("Guess file 2: %s\n", in->guess_file2);
   printf("IET mapping: %s\n", in->iet_mapping);
+  printf("Coupling parameter resolution: %f\n", in->drs);
+  printf("Free parameter for VS schemes: %f\n", in->a_csr);
   printf("-------------------------------------\n");
   
 }

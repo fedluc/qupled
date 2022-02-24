@@ -329,8 +329,13 @@ void bridge_function_ocp_ioi(double *bf, double *xx, input in){
 
   // Coupling parameter to compute the bridge function (depends on the mapping specified in input)
   double Gamma_bf;
-  if (strcmp(in.iet_mapping, "standard") == 0)
+  if (strcmp(in.iet_mapping, "standard") == 0) {
+    if (in.Theta == 0.0) {
+      perror("The standard iet-mapping cannot be used in the ground state (theta = 0.0)\n");
+      exit(EXIT_FAILURE);
+    }
     Gamma_bf = Gamma;
+  }
   else if (strcmp(in.iet_mapping, "sqrt") == 0)
     Gamma_bf = 2*l2*in.rs/sqrt(1 + in.Theta*in.Theta);
   else if (strcmp(in.iet_mapping, "linear") == 0)
@@ -393,8 +398,13 @@ void bridge_function_ocp_lct(double *bf, double *xx, input in){
 
   // Coupling parameter to compute the bridge function (depends on the mapping specified in input)
   double Gamma_bf;
-  if (strcmp(in.iet_mapping, "standard") == 0)
+  if (strcmp(in.iet_mapping, "standard") == 0) {
+    if (in.Theta == 0.0) {
+      perror("The standard iet-mapping cannot be used in the ground state (theta = 0.0)\n");
+      exit(EXIT_FAILURE);
+    }
     Gamma_bf = Gamma;
+  }
   else if (strcmp(in.iet_mapping, "sqrt") == 0)
     Gamma_bf = 2*l2*in.rs/sqrt(1 + in.Theta*in.Theta);
   else if (strcmp(in.iet_mapping, "linear") == 0)

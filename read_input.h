@@ -19,17 +19,20 @@ typedef struct {
   char *qstls_fixed_file;
   char *qstls_iet_fixed_file;
   char *theory;
+  double a_csr;
+  double a_mix;
   double Theta;
   double rs;
   double dx;
+  double drs;
   double err_min_iter;
-  double a_mix;
   double mu_lo;
   double mu_hi;
   double mu;
   double xmax;
   int nl;
   int nx;
+  int nrs;
   int nIter;
   int nThreads;
   
@@ -51,7 +54,7 @@ void set_default_parse_opt(input *in);
 // FUNCTION TO COMPUTE THE NUMBER OF GRID POINTS
 // ------------------------------------------------
 
-void get_nx(input *in);
+void get_grid_size(input *in);
 
 // ------------------------------------------------------------
 // FUNCTION TO VERIFY THAT THE OPTIONS GIVEN IN INPUT ARE VALID

@@ -15,12 +15,7 @@
 // -------------------------------------------------------------------
 
 void solve_vs_stls(input in, bool verbose) {
-
-  // VS parameters
-  double alpha = 0.5;
-  double nrs = 10;
-  double rs = in.rs;
-  double drs;
+  
   // Arrays for STLS solution
   double *xx = NULL; 
   double *phi = NULL;
@@ -32,15 +27,22 @@ void solve_vs_stls(input in, bool verbose) {
   // Arrays for VS-STLS solution
   double *uint = NULL;
   double *rsArray = NULL;
+
+  // Check that we are in the ground state
+  if (in.Theta > 0.0) {
+    perror("The VS-STLS is only implemented in the ground state (theta = 0.0)\n");
+    exit(EXIT_FAILURE);
+  }
   
   // Allocate arrays
   alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
-  alloc_vs_stls_arrays(in, nrs, &uint, &rsArray);
+  alloc_vs_stls_arrays(in, &uint, &rsArray);
   
   // Initialize arrays that are not modified with the iterative procedure
-  init_fixed_vs_stls_arrays(&in, nrs, xx, rsArray, verbose);
+  init_fixed_vs_stls_arrays(&in, xx, rsArray, verbose);
+  init_state_point_vs_stls_arrays(&in, xx, phi, SSHF, verbose);
   
-  // Initial guess (not sure how to use this, fix later)
+  // Initial guess
   if (strcmp(in.stls_guess_file,"NO_FILE")==0){
     for (int ii=0; ii < in.nx; ii++) {
       GG[ii] = 0.0; // Static local field correction
@@ -52,46 +54,26 @@ void solve_vs_stls(input in, bool verbose) {
     read_guess_stls(SS, GG, in); // Read from file
   }
 
-  // #######################################################################################
-  // CALCULATIONS FOR A GIVEN VALUE OF ALPHA
-  // #######################################################################################
-  drs = rsArray[1] - rsArray[0];
-  // Internal energy
-  for (int ii=0; ii<nrs; ii++) {
+  // Iterative procedure to fix the compressibility sum rule
+  if (verbose) printf("Iterative procedure to enforce the CSR rule...\n");
+  in.a_csr = vs_stls_thermo_iterations(xx, uint, rsArray, in, true);
+  if (verbose) printf("Done.\n");
 
-    // State point
-    in.rs = rsArray[ii];
-   
-    // Initialize arrays that depend only on the state point
-    init_state_point_vs_stls_arrays(&in, xx, phi, SSHF, false);
-
-    // Solve state point
-    vs_stls_iterations(SS, SSHF, GG, GG_new, phi, xx, drs, alpha, in, false);
-    
-    // Internal energy
-    uint[ii] = compute_internal_energy(SS, xx, in);
-    printf("%f %f\n", in.rs, in.rs*uint[ii]);
-    
-  }
-
-  // Free energy
-  in.rs = rs;
-  printf("Free energy: %f\n", compute_free_energy(uint, rsArray, in, nrs));
-
-
-  // #######################################################################################
-  // CALCULATIONS FOR A GIVEN VALUE OF ALPHA
-  // #######################################################################################
-
+  // Structural properties
+  if (verbose) printf("Structural properties calculation...\n");
+  vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, in, false);
+  if (verbose) printf("Done.\n");
   
-  /* // Internal energy */
-  /* if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in)); */
+  // Thermodynamic properties
+  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
+  if (verbose) printf("Free energy: %.10f\n",compute_free_energy(uint, rsArray, in));
   
-  /* // Output to file */
-  /* if (verbose) printf("Writing output files...\n"); */
-  /* write_text_stls(SS, GG, phi, SSHF, xx, in); */
-  /* write_guess_stls(SS, GG, in);  */
-  /* if (verbose) printf("Done.\n"); */
+  // Output to file
+  if (verbose) printf("Writing output files...\n");
+  write_text_stls(SS, GG, phi, SSHF, xx, in);
+  write_text_vs_stls(uint, rsArray, in);
+  write_guess_stls(SS, GG, in);
+  if (verbose) printf("Done.\n");
 
   // Free memory
   free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
@@ -100,9 +82,106 @@ void solve_vs_stls(input in, bool verbose) {
 }
 
 
-void alloc_vs_stls_arrays(input in, int nrs, double **uint, double **rsArray){
-  *uint = malloc( sizeof(double) * nrs);
-  *rsArray = malloc( sizeof(double) * nrs); 
+// ---------------------------------------------------------------------
+// FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE VS-STLS SCHEME
+// ---------------------------------------------------------------------
+
+// Iterations over the parameter used to enforce the CSR rule
+double vs_stls_thermo_iterations(double *xx, double *uint,
+				 double *rsArray, input in,
+				 bool verbose) {
+
+  double alpha = in.a_csr;
+  double iter_err = 1.0;
+  int iter_counter = 0;
+
+  // Iterations
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
+
+    // Start timing
+    double tic = omp_get_wtime();
+
+    // Get parameter to enforce the compressibility sum rule
+    alpha = get_alpha(xx, uint, rsArray, in);
+
+    // Update diagnostic
+    iter_err = fabs((alpha - in.a_csr)/alpha);
+    iter_counter++;
+    in.a_csr = alpha;
+
+    // End timing
+    double toc = omp_get_wtime();
+    
+    // Print diagnostic
+    if (verbose) {
+      printf("--- iteration %d ---\n", iter_counter);
+      printf("Elapsed time: %f seconds\n", toc - tic);
+      printf("Residual error: %.5e\n", iter_err);
+      fflush(stdout);
+    }
+    
+  }
+
+  return alpha;
+  
+}
+
+
+// Iterations over the structural properties
+void vs_stls_struct_iterations(double *SS, double *SSHF,
+			       double *GG, double *GG_new,
+			       double *phi, double *xx,
+			       input in, bool verbose) {
+
+  if (verbose) printf("SSF and SLFC calculation...\n");
+  double iter_err = 1.0;
+  int iter_counter = 0;
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
+    
+    // Start timing
+    double tic = omp_get_wtime();
+    
+    // Update SSF
+    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
+
+    // Update SLFC    
+    compute_vs_slfc(GG_new, SS, xx, in);
+
+    // Update diagnostic
+    iter_err = 0.0;
+    iter_counter++;
+    for (int ii=0; ii<in.nx; ii++) {
+      iter_err += (GG_new[ii] - GG[ii]) * (GG_new[ii] - GG[ii]);
+      GG[ii] = in.a_mix*GG_new[ii] + (1-in.a_mix)*GG[ii];
+    }
+    iter_err = sqrt(iter_err);
+   
+    // End timing
+    double toc = omp_get_wtime();
+    
+    // Print diagnostic
+    if (verbose) {
+      printf("--- iteration (structure) %d ---\n", iter_counter);
+      printf("Elapsed time: %f seconds\n", toc - tic);
+      printf("Residual error: %.5e\n", iter_err);
+      fflush(stdout);
+    }
+    
+  }
+  if (verbose) printf("Done.\n");
+ 
+ 
+}
+
+
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
+// -------------------------------------------------------------------
+
+void alloc_vs_stls_arrays(input in, double **uint, double **rsArray){
+  *uint = malloc( sizeof(double) * in.nrs);
+  *rsArray = malloc( sizeof(double) * in.nrs); 
 }
 
 void free_vs_stls_arrays(double *uint, double *rsArray){
@@ -110,7 +189,14 @@ void free_vs_stls_arrays(double *uint, double *rsArray){
   free(rsArray);
 }
 
-void init_fixed_vs_stls_arrays(input *in, int nrs,  double *xx, double *rsArray, bool verbose){
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO INITIALIZE ARRAYS
+// -------------------------------------------------------------------
+
+// Initialize arrays that do not depend on iterations and state points
+void init_fixed_vs_stls_arrays(input *in, double *xx, double *rsArray,
+			       bool verbose){
 
   // Print on screen the parameter used to solve the STLS equation
   printf("------ Parameters used in the solution -------------\n");
@@ -133,12 +219,14 @@ void init_fixed_vs_stls_arrays(input *in, int nrs,  double *xx, double *rsArray,
 
   // Array of coupling parameters
   if (verbose) printf("Coupling parameter grid initialization: ");
-  rs_grid(rsArray, nrs, in);
+  rs_grid(rsArray, in);
   if (verbose) printf("Done.\n");
   
 }
 
 
+// Initialize arrays that do not depend on the iterations, but that
+// are a function of the state point
 void init_state_point_vs_stls_arrays(input *in, double *xx,
 				     double *phi, double *SSHF,
 				     bool verbose){
@@ -170,57 +258,24 @@ void init_state_point_vs_stls_arrays(input *in, double *xx,
 }
 
 
-// -------------------------------------------------------------------
-// FUNCTION USED TO PERFORM THE ITERATIONS FOR THE STLS SCHEME
-// -------------------------------------------------------------------
+// ------------------------------------------------------------------
+// FUNCTION USED TO DEFINE THE WAVE-VECTOR GRID
+// ------------------------------------------------------------------
 
-void vs_stls_iterations(double *SS, double *SSHF,
-			double *GG, double *GG_new,
-			double *phi, double *xx,
-			double drs, double alpha,
-			input in, bool verbose) {
+void rs_grid(double *rsArray, input *in){
 
-  if (verbose) printf("SSF and SLFC calculation...\n");
-  double iter_err = 1.0;
-  int iter_counter = 0;
-  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
-    
-    // Start timing
-    double tic = omp_get_wtime();
-    
-    // Update SSF
-    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
-
-    // Update SLFC    
-    compute_vs_slfc(GG_new, SS, xx, drs, alpha, in);
-
-    // Update diagnostic
-    iter_err = 0.0;
-    iter_counter++;
-    for (int ii=0; ii<in.nx; ii++) {
-      iter_err += (GG_new[ii] - GG[ii]) * (GG_new[ii] - GG[ii]);
-      GG[ii] = in.a_mix*GG_new[ii] + (1-in.a_mix)*GG[ii];
-    }
-    iter_err = sqrt(iter_err);
-   
-    // End timing
-    double toc = omp_get_wtime();
-    
-    // Print diagnostic
-    if (verbose) {
-      printf("--- iteration %d ---\n", iter_counter);
-      printf("Elapsed time: %f seconds\n", toc - tic);
-      printf("Residual error: %.5e\n", iter_err);
-      fflush(stdout);
-    }
+  for (int ii=0; ii<in->nrs; ii++) {
+    rsArray[ii] =  in->drs*(ii+1);
   }
-  if (verbose) printf("Done.\n");
- 
- 
+  
 }
 
 
-void compute_vs_slfc(double *GG, double *SS, double *xx, double drs, double alpha, input in) {
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
+// -------------------------------------------------------------------
+
+void compute_vs_slfc(double *GG, double *SS, double *xx, input in) {
 
   // Arrays for VS-STLS solution
   double *GGrs = NULL;
@@ -235,9 +290,9 @@ void compute_vs_slfc(double *GG, double *SS, double *xx, double drs, double alph
   
   // STLS local field correction at three state points
   compute_slfc(GGrs, SS, xx, in);
-  in.rs = rs + drs;
+  in.rs = rs + in.drs;
   compute_slfc(GGrsp, SS, xx, in);
-  in.rs = rs - drs;
+  in.rs = rs - in.drs;
   compute_slfc(GGrsm, SS, xx, in);
 
   // VS-STLS static local field correction
@@ -247,11 +302,11 @@ void compute_vs_slfc(double *GG, double *SS, double *xx, double drs, double alph
     GG[ii] = GGrs[ii];
 
     // State point derivative contribution
-    GG[ii] += -alpha/3.0*rs*(GGrsp[ii] - GGrsm[ii])/(2.0*drs);
+    GG[ii] += -in.a_csr/3.0*rs*(GGrsp[ii] - GGrsm[ii])/(2.0*in.drs);
 
     // Wave-vector derivative contribution
     if (ii > 0 && ii < in.nx-1) {
-      GG[ii] += -alpha/3.0*xx[ii]*(GGrs[ii+1] - GGrs[ii-1])/(2.0*in.dx);
+      GG[ii] += -in.a_csr/3.0*xx[ii]*(GGrs[ii+1] - GGrs[ii-1])/(2.0*in.dx);
     }
     
   }
@@ -260,6 +315,99 @@ void compute_vs_slfc(double *GG, double *SS, double *xx, double drs, double alph
   free(GGrs);
   free(GGrsp);
   free(GGrsm);
+  
+}
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE PARAMETER FOR THE CSR RULE
+// -------------------------------------------------------------------
+
+double get_alpha(double *xx, double *uint,
+		 double *rsArray, input in) {
+
+  double frs, frsp, frsm;
+  double dudrs;
+  double dfdrs;
+  double d2fdrs2;
+  double numer;
+  double denom;
+  double alpha;
+  double rs = in.rs;
+  
+  // Get internal energy for thermodynamic integration
+  fill_internal_energy_array(xx, uint, rsArray, in, false);
+
+  // Free energy
+  frs = compute_free_energy(uint, rsArray, in);
+  in.rs = rs + in.drs;
+  frsp = compute_free_energy(uint, rsArray, in);
+  in.rs = rs - in.drs;
+  frsm = compute_free_energy(uint, rsArray, in);
+  in.rs = rs;
+  
+  // Internal energy derivatives
+  dudrs = (uint[in.nrs-1] - uint[in.nrs-3])/(2.0*in.drs);
+
+  // Free energy derivatives
+  dfdrs = (frsp - frsm)/(2.0*in.drs);
+  d2fdrs2 = (frsp -2.0*frs + frsm)/(in.drs*in.drs);
+
+  // Parameter for the CSR rule
+  numer = (2.0*frs - (1.0/6.0)*in.rs*in.rs*d2fdrs2
+	   + (4.0/3.0)*in.rs*dfdrs);
+  denom = (uint[in.nrs-2] + (1.0/3.0)*in.rs*dudrs);
+  alpha = numer/denom;
+
+  // Output
+  return alpha;
+ 
+}
+
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE INTERNAL ENERGY FOR THERMODYNAMIC
+// INTEGRATION
+// -------------------------------------------------------------------
+
+void fill_internal_energy_array(double *xx, double *uint, double *rsArray,
+				input in, bool verbose){
+
+
+  #pragma omp parallel
+  {
+    #pragma omp for // Parallel calculations
+    for (int ii=0; ii<in.nrs; ii++) {
+
+      // Arrays for STLS solution
+      double *xx_tmp = NULL; 
+      double *phi = NULL;
+      double *GG = NULL;
+      double *GG_new = NULL;
+      double *SS = NULL;
+      double *SSHF = NULL;
+      input in_tmp = in;
+
+      // State point
+      in_tmp.rs = rsArray[ii];
+      
+      // Allocate arrays
+      alloc_stls_arrays(in_tmp, &xx_tmp, &phi, &GG, &GG_new, &SS, &SSHF);
+      
+      // Initialize arrays that depend only on the state point
+      init_state_point_vs_stls_arrays(&in_tmp, xx, phi, SSHF, verbose);
+      
+      // Solve state point
+      vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, in_tmp, verbose);
+      
+      // Internal energy
+      uint[ii] = compute_internal_energy(SS, xx, in_tmp);
+      
+      // Free memory
+      free_stls_arrays(xx_tmp, phi, GG, GG_new, SS, SSHF);
+      
+    }
+
+ }
   
 }
 
@@ -275,7 +423,7 @@ struct fex_params {
 
 };
 
-double compute_free_energy(double *uint, double *rsArray, input in, int nrs) {
+double compute_free_energy(double *uint, double *rsArray, input in) {
 
   double err;
   size_t neval;
@@ -286,11 +434,11 @@ double compute_free_energy(double *uint, double *rsArray, input in, int nrs) {
   gsl_interp_accel *uint_acc_ptr;
   
   // Allocate the accelerator and the spline objects
-  uint_sp_ptr = gsl_spline_alloc(gsl_interp_linear, nrs);
+  uint_sp_ptr = gsl_spline_alloc(gsl_interp_linear, in.nrs);
   uint_acc_ptr = gsl_interp_accel_alloc();
   
   // Initialize the spline
-  gsl_spline_init(uint_sp_ptr, rsArray, uint, nrs);
+  gsl_spline_init(uint_sp_ptr, rsArray, uint, in.nrs);
 
   // Integration workspace
   gsl_integration_cquad_workspace *wsp
@@ -304,7 +452,7 @@ double compute_free_energy(double *uint, double *rsArray, input in, int nrs) {
   struct fex_params fexp = {uint_sp_ptr, uint_acc_ptr};
   ff_int.params = &fexp;
   gsl_integration_cquad(&ff_int,
-  			rsArray[0], in.rs,
+  			rsArray[0]+1.0e-14, in.rs,
   			0.0, QUAD_REL_ERR,
   			wsp,
   			&fre, &err, &neval);
@@ -329,16 +477,47 @@ double fex(double rs, void* pp) {
   
 }
 
+// -------------------------------------------------------------------
+// FUNCTIONS FOR OUTPUT AND INPUT
+// -------------------------------------------------------------------
 
-// ------------------------------------------------------------------
-// FUNCTION USED TO DEFINE THE WAVE-VECTOR GRID
-// ------------------------------------------------------------------
+// write text files for output
+void write_text_vs_stls(double *uint, double *rsArray, input in){
 
-void rs_grid(double *rsArray, int nrs, input *in){
+    FILE* fid;
+    char out_name[100];
+    
+    // Output for the internal energy used for thermodynamic integration
+    sprintf(out_name, "uint_thermoint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+        perror("Error while creating the output file for the static structure factor (HF)");
+        exit(EXIT_FAILURE);
+    }
+    for (int ii = 0; ii < in.nrs; ii++)
+        fprintf(fid, "%.8e %.8e\n", rsArray[ii], uint[ii]);
 
-  double  drs = in->rs/nrs;
-  for (int ii=0; ii<nrs; ii++) {
-    rsArray[ii] = drs + drs*(ii);
-  }
-  
+    fclose(fid);
+
+    // Output for the free energy
+    sprintf(out_name, "fxc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+        perror("Error while creating the output file for the free energy\n");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(fid, "%.8e\n", compute_free_energy(uint, rsArray, in));
+    fclose(fid);
+
+    // Output for the free parameter
+    sprintf(out_name, "alpha_csr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+        perror("Error while creating the output file for the free energy\n");
+        exit(EXIT_FAILURE);
+    }
+    fprintf(fid, "%.8e\n", in.a_csr);
+    fclose(fid);
+
 }
+
