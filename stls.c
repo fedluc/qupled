@@ -118,11 +118,41 @@ void alloc_stls_arrays(input in, double **xx, double **phi,
 		       double **SS, double **SSHF){
 
   *xx = malloc( sizeof(double) * in.nx);
+  if (*xx == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the grid\n");
+    exit(EXIT_FAILURE);
+  }
+  
   *phi = malloc( sizeof(double) * in.nx * in.nl);
+    if (*phi == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the ideal density response\n");
+    exit(EXIT_FAILURE);
+  }
+    
   *SSHF = malloc( sizeof(double) * in.nx);
+  if (*SSHF == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the static structure factor"
+	    " in the Hartree-Fock approximation\n");
+    exit(EXIT_FAILURE);
+  }
+  
   *GG = malloc( sizeof(double) * in.nx);
+  if (*GG == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the static local field correction\n");
+    exit(EXIT_FAILURE);
+  }
+  
   *GG_new = malloc( sizeof(double) * in.nx);
+  if (*GG_new == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the static local field correction\n");
+    exit(EXIT_FAILURE);
+  }
+  
   *SS = malloc( sizeof(double) * in.nx);
+    if (*SS == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the static structure factor\n");
+    exit(EXIT_FAILURE);
+  }
   
 }
 
@@ -224,6 +254,10 @@ void compute_idr(double *phi, double *xx,  input in, bool verbose) {
 
   // Temporary array to store results
   double *phil = malloc( sizeof(double) * in.nx);
+  if (phil == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the ideal density response\n");
+    exit(EXIT_FAILURE);
+  }
   
   // Loop over the Matsubara frequency
   for (int ll=0; ll<in.nl; ll++){

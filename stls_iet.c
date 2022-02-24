@@ -26,10 +26,10 @@ void solve_stls_iet(input in, bool verbose) {
 
   // Allocate arrays
   alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
-
+  alloc_stls_iet_arrays(in, &bf);
+    
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
-  bf = malloc( sizeof(double) * in.nx);
   compute_bridge_function(bf, xx, in);
 
   // Initial guess
@@ -93,10 +93,27 @@ void solve_stls_iet(input in, bool verbose) {
 
   // Free memory
   free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
-  free(bf);
+  free_stls_iet_arrays(bf);
  
 }
 
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
+// -------------------------------------------------------------------
+
+void alloc_stls_iet_arrays(input in, double **bf){
+  
+  *bf = malloc(sizeof(double) * in.nx);
+    if (*bf == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the bridge function\n");
+    exit(EXIT_FAILURE);
+  }
+    
+}
+
+void free_stls_iet_arrays(double *bf){
+  free(bf);
+}
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION

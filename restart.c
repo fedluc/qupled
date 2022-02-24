@@ -46,6 +46,10 @@ void create_restart(input in){
   // Allocate additional qstsl arrays if necessary
   if(is_qstls) {
     psi = malloc( sizeof(double) * in.nx * in.nl);
+    if (psi == NULL) {
+      fprintf(stderr, "Failed to allocate memory for the auxiliary density response\n");
+      exit(EXIT_FAILURE);
+    }
   }
 
   // Get restart data

@@ -3,6 +3,14 @@
 
 #include "read_input.h"
 
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
+// -------------------------------------------------------------------
+
+void alloc_qstls_arrays(input in, double **psi, double **psi_fixed);
+
+void free_qstls_arrays(double *psi, double *psi_fixed);
+
 // ------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE FIXED COMPONENT OF THE AUXILIARY RESPONSE
 // ------------------------------------------------------------------------

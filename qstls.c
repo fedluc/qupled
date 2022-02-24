@@ -30,8 +30,7 @@ void solve_qstls(input in, bool verbose) {
   // Note: GG is not needed for qSTLS, but we keep it here so that
   // we can reuse some stls routines 
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
-  psi = malloc( sizeof(double) * in.nx * in.nl);  
-  psi_fixed = malloc( sizeof(double) * in.nx * in.nl * in.nx);
+  alloc_qstls_arrays(in, &psi, &psi_fixed);
 
   // Initialize STLS arrays that are not modified by the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
@@ -108,11 +107,40 @@ void solve_qstls(input in, bool verbose) {
 
   // Free memory
   free_stls_arrays(xx, phi, GG, SS_new, SS, SSHF);
-  free(psi);
-  free(psi_fixed);
+  free_qstls_arrays(psi, psi_fixed);
 
 }
 
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
+// -------------------------------------------------------------------
+
+void alloc_qstls_arrays(input in, double **psi, double **psi_fixed){
+
+  *psi = malloc( sizeof(double) * in.nx * in.nl);
+  if (*psi == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the auxiliary density response\n");
+    exit(EXIT_FAILURE);
+  }
+  
+    
+  *psi_fixed = malloc( sizeof(double) * in.nx * in.nl * in.nx);
+  if (*psi_fixed == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the fixed component of the "
+	    "auxiliary density response\n");
+    exit(EXIT_FAILURE);
+  }
+
+  
+}
+
+void free_qstls_arrays(double *psi, double *psi_fixed){
+
+  free(psi);
+  free(psi_fixed);
+ 
+}
 
 // ------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE FIXED COMPONENT OF THE AUXILIARY RESPONSE
@@ -148,7 +176,12 @@ void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
     size_t nevals;
     double xx2, xw, tmax, tmin;
     double *psi_fixed_part1  = malloc( sizeof(double) * in.nx);
-    
+    if (psi_fixed_part1 == NULL){
+      fprintf(stderr, "Failed to allocate memory for fixed component of the "
+	      "the auxiliary density response\n");
+      exit(EXIT_FAILURE);
+    }
+      
     // Declare accelerator and spline objects
     gsl_spline *psi_fixed_part1_sp_ptr;
     gsl_interp_accel *psi_fixed_part1_acc_ptr;
@@ -337,8 +370,13 @@ void compute_adr(double *psi, double *psi_fixed, double *SS,
 
     double err;
     size_t nevals;
-    double *adr_fixed  = malloc( sizeof(double) * in.nx);
     double norm_fact;
+    double *adr_fixed  = malloc( sizeof(double) * in.nx);
+    if (adr_fixed == NULL){
+      fprintf(stderr, "Failed to allocate memory for fixed component of the "
+	      "the auxiliary density response\n");
+      exit(EXIT_FAILURE);
+    }
     
     // Declare accelerator and spline objects
     gsl_spline *ssf_sp_ptr;

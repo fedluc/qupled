@@ -4,6 +4,14 @@
 #include "read_input.h"
 
 // -------------------------------------------------------------------
+// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
+// -------------------------------------------------------------------
+
+void alloc_stls_iet_arrays(input in, double **bf);
+
+void free_stls_iet_arrays(double *bf);
+
+// -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 

@@ -34,10 +34,7 @@ void solve_qstls_iet(input in, bool verbose) {
   // Note: GG is not needed for QSTLS, but we keep it here so that
   // we can reuse some stls routines 
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
-  psi = malloc( sizeof(double) * in.nx * in.nl);  
-  psi_new = malloc( sizeof(double) * in.nx * in.nl);  
-  psi_fixed_qstls = malloc( sizeof(double) * in.nx * in.nl * in.nx);  
-  bf = malloc(sizeof(double) * in.nx);
+  alloc_qstls_iet_arrays(in, &psi, &psi_new, &psi_fixed_qstls, &bf);
 
   // Initialize STLS arrays that are not modified by the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
@@ -131,11 +128,52 @@ void solve_qstls_iet(input in, bool verbose) {
 
   // Free memory
   free_stls_arrays(xx, phi, GG, SS_new, SS, SSHF);
+  free_qstls_iet_arrays(psi, psi_new, psi_fixed_qstls, bf);
+
+}
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
+// -------------------------------------------------------------------
+
+void alloc_qstls_iet_arrays(input in, double **psi, double **psi_new,
+			    double **psi_fixed_qstls, double **bf){
+  
+  *psi = malloc( sizeof(double) * in.nx * in.nl);
+  if (*psi == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the auxiliary density response\n");
+    exit(EXIT_FAILURE);
+  }
+
+  *psi_new = malloc( sizeof(double) * in.nx * in.nl);  
+  if (*psi_new == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the auxiliary density response\n");
+    exit(EXIT_FAILURE);
+  }
+
+  *psi_fixed_qstls = malloc( sizeof(double) * in.nx * in.nl * in.nx);
+  if (*psi_fixed_qstls == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the fixed component of the "
+	    "auxiliary density response\n");
+    exit(EXIT_FAILURE);
+  }
+
+  *bf = malloc(sizeof(double) * in.nx);
+    if (*bf == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the bridge function\n");
+    exit(EXIT_FAILURE);
+  }
+    
+}
+
+void free_qstls_iet_arrays(double *psi, double *psi_new,
+			   double *psi_fixed_qstls, double *bf){
+
   free(psi);
   free(psi_new);
   free(psi_fixed_qstls);
   free(bf);
-
+  
 }
 
 
@@ -328,6 +366,18 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
     double wmax, wmin;
     double *adr_part2  = malloc( sizeof(double) * in.nx);
     double *adr_part1  = malloc( sizeof(double) * in.nx);
+    
+    if (adr_part2 == NULL) {
+      fprintf(stderr, "Failed to allocate memory for the "
+	      "auxiliary density response (part 2)\n");
+      exit(EXIT_FAILURE);
+    }
+    if (adr_part1 == NULL) {
+      fprintf(stderr, "Failed to allocate memory for the "
+	      "auxiliary density response (part 1)\n");
+      exit(EXIT_FAILURE);
+    }
+
     
     // Declare accelerator and spline objects
     gsl_spline *adr_part1_sp_ptr;
