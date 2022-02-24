@@ -314,7 +314,7 @@ void compute_vs_slfc(double *GG, double *SS, double *xx, input in) {
   // NOTE: For this derivative we use the same resolution used for the rs derivative
   if (finite_temperature) {
     if (in.drs >= Theta) {
-      printf("Degeneracy parameter derivative cannot be computed, choose different vs-drs parameter\n");
+      fprintf(stderr, "Degeneracy parameter derivative cannot be computed, choose different vs-drs parameter\n");
       exit(EXIT_FAILURE);
     }
     in.Theta = Theta + in.drs;
@@ -534,7 +534,7 @@ void write_text_vs_stls(double *rsu, double *rsp, input in){
     sprintf(out_name, "rsu_thermoint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the static structure factor (HF)");
+        fprintf(stderr, "Error while creating the output file for the static structure factor (HF)");
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nrs; ii++)
@@ -546,7 +546,7 @@ void write_text_vs_stls(double *rsu, double *rsp, input in){
     sprintf(out_name, "fxc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the free energy\n");
+        fprintf(stderr, "Error while creating the output file for the free energy\n");
         exit(EXIT_FAILURE);
     }
     fprintf(fid, "%.8e\n", compute_free_energy(rsu, rsp, in));
@@ -556,7 +556,7 @@ void write_text_vs_stls(double *rsu, double *rsp, input in){
     sprintf(out_name, "alpha_csr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the free energy\n");
+        fprintf(stderr, "Error while creating the output file for the free parameter\n");
         exit(EXIT_FAILURE);
     }
     fprintf(fid, "%.8e\n", in.a_csr);

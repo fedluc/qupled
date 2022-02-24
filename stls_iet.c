@@ -331,7 +331,7 @@ void bridge_function_ocp_ioi(double *bf, double *xx, input in){
   double Gamma_bf;
   if (strcmp(in.iet_mapping, "standard") == 0) {
     if (in.Theta == 0.0) {
-      perror("The standard iet-mapping cannot be used in the ground state (theta = 0.0)\n");
+      fprintf(stderr, "The standard iet-mapping cannot be used in the ground state (theta = 0.0)\n");
       exit(EXIT_FAILURE);
     }
     Gamma_bf = Gamma;
@@ -400,7 +400,7 @@ void bridge_function_ocp_lct(double *bf, double *xx, input in){
   double Gamma_bf;
   if (strcmp(in.iet_mapping, "standard") == 0) {
     if (in.Theta == 0.0) {
-      perror("The standard iet-mapping cannot be used in the ground state (theta = 0.0)\n");
+      fprintf(stderr, "The standard iet-mapping cannot be used in the ground state (theta = 0.0)\n");
       exit(EXIT_FAILURE);
     }
     Gamma_bf = Gamma;
@@ -496,9 +496,9 @@ double  rbfr(double rr, void *pp){
 
   if (Gamma < 5.0){
 
-    printf("Error: The IET scheme cannot be applied to this state point"
-	   " because for Gamma = %.8f the bridge function parameterization"
-	   " is not applicable (Gamma must be larger or equal than 5.0)\n", Gamma);
+    fprintf(stderr, "Error: The IET scheme cannot be applied to this state point"
+	    " because for Gamma = %.8f the bridge function parameterization"
+	    " is not applicable (Gamma must be larger or equal than 5.0)\n", Gamma);
     exit(EXIT_FAILURE);
 
   }
@@ -538,7 +538,7 @@ void write_bridge_function(double *bf, double *xx, input in){
   sprintf(out_name, "bf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
   fid = fopen(out_name, "w");
   if (fid == NULL) {
-    perror("Error while creating the output file for the bridge function");
+    fprintf(stderr, "Error while creating the output file for the bridge function\n");
     exit(EXIT_FAILURE);
   }
   for (int ii = 0; ii < in.nx; ii++)

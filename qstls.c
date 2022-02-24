@@ -475,7 +475,7 @@ void write_text_qstls(double *SS, double *psi, double *phi,
     sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the static structure factor");
+        fprintf(stderr, "Error while creating the output file for the static structure factor");
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nx; ii++)
@@ -487,7 +487,7 @@ void write_text_qstls(double *SS, double *psi, double *phi,
     sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-      perror("Error while creating the output file for the static local field correction");
+      fprintf(stderr, "Error while creating the output file for the static local field correction");
       exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nx; ii++)
@@ -499,7 +499,7 @@ void write_text_qstls(double *SS, double *psi, double *phi,
     sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-      perror("Error while creating the output file for the static density response");
+      fprintf(stderr, "Error while creating the output file for the static density response");
       exit(EXIT_FAILURE);
     }
     double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
@@ -516,7 +516,7 @@ void write_text_qstls(double *SS, double *psi, double *phi,
     sprintf(out_name, "adr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-      perror("Error while creating the output file for the auxiliary density response");
+      fprintf(stderr, "Error while creating the output file for the auxiliary density response");
       exit(EXIT_FAILURE);
     }
     for (int ii=0; ii<in.nx; ii++){
@@ -531,7 +531,7 @@ void write_text_qstls(double *SS, double *psi, double *phi,
     sprintf(out_name, "idr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-      perror("Error while creating the output file for the ideal density response");
+      fprintf(stderr, "Error while creating the output file for the ideal density response");
       exit(EXIT_FAILURE);
     }
     for (int ii=0; ii<in.nx; ii++){
@@ -546,7 +546,7 @@ void write_text_qstls(double *SS, double *psi, double *phi,
     sprintf(out_name, "ssfHF_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the static structure factor (HF)");
+        fprintf(stderr, "Error while creating the output file for the static structure factor (HF)");
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nx; ii++)
@@ -558,7 +558,7 @@ void write_text_qstls(double *SS, double *psi, double *phi,
     sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the interaction energy");
+        fprintf(stderr, "Error while creating the output file for the interaction energy");
         exit(EXIT_FAILURE);
     }
     fprintf(fid, "%.8e\n", compute_internal_energy(SS, xx, in));

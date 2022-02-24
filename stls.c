@@ -719,8 +719,9 @@ double ssf_plasmon(double xx, double GG, input in) {
 
   // Stop if no root was found within the prescribed accuracy
   if (status != GSL_SUCCESS) {
-    perror("The plasmon frequency could not be determined with the requested accuracy." 
-	   " Try to increase the value of the variable ROOT_REL_ERR.\n");
+    fprintf(stderr, "The plasmon frequency could not be determined "
+	    "with the requested accuracy.  Try to increase the value "
+	    "of the variable ROOT_REL_ERR.\n");
     exit(EXIT_FAILURE);
   }
   
@@ -750,7 +751,7 @@ double drf_re_zero_temperature(double Omega, void *pp){
   double w_co = xx*xx + 2*xx; 
     
   if (Omega < w_co) {
-    perror("The dielectric response cannot be evaluated at the given frequency\n");
+    fprintf(stderr, "The dielectric response cannot be evaluated at the given frequency\n");
     exit(EXIT_FAILURE);
   }
 
@@ -770,7 +771,7 @@ double drfp_re_zero_temperature(double xx, double Omega, double GG, double rs){
   double w_co = xx*xx + 2*xx;
 
   if (Omega < w_co) {
-    perror("The dielectric response cannot be evaluated at the given frequency\n");
+    fprintf(stderr, "The dielectric response cannot be evaluated at the given frequency\n");
     exit(EXIT_FAILURE);
   }
   
@@ -885,7 +886,7 @@ void write_text_stls(double *SS, double *GG, double *phi,
     sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the static structure factor\n");
+        fprintf(stderr, "Error while creating the output file for the static structure factor\n");
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nx; ii++)
@@ -897,7 +898,7 @@ void write_text_stls(double *SS, double *GG, double *phi,
     sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the static local field correction\n");
+        fprintf(stderr, "Error while creating the output file for the static local field correction\n");
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nx; ii++)
@@ -909,7 +910,7 @@ void write_text_stls(double *SS, double *GG, double *phi,
     sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-      perror("Error while creating the output file for the static density response\n");
+      fprintf(stderr, "Error while creating the output file for the static density response\n");
       exit(EXIT_FAILURE);
     }
     double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
@@ -926,7 +927,7 @@ void write_text_stls(double *SS, double *GG, double *phi,
     sprintf(out_name, "idr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-      perror("Error while creating the output file for the ideal density response");
+      fprintf(stderr, "Error while creating the output file for the ideal density response");
       exit(EXIT_FAILURE);
     }
     for (int ii=0; ii<in.nx; ii++){
@@ -941,7 +942,7 @@ void write_text_stls(double *SS, double *GG, double *phi,
     sprintf(out_name, "ssfHF_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the static structure factor (HF)");
+        fprintf(stderr, "Error while creating the output file for the static structure factor (HF)");
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nx; ii++)
@@ -953,7 +954,7 @@ void write_text_stls(double *SS, double *GG, double *phi,
     sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
-        perror("Error while creating the output file for the interaction energy\n");
+        fprintf(stderr, "Error while creating the output file for the interaction energy\n");
         exit(EXIT_FAILURE);
     }
     fprintf(fid, "%.8e\n", compute_internal_energy(SS, xx, in));

@@ -68,6 +68,14 @@ double compute_chemical_potential(input in) {
   // Free memory
   gsl_root_fsolver_free(rs);
 
+  // Check that the chemical potential is reliable
+  if (status != GSL_SUCCESS) {
+    fprintf(stderr,"The chemical potential could not be determined  "
+	    "with the requested accuracy.  Try to increase the value "
+	    "of the variable ROOT_REL_ERR.\n");
+    exit(EXIT_FAILURE);
+  }
+  
   // Output
   return mu;
 
