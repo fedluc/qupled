@@ -25,15 +25,15 @@ void solve_vs_stls(input in, bool verbose) {
   double *SSHF = NULL;
 
   // Arrays for VS-STLS solution
-  double *uint = NULL;
-  double *rsArray = NULL;
+  double *rsu = NULL;
+  double *rsp = NULL;
   
   // Allocate arrays
   alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
-  alloc_vs_stls_arrays(in, &uint, &rsArray);
+  alloc_vs_stls_arrays(in, &rsu, &rsp);
   
   // Initialize arrays that are not modified with the iterative procedure
-  init_fixed_vs_stls_arrays(&in, xx, rsArray, verbose);
+  init_fixed_vs_stls_arrays(&in, xx, rsp, verbose);
   init_state_point_vs_stls_arrays(&in, xx, phi, SSHF, verbose);
   
   // Initial guess
@@ -50,7 +50,7 @@ void solve_vs_stls(input in, bool verbose) {
 
   // Iterative procedure to fix the compressibility sum rule
   if (verbose) printf("Iterative procedure to enforce the compressibility sum rule ...\n");
-  in.a_csr = vs_stls_thermo_iterations(xx, uint, rsArray, in, true);
+  in.a_csr = vs_stls_thermo_iterations(xx, rsu, rsp, in, true);
   if (verbose) printf("Done.\n");
 
   // Structural properties
@@ -61,18 +61,18 @@ void solve_vs_stls(input in, bool verbose) {
   // Thermodynamic properties
   if (verbose) printf("Free parameter: %.5f\n",in.a_csr);
   if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
-  if (verbose) printf("Free energy: %.10f\n",compute_free_energy(uint, rsArray, in));
+  if (verbose) printf("Free energy: %.10f\n",compute_free_energy(rsu, rsp, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_stls(SS, GG, phi, SSHF, xx, in);
-  write_text_vs_stls(uint, rsArray, in);
+  write_text_vs_stls(rsu, rsp, in);
   write_guess_stls(SS, GG, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
   free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
-  free_vs_stls_arrays(uint, rsArray);
+  free_vs_stls_arrays(rsu, rsp);
  
 }
 
@@ -82,8 +82,8 @@ void solve_vs_stls(input in, bool verbose) {
 // ---------------------------------------------------------------------
 
 // Iterations over the parameter used to enforce the CSR rule
-double vs_stls_thermo_iterations(double *xx, double *uint,
-				 double *rsArray, input in,
+double vs_stls_thermo_iterations(double *xx, double *rsu,
+				 double *rsp, input in,
 				 bool verbose) {
 
   double alpha = in.a_csr;
@@ -97,7 +97,7 @@ double vs_stls_thermo_iterations(double *xx, double *uint,
     double tic = omp_get_wtime();
 
     // Get parameter to enforce the compressibility sum rule
-    alpha = get_alpha(xx, uint, rsArray, in);
+    alpha = compute_alpha(xx, rsu, rsp, in);
 
     // Update diagnostic
     iter_err = fabs((alpha - in.a_csr)/alpha);
@@ -174,14 +174,14 @@ void vs_stls_struct_iterations(double *SS, double *SSHF,
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
 
-void alloc_vs_stls_arrays(input in, double **uint, double **rsArray){
-  *uint = malloc( sizeof(double) * in.nrs);
-  *rsArray = malloc( sizeof(double) * in.nrs); 
+void alloc_vs_stls_arrays(input in, double **rsu, double **rsp){
+  *rsu = malloc( sizeof(double) * in.nrs);
+  *rsp = malloc( sizeof(double) * in.nrs); 
 }
 
-void free_vs_stls_arrays(double *uint, double *rsArray){
-  free(uint);
-  free(rsArray);
+void free_vs_stls_arrays(double *rsu, double *rsp){
+  free(rsu);
+  free(rsp);
 }
 
 
@@ -190,7 +190,7 @@ void free_vs_stls_arrays(double *uint, double *rsArray){
 // -------------------------------------------------------------------
 
 // Initialize arrays that do not depend on iterations and state points
-void init_fixed_vs_stls_arrays(input *in, double *xx, double *rsArray,
+void init_fixed_vs_stls_arrays(input *in, double *xx, double *rsp,
 			       bool verbose){
 
   // Print on screen the parameter used to solve the STLS equation
@@ -214,7 +214,7 @@ void init_fixed_vs_stls_arrays(input *in, double *xx, double *rsArray,
 
   // Array of coupling parameters
   if (verbose) printf("Coupling parameter grid initialization: ");
-  rs_grid(rsArray, in);
+  rs_grid(rsp, in);
   if (verbose) printf("Done.\n");
   
 }
@@ -257,10 +257,11 @@ void init_state_point_vs_stls_arrays(input *in, double *xx,
 // FUNCTION USED TO DEFINE THE WAVE-VECTOR GRID
 // ------------------------------------------------------------------
 
-void rs_grid(double *rsArray, input *in){
+void rs_grid(double *rsp, input *in){
 
-  for (int ii=0; ii<in->nrs; ii++) {
-    rsArray[ii] =  in->drs*(ii+1);
+  rsp[0] = 0.0;
+  for (int ii=1; ii<in->nrs; ii++) {
+    rsp[ii] =  in->drs*(ii);
   }
   
 }
@@ -354,12 +355,14 @@ void compute_vs_slfc(double *GG, double *SS, double *xx, input in) {
 // FUNCTION USED TO COMPUTE THE PARAMETER FOR THE COMPRESSIBILITY RULE
 // -------------------------------------------------------------------
 
-double get_alpha(double *xx, double *uint,
-		 double *rsArray, input in) {
+double compute_alpha(double *xx, double *rsu,
+		     double *rsp, input in) {
 
   bool finite_temperature = false;
-  double *uinttp = NULL;
-  double *uinttm = NULL;  
+  double *rsutp = NULL;
+  double *rsutm = NULL;
+  double urs, ursp, ursm;
+  double utp, utm;
   double frs, frsp, frsm;
   double ftp, ftm;
   double frsptp, frsmtp, frsptm, frsmtm;
@@ -377,42 +380,55 @@ double get_alpha(double *xx, double *uint,
   
   // Allocate temporary arrays for finite temperature calculations
   if (finite_temperature) {
-    uinttp = malloc( sizeof(double) * in.nrs);
-    uinttm = malloc( sizeof(double) * in.nrs);
+    rsutp = malloc( sizeof(double) * in.nrs);
+    rsutm = malloc( sizeof(double) * in.nrs);
   }
   
-  // Get internal energy for thermodynamic integration
-  fill_internal_energy_array(xx, uint, rsArray, in, false);
+  // Get integrand for the free energy
+  compute_rsu(xx, rsu, rsp, in, false);
   if (finite_temperature) {
     in.Theta = Theta + in.drs;
-    fill_internal_energy_array(xx, uinttp, rsArray, in, false);
+    compute_rsu(xx, rsutp, rsp, in, false);
     in.Theta = Theta - in.drs;
-    fill_internal_energy_array(xx, uinttm, rsArray, in, false);
+    compute_rsu(xx, rsutm, rsp, in, false);
+  }
+
+  // Internal energy
+  urs = rsu[in.nrs-2]/rsp[in.nrs-2];
+  ursp = rsu[in.nrs-1]/rsp[in.nrs-1];
+  ursm = rsu[in.nrs-3]/rsp[in.nrs-3];
+  if (finite_temperature) {
+    utp = rsutp[in.nrs-2]/rs;
+    utm = rsutm[in.nrs-2]/rs;
   }
   
   // Free energy
-  frs = compute_free_energy(uint, rsArray, in);
+  frs = compute_free_energy(rsu, rsp, in);
   in.rs = rs + in.drs;
-  frsp = compute_free_energy(uint, rsArray, in);
+  frsp = compute_free_energy(rsu, rsp, in);
   in.rs = rs - in.drs;
-  frsm = compute_free_energy(uint, rsArray, in);
+  frsm = compute_free_energy(rsu, rsp, in);
   in.rs = rs;
   if (finite_temperature) {
-    ftp = compute_free_energy(uinttp, rsArray, in);
-    ftm = compute_free_energy(uinttm, rsArray, in);
+    ftp = compute_free_energy(rsutp, rsp, in);
+    ftm = compute_free_energy(rsutm, rsp, in);
     in.rs = rs + in.drs;
-    frsptp = compute_free_energy(uinttp, rsArray, in);
-    frsptm = compute_free_energy(uinttm, rsArray, in);
+    frsptp = compute_free_energy(rsutp, rsp, in);
+    frsptm = compute_free_energy(rsutm, rsp, in);
     in.rs = rs - in.drs;
-    frsmtp = compute_free_energy(uinttp, rsArray, in);
-    frsmtm = compute_free_energy(uinttm, rsArray, in);
+    frsmtp = compute_free_energy(rsutp, rsp, in);
+    frsmtm = compute_free_energy(rsutm, rsp, in);
     in.rs = rs;
   }
   
   // Internal energy derivatives
-  dudrs = (uint[in.nrs-1] - uint[in.nrs-3])/(2.0*in.drs);
-  if (finite_temperature) 
-    dudt =  (uinttp[in.nrs-2] - uinttm[in.nrs-2])/(2.0*in.drs);
+  dudrs = (ursp - ursm)/(2.0*in.drs);
+  if (finite_temperature)
+    dudt =  (utp - utm)/(2.0*in.drs);
+  // Internal energy derivatives
+  /* dudrs = (rsu[in.nrs-1] - rsu[in.nrs-3])/(2.0*in.drs); */
+  /* if (finite_temperature)  */
+  /*   dudt =  (rsutp[in.nrs-2] - rsutm[in.nrs-2])/(2.0*in.drs); */
   
   // Free energy derivatives
   dfdrs = (frsp - frsm)/(2.0*in.drs);
@@ -426,7 +442,8 @@ double get_alpha(double *xx, double *uint,
   // Parameter for the compressibility sum rule
   numer = (2.0*frs - (1.0/6.0)*rs*rs*d2fdrs2
 	   + (4.0/3.0)*rs*dfdrs);
-  denom = (uint[in.nrs-2] + (1.0/3.0)*rs*dudrs);
+  denom = (urs + (1.0/3.0)*rs*dudrs);
+  //denom = (rsu[in.nrs-2] + (1.0/3.0)*rs*dudrs);
   if (finite_temperature) {
     numer += -(2.0/3.0)*Theta*Theta*d2fdt2
              -(2.0/3.0)*Theta*rs*d2fdrsdt
@@ -436,8 +453,8 @@ double get_alpha(double *xx, double *uint,
   alpha = numer/denom;
 
   // Free memory
-  free(uinttp);
-  free(uinttm);
+  free(rsutp);
+  free(rsutm);
   
   // Output
   return alpha;
@@ -446,12 +463,11 @@ double get_alpha(double *xx, double *uint,
 
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO COMPUTE THE INTERNAL ENERGY FOR THERMODYNAMIC
-// INTEGRATION
+// FUNCTION USED TO COMPUTE THE INTEGRAND FOR THE FREE ENERGY
 // -------------------------------------------------------------------
 
-void fill_internal_energy_array(double *xx, double *uint, double *rsArray,
-				input in, bool verbose){
+void compute_rsu(double *xx, double *rsu, double *rsp,
+		 input in, bool verbose){
 
 
   #pragma omp parallel
@@ -469,20 +485,30 @@ void fill_internal_energy_array(double *xx, double *uint, double *rsArray,
       input in_tmp = in;
 
       // State point
-      in_tmp.rs = rsArray[ii];
+      in_tmp.rs = rsp[ii];
       
       // Allocate arrays
       alloc_stls_arrays(in_tmp, &xx_tmp, &phi, &GG, &GG_new, &SS, &SSHF);
       
       // Initialize arrays that depend only on the state point
       init_state_point_vs_stls_arrays(&in_tmp, xx, phi, SSHF, verbose);
+
+      if (rsp[ii] == 0.0) {
+
+	// Get the integrand from the HF static structure factor
+	in_tmp.rs = 1.0;
+	rsu[ii] = compute_internal_energy(SSHF, xx, in_tmp);
+      }
+      else {
+	
+	// Compute structural properties with the VS-STLS static local field correction
+	vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, in_tmp, verbose);
       
-      // Solve state point
-      vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, in_tmp, verbose);
-      
-      // Internal energy
-      uint[ii] = compute_internal_energy(SS, xx, in_tmp);
-      
+	// Compute the integrand for the free energy from the static structure factor
+	rsu[ii] = rsp[ii]*compute_internal_energy(SS, xx, in_tmp);
+	
+      }
+	
       // Free memory
       free_stls_arrays(xx_tmp, phi, GG, GG_new, SS, SSHF);
       
@@ -493,90 +519,26 @@ void fill_internal_energy_array(double *xx, double *uint, double *rsArray,
 }
 
 
-// -------------------------------------------------------------------
-// FUNCTIONS USED TO COMPUTE THE FREE ENERGY
-// -------------------------------------------------------------------
-
-struct fex_params {
-
-  gsl_spline *uint_sp_ptr;
-  gsl_interp_accel *uint_acc_ptr;
-
-};
-
-double compute_free_energy(double *uint, double *rsArray, input in) {
-
-  double err;
-  size_t neval;
-  double fre;
-
-  // Declare accelerator and spline objects
-  gsl_spline *uint_sp_ptr;
-  gsl_interp_accel *uint_acc_ptr;
-  
-  // Allocate the accelerator and the spline objects
-  uint_sp_ptr = gsl_spline_alloc(gsl_interp_linear, in.nrs);
-  uint_acc_ptr = gsl_interp_accel_alloc();
-  
-  // Initialize the spline
-  gsl_spline_init(uint_sp_ptr, rsArray, uint, in.nrs);
-
-  // Integration workspace
-  gsl_integration_cquad_workspace *wsp
-    = gsl_integration_cquad_workspace_alloc(100);
-
-  // Integration function
-  gsl_function ff_int;
-  ff_int.function = &fex;
-
-  // Internal energy
-  struct fex_params fexp = {uint_sp_ptr, uint_acc_ptr};
-  ff_int.params = &fexp;
-  gsl_integration_cquad(&ff_int,
-  			rsArray[0]+1.0e-14, in.rs,
-  			0.0, QUAD_REL_ERR,
-  			wsp,
-  			&fre, &err, &neval);
-  
-  // Free memory
-  gsl_integration_cquad_workspace_free(wsp);
-  gsl_spline_free(uint_sp_ptr);
-  gsl_interp_accel_free(uint_acc_ptr);
-
-  // Output
-  return fre/(in.rs*in.rs);
-
-}
-
-double fex(double rs, void* pp) {
-
-  struct fex_params* params = (struct fex_params*)pp;
-  gsl_spline* uint_sp_ptr = (params->uint_sp_ptr);
-  gsl_interp_accel* uint_acc_ptr = (params->uint_acc_ptr);
-
-  return rs*gsl_spline_eval(uint_sp_ptr, rs, uint_acc_ptr);
-  
-}
 
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
 // write text files for output
-void write_text_vs_stls(double *uint, double *rsArray, input in){
+void write_text_vs_stls(double *rsu, double *rsp, input in){
 
     FILE* fid;
     char out_name[100];
     
     // Output for the internal energy used for thermodynamic integration
-    sprintf(out_name, "uint_thermoint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    sprintf(out_name, "rsu_thermoint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
         perror("Error while creating the output file for the static structure factor (HF)");
         exit(EXIT_FAILURE);
     }
     for (int ii = 0; ii < in.nrs; ii++)
-        fprintf(fid, "%.8e %.8e\n", rsArray[ii], uint[ii]);
+        fprintf(fid, "%.8e %.8e\n", rsp[ii], rsu[ii]);
 
     fclose(fid);
 
@@ -587,7 +549,7 @@ void write_text_vs_stls(double *uint, double *rsArray, input in){
         perror("Error while creating the output file for the free energy\n");
         exit(EXIT_FAILURE);
     }
-    fprintf(fid, "%.8e\n", compute_free_energy(uint, rsArray, in));
+    fprintf(fid, "%.8e\n", compute_free_energy(rsu, rsp, in));
     fclose(fid);
 
     // Output for the free parameter

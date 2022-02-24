@@ -110,14 +110,6 @@ void compute_slfc(double *GG, double *SS,
 double slfc(double yy, void *pp);
 
 // -------------------------------------------------------------------
-// FUNCTIONS USED TO COMPUTE THE INTERNAL ENERGY
-// -------------------------------------------------------------------
-
-double compute_internal_energy(double *SS, double *xx, input in);
-
-double uex(double yy, void *pp);
-
-// -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 

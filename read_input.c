@@ -306,7 +306,7 @@ void set_default_parse_opt(input *in){
 // ------------------------------------------------
 void get_grid_size(input *in){
   in->nx = (int)floor(in->xmax/in->dx);
-  in->nrs = (int)floor((in->rs + in->drs)/in->drs);
+  in->nrs = (int)floor((in->rs + in->drs)/in->drs) + 1; 
 }
 
 

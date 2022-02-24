@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "read_input.h"
 
 // -------------------------------------------------------------------
 // CONSTANTS FOR ROOT SOLVERS, MINIMIZATIONS AND QUADRATURES
@@ -39,5 +40,23 @@ int idx3(int xx, int yy, int zz,
 // -------------------------------------------------------------------
 
 int get_sign(double num);
+
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE INTERNAL ENERGY
+// -------------------------------------------------------------------
+
+double compute_internal_energy(double *SS, double *xx, input in);
+
+double uex(double yy, void *pp);
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE FREE ENERGY
+// -------------------------------------------------------------------
+
+double compute_free_energy(double *rsu, double *rsp, input in);
+
+double fex(double rs, void* pp);
+
 
 #endif
