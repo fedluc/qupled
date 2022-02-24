@@ -3,6 +3,16 @@
 
 #include "read_input.h"
 
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
+// -------------------------------------------------------------------
+
+void stls_iterations(double *SS, double *SSHF,
+		     double *GG, double *GG_new,
+		     double *phi, double *xx,
+		     input in, bool verbose);
+
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------

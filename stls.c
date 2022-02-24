@@ -11,7 +11,7 @@
 
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ITERATIVELY SOLVE THE STLS EQUATIONS
+// FUNCTION USED TO SOLVE THE STLS SCHEME
 // -------------------------------------------------------------------
 
 void solve_stls(input in, bool verbose) {
@@ -42,8 +42,33 @@ void solve_stls(input in, bool verbose) {
     read_guess_stls(SS, GG, in); // Read from file
   }
 
-
   // Iterative procedure
+  stls_iterations(SS, SSHF, GG, GG_new, phi, xx, in, verbose);
+  
+  // Internal energy
+  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
+  
+  // Output to file
+  if (verbose) printf("Writing output files...\n");
+  write_text_stls(SS, GG, phi, SSHF, xx, in);
+  write_guess_stls(SS, GG, in); 
+  if (verbose) printf("Done.\n");
+
+  // Free memory
+  free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
+
+ 
+}
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO PERFORM THE ITERATIONS FOR THE STLS SCHEME
+// -------------------------------------------------------------------
+
+void stls_iterations(double *SS, double *SSHF,
+		     double *GG, double *GG_new,
+		     double *phi, double *xx,
+		     input in, bool verbose) {
+
   if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
@@ -79,21 +104,10 @@ void solve_stls(input in, bool verbose) {
     }
   }
   if (verbose) printf("Done.\n");
-  
-  // Internal energy
-  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
-  
-  // Output to file
-  if (verbose) printf("Writing output files...\n");
-  write_text_stls(SS, GG, phi, SSHF, xx, in);
-  write_guess_stls(SS, GG, in); 
-  if (verbose) printf("Done.\n");
-
-  // Free memory
-  free_stls_arrays(xx, phi, GG, GG_new, SS, SSHF);
-
+ 
  
 }
+
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS

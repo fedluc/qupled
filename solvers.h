@@ -4,27 +4,32 @@
 #include "read_input.h"
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ITERATIVELY SOLVE THE STLS EQUATIONS
+// FUNCTION USED TO SOLVE THE STLS SCHEME
 // -------------------------------------------------------------------
 
 void solve_stls(input in, bool verbose);
 
+// -------------------------------------------------------------------
+// FUNCTION USED TO SOLVE THE VS-STLS SCHEME
+// -------------------------------------------------------------------
+
+void solve_vs_stls(input in, bool verbose);
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ITERATIVELY SOLVE THE STLS-IET EQUATIONS
+// FUNCTION USED TO SOLVE THE STLS-IET SCHEME
 // -------------------------------------------------------------------
 
 void solve_stls_iet(input in, bool verbose);
 
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS EQUATIONS
+// FUNCTION USED TO SOLVE THE QSTLS SCHEME
 // -------------------------------------------------------------------
 
 void solve_qstls(input in, bool verbose);
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS-IET EQUATIONS
+// FUNCTION USED TO SOLVE THE QSTLS-IET SCHEME
 // -------------------------------------------------------------------
 
 void solve_qstls_iet(input in, bool verbose);
