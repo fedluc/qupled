@@ -82,6 +82,7 @@ void alloc_stls_arrays_new(input in, stls_pointers *pp){
   
 }
 
+
 void alloc_vs_stls_arrays(input in, stls_pointers pp, vs_sp *xx, vs_sp *phi,
 			  vs_sp *SS, vs_sp *SSHF, vs_sp *GG, vs_sp *GG_new,
 			  double **rsu, double **rs_arr, int el){
@@ -169,6 +170,47 @@ void alloc_vs_stls_arrays(input in, stls_pointers pp, vs_sp *xx, vs_sp *phi,
  
 }
 
+void alloc_vs_stls_slfc(double *pp, vs_sp *GG, int el){
+
+  bool alloc_failed = false;
+
+  // Allocate arrays for structural properties
+  if (pp == NULL)
+    alloc_failed = true;
+  
+  switch(el) {
+    
+  case 0:
+    GG->in = pp;
+    break;
+    
+  case 1:
+    GG->rsp1 = pp;
+    break;
+
+  case 2:
+    GG->rsm1 = pp;
+    break;
+
+  case 3:
+    GG->rsp2 = pp;
+    break;
+
+  case 4:
+    GG->rsm2 = pp;
+    break;
+
+  default:
+    alloc_failed = true;
+
+  }
+
+  if (alloc_failed) {
+    printf("The allocation of the VS-STLS slfc failed\n"); 
+    exit(EXIT_FAILURE);
+  }
+ 
+}
 
 void free_vs_stls_arrays(vs_sp xx, vs_sp phi, vs_sp SS, vs_sp SSHF,
 			 vs_sp GG, vs_sp GG_new, double *rsu,
@@ -531,18 +573,23 @@ void vs_stls_struct_iterations(vs_sp SS, vs_sp SSHF,
 void compute_vs_slfc(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
 
   /* bool finite_temperature = false; */
-  /* double *GGrs = NULL; */
-  /* double *GGrs_arr = NULL; */
-  /* double *GGrsm = NULL; */
-  /* double *GGtp = NULL; */
-  /* double *GGtm = NULL; */
-  /* double drs = vs_in[0].rs; */
+  vs_sp GG_stls;
+  double *pp;
+  double drs = vs_in[0].rs;
+  double nx = vs_in[0].nx;
   /* double der_coeff = 2.0; */
   
   // Check if finite temperature calculations must be performed
   /* if (Theta > 0.0) finite_temperature = true; */
   
   // Allocate arrays
+  for (int ii=0; ii<VS_SP_EL; ii++){
+    pp = malloc(sizeof(double) * nx);
+    alloc_vs_stls_slfc(pp, &GG, ii);
+  }
+
+  // CHECK MALLOC, AND IMPLEMENT FREE
+  
   /* GGrs = malloc( sizeof(double) * in.nx); */
   /* GGrs_arr = malloc( sizeof(double) * in.nx); */
   /* GGrsm = malloc( sizeof(double) * in.nx); */
