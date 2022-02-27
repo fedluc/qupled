@@ -116,7 +116,7 @@ void alloc_vs_stls_arrays(input in, stls_pointers pp, vs_sp *xx, vs_sp *phi,
   // Allocate arrays for thermodynamic integration
   if (el == 0) {
     
-    *rsu = malloc( sizeof(double) * in.nrs);
+    *rsu = malloc( sizeof(double) * in.nrs * 3);
     if (*rsu == NULL) {
       fprintf(stderr, "Failed to allocate memory for the free energy integrand\n");
       alloc_failed = true;
@@ -320,22 +320,24 @@ void init_state_point_vs_stls_arrays(input *vs_in, vs_sp xx,
   vs_in[2].rs -= in.drs;
   vs_in[3].rs += 2.0*in.drs;
   vs_in[4].rs -= 2.0*in.drs;
+  vs_in[5].Theta += in.drs;
+  vs_in[6].Theta -= in.drs;
+  vs_in[7].Theta += 2.0*in.drs;
+  vs_in[8].Theta -= 2.0*in.drs;
   if (vs_in[2].rs < 0.0) vs_in[2].rs = in.drs;
   if (vs_in[4].rs < 0.0) vs_in[4].rs = in.drs;
+  if (vs_in[7].rs < 0.0) vs_in[7].rs = 0.0;
+  if (vs_in[8].rs < 0.0) vs_in[8].rs = 0.0;
   
   // Chemical potential
-  if (in.Theta > 0) {
-    if (verbose) printf("Chemical potential calculation: ");
-    compute_chemical_potential_vs_stls(vs_in);
-    if (verbose) printf("Done. Chemical potential: %.8f\n", in.mu);
-  }
+  if (verbose) printf("Chemical potential calculation: ");
+  compute_chemical_potential_vs_stls(vs_in);
+  if (verbose) printf("Done. Chemical potential: %.8f\n", in.mu);
   
   // Normalized ideal Lindhard density response
-  if (in.Theta > 0) {
-    if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
-    compute_idr_vs_stls(phi, xx, vs_in);
-    if (verbose) printf("Done.\n");
-  }
+  if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
+  compute_idr_vs_stls(phi, xx, vs_in);
+  if (verbose) printf("Done.\n");
   
   // Static structure factor in the Hartree-Fock approximation
   if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
@@ -530,7 +532,9 @@ void vs_stls_struct_update(vs_sp GG, vs_sp GG_new, input *vs_in){
 void compute_chemical_potential_vs_stls(input *vs_in){
 
   for (int ii=0; ii<VS_SP_EL; ii++){
-    vs_in[ii].mu = compute_chemical_potential(vs_in[ii]);
+    if (vs_in[ii].Theta > 0.0) {
+      vs_in[ii].mu = compute_chemical_potential(vs_in[ii]);
+    }
   }
   
 }
@@ -572,17 +576,18 @@ void compute_ssf_HF_vs_stls(vs_sp SS, vs_sp xx, input *vs_in){
 
 void compute_slfc_vs_stls(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
 
-  /* bool finite_temperature = false; */
+  bool finite_temperature = false;
   vs_sp GG_stls;
   double *pp;
   input in = vs_in[0];
   double alpha = in.a_csr;
   double a_drs = alpha/(3.0*2.0*in.drs);
   double a_dx = alpha/(3.0*2.0*in.dx);
+  double a_dt = 2.0*alpha/(3.0*2.0*in.drs);
   /* double der_coeff = 2.0; */
   
   // Check if finite temperature calculations must be performed
-  /* if (Theta > 0.0) finite_temperature = true; */
+  if (in.Theta > 0.0) finite_temperature = true;
   
   // Allocate arrays
   for (int ii=0; ii<VS_SP_EL; ii++){
@@ -625,8 +630,20 @@ void compute_slfc_vs_stls(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
                   *(3.0*GG_stls.rsp2[ii] - 4.0*GG_stls.rsp1[ii] + GG_stls.in[ii]);
     GG.rsm2[ii] += -a_drs*vs_in[4].rs
                   *(-3.0*GG_stls.rsm2[ii] + 4.0*GG_stls.rsm1[ii] - GG_stls.in[ii]);
-    /* if (finite_temperature) */
+    if (finite_temperature) {
+      GG.in[ii] += -a_dt*vs_in[0].Theta
+	           *(GG_stls.tp1[ii] - GG_stls.tm1[ii]);
+      GG.tp1[ii] += -a_dt*vs_in[5].Theta
+                   *(GG_stls.tp2[ii] - GG_stls.in[ii]);
+      GG.tm1[ii] += -a_dt*vs_in[6].Theta
+                    *(GG_stls.in[ii] - GG_stls.tm2[ii]);
+      GG.tp2[ii] += -a_dt*vs_in[7].Theta
+	            *(3.0*GG_stls.tp2[ii] - 4.0*GG_stls.tp1[ii] + GG_stls.in[ii]);
+      GG.tm2[ii] += -a_dt*vs_in[8].Theta
+                     *(-3.0*GG_stls.tm2[ii] + 4.0*GG_stls.tm1[ii] - GG_stls.in[ii]);
       
+    }
+
   }
 
   // Free memory
@@ -641,8 +658,10 @@ void compute_slfc_vs_stls(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
 void compute_idr_vs_stls(vs_sp phi, vs_sp xx, input *vs_in){
 
   for (int ii=0; ii<VS_SP_EL; ii++) {
-    compute_idr(get_el(phi,ii), get_el(xx,ii),
-		vs_in[ii], false);
+    if (vs_in[ii].Theta > 0.0) {
+      compute_idr(get_el(phi,ii), get_el(xx,ii),
+		  vs_in[ii], false);
+    }
   }
   
 }
@@ -654,98 +673,82 @@ void compute_idr_vs_stls(vs_sp phi, vs_sp xx, input *vs_in){
 double compute_alpha(vs_sp xx, double *rsu,
 		     double *rs_arr, input *vs_in) {
 
-  /* bool finite_temperature = false; */
-  /* double *rsutp = NULL; */
-  /* double *rsutm = NULL; */
+  bool finite_temperature = false;
   double urs, ursp, ursm;
-  /* double utp, utm; */
+  double utp, utm;
   double frs, frsp, frsm;
-  /* double ftp, ftm; */
-  /* double frsptp, frsmtp, frsptm, frsmtm; */
-  /* double dudrs, dudt; */
-  /* double dfdrs, dfdt; */
-  /* double d2fdrs2, d2fdt2, d2fdrsdt; */
-  double dudrs;
-  double dfdrs;
-  double d2fdrs2;
+  double ftp, ftm;
+  double frsptp, frsmtp, frsptm, frsmtm;
+  double dudrs, dudt;
+  double dfdrs, dfdt;
+  double d2fdrs2, d2fdt2, d2fdrsdt;
   double numer;
   double denom;
   double alpha;
   input in = vs_in[0];
-  /* double Theta = vs_in[0].Theta; */
+  int nrs = in.nrs;
   
   // Check if finite temperature calculations must be performed
-  //if (Theta > 0.0) finite_temperature = true;
-  
-  // Allocate temporary arrays for finite temperature calculations
-  /* if (finite_temperature) { */
-  /*   rsutp = malloc( sizeof(double) * in.nrs); */
-  /*   rsutm = malloc( sizeof(double) * in.nrs); */
-  /* } */
+  if (in.Theta > 0.0) finite_temperature = true;
   
   // Get integrand for the free energy
   compute_rsu(xx, rsu, rs_arr, vs_in, false);
-  /* if (finite_temperature) { */
-  /*   in.Theta = Theta + in.drs; */
-  /*   compute_rsu(xx, rsutp, rs_arr, in, false); */
-  /*   in.Theta = Theta - in.drs; */
-  /*   compute_rsu(xx, rsutm, rs_arr, in, false); */
-  /* } */
 
   // Internal energy
-  urs = rsu[in.nrs-2]/rs_arr[in.nrs-2];
-  ursp = rsu[in.nrs-1]/rs_arr[in.nrs-1];
-  ursm = rsu[in.nrs-3]/rs_arr[in.nrs-3];
-  /* if (finite_temperature) { */
-  /*   utp = rsutp[in.nrs-2]/rs; */
-  /*   utm = rsutm[in.nrs-2]/rs; */
-  /* } */
+  urs = rsu[idx2(nrs-2,0,nrs)]/rs_arr[nrs-2];
+  ursp = rsu[idx2(nrs-1,0,nrs)]/rs_arr[nrs-1];
+  ursm = rsu[idx2(nrs-3,0,nrs)]/rs_arr[nrs-3];
+  if (finite_temperature) {
+    utp = rsu[idx2(nrs-2,1,in.nx)]/rs_arr[nrs-2];
+    utm = rsu[idx2(nrs-2,2,in.nx)]/rs_arr[nrs-2];
+  }
   
   // Free energy
   frs = compute_free_energy(rsu, rs_arr, vs_in[0]);
   frsp = compute_free_energy(rsu, rs_arr, vs_in[1]);
   frsm = compute_free_energy(rsu, rs_arr, vs_in[2]);
-  /* in.rs = rs; */
-  /* if (finite_temperature) { */
-  /*   ftp = compute_free_energy(rsutp, rs_arr, in); */
-  /*   ftm = compute_free_energy(rsutm, rs_arr, in); */
-  /*   in.rs = rs + in.drs; */
-  /*   frsptp = compute_free_energy(rsutp, rs_arr, in); */
-  /*   frsptm = compute_free_energy(rsutm, rs_arr, in); */
-  /*   in.rs = rs - in.drs; */
-  /*   frsmtp = compute_free_energy(rsutp, rs_arr, in); */
-  /*   frsmtm = compute_free_energy(rsutm, rs_arr, in); */
-  /*   in.rs = rs; */
-  /* } */
+  if (finite_temperature) {
+    /* ftp = compute_free_energy(rsutp, rs_arr, in); */
+    /* ftm = compute_free_energy(rsutm, rs_arr, in); */
+    /* in.rs = rs + in.drs; */
+    /* frsptp = compute_free_energy(rsutp, rs_arr, in); */
+    /* frsptm = compute_free_energy(rsutm, rs_arr, in); */
+    /* in.rs = rs - in.drs; */
+    /* frsmtp = compute_free_energy(rsutp, rs_arr, in); */
+    /* frsmtm = compute_free_energy(rsutm, rs_arr, in); */
+    /* in.rs = rs; */
+    ftp = 0.0; // Integrate rsu[:,1] up to rs
+    ftm = 0.0; // Integrate rsu[:,2] up to rs
+    frsptp = 0.0; // Integrate rsu[:,1] up to rs+1
+    frsptm = 0.0; // Integrate rsu[:,1] up to rs-1
+    frsmtp = 0.0; // Integrate rsu[:,2] up to rs+1
+    frsmtm = 0.0; // Integrate rsu[:,2] up to rs-1
+  }
   
   // Internal energy derivatives
   dudrs = (ursp - ursm)/(2.0*in.drs);
-  /* if (finite_temperature) */
-  /*   dudt =  (utp - utm)/(2.0*in.drs); */
-  // Internal energy derivatives
-  /* dudrs = (rsu[in.nrs-1] - rsu[in.nrs-3])/(2.0*in.drs); */
-  /* if (finite_temperature)  */
-  /*   dudt =  (rsutp[in.nrs-2] - rsutm[in.nrs-2])/(2.0*in.drs); */
+  if (finite_temperature)
+    dudt =  (utp - utm)/(2.0*in.drs);
   
   // Free energy derivatives
   dfdrs = (frsp - frsm)/(2.0*in.drs);
   d2fdrs2 = (frsp -2.0*frs + frsm)/(in.drs*in.drs);
-  /* if (finite_temperature) { */
-  /*   dfdt = (ftp - ftm)/(2.0*in.drs); */
-  /*   d2fdt2 = (ftp -2.0*frs + ftm)/(in.drs*in.drs); */
-  /*   d2fdrsdt = (frsptp - frsmtp - frsptm + frsmtm)/(4.0*in.drs*in.drs); */
-  /* } */
+  if (finite_temperature) {
+    dfdt = (ftp - ftm)/(2.0*in.drs);
+    d2fdt2 = (ftp -2.0*frs + ftm)/(in.drs*in.drs);
+    d2fdrsdt = (frsptp - frsmtp - frsptm + frsmtm)/(4.0*in.drs*in.drs);
+  }
     
   // Parameter for the compressibility sum rule
   numer = (2.0*frs - (1.0/6.0)*in.rs*in.rs*d2fdrs2
 	   + (4.0/3.0)*in.rs*dfdrs);
   denom = (urs + (1.0/3.0)*in.rs*dudrs);
-  /* if (finite_temperature) { */
-  /*   numer += -(2.0/3.0)*Theta*Theta*d2fdt2 */
-  /*            -(2.0/3.0)*Theta*rs*d2fdrsdt */
-  /*            +(1.0/3.0)*Theta*dfdt; */
-  /*   denom += (2.0/3.0)*Theta*dudt; */
-  /* } */
+  if (finite_temperature) {
+    numer += -(2.0/3.0)*in.Theta*in.Theta*d2fdt2
+             -(2.0/3.0)*in.Theta*in.rs*d2fdrsdt
+             +(1.0/3.0)*in.Theta*dfdt;
+    denom += (2.0/3.0)*in.Theta*dudt;
+  }
   alpha = numer/denom;
 
   // Free memory
@@ -805,7 +808,11 @@ void compute_rsu(vs_sp xx, double *rsu, double *rs_arr,
 
 	// Get the integrand from the HF static structure factor
 	vs_in_tmp[0].rs = 1.0;
-	rsu[ii] = compute_internal_energy(get_el(SSHF,0), get_el(xx,0), vs_in_tmp[0]);
+	vs_in_tmp[5].rs = 1.0;
+	vs_in_tmp[6].rs = 1.0;
+	rsu[idx2(ii,0,nrs)] = compute_internal_energy(SSHF.in, xx.in, vs_in_tmp[0]);
+	rsu[idx2(ii,1,nrs)] = compute_internal_energy(SSHF.tp1, xx.tp1, vs_in_tmp[5]);
+	rsu[idx2(ii,2,nrs)] = compute_internal_energy(SSHF.tm1, xx.tm1, vs_in_tmp[6]);
 	
       }
       else {
@@ -819,8 +826,9 @@ void compute_rsu(vs_sp xx, double *rsu, double *rs_arr,
 	vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in_tmp, verbose);
 	
 	// Compute the integrand for the free energy from the static structure factor
-	rsu[ii] = rs_arr[ii]*compute_internal_energy(get_el(SS,0), get_el(xx,0),
-						     vs_in_tmp[0]);
+	rsu[idx2(ii,0,nrs)] = rs_arr[ii]*compute_internal_energy(SSHF.in, xx.in, vs_in_tmp[0]);
+	rsu[idx2(ii,1,nrs)] = rs_arr[ii]*compute_internal_energy(SSHF.tp1, xx.tp1, vs_in_tmp[5]);
+	rsu[idx2(ii,2,nrs)] = rs_arr[ii]*compute_internal_energy(SSHF.tm1, xx.tm1, vs_in_tmp[6]);
 	
       }
 	

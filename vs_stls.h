@@ -9,7 +9,7 @@
 // -------------------------------------------------------------------
 
 // Number of elements (field) in the vs_sp structure
-const int VS_SP_EL = 5;
+const int VS_SP_EL = 9;
 
 typedef struct {
 
@@ -18,9 +18,12 @@ typedef struct {
   double *rsm1;
   double *rsp2;
   double *rsm2;
+  double *tp1;
+  double *tm1;
+  double *tp2;
+  double *tm2;
   
 } vs_sp;
-  
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO LOOP OVER THE VS_SP DATA STRUCTURES
