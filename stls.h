@@ -22,15 +22,6 @@ typedef struct {
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
 
-void stls_iterations(double *SS, double *SSHF,
-		     double *GG, double *GG_new,
-		     double *phi, double *xx,
-		     input in, bool verbose);
-
-// -------------------------------------------------------------------
-// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
-// -------------------------------------------------------------------
-
 void alloc_stls_arrays_new(input in, stls_pointers *pp);
 
 void alloc_stls_arrays(input in, double **xx, double **phi,
@@ -54,6 +45,26 @@ void init_fixed_stls_arrays(input *in, double *xx,
 // ------------------------------------------------------------------
 
 void wave_vector_grid(double *xx, input *in);
+
+// ---------------------------------------------------------------------
+// FUNCTION USED TO DEFINE THE INITIAL GUESS
+// ---------------------------------------------------------------------
+void initial_guess_stls(double *xx, double *SS, double *SSHF,
+			double *GG, double *GG_new, double *phi,
+			input in);
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE STLS SCHEME
+// -------------------------------------------------------------------
+
+void stls_iterations(double *SS, double *SSHF,
+		     double *GG, double *GG_new,
+		     double *phi, double *xx,
+		     input in, bool verbose);
+
+double stls_err(double *GG, double *GG_new, input in);
+
+void stls_update(double *GG, double *GG_new, input in);
 
 // -------------------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY AT FINITE TEMPERATURE

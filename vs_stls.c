@@ -29,10 +29,11 @@ void solve_vs_stls(input in, bool verbose) {
   input vs_in[VS_SP_EL];
 
   // Limit to zero temperature
-  if (in.Theta > 0.0) {
-    printf("The VS-STLS scheme is only implemented in the ground state\n");
-    exit(EXIT_FAILURE);
-  }
+  /* if (in.Theta > 0.0) { */
+  /*   printf("The VS-STLS scheme is only implemented in the ground state\n"); */
+  /*   exit(EXIT_FAILURE); */
+  /* } */
+  
   // Allocate arrays
   stls_pointers stls_pp;
   for (int ii=0; ii<VS_SP_EL; ii++) {
@@ -45,31 +46,6 @@ void solve_vs_stls(input in, bool verbose) {
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_vs_stls_arrays(&in, vs_in, xx, rs_arr, verbose);
   init_state_point_vs_stls_arrays(vs_in, xx, phi, SSHF, verbose);
-    
-  // Initial guess
-  if (strcmp(in.stls_guess_file,"NO_FILE")==0){
-    // Static local field correction
-    for (int ii=0; ii < in.nx; ii++) {
-      // Static local field correction
-      for (int jj=0; jj<VS_SP_EL; jj++) {
-	get_el(GG,jj)[ii] = 0.0;
-	get_el(GG_new,jj)[ii] = 0.0;
-      }
-    }
-    // Static structure factor
-    for (int ii=0;  ii<VS_SP_EL; ii++) {
-      compute_ssf_stls(get_el(SS,ii), get_el(SSHF,ii),
-		       get_el(GG,ii), get_el(phi,ii),
-		       get_el(xx,ii), vs_in[ii]);
-    }
-  }
-  else {
-    // Read from file
-    for (int ii=0;  ii<VS_SP_EL; ii++) {
-      read_guess_stls(get_el(SS,ii), get_el(GG,ii),
-		      vs_in[ii]);
-    }
-  }
 
   // Iterative procedure to fix the compressibility sum rule
   if (verbose) printf("Iterative procedure to enforce the compressibility sum rule ...\n");
@@ -78,6 +54,7 @@ void solve_vs_stls(input in, bool verbose) {
 
   // Structural properties
   if (verbose) printf("Structural properties calculation...\n");
+  initial_guess_vs_stls(xx, SS, SSHF, GG, GG_new, phi, vs_in);
   vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in, false);
   if (verbose) printf("Done.\n");
   
@@ -334,7 +311,7 @@ void init_state_point_vs_stls_arrays(input *vs_in, vs_sp xx,
 				     bool verbose){
 
   input in = vs_in[0];
-  
+
   // Input structure for points to be solved simultaneously
   for(int ii=1; ii<VS_SP_EL; ii++){
     vs_in[ii] = in;			       
@@ -347,32 +324,22 @@ void init_state_point_vs_stls_arrays(input *vs_in, vs_sp xx,
   if (vs_in[4].rs < 0.0) vs_in[4].rs = in.drs;
   
   // Chemical potential
-  /* if (in->Theta > 0) { */
-  /*   if (verbose) printf("Chemical potential calculation: "); */
-  /*   in->mu = compute_chemical_potential(*in); */
-  /*   if (verbose) printf("Done. Chemical potential: %.8f\n", in->mu); */
-  /* } */
+  if (in.Theta > 0) {
+    if (verbose) printf("Chemical potential calculation: ");
+    compute_chemical_potential_vs_stls(vs_in);
+    if (verbose) printf("Done. Chemical potential: %.8f\n", in.mu);
+  }
   
   // Normalized ideal Lindhard density response
-  /* if (in->Theta > 0) { */
-  /*   if (verbose) printf("Normalized ideal Lindhard density calculation:\n"); */
-  /*   compute_idr(phi.in, xx.in, *in, verbose); */
-  /*   compute_idr(phi.rsp1, xx.rsp1, *in, verbose); */
-  /*   if (verbose) printf("Done.\n"); */
-  /* } */
+  if (in.Theta > 0) {
+    if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
+    compute_idr_vs_stls(phi, xx, vs_in);
+    if (verbose) printf("Done.\n");
+  }
   
   // Static structure factor in the Hartree-Fock approximation
   if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
-  /* if (in->Theta == 0) { */
-    for (int ii=0; ii<VS_SP_EL; ii++) {
-      compute_ssf_HF_zero_temperature(get_el(SSHF,ii), get_el(xx,ii), vs_in[ii]);
-    }
-  /* } */
-  /* else { */
-  /*   for (int ii=0; ii<VS_SP_EL; ii++) { */
-  /*     compute_ssf_HF_zero_temperature(get_el(SSHF,ii), get_el(xx,ii), vs_in[ii]); */
-  /*   } */
-  /* } */
+  compute_ssf_HF_vs_stls(SSHF, xx, vs_in);
   if (verbose) printf("Done.\n");
 
 }
@@ -391,7 +358,32 @@ void rs_grid(double *rs_arr, input *in){
   
 }
 
+// ---------------------------------------------------------------------
+// FUNCTIONS USED TO DEFINE THE INITIAL GUESS
+// ---------------------------------------------------------------------
+void initial_guess_vs_stls(vs_sp xx, vs_sp SS, vs_sp SSHF,
+			   vs_sp GG, vs_sp GG_new, vs_sp phi,
+			   input *vs_in){
 
+  input in = vs_in[0];
+  
+  if (strcmp(in.stls_guess_file,"NO_FILE")==0){
+
+    for (int ii=0; ii<VS_SP_EL; ii++){
+      initial_guess_stls(get_el(xx,ii), get_el(SS,ii), get_el(SSHF, ii),
+			 get_el(GG,ii), get_el(GG_new,ii), get_el(phi,ii),
+			 vs_in[ii]);
+    }
+
+  }  
+  else {
+
+    // Read from file
+    read_guess_vs_stls(SS, GG, vs_in);
+    
+  }
+  
+}
 
 // ---------------------------------------------------------------------
 // FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE VS-STLS SCHEME
@@ -402,14 +394,13 @@ double vs_stls_thermo_iterations(vs_sp xx, double *rsu,
 				 double *rs_arr, input *vs_in,
 				 bool verbose) {
 
-  double alpha = vs_in[0].a_csr;
-  int max_iter = vs_in[0].nIter;
-  double min_err = vs_in[0].err_min_iter;
+  input in = vs_in[0];
+  double alpha = in.a_csr;
 
   // Iterations
   double iter_err = 1.0;
   int iter_counter = 0;
-  while (iter_counter < max_iter && iter_err > min_err ) {
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
 
     // Start timing
     double tic = omp_get_wtime();
@@ -418,13 +409,11 @@ double vs_stls_thermo_iterations(vs_sp xx, double *rsu,
     alpha = compute_alpha(xx, rsu, rs_arr, vs_in);
 
     // Update diagnostic
-    iter_err = fabs((alpha - vs_in[0].a_csr)/alpha);
     iter_counter++;
+    iter_err = vs_stls_thermo_err(alpha, vs_in);
+    vs_stls_thermo_update(alpha, vs_in);
 
     // Update alpha for all state points
-    for (int ii=0; ii<VS_SP_EL; ii++) {
-      vs_in[ii].a_csr = alpha;
-    }
 
     // End timing
     double toc = omp_get_wtime();
@@ -444,6 +433,20 @@ double vs_stls_thermo_iterations(vs_sp xx, double *rsu,
   
 }
 
+double vs_stls_thermo_err(double alpha, input *vs_in){
+
+  return fabs((alpha - vs_in[0].a_csr)/alpha);
+  
+}
+
+void vs_stls_thermo_update(double alpha, input *vs_in){
+
+  for (int ii=0; ii<VS_SP_EL; ii++) {
+    vs_in[ii].a_csr = alpha;
+  }
+   
+}
+
 
 // Iterations over the structural properties
 void vs_stls_struct_iterations(vs_sp SS, vs_sp SSHF,
@@ -451,44 +454,27 @@ void vs_stls_struct_iterations(vs_sp SS, vs_sp SSHF,
 			       vs_sp phi, vs_sp xx,
 			       input *vs_in, bool verbose) {
 
-  double a_mix = vs_in[0].a_mix;
-  int max_iter = vs_in[0].nIter;
-  double min_err = vs_in[0].err_min_iter;
-  double nx = vs_in[0].nx;
+  input in = vs_in[0];
     
   // Iterations
   if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
-  while (iter_counter < max_iter && iter_err > min_err ) {
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter) {
     
     // Start timing
     double tic = omp_get_wtime();
     
     // Update SSF
-    for (int ii=0; ii<VS_SP_EL; ii++) {
-      compute_ssf_stls(get_el(SS,ii), get_el(SSHF,ii),
-		       get_el(GG,ii), get_el(phi,ii),
-		       get_el(xx,ii), vs_in[ii]);
-    }
+    compute_ssf_vs_stls(SS, SSHF, GG, phi, xx, vs_in);
     
     // Update SLFC
-    compute_vs_slfc(GG_new, SS, xx, vs_in);
+    compute_slfc_vs_stls(GG_new, SS, xx, vs_in);
     
     // Update diagnostic
-    iter_err = 0.0;
     iter_counter++;
-    for (int ii=0; ii<nx; ii++) {
-      // Perhaps consider the minimum between all state points to
-      // be solved simultaneously?
-      iter_err += (get_el(GG_new,0)[ii] - get_el(GG,0)[ii])
-	          * (get_el(GG_new,0)[ii] - get_el(GG,0)[ii]);
-      for (int jj=0; jj<VS_SP_EL; jj++) {
-	get_el(GG,jj)[ii] = a_mix*get_el(GG_new,jj)[ii]
-	                    + (1 - a_mix)*get_el(GG,jj)[ii];
-      }
-    }
-    iter_err = sqrt(iter_err);
+    iter_err = vs_stls_struct_err(GG, GG_new, vs_in);
+    vs_stls_struct_update(GG, GG_new, vs_in);
    
     // End timing
     double toc = omp_get_wtime();
@@ -502,28 +488,97 @@ void vs_stls_struct_iterations(vs_sp SS, vs_sp SSHF,
     }
     
   }
+
+  // Stop execution if convergence was not reached
+  if (iter_err > in.err_min_iter) {
+    fprintf(stderr, "The calculation for the structural properties for "
+	    "the state point (rs = %f, theta = %f) did not converge",
+	    vs_in[0].rs, vs_in[0].Theta);
+    exit(EXIT_FAILURE);
+  }
+	    
   if (verbose) printf("Done.\n");
- 
  
 }
 
+double vs_stls_struct_err(vs_sp GG, vs_sp GG_new, input *vs_in){
 
+  double err = 0.0;
+  double err_tmp;
+  
+  for (int ii=0; ii<VS_SP_EL; ii++) {
+    err_tmp = stls_err(get_el(GG,ii), get_el(GG_new,ii), vs_in[ii]);
+    if (err_tmp > err) err = err_tmp;
+  }
 
+  return err;
+  
+}
+
+void vs_stls_struct_update(vs_sp GG, vs_sp GG_new, input *vs_in){
+
+  for (int ii=0; ii<VS_SP_EL; ii++) {
+    stls_update(get_el(GG,ii), get_el(GG_new,ii), vs_in[ii]);
+  }
+   
+}
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE CHEMICAL POTENTIAL
+// -------------------------------------------------------------------
+
+void compute_chemical_potential_vs_stls(input *vs_in){
+
+  for (int ii=0; ii<VS_SP_EL; ii++){
+    vs_in[ii].mu = compute_chemical_potential(vs_in[ii]);
+  }
+  
+}
+					
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
+// -------------------------------------------------------------------
+
+void compute_ssf_vs_stls(vs_sp SS, vs_sp SSHF, vs_sp GG, vs_sp phi,
+		    vs_sp xx, input *vs_in){
+
+  for (int ii=0; ii<VS_SP_EL; ii++) {
+    compute_ssf_stls(get_el(SS,ii), get_el(SSHF,ii),
+		     get_el(GG,ii), get_el(phi,ii),
+		     get_el(xx,ii), vs_in[ii]);
+  }
+  
+}
+
+void compute_ssf_HF_vs_stls(vs_sp SS, vs_sp xx, input *vs_in){
+
+  for (int ii=0; ii<VS_SP_EL; ii++) {
+    if (vs_in[ii].Theta == 0) {
+      compute_ssf_HF_zero_temperature(get_el(SS,ii), get_el(xx,ii),
+				      vs_in[ii]);
+    }
+    else {
+      compute_ssf_HF_finite_temperature(get_el(SS,ii), get_el(xx,ii),
+					vs_in[ii]);
+    }
+	
+  }
+  
+}
+		    
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 
-void compute_vs_slfc(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
+void compute_slfc_vs_stls(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
 
   /* bool finite_temperature = false; */
   vs_sp GG_stls;
   double *pp;
-  double drs = vs_in[0].drs;
-  double dx = vs_in[0].dx;  
-  double nx = vs_in[0].nx;
-  double alpha = vs_in[0].a_csr;
-  double a_drs = alpha/(3.0*2.0*drs);
-  double a_dx = alpha/(3.0*2.0*dx);
+  input in = vs_in[0];
+  double alpha = in.a_csr;
+  double a_drs = alpha/(3.0*2.0*in.drs);
+  double a_dx = alpha/(3.0*2.0*in.dx);
   /* double der_coeff = 2.0; */
   
   // Check if finite temperature calculations must be performed
@@ -531,7 +586,7 @@ void compute_vs_slfc(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
   
   // Allocate arrays
   for (int ii=0; ii<VS_SP_EL; ii++){
-    pp = malloc(sizeof(double) * nx);
+    pp = malloc(sizeof(double) * in.nx);
     alloc_vs_stls_one_array(pp, &GG_stls, ii);
   }
 
@@ -541,23 +596,23 @@ void compute_vs_slfc(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
     compute_slfc(get_el(GG_stls,ii), get_el(SS,ii), get_el(xx, ii), vs_in[ii]);
   }
 
-  // Update static local field correction according to the VS-STLS scheme
-  for (int ii=0; ii<nx; ii++) {
-
-    
-    for (int jj=0; jj<VS_SP_EL; jj++) {
-
-      // STLS contribution
-      get_el(GG, jj)[ii] = get_el(GG_stls,jj)[ii];
-
-      // Wave-vector derivative contribution
-      if (ii > 0 && ii < nx-1) {
-	get_el(GG,jj)[ii] += -a_dx*get_el(xx,jj)[ii]
-	                     *(get_el(GG_stls,jj)[ii+1] - get_el(GG_stls,jj)[ii-1]);
-      }
-      
+  // STLS contribution to the VS-STLS static local field correction
+  for (int ii=0; ii<VS_SP_EL; ii++){
+    for (int jj=0; jj<in.nx; jj++){
+      get_el(GG, ii)[jj] = get_el(GG_stls,ii)[jj];
     }
+  }
 
+  // Wave-vector derivative contribution to the VS-STLS static local field correction
+  for (int ii=0; ii<VS_SP_EL; ii++){
+    for (int jj=1; jj<in.nx-1; jj++){
+      get_el(GG,ii)[jj] += -a_dx*get_el(xx,ii)[jj]*(get_el(GG_stls,ii)[jj+1]
+						    - get_el(GG_stls,ii)[jj-1]);
+    }
+  }
+
+  // State point derivative contribution to the VS-STLS static local field correction
+  for (int ii=0; ii<in.nx; ii++) {
     
     // State point derivative contribution
     GG.in[ii] += -a_drs*vs_in[0].rs
@@ -576,6 +631,19 @@ void compute_vs_slfc(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
 
   // Free memory
   free_vs_stls_one_array(GG_stls);
+  
+}
+
+// -----------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY RESPONSE
+// -----------------------------------------------------------------------
+
+void compute_idr_vs_stls(vs_sp phi, vs_sp xx, input *vs_in){
+
+  for (int ii=0; ii<VS_SP_EL; ii++) {
+    compute_idr(get_el(phi,ii), get_el(xx,ii),
+		vs_in[ii], false);
+  }
   
 }
 
@@ -603,10 +671,8 @@ double compute_alpha(vs_sp xx, double *rsu,
   double numer;
   double denom;
   double alpha;
-  double rs = vs_in[0].rs;
+  input in = vs_in[0];
   /* double Theta = vs_in[0].Theta; */
-  double drs = vs_in[0].drs;
-  int nrs = vs_in[0].nrs;
   
   // Check if finite temperature calculations must be performed
   //if (Theta > 0.0) finite_temperature = true;
@@ -627,9 +693,9 @@ double compute_alpha(vs_sp xx, double *rsu,
   /* } */
 
   // Internal energy
-  urs = rsu[nrs-2]/rs_arr[nrs-2];
-  ursp = rsu[nrs-1]/rs_arr[nrs-1];
-  ursm = rsu[nrs-3]/rs_arr[nrs-3];
+  urs = rsu[in.nrs-2]/rs_arr[in.nrs-2];
+  ursp = rsu[in.nrs-1]/rs_arr[in.nrs-1];
+  ursm = rsu[in.nrs-3]/rs_arr[in.nrs-3];
   /* if (finite_temperature) { */
   /*   utp = rsutp[in.nrs-2]/rs; */
   /*   utm = rsutm[in.nrs-2]/rs; */
@@ -653,7 +719,7 @@ double compute_alpha(vs_sp xx, double *rsu,
   /* } */
   
   // Internal energy derivatives
-  dudrs = (ursp - ursm)/(2.0*drs);
+  dudrs = (ursp - ursm)/(2.0*in.drs);
   /* if (finite_temperature) */
   /*   dudt =  (utp - utm)/(2.0*in.drs); */
   // Internal energy derivatives
@@ -662,8 +728,8 @@ double compute_alpha(vs_sp xx, double *rsu,
   /*   dudt =  (rsutp[in.nrs-2] - rsutm[in.nrs-2])/(2.0*in.drs); */
   
   // Free energy derivatives
-  dfdrs = (frsp - frsm)/(2.0*drs);
-  d2fdrs2 = (frsp -2.0*frs + frsm)/(drs*drs);
+  dfdrs = (frsp - frsm)/(2.0*in.drs);
+  d2fdrs2 = (frsp -2.0*frs + frsm)/(in.drs*in.drs);
   /* if (finite_temperature) { */
   /*   dfdt = (ftp - ftm)/(2.0*in.drs); */
   /*   d2fdt2 = (ftp -2.0*frs + ftm)/(in.drs*in.drs); */
@@ -671,9 +737,9 @@ double compute_alpha(vs_sp xx, double *rsu,
   /* } */
     
   // Parameter for the compressibility sum rule
-  numer = (2.0*frs - (1.0/6.0)*rs*rs*d2fdrs2
-	   + (4.0/3.0)*rs*dfdrs);
-  denom = (urs + (1.0/3.0)*rs*dudrs);
+  numer = (2.0*frs - (1.0/6.0)*in.rs*in.rs*d2fdrs2
+	   + (4.0/3.0)*in.rs*dfdrs);
+  denom = (urs + (1.0/3.0)*in.rs*dudrs);
   /* if (finite_temperature) { */
   /*   numer += -(2.0/3.0)*Theta*Theta*d2fdt2 */
   /*            -(2.0/3.0)*Theta*rs*d2fdrsdt */
@@ -698,7 +764,6 @@ double compute_alpha(vs_sp xx, double *rsu,
 
 void compute_rsu(vs_sp xx, double *rsu, double *rs_arr,
 		 input *vs_in, bool verbose){
-
 
   int nrs = vs_in[0].nrs;
   
@@ -733,7 +798,6 @@ void compute_rsu(vs_sp xx, double *rsu, double *rs_arr,
 			     &tmp2, &tmp3, ii);
       }
 
-      
       // Initialize arrays that depend only on the state point
       init_state_point_vs_stls_arrays(vs_in_tmp, xx, phi, SSHF, verbose);
  
@@ -746,6 +810,11 @@ void compute_rsu(vs_sp xx, double *rsu, double *rs_arr,
       }
       else {
 
+	// Initial guess (same for all threads)
+	// NOTE: This could be problematic if the initial
+	// rs is noticeably different from zero (rs > 20)
+	initial_guess_vs_stls(xx, SS, SSHF, GG, GG_new, phi, vs_in);
+	
 	// Compute structural properties with the VS-STLS static local field correction
 	vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in_tmp, verbose);
 	
@@ -810,3 +879,12 @@ void write_text_vs_stls(double *rsu, double *rs_arr, input in){
 
 }
 
+// Read guess from input file
+void read_guess_vs_stls(vs_sp SS, vs_sp GG, input *vs_in){
+  
+  for (int ii=0;  ii<VS_SP_EL; ii++) {
+    read_guess_stls(get_el(SS,ii), get_el(GG,ii),
+		    vs_in[ii]);
+  }
+  
+}

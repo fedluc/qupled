@@ -21,18 +21,6 @@ typedef struct {
   
 } vs_sp;
   
-// ---------------------------------------------------------------------
-// FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE VS-STLS SCHEME
-// ---------------------------------------------------------------------
-
-double vs_stls_thermo_iterations(vs_sp xx, double *rsu,
-				 double *rsp, input *vs_in,
-				 bool verbose);
-
-void vs_stls_struct_iterations(vs_sp SS, vs_sp SSHF,
-			       vs_sp GG, vs_sp GG_new,
-			       vs_sp phi, vs_sp xx,
-			       input *vs_in, bool verbose);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO LOOP OVER THE VS_SP DATA STRUCTURES
@@ -74,14 +62,63 @@ void init_state_point_vs_stls_arrays(input *vs_in, vs_sp xx,
 
 void rs_grid(double *rsp, input *in);
 
+// ---------------------------------------------------------------------
+// FUNCTIONS USED TO DEFINE THE INITIAL GUESS
+// ---------------------------------------------------------------------
+
+void initial_guess_vs_stls(vs_sp xx, vs_sp SS, vs_sp SSHF,
+			   vs_sp GG, vs_sp GG_new, vs_sp phi,
+			   input *vs_in);
+
+// ---------------------------------------------------------------------
+// FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE VS-STLS SCHEME
+// ---------------------------------------------------------------------
+
+double vs_stls_thermo_iterations(vs_sp xx, double *rsu,
+				 double *rsp, input *vs_in,
+				 bool verbose);
+
+double vs_stls_thermo_err(double alpha, input *vs_in);
+
+void vs_stls_thermo_update(double alpha, input *vs_in);
+
+void vs_stls_struct_iterations(vs_sp SS, vs_sp SSHF,
+			       vs_sp GG, vs_sp GG_new,
+			       vs_sp phi, vs_sp xx,
+			       input *vs_in, bool verbose);
+
+double vs_stls_struct_err(vs_sp GG, vs_sp GG_new, input *vs_in);
+
+void vs_stls_struct_update(vs_sp GG, vs_sp GG_new, input *vs_in);
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE CHEMICAL POTENTIAL
+// -------------------------------------------------------------------
+
+void compute_chemical_potential_vs_stls(input *vs_in);
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
+// -------------------------------------------------------------------
+
+void compute_ssf_vs_stls(vs_sp SS, vs_sp SSHF, vs_sp GG, vs_sp phi,
+		    vs_sp xx, input *vs_in);
+
+void compute_ssf_HF_vs_stls(vs_sp SS, vs_sp xx, input *vs_in);
+
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 
-void compute_vs_slfc(vs_sp GG, vs_sp SS,
-		     vs_sp xx, input *vs_in);
+void compute_slfc_vs_stls(vs_sp GG, vs_sp SS,
+			  vs_sp xx, input *vs_in);
 
+// -----------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY RESPONSE
+// -----------------------------------------------------------------------
 
+void compute_idr_vs_stls(vs_sp phi, vs_sp xx, input *vs_in);
+  
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE PARAMETER FOR THE CSR RULE
 // -------------------------------------------------------------------
@@ -103,6 +140,8 @@ void compute_rsu(vs_sp xx, double *rsu, double *rsp,
 // -------------------------------------------------------------------
 
 void write_text_vs_stls(double *rsu, double *rsp, input in);
+
+void read_guess_vs_stls(vs_sp SS, vs_sp GG, input *vs_in);
   
 #endif
 
