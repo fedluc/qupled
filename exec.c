@@ -26,33 +26,32 @@ int main (int argc, char **argv){
   omp_set_num_threads(in.nThreads);
 
   // Solve theory specified in input
-  solve_vs_stls(in, true);
-  /* if (strcmp(in.theory, "STLS") == 0) { */
-  /*   solve_stls(in, true); */
-  /* } */
-  /* else if (strcmp(in.theory, "VS-STLS") == 0) { */
-  /*   solve_vs_stls(in, true); */
-  /* } */
-  /* else if (strcmp(in.theory, "STLS-IET-HNC") == 0 || */
-  /* 	   strcmp(in.theory, "STLS-IET-IOI") == 0 || */
-  /* 	   strcmp(in.theory, "STLS-IET-LCT") == 0) { */
-  /*   solve_stls_iet(in,true); */
-  /* } */
-  /* else if (strcmp(in.theory, "QSTLS") == 0) { */
-  /*   solve_qstls(in, true); */
-  /* } */
-  /* else if (strcmp(in.theory, "QSTLS-IET-HNC") == 0 || */
-  /* 	   strcmp(in.theory, "QSTLS-IET-IOI") == 0 || */
-  /* 	   strcmp(in.theory, "QSTLS-IET-LCT") == 0) { */
-  /*   solve_qstls_iet(in,true); */
-  /* } */
-  /* else { */
-  /*   printf("Error: %s is an unknown theory to be solved. " */
-  /* 	   "Choose between: STLS, VS-STLS, STLS-IET-HNC," */
-  /* 	   " STLS-IET-IOI, STLS-IET-LCT, QSTLS, QSTLS-IET-HNC," */
-  /* 	   "QSTLS-IET-IOI and QSTLS-IET-LCT\n", in.theory); */
-  /*   return 1; */
-  /* } */
+  if (strcmp(in.theory, "STLS") == 0) {
+    solve_stls(in, true);
+  }
+  else if (strcmp(in.theory, "VS-STLS") == 0) {
+    solve_vs_stls(in, true);
+  }
+  else if (strcmp(in.theory, "STLS-IET-HNC") == 0 ||
+  	   strcmp(in.theory, "STLS-IET-IOI") == 0 ||
+  	   strcmp(in.theory, "STLS-IET-LCT") == 0) {
+    solve_stls_iet(in,true);
+  }
+  else if (strcmp(in.theory, "QSTLS") == 0) {
+    solve_qstls(in, true);
+  }
+  else if (strcmp(in.theory, "QSTLS-IET-HNC") == 0 ||
+  	   strcmp(in.theory, "QSTLS-IET-IOI") == 0 ||
+  	   strcmp(in.theory, "QSTLS-IET-LCT") == 0) {
+    solve_qstls_iet(in,true);
+  }
+  else {
+    printf("Error: %s is an unknown theory to be solved. "
+  	   "Choose between: STLS, VS-STLS, STLS-IET-HNC,"
+  	   " STLS-IET-IOI, STLS-IET-LCT, QSTLS, QSTLS-IET-HNC,"
+  	   "QSTLS-IET-IOI and QSTLS-IET-LCT\n", in.theory);
+    return 1;
+  }
   
   // End timing
   double toc = omp_get_wtime();

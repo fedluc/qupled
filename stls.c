@@ -113,6 +113,50 @@ void stls_iterations(double *SS, double *SSHF,
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
 
+// A new function to allocate stls arrays (this should replace alloc_stls_arrays)
+void alloc_stls_arrays_new(input in, stls_pointers *pp){
+
+  pp->xx = malloc( sizeof(double) * in.nx);
+  if (pp->xx == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the grid\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  pp->phi = malloc( sizeof(double) * in.nx * in.nl);
+    if (pp->phi == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the ideal density response\n");
+    exit(EXIT_FAILURE);
+  }
+
+  pp->SS = malloc( sizeof(double) * in.nx);
+    if (pp->SS == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the static structure factor\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  pp->SSHF = malloc( sizeof(double) * in.nx);
+  if (pp->SSHF == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the static structure factor"
+  	    " in the Hartree-Fock approximation\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  pp->GG = malloc( sizeof(double) * in.nx);
+  if (pp->GG == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the static local field correction\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  pp->GG_new = malloc( sizeof(double) * in.nx);
+  if (pp->GG_new == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the static local field correction\n");
+    exit(EXIT_FAILURE);
+  }
+
+  
+}
+
+
 void alloc_stls_arrays(input in, double **xx, double **phi, 
 		       double **GG, double **GG_new, 
 		       double **SS, double **SSHF){
