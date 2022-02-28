@@ -37,8 +37,8 @@ void solve_stls(input in, bool verbose) {
   stls_iterations(SS, SSHF, GG, GG_new, phi, xx, in, verbose);
   
   // Internal energy
-  if (verbose) printf("Internal energy: %.10f\n",
-		      compute_internal_energy(SS, xx, in));
+  /* if (verbose) printf("Internal energy: %.10f\n", */
+  /* 		      compute_internal_energy(SS, xx, in)); */
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
@@ -561,26 +561,34 @@ void compute_ssf_stls_finite_temperature(double *SS, double *SSHF, double *GG,
 
   for (int ii=0; ii<in.nx; ii++){
 
-    if (xx[ii] > 0.0){
+    // Hartree-Fock contribution
+    SS[ii] = SSHF[ii];
 
-      xx2 = xx[ii]*xx[ii];
-      BB = 0.0;
+    // Beyond Hartree-Fock contribution
+    if (in.rs > 0.0) {
       
-      for (int ll=0; ll<in.nl; ll++){
-	phixl = phi[idx2(ii,ll,in.nx)];
-	BB_den = 1.0 + ff/xx2*(1 - GG[ii])*phixl;
-	BB_tmp = phixl*phixl/BB_den;
-	if (ll>0) BB_tmp *= 2.0;
-	BB += BB_tmp;
+      if (xx[ii] > 0.0){
+	
+	xx2 = xx[ii]*xx[ii];
+	BB = 0.0;
+	
+	for (int ll=0; ll<in.nl; ll++){
+	  phixl = phi[idx2(ii,ll,in.nx)];
+	  BB_den = 1.0 + ff/xx2*(1 - GG[ii])*phixl;
+	  BB_tmp = phixl*phixl/BB_den;
+	  if (ll>0) BB_tmp *= 2.0;
+	  BB += BB_tmp;
+	  
+	}
+	
+	SS[ii] += - 3.0/2.0*ff/xx2*in.Theta*(1- GG[ii])*BB;
 	
       }
+      else
+	
+	SS[ii] = 0.0;
       
-      SS[ii] = SSHF[ii]
-	- 3.0/2.0*ff/xx2*in.Theta*(1- GG[ii])*BB;
-
     }
-    else
-      SS[ii] = 0.0;
 
   }
 
@@ -682,33 +690,41 @@ void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG,
   
   for (int ii=0; ii<in.nx; ii++){
 
-    if (xx[ii] > 0.0){
+    // Hartree-Fock contribution
+    SS[ii] = SSHF[ii];
 
-      // Integration limits
-      if (xx[ii] < 2.0) int_lo = 0.0;
-      else int_lo = xx[ii]*(xx[ii] - 2.0);
-      int_hi = xx[ii]*(2.0 + xx[ii]);
+    // Beyond Hartree-Fock contribution
+    if (in.rs > 0.0) {
 
-      // Compute integral
-      struct ssf_stls_zero_temperature_params ssf_p = {xx[ii], in.rs, GG[ii]};
-      ff_int.params = &ssf_p;
-      gsl_integration_cquad(&ff_int,
-      			    int_lo, int_hi,
-      			    0.0, QUAD_REL_ERR,
-      			    wsp,
-      			    &SS[ii], &err, &nevals);
+      if (xx[ii] > 0.0){
+	
+	// Integration limits
+	if (xx[ii] < 2.0) int_lo = 0.0;
+	else int_lo = xx[ii]*(xx[ii] - 2.0);
+	int_hi = xx[ii]*(2.0 + xx[ii]);
+	
+	// Compute integral
+	struct ssf_stls_zero_temperature_params ssf_p = {xx[ii], in.rs, GG[ii]};
+	ff_int.params = &ssf_p;
+	gsl_integration_cquad(&ff_int,
+			      int_lo, int_hi,
+			      0.0, QUAD_REL_ERR,
+			      wsp,
+			      &SS[ii], &err, &nevals);
+	
+	// Plasmon contribution
+	ssf_wp = ssf_plasmon(xx[ii], GG[ii], in);
+	if (ssf_wp >= 0.0) SS[ii] += ssf_wp;
+	
+      }
+      else {
+	
+	SS[ii] = 0.0;
+	
+      }
 
-      // Add plasmon contribution
-      ssf_wp = ssf_plasmon(xx[ii], GG[ii], in);
-      if (ssf_wp >= 0.0) SS[ii] += ssf_wp;
-
+      
     }
-    else {
-      SS[ii] = 0.0;
-    }
-
-    // Add Hartree-Fock contribution
-    SS[ii] += SSHF[ii];
     
   }
 

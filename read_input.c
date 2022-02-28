@@ -352,7 +352,7 @@ void check_input(input *in){
     invalid_input = true;
   }
 
-  if (in->rs <= 0.0) {
+  if (in->rs < 0.0) {
     printf("The quantum coupling parameter must be larger than zero\n");
     invalid_input = true;
   }

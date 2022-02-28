@@ -9,7 +9,7 @@
 // -------------------------------------------------------------------
 
 // Number of elements (field) in the vs_sp structure
-const int VS_SP_EL = 9;
+const int VS_SP_EL = 5;
 
 typedef struct {
 
@@ -26,6 +26,18 @@ typedef struct {
 } vs_sp;
 
 // -------------------------------------------------------------------
+// DATA STRUCTURE USED TO ALLOCATE THE THERMO VS-STLS ARRAYS
+// -------------------------------------------------------------------
+
+typedef struct {
+
+  double *rsu;
+  double *rsa;
+  
+} vs_stls_pointers;
+
+
+// -------------------------------------------------------------------
 // FUNCTION USED TO LOOP OVER THE VS_SP DATA STRUCTURES
 // -------------------------------------------------------------------
 
@@ -35,16 +47,21 @@ double *get_el(vs_sp sp, int ii);
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
 
-void alloc_vs_stls_arrays(input in, stls_pointers pp, vs_sp *xx,
-			  vs_sp *phi, vs_sp *SS, vs_sp *SSHF,
-			  vs_sp *GG, vs_sp *GG_new, double **rsu,
-			  double **rs_arr, int el);
+void alloc_vs_stls_struct_arrays(input in, stls_pointers pp, vs_sp *xx,
+				vs_sp *phi, vs_sp *SS, vs_sp *SSHF,
+				vs_sp *GG, vs_sp *GG_new, int el);
 
+void alloc_vs_stls_thermo_arrays(input in, vs_stls_pointers pp,
+				 vs_sp *rsu, vs_sp *rsa, int el);
+  
+void alloc_vs_stls_thermo_arrays_elem(input in, vs_stls_pointers *pp);
+  
 void alloc_vs_stls_one_array(double *pp, vs_sp *vs_arr, int el);
 
-void free_vs_stls_arrays(vs_sp xx, vs_sp phi, vs_sp SS, vs_sp SSHF,
-			 vs_sp GG, vs_sp GG_new, double *rsu,
-			 double *rs_arr);
+void free_vs_stls_struct_arrays(vs_sp xx, vs_sp phi, vs_sp SS,
+				vs_sp SSHF, vs_sp GG, vs_sp GG_new);
+
+void free_vs_stls_thermo_arrays(vs_sp rsu, vs_sp rsa);
 
 void free_vs_stls_one_array(vs_sp vs_arr);
 
@@ -53,7 +70,7 @@ void free_vs_stls_one_array(vs_sp vs_arr);
 // -------------------------------------------------------------------
 
 void init_fixed_vs_stls_arrays(input *in, input *vs_in, vs_sp xx,
-			       double *rs_arr, bool verbose);
+			       vs_sp rsa, bool verbose);
 
 void init_state_point_vs_stls_arrays(input *vs_in, vs_sp xx,
 				     vs_sp phi, vs_sp SSHF,
@@ -77,9 +94,8 @@ void initial_guess_vs_stls(vs_sp xx, vs_sp SS, vs_sp SSHF,
 // FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE VS-STLS SCHEME
 // ---------------------------------------------------------------------
 
-double vs_stls_thermo_iterations(vs_sp xx, double *rsu,
-				 double *rsp, input *vs_in,
-				 bool verbose);
+double vs_stls_thermo_iterations(vs_sp xx, vs_sp rsu, vs_sp rsa,
+				 input *vs_in, bool verbose);
 
 double vs_stls_thermo_err(double alpha, input *vs_in);
 
@@ -126,17 +142,15 @@ void compute_idr_vs_stls(vs_sp phi, vs_sp xx, input *vs_in);
 // FUNCTION USED TO COMPUTE THE PARAMETER FOR THE CSR RULE
 // -------------------------------------------------------------------
 
-double compute_alpha(vs_sp xx, double *rsu,
-		     double *rsp, input *vs_in);
+double compute_alpha(vs_sp xx, vs_sp rsu, vs_sp rsa, input *vs_in);
 
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE INTEGRAND FOR THE FREE ENERGY
 // -------------------------------------------------------------------
 
-void compute_rsu(vs_sp xx, double *rsu, double *rsp,
+void compute_rsu(vs_sp xx, vs_sp rsu, vs_sp rsa,
 		 input *vs_in, bool verbose);
-
 
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
