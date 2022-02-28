@@ -674,6 +674,7 @@ struct ssf_stls_zero_temperature_params {
 void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG, 
 				       double *xx, input in){
 
+  double ssf_int;
   double ssf_wp;
   double err;
   double int_lo;
@@ -710,7 +711,10 @@ void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG,
 			      int_lo, int_hi,
 			      0.0, QUAD_REL_ERR,
 			      wsp,
-			      &SS[ii], &err, &nevals);
+			      &ssf_int, &err, &nevals);
+
+	// Integral contribution
+	SS[ii] += ssf_int;
 	
 	// Plasmon contribution
 	ssf_wp = ssf_plasmon(xx[ii], GG[ii], in);

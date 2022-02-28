@@ -635,12 +635,12 @@ void vs_stls_struct_iterations(vs_sp SS, vs_sp SSHF,
   }
 
   // Stop execution if convergence was not reached
-  /* if (iter_err > in.err_min_iter) { */
-  /*   fprintf(stderr, "The calculation for the structural properties for " */
-  /* 	    "the state point (rs = %f, theta = %f) did not converge\n", */
-  /* 	    vs_in[0].rs, vs_in[0].Theta); */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
+  if (iter_err > in.err_min_iter) {
+    fprintf(stderr, "The calculation for the structural properties for "
+  	    "the state point (rs = %f, theta = %f) did not converge\n",
+  	    vs_in[0].rs, vs_in[0].Theta);
+    exit(EXIT_FAILURE);
+  }
 	    
   if (verbose) printf("Done.\n");
  
