@@ -9,7 +9,7 @@
 // -------------------------------------------------------------------
 
 // Number of elements (field) in the vs_sp structure
-const int VS_SP_EL = 5;
+const int VS_SP_EL = 9;
 
 typedef struct {
 

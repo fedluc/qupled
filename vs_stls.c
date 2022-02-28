@@ -51,9 +51,9 @@ void solve_vs_stls(input in, bool verbose) {
   init_state_point_vs_stls_arrays(vs_in, xx, phi, SSHF, verbose);
    
   // Iterative procedure to fix the compressibility sum rule
-  if (verbose) printf("Iterative procedure to enforce the compressibility sum rule ...\n");
-  in.a_csr = vs_stls_thermo_iterations(xx, rsu, rsa, vs_in, true);
-  if (verbose) printf("Done.\n");
+  /* if (verbose) printf("Iterative procedure to enforce the compressibility sum rule ...\n"); */
+  /* in.a_csr = vs_stls_thermo_iterations(xx, rsu, rsa, vs_in, true); */
+  /* if (verbose) printf("Done.\n"); */
 
   // Structural properties
   if (verbose) printf("Structural properties calculation...\n");
@@ -67,15 +67,15 @@ void solve_vs_stls(input in, bool verbose) {
   if (verbose) printf("Free energy: %.10f\n",compute_free_energy(rsu.in, rsa.in, in));
   
   // Output to file
-  /* if (verbose) printf("Writing output files...\n"); */
-  /* write_text_stls(SS.in, GG.in, phi.in, SSHF.in, xx.in, in); */
-  /* write_text_vs_stls(rsu, rsa, in); */
-  /* write_guess_stls(SS.in, GG.in, in); */
-  /* if (verbose) printf("Done.\n"); */
+  if (verbose) printf("Writing output files...\n");
+  write_text_stls(SS.in, GG.in, phi.in, SSHF.in, xx.in, in);
+  write_text_vs_stls(rsu.in, rsa.in, in);
+  write_guess_stls(SS.in, GG.in, in);
+  if (verbose) printf("Done.\n");
 
   // Free memory
-  /* free_vs_stls_struct_arrays(xx, phi, SS, SSHF, GG, GG_new); */
-  /* free_vs_stls_thermo_arrays(rsu, rsa); */
+  free_vs_stls_struct_arrays(xx, phi, SS, SSHF, GG, GG_new);
+  free_vs_stls_thermo_arrays(rsu, rsa);
   
 }
 
@@ -467,18 +467,20 @@ void init_state_point_vs_stls_arrays(input *vs_in, vs_sp xx,
   if (vs_in[2].rs < 0.0) vs_in[2].rs = 0.0;
   if (vs_in[4].rs < 0.0) vs_in[4].rs = 0.0;
   if (VS_SP_EL > 5) {
-    vs_in[5].Theta += in.drs;
-    vs_in[6].Theta -= in.drs;
-    vs_in[7].Theta += 2.0*in.drs;
-    vs_in[8].Theta -= 2.0*in.drs;
-    if (vs_in[7].rs < 0.0) vs_in[7].rs = 0.0;
-    if (vs_in[8].rs < 0.0) vs_in[8].rs = 0.0;
+    if (in.Theta > 0.0){
+      vs_in[5].Theta += in.drs;
+      vs_in[6].Theta -= in.drs;
+      vs_in[7].Theta += 2.0*in.drs;
+      vs_in[8].Theta -= 2.0*in.drs;
+      if (vs_in[7].rs < 0.0) vs_in[7].rs = 0.0;
+      if (vs_in[8].rs < 0.0) vs_in[8].rs = 0.0;
+    }
   }
   
   // Chemical potential
   if (verbose) printf("Chemical potential calculation: ");
   compute_chemical_potential_vs_stls(vs_in);
-  if (verbose) printf("Done. Chemical potential: %.8f\n", in.mu);
+  if (verbose) printf("Done. Chemical potential: %.8f\n", vs_in[0].mu);
   
   // Normalized ideal Lindhard density response
   if (verbose) printf("Normalized ideal Lindhard density calculation: ");
@@ -568,6 +570,7 @@ double vs_stls_thermo_iterations(vs_sp xx, vs_sp rsu, vs_sp rsa,
       printf("--- iteration %d ---\n", iter_counter);
       printf("Elapsed time: %f seconds\n", toc - tic);
       printf("Residual error: %.5e\n", iter_err);
+      printf("alpha (CSR): %.5e\n", alpha);
       fflush(stdout);
     }
     
