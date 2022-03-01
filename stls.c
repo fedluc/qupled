@@ -37,8 +37,8 @@ void solve_stls(input in, bool verbose) {
   stls_iterations(SS, SSHF, GG, GG_new, phi, xx, in, verbose);
   
   // Internal energy
-  /* if (verbose) printf("Internal energy: %.10f\n", */
-  /* 		      compute_internal_energy(SS, xx, in)); */
+  if (verbose) printf("Internal energy: %.10f\n",
+  		      compute_internal_energy(SS, xx, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
@@ -1085,6 +1085,24 @@ void write_text_stls(double *SS, double *GG, double *phi,
 
     fclose(fid);
 
+    // Output for the radial distribution function
+    sprintf(out_name, "rdf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+    fid = fopen(out_name, "w");
+    if (fid == NULL) {
+        fprintf(stderr, "Error while creating the output file for the radial distribution function");
+        exit(EXIT_FAILURE);
+    }
+    double *rdf = malloc( sizeof(double) * in.nx);
+    double *rr = malloc( sizeof(double) * in.nx);
+    if (rdf == NULL || rr == NULL) {
+      fprintf(stderr, "Failed to allocate memory for the radial distribution function\n");
+      exit(EXIT_FAILURE);
+    }
+    compute_rdf(rdf, rr, SS, xx, in);
+    for (int ii = 0; ii < in.nx; ii++)
+        fprintf(fid, "%.8e %.8e\n", rr[ii], rdf[ii]);
+    fclose(fid);
+    
     // Output for the interaction energy
     sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");

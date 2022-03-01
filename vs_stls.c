@@ -27,12 +27,6 @@ void solve_vs_stls(input in, bool verbose) {
   vs_sp rsu;
   vs_sp rsa;
   input vs_in[VS_SP_EL];
-
-  // Limit to zero temperature
-  /* if (in.Theta > 0.0) { */
-  /*   printf("The VS-STLS scheme is only implemented in the ground state\n"); */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
   
   // Allocate arrays
   stls_pointers stls_pp;
@@ -48,12 +42,12 @@ void solve_vs_stls(input in, bool verbose) {
   
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_vs_stls_arrays(&in, vs_in, xx, rsa, verbose);
-  init_state_point_vs_stls_arrays(vs_in, xx, phi, SSHF, verbose);
+  init_tmp_vs_stls_arrays(vs_in, xx, phi, SSHF, verbose);
    
   // Iterative procedure to fix the compressibility sum rule
-  /* if (verbose) printf("Iterative procedure to enforce the compressibility sum rule ...\n"); */
-  /* in.a_csr = vs_stls_thermo_iterations(xx, rsu, rsa, vs_in, true); */
-  /* if (verbose) printf("Done.\n"); */
+  if (verbose) printf("Iterative procedure to enforce the compressibility sum rule ...\n");
+  in.a_csr = vs_stls_thermo_iterations(xx, rsu, rsa, vs_in, true);
+  if (verbose) printf("Done.\n");
 
   // Structural properties
   if (verbose) printf("Structural properties calculation...\n");
@@ -450,15 +444,15 @@ void init_fixed_vs_stls_arrays(input *in, input *vs_in,
 
 // Initialize arrays that do not depend on the iterations, but that
 // are a function of the state point
-void init_state_point_vs_stls_arrays(input *vs_in, vs_sp xx,
+void init_tmp_vs_stls_arrays(input *vs_in, vs_sp xx,
 				     vs_sp phi, vs_sp SSHF,
 				     bool verbose){
 
   input in = vs_in[0];
-
+  
   // Input structure for points to be solved simultaneously
   for(int ii=1; ii<VS_SP_EL; ii++){
-    vs_in[ii] = in;			       
+    vs_in[ii] = in;
   }
   vs_in[1].rs += in.drs;
   vs_in[2].rs -= in.drs;
@@ -466,21 +460,19 @@ void init_state_point_vs_stls_arrays(input *vs_in, vs_sp xx,
   vs_in[4].rs -= 2.0*in.drs;
   if (vs_in[2].rs < 0.0) vs_in[2].rs = 0.0;
   if (vs_in[4].rs < 0.0) vs_in[4].rs = 0.0;
-  if (VS_SP_EL > 5) {
-    if (in.Theta > 0.0){
-      vs_in[5].Theta += in.drs;
-      vs_in[6].Theta -= in.drs;
-      vs_in[7].Theta += 2.0*in.drs;
-      vs_in[8].Theta -= 2.0*in.drs;
-      if (vs_in[7].rs < 0.0) vs_in[7].rs = 0.0;
-      if (vs_in[8].rs < 0.0) vs_in[8].rs = 0.0;
-    }
+  if (in.Theta > 0.0){
+    vs_in[5].Theta += in.dt;
+    vs_in[6].Theta -= in.dt;
+    vs_in[7].Theta += 2.0*in.dt;
+    vs_in[8].Theta -= 2.0*in.dt;
+    if (vs_in[7].Theta < 0.0) vs_in[7].Theta = 0.0;
+    if (vs_in[8].Theta < 0.0) vs_in[8].Theta = 0.0;
   }
   
   // Chemical potential
   if (verbose) printf("Chemical potential calculation: ");
   compute_chemical_potential_vs_stls(vs_in);
-  if (verbose) printf("Done. Chemical potential: %.8f\n", vs_in[0].mu);
+  if (verbose) printf("Done. \n");
   
   // Normalized ideal Lindhard density response
   if (verbose) printf("Normalized ideal Lindhard density calculation: ");
@@ -728,7 +720,7 @@ void compute_slfc_vs_stls(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
   double alpha = in.a_csr;
   double a_drs = alpha/(3.0*2.0*in.drs);
   double a_dx = alpha/(3.0*2.0*in.dx);
-  double a_dt = 2.0*alpha/(3.0*2.0*in.drs);
+  double a_dt = 2.0*alpha/(3.0*2.0*in.dt);
   /* double der_coeff = 2.0; */
   
   // Check if finite temperature calculations must be performed
@@ -776,16 +768,16 @@ void compute_slfc_vs_stls(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
     GG.rsm2[ii] += -a_drs*vs_in[4].rs
                   *(-3.0*GG_stls.rsm2[ii] + 4.0*GG_stls.rsm1[ii] - GG_stls.in[ii]);
     if (finite_temperature) {
-      GG.in[ii] += -a_dt*vs_in[0].Theta
-    	           *(GG_stls.tp1[ii] - GG_stls.tm1[ii]);
-      GG.tp1[ii] += -a_dt*vs_in[5].Theta
-                   *(GG_stls.tp2[ii] - GG_stls.in[ii]);
-      GG.tm1[ii] += -a_dt*vs_in[6].Theta
-                    *(GG_stls.in[ii] - GG_stls.tm2[ii]);
-      GG.tp2[ii] += -a_dt*vs_in[7].Theta
-    	            *(3.0*GG_stls.tp2[ii] - 4.0*GG_stls.tp1[ii] + GG_stls.in[ii]);
-      GG.tm2[ii] += -a_dt*vs_in[8].Theta
-                     *(-3.0*GG_stls.tm2[ii] + 4.0*GG_stls.tm1[ii] - GG_stls.in[ii]);
+    /*   GG.in[ii] += -a_dt*vs_in[0].Theta */
+    /* 	           *(GG_stls.tp1[ii] - GG_stls.tm1[ii]); */
+    /*   GG.tp1[ii] += -a_dt*vs_in[5].Theta */
+    /*                *(GG_stls.tp2[ii] - GG_stls.in[ii]); */
+    /*   GG.tm1[ii] += -a_dt*vs_in[6].Theta */
+    /*                 *(GG_stls.in[ii] - GG_stls.tm2[ii]); */
+    /*   GG.tp2[ii] += -a_dt*vs_in[7].Theta */
+    /* 	            *(3.0*GG_stls.tp2[ii] - 4.0*GG_stls.tp1[ii] + GG_stls.in[ii]); */
+    /*   GG.tm2[ii] += -a_dt*vs_in[8].Theta */
+    /*                  *(-3.0*GG_stls.tm2[ii] + 4.0*GG_stls.tm1[ii] - GG_stls.in[ii]); */
       
     }
 
@@ -860,31 +852,31 @@ double compute_alpha(vs_sp xx, vs_sp rsu, vs_sp rsa, input *vs_in){
     frsmtp = compute_free_energy(rsu.tp1, rsa.tp1, vs_in[2]);
     frsmtp = compute_free_energy(rsu.tm1, rsa.tm1, vs_in[2]);
   }
-  
+	 
   // Internal energy derivatives
   dudrs = (ursp - ursm)/(2.0*in.drs);
   if (finite_temperature)
-    dudt =  (utp - utm)/(2.0*in.drs);
+    dudt =  (utp - utm)/(2.0*in.dt);
   
   // Free energy derivatives
   dfdrs = (frsp - frsm)/(2.0*in.drs);
   d2fdrs2 = (frsp -2.0*frs + frsm)/(in.drs*in.drs);
   if (finite_temperature) {
-    dfdt = (ftp - ftm)/(2.0*in.drs);
-    d2fdt2 = (ftp -2.0*frs + ftm)/(in.drs*in.drs);
-    d2fdrsdt = (frsptp - frsmtp - frsptm + frsmtm)/(4.0*in.drs*in.drs);
+    dfdt = (ftp - ftm)/(2.0*in.dt);
+    d2fdt2 = (ftp -2.0*frs + ftm)/(in.dt*in.dt);
+    d2fdrsdt = (frsptp - frsmtp - frsptm + frsmtm)/(4.0*in.drs*in.dt);
   }
     
   // Parameter for the compressibility sum rule
   numer = (2.0*frs - (1.0/6.0)*in.rs*in.rs*d2fdrs2
   	   + (4.0/3.0)*in.rs*dfdrs);
   denom = (urs + (1.0/3.0)*in.rs*dudrs);
-  if (finite_temperature) {
-    numer += -(2.0/3.0)*in.Theta*in.Theta*d2fdt2
-             -(2.0/3.0)*in.Theta*in.rs*d2fdrsdt
-             +(1.0/3.0)*in.Theta*dfdt;
-    denom += (2.0/3.0)*in.Theta*dudt;
-  }
+  /* if (finite_temperature) { */
+  /*   numer += -(2.0/3.0)*in.Theta*in.Theta*d2fdt2 */
+  /*            -(2.0/3.0)*in.Theta*in.rs*d2fdrsdt */
+  /*            +(1.0/3.0)*in.Theta*dfdt; */
+  /*   denom += (2.0/3.0)*in.Theta*dudt; */
+  /* } */
   alpha = numer/denom;
 
   // Output
@@ -932,7 +924,7 @@ void compute_rsu(vs_sp xx, vs_sp rsu, vs_sp rsa,
       }
 
       // Initialize arrays that depend only on the state point
-      init_state_point_vs_stls_arrays(vs_in_tmp, xx, phi, SSHF, verbose);
+      init_tmp_vs_stls_arrays(vs_in_tmp, xx, phi, SSHF, verbose);
   
       // Initial guess (same for all threads)
       // NOTE: This could be problematic if the initial

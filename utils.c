@@ -166,3 +166,89 @@ double fex(double rs, void* pp) {
   
 }
 
+
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE RADIAL DISTRIBUTION FUNCTION
+// -------------------------------------------------------------------
+
+struct rdf_params {
+
+  double cutoff;
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+  
+};
+
+void compute_rdf(double *gg, double *rr, double *SS, double *xx, input in){
+
+  double err;
+
+  // Declare accelerator and spline objects
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+  
+  // Allocate the accelerator and the spline objects
+  ssf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  ssf_acc_ptr = gsl_interp_accel_alloc();
+  
+  // Initialize the spline
+  gsl_spline_init(ssf_sp_ptr, xx, SS, in.nx);
+  
+  // Integration workspace
+  gsl_integration_workspace *wsp 
+    = gsl_integration_workspace_alloc(1000);
+  gsl_integration_workspace *wspc 
+    = gsl_integration_workspace_alloc(1000);
+  gsl_integration_qawo_table *qtab
+    = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, 1000);
+  
+  // Integration function
+  gsl_function ff_int;
+  struct rdf_params rdfp = {xx[in.nx-1], ssf_sp_ptr, ssf_acc_ptr};
+  ff_int.function = &xssf;
+  ff_int.params = &rdfp;
+
+  // Real space grid
+  for (int ii = 0; ii < in.nx; ii++){
+    rr[ii] = 0.01 + in.dx*ii;
+  }
+  
+  // Radial distribution function
+  for (int ii = 0; ii < in.nx; ii++) {
+
+    // Set wave-vector (divide xx[ii] by ll to convert to Wigner-Seitz units)
+    gsl_integration_qawo_table_set(qtab, rr[ii], 1.0, GSL_INTEG_SINE);
+
+    // Fourier transform
+    gsl_integration_qawf(&ff_int,
+    			 0.0, QUAD_REL_ERR,
+			 1000,
+    			 wsp, wspc,
+    			 qtab,
+    			 &gg[ii], &err);
+    gg[ii] = 1 + 3.0/(2.0*rr[ii])*gg[ii];
+
+  }
+
+  // Free memory
+  gsl_integration_workspace_free(wsp);
+  gsl_integration_workspace_free(wspc); 
+  gsl_integration_qawo_table_free(qtab);
+
+ 
+
+}
+
+double  xssf(double xx, void *pp){
+  
+  struct rdf_params* params = (struct rdf_params*)pp;
+  double cutoff = (params->cutoff);
+  gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
+  gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
+
+  if (xx < cutoff)
+    return xx*(gsl_spline_eval(ssf_sp_ptr, xx, ssf_acc_ptr) - 1);
+  else
+    return 0.0;
+}

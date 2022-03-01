@@ -72,9 +72,9 @@ void free_vs_stls_one_array(vs_sp vs_arr);
 void init_fixed_vs_stls_arrays(input *in, input *vs_in, vs_sp xx,
 			       vs_sp rsa, bool verbose);
 
-void init_state_point_vs_stls_arrays(input *vs_in, vs_sp xx,
-				     vs_sp phi, vs_sp SSHF,
-				     bool verbose);
+void init_tmp_vs_stls_arrays(input *vs_in, vs_sp xx,
+			     vs_sp phi, vs_sp SSHF,
+			     bool verbose);
 
 // ------------------------------------------------------------------
 // FUNCTION USED TO DEFINE THE WAVE-VECTOR GRID

@@ -25,6 +25,7 @@ typedef struct {
   double rs;
   double dx;
   double drs;
+  double dt;
   double err_min_iter;
   double mu_lo;
   double mu_hi;

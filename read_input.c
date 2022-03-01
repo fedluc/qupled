@@ -36,7 +36,8 @@ static char doc[] =
 #define ARGUMENT_GUESS_FILES_SHORT 0x98
 #define ARGUMENT_IET_MAPPING_SHORT 0x99
 #define ARGUMENT_DRS_SHORT 0x100
-#define ARGUMENT_ALPHA_CSR_SHORT 0x101
+#define ARGUMENT_DT_SHORT 0x101
+#define ARGUMENT_ALPHA_CSR_SHORT 0x102
 
 // Optional arguments
 static struct argp_option options[] = {
@@ -104,6 +105,9 @@ static struct argp_option options[] = {
 
   {"vs-drs", ARGUMENT_DRS_SHORT, "0.01", 0,
    "Resolution of the coupling parameter grid for the VS schemes"},
+
+  {"vs-dt", ARGUMENT_DRS_SHORT, "0.01", 0,
+   "Resolution of the degeneracy parameter grid for the VS schemes"},
 
   {"vs-alpha", ARGUMENT_ALPHA_CSR_SHORT, "0.5", 0,
    "Initial guess for the free parameter in the VS schemes"},
@@ -231,6 +235,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
       in->drs = atof(arg);
       break;
 
+    case ARGUMENT_DT_SHORT:
+      in->dt = atof(arg);
+      break;
+
     case ARGUMENT_ALPHA_CSR_SHORT:
       in->a_csr = atof(arg);
       break;
@@ -297,6 +305,7 @@ void set_default_parse_opt(input *in){
   in->guess_file2 = "NO_FILE"; // File of the second file used to construct the guess (static local field correction or auxiliary density response)
   in->iet_mapping = "standard"; // Mapping between the quantum and classical state points for the IET-based schemes
   in->drs = 0.01; // Resolution of the coupling parameter grid for the VS schemes
+  in->dt = 0.01; // Resolution of the degeneracy parameter grid for the VS schemes
   in->a_csr = 0.5; // Initial guess for the free parameter in the VS schemes
   
 }
@@ -318,57 +327,62 @@ void check_input(input *in){
   bool invalid_input = false;
 
   if (in->dx <= 0.0) {
-    printf("The resolution of the wave vector grid must be larger than zero\n");
+    fprintf(stderr, "The resolution of the wave vector grid must be larger than zero\n");
     invalid_input = true;
   }
 
   if (in->xmax <= 0.0) {
-    printf("The cutoff of the wave vector grid must be larger than zero\n");
+    fprintf(stderr, "The cutoff of the wave vector grid must be larger than zero\n");
     invalid_input = true;
   }
 
   if (in->nIter < 0.0) {
-    printf("The number of iterations must be a positive number\n");
+    fprintf(stderr, "The number of iterations must be a positive number\n");
     invalid_input = true;
   }
 
   if (in->err_min_iter <= 0.0) {
-    printf("The minimum error for convergence must be larger than zero\n");
+    fprintf(stderr, "The minimum error for convergence must be larger than zero\n");
     invalid_input = true;
   }
 
   if (in->a_mix <= 0.0) {
-    printf("The mixing parameter must be larger than 0.0\n");
+    fprintf(stderr, "The mixing parameter must be larger than 0.0\n");
     invalid_input = true;
   }
 
   if (in->nl <= 0.0) {
-    printf("The number of Matsubara frequencies must be larger than zero\n");
+    fprintf(stderr, "The number of Matsubara frequencies must be larger than zero\n");
     invalid_input = true;
   }
 
   if (in->nThreads <= 0.0) {
-    printf("The number of OMP threads must be larger than zero\n");
+    fprintf(stderr, "The number of OMP threads must be larger than zero\n");
     invalid_input = true;
   }
 
   if (in->rs < 0.0) {
-    printf("The quantum coupling parameter must be larger than zero\n");
+    fprintf(stderr, "The quantum coupling parameter must be larger than zero\n");
     invalid_input = true;
   }
 
   if (in->Theta < 0.0) {
-    printf("The quantum degeneracy parameter must be positive\n");
+    fprintf(stderr, "The quantum degeneracy parameter must be positive\n");
     invalid_input = true;
   }
 
   if (in->drs <= 0.0) {
-    printf("The resolution of the coupling parameter  grid must be larger than zero\n");
+    fprintf(stderr, "The resolution of the coupling parameter grid must be larger than zero\n");
+    invalid_input = true;
+  }
+
+  if (in->dt <= 0.0) {
+    fprintf(stderr, "The resolution of the degeneracy parameter grid must be larger than zero\n");
     invalid_input = true;
   }
 
   if (in->a_csr <= 0.0) {
-    printf("The free parameter for the VS schemes must be larger than zero\n");
+    fprintf(stderr, "The free parameter for the VS schemes must be larger than zero\n");
     invalid_input = true;
   }
   
@@ -404,7 +418,8 @@ void print_input(input *in){
   printf("Guess file 1: %s\n", in->guess_file1);
   printf("Guess file 2: %s\n", in->guess_file2);
   printf("IET mapping: %s\n", in->iet_mapping);
-  printf("Coupling parameter resolution: %f\n", in->drs);
+  printf("Coupling parameter resolution (VS schemes): %f\n", in->drs);
+  printf("Degeneracy parameter resolution (VS schemes): %f\n", in->dt);
   printf("Free parameter for VS schemes: %f\n", in->a_csr);
   printf("-------------------------------------\n");
   
