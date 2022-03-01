@@ -39,7 +39,8 @@ void solve_vs_stls(input in, bool verbose) {
     alloc_vs_stls_thermo_arrays_elem(in, &vs_stls_pp);
     alloc_vs_stls_thermo_arrays(in, vs_stls_pp, &rsu, &rsa, ii);
   }
-  
+
+
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_vs_stls_arrays(&in, vs_in, xx, rsa, verbose);
   init_tmp_vs_stls_arrays(vs_in, xx, phi, SSHF, verbose);
@@ -893,11 +894,36 @@ void compute_rsu(vs_sp xx, vs_sp rsu, vs_sp rsa,
 		 input *vs_in, bool verbose){
 
   int nrs = vs_in[0].nrs;
+  int stencil = 5;
+  int max_idx = floor(nrs/stencil)*stencil;
+
+  // Update the first part of rsu in steps of five
+  compute_rsu_blocks(xx, rsu, rsa, vs_in, 2, nrs-2,
+		     stencil, verbose);
   
+  // Update the remainder of rsu in steps of one
+  compute_rsu_blocks(xx, rsu, rsa, vs_in, max_idx, nrs,
+		     1, verbose);
+  
+  /* for (int ii=2; ii<in.nrs-2; ii=ii+stencil){ */
+  /*   printf("%d %d %d %d %d | %d\n", ii-2, ii-1, ii, ii+1, ii+2, in.nrs); */
+  /* } */
+  /* for (int ii=max_idx; ii<in.nrs; ii++){ */
+  /*   printf("%d | %d\n", ii, in.nrs); */
+  /* } */
+  
+}
+
+void compute_rsu_blocks(vs_sp xx, vs_sp rsu, vs_sp rsa,
+			input *vs_in, int start, int end,
+			int step, bool verbose){
+
+  int nrs = vs_in[0].nrs;
+    
   #pragma omp parallel
   {
     #pragma omp for // Parallel calculations
-    for (int ii=0; ii<nrs; ii++) {
+    for (int ii=start; ii<end; ii=ii+step) {
  
       // Arrays for VS-STLS solution
       vs_sp tmp_xx;
@@ -934,14 +960,40 @@ void compute_rsu(vs_sp xx, vs_sp rsu, vs_sp rsa,
       // Compute structural properties with the VS-STLS static local field correction
       vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in_tmp, verbose);
       
-      // Compute the free energy integrand
-      for (int jj=0; jj<VS_SP_EL; jj++){
+      // Compute the free energy integrand      
 
-	// Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs)
-	if (vs_in_tmp[jj].rs == 0.0) vs_in_tmp[jj].rs = 1.0; // Avoid divergencies for rs = 0.0;
-	u_int = compute_internal_energy(get_el(SS,jj), get_el(xx,jj), vs_in_tmp[jj]);
-	get_el(rsu,jj)[ii] = vs_in_tmp[jj].rs*u_int;
+      /* for (int jj=0; jj<step; jj++){ */
+
+      /* 	// Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs) */
+      /* 	if (vs_in_tmp[jj].rs == 0.0) vs_in_tmp[jj].rs = 1.0; // Avoid divergencies for rs = 0.0; */
+      /* 	u_int = compute_internal_energy(get_el(SS,jj), get_el(xx,jj), vs_in_tmp[jj]); */
+      /* 	get_el(rsu,jj)[ii] = vs_in_tmp[jj].rs*u_int; */
 	
+      /* } */
+      
+      // Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs)
+      if (vs_in_tmp[0].rs == 0.0) vs_in_tmp[0].rs = 1.0;
+      u_int = compute_internal_energy(SS.in, xx.in, vs_in_tmp[0]);
+      rsu.in[ii] = vs_in_tmp[0].rs*u_int;
+
+      if (ii>=2 && ii<nrs-2){
+	
+	if (vs_in_tmp[1].rs == 0.0) vs_in_tmp[1].rs = 1.0;
+	u_int = compute_internal_energy(SS.rsp1, xx.rsp1, vs_in_tmp[1]);
+	rsu.in[ii+1] = vs_in_tmp[1].rs*u_int;
+        
+	if (vs_in_tmp[2].rs == 0.0) vs_in_tmp[2].rs = 1.0;
+	u_int = compute_internal_energy(SS.rsm1, xx.rsm1, vs_in_tmp[2]);
+	rsu.in[ii-1] = vs_in_tmp[2].rs*u_int;
+
+	if (vs_in_tmp[3].rs == 0.0) vs_in_tmp[3].rs = 1.0;
+	u_int = compute_internal_energy(SS.rsp2, xx.rsp2, vs_in_tmp[3]);
+	rsu.in[ii+2] = vs_in_tmp[3].rs*u_int;
+
+	if (vs_in_tmp[4].rs == 0.0) vs_in_tmp[4].rs = 1.0;
+	u_int = compute_internal_energy(SS.rsm2, xx.rsm2, vs_in_tmp[4]);
+	rsu.in[ii-2] = vs_in_tmp[4].rs*u_int;
+
       }
       
       // Free memory
@@ -952,8 +1004,6 @@ void compute_rsu(vs_sp xx, vs_sp rsu, vs_sp rsa,
  }
   
 }
-
-
 
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT

@@ -152,6 +152,10 @@ double compute_alpha(vs_sp xx, vs_sp rsu, vs_sp rsa, input *vs_in);
 void compute_rsu(vs_sp xx, vs_sp rsu, vs_sp rsa,
 		 input *vs_in, bool verbose);
 
+void compute_rsu_blocks(vs_sp xx, vs_sp rsu, vs_sp rsa,
+			input *vs_in, int start, int end,
+			int step, bool verbose);
+    
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
