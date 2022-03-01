@@ -18,20 +18,20 @@
 void solve_vs_stls(input in, bool verbose) {
 
   // Arrays for VS-STLS solution
-  vs_sp xx;
-  vs_sp phi;
-  vs_sp GG;
-  vs_sp GG_new;
-  vs_sp SS;
-  vs_sp SSHF;
-  vs_sp rsu;
-  vs_sp rsa;
-  input vs_in[VS_SP_EL];
+  vs_struct xx;
+  vs_struct phi;
+  vs_struct GG;
+  vs_struct GG_new;
+  vs_struct SS;
+  vs_struct SSHF;
+  vs_struct rsu;
+  vs_struct rsa;
+  input vs_in[VS_STRUCT_EL];
   
   // Allocate arrays
   stls_pointers stls_pp;
   vs_stls_pointers vs_stls_pp;
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     alloc_stls_arrays_new(in, &stls_pp);
     alloc_vs_stls_struct_arrays(in, stls_pp, &xx,
     				&phi, &SS, &SSHF,
@@ -58,14 +58,14 @@ void solve_vs_stls(input in, bool verbose) {
   
   // Thermodynamic properties
   if (verbose) printf("Free parameter: %.5f\n",vs_in[0].a_csr);
-  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS.in, xx.in, in));
-  if (verbose) printf("Free energy: %.10f\n",compute_free_energy(rsu.in, rsa.in, in));
+  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS.rst, xx.rst, in));
+  if (verbose) printf("Free energy: %.10f\n",compute_free_energy(rsu.rst, rsa.rst, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_stls(SS.in, GG.in, phi.in, SSHF.in, xx.in, in);
-  write_text_vs_stls(rsu.in, rsa.in, in);
-  write_guess_stls(SS.in, GG.in, in);
+  write_text_stls(SS.rst, GG.rst, phi.rst, SSHF.rst, xx.rst, in);
+  write_text_vs_stls(rsu.rst, rsa.rst, in);
+  write_guess_stls(SS.rst, GG.rst, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -76,35 +76,68 @@ void solve_vs_stls(input in, bool verbose) {
 
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO LOOP OVER THE VS_SP DATA STRUCTURES
+// FUNCTION USED TO LOOP OVER THE VS_STRUCT DATA STRUCTURES
 // -------------------------------------------------------------------
 
-double *get_el(vs_sp sp, int ii) {
+double *get_el(vs_struct sp, int ii) {
   
   switch(ii) {
     
   case 0:
-    return sp.in;
+    return sp.rst;
   case 1:
-    return sp.rsp1;
+    return sp.rstp1;
   case 2:
-    return sp.rsm1;
+    return sp.rstm1;
   case 3:
-    return sp.rsp2;
+    return sp.rstp2;
   case 4:
-    return sp.rsm2;
+    return sp.rstm2;
   case 5:
-    return sp.tp1;
+    return sp.rsp1t;
   case 6:
-    return sp.tm1;
+    return sp.rsp1tp1;
   case 7:
-    return sp.tp2;
+    return sp.rsp1tm1;
   case 8:
-    return sp.tm2;
+    return sp.rsp1tp2;
+  case 9:
+    return sp.rsp1tm2;
+  case 10:
+    return sp.rsm1t;
+  case 11:
+    return sp.rsm1tp1;
+  case 12:
+    return sp.rsm1tm1;
+  case 13:
+    return sp.rsm1tp2;
+  case 14:
+    return sp.rsm1tm2;
+  case 15:
+    return sp.rsp2t;
+  case 16:
+    return sp.rsp2tp1;
+  case 17:
+    return sp.rsp2tm1;
+  case 18:
+    return sp.rsp2tp2;
+  case 19:
+    return sp.rsp2tm2;
+  case 20:
+    return sp.rsm2t;
+  case 21:
+    return sp.rsm2tp1;
+  case 22:
+    return sp.rsm2tm1;
+  case 23:
+    return sp.rsm2tp2;
+  case 24:
+    return sp.rsm2tm2;
+
     
   }
 
-  printf("Invalid structure element for vs_sp data structures\n"); 
+  printf("Invalid structure element for vs_struct data structures\n"); 
   exit(EXIT_FAILURE);
 
 }
@@ -114,9 +147,9 @@ double *get_el(vs_sp sp, int ii) {
 // -------------------------------------------------------------------
 
 // Function to allocate the VS-STLS arrays for the structural properties
-void alloc_vs_stls_struct_arrays(input in, stls_pointers pp, vs_sp *xx,
-				 vs_sp *phi, vs_sp *SS, vs_sp *SSHF,
-				 vs_sp *GG, vs_sp *GG_new, int el){
+void alloc_vs_stls_struct_arrays(input in, stls_pointers pp, vs_struct *xx,
+				 vs_struct *phi, vs_struct *SS, vs_struct *SSHF,
+				 vs_struct *GG, vs_struct *GG_new, int el){
 
   bool alloc_failed = false;
   
@@ -127,86 +160,230 @@ void alloc_vs_stls_struct_arrays(input in, stls_pointers pp, vs_sp *xx,
   switch(el) {
     
   case 0:
-    xx->in = pp.xx;    
-    phi->in = pp.phi;
-    SS->in = pp.SS;
-    SSHF->in = pp.SSHF;
-    GG->in = pp.GG;
-    GG_new->in= pp.GG_new;
+    xx->rst = pp.xx;    
+    phi->rst = pp.phi;
+    SS->rst = pp.SS;
+    SSHF->rst = pp.SSHF;
+    GG->rst = pp.GG;
+    GG_new->rst = pp.GG_new;
     break;
     
   case 1:
-    xx->rsp1 = pp.xx;    
-    phi->rsp1 = pp.phi;
-    SS->rsp1 = pp.SS;
-    SSHF->rsp1 = pp.SSHF;
-    GG->rsp1 = pp.GG;
-    GG_new->rsp1 = pp.GG_new;
+    xx->rstp1 = pp.xx;    
+    phi->rstp1 = pp.phi;
+    SS->rstp1 = pp.SS;
+    SSHF->rstp1 = pp.SSHF;
+    GG->rstp1 = pp.GG;
+    GG_new->rstp1 = pp.GG_new;
     break;
 
   case 2:
-    xx->rsm1 = pp.xx;    
-    phi->rsm1 = pp.phi;
-    SS->rsm1 = pp.SS;
-    SSHF->rsm1 = pp.SSHF;
-    GG->rsm1 = pp.GG;
-    GG_new->rsm1 = pp.GG_new;
+    xx->rstm1 = pp.xx;    
+    phi->rstm1 = pp.phi;
+    SS->rstm1 = pp.SS;
+    SSHF->rstm1 = pp.SSHF;
+    GG->rstm1 = pp.GG;
+    GG_new->rstm1 = pp.GG_new;
     break;
 
   case 3:
-    xx->rsp2 = pp.xx;    
-    phi->rsp2 = pp.phi;
-    SS->rsp2 = pp.SS;
-    SSHF->rsp2 = pp.SSHF;
-    GG->rsp2 = pp.GG;
-    GG_new->rsp2 = pp.GG_new;
+    xx->rstp2 = pp.xx;    
+    phi->rstp2 = pp.phi;
+    SS->rstp2 = pp.SS;
+    SSHF->rstp2 = pp.SSHF;
+    GG->rstp2 = pp.GG;
+    GG_new->rstp2 = pp.GG_new;
     break;
 
   case 4:
-    xx->rsm2 = pp.xx;    
-    phi->rsm2 = pp.phi;
-    SS->rsm2 = pp.SS;
-    SSHF->rsm2 = pp.SSHF;
-    GG->rsm2 = pp.GG;
-    GG_new->rsm2 = pp.GG_new;
+    xx->rstm2 = pp.xx;    
+    phi->rstm2 = pp.phi;
+    SS->rstm2 = pp.SS;
+    SSHF->rstm2 = pp.SSHF;
+    GG->rstm2 = pp.GG;
+    GG_new->rstm2 = pp.GG_new;
     break;
 
   case 5:
-    xx->tp1 = pp.xx;    
-    phi->tp1 = pp.phi;
-    SS->tp1 = pp.SS;
-    SSHF->tp1 = pp.SSHF;
-    GG->tp1 = pp.GG;
-    GG_new->tp1 = pp.GG_new;
+    xx->rsp1t = pp.xx;    
+    phi->rsp1t = pp.phi;
+    SS->rsp1t = pp.SS;
+    SSHF->rsp1t = pp.SSHF;
+    GG->rsp1t = pp.GG;
+    GG_new->rsp1t = pp.GG_new;
     break;
-
+    
   case 6:
-    xx->tp2 = pp.xx;    
-    phi->tp2 = pp.phi;
-    SS->tp2 = pp.SS;
-    SSHF->tp2 = pp.SSHF;
-    GG->tp2 = pp.GG;
-    GG_new->tp2 = pp.GG_new;
+    xx->rsp1tp1 = pp.xx;    
+    phi->rsp1tp1 = pp.phi;
+    SS->rsp1tp1 = pp.SS;
+    SSHF->rsp1tp1 = pp.SSHF;
+    GG->rsp1tp1 = pp.GG;
+    GG_new->rsp1tp1 = pp.GG_new;
     break;
 
   case 7:
-    xx->tm1 = pp.xx;    
-    phi->tm1 = pp.phi;
-    SS->tm1 = pp.SS;
-    SSHF->tm1 = pp.SSHF;
-    GG->tm1 = pp.GG;
-    GG_new->tm1 = pp.GG_new;
+    xx->rsp1tm1 = pp.xx;    
+    phi->rsp1tm1 = pp.phi;
+    SS->rsp1tm1 = pp.SS;
+    SSHF->rsp1tm1 = pp.SSHF;
+    GG->rsp1tm1 = pp.GG;
+    GG_new->rsp1tm1 = pp.GG_new;
     break;
 
   case 8:
-    xx->tm2 = pp.xx;    
-    phi->tm2 = pp.phi;
-    SS->tm2 = pp.SS;
-    SSHF->tm2 = pp.SSHF;
-    GG->tm2 = pp.GG;
-    GG_new->tm2 = pp.GG_new;
+    xx->rsp1tp2 = pp.xx;    
+    phi->rsp1tp2 = pp.phi;
+    SS->rsp1tp2 = pp.SS;
+    SSHF->rsp1tp2 = pp.SSHF;
+    GG->rsp1tp2 = pp.GG;
+    GG_new->rsp1tp2 = pp.GG_new;
     break;
 
+  case 9:
+    xx->rsp1tm2 = pp.xx;    
+    phi->rsp1tm2 = pp.phi;
+    SS->rsp1tm2 = pp.SS;
+    SSHF->rsp1tm2 = pp.SSHF;
+    GG->rsp1tm2 = pp.GG;
+    GG_new->rsp1tm2 = pp.GG_new;
+    break;
+
+  case 10:
+    xx->rsm1t = pp.xx;    
+    phi->rsm1t = pp.phi;
+    SS->rsm1t = pp.SS;
+    SSHF->rsm1t = pp.SSHF;
+    GG->rsm1t = pp.GG;
+    GG_new->rsm1t = pp.GG_new;
+    break;
+    
+  case 11:
+    xx->rsm1tp1 = pp.xx;    
+    phi->rsm1tp1 = pp.phi;
+    SS->rsm1tp1 = pp.SS;
+    SSHF->rsm1tp1 = pp.SSHF;
+    GG->rsm1tp1 = pp.GG;
+    GG_new->rsm1tp1 = pp.GG_new;
+    break;
+
+  case 12:
+    xx->rsm1tm1 = pp.xx;    
+    phi->rsm1tm1 = pp.phi;
+    SS->rsm1tm1 = pp.SS;
+    SSHF->rsm1tm1 = pp.SSHF;
+    GG->rsm1tm1 = pp.GG;
+    GG_new->rsm1tm1 = pp.GG_new;
+    break;
+
+  case 13:
+    xx->rsm1tp2 = pp.xx;    
+    phi->rsm1tp2 = pp.phi;
+    SS->rsm1tp2 = pp.SS;
+    SSHF->rsm1tp2 = pp.SSHF;
+    GG->rsm1tp2 = pp.GG;
+    GG_new->rsm1tp2 = pp.GG_new;
+    break;
+
+  case 14:
+    xx->rsm1tm2 = pp.xx;    
+    phi->rsm1tm2 = pp.phi;
+    SS->rsm1tm2 = pp.SS;
+    SSHF->rsm1tm2 = pp.SSHF;
+    GG->rsm1tm2 = pp.GG;
+    GG_new->rsm1tm2 = pp.GG_new;
+    break;
+
+  case 15:
+    xx->rsp2t = pp.xx;    
+    phi->rsp2t = pp.phi;
+    SS->rsp2t = pp.SS;
+    SSHF->rsp2t = pp.SSHF;
+    GG->rsp2t = pp.GG;
+    GG_new->rsp2t = pp.GG_new;
+    break;
+    
+  case 16:
+    xx->rsp2tp1 = pp.xx;    
+    phi->rsp2tp1 = pp.phi;
+    SS->rsp2tp1 = pp.SS;
+    SSHF->rsp2tp1 = pp.SSHF;
+    GG->rsp2tp1 = pp.GG;
+    GG_new->rsp2tp1 = pp.GG_new;
+    break;
+
+  case 17:
+    xx->rsp2tm1 = pp.xx;    
+    phi->rsp2tm1 = pp.phi;
+    SS->rsp2tm1 = pp.SS;
+    SSHF->rsp2tm1 = pp.SSHF;
+    GG->rsp2tm1 = pp.GG;
+    GG_new->rsp2tm1 = pp.GG_new;
+    break;
+
+  case 18:
+    xx->rsp2tp2 = pp.xx;    
+    phi->rsp2tp2 = pp.phi;
+    SS->rsp2tp2 = pp.SS;
+    SSHF->rsp2tp2 = pp.SSHF;
+    GG->rsp2tp2 = pp.GG;
+    GG_new->rsp2tp2 = pp.GG_new;
+    break;
+
+  case 19:
+    xx->rsp2tm2 = pp.xx;    
+    phi->rsp2tm2 = pp.phi;
+    SS->rsp2tm2 = pp.SS;
+    SSHF->rsp2tm2 = pp.SSHF;
+    GG->rsp2tm2 = pp.GG;
+    GG_new->rsp2tm2 = pp.GG_new;
+    break;
+
+  case 20:
+    xx->rsm2t = pp.xx;    
+    phi->rsm2t = pp.phi;
+    SS->rsm2t = pp.SS;
+    SSHF->rsm2t = pp.SSHF;
+    GG->rsm2t = pp.GG;
+    GG_new->rsm2t = pp.GG_new;
+    break;
+    
+  case 21:
+    xx->rsm2tp1 = pp.xx;    
+    phi->rsm2tp1 = pp.phi;
+    SS->rsm2tp1 = pp.SS;
+    SSHF->rsm2tp1 = pp.SSHF;
+    GG->rsm2tp1 = pp.GG;
+    GG_new->rsm2tp1 = pp.GG_new;
+    break;
+
+  case 22:
+    xx->rsm2tm1 = pp.xx;    
+    phi->rsm2tm1 = pp.phi;
+    SS->rsm2tm1 = pp.SS;
+    SSHF->rsm2tm1 = pp.SSHF;
+    GG->rsm2tm1 = pp.GG;
+    GG_new->rsm2tm1 = pp.GG_new;
+    break;
+
+  case 23:
+    xx->rsm2tp2 = pp.xx;    
+    phi->rsm2tp2 = pp.phi;
+    SS->rsm2tp2 = pp.SS;
+    SSHF->rsm2tp2 = pp.SSHF;
+    GG->rsm2tp2 = pp.GG;
+    GG_new->rsm2tp2 = pp.GG_new;
+    break;
+
+  case 24:
+    xx->rsm2tm2 = pp.xx;    
+    phi->rsm2tm2 = pp.phi;
+    SS->rsm2tm2 = pp.SS;
+    SSHF->rsm2tm2 = pp.SSHF;
+    GG->rsm2tm2 = pp.GG;
+    GG_new->rsm2tm2 = pp.GG_new;
+    break;
+    
   default:
     alloc_failed = true;
 
@@ -221,7 +398,7 @@ void alloc_vs_stls_struct_arrays(input in, stls_pointers pp, vs_sp *xx,
 
 // Function to allocate the VS-STLS arrays for the thermodynamic properties
 void alloc_vs_stls_thermo_arrays(input in, vs_stls_pointers pp,
-				 vs_sp *rsu, vs_sp *rsa, int el){
+				 vs_struct *rsu, vs_struct *rsa, int el){
 
   bool alloc_failed = false;
     
@@ -232,48 +409,128 @@ void alloc_vs_stls_thermo_arrays(input in, vs_stls_pointers pp,
   switch(el) {
     
   case 0:
-    rsu->in = pp.rsu;
-    rsa->in = pp.rsa;
+    rsu->rst = pp.rsu;    
+    rsa->rst = pp.rsa;
     break;
     
   case 1:
-    rsu->rsp1 = pp.rsu;
-    rsa->rsp1 = pp.rsa;
+    rsu->rstp1 = pp.rsu;    
+    rsa->rstp1 = pp.rsa;
     break;
 
   case 2:
-    rsu->rsm1 = pp.rsu;
-    rsa->rsm1 = pp.rsa;
+    rsu->rstm1 = pp.rsu;    
+    rsa->rstm1 = pp.rsa;
     break;
 
   case 3:
-    rsu->rsp2 = pp.rsu;
-    rsa->rsp2 = pp.rsa;
+    rsu->rstp2 = pp.rsu;    
+    rsa->rstp2 = pp.rsa;
     break;
 
   case 4:
-    rsu->rsm2 = pp.rsu;
-    rsa->rsm2 = pp.rsa;
+    rsu->rstm2 = pp.rsu;    
+    rsa->rstm2 = pp.rsa;
     break;
 
   case 5:
-    rsu->tp1 = pp.rsu;
-    rsa->tp1 = pp.rsa;
+    rsu->rsp1t = pp.rsu;    
+    rsa->rsp1t = pp.rsa;
     break;
-
+    
   case 6:
-    rsu->tm1 = pp.rsu;
-    rsa->tm1 = pp.rsa;
+    rsu->rsp1tp1 = pp.rsu;    
+    rsa->rsp1tp1 = pp.rsa;
     break;
 
   case 7:
-    rsu->tp2 = pp.rsu;
-    rsa->tp2 = pp.rsa;
+    rsu->rsp1tm1 = pp.rsu;    
+    rsa->rsp1tm1 = pp.rsa;
     break;
 
   case 8:
-    rsu->tm2 = pp.rsu;
-    rsa->tm2 = pp.rsa;
+    rsu->rsp1tp2 = pp.rsu;
+    rsa->rsp1tp2 = pp.rsa;
+    break;
+
+  case 9:
+    rsu->rsp1tm2 = pp.rsu;    
+    rsa->rsp1tm2 = pp.rsa;
+    break;
+
+  case 10:
+    rsu->rsm1t = pp.rsu;    
+    rsa->rsm1t = pp.rsa;
+    break;
+    
+  case 11:
+    rsu->rsm1tp1 = pp.rsu;    
+    rsa->rsm1tp1 = pp.rsa;
+    break;
+
+  case 12:
+    rsu->rsm1tm1 = pp.rsu;    
+    rsa->rsm1tm1 = pp.rsa;
+    break;
+
+  case 13:
+    rsu->rsm1tp2 = pp.rsu;    
+    rsa->rsm1tp2 = pp.rsa;
+    break;
+
+  case 14:
+    rsu->rsm1tm2 = pp.rsu;    
+    rsa->rsm1tm2 = pp.rsa;
+    break;
+
+  case 15:
+    rsu->rsp2t = pp.rsu;    
+    rsa->rsp2t = pp.rsa;
+    break;
+    
+  case 16:
+    rsu->rsp2tp1 = pp.rsu;    
+    rsa->rsp2tp1 = pp.rsa;
+    break;
+
+  case 17:
+    rsu->rsp2tm1 = pp.rsu;    
+    rsa->rsp2tm1 = pp.rsa;
+    break;
+
+  case 18:
+    rsu->rsp2tp2 = pp.rsu;    
+    rsa->rsp2tp2 = pp.rsa;
+    break;
+
+  case 19:
+    rsu->rsp2tm2 = pp.rsu;    
+    rsa->rsp2tm2 = pp.rsa;
+    break;
+
+  case 20:
+    rsu->rsm2t = pp.rsu;    
+    rsa->rsm2t = pp.rsa;
+    break;
+    
+  case 21:
+    rsu->rsm2tp1 = pp.rsu;    
+    rsa->rsm2tp1 = pp.rsa;
+    break;
+
+  case 22:
+    rsu->rsm2tm1 = pp.rsu;    
+    rsa->rsm2tm1 = pp.rsa;
+    break;
+
+  case 23:
+    rsu->rsm2tp2 = pp.rsu;    
+    rsa->rsm2tp2 = pp.rsa;
+    break;
+
+  case 24:
+    rsu->rsm2tm2 = pp.rsu;    
+    rsa->rsm2tm2 = pp.rsa;
     break;
 
     
@@ -309,50 +566,114 @@ void alloc_vs_stls_thermo_arrays_elem(input in, vs_stls_pointers *pp){
 
 
 // Function to allocate a single VS-STLS array
-void alloc_vs_stls_one_array(double *pp, vs_sp *vs_arr, int el){
+void alloc_vs_stls_one_array(double *pp, vs_struct *vs_arr, int el){
 
   bool alloc_failed = false;
 
-  // Allocate vs_sp array
+  // Allocate vs_struct array
   if (pp == NULL)
     alloc_failed = true;
   
   switch(el) {
-    
+
   case 0:
-    vs_arr->in = pp;
+    vs_arr->rst = pp;
     break;
     
   case 1:
-    vs_arr->rsp1 = pp;
+    vs_arr->rstp1 = pp;
     break;
 
   case 2:
-    vs_arr->rsm1 = pp;
+    vs_arr->rstm1 = pp;
     break;
 
   case 3:
-    vs_arr->rsp2 = pp;
+    vs_arr->rstp2 = pp;
     break;
 
   case 4:
-    vs_arr->rsm2 = pp;
+    vs_arr->rstm2 = pp;
     break;
 
   case 5:
-    vs_arr->tp1 = pp;
+    vs_arr->rsp1t = pp;
     break;
-
+    
   case 6:
-    vs_arr->tm1 = pp;
+    vs_arr->rsp1tp1 = pp;
     break;
 
   case 7:
-    vs_arr->tp2 = pp;
+    vs_arr->rsp1tm1 = pp;
     break;
 
   case 8:
-    vs_arr->tm2 = pp;
+    vs_arr->rsp1tp2 = pp;
+    break;
+
+  case 9:
+    vs_arr->rsp1tm2 = pp;
+    break;
+
+  case 10:
+    vs_arr->rsm1t = pp;
+    break;
+    
+  case 11:
+    vs_arr->rsm1tp1 = pp;
+    break;
+
+  case 12:
+    vs_arr->rsm1tm1 = pp;
+    break;
+
+  case 13:
+    vs_arr->rsm1tp2 = pp;
+    break;
+
+  case 14:
+    vs_arr->rsm1tm2 = pp;
+    break;
+
+  case 15:
+    vs_arr->rsp2t = pp;
+    break;
+    
+  case 16:
+    vs_arr->rsp2tp1 = pp;
+    break;
+
+  case 17:
+    vs_arr->rsp2tm1 = pp;
+    break;
+
+  case 18:
+    vs_arr->rsp2tp2 = pp;
+    break;
+
+  case 19:
+    vs_arr->rsp2tm2 = pp;
+    break;
+
+  case 20:
+    vs_arr->rsm2t = pp;
+    break;
+    
+  case 21:
+    vs_arr->rsm2tp1 = pp;
+    break;
+
+  case 22:
+    vs_arr->rsm2tm1 = pp;
+    break;
+
+  case 23:
+    vs_arr->rsm2tp2 = pp;
+    break;
+
+  case 24:
+    vs_arr->rsm2tm2 = pp;
     break;
 
   default:
@@ -368,10 +689,10 @@ void alloc_vs_stls_one_array(double *pp, vs_sp *vs_arr, int el){
 }
 
 // Function to free the VS-STLS arrays for the structural properties
-void free_vs_stls_struct_arrays(vs_sp xx, vs_sp phi, vs_sp SS, vs_sp SSHF,
-				vs_sp GG, vs_sp GG_new){
+void free_vs_stls_struct_arrays(vs_struct xx, vs_struct phi, vs_struct SS, vs_struct SSHF,
+				vs_struct GG, vs_struct GG_new){
 
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     free_stls_arrays(get_el(xx,ii), get_el(phi,ii), get_el(GG,ii),
 		     get_el(GG_new, ii), get_el(SS,ii),
 		     get_el(SSHF,ii));
@@ -380,9 +701,9 @@ void free_vs_stls_struct_arrays(vs_sp xx, vs_sp phi, vs_sp SS, vs_sp SSHF,
 }
 
 // Function to free the VS-STLS arrays for the thermodynamic properties
-void free_vs_stls_thermo_arrays(vs_sp rsu, vs_sp rsa){
+void free_vs_stls_thermo_arrays(vs_struct rsu, vs_struct rsa){
 
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     free(get_el(rsu,ii));
     free(get_el(rsa,ii));
   }
@@ -391,9 +712,9 @@ void free_vs_stls_thermo_arrays(vs_sp rsu, vs_sp rsa){
 
 
 // Function to free a single VS-STLS array
-void free_vs_stls_one_array(vs_sp vs_arr){
+void free_vs_stls_one_array(vs_struct vs_arr){
 
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     free(get_el(vs_arr,ii));
   }
  
@@ -406,7 +727,7 @@ void free_vs_stls_one_array(vs_sp vs_arr){
 
 // Initialize arrays that do not depend on iterations and state points
 void init_fixed_vs_stls_arrays(input *in, input *vs_in,
-			       vs_sp xx, vs_sp rsa,
+			       vs_struct xx, vs_struct rsa,
 			       bool verbose){
 
   // Print on screen the parameter used to solve the STLS equation
@@ -425,14 +746,14 @@ void init_fixed_vs_stls_arrays(input *in, input *vs_in,
     
   // Wave-vector grid
   if (verbose) printf("Wave-vector grid initialization: ");
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     wave_vector_grid(get_el(xx,ii), in);
   }
   if (verbose) printf("Done.\n");
 
   // Array of coupling parameters
   if (verbose) printf("Coupling parameter grid initialization: ");
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     rs_grid(get_el(rsa,ii), in);
   }
   if (verbose) printf("Done.\n");
@@ -445,29 +766,34 @@ void init_fixed_vs_stls_arrays(input *in, input *vs_in,
 
 // Initialize arrays that do not depend on the iterations, but that
 // are a function of the state point
-void init_tmp_vs_stls_arrays(input *vs_in, vs_sp xx,
-				     vs_sp phi, vs_sp SSHF,
+void init_tmp_vs_stls_arrays(input *vs_in, vs_struct xx,
+				     vs_struct phi, vs_struct SSHF,
 				     bool verbose){
 
   input in = vs_in[0];
+  int stencil = 5;
+  double adder_rs[stencil-1] = {in.drs, -in.drs, 2.0*in.drs, -2.0*in.drs};
+  double adder_Theta[stencil-1] = {in.Theta, -in.Theta, 2.0*in.Theta, -2.0*in.Theta};
   
   // Input structure for points to be solved simultaneously
-  for(int ii=1; ii<VS_SP_EL; ii++){
+  for(int ii=0; ii<VS_STRUCT_EL; ii++){
     vs_in[ii] = in;
   }
-  vs_in[1].rs += in.drs;
-  vs_in[2].rs -= in.drs;
-  vs_in[3].rs += 2.0*in.drs;
-  vs_in[4].rs -= 2.0*in.drs;
-  if (vs_in[2].rs < 0.0) vs_in[2].rs = 0.0;
-  if (vs_in[4].rs < 0.0) vs_in[4].rs = 0.0;
-  if (in.Theta > 0.0){
-    vs_in[5].Theta += in.dt;
-    vs_in[6].Theta -= in.dt;
-    vs_in[7].Theta += 2.0*in.dt;
-    vs_in[8].Theta -= 2.0*in.dt;
-    if (vs_in[7].Theta < 0.0) vs_in[7].Theta = 0.0;
-    if (vs_in[8].Theta < 0.0) vs_in[8].Theta = 0.0;
+  
+  // State points with modified coupling parameter
+  for(int ii=stencil; ii<VS_STRUCT_EL; ii++){
+    vs_in[ii].rs += adder_rs[ii/stencil - 1];
+    if (vs_in[ii].rs < 0.0) vs_in[ii].rs = 0.0;
+  }
+
+  // State points with modified degeneracy parameter
+  if (in.Theta > 0){
+    for (int ii=1; ii<stencil; ii++){
+      for(int jj=ii; jj<VS_STRUCT_EL; jj=jj+stencil){
+	vs_in[jj].Theta += adder_Theta[ii];
+	if (vs_in[jj].Theta < 0.0) vs_in[jj].Theta = 0.0;
+      }
+    }
   }
   
   // Chemical potential
@@ -504,15 +830,15 @@ void rs_grid(double *rsa, input *in){
 // ---------------------------------------------------------------------
 // FUNCTIONS USED TO DEFINE THE INITIAL GUESS
 // ---------------------------------------------------------------------
-void initial_guess_vs_stls(vs_sp xx, vs_sp SS, vs_sp SSHF,
-			   vs_sp GG, vs_sp GG_new, vs_sp phi,
+void initial_guess_vs_stls(vs_struct xx, vs_struct SS, vs_struct SSHF,
+			   vs_struct GG, vs_struct GG_new, vs_struct phi,
 			   input *vs_in){
 
   input in = vs_in[0];
   
   if (strcmp(in.stls_guess_file,"NO_FILE")==0){
 
-    for (int ii=0; ii<VS_SP_EL; ii++){
+    for (int ii=0; ii<VS_STRUCT_EL; ii++){
       initial_guess_stls(get_el(xx,ii), get_el(SS,ii), get_el(SSHF, ii),
 			 get_el(GG,ii), get_el(GG_new,ii), get_el(phi,ii),
 			 vs_in[ii]);
@@ -533,7 +859,7 @@ void initial_guess_vs_stls(vs_sp xx, vs_sp SS, vs_sp SSHF,
 // ---------------------------------------------------------------------
 
 // Iterations over the parameter used to enforce the CSR rule
-double vs_stls_thermo_iterations(vs_sp xx, vs_sp rsu, vs_sp rsa,
+double vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu, vs_struct rsa,
 				 input *vs_in, bool verbose) {
 
   input in = vs_in[0];
@@ -582,7 +908,7 @@ double vs_stls_thermo_err(double alpha, input *vs_in){
 
 void vs_stls_thermo_update(double alpha, input *vs_in){
 
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     vs_in[ii].a_csr = alpha;
   }
    
@@ -590,9 +916,9 @@ void vs_stls_thermo_update(double alpha, input *vs_in){
 
 
 // Iterations over the structural properties
-void vs_stls_struct_iterations(vs_sp SS, vs_sp SSHF,
-			       vs_sp GG, vs_sp GG_new,
-			       vs_sp phi, vs_sp xx,
+void vs_stls_struct_iterations(vs_struct SS, vs_struct SSHF,
+			       vs_struct GG, vs_struct GG_new,
+			       vs_struct phi, vs_struct xx,
 			       input *vs_in, bool verbose) {
 
   input in = vs_in[0];
@@ -642,12 +968,12 @@ void vs_stls_struct_iterations(vs_sp SS, vs_sp SSHF,
  
 }
 
-double vs_stls_struct_err(vs_sp GG, vs_sp GG_new, input *vs_in){
+double vs_stls_struct_err(vs_struct GG, vs_struct GG_new, input *vs_in){
 
   double err = 0.0;
   double err_tmp;
   
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     err_tmp = stls_err(get_el(GG,ii), get_el(GG_new,ii), vs_in[ii]);
     if (err_tmp > err) err = err_tmp;
   }
@@ -655,9 +981,9 @@ double vs_stls_struct_err(vs_sp GG, vs_sp GG_new, input *vs_in){
   
 }
 
-void vs_stls_struct_update(vs_sp GG, vs_sp GG_new, input *vs_in){
+void vs_stls_struct_update(vs_struct GG, vs_struct GG_new, input *vs_in){
 
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     stls_update(get_el(GG,ii), get_el(GG_new,ii), vs_in[ii]);
   }
    
@@ -669,7 +995,7 @@ void vs_stls_struct_update(vs_sp GG, vs_sp GG_new, input *vs_in){
 
 void compute_chemical_potential_vs_stls(input *vs_in){
 
-  for (int ii=0; ii<VS_SP_EL; ii++){
+  for (int ii=0; ii<VS_STRUCT_EL; ii++){
     if (vs_in[ii].Theta > 0.0) {
       vs_in[ii].mu = compute_chemical_potential(vs_in[ii]);
     }
@@ -681,10 +1007,10 @@ void compute_chemical_potential_vs_stls(input *vs_in){
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
 
-void compute_ssf_vs_stls(vs_sp SS, vs_sp SSHF, vs_sp GG, vs_sp phi,
-		    vs_sp xx, input *vs_in){
+void compute_ssf_vs_stls(vs_struct SS, vs_struct SSHF, vs_struct GG, vs_struct phi,
+		    vs_struct xx, input *vs_in){
 
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     compute_ssf_stls(get_el(SS,ii), get_el(SSHF,ii),
 		     get_el(GG,ii), get_el(phi,ii),
 		     get_el(xx,ii), vs_in[ii]);
@@ -692,9 +1018,9 @@ void compute_ssf_vs_stls(vs_sp SS, vs_sp SSHF, vs_sp GG, vs_sp phi,
   
 }
 
-void compute_ssf_HF_vs_stls(vs_sp SS, vs_sp xx, input *vs_in){
+void compute_ssf_HF_vs_stls(vs_struct SS, vs_struct xx, input *vs_in){
 
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     if (vs_in[ii].Theta == 0) {
       compute_ssf_HF_zero_temperature(get_el(SS,ii), get_el(xx,ii),
 				      vs_in[ii]);
@@ -712,10 +1038,10 @@ void compute_ssf_HF_vs_stls(vs_sp SS, vs_sp xx, input *vs_in){
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 
-void compute_slfc_vs_stls(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
+void compute_slfc_vs_stls(vs_struct GG, vs_struct SS, vs_struct xx, input *vs_in) {
 
   bool finite_temperature = false;
-  vs_sp GG_stls;
+  vs_struct GG_stls;
   double *pp;
   input in = vs_in[0];
   double alpha = in.a_csr;
@@ -728,26 +1054,26 @@ void compute_slfc_vs_stls(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
   if (in.Theta > 0.0) finite_temperature = true;
   
   // Allocate arrays
-  for (int ii=0; ii<VS_SP_EL; ii++){
+  for (int ii=0; ii<VS_STRUCT_EL; ii++){
     pp = malloc(sizeof(double) * in.nx);
     alloc_vs_stls_one_array(pp, &GG_stls, ii);
   }
 
   
   // STLS contribution at all the state points that have to be updated simultaneously
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     compute_slfc(get_el(GG_stls,ii), get_el(SS,ii), get_el(xx, ii), vs_in[ii]);
   }
 
   // STLS contribution to the VS-STLS static local field correction
-  for (int ii=0; ii<VS_SP_EL; ii++){
+  for (int ii=0; ii<VS_STRUCT_EL; ii++){
     for (int jj=0; jj<in.nx; jj++){
       get_el(GG, ii)[jj] = get_el(GG_stls,ii)[jj];
     }
   }
 
   // Wave-vector derivative contribution to the VS-STLS static local field correction
-  for (int ii=0; ii<VS_SP_EL; ii++){
+  for (int ii=0; ii<VS_STRUCT_EL; ii++){
     for (int jj=1; jj<in.nx-1; jj++){
       get_el(GG,ii)[jj] += -a_dx*get_el(xx,ii)[jj]*(get_el(GG_stls,ii)[jj+1]
 						    - get_el(GG_stls,ii)[jj-1]);
@@ -758,27 +1084,27 @@ void compute_slfc_vs_stls(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
   for (int ii=0; ii<in.nx; ii++) {
     
     // State point derivative contribution
-    GG.in[ii] += -a_drs*vs_in[0].rs
-                *(GG_stls.rsp1[ii] - GG_stls.rsm1[ii]);
-    GG.rsp1[ii] += -a_drs*vs_in[1].rs
-                  *(GG_stls.rsp2[ii] - GG_stls.in[ii]);
-    GG.rsm1[ii] += -a_drs*vs_in[2].rs
-                   *(GG_stls.in[ii] - GG_stls.rsm2[ii]);
-    GG.rsp2[ii] += -a_drs*vs_in[3].rs
-                  *(3.0*GG_stls.rsp2[ii] - 4.0*GG_stls.rsp1[ii] + GG_stls.in[ii]);
-    GG.rsm2[ii] += -a_drs*vs_in[4].rs
-                  *(-3.0*GG_stls.rsm2[ii] + 4.0*GG_stls.rsm1[ii] - GG_stls.in[ii]);
+    GG.rst[ii] += -a_drs*vs_in[0].rs
+                *(GG_stls.rsp1t[ii] - GG_stls.rsm1t[ii]);
+    GG.rsp1t[ii] += -a_drs*vs_in[1].rs
+                  *(GG_stls.rsp2t[ii] - GG_stls.rst[ii]);
+    GG.rsm1t[ii] += -a_drs*vs_in[2].rs
+                   *(GG_stls.rst[ii] - GG_stls.rsm2t[ii]);
+    GG.rsp2t[ii] += -a_drs*vs_in[3].rs
+                  *(3.0*GG_stls.rsp2t[ii] - 4.0*GG_stls.rsp1t[ii] + GG_stls.rst[ii]);
+    GG.rsm2t[ii] += -a_drs*vs_in[4].rs
+                  *(-3.0*GG_stls.rsm2t[ii] + 4.0*GG_stls.rsm1t[ii] - GG_stls.rst[ii]);
     if (finite_temperature) {
-    /*   GG.in[ii] += -a_dt*vs_in[0].Theta */
-    /* 	           *(GG_stls.tp1[ii] - GG_stls.tm1[ii]); */
-    /*   GG.tp1[ii] += -a_dt*vs_in[5].Theta */
-    /*                *(GG_stls.tp2[ii] - GG_stls.in[ii]); */
-    /*   GG.tm1[ii] += -a_dt*vs_in[6].Theta */
-    /*                 *(GG_stls.in[ii] - GG_stls.tm2[ii]); */
-    /*   GG.tp2[ii] += -a_dt*vs_in[7].Theta */
-    /* 	            *(3.0*GG_stls.tp2[ii] - 4.0*GG_stls.tp1[ii] + GG_stls.in[ii]); */
-    /*   GG.tm2[ii] += -a_dt*vs_in[8].Theta */
-    /*                  *(-3.0*GG_stls.tm2[ii] + 4.0*GG_stls.tm1[ii] - GG_stls.in[ii]); */
+    /*   GG.rst[ii] += -a_dt*vs_in[0].Theta */
+    /* 	           *(GG_stls.rstp1[ii] - GG_stls.rstm1[ii]); */
+    /*   GG.rstp1[ii] += -a_dt*vs_in[5].Theta */
+    /*                *(GG_stls.rstp2[ii] - GG_stls.rst[ii]); */
+    /*   GG.rstm1[ii] += -a_dt*vs_in[6].Theta */
+    /*                 *(GG_stls.rst[ii] - GG_stls.rstm2[ii]); */
+    /*   GG.rstp2[ii] += -a_dt*vs_in[7].Theta */
+    /* 	            *(3.0*GG_stls.rstp2[ii] - 4.0*GG_stls.rstp1[ii] + GG_stls.rst[ii]); */
+    /*   GG.rstm2[ii] += -a_dt*vs_in[8].Theta */
+    /*                  *(-3.0*GG_stls.rstm2[ii] + 4.0*GG_stls.rstm1[ii] - GG_stls.rst[ii]); */
       
     }
 
@@ -793,9 +1119,9 @@ void compute_slfc_vs_stls(vs_sp GG, vs_sp SS, vs_sp xx, input *vs_in) {
 // FUNCTION USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY RESPONSE
 // -----------------------------------------------------------------------
 
-void compute_idr_vs_stls(vs_sp phi, vs_sp xx, input *vs_in){
+void compute_idr_vs_stls(vs_struct phi, vs_struct xx, input *vs_in){
 
-  for (int ii=0; ii<VS_SP_EL; ii++) {
+  for (int ii=0; ii<VS_STRUCT_EL; ii++) {
     if (vs_in[ii].Theta > 0.0) {
       compute_idr(get_el(phi,ii), get_el(xx,ii),
 		  vs_in[ii], false);
@@ -808,7 +1134,7 @@ void compute_idr_vs_stls(vs_sp phi, vs_sp xx, input *vs_in){
 // FUNCTION USED TO COMPUTE THE PARAMETER FOR THE COMPRESSIBILITY RULE
 // -------------------------------------------------------------------
 
-double compute_alpha(vs_sp xx, vs_sp rsu, vs_sp rsa, input *vs_in){
+double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
 
   bool finite_temperature = false;
   double urs = 0.0, ursp = 0.0, ursm = 0.0;
@@ -833,25 +1159,25 @@ double compute_alpha(vs_sp xx, vs_sp rsu, vs_sp rsa, input *vs_in){
   compute_rsu(xx, rsu, rsa, vs_in, false);
 
   // Internal energy
-  urs = rsu.in[nrs-2]/rsa.in[nrs-2];
-  ursp = rsu.in[nrs-1]/rsa.in[nrs-1];
-  ursm = rsu.in[nrs-3]/rsa.in[nrs-3];
+  urs = rsu.rst[nrs-2]/rsa.rst[nrs-2];
+  ursp = rsu.rst[nrs-1]/rsa.rst[nrs-1];
+  ursm = rsu.rst[nrs-3]/rsa.rst[nrs-3];
   if (finite_temperature) {
-    utp = rsu.tp1[nrs-2]/rsa.tp1[nrs-2];
-    utm = rsu.tm1[nrs-2]/rsa.tm1[nrs-2];
+    utp = rsu.rstp1[nrs-2]/rsa.rstp1[nrs-2];
+    utm = rsu.rstm1[nrs-2]/rsa.rstm1[nrs-2];
   } 
   
   // Free energy
-  frs = compute_free_energy(rsu.in, rsa.in, vs_in[0]);
-  frsp = compute_free_energy(rsu.in, rsa.in, vs_in[1]);
-  frsm = compute_free_energy(rsu.in, rsa.in, vs_in[2]);
+  frs = compute_free_energy(rsu.rst, rsa.rst, vs_in[0]);
+  frsp = compute_free_energy(rsu.rst, rsa.rst, vs_in[1]);
+  frsm = compute_free_energy(rsu.rst, rsa.rst, vs_in[2]);
   if (finite_temperature) {
-    ftp = compute_free_energy(rsu.tp1, rsa.tp1, vs_in[0]);
-    ftm = compute_free_energy(rsu.tm1, rsa.tm1, vs_in[0]);
-    frsptp = compute_free_energy(rsu.tp1, rsa.tp1, vs_in[1]);
-    frsptm = compute_free_energy(rsu.tm1, rsa.tm1, vs_in[1]);
-    frsmtp = compute_free_energy(rsu.tp1, rsa.tp1, vs_in[2]);
-    frsmtp = compute_free_energy(rsu.tm1, rsa.tm1, vs_in[2]);
+    ftp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[0]);
+    ftm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[0]);
+    frsptp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[1]);
+    frsptm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[1]);
+    frsmtp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[2]);
+    frsmtp = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[2]);
   }
 	 
   // Internal energy derivatives
@@ -890,7 +1216,7 @@ double compute_alpha(vs_sp xx, vs_sp rsu, vs_sp rsa, input *vs_in){
 // FUNCTION USED TO COMPUTE THE INTEGRAND FOR THE FREE ENERGY
 // -------------------------------------------------------------------
 
-void compute_rsu(vs_sp xx, vs_sp rsu, vs_sp rsa,
+void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
 		 input *vs_in, bool verbose){
 
   int nrs = vs_in[0].nrs;
@@ -899,22 +1225,15 @@ void compute_rsu(vs_sp xx, vs_sp rsu, vs_sp rsa,
 
   // Update the first part of rsu in steps of five
   compute_rsu_blocks(xx, rsu, rsa, vs_in, 2, nrs-2,
-		     stencil, verbose);
-  
+  		     stencil, verbose);
+ 
   // Update the remainder of rsu in steps of one
   compute_rsu_blocks(xx, rsu, rsa, vs_in, max_idx, nrs,
-		     1, verbose);
-  
-  /* for (int ii=2; ii<in.nrs-2; ii=ii+stencil){ */
-  /*   printf("%d %d %d %d %d | %d\n", ii-2, ii-1, ii, ii+1, ii+2, in.nrs); */
-  /* } */
-  /* for (int ii=max_idx; ii<in.nrs; ii++){ */
-  /*   printf("%d | %d\n", ii, in.nrs); */
-  /* } */
+  		     1, verbose);
   
 }
 
-void compute_rsu_blocks(vs_sp xx, vs_sp rsu, vs_sp rsa,
+void compute_rsu_blocks(vs_struct xx, vs_struct rsu, vs_struct rsa,
 			input *vs_in, int start, int end,
 			int step, bool verbose){
 
@@ -926,24 +1245,24 @@ void compute_rsu_blocks(vs_sp xx, vs_sp rsu, vs_sp rsa,
     for (int ii=start; ii<end; ii=ii+step) {
  
       // Arrays for VS-STLS solution
-      vs_sp tmp_xx;
-      vs_sp phi;
-      vs_sp GG;
-      vs_sp GG_new;
-      vs_sp SS;
-      vs_sp SSHF;
-      input vs_in_tmp[VS_SP_EL];
+      vs_struct tmp_xx;
+      vs_struct phi;
+      vs_struct GG;
+      vs_struct GG_new;
+      vs_struct SS;
+      vs_struct SSHF;
+      input vs_in_tmp[VS_STRUCT_EL];
       double u_int;
       stls_pointers stls_pp;
 
       // Define state point
-      for (int jj=0; jj<VS_SP_EL; jj++) {
+      for (int jj=0; jj<VS_STRUCT_EL; jj++) {
 	vs_in_tmp[jj] = vs_in[jj];
       }
-      vs_in_tmp[0].rs = rsa.in[ii];
+      vs_in_tmp[0].rs = rsa.rst[ii];
       
       // Allocate arrays
-      for (int jj=0; jj<VS_SP_EL; jj++) {
+      for (int jj=0; jj<VS_STRUCT_EL; jj++) {
 	alloc_stls_arrays_new(vs_in[0], &stls_pp);
 	alloc_vs_stls_struct_arrays(vs_in[0], stls_pp, &tmp_xx, &phi,
 				    &SS, &SSHF, &GG, &GG_new, jj);
@@ -963,36 +1282,35 @@ void compute_rsu_blocks(vs_sp xx, vs_sp rsu, vs_sp rsa,
       // Compute the free energy integrand      
 
       /* for (int jj=0; jj<step; jj++){ */
-
       /* 	// Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs) */
       /* 	if (vs_in_tmp[jj].rs == 0.0) vs_in_tmp[jj].rs = 1.0; // Avoid divergencies for rs = 0.0; */
       /* 	u_int = compute_internal_energy(get_el(SS,jj), get_el(xx,jj), vs_in_tmp[jj]); */
       /* 	get_el(rsu,jj)[ii] = vs_in_tmp[jj].rs*u_int; */
 	
       /* } */
-      
+       
       // Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs)
       if (vs_in_tmp[0].rs == 0.0) vs_in_tmp[0].rs = 1.0;
-      u_int = compute_internal_energy(SS.in, xx.in, vs_in_tmp[0]);
-      rsu.in[ii] = vs_in_tmp[0].rs*u_int;
-
-      if (ii>=2 && ii<nrs-2){
+      u_int = compute_internal_energy(SS.rst, xx.rst, vs_in_tmp[0]);
+      rsu.rst[ii] = vs_in_tmp[0].rs*u_int;
+  
+      if (start>=2 && end<=nrs-2){
 	
-	if (vs_in_tmp[1].rs == 0.0) vs_in_tmp[1].rs = 1.0;
-	u_int = compute_internal_energy(SS.rsp1, xx.rsp1, vs_in_tmp[1]);
-	rsu.in[ii+1] = vs_in_tmp[1].rs*u_int;
+      	if (vs_in_tmp[1].rs == 0.0) vs_in_tmp[1].rs = 1.0;
+      	u_int = compute_internal_energy(SS.rsp1t, xx.rsp1t, vs_in_tmp[1]);
+      	rsu.rst[ii+1] = vs_in_tmp[1].rs*u_int;
         
-	if (vs_in_tmp[2].rs == 0.0) vs_in_tmp[2].rs = 1.0;
-	u_int = compute_internal_energy(SS.rsm1, xx.rsm1, vs_in_tmp[2]);
-	rsu.in[ii-1] = vs_in_tmp[2].rs*u_int;
+      	if (vs_in_tmp[2].rs == 0.0) vs_in_tmp[2].rs = 1.0;
+      	u_int = compute_internal_energy(SS.rsm1t, xx.rsm1t, vs_in_tmp[2]);
+      	rsu.rst[ii-1] = vs_in_tmp[2].rs*u_int;
 
-	if (vs_in_tmp[3].rs == 0.0) vs_in_tmp[3].rs = 1.0;
-	u_int = compute_internal_energy(SS.rsp2, xx.rsp2, vs_in_tmp[3]);
-	rsu.in[ii+2] = vs_in_tmp[3].rs*u_int;
+      	if (vs_in_tmp[3].rs == 0.0) vs_in_tmp[3].rs = 1.0;
+      	u_int = compute_internal_energy(SS.rsp2t, xx.rsp2t, vs_in_tmp[3]);
+      	rsu.rst[ii+2] = vs_in_tmp[3].rs*u_int;
 
-	if (vs_in_tmp[4].rs == 0.0) vs_in_tmp[4].rs = 1.0;
-	u_int = compute_internal_energy(SS.rsm2, xx.rsm2, vs_in_tmp[4]);
-	rsu.in[ii-2] = vs_in_tmp[4].rs*u_int;
+      	if (vs_in_tmp[4].rs == 0.0) vs_in_tmp[4].rs = 1.0;
+      	u_int = compute_internal_energy(SS.rsm2t, xx.rsm2t, vs_in_tmp[4]);
+      	rsu.rst[ii-2] = vs_in_tmp[4].rs*u_int;
 
       }
       
@@ -1050,9 +1368,9 @@ void write_text_vs_stls(double *rsu, double *rsa, input in){
 }
 
 // Read guess from input file
-void read_guess_vs_stls(vs_sp SS, vs_sp GG, input *vs_in){
+void read_guess_vs_stls(vs_struct SS, vs_struct GG, input *vs_in){
   
-  for (int ii=0;  ii<VS_SP_EL; ii++) {
+  for (int ii=0;  ii<VS_STRUCT_EL; ii++) {
     read_guess_stls(get_el(SS,ii), get_el(GG,ii),
 		    vs_in[ii]);
   }
