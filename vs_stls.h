@@ -202,9 +202,11 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in);
 void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
 		 input *vs_in, bool verbose);
 
-void compute_rsu_blocks(vs_struct xx, vs_struct rsu, vs_struct rsa,
-			input *vs_in, int start, int end,
-			int step, bool verbose);
+void compute_rsu_blocks(vs_struct SS, vs_struct SSHF, vs_struct GG,
+			vs_struct GG_new, vs_struct phi, vs_struct xx,
+			vs_struct rsu, vs_struct rsa, input *vs_in,
+			int start, int end, int step,
+			bool compute_guess, bool verbose);
     
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT

@@ -420,6 +420,7 @@ void vs_stls_struct_update(vs_struct GG, vs_struct GG_new, input *vs_in){
 
 void compute_chemical_potential_vs_stls(input *vs_in){
 
+  #pragma omp parallel for
   for (int ii=0; ii<VSS_NUMEL; ii++){
     if (vs_in[ii].Theta > 0.0) {
       vs_in[ii].mu = compute_chemical_potential(vs_in[ii]);
@@ -435,6 +436,7 @@ void compute_chemical_potential_vs_stls(input *vs_in){
 void compute_ssf_vs_stls(vs_struct SS, vs_struct SSHF, vs_struct GG, vs_struct phi,
 		    vs_struct xx, input *vs_in){
 
+  #pragma omp parallel for
   for (int ii=0; ii<VSS_NUMEL; ii++) {
     compute_ssf_stls(SS.el[ii], SSHF.el[ii], GG.el[ii],
 		     phi.el[ii], xx.el[ii], vs_in[ii]);
@@ -444,6 +446,7 @@ void compute_ssf_vs_stls(vs_struct SS, vs_struct SSHF, vs_struct GG, vs_struct p
 
 void compute_ssf_HF_vs_stls(vs_struct SS, vs_struct xx, input *vs_in){
 
+  # pragma omp parallel for
   for (int ii=0; ii<VSS_NUMEL; ii++) {
     if (vs_in[ii].Theta == 0) {
       compute_ssf_HF_zero_temperature(SS.el[ii], xx.el[ii], vs_in[ii]);
@@ -496,7 +499,8 @@ void slfc_vs_stls_stls(vs_struct GG, vs_struct SS, vs_struct GG_stls,
 		       vs_struct xx, input *vs_in){
 
   input in = vs_in[VSS_IDXIN];
-  
+
+  #pragma omp parallel for
   for (int ii=0; ii<VSS_NUMEL; ii++){
     compute_slfc(GG_stls.el[ii], SS.el[ii], xx.el[ii], vs_in[ii]);
     for (int jj=0; jj<in.nx; jj++){
@@ -511,7 +515,8 @@ void slfc_vs_stls_dx(vs_struct GG, vs_struct GG_stls, vs_struct xx,
 
   input in = vs_in[VSS_IDXIN];
   double a_dx = in.a_csr/(3.0*2.0*in.dx);
-  
+
+  #pragma omp parallel for
   for (int ii=0; ii<VSS_NUMEL; ii++){
     for (int jj=1; jj<in.nx-1; jj++){
       GG.el[ii][jj] += -a_dx*xx.el[ii][jj]*(GG_stls.el[ii][jj+1]
@@ -524,6 +529,7 @@ void slfc_vs_stls_dx(vs_struct GG, vs_struct GG_stls, vs_struct xx,
 
 void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls, input *vs_in){
 
+  #pragma omp parallel for
   for (int ii=0; ii<VSS_NUMEL; ii++){
     for (int jj=0; jj<vs_in[ii].nx; jj++){
 
@@ -552,6 +558,7 @@ void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls, input *vs_in){
 
 void slfc_vs_stls_dt(vs_struct GG, vs_struct GG_stls, input *vs_in){
 
+  # pragma omp parallel for
   for (int ii=0; ii<VSS_NUMEL; ii++){
     for (int jj=0; jj<vs_in[ii].nx; jj++){
 
@@ -626,6 +633,7 @@ double slfc_vs_stls_dt_backward(vs_struct GG, int ii, int jj, input *vs_in){
 
 void compute_idr_vs_stls(vs_struct phi, vs_struct xx, input *vs_in){
 
+  #pragma omp parallel for 
   for (int ii=0; ii<VSS_NUMEL; ii++) {
     if (vs_in[ii].Theta > 0.0) {
       compute_idr(phi.el[ii], xx.el[ii], vs_in[ii], false);
@@ -726,101 +734,104 @@ void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
   int nrs = vs_in[VSS_IDXIN].nrs;
   int max_idx = floor(nrs/VSS_STENCIL)*VSS_STENCIL;
 
+  // Arrays for VS-STLS solution
+  vs_struct xx_tmp;
+  vs_struct phi;
+  vs_struct GG;
+  vs_struct GG_new;
+  vs_struct SS;
+  vs_struct SSHF;
+  stls_pointers stls_pp;
+    
+  // Allocate arrays
+  for (int ii=0; ii<VSS_NUMEL; ii++) {
+    alloc_stls_arrays_new(vs_in[VSS_IDXIN], &stls_pp);
+    xx_tmp.el[ii] = stls_pp.xx;
+    phi.el[ii] = stls_pp.phi;
+    GG.el[ii] = stls_pp.GG;
+    GG_new.el[ii] = stls_pp.GG_new;
+    SS.el[ii] = stls_pp.SS;
+    SSHF.el[ii] = stls_pp.SSHF;
+  }
+  
   // Update the first part of rsu in steps of five
-  compute_rsu_blocks(xx, rsu, rsa, vs_in, 2, nrs-2,
-  		     VSS_STENCIL, verbose);
+  compute_rsu_blocks(SS, SSHF, GG, GG_new, phi, xx,
+		     rsu, rsa, vs_in,
+		     2, nrs-2, VSS_STENCIL,
+		     true, verbose);
  
   // Update the remainder of rsu in steps of one
-  compute_rsu_blocks(xx, rsu, rsa, vs_in, max_idx, nrs,
-  		     1, verbose);
-  
+  compute_rsu_blocks(SS, SSHF, GG, GG_new, phi, xx,
+		     rsu, rsa, vs_in,
+		     max_idx, nrs, 1,
+		     false, verbose);
+
+  // Free memory
+  free_vs_stls_struct_arrays(xx_tmp, phi, SS, SSHF, GG, GG_new);
+     
 }
 
-void compute_rsu_blocks(vs_struct xx, vs_struct rsu, vs_struct rsa,
-			input *vs_in, int start, int end,
-			int step, bool verbose){
+void compute_rsu_blocks(vs_struct SS, vs_struct SSHF, vs_struct GG,
+			vs_struct GG_new, vs_struct phi, vs_struct xx,
+			vs_struct rsu, vs_struct rsa, input *vs_in,
+			int start, int end, int step,
+			bool compute_guess, bool verbose){
 
   int nrs = vs_in[VSS_IDXIN].nrs;
-    
-  #pragma omp parallel
-  {
-    #pragma omp for // Parallel calculations
-    for (int ii=start; ii<end; ii=ii+step) {
- 
-      // Arrays for VS-STLS solution
-      vs_struct xx_tmp;
-      vs_struct phi;
-      vs_struct GG;
-      vs_struct GG_new;
-      vs_struct SS;
-      vs_struct SSHF;
-      input vs_in_tmp[VSS_NUMEL];
-      double u_int;
-      stls_pointers stls_pp;
-
-      // Define state point
-      for (int jj=0; jj<VSS_NUMEL; jj++) {
-	vs_in_tmp[jj] = vs_in[jj];
-      }
-      vs_in_tmp[VSS_IDXIN].rs = rsa.rst[ii];
-      
-      // Allocate arrays
-      for (int ii=0; ii<VSS_NUMEL; ii++) {
-	alloc_stls_arrays_new(vs_in_tmp[VSS_IDXIN], &stls_pp);
-	xx_tmp.el[ii] = stls_pp.xx;
-	phi.el[ii] = stls_pp.phi;
-	GG.el[ii] = stls_pp.GG;
-	GG_new.el[ii] = stls_pp.GG_new;
-	SS.el[ii] = stls_pp.SS;
-	SSHF.el[ii] = stls_pp.SSHF;
-      }
-      
-      // Initialize arrays that depend only on the state point
-      init_tmp_vs_stls_arrays(vs_in_tmp, xx, phi, SSHF, verbose);
+  input vs_in_tmp[VSS_NUMEL];
+  double u_int;
   
-      // Initial guess (same for all threads)
-      // NOTE: This could be problematic if the initial
-      // rs is noticeably different from zero (rs > 20)
+  for (int ii=start; ii<end; ii=ii+step) {
+    
+    // Define state point
+    for (int jj=0; jj<VSS_NUMEL; jj++) {
+      vs_in_tmp[jj] = vs_in[jj];
+    }
+    vs_in_tmp[VSS_IDXIN].rs = rsa.rst[ii];
+       
+    // Initialize arrays that depend only on the state point
+    init_tmp_vs_stls_arrays(vs_in_tmp, xx, phi, SSHF, verbose);
+
+    // Initial guess (same for all threads)
+    // NOTE: This could be problematic if the initial
+    // rs is noticeably different from zero (rs > 20)
+    if (compute_guess && ii == start) {
       initial_guess_vs_stls(xx, SS, SSHF, GG, GG_new, phi, vs_in_tmp);
+    }
+    
+    // Compute structural properties with the VS-STLS static local field correction
+    vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in_tmp, verbose);
+    
+    // Compute the free energy integrand
+    for (int jj=0; jj<VSS_NUMEL; jj++){
       
-      // Compute structural properties with the VS-STLS static local field correction
-      vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in_tmp, verbose);
+      // Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs)
+      if (vs_in_tmp[jj].rs == 0.0) vs_in_tmp[jj].rs = 1.0;
       
-      // Compute the free energy integrand
-      for (int jj=0; jj<VSS_NUMEL; jj++){
-	
-	// Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs)
-	if (vs_in_tmp[jj].rs == 0.0) vs_in_tmp[jj].rs = 1.0;
-	
-	// Internal energy
-	u_int = compute_internal_energy(SS.el[jj], xx.el[jj], vs_in_tmp[jj]);
-	
-	// Free energy integrand
-	rsu.el[jj][ii] = vs_in_tmp[jj].rs*u_int;
-
-      }
+      // Internal energy
+      u_int = compute_internal_energy(SS.el[jj], xx.el[jj], vs_in_tmp[jj]);
       
-      // Update free energy integrand of neighboring points
-      // We care to keep synchronized only the rst, rstm1 and rstp2 elements of rsu,
-      // since these are the only elements used to compute alpha (see compute_alpha)
-      if (start>=2 && end<=nrs-2){
-
-	for (int jj=-VSS_STENCIL; jj<2*VSS_STENCIL; jj=jj+VSS_STENCIL){
-	  rsu.el[VSS_IDXIN+jj][ii-2] = rsu.el[VSS_IDXIN+jj-2][ii];
-	  rsu.el[VSS_IDXIN+jj][ii-1] = rsu.el[VSS_IDXIN+jj-1][ii];
-	  rsu.el[VSS_IDXIN+jj][ii+1] = rsu.el[VSS_IDXIN+jj+1][ii];
-	  rsu.el[VSS_IDXIN+jj][ii+2] = rsu.el[VSS_IDXIN+jj+2][ii];
-	}
-
-      }
-      
-      // Free memory
-      free_vs_stls_struct_arrays(xx_tmp, phi, SS, SSHF, GG, GG_new);
+      // Free energy integrand
+      rsu.el[jj][ii] = vs_in_tmp[jj].rs*u_int;
       
     }
-
- }
-  
+    
+    // Update free energy integrand of neighboring points
+    // We care to keep synchronized only the rst, rstm1 and rstp2 elements of rsu,
+    // since these are the only elements used to compute alpha (see compute_alpha)
+    if (start>=2 && end<=nrs-2){
+      
+      for (int jj=-VSS_STENCIL; jj<2*VSS_STENCIL; jj=jj+VSS_STENCIL){
+	rsu.el[VSS_IDXIN+jj][ii-2] = rsu.el[VSS_IDXIN+jj-2][ii];
+	rsu.el[VSS_IDXIN+jj][ii-1] = rsu.el[VSS_IDXIN+jj-1][ii];
+	rsu.el[VSS_IDXIN+jj][ii+1] = rsu.el[VSS_IDXIN+jj+1][ii];
+	rsu.el[VSS_IDXIN+jj][ii+2] = rsu.el[VSS_IDXIN+jj+2][ii];
+      }
+      
+    }
+     
+  }
+ 
 }
 
 // -------------------------------------------------------------------
