@@ -487,8 +487,8 @@ void compute_slfc_vs_stls(vs_struct GG, vs_struct SS, vs_struct xx, input *vs_in
   
   // State point derivative contribution to the VS-STLS static local field correction
   slfc_vs_stls_drs(GG, GG_stls, vs_in);
-  /* if (finite_temperature) */
-  /*   slfc_vs_stls_dt(GG, GG_stls, vs_in); */
+  if (finite_temperature)
+    slfc_vs_stls_dt(GG, GG_stls, vs_in);
   
   // Free memory
   free_vs_stls_one_array(GG_stls);
@@ -689,7 +689,7 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
     frsptp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN+1]);
     frsptm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN+1]);
     frsmtp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN-1]);
-    frsmtp = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN-1]);
+    frsmtm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN-1]);
   }
 	 
   // Internal energy derivatives
@@ -710,12 +710,12 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
   numer = (2.0*frs - (1.0/6.0)*in.rs*in.rs*d2fdrs2
   	   + (4.0/3.0)*in.rs*dfdrs);
   denom = (urs + (1.0/3.0)*in.rs*dudrs);
-  /* if (finite_temperature) { */
-  /*   numer += -(2.0/3.0)*in.Theta*in.Theta*d2fdt2 */
-  /*            -(2.0/3.0)*in.Theta*in.rs*d2fdrsdt */
-  /*            +(1.0/3.0)*in.Theta*dfdt; */
-  /*   denom += (2.0/3.0)*in.Theta*dudt; */
-  /* } */
+  if (finite_temperature) {
+    numer += -(2.0/3.0)*in.Theta*in.Theta*d2fdt2
+             -(2.0/3.0)*in.Theta*in.rs*d2fdrsdt
+             +(1.0/3.0)*in.Theta*dfdt;
+    denom += (2.0/3.0)*in.Theta*dudt;
+  }
   alpha = numer/denom;
 
   // Output
