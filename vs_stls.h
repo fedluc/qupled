@@ -160,6 +160,12 @@ void compute_ssf_HF_vs_stls(vs_struct SS, vs_struct xx, input *vs_in);
 void compute_slfc_vs_stls(vs_struct GG, vs_struct SS,
 			  vs_struct xx, input *vs_in);
 
+void slfc_vs_stls_stls(vs_struct GG, vs_struct SS, vs_struct GG_stls,
+		       vs_struct xx, input *vs_in);
+
+void slfc_vs_stls_dx(vs_struct GG, vs_struct GG_stls, vs_struct xx,
+		     input *vs_in);
+
 void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls, input *vs_in);
 
 void slfc_vs_stls_dt(vs_struct GG, vs_struct GG_stls, input *vs_in);

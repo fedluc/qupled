@@ -65,16 +65,16 @@ void solve_vs_stls(input in, bool verbose) {
   if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS.rst, xx.rst, in));
   if (verbose) printf("Free energy: %.10f\n",compute_free_energy(rsu.rst, rsa.rst, in));
   
-  /* // Output to file */
-  /* if (verbose) printf("Writing output files...\n"); */
-  /* write_text_stls(SS.rst, GG.rst, phi.rst, SSHF.rst, xx.rst, in); */
-  /* write_text_vs_stls(rsu.rst, rsa.rst, in); */
-  /* write_guess_stls(SS.rst, GG.rst, in); */
-  /* if (verbose) printf("Done.\n"); */
+  // Output to file
+  if (verbose) printf("Writing output files...\n");
+  write_text_stls(SS.rst, GG.rst, phi.rst, SSHF.rst, xx.rst, in);
+  write_text_vs_stls(rsu.rst, rsa.rst, in);
+  write_guess_stls(SS.rst, GG.rst, in);
+  if (verbose) printf("Done.\n");
 
-  /* /\* // Free memory *\/ */
-  /* free_vs_stls_struct_arrays(xx, phi, SS, SSHF, GG, GG_new); */
-  /* free_vs_stls_thermo_arrays(rsu, rsa); */
+  /* // Free memory */
+  free_vs_stls_struct_arrays(xx, phi, SS, SSHF, GG, GG_new);
+  free_vs_stls_thermo_arrays(rsu, rsa);
   
 }
 
@@ -321,12 +321,14 @@ double vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu, vs_struct rsa,
   
 }
 
+// Compute error for the iterations used to enforce the CSR
 double vs_stls_thermo_err(double alpha, input *vs_in){
 
   return fabs((alpha - vs_in[VSS_IDXIN].a_csr)/alpha);
   
 }
 
+// Update self-consistency parameter for the CSR
 void vs_stls_thermo_update(double alpha, input *vs_in){
 
   for (int ii=0; ii<VSS_NUMEL; ii++) {
@@ -389,6 +391,7 @@ void vs_stls_struct_iterations(vs_struct SS, vs_struct SSHF,
  
 }
 
+// Compute error for the iterations over the structural properties
 double vs_stls_struct_err(vs_struct GG, vs_struct GG_new, input *vs_in){
 
   double err = 0.0;
@@ -402,6 +405,7 @@ double vs_stls_struct_err(vs_struct GG, vs_struct GG_new, input *vs_in){
   
 }
 
+// Update structural properties
 void vs_stls_struct_update(vs_struct GG, vs_struct GG_new, input *vs_in){
 
   for (int ii=0; ii<VSS_NUMEL; ii++) {
@@ -455,15 +459,14 @@ void compute_ssf_HF_vs_stls(vs_struct SS, vs_struct xx, input *vs_in){
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
+
 void compute_slfc_vs_stls(vs_struct GG, vs_struct SS, vs_struct xx, input *vs_in) {
 
   bool finite_temperature = false;
   vs_struct GG_stls;
   double *pp;
   input in = vs_in[VSS_IDXIN];
-  double alpha = in.a_csr;
-  double a_dx = alpha/(3.0*2.0*in.dx);
-  
+
   // Check if finite temperature calculations must be performed
   if (in.Theta > 0.0) finite_temperature = true;
   
@@ -473,36 +476,51 @@ void compute_slfc_vs_stls(vs_struct GG, vs_struct SS, vs_struct xx, input *vs_in
     GG_stls.el[ii] = pp;
   }
 
-  
-  // STLS contribution at all the state points that have to be updated simultaneously
-  for (int ii=0; ii<VSS_NUMEL; ii++) {
-    compute_slfc(GG_stls.el[ii], SS.el[ii], xx.el[ii], vs_in[ii]);
-  }
-
   // STLS contribution to the VS-STLS static local field correction
+  slfc_vs_stls_stls(GG, SS, GG_stls, xx, vs_in);
+
+  // Wave-vector derivative contribution to the VS-STLS static local field correction
+  slfc_vs_stls_dx(GG, GG_stls, xx, vs_in);
+  
+  // State point derivative contribution to the VS-STLS static local field correction
+  slfc_vs_stls_drs(GG, GG_stls, vs_in);
+  /* if (finite_temperature) */
+  /*   slfc_vs_stls_dt(GG, GG_stls, vs_in); */
+  
+  // Free memory
+  free_vs_stls_one_array(GG_stls);
+    
+}
+
+void slfc_vs_stls_stls(vs_struct GG, vs_struct SS, vs_struct GG_stls,
+		       vs_struct xx, input *vs_in){
+
+  input in = vs_in[VSS_IDXIN];
+  
   for (int ii=0; ii<VSS_NUMEL; ii++){
+    compute_slfc(GG_stls.el[ii], SS.el[ii], xx.el[ii], vs_in[ii]);
     for (int jj=0; jj<in.nx; jj++){
       GG.el[ii][jj] = GG_stls.el[ii][jj];
     }
   }
+  
+}
 
-  // Wave-vector derivative contribution to the VS-STLS static local field correction
+void slfc_vs_stls_dx(vs_struct GG, vs_struct GG_stls, vs_struct xx,
+		     input *vs_in){
+
+  input in = vs_in[VSS_IDXIN];
+  double a_dx = in.a_csr/(3.0*2.0*in.dx);
+  
   for (int ii=0; ii<VSS_NUMEL; ii++){
     for (int jj=1; jj<in.nx-1; jj++){
       GG.el[ii][jj] += -a_dx*xx.el[ii][jj]*(GG_stls.el[ii][jj+1]
 					    - GG_stls.el[ii][jj-1]);
     }
   }
-
-  // State point derivative contribution to the VS-STLS static local field correction
-  slfc_vs_stls_drs(GG, GG_stls, vs_in);
-  if (finite_temperature)
-    slfc_vs_stls_dt(GG, GG_stls, vs_in);
-  
-  // Free memory
-  free_vs_stls_one_array(GG_stls);
-    
+      
 }
+
 
 void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls, input *vs_in){
 
@@ -563,42 +581,42 @@ void slfc_vs_stls_dt(vs_struct GG, vs_struct GG_stls, input *vs_in){
 
 double slfc_vs_stls_drs_centered(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return (GG.el[ii+1][jj] - GG.el[ii-1][jj])/(2.0*vs_in[ii].drs);
+  return vs_in[ii].rs*(GG.el[ii+1][jj] - GG.el[ii-1][jj])/(2.0*vs_in[ii].drs);
   
 }
 
 double slfc_vs_stls_drs_forward(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return (-3.0*GG.el[ii][jj] + 4.0*GG.el[ii+1][jj]
-	  - GG.el[ii+2][jj])/(2.0*vs_in[ii].drs);
+  return vs_in[ii].rs*(-3.0*GG.el[ii][jj] + 4.0*GG.el[ii+1][jj]
+		       - GG.el[ii+2][jj])/(2.0*vs_in[ii].drs);
   
 }
 
 double slfc_vs_stls_drs_backward(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return (3.0*GG.el[ii][jj] - 4.0*GG.el[ii-1][jj]
-	  + GG.el[ii-2][jj])/(2.0*vs_in[ii].drs);
+  return vs_in[ii].rs*(3.0*GG.el[ii][jj] - 4.0*GG.el[ii-1][jj]
+		       + GG.el[ii-2][jj])/(2.0*vs_in[ii].drs);
   
 }
 
 double slfc_vs_stls_dt_centered(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return (GG.el[ii+VSS_STENCIL][jj] - GG.el[ii-VSS_STENCIL][jj])
-         /(2.0*vs_in[ii].dt);
+  return vs_in[ii].Theta*(GG.el[ii+VSS_STENCIL][jj]
+			  - GG.el[ii-VSS_STENCIL][jj])/(2.0*vs_in[ii].dt);
   
 }
 
 double slfc_vs_stls_dt_forward(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return (-3.0*GG.el[ii][jj] + 4.0*GG.el[ii+VSS_STENCIL][jj]
-	  - GG.el[ii+2*VSS_STENCIL][jj])/(2.0*vs_in[ii].dt);
+  return vs_in[ii].Theta*(-3.0*GG.el[ii][jj] + 4.0*GG.el[ii+VSS_STENCIL][jj]
+			  - GG.el[ii+2*VSS_STENCIL][jj])/(2.0*vs_in[ii].dt);
   
 }
 
 double slfc_vs_stls_dt_backward(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return (3.0*GG.el[ii][jj] - 4.0*GG.el[ii-VSS_STENCIL][jj]
-	  + GG.el[ii-2*VSS_STENCIL][jj])/(2.0*vs_in[ii].dt);
+  return vs_in[ii].Theta*(3.0*GG.el[ii][jj] - 4.0*GG.el[ii-VSS_STENCIL][jj]
+			  + GG.el[ii-2*VSS_STENCIL][jj])/(2.0*vs_in[ii].dt);
   
 }
 
@@ -768,38 +786,31 @@ void compute_rsu_blocks(vs_struct xx, vs_struct rsu, vs_struct rsa,
       // Compute structural properties with the VS-STLS static local field correction
       vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in_tmp, verbose);
       
-      // Compute the free energy integrand      
-
-      /* for (int jj=0; jj<step; jj++){ */
-      /* 	// Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs) */
-      /* 	if (vs_in_tmp[jj].rs == 0.0) vs_in_tmp[jj].rs = 1.0; // Avoid divergencies for rs = 0.0; */
-      /* 	u_int = compute_internal_energy(get_el(SS,jj), get_el(xx,jj), vs_in_tmp[jj]); */
-      /* 	get_el(rsu,jj)[ii] = vs_in_tmp[jj].rs*u_int; */
+      // Compute the free energy integrand
+      for (int jj=0; jj<VSS_NUMEL; jj++){
 	
-      /* } */
-       
-      // Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs)
-      if (vs_in_tmp[VSS_IDXIN].rs == 0.0) vs_in_tmp[VSS_IDXIN].rs = 1.0;
-      u_int = compute_internal_energy(SS.rst, xx.rst, vs_in_tmp[VSS_IDXIN]);
-      rsu.rst[ii] = vs_in_tmp[VSS_IDXIN].rs*u_int;
-  
+	// Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs)
+	if (vs_in_tmp[jj].rs == 0.0) vs_in_tmp[jj].rs = 1.0;
+	
+	// Internal energy
+	u_int = compute_internal_energy(SS.el[jj], xx.el[jj], vs_in_tmp[jj]);
+	
+	// Free energy integrand
+	rsu.el[jj][ii] = vs_in_tmp[jj].rs*u_int;
+
+      }
+      
+      // Update free energy integrand of neighboring points
+      // We care to keep synchronized only the rst, rstm1 and rstp2 elements of rsu,
+      // since these are the only elements used to compute alpha (see compute_alpha)
       if (start>=2 && end<=nrs-2){
-	
-      	if (vs_in_tmp[VSS_IDXIN+1].rs == 0.0) vs_in_tmp[VSS_IDXIN+1].rs = 1.0;
-      	u_int = compute_internal_energy(SS.rsp1t, xx.rsp1t, vs_in_tmp[VSS_IDXIN+1]);
-      	rsu.rst[ii+1] = vs_in_tmp[VSS_IDXIN+1].rs*u_int;
-        
-      	if (vs_in_tmp[VSS_IDXIN-1].rs == 0.0) vs_in_tmp[VSS_IDXIN-1].rs = 1.0;
-      	u_int = compute_internal_energy(SS.rsm1t, xx.rsm1t, vs_in_tmp[VSS_IDXIN-1]);
-      	rsu.rst[ii-1] = vs_in_tmp[VSS_IDXIN-1].rs*u_int;
 
-      	if (vs_in_tmp[VSS_IDXIN+2].rs == 0.0) vs_in_tmp[VSS_IDXIN+2].rs = 1.0;
-      	u_int = compute_internal_energy(SS.rsp2t, xx.rsp2t, vs_in_tmp[VSS_IDXIN+2]);
-      	rsu.rst[ii+2] = vs_in_tmp[VSS_IDXIN+2].rs*u_int;
-
-      	if (vs_in_tmp[VSS_IDXIN-2].rs == 0.0) vs_in_tmp[VSS_IDXIN-2].rs = 1.0;
-      	u_int = compute_internal_energy(SS.rsm2t, xx.rsm2t, vs_in_tmp[VSS_IDXIN-2]);
-      	rsu.rst[ii-2] = vs_in_tmp[VSS_IDXIN-2].rs*u_int;
+	for (int jj=-VSS_STENCIL; jj<2*VSS_STENCIL; jj=jj+VSS_STENCIL){
+	  rsu.el[VSS_IDXIN+jj][ii-2] = rsu.el[VSS_IDXIN+jj-2][ii];
+	  rsu.el[VSS_IDXIN+jj][ii-1] = rsu.el[VSS_IDXIN+jj-1][ii];
+	  rsu.el[VSS_IDXIN+jj][ii+1] = rsu.el[VSS_IDXIN+jj+1][ii];
+	  rsu.el[VSS_IDXIN+jj][ii+2] = rsu.el[VSS_IDXIN+jj+2][ii];
+	}
 
       }
       
