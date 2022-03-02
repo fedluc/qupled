@@ -9,55 +9,49 @@
 // -------------------------------------------------------------------
 
 // Number of elements (field) in the vs_sp structure
-#define VS_STRUCT_EL 5
+#define VSS_NUMEL 25
+#define VSS_IDXIN 12
+#define VSS_STENCIL 5
 
 typedef union {
 
   struct {
-    
-    double *rst;
-    double *rsp1t;
-    double *rsm1t;
-    double *rsp2t;
-    double *rsm2t;
-    
-    double *rstp1;
-    double *rsp1tp1;
-    double *rsm1tp1;
-    double *rsp2tp1;
-    double *rsm2tp1;
 
-    double *rstm1;
-    double *rsp1tm1;
-    double *rsm1tm1;
-    double *rsp2tm1;
-    double *rsm2tm1;
-
-    double *rstp2;
-    double *rsp1tp2;
-    double *rsm1tp2;
-    double *rsp2tp2;
-    double *rsm2tp2;
-
+    double *rsm2tm2;
+    double *rsm1tm2;
     double *rstm2;
     double *rsp1tm2;
-    double *rsm1tm2;
     double *rsp2tm2;
-    double *rsm2tm2;
+
+    double *rsm2tm1;
+    double *rsm1tm1;
+    double *rstm1;
+    double *rsp1tm1;
+    double *rsp2tm1;
+
+    double *rsm2t;
+    double *rsm1t;
+    double *rst;
+    double *rsp1t;
+    double *rsp2t;
+
+    double *rsm2tp1;
+    double *rsm1tp1;
+    double *rstp1;
+    double *rsp1tp1;
+    double *rsp2tp1;
+
+    double *rsm2tp2;
+    double *rsm1tp2;
+    double *rstp2;
+    double *rsp1tp2;
+    double *rsp2tp2;
+    
     
   };
-  double *el[VS_STRUCT_EL];
+  double *el[VSS_NUMEL];
   
 } vs_struct;
-
-/* typedef union { */
-  
-/*     struct { */
-/*         float x, y, z; */
-/*     }; */
-/*     float vect3_a[3]; */
-  
-/* } vec3; */
 
 // -------------------------------------------------------------------
 // DATA STRUCTURE USED TO ALLOCATE THE THERMO VS-STLS ARRAYS
@@ -166,12 +160,28 @@ void compute_ssf_HF_vs_stls(vs_struct SS, vs_struct xx, input *vs_in);
 void compute_slfc_vs_stls(vs_struct GG, vs_struct SS,
 			  vs_struct xx, input *vs_in);
 
+void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls, input *vs_in);
+
+void slfc_vs_stls_dt(vs_struct GG, vs_struct GG_stls, input *vs_in);
+
+double slfc_vs_stls_drs_centered(vs_struct GG, int ii, int jj, input *vs_in);
+
+double slfc_vs_stls_drs_forward(vs_struct GG, int ii, int jj, input *vs_in);
+
+double slfc_vs_stls_drs_backward(vs_struct GG, int ii, int jj, input *vs_in);
+
+double slfc_vs_stls_dt_centered(vs_struct GG, int ii, int jj, input *vs_in);
+
+double slfc_vs_stls_dt_forward(vs_struct GG, int ii, int jj, input *vs_in);
+
+double slfc_vs_stls_dt_backward(vs_struct GG, int ii, int jj, input *vs_in);
+
 // -----------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY RESPONSE
 // -----------------------------------------------------------------------
 
 void compute_idr_vs_stls(vs_struct phi, vs_struct xx, input *vs_in);
-  
+ 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE PARAMETER FOR THE CSR RULE
 // -------------------------------------------------------------------
