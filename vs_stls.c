@@ -74,8 +74,8 @@ void solve_vs_stls(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_stls(SS.rst, GG.rst, phi.rst, SSHF.rst, xx.rst, in);
-  write_text_vs_stls(rsu.rst, rsa.rst, in);
+  write_text_vs_stls(SS.rst, GG.rst, phi.rst, SSHF.rst, xx.rst,
+		     rsu.rst, rsa.rst, in);
   write_guess_stls(SS.rst, GG.rst, in);
   if (verbose) printf("Done.\n");
 
@@ -836,8 +836,13 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF, vs_struct GG,
 // -------------------------------------------------------------------
 
 // write text files for output
-void write_text_vs_stls(double *rsu, double *rsa, input in){
+void write_text_vs_stls(double *SS, double *GG, double *phi,
+			double *SSHF, double *xx, double *rsu,
+			double *rsa, input in){
 
+  // STLS arrays
+  write_text_stls(SS, GG, phi, SSHF, xx, in);
+  
   // Free energy output
   write_text_fxc(rsu, rsa, in);
 

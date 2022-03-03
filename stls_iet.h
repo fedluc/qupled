@@ -12,6 +12,22 @@ void alloc_stls_iet_arrays(input in, double **bf);
 void free_stls_iet_arrays(double *bf);
 
 // -------------------------------------------------------------------
+// FUNCTION USED TO INITIALIZE ARRAYS
+// -------------------------------------------------------------------
+
+void init_fixed_stls_iet_arrays(double *bf, double *xx, input in);
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO PERFORM THE ITERATIONS FOR THE STLS SCHEME
+// -------------------------------------------------------------------
+
+void stls_iet_iterations(double *SS, double *SSHF,
+			 double *GG, double *GG_new,
+			 double *phi, double *bf,
+			 double *xx, input in,
+			 bool verbose);
+  
+// -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 
@@ -42,6 +58,10 @@ double rbfr(double rr, void *pp);
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
-void write_bridge_function(double *bf, double *xx, input in);
+void write_text_stls_iet(double *SS, double *GG, double *phi, 
+			 double *SSHF, double *xx, double *bf,
+			 input in);
+  
+void write_text_bf(double *bf, double *xx, input in);
 
 #endif

@@ -217,9 +217,11 @@ void stls_iterations(double *SS, double *SSHF,
 		     double *phi, double *xx,
 		     input in, bool verbose) {
 
-  if (verbose) printf("SSF and SLFC calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
+
+  if (verbose) printf("SSF and SLFC calculation...\n");
+
   while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     
     // Start timing

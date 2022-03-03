@@ -214,7 +214,9 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
-void write_text_vs_stls(double *rsu, double *rsp, input in);
+void write_text_vs_stls(double *SS, double *GG, double *phi,
+			double *SSHF, double *xx, double *rsu,
+			double *rsa, input in);
 
 void write_text_fxc(double *rsu, double *rsp, input in);
 

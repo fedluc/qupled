@@ -30,64 +30,22 @@ void solve_stls_iet(input in, bool verbose) {
     
   // Initialize arrays that are not modified with the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
-  compute_bridge_function(bf, xx, in);
+  init_fixed_stls_iet_arrays(bf, xx, in);
 
   // Initial guess
-  if (strcmp(in.stls_guess_file,"NO_FILE")==0){
-    for (int ii=0; ii < in.nx; ii++) {
-      GG[ii] = 0.0; // Static local field correction
-      GG_new[ii] = 1.0;
-    }
-    compute_ssf_stls(SS, SSHF, GG, phi, xx, in); // Static structure factor
-  }
-  else {
-    read_guess_stls(SS, GG, in); // Read from file
-  }
+  initial_guess_stls(xx, SS, SSHF, GG, GG_new, phi, in);
    
   // Iterations
-  if (verbose) printf("SSF and SLFC calculation...\n");
-  double iter_err = 1.0;
-  int iter_counter = 0;
-  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
-    
-    // Start timing
-    double tic = omp_get_wtime();
-    
-    // Update static structure factor
-    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
-    
-    // Update static local field correction
-    compute_slfc_iet(GG_new, GG, SS, bf, xx, in);
-    
-    // Update diagnostic
-    iter_err = 0.0;
-    iter_counter++;
-    for (int ii=0; ii<in.nx; ii++) {
-      iter_err += (GG_new[ii] - GG[ii]) * (GG_new[ii] - GG[ii]);
-      GG[ii] = in.a_mix*GG_new[ii] + (1-in.a_mix)*GG[ii];
-    }
-    iter_err = sqrt(iter_err);
-    
-    // End timing
-    double toc = omp_get_wtime();
-    
-    // Print diagnostic
-    if (verbose) {
-      printf("--- iteration %d ---\n", iter_counter);
-      printf("Elapsed time: %f seconds\n", toc - tic);
-      printf("Residual error: %.5e\n", iter_err);
-      fflush(stdout);
-    }
-  }
-  if (verbose) printf("Done.\n");
+  stls_iet_iterations(SS, SSHF, GG, GG_new, phi, bf,
+		      xx, in, verbose);
   
   // Internal energy
-  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
+  if (verbose) printf("Internal energy: %.10f\n",
+		      compute_internal_energy(SS, xx, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
-  write_text_stls(SS, GG, phi, SSHF, xx, in);
-  write_bridge_function(bf, xx, in);
+  write_text_stls_iet(SS, GG, phi, SSHF, xx, bf, in);
   write_guess_stls(SS, GG, in);
   if (verbose) printf("Done.\n");
 
@@ -113,6 +71,64 @@ void alloc_stls_iet_arrays(input in, double **bf){
 
 void free_stls_iet_arrays(double *bf){
   free(bf);
+}
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO INITIALIZE ARRAYS
+// -------------------------------------------------------------------
+
+void init_fixed_stls_iet_arrays(double *bf, double *xx, input in){
+
+  compute_bridge_function(bf, xx, in);
+  
+}
+
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO PERFORM THE ITERATIONS FOR THE STLS SCHEME
+// -------------------------------------------------------------------
+
+void stls_iet_iterations(double *SS, double *SSHF,
+			 double *GG, double *GG_new,
+			 double *phi, double *bf,
+			 double *xx, input in,
+			 bool verbose) {
+
+  double iter_err = 1.0;
+  int iter_counter = 0;
+
+  if (verbose) printf("SSF and SLFC calculation...\n");
+
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
+    
+    // Start timing
+    double tic = omp_get_wtime();
+    
+    // Update static structure factor
+    compute_ssf_stls(SS, SSHF, GG, phi, xx, in);
+    
+    // Update static local field correction
+    compute_slfc_iet(GG_new, GG, SS, bf, xx, in);
+    
+    // Update diagnostic
+    iter_counter++;
+    iter_err = stls_err(GG, GG_new, in);
+    stls_update(GG, GG_new, in);
+    
+    // End timing
+    double toc = omp_get_wtime();
+    
+    // Print diagnostic
+    if (verbose) {
+      printf("--- iteration %d ---\n", iter_counter);
+      printf("Elapsed time: %f seconds\n", toc - tic);
+      printf("Residual error: %.5e\n", iter_err);
+      fflush(stdout);
+    }
+  }
+  
+  if (verbose) printf("Done.\n");
+  
 }
 
 // -------------------------------------------------------------------
@@ -543,9 +559,19 @@ double  rbfr(double rr, void *pp){
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
+// write text files for output
+void write_text_stls_iet(double *SS, double *GG, double *phi, 
+			 double *SSHF, double *xx, double *bf,
+			 input in){
+
+  write_text_stls(SS, GG, phi, SSHF, xx, in);
+  write_text_bf(bf, xx, in);
+  
+}
+
 
 // write text files for output
-void write_bridge_function(double *bf, double *xx, input in){
+void write_text_bf(double *bf, double *xx, input in){
 
 
   FILE* fid;

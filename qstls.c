@@ -125,7 +125,7 @@ void initial_guess_qstls(double *xx, double *SS, double *SSHF,
 }
 
 // -------------------------------------------------------------------
-// FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE STLS SCHEME
+// FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE QSTLS SCHEME
 // -------------------------------------------------------------------
 
 void qstls_iterations(double *SS, double *SS_new,
@@ -133,10 +133,12 @@ void qstls_iterations(double *SS, double *SS_new,
 		      double *psi_fixed, double *phi,
 		      double *xx, input in,
 		      bool verbose){
- 
-  if (verbose) printf("SSF calculation...\n");
+
   double iter_err = 1.0;
   int iter_counter = 0;
+  
+  if (verbose) printf("SSF calculation...\n");
+
   while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     
     // Start timing
@@ -163,7 +165,9 @@ void qstls_iterations(double *SS, double *SS_new,
       printf("Residual error: %.5e\n", iter_err);
       fflush(stdout);
     }
+    
   }
+  
   if (verbose) printf("Done.\n");
 
 }
@@ -178,10 +182,14 @@ void init_fixed_qstls_arrays(double *psi_fixed, double *xx,
 
   if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
 
-    // Compute fixed component of the auxiliary density response and store to file
-    if (verbose) printf("Fixed component of the auxiliary density response function: ");
+    // Compute fixed component of the auxiliary density response and
+    // store to file
+    if (verbose) printf("Fixed component of the QSTLS auxiliary "
+			"density response function: ");
+    
     compute_adr_fixed(psi_fixed, xx, in);
     write_fixed_qstls(psi_fixed, in);
+    
     if (verbose) printf("Done.\n");
     
   }
@@ -551,7 +559,7 @@ void compute_ssf_qstls(double *SS, double *SSHF, double *psi,
 
 // write text files for output
 void write_text_qstls(double *SS, double *psi, double *phi, 
-			double *SSHF, double *xx, input in){
+		      double *SSHF, double *xx, input in){
 
   bool finite_temperature = false;
 

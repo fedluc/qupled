@@ -30,51 +30,88 @@ void solve_qstls_iet(input in, bool verbose) {
   double *psi_fixed_qstls = NULL;
   double *bf = NULL;
 
+  // Limit calculations to finite temperatures
+  if (in.Theta == 0) {
+    fprintf(stderr, "Zero temperature calculations are not "
+	    "implemented for the quantum schemes\n");
+    exit(EXIT_FAILURE);
+  }
+  
   // Allocate arrays
-  // Note: GG is not needed for QSTLS, but we keep it here so that
-  // we can reuse some stls routines 
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
-  alloc_qstls_iet_arrays(in, &psi, &psi_new, &psi_fixed_qstls, &bf);
+  alloc_stls_iet_arrays(in, &bf);
+  alloc_qstls_arrays(in, &psi, &psi_fixed_qstls);
+  alloc_qstls_iet_arrays(in, &psi_new);
 
-  // Initialize STLS arrays that are not modified by the iterative procedure
+  // Initialize arrays that are not modified by the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
-  compute_bridge_function(bf, xx, in);
-
+  init_fixed_stls_iet_arrays(bf, xx, in);
+  init_fixed_qstls_arrays(psi_fixed_qstls, xx, in, verbose);
+  init_fixed_qstls_iet_arrays(xx, in, verbose);
+    
   // Initial guess
-  if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
-    for (int ii=0; ii<in.nx; ii++){
-      for (int ll=0; ll<in.nl; ll++){
-  	psi[idx2(ii,ll,in.nx)] = 0.0;
-      }
-    }
-    compute_ssf_qstls_iet(SS, SSHF, psi, phi, bf, xx, in);
-  }
-  else {
-    read_guess_qstls(SS, psi, in);
-  }
+  initial_guess_qstls_iet(xx, SS, SSHF, psi, phi, bf, in);
 
-  // Initialize QSTLS arrays that are not modified by the iterative procedure
-  if (verbose) printf("Fixed component of the qstls auxiliary response function: ");
-  if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
-    compute_adr_fixed(psi_fixed_qstls, xx, in);
-    write_fixed_qstls(psi_fixed_qstls, in);
-  }
-  else {
-    read_fixed_qstls(psi_fixed_qstls, in);
-  }
-  if (verbose) printf("Done.\n");
-
-  // Initialize QSTLS-IET arrays that are not modified by the iterative procedure
-  if (verbose) printf("Fixed component of the auxiliary response function: ");
-  if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
-    compute_adr_iet_fixed(xx, in);
-  }
-  if (verbose) printf("Done.\n");
- 
   // SSF and SLFC via iterative procedure
-  if (verbose) printf("SSF calculation...\n");
+  qstls_iet_iterations(SS, SS_new, SSHF, psi, psi_new,
+		       psi_fixed_qstls, phi, bf, xx, in,
+		       verbose);
+  
+  // Internal energy
+  if (verbose) printf("Internal energy: %.10f\n",
+		      compute_internal_energy(SS, xx, in));
+  
+  // Output to file
+  if (verbose) printf("Writing output files...\n");
+  write_text_qstls_iet(SS, psi, phi, SSHF, bf, xx, in);
+  write_guess_qstls(SS, psi, in);
+  if (verbose) printf("Done.\n");
+
+  // Free memory
+  free_stls_arrays(xx, phi, GG, SS_new, SS, SSHF);
+  free_stls_iet_arrays(bf);
+  free_qstls_arrays(psi, psi_fixed_qstls);
+  free_qstls_iet_arrays(psi_new);
+  
+}
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
+// -------------------------------------------------------------------
+
+void alloc_qstls_iet_arrays(input in, double **psi_new){
+ 
+  *psi_new = malloc( sizeof(double) * in.nx * in.nl);  
+  if (*psi_new == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the auxiliary density response\n");
+    exit(EXIT_FAILURE);
+  }
+    
+}
+
+void free_qstls_iet_arrays(double *psi_new){
+
+  free(psi_new);
+  
+}
+
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE QSTLS SCHEME
+// -------------------------------------------------------------------
+
+void qstls_iet_iterations(double *SS, double *SS_new,
+			  double *SSHF, double *psi,
+			  double *psi_new,  double *psi_fixed_qstls,
+			  double *phi, double *bf, 
+			  double *xx, input in,
+			  bool verbose){
+
   double iter_err = 1.0;
   int iter_counter = 0;
+  
+  if (verbose) printf("SSF calculation...\n");
+  
   while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     
     // Start timing
@@ -86,22 +123,11 @@ void solve_qstls_iet(input in, bool verbose) {
     // Update SSF
     compute_ssf_qstls_iet(SS_new, SSHF, psi_new, phi, bf, xx, in);
 
-    // Prepare auxiliary function for next iteration
-    for (int ii=0; ii<in.nx; ii++){
-      for (int ll=0; ll<in.nl; ll++){
-    	psi[idx2(ii,ll,in.nx)] = psi_new[idx2(ii,ll,in.nx)];
-      }
-    }
-
     // Update diagnostic
-    iter_err = 0.0;
     iter_counter++;
-    for (int ii=0; ii<in.nx; ii++) {
-      iter_err += (SS_new[ii] - SS[ii]) * (SS_new[ii] - SS[ii]);
-      SS[ii] = in.a_mix*SS_new[ii] + (1-in.a_mix)*SS[ii];
-    }
-    iter_err = sqrt(iter_err);
-    
+    iter_err = stls_err(SS, SS_new, in);
+    qstls_iet_update(SS, SS_new, psi, psi_new, in);
+
     // End timing
     double toc = omp_get_wtime();
     
@@ -114,65 +140,55 @@ void solve_qstls_iet(input in, bool verbose) {
     }
 
   }
+
   if (verbose) printf("Done.\n");
   
-  // Internal energy
-  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
-  
-  // Output to file
-  if (verbose) printf("Writing output files...\n");
-  write_text_qstls_iet(SS, psi, phi, SSHF, bf, xx, in);
-  write_guess_qstls(SS, psi, in);
-  write_bridge_function(bf, xx, in);
-  if (verbose) printf("Done.\n");
-
-  // Free memory
-  free_stls_arrays(xx, phi, GG, SS_new, SS, SSHF);
-  free_qstls_iet_arrays(psi, psi_new, psi_fixed_qstls, bf);
-
 }
 
-// -------------------------------------------------------------------
-// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
-// -------------------------------------------------------------------
+void qstls_iet_update(double *SS, double *SS_new,
+		      double *psi, double *psi_new,
+		      input in){
 
-void alloc_qstls_iet_arrays(input in, double **psi, double **psi_new,
-			    double **psi_fixed_qstls, double **bf){
-  
-  *psi = malloc( sizeof(double) * in.nx * in.nl);
-  if (*psi == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the auxiliary density response\n");
-    exit(EXIT_FAILURE);
-  }
+  // Static structure factor
+  stls_update(SS, SS_new, in);
 
-  *psi_new = malloc( sizeof(double) * in.nx * in.nl);  
-  if (*psi_new == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the auxiliary density response\n");
-    exit(EXIT_FAILURE);
+  // Auxiliary density response
+  for (int ii=0; ii<in.nx; ii++){
+    for (int ll=0; ll<in.nl; ll++){
+      psi[idx2(ii,ll,in.nx)] = psi_new[idx2(ii,ll,in.nx)];
+    }
   }
+	  
+}
 
-  *psi_fixed_qstls = malloc( sizeof(double) * in.nx * in.nl * in.nx);
-  if (*psi_fixed_qstls == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the fixed component of the "
-	    "auxiliary density response\n");
-    exit(EXIT_FAILURE);
-  }
+// ---------------------------------------------------------------------
+// FUNCTION USED TO DEFINE THE INITIAL GUESS
+// ---------------------------------------------------------------------
 
-  *bf = malloc(sizeof(double) * in.nx);
-    if (*bf == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the bridge function\n");
-    exit(EXIT_FAILURE);
-  }
+void initial_guess_qstls_iet(double *xx, double *SS, double *SSHF,
+			     double *psi, double *phi, double *bf,
+			     input in){
+
+  if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
+
+    // Auxilirary density response
+    for (int ii=0; ii<in.nx; ii++){
+      for (int ll=0; ll<in.nl; ll++){
+	psi[idx2(ii,ll,in.nx)] = 0.0;
+      }
+    }
+
+    // Static structure factor
+    compute_ssf_qstls_iet(SS, SSHF, psi,
+			  phi, bf, xx, in);
     
-}
+  }
+  else {
 
-void free_qstls_iet_arrays(double *psi, double *psi_new,
-			   double *psi_fixed_qstls, double *bf){
-
-  free(psi);
-  free(psi_new);
-  free(psi_fixed_qstls);
-  free(bf);
+    // Read from file
+    read_guess_qstls(SS, psi, in);
+    
+  }
   
 }
 
@@ -180,6 +196,23 @@ void free_qstls_iet_arrays(double *psi, double *psi_new,
 // ------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE FIXED COMPONENT OF THE AUXILIARY RESPONSE
 // ------------------------------------------------------------------------
+
+// Initialize QSTLS-IET arrays that are not modified by the iterative procedure
+void init_fixed_qstls_iet_arrays(double *xx, input in, bool verbose){
+  
+  if (verbose) printf("Fixed component of the QSTLS-IET "
+		      "auxiliary response function: ");
+
+  // Compute fixed component of the auxiliary density response and store
+  // to file
+  if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
+    compute_adr_iet_fixed(xx, in);
+  }
+  
+  if (verbose) printf("Done.\n");
+  
+};
+
 
 struct adr_iet_fixed_params {
 
@@ -596,100 +629,70 @@ void write_text_qstls_iet(double *SS, double *psi, double *phi,
 			  input in){
 
 
+  bool finite_temperature = false;
+
+  // Check the value of the temperature
+  if (in.Theta > 0) finite_temperature = true;
+  
+  // Static structure factor
+  write_text_ssf(SS, xx, in);
+
+  // Static structure factor within the Hartree-Fock approximation
+  write_text_ssf_HF(SSHF, xx, in);
+
+  // Static local field correction
+  if (finite_temperature)
+    write_text_slfc_qstls(psi, phi, xx, in);
+  
+  // Static density response
+  if (finite_temperature)
+    write_text_sdr_qstls_iet(psi, phi, bf, xx, in);
+  
+  // Ideal density response
+  if (finite_temperature)
+    write_text_idr(phi, in);
+
+  // Auxiliary density response
+  if (finite_temperature)
+    write_text_adr(psi, in);
+
+  // Radial distribution function
+  write_text_rdf(SS, xx, in);
+
+  // Bridge function
+  write_text_bf(bf, xx, in);
+			
+  // Interaction energy
+  write_text_uint(SS, xx, in);
+
+}
+
+
+// write static density response to text file
+void write_text_sdr_qstls_iet(double *psi, double *phi, double *bf,
+			      double *xx,  input in){
+
   FILE* fid;
-
-  // Output for SSF
   char out_name[100];
-  sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-  fid = fopen(out_name, "w");
-  if (fid == NULL) {
-    fprintf(stderr, "Error while creating the output file for the static structure factor");
-    exit(EXIT_FAILURE);
-  }
-  for (int ii = 0; ii < in.nx; ii++)
-    fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]);
-
-  fclose(fid);
-
-  // Output for SLFC
-  sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-  fid = fopen(out_name, "w");
-  if (fid == NULL) {
-    fprintf(stderr, "Error while creating the output file for the static local field correction");
-    exit(EXIT_FAILURE);
-  }
-  for (int ii = 0; ii < in.nx; ii++)
-    fprintf(fid, "%.8e %.8e\n", xx[ii], psi[idx2(ii,0,in.nx)]/phi[idx2(ii,0,in.nx)]);
-
-  fclose(fid);
-
-  // Output for static density response
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double ff = 4*lambda*in.rs/M_PI;
+  double sdr;
+  
   sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
   fid = fopen(out_name, "w");
   if (fid == NULL) {
     fprintf(stderr, "Error while creating the output file for the static density response");
     exit(EXIT_FAILURE);
   }
-  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  double ff = 4*lambda*in.rs/M_PI;
-  double sdr;
+
   for (int ii=0 ; ii<in.nx; ii++){
     sdr = -(3.0/2.0)*in.Theta*phi[idx2(ii,0,in.nx)]/
-      (1.0 + ff/(xx[ii]*xx[ii])*((1.0 - bf[ii])*phi[idx2(ii,0,in.nx)] - psi[idx2(ii,0,in.nx)]));
+      (1.0 + ff/(xx[ii]*xx[ii])*((1.0 - bf[ii])*phi[idx2(ii,0,in.nx)]
+				 - psi[idx2(ii,0,in.nx)]));
     fprintf(fid, "%.8e %.8e\n", xx[ii], sdr);
   }
-  fclose(fid);
-
-  // Output for the auxiliary density response
-  sprintf(out_name, "adr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-  fid = fopen(out_name, "w");
-  if (fid == NULL) {
-    fprintf(stderr, "Error while creating the output file for the auxiliary density response");
-    exit(EXIT_FAILURE);
-  }
-  for (int ii=0; ii<in.nx; ii++){
-    for (int jj=0; jj<in.nl; jj++){
-      fprintf(fid, "%.8e ", psi[idx2(ii,jj,in.nx)]);
-    }
-    fprintf(fid,"\n");
-  }
-  fclose(fid);
-
-  // Output for ideal Lindhard density response
-  sprintf(out_name, "idr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-  fid = fopen(out_name, "w");
-  if (fid == NULL) {
-    fprintf(stderr, "Error while creating the output file for the ideal density response");
-    exit(EXIT_FAILURE);
-  }
-  for (int ii=0; ii<in.nx; ii++){
-    for (int jj=0; jj<in.nl; jj++){
-      fprintf(fid, "%.8e ", phi[idx2(ii,jj,in.nx)]);
-    }
-    fprintf(fid,"\n");
-  }
-  fclose(fid);
-
-  // Output for static structure factor in the Hartree-Fock approximation
-  sprintf(out_name, "ssfHF_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-  fid = fopen(out_name, "w");
-  if (fid == NULL) {
-    fprintf(stderr, "Error while creating the output file for the static structure factor (HF)");
-    exit(EXIT_FAILURE);
-  }
-  for (int ii = 0; ii < in.nx; ii++)
-    fprintf(fid, "%.8e %.8e\n", xx[ii], SSHF[ii]);
 
   fclose(fid);
 
-  // Output for the interaction energy
-  sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-  fid = fopen(out_name, "w");
-  if (fid == NULL) {
-    fprintf(stderr, "Error while creating the output file for the interaction energy");
-    exit(EXIT_FAILURE);
-  }
-  fprintf(fid, "%.8e %.8e %.8e\n", in.rs, in.Theta, compute_internal_energy(SS, xx, in));
-  fclose(fid);
-
+  
 }
