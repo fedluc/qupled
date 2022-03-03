@@ -74,24 +74,10 @@ double *get_el(vs_struct sp, int ii);
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
-
-void alloc_vs_stls_struct_arrays(input in, stls_pointers pp, vs_struct *xx,
-				vs_struct *phi, vs_struct *SS, vs_struct *SSHF,
-				vs_struct *GG, vs_struct *GG_new, int el);
-
-void alloc_vs_stls_thermo_arrays(input in, vs_stls_pointers pp,
-				 vs_struct *rsu, vs_struct *rsa, int el);
   
-void alloc_vs_stls_thermo_arrays_elem(input in, vs_stls_pointers *pp);
+void alloc_vs_stls_arrays(input in, double **rsa, double **rsu);
   
-void alloc_vs_stls_one_array(double *pp, vs_struct *vs_arr, int el);
-
-void free_vs_stls_struct_arrays(vs_struct xx, vs_struct phi, vs_struct SS,
-				vs_struct SSHF, vs_struct GG, vs_struct GG_new);
-
-void free_vs_stls_thermo_arrays(vs_struct rsu, vs_struct rsa);
-
-void free_vs_stls_one_array(vs_struct vs_arr);
+void free_vs_stls_arrays(double *rsu, double *rsa);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO INITIALIZE ARRAYS
@@ -114,16 +100,18 @@ void rs_grid(double *rsp, input *in);
 // FUNCTIONS USED TO DEFINE THE INITIAL GUESS
 // ---------------------------------------------------------------------
 
-void initial_guess_vs_stls(vs_struct xx, vs_struct SS, vs_struct SSHF,
-			   vs_struct GG, vs_struct GG_new, vs_struct phi,
+void initial_guess_vs_stls(vs_struct xx, vs_struct SS,
+			   vs_struct SSHF, vs_struct GG,
+			   vs_struct GG_new, vs_struct phi,
 			   input *vs_in);
 
 // ---------------------------------------------------------------------
 // FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE VS-STLS SCHEME
 // ---------------------------------------------------------------------
 
-double vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu, vs_struct rsa,
-				 input *vs_in, bool verbose);
+double vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu,
+				 vs_struct rsa, input *vs_in,
+				 bool verbose);
 
 double vs_stls_thermo_err(double alpha, input *vs_in);
 
@@ -134,9 +122,11 @@ void vs_stls_struct_iterations(vs_struct SS, vs_struct SSHF,
 			       vs_struct phi, vs_struct xx,
 			       input *vs_in, bool verbose);
 
-double vs_stls_struct_err(vs_struct GG, vs_struct GG_new, input *vs_in);
+double vs_stls_struct_err(vs_struct GG, vs_struct GG_new,
+			  input *vs_in);
 
-void vs_stls_struct_update(vs_struct GG, vs_struct GG_new, input *vs_in);
+void vs_stls_struct_update(vs_struct GG, vs_struct GG_new,
+			   input *vs_in);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE CHEMICAL POTENTIAL
@@ -148,8 +138,8 @@ void compute_chemical_potential_vs_stls(input *vs_in);
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // -------------------------------------------------------------------
 
-void compute_ssf_vs_stls(vs_struct SS, vs_struct SSHF, vs_struct GG, vs_struct phi,
-		    vs_struct xx, input *vs_in);
+void compute_ssf_vs_stls(vs_struct SS, vs_struct SSHF, vs_struct GG,
+			 vs_struct phi, vs_struct xx, input *vs_in);
 
 void compute_ssf_HF_vs_stls(vs_struct SS, vs_struct xx, input *vs_in);
 
@@ -160,27 +150,36 @@ void compute_ssf_HF_vs_stls(vs_struct SS, vs_struct xx, input *vs_in);
 void compute_slfc_vs_stls(vs_struct GG, vs_struct SS,
 			  vs_struct xx, input *vs_in);
 
-void slfc_vs_stls_stls(vs_struct GG, vs_struct SS, vs_struct GG_stls,
-		       vs_struct xx, input *vs_in);
+void slfc_vs_stls_stls(vs_struct GG, vs_struct SS,
+		       vs_struct GG_stls, vs_struct xx,
+		       input *vs_in);
 
-void slfc_vs_stls_dx(vs_struct GG, vs_struct GG_stls, vs_struct xx,
+void slfc_vs_stls_dx(vs_struct GG, vs_struct GG_stls,
+		     vs_struct xx, input *vs_in);
+
+void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls,
+		      input *vs_in);
+
+void slfc_vs_stls_dt(vs_struct GG, vs_struct GG_stls,
 		     input *vs_in);
 
-void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls, input *vs_in);
+double slfc_vs_stls_drs_centered(vs_struct GG, int ii, int jj,
+				 input *vs_in);
 
-void slfc_vs_stls_dt(vs_struct GG, vs_struct GG_stls, input *vs_in);
+double slfc_vs_stls_drs_forward(vs_struct GG, int ii, int jj,
+				input *vs_in);
 
-double slfc_vs_stls_drs_centered(vs_struct GG, int ii, int jj, input *vs_in);
+double slfc_vs_stls_drs_backward(vs_struct GG, int ii, int jj,
+				 input *vs_in);
 
-double slfc_vs_stls_drs_forward(vs_struct GG, int ii, int jj, input *vs_in);
+double slfc_vs_stls_dt_centered(vs_struct GG, int ii, int jj,
+				input *vs_in);
 
-double slfc_vs_stls_drs_backward(vs_struct GG, int ii, int jj, input *vs_in);
+double slfc_vs_stls_dt_forward(vs_struct GG, int ii, int jj,
+			       input *vs_in);
 
-double slfc_vs_stls_dt_centered(vs_struct GG, int ii, int jj, input *vs_in);
-
-double slfc_vs_stls_dt_forward(vs_struct GG, int ii, int jj, input *vs_in);
-
-double slfc_vs_stls_dt_backward(vs_struct GG, int ii, int jj, input *vs_in);
+double slfc_vs_stls_dt_backward(vs_struct GG, int ii, int jj,
+				input *vs_in);
 
 // -----------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY RESPONSE
@@ -192,7 +191,8 @@ void compute_idr_vs_stls(vs_struct phi, vs_struct xx, input *vs_in);
 // FUNCTION USED TO COMPUTE THE PARAMETER FOR THE CSR RULE
 // -------------------------------------------------------------------
 
-double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in);
+double compute_alpha(vs_struct xx, vs_struct rsu,
+		     vs_struct rsa, input *vs_in);
 
 
 // -------------------------------------------------------------------
@@ -202,10 +202,12 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in);
 void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
 		 input *vs_in, bool verbose);
 
-void compute_rsu_blocks(vs_struct SS, vs_struct SSHF, vs_struct GG,
-			vs_struct GG_new, vs_struct phi, vs_struct xx,
-			vs_struct rsu, vs_struct rsa, input *vs_in,
-			int start, int end, int step,
+void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
+			vs_struct GG, vs_struct GG_new,
+			vs_struct phi, vs_struct xx,
+			vs_struct rsu, vs_struct rsa,
+			input *vs_in, int start,
+			int end, int step,
 			bool compute_guess, bool verbose);
     
 // -------------------------------------------------------------------
@@ -213,6 +215,10 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF, vs_struct GG,
 // -------------------------------------------------------------------
 
 void write_text_vs_stls(double *rsu, double *rsp, input in);
+
+void write_text_fxc(double *rsu, double *rsp, input in);
+
+void write_text_alpha_CSR(input in);
 
 void read_guess_vs_stls(vs_struct SS, vs_struct GG, input *vs_in);
   

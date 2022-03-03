@@ -235,7 +235,8 @@ void compute_rdf(double *gg, double *rr, double *SS, double *xx, input in){
   gsl_integration_workspace_free(wsp);
   gsl_integration_workspace_free(wspc); 
   gsl_integration_qawo_table_free(qtab);
-
+  gsl_spline_free(ssf_sp_ptr);
+  gsl_interp_accel_free(ssf_acc_ptr);
  
 
 }

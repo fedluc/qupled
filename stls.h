@@ -143,12 +143,27 @@ double slfc(double yy, void *pp);
 void write_text_stls(double *SS, double *GG, double *phi, 
 		       double *SSHF, double *xx, input in);
 
+void write_text_ssf(double *SS, double *xx, input in);
+
+void write_text_ssf_HF(double *SS, double *xx, input in);
+
+void write_text_slfc(double *GG, double *xx, input in);
+
+void write_text_sdr(double *GG, double *phi, double *xx, input in);
+
+void write_text_idr(double *phi, input in);
+
+void write_text_uint(double *SS, double *xx, input in);
+  
+void write_text_rdf(double *SS, double *xx, input in);
+
 void write_guess_stls(double *SS, double *GG, input in);
 
 void read_guess_stls(double *SS, double *GG, input in);
 
-void check_guess_stls(int nx, double dx, double xmax, input in,
-		      size_t it_read, size_t it_expected, FILE *fid,
-		      bool check_grid, bool check_items, bool check_eof);
+void check_guess_stls(int nx, double dx, double xmax,
+		      input in, size_t it_read, size_t it_expected,
+		      FILE *fid, bool check_grid, bool check_items,
+		      bool check_eof);
 
 #endif

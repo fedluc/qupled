@@ -26,78 +26,31 @@ void solve_qstls(input in, bool verbose) {
   double *psi = NULL;
   double *psi_fixed = NULL;
 
+  // Limit calculations to finite temperatures
+  if (in.Theta == 0) {
+    fprintf(stderr, "Zero temperature calculations are not "
+	    "implemented for the quantum schemes\n");
+    exit(EXIT_FAILURE);
+  }
+  
   // Allocate arrays
-  // Note: GG is not needed for qSTLS, but we keep it here so that
-  // we can reuse some stls routines 
   alloc_stls_arrays(in, &xx, &phi, &GG, &SS_new, &SS, &SSHF);
   alloc_qstls_arrays(in, &psi, &psi_fixed);
 
-  // Initialize STLS arrays that are not modified by the iterative procedure
+  // Initialize arrays that are not modified by the iterative procedure
   init_fixed_stls_arrays(&in, xx, phi, SSHF, verbose);
-
+  init_fixed_qstls_arrays(psi_fixed, xx, in, verbose);
+			  
   // Initial guess
-  if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
-    for (int ii=0; ii<in.nx; ii++){
-      for (int ll=0; ll<in.nl; ll++){
-	psi[idx2(ii,ll,in.nx)] = 0.0; // Auxilliary density response
-      }
-    }
-    compute_ssf_qstls(SS, SSHF, psi, phi, xx, in); // Static structure factor
-  }
-  else {
-    read_guess_qstls(SS, psi, in); // Read from file
-  }
+  initial_guess_qstls(xx, SS, SSHF, psi, phi, in);
 
-  // Initialize QSTLS arrays that are not modified by the iterative procedure
-  if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
-    if (verbose) printf("Fixed component of the auxiliary density response function: ");
-    compute_adr_fixed(psi_fixed, xx, in);
-    write_fixed_qstls(psi_fixed, in);
-    if (verbose) printf("Done.\n");
-  }
-  else {
-    read_fixed_qstls(psi_fixed, in);
-  }
- 
   // Iterative procedure
-  if (verbose) printf("SSF calculation...\n");
-  double iter_err = 1.0;
-  int iter_counter = 0;
-  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
-    
-    // Start timing
-    double tic = omp_get_wtime();
-    
-    // Update auxiliary density response
-    compute_adr(psi, psi_fixed, SS, xx, in);
-    
-    // Update static structure factor
-    compute_ssf_qstls(SS_new, SSHF, psi, phi, xx, in);
-    
-    // Update diagnostic
-    iter_err = 0.0;
-    iter_counter++;
-    for (int ii=0; ii<in.nx; ii++) {
-      iter_err += (SS_new[ii] - SS[ii]) * (SS_new[ii] - SS[ii]);
-      SS[ii] = in.a_mix*SS_new[ii] + (1-in.a_mix)*SS[ii];
-    }
-    iter_err = sqrt(iter_err);
-    
-    // End timing
-    double toc = omp_get_wtime();
-    
-    // Print diagnostic
-    if (verbose) {
-      printf("--- iteration %d ---\n", iter_counter);
-      printf("Elapsed time: %f seconds\n", toc - tic);
-      printf("Residual error: %.5e\n", iter_err);
-      fflush(stdout);
-    }
-  }
-  if (verbose) printf("Done.\n");
+  qstls_iterations(SS, SS_new, SSHF, psi, psi_fixed,
+		   phi, xx, in, verbose);
   
   // Internal energy
-  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS, xx, in));
+  if (verbose) printf("Internal energy: %.10f\n",
+		      compute_internal_energy(SS, xx, in));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
@@ -142,9 +95,105 @@ void free_qstls_arrays(double *psi, double *psi_fixed){
  
 }
 
+// ---------------------------------------------------------------------
+// FUNCTION USED TO DEFINE THE INITIAL GUESS
+// ---------------------------------------------------------------------
+
+void initial_guess_qstls(double *xx, double *SS, double *SSHF,
+			 double *psi, double *phi, input in){
+
+  if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
+
+    // Auxilirary density response
+    for (int ii=0; ii<in.nx; ii++){
+      for (int ll=0; ll<in.nl; ll++){
+	psi[idx2(ii,ll,in.nx)] = 0.0;
+      }
+    }
+
+    // Static structure factor
+    compute_ssf_qstls(SS, SSHF, psi, phi, xx, in);
+    
+  }
+  else {
+
+    // Read from file
+    read_guess_qstls(SS, psi, in);
+    
+  }
+  
+}
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE STLS SCHEME
+// -------------------------------------------------------------------
+
+void qstls_iterations(double *SS, double *SS_new,
+		      double *SSHF, double *psi,
+		      double *psi_fixed, double *phi,
+		      double *xx, input in,
+		      bool verbose){
+ 
+  if (verbose) printf("SSF calculation...\n");
+  double iter_err = 1.0;
+  int iter_counter = 0;
+  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
+    
+    // Start timing
+    double tic = omp_get_wtime();
+    
+    // Update auxiliary density response
+    compute_adr(psi, psi_fixed, SS, xx, in);
+    
+    // Update static structure factor
+    compute_ssf_qstls(SS_new, SSHF, psi, phi, xx, in);
+    
+    // Update diagnostic
+    iter_counter++;
+    iter_err = stls_err(SS, SS_new, in);
+    stls_update(SS, SS_new, in);
+      
+    // End timing
+    double toc = omp_get_wtime();
+    
+    // Print diagnostic
+    if (verbose) {
+      printf("--- iteration %d ---\n", iter_counter);
+      printf("Elapsed time: %f seconds\n", toc - tic);
+      printf("Residual error: %.5e\n", iter_err);
+      fflush(stdout);
+    }
+  }
+  if (verbose) printf("Done.\n");
+
+}
+
 // ------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE FIXED COMPONENT OF THE AUXILIARY RESPONSE
 // ------------------------------------------------------------------------
+
+// Initialize QSTLS arrays that do not depend on the iterations
+void init_fixed_qstls_arrays(double *psi_fixed, double *xx,
+			     input in, bool verbose){
+
+  if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
+
+    // Compute fixed component of the auxiliary density response and store to file
+    if (verbose) printf("Fixed component of the auxiliary density response function: ");
+    compute_adr_fixed(psi_fixed, xx, in);
+    write_fixed_qstls(psi_fixed, in);
+    if (verbose) printf("Done.\n");
+    
+  }
+  else {
+
+    // Read from file
+    read_fixed_qstls(psi_fixed, in);
+    
+  }
+  
+}
+
 
 struct adr_fixed_part1_params {
 
@@ -500,108 +549,116 @@ void compute_ssf_qstls(double *SS, double *SSHF, double *psi,
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
-
 // write text files for output
 void write_text_qstls(double *SS, double *psi, double *phi, 
 			double *SSHF, double *xx, input in){
 
+  bool finite_temperature = false;
 
-    FILE* fid;
-    
-    // Output for SSF
-    char out_name[100];
-    sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-        fprintf(stderr, "Error while creating the output file for the static structure factor");
-        exit(EXIT_FAILURE);
+  // Check the value of the temperature
+  if (in.Theta > 0) finite_temperature = true;
+  
+  // Static structure factor
+  write_text_ssf(SS, xx, in);
+
+  // Static structure factor within the Hartree-Fock approximation
+  write_text_ssf_HF(SSHF, xx, in);
+  
+  // Static local field correction
+  if (finite_temperature)
+    write_text_slfc_qstls(psi, phi, xx, in);
+  
+  // Static density response
+  if (finite_temperature)
+    write_text_sdr_qstls(psi, phi, xx, in);
+  
+  // Ideal density response
+  if (finite_temperature)
+    write_text_idr(phi, in);
+
+  // Auxiliary density response
+  if (finite_temperature)
+    write_text_adr(psi, in);
+
+  // Radial distribution function
+  write_text_rdf(SS, xx, in);
+
+  // Interaction energy
+  write_text_uint(SS, xx, in);
+
+}
+
+// write static local field correction to text file
+void write_text_slfc_qstls(double *psi, double *phi, double *xx,  input in){
+
+  FILE* fid;
+  char out_name[100];
+  
+  sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the static local field correction\n");
+    exit(EXIT_FAILURE);
+  }
+
+  for (int ii = 0; ii < in.nx; ii++)
+    fprintf(fid, "%.8e %.8e\n", xx[ii], psi[idx2(ii,0,in.nx)]/phi[idx2(ii,0,in.nx)]);
+  
+  fclose(fid);
+  
+}
+
+
+// write static density response to text file
+void write_text_sdr_qstls(double *psi, double *phi, double *xx,  input in){
+
+  FILE* fid;
+  char out_name[100];
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double ff = 4*lambda*in.rs/M_PI;
+  double sdr;
+  
+  sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the static density response");
+    exit(EXIT_FAILURE);
+  }
+  
+  for (int ii=0 ; ii<in.nx; ii++){
+    sdr = -(3.0/2.0)*in.Theta*phi[idx2(ii,0,in.nx)]/
+      (1.0 + ff/(xx[ii]*xx[ii])*(phi[idx2(ii,0,in.nx)]
+				 - psi[idx2(ii,0,in.nx)]));
+    fprintf(fid, "%.8e %.8e\n", xx[ii], sdr);
+  }
+
+  fclose(fid);
+  
+}
+
+
+// write auxiliary density response to text file
+void write_text_adr(double *psi, input in){
+  
+  FILE* fid;
+  char out_name[100];
+  
+  sprintf(out_name, "adr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the auxiliary density response");
+    exit(EXIT_FAILURE);
+  }
+  
+  for (int ii=0; ii<in.nx; ii++){
+    for (int jj=0; jj<in.nl; jj++){
+      fprintf(fid, "%.8e ", psi[idx2(ii,jj,in.nx)]);
     }
-    for (int ii = 0; ii < in.nx; ii++)
-        fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]);
+    fprintf(fid,"\n");
+  }
 
-    fclose(fid);
-
-    // Output for SLFC
-    sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-      fprintf(stderr, "Error while creating the output file for the static local field correction");
-      exit(EXIT_FAILURE);
-    }
-    for (int ii = 0; ii < in.nx; ii++)
-      fprintf(fid, "%.8e %.8e\n", xx[ii], psi[idx2(ii,0,in.nx)]/phi[idx2(ii,0,in.nx)]);
-
-    fclose(fid);
-
-    // Output for static density response
-    sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-      fprintf(stderr, "Error while creating the output file for the static density response");
-      exit(EXIT_FAILURE);
-    }
-    double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-    double ff = 4*lambda*in.rs/M_PI;
-    double sdr;
-    for (int ii=0 ; ii<in.nx; ii++){
-      sdr = -(3.0/2.0)*in.Theta*phi[idx2(ii,0,in.nx)]/
-	(1.0 + ff/(xx[ii]*xx[ii])*(phi[idx2(ii,0,in.nx)] - psi[idx2(ii,0,in.nx)]));
-      fprintf(fid, "%.8e %.8e\n", xx[ii], sdr);
-    }
-    fclose(fid);
-
-    // Output for the auxiliary density response
-    sprintf(out_name, "adr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-      fprintf(stderr, "Error while creating the output file for the auxiliary density response");
-      exit(EXIT_FAILURE);
-    }
-    for (int ii=0; ii<in.nx; ii++){
-      for (int jj=0; jj<in.nl; jj++){
-        fprintf(fid, "%.8e ", psi[idx2(ii,jj,in.nx)]);
-      }
-      fprintf(fid,"\n");
-    }
-    fclose(fid);
-
-    // Output for ideal Lindhard density response
-    sprintf(out_name, "idr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-      fprintf(stderr, "Error while creating the output file for the ideal density response");
-      exit(EXIT_FAILURE);
-    }
-    for (int ii=0; ii<in.nx; ii++){
-      for (int jj=0; jj<in.nl; jj++){
-        fprintf(fid, "%.8e ", phi[idx2(ii,jj,in.nx)]);
-      }
-      fprintf(fid,"\n");
-    }
-    fclose(fid);
-
-    // Output for static structure factor in the Hartree-Fock approximation
-    sprintf(out_name, "ssfHF_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-        fprintf(stderr, "Error while creating the output file for the static structure factor (HF)");
-        exit(EXIT_FAILURE);
-    }
-    for (int ii = 0; ii < in.nx; ii++)
-        fprintf(fid, "%.8e %.8e\n", xx[ii], SSHF[ii]);
-
-    fclose(fid);
-
-    // Output for the interaction energy
-    sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-        fprintf(stderr, "Error while creating the output file for the interaction energy");
-        exit(EXIT_FAILURE);
-    }
-    fprintf(fid, "%.8e\n", compute_internal_energy(SS, xx, in));
-    fclose(fid);
-
+  fclose(fid);
+  
 }
 
 

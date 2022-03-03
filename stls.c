@@ -23,7 +23,7 @@ void solve_stls(input in, bool verbose) {
   double *GG_new = NULL;
   double *SS = NULL;
   double *SSHF = NULL;
-
+  
   // Allocate arrays
   alloc_stls_arrays(in, &xx, &phi, &GG, &GG_new, &SS, &SSHF);
 
@@ -43,7 +43,7 @@ void solve_stls(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_stls(SS, GG, phi, SSHF, xx, in);
-  write_guess_stls(SS, GG, in); 
+  write_guess_stls(SS, GG, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -56,50 +56,6 @@ void solve_stls(input in, bool verbose) {
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
-
-// A new function to allocate stls arrays (this should replace alloc_stls_arrays)
-void alloc_stls_arrays_new(input in, stls_pointers *pp){
-
-  pp->xx = malloc( sizeof(double) * in.nx);
-  if (pp->xx == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the grid\n");
-    exit(EXIT_FAILURE);
-  }
-  
-  pp->phi = malloc( sizeof(double) * in.nx * in.nl);
-    if (pp->phi == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the ideal density response\n");
-    exit(EXIT_FAILURE);
-  }
-
-  pp->SS = malloc( sizeof(double) * in.nx);
-    if (pp->SS == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the static structure factor\n");
-    exit(EXIT_FAILURE);
-  }
-  
-  pp->SSHF = malloc( sizeof(double) * in.nx);
-  if (pp->SSHF == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the static structure factor"
-  	    " in the Hartree-Fock approximation\n");
-    exit(EXIT_FAILURE);
-  }
-  
-  pp->GG = malloc( sizeof(double) * in.nx);
-  if (pp->GG == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the static local field correction\n");
-    exit(EXIT_FAILURE);
-  }
-  
-  pp->GG_new = malloc( sizeof(double) * in.nx);
-  if (pp->GG_new == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the static local field correction\n");
-    exit(EXIT_FAILURE);
-  }
-
-  
-}
-
 
 void alloc_stls_arrays(input in, double **xx, double **phi, 
 		       double **GG, double **GG_new, 
@@ -193,7 +149,7 @@ void init_fixed_stls_arrays(input *in, double *xx,
   
   // Normalized ideal Lindhard density response
   if (in->Theta > 0) {
-    if (verbose) printf("Normalized ideal Lindhard density calculation:\n");
+    if (verbose) printf("Normalized ideal Lindhard density calculation: ");
     compute_idr(phi, xx, *in, verbose);
     if (verbose) printf("Done.\n");
   }
@@ -1013,108 +969,198 @@ double slfc(double yy, void* pp) {
 void write_text_stls(double *SS, double *GG, double *phi, 
 		       double *SSHF, double *xx, input in){
 
+  bool finite_temperature = false;
 
-    FILE* fid;
-    
-    // Output for SSF
-    char out_name[100];
-    sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-        fprintf(stderr, "Error while creating the output file for the static structure factor\n");
-        exit(EXIT_FAILURE);
-    }
-    for (int ii = 0; ii < in.nx; ii++)
-        fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]);
+  // Check the value of the temperature
+  if (in.Theta > 0) finite_temperature = true;
+  
+  // Static structure factor
+  write_text_ssf(SS, xx, in);
 
-    fclose(fid);
+  // Static structure factor within the Hartree-Fock approximation
+  write_text_ssf_HF(SSHF, xx, in);
 
-    // Output for SLFC
-    sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-        fprintf(stderr, "Error while creating the output file for the static local field correction\n");
-        exit(EXIT_FAILURE);
-    }
-    for (int ii = 0; ii < in.nx; ii++)
-        fprintf(fid, "%.8e %.8e\n", xx[ii], GG[ii]);
+  // Static local field correction
+  write_text_slfc(GG, xx, in);
 
-    fclose(fid);
+  // Static density response
+  if (finite_temperature)
+    write_text_sdr(GG, phi, xx, in);
 
-    // Output for static density response
-    sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-      fprintf(stderr, "Error while creating the output file for the static density response\n");
-      exit(EXIT_FAILURE);
-    }
-    double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-    double ff = 4*lambda*in.rs/M_PI;
-    double sdr;
-    for (int ii=0 ; ii<in.nx; ii++){
-	sdr = -(3.0/2.0)*in.Theta*phi[idx2(ii,0,in.nx)]/
-	  (1.0 + ff/(xx[ii]*xx[ii])*(1.0 - GG[ii])*phi[idx2(ii,0,in.nx)]);
-	fprintf(fid, "%.8e %.8e\n", xx[ii], sdr);
-      }
-    fclose(fid);
+  // Ideal density response
+  if (finite_temperature)
+    write_text_idr(phi, in);
 
-    // Output for ideal Lindhard density response
-    sprintf(out_name, "idr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-      fprintf(stderr, "Error while creating the output file for the ideal density response");
-      exit(EXIT_FAILURE);
-    }
-    for (int ii=0; ii<in.nx; ii++){
-      for (int jj=0; jj<in.nl; jj++){
-        fprintf(fid, "%.8e ", phi[idx2(ii,jj,in.nx)]);
-      }
-      fprintf(fid,"\n");
-    }
-    fclose(fid);
+  // Radial distribution function
+  write_text_rdf(SS, xx, in);
 
-    // Output for static structure factor in the Hartree-Fock approximation
-    sprintf(out_name, "ssfHF_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-        fprintf(stderr, "Error while creating the output file for the static structure factor (HF)");
-        exit(EXIT_FAILURE);
-    }
-    for (int ii = 0; ii < in.nx; ii++)
-        fprintf(fid, "%.8e %.8e\n", xx[ii], SSHF[ii]);
-
-    fclose(fid);
-
-    // Output for the radial distribution function
-    sprintf(out_name, "rdf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-        fprintf(stderr, "Error while creating the output file for the radial distribution function");
-        exit(EXIT_FAILURE);
-    }
-    double *rdf = malloc( sizeof(double) * in.nx);
-    double *rr = malloc( sizeof(double) * in.nx);
-    if (rdf == NULL || rr == NULL) {
-      fprintf(stderr, "Failed to allocate memory for the radial distribution function\n");
-      exit(EXIT_FAILURE);
-    }
-    compute_rdf(rdf, rr, SS, xx, in);
-    for (int ii = 0; ii < in.nx; ii++)
-        fprintf(fid, "%.8e %.8e\n", rr[ii], rdf[ii]);
-    fclose(fid);
-    
-    // Output for the interaction energy
-    sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-        fprintf(stderr, "Error while creating the output file for the interaction energy\n");
-        exit(EXIT_FAILURE);
-    }
-    fprintf(fid, "%.8e\n", compute_internal_energy(SS, xx, in));
-    fclose(fid);
-
+  // Interaction energy
+  write_text_uint(SS, xx, in);
+  
 }
 
+
+// write static structure factor to text file
+void write_text_ssf(double *SS, double *xx, input in){
+
+  FILE* fid;
+  
+  char out_name[100];
+  sprintf(out_name, "ssf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the static structure factor\n");
+    exit(EXIT_FAILURE);
+  }
+  for (int ii = 0; ii < in.nx; ii++)
+    fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]);
+  
+  fclose(fid);
+  
+}
+
+// write static structure factor in the Hartree-Fock approximation to text file
+void write_text_ssf_HF(double *SS, double *xx, input in){
+
+  FILE* fid;
+  char out_name[100];
+   
+  sprintf(out_name, "ssfHF_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the static structure factor"
+	    "in the Hartree-Fock approximation\n");
+    exit(EXIT_FAILURE);
+  }
+
+  for (int ii = 0; ii < in.nx; ii++)
+    fprintf(fid, "%.8e %.8e\n", xx[ii], SS[ii]);
+  
+  fclose(fid);
+  
+}
+
+
+// write static local field correction to text file
+void write_text_slfc(double *GG, double *xx, input in){
+
+  FILE* fid;
+  char out_name[100];
+  
+  sprintf(out_name, "slfc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the static local field correction\n");
+    exit(EXIT_FAILURE);
+  }
+
+  for (int ii = 0; ii < in.nx; ii++)
+    fprintf(fid, "%.8e %.8e\n", xx[ii], GG[ii]);
+  
+  fclose(fid);
+  
+}
+
+// write static density response to text file
+void write_text_sdr(double *GG, double *phi, double *xx, input in){
+
+  FILE *fid;
+  char out_name[100];
+  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  double ff = 4*lambda*in.rs/M_PI;
+  double sdr = 0.0;
+ 
+  sprintf(out_name, "sdr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the static density response\n");
+    exit(EXIT_FAILURE);
+  }
+ 
+  for (int ii=0 ; ii<in.nx; ii++){
+    sdr = -(3.0/2.0)*in.Theta*phi[idx2(ii,0,in.nx)]/
+      (1.0 + ff/(xx[ii]*xx[ii])*(1.0 - GG[ii])*phi[idx2(ii,0,in.nx)]);
+    fprintf(fid, "%.8e %.8e\n", xx[ii], sdr);
+  }
+
+  fclose(fid);
+  
+}
+
+// write ideal Lindhard density response to text file
+void write_text_idr(double *phi, input in){
+  
+  FILE *fid;
+  char out_name[100];
+  
+  sprintf(out_name, "idr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the ideal density response");
+    exit(EXIT_FAILURE);
+  }
+  
+  for (int ii=0; ii<in.nx; ii++){
+    for (int jj=0; jj<in.nl; jj++){
+      fprintf(fid, "%.8e ", phi[idx2(ii,jj,in.nx)]);
+    }
+    fprintf(fid,"\n");
+  }
+  
+  fclose(fid);
+  
+}
+
+
+// write radial distribution function to text file
+void write_text_rdf(double *SS, double *xx, input in){
+  
+  FILE *fid;
+  char out_name[100];
+  double *rdf = malloc( sizeof(double) * in.nx);
+  double *rr = malloc( sizeof(double) * in.nx);
+
+  if (rdf == NULL || rr == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the radial distribution function\n");
+    exit(EXIT_FAILURE);
+  }
+    
+  sprintf(out_name, "rdf_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the radial distribution function");
+    exit(EXIT_FAILURE);
+  }
+
+  compute_rdf(rdf, rr, SS, xx, in);
+
+  for (int ii = 0; ii < in.nx; ii++)
+    fprintf(fid, "%.8e %.8e\n", rr[ii], rdf[ii]);
+
+  fclose(fid);
+  free(rdf);
+  free(rr);
+  
+}
+
+// Write internal energy to text file
+void write_text_uint(double *SS, double *xx, input in){
+  
+  FILE *fid;
+  char out_name[100];
+  
+  sprintf(out_name, "uint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the interaction energy\n");
+    exit(EXIT_FAILURE);
+  }
+
+  fprintf(fid, "%.8e %.8e %.8e\n", in.rs, in.Theta, compute_internal_energy(SS, xx, in));
+
+  fclose(fid);
+
+}
 
 // write binary file to use as initial guess (or restart)
 void write_guess_stls(double *SS, double *GG, input in){

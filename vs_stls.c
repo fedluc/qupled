@@ -26,30 +26,37 @@ void solve_vs_stls(input in, bool verbose) {
   vs_struct rsu;
   vs_struct rsa;
   input vs_in[VSS_NUMEL];
-
+  
+  // Temporary arrays for allocation
+  double *xx_el = NULL; 
+  double *phi_el = NULL;
+  double *GG_el = NULL;
+  double *GG_new_el = NULL;
+  double *SS_el = NULL;
+  double *SSHF_el = NULL;
+  double *rsu_el = NULL;
+  double *rsa_el = NULL;
+    
   // Allocate arrays
-  stls_pointers stls_pp;
-  vs_stls_pointers vs_stls_pp;
-
   for (int ii=0; ii<VSS_NUMEL; ii++) {
-    alloc_stls_arrays_new(in, &stls_pp);
-    alloc_vs_stls_thermo_arrays_elem(in, &vs_stls_pp);
-    xx.el[ii] = stls_pp.xx;
-    phi.el[ii] = stls_pp.phi;
-    GG.el[ii] = stls_pp.GG;
-    GG_new.el[ii] = stls_pp.GG_new;
-    SS.el[ii] = stls_pp.SS;
-    SSHF.el[ii] = stls_pp.SSHF;
-    rsu.el[ii] = vs_stls_pp.rsu;
-    rsa.el[ii] = vs_stls_pp.rsa;
+    alloc_stls_arrays(in, &xx_el, &phi_el, &GG_el,
+		      &GG_new_el, &SS_el, &SSHF_el);
+    alloc_vs_stls_arrays(in, &rsa_el, &rsu_el);
+    xx.el[ii] = xx_el;
+    phi.el[ii] = phi_el;
+    GG.el[ii] = GG_el;
+    GG_new.el[ii] = GG_new_el;
+    SS.el[ii] = SS_el;
+    SSHF.el[ii] = SSHF_el;
+    rsa.el[ii] = rsa_el;
+    rsu.el[ii] = rsu_el;
   }
 
-
-  /* // Initialize arrays that are not modified with the iterative procedure */
+  // Initialize arrays that are not modified with the iterative procedure
   init_fixed_vs_stls_arrays(&in, vs_in, xx, rsa, verbose);
   init_tmp_vs_stls_arrays(vs_in, xx, phi, SSHF, verbose);
    
-  // Iterative procedure to fix the compressibility sum rule
+  // Iterative procedure to enforce the compressibility sum rule
   if (verbose) printf("Iterative procedure to enforce the compressibility sum rule ...\n");
   in.a_csr = vs_stls_thermo_iterations(xx, rsu, rsa, vs_in, true);
   if (verbose) printf("Done.\n");
@@ -72,9 +79,12 @@ void solve_vs_stls(input in, bool verbose) {
   write_guess_stls(SS.rst, GG.rst, in);
   if (verbose) printf("Done.\n");
 
-  /* // Free memory */
-  free_vs_stls_struct_arrays(xx, phi, SS, SSHF, GG, GG_new);
-  free_vs_stls_thermo_arrays(rsu, rsa);
+  // Free memory
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    free_stls_arrays(xx.el[ii], phi.el[ii], GG.el[ii],
+		     GG_new.el[ii], SS.el[ii], SSHF.el[ii]);
+    free_vs_stls_arrays(rsa.el[ii], rsu.el[ii]);
+  }
   
 }
 
@@ -84,54 +94,29 @@ void solve_vs_stls(input in, bool verbose) {
 // -------------------------------------------------------------------
 
 // Function to allocate one element of the VS-STLS arrays for the thermodynamic properties
-void alloc_vs_stls_thermo_arrays_elem(input in, vs_stls_pointers *pp){
+void alloc_vs_stls_arrays(input in, double **rsa, double **rsu){
 
-  pp->rsu = malloc( sizeof(double) * in.nrs);
-  if (pp->rsu == NULL) {
-    fprintf(stderr, "Failed to allocate memory for the free energy integrand\n");
-    exit(EXIT_FAILURE);
-  }
-
-  pp->rsa = malloc( sizeof(double) * in.nrs);
-  if (pp->rsa == NULL) {
+  *rsa = malloc( sizeof(double) * in.nrs);
+  if (*rsa == NULL) {
     fprintf(stderr, "Failed to allocate memory for the coupling parameter array\n");
     exit(EXIT_FAILURE);
   }
 
+  *rsu = malloc( sizeof(double) * in.nrs);
+  if (*rsu == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the free energy integrand\n");
+    exit(EXIT_FAILURE);
+  }
   
 }
 
-// Function to free the VS-STLS arrays for the structural properties
-void free_vs_stls_struct_arrays(vs_struct xx, vs_struct phi, vs_struct SS, vs_struct SSHF,
-				vs_struct GG, vs_struct GG_new){
-
-  for (int ii=0; ii<VSS_NUMEL; ii++) {
-    free_stls_arrays(xx.el[ii], phi.el[ii], GG.el[ii],
-		     GG_new.el[ii], SS.el[ii], SSHF.el[ii]);
-  }
- 
-}
-
 // Function to free the VS-STLS arrays for the thermodynamic properties
-void free_vs_stls_thermo_arrays(vs_struct rsu, vs_struct rsa){
+void free_vs_stls_arrays(double *rsa, double *rsu){
 
-  for (int ii=0; ii<VSS_NUMEL; ii++) {
-    free(rsu.el[ii]);
-    free(rsa.el[ii]);
-  }
- 
+  free(rsa);
+  free(rsu);
+
 }
-
-
-// Function to free a single VS-STLS array
-void free_vs_stls_one_array(vs_struct arr){
-
-  for (int ii=0; ii<VSS_NUMEL; ii++) {
-    free(arr.el[ii]);
-  }
- 
-}
-
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO INITIALIZE ARRAYS
@@ -210,10 +195,6 @@ void init_tmp_vs_stls_arrays(input *vs_in, vs_struct xx,
       }
     }
   }
-
-  /* for (int ii=0; ii<VSS_NUMEL; ii++){ */
-  /*   printf("rs = %f, theta = %f\n", vs_in[ii].rs, vs_in[ii].Theta); */
-  /* } */
 
   // Chemical potential
   if (verbose) printf("Chemical potential calculation: ");
@@ -491,10 +472,13 @@ void compute_slfc_vs_stls(vs_struct GG, vs_struct SS, vs_struct xx, input *vs_in
     slfc_vs_stls_dt(GG, GG_stls, vs_in);
   
   // Free memory
-  free_vs_stls_one_array(GG_stls);
-    
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    free(GG_stls.el[ii]);
+  }
+  
 }
 
+// STLS contribution to the VS-STLS static local field correction
 void slfc_vs_stls_stls(vs_struct GG, vs_struct SS, vs_struct GG_stls,
 		       vs_struct xx, input *vs_in){
 
@@ -510,6 +494,7 @@ void slfc_vs_stls_stls(vs_struct GG, vs_struct SS, vs_struct GG_stls,
   
 }
 
+// Wave-vector derivative contribution to the VS-STLS static local field correction
 void slfc_vs_stls_dx(vs_struct GG, vs_struct GG_stls, vs_struct xx,
 		     input *vs_in){
 
@@ -527,6 +512,7 @@ void slfc_vs_stls_dx(vs_struct GG, vs_struct GG_stls, vs_struct xx,
 }
 
 
+// State point derivateive contribution to the VS-STLS static local field correction
 void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls, input *vs_in){
 
   #pragma omp parallel for
@@ -741,17 +727,25 @@ void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
   vs_struct GG_new;
   vs_struct SS;
   vs_struct SSHF;
-  stls_pointers stls_pp;
+
+  // Temporary arrays for allocation
+  double *xx_el = NULL; 
+  double *phi_el = NULL;
+  double *GG_el = NULL;
+  double *GG_new_el = NULL;
+  double *SS_el = NULL;
+  double *SSHF_el = NULL;
     
   // Allocate arrays
   for (int ii=0; ii<VSS_NUMEL; ii++) {
-    alloc_stls_arrays_new(vs_in[VSS_IDXIN], &stls_pp);
-    xx_tmp.el[ii] = stls_pp.xx;
-    phi.el[ii] = stls_pp.phi;
-    GG.el[ii] = stls_pp.GG;
-    GG_new.el[ii] = stls_pp.GG_new;
-    SS.el[ii] = stls_pp.SS;
-    SSHF.el[ii] = stls_pp.SSHF;
+    alloc_stls_arrays(vs_in[VSS_IDXIN], &xx_el, &phi_el, &GG_el,
+		      &GG_new_el, &SS_el, &SSHF_el);
+    xx_tmp.el[ii] = xx_el;
+    phi.el[ii] = phi_el;
+    GG.el[ii] = GG_el;
+    GG_new.el[ii] = GG_new_el;
+    SS.el[ii] = SS_el;
+    SSHF.el[ii] = SSHF_el;
   }
   
   // Update the first part of rsu in steps of five
@@ -767,8 +761,11 @@ void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
 		     false, verbose);
 
   // Free memory
-  free_vs_stls_struct_arrays(xx_tmp, phi, SS, SSHF, GG, GG_new);
-     
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    free_stls_arrays(xx_tmp.el[ii], phi.el[ii], GG.el[ii],
+		     GG_new.el[ii], SS.el[ii], SSHF.el[ii]);
+  }
+  
 }
 
 void compute_rsu_blocks(vs_struct SS, vs_struct SSHF, vs_struct GG,
@@ -841,39 +838,50 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF, vs_struct GG,
 // write text files for output
 void write_text_vs_stls(double *rsu, double *rsa, input in){
 
+  // Free energy output
+  write_text_fxc(rsu, rsa, in);
+
+  // Free parameter output
+  write_text_alpha_CSR(in);
+  
+}
+
+
+// Write free energy to text file
+void write_text_fxc(double *rsu, double *rsa, input in){
+
+  FILE* fid;
+  char out_name[100];
+  
+  sprintf(out_name, "fxc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the free energy\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  fprintf(fid, "%.8e %.8e %.8e\n", in.rs, in.Theta, compute_free_energy(rsu, rsa, in));
+  
+  fclose(fid);
+
+}
+
+
+// Write free parameter for the compressibility sum rule to file
+void write_text_alpha_CSR(input in){
+
     FILE* fid;
     char out_name[100];
-    
-    // Output for the internal energy used for thermodynamic integration
-    sprintf(out_name, "rsu_thermoint_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-        fprintf(stderr, "Error while creating the output file for the static structure factor (HF)");
-        exit(EXIT_FAILURE);
-    }
-    for (int ii = 0; ii < in.nrs; ii++)
-        fprintf(fid, "%.8e %.8e\n", rsa[ii], rsu[ii]);
 
-    fclose(fid);
-
-    // Output for the free energy
-    sprintf(out_name, "fxc_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
-    fid = fopen(out_name, "w");
-    if (fid == NULL) {
-        fprintf(stderr, "Error while creating the output file for the free energy\n");
-        exit(EXIT_FAILURE);
-    }
-    fprintf(fid, "%.8e\n", compute_free_energy(rsu, rsa, in));
-    fclose(fid);
-
-    // Output for the free parameter
     sprintf(out_name, "alpha_csr_rs%.3f_theta%.3f_%s.dat", in.rs, in.Theta, in.theory);
     fid = fopen(out_name, "w");
     if (fid == NULL) {
         fprintf(stderr, "Error while creating the output file for the free parameter\n");
         exit(EXIT_FAILURE);
     }
-    fprintf(fid, "%.8e\n", in.a_csr);
+    
+    fprintf(fid, "%.8e %.8e %.8e\n", in.rs, in.Theta, in.a_csr);
+
     fclose(fid);
 
 }

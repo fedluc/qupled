@@ -689,7 +689,7 @@ void write_text_qstls_iet(double *SS, double *psi, double *phi,
     fprintf(stderr, "Error while creating the output file for the interaction energy");
     exit(EXIT_FAILURE);
   }
-  fprintf(fid, "%.8e\n", compute_internal_energy(SS, xx, in));
+  fprintf(fid, "%.8e %.8e %.8e\n", in.rs, in.Theta, compute_internal_energy(SS, xx, in));
   fclose(fid);
 
 }
