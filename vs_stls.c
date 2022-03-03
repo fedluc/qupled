@@ -266,10 +266,10 @@ double vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu, vs_struct rsa,
 
   input in = vs_in[VSS_IDXIN];
   double alpha = in.a_csr;
-
-  // Iterations
   double iter_err = 1.0;
   int iter_counter = 0;
+  
+  // Iterations
   while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
 
     // Start timing
@@ -375,14 +375,7 @@ void vs_stls_struct_iterations(vs_struct SS, vs_struct SSHF,
 // Compute error for the iterations over the structural properties
 double vs_stls_struct_err(vs_struct GG, vs_struct GG_new, input *vs_in){
 
-  double err = 0.0;
-  double err_tmp;
-  
-  for (int ii=0; ii<VSS_NUMEL; ii++) {
-    err_tmp = stls_err(GG.el[ii], GG_new.el[ii], vs_in[ii]);
-    if (err_tmp > err) err = err_tmp;
-  }
-  return err;
+  return stls_err(GG.rst, GG_new.rst, vs_in[VSS_IDXIN]);
   
 }
 
