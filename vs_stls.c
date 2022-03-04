@@ -1090,10 +1090,11 @@ void read_thermo_vs_stls(vs_struct rsa, vs_struct rsu,
     rsu.rstm1[ii] = rsu_file.rstm1[ii];
     rsu.rst[ii] = rsu_file.rst[ii];
     rsu.rstp1[ii] = rsu_file.rstp1[ii];
-    *cutoff = ii;
     
   }
 
+  *cutoff = nrs_file;
+  
   // Free memory
   for (int ii=0; ii<VSS_NUMEL; ii++){
     free_vs_stls_arrays(rsa_file.el[ii], rsu_file.el[ii]);
