@@ -51,14 +51,6 @@ double compute_internal_energy(double *SS, double *xx, input in);
 double uex(double yy, void *pp);
 
 // -------------------------------------------------------------------
-// FUNCTIONS USED TO COMPUTE THE FREE ENERGY
-// -------------------------------------------------------------------
-
-double compute_free_energy(double *rsu, double *rsp, input in);
-
-double fex(double rs, void* pp);
-
-// -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE RADIAL DISTRIBUTION FUNCTION
 // -------------------------------------------------------------------
 

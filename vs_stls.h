@@ -206,10 +206,18 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 			vs_struct GG, vs_struct GG_new,
 			vs_struct phi, vs_struct xx,
 			vs_struct rsu, vs_struct rsa,
-			input *vs_in, int start,
-			int end, int step,
+			input *vs_in, int *last,
+			int start, int end, int step,
 			bool compute_guess, bool verbose);
-    
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE FREE ENERGY
+// -------------------------------------------------------------------
+
+double compute_free_energy(double *rsu, double *rsa, input in);
+
+double fxc(double rs, void* pp);
+
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
@@ -223,6 +231,14 @@ void write_text_fxc(double *rsu, double *rsp, input in);
 void write_text_alpha_CSR(input in);
 
 void read_guess_vs_stls(vs_struct SS, vs_struct GG, input *vs_in);
-  
+
+void write_thermo_vs_stls(vs_struct rsa, vs_struct rsu, input *vs_in);
+
+void read_thermo_vs_stls(vs_struct rsa, vs_struct rsu,
+			 int *cutoff, input *vs_in);
+
+void check_thermo_vs_stls(double drs, double dt, double Theta, input in,
+			  size_t it_read, size_t it_expected, FILE *fid,
+			  bool check_grid, bool check_items, bool check_eof);
 #endif
 

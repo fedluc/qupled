@@ -35,9 +35,10 @@ static char doc[] =
 #define ARGUMENT_GUESS_WRITE_SHORT 0x97
 #define ARGUMENT_GUESS_FILES_SHORT 0x98
 #define ARGUMENT_IET_MAPPING_SHORT 0x99
-#define ARGUMENT_DRS_SHORT 0x100
-#define ARGUMENT_DT_SHORT 0x101
-#define ARGUMENT_ALPHA_CSR_SHORT 0x102
+#define ARGUMENT_VS_DRS_SHORT 0x100
+#define ARGUMENT_VS_DT_SHORT 0x101
+#define ARGUMENT_VS_ALPHA_SHORT 0x102
+#define ARGUMENT_VS_THERMO_SHORT 0x103
 
 // Optional arguments
 static struct argp_option options[] = {
@@ -76,14 +77,16 @@ static struct argp_option options[] = {
    "Load initial guess from file for the qstls and qstls-iet schemes"},
 
   {"qstls-fix", ARGUMENT_QSTLS_FIXED_SHORT, "NO_FILE", 0,
-   "Load fixed component of the density response function from file for the qslts scheme"},
+   "Load fixed component of the density response function from file for "
+   "the qslts scheme"},
 
   {"qstls-iet-fix", ARGUMENT_QSTLS_IET_FIXED_SHORT, "NO_FILE", 0,
-   "Load fixed component of the density response function from file for the qslts-iet scheme"},
+   "Load fixed component of the density response function from file for "
+   "the qslts-iet scheme"},
 
   {"qstls-iet-static", ARGUMENT_QSTLS_IET_FIXED_SHORT, "0", 0,
-   "Use static approximation to compute the auxiliary density response in the qstls-iet scheme"
-  " (0 = off, 1 = on)"},
+   "Use static approximation to compute the auxiliary density response "
+   "in the qstls-iet scheme (0 = off, 1 = on)"},
 
   {"theory", ARGUMENT_THEORY_SHORT, "STLS", 0,
    "Scheme to be solved"},
@@ -103,15 +106,18 @@ static struct argp_option options[] = {
   {"iet-mapping", ARGUMENT_IET_MAPPING_SHORT, "standard", 0,
    "Mapping between quantum and classical state points for IET-based schemes"},
 
-  {"vs-drs", ARGUMENT_DRS_SHORT, "0.01", 0,
+  {"vs-drs", ARGUMENT_VS_DRS_SHORT, "0.01", 0,
    "Resolution of the coupling parameter grid for the VS schemes"},
 
-  {"vs-dt", ARGUMENT_DRS_SHORT, "0.01", 0,
+  {"vs-dt", ARGUMENT_VS_DT_SHORT, "0.01", 0,
    "Resolution of the degeneracy parameter grid for the VS schemes"},
 
-  {"vs-alpha", ARGUMENT_ALPHA_CSR_SHORT, "0.5", 0,
+  {"vs-alpha", ARGUMENT_VS_ALPHA_SHORT, "0.5", 0,
    "Initial guess for the free parameter in the VS schemes"},
 
+  {"vs-thermo-file", ARGUMENT_VS_THERMO_SHORT, "NO_FILE", 0,
+   "Load thermodynamic integration data from file for the VS schemes"},
+  
   { 0 }
   
 };
@@ -222,25 +228,29 @@ parse_opt (int key, char *arg, struct argp_state *state)
       else exit(EXIT_FAILURE);
       break;
 
-    case ARGP_KEY_ARG:
-      if (state->arg_num > 0) 
-        argp_usage (state);
-      break;
-
     case ARGUMENT_IET_MAPPING_SHORT:
       in->iet_mapping = arg;
       break;
 
-    case ARGUMENT_DRS_SHORT:
-      in->drs = atof(arg);
+    case ARGUMENT_VS_DRS_SHORT:
+      in->vs_drs = atof(arg);
       break;
 
-    case ARGUMENT_DT_SHORT:
-      in->dt = atof(arg);
+    case ARGUMENT_VS_DT_SHORT:
+      in->vs_dt = atof(arg);
       break;
 
-    case ARGUMENT_ALPHA_CSR_SHORT:
-      in->a_csr = atof(arg);
+    case ARGUMENT_VS_ALPHA_SHORT:
+      in->vs_alpha = atof(arg);
+      break;
+
+    case ARGUMENT_VS_THERMO_SHORT:
+      in->vs_thermo_file = arg;
+      break;
+      
+    case ARGP_KEY_ARG:
+      if (state->arg_num > 0) 
+        argp_usage (state);
       break;
 
     default:
@@ -304,9 +314,10 @@ void set_default_parse_opt(input *in){
   in->guess_file1 = "NO_FILE"; // File of the first file used to construct the guess (static structure factor)
   in->guess_file2 = "NO_FILE"; // File of the second file used to construct the guess (static local field correction or auxiliary density response)
   in->iet_mapping = "standard"; // Mapping between the quantum and classical state points for the IET-based schemes
-  in->drs = 0.01; // Resolution of the coupling parameter grid for the VS schemes
-  in->dt = 0.01; // Resolution of the degeneracy parameter grid for the VS schemes
-  in->a_csr = 0.5; // Initial guess for the free parameter in the VS schemes
+  in->vs_drs = 0.01; // Resolution of the coupling parameter grid for the VS schemes
+  in->vs_dt = 0.01; // Resolution of the degeneracy parameter grid for the VS schemes
+  in->vs_alpha = 0.5; // Initial guess for the free parameter in the VS schemes
+  in->vs_thermo_file = "NO_FILE"; // File with thermodynamic integration data for the VS schemes
   
 }
 
@@ -315,7 +326,7 @@ void set_default_parse_opt(input *in){
 // ------------------------------------------------
 void get_grid_size(input *in){
   in->nx = (int)floor(in->xmax/in->dx);
-  in->nrs = (int)floor((in->rs + in->drs)/in->drs) + 1; 
+  in->vs_nrs = (int)floor((in->rs + in->vs_drs)/in->vs_drs) + 1; 
 }
 
 
@@ -371,17 +382,17 @@ void check_input(input *in){
     invalid_input = true;
   }
 
-  if (in->drs <= 0.0) {
+  if (in->vs_drs <= 0.0) {
     fprintf(stderr, "The resolution of the coupling parameter grid must be larger than zero\n");
     invalid_input = true;
   }
 
-  if (in->dt <= 0.0) {
+  if (in->vs_dt <= 0.0) {
     fprintf(stderr, "The resolution of the degeneracy parameter grid must be larger than zero\n");
     invalid_input = true;
   }
 
-  if (in->a_csr <= 0.0) {
+  if (in->vs_alpha <= 0.0) {
     fprintf(stderr, "The free parameter for the VS schemes must be larger than zero\n");
     invalid_input = true;
   }
@@ -418,9 +429,10 @@ void print_input(input *in){
   printf("Guess file 1: %s\n", in->guess_file1);
   printf("Guess file 2: %s\n", in->guess_file2);
   printf("IET mapping: %s\n", in->iet_mapping);
-  printf("Coupling parameter resolution (VS schemes): %f\n", in->drs);
-  printf("Degeneracy parameter resolution (VS schemes): %f\n", in->dt);
-  printf("Free parameter for VS schemes: %f\n", in->a_csr);
+  printf("Coupling parameter resolution (VS schemes): %f\n", in->vs_drs);
+  printf("Degeneracy parameter resolution (VS schemes): %f\n", in->vs_dt);
+  printf("Free parameter for VS schemes: %f\n", in->vs_alpha);
+  printf("File for thermodynamic integration (VS): %s\n", in->vs_thermo_file);
   printf("-------------------------------------\n");
   
 }

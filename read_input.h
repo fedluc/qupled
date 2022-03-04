@@ -19,23 +19,24 @@ typedef struct {
   char *qstls_fixed_file;
   char *qstls_iet_fixed_file;
   char *theory;
-  double a_csr;
+  char *vs_thermo_file;
   double a_mix;
   double Theta;
   double rs;
   double dx;
-  double drs;
-  double dt;
   double err_min_iter;
   double mu_lo;
   double mu_hi;
   double mu;
+  double vs_alpha;
+  double vs_drs;
+  double vs_dt;
   double xmax;
   int nl;
   int nx;
-  int nrs;
   int nIter;
   int nThreads;
+  int vs_nrs;
   
 } input;
 
