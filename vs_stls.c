@@ -658,11 +658,15 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
     utp = rsu.rstp1[nrs-2]/rsa.rstp1[nrs-2];
     utm = rsu.rstm1[nrs-2]/rsa.rstm1[nrs-2];
   } 
-  
+
   // Free energy
+  printf("1\n");
   frs = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN]);
+  printf("2\n");
   frsp = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN+1]);
+  printf("3\n");
   frsm = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN-1]);
+  printf("4\n");
   if (finite_temperature) {
     ftp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN]);
     ftm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN]);
@@ -671,7 +675,7 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
     frsmtp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN-1]);
     frsmtm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN-1]);
   }
-	 
+  
   // Internal energy derivatives
   dudrs = (ursp - ursm)/(2.0*in.vs_drs);
   if (finite_temperature)
@@ -782,11 +786,14 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 			bool compute_guess, bool verbose){
 
   int nrs = vs_in[VSS_IDXIN].vs_nrs;
+  int last_tmp = -1;
   input vs_in_tmp[VSS_NUMEL];
   double u_int;
 
   for (int ii=start; ii<end; ii=ii+step) {
 
+    fprintf(stderr, "%f: ", rsa.rst[ii]);
+    
     // Define state point
     for (int jj=0; jj<VSS_NUMEL; jj++) {
       vs_in_tmp[jj] = vs_in[jj];
@@ -817,7 +824,7 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
       rsu.el[jj][ii] = vs_in_tmp[jj].rs*u_int;
       
     }
-    
+
     // Update free energy integrand of neighboring points
     // We care to keep synchronized only the rst, rstm1 and rstp1 elements of rsu,
     // since these are the only elements used to compute alpha (see compute_alpha)
@@ -829,14 +836,23 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 	rsu.el[VSS_IDXIN+jj][ii+1] = rsu.el[VSS_IDXIN+jj+1][ii];
 	rsu.el[VSS_IDXIN+jj][ii+2] = rsu.el[VSS_IDXIN+jj+2][ii];
       }
-      
-    }
 
+    }
+    
     // Keep track of the index of the last element that was processed
-    *last = ii;
+    last_tmp = ii;
+
+    fprintf(stderr, "Done\n");
     
   }
 
+  if (last_tmp >= 0) {
+    if (start>=2 && end<=nrs-2)
+      *last = last_tmp + 3;
+    else
+      *last = last_tmp + 1;
+  }
+  
 }
 
 
@@ -862,7 +878,7 @@ double compute_free_energy(double *rsu, double *rsa, input in) {
   gsl_interp_accel *rsu_acc_ptr;
   
   // Allocate the accelerator and the spline objects
-  rsu_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.vs_nrs);
+  rsu_sp_ptr = gsl_spline_alloc(gsl_interp_linear, in.vs_nrs);
   rsu_acc_ptr = gsl_interp_accel_alloc();
   
   // Initialize the spline
@@ -901,8 +917,11 @@ double fxc(double rs, void* pp) {
   gsl_spline* rsu_sp_ptr = (params->rsu_sp_ptr);
   gsl_interp_accel* rsu_acc_ptr = (params->rsu_acc_ptr);
 
-  return gsl_spline_eval(rsu_sp_ptr, rs, rsu_acc_ptr);
-  
+  if (rs >= 0.0) 
+    return gsl_spline_eval(rsu_sp_ptr, rs, rsu_acc_ptr);
+  else
+    return 0.0;
+      
 }
 
 
