@@ -803,8 +803,6 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
   double u_int;
 
   for (int ii=start; ii<end; ii=ii+step) {
-
-    fprintf(stderr, "%f: ", rsa.rst[ii]);
     
     // Define state point
     for (int jj=0; jj<VSS_NUMEL; jj++) {
@@ -854,8 +852,6 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
     // Keep track of the index of the last element that was processed
     last_tmp = ii;
 
-    fprintf(stderr, "Done\n");
-    
   }
 
   if (last_tmp >= 0) {
