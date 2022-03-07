@@ -9,44 +9,25 @@
 // -------------------------------------------------------------------
 
 // Number of elements (field) in the vs_sp structure
-#define VSS_NUMEL 25
-#define VSS_IDXIN 12
-#define VSS_STENCIL 5
+#define VSS_NUMEL 9
+#define VSS_IDXIN 4
+#define VSS_STENCIL 3
 
 typedef union {
 
   struct {
 
-    double *rsm2tm2;
-    double *rsm1tm2;
-    double *rstm2;
-    double *rsp1tm2;
-    double *rsp2tm2;
-
-    double *rsm2tm1;
     double *rsm1tm1;
     double *rstm1;
     double *rsp1tm1;
-    double *rsp2tm1;
 
-    double *rsm2t;
     double *rsm1t;
     double *rst;
     double *rsp1t;
-    double *rsp2t;
 
-    double *rsm2tp1;
     double *rsm1tp1;
     double *rstp1;
     double *rsp1tp1;
-    double *rsp2tp1;
-
-    double *rsm2tp2;
-    double *rsm1tp2;
-    double *rstp2;
-    double *rsp1tp2;
-    double *rsp2tp2;
-    
     
   };
   double *el[VSS_NUMEL];

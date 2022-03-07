@@ -61,7 +61,7 @@ void solve_vs_stls(input in, bool verbose) {
 
   // Iterative procedure to enforce the compressibility sum rule
   if (verbose) printf("Iterative procedure to enforce the compressibility sum rule ...\n");
-  if (in.vs_solve_csr) 
+  if (in.vs_solve_csr)
     in.vs_alpha = vs_stls_thermo_iterations(xx, rsu, rsa, vs_in, true);
   if (verbose) printf("Done.\n");
 
@@ -197,7 +197,7 @@ void init_tmp_vs_stls_arrays(input *vs_in, vs_struct xx,
   // State points with modified coupling parameter
   for (int ii=0; ii<VSS_STENCIL; ii++){
     for(int jj=ii; jj<VSS_NUMEL; jj=jj+VSS_STENCIL){
-      vs_in[jj].rs += (ii-2)*in.vs_drs;
+      vs_in[jj].rs += (ii-1)*in.vs_drs;
       if (vs_in[jj].rs < 0.0) vs_in[jj].rs = 0.0;
     }
   }
@@ -206,7 +206,7 @@ void init_tmp_vs_stls_arrays(input *vs_in, vs_struct xx,
   if (finite_temperature){
     for (int ii=0; ii<VSS_NUMEL; ii=ii+VSS_STENCIL){
       for(int jj=ii; jj<ii+VSS_STENCIL; jj++){
-	vs_in[jj].Theta += (ii/VSS_STENCIL-2)*in.vs_dt;
+	vs_in[jj].Theta += (ii/VSS_STENCIL-1)*in.vs_dt;
 	if (vs_in[jj].Theta < 0.0) vs_in[jj].Theta = 0.0;
       }
     }
@@ -528,23 +528,23 @@ void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls, input *vs_in){
   for (int ii=0; ii<VSS_NUMEL; ii++){
     for (int jj=0; jj<vs_in[ii].nx; jj++){
 
-      // Forward difference for all state points with rs - 2*drs
+      // Forward difference for all state points with rs - drs
       if (ii % VSS_STENCIL == 0)
 	
-	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha
-	  *slfc_vs_stls_drs_forward(GG_stls, ii, jj, vs_in);
+      	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha
+      	  *slfc_vs_stls_drs_forward(GG_stls, ii, jj, vs_in);
 
-      // Backward difference for all state points with rs + 2*drs
+      // Backward difference for all state points with rs + drs
       else if ((ii-VSS_STENCIL+1) % VSS_STENCIL == 0)
 
-	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha
-	  *slfc_vs_stls_drs_backward(GG_stls, ii, jj, vs_in);
+      	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha
+      	  *slfc_vs_stls_drs_backward(GG_stls, ii, jj, vs_in);
 
       // Centered difference for all the other state points
       else
 
-	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha
-	  *slfc_vs_stls_drs_centered(GG_stls, ii, jj, vs_in);
+      	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha
+      	  *slfc_vs_stls_drs_centered(GG_stls, ii, jj, vs_in);
       
     }
   }
@@ -557,13 +557,13 @@ void slfc_vs_stls_dt(vs_struct GG, vs_struct GG_stls, input *vs_in){
   for (int ii=0; ii<VSS_NUMEL; ii++){
     for (int jj=0; jj<vs_in[ii].nx; jj++){
 
-      // Forward difference for all state points with Theta - 2*dt
+      // Forward difference for all state points with Theta - dt
       if (ii/VSS_STENCIL == 0)
 	
 	GG.el[ii][jj] += -(2.0/3.0)*vs_in[ii].vs_alpha
 	  *slfc_vs_stls_dt_forward(GG_stls, ii, jj, vs_in);
 
-      // Backward difference for all state points with Theta + 2*dt
+      // Backward difference for all state points with Theta + dt
       else if (ii/VSS_STENCIL == VSS_STENCIL-1)
 
 	GG.el[ii][jj] += -(2.0/3.0)*vs_in[ii].vs_alpha
@@ -764,16 +764,17 @@ void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
 
   // Update the first part of rsu in steps of five
   compute_rsu_blocks(SS, SSHF, GG, GG_new, phi, xx,
-		     rsu, rsa, vs_in, &cutoff_idx,
-		     cutoff_idx+2, nrs-2, VSS_STENCIL,
-		     true, verbose);
+  		     rsu, rsa, vs_in, &cutoff_idx,
+  		     cutoff_idx+1, nrs-1, VSS_STENCIL,
+  		     true, verbose);
  
   // Update the remainder of rsu in steps of one
   compute_rsu_blocks(SS, SSHF, GG, GG_new, phi, xx,
-		     rsu, rsa, vs_in, &cutoff_idx,
-		     cutoff_idx, nrs, 1,
-		     false, verbose);
-
+  		     rsu, rsa, vs_in, &cutoff_idx,
+  		     cutoff_idx, nrs, 1,
+  		     false, verbose);
+  
+  
   // Final check to ensure that all the rsu array has been filled
   if (cutoff_idx < nrs-1) {
     fprintf(stderr, "Unexpected error, the free energy integrand was computed "
@@ -841,13 +842,11 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
     // Update free energy integrand of neighboring points
     // We care to keep synchronized only the rst, rstm1 and rstp1 elements of rsu,
     // since these are the only elements used to compute alpha (see compute_alpha)
-    if (start>=2 && end<=nrs-2){
+    if (start>=1 && end<=nrs-1){
       
-      for (int jj=-VSS_STENCIL; jj<2*VSS_STENCIL; jj=jj+VSS_STENCIL){
-	rsu.el[VSS_IDXIN+jj][ii-2] = rsu.el[VSS_IDXIN+jj-2][ii];
-	rsu.el[VSS_IDXIN+jj][ii-1] = rsu.el[VSS_IDXIN+jj-1][ii];
-	rsu.el[VSS_IDXIN+jj][ii+1] = rsu.el[VSS_IDXIN+jj+1][ii];
-	rsu.el[VSS_IDXIN+jj][ii+2] = rsu.el[VSS_IDXIN+jj+2][ii];
+      for (int jj=-VSS_STENCIL; jj<VSS_STENCIL; jj=jj+VSS_STENCIL){
+    	rsu.el[VSS_IDXIN+jj][ii-1] = rsu.el[VSS_IDXIN+jj-1][ii];
+    	rsu.el[VSS_IDXIN+jj][ii+1] = rsu.el[VSS_IDXIN+jj+1][ii];
       }
 
     }
@@ -858,8 +857,8 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
   }
 
   if (last_tmp >= 0) {
-    if (start>=2 && end<=nrs-2)
-      *last = last_tmp + 3;
+    if (start>=1 && end<=nrs-1)
+      *last = last_tmp + 2;
     else
       *last = last_tmp + 1;
   }
