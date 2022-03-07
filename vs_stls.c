@@ -68,7 +68,7 @@ void solve_vs_stls(input in, bool verbose) {
   // Structural properties
   if (verbose) printf("Structural properties calculation...\n");
   initial_guess_vs_stls(xx, SS, SSHF, GG, GG_new, phi, vs_in);
-  vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in, false);
+  vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in, true);
   if (verbose) printf("Done.\n");
   
   // Thermodynamic properties
@@ -351,17 +351,17 @@ void vs_stls_struct_iterations(vs_struct SS, vs_struct SSHF,
     
     // Start timing
     double tic = omp_get_wtime();
+
+    // Update SLFC
+    compute_slfc_vs_stls(GG, SS, xx, vs_in);
     
     // Update SSF
-    compute_ssf_vs_stls(SS, SSHF, GG, phi, xx, vs_in);
-    
-    // Update SLFC
-    compute_slfc_vs_stls(GG_new, SS, xx, vs_in);
+    compute_ssf_vs_stls(GG_new, SSHF, GG, phi, xx, vs_in);
     
     // Update diagnostic
     iter_counter++;
-    iter_err = vs_stls_struct_err(GG, GG_new, vs_in);
-    vs_stls_struct_update(GG, GG_new, vs_in);
+    iter_err = vs_stls_struct_err(SS, GG_new, vs_in);
+    vs_stls_struct_update(SS, GG_new, vs_in);
     
     // End timing
     double toc = omp_get_wtime();
@@ -774,7 +774,6 @@ void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
   		     cutoff_idx, nrs, 1,
   		     false, verbose);
   
-  
   // Final check to ensure that all the rsu array has been filled
   if (cutoff_idx < nrs-1) {
     fprintf(stderr, "Unexpected error, the free energy integrand was computed "
@@ -843,8 +842,8 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
     // We care to keep synchronized only the rst, rstm1 and rstp1 elements of rsu,
     // since these are the only elements used to compute alpha (see compute_alpha)
     if (start>=1 && end<=nrs-1){
-      
-      for (int jj=-VSS_STENCIL; jj<VSS_STENCIL; jj=jj+VSS_STENCIL){
+
+      for (int jj=-VSS_STENCIL; jj<VSS_STENCIL+1; jj=jj+VSS_STENCIL){
     	rsu.el[VSS_IDXIN+jj][ii-1] = rsu.el[VSS_IDXIN+jj-1][ii];
     	rsu.el[VSS_IDXIN+jj][ii+1] = rsu.el[VSS_IDXIN+jj+1][ii];
       }
@@ -855,7 +854,7 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
     last_tmp = ii;
 
   }
-
+  
   if (last_tmp >= 0) {
     if (start>=1 && end<=nrs-1)
       *last = last_tmp + 2;
