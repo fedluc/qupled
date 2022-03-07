@@ -803,6 +803,9 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
   double u_int;
 
   for (int ii=start; ii<end; ii=ii+step) {
+
+    // Print state point
+    printf("rsa = %f\n", rsa.rst[ii]);
     
     // Define state point
     for (int jj=0; jj<VSS_NUMEL; jj++) {
@@ -814,9 +817,9 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
     init_tmp_vs_stls_arrays(vs_in_tmp, xx, phi, SSHF, verbose);
 
     // Initial guess
-    /* if (compute_guess && ii == start) { */
+    if (compute_guess && ii == start) {
       initial_guess_vs_stls(xx, SS, SSHF, GG, GG_new, phi, vs_in_tmp);
-    /* } */
+    }
     
     // Compute structural properties with the VS-STLS static local field correction
     vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in_tmp, verbose);
@@ -886,7 +889,7 @@ double compute_free_energy(double *rsu, double *rsa, input in) {
   gsl_interp_accel *rsu_acc_ptr;
   
   // Allocate the accelerator and the spline objects
-  rsu_sp_ptr = gsl_spline_alloc(gsl_interp_linear, in.vs_nrs);
+  rsu_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.vs_nrs);
   rsu_acc_ptr = gsl_interp_accel_alloc();
   
   // Initialize the spline
