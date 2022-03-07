@@ -36,7 +36,10 @@ void solve_vs_stls(input in, bool verbose) {
   double *SSHF_el = NULL;
   double *rsu_el = NULL;
   double *rsa_el = NULL;
-    
+
+  // Define size of grid for thermodynamic integration
+  get_grid_thermo_size(&in);
+  
   // Allocate arrays
   for (int ii=0; ii<VSS_NUMEL; ii++) {
     alloc_stls_arrays(in, &xx_el, &phi_el, &GG_el,
@@ -58,7 +61,8 @@ void solve_vs_stls(input in, bool verbose) {
 
   // Iterative procedure to enforce the compressibility sum rule
   if (verbose) printf("Iterative procedure to enforce the compressibility sum rule ...\n");
-  in.vs_alpha = vs_stls_thermo_iterations(xx, rsu, rsa, vs_in, true);
+  if (in.vs_solve_csr) 
+    in.vs_alpha = vs_stls_thermo_iterations(xx, rsu, rsa, vs_in, true);
   if (verbose) printf("Done.\n");
 
   // Structural properties
@@ -89,6 +93,17 @@ void solve_vs_stls(input in, bool verbose) {
   
 }
 
+// -------------------------------------------------------------------
+// FUNCTION USED TO DEFINE THE SIZE OF THE GRID FOR THERMODYNAMIC
+// INTEGRATION
+// -------------------------------------------------------------------
+
+void get_grid_thermo_size(input *in){
+  
+  // Define a grid from 0.0 up to r_s + 2.0*d_rs  
+  in->vs_nrs = (int)floor((in->rs + in->vs_drs)/in->vs_drs) + 2;
+  
+}
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
@@ -155,7 +170,7 @@ void init_fixed_vs_stls_arrays(input *in, input *vs_in,
     rs_grid(rsa.el[ii], in);
   }
   if (verbose) printf("Done.\n");
-
+  
   // Input structure for the state point of interest
   vs_in[VSS_IDXIN] = *in;
   
@@ -271,7 +286,7 @@ double vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu, vs_struct rsa,
   int iter_counter = 0;
   
   // Iterations
-  while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
+  while (iter_counter < in.nIter && iter_err > in.vs_err_min_iter ) {
 
     // Start timing
     double tic = omp_get_wtime();
@@ -651,22 +666,19 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
   compute_rsu(xx, rsu, rsa, vs_in, false);
 
   // Internal energy
-  urs = rsu.rst[nrs-2]/rsa.rst[nrs-2];
-  ursp = rsu.rst[nrs-1]/rsa.rst[nrs-1];
-  ursm = rsu.rst[nrs-3]/rsa.rst[nrs-3];
-  if (finite_temperature) {
-    utp = rsu.rstp1[nrs-2]/rsa.rstp1[nrs-2];
-    utm = rsu.rstm1[nrs-2]/rsa.rstm1[nrs-2];
-  } 
+  ursm = rsu.rst[nrs-4]/rsa.rst[nrs-4];
+  urs = rsu.rst[nrs-3]/rsa.rst[nrs-3];
+  ursp = rsu.rst[nrs-2]/rsa.rst[nrs-2];
+   if (finite_temperature) {
+     utp = rsu.rstp1[nrs-3]/rsa.rstp1[nrs-3];
+     utm = rsu.rstm1[nrs-3]/rsa.rstm1[nrs-3];
+   } 
 
+ 
   // Free energy
-  printf("1\n");
   frs = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN]);
-  printf("2\n");
   frsp = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN+1]);
-  printf("3\n");
   frsm = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN-1]);
-  printf("4\n");
   if (finite_temperature) {
     ftp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN]);
     ftm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN]);
@@ -864,7 +876,7 @@ struct fxc_params {
 
   gsl_spline *rsu_sp_ptr;
   gsl_interp_accel *rsu_acc_ptr;
-
+  
 };
 
 double compute_free_energy(double *rsu, double *rsa, input in) {
@@ -916,12 +928,12 @@ double fxc(double rs, void* pp) {
   struct fxc_params* params = (struct fxc_params*)pp;
   gsl_spline* rsu_sp_ptr = (params->rsu_sp_ptr);
   gsl_interp_accel* rsu_acc_ptr = (params->rsu_acc_ptr);
-
-  if (rs >= 0.0) 
+  
+  if (rs >= 0.0)
     return gsl_spline_eval(rsu_sp_ptr, rs, rsu_acc_ptr);
   else
     return 0.0;
-      
+  
 }
 
 

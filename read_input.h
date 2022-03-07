@@ -11,6 +11,7 @@ typedef struct {
 
   bool guess_write;
   bool qstls_iet_static;
+  bool vs_solve_csr;
   char *guess_file1;
   char *guess_file2;
   char *iet_mapping;
@@ -31,6 +32,7 @@ typedef struct {
   double vs_alpha;
   double vs_drs;
   double vs_dt;
+  double vs_err_min_iter;
   double xmax;
   int nl;
   int nx;

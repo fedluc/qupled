@@ -4,25 +4,8 @@
 #include "read_input.h"
 
 // -------------------------------------------------------------------
-// DATA STRUCTURE USED TO ALLOCATE THE STLS ARRAYS
-// -------------------------------------------------------------------
-
-typedef struct {
-
-  double *xx;
-  double *phi;
-  double *SS;
-  double *SSHF;
-  double *GG;
-  double *GG_new;
-  
-} stls_pointers;
-
-// -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
-
-void alloc_stls_arrays_new(input in, stls_pointers *pp);
 
 void alloc_stls_arrays(input in, double **xx, double **phi,
 		       double **GG, double **GG_new,

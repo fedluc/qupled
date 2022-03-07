@@ -39,6 +39,8 @@ static char doc[] =
 #define ARGUMENT_VS_DT_SHORT 0x101
 #define ARGUMENT_VS_ALPHA_SHORT 0x102
 #define ARGUMENT_VS_THERMO_SHORT 0x103
+#define ARGUMENT_VS_MIN_ERR_SHORT 0x104
+#define ARGUMENT_VS_SOLVE_CSR_SHORT 0x105
 
 // Optional arguments
 static struct argp_option options[] = {
@@ -117,6 +119,12 @@ static struct argp_option options[] = {
 
   {"vs-thermo-file", ARGUMENT_VS_THERMO_SHORT, "NO_FILE", 0,
    "Load thermodynamic integration data from file for the VS schemes"},
+
+  {"vs-min-err", ARGUMENT_VS_MIN_ERR_SHORT, "1e-5", 0,
+   "Minimum error for convergence in the iterations for the VS schemes "},
+
+  {"vs-solve-csr", ARGUMENT_VS_SOLVE_CSR_SHORT, "1", 0,
+   "Enforce CSR in the VS schemes (0 = off, 1 = on)"},
   
   { 0 }
   
@@ -247,7 +255,15 @@ parse_opt (int key, char *arg, struct argp_state *state)
     case ARGUMENT_VS_THERMO_SHORT:
       in->vs_thermo_file = arg;
       break;
-      
+
+    case  ARGUMENT_VS_MIN_ERR_SHORT:
+      in->vs_err_min_iter = atof(arg);
+      break;
+
+    case  ARGUMENT_VS_SOLVE_CSR_SHORT:
+      in->vs_solve_csr = atoi(arg);
+      break;
+
     case ARGP_KEY_ARG:
       if (state->arg_num > 0) 
         argp_usage (state);
@@ -318,7 +334,9 @@ void set_default_parse_opt(input *in){
   in->vs_dt = 0.01; // Resolution of the degeneracy parameter grid for the VS schemes
   in->vs_alpha = 0.5; // Initial guess for the free parameter in the VS schemes
   in->vs_thermo_file = "NO_FILE"; // File with thermodynamic integration data for the VS schemes
-  
+  in->vs_err_min_iter = 1e-5; // Minimum error for convergence in the iterations for the VS schemes 
+  in->vs_solve_csr = 1; // Enforce CSR in the VS schemes
+
 }
 
 // ------------------------------------------------
@@ -326,7 +344,6 @@ void set_default_parse_opt(input *in){
 // ------------------------------------------------
 void get_grid_size(input *in){
   in->nx = (int)floor(in->xmax/in->dx);
-  in->vs_nrs = (int)floor((in->rs + in->vs_drs)/in->vs_drs) + 1; 
 }
 
 
@@ -396,7 +413,12 @@ void check_input(input *in){
     fprintf(stderr, "The free parameter for the VS schemes must be larger than zero\n");
     invalid_input = true;
   }
-  
+
+  if (in->vs_err_min_iter <= 0.0) {
+    fprintf(stderr, "The minimum error for convergence must be larger than zero\n");
+    invalid_input = true;
+  }
+    
   if (invalid_input) exit(EXIT_FAILURE);
   
 }
@@ -433,6 +455,8 @@ void print_input(input *in){
   printf("Degeneracy parameter resolution (VS schemes): %f\n", in->vs_dt);
   printf("Free parameter for VS schemes: %f\n", in->vs_alpha);
   printf("File for thermodynamic integration (VS): %s\n", in->vs_thermo_file);
+  printf("Error for convergence (VS): %f\n", in->vs_err_min_iter);
+  printf("Enforce CSR (VS): %d\n", in->vs_solve_csr);
   printf("-------------------------------------\n");
   
 }

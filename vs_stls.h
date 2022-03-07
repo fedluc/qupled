@@ -54,23 +54,12 @@ typedef union {
 } vs_struct;
 
 // -------------------------------------------------------------------
-// DATA STRUCTURE USED TO ALLOCATE THE THERMO VS-STLS ARRAYS
+// FUNCTION USED TO DEFINE THE SIZE OF THE GRID FOR THERMODYNAMIC
+// INTEGRATION
 // -------------------------------------------------------------------
 
-typedef struct {
-
-  double *rsu;
-  double *rsa;
+void get_grid_thermo_size(input *in);
   
-} vs_stls_pointers;
-
-
-// -------------------------------------------------------------------
-// FUNCTION USED TO LOOP OVER THE VS_STRUCT DATA STRUCTURES
-// -------------------------------------------------------------------
-
-double *get_el(vs_struct sp, int ii);
-
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
