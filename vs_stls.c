@@ -310,7 +310,7 @@ double vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu, vs_struct rsa,
       printf("alpha (CSR): %.5e\n", alpha);
       fflush(stdout);
     }
-    
+	
   }
 
   
@@ -327,11 +327,11 @@ double vs_stls_thermo_err(double alpha, input *vs_in){
 
 // Update self-consistency parameter for the CSR
 void vs_stls_thermo_update(double alpha, input *vs_in){
-
+  
   for (int ii=0; ii<VSS_NUMEL; ii++) {
     vs_in[ii].vs_alpha = alpha;
   }
-   
+  
 }
 
 
@@ -352,16 +352,16 @@ void vs_stls_struct_iterations(vs_struct SS, vs_struct SSHF,
     // Start timing
     double tic = omp_get_wtime();
 
-    // Update SLFC
-    compute_slfc_vs_stls(GG, SS, xx, vs_in);
-    
     // Update SSF
-    compute_ssf_vs_stls(GG_new, SSHF, GG, phi, xx, vs_in);
+    compute_ssf_vs_stls(SS, SSHF, GG, phi, xx, vs_in);
+
+    // Update SLFC
+    compute_slfc_vs_stls(GG_new, SS, xx, vs_in);
     
     // Update diagnostic
     iter_counter++;
-    iter_err = vs_stls_struct_err(SS, GG_new, vs_in);
-    vs_stls_struct_update(SS, GG_new, vs_in);
+    iter_err = vs_stls_struct_err(GG, GG_new, vs_in);
+    vs_stls_struct_update(GG, GG_new, vs_in);
     
     // End timing
     double toc = omp_get_wtime();
@@ -378,10 +378,11 @@ void vs_stls_struct_iterations(vs_struct SS, vs_struct SSHF,
 
   // Stop execution if convergence was not reached
   if (iter_err > in.err_min_iter) {
-    fprintf(stderr, "The calculation for the structural properties for "
-  	    "the state point (rs = %f, theta = %f) did not converge\n",
-  	    vs_in[VSS_IDXIN].rs, vs_in[VSS_IDXIN].Theta);
-    exit(EXIT_FAILURE);
+    fprintf(stderr, "Warning: The calculation for the structural properties for "
+  	    "the state point (rs = %f, theta = %f) did not converge\n"
+	    "Residual error at iteration %d: %.5e\n",
+  	    vs_in[VSS_IDXIN].rs, vs_in[VSS_IDXIN].Theta,
+	    iter_counter, iter_err);
   }
 	    
   if (verbose) printf("Done.\n");
@@ -531,19 +532,19 @@ void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls, input *vs_in){
       // Forward difference for all state points with rs - drs
       if (ii % VSS_STENCIL == 0)
 	
-      	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha
+      	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha*vs_in[ii].rs
       	  *slfc_vs_stls_drs_forward(GG_stls, ii, jj, vs_in);
 
       // Backward difference for all state points with rs + drs
       else if ((ii-VSS_STENCIL+1) % VSS_STENCIL == 0)
 
-      	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha
+      	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha*vs_in[ii].rs
       	  *slfc_vs_stls_drs_backward(GG_stls, ii, jj, vs_in);
 
       // Centered difference for all the other state points
       else
 
-      	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha
+      	GG.el[ii][jj] += -(1.0/3.0)*vs_in[ii].vs_alpha*vs_in[ii].rs
       	  *slfc_vs_stls_drs_centered(GG_stls, ii, jj, vs_in);
       
     }
@@ -560,19 +561,19 @@ void slfc_vs_stls_dt(vs_struct GG, vs_struct GG_stls, input *vs_in){
       // Forward difference for all state points with Theta - dt
       if (ii/VSS_STENCIL == 0)
 	
-	GG.el[ii][jj] += -(2.0/3.0)*vs_in[ii].vs_alpha
+	GG.el[ii][jj] += -(2.0/3.0)*vs_in[ii].vs_alpha*vs_in[ii].Theta
 	  *slfc_vs_stls_dt_forward(GG_stls, ii, jj, vs_in);
 
       // Backward difference for all state points with Theta + dt
       else if (ii/VSS_STENCIL == VSS_STENCIL-1)
 
-	GG.el[ii][jj] += -(2.0/3.0)*vs_in[ii].vs_alpha
+	GG.el[ii][jj] += -(2.0/3.0)*vs_in[ii].vs_alpha*vs_in[ii].Theta
 	  *slfc_vs_stls_dt_backward(GG_stls, ii, jj, vs_in);
 
       // Centered difference for all the other state points
       else
 
-	GG.el[ii][jj] += -(2.0/3.0)*vs_in[ii].vs_alpha
+	GG.el[ii][jj] += -(2.0/3.0)*vs_in[ii].vs_alpha*vs_in[ii].Theta
 	  *slfc_vs_stls_dt_centered(GG_stls, ii, jj, vs_in);
       
     }
@@ -583,42 +584,42 @@ void slfc_vs_stls_dt(vs_struct GG, vs_struct GG_stls, input *vs_in){
 
 double slfc_vs_stls_drs_centered(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return vs_in[ii].rs*(GG.el[ii+1][jj] - GG.el[ii-1][jj])/(2.0*vs_in[ii].vs_drs);
+  return (GG.el[ii+1][jj] - GG.el[ii-1][jj])/(2.0*vs_in[ii].vs_drs);
   
 }
 
 double slfc_vs_stls_drs_forward(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return vs_in[ii].rs*(-3.0*GG.el[ii][jj] + 4.0*GG.el[ii+1][jj]
-		       - GG.el[ii+2][jj])/(2.0*vs_in[ii].vs_drs);
+  return (-3.0*GG.el[ii][jj] + 4.0*GG.el[ii+1][jj]
+	  - GG.el[ii+2][jj])/(2.0*vs_in[ii].vs_drs);
   
 }
 
 double slfc_vs_stls_drs_backward(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return vs_in[ii].rs*(3.0*GG.el[ii][jj] - 4.0*GG.el[ii-1][jj]
-		       + GG.el[ii-2][jj])/(2.0*vs_in[ii].vs_drs);
+  return (3.0*GG.el[ii][jj] - 4.0*GG.el[ii-1][jj]
+	  + GG.el[ii-2][jj])/(2.0*vs_in[ii].vs_drs);
   
 }
 
 double slfc_vs_stls_dt_centered(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return vs_in[ii].Theta*(GG.el[ii+VSS_STENCIL][jj]
-			  - GG.el[ii-VSS_STENCIL][jj])/(2.0*vs_in[ii].vs_dt);
+  return (GG.el[ii+VSS_STENCIL][jj]
+	  - GG.el[ii-VSS_STENCIL][jj])/(2.0*vs_in[ii].vs_dt);
   
 }
 
 double slfc_vs_stls_dt_forward(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return vs_in[ii].Theta*(-3.0*GG.el[ii][jj] + 4.0*GG.el[ii+VSS_STENCIL][jj]
-			  - GG.el[ii+2*VSS_STENCIL][jj])/(2.0*vs_in[ii].vs_dt);
+  return (-3.0*GG.el[ii][jj] + 4.0*GG.el[ii+VSS_STENCIL][jj]
+	  - GG.el[ii+2*VSS_STENCIL][jj])/(2.0*vs_in[ii].vs_dt);
   
 }
 
 double slfc_vs_stls_dt_backward(vs_struct GG, int ii, int jj, input *vs_in){
 
-  return vs_in[ii].Theta*(3.0*GG.el[ii][jj] - 4.0*GG.el[ii-VSS_STENCIL][jj]
-			  + GG.el[ii-2*VSS_STENCIL][jj])/(2.0*vs_in[ii].vs_dt);
+  return (3.0*GG.el[ii][jj] - 4.0*GG.el[ii-VSS_STENCIL][jj]
+	  + GG.el[ii-2*VSS_STENCIL][jj])/(2.0*vs_in[ii].vs_dt);
   
 }
 
