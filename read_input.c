@@ -41,6 +41,7 @@ static char doc[] =
 #define ARGUMENT_VS_THERMO_SHORT 0x103
 #define ARGUMENT_VS_MIN_ERR_SHORT 0x104
 #define ARGUMENT_VS_SOLVE_CSR_SHORT 0x105
+#define ARGUMENT_VS_MIX_SHORT 0x106
 
 // Optional arguments
 static struct argp_option options[] = {
@@ -123,6 +124,9 @@ static struct argp_option options[] = {
   {"vs-min-err", ARGUMENT_VS_MIN_ERR_SHORT, "1e-5", 0,
    "Minimum error for convergence in the iterations for the VS schemes "},
 
+  {"vs-mix", ARGUMENT_VS_MIN_ERR_SHORT, "0.1", 0,
+   "Mixing parameter for iterative solution in the VS schemes "},
+  
   {"vs-solve-csr", ARGUMENT_VS_SOLVE_CSR_SHORT, "1", 0,
    "Enforce CSR in the VS schemes (0 = off, 1 = on)"},
   
@@ -260,6 +264,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
       in->vs_err_min_iter = atof(arg);
       break;
 
+    case  ARGUMENT_VS_MIX_SHORT:
+      in->vs_a_mix = atof(arg);
+      break;
+
     case  ARGUMENT_VS_SOLVE_CSR_SHORT:
       in->vs_solve_csr = atoi(arg);
       break;
@@ -334,7 +342,8 @@ void set_default_parse_opt(input *in){
   in->vs_dt = 0.01; // Resolution of the degeneracy parameter grid for the VS schemes
   in->vs_alpha = 0.5; // Initial guess for the free parameter in the VS schemes
   in->vs_thermo_file = "NO_FILE"; // File with thermodynamic integration data for the VS schemes
-  in->vs_err_min_iter = 1e-5; // Minimum error for convergence in the iterations for the VS schemes 
+  in->vs_err_min_iter = 1e-5; // Minimum error for convergence in the iterations for the VS schemes
+  in->vs_a_mix = 1e-5; // Mixing parameter for iterative procedure for the VS schemes 
   in->vs_solve_csr = 1; // Enforce CSR in the VS schemes
 
 }
@@ -418,6 +427,11 @@ void check_input(input *in){
     fprintf(stderr, "The minimum error for convergence must be larger than zero\n");
     invalid_input = true;
   }
+
+  if (in->vs_a_mix <= 0.0) {
+    fprintf(stderr, "The mixing parameter must be larger than 0.0\n");
+    invalid_input = true;
+  }
     
   if (invalid_input) exit(EXIT_FAILURE);
   
@@ -456,6 +470,7 @@ void print_input(input *in){
   printf("Free parameter for VS schemes: %f\n", in->vs_alpha);
   printf("File for thermodynamic integration (VS): %s\n", in->vs_thermo_file);
   printf("Error for convergence (VS): %f\n", in->vs_err_min_iter);
+  printf("Mixing parameter (VS): %f\n", in->vs_a_mix);
   printf("Enforce CSR (VS): %d\n", in->vs_solve_csr);
   printf("-------------------------------------\n");
   

@@ -30,6 +30,7 @@ typedef struct {
   double mu_hi;
   double mu;
   double vs_alpha;
+  double vs_a_mix;
   double vs_drs;
   double vs_dt;
   double vs_err_min_iter;

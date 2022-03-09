@@ -307,7 +307,7 @@ double vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu, vs_struct rsa,
       printf("--- iteration %d ---\n", iter_counter);
       printf("Elapsed time: %f seconds\n", toc - tic);
       printf("Residual error: %.5e\n", iter_err);
-      printf("alpha (CSR): %.5e\n", alpha);
+      printf("alpha (CSR): %.5e\n", vs_in[VSS_IDXIN].vs_alpha);
       fflush(stdout);
     }
 	
@@ -327,9 +327,12 @@ double vs_stls_thermo_err(double alpha, input *vs_in){
 
 // Update self-consistency parameter for the CSR
 void vs_stls_thermo_update(double alpha, input *vs_in){
+
+  double a_mix = vs_in[VSS_IDXIN].vs_a_mix;
   
   for (int ii=0; ii<VSS_NUMEL; ii++) {
-    vs_in[ii].vs_alpha = alpha;
+    vs_in[ii].vs_alpha = alpha*a_mix +
+      vs_in[ii].vs_alpha*(1-a_mix);
   }
   
 }
