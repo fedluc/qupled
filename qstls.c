@@ -832,12 +832,11 @@ void check_guess_qstls(int nx, double dx, double xmax, int nl,
 		       bool check_items, bool check_eof){
   
   int buffer;
-  double tol = 1e-10;
   
   // Check that the grid in the guess data is consistent with input
   if (check_grid) {
     
-    if (nx != in.nx || fabs(dx-in.dx) > tol || fabs(xmax-in.xmax) > tol){
+    if (nx != in.nx || fabs(dx-in.dx) > DBL_TOL || fabs(xmax-in.xmax) > DBL_TOL){
       fprintf(stderr,"Grid from guess file is incompatible with input\n");
       fprintf(stderr,"Grid points (nx) : %d (input), %d (file)\n", in.nx, nx);
       fprintf(stderr,"Resolution (dx)  : %.16f (input), %.16f (file)\n", in.dx, dx);
@@ -851,7 +850,7 @@ void check_guess_qstls(int nx, double dx, double xmax, int nl,
       fclose(fid);
       exit(EXIT_FAILURE);
     }
-    if (fabs(Theta-in.Theta) > tol){
+    if (fabs(Theta-in.Theta) > DBL_TOL){
       fprintf(stderr,"Quantum degeneracy parameter from fixed solution file is incompatible with input\n");
       fprintf(stderr,"Degeneracy parameter (theta) : %f (input), %f (file)\n", in.Theta, Theta);
       fclose(fid);

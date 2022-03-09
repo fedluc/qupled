@@ -100,9 +100,15 @@ void solve_vs_stls(input in, bool verbose) {
 
 void get_grid_thermo_size(input *in){
   
-  // Define a grid from 0.0 up to r_s + 2.0*d_rs  
-  in->vs_nrs = (int)floor((in->rs + in->vs_drs)/in->vs_drs) + 2;
+  double rsa = 0.0;
+  double rsa_max = in->rs + 2.0*in->vs_drs;
   
+  in->vs_nrs = 0;
+  while ((rsa-rsa_max) < DBL_TOL) {
+    in->vs_nrs = in->vs_nrs + 1;
+    rsa += in->vs_drs;
+  }
+ 
 }
 
 // -------------------------------------------------------------------
@@ -765,25 +771,14 @@ void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
   // Read file for thermodynamic integration
   if (strcmp(vs_in[VSS_IDXIN].vs_thermo_file, "NO_FILE") != 0)
     read_thermo_vs_stls(rsa, rsu, &cutoff_idx, vs_in);
-
-  // Update the first part of rsu in steps of five
-  compute_rsu_blocks(SS, SSHF, GG, GG_new, phi, xx,
-  		     rsu, rsa, vs_in, &cutoff_idx,
-  		     cutoff_idx+1, nrs-1, VSS_STENCIL,
-  		     true, verbose);
- 
-  // Update the remainder of rsu in steps of one
+  else
+    cutoff_idx = 0;
+  
+  // Fill the free energy integrand
   compute_rsu_blocks(SS, SSHF, GG, GG_new, phi, xx,
   		     rsu, rsa, vs_in, &cutoff_idx,
   		     cutoff_idx, nrs, 1,
-  		     false, verbose);
-  
-  // Final check to ensure that all the rsu array has been filled
-  if (cutoff_idx < nrs-1) {
-    fprintf(stderr, "Unexpected error, the free energy integrand was computed "
-	    "only up to r_s = %f\n", rsa.rst[cutoff_idx]);
-    exit(EXIT_FAILURE);
-  }
+  		     true, verbose);
 
   // Free memory
   for (int ii=0; ii<VSS_NUMEL; ii++){
@@ -809,7 +804,7 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
   for (int ii=start; ii<end; ii=ii+step) {
 
     // Print state point
-    printf("rsa = %f\n", rsa.rst[ii]);
+    printf("rs = %f\n", rsa.rst[ii]);
     
     // Define state point
     for (int jj=0; jj<VSS_NUMEL; jj++) {
@@ -1052,13 +1047,14 @@ void write_thermo_vs_stls(vs_struct rsa, vs_struct rsu, input *vs_in){
 
 // read binary file to use for thermodynamic integration
 void read_thermo_vs_stls(vs_struct rsa, vs_struct rsu,
-			 int *cutoff, input *vs_in){
+			 int *last, input *vs_in){
 
   // Variables
   input in = vs_in[VSS_IDXIN];
   input in_file = vs_in[VSS_IDXIN];
   size_t it_read;
   int nrs_file;
+  int last_tmp;
   double drs_file;
   double dt_file;
   double Theta_file;
@@ -1114,19 +1110,27 @@ void read_thermo_vs_stls(vs_struct rsa, vs_struct rsu,
   fclose(fid);
 
   // Output
+  last_tmp = -1;
   for (int ii=0; ii<nrs_file; ii++){
 
     if (ii>in.vs_nrs-1) 
       break;
 
+    // Update free energy integrand
     rsu.rstm1[ii] = rsu_file.rstm1[ii];
     rsu.rst[ii] = rsu_file.rst[ii];
     rsu.rstp1[ii] = rsu_file.rstp1[ii];
+
+    // Keep track of the last element that was processed
+    last_tmp = ii;
     
   }
 
-  *cutoff = nrs_file;
-  
+  if (last_tmp >= 0)
+    *last = last_tmp + 1;
+  else
+    *last = 0;
+    
   // Free memory
   for (int ii=0; ii<VSS_NUMEL; ii++){
     free_vs_stls_arrays(rsa_file.el[ii], rsu_file.el[ii]);
@@ -1141,12 +1145,11 @@ void check_thermo_vs_stls(double drs, double dt, double Theta, input in,
 			  bool check_grid, bool check_items, bool check_eof){
 
   int buffer;
-  double tol = 1e-10;
   
   // Check that the grid in the guess data is consistent with input
   if (check_grid) {
     
-    if (fabs(drs-in.vs_drs) > tol || fabs(dt-in.vs_dt) > tol){
+    if (fabs(drs-in.vs_drs) > DBL_TOL || fabs(dt-in.vs_dt) > DBL_TOL){
       fprintf(stderr,"Grid from thermodynamic integration file is incompatible with input\n");
       fprintf(stderr,"Resolution (drs)  : %.16f (input), %.16f (file)\n", in.vs_drs, drs);
       fprintf(stderr,"Resolution (dt)  : %.16f (input), %.16f (file)\n", in.vs_dt, dt);
@@ -1154,7 +1157,7 @@ void check_thermo_vs_stls(double drs, double dt, double Theta, input in,
       exit(EXIT_FAILURE);
     }
 
-    if (fabs(Theta-in.Theta) > tol){
+    if (fabs(Theta-in.Theta) > DBL_TOL){
       fprintf(stderr,"Degeneracy parameter from thermodynamic integration file is incompatible with input\n");
       fprintf(stderr,"Theta  : %.16f (input), %.16f (file)\n", in.Theta, Theta);
       fclose(fid);

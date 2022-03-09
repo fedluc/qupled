@@ -4,8 +4,11 @@
 #include "read_input.h"
 
 // -------------------------------------------------------------------
-// CONSTANTS FOR ROOT SOLVERS, MINIMIZATIONS AND QUADRATURES
+// CONSTANTS 
 // -------------------------------------------------------------------
+
+// Tolerance to compare doubles
+static const double DBL_TOL = 1e-14;
 
 // Maximum number of iterations for the root solvers
 static const int ROOT_MAX_ITER = 1000;

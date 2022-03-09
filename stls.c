@@ -1245,12 +1245,11 @@ void check_guess_stls(int nx, double dx, double xmax, input in,
 		      bool check_grid, bool check_items, bool check_eof){
 
   int buffer;
-  double tol = 1e-10;
   
   // Check that the grid in the guess data is consistent with input
   if (check_grid) {
     
-    if (nx != in.nx || fabs(dx-in.dx) > tol || fabs(xmax-in.xmax) > tol){
+    if (nx != in.nx || fabs(dx-in.dx) > DBL_TOL || fabs(xmax-in.xmax) > DBL_TOL){
       fprintf(stderr,"Grid from guess file is incompatible with input\n");
       fprintf(stderr,"Grid points (nx) : %d (input), %d (file)\n", in.nx, nx);
       fprintf(stderr,"Resolution (dx)  : %.16f (input), %.16f (file)\n", in.dx, dx);

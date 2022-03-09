@@ -124,7 +124,7 @@ static struct argp_option options[] = {
   {"vs-min-err", ARGUMENT_VS_MIN_ERR_SHORT, "1e-5", 0,
    "Minimum error for convergence in the iterations for the VS schemes "},
 
-  {"vs-mix", ARGUMENT_VS_MIN_ERR_SHORT, "0.1", 0,
+  {"vs-mix", ARGUMENT_VS_MIX_SHORT, "0.1", 0,
    "Mixing parameter for iterative solution in the VS schemes "},
   
   {"vs-solve-csr", ARGUMENT_VS_SOLVE_CSR_SHORT, "1", 0,
