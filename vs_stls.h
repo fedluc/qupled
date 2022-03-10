@@ -79,9 +79,9 @@ void initial_guess_vs_stls(vs_struct xx, vs_struct SS,
 // FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE VS-STLS SCHEME
 // ---------------------------------------------------------------------
 
-double vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu,
-				 vs_struct rsa, input *vs_in,
-				 bool verbose);
+void vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu,
+			       vs_struct rsa, input *vs_in,
+			       bool verbose);
 
 double vs_stls_thermo_err(double alpha, input *vs_in);
 
