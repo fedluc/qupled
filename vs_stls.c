@@ -74,7 +74,7 @@ void solve_vs_stls(input in, bool verbose) {
   // Thermodynamic properties
   if (verbose) printf("Free parameter: %.5f\n",vs_in[VSS_IDXIN].vs_alpha);
   if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS.rst, xx.rst, vs_in[VSS_IDXIN]));
-  if (verbose) printf("Free energy: %.10f\n",compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN]));
+  //if (verbose) printf("Free energy: %.10f\n",compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN]));
   
   // Output to file
   if (verbose) printf("Writing output files...\n");
@@ -668,13 +668,17 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
   double alpha;
   input in = vs_in[VSS_IDXIN];
   int nrs = in.vs_nrs;
+  double rsa_fix_max = 0.0;
+  double ffix = 0.0;
+  double drs = in.vs_drs;
+  double rs = in.rs;
   
   // Check if finite temperature calculations must be performed
   if (in.Theta > 0.0) finite_temperature = true;
   
   // Get integrand for the free energy
-  compute_rsu(xx, rsu, rsa, vs_in, false);
-
+  compute_rsu(xx, rsu, rsa, vs_in, &rsa_fix_max, false); 
+  
   // Internal energy
   ursm = rsu.rst[nrs-4]/rsa.rst[nrs-4];
   urs = rsu.rst[nrs-3]/rsa.rst[nrs-3];
@@ -684,22 +688,26 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
     utm = rsu.rstm1[nrs-3]/rsa.rstm1[nrs-3];
   } 
   
-  for (int ii=0; ii<VSS_NUMEL; ii++){
-    printf("%f %f %f\n", rsu.el[ii][nrs-4],  rsu.el[ii][nrs-3],  rsu.el[ii][nrs-2]);
-  }
-   
   // Free energy
-  frs = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN]);
-  frsp = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN+1]);
-  frsm = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN-1]);
-  if (finite_temperature) {
-    ftp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN]);
-    ftm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN]);
-    frsptp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN+1]);
-    frsptm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN+1]);
-    frsmtp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN-1]);
-    frsmtm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN-1]);
-  }
+  if (rsa_fix_max > 0.0)
+    ffix = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN], rsa_fix_max, 0.0);
+  frs =  ffix*(rsa_fix_max*rsa_fix_max)/(rs*rs)
+    + compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN], rs, rsa_fix_max);
+  frsp =  ffix*(rsa_fix_max*rsa_fix_max)/((rs+drs)*(rs+drs))
+    + compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN], rs+drs, rsa_fix_max);
+  frsm =  ffix*(rsa_fix_max*rsa_fix_max)/((rs-drs)*(rs-drs))
+    + compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN], rs-drs, rsa_fix_max);
+  /* frs = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN]); */
+  /* frsp = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN+1]); */
+  /* frsm = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN-1]); */
+  /* if (finite_temperature) { */
+  /*   ftp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN]); */
+  /*   ftm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN]); */
+  /*   frsptp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN+1]); */
+  /*   frsptm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN+1]); */
+  /*   frsmtp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN-1]); */
+  /*   frsmtm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN-1]); */
+  /* } */
   
   // Internal energy derivatives
   dudrs = (ursp - ursm)/(2.0*in.vs_drs);
@@ -738,7 +746,7 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
 // -------------------------------------------------------------------
 
 void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
-		 input *vs_in, bool verbose){
+		 input *vs_in, double *rsa_fix_max, bool verbose){
 
   int nrs = vs_in[VSS_IDXIN].vs_nrs;
   int cutoff_idx = 0;
@@ -776,6 +784,10 @@ void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
     read_thermo_vs_stls(rsa, rsu, &cutoff_idx, vs_in);
   else
     cutoff_idx = 0;
+
+  // #################################
+  *rsa_fix_max = rsa.rst[cutoff_idx];
+  // #################################
   
   // Fill the free energy integrand
   compute_rsu_blocks(SS, SSHF, GG, GG_new, phi, xx,
@@ -788,7 +800,7 @@ void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
     free_stls_arrays(xx_tmp.el[ii], phi.el[ii], GG.el[ii],
 		     GG_new.el[ii], SS.el[ii], SSHF.el[ii]);
   }
-  
+
 }
 
 void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
@@ -878,7 +890,7 @@ struct fxc_params {
   
 };
 
-double compute_free_energy(double *rsu, double *rsa, input in) {
+double compute_free_energy(double *rsu, double *rsa, input in, double rs, double rs_min) {
 
   double err;
   size_t neval;
@@ -907,7 +919,7 @@ double compute_free_energy(double *rsu, double *rsa, input in) {
   struct fxc_params fxcp = {rsu_sp_ptr, rsu_acc_ptr};
   ff_int.params = &fxcp;
   gsl_integration_cquad(&ff_int,
-  			rsa[0], in.rs,
+  			rs_min, rs,
   			0.0, QUAD_REL_ERR,
   			wsp,
   			&fre, &err, &neval);
@@ -918,7 +930,7 @@ double compute_free_energy(double *rsu, double *rsa, input in) {
   gsl_interp_accel_free(rsu_acc_ptr);
 
   // Output
-  return fre/(in.rs*in.rs);
+  return fre/(rs*rs);
 
 }
 
@@ -970,7 +982,7 @@ void write_text_fxc(double *rsu, double *rsa, input in){
     exit(EXIT_FAILURE);
   }
   
-  fprintf(fid, "%.8e %.8e %.8e\n", in.rs, in.Theta, compute_free_energy(rsu, rsa, in));
+  //fprintf(fid, "%.8e %.8e %.8e\n", in.rs, in.Theta, compute_free_energy(rsu, rsa, in));
   
   fclose(fid);
 

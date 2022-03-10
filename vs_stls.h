@@ -170,7 +170,7 @@ double compute_alpha(vs_struct xx, vs_struct rsu,
 // -------------------------------------------------------------------
 
 void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
-		 input *vs_in, bool verbose);
+		 input *vs_in, double *rsa_fix_max, bool verbose);
 
 void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 			vs_struct GG, vs_struct GG_new,
@@ -184,7 +184,7 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 // FUNCTIONS USED TO COMPUTE THE FREE ENERGY
 // -------------------------------------------------------------------
 
-double compute_free_energy(double *rsu, double *rsa, input in);
+double compute_free_energy(double *rsu, double *rsa, input in, double rs, double rs_min);
 
 double fxc(double rs, void* pp);
 
