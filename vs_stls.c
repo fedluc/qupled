@@ -26,6 +26,8 @@ void solve_vs_stls(input in, bool verbose) {
   vs_struct rsu;
   vs_struct rsa;
   input vs_in[VSS_NUMEL];
+  double fxc[VSS_NUMEL];
+  double rs_co[VSS_NUMEL];
   
   // Temporary arrays for allocation
   double *xx_el = NULL; 
@@ -56,40 +58,41 @@ void solve_vs_stls(input in, bool verbose) {
   }
 
   // Initialize arrays that are not modified with the iterative procedure
-  init_fixed_vs_stls_arrays(&in, vs_in, xx, rsa, verbose);
+  init_fixed_vs_stls_arrays(&in, vs_in, xx, rsa, rsu, fxc,
+			    rs_co, verbose);
   init_tmp_vs_stls_arrays(vs_in, xx, phi, SSHF, verbose);
-
+  
   // Iterative procedure to enforce the compressibility sum rule
   if (verbose) printf("Iterative procedure to enforce the compressibility sum rule ...\n");
   if (in.vs_solve_csr)
-    vs_stls_thermo_iterations(xx, rsu, rsa, vs_in, true);
+    vs_stls_thermo_iterations(xx, rsu, rsa, fxc, rs_co, vs_in, true);
   if (verbose) printf("Done.\n");
 
-  // Structural properties
-  if (verbose) printf("Structural properties calculation...\n");
-  initial_guess_vs_stls(xx, SS, SSHF, GG, GG_new, phi, vs_in);
-  vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in, false);
-  if (verbose) printf("Done.\n");
+  /* // Structural properties */
+  /* if (verbose) printf("Structural properties calculation...\n"); */
+  /* initial_guess_vs_stls(xx, SS, SSHF, GG, GG_new, phi, vs_in); */
+  /* vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in, false); */
+  /* if (verbose) printf("Done.\n"); */
   
-  // Thermodynamic properties
-  if (verbose) printf("Free parameter: %.5f\n",vs_in[VSS_IDXIN].vs_alpha);
-  if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS.rst, xx.rst, vs_in[VSS_IDXIN]));
-  //if (verbose) printf("Free energy: %.10f\n",compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN]));
+  /* // Thermodynamic properties */
+  /* if (verbose) printf("Free parameter: %.5f\n",vs_in[VSS_IDXIN].vs_alpha); */
+  /* if (verbose) printf("Internal energy: %.10f\n",compute_internal_energy(SS.rst, xx.rst, vs_in[VSS_IDXIN])); */
+  /* //if (verbose) printf("Free energy: %.10f\n",compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN])); */
   
-  // Output to file
-  if (verbose) printf("Writing output files...\n");
-  write_text_vs_stls(SS.rst, GG.rst, phi.rst, SSHF.rst, xx.rst,
-  		     rsu.rst, rsa.rst, vs_in[VSS_IDXIN]);
-  write_guess_stls(SS.rst, GG.rst, vs_in[VSS_IDXIN]);
-  write_thermo_vs_stls(rsa, rsu, vs_in);
-  if (verbose) printf("Done.\n");
+  /* // Output to file */
+  /* if (verbose) printf("Writing output files...\n"); */
+  /* write_text_vs_stls(SS.rst, GG.rst, phi.rst, SSHF.rst, xx.rst, */
+  /* 		     rsu.rst, rsa.rst, vs_in[VSS_IDXIN]); */
+  /* write_guess_stls(SS.rst, GG.rst, vs_in[VSS_IDXIN]); */
+  /* write_thermo_vs_stls(rsa, rsu, vs_in); */
+  /* if (verbose) printf("Done.\n"); */
 
-  // Free memory
-  for (int ii=0; ii<VSS_NUMEL; ii++){
-    free_stls_arrays(xx.el[ii], phi.el[ii], GG.el[ii],
-  		     GG_new.el[ii], SS.el[ii], SSHF.el[ii]);
-    free_vs_stls_arrays(rsa.el[ii], rsu.el[ii]);
-  }
+  /* // Free memory */
+  /* for (int ii=0; ii<VSS_NUMEL; ii++){ */
+  /*   free_stls_arrays(xx.el[ii], phi.el[ii], GG.el[ii], */
+  /* 		     GG_new.el[ii], SS.el[ii], SSHF.el[ii]); */
+  /*   free_vs_stls_arrays(rsa.el[ii], rsu.el[ii]); */
+  /* } */
   
 }
 
@@ -147,7 +150,8 @@ void free_vs_stls_arrays(double *rsa, double *rsu){
 // Initialize arrays that do not depend on iterations and state points
 void init_fixed_vs_stls_arrays(input *in, input *vs_in,
 			       vs_struct xx, vs_struct rsa,
-			       bool verbose){
+			       vs_struct rsu, double *fxc,
+			       double *rs_co, bool verbose){
 
   // Print on screen the parameter used to solve the STLS equation
   printf("------ Parameters used in the solution -------------\n");
@@ -177,8 +181,13 @@ void init_fixed_vs_stls_arrays(input *in, input *vs_in,
   }
   if (verbose) printf("Done.\n");
   
-  // Input structure for the state point of interest
-  vs_in[VSS_IDXIN] = *in;
+  // Input structure
+  for (int ii=0; ii<VSS_NUMEL; ii++) {
+    vs_in[VSS_IDXIN] = *in;
+  }
+
+  // Fixed component of the free energy
+  compute_free_energy_fixed(rsa, rsu, fxc, rs_co, vs_in);
   
 }
 
@@ -284,7 +293,7 @@ void initial_guess_vs_stls(vs_struct xx, vs_struct SS, vs_struct SSHF,
 
 // Iterations over the parameter used to enforce the CSR rule
 void vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu, vs_struct rsa,
-				 input *vs_in, bool verbose) {
+			       double *fxc, double *rs_co, input *vs_in, bool verbose) {
 
   input in = vs_in[VSS_IDXIN];
   double alpha = in.vs_alpha;
@@ -298,7 +307,8 @@ void vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu, vs_struct rsa,
     double tic = omp_get_wtime();
 
     // Get parameter to enforce the compressibility sum rule
-    alpha = compute_alpha(xx, rsu, rsa, vs_in);
+    alpha = compute_alpha(xx, rsu, rsa, fxc,
+			  rs_co, vs_in);
 
     // Update diagnostic
     iter_counter++;
@@ -651,7 +661,8 @@ void compute_idr_vs_stls(vs_struct phi, vs_struct xx, input *vs_in){
 // FUNCTION USED TO COMPUTE THE PARAMETER FOR THE COMPRESSIBILITY RULE
 // -------------------------------------------------------------------
 
-double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
+double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa,
+		     double *fxc, double *rs_co, input *vs_in){
 
   bool finite_temperature = false;
   double urs = 0.0, ursp = 0.0, ursm = 0.0;
@@ -668,8 +679,6 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
   double alpha;
   input in = vs_in[VSS_IDXIN];
   int nrs = in.vs_nrs;
-  double rsa_fix_max = 0.0;
-  double ffix = 0.0;
   double drs = in.vs_drs;
   double rs = in.rs;
   
@@ -677,7 +686,18 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
   if (in.Theta > 0.0) finite_temperature = true;
   
   // Get integrand for the free energy
-  compute_rsu(xx, rsu, rsa, vs_in, &rsa_fix_max, false); 
+  compute_rsu(xx, rsu, rsa, rs_co, vs_in, false); 
+
+  for (int ii=0; ii<vs_in[VSS_IDXIN].vs_nrs; ii++){
+    printf("%f %f %f\n", rsa.rst[ii], rsu.rst[ii], rs_co[VSS_IDXIN]);
+  }
+  /* exit(0); */
+  
+  // ##################################################################
+  // WRITE A FUNCTIONS TO COMPUTE FREE AND INTERNAL ENERGIES, LOOP
+  // OVER THE RSA AND RSU FIELDS, PERHAPS SHIFT RSA UP OR DOWN FOR THE
+  // FIELDS CORRESPONDING TO MODIFIED RS
+  // ##################################################################
   
   // Internal energy
   ursm = rsu.rst[nrs-4]/rsa.rst[nrs-4];
@@ -686,27 +706,32 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
   if (finite_temperature) {
     utp = rsu.rstp1[nrs-3]/rsa.rstp1[nrs-3];
     utm = rsu.rstm1[nrs-3]/rsa.rstm1[nrs-3];
-  } 
+  }
   
   // Free energy
-  if (rsa_fix_max > 0.0)
-    ffix = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN], rsa_fix_max, 0.0);
-  frs =  ffix*(rsa_fix_max*rsa_fix_max)/(rs*rs)
-    + compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN], rs, rsa_fix_max);
-  frsp =  ffix*(rsa_fix_max*rsa_fix_max)/((rs+drs)*(rs+drs))
-    + compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN], rs+drs, rsa_fix_max);
-  frsm =  ffix*(rsa_fix_max*rsa_fix_max)/((rs-drs)*(rs-drs))
-    + compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN], rs-drs, rsa_fix_max);
-  /* frs = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN]); */
-  /* frsp = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN+1]); */
-  /* frsm = compute_free_energy(rsu.rst, rsa.rst, vs_in[VSS_IDXIN-1]); */
+  frsm = fxc[VSS_IDXIN];
+  frs = fxc[VSS_IDXIN];
+  frsp = fxc[VSS_IDXIN];
+  frsm += compute_free_energy_integral(rsa.rst, rsu.rst, rs_co[VSS_IDXIN], rs-drs, vs_in[VSS_IDXIN]);
+  frs += compute_free_energy_integral(rsa.rst, rsu.rst, rs_co[VSS_IDXIN], rs, vs_in[VSS_IDXIN]);
+  frsp += compute_free_energy_integral(rsa.rst, rsu.rst, rs_co[VSS_IDXIN], rs+drs, vs_in[VSS_IDXIN]);
+  /* frsm = compute_free_energy_integral(rsa.rst, rsu.rst, 0.0, rs-drs, vs_in[VSS_IDXIN]); */
+  /* frs = compute_free_energy_integral(rsa.rst, rsu.rst, 0.0, rs, vs_in[VSS_IDXIN]); */
+  /* frsp = compute_free_energy_integral(rsa.rst, rsu.rst, 0.0, rs+drs, vs_in[VSS_IDXIN]); */
+  
   /* if (finite_temperature) { */
-  /*   ftp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN]); */
-  /*   ftm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN]); */
-  /*   frsptp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN+1]); */
-  /*   frsptm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN+1]); */
-  /*   frsmtp = compute_free_energy(rsu.rstp1, rsa.rstp1, vs_in[VSS_IDXIN-1]); */
-  /*   frsmtm = compute_free_energy(rsu.rstm1, rsa.rstm1, vs_in[VSS_IDXIN-1]); */
+  /*   frsmtm = fxc[VSS_IDXIN - VSS_STENCIL]; */
+  /*   ftm = fxc[VSS_IDXIN - VSS_STENCIL]; */
+  /*   frsptm = fxc[VSS_IDXIN - VSS_STENCIL]; */
+  /*   frsmtp = fxc[VSS_IDXIN + VSS_STENCIL]; */
+  /*   ftp = fxc[VSS_IDXIN + VSS_STENCIL]; */
+  /*   frsptp = fxc[VSS_IDXIN + VSS_STENCIL]; */
+  /*   frsmtm += compute_free_energy_integral(rsa.rstm1, rsu.rstm1, rs_co[VSS_IDXIN], rs-drs, vs_in[VSS_IDXIN]); */
+  /*   ftm += compute_free_energy_integral(rsa.rstm1, rsu.rstm1, rs_co[VSS_IDXIN], rs, vs_in[VSS_IDXIN]); */
+  /*   frsptm += compute_free_energy_integral(rsa.rstm1, rsu.rstm1, rs_co[VSS_IDXIN], rs+drs, vs_in[VSS_IDXIN]); */
+  /*   frsmtp += compute_free_energy_integral(rsa.rstp1, rsu.rstp1, rs_co[VSS_IDXIN], rs-drs, vs_in[VSS_IDXIN]); */
+  /*   ftp += compute_free_energy_integral(rsa.rstp1, rsu.rstp1, rs_co[VSS_IDXIN], rs, vs_in[VSS_IDXIN]); */
+  /*   frsptp += compute_free_energy_integral(rsa.rstp1, rsu.rstp1, rs_co[VSS_IDXIN], rs+drs, vs_in[VSS_IDXIN]); */
   /* } */
   
   // Internal energy derivatives
@@ -745,11 +770,12 @@ double compute_alpha(vs_struct xx, vs_struct rsu, vs_struct rsa, input *vs_in){
 // FUNCTION USED TO COMPUTE THE INTEGRAND FOR THE FREE ENERGY
 // -------------------------------------------------------------------
 
-void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
-		 input *vs_in, double *rsa_fix_max, bool verbose){
+void compute_rsu(vs_struct xx, vs_struct rsu,
+		 vs_struct rsa, double *rs_co,
+		 input *vs_in, bool verbose){
 
+  // Size of the grid for thermodynamic integration
   int nrs = vs_in[VSS_IDXIN].vs_nrs;
-  int cutoff_idx = 0;
   
   // Arrays for VS-STLS solution
   vs_struct xx_tmp;
@@ -778,21 +804,10 @@ void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
     SS.el[ii] = SS_el;
     SSHF.el[ii] = SSHF_el;
   }
-
-  // Read file for thermodynamic integration
-  if (strcmp(vs_in[VSS_IDXIN].vs_thermo_file, "NO_FILE") != 0)
-    read_thermo_vs_stls(rsa, rsu, &cutoff_idx, vs_in);
-  else
-    cutoff_idx = 0;
-
-  // #################################
-  *rsa_fix_max = rsa.rst[cutoff_idx];
-  // #################################
   
   // Fill the free energy integrand
   compute_rsu_blocks(SS, SSHF, GG, GG_new, phi, xx,
-  		     rsu, rsa, vs_in, &cutoff_idx,
-  		     cutoff_idx, nrs, 1,
+  		     rsu, rsa, rs_co, 0, nrs, 1, vs_in,
   		     true, verbose);
 
   // Free memory
@@ -807,12 +822,12 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 			vs_struct GG, vs_struct GG_new,
 			vs_struct phi, vs_struct xx,
 			vs_struct rsu, vs_struct rsa,
-			input *vs_in, int *last,
-			int start, int end, int step,
+			double *rs_co, int start,
+			int end, int step, input *vs_in,
 			bool compute_guess, bool verbose){
 
-  int nrs = vs_in[VSS_IDXIN].vs_nrs;
-  int last_tmp = -1;
+  /* int nrs = vs_in[VSS_IDXIN].vs_nrs; */
+  /* int last_tmp = -1; */
   input vs_in_tmp[VSS_NUMEL];
   double u_int;
 
@@ -820,6 +835,9 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 
     // Print state point
     printf("rs = %f\n", rsa.rst[ii]);
+    
+    // Skip state points imported from file
+    if (rsa.rst[ii] < rs_co[VSS_IDXIN]) continue;
     
     // Define state point
     for (int jj=0; jj<VSS_NUMEL; jj++) {
@@ -852,29 +870,29 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
       
     }
 
-    // Update free energy integrand of neighboring points
-    // We care to keep synchronized only the rst, rstm1 and rstp1 elements of rsu,
-    // since these are the only elements used to compute alpha (see compute_alpha)
-    if (start>=1 && end<=nrs-1){
+    /* // Update free energy integrand of neighboring points */
+    /* // We care to keep synchronized only the rst, rstm1 and rstp1 elements of rsu, */
+    /* // since these are the only elements used to compute alpha (see compute_alpha) */
+    /* if (start>=1 && end<=nrs-1){ */
 
-      for (int jj=-VSS_STENCIL; jj<VSS_STENCIL+1; jj=jj+VSS_STENCIL){
-    	rsu.el[VSS_IDXIN+jj][ii-1] = rsu.el[VSS_IDXIN+jj-1][ii];
-    	rsu.el[VSS_IDXIN+jj][ii+1] = rsu.el[VSS_IDXIN+jj+1][ii];
-      }
+    /*   for (int jj=-VSS_STENCIL; jj<VSS_STENCIL+1; jj=jj+VSS_STENCIL){ */
+    /* 	rsu.el[VSS_IDXIN+jj][ii-1] = rsu.el[VSS_IDXIN+jj-1][ii]; */
+    /* 	rsu.el[VSS_IDXIN+jj][ii+1] = rsu.el[VSS_IDXIN+jj+1][ii]; */
+    /*   } */
 
-    }
-    
-    // Keep track of the index of the last element that was processed
-    last_tmp = ii;
+    /* } */
+     
+    /* // Keep track of the index of the last element that was processed */
+    /* last_tmp = ii; */
 
   }
   
-  if (last_tmp >= 0) {
-    if (start>=1 && end<=nrs-1)
-      *last = last_tmp + 2;
-    else
-      *last = last_tmp + 1;
-  }
+  /* if (last_tmp >= 0) { */
+  /*   if (start>=1 && end<=nrs-1) */
+  /*     *last = last_tmp + 2; */
+  /*   else */
+  /*     *last = last_tmp + 1; */
+  /* } */
   
 }
 
@@ -890,7 +908,10 @@ struct fxc_params {
   
 };
 
-double compute_free_energy(double *rsu, double *rsa, input in, double rs, double rs_min) {
+// Compute free energy from integrand
+double compute_free_energy_integral(double *rsa, double *rsu,
+				    double rs_min, double rs_max,
+				    input in) {
 
   double err;
   size_t neval;
@@ -904,7 +925,7 @@ double compute_free_energy(double *rsu, double *rsa, input in, double rs, double
   rsu_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.vs_nrs);
   rsu_acc_ptr = gsl_interp_accel_alloc();
   
-  // Initialize the spline
+  // Initialize the spline  
   gsl_spline_init(rsu_sp_ptr, rsa, rsu, in.vs_nrs);
 
   // Integration workspace
@@ -919,7 +940,7 @@ double compute_free_energy(double *rsu, double *rsa, input in, double rs, double
   struct fxc_params fxcp = {rsu_sp_ptr, rsu_acc_ptr};
   ff_int.params = &fxcp;
   gsl_integration_cquad(&ff_int,
-  			rs_min, rs,
+  			rs_min, rs_max,
   			0.0, QUAD_REL_ERR,
   			wsp,
   			&fre, &err, &neval);
@@ -930,7 +951,7 @@ double compute_free_energy(double *rsu, double *rsa, input in, double rs, double
   gsl_interp_accel_free(rsu_acc_ptr);
 
   // Output
-  return fre/(rs*rs);
+  return fre/(rs_max*rs_max);
 
 }
 
@@ -947,6 +968,76 @@ double fxc(double rs, void* pp) {
   
 }
 
+
+// Compute fixed component of the free energy
+void compute_free_energy_fixed(vs_struct rsa, vs_struct rsu,
+			       double *fxc, double *rs_co,
+			       input *vs_in) {
+
+  input in = vs_in[VSS_IDXIN];
+  double rs = in.rs;
+  vs_struct rsa_file;
+  vs_struct rsu_file;
+  gsl_spline *rsu_sp_ptr;
+  gsl_interp_accel *rsu_acc_ptr;
+  
+  // Default values
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    fxc[ii] = 0.0;
+    rs_co[ii] = 0.0;
+  }
+  
+  // Return immediately if no file was given in input
+  if (strcmp(vs_in[VSS_IDXIN].vs_thermo_file, "NO_FILE") == 0)
+    return;
+    
+  // Read data from file for thermodynamic integration
+  read_thermo_vs_stls(&rsa_file, &rsu_file, &in.vs_nrs, vs_in);
+  
+  // Find cutoff
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    for (int jj=0; jj<in.vs_nrs; jj++){
+      if (rsa_file.el[ii][jj] > rs - in.vs_drs)
+      	break;
+      rs_co[ii] = rsa_file.el[ii][jj];
+    }
+  }
+
+  // Compute free energy
+
+  // #############################################################
+  // careful, rsa and rsu might not be consistent. make sure that
+  // they are consistent (shift rsa up or down, for instance) before
+  // proceeding
+  // #############################################################
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    fxc[ii] = compute_free_energy_integral(rsa_file.el[ii], rsu_file.el[ii],
+					   0.0, rs_co[ii], in);
+    /* fxc[ii] *= (rs_co[ii]*rs_co[ii])/(vs_in[ii].rs*vs_in[ii].rs); */
+  }
+
+  // Fill the free energy integrand with data from file
+  rsu_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.vs_nrs);
+  rsu_acc_ptr = gsl_interp_accel_alloc();
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    gsl_spline_init(rsu_sp_ptr, rsa_file.el[ii], rsu_file.el[ii], in.vs_nrs);
+    for (int jj=0; jj<vs_in[VSS_IDXIN].vs_nrs; jj++){
+      if (rsa.el[ii][jj] > rs_co[ii])
+      	break;
+      rsu.el[ii][jj] = gsl_spline_eval(rsu_sp_ptr, rsa.el[ii][jj], rsu_acc_ptr);
+    }
+  }
+  
+
+  
+  // Free memory
+  gsl_spline_free(rsu_sp_ptr);
+  gsl_interp_accel_free(rsu_acc_ptr);
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    free_vs_stls_arrays(rsa_file.el[ii], rsu_file.el[ii]);
+  }
+  
+}
 
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
@@ -1037,23 +1128,23 @@ void write_thermo_vs_stls(vs_struct rsa, vs_struct rsu, input *vs_in){
   }
 
   // Data for the grid used for thermodynamic integration
-  in.vs_nrs -= 1;
+  in.vs_nrs -= 1; 
   fwrite(&in.vs_nrs, sizeof(int), 1, fid);
-  fwrite(&in.vs_drs, sizeof(double), 1, fid);
 
   // Data for the degeneracy parameters
   fwrite(&Theta, sizeof(double), 1, fid);
   fwrite(&in.vs_dt, sizeof(double), 1, fid);
   
   // Grid used for thermodynamic integration
-  fwrite(rsa.rstm1, sizeof(double), in.vs_nrs, fid);
-  fwrite(rsa.rst, sizeof(double), in.vs_nrs, fid);
-  fwrite(rsa.rstp1, sizeof(double), in.vs_nrs, fid);
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    fwrite(rsa.el[ii], sizeof(double), in.vs_nrs, fid);
+  }
   
   // Free energy integrand
-  fwrite(rsu.rstm1, sizeof(double), in.vs_nrs, fid);
-  fwrite(rsu.rst, sizeof(double), in.vs_nrs, fid);
-  fwrite(rsu.rstp1, sizeof(double), in.vs_nrs, fid);
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    fwrite(rsu.el[ii], sizeof(double), in.vs_nrs, fid);
+  }
+  
   
   // Close binary file
   fclose(fid);
@@ -1062,22 +1153,17 @@ void write_thermo_vs_stls(vs_struct rsa, vs_struct rsu, input *vs_in){
 
 
 // read binary file to use for thermodynamic integration
-void read_thermo_vs_stls(vs_struct rsa, vs_struct rsu,
-			 int *last, input *vs_in){
+void read_thermo_vs_stls(vs_struct *rsa, vs_struct *rsu,
+			 int *nrs, input *vs_in){
 
   // Variables
   input in = vs_in[VSS_IDXIN];
   input in_file = vs_in[VSS_IDXIN];
   size_t it_read;
-  int nrs_file;
-  int last_tmp;
-  double drs_file;
-  double dt_file;
-  double Theta_file;
+  double dt;
+  double Theta;
   double *rsu_el = NULL;
   double *rsa_el = NULL;
-  vs_struct rsa_file;
-  vs_struct rsu_file;
   
   // Open binary file
   FILE *fid = NULL;
@@ -1090,73 +1176,49 @@ void read_thermo_vs_stls(vs_struct rsa, vs_struct rsu,
   // Initialize number of items read from input file
   it_read = 0;
 
+  // Data for the grid used for thermodynamic integration
+  it_read += fread(nrs, sizeof(int), 1, fid);
+
+  
   // Check that the data in the file for thermodynamic integration is consistent
-  it_read += fread(&nrs_file, sizeof(int), 1, fid);
-  it_read += fread(&drs_file, sizeof(double), 1, fid);
-  it_read += fread(&Theta_file, sizeof(double), 1, fid);
-  it_read += fread(&dt_file, sizeof(double), 1, fid);
-  check_thermo_vs_stls(drs_file, dt_file, Theta_file,
-		       in, it_read, 4, fid,
+  // Data for the degeneracy parameters
+  it_read += fread(&Theta, sizeof(double), 1, fid);
+  it_read += fread(&dt, sizeof(double), 1, fid);
+
+  // Check that the imported data is consistent with input
+  check_thermo_vs_stls(dt, Theta, in, it_read, 3, fid,
 		       true, true, false);   
 	 
   // Allocate temporary arrays
-  in_file.vs_nrs = nrs_file;
+  in_file.vs_nrs = *nrs;
   for (int ii=0; ii<VSS_NUMEL; ii++) {
     alloc_vs_stls_arrays(in_file, &rsa_el, &rsu_el);
-    rsa_file.el[ii] = rsa_el;
-    rsu_file.el[ii] = rsu_el;
+    rsa->el[ii] = rsa_el;
+    rsu->el[ii] = rsu_el;
   }
   
   // Array of coupling parameters used for thermodynamic integration
-  it_read += fread(rsa_file.rstm1, sizeof(double), nrs_file, fid);
-  it_read += fread(rsa_file.rst, sizeof(double), nrs_file, fid);
-  it_read += fread(rsa_file.rstp1, sizeof(double), nrs_file, fid);
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    it_read += fread(rsa->el[ii], sizeof(double), in_file.vs_nrs, fid);
+  }
   
   // Free energy integrand
-  it_read += fread(rsu_file.rstm1, sizeof(double), nrs_file, fid);
-  it_read += fread(rsu_file.rst, sizeof(double), nrs_file, fid);
-  it_read += fread(rsu_file.rstp1, sizeof(double), nrs_file, fid);
+  for (int ii=0; ii<VSS_NUMEL; ii++){
+    it_read += fread(rsu->el[ii], sizeof(double), in_file.vs_nrs, fid);
+  }
 
   // Check that all items where read and the end-of-file was reached
-  check_thermo_vs_stls(drs_file, dt_file, Theta_file,
-		       in, it_read, 6*nrs_file + 4, fid,
-		       false, true, true);   
+  check_thermo_vs_stls(dt, Theta, in, it_read, 2*VSS_NUMEL*(in_file.vs_nrs) + 3,
+		       fid, false, true, true);
  
   // Close binary file
   fclose(fid);
 
-  // Output
-  last_tmp = -1;
-  for (int ii=0; ii<nrs_file; ii++){
-
-    if (ii>in.vs_nrs-1) 
-      break;
-
-    // Update free energy integrand
-    rsu.rstm1[ii] = rsu_file.rstm1[ii];
-    rsu.rst[ii] = rsu_file.rst[ii];
-    rsu.rstp1[ii] = rsu_file.rstp1[ii];
-
-    // Keep track of the last element that was processed
-    last_tmp = ii;
-    
-  }
-
-  if (last_tmp >= 0)
-    *last = last_tmp + 1;
-  else
-    *last = 0;
-    
-  // Free memory
-  for (int ii=0; ii<VSS_NUMEL; ii++){
-    free_vs_stls_arrays(rsa_file.el[ii], rsu_file.el[ii]);
-  }
- 
 }
 
 
 // Check consistency of the thermodynamic integration data
-void check_thermo_vs_stls(double drs, double dt, double Theta, input in,
+void check_thermo_vs_stls(double dt, double Theta, input in,
 			  size_t it_read, size_t it_expected, FILE *fid,
 			  bool check_grid, bool check_items, bool check_eof){
 
@@ -1165,9 +1227,8 @@ void check_thermo_vs_stls(double drs, double dt, double Theta, input in,
   // Check that the grid in the guess data is consistent with input
   if (check_grid) {
     
-    if (fabs(drs-in.vs_drs) > DBL_TOL || fabs(dt-in.vs_dt) > DBL_TOL){
+    if (fabs(dt-in.vs_dt) > DBL_TOL){
       fprintf(stderr,"Grid from thermodynamic integration file is incompatible with input\n");
-      fprintf(stderr,"Resolution (drs)  : %.16f (input), %.16f (file)\n", in.vs_drs, drs);
       fprintf(stderr,"Resolution (dt)  : %.16f (input), %.16f (file)\n", in.vs_dt, dt);
       fclose(fid);
       exit(EXIT_FAILURE);

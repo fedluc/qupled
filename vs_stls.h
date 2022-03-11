@@ -53,8 +53,10 @@ void free_vs_stls_arrays(double *rsu, double *rsa);
 // FUNCTION USED TO INITIALIZE ARRAYS
 // -------------------------------------------------------------------
 
-void init_fixed_vs_stls_arrays(input *in, input *vs_in, vs_struct xx,
-			       vs_struct rsa, bool verbose);
+void init_fixed_vs_stls_arrays(input *in, input *vs_in,
+			       vs_struct xx, vs_struct rsa,
+			       vs_struct rsu, double *fxc,
+			       double *rs_co, bool verbose);
 
 void init_tmp_vs_stls_arrays(input *vs_in, vs_struct xx,
 			     vs_struct phi, vs_struct SSHF,
@@ -80,7 +82,8 @@ void initial_guess_vs_stls(vs_struct xx, vs_struct SS,
 // ---------------------------------------------------------------------
 
 void vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu,
-			       vs_struct rsa, input *vs_in,
+			       vs_struct rsa, double *fxc,
+			       double *rs_co, input *vs_in,
 			       bool verbose);
 
 double vs_stls_thermo_err(double alpha, input *vs_in);
@@ -162,31 +165,40 @@ void compute_idr_vs_stls(vs_struct phi, vs_struct xx, input *vs_in);
 // -------------------------------------------------------------------
 
 double compute_alpha(vs_struct xx, vs_struct rsu,
-		     vs_struct rsa, input *vs_in);
+		     vs_struct rsa, double *fxc,
+		     double *rs_co, input *vs_in);
 
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE INTEGRAND FOR THE FREE ENERGY
 // -------------------------------------------------------------------
 
-void compute_rsu(vs_struct xx, vs_struct rsu, vs_struct rsa,
-		 input *vs_in, double *rsa_fix_max, bool verbose);
+void compute_rsu(vs_struct xx, vs_struct rsu,
+		 vs_struct rsa, double *rs_co,
+		 input *vs_in,
+		 bool verbose);
 
 void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 			vs_struct GG, vs_struct GG_new,
 			vs_struct phi, vs_struct xx,
 			vs_struct rsu, vs_struct rsa,
-			input *vs_in, int *last,
-			int start, int end, int step,
+			double *rs_co, int start,
+			int end, int step, input *vs_in,
 			bool compute_guess, bool verbose);
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE FREE ENERGY
 // -------------------------------------------------------------------
 
-double compute_free_energy(double *rsu, double *rsa, input in, double rs, double rs_min);
+double compute_free_energy_integral(double *rsa, double *rsu,
+				    double rs_min, double rs_max,
+				    input in);
 
 double fxc(double rs, void* pp);
+
+void compute_free_energy_fixed(vs_struct rsa, vs_struct rsu,
+			       double *fxc, double *rs_co,
+			       input *vs_in);
 
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
@@ -204,10 +216,10 @@ void read_guess_vs_stls(vs_struct SS, vs_struct GG, input *vs_in);
 
 void write_thermo_vs_stls(vs_struct rsa, vs_struct rsu, input *vs_in);
 
-void read_thermo_vs_stls(vs_struct rsa, vs_struct rsu,
-			 int *last, input *vs_in);
+void read_thermo_vs_stls(vs_struct *rsa, vs_struct *rsu,
+			 int *nrs, input *vs_in);
 
-void check_thermo_vs_stls(double drs, double dt, double Theta, input in,
+void check_thermo_vs_stls(double dt, double Theta, input in,
 			  size_t it_read, size_t it_expected, FILE *fid,
 			  bool check_grid, bool check_items, bool check_eof);
 #endif
