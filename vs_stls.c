@@ -766,10 +766,6 @@ double compute_alpha(vs_struct xx, vs_thermo rsu, vs_thermo rsa,
   }
   
   alpha = numer/denom;
-
-  for (int ii=0; ii<in.vs_nrs; ii++){
-    printf("rsa[%d] = %f, rsu[%d] = %f\n", ii, rsa.rst[ii], ii, rsu.rst[ii]);
-  }
   
   // Output
   return alpha;
