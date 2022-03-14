@@ -836,9 +836,6 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
   double u_int;
 
   for (int ii=start; ii<end; ii=ii+step) {
-
-    // Print state point
-    printf("rs = %f\n", rsa.rst[ii]);
     
     // Skip state points imported from file
     if (rsa.rst[ii] < rs_co[VST_IDXIN]) continue;

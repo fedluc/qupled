@@ -45,7 +45,7 @@ typedef union {
     double *rstp;
     
   };
-  double *el[VSS_NUMEL];
+  double *el[VST_NUMEL];
   
 } vs_thermo;
 
