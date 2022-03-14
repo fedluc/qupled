@@ -280,7 +280,7 @@ void initial_guess_vs_stls(vs_struct xx, vs_struct SS, vs_struct SSHF,
 
   input in = vs_in[VSS_IDXIN];
   
-  if (strcmp(in.stls_guess_file,"NO_FILE")==0){
+  if (strcmp(in.stls_guess_file, NO_FILE_STR)==0){
 
     for (int ii=0; ii<VSS_NUMEL; ii++){
       initial_guess_stls(xx.el[ii], SS.el[ii], SSHF.el[ii],
@@ -973,7 +973,7 @@ void compute_free_energy_fixed(vs_thermo rsa, vs_thermo rsu,
   }
   
   // Return immediately if no file was given in input
-  if (strcmp(vs_in[VSS_IDXIN].vs_thermo_file, "NO_FILE") == 0)
+  if (strcmp(vs_in[VSS_IDXIN].vs_thermo_file, NO_FILE_STR) == 0)
     return;
     
   // Read data from file for thermodynamic integration

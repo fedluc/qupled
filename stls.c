@@ -187,7 +187,7 @@ void initial_guess_stls(double *xx, double *SS, double *SSHF,
 			double *GG, double *GG_new, double *phi,
 			input in){
 
-  if (strcmp(in.stls_guess_file,"NO_FILE")==0){
+  if (strcmp(in.stls_guess_file, NO_FILE_STR)==0){
 
     // Static local field correction
     for (int ii=0; ii < in.nx; ii++) {

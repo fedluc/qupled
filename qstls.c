@@ -102,7 +102,7 @@ void free_qstls_arrays(double *psi, double *psi_fixed){
 void initial_guess_qstls(double *xx, double *SS, double *SSHF,
 			 double *psi, double *phi, input in){
 
-  if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
+  if (strcmp(in.qstls_guess_file, NO_FILE_STR)==0){
 
     // Auxilirary density response
     for (int ii=0; ii<in.nx; ii++){
@@ -180,7 +180,7 @@ void qstls_iterations(double *SS, double *SS_new,
 void init_fixed_qstls_arrays(double *psi_fixed, double *xx,
 			     input in, bool verbose){
 
-  if (strcmp(in.qstls_fixed_file,"NO_FILE")==0){
+  if (strcmp(in.qstls_fixed_file, NO_FILE_STR)==0){
 
     // Compute fixed component of the auxiliary density response and
     // store to file

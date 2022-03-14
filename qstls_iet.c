@@ -169,7 +169,7 @@ void initial_guess_qstls_iet(double *xx, double *SS, double *SSHF,
 			     double *psi, double *phi, double *bf,
 			     input in){
 
-  if (strcmp(in.qstls_guess_file,"NO_FILE")==0){
+  if (strcmp(in.qstls_guess_file, NO_FILE_STR)==0){
 
     // Auxilirary density response
     for (int ii=0; ii<in.nx; ii++){
@@ -205,7 +205,7 @@ void init_fixed_qstls_iet_arrays(double *xx, input in, bool verbose){
 
   // Compute fixed component of the auxiliary density response and store
   // to file
-  if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
+  if (strcmp(in.qstls_iet_fixed_file, NO_FILE_STR)==0){
     compute_adr_iet_fixed(xx, in);
   }
   
@@ -446,7 +446,7 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
       double xmax_file;
       double Theta_file;
       FILE *fid = NULL;
-      if (strcmp(in.qstls_iet_fixed_file,"NO_FILE")==0){
+      if (strcmp(in.qstls_iet_fixed_file, NO_FILE_STR)==0){
 	sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
       }
       else{

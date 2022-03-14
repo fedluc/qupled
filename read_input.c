@@ -73,19 +73,19 @@ static struct argp_option options[] = {
   {"mu-guess", ARGUMENT_MU_GUESS_SHORT, "-10,10", 0,
    "Initial guess for chemical potential"},
 
-  {"stls-guess", ARGUMENT_STLS_GUESS_SHORT, "NO_FILE", 0,
-   "Load initial guess from file for the stls and stls-iet schemes"},
+  {"stls-guess", ARGUMENT_STLS_GUESS_SHORT, 0, 0,
+   "File used to load the stls and stls-iet schemes"},
 
-  {"qstls-guess", ARGUMENT_QSTLS_GUESS_SHORT, "NO_FILE", 0,
-   "Load initial guess from file for the qstls and qstls-iet schemes"},
+  {"qstls-guess", ARGUMENT_QSTLS_GUESS_SHORT, 0, 0,
+   "File used to load the qstls and qstls-iet schemes"},
 
-  {"qstls-fix", ARGUMENT_QSTLS_FIXED_SHORT, "NO_FILE", 0,
-   "Load fixed component of the density response function from file for "
-   "the qslts scheme"},
+  {"qstls-fix", ARGUMENT_QSTLS_FIXED_SHORT, 0, 0,
+   "File used to load the fixed component of the density response function "
+   "for the qslts scheme"},
 
-  {"qstls-iet-fix", ARGUMENT_QSTLS_IET_FIXED_SHORT, "NO_FILE", 0,
-   "Load fixed component of the density response function from file for "
-   "the qslts-iet scheme"},
+  {"qstls-iet-fix", ARGUMENT_QSTLS_IET_FIXED_SHORT, 0, 0,
+   "File used to load fixed component of the density response function "
+   "for the qslts-iet scheme"},
 
   {"qstls-iet-static", ARGUMENT_QSTLS_IET_FIXED_SHORT, "0", 0,
    "Use static approximation to compute the auxiliary density response "
@@ -103,8 +103,8 @@ static struct argp_option options[] = {
   {"guess-write", ARGUMENT_GUESS_WRITE_SHORT, "0", 0,
    "Write binary restart files from text files (0 = off, 1 = on)"},
 
-  {"guess-files", ARGUMENT_GUESS_FILES_SHORT, "NO_FILE,NO_FILE", 0,
-   "Text files to write binary restart files"},
+  {"guess-files", ARGUMENT_GUESS_FILES_SHORT, 0, 0,
+   "Name of the two text files used to write binary restart files"},
 
   {"iet-mapping", ARGUMENT_IET_MAPPING_SHORT, "standard", 0,
    "Mapping between quantum and classical state points for IET-based schemes"},
@@ -118,8 +118,8 @@ static struct argp_option options[] = {
   {"vs-alpha", ARGUMENT_VS_ALPHA_SHORT, "0.5", 0,
    "Initial guess for the free parameter in the VS schemes"},
 
-  {"vs-thermo-file", ARGUMENT_VS_THERMO_SHORT, "NO_FILE", 0,
-   "Load thermodynamic integration data from file for the VS schemes"},
+  {"vs-thermo-file", ARGUMENT_VS_THERMO_SHORT, 0, 0,
+   "File used to load the thermodynamic integration data for the VS schemes"},
 
   {"vs-min-err", ARGUMENT_VS_MIN_ERR_SHORT, "1e-5", 0,
    "Minimum error for convergence in the iterations for the VS schemes "},
@@ -317,10 +317,10 @@ void get_input(int argc, char **argv, input *in){
 void set_default_parse_opt(input *in){
 
   debug_input = false;
-  in->stls_guess_file = "NO_FILE"; // File with initial guess for STLS and STLS-IET schemes
-  in->qstls_guess_file = "NO_FILE"; // File with initial guess for QSTLS and QSTLS-IET schemes
-  in->qstls_fixed_file = "NO_FILE"; // File with fixed component of the density response for the QSTLS scheme
-  in->qstls_iet_fixed_file = "NO_FILE"; // File with fixed component of the density response for the QSTLS-IET scheme
+  in->stls_guess_file = NO_FILE_STR; // File with initial guess for STLS and STLS-IET schemes
+  in->qstls_guess_file = NO_FILE_STR; // File with initial guess for QSTLS and QSTLS-IET schemes
+  in->qstls_fixed_file = NO_FILE_STR; // File with fixed component of the density response for the QSTLS scheme
+  in->qstls_iet_fixed_file = NO_FILE_STR; // File with fixed component of the density response for the QSTLS-IET scheme
   in->qstls_iet_static = 0; // Use static approximation to compute the auxiliary density response for the QSTLS-IET scheme
   in->Theta = 1.0; // Quantum degeneracy parameter
   in->rs = 1.0; // Quantum coupling parameter
@@ -335,13 +335,13 @@ void set_default_parse_opt(input *in){
   in->theory = "STLS"; // Theory to solve
   in->nThreads = 1; // Number of OMP threads to use in the solution
   in->guess_write = 0; // Flag to run in "write guess" mode
-  in->guess_file1 = "NO_FILE"; // File of the first file used to construct the guess (static structure factor)
-  in->guess_file2 = "NO_FILE"; // File of the second file used to construct the guess (static local field correction or auxiliary density response)
+  in->guess_file1 = NO_FILE_STR; // File of the first file used to construct the guess (static structure factor)
+  in->guess_file2 = NO_FILE_STR; // File of the second file used to construct the guess (static local field correction or auxiliary density response)
   in->iet_mapping = "standard"; // Mapping between the quantum and classical state points for the IET-based schemes
   in->vs_drs = 0.01; // Resolution of the coupling parameter grid for the VS schemes
   in->vs_dt = 0.01; // Resolution of the degeneracy parameter grid for the VS schemes
   in->vs_alpha = 0.5; // Initial guess for the free parameter in the VS schemes
-  in->vs_thermo_file = "NO_FILE"; // File with thermodynamic integration data for the VS schemes
+  in->vs_thermo_file = NO_FILE_STR; // File with thermodynamic integration data for the VS schemes
   in->vs_err_min_iter = 1e-5; // Minimum error for convergence in the iterations for the VS schemes
   in->vs_a_mix = 1e-5; // Mixing parameter for iterative procedure for the VS schemes 
   in->vs_solve_csr = 1; // Enforce CSR in the VS schemes

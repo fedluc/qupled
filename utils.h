@@ -8,22 +8,22 @@
 // -------------------------------------------------------------------
 
 // Tolerance to compare doubles
-static const double DBL_TOL = 1e-14;
+#define DBL_TOL 1e-14
 
 // Maximum number of iterations for the root solvers
-static const int ROOT_MAX_ITER = 1000;
+#define ROOT_MAX_ITER 1000
 
 // Minimum relative error for the root solvers
-static const double ROOT_REL_ERR = 1e-10;
+#define ROOT_REL_ERR 1e-10
 
 // Minimum absolute error for the root solvers
-static const double ROOT_ABS_ERR = 1e-10;
+#define ROOT_ABS_ERR 1e-10
 
 // Minimum relative error for the Fourier integrals
-static const double FOURIER_REL_ERR = 1e-10;
+#define FOURIER_REL_ERR 1e-10
 
 // Minimum relative error for the numerical quadratures
-static const double QUAD_REL_ERR = 1e-5;
+#define QUAD_REL_ERR 1e-5
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ACCESS ONE ELEMENT OF A TWO-DIMENSIONAL ARRAY
