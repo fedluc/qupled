@@ -8,31 +8,47 @@
 // DATA STRUCTURES TO HANDLE MORE STATE POINTS SIMULTANEOUSLY
 // -------------------------------------------------------------------
 
-// Number of elements (field) in the vs_sp structure
 #define VSS_NUMEL 9
 #define VSS_IDXIN 4
 #define VSS_STENCIL 3
+#define VST_NUMEL 3
+#define VST_IDXIN 1
 
 typedef union {
 
   struct {
 
-    double *rsm1tm1;
-    double *rstm1;
-    double *rsp1tm1;
+    double *rsmtm;
+    double *rstm;
+    double *rsptm;
 
-    double *rsm1t;
+    double *rsmt;
     double *rst;
-    double *rsp1t;
+    double *rspt;
 
-    double *rsm1tp1;
-    double *rstp1;
-    double *rsp1tp1;
+    double *rsmtp;
+    double *rstp;
+    double *rsptp;
     
   };
   double *el[VSS_NUMEL];
   
 } vs_struct;
+
+
+typedef union {
+
+  struct {
+
+    double *rstm;
+    double *rst;
+    double *rstp;
+    
+  };
+  double *el[VSS_NUMEL];
+  
+} vs_thermo;
+
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO DEFINE THE SIZE OF THE GRID FOR THERMODYNAMIC
@@ -54,8 +70,8 @@ void free_vs_stls_arrays(double *rsu, double *rsa);
 // -------------------------------------------------------------------
 
 void init_fixed_vs_stls_arrays(input *in, input *vs_in,
-			       vs_struct xx, vs_struct rsa,
-			       vs_struct rsu, double *fxc,
+			       vs_struct xx, vs_thermo rsa,
+			       vs_thermo rsu, double *fxc,
 			       double *rs_co, bool verbose);
 
 void init_tmp_vs_stls_arrays(input *vs_in, vs_struct xx,
@@ -81,8 +97,8 @@ void initial_guess_vs_stls(vs_struct xx, vs_struct SS,
 // FUNCTIONS USED TO PERFORM THE ITERATIONS FOR THE VS-STLS SCHEME
 // ---------------------------------------------------------------------
 
-void vs_stls_thermo_iterations(vs_struct xx, vs_struct rsu,
-			       vs_struct rsa, double *fxc,
+void vs_stls_thermo_iterations(vs_struct xx, vs_thermo rsu,
+			       vs_thermo rsa, double *fxc,
 			       double *rs_co, input *vs_in,
 			       bool verbose);
 
@@ -164,8 +180,8 @@ void compute_idr_vs_stls(vs_struct phi, vs_struct xx, input *vs_in);
 // FUNCTION USED TO COMPUTE THE PARAMETER FOR THE CSR RULE
 // -------------------------------------------------------------------
 
-double compute_alpha(vs_struct xx, vs_struct rsu,
-		     vs_struct rsa, double *fxc,
+double compute_alpha(vs_struct xx, vs_thermo rsu,
+		     vs_thermo rsa, double *fxc,
 		     double *rs_co, input *vs_in);
 
 
@@ -173,15 +189,15 @@ double compute_alpha(vs_struct xx, vs_struct rsu,
 // FUNCTION USED TO COMPUTE THE INTEGRAND FOR THE FREE ENERGY
 // -------------------------------------------------------------------
 
-void compute_rsu(vs_struct xx, vs_struct rsu,
-		 vs_struct rsa, double *rs_co,
+void compute_rsu(vs_struct xx, vs_thermo rsu,
+		 vs_thermo rsa, double *rs_co,
 		 input *vs_in,
 		 bool verbose);
 
 void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 			vs_struct GG, vs_struct GG_new,
 			vs_struct phi, vs_struct xx,
-			vs_struct rsu, vs_struct rsa,
+			vs_thermo rsu, vs_thermo rsa,
 			double *rs_co, int start,
 			int end, int step, input *vs_in,
 			bool compute_guess, bool verbose);
@@ -190,13 +206,13 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 // FUNCTIONS USED TO COMPUTE THE FREE ENERGY
 // -------------------------------------------------------------------
 
-double compute_free_energy_integral(double *rsa, double *rsu,
-				    double rs_min, double rs_max,
-				    input in);
+double compute_free_energy(double *rsa, double *rsu,
+			   double rs_min, double rs_max,
+			   input in);
 
 double fxc(double rs, void* pp);
 
-void compute_free_energy_fixed(vs_struct rsa, vs_struct rsu,
+void compute_free_energy_fixed(vs_thermo rsa, vs_thermo rsu,
 			       double *fxc, double *rs_co,
 			       input *vs_in);
 
@@ -214,9 +230,9 @@ void write_text_alpha_CSR(input in);
 
 void read_guess_vs_stls(vs_struct SS, vs_struct GG, input *vs_in);
 
-void write_thermo_vs_stls(vs_struct rsa, vs_struct rsu, input *vs_in);
+void write_thermo_vs_stls(vs_thermo rsa, vs_thermo rsu, input *vs_in);
 
-void read_thermo_vs_stls(vs_struct *rsa, vs_struct *rsu,
+void read_thermo_vs_stls(vs_thermo *rsa, vs_thermo *rsu,
 			 int *nrs, input *vs_in);
 
 void check_thermo_vs_stls(double dt, double Theta, input in,
