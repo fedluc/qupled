@@ -109,7 +109,7 @@ The following command line options can be employed to control the calculations p
   
   * `--vs-solve-csr` speficies whether to enforce the compressibility sum-rule in the VS-STLS scheme or not. If this parameter is set to 0, the self consistent calculation for the free parameter in the VS-STLS is by-passed completely and the structural properties are determined via the free parameter specified with `vs-alpha`. Default `--vs-solve-csr=1`
   
-  * `--vs-thermo-file` speficies the name of the binary file used to load part of the exchange free energy integrand in the VS-STLS scheme. The binary file with the free energy integrand is written at the end of any successfull VS-STLS calculation. If no file name is given, the free energy integrand is computed starting from 0. Note that the same value for the free parameter used to enforce the compressibility sum-rule (&alpha;) is adopted for all the state points that are not included in the imported binary file. Hence, if (&alpha;) is expected to vary significantly with the coupling parameter, computing the free energy integrand from 0 could lead to erroneous results.  Default: no file name is specified.
+  * `--vs-thermo-file` speficies the name of the binary file used to load part of the exchange free energy integrand in the VS-STLS scheme. The binary file with the free energy integrand is written at the end of any successfull VS-STLS calculation (see [Output](https://github.com/fedluc/STLS/edit/master/README.md#Output)). If no file name is given, the free energy integrand is computed starting from 0. Note that the same value for the free parameter used to enforce the compressibility sum-rule (&alpha;) is adopted for all the state points that are not included in the imported binary file. Hence, if (&alpha;) is expected to vary significantly with the coupling parameter, computing the free energy integrand from 0 could lead to erroneous results.  Default: no file name is specified.
 
   * `--xmax` specifies the cutoff for wave-vector grid. Default `--xcut=20`
  
@@ -126,9 +126,15 @@ The following command line options can be employed to control the calculations p
   * One text file with the static density response (sdr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
   * One text file with the ideal density response (idr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and n<sub>l</sub> columns
   * One text file with the static structure factor within the Hartree-Fock approximation (ssfHF_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
-  * One text file with the interaction energy (uint_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
-  * One binary file which can be used as an initial guess for subsequent calculations via the options `--stls-guess` and `--qstls-guess` (restart_rs\*\_theta\*\*\_\*\*\*_.bin)
-
+  * One text file with the interaction energy (uint_rs\*\_theta\*\*\_\*\*\*.dat) 
+  * One binary file which can be used as an initial guess for subsequent calculations via the options `--stls-guess` and `--qstls-guess` (restart_rs\*\_theta\*\*\_\*\*\*.bin)
+   
+ For the VS-STLS, additional files are produced: 
+ 
+ * One text file with the free parameter obtained by enforcing the compressibility sum-rule (alpha_csr_rs\*\_theta\*\*\_\*\*\*.dat) 
+  * One text file with the exchange free energy (fxc_rs\*\_theta\*\*\_\*\*\*.dat) 
+  * One binary file with the free energy integrand that can be used for subsequent calculations via the option `vs-thermo-file` (thermo_int_rs\*\_theta\*\*\_\*\*\*.bin)
+  
  For the quantum schemes, additional files are produced: 
  
   * One text file with the auxiliary density response (adr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and n<sub>l</sub> columns
