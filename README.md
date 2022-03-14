@@ -5,6 +5,7 @@
 STLS can be used to compute the static and thermodynamic properties of quantum one component plasmas via theoretical approaches based on the dielectric formalism. The theoretical approaches which can be solved with STLS include:
 
 * The classical STLS scheme as discussed by [Tanaka and Ichimaru](https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278)
+* The classical VS-STLS scheme discussed by [Vashishta and Singwi](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875) extended to finite temperatures
 * The classical STLS-HNC scheme as discussed by [Tanaka](https://aip.scitation.org/doi/full/10.1063/1.4969071)
 * The classical STLS-IET scheme as discussed by [Tolias and collaborators](https://aip.scitation.org/doi/10.1063/5.0065988)
 * The quantum STLS (qSTLS) scheme as discussed by [Schweng and Böhm](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037)
@@ -29,8 +30,14 @@ Given a state point defined via the quantum degeneracy parameter (&theta;) and v
   * The chemical potential is determined from the normalization condition for the Fermi-Dirac distribution function which is solved with a bisection method
   * The ideal density response is computed for various values of the wave-vector and of the Matsubara frequency
   * The static structure factor and the static local field correction are computed via an iterative solution which employs [mixing](https://aip.scitation.org/doi/abs/10.1063/1.1682399]) and is assumed converged if the condition 
-||G<sub>i</sub>(x) - G<sub>i-1</sub>(x)|| < epsilon is satisfied between two successive iterations. Here G(x) is the static local field correction and epsilon is a tolerance specified in input
+||G<sub>i</sub>(x) - G<sub>i-1</sub>(x)|| < &epsilon; is satisfied between two successive iterations. Here G(x) is the static local field correction and &epsilon; is a tolerance specified in input
 
+* For the classical VS-STLS scheme
+  * The free parameter used to enforce the compressibility sum-rule (&alpha;) is guessed from input
+  * The static structure factor and the static local field correction are computed with the an iterative procedure similar to the one employed for the other classical schemes (see above). In order to compute the state point derivatives that appear in the expression for the static local field correction, nine state points are solved simultaneously
+  * The interaction energy is computed from the static structure factor
+  * The exchange free energy is computed from the internal energy
+  * A new value for the free parameter used to enforce the compressibility sum-rule is obtained from the interaction energy and from the exchange free energy. If the condition |&alpha;<sub>i</sub>(x) - &alpha;<sub>i-1</sub>(x)|/ &alpha;<sub>i</sub>(x) < &epsilon; is satisfied, the calculation is complete. Otherwise, the new value for &alpha; is used to start a new computational cycle. The tolerance &epsilon; used to check the convergence of the free parameter does not have to be equal to the tolerance used to compute the structural properties
 
 * For the quantum schemes (qSTLS, qSTLS-IET)
   * The chemical potential is determined from the normalization condition for the Fermi-Dirac distribution function which is solved with a bisection method
@@ -90,6 +97,20 @@ The following command line options can be employed to control the calculations p
      
   * `--Theta` specifies the  quantum degeneracy parameter. Default `--Theta=1.0`
   
+  * `--vs-alpha` specifies the initial guess for the free parameter used to enforce the compressibility sum-rule in the VS-STLS scheme. Default `--vs-alpha=0.5`
+  
+  * `--vs-drs` speficies the resolution used to compute the derivatives with respect to the coupling parameter and the exchange free energy integrand in the VS-STLS scheme. Default `--vs-drs=0.01`
+  
+  * `--vs-dt` speficies the resolution used to compute the derivatives with respect to the degeneracy parameter in the VS-STLS scheme. Default `--vs-dt=0.01`
+  
+    * `--vs-min-err` speficies the minimum error for convergence in the iterations for the free parameter used to enforce the compressibility sum-rule in the VS-STLS scheme. Default `--vs-alpha=1e-5`
+    
+  * `--vs-mix` speficies the mixing parameter in the iterations for the free parameter used to enforce the compressibility sum-rule in the VS-STLS scheme . Default `--vs-mix=0.1`  
+  
+  * `--vs-solve-csr` speficies whether to enforce the compressibility sum-rule in the VS-STLS scheme or not. If this parameter is set to 0, the self consistent calculation for the free parameter in the VS-STLS is by-passed completely and the structural properties are determined via the free parameter specified with `vs-alpha`. Default `--vs-solve-csr=1`
+  
+  * `--vs-thermo-file` speficies the name of the binary file used to load part of the exchange free energy integrand in the VS-STLS scheme. The binary file with the free energy integrand is written at the end of any successfull VS-STLS calculation. If no file name is given, the free energy integrand is computed starting from 0. Note that the same value for the free parameter used to enforce the compressibility sum-rule (&alpha;) is adopted for all the state points that are not included in the imported binary file. Hence, if (&alpha;) is expected to vary significantly with the coupling parameter, computing the free energy integrand from 0 could lead to erroneous results.  Default: no file name is specified.
+
   * `--xmax` specifies the cutoff for wave-vector grid. Default `--xcut=20`
  
   ## Constants
