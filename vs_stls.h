@@ -198,9 +198,8 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 			vs_struct GG, vs_struct GG_new,
 			vs_struct phi, vs_struct xx,
 			vs_thermo rsu, vs_thermo rsa,
-			double *rs_co, int start,
-			int end, int step, input *vs_in,
-			bool compute_guess, bool verbose);
+			double *rs_co, input *vs_in,
+			bool verbose);
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE FREE ENERGY

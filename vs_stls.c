@@ -779,9 +779,6 @@ double compute_alpha(vs_struct xx, vs_thermo rsu, vs_thermo rsa,
 void compute_rsu(vs_struct xx, vs_thermo rsu,
 		 vs_thermo rsa, double *rs_co,
 		 input *vs_in, bool verbose){
-
-  // Size of the grid for thermodynamic integration
-  int nrs = vs_in[VSS_IDXIN].vs_nrs;
   
   // Arrays for VS-STLS solution
   vs_struct xx_tmp;
@@ -813,8 +810,7 @@ void compute_rsu(vs_struct xx, vs_thermo rsu,
   
   // Fill the free energy integrand
   compute_rsu_blocks(SS, SSHF, GG, GG_new, phi, xx,
-  		     rsu, rsa, rs_co, 0, nrs, 1, vs_in,
-  		     true, verbose);
+  		     rsu, rsa, rs_co, vs_in, verbose);
 
   // Free memory
   for (int ii=0; ii<VSS_NUMEL; ii++){
@@ -828,17 +824,36 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 			vs_struct GG, vs_struct GG_new,
 			vs_struct phi, vs_struct xx,
 			vs_thermo rsu, vs_thermo rsa,
-			double *rs_co, int start,
-			int end, int step, input *vs_in,
-			bool compute_guess, bool verbose){
+			double *rs_co, input *vs_in,
+			bool verbose){
 
+  bool compute_guess = true;
+  int nrs = vs_in[VSS_IDXIN].vs_nrs;
+  int start = -1;
+  double u_int[VSS_NUMEL];
   input vs_in_tmp[VSS_NUMEL];
-  double u_int;
 
-  for (int ii=start; ii<end; ii=ii+step) {
+  // Initialize free energy integrand
+  for (int ii=0; ii<nrs; ii++) {
     
     // Skip state points imported from file
     if (rsa.rst[ii] < rs_co[VST_IDXIN]) continue;
+
+    // Store index of the first element that is initialized
+    if (start < 0) start = ii;
+
+    // Initialize
+    for (int jj=0; jj<VST_NUMEL; jj++){ 
+      rsu.el[jj][ii] = INFINITY;
+    }
+      
+  }
+
+  // Update free energy integrand
+  for (int ii=start; ii<nrs; ii++) {
+    
+    // Skip state points that were already updated
+    if (rsu.rst[ii-1] != INFINITY) continue;
     
     // Define state point
     for (int jj=0; jj<VSS_NUMEL; jj++) {
@@ -853,28 +868,40 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
     if (compute_guess)
       initial_guess_vs_stls(xx, SS, SSHF, GG, GG_new, phi, vs_in_tmp);
 
-    // Avoid recomputing guess for next state points
+    // Avoid recomputing initial guess for the following state points 
     compute_guess = false;
     
     // Compute structural properties with the VS-STLS static local field correction
     vs_stls_struct_iterations(SS, SSHF, GG, GG_new, phi, xx, vs_in_tmp, verbose);
     
+    // Compute the internal energy 
+    for (int jj=0; jj<VSS_NUMEL; jj++){
+
+      // Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs)
+      if (vs_in_tmp[jj].rs == 0.0) vs_in_tmp[jj].rs = 1.0;
+      
+      // Internal energy
+      u_int[jj] = compute_internal_energy(SS.el[jj], xx.el[jj], vs_in_tmp[jj]);
+      
+    }
+
     // Compute the free energy integrand
     for (int jj=0; jj<VST_NUMEL; jj++){
 
       // Index to map from vss_thermo to vss_struct
       int kk = jj*VSS_STENCIL+1;
       
-      // Avoid divergencies for rs = 0.0 (the internal energy scales as 1.0/rs)
-      if (vs_in_tmp[kk].rs == 0.0) vs_in_tmp[kk].rs = 1.0;
-      
-      // Internal energy
-      u_int = compute_internal_energy(SS.el[kk], xx.el[kk], vs_in_tmp[kk]);
-      
-      // Free energy integrand
-      rsu.el[jj][ii] = vs_in_tmp[kk].rs*u_int;
+      // Free energy integrand 
+      rsu.el[jj][ii] = vs_in_tmp[kk].rs*u_int[kk];
+
+      // Free energy integrand of neighboring points (in rs)
+      if (ii>0 && ii<nrs-1){
+	rsu.el[jj][ii-1] = vs_in_tmp[kk-1].rs*u_int[kk-1];
+	rsu.el[jj][ii+1] = vs_in_tmp[kk+1].rs*u_int[kk+1];
+      }
       
     }
+    
 
   }
 

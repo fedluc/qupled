@@ -73,17 +73,17 @@ static struct argp_option options[] = {
   {"mu-guess", ARGUMENT_MU_GUESS_SHORT, "-10,10", 0,
    "Initial guess for chemical potential"},
 
-  {"stls-guess", ARGUMENT_STLS_GUESS_SHORT, 0, 0,
+  {"stls-guess", ARGUMENT_STLS_GUESS_SHORT, "file", 0,
    "File used to load the stls and stls-iet schemes"},
 
-  {"qstls-guess", ARGUMENT_QSTLS_GUESS_SHORT, 0, 0,
+  {"qstls-guess", ARGUMENT_QSTLS_GUESS_SHORT, "file", 0,
    "File used to load the qstls and qstls-iet schemes"},
 
-  {"qstls-fix", ARGUMENT_QSTLS_FIXED_SHORT, 0, 0,
+  {"qstls-fix", ARGUMENT_QSTLS_FIXED_SHORT, "file", 0,
    "File used to load the fixed component of the density response function "
    "for the qslts scheme"},
 
-  {"qstls-iet-fix", ARGUMENT_QSTLS_IET_FIXED_SHORT, 0, 0,
+  {"qstls-iet-fix", ARGUMENT_QSTLS_IET_FIXED_SHORT, "file", 0,
    "File used to load fixed component of the density response function "
    "for the qslts-iet scheme"},
 
@@ -103,7 +103,7 @@ static struct argp_option options[] = {
   {"guess-write", ARGUMENT_GUESS_WRITE_SHORT, "0", 0,
    "Write binary restart files from text files (0 = off, 1 = on)"},
 
-  {"guess-files", ARGUMENT_GUESS_FILES_SHORT, 0, 0,
+  {"guess-files", ARGUMENT_GUESS_FILES_SHORT, "file1,file2", 0,
    "Name of the two text files used to write binary restart files"},
 
   {"iet-mapping", ARGUMENT_IET_MAPPING_SHORT, "standard", 0,
@@ -118,7 +118,7 @@ static struct argp_option options[] = {
   {"vs-alpha", ARGUMENT_VS_ALPHA_SHORT, "0.5", 0,
    "Initial guess for the free parameter in the VS schemes"},
 
-  {"vs-thermo-file", ARGUMENT_VS_THERMO_SHORT, 0, 0,
+  {"vs-thermo-file", ARGUMENT_VS_THERMO_SHORT, "file", 0,
    "File used to load the thermodynamic integration data for the VS schemes"},
 
   {"vs-min-err", ARGUMENT_VS_MIN_ERR_SHORT, "1e-5", 0,
