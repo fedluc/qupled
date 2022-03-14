@@ -764,8 +764,13 @@ double compute_alpha(vs_struct xx, vs_thermo rsu, vs_thermo rsa,
              +(1.0/3.0)*in.Theta*dfdt;
     denom += (2.0/3.0)*in.Theta*dudt;
   }
+  
   alpha = numer/denom;
 
+  for (int ii=0; ii<in.vs_nrs; ii++){
+    printf("rsa[%d] = %f, rsu[%d] = %f\n", ii, rsa.rst[ii], ii, rsu.rst[ii]);
+  }
+  
   // Output
   return alpha;
  
@@ -853,7 +858,7 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
   for (int ii=start; ii<nrs; ii++) {
     
     // Skip state points that were already updated
-    if (rsu.rst[ii-1] != INFINITY) continue;
+    if (rsu.rst[ii-1] != INFINITY && ii<nrs-1) continue;
     
     // Define state point
     for (int jj=0; jj<VSS_NUMEL; jj++) {
