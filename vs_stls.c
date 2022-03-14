@@ -169,7 +169,9 @@ void init_fixed_vs_stls_arrays(input *in, input *vs_in,
   printf("Chemical potential (low and high bound): %f %f\n",
 	 in->mu_lo, in->mu_hi);
   printf("Wave-vector cutoff: %f\n", in->xmax);
-  printf("Wave-vector resolutions: %f\n", in->dx);
+  printf("Wave-vector resolution: %f\n", in->dx);
+  printf("Coupling parameter resolution: %f\n", in->vs_drs);
+  printf("Degeneracy parameter resolution: %f\n", in->vs_dt);
   printf("Number of Matsubara frequencies: %d\n", in->nl);
   printf("Maximum number of iterations: %d\n", in->nIter);
   printf("Error for convergence: %.5e\n", in->err_min_iter);
@@ -830,8 +832,6 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
 			int end, int step, input *vs_in,
 			bool compute_guess, bool verbose){
 
-  /* int nrs = vs_in[VSS_IDXIN].vs_nrs; */
-  /* int last_tmp = -1; */
   input vs_in_tmp[VSS_NUMEL];
   double u_int;
 
@@ -879,30 +879,8 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
       
     }
 
-
-    /* // Update free energy integrand of neighboring points */
-    /* // We care to keep synchronized only the rst, rstm and rstp elements of rsu, */
-    /* // since these are the only elements used to compute alpha (see compute_alpha) */
-    /* if (start>=1 && end<=nrs-1){ */
-
-    /*   for (int jj=-VSS_STENCIL; jj<VSS_STENCIL+1; jj=jj+VSS_STENCIL){ */
-    /* 	rsu.el[VSS_IDXIN+jj][ii-1] = rsu.el[VSS_IDXIN+jj-1][ii]; */
-    /* 	rsu.el[VSS_IDXIN+jj][ii+1] = rsu.el[VSS_IDXIN+jj+1][ii]; */
-    /*   } */
-
-    /* } */
-     
-    /* // Keep track of the index of the last element that was processed */
-    /* last_tmp = ii; */
-
   }
-  
-  /* if (last_tmp >= 0) { */
-  /*   if (start>=1 && end<=nrs-1) */
-  /*     *last = last_tmp + 2; */
-  /*   else */
-  /*     *last = last_tmp + 1; */
-  /* } */
+
   
 }
 

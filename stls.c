@@ -128,7 +128,7 @@ void init_fixed_stls_arrays(input *in, double *xx,
   printf("Chemical potential (low and high bound): %f %f\n", 
 	 in->mu_lo, in->mu_hi);
   printf("Wave-vector cutoff: %f\n", in->xmax);
-  printf("Wave-vector resolutions: %f\n", in->dx);
+  printf("Wave-vector resolution: %f\n", in->dx);
   printf("Number of Matsubara frequencies: %d\n", in->nl);
   printf("Maximum number of iterations: %d\n", in->nIter);
   printf("Error for convergence: %.5e\n", in->err_min_iter);
@@ -1264,7 +1264,7 @@ void check_guess_stls(int nx, double dx, double xmax, input in,
   if (check_items) {
     if (it_read != it_expected ) {
       fprintf(stderr,"Error while reading file for initial guess or restart.\n");
-      fprintf(stderr,"%ld Elements expected, %ld elements read\n", it_read, it_expected);
+      fprintf(stderr,"%ld Elements expected, %ld elements read\n", it_expected, it_read);
       fclose(fid);
       exit(EXIT_FAILURE);
     }

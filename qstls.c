@@ -863,7 +863,7 @@ void check_guess_qstls(int nx, double dx, double xmax, int nl,
   if (check_items) {
     if (it_read != it_expected ) {
       fprintf(stderr,"Error while reading file for initial guess or restart.\n");
-      fprintf(stderr,"%ld Elements expected, %ld elements read\n", it_read, it_expected);
+      fprintf(stderr,"%ld Elements expected, %ld elements read\n", it_expected, it_read);
       fclose(fid);
       exit(EXIT_FAILURE);
     }
