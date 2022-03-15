@@ -24,16 +24,7 @@ void compute_dynamic_stls(input in, bool verbose) {
 
   // Scalars
   double GG;
-  
-  // ###################################################
-  // ASSUMPTIONS: xmax stores the target wave-vector
-  // nx and dx are used to construct the frequency
-  // grid. This will be replaced with appropriate input
-  // parameters once a full working version is available.
-  // The same holds for the hard-coded parameters listed
-  // below.
-  // ###################################################
-  
+ 
   // Safeguard
   if (in.Theta == 0) {
     printf("Ground state calculations of the dynamic properties"
@@ -82,15 +73,8 @@ void compute_dynamic_stls(input in, bool verbose) {
 
 void get_frequency_grid_size(input *in){
 
-  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  double wp = 2.0*sqrt(3.0*in->rs)*lambda*lambda;
-  double wmax;
-
-  // Cutoff at 10 times the plasma frequency
-  wmax = 10*wp;
-
   // Number of grid points in the frequency grid
-  in->nx = (int)floor(wmax/in->dx);
+  in->nx = (int)floor(in->dyn_wmax/in->dyn_dw);
   
 }
 // -------------------------------------------------------------------
@@ -144,18 +128,15 @@ void free_dynamic_stls_arrays(double *ww, double *phi_re,
 
 void init_fixed_dynamic_stls_arrays(input *in, double *ww, bool verbose){
 
-  double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  double wp = 2.0*sqrt(3.0*in->rs)*lambda*lambda;
-
   // Print on screen the parameter used to solve the STLS equation
   printf("------ Parameters used in the solution -------------\n");
   printf("Quantum degeneracy parameter: %f\n", in->Theta);
   printf("Quantum coupling parameter: %f\n", in->rs);
   printf("Chemical potential (low and high bound): %f %f\n", 
 	 in->mu_lo, in->mu_hi);
-  printf("Wave-vector: %f\n", in->xmax);
-  printf("Frequency cutoff: %f\n", 10.0*wp);
-  printf("Frequency resolution: %f\n", in->dx);
+  printf("Target wave-vector: %f\n", in->dyn_xtarget);
+  printf("Frequency cutoff: %f\n", in->dyn_wmax);
+  printf("Frequency resolution: %f\n", in->dyn_dw);
   printf("----------------------------------------------------\n");
  
   // Chemical potential
@@ -178,8 +159,8 @@ void init_fixed_dynamic_stls_arrays(input *in, double *ww, bool verbose){
 
 void frequency_grid(double *ww, input *in){
  
-  ww[0] = in->dx;
-  for (int ii=1; ii < in->nx; ii++) ww[ii] = ww[ii-1] + in->dx;
+  ww[0] = in->dyn_dw;
+  for (int ii=1; ii < in->nx; ii++) ww[ii] = ww[ii-1] + in->dyn_dw;
 
 }
 
@@ -212,9 +193,7 @@ void compute_dynamic_idr(double *phi_re, double *phi_im,  double *ww,
 void compute_dynamic_idr_re(double *phi_re, double *ww,
 			     input in) {
 
-  double xx = in.xmax;
-  double y_co = 40.0; // Hard-coded, read from in.xmax
-  double ff = 1.0;
+  double xx = in.dyn_xtarget;
   double err;
   size_t nevals;
   
@@ -230,10 +209,10 @@ void compute_dynamic_idr_re(double *phi_re, double *ww,
   // Normalized ideal Lindhard density
   for (int ii=0; ii<in.nx; ii++) {
 
-    struct idr_params phixwp = {in.xmax, in.mu, in.Theta, ww[ii]};
+    struct idr_params phixwp = {xx, in.mu, in.Theta, ww[ii]};
     ff_int.params = &phixwp;
     gsl_integration_cquad(&ff_int, 
-			  0.0, ymax, 
+			  0.0, in.xmax, 
 			  0.0, QUAD_REL_ERR, 
 			  wsp, 
 			  &phi_re[ii], &err, &nevals);
@@ -249,7 +228,7 @@ void compute_dynamic_idr_re(double *phi_re, double *ww,
 void compute_dynamic_idr_im(double *phi_im, double *ww,
 			     input in) {
 
-  double xx = in.xmax;
+  double xx = in.dyn_xtarget;
   double ymin;
   double ymax;
   double err;
@@ -272,7 +251,7 @@ void compute_dynamic_idr_im(double *phi_im, double *ww,
     if (ymin < 0.0) ymin = -ymin;
     ymax = (xx/2.0) + ww[ii]/(2.0*xx);
     
-    struct idr_params phixwp = {in.xmax, in.mu, in.Theta, ww[ii]};
+    struct idr_params phixwp = {xx, in.mu, in.Theta, ww[ii]};
     ff_int.params = &phixwp;
     gsl_integration_cquad(&ff_int, 
 			  ymin, ymax, 
@@ -392,6 +371,7 @@ void get_slfc(double *GG, input in){
 
   // Variables
   size_t it_read;
+  char slfc_file_name[100];
   int nx_file;
   double dx_file;
   double xmax_file;
@@ -401,10 +381,16 @@ void get_slfc(double *GG, input in){
   input in_file = in;
   gsl_spline *slfc_sp_ptr;
   gsl_interp_accel *slfc_acc_ptr;
-  
+
   // Open binary file
   FILE *fid = NULL;
-  fid = fopen(in.stls_guess_file, "rb");
+  if (strcmp(in.stls_guess_file, NO_FILE_STR)==0) {
+    sprintf(slfc_file_name, "restart_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
+    fid = fopen(slfc_file_name, "rb");
+  }
+  else {
+    fid = fopen(in.stls_guess_file, "rb");
+  }
   if (fid == NULL) {
     fprintf(stderr,"Error while opening file for the static local field correction\n");
     exit(EXIT_FAILURE);
@@ -419,7 +405,7 @@ void get_slfc(double *GG, input in){
   it_read += fread(&xmax_file, sizeof(double), 1, fid);
   check_guess_stls(nx_file, dx_file, xmax_file, in, it_read, 3,
   		   fid, false, true, false);
-
+  
   // Allocate temporary arrays to store the structural properties
   SS_file = malloc( sizeof(double) * nx_file);
   GG_file = malloc( sizeof(double) * nx_file);
@@ -455,7 +441,7 @@ void get_slfc(double *GG, input in){
   slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, nx_file);
   slfc_acc_ptr = gsl_interp_accel_alloc();
   gsl_spline_init(slfc_sp_ptr, xx_file, GG_file, nx_file);
-  *GG = gsl_spline_eval(slfc_sp_ptr, in.xmax, slfc_acc_ptr);
+  *GG = gsl_spline_eval(slfc_sp_ptr, in.dyn_xtarget, slfc_acc_ptr);
   
   // Free memory
   free(SS_file);
@@ -475,7 +461,7 @@ void compute_dsf(double *SSn, double *phi_re, double *phi_im,
 		 double GG, double *ww, input in){
     
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  double xx = in.xmax;
+  double xx = in.dyn_xtarget;
   double ff1 = 4.0*lambda*in.rs/(M_PI*xx*xx);
   double ff2;
   double denom, denom_re, denom_im;
@@ -491,7 +477,7 @@ void compute_dsf(double *SSn, double *phi_re, double *phi_im,
       SSn[ii] = 0.0;
     else
       SSn[ii] = (ff2/M_PI)*phi_im[ii]/denom;
-	     
+
   }
 
 }
@@ -515,7 +501,8 @@ void write_text_dsf(double *SSn, double *ww, input in){
   FILE* fid;
   
   char out_name[100];
-  sprintf(out_name, "dsf_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta, in.xmax, in.theory);
+  sprintf(out_name, "dsf_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta,
+	  in.dyn_xtarget, in.theory);
   fid = fopen(out_name, "w");
   if (fid == NULL) {
     fprintf(stderr, "Error while creating the output file for the dynamic structure factor\n");
