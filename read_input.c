@@ -121,10 +121,10 @@ static struct argp_option options[] = {
   {"vs-thermo-file", ARGUMENT_VS_THERMO_SHORT, "file", 0,
    "File used to load the thermodynamic integration data for the VS schemes"},
 
-  {"vs-min-err", ARGUMENT_VS_MIN_ERR_SHORT, "1e-5", 0,
+  {"vs-min-err", ARGUMENT_VS_MIN_ERR_SHORT, "1e-3", 0,
    "Minimum error for convergence in the iterations for the VS schemes "},
 
-  {"vs-mix", ARGUMENT_VS_MIX_SHORT, "0.1", 0,
+  {"vs-mix", ARGUMENT_VS_MIX_SHORT, "1.0", 0,
    "Mixing parameter for iterative solution in the VS schemes "},
   
   {"vs-solve-csr", ARGUMENT_VS_SOLVE_CSR_SHORT, "1", 0,
@@ -342,8 +342,8 @@ void set_default_parse_opt(input *in){
   in->vs_dt = 0.01; // Resolution of the degeneracy parameter grid for the VS schemes
   in->vs_alpha = 0.5; // Initial guess for the free parameter in the VS schemes
   in->vs_thermo_file = NO_FILE_STR; // File with thermodynamic integration data for the VS schemes
-  in->vs_err_min_iter = 1e-5; // Minimum error for convergence in the iterations for the VS schemes
-  in->vs_a_mix = 1e-5; // Mixing parameter for iterative procedure for the VS schemes 
+  in->vs_err_min_iter = 1e-3; // Minimum error for convergence in the iterations for the VS schemes
+  in->vs_a_mix = 1.0; // Mixing parameter for iterative procedure for the VS schemes 
   in->vs_solve_csr = 1; // Enforce CSR in the VS schemes
 
 }
