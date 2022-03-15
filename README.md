@@ -103,9 +103,9 @@ The following command line options can be employed to control the calculations p
   
   * `--vs-dt` speficies the resolution used to compute the derivatives with respect to the degeneracy parameter in the VS-STLS scheme. Default `--vs-dt=0.01`
   
-  * `--vs-min-err` speficies the minimum error for convergence in the iterations for the free parameter used to enforce the compressibility sum-rule in the VS-STLS scheme. Default `--vs-alpha=1e-5`
+  * `--vs-min-err` speficies the minimum error for convergence in the iterations for the free parameter used to enforce the compressibility sum-rule in the VS-STLS scheme. Default `--vs-alpha=1e-3`
     
-  * `--vs-mix` speficies the mixing parameter in the iterations for the free parameter used to enforce the compressibility sum-rule in the VS-STLS scheme . Default `--vs-mix=0.1`  
+  * `--vs-mix` speficies the mixing parameter in the iterations for the free parameter used to enforce the compressibility sum-rule in the VS-STLS scheme . Default `--vs-mix=1.0`  
   
   * `--vs-solve-csr` speficies whether to enforce the compressibility sum-rule in the VS-STLS scheme or not. If this parameter is set to 0, the self consistent calculation for the free parameter in the VS-STLS is by-passed completely and the structural properties are determined via the free parameter specified with `vs-alpha`. Default `--vs-solve-csr=1`
   
