@@ -21,36 +21,36 @@ void get_frequency_grid_size(input *in);
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
 
-void alloc_dynamic_stls_arrays(input in, double **ww, double **phi_re, 
+void alloc_dynamic_stls_arrays(input in, double **WW, double **phi_re, 
 			       double **phi_im, double **SSn);
 
-void free_dynamic_stls_arrays(double *ww, double *phi_re, 
+void free_dynamic_stls_arrays(double *WW, double *phi_re, 
 			      double *phi_im, double *SSn);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO INITIALIZE ARRAYS
 // -------------------------------------------------------------------
 
-void init_fixed_dynamic_stls_arrays(input *in, double *ww,
+void init_fixed_dynamic_stls_arrays(input *in, double *WW,
 				    bool verbose);
 
 // ------------------------------------------------------------------
 // FUNCTION USED TO DEFINE THE FREQUENCY GRID
 // ------------------------------------------------------------------
 
-void frequency_grid(double *ww, input *in);
+void frequency_grid(double *WW, input *in);
 
 // ------------------------------------------------------------------
 // FUNCTION USED TO DEFINE THE IDEAL DENSITY RESPONSE
 // ------------------------------------------------------------------
 
 void compute_dynamic_idr(double *phi_re, double *phi_im,
-			 double *ww, input in);
+			 double *WW, input in);
 
-void compute_dynamic_idr_re(double *phi_re, double *ww,
+void compute_dynamic_idr_re(double *phi_re, double *WW,
 			    input in);
 
-void compute_dynamic_idr_im(double *phi_im, double *ww,
+void compute_dynamic_idr_im(double *phi_im, double *WW,
 			    input in);
 
 double idr_re_partial_xw(double yy, void *pp);
@@ -72,14 +72,37 @@ void get_slfc(double *GG, input in);
 // ---------------------------------------------------------------------
 
 void compute_dsf(double *SSn, double *phi_re, double *phi_im,
-		 double GG, double *ww, input in);
+		 double GG, double *WW, input in);
 
-// -------------------------------------------------------------------
+// ---------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
-// -------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
-void write_text_dynamic_stls(double *SSn, double *ww, input in);
+void write_text_dynamic_stls(double *SSn, double *WW, input in);
 
-void write_text_dsf(double *SSn, double *ww, input in);
+void write_text_dsf(double *SSn, double *WW, input in);
+
+
+// --------------------------------------------------------------------
+// QSTLS
+// --------------------------------------------------------------------
+
+void compute_dynamic_qstls(input in, bool verbose);
+void alloc_dynamic_qstls_arrays(input in, double **psi_re, 
+				double **psi_im);
+void free_dynamic_qstls_arrays(double *psi_re, double *psi_im, double *SS,
+			       double *xx);
+void get_ssf(double **SS, double **xx, input *in);
+void compute_dynamic_adr(double *psi_re, double *psi_im,
+			 double *WW, double *SS,
+			 double *xx, input in);
+void compute_dynamic_adr_re(double *psi_re, double *WW,
+			    double *SS, double *xx,
+			    input in);
+double adr_re_part1_partial_xW(double ww, void* pp);
+double adr_re_part2_partial_xwW(double qq, void* pp);
+double adr_re_part2_partial_xw0(double qq, void* pp);
+double adr_re_part3_partial_xwqW(double tt, void* pp);
+double adr_re_part3_partial_xwq0(double tt, void* pp);
 
 #endif

@@ -16,7 +16,7 @@ int main (int argc, char **argv){
   // Start timing
   double tic = omp_get_wtime();
 
-  compute_dynamic_stls(in, true);
+  compute_dynamic_qstls(in, true);
   /* // Write guess (or restart) files */
   /* if (in.guess_write) { */
   /*   create_restart(in); */
