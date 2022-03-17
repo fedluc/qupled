@@ -74,6 +74,15 @@ void get_slfc(double *GG, input in);
 void compute_dsf(double *SSn, double *phi_re, double *phi_im,
 		 double GG, double *ww, input in);
 
+// ---------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE INTERMEDIATE SCATTERING FUNCTION
+// ---------------------------------------------------------------------
+
+void compute_isf(double *FF, double *tt, double *SSn,
+		 double *WW, input in);
+ 
+double isf(double WW, void *pp);
+
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
@@ -81,5 +90,7 @@ void compute_dsf(double *SSn, double *phi_re, double *phi_im,
 void write_text_dynamic_stls(double *SSn, double *ww, input in);
 
 void write_text_dsf(double *SSn, double *ww, input in);
+
+void write_text_isf(double *SSn, double *ww, input in);
 
 #endif

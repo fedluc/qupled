@@ -21,8 +21,6 @@ int main (int argc, char **argv){
   // Start timing
   double tic = omp_get_wtime();
 
-  compute_dynamic_stls(in, true);
-
   // Set number of threads for parallel calculations
   omp_set_num_threads(in.nThreads);
 

@@ -10,6 +10,13 @@
 #include "dynamic_stls.h"
 
 // -------------------------------------------------------------------
+// CONSTANTS
+// -------------------------------------------------------------------
+
+// Number of data points for imaginary time (varies between 0 and 1)
+#define NTAU 100
+
+// -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF THE CLASSICAL
 // SCHEMES (STLS, VS-STLS AND STLS-IET)
 // -------------------------------------------------------------------
@@ -17,11 +24,11 @@
 void compute_dynamic_stls(input in, bool verbose) {
 
   // Arrays 
-  double *ww = NULL; 
+  double *WW = NULL; 
   double *phi_re = NULL;
   double *phi_im = NULL;
   double *SSn = NULL;
-
+  
   // Scalars
   double GG;
  
@@ -36,14 +43,15 @@ void compute_dynamic_stls(input in, bool verbose) {
   get_frequency_grid_size(&in);
   
   // Allocate arrays
-  alloc_dynamic_stls_arrays(in, &ww, &phi_re, &phi_im, &SSn);
+  alloc_dynamic_stls_arrays(in, &WW, &phi_re, &phi_im,
+			    &SSn);
 
   // Chemical potential and frequency grid
-  init_fixed_dynamic_stls_arrays(&in, ww, verbose);
+  init_fixed_dynamic_stls_arrays(&in, WW, verbose);
 
   // Ideal density response
   if (verbose) printf("Normalized ideal Lindhard density calculation: ");
-  compute_dynamic_idr(phi_re, phi_im, ww, in);
+  compute_dynamic_idr(phi_re, phi_im, WW, in);
   if (verbose) printf("Done.\n");
   
   // Static local field correction
@@ -53,16 +61,16 @@ void compute_dynamic_stls(input in, bool verbose) {
   
   // Dynamic structure factor
   if (verbose) printf("Dynamic structure factor calculation: ");
-  compute_dsf(SSn, phi_re, phi_im, GG, ww, in);
+  compute_dsf(SSn, phi_re, phi_im, GG, WW, in);
   if (verbose) printf("Done.\n");
   
   // Output to file
   if (verbose) printf("Writing output files: ");
-  write_text_dynamic_stls(SSn, ww, in);
+  write_text_dynamic_stls(SSn, WW, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
-  free_dynamic_stls_arrays(ww, phi_re, phi_im, SSn);
+  free_dynamic_stls_arrays(WW, phi_re, phi_im, SSn);
 
  
 }
@@ -74,48 +82,48 @@ void compute_dynamic_stls(input in, bool verbose) {
 void get_frequency_grid_size(input *in){
 
   // Number of grid points in the frequency grid
-  in->nx = (int)floor(in->dyn_wmax/in->dyn_dw);
+  in->nW = (int)floor(in->dyn_wmax/in->dyn_dw);
   
 }
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
 
-void alloc_dynamic_stls_arrays(input in, double **ww, double **phi_re, 
+void alloc_dynamic_stls_arrays(input in, double **WW, double **phi_re, 
 			       double **phi_im, double **SSn){
 
-  *ww = malloc( sizeof(double) * in.nx);
-  if (*ww == NULL) {
+  *WW = malloc( sizeof(double) * in.nW);
+  if (*WW == NULL) {
     fprintf(stderr, "Failed to allocate memory for the frequency grid\n");
     exit(EXIT_FAILURE);
   }
 
-  *phi_re = malloc( sizeof(double) * in.nx);
+  *phi_re = malloc( sizeof(double) * in.nW);
   if (*phi_re == NULL) {
     fprintf(stderr, "Failed to allocate memory for the real part of"
 	    " the ideal density response\n");
     exit(EXIT_FAILURE);
   }
   
-  *phi_im = malloc( sizeof(double) * in.nx);
+  *phi_im = malloc( sizeof(double) * in.nW);
   if (*phi_im == NULL) {
     fprintf(stderr, "Failed to allocate memory for the imaginary part of"
 	    " the ideal density response\n");
     exit(EXIT_FAILURE);
   }
   
-  *SSn = malloc( sizeof(double) * in.nx);
-    if (*SSn == NULL) {
+  *SSn = malloc( sizeof(double) * in.nW);
+  if (*SSn == NULL) {
     fprintf(stderr, "Failed to allocate memory for the dynamic structure factor\n");
     exit(EXIT_FAILURE);
   }
-  
+
 }
 
-void free_dynamic_stls_arrays(double *ww, double *phi_re, 
+void free_dynamic_stls_arrays(double *WW, double *phi_re, 
 			      double *phi_im, double *SSn){
 
-  free(ww);
+  free(WW);
   free(phi_re);
   free(phi_im);
   free(SSn);
@@ -126,7 +134,7 @@ void free_dynamic_stls_arrays(double *ww, double *phi_re,
 // FUNCTION USED TO INITIALIZE ARRAYS
 // -------------------------------------------------------------------
 
-void init_fixed_dynamic_stls_arrays(input *in, double *ww, bool verbose){
+void init_fixed_dynamic_stls_arrays(input *in, double *WW, bool verbose){
 
   // Print on screen the parameter used to solve the STLS equation
   printf("------ Parameters used in the solution -------------\n");
@@ -148,7 +156,7 @@ void init_fixed_dynamic_stls_arrays(input *in, double *ww, bool verbose){
   
   // Frequency grid
   if (verbose) printf("Frequency grid initialization: ");
-  frequency_grid(ww, in);
+  frequency_grid(WW, in);
   if (verbose) printf("Done.\n");
 
 }
@@ -157,10 +165,10 @@ void init_fixed_dynamic_stls_arrays(input *in, double *ww, bool verbose){
 // FUNCTION USED TO DEFINE THE FREQUENCY GRID
 // ------------------------------------------------------------------
 
-void frequency_grid(double *ww, input *in){
+void frequency_grid(double *WW, input *in){
  
-  ww[0] = in->dyn_dw;
-  for (int ii=1; ii < in->nx; ii++) ww[ii] = ww[ii-1] + in->dyn_dw;
+  WW[0] = 0.0;
+  for (int ii=1; ii < in->nW; ii++) WW[ii] = WW[ii-1] + in->dyn_dw;
 
 }
 
@@ -173,24 +181,24 @@ struct idr_params {
   double xx;
   double mu;
   double Theta;
-  double ww;
+  double WW;
 
 };
 
 // Ideal density response (real and imaginary part)
-void compute_dynamic_idr(double *phi_re, double *phi_im,  double *ww,
+void compute_dynamic_idr(double *phi_re, double *phi_im,  double *WW,
 			 input in) {
 
   // Real component
-  compute_dynamic_idr_re(phi_re, ww, in);
+  compute_dynamic_idr_re(phi_re, WW, in);
 
   // Imaginary component
-  compute_dynamic_idr_im(phi_im, ww, in);
+  compute_dynamic_idr_im(phi_im, WW, in);
   
 }
 
 // Real part of the ideal density response
-void compute_dynamic_idr_re(double *phi_re, double *ww,
+void compute_dynamic_idr_re(double *phi_re, double *WW,
 			     input in) {
 
   double xx = in.dyn_xtarget;
@@ -203,13 +211,13 @@ void compute_dynamic_idr_re(double *phi_re, double *ww,
 
   // Integration function
   gsl_function ff_int;
-  if (ww == 0) ff_int.function = &idr_re_partial_x0;
+  if (WW == 0) ff_int.function = &idr_re_partial_x0;
   else ff_int.function = &idr_re_partial_xw;
 
   // Normalized ideal Lindhard density
-  for (int ii=0; ii<in.nx; ii++) {
+  for (int ii=0; ii<in.nW; ii++) {
 
-    struct idr_params phixwp = {xx, in.mu, in.Theta, ww[ii]};
+    struct idr_params phixwp = {xx, in.mu, in.Theta, WW[ii]};
     ff_int.params = &phixwp;
     gsl_integration_cquad(&ff_int, 
 			  0.0, in.xmax, 
@@ -225,7 +233,7 @@ void compute_dynamic_idr_re(double *phi_re, double *ww,
 }
 
 // Imaginary part of the ideal density response
-void compute_dynamic_idr_im(double *phi_im, double *ww,
+void compute_dynamic_idr_im(double *phi_im, double *WW,
 			     input in) {
 
   double xx = in.dyn_xtarget;
@@ -241,17 +249,17 @@ void compute_dynamic_idr_im(double *phi_im, double *ww,
 
   // Integration function
   gsl_function ff_int;
-  if (ww == 0) ff_int.function = &idr_im_partial_x0;
+  if (WW == 0) ff_int.function = &idr_im_partial_x0;
   else ff_int.function = &idr_im_partial_xw;
 
   // Normalized ideal Lindhard density
-  for (int ii=0; ii<in.nx; ii++) {
+  for (int ii=0; ii<in.nW; ii++) {
 
-    ymin = (xx/2.0) - ww[ii]/(2.0*xx);
+    ymin = (xx/2.0) - WW[ii]/(2.0*xx);
     if (ymin < 0.0) ymin = -ymin;
-    ymax = (xx/2.0) + ww[ii]/(2.0*xx);
+    ymax = (xx/2.0) + WW[ii]/(2.0*xx);
     
-    struct idr_params phixwp = {xx, in.mu, in.Theta, ww[ii]};
+    struct idr_params phixwp = {xx, in.mu, in.Theta, WW[ii]};
     ff_int.params = &phixwp;
     gsl_integration_cquad(&ff_int, 
 			  ymin, ymax, 
@@ -273,13 +281,13 @@ double idr_re_partial_xw(double yy, void *pp) {
   double xx = (params->xx);
   double mu = (params->mu);
   double Theta = (params->Theta);
-  double ww = (params->ww);
+  double WW = (params->WW);
   double yy2 = yy*yy;
   double ymx = yy - 0.5*xx;
   double ypx = yy + 0.5*xx;
   double ymx2 = ymx*ymx;
   double ypx2 = ypx*ypx;
-  double w_2x = ww/(2.0*xx);
+  double w_2x = WW/(2.0*xx);
   double w_2x2 = w_2x*w_2x;
   double log_arg = (ymx2 - w_2x2)/(ypx2 - w_2x2);
 
@@ -335,10 +343,10 @@ double idr_im_partial_xw(double yy, void *pp) {
   double xx = (params->xx);
   double mu = (params->mu);
   double Theta = (params->Theta);
-  double ww = (params->ww);
+  double WW = (params->WW);
   double yy2 = yy*yy;
-  double xpw = 0.5*xx + 0.5*ww/xx;
-  double xmw = 0.5*xx - 0.5*ww/xx;
+  double xpw = 0.5*xx + 0.5*WW/xx;
+  double xmw = 0.5*xx - 0.5*WW/xx;
   double xpw2 = xpw*xpw;
   double xmw2 = xmw*xmw;
   double out1 = 0;
@@ -458,28 +466,126 @@ void get_slfc(double *GG, input in){
 // ---------------------------------------------------------------------
 
 void compute_dsf(double *SSn, double *phi_re, double *phi_im,
-		 double GG, double *ww, input in){
+		 double GG, double *WW, input in){
     
   double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   double xx = in.dyn_xtarget;
-  double ff1 = 4.0*lambda*in.rs/(M_PI*xx*xx);
+  double xx2 = xx*xx;
+  double ff1 = 4.0*lambda*in.rs/(M_PI*xx2);
   double ff2;
   double denom, denom_re, denom_im;
   
-  for (int ii=0; ii<in.nx; ii++){
-
-    ff2 = 1.0/(1.0 - exp(-ww[ii]/in.Theta));
-    denom_re = 1.0 + ff1 * (1 - GG) * phi_re[ii];
-    denom_im = ff1 * (1 - GG) * phi_im[ii];
-    denom = denom_re*denom_re + denom_im*denom_im;
-
-    if (xx == 0.0)
+  for (int ii=0; ii<in.nW; ii++){
+    
+    if (xx == 0.0) {
       SSn[ii] = 0.0;
-    else
+      continue;
+    }
+    
+    if (WW[ii] == 0.0) {
+
+      ff2 = 1.0/(1.0 + exp(xx2/(4.0*in.Theta) - in.mu));
+      denom_re = 1.0 + ff1 * (1 - GG) * phi_re[ii];
+      denom = denom_re*denom_re;
+      SSn[ii] = in.Theta/(4.0*xx)*(ff2/denom);
+      
+    }
+    else {
+      
+      ff2 = 1.0/(1.0 - exp(-WW[ii]/in.Theta));
+      denom_re = 1.0 + ff1 * (1 - GG) * phi_re[ii];
+      denom_im = ff1 * (1 - GG) * phi_im[ii];
+      denom = denom_re*denom_re + denom_im*denom_im;
       SSn[ii] = (ff2/M_PI)*phi_im[ii]/denom;
+
+    }
 
   }
 
+}
+
+
+// ---------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE INTERMEDIATE SCATTERING FUNCTION
+// ---------------------------------------------------------------------
+
+struct isf_params {
+
+  double Theta;
+  double tau;
+  gsl_spline *dsf_sp_ptr;
+  gsl_interp_accel *dsf_acc_ptr;
+  
+};
+
+
+// Intermediate scattering function
+void compute_isf(double *FF, double *tt, double *SSn,
+		 double *WW, input in) {
+
+  double dt = 1.0/NTAU; 
+  double err;
+  size_t nevals;
+
+  // Declare accelerator and spline objects
+  gsl_spline *dsf_sp_ptr;
+  gsl_interp_accel *dsf_acc_ptr;
+  
+  // Allocate the accelerator and the spline objects
+  dsf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nW);
+  dsf_acc_ptr = gsl_interp_accel_alloc();
+  
+  // Initialize the spline
+  gsl_spline_init(dsf_sp_ptr, WW, SSn, in.nW);
+
+  // Integration workspace 
+  gsl_integration_cquad_workspace *wsp 
+    = gsl_integration_cquad_workspace_alloc(100);
+
+  // Integration function
+  gsl_function ff_int;
+  ff_int.function = &isf;
+
+  // Imaginary time
+  for (int ii=0; ii<NTAU; ii++){
+    tt[ii] = ii*dt;
+  }
+  
+  // Compute intermediate scattering function
+  for (int ii=0; ii<NTAU; ii++) {
+
+    struct isf_params isfp = {in.Theta, tt[ii],
+			      dsf_sp_ptr, dsf_acc_ptr};
+    ff_int.params = &isfp;
+    gsl_integration_cquad(&ff_int, 
+			  WW[0], WW[in.nW-1], 
+			  0.0, QUAD_REL_ERR, 
+			  wsp, 
+			  &FF[ii], &err, &nevals);
+
+  }
+  
+  // Free memory
+  gsl_integration_cquad_workspace_free(wsp);
+  gsl_spline_free(dsf_sp_ptr);
+  gsl_interp_accel_free(dsf_acc_ptr);
+  
+}
+
+
+double isf(double WW, void *pp) {
+
+  struct isf_params *params = (struct isf_params*)pp;
+  double Theta = (params->Theta);
+  double tau = (params->tau);
+  gsl_spline *dsf_sp_ptr = (params->dsf_sp_ptr);
+  gsl_interp_accel *dsf_acc_ptr = (params->dsf_acc_ptr);;
+  double WW_T = WW/Theta;
+  double WW_Tt = WW_T*tau;
+  
+  return gsl_spline_eval(dsf_sp_ptr, WW, dsf_acc_ptr)*
+    (exp(-WW_Tt) + exp(-WW_T + WW_Tt));
+  
 }
 
 // -------------------------------------------------------------------
@@ -487,16 +593,19 @@ void compute_dsf(double *SSn, double *phi_re, double *phi_im,
 // -------------------------------------------------------------------
 
 // write text files for output
-void write_text_dynamic_stls(double *SSn, double *ww, input in){
+void write_text_dynamic_stls(double *SSn, double *WW, input in){
 
   // Static structure factor
-  write_text_dsf(SSn, ww, in);
-  
+  write_text_dsf(SSn, WW, in);
+
+  // Intermediate scattering function
+  write_text_isf(SSn, WW, in);
+		 
 }
 
 
 // write static structure factor to text file
-void write_text_dsf(double *SSn, double *ww, input in){
+void write_text_dsf(double *SSn, double *WW, input in){
 
   FILE* fid;
   
@@ -508,8 +617,34 @@ void write_text_dsf(double *SSn, double *ww, input in){
     fprintf(stderr, "Error while creating the output file for the dynamic structure factor\n");
     exit(EXIT_FAILURE);
   }
-  for (int ii = 0; ii < in.nx; ii++)
-    fprintf(fid, "%.8e %.8e\n", ww[ii], SSn[ii]);
+  for (int ii = 0; ii < in.nW; ii++)
+    fprintf(fid, "%.8e %.8e\n", WW[ii], SSn[ii]);
+  
+  fclose(fid);
+  
+}
+
+// write intermediate scattering function to file
+void write_text_isf(double *SSn, double *WW, input in){
+
+  FILE* fid;
+  double FF[NTAU];
+  double tt[NTAU];
+  
+  char out_name[100];
+  sprintf(out_name, "isf_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta,
+	  in.dyn_xtarget, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the intermediate"
+	    " scattering function\n");
+    exit(EXIT_FAILURE);
+  }
+
+  compute_isf(FF, tt, SSn, WW, in);
+  
+  for (int ii = 0; ii <NTAU; ii++)
+    fprintf(fid, "%.8e %.8e\n", tt[ii], FF[ii]);
   
   fclose(fid);
   
