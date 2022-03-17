@@ -16,16 +16,18 @@ int main (int argc, char **argv){
   // Start timing
   double tic = omp_get_wtime();
 
-  compute_dynamic_qstls(in, true);
+
   /* // Write guess (or restart) files */
   /* if (in.guess_write) { */
   /*   create_restart(in); */
   /*   return 0; */
   /* } */
   
-  /* // Set number of threads for parallel calculations */
-  /* omp_set_num_threads(in.nThreads); */
+  // Set number of threads for parallel calculations
+  omp_set_num_threads(in.nThreads);
 
+  compute_dynamic_qstls(in, true);
+  
   /* // Solve theory specified in input */
   /* if (strcmp(in.theory, "STLS") == 0) { */
   /*   solve_stls(in, true); */
