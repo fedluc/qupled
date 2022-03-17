@@ -42,6 +42,9 @@ static char doc[] =
 #define ARGUMENT_VS_MIN_ERR_SHORT 0x104
 #define ARGUMENT_VS_SOLVE_CSR_SHORT 0x105
 #define ARGUMENT_VS_MIX_SHORT 0x106
+#define ARGUMENT_DYN_DW_SHORT 0x107
+#define ARGUMENT_DYN_WMAX_SHORT 0x108
+#define ARGUMENT_DYN_XTARGET_SHORT 0x109
 
 // Optional arguments
 static struct argp_option options[] = {
@@ -129,6 +132,15 @@ static struct argp_option options[] = {
   
   {"vs-solve-csr", ARGUMENT_VS_SOLVE_CSR_SHORT, "1", 0,
    "Enforce CSR in the VS schemes (0 = off, 1 = on)"},
+
+  {"dyn-dw", ARGUMENT_DYN_DW_SHORT, "0.1", 0,
+   "Resolution for the frequency grid for the dynamic properties"},
+
+  {"dyn-wmax", ARGUMENT_DYN_WMAX_SHORT, "20.0", 0,
+   "Cutoff for the frequency grid for the dynamic properties"},
+
+  {"dyn-xtarget", ARGUMENT_DYN_XTARGET_SHORT, "1.0", 0,
+   "Wave-vector used to compute the dynamic properties"},
   
   { 0 }
   
@@ -272,6 +284,18 @@ parse_opt (int key, char *arg, struct argp_state *state)
       in->vs_solve_csr = atoi(arg);
       break;
 
+    case  ARGUMENT_DYN_DW_SHORT:
+      in->dyn_dw = atof(arg);
+      break;
+
+    case  ARGUMENT_DYN_WMAX_SHORT:
+      in->dyn_wmax = atof(arg);
+      break;
+
+    case  ARGUMENT_DYN_XTARGET_SHORT:
+      in->dyn_xtarget = atof(arg);
+      break;  
+      
     case ARGP_KEY_ARG:
       if (state->arg_num > 0) 
         argp_usage (state);
@@ -345,7 +369,10 @@ void set_default_parse_opt(input *in){
   in->vs_err_min_iter = 1e-3; // Minimum error for convergence in the iterations for the VS schemes
   in->vs_a_mix = 1.0; // Mixing parameter for iterative procedure for the VS schemes 
   in->vs_solve_csr = 1; // Enforce CSR in the VS schemes
-
+  in->dyn_dw = 0.1; // Resolution for the frequency grid for the dynamic properties
+  in->dyn_wmax = 20.0; // Cutoff for the frequency grid for the dynamic properties
+  in->dyn_xtarget = 1.0; // Wave-vector used to compute the dynamic properties
+  
 }
 
 // ------------------------------------------------
@@ -432,7 +459,23 @@ void check_input(input *in){
     fprintf(stderr, "The mixing parameter must be larger than 0.0\n");
     invalid_input = true;
   }
-    
+
+  if (in->dyn_dw <= 0.0) {
+    fprintf(stderr, "The resolution of the frequency grid must be larger than zero\n");
+    invalid_input = true;
+  }
+
+  if (in->dyn_wmax <= 0.0) {
+    fprintf(stderr, "The cutoff of the frequency grid must be larger than zero\n");
+    invalid_input = true;
+  }
+
+  if (in->dyn_xtarget <= 0.0) {
+    fprintf(stderr, "The wave-vector used to compute the dynamic properties  must be larger than zero\n");
+    invalid_input = true;
+  }
+
+  
   if (invalid_input) exit(EXIT_FAILURE);
   
 }
@@ -451,7 +494,7 @@ void print_input(input *in){
   printf("Theory: %s\n", in->theory);
   printf("Quantum degeneracy parameter: %f\n", in->Theta);
   printf("Quantum coupling parameter: %f\n", in->rs);
-  printf("Wave-vector resolutions: %f\n", in->dx);
+  printf("Wave-vector resolution: %f\n", in->dx);
   printf("Error for convergence: %.5e\n", in->err_min_iter);
   printf("Mixing parameter: %f\n", in->a_mix);
   printf("Chemical potential (low and high bound): %f %f\n", 
@@ -472,6 +515,9 @@ void print_input(input *in){
   printf("Error for convergence (VS): %f\n", in->vs_err_min_iter);
   printf("Mixing parameter (VS): %f\n", in->vs_a_mix);
   printf("Enforce CSR (VS): %d\n", in->vs_solve_csr);
+  printf("Frequency resolution (dynamic): %f\n", in->dyn_dw);
+  printf("Frequency cutoff (dynamic): %f\n", in->dyn_wmax);
+  printf("Target wave-vector (dynamic): %f\n", in->dyn_xtarget);
   printf("-------------------------------------\n");
   
 }

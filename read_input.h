@@ -8,7 +8,7 @@
 // -------------------------------------------------------------------
 
 // Default string for when no file name is passed in input
-#define NO_FILE_STR ""
+#define NO_FILE_STR "\0"
 
 // -------------------------------------------------------------------
 // STRUCTURE TO STORE THE INPUT PARAMETERS
@@ -32,6 +32,9 @@ typedef struct {
   double Theta;
   double rs;
   double dx;
+  double dyn_dw;
+  double dyn_wmax;
+  double dyn_xtarget;
   double err_min_iter;
   double mu_lo;
   double mu_hi;
