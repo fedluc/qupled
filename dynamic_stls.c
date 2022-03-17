@@ -583,7 +583,7 @@ double isf(double WW, void *pp) {
   double WW_T = WW/Theta;
   double WW_Tt = WW_T*tau;
   
-  return gsl_spline_eval(dsf_sp_ptr, WW, dsf_acc_ptr)*
+  return 1.5*gsl_spline_eval(dsf_sp_ptr, WW, dsf_acc_ptr)*
     (exp(-WW_Tt) + exp(-WW_T + WW_Tt));
   
 }
