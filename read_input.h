@@ -16,11 +16,11 @@
 
 typedef struct {
 
-  bool guess_write;
   bool qstls_iet_static;
   bool vs_solve_csr;
   char *guess_file1;
   char *guess_file2;
+  char *mode;
   char *iet_mapping;
   char *stls_guess_file;
   char *qstls_guess_file;

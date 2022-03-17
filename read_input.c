@@ -32,7 +32,7 @@ static char doc[] =
 #define ARGUMENT_QSTLS_IET_FIXED_SHORT 0x94
 #define ARGUMENT_QSTLS_IET_STATIC_SHORT 0x95
 #define ARGUMENT_DEBUG_SHORT 0x96
-#define ARGUMENT_GUESS_WRITE_SHORT 0x97
+#define ARGUMENT_MODE_SHORT 0x97
 #define ARGUMENT_GUESS_FILES_SHORT 0x98
 #define ARGUMENT_IET_MAPPING_SHORT 0x99
 #define ARGUMENT_VS_DRS_SHORT 0x100
@@ -103,8 +103,8 @@ static struct argp_option options[] = {
   {"debug-input", ARGUMENT_DEBUG_SHORT, "0", 0,
    "Print content of the input structure on screen (0 = off, 1 = on)"},
 
-  {"guess-write", ARGUMENT_GUESS_WRITE_SHORT, "0", 0,
-   "Write binary restart files from text files (0 = off, 1 = on)"},
+  {"mode", ARGUMENT_MODE_SHORT, "static", 0,
+   "Select working mode of the code (static, dynamic, guess)"},
 
   {"guess-files", ARGUMENT_GUESS_FILES_SHORT, "file1,file2", 0,
    "Name of the two text files used to write binary restart files"},
@@ -235,8 +235,8 @@ parse_opt (int key, char *arg, struct argp_state *state)
       debug_input = atoi(arg);
       break;
 
-    case  ARGUMENT_GUESS_WRITE_SHORT:
-      in->guess_write = atoi(arg);
+    case  ARGUMENT_MODE_SHORT:
+      in->mode = arg;
       break;  
 
     case  ARGUMENT_GUESS_FILES_SHORT:
@@ -358,7 +358,7 @@ void set_default_parse_opt(input *in){
   in->nIter = 1000; // Number of iterations
   in->theory = "STLS"; // Theory to solve
   in->nThreads = 1; // Number of OMP threads to use in the solution
-  in->guess_write = 0; // Flag to run in "write guess" mode
+  in->mode = "static"; // Working mode of the code
   in->guess_file1 = NO_FILE_STR; // File of the first file used to construct the guess (static structure factor)
   in->guess_file2 = NO_FILE_STR; // File of the second file used to construct the guess (static local field correction or auxiliary density response)
   in->iet_mapping = "standard"; // Mapping between the quantum and classical state points for the IET-based schemes
@@ -504,7 +504,7 @@ void print_input(input *in){
   printf("Number of grid points: %d\n", in->nIter);  
   printf("Maximum number of iterations: %d\n", in->nIter);
   printf("Number of threads: %d\n", in->nThreads);
-  printf("Write-guess mode: %d\n", in->guess_write);
+  printf("Mode: %s\n", in->mode);
   printf("Guess file 1: %s\n", in->guess_file1);
   printf("Guess file 2: %s\n", in->guess_file2);
   printf("IET mapping: %s\n", in->iet_mapping);
