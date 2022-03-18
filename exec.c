@@ -5,6 +5,7 @@
 #include "solvers.h"
 #include "restart.h"
 #include "dynamic_stls.h"
+#include "dynamic_qstls.h"
 
 int main (int argc, char **argv){
 
