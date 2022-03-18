@@ -285,11 +285,11 @@ parse_opt (int key, char *arg, struct argp_state *state)
       break;
 
     case  ARGUMENT_DYN_DW_SHORT:
-      in->dyn_dw = atof(arg);
+      in->dyn_dW = atof(arg);
       break;
 
     case  ARGUMENT_DYN_WMAX_SHORT:
-      in->dyn_wmax = atof(arg);
+      in->dyn_Wmax = atof(arg);
       break;
 
     case  ARGUMENT_DYN_XTARGET_SHORT:
@@ -369,8 +369,8 @@ void set_default_parse_opt(input *in){
   in->vs_err_min_iter = 1e-3; // Minimum error for convergence in the iterations for the VS schemes
   in->vs_a_mix = 1.0; // Mixing parameter for iterative procedure for the VS schemes 
   in->vs_solve_csr = 1; // Enforce CSR in the VS schemes
-  in->dyn_dw = 0.1; // Resolution for the frequency grid for the dynamic properties
-  in->dyn_wmax = 20.0; // Cutoff for the frequency grid for the dynamic properties
+  in->dyn_dW = 0.1; // Resolution for the frequency grid for the dynamic properties
+  in->dyn_Wmax = 20.0; // Cutoff for the frequency grid for the dynamic properties
   in->dyn_xtarget = 1.0; // Wave-vector used to compute the dynamic properties
   
 }
@@ -460,12 +460,12 @@ void check_input(input *in){
     invalid_input = true;
   }
 
-  if (in->dyn_dw <= 0.0) {
+  if (in->dyn_dW <= 0.0) {
     fprintf(stderr, "The resolution of the frequency grid must be larger than zero\n");
     invalid_input = true;
   }
 
-  if (in->dyn_wmax <= 0.0) {
+  if (in->dyn_Wmax <= 0.0) {
     fprintf(stderr, "The cutoff of the frequency grid must be larger than zero\n");
     invalid_input = true;
   }
@@ -515,8 +515,8 @@ void print_input(input *in){
   printf("Error for convergence (VS): %f\n", in->vs_err_min_iter);
   printf("Mixing parameter (VS): %f\n", in->vs_a_mix);
   printf("Enforce CSR (VS): %d\n", in->vs_solve_csr);
-  printf("Frequency resolution (dynamic): %f\n", in->dyn_dw);
-  printf("Frequency cutoff (dynamic): %f\n", in->dyn_wmax);
+  printf("Frequency resolution (dynamic): %f\n", in->dyn_dW);
+  printf("Frequency cutoff (dynamic): %f\n", in->dyn_Wmax);
   printf("Target wave-vector (dynamic): %f\n", in->dyn_xtarget);
   printf("-------------------------------------\n");
   

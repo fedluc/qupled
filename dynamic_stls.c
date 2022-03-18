@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "chemical_potential.h"
 #include "stls.h"
+#include "qstls.h"
 #include "dynamic_stls.h"
 
 // -------------------------------------------------------------------
@@ -143,8 +144,8 @@ void init_fixed_dynamic_stls_arrays(input *in, double *WW, bool verbose){
   printf("Chemical potential (low and high bound): %f %f\n", 
 	 in->mu_lo, in->mu_hi);
   printf("Target wave-vector: %f\n", in->dyn_xtarget);
-  printf("Frequency cutoff: %f\n", in->dyn_wmax);
-  printf("Frequency resolution: %f\n", in->dyn_dw);
+  printf("Frequency cutoff: %f\n", in->dyn_Wmax);
+  printf("Frequency resolution: %f\n", in->dyn_dW);
   printf("----------------------------------------------------\n");
  
   // Chemical potential
@@ -476,7 +477,7 @@ void compute_dsf(double *SSn, double *phi_re, double *phi_im,
   double denom, denom_re, denom_im;
   
   for (int ii=0; ii<in.nW; ii++){
-    
+
     if (xx == 0.0) {
       SSn[ii] = 0.0;
       continue;
@@ -600,7 +601,7 @@ void write_text_dynamic_stls(double *SSn, double *WW, input in){
 
   // Intermediate scattering function
   write_text_isf(SSn, WW, in);
-		 
+  
 }
 
 
@@ -649,4 +650,3 @@ void write_text_isf(double *SSn, double *WW, input in){
   fclose(fid);
   
 }
-

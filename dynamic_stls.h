@@ -21,36 +21,36 @@ void get_frequency_grid_size(input *in);
 // FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
 // -------------------------------------------------------------------
 
-void alloc_dynamic_stls_arrays(input in, double **ww, double **phi_re, 
+void alloc_dynamic_stls_arrays(input in, double **WW, double **phi_re, 
 			       double **phi_im, double **SSn);
 
-void free_dynamic_stls_arrays(double *ww, double *phi_re, 
+void free_dynamic_stls_arrays(double *WW, double *phi_re, 
 			      double *phi_im, double *SSn);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO INITIALIZE ARRAYS
 // -------------------------------------------------------------------
 
-void init_fixed_dynamic_stls_arrays(input *in, double *ww,
+void init_fixed_dynamic_stls_arrays(input *in, double *WW,
 				    bool verbose);
 
 // ------------------------------------------------------------------
 // FUNCTION USED TO DEFINE THE FREQUENCY GRID
 // ------------------------------------------------------------------
 
-void frequency_grid(double *ww, input *in);
+void frequency_grid(double *WW, input *in);
 
 // ------------------------------------------------------------------
 // FUNCTION USED TO DEFINE THE IDEAL DENSITY RESPONSE
 // ------------------------------------------------------------------
 
 void compute_dynamic_idr(double *phi_re, double *phi_im,
-			 double *ww, input in);
+			 double *WW, input in);
 
-void compute_dynamic_idr_re(double *phi_re, double *ww,
+void compute_dynamic_idr_re(double *phi_re, double *WW,
 			    input in);
 
-void compute_dynamic_idr_im(double *phi_im, double *ww,
+void compute_dynamic_idr_im(double *phi_im, double *WW,
 			    input in);
 
 double idr_re_partial_xw(double yy, void *pp);
@@ -72,7 +72,7 @@ void get_slfc(double *GG, input in);
 // ---------------------------------------------------------------------
 
 void compute_dsf(double *SSn, double *phi_re, double *phi_im,
-		 double GG, double *ww, input in);
+		 double GG, double *WW, input in);
 
 // ---------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE INTERMEDIATE SCATTERING FUNCTION
@@ -85,11 +85,12 @@ double isf(double WW, void *pp);
 
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT
-// -------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
-void write_text_dynamic_stls(double *SSn, double *ww, input in);
+void write_text_dynamic_stls(double *SSn, double *WW, input in);
 
-void write_text_dsf(double *SSn, double *ww, input in);
+void write_text_dsf(double *SSn, double *WW, input in);
+
 
 void write_text_isf(double *SSn, double *ww, input in);
 
