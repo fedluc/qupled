@@ -571,12 +571,7 @@ void compute_dynamic_adr_im_part1(double *psi_im, double *WW,
     // Loop over the frequency
     #pragma omp for // Distribute for loop over the threads
     for (int ii=0; ii<in.nW; ii++){
-
-      if (WW[ii] == 0.0) {
-	psi_im[ii] = 0.0;
-	continue;
-      }
-	  
+      
       // Integration function
       gsl_function ff_int_part1;
       ff_int_part1.function = &adr_im_part1_partial_xW;
@@ -635,8 +630,11 @@ struct adr_im_part2_params {
 
   double ww;
   double xx;
+  double Theta;
+  double mu;
   gsl_spline *psi_im_part2_sp_ptr;
   gsl_interp_accel *psi_im_part2_acc_ptr;
+
   
 };
 
@@ -666,8 +664,10 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
      
   // Integration function
   gsl_function ff_int_part2;
-  ff_int_part2.function = &adr_im_part2_partial_xwW;
-  
+  if (WW == 0.0) 
+    ff_int_part2.function = &adr_im_part2_partial_xw0;
+  else 
+    ff_int_part2.function = &adr_im_part2_partial_xwW;
 
   // Fill array with integration variable (u)
   for (int ii=0; ii<ADR_NU; ii++){
@@ -677,14 +677,19 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
   // Loop over w (wave-vector)
   for (int ii=0; ii<in.nx; ii++) {
 
-    // Inner integral
-    compute_dynamic_adr_im_part3(psi_im_part2, WW, ww[ii], ww, uu, in);
+    if (WW > 0.0) {
 
-    // Construct integrand
-    gsl_spline_init(psi_im_part2_sp_ptr, uu, psi_im_part2, ADR_NU);
+      // Inner integral
+      compute_dynamic_adr_im_part3(psi_im_part2, WW, ww[ii], ww, uu, in);
+      
+      // Construct integrand
+      gsl_spline_init(psi_im_part2_sp_ptr, uu, psi_im_part2, ADR_NU);
+
+    }
     
     // Integration over u (wave-vector squared)
     struct adr_im_part2_params ppart2 = {ww[ii], xx,
+					 in.Theta, in.mu,
 					 psi_im_part2_sp_ptr,
                                          psi_im_part2_acc_ptr};
     
@@ -695,6 +700,7 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
 			  wsp,
 			  &psi_im_part1[ii],
 			  &err, &nevals);
+    
   }
  
     
@@ -721,6 +727,24 @@ double adr_im_part2_partial_xwW(double uu, void* pp) {
   double ffp2 = gsl_spline_eval(psi_im_part2_sp_ptr, uu, psi_im_part2_acc_ptr);
 
   return (3.0*M_PI/8)*xx*ww*ffp2/denom;
+  
+}
+
+// Integrand for part 2 of the imaginary auxiliary density response (vectors = {x,w,u}, frequency = 0)
+double adr_im_part2_partial_xw0(double uu, void* pp) {
+  
+  struct adr_im_part2_params* params = (struct adr_im_part2_params*)pp;
+  double xx = (params->xx);
+  double ww = (params->ww);
+  double Theta = (params->Theta);
+  double mu = (params->mu);
+  double xx2 = xx*xx;
+  double ww2 = ww*ww;
+  double tt = xx2 - xx*ww*uu;
+  double tt2 = tt*tt;
+  double denom = 2*tt + ww2 - xx2;
+
+  return tt*xx*ww/denom*1.0/(exp(tt2/(4.0*Theta*xx2) - mu) + 1.0);
   
 }
 
@@ -834,17 +858,33 @@ void compute_dsf_qstls(double *SSn, double *phi_re, double *phi_im,
   
   for (int ii=0; ii<in.nW; ii++){
 
-    ff2 = 1.0/(1.0 - exp(-WW[ii]/in.Theta));
-    numer = phi_im[ii] + ff1*(phi_re[ii]*psi_im[ii] -
-    			      phi_im[ii]*psi_re[ii]);
-    denom_re = 1.0 + ff1 * (phi_re[ii] - psi_re[ii]);
-    denom_im = ff1 * (phi_im[ii] - psi_im[ii]);
-    denom = denom_re*denom_re + denom_im*denom_im;
+    if (WW[ii] == 0.0) {
 
+      ff2 = in.Theta/(4.0*xx);
+      numer = (1.0 - ff1*psi_re[ii])
+	/(exp(xx*xx/(4.0*in.Theta) - in.mu) + 1)
+	- 3.0/(4.0*xx)*ff1*phi_re[ii]*psi_im[ii];
+      numer *= ff2;
+      denom_re = 1.0 + ff1 * (phi_re[ii] - psi_re[ii]);
+      denom = denom_re * denom_re;
+	
+    }
+    else {
+      
+      ff2 = 1.0/(1.0 - exp(-WW[ii]/in.Theta));
+      numer = phi_im[ii] + ff1*(phi_re[ii]*psi_im[ii] -
+				phi_im[ii]*psi_re[ii]);
+      numer *= (ff2/M_PI);
+      denom_re = 1.0 + ff1 * (phi_re[ii] - psi_re[ii]);
+      denom_im = ff1 * (phi_im[ii] - psi_im[ii]);
+      denom = denom_re*denom_re + denom_im*denom_im;
+      
+    }
+    
     if (xx == 0.0)
       SSn[ii] = 0.0;
     else
-      SSn[ii] = (ff2/M_PI)*numer/denom;
+      SSn[ii] = numer/denom;
 
   }
 

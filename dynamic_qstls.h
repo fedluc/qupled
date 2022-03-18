@@ -76,6 +76,8 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
 
 double adr_im_part2_partial_xwW(double uu, void* pp);
 
+double adr_im_part2_partial_xw0(double uu, void* pp);
+
 void compute_dynamic_adr_im_part3(double *psi_im_part2, double WW,
 				  double ww, double *qq, double *uu,
 				  input in);
