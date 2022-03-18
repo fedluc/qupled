@@ -3,6 +3,13 @@
 
 #include "read_input.h"
 
+// -------------------------------------------------------------------
+// CONSTANTS
+// -------------------------------------------------------------------
+
+// Number of data points for the integration of the second part
+// of the imaginary auxiliary density response
+#define ADR_IM_NU 201
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF THE QSTLS
@@ -72,7 +79,7 @@ double adr_im_part2_partial_xwW(double uu, void* pp);
 
 void compute_dynamic_adr_im_part3(double *psi_im_part2, double WW,
 				  double ww, double *qq, double *uu,
-				  int nu, input in);
+				  input in);
 
 double adr_im_part3_partial_xwuW(double qq, void* pp);
 

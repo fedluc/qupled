@@ -3,6 +3,12 @@
 
 #include "read_input.h"
 
+// -------------------------------------------------------------------
+// CONSTANTS
+// -------------------------------------------------------------------
+
+// Number of data points for imaginary time (varies between 0 and 1)
+#define ISF_NTAU 100
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF THE CLASSICAL

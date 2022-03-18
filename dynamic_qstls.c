@@ -667,17 +667,16 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
 
   // Integration limits
   double xx = in.dyn_xtarget;
-  int const nu = 41;
-  double uu[nu];
-  double du = 0.05;
-  double psi_im_part2[nu];
+  double uu[ADR_IM_NU];
+  double du = 2.0/(ADR_IM_NU - 1);
+  double psi_im_part2[ADR_IM_NU];
   
   // Declare accelerator and spline objects
   gsl_spline *psi_im_part2_sp_ptr;
   gsl_interp_accel *psi_im_part2_acc_ptr;
   
   // Allocate the accelerator and the spline objects
-  psi_im_part2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, nu);
+  psi_im_part2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, ADR_IM_NU);
   psi_im_part2_acc_ptr = gsl_interp_accel_alloc();
   
   // Integration workspace
@@ -690,7 +689,7 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
   
 
   // Fill array with integration variable (u)
-  for (int ii=0; ii<nu; ii++){
+  for (int ii=0; ii<ADR_IM_NU; ii++){
     uu[ii] = -1 + du*ii;
   }
   
@@ -698,10 +697,10 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
   for (int ii=0; ii<in.nx; ii++) {
 
     // Inner integral
-    compute_dynamic_adr_im_part3(psi_im_part2, WW, ww[ii], ww, uu, nu, in);
+    compute_dynamic_adr_im_part3(psi_im_part2, WW, ww[ii], ww, uu, in);
 
     // Construct integrand
-    gsl_spline_init(psi_im_part2_sp_ptr, uu, psi_im_part2, nu);
+    gsl_spline_init(psi_im_part2_sp_ptr, uu, psi_im_part2, ADR_IM_NU);
     
     // Integration over u (wave-vector squared)
     struct adr_im_part2_params ppart2 = {ww[ii], xx,
@@ -710,7 +709,7 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
     
     ff_int_part2.params = &ppart2;
     gsl_integration_cquad(&ff_int_part2,
-			  -1.0, 1.0,
+			  uu[0], uu[ADR_IM_NU-1],
 			  0.0, QUAD_REL_ERR,
 			  wsp,
 			  &psi_im_part1[ii],
@@ -760,7 +759,7 @@ struct adr_im_part3_params {
 
 void compute_dynamic_adr_im_part3(double *psi_im_part2, double WW,
 				  double ww, double *qq, double *uu,
-				  int nu, input in) {
+				  input in) {
 
   double err;
   size_t nevals;
@@ -780,7 +779,7 @@ void compute_dynamic_adr_im_part3(double *psi_im_part2, double WW,
   ff_int_part3.function = &adr_im_part3_partial_xwuW;
   
   // Loop over u (wave-vector squared)
-  for (int ii=0; ii<nu; ii++){
+  for (int ii=0; ii<ADR_IM_NU; ii++){
     
     // Integration limits
     x2mxwu = xx2 - xw*uu[ii];

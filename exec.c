@@ -97,10 +97,13 @@ void run_dynamic_mode(input in){
       strcmp(in.theory, "STLS-IET-LCT") == 0) {
     compute_dynamic_stls(in, true);
   }
+  else if (strcmp(in.theory, "QSTLS") == 0){
+    compute_dynamic_qstls(in, true);
+  }
   else {
     fprintf(stderr, "Error: %s is an unknown theory to be solved. "
 	    "Choose between: STLS, VS-STLS, STLS-IET-HNC,"
-	    " STLS-IET-IOI, STLS-IET-LCT\n", in.theory);
+	    " STLS-IET-IOI, STLS-IET-LCT and QSTLS\n", in.theory);
     exit(EXIT_FAILURE);
   }
   

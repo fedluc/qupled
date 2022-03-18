@@ -11,13 +11,6 @@
 #include "dynamic_stls.h"
 
 // -------------------------------------------------------------------
-// CONSTANTS
-// -------------------------------------------------------------------
-
-// Number of data points for imaginary time (varies between 0 and 1)
-#define NTAU 100
-
-// -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF THE CLASSICAL
 // SCHEMES (STLS, VS-STLS AND STLS-IET)
 // -------------------------------------------------------------------
@@ -83,7 +76,7 @@ void compute_dynamic_stls(input in, bool verbose) {
 void get_frequency_grid_size(input *in){
 
   // Number of grid points in the frequency grid
-  in->nW = (int)floor(in->dyn_wmax/in->dyn_dw);
+  in->nW = (int)floor(in->dyn_Wmax/in->dyn_dW);
   
 }
 // -------------------------------------------------------------------
@@ -169,7 +162,7 @@ void init_fixed_dynamic_stls_arrays(input *in, double *WW, bool verbose){
 void frequency_grid(double *WW, input *in){
  
   WW[0] = 0.0;
-  for (int ii=1; ii < in->nW; ii++) WW[ii] = WW[ii-1] + in->dyn_dw;
+  for (int ii=1; ii < in->nW; ii++) WW[ii] = WW[ii-1] + in->dyn_dW;
 
 }
 
@@ -524,7 +517,7 @@ struct isf_params {
 void compute_isf(double *FF, double *tt, double *SSn,
 		 double *WW, input in) {
 
-  double dt = 1.0/NTAU; 
+  double dt = 1.0/ISF_NTAU; 
   double err;
   size_t nevals;
 
@@ -548,12 +541,12 @@ void compute_isf(double *FF, double *tt, double *SSn,
   ff_int.function = &isf;
 
   // Imaginary time
-  for (int ii=0; ii<NTAU; ii++){
+  for (int ii=0; ii<ISF_NTAU; ii++){
     tt[ii] = ii*dt;
   }
   
   // Compute intermediate scattering function
-  for (int ii=0; ii<NTAU; ii++) {
+  for (int ii=0; ii<ISF_NTAU; ii++) {
 
     struct isf_params isfp = {in.Theta, tt[ii],
 			      dsf_sp_ptr, dsf_acc_ptr};
@@ -629,8 +622,8 @@ void write_text_dsf(double *SSn, double *WW, input in){
 void write_text_isf(double *SSn, double *WW, input in){
 
   FILE* fid;
-  double FF[NTAU];
-  double tt[NTAU];
+  double FF[ISF_NTAU];
+  double tt[ISF_NTAU];
   
   char out_name[100];
   sprintf(out_name, "isf_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta,
@@ -644,7 +637,7 @@ void write_text_isf(double *SSn, double *WW, input in){
 
   compute_isf(FF, tt, SSn, WW, in);
   
-  for (int ii = 0; ii <NTAU; ii++)
+  for (int ii = 0; ii<ISF_NTAU; ii++)
     fprintf(fid, "%.8e %.8e\n", tt[ii], FF[ii]);
   
   fclose(fid);

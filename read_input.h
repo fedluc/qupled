@@ -47,7 +47,6 @@ typedef struct {
   double xmax;
   int nl;
   int nx;
-  int nW;
   int nIter;
   int nThreads;
   int nW;
