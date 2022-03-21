@@ -11,10 +11,26 @@
 void compute_dynamic_qstls_iet(input in, bool verbose);
 
 // -------------------------------------------------------------------
+// FUNCTIONS USED TO ALLOCATE AND FREE ARRAYS
+// -------------------------------------------------------------------
+
+void alloc_dynamic_qstls_iet_arrays(input in, double **WW,
+				    double **phi_re, double **phi_im,
+				    double **psi_re, double **psi_im,
+				    double **SSn);
+
+// -------------------------------------------------------------------
 // FUNCTION USED TO OBTAIN THE STATIC STRUCTURE FACTOR (FROM FILE)
 // -------------------------------------------------------------------
 
 void get_ssf(double **SS, double **xx, input *in);
+
+// --------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE IDEAL DENSITY RESPONSE
+// --------------------------------------------------------------------
+
+void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
+			     double *WW, double *xx, input in);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO OBTAIN THE BRIDGE FUNCTION
@@ -23,34 +39,53 @@ void get_ssf(double **SS, double **xx, input *in);
 void get_bf(double **bf, double *xx, input in);
 
 // --------------------------------------------------------------------
-// FUNCTIONS USED TO COMPUTE THE REAL PART OF THE AUXILIARY DENSITY
-// RESPONSE
+// FUNCTIONS USED TO COMPUTE THE AUXILIARY DENSITY RESPONSE
 // --------------------------------------------------------------------
 
 void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
+			     double *phi_re, double *phi_im,
 			     double *WW, double *SS,
 			     double *bf, double *xx,
 			     input in);
 
-void compute_dynamic_adr_re_iet(double *psi_re, double *WW,
-				double *SS, double *bf,
-				double *xx, input in);
+// --------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE REAL PART OF THE AUXILIARY DENSITY
+// RESPONSE
+// --------------------------------------------------------------------
 
-void compute_dynamic_adr_iet_re_lev1(double *psi_re, double psi_re_old,
-				      double *WW, double *SS,
-				      double *bf, double *xx,
-				      input in);
+void compute_dynamic_adr_iet_re(double *psi_re, double *phi_re,
+				double *WW, double *SS,
+				double *bf, double *xx,
+				input in);
 
+double adr_iet_err(double *psi_re, double *psi_re_new, input in);
+
+void adr_iet_update(double *psi_re, double *psi_re_new, input in);
+
+void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
+				     double *psi_re_fixed, double *phi_re,
+				     double *WW, double *SS, double *bf,
+				     double *xx, input in);
+
+void compute_dynamic_adr_iet_re_lev1_1(double *int_lev1_1, double *psi_re,
+				       double *phi_re, double *SS,
+				       double *bf, input in);
+
+void compute_dynamic_adr_iet_re_lev1_2(double *int_lev1_2,
+				       double *psi_re_fixed,
+				       int jj, input in);
+  
 double adr_iet_re_lev1_partial_xW(double ww, void* pp);
 
 void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
-				      double *ww, input in);
+				     double xx, double *SS,
+				     double *ww, input in);
 
 double adr_iet_re_lev2_partial_xwW(double uu, void* pp);
 
 void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
-				      double ww, double *qq, double *uu,
-				      input in);
+				     double xx, double ww,
+				     double *uu, input in);
 
 double adr_iet_re_lev3_partial_xwuW(double qq, void* pp);
 

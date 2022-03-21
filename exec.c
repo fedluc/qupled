@@ -7,6 +7,7 @@
 #include "restart.h"
 #include "dynamic_stls.h"
 #include "dynamic_qstls.h"
+#include "dynamic_qstls_iet.h"
 
 void run_static_mode(input in);
 void run_dynamic_mode(input in);
@@ -100,10 +101,16 @@ void run_dynamic_mode(input in){
   else if (strcmp(in.theory, "QSTLS") == 0){
     compute_dynamic_qstls(in, true);
   }
+  else if (strcmp(in.theory, "QSTLS-IET-HNC") == 0 ||
+	   strcmp(in.theory, "QSTLS-IET-IOI") == 0 ||
+	   strcmp(in.theory, "QSTLS-IET-LCT") == 0) {
+    compute_dynamic_qstls_iet(in,true);
+  }
   else {
     fprintf(stderr, "Error: %s is an unknown theory to be solved. "
 	    "Choose between: STLS, VS-STLS, STLS-IET-HNC,"
-	    " STLS-IET-IOI, STLS-IET-LCT and QSTLS\n", in.theory);
+	    " STLS-IET-IOI, STLS-IET-LCT, QSTLS, QSTLS-IET-HNC,"
+	    "QSTLS-IET-IOI and QSTLS-IET-LCT\n", in.theory);
     exit(EXIT_FAILURE);
   }
   
