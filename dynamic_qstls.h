@@ -48,12 +48,12 @@ void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
 
 double adr_re_lev1_partial_xW(double ww, void* pp);
 
-void compute_dynamic_adr_re_lev2(double *psi_re_lev1, double WW,
+void compute_dynamic_adr_re_lev2(double *int_lev1, double WW,
 				  double *ww, input in);
 
 double adr_re_lev2_partial_xwW(double uu, void* pp);
 
-void compute_dynamic_adr_re_lev3(double *psi_re_lev2, double WW,
+void compute_dynamic_adr_re_lev3(double *int_lev2, double WW,
 				  double ww, double *qq, double *uu,
 				  input in);
 

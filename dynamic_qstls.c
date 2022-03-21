@@ -212,8 +212,8 @@ struct adr_re_lev1_params {
 
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
-  gsl_spline *psi_re_lev1_sp_ptr;
-  gsl_interp_accel *psi_re_lev1_acc_ptr;
+  gsl_spline *int_lev1_sp_ptr;
+  gsl_interp_accel *int_lev1_acc_ptr;
 
 };
 
@@ -227,8 +227,8 @@ void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
   
     double err;
     size_t nevals;
-    double *psi_re_lev1  = malloc( sizeof(double) * in.nx);
-    if (psi_re_lev1 == NULL){
+    double *int_lev1  = malloc( sizeof(double) * in.nx);
+    if (int_lev1 == NULL){
       fprintf(stderr, "Failed to allocate memory for calculation"
 	      " of the real part of the auxiliary density"
 	      " response function\n");
@@ -238,14 +238,14 @@ void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
     // Declare accelerator and spline objects
     gsl_spline *ssf_sp_ptr;
     gsl_interp_accel *ssf_acc_ptr;
-    gsl_spline *psi_re_lev1_sp_ptr;
-    gsl_interp_accel *psi_re_lev1_acc_ptr;
+    gsl_spline *int_lev1_sp_ptr;
+    gsl_interp_accel *int_lev1_acc_ptr;
     
     // Allocate the accelerator and the spline objects
     ssf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
     ssf_acc_ptr = gsl_interp_accel_alloc();
-    psi_re_lev1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    psi_re_lev1_acc_ptr = gsl_interp_accel_alloc();
+    int_lev1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    int_lev1_acc_ptr = gsl_interp_accel_alloc();
     
     // Integration workspace
     gsl_integration_cquad_workspace *wsp
@@ -263,14 +263,14 @@ void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
       ff_int_lev1.function = &adr_re_lev1_partial_xW;
       
       // Inner integrals
-      compute_dynamic_adr_re_lev2(psi_re_lev1, WW[ii], xx, in);
-      gsl_spline_init(psi_re_lev1_sp_ptr, xx, psi_re_lev1, in.nx);
+      compute_dynamic_adr_re_lev2(int_lev1, WW[ii], xx, in);
+      gsl_spline_init(int_lev1_sp_ptr, xx, int_lev1, in.nx);
       
       // Integral over w
       struct adr_re_lev1_params plev1 = {ssf_sp_ptr,
 					   ssf_acc_ptr,
-					   psi_re_lev1_sp_ptr,
-					   psi_re_lev1_acc_ptr};
+					   int_lev1_sp_ptr,
+					   int_lev1_acc_ptr};
       ff_int_lev1.params = &plev1;
       gsl_integration_cquad(&ff_int_lev1,
 			    xx[0], xx[in.nx-1],
@@ -282,12 +282,12 @@ void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
     }
     
     // Free memory
-    free(psi_re_lev1);
+    free(int_lev1);
     gsl_integration_cquad_workspace_free(wsp);
     gsl_spline_free(ssf_sp_ptr);
     gsl_interp_accel_free(ssf_acc_ptr);
-    gsl_spline_free(psi_re_lev1_sp_ptr);
-    gsl_interp_accel_free(psi_re_lev1_acc_ptr);
+    gsl_spline_free(int_lev1_sp_ptr);
+    gsl_interp_accel_free(int_lev1_acc_ptr);
     
   }
   
@@ -299,9 +299,9 @@ double adr_re_lev1_partial_xW(double ww, void* pp) {
   struct adr_re_lev1_params* params = (struct adr_re_lev1_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
-  gsl_spline* psi_re_lev1_sp_ptr = (params->psi_re_lev1_sp_ptr);
-  gsl_interp_accel* psi_re_lev1_acc_ptr = (params->psi_re_lev1_acc_ptr);
-  double ffp1 = gsl_spline_eval(psi_re_lev1_sp_ptr, ww, psi_re_lev1_acc_ptr);
+  gsl_spline* int_lev1_sp_ptr = (params->int_lev1_sp_ptr);
+  gsl_interp_accel* int_lev1_acc_ptr = (params->int_lev1_acc_ptr);
+  double ffp1 = gsl_spline_eval(int_lev1_sp_ptr, ww, int_lev1_acc_ptr);
   double ssfm1 = gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0;
 
   return ww*ssfm1*ffp1;
@@ -315,12 +315,12 @@ struct adr_re_lev2_params {
 
   double ww;
   double xx;
-  gsl_spline *psi_re_lev2_sp_ptr;
-  gsl_interp_accel *psi_re_lev2_acc_ptr;
+  gsl_spline *int_lev2_sp_ptr;
+  gsl_interp_accel *int_lev2_acc_ptr;
   
 };
 
-void compute_dynamic_adr_re_lev2(double *psi_re_lev1, double WW,
+void compute_dynamic_adr_re_lev2(double *int_lev1, double WW,
 				  double *ww, input in) {
 
   double err;
@@ -330,15 +330,15 @@ void compute_dynamic_adr_re_lev2(double *psi_re_lev1, double WW,
   double xx = in.dyn_xtarget;
   double uu[ADR_NU];
   double du = 2.0/(ADR_NU - 1);
-  double psi_re_lev2[ADR_NU];
+  double int_lev2[ADR_NU];
   
   // Declare accelerator and spline objects
-  gsl_spline *psi_re_lev2_sp_ptr;
-  gsl_interp_accel *psi_re_lev2_acc_ptr;
+  gsl_spline *int_lev2_sp_ptr;
+  gsl_interp_accel *int_lev2_acc_ptr;
   
   // Allocate the accelerator and the spline objects
-  psi_re_lev2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, ADR_NU);
-  psi_re_lev2_acc_ptr = gsl_interp_accel_alloc();
+  int_lev2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, ADR_NU);
+  int_lev2_acc_ptr = gsl_interp_accel_alloc();
   
   // Integration workspace
   gsl_integration_cquad_workspace *wsp
@@ -358,20 +358,20 @@ void compute_dynamic_adr_re_lev2(double *psi_re_lev1, double WW,
   for (int ii=0; ii<in.nx; ii++) {
 
     // Inner integral
-    compute_dynamic_adr_re_lev3(psi_re_lev2, WW, ww[ii], ww, uu, in);
-    gsl_spline_init(psi_re_lev2_sp_ptr, uu, psi_re_lev2, ADR_NU);
+    compute_dynamic_adr_re_lev3(int_lev2, WW, ww[ii], ww, uu, in);
+    gsl_spline_init(int_lev2_sp_ptr, uu, int_lev2, ADR_NU);
     
     // Integration over u (wave-vector squared)
     struct adr_re_lev2_params plev2 = {ww[ii], xx,
-					 psi_re_lev2_sp_ptr,
-                                         psi_re_lev2_acc_ptr};
+					 int_lev2_sp_ptr,
+                                         int_lev2_acc_ptr};
     
     ff_int_lev2.params = &plev2;
     gsl_integration_cquad(&ff_int_lev2,
 			  uu[0], uu[ADR_NU-1],
 			  0.0, QUAD_REL_ERR,
 			  wsp,
-			  &psi_re_lev1[ii],
+			  &int_lev1[ii],
 			  &err, &nevals);
   }
  
@@ -379,8 +379,8 @@ void compute_dynamic_adr_re_lev2(double *psi_re_lev1, double WW,
 
   // Free memory
   gsl_integration_cquad_workspace_free(wsp);
-  gsl_spline_free(psi_re_lev2_sp_ptr);
-  gsl_interp_accel_free(psi_re_lev2_acc_ptr);
+  gsl_spline_free(int_lev2_sp_ptr);
+  gsl_interp_accel_free(int_lev2_acc_ptr);
   
 }
 
@@ -391,12 +391,12 @@ double adr_re_lev2_partial_xwW(double uu, void* pp) {
   struct adr_re_lev2_params* params = (struct adr_re_lev2_params*)pp;
   double xx = (params->xx);
   double ww = (params->ww);
-  gsl_spline* psi_re_lev2_sp_ptr = (params->psi_re_lev2_sp_ptr);
-  gsl_interp_accel* psi_re_lev2_acc_ptr = (params->psi_re_lev2_acc_ptr);  
+  gsl_spline* int_lev2_sp_ptr = (params->int_lev2_sp_ptr);
+  gsl_interp_accel* int_lev2_acc_ptr = (params->int_lev2_acc_ptr);  
   double xx2 = xx*xx;
   double ww2 = ww*ww;
   double denom = xx2 +  ww2 - 2.0*xx*ww*uu;
-  double ffp2 = gsl_spline_eval(psi_re_lev2_sp_ptr, uu, psi_re_lev2_acc_ptr);
+  double ffp2 = gsl_spline_eval(int_lev2_sp_ptr, uu, int_lev2_acc_ptr);
 
   return xx*ww*ffp2/denom;
   
@@ -415,7 +415,7 @@ struct adr_re_lev3_params {
   
 };
 
-void compute_dynamic_adr_re_lev3(double *psi_re_lev2, double WW,
+void compute_dynamic_adr_re_lev3(double *int_lev2, double WW,
 				  double ww, double *qq, double *uu,
 				  input in) {
 
@@ -444,7 +444,7 @@ void compute_dynamic_adr_re_lev3(double *psi_re_lev2, double WW,
 			  qq[0], qq[in.nx-1],
 			  0.0, QUAD_REL_ERR,
 			  wsp,
-			  &psi_re_lev2[ii],
+			  &int_lev2[ii],
 			  &err, &nevals);
   }
 
