@@ -360,7 +360,6 @@ void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
     #pragma omp for // Distribute for loop over the threads
     for (int ii=0; ii<in.nx; ii++){
 
-      printf("%f\n", xx[ii]);
       // Loop over the frequencies
       for (int jj=0; jj<in.nW; jj++) {
 
@@ -373,13 +372,13 @@ void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
 	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
 	  
 	// Integrand (part 2)
-	//if (compute_fixed) {
+	if (compute_fixed) {
 	  compute_dynamic_adr_iet_re_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
-	  /* compute_dynamic_adr_iet_re_lev1_2(psi_re_fixed, int_lev1_2, jj, in); */
-	/* } */
-	/* else { */
-	/*   compute_dynamic_adr_iet_re_lev1_2(int_lev1_2, psi_re_fixed, jj, in); */
-	/* } */
+	  compute_dynamic_adr_iet_re_lev1_2(int_lev1_2, psi_re_fixed, jj, in, false);
+	}
+	else {
+	  compute_dynamic_adr_iet_re_lev1_2(int_lev1_2, psi_re_fixed, jj, in, true);
+	}
 	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
 	      
 	// Integral over w
@@ -429,11 +428,14 @@ void compute_dynamic_adr_iet_re_lev1_1(double *int_lev1_1, double *psi_re,
 
 // Integrand for level 1 of the real auxiliary density response (part 2)
 void compute_dynamic_adr_iet_re_lev1_2(double *int_lev1_2, double *psi_re_fixed,
-				       int jj, input in){
+				       int jj, input in, bool read){
 
-  for (int ii=0; ii<in.nx; ii++){
-    int_lev1_2[idx2(ii,jj,in.nx)] = psi_re_fixed[idx2(ii,jj,in.nx)];
-  }
+  if (read)
+    for (int ii=0; ii<in.nx; ii++)
+      int_lev1_2[ii] = psi_re_fixed[idx2(ii,jj,in.nx)];
+  else 
+    for (int ii=0; ii<in.nx; ii++)
+      psi_re_fixed[idx2(ii,jj,in.nx)] = int_lev1_2[ii];
   
 }
 
