@@ -54,9 +54,9 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
                      double *phi, double *SS, double *bf, double *xx,
                      input in);
 
-double adr_iet_part1_partial(double uu, void* pp);
+double adr_iet_lev1_partial(double uu, void* pp);
 
-double adr_iet_part2_partial(double ww, void* pp);
+double adr_iet_lev2_partial(double ww, void* pp);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR

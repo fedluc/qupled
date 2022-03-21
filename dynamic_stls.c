@@ -193,7 +193,7 @@ void compute_dynamic_idr(double *phi_re, double *phi_im,  double *WW,
 
 // Real part of the ideal density response
 void compute_dynamic_idr_re(double *phi_re, double *WW,
-			     input in) {
+			    input in) {
 
   double xx = in.dyn_xtarget;
   double err;

@@ -37,13 +37,13 @@ void init_fixed_qstls_arrays(double *psi_fixed, double *xx,
 
 void compute_adr_fixed(double *psi_fixed, double *xx, input in);
 
-double adr_fixed_part1_partial_xwl(double qq, void* pp);
+double adr_fixed_lev1_partial_xwl(double qq, void* pp);
 
-double adr_fixed_part1_partial_xw0(double qq, void* pp);
+double adr_fixed_lev1_partial_xw0(double qq, void* pp);
 
-double adr_fixed_part2_partial_xwq0(double tt, void* pp);
+double adr_fixed_lev2_partial_xwq0(double tt, void* pp);
 
-double adr_fixed_part2_partial_xwql(double tt, void* pp);
+double adr_fixed_lev2_partial_xwql(double tt, void* pp);
 
 // ---------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE

@@ -135,20 +135,20 @@ void stls_iet_iterations(double *SS, double *SSHF,
 // FUNCTION USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 
-struct slfc_partial_part1_params {
+struct slfc_partial_lev1_params {
 
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
   gsl_spline *slfc_sp_ptr;
   gsl_interp_accel *slfc_acc_ptr;
-  gsl_spline *GG_part1_sp_ptr;
-  gsl_interp_accel *GG_part1_acc_ptr;
+  gsl_spline *GG_lev1_sp_ptr;
+  gsl_interp_accel *GG_lev1_acc_ptr;
   gsl_spline *bf_sp_ptr;
   gsl_interp_accel *bf_acc_ptr;
 
 };
 
-struct slfc_partial_part2_params {
+struct slfc_partial_lev2_params {
 
   double xx;
   double uu;
@@ -164,15 +164,15 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
   double err;
   size_t nevals;
   double wmax, wmin, GG_tmp;
-  double *GG_part1  = malloc( sizeof(double) * in.nx);
+  double *GG_lev1  = malloc( sizeof(double) * in.nx);
 
   // Declare accelerator and spline objects
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
   gsl_spline *slfc_sp_ptr;
   gsl_interp_accel *slfc_acc_ptr;
-  gsl_spline *GG_part1_sp_ptr;
-  gsl_interp_accel *GG_part1_acc_ptr;
+  gsl_spline *GG_lev1_sp_ptr;
+  gsl_interp_accel *GG_lev1_acc_ptr;
   gsl_spline *bf_sp_ptr;
   gsl_interp_accel *bf_acc_ptr;
   
@@ -181,8 +181,8 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
   ssf_acc_ptr = gsl_interp_accel_alloc();
   slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   slfc_acc_ptr = gsl_interp_accel_alloc();
-  GG_part1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-  GG_part1_acc_ptr = gsl_interp_accel_alloc();
+  GG_lev1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  GG_lev1_acc_ptr = gsl_interp_accel_alloc();
   bf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   bf_acc_ptr = gsl_interp_accel_alloc();
   
@@ -196,9 +196,9 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
   = gsl_integration_cquad_workspace_alloc(100);
 
   // Integration function
-  gsl_function ff_part1_int, ff_part2_int;
-  ff_part1_int.function = &slfc_partial_part1;
-  ff_part2_int.function = &slfc_partial_part2;
+  gsl_function ff_lev1_int, ff_lev2_int;
+  ff_lev1_int.function = &slfc_partial_lev1;
+  ff_lev2_int.function = &slfc_partial_lev2;
 
   // STLS component of the static local field correction
   compute_slfc(GG_new, SS, xx, in);
@@ -214,7 +214,7 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
 	
 	if (xx[jj] >  0.0) {
 
-	  struct slfc_partial_part2_params pp_part2 = {xx[ii], xx[jj], 
+	  struct slfc_partial_lev2_params pp_lev2 = {xx[ii], xx[jj], 
 					ssf_sp_ptr, ssf_acc_ptr};
 	  wmin = xx[jj] - xx[ii];
 	  if (wmin < 0.0) wmin = -wmin;
@@ -222,29 +222,29 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
 	  // The quadrature formula attemps a tiny extrapolation which causes 
 	  // the interpolation routine to crash. 
 	  wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
-	  ff_part2_int.params = &pp_part2;
-	  gsl_integration_cquad(&ff_part2_int,
+	  ff_lev2_int.params = &pp_lev2;
+	  gsl_integration_cquad(&ff_lev2_int,
 				wmin, wmax,
 				0.0, QUAD_REL_ERR,
 				wsp,
-				&GG_part1[jj], &err, &nevals);
+				&GG_lev1[jj], &err, &nevals);
 
 	}
 
-	else GG_part1[jj] = 0.0; 
+	else GG_lev1[jj] = 0.0; 
 
       }
 
       // Interpolate result of integration over w
-      gsl_spline_init(GG_part1_sp_ptr, xx, GG_part1, in.nx);    
+      gsl_spline_init(GG_lev1_sp_ptr, xx, GG_lev1, in.nx);    
       
       // Evaluate integral over u
-      struct slfc_partial_part1_params pp_part1 = {ssf_sp_ptr, ssf_acc_ptr,
+      struct slfc_partial_lev1_params pp_lev1 = {ssf_sp_ptr, ssf_acc_ptr,
 				    slfc_sp_ptr, slfc_acc_ptr,
-				    GG_part1_sp_ptr, GG_part1_acc_ptr,
+				    GG_lev1_sp_ptr, GG_lev1_acc_ptr,
 				    bf_sp_ptr, bf_acc_ptr};
-      ff_part1_int.params = &pp_part1;
-      gsl_integration_cquad(&ff_part1_int,
+      ff_lev1_int.params = &pp_lev1;
+      gsl_integration_cquad(&ff_lev1_int,
 			    xx[0], xx[in.nx-1],
 			    0.0, QUAD_REL_ERR,
 			    wsp,
@@ -259,33 +259,33 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
   }
 
   // Free memory
-  free(GG_part1);
+  free(GG_lev1);
   gsl_integration_cquad_workspace_free(wsp);
   gsl_spline_free(ssf_sp_ptr);
   gsl_interp_accel_free(ssf_acc_ptr);
   gsl_spline_free(slfc_sp_ptr);
   gsl_interp_accel_free(slfc_acc_ptr);
-  gsl_spline_free(GG_part1_sp_ptr);
-  gsl_interp_accel_free(GG_part1_acc_ptr);
+  gsl_spline_free(GG_lev1_sp_ptr);
+  gsl_interp_accel_free(GG_lev1_acc_ptr);
   gsl_spline_free(bf_sp_ptr);
   gsl_interp_accel_free(bf_acc_ptr);
 
 }
 
-double slfc_partial_part1(double uu, void* pp) {
+double slfc_partial_lev1(double uu, void* pp) {
 
-  struct slfc_partial_part1_params* params = (struct slfc_partial_part1_params*)pp;
+  struct slfc_partial_lev1_params* params = (struct slfc_partial_lev1_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
   gsl_spline* slfc_sp_ptr = (params->slfc_sp_ptr);
   gsl_interp_accel* slfc_acc_ptr = (params->slfc_acc_ptr);
-  gsl_spline* GG_part1_sp_ptr = (params->GG_part1_sp_ptr);
-  gsl_interp_accel* GG_part1_acc_ptr = (params->GG_part1_acc_ptr);
+  gsl_spline* GG_lev1_sp_ptr = (params->GG_lev1_sp_ptr);
+  gsl_interp_accel* GG_lev1_acc_ptr = (params->GG_lev1_acc_ptr);
   gsl_spline* bf_sp_ptr = (params->bf_sp_ptr);
   gsl_interp_accel* bf_acc_ptr = (params->bf_acc_ptr);
 
   if (uu > 0.0)
-    return (1.0/uu) * gsl_spline_eval(GG_part1_sp_ptr, uu, GG_part1_acc_ptr)
+    return (1.0/uu) * gsl_spline_eval(GG_lev1_sp_ptr, uu, GG_lev1_acc_ptr)
       *(-gsl_spline_eval(bf_sp_ptr, uu, bf_acc_ptr) 
 	- (gsl_spline_eval(ssf_sp_ptr, uu, ssf_acc_ptr) - 1.0)
 	*(gsl_spline_eval(slfc_sp_ptr, uu, slfc_acc_ptr) - 1.0));
@@ -293,9 +293,9 @@ double slfc_partial_part1(double uu, void* pp) {
     return 0;
 }
 
-double slfc_partial_part2(double ww, void* pp) {
+double slfc_partial_lev2(double ww, void* pp) {
 
-  struct slfc_partial_part2_params* params = (struct slfc_partial_part2_params*)pp;
+  struct slfc_partial_lev2_params* params = (struct slfc_partial_lev2_params*)pp;
   double xx = (params->xx);
   double uu = (params->uu);
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);

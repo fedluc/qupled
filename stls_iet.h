@@ -34,9 +34,9 @@ void stls_iet_iterations(double *SS, double *SSHF,
 void compute_slfc_iet(double *GG_new, double *GG, double *SS,
                       double *bf, double *xx, input in);
 
-double slfc_partial_part1(double uu, void* pp);
+double slfc_partial_lev1(double uu, void* pp);
 
-double slfc_partial_part2(double ww, void* pp);
+double slfc_partial_lev2(double ww, void* pp);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE BRIDGE FUNCTION TERM

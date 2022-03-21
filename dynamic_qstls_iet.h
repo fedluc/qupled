@@ -32,9 +32,14 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
 			     double *bf, double *xx,
 			     input in);
 
-void compute_dynamic_adr_iet_re_part1(double *psi_re, double *WW,
-				      double *SS, double *bf,
-				      double *xx, input in);
+void compute_dynamic_adr_re_iet(double *psi_re, double *WW,
+				double *SS, double *bf,
+				double *xx, input in);
+
+void compute_dynamic_adr_iet_re_part1(double *psi_re, double psi_re_old,
+				      double *WW, double *SS,
+				      double *bf, double *xx,
+				      input in);
 
 double adr_iet_re_part1_partial_xW(double ww, void* pp);
 

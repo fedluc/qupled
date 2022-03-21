@@ -366,18 +366,18 @@ double adr_iet_fixed_partial_xuw0(double yy, void* pp) {
 // FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE
 // ---------------------------------------------------------------------------
 
-struct adr_iet_part1_params {
+struct adr_iet_lev1_params {
 
-  gsl_spline *adr_part1_sp_ptr;
-  gsl_interp_accel *adr_part1_acc_ptr;
+  gsl_spline *adr_lev1_sp_ptr;
+  gsl_interp_accel *adr_lev1_acc_ptr;
 
 };
 
 
-struct adr_iet_part2_params {
+struct adr_iet_lev2_params {
 
-  gsl_spline *adr_part2_sp_ptr;
-  gsl_interp_accel *adr_part2_acc_ptr;
+  gsl_spline *adr_lev2_sp_ptr;
+  gsl_interp_accel *adr_lev2_acc_ptr;
 
 };
 
@@ -397,15 +397,15 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
     size_t nevals;
     double psi_tmp;
     double wmax, wmin;
-    double *adr_part2  = malloc( sizeof(double) * in.nx);
-    double *adr_part1  = malloc( sizeof(double) * in.nx);
+    double *adr_lev2  = malloc( sizeof(double) * in.nx);
+    double *adr_lev1  = malloc( sizeof(double) * in.nx);
     
-    if (adr_part2 == NULL) {
+    if (adr_lev2 == NULL) {
       fprintf(stderr, "Failed to allocate memory for the "
 	      "auxiliary density response (part 2)\n");
       exit(EXIT_FAILURE);
     }
-    if (adr_part1 == NULL) {
+    if (adr_lev1 == NULL) {
       fprintf(stderr, "Failed to allocate memory for the "
 	      "auxiliary density response (part 1)\n");
       exit(EXIT_FAILURE);
@@ -413,25 +413,25 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
 
     
     // Declare accelerator and spline objects
-    gsl_spline *adr_part1_sp_ptr;
-    gsl_interp_accel *adr_part1_acc_ptr;
-    gsl_spline *adr_part2_sp_ptr;
-    gsl_interp_accel *adr_part2_acc_ptr;
+    gsl_spline *adr_lev1_sp_ptr;
+    gsl_interp_accel *adr_lev1_acc_ptr;
+    gsl_spline *adr_lev2_sp_ptr;
+    gsl_interp_accel *adr_lev2_acc_ptr;
     
     // Allocate the accelerator and the spline objects
-    adr_part1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    adr_part1_acc_ptr = gsl_interp_accel_alloc();
-    adr_part2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    adr_part2_acc_ptr = gsl_interp_accel_alloc();
+    adr_lev1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    adr_lev1_acc_ptr = gsl_interp_accel_alloc();
+    adr_lev2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    adr_lev2_acc_ptr = gsl_interp_accel_alloc();
     
     // Integration workspace
     gsl_integration_cquad_workspace *wsp
       = gsl_integration_cquad_workspace_alloc(100);
     
     // Integration function
-    gsl_function ff_part1_int, ff_part2_int;
-    ff_part1_int.function = &adr_iet_part1_partial;
-    ff_part2_int.function = &adr_iet_part2_partial;
+    gsl_function ff_lev1_int, ff_lev2_int;
+    ff_lev1_int.function = &adr_iet_lev1_partial;
+    ff_lev2_int.function = &adr_iet_lev2_partial;
     
     // Loop over xx (wave-vector)
     #pragma omp for // Distribute loops over the threads
@@ -475,39 +475,39 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
 	  
       	  // Construct integrand over w
       	  for (int kk=0; kk<in.nx; kk++) {
-      	    fread(&adr_part2[kk], sizeof(double), 1, fid);
-      	    adr_part2[kk] *= xx[kk]*(SS[kk]-1.0);
+      	    fread(&adr_lev2[kk], sizeof(double), 1, fid);
+      	    adr_lev2[kk] *= xx[kk]*(SS[kk]-1.0);
       	  }
-      	  gsl_spline_init(adr_part2_sp_ptr, xx, adr_part2, in.nx);
+      	  gsl_spline_init(adr_lev2_sp_ptr, xx, adr_lev2, in.nx);
 	  
       	  // Compute integral over w
 	  if (xx[ii] == 0.0 || xx[jj] == 0.0){
-	    adr_part1[jj] = 0.0;
+	    adr_lev1[jj] = 0.0;
 	  }
 	  else {
 
-	    struct adr_iet_part2_params pp_part2 =  {adr_part2_sp_ptr, adr_part2_acc_ptr};
+	    struct adr_iet_lev2_params pp_lev2 =  {adr_lev2_sp_ptr, adr_lev2_acc_ptr};
 	    wmin = xx[jj] - xx[ii];
 	    if (wmin < 0.0) wmin = -wmin;
 	    // NOTE: The upper cutoff is at qm - dq for numerical reasons;
 	    // The quadrature formula attemps a tiny extrapolation which causes
 	    // the interpolation routine to crash.
 	    wmax = GSL_MIN(xx[in.nx-2], xx[ii]+xx[jj]);
-	    ff_part2_int.params = &pp_part2;
-	    gsl_integration_cquad(&ff_part2_int,
+	    ff_lev2_int.params = &pp_lev2;
+	    gsl_integration_cquad(&ff_lev2_int,
 				  wmin, wmax,
 				  0.0, QUAD_REL_ERR,
 				  wsp,
-				  &adr_part1[jj], &err, &nevals);
+				  &adr_lev1[jj], &err, &nevals);
 
 	    // Construct integrand over u ( the -1 is added because the qSTLS contribution is calculated separately)
 	    if (in.qstls_iet_static){ 
-	      adr_part1[jj] *= (1.0/xx[jj])
+	      adr_lev1[jj] *= (1.0/xx[jj])
 		*( (-bf[jj]+1)*SS[jj] - 1 - 
 		   (psi[idx2(jj,0,in.nx)]/phi[idx2(jj,0,in.nx)])*(SS[jj]-1));
 	    }
 	    else {
-	      adr_part1[jj] *= (1.0/xx[jj])
+	      adr_lev1[jj] *= (1.0/xx[jj])
 		*( (-bf[jj]+1)*SS[jj] - 1 - 
 		   (psi[idx2(jj,ll,in.nx)]/phi[idx2(jj,ll,in.nx)])*(SS[jj]-1));
 	    }
@@ -517,12 +517,12 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
       	}
 	
       	// Interpolate integrand over u
-      	gsl_spline_init(adr_part1_sp_ptr, xx, adr_part1, in.nx);
+      	gsl_spline_init(adr_lev1_sp_ptr, xx, adr_lev1, in.nx);
 	
       	// Compute integral over u
-      	struct adr_iet_part1_params pp_part1 = {adr_part1_sp_ptr, adr_part1_acc_ptr};
-      	ff_part1_int.params = &pp_part1;
-      	gsl_integration_cquad(&ff_part1_int,
+      	struct adr_iet_lev1_params pp_lev1 = {adr_lev1_sp_ptr, adr_lev1_acc_ptr};
+      	ff_lev1_int.params = &pp_lev1;
+      	gsl_integration_cquad(&ff_lev1_int,
       			      xx[0], xx[in.nx-1],
       			      0.0, QUAD_REL_ERR,
       			      wsp,
@@ -545,36 +545,36 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
     }
     
     // Free memory
-    free(adr_part2);
-    free(adr_part1);
+    free(adr_lev2);
+    free(adr_lev1);
     gsl_integration_cquad_workspace_free(wsp);
-    gsl_spline_free(adr_part1_sp_ptr);
-    gsl_interp_accel_free(adr_part1_acc_ptr);
-    gsl_spline_free(adr_part2_sp_ptr);
-    gsl_interp_accel_free(adr_part2_acc_ptr);
+    gsl_spline_free(adr_lev1_sp_ptr);
+    gsl_interp_accel_free(adr_lev1_acc_ptr);
+    gsl_spline_free(adr_lev2_sp_ptr);
+    gsl_interp_accel_free(adr_lev2_acc_ptr);
     
   }
   
 }
 
 
-double adr_iet_part1_partial(double uu, void* pp) {
+double adr_iet_lev1_partial(double uu, void* pp) {
 
-  struct adr_iet_part1_params* params = (struct adr_iet_part1_params*)pp;
-  gsl_spline* adr_part1_sp_ptr = (params->adr_part1_sp_ptr);
-  gsl_interp_accel* adr_part1_acc_ptr = (params->adr_part1_acc_ptr);
+  struct adr_iet_lev1_params* params = (struct adr_iet_lev1_params*)pp;
+  gsl_spline* adr_lev1_sp_ptr = (params->adr_lev1_sp_ptr);
+  gsl_interp_accel* adr_lev1_acc_ptr = (params->adr_lev1_acc_ptr);
  
-  return gsl_spline_eval(adr_part1_sp_ptr, uu, adr_part1_acc_ptr);
+  return gsl_spline_eval(adr_lev1_sp_ptr, uu, adr_lev1_acc_ptr);
 
 }
 
-double adr_iet_part2_partial(double ww, void* pp) {
+double adr_iet_lev2_partial(double ww, void* pp) {
 
-  struct adr_iet_part2_params* params = (struct adr_iet_part2_params*)pp;
-  gsl_spline* adr_part2_sp_ptr = (params->adr_part2_sp_ptr);
-  gsl_interp_accel* adr_part2_acc_ptr = (params->adr_part2_acc_ptr);
+  struct adr_iet_lev2_params* params = (struct adr_iet_lev2_params*)pp;
+  gsl_spline* adr_lev2_sp_ptr = (params->adr_lev2_sp_ptr);
+  gsl_interp_accel* adr_lev2_acc_ptr = (params->adr_lev2_acc_ptr);
  
-  return gsl_spline_eval(adr_part2_sp_ptr, ww, adr_part2_acc_ptr);
+  return gsl_spline_eval(adr_lev2_sp_ptr, ww, adr_lev2_acc_ptr);
 }
 
 

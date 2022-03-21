@@ -193,10 +193,10 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
 			 double *xx, input in) {
 
   // Real component
-  compute_dynamic_adr_re_part1(psi_re, WW, SS, xx, in);
+  compute_dynamic_adr_re_lev1(psi_re, WW, SS, xx, in);
   
   // Imaginary component
-  compute_dynamic_adr_im_part1(psi_im, WW, SS, xx, in);
+  compute_dynamic_adr_im_lev1(psi_im, WW, SS, xx, in);
   
 }
 
@@ -206,18 +206,18 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
 // DENSITY RESPONSE
 // ------------------------------------------------------------------
 
-// Real part of the auxiliary density response (part 1)
+// Real part of the auxiliary density response (level 1)
 
-struct adr_re_part1_params {
+struct adr_re_lev1_params {
 
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
-  gsl_spline *psi_re_part1_sp_ptr;
-  gsl_interp_accel *psi_re_part1_acc_ptr;
+  gsl_spline *psi_re_lev1_sp_ptr;
+  gsl_interp_accel *psi_re_lev1_acc_ptr;
 
 };
 
-void compute_dynamic_adr_re_part1(double *psi_re, double *WW,
+void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
 				  double *SS, double *xx,
 				  input in) {
 
@@ -227,8 +227,8 @@ void compute_dynamic_adr_re_part1(double *psi_re, double *WW,
   
     double err;
     size_t nevals;
-    double *psi_re_part1  = malloc( sizeof(double) * in.nx);
-    if (psi_re_part1 == NULL){
+    double *psi_re_lev1  = malloc( sizeof(double) * in.nx);
+    if (psi_re_lev1 == NULL){
       fprintf(stderr, "Failed to allocate memory for calculation"
 	      " of the real part of the auxiliary density"
 	      " response function\n");
@@ -238,41 +238,41 @@ void compute_dynamic_adr_re_part1(double *psi_re, double *WW,
     // Declare accelerator and spline objects
     gsl_spline *ssf_sp_ptr;
     gsl_interp_accel *ssf_acc_ptr;
-    gsl_spline *psi_re_part1_sp_ptr;
-    gsl_interp_accel *psi_re_part1_acc_ptr;
+    gsl_spline *psi_re_lev1_sp_ptr;
+    gsl_interp_accel *psi_re_lev1_acc_ptr;
     
     // Allocate the accelerator and the spline objects
-    ssf_sp_ptr = gsl_spline_alloc(gsl_interp_linear, in.nx);
+    ssf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
     ssf_acc_ptr = gsl_interp_accel_alloc();
-    psi_re_part1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    psi_re_part1_acc_ptr = gsl_interp_accel_alloc();
+    psi_re_lev1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    psi_re_lev1_acc_ptr = gsl_interp_accel_alloc();
     
     // Integration workspace
     gsl_integration_cquad_workspace *wsp
       = gsl_integration_cquad_workspace_alloc(100);
+
+    // Interpolate static structure factor
+    gsl_spline_init(ssf_sp_ptr, xx, SS, in.nx);
     
     // Loop over the frequency
     #pragma omp for // Distribute for loop over the threads
     for (int ii=0; ii<in.nW; ii++){
 
       // Integration function
-      gsl_function ff_int_part1;
-      ff_int_part1.function = &adr_re_part1_partial_xW;
+      gsl_function ff_int_lev1;
+      ff_int_lev1.function = &adr_re_lev1_partial_xW;
       
       // Inner integrals
-      compute_dynamic_adr_re_part2(psi_re_part1, WW[ii], xx, in);
-    
-      // Construct integrand
-      gsl_spline_init(ssf_sp_ptr, xx, SS, in.nx);
-      gsl_spline_init(psi_re_part1_sp_ptr, xx, psi_re_part1, in.nx);
+      compute_dynamic_adr_re_lev2(psi_re_lev1, WW[ii], xx, in);
+      gsl_spline_init(psi_re_lev1_sp_ptr, xx, psi_re_lev1, in.nx);
       
       // Integral over w
-      struct adr_re_part1_params ppart1 = {ssf_sp_ptr,
+      struct adr_re_lev1_params plev1 = {ssf_sp_ptr,
 					   ssf_acc_ptr,
-					   psi_re_part1_sp_ptr,
-					   psi_re_part1_acc_ptr};
-      ff_int_part1.params = &ppart1;
-      gsl_integration_cquad(&ff_int_part1,
+					   psi_re_lev1_sp_ptr,
+					   psi_re_lev1_acc_ptr};
+      ff_int_lev1.params = &plev1;
+      gsl_integration_cquad(&ff_int_lev1,
 			    xx[0], xx[in.nx-1],
 			    0.0, QUAD_REL_ERR,
 			    wsp,
@@ -282,24 +282,26 @@ void compute_dynamic_adr_re_part1(double *psi_re, double *WW,
     }
     
     // Free memory
-    free(psi_re_part1);
+    free(psi_re_lev1);
     gsl_integration_cquad_workspace_free(wsp);
-    gsl_spline_free(psi_re_part1_sp_ptr);
-    gsl_interp_accel_free(psi_re_part1_acc_ptr);
+    gsl_spline_free(ssf_sp_ptr);
+    gsl_interp_accel_free(ssf_acc_ptr);
+    gsl_spline_free(psi_re_lev1_sp_ptr);
+    gsl_interp_accel_free(psi_re_lev1_acc_ptr);
     
   }
   
 }
 
-// Integrand for part 1 of the real auxiliary density response (vector = x, frequency = W)
-double adr_re_part1_partial_xW(double ww, void* pp) {
+// Integrand for level 1 of the real auxiliary density response (vector = x, frequency = W)
+double adr_re_lev1_partial_xW(double ww, void* pp) {
   
-  struct adr_re_part1_params* params = (struct adr_re_part1_params*)pp;
+  struct adr_re_lev1_params* params = (struct adr_re_lev1_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
-  gsl_spline* psi_re_part1_sp_ptr = (params->psi_re_part1_sp_ptr);
-  gsl_interp_accel* psi_re_part1_acc_ptr = (params->psi_re_part1_acc_ptr);
-  double ffp1 = gsl_spline_eval(psi_re_part1_sp_ptr, ww, psi_re_part1_acc_ptr);
+  gsl_spline* psi_re_lev1_sp_ptr = (params->psi_re_lev1_sp_ptr);
+  gsl_interp_accel* psi_re_lev1_acc_ptr = (params->psi_re_lev1_acc_ptr);
+  double ffp1 = gsl_spline_eval(psi_re_lev1_sp_ptr, ww, psi_re_lev1_acc_ptr);
   double ssfm1 = gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0;
 
   return ww*ssfm1*ffp1;
@@ -307,18 +309,18 @@ double adr_re_part1_partial_xW(double ww, void* pp) {
 }
 
 
-// Real part of the auxiliary density response (part 2)
+// Real part of the auxiliary density response (level 2)
 
-struct adr_re_part2_params {
+struct adr_re_lev2_params {
 
   double ww;
   double xx;
-  gsl_spline *psi_re_part2_sp_ptr;
-  gsl_interp_accel *psi_re_part2_acc_ptr;
+  gsl_spline *psi_re_lev2_sp_ptr;
+  gsl_interp_accel *psi_re_lev2_acc_ptr;
   
 };
 
-void compute_dynamic_adr_re_part2(double *psi_re_part1, double WW,
+void compute_dynamic_adr_re_lev2(double *psi_re_lev1, double WW,
 				  double *ww, input in) {
 
   double err;
@@ -328,23 +330,23 @@ void compute_dynamic_adr_re_part2(double *psi_re_part1, double WW,
   double xx = in.dyn_xtarget;
   double uu[ADR_NU];
   double du = 2.0/(ADR_NU - 1);
-  double psi_re_part2[ADR_NU];
+  double psi_re_lev2[ADR_NU];
   
   // Declare accelerator and spline objects
-  gsl_spline *psi_re_part2_sp_ptr;
-  gsl_interp_accel *psi_re_part2_acc_ptr;
+  gsl_spline *psi_re_lev2_sp_ptr;
+  gsl_interp_accel *psi_re_lev2_acc_ptr;
   
   // Allocate the accelerator and the spline objects
-  psi_re_part2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, ADR_NU);
-  psi_re_part2_acc_ptr = gsl_interp_accel_alloc();
+  psi_re_lev2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, ADR_NU);
+  psi_re_lev2_acc_ptr = gsl_interp_accel_alloc();
   
   // Integration workspace
   gsl_integration_cquad_workspace *wsp
     = gsl_integration_cquad_workspace_alloc(100);
      
   // Integration function
-  gsl_function ff_int_part2;
-  ff_int_part2.function = &adr_re_part2_partial_xwW;
+  gsl_function ff_int_lev2;
+  ff_int_lev2.function = &adr_re_lev2_partial_xwW;
   
 
   // Fill array with integration variable (u)
@@ -356,22 +358,20 @@ void compute_dynamic_adr_re_part2(double *psi_re_part1, double WW,
   for (int ii=0; ii<in.nx; ii++) {
 
     // Inner integral
-    compute_dynamic_adr_re_part3(psi_re_part2, WW, ww[ii], ww, uu, in);
-
-    // Construct integrand
-    gsl_spline_init(psi_re_part2_sp_ptr, uu, psi_re_part2, ADR_NU);
+    compute_dynamic_adr_re_lev3(psi_re_lev2, WW, ww[ii], ww, uu, in);
+    gsl_spline_init(psi_re_lev2_sp_ptr, uu, psi_re_lev2, ADR_NU);
     
     // Integration over u (wave-vector squared)
-    struct adr_re_part2_params ppart2 = {ww[ii], xx,
-					 psi_re_part2_sp_ptr,
-                                         psi_re_part2_acc_ptr};
+    struct adr_re_lev2_params plev2 = {ww[ii], xx,
+					 psi_re_lev2_sp_ptr,
+                                         psi_re_lev2_acc_ptr};
     
-    ff_int_part2.params = &ppart2;
-    gsl_integration_cquad(&ff_int_part2,
+    ff_int_lev2.params = &plev2;
+    gsl_integration_cquad(&ff_int_lev2,
 			  uu[0], uu[ADR_NU-1],
 			  0.0, QUAD_REL_ERR,
 			  wsp,
-			  &psi_re_part1[ii],
+			  &psi_re_lev1[ii],
 			  &err, &nevals);
   }
  
@@ -379,32 +379,32 @@ void compute_dynamic_adr_re_part2(double *psi_re_part1, double WW,
 
   // Free memory
   gsl_integration_cquad_workspace_free(wsp);
-  gsl_spline_free(psi_re_part2_sp_ptr);
-  gsl_interp_accel_free(psi_re_part2_acc_ptr);
+  gsl_spline_free(psi_re_lev2_sp_ptr);
+  gsl_interp_accel_free(psi_re_lev2_acc_ptr);
   
 }
 
 
-// Integrand for part 2 of the real auxiliary density response (vectors = {x,w}, frequency = W)
-double adr_re_part2_partial_xwW(double uu, void* pp) {
+// Integrand for level 2 of the real auxiliary density response (vectors = {x,w}, frequency = W)
+double adr_re_lev2_partial_xwW(double uu, void* pp) {
   
-  struct adr_re_part2_params* params = (struct adr_re_part2_params*)pp;
+  struct adr_re_lev2_params* params = (struct adr_re_lev2_params*)pp;
   double xx = (params->xx);
   double ww = (params->ww);
-  gsl_spline* psi_re_part2_sp_ptr = (params->psi_re_part2_sp_ptr);
-  gsl_interp_accel* psi_re_part2_acc_ptr = (params->psi_re_part2_acc_ptr);  
+  gsl_spline* psi_re_lev2_sp_ptr = (params->psi_re_lev2_sp_ptr);
+  gsl_interp_accel* psi_re_lev2_acc_ptr = (params->psi_re_lev2_acc_ptr);  
   double xx2 = xx*xx;
   double ww2 = ww*ww;
   double denom = xx2 +  ww2 - 2.0*xx*ww*uu;
-  double ffp2 = gsl_spline_eval(psi_re_part2_sp_ptr, uu, psi_re_part2_acc_ptr);
+  double ffp2 = gsl_spline_eval(psi_re_lev2_sp_ptr, uu, psi_re_lev2_acc_ptr);
 
   return xx*ww*ffp2/denom;
   
 }
 
-// Real part of the auxiliary density response (part 3)
+// Real part of the auxiliary density response (level 3)
 
-struct adr_re_part3_params {
+struct adr_re_lev3_params {
 
   double mu;
   double Theta;
@@ -415,7 +415,7 @@ struct adr_re_part3_params {
   
 };
 
-void compute_dynamic_adr_re_part3(double *psi_re_part2, double WW,
+void compute_dynamic_adr_re_lev3(double *psi_re_lev2, double WW,
 				  double ww, double *qq, double *uu,
 				  input in) {
 
@@ -428,23 +428,23 @@ void compute_dynamic_adr_re_part3(double *psi_re_part2, double WW,
     = gsl_integration_cquad_workspace_alloc(100);
     
   // Integration function
-  gsl_function ff_int_part3;
+  gsl_function ff_int_lev3;
   if (WW == 0.0)
-    ff_int_part3.function = &adr_re_part3_partial_xwu0;
+    ff_int_lev3.function = &adr_re_lev3_partial_xwu0;
   else
-    ff_int_part3.function = &adr_re_part3_partial_xwuW;
+    ff_int_lev3.function = &adr_re_lev3_partial_xwuW;
   
   // Loop over u (wave-vector squared)
   for (int ii=0; ii<ADR_NU; ii++){
         
     // Integrate over q (wave-vector)
-    struct adr_re_part3_params ppart3 = {in.mu,in.Theta, xx, ww, uu[ii], WW};
-    ff_int_part3.params = &ppart3;
-    gsl_integration_cquad(&ff_int_part3,
+    struct adr_re_lev3_params plev3 = {in.mu,in.Theta, xx, ww, uu[ii], WW};
+    ff_int_lev3.params = &plev3;
+    gsl_integration_cquad(&ff_int_lev3,
 			  qq[0], qq[in.nx-1],
 			  0.0, QUAD_REL_ERR,
 			  wsp,
-			  &psi_re_part2[ii],
+			  &psi_re_lev2[ii],
 			  &err, &nevals);
   }
 
@@ -453,10 +453,10 @@ void compute_dynamic_adr_re_part3(double *psi_re_part2, double WW,
   
 }
 
-// Integrand for part 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = W)
-double adr_re_part3_partial_xwuW(double qq, void* pp) {
+// Integrand for level 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = W)
+double adr_re_lev3_partial_xwuW(double qq, void* pp) {
   
-  struct adr_re_part3_params* params = (struct adr_re_part3_params*)pp;
+  struct adr_re_lev3_params* params = (struct adr_re_lev3_params*)pp;
   double mu = (params->mu);
   double Theta = (params->Theta);
   double xx = (params->xx);
@@ -482,10 +482,10 @@ double adr_re_part3_partial_xwuW(double qq, void* pp) {
 }
 
 
-// Integrand for part 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = 0)
-double adr_re_part3_partial_xwu0(double qq, void* pp) {
+// Integrand for level 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = 0)
+double adr_re_lev3_partial_xwu0(double qq, void* pp) {
   
-  struct adr_re_part3_params* params = (struct adr_re_part3_params*)pp;
+  struct adr_re_lev3_params* params = (struct adr_re_lev3_params*)pp;
   double mu = (params->mu);
   double Theta = (params->Theta);
   double xx = (params->xx);
@@ -523,18 +523,18 @@ double adr_re_part3_partial_xwu0(double qq, void* pp) {
 // DENSITY RESPONSE
 // ------------------------------------------------------------------
 
-// Imaginary part of the auxiliary density response (part 1)
+// Imaginary part of the auxiliary density response (level 1)
 
-struct adr_im_part1_params {
+struct adr_im_lev1_params {
 
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
-  gsl_spline *psi_im_part1_sp_ptr;
-  gsl_interp_accel *psi_im_part1_acc_ptr;
+  gsl_spline *psi_im_lev1_sp_ptr;
+  gsl_interp_accel *psi_im_lev1_acc_ptr;
 
 };
 
-void compute_dynamic_adr_im_part1(double *psi_im, double *WW,
+void compute_dynamic_adr_im_lev1(double *psi_im, double *WW,
 				  double *SS, double *xx,
 				  input in) {
 
@@ -544,8 +544,8 @@ void compute_dynamic_adr_im_part1(double *psi_im, double *WW,
   
     double err;
     size_t nevals;
-    double *psi_im_part1  = malloc( sizeof(double) * in.nx);
-    if (psi_im_part1 == NULL){
+    double *psi_im_lev1  = malloc( sizeof(double) * in.nx);
+    if (psi_im_lev1 == NULL){
       fprintf(stderr, "Failed to allocate memory for calculation"
 	      " of the imaginary part of the auxiliary density"
 	      " response function\n");
@@ -555,14 +555,14 @@ void compute_dynamic_adr_im_part1(double *psi_im, double *WW,
     // Declare accelerator and spline objects
     gsl_spline *ssf_sp_ptr;
     gsl_interp_accel *ssf_acc_ptr;
-    gsl_spline *psi_im_part1_sp_ptr;
-    gsl_interp_accel *psi_im_part1_acc_ptr;
+    gsl_spline *psi_im_lev1_sp_ptr;
+    gsl_interp_accel *psi_im_lev1_acc_ptr;
     
     // Allocate the accelerator and the spline objects
     ssf_sp_ptr = gsl_spline_alloc(gsl_interp_linear, in.nx);
     ssf_acc_ptr = gsl_interp_accel_alloc();
-    psi_im_part1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    psi_im_part1_acc_ptr = gsl_interp_accel_alloc();
+    psi_im_lev1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    psi_im_lev1_acc_ptr = gsl_interp_accel_alloc();
     
     // Integration workspace
     gsl_integration_cquad_workspace *wsp
@@ -573,23 +573,23 @@ void compute_dynamic_adr_im_part1(double *psi_im, double *WW,
     for (int ii=0; ii<in.nW; ii++){
       
       // Integration function
-      gsl_function ff_int_part1;
-      ff_int_part1.function = &adr_im_part1_partial_xW;
+      gsl_function ff_int_lev1;
+      ff_int_lev1.function = &adr_im_lev1_partial_xW;
       
       // Inner integrals
-      compute_dynamic_adr_im_part2(psi_im_part1, WW[ii], xx, in);
+      compute_dynamic_adr_im_lev2(psi_im_lev1, WW[ii], xx, in);
     
       // Construct integrand
       gsl_spline_init(ssf_sp_ptr, xx, SS, in.nx);
-      gsl_spline_init(psi_im_part1_sp_ptr, xx, psi_im_part1, in.nx);
+      gsl_spline_init(psi_im_lev1_sp_ptr, xx, psi_im_lev1, in.nx);
       
       // Integral over w
-      struct adr_im_part1_params ppart1 = {ssf_sp_ptr,
+      struct adr_im_lev1_params plev1 = {ssf_sp_ptr,
 					   ssf_acc_ptr,
-					   psi_im_part1_sp_ptr,
-					   psi_im_part1_acc_ptr};
-      ff_int_part1.params = &ppart1;
-      gsl_integration_cquad(&ff_int_part1,
+					   psi_im_lev1_sp_ptr,
+					   psi_im_lev1_acc_ptr};
+      ff_int_lev1.params = &plev1;
+      gsl_integration_cquad(&ff_int_lev1,
 			    xx[0], xx[in.nx-1],
 			    0.0, QUAD_REL_ERR,
 			    wsp,
@@ -599,24 +599,24 @@ void compute_dynamic_adr_im_part1(double *psi_im, double *WW,
     }
     
     // Free memory
-    free(psi_im_part1);
+    free(psi_im_lev1);
     gsl_integration_cquad_workspace_free(wsp);
-    gsl_spline_free(psi_im_part1_sp_ptr);
-    gsl_interp_accel_free(psi_im_part1_acc_ptr);
+    gsl_spline_free(psi_im_lev1_sp_ptr);
+    gsl_interp_accel_free(psi_im_lev1_acc_ptr);
     
   }
   
 }
 
-// Integrand for part 1 of the imaginary auxiliary density response (vector = x, frequency = W)
-double adr_im_part1_partial_xW(double ww, void* pp) {
+// Integrand for level 1 of the imaginary auxiliary density response (vector = x, frequency = W)
+double adr_im_lev1_partial_xW(double ww, void* pp) {
   
-  struct adr_im_part1_params* params = (struct adr_im_part1_params*)pp;
+  struct adr_im_lev1_params* params = (struct adr_im_lev1_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
-  gsl_spline* psi_im_part1_sp_ptr = (params->psi_im_part1_sp_ptr);
-  gsl_interp_accel* psi_im_part1_acc_ptr = (params->psi_im_part1_acc_ptr);
-  double ffp1 = gsl_spline_eval(psi_im_part1_sp_ptr, ww, psi_im_part1_acc_ptr);
+  gsl_spline* psi_im_lev1_sp_ptr = (params->psi_im_lev1_sp_ptr);
+  gsl_interp_accel* psi_im_lev1_acc_ptr = (params->psi_im_lev1_acc_ptr);
+  double ffp1 = gsl_spline_eval(psi_im_lev1_sp_ptr, ww, psi_im_lev1_acc_ptr);
   double ssfm1 = gsl_spline_eval(ssf_sp_ptr, ww, ssf_acc_ptr) - 1.0;
 
   return ww*ssfm1*ffp1;
@@ -624,21 +624,21 @@ double adr_im_part1_partial_xW(double ww, void* pp) {
 }
 
 
-// Imaginary part of the auxiliary density response (part 2)
+// Imaginary part of the auxiliary density response (level 2)
 
-struct adr_im_part2_params {
+struct adr_im_lev2_params {
 
   double ww;
   double xx;
   double Theta;
   double mu;
-  gsl_spline *psi_im_part2_sp_ptr;
-  gsl_interp_accel *psi_im_part2_acc_ptr;
+  gsl_spline *psi_im_lev2_sp_ptr;
+  gsl_interp_accel *psi_im_lev2_acc_ptr;
 
   
 };
 
-void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
+void compute_dynamic_adr_im_lev2(double *psi_im_lev1, double WW,
 				  double *ww, input in) {
 
   double err;
@@ -648,26 +648,26 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
   double xx = in.dyn_xtarget;
   double uu[ADR_NU];
   double du = 2.0/(ADR_NU - 1);
-  double psi_im_part2[ADR_NU];
+  double psi_im_lev2[ADR_NU];
   
   // Declare accelerator and spline objects
-  gsl_spline *psi_im_part2_sp_ptr;
-  gsl_interp_accel *psi_im_part2_acc_ptr;
+  gsl_spline *psi_im_lev2_sp_ptr;
+  gsl_interp_accel *psi_im_lev2_acc_ptr;
   
   // Allocate the accelerator and the spline objects
-  psi_im_part2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, ADR_NU);
-  psi_im_part2_acc_ptr = gsl_interp_accel_alloc();
+  psi_im_lev2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, ADR_NU);
+  psi_im_lev2_acc_ptr = gsl_interp_accel_alloc();
   
   // Integration workspace
   gsl_integration_cquad_workspace *wsp
     = gsl_integration_cquad_workspace_alloc(100);
      
   // Integration function
-  gsl_function ff_int_part2;
+  gsl_function ff_int_lev2;
   if (WW == 0.0) 
-    ff_int_part2.function = &adr_im_part2_partial_xw0;
+    ff_int_lev2.function = &adr_im_lev2_partial_xw0;
   else 
-    ff_int_part2.function = &adr_im_part2_partial_xwW;
+    ff_int_lev2.function = &adr_im_lev2_partial_xwW;
 
   // Fill array with integration variable (u)
   for (int ii=0; ii<ADR_NU; ii++){
@@ -680,25 +680,25 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
     if (WW > 0.0) {
 
       // Inner integral
-      compute_dynamic_adr_im_part3(psi_im_part2, WW, ww[ii], ww, uu, in);
+      compute_dynamic_adr_im_lev3(psi_im_lev2, WW, ww[ii], ww, uu, in);
       
       // Construct integrand
-      gsl_spline_init(psi_im_part2_sp_ptr, uu, psi_im_part2, ADR_NU);
+      gsl_spline_init(psi_im_lev2_sp_ptr, uu, psi_im_lev2, ADR_NU);
 
     }
     
     // Integration over u (wave-vector squared)
-    struct adr_im_part2_params ppart2 = {ww[ii], xx,
+    struct adr_im_lev2_params plev2 = {ww[ii], xx,
 					 in.Theta, in.mu,
-					 psi_im_part2_sp_ptr,
-                                         psi_im_part2_acc_ptr};
+					 psi_im_lev2_sp_ptr,
+                                         psi_im_lev2_acc_ptr};
     
-    ff_int_part2.params = &ppart2;
-    gsl_integration_cquad(&ff_int_part2,
+    ff_int_lev2.params = &plev2;
+    gsl_integration_cquad(&ff_int_lev2,
 			  uu[0], uu[ADR_NU-1],
 			  0.0, QUAD_REL_ERR,
 			  wsp,
-			  &psi_im_part1[ii],
+			  &psi_im_lev1[ii],
 			  &err, &nevals);
     
   }
@@ -707,33 +707,33 @@ void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
 
   // Free memory
   gsl_integration_cquad_workspace_free(wsp);
-  gsl_spline_free(psi_im_part2_sp_ptr);
-  gsl_interp_accel_free(psi_im_part2_acc_ptr);
+  gsl_spline_free(psi_im_lev2_sp_ptr);
+  gsl_interp_accel_free(psi_im_lev2_acc_ptr);
   
 }
 
 
-// Integrand for part 2 of the imaginary auxiliary density response (vectors = {x,w,u}, frequency = W)
-double adr_im_part2_partial_xwW(double uu, void* pp) {
+// Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w,u}, frequency = W)
+double adr_im_lev2_partial_xwW(double uu, void* pp) {
   
-  struct adr_im_part2_params* params = (struct adr_im_part2_params*)pp;
+  struct adr_im_lev2_params* params = (struct adr_im_lev2_params*)pp;
   double xx = (params->xx);
   double ww = (params->ww);
-  gsl_spline* psi_im_part2_sp_ptr = (params->psi_im_part2_sp_ptr);
-  gsl_interp_accel* psi_im_part2_acc_ptr = (params->psi_im_part2_acc_ptr);  
+  gsl_spline* psi_im_lev2_sp_ptr = (params->psi_im_lev2_sp_ptr);
+  gsl_interp_accel* psi_im_lev2_acc_ptr = (params->psi_im_lev2_acc_ptr);  
   double xx2 = xx*xx;
   double ww2 = ww*ww;
   double denom = xx2 +  ww2 - 2.0*xx*ww*uu;
-  double ffp2 = gsl_spline_eval(psi_im_part2_sp_ptr, uu, psi_im_part2_acc_ptr);
+  double ffp2 = gsl_spline_eval(psi_im_lev2_sp_ptr, uu, psi_im_lev2_acc_ptr);
 
   return (3.0*M_PI/8)*xx*ww*ffp2/denom;
   
 }
 
-// Integrand for part 2 of the imaginary auxiliary density response (vectors = {x,w,u}, frequency = 0)
-double adr_im_part2_partial_xw0(double uu, void* pp) {
+// Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w,u}, frequency = 0)
+double adr_im_lev2_partial_xw0(double uu, void* pp) {
   
-  struct adr_im_part2_params* params = (struct adr_im_part2_params*)pp;
+  struct adr_im_lev2_params* params = (struct adr_im_lev2_params*)pp;
   double xx = (params->xx);
   double ww = (params->ww);
   double Theta = (params->Theta);
@@ -749,9 +749,9 @@ double adr_im_part2_partial_xw0(double uu, void* pp) {
 }
 
 
-// Imaginary part of the auxiliary density response (part 3)
+// Imaginary part of the auxiliary density response (level 3)
 
-struct adr_im_part3_params {
+struct adr_im_lev3_params {
 
   double mu;
   double Theta;
@@ -762,7 +762,7 @@ struct adr_im_part3_params {
   
 };
 
-void compute_dynamic_adr_im_part3(double *psi_im_part2, double WW,
+void compute_dynamic_adr_im_lev3(double *psi_im_lev2, double WW,
 				  double ww, double *qq, double *uu,
 				  input in) {
 
@@ -780,8 +780,8 @@ void compute_dynamic_adr_im_part3(double *psi_im_part2, double WW,
     = gsl_integration_cquad_workspace_alloc(100);
     
   // Integration function
-  gsl_function ff_int_part3;
-  ff_int_part3.function = &adr_im_part3_partial_xwuW;
+  gsl_function ff_int_lev3;
+  ff_int_lev3.function = &adr_im_lev3_partial_xwuW;
   
   // Loop over u (wave-vector squared)
   for (int ii=0; ii<ADR_NU; ii++){
@@ -794,13 +794,13 @@ void compute_dynamic_adr_im_part3(double *psi_im_part2, double WW,
     q_max = (WW + x2mxwu)/(2.0*xx);
     
     // Integrate over q (wave-vector)
-    struct adr_im_part3_params ppart3 = {in.mu,in.Theta, xx, ww, uu[ii], WW};
-    ff_int_part3.params = &ppart3;
-    gsl_integration_cquad(&ff_int_part3,
+    struct adr_im_lev3_params plev3 = {in.mu,in.Theta, xx, ww, uu[ii], WW};
+    ff_int_lev3.params = &plev3;
+    gsl_integration_cquad(&ff_int_lev3,
 			  q_min, q_max,
 			  0.0, QUAD_REL_ERR,
 			  wsp,
-			  &psi_im_part2[ii],
+			  &psi_im_lev2[ii],
 			  &err, &nevals);
   }
 
@@ -809,10 +809,10 @@ void compute_dynamic_adr_im_part3(double *psi_im_part2, double WW,
   
 }
 
-// Integrand for part 3 of the imaginary auxiliary density response (vectors = {x,w}, frequency = W)
-double adr_im_part3_partial_xwuW(double qq, void* pp) {
+// Integrand for level 3 of the imaginary auxiliary density response (vectors = {x,w}, frequency = W)
+double adr_im_lev3_partial_xwuW(double qq, void* pp) {
   
-  struct adr_im_part3_params* params = (struct adr_im_part3_params*)pp;
+  struct adr_im_lev3_params* params = (struct adr_im_lev3_params*)pp;
   double mu = (params->mu);
   double Theta = (params->Theta);
   double xx = (params->xx);

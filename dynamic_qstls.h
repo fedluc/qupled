@@ -42,47 +42,47 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
 			 double *WW, double *SS,
 			 double *xx, input in);
 
-void compute_dynamic_adr_re_part1(double *psi_re, double *WW,
+void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
 				  double *SS, double *xx,
 				  input in);
 
-double adr_re_part1_partial_xW(double ww, void* pp);
+double adr_re_lev1_partial_xW(double ww, void* pp);
 
-void compute_dynamic_adr_re_part2(double *psi_re_part1, double WW,
+void compute_dynamic_adr_re_lev2(double *psi_re_lev1, double WW,
 				  double *ww, input in);
 
-double adr_re_part2_partial_xwW(double uu, void* pp);
+double adr_re_lev2_partial_xwW(double uu, void* pp);
 
-void compute_dynamic_adr_re_part3(double *psi_re_part2, double WW,
+void compute_dynamic_adr_re_lev3(double *psi_re_lev2, double WW,
 				  double ww, double *qq, double *uu,
 				  input in);
 
-double adr_re_part3_partial_xwuW(double qq, void* pp);
+double adr_re_lev3_partial_xwuW(double qq, void* pp);
 
-double adr_re_part3_partial_xwu0(double qq, void* pp);
+double adr_re_lev3_partial_xwu0(double qq, void* pp);
 
 // --------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE IMAGINARY PART OF THE AUXILIARY 
 // DENSITY RESPONSE
 // --------------------------------------------------------------------
 
-void compute_dynamic_adr_im_part1(double *psi_re, double *WW,
+void compute_dynamic_adr_im_lev1(double *psi_re, double *WW,
 				  double *SS, double *xx,
 				  input in);
-double adr_im_part1_partial_xW(double ww, void* pp);
+double adr_im_lev1_partial_xW(double ww, void* pp);
 
-void compute_dynamic_adr_im_part2(double *psi_im_part1, double WW,
+void compute_dynamic_adr_im_lev2(double *psi_im_lev1, double WW,
 				  double *ww, input in);
 
-double adr_im_part2_partial_xwW(double uu, void* pp);
+double adr_im_lev2_partial_xwW(double uu, void* pp);
 
-double adr_im_part2_partial_xw0(double uu, void* pp);
+double adr_im_lev2_partial_xw0(double uu, void* pp);
 
-void compute_dynamic_adr_im_part3(double *psi_im_part2, double WW,
+void compute_dynamic_adr_im_lev3(double *psi_im_lev2, double WW,
 				  double ww, double *qq, double *uu,
 				  input in);
 
-double adr_im_part3_partial_xwuW(double qq, void* pp);
+double adr_im_lev3_partial_xwuW(double qq, void* pp);
 
 // ---------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE DYNAMIC STRUCTURE FACTOR
