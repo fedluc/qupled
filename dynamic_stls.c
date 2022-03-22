@@ -249,6 +249,11 @@ void compute_dynamic_idr_im(double *phi_im, double *WW,
   // Normalized ideal Lindhard density
   for (int ii=0; ii<in.nW; ii++) {
 
+    if (xx == 0.0){
+      phi_im[ii] = 0.0;
+      continue;
+    }
+    
     ymin = (xx/2.0) - WW[ii]/(2.0*xx);
     if (ymin < 0.0) ymin = -ymin;
     ymax = (xx/2.0) + WW[ii]/(2.0*xx);

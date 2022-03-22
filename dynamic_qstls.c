@@ -187,7 +187,7 @@ void get_ssf(double **SS, double **xx, input *in){
 // FUNCTION USED TO DEFINE THE AUXILIARY DENSITY RESPONSE
 // ------------------------------------------------------------------
 
-// Ideal density response (real and imaginary part)
+// Auxiliary density response (real and imaginary part)
 void compute_dynamic_adr(double *psi_re, double *psi_im,
 			 double *WW, double *SS,
 			 double *xx, input in) {
