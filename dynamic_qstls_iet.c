@@ -315,7 +315,6 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
   /* 	      psi_im_grid[idx2(ii,jj,in.nx)]); */
   /*   } */
   /* } */
-
  
   // Interpolate to wave-vector given in input
   for (int jj=0; jj<in.nW; jj++){
@@ -329,7 +328,7 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
     gsl_spline_init(phi_re_sp_ptr, xx, phi_re_tmp, in.nx);
     gsl_spline_init(phi_im_sp_ptr, xx, phi_im_tmp, in.nx);
     gsl_spline_init(psi_re_sp_ptr, xx, psi_re_tmp, in.nx);
-    gsl_spline_init(psi_im_sp_ptr, xx, psi_re_tmp, in.nx);
+    gsl_spline_init(psi_im_sp_ptr, xx, psi_im_tmp, in.nx);
     phi_re[jj] = gsl_spline_eval(phi_re_sp_ptr, xTarget, phi_re_acc_ptr);
     phi_im[jj] = gsl_spline_eval(phi_im_sp_ptr, xTarget, phi_im_acc_ptr);
     psi_re[jj] = gsl_spline_eval(psi_re_sp_ptr, xTarget, psi_re_acc_ptr);
@@ -879,11 +878,11 @@ void compute_dynamic_adr_iet_im_lev1(double *psi_im, double *psi_re,
 	ff_int_lev1.function = &adr_iet_im_lev1_partial_xW;
 
 	// Integrand (part 1)
-	compute_dynamic_adr_iet_re_lev1_1(int_lev1_1, psi_re, phi_re, SS, bf, in);
+	compute_dynamic_adr_iet_im_lev1_1(int_lev1_1, psi_re, phi_re, SS, bf, in);
 	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
 	  
 	// Integrand (part 2)
-	compute_dynamic_adr_iet_re_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
+	compute_dynamic_adr_iet_im_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
 	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
 	      
 	// Integral over w
