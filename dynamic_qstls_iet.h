@@ -32,12 +32,6 @@ void free_dynamic_qstls_iet_arrays(double *phi_re_2D,
 				   double *psi_re_1D,
 				   double *psi_im_1D);
 
-// -------------------------------------------------------------------
-// FUNCTION USED TO OBTAIN THE STATIC STRUCTURE FACTOR (FROM FILE)
-// -------------------------------------------------------------------
-
-void get_ssf(double **SS, double **xx, input *in);
-
 // --------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE IDEAL DENSITY RESPONSE
 // --------------------------------------------------------------------
@@ -145,12 +139,25 @@ void compute_dsf_qstls_iet(double *SSn, double *phi_re, double *phi_im,
 			   double *WW ,input in);
 
 
-/* // ------------------------------------------------------------------- */
-/* // FUNCTIONS FOR OUTPUT AND INPUT */
-/* // ------------------------------------------------------------------- */
+// -------------------------------------------------------------------
+// FUNCTIONS FOR OUTPUT AND INPUT
+// -------------------------------------------------------------------
 
-/* void write_text_dynamic_qstls(double *SSn, double *WW, double *psi_re, */
-/* 			      double *psi_im, input in); */
+void write_fixed_dynamic_qstls_iet(double *phi_re, double *phi_im,
+				   double *psi_re, double *psi_im,
+				   input in);
+
+void read_fixed_dynamic_qstls_iet(double *phi_re, double *phi_im,
+				  double *psi_re, double *psi_im,
+				  input in);
+
+void check_dynamic_qstls_iet(double dx, int nx, double xmax,
+			     double dW, int nW, double Wmax,
+			     double Theta, double rs,
+			     input in, size_t it_read,
+			     size_t it_expected, FILE *fid,
+			     bool check_grid, bool check_items,
+			     bool check_eof);
 
 
 #endif

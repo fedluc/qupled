@@ -45,6 +45,7 @@ static char doc[] =
 #define ARGUMENT_DYN_DW_SHORT 0x107
 #define ARGUMENT_DYN_WMAX_SHORT 0x108
 #define ARGUMENT_DYN_XTARGET_SHORT 0x109
+#define ARGUMENT_DYN_ADR_FILE_SHORT 0x110
 
 // Optional arguments
 static struct argp_option options[] = {
@@ -141,6 +142,11 @@ static struct argp_option options[] = {
 
   {"dyn-xtarget", ARGUMENT_DYN_XTARGET_SHORT, "1.0", 0,
    "Wave-vector used to compute the dynamic properties"},
+
+  {"dyn-adr-file", ARGUMENT_DYN_ADR_FILE_SHORT, "file", 0,
+   "File used to load the density response for the"
+   " calculation of the dynamic properties in the qstsls-iet"
+   " scheme"},
   
   { 0 }
   
@@ -294,6 +300,10 @@ parse_opt (int key, char *arg, struct argp_state *state)
 
     case  ARGUMENT_DYN_XTARGET_SHORT:
       in->dyn_xtarget = atof(arg);
+      break;
+
+    case  ARGUMENT_DYN_ADR_FILE_SHORT:
+      in->dyn_adr_file = arg;
       break;  
       
     case ARGP_KEY_ARG:
@@ -372,6 +382,7 @@ void set_default_parse_opt(input *in){
   in->dyn_dW = 0.1; // Resolution for the frequency grid for the dynamic properties
   in->dyn_Wmax = 20.0; // Cutoff for the frequency grid for the dynamic properties
   in->dyn_xtarget = 1.0; // Wave-vector used to compute the dynamic properties
+  in->dyn_adr_file = NO_FILE_STR; // File with density response for dynamic properties in the qSTLS-IET scheme
   
 }
 
@@ -518,6 +529,7 @@ void print_input(input *in){
   printf("Frequency resolution (dynamic): %f\n", in->dyn_dW);
   printf("Frequency cutoff (dynamic): %f\n", in->dyn_Wmax);
   printf("Target wave-vector (dynamic): %f\n", in->dyn_xtarget);
+  printf("File for density response (qSTLS-IET): %s\n", in->dyn_adr_file);
   printf("-------------------------------------\n");
   
 }
