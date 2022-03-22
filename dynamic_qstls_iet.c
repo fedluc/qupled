@@ -240,7 +240,8 @@ void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
 
 
 // ------------------------------------------------------------------
-// FUNCTION USED TO DEFINE THE AUXILIARY DENSITY RESPONSE
+// FUNCTION USED TO DEFINE THE PARTIALLY DYNAMIC AUXILIARY DENSITY
+// RESPONSE
 // ------------------------------------------------------------------
 
 // Auxiliary density response (real and imaginary part)
@@ -304,17 +305,6 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
   compute_dynamic_adr_iet_im_lev1(psi_im_grid, psi_re_grid,
   				  phi_re_grid, WW, SS,
   				  bf, xx, in);
-
-  /* // Interpolate to wave-vector given in input */
-  /* for (int jj=0; jj<in.nW; jj++){ */
-
-  /*   for (int ii=0; ii<in.nx; ii++){ */
-  /*     printf ("%f %f %f %f\n", phi_re_grid[idx2(ii,jj,in.nx)], */
-  /* 	      phi_im_grid[idx2(ii,jj,in.nx)], */
-  /* 	      psi_re_grid[idx2(ii,jj,in.nx)], */
-  /* 	      psi_im_grid[idx2(ii,jj,in.nx)]); */
-  /*   } */
-  /* } */
  
   // Interpolate to wave-vector given in input
   for (int jj=0; jj<in.nW; jj++){
@@ -334,6 +324,8 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
     psi_re[jj] = gsl_spline_eval(psi_re_sp_ptr, xTarget, psi_re_acc_ptr);
     psi_im[jj] = gsl_spline_eval(psi_im_sp_ptr, xTarget, psi_im_acc_ptr);
   }
+
+  // WRITE 2D ARRAYS TO FILE, FOR RE-USE!
   
   // Free memory
   free_dynamic_qstls_iet_arrays(phi_re_grid, phi_im_grid,
@@ -736,7 +728,7 @@ void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
 
     // Integrate over q (wave-vector)
     struct adr_iet_re_lev3_params plev3 = {in.mu,in.Theta, xx, ww,
-				       uu[ii], WW};
+					   uu[ii], WW};
     ff_int_lev3.params = &plev3;
     gsl_integration_cquad(&ff_int_lev3,
 			  uu[0], uu[in.nx-1],
@@ -794,7 +786,7 @@ double adr_iet_re_lev3_partial_xwu0(double qq, void* pp) {
   double x2u2w2 = xx2 + ww2 - uu2;
   double f1 = x2u2w2 + 4.0*xx*qq;
   double f2 = x2u2w2 - 4.0*xx*qq;
-  double logarg = (f1*f1)/(f2*f2);
+  double logarg = f1/f2;
 
   if (xx == 0 || qq == 0){
     return 0;
@@ -948,11 +940,14 @@ double adr_iet_im_lev1_partial_xW(double ww, void* pp) {
 
 }
 
-
 // Imaginary part of the auxiliary density response (level 2)
 
 struct adr_iet_im_lev2_params {
 
+  double mu;
+  double Theta;
+  double xx;
+  double ww;
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
   gsl_spline *int_lev2_sp_ptr;
@@ -995,7 +990,10 @@ void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
      
   // Integration function
   gsl_function ff_int_lev2;
-  ff_int_lev2.function = &adr_iet_im_lev2_partial_xwW;
+  if (WW == 0.0)
+    ff_int_lev2.function = &adr_iet_im_lev2_partial_xw0;
+  else
+    ff_int_lev2.function = &adr_iet_im_lev2_partial_xwW;
 
   // Interpolation of the static structure factor
   gsl_spline_init(ssf_sp_ptr, ww, SS, in.nx);
@@ -1016,10 +1014,12 @@ void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
     gsl_spline_init(int_lev2_sp_ptr, ww, int_lev2, in.nx);
     
     // Integration over u (wave-vector squared)
-    struct adr_iet_im_lev2_params plev2 = {ssf_sp_ptr,
-				       ssf_acc_ptr,
-				       int_lev2_sp_ptr,
-				       int_lev2_acc_ptr};
+    struct adr_iet_im_lev2_params plev2 = {in.mu, in.Theta,
+					   xx, ww[ii],
+					   ssf_sp_ptr,
+					   ssf_acc_ptr,
+					   int_lev2_sp_ptr,
+					   int_lev2_acc_ptr};
     
     ff_int_lev2.params = &plev2;
     gsl_integration_cquad(&ff_int_lev2,
@@ -1055,6 +1055,30 @@ double adr_iet_im_lev2_partial_xwW(double uu, void* pp) {
   double fflv2 = gsl_spline_eval(int_lev2_sp_ptr, uu, int_lev2_acc_ptr);
 
   return uu*ssfm1*fflv2;
+  
+}
+
+
+// Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = 0)
+double adr_iet_im_lev2_partial_xw0(double uu, void* pp) {
+  
+  struct adr_iet_im_lev2_params* params = (struct adr_iet_im_lev2_params*)pp;
+  double mu = (params->mu);
+  double Theta = (params->Theta);
+  double xx = (params->xx);
+  double ww = (params->ww);
+  gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
+  gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
+  double ssfm1 = gsl_spline_eval(ssf_sp_ptr, uu, ssf_acc_ptr) - 1.0;
+  double xx2 = xx*xx;
+  double ww2 = ww*ww;
+  double uu2 = uu*uu;
+  double tt = xx2 + ww2 - uu2;
+
+  if (xx == 0.0)
+    return 0.0;
+  else
+    return 0.5*uu*ssfm1*tt/(exp(tt*tt/(16*Theta*xx2) - mu ) + 1);
   
 }
 
@@ -1104,7 +1128,7 @@ void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
     
     // Integrate over q (wave-vector)
     struct adr_iet_im_lev3_params plev3 = {in.mu,in.Theta, xx, ww,
-				       uu[ii], WW};
+					   uu[ii], WW};
     ff_int_lev3.params = &plev3;
     gsl_integration_cquad(&ff_int_lev3,
 			  q_min, q_max,
@@ -1167,39 +1191,40 @@ void compute_dsf_qstls_iet(double *SSn, double *phi_re, double *phi_im,
   double denom;
   double denom_re;
   double denom_im;
-  
+  double bb[1];
+  double xb[1];
+  input in_tmp = in;
+
+  // Bridge function at the target wave-vector
+  xb[0] = xx;
+  in_tmp.nx = 1;
+  compute_bridge_function(bb, xb, in_tmp);
+ 
+  // Dynamic structure factor
   for (int ii=0; ii<in.nW; ii++){
 
-    /* if (WW[ii] == 0.0) { */
+    if (WW[ii] == 0.0) {
 
-    /*   ff2 = in.Theta/(4.0*xx); */
-    /*   numer = (1.0 - ff1*psi_re[ii]) */
-    /* 	/(exp(xx*xx/(4.0*in.Theta) - in.mu) + 1) */
-    /* 	- 3.0/(4.0*xx)*ff1*phi_re[ii]*psi_im[ii]; */
-    /*   numer *= ff2; */
-    /*   denom_re = 1.0 + ff1 * (phi_re[ii] - psi_re[ii]); */
-    /*   denom = denom_re * denom_re; */
+      ff2 = in.Theta/(4.0*xx);
+      numer = (1.0 - ff1*psi_re[ii])
+    	/(exp(xx*xx/(4.0*in.Theta) - in.mu) + 1)
+    	- 3.0/(4.0*xx)*ff1*phi_re[ii]*psi_im[ii];
+      numer *= ff2;
+      denom_re = 1.0 + ff1 * ((1 - bb[0])*phi_re[ii] - psi_re[ii]);
+      denom = denom_re * denom_re;
 	
-    /* } */
-    /* else { */
+    }
+    else {
       
-    /*   ff2 = 1.0/(1.0 - exp(-WW[ii]/in.Theta)); */
-    /*   numer = phi_im[ii] + ff1*(phi_re[ii]*psi_im[ii] - */
-    /* 				phi_im[ii]*psi_re[ii]); */
-    /*   numer *= (ff2/M_PI); */
-    /*   denom_re = 1.0 + ff1 * (phi_re[ii] - psi_re[ii]); */
-    /*   denom_im = ff1 * (phi_im[ii] - psi_im[ii]); */
-    /*   denom = denom_re*denom_re + denom_im*denom_im; */
+      ff2 = 1.0/(1.0 - exp(-WW[ii]/in.Theta));
+      numer = phi_im[ii] + ff1*(phi_re[ii]*psi_im[ii] -
+				phi_im[ii]*psi_re[ii]);
+      numer *= (ff2/M_PI);
+      denom_re = 1.0 + ff1 * ((1 - bb[0])*phi_re[ii] - psi_re[ii]);
+      denom_im = ff1 * ((1 - bb[0])*phi_im[ii] - psi_im[ii]);
+      denom = denom_re*denom_re + denom_im*denom_im;
       
-    /* } */
-
-    ff2 = 1.0/(1.0 - exp(-WW[ii]/in.Theta));
-    numer = phi_im[ii] + ff1*(phi_re[ii]*psi_im[ii] -
-			      phi_im[ii]*psi_re[ii]);
-    numer *= (ff2/M_PI);
-    denom_re = 1.0 + ff1 * (phi_re[ii] - psi_re[ii]);
-    denom_im = ff1 * (phi_im[ii] - psi_im[ii]);
-    denom = denom_re*denom_re + denom_im*denom_im;
+    }
         
     if (xx == 0.0)
       SSn[ii] = 0.0;

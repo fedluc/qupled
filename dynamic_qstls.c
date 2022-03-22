@@ -66,7 +66,7 @@ void compute_dynamic_qstls(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files: ");
-  write_text_dynamic_qstls(SSn, WW, psi_re, psi_im, in);
+  write_text_dynamic_qstls(SSn, WW, psi_re, phi_re, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -129,7 +129,7 @@ void get_ssf(double **SS, double **xx, input *in){
 
   // Open binary file
   FILE *fid = NULL;
-  if (strcmp(in->stls_guess_file, NO_FILE_STR)==0) {
+  if (strcmp(in->qstls_guess_file, NO_FILE_STR)==0) {
     sprintf(slfc_file_name, "restart_rs%.3f_theta%.3f_%s.bin", in->rs,
 	    in->Theta, in->theory);
     fid = fopen(slfc_file_name, "rb");
@@ -713,7 +713,7 @@ void compute_dynamic_adr_im_lev2(double *psi_im_lev1, double WW,
 }
 
 
-// Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w,u}, frequency = W)
+// Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = W)
 double adr_im_lev2_partial_xwW(double uu, void* pp) {
   
   struct adr_im_lev2_params* params = (struct adr_im_lev2_params*)pp;
@@ -730,7 +730,7 @@ double adr_im_lev2_partial_xwW(double uu, void* pp) {
   
 }
 
-// Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w,u}, frequency = 0)
+// Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = 0)
 double adr_im_lev2_partial_xw0(double uu, void* pp) {
   
   struct adr_im_lev2_params* params = (struct adr_im_lev2_params*)pp;
@@ -809,7 +809,7 @@ void compute_dynamic_adr_im_lev3(double *psi_im_lev2, double WW,
   
 }
 
-// Integrand for level 3 of the imaginary auxiliary density response (vectors = {x,w}, frequency = W)
+// Integrand for level 3 of the imaginary auxiliary density response (vectors = {x,w,u}, frequency = W)
 double adr_im_lev3_partial_xwuW(double qq, void* pp) {
   
   struct adr_im_lev3_params* params = (struct adr_im_lev3_params*)pp;

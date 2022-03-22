@@ -128,6 +128,8 @@ void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
 
 double adr_iet_im_lev2_partial_xwW(double uu, void* pp);
 
+double adr_iet_im_lev2_partial_xw0(double uu, void* pp);
+
 void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
 				     double xx, double ww,
 				     double *uu, input in);
@@ -140,7 +142,7 @@ double adr_iet_im_lev3_partial_xwuW(double qq, void* pp);
 
 void compute_dsf_qstls_iet(double *SSn, double *phi_re, double *phi_im,
 			   double *psi_re, double *psi_im,
-			   double *WW, input in);
+			   double *WW ,input in);
 
 
 /* // ------------------------------------------------------------------- */
