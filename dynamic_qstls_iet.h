@@ -85,10 +85,11 @@ void compute_dynamic_adr_iet_re_lev1_1(double *int_lev1_1, double *psi_re,
 				       double *phi_re, double *SS,
 				       double *bf, input in);
 
-void compute_dynamic_adr_iet_re_lev1_2(double *int_lev1_2,
-				       double *psi_re_fixed,
-				       int ii, int jj,
-				       input in, bool read);
+void read_dynamic_adr_iet_fixed(double *var, double *psi_re_fixed,
+				int ii, int jj, input in);
+
+void write_dynamic_adr_iet_fixed(double *var, double *psi_re_fixed,
+				 int ii, int jj, input in);
   
 double adr_iet_re_lev1_partial_xW(double ww, void* pp);
 
@@ -165,6 +166,39 @@ void check_dynamic_qstls_iet(double dx, int nx, double xmax,
 			     size_t it_expected, FILE *fid,
 			     bool check_grid, bool check_items,
 			     bool check_eof);
+
+
+// ------------------------------------------------------------------
+// FUNCTIONS USED TO DEFINE THE REAL PART OF THE AUXILIARY
+// DENSITY RESPONSE (FULLY DYNAMIC)
+// ------------------------------------------------------------------
+
+void compute_dynamic_adr_iet_fd_re(double *psi_re_new,
+				   double *psi_re, double *psi_im,
+				   double *phi_re, double *phi_im,
+				   double *psi_re_fixed_p1,
+				   double *psi_re_fixed_p2,
+				   double *WW, double *SS,
+				   double *bf, double *xx,
+				   input in);
+
+void compute_dynamic_adr_iet_fd_re_lev1(double *psi_re_new,
+					double *psi_re, double *psi_im,
+					double *phi_re, double *phi_im,
+					double *psi_re_fixed,
+					double *WW, double *SS,
+					double *bf, double *xx,
+					int ncomp, input in);
+
+void compute_dynamic_adr_iet_fd_re_lev1_p1_1(double *int_lev1_1, double *psi_re,
+					     double *psi_im, double *phi_re,
+					     double *phi_im, double *SS,
+					     double *bf, int jj, input in);
+     
+void compute_dynamic_adr_iet_fd_re_lev1_p2_1(double *int_lev1_1, double *psi_re,
+					     double *psi_im, double *phi_re,
+					     double *phi_im, double *SS,
+					     int jj, input in);
 
 
 #endif
