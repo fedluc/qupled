@@ -57,6 +57,7 @@ void compute_dynamic_qstls(input in, bool verbose) {
 
   // Auxiliary density response
   if (verbose) printf("Auxiliary density calculation: ");
+  fflush(stdout);
   compute_dynamic_adr(psi_re, psi_im, WW, SS, xx, in);
   if (verbose) printf("Done.\n");
 
