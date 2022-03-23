@@ -298,7 +298,7 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
 
     // Load from file
     read_fixed_dynamic_qstls_iet(phi_re_grid, phi_im_grid,
-				 psi_re_grid, phi_im_grid,
+				 psi_re_grid, psi_im_grid,
 				 in);
       
   }
@@ -340,7 +340,9 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
   }
 
   // Write 2D array with density response to file
-  write_fixed_dynamic_qstls_iet(phi_re, phi_im, psi_re, psi_im, in);
+  write_fixed_dynamic_qstls_iet(phi_re_grid, phi_im_grid,
+				psi_re_grid, psi_im_grid,
+				in);
   
   // Free memory
   free_dynamic_qstls_iet_arrays(phi_re_grid, phi_im_grid,
