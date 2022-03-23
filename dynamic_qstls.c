@@ -5,6 +5,7 @@
 #include <gsl/gsl_integration.h>
 #include "solvers.h"
 #include "utils.h"
+#include "restart.h"
 #include "chemical_potential.h"
 #include "stls.h"
 #include "qstls.h"
@@ -118,69 +119,46 @@ void free_dynamic_qstls_arrays(double *psi_re, double *psi_im,
 
 void get_ssf(double **SS, double **xx, input *in){
 
-  // Variables
-  size_t it_read;
-  char slfc_file_name[100];
-  int nx_file;
-  int nl_file;
-  double dx_file;
-  double xmax_file;
-  input in_file = *in;
-
-  // Open binary file
-  FILE *fid = NULL;
-  if (strcmp(in->qstls_guess_file, NO_FILE_STR)==0) {
-    sprintf(slfc_file_name, "restart_rs%.3f_theta%.3f_%s.bin", in->rs,
-	    in->Theta, in->theory);
-    fid = fopen(slfc_file_name, "rb");
+   // Variables
+  size_t ssf_file_name_len = 1000;
+  char *ssf_file_name;
+  input in_tmp = *in;
+   
+  // File with static structure factor
+  if (strcmp(in->dyn_struct_file, NO_FILE_STR)==0){
+    ssf_file_name = malloc( sizeof(char) * ssf_file_name_len);
+    sprintf(ssf_file_name, "ssf_rs%.3f_theta%.3f_%s.dat",
+	    in->rs, in->Theta, in->theory);
   }
   else {
-    fid = fopen(in->stls_guess_file, "rb");
+    ssf_file_name_len = strlen(in->dyn_struct_file) + 1;
+    ssf_file_name = malloc( sizeof(char) * ssf_file_name_len);
+    strcpy(ssf_file_name, in->dyn_struct_file);
   }
-  if (fid == NULL) {
-    fprintf(stderr,"Error while opening file for the static structure factor\n");
-    exit(EXIT_FAILURE);
-  }
+ 
+  // Get size of data stored in the input file
+  get_restart_data_format(ssf_file_name, &in_tmp.nx, &in_tmp.nl);
 
-  // Initialize number of items read from input file
-  it_read = 0;
-
-  // Check that the data for the guess file is consistent
-  it_read += fread(&nx_file, sizeof(int), 1, fid);
-  it_read += fread(&nl_file, sizeof(int), 1, fid);
-  it_read += fread(&dx_file, sizeof(double), 1, fid);
-  it_read += fread(&xmax_file, sizeof(double), 1, fid);
-  check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, in->Theta,
-		    *in, it_read, 4, fid, false, true, false);
-  
   // Allocate temporary arrays to store the structural properties
-  *SS = malloc( sizeof(double) * nx_file);
-  *xx = malloc( sizeof(double) * nx_file);
+  *SS = malloc( sizeof(double) * in_tmp.nx);
+  *xx = malloc( sizeof(double) * in_tmp.nx);
   if (*SS == NULL ||
       *xx == NULL) {
     fprintf(stderr, "Failed to allocate memory for the data read"
   	    " from file\n");
     exit(EXIT_FAILURE);
   }
+
+  // Get data from input file
+  get_restart_data(ssf_file_name, in_tmp.nx, in_tmp.nl,
+		   *SS, *xx, &in_tmp);
+  in->nx=in_tmp.nx;
+  in->dx=in_tmp.dx; // Set by get_restart_data
+  in->xmax=in_tmp.xmax; // Set by get_restart_data
+
+  // Free memory
+  free(ssf_file_name);
   
-  // Static structure factor
-  it_read += fread(*SS, sizeof(double), nx_file, fid);
-
-  // Check that all items where read
-  check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, in->Theta,
-		    *in, it_read, nx_file + 4, fid, false, true, false);
-  
-  // Close binary file
-  fclose(fid);
-
-  // Wave-vector grid consistent with the data read from file
-  in_file.nx = nx_file;
-  in_file.dx = dx_file;
-  in_file.xmax = xmax_file;
-  wave_vector_grid(*xx, &in_file);
-  in->nx=in_file.nx;
-  in->dx=in_file.dx;
-
 }
 
 // ------------------------------------------------------------------

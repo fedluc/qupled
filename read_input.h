@@ -19,6 +19,7 @@ typedef struct {
   bool qstls_iet_static;
   bool vs_solve_csr;
   char *dyn_adr_file;
+  char *dyn_struct_file;
   char *guess_file1;
   char *guess_file2;
   char *mode;

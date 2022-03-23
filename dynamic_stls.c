@@ -5,6 +5,7 @@
 #include <gsl/gsl_integration.h>
 #include "solvers.h"
 #include "utils.h"
+#include "restart.h"
 #include "chemical_potential.h"
 #include "stls.h"
 #include "qstls.h"
@@ -377,81 +378,50 @@ double idr_im_partial_x0(double yy, void *pp) {
 void get_slfc(double *GG, input in){
 
   // Variables
-  size_t it_read;
-  char slfc_file_name[100];
-  int nx_file;
-  double dx_file;
-  double xmax_file;
-  double *SS_file = NULL;
+  size_t slfc_file_name_len = 1000;
+  char *slfc_file_name;
   double *GG_file = NULL;
   double *xx_file = NULL;
-  input in_file = in;
   gsl_spline *slfc_sp_ptr;
   gsl_interp_accel *slfc_acc_ptr;
 
-  // Open binary file
-  FILE *fid = NULL;
-  if (strcmp(in.stls_guess_file, NO_FILE_STR)==0) {
-    sprintf(slfc_file_name, "restart_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
-    fid = fopen(slfc_file_name, "rb");
+  // File with static local field correction
+  if (strcmp(in.dyn_struct_file, NO_FILE_STR)==0){
+    slfc_file_name = malloc( sizeof(char) * slfc_file_name_len);
+    sprintf(slfc_file_name, "slfc_rs%.3f_theta%.3f_%s.dat",
+	    in.rs, in.Theta, in.theory);
   }
   else {
-    fid = fopen(in.stls_guess_file, "rb");
+    slfc_file_name_len = strlen(in.dyn_struct_file) + 1;
+    slfc_file_name = malloc( sizeof(char) * slfc_file_name_len);
+    strcpy(slfc_file_name, in.dyn_struct_file);
   }
-  if (fid == NULL) {
-    fprintf(stderr,"Error while opening file for the static local field correction\n");
-    exit(EXIT_FAILURE);
-  }
+ 
+  // Get size of data stored in the input file
+  get_restart_data_format(slfc_file_name, &in.nx, &in.nl);
 
-  // Initialize number of items read from input file
-  it_read = 0;
-
-  // Check that the data for the guess file is consistent
-  it_read += fread(&nx_file, sizeof(int), 1, fid);
-  it_read += fread(&dx_file, sizeof(double), 1, fid);
-  it_read += fread(&xmax_file, sizeof(double), 1, fid);
-  check_guess_stls(nx_file, dx_file, xmax_file, in, it_read, 3,
-  		   fid, false, true, false);
-  
   // Allocate temporary arrays to store the structural properties
-  SS_file = malloc( sizeof(double) * nx_file);
-  GG_file = malloc( sizeof(double) * nx_file);
-  xx_file = malloc( sizeof(double) * nx_file);
-  if (SS_file == NULL ||
-      GG_file == NULL ||
+  GG_file = malloc( sizeof(double) * in.nx);
+  xx_file = malloc( sizeof(double) * in.nx);
+  if (GG_file == NULL ||
       xx_file == NULL) {
     fprintf(stderr, "Failed to allocate memory for the data read"
   	    " from file\n");
     exit(EXIT_FAILURE);
   }
-  
-  // Static structure factor
-  it_read += fread(SS_file, sizeof(double), nx_file, fid);
 
-  // Static local field correction
-  it_read += fread(GG_file, sizeof(double), nx_file, fid);
+  // Get data from input file
+  get_restart_data(slfc_file_name, in.nx, in.nl,
+		   GG_file, xx_file, &in);
 
-  // Check that all items where read and the end-of-file was reached
-  check_guess_stls(nx_file, dx_file, xmax_file, in, it_read,
-  		   2*nx_file + 3, fid, false, true, true);
- 
-  // Close binary file
-  fclose(fid);
-
-  // Wave-vector grid consistent with the data read from file
-  in_file.nx = nx_file;
-  in_file.dx = dx_file;
-  in_file.xmax = xmax_file;
-  wave_vector_grid(xx_file, &in_file);
-    
   // Static local field correction for the wave-vector given in input
-  slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, nx_file);
+  slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   slfc_acc_ptr = gsl_interp_accel_alloc();
-  gsl_spline_init(slfc_sp_ptr, xx_file, GG_file, nx_file);
+  gsl_spline_init(slfc_sp_ptr, xx_file, GG_file, in.nx);
   *GG = gsl_spline_eval(slfc_sp_ptr, in.dyn_xtarget, slfc_acc_ptr);
   
   // Free memory
-  free(SS_file);
+  free(slfc_file_name);
   free(GG_file);
   free(xx_file);
   gsl_spline_free(slfc_sp_ptr);
