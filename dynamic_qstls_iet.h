@@ -39,6 +39,7 @@ void free_dynamic_qstls_iet_arrays(double *phi_re_2D,
 void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
 			     double *WW, double *xx, input in);
 
+
 // -------------------------------------------------------------------
 // FUNCTION USED TO OBTAIN THE BRIDGE FUNCTION
 // -------------------------------------------------------------------
@@ -54,6 +55,12 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
 			     double *WW, double *SS,
 			     double *bf, double *xx,
 			     input in);
+
+void compute_dynamic_adr_iet_pd(double *phi_re, double *phi_im,
+				double *psi_re, double *psi_im,
+				double *WW, double *SS,
+				double *bf, double *xx,
+				input in);
 
 // --------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE REAL PART OF THE AUXILIARY DENSITY

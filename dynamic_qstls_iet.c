@@ -240,8 +240,7 @@ void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
 
 
 // ------------------------------------------------------------------
-// FUNCTION USED TO DEFINE THE PARTIALLY DYNAMIC AUXILIARY DENSITY
-// RESPONSE
+// FUNCTION USED TO DEFINE THE AUXILIARY DENSITY RESPONSE
 // ------------------------------------------------------------------
 
 // Auxiliary density response (real and imaginary part)
@@ -309,15 +308,17 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
     compute_dynamic_idr_iet(phi_re_grid, phi_im_grid,
 			    WW, xx, in);
     
-    // Auxiliary (real component)
-    compute_dynamic_adr_iet_re(psi_re_grid, phi_re_grid,
-			       WW, SS, bf, xx, in);
-    
-    // Auxiliary (imaginary component)
-    compute_dynamic_adr_iet_im_lev1(psi_im_grid, psi_re_grid,
-				    phi_re_grid, WW, SS,
-				    bf, xx, in);
-
+    // Auxiliary
+    if (in.qstls_iet_static)
+      // Fully dynamic
+      compute_dynamic_adr_iet_pd(phi_re_grid, phi_im_grid,
+				 psi_re_grid, psi_im_grid,
+				 WW, SS, bf, xx, in);
+    else
+      // Partially dynamic
+      compute_dynamic_adr_iet_pd(phi_re_grid, phi_im_grid,
+				 psi_re_grid, psi_im_grid,
+				 WW, SS, bf, xx, in);
   }
 
   // Interpolate to wave-vector given in input
@@ -361,9 +362,27 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
 }
 
 
+// Partially dynamic auxiliary density response
+void compute_dynamic_adr_iet_pd(double *phi_re, double *phi_im,
+				double *psi_re, double *psi_im,
+				double *WW, double *SS,
+				double *bf, double *xx,
+				input in){
+  
+  // Auxiliary (real component)
+  compute_dynamic_adr_iet_re(psi_re, phi_re,
+			     WW, SS, bf, xx, in);
+  
+  // Auxiliary (imaginary component)
+  compute_dynamic_adr_iet_im_lev1(psi_im, psi_re,
+				  phi_re, WW, SS,
+				  bf, xx, in);
+  
+}
+
 // ------------------------------------------------------------------
 // FUNCTIONS USED TO DEFINE THE REAL PART OF THE AUXILIARY
-// DENSITY RESPONSE
+// DENSITY RESPONSE 
 // ------------------------------------------------------------------
 
 // Real part of the auxiliary density response (iterations)
