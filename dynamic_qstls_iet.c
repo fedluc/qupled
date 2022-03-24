@@ -40,116 +40,153 @@ static void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
 static void get_bf(double **bf, double *xx, input in);
 
 // Auxiliary density response 
-static void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
-				    double *phi_re, double *phi_im,
-				    double *WW, double *SS,
-				    double *bf, double *xx,
-				    input in);
+static void compute_dynamic_adr(double *psi_re, double *psi_im,
+				double *phi_re, double *phi_im,
+				double *WW, double *SS,
+				double *bf, double *xx,
+				input in);
 
 // Auxiliary density response (partially dynamic) 
-static void compute_dynamic_adr_iet_pd(double *phi_re, double *phi_im,
-				       double *psi_re, double *psi_im,
-				       double *WW, double *SS,
-				       double *bf, double *xx,
-				       input in);
+static void compute_dynamic_adr_pd(double *phi_re, double *phi_im,
+				   double *psi_re, double *psi_im,
+				   double *WW, double *SS,
+				   double *bf, double *xx,
+				   input in);
 
 // Auxiliary density response (fully dynamic) 
-static void compute_dynamic_adr_iet_fd(double *phi_re, double *phi_im,
-				       double *psi_re, double *psi_im,
-				       double *WW, double *SS,
-				       double *bf, double *xx,
-				       input in);
+static void compute_dynamic_adr_fd(double *phi_re, double *phi_im,
+				   double *psi_re, double *psi_im,
+				   double *WW, double *SS,
+				   double *bf, double *xx,
+				   input in);
 
 // Iterations to determine the auxiliary density response
-static double adr_iet_err(double *psi_re, double *psi_re_new, input in);
+static double adr_err(double *psi_re, double *psi_re_new, input in);
 
-static void adr_iet_update(double *psi_re, double *psi_re_new, input in);
+static void adr_update(double *psi_re, double *psi_re_new, input in);
 
 // Auxiliary density response (partially dynamic, real part) 
-static void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
-					    double *psi_re_fixed, double *phi_re,
-					    double *WW, double *SS, double *bf,
-					    double *xx, input in);
+static void compute_dynamic_adr_re_lev1(double *psi_re_new, double *psi_re,
+					double *psi_fixed, double *phi_re,
+					double *WW, double *SS, double *bf,
+					double *xx, bool compute_fixed,
+					input in);
 
-static void compute_dynamic_adr_iet_re_lev1_1(double *int_lev1_1, double *psi_re,
-					      double *phi_re, double *SS,
-					      double *bf, input in);
+static void compute_dynamic_adr_re_lev1_1(double *int_lev1_1, double *psi_re,
+					  double *phi_re, double *SS,
+					  double *bf, input in);
 
-static void read_dynamic_adr_iet_fixed(double *var, double *psi_re_fixed,
-				       int ii, int jj, input in);
+static void read_dynamic_adr_fixed(double *var, double *psi_fixed,
+				   int ii, int jj, input in);
 
-static void write_dynamic_adr_iet_fixed(double *var, double *psi_re_fixed,
-					int ii, int jj, input in);
+static void write_dynamic_adr_fixed(double *var, double *psi_fixed,
+				    int ii, int jj, input in);
 
-static double adr_iet_re_lev1_xW(double ww, void* pp);
+static double adr_re_lev1_xW(double ww, void* pp);
 
-static void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
-					    double xx, double *SS,
-					    double *ww, input in);
+static void compute_dynamic_adr_re_lev2(double *int_lev1, double WW,
+					double xx, double *SS,
+					double *ww, input in);
 
-static double adr_iet_re_lev2_xwW(double uu, void* pp);
+static double adr_re_lev2_xwW(double uu, void* pp);
 
-static void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
-					    double xx, double ww,
-					    double *uu, input in);
+static void compute_dynamic_adr_re_lev3(double *int_lev2, double WW,
+					double xx, double ww,
+					double *uu, input in);
 
-static double adr_iet_re_lev3_xwuW(double qq, void* pp);
+static double adr_re_lev3_xwuW(double qq, void* pp);
 
-static double adr_iet_re_lev3_xwu0(double qq, void* pp);
+static double adr_re_lev3_xwu0(double qq, void* pp);
 
 // Auxiliary density response (partially dynamic, imaginary part) 
-static void compute_dynamic_adr_iet_im_lev1(double *psi_im, double *psi_re,
-					    double *phi_re, double *WW,
-					    double *SS, double *bf,
-					    double *xx, input in);
+static void compute_dynamic_adr_im_lev1(double *psi_im, double *psi_re,
+					double *phi_re, double *WW,
+					double *SS, double *bf,
+					double *xx, input in);
 
-static void compute_dynamic_adr_iet_im_lev1_1(double *int_lev1_1, double *psi_re,
-					      double *phi_re, double *SS,
-					      double *bf, input in);
+static void compute_dynamic_adr_im_lev1_1(double *int_lev1_1, double *psi_re,
+					  double *phi_re, double *SS,
+					  double *bf, input in);
 
-static double adr_iet_im_lev1_xW(double ww, void* pp);
+static double adr_im_lev1_xW(double ww, void* pp);
 
-static void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
-					    double xx, double *SS,
-					    double *ww, input in);
+static void compute_dynamic_adr_im_lev2(double *int_lev1, double WW,
+					double xx, double *SS,
+					double *ww, input in);
 
-static double adr_iet_im_lev2_xwW(double uu, void* pp);
+static double adr_im_lev2_xwW(double uu, void* pp);
 
-static double adr_iet_im_lev2_xw0(double uu, void* pp);
+static double adr_im_lev2_xw0(double uu, void* pp);
 
-static void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
-					    double xx, double ww,
-					    double *uu, input in);
+static void compute_dynamic_adr_im_lev3(double *int_lev2, double WW,
+					double xx, double ww,
+					double *uu, input in);
 
-static double adr_iet_im_lev3_xwuW(double qq, void* pp);
+static double adr_im_lev3_xwuW(double qq, void* pp);
 
 // Auxiliary density response (fully dynamic, real part) 
-static void compute_dynamic_adr_iet_fd_re(double *psi_re_new,
-					  double *psi_re, double *psi_im,
-					  double *phi_re, double *phi_im,
-					  double *psi_re_fixed_p1,
-					  double *psi_re_fixed_p2,
-					  double *WW, double *SS,
-					  double *bf, double *xx,
-					  input in);
+static void compute_dynamic_adr_fd_re(double *psi_re_new,
+				      double *psi_re, double *psi_im,
+				      double *phi_re, double *phi_im,
+				      double *psi_fixed_p1,
+				      double *psi_fixed_p2,
+				      double *WW, double *SS,
+				      double *bf, double *xx,
+				      bool compute_fixed, input in);
 
-static void compute_dynamic_adr_iet_fd_re_lev1(double *psi_re_new,
-					       double *psi_re, double *psi_im,
-					       double *phi_re, double *phi_im,
-					       double *psi_re_fixed,
-					       double *WW, double *SS,
-					       double *bf, double *xx,
-					       int ncomp, input in);
+static void compute_dynamic_adr_fd_re_lev1(double *psi_re_new,
+					   double *psi_re, double *psi_im,
+					   double *phi_re, double *phi_im,
+					   double *psi_fixed,
+					   double *WW, double *SS,
+					   double *bf, double *xx,
+					   int ncomp, bool compute_fixed,
+					   input in);
 
-static void compute_dynamic_adr_iet_fd_re_lev1_p1_1(double *int_lev1_1, double *psi_re,
-						    double *psi_im, double *phi_re,
-						    double *phi_im, double *SS,
-						    double *bf, int jj, input in);
+static void compute_dynamic_adr_fd_re_lev1_p1_1(double *int_lev1_1, double *psi_re,
+						double *psi_im, double *phi_re,
+						double *phi_im, double *SS,
+						double *bf, int jj, input in);
 
-static void compute_dynamic_adr_iet_fd_re_lev1_p2_1(double *int_lev1_1, double *psi_re,
-						    double *psi_im, double *phi_re,
-						    double *phi_im, double *SS,
-						    int jj, input in);
+static void compute_dynamic_adr_fd_re_lev1_p2_1(double *int_lev1_1, double *psi_re,
+						double *psi_im, double *phi_re,
+						double *phi_im, double *SS,
+						int jj, input in);
+
+// Auxiliary density response (fully dynamic, imaginary part) 
+static void compute_dynamic_adr_fd_im(double *psi_im_new,
+				      double *psi_re, double *psi_im,
+				      double *phi_re, double *phi_im,
+				      double *psi_fixed_p1,
+				      double *psi_fixed_p2,
+				      double *psi_fixed_p3,
+				      double *WW, double *SS,
+				      double *bf, double *xx,
+				      bool compute_fixed, input in);
+
+static void compute_dynamic_adr_fd_im_lev1(double *psi_im_new,
+					   double *psi_re, double *psi_im,
+					   double *phi_re, double *phi_im,
+					   double *psi_fixed,
+					   double *WW, double *SS,
+					   double *bf, double *xx,
+					   int ncomp, bool compute_fixed,
+					   input in);
+
+static void compute_dynamic_adr_fd_im_zero_frequency_lev1(double *psi_im_new,
+							  double *psi_re,
+							  double *psi_im,
+							  double *phi_re, 
+							  double *psi_fixed,
+							  double *SS, double *bf,
+							  double *xx, int ncomp,
+							  bool compute_fixed,
+							  input in);
+
+static void compute_dynamic_adr_fd_im_lev1_p1_1(double *int_lev1_1, double *psi_re,
+						double *psi_im, double *phi_re,
+						double *SS, double *ww,
+						double xx, input in);
 
 // Dynamic structure factor
 static void compute_dsf_qstls_iet(double *SSn, double *phi_re, double *phi_im,
@@ -270,7 +307,7 @@ void compute_dynamic_qstls_iet(input in, bool verbose) {
   // Auxiliary density response
   if (verbose) printf("Auxiliary density calculation: ");
   fflush(stdout);
-  compute_dynamic_adr_iet(psi_re, psi_im, phi_re, phi_im, WW, SS,
+  compute_dynamic_adr(psi_re, psi_im, phi_re, phi_im, WW, SS,
 			  bf, xx, in);
   if (verbose) printf("Done.\n");
 
@@ -449,7 +486,7 @@ void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
 // ------------------------------------------------------------------
 
 // Auxiliary density response (real and imaginary part)
-void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
+void compute_dynamic_adr(double *psi_re, double *psi_im,
 			     double *phi_re, double *phi_im,
 			     double *WW, double *SS,
 			     double *bf, double *xx,
@@ -515,15 +552,16 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
     
     // Auxiliary
     if (in.qstls_iet_static)
-      // Fully dynamic
-      compute_dynamic_adr_iet_pd(phi_re_grid, phi_im_grid,
-				 psi_re_grid, psi_im_grid,
-				 WW, SS, bf, xx, in);
-    else
       // Partially dynamic
-      compute_dynamic_adr_iet_pd(phi_re_grid, phi_im_grid,
+      compute_dynamic_adr_pd(phi_re_grid, phi_im_grid,
 				 psi_re_grid, psi_im_grid,
 				 WW, SS, bf, xx, in);
+    else {
+      // Fully dynamic
+      compute_dynamic_adr_fd(phi_re_grid, phi_im_grid,
+			    psi_re_grid, psi_im_grid,
+			     WW, SS, bf, xx, in);
+    }
   }
 
   // Interpolate to wave-vector given in input
@@ -569,20 +607,22 @@ void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
 
 
 // Partially dynamic auxiliary density response
-void compute_dynamic_adr_iet_pd(double *phi_re, double *phi_im,
-				double *psi_re, double *psi_im,
-				double *WW, double *SS,
-				double *bf, double *xx,
-				input in){
+void compute_dynamic_adr_pd(double *phi_re, double *phi_im,
+			    double *psi_re, double *psi_im,
+			    double *WW, double *SS,
+			    double *bf, double *xx,
+			    input in){
 
+  // Variables for iterative solution
   int iter_counter;
   double iter_err;
-  
+  bool compute_fixed;
+
   // Allocate temporary arrays
   double *psi_re_new = malloc( sizeof(double) * in.nx * in.nW);
-  double *psi_re_fixed = malloc( sizeof(double) * in.nx * in.nW * in.nx);
+  double *psi_fixed = malloc( sizeof(double) * in.nx * in.nW * in.nx);
   if (psi_re_new == NULL ||
-      psi_re_fixed == NULL){
+      psi_fixed == NULL){
     fprintf(stderr, "Failed to allocate memory for calculation"
 	    " of the real part of the auxiliary density"
 	    " response function\n");
@@ -593,55 +633,66 @@ void compute_dynamic_adr_iet_pd(double *phi_re, double *phi_im,
   for (int ii=0; ii<in.nx; ii++){
     for (int jj=0; jj<in.nW; jj++){
       psi_re[idx2(ii,jj,in.nx)] = 0.0;
-      psi_re_fixed[idx2(ii,jj,in.nx)] = INFINITY;
+      psi_fixed[idx2(ii,jj,in.nx)] = 0.0;
     }
   }
 
   // Iterations
   iter_counter = 0;
   iter_err = 1;
+  compute_fixed = true;
   while (iter_counter < in.nIter && iter_err > in.err_min_iter) {
 
     // Update real component
-    compute_dynamic_adr_iet_re_lev1(psi_re_new, psi_re, psi_re_fixed,
-				    phi_re, WW, SS, bf, xx, in);
+    compute_dynamic_adr_re_lev1(psi_re_new, psi_re, psi_fixed,
+				phi_re, WW, SS, bf, xx,
+				compute_fixed, in);
 
+    // Compute fixed component only once
+    compute_fixed = false;
+    
     // Update diagnostics
     iter_counter++;
-    iter_err = adr_iet_err(psi_re, psi_re_new, in);
-    adr_iet_update(psi_re, psi_re_new, in);
-    
+    iter_err = adr_err(psi_re, psi_re_new, in);
+    adr_update(psi_re, psi_re_new, in);
+
   }
 
   // Imaginary component
-  compute_dynamic_adr_iet_im_lev1(psi_im, psi_re,
-				  phi_re, WW, SS,
-				  bf, xx, in);
+  compute_dynamic_adr_im_lev1(psi_im, psi_re,
+			      phi_re, WW, SS,
+			      bf, xx, in);
   
   // Free memory
   free(psi_re_new);  
-  free(psi_re_fixed);
+  free(psi_fixed);
 
 }
 
 
 // Fully dynamic auxiliary density response
-void compute_dynamic_adr_iet_fd(double *phi_re, double *phi_im,
-				double *psi_re, double *psi_im,
-				double *WW, double *SS,
-				double *bf, double *xx,
-				input in){
+void compute_dynamic_adr_fd(double *phi_re, double *phi_im,
+			    double *psi_re, double *psi_im,
+			    double *WW, double *SS,
+			    double *bf, double *xx,
+			    input in){
 
+  // Variables for iterative solution
   int iter_counter;
   double iter_err;
+  bool compute_fixed;
   
   // Allocate temporary arrays
   double *psi_re_new = malloc( sizeof(double) * in.nx * in.nW);
-  double *psi_re_fixed = malloc( sizeof(double) * in.nx * in.nW * in.nx);
-  double *psi_re_p1_fixed = malloc( sizeof(double) * in.nx * in.nW * in.nx);
-  double *psi_re_p2_fixed = malloc( sizeof(double) * in.nx * in.nW * in.nx);
+  double *psi_im_new = malloc( sizeof(double) * in.nx * in.nW);
+  double *psi_fixed_p1 = malloc( sizeof(double) * in.nx * in.nW * in.nx);
+  double *psi_fixed_p2 = malloc( sizeof(double) * in.nx * in.nW * in.nx);
+  double *psi_fixed_p3 = malloc( sizeof(double) * in.nx * in.nW * in.nx);
   if (psi_re_new == NULL ||
-      psi_re_fixed == NULL){
+      psi_im_new == NULL ||
+      psi_fixed_p1 == NULL ||
+      psi_fixed_p2 == NULL ||
+      psi_fixed_p3 == NULL){
     fprintf(stderr, "Failed to allocate memory for calculation"
 	    " of the real part of the auxiliary density"
 	    " response function\n");
@@ -652,9 +703,10 @@ void compute_dynamic_adr_iet_fd(double *phi_re, double *phi_im,
   for (int ii=0; ii<in.nx; ii++){
     for (int jj=0; jj<in.nW; jj++){
       psi_re[idx2(ii,jj,in.nx)] = 0.0;
+      psi_im[idx2(ii,jj,in.nx)] = 0.0;
       for (int kk=0; kk<in.nx; kk++){
-	psi_re_p1_fixed[idx3(ii,jj,kk,in.nx,in.nW)] = INFINITY;
-	psi_re_p2_fixed[idx3(ii,jj,kk,in.nx,in.nW)] = INFINITY;
+	psi_fixed_p1[idx3(ii,jj,kk,in.nx,in.nW)] = 0.0;
+	psi_fixed_p2[idx3(ii,jj,kk,in.nx,in.nW)] = 0.0;
       }
     }
   }
@@ -662,45 +714,64 @@ void compute_dynamic_adr_iet_fd(double *phi_re, double *phi_im,
   // Iterations
   iter_counter = 0;
   iter_err = 1;
+  compute_fixed = true;
   while (iter_counter < in.nIter && iter_err > in.err_min_iter) {
 
-    // ################################################
-    // UPDATE CALLS!
-    // ################################################
-    
     // Update real component
-    compute_dynamic_adr_iet_re_lev1(psi_re_new, psi_re, psi_re_fixed,
-				    phi_re, WW, SS, bf, xx, in);
+    compute_dynamic_adr_fd_re(psi_re_new,
+			      psi_re, psi_im,
+			      phi_re, phi_im,
+			      psi_fixed_p1,
+			      psi_fixed_p2,
+			      WW, SS, bf,
+			      xx, compute_fixed,
+			      in); 
 
     // Update imaginary component
-    compute_dynamic_adr_iet_im_lev1(psi_im, psi_re,
-				    phi_re, WW, SS,
-				    bf, xx, in);
-  
+    compute_dynamic_adr_fd_im(psi_im_new,
+			      psi_re, psi_im,
+			      phi_re, phi_im,
+			      psi_fixed_p1,
+			      psi_fixed_p2,
+			      psi_fixed_p3,
+			      WW, SS, bf,
+			      xx, compute_fixed,
+			      in); 
+
+    // Compute fixed component only once
+    compute_fixed = false;
+    
     // Update diagnostics
     iter_counter++;
-    iter_err = adr_iet_err(psi_re, psi_re_new, in);
-    adr_iet_update(psi_re, psi_re_new, in);
-    
+    iter_err = adr_err(psi_re, psi_re_new, in);
+    adr_update(psi_re, psi_re_new, in);
+    adr_update(psi_im, psi_im_new, in);
+    printf("iteration %d, error %.5e\n", iter_counter, iter_err);
+
   }
 
   
   // Free memory
-  free(psi_re_new);  
-  free(psi_re_fixed);
+  free(psi_re_new);
+  free(psi_im_new);
+  free(psi_fixed_p1);
+  free(psi_fixed_p2);
 
   
 }
 
 
 // Relative error for the iterations
-double adr_iet_err(double *psi_re, double *psi_re_new, input in){
+double adr_err(double *psi_re, double *psi_re_new, input in){
 
   double err = 0.0;
   double err_tmp;
   
   for (int ii=0; ii<in.nx; ii++){
-    err_tmp = psi_re[idx2(ii,0,in.nx)] - psi_re_new[idx2(ii,0,in.nx)];
+    err_tmp = 0.0;
+    for (int jj=0; jj<in.nW; jj++){
+      err_tmp = psi_re[idx2(ii,jj,in.nx)] - psi_re_new[idx2(ii,jj,in.nx)];
+    }
     err += err_tmp*err_tmp;
   }
 
@@ -709,12 +780,12 @@ double adr_iet_err(double *psi_re, double *psi_re_new, input in){
 }
 
 // Update iterative solution
-void adr_iet_update(double *psi_re, double *psi_re_new, input in){
+void adr_update(double *psi, double *psi_new, input in){
 
   for (int ii=0; ii<in.nx; ii++){
     for (int jj=0; jj<in.nW; jj++){
-      psi_re[idx2(ii,jj,in.nx)] = in.a_mix * psi_re_new[idx2(ii,jj,in.nx)]
-      + (1 - in.a_mix)*psi_re[idx2(ii,jj,in.nx)];
+      psi[idx2(ii,jj,in.nx)] = in.a_mix * psi_new[idx2(ii,jj,in.nx)]
+      + (1 - in.a_mix)*psi[idx2(ii,jj,in.nx)];
     }
   }
 }
@@ -728,17 +799,16 @@ void adr_iet_update(double *psi_re, double *psi_re_new, input in){
 
 // Real part of the auxiliary density response (level 1)
 
-void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
-				     double *psi_re_fixed, double *phi_re,
-				     double *WW, double *SS,
-				     double *bf, double *xx,
-				     input in) {
+void compute_dynamic_adr_re_lev1(double *psi_re_new, double *psi_re,
+				 double *psi_fixed, double *phi_re,
+				 double *WW, double *SS,
+				 double *bf, double *xx,
+				 bool compute_fixed, input in) {
 
   // Parallel calculations
   #pragma omp parallel
   {
 
-    bool compute_fixed = true;
     double err;
     size_t nevals;
     double *int_lev1_1  = malloc( sizeof(double) * in.nx);
@@ -766,8 +836,6 @@ void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
     // Integration workspace
     gsl_integration_cquad_workspace *wsp
       = gsl_integration_cquad_workspace_alloc(100);
-
-    if (psi_re_fixed[0] != INFINITY) compute_fixed = false;
     
     // Loop over the wave-vectors
     #pragma omp for // Distribute for loop over the threads
@@ -778,27 +846,27 @@ void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
 
 	// Integration function
 	gsl_function ff_int_lev1;
-	ff_int_lev1.function = &adr_iet_re_lev1_xW;
+	ff_int_lev1.function = &adr_re_lev1_xW;
 
 	// Integrand (part 1)
-	compute_dynamic_adr_iet_re_lev1_1(int_lev1_1, psi_re, phi_re, SS, bf, in);
+	compute_dynamic_adr_re_lev1_1(int_lev1_1, psi_re, phi_re, SS, bf, in);
 	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
 	  
 	// Integrand (part 2)
 	if (compute_fixed) {
-	  compute_dynamic_adr_iet_re_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
-	  write_dynamic_adr_iet_fixed(int_lev1_2, psi_re_fixed, ii, jj, in);
+	  compute_dynamic_adr_re_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
+	  write_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
 	}
 	else {
-	  read_dynamic_adr_iet_fixed(int_lev1_2, psi_re_fixed, ii, jj, in);
+	  read_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
 	}
 	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
 	      
 	// Integral over w
 	struct adr_lev1_params plev1 = {int_lev1_1_sp_ptr,
-					       int_lev1_1_acc_ptr,
-					       int_lev1_2_sp_ptr,
-					       int_lev1_2_acc_ptr};
+					int_lev1_1_acc_ptr,
+					int_lev1_2_sp_ptr,
+					int_lev1_2_acc_ptr};
 	ff_int_lev1.params = &plev1;
 	gsl_integration_cquad(&ff_int_lev1,
 			      xx[0], xx[in.nx-1],
@@ -806,6 +874,8 @@ void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
 			      wsp,
 			      &psi_re_new[idx2(ii,jj,in.nx)],
 			      &err, &nevals);
+	if (jj==0 && ii<5) 
+	  printf("xx[ii] = %f, psi_re[ii,jj] = %f\n", xx[ii], psi_re_new[idx2(ii,jj,in.nx)]);
       }
     }
     
@@ -823,10 +893,10 @@ void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
 }
 
 // Integrand for level 1 of the real auxiliary density response (part 1)
-void compute_dynamic_adr_iet_re_lev1_1(double *int_lev1_1, double *psi_re,
-				       double *phi_re, double *SS,
-				       double *bf, input in){
-
+void compute_dynamic_adr_re_lev1_1(double *int_lev1_1, double *psi_re,
+				   double *phi_re, double *SS,
+				   double *bf, input in){
+  
   double psi_phi;
   
   for (int ii=0; ii<in.nx; ii++){
@@ -840,24 +910,24 @@ void compute_dynamic_adr_iet_re_lev1_1(double *int_lev1_1, double *psi_re,
 }
 
 // Read the fixed component of the auxiliary density response integrals 
-void read_dynamic_adr_iet_fixed(double *var, double *psi_re_fixed,
-			int ii, int jj, input in){
+void read_dynamic_adr_fixed(double *var, double *psi_fixed,
+			    int ii, int jj, input in){
   for (int kk=0; kk<in.nx; kk++)
-    var[kk] = psi_re_fixed[idx3(ii,jj,kk,in.nx,in.nW)];
+    var[kk] = psi_fixed[idx3(ii,jj,kk,in.nx,in.nW)];
 }
 
 
 // Write the fixed component of the auxiliary density response integrals 
-void write_dynamic_adr_iet_fixed(double *var, double *psi_re_fixed,
-				 int ii, int jj, input in){
+void write_dynamic_adr_fixed(double *var, double *psi_fixed,
+			     int ii, int jj, input in){
   for (int kk=0; kk<in.nx; kk++){
-    psi_re_fixed[idx3(ii,jj,kk,in.nx,in.nW)] = var[kk];
+    psi_fixed[idx3(ii,jj,kk,in.nx,in.nW)] = var[kk];
   }
 }
 
 
 // Integrand for level 1 of the real auxiliary density response (vector = x, frequency = W)
-double adr_iet_re_lev1_xW(double ww, void* pp) {
+double adr_re_lev1_xW(double ww, void* pp) {
   
   struct adr_lev1_params* params = (struct adr_lev1_params*)pp;
   gsl_spline* int_lev1_1_sp_ptr = (params->int_lev1_1_sp_ptr);
@@ -876,8 +946,7 @@ double adr_iet_re_lev1_xW(double ww, void* pp) {
 
 
 // Real part of the auxiliary density response (level 2)
-
-void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
+void compute_dynamic_adr_re_lev2(double *int_lev1, double WW,
 				     double xx, double *SS,
 				     double *ww, input in) {
 
@@ -912,7 +981,7 @@ void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
      
   // Integration function
   gsl_function ff_int_lev2;
-  ff_int_lev2.function = &adr_iet_re_lev2_xwW;
+  ff_int_lev2.function = &adr_re_lev2_xwW;
 
   // Interpolation of the static structure factor
   gsl_spline_init(ssf_sp_ptr, ww, SS, in.nx);
@@ -927,7 +996,7 @@ void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
     if (u_max > w_max) u_max = w_max;
     
     // Inner integral
-    compute_dynamic_adr_iet_re_lev3(int_lev2, WW, xx, ww[ii], ww, in);
+    compute_dynamic_adr_re_lev3(int_lev2, WW, xx, ww[ii], ww, in);
 
     // Construct integrand
     gsl_spline_init(int_lev2_sp_ptr, ww, int_lev2, in.nx);
@@ -963,7 +1032,7 @@ void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
 
 
 // Integrand for level 2 of the real auxiliary density response (vectors = {x,w}, frequency = W)
-double adr_iet_re_lev2_xwW(double uu, void* pp) {
+double adr_re_lev2_xwW(double uu, void* pp) {
   
   struct adr_lev2_params* params = (struct adr_lev2_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
@@ -978,8 +1047,7 @@ double adr_iet_re_lev2_xwW(double uu, void* pp) {
 }
 
 // Real part of the auxiliary density response (level 3)
-
-void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
+void compute_dynamic_adr_re_lev3(double *int_lev2, double WW,
 				     double xx, double ww,
 				     double *uu, input in) {
 
@@ -993,9 +1061,9 @@ void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
   // Integration function
   gsl_function ff_int_lev3;
   if (WW == 0.0)
-    ff_int_lev3.function = &adr_iet_re_lev3_xwu0;
+    ff_int_lev3.function = &adr_re_lev3_xwu0;
   else
-    ff_int_lev3.function = &adr_iet_re_lev3_xwuW;
+    ff_int_lev3.function = &adr_re_lev3_xwuW;
   
   // Loop over u (wave-vector)
   for (int ii=0; ii<in.nx; ii++){
@@ -1018,7 +1086,7 @@ void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
 }
 
 // Integrand for level 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = W)
-double adr_iet_re_lev3_xwuW(double qq, void* pp) {
+double adr_re_lev3_xwuW(double qq, void* pp) {
   
   struct adr_lev3_params* params = (struct adr_lev3_params*)pp;
   double mu = (params->mu);
@@ -1045,7 +1113,7 @@ double adr_iet_re_lev3_xwuW(double qq, void* pp) {
 
 
 // Integrand for level 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = 0)
-double adr_iet_re_lev3_xwu0(double qq, void* pp) {
+double adr_re_lev3_xwu0(double qq, void* pp) {
   
   struct adr_lev3_params* params = (struct adr_lev3_params*)pp;
   double mu = (params->mu);
@@ -1081,15 +1149,14 @@ double adr_iet_re_lev3_xwu0(double qq, void* pp) {
 
 // ------------------------------------------------------------------
 // FUNCTIONS USED TO DEFINE THE IMAGINARY PART OF THE AUXILIARY
-// DENSITY RESPONSE
+// DENSITY RESPONSE (PARTIALLY DYNAMIC)
 // ------------------------------------------------------------------
 
 // Imaginary part of the auxiliary density response (level 1)
-
-void compute_dynamic_adr_iet_im_lev1(double *psi_im, double *psi_re,
-				     double *phi_re, double *WW,
-				     double *SS, double *bf,
-				     double *xx, input in) {
+void compute_dynamic_adr_im_lev1(double *psi_im, double *psi_re,
+				 double *phi_re, double *WW,
+				 double *SS, double *bf,
+				 double *xx, input in) {
 
   // Parallel calculations
   #pragma omp parallel
@@ -1132,14 +1199,14 @@ void compute_dynamic_adr_iet_im_lev1(double *psi_im, double *psi_re,
 
 	// Integration function
 	gsl_function ff_int_lev1;
-	ff_int_lev1.function = &adr_iet_im_lev1_xW;
+	ff_int_lev1.function = &adr_im_lev1_xW;
 
 	// Integrand (part 1)
-	compute_dynamic_adr_iet_im_lev1_1(int_lev1_1, psi_re, phi_re, SS, bf, in);
+	compute_dynamic_adr_im_lev1_1(int_lev1_1, psi_re, phi_re, SS, bf, in);
 	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
 	  
 	// Integrand (part 2)
-	compute_dynamic_adr_iet_im_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
+	compute_dynamic_adr_im_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
 	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
 	      
 	// Integral over w
@@ -1171,9 +1238,9 @@ void compute_dynamic_adr_iet_im_lev1(double *psi_im, double *psi_re,
 }
 
 // Integrand for level 1 of the imaginary auxiliary density response (part 1)
-void compute_dynamic_adr_iet_im_lev1_1(double *int_lev1_1, double *psi_re,
-				       double *phi_re, double *SS,
-				       double *bf, input in){
+void compute_dynamic_adr_im_lev1_1(double *int_lev1_1, double *psi_re,
+				   double *phi_re, double *SS,
+				   double *bf, input in){
 
   double psi_phi;
   
@@ -1188,7 +1255,7 @@ void compute_dynamic_adr_iet_im_lev1_1(double *int_lev1_1, double *psi_re,
 }
 
 // Integrand for level 1 of the imaginary auxiliary density response (vector = x, frequency = W)
-double adr_iet_im_lev1_xW(double ww, void* pp) {
+double adr_im_lev1_xW(double ww, void* pp) {
   
   struct adr_lev1_params* params = (struct adr_lev1_params*)pp;
   gsl_spline* int_lev1_1_sp_ptr = (params->int_lev1_1_sp_ptr);
@@ -1207,7 +1274,7 @@ double adr_iet_im_lev1_xW(double ww, void* pp) {
 
 // Imaginary part of the auxiliary density response (level 2)
 
-void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
+void compute_dynamic_adr_im_lev2(double *int_lev1, double WW,
 				     double xx, double *SS,
 				     double *ww, input in) {
 
@@ -1243,9 +1310,9 @@ void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
   // Integration function
   gsl_function ff_int_lev2;
   if (WW == 0.0)
-    ff_int_lev2.function = &adr_iet_im_lev2_xw0;
+    ff_int_lev2.function = &adr_im_lev2_xw0;
   else
-    ff_int_lev2.function = &adr_iet_im_lev2_xwW;
+    ff_int_lev2.function = &adr_im_lev2_xwW;
 
   // Interpolation of the static structure factor
   gsl_spline_init(ssf_sp_ptr, ww, SS, in.nx);
@@ -1260,7 +1327,7 @@ void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
     if (u_max > w_max) u_max = w_max;
     
     // Inner integral
-    compute_dynamic_adr_iet_im_lev3(int_lev2, WW, xx, ww[ii], ww, in);
+    compute_dynamic_adr_im_lev3(int_lev2, WW, xx, ww[ii], ww, in);
 
     // Construct integrand
     gsl_spline_init(int_lev2_sp_ptr, ww, int_lev2, in.nx);
@@ -1296,7 +1363,7 @@ void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
 
 
 // Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = W)
-double adr_iet_im_lev2_xwW(double uu, void* pp) {
+double adr_im_lev2_xwW(double uu, void* pp) {
   
   struct adr_lev2_params* params = (struct adr_lev2_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
@@ -1312,7 +1379,7 @@ double adr_iet_im_lev2_xwW(double uu, void* pp) {
 
 
 // Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = 0)
-double adr_iet_im_lev2_xw0(double uu, void* pp) {
+double adr_im_lev2_xw0(double uu, void* pp) {
   
   struct adr_lev2_params* params = (struct adr_lev2_params*)pp;
   double mu = (params->mu);
@@ -1336,7 +1403,7 @@ double adr_iet_im_lev2_xw0(double uu, void* pp) {
 
 // Imaginary part of the auxiliary density response (level 3)
 
-void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
+void compute_dynamic_adr_im_lev3(double *int_lev2, double WW,
 				     double xx, double ww,
 				     double *uu, input in) {
 
@@ -1354,7 +1421,7 @@ void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
     
   // Integration function
   gsl_function ff_int_lev3;
-  ff_int_lev3.function = &adr_iet_im_lev3_xwuW;
+  ff_int_lev3.function = &adr_im_lev3_xwuW;
   
   // Loop over u (wave-vector)
   for (int ii=0; ii<in.nx; ii++){
@@ -1385,7 +1452,7 @@ void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
 }
 
 // Integrand for level 3 of the imaginary  auxiliary density response (vectors = {x,w,u}, frequency = W)
-double adr_iet_im_lev3_xwuW(double qq, void* pp) {
+double adr_im_lev3_xwuW(double qq, void* pp) {
   
   struct adr_lev3_params* params = (struct adr_lev3_params*)pp;
   double mu = (params->mu);
@@ -1416,6 +1483,524 @@ double adr_iet_im_lev3_xwuW(double qq, void* pp) {
 
 }
 
+
+
+// ------------------------------------------------------------------
+// FUNCTIONS USED TO DEFINE THE REAL PART OF THE AUXILIARY
+// DENSITY RESPONSE (FULLY DYNAMIC)
+// ------------------------------------------------------------------
+
+// Real part of the auxiliary density response (level 1)
+void compute_dynamic_adr_fd_re(double *psi_re_new,
+			       double *psi_re, double *psi_im,
+			       double *phi_re, double *phi_im,
+			       double *psi_fixed_p1,
+			       double *psi_fixed_p2,
+			       double *WW, double *SS,
+			       double *bf, double *xx,
+			       bool compute_fixed, input in){
+
+  // Zero frequency contribution
+  compute_dynamic_adr_re_lev1(psi_re_new, psi_re,
+			      psi_fixed_p1, phi_re,
+			      WW, SS, bf, xx,
+			      compute_fixed, in);
+	 
+  // First component (one triple integral)
+  compute_dynamic_adr_fd_re_lev1(psi_re_new, psi_re, psi_im,
+				 phi_re, phi_im, psi_fixed_p1,
+				 WW, SS, bf, xx, 1, compute_fixed,
+				 in);
+
+  // Second component (one triple integral)
+  compute_dynamic_adr_fd_re_lev1(psi_re_new, psi_re, psi_im,
+				 phi_re, phi_im, psi_fixed_p2,
+				 WW, SS, bf, xx, 2, compute_fixed,
+				 in);
+  
+  
+}
+
+// Real part of the auxiliary density response (one component, level 1)
+void compute_dynamic_adr_fd_re_lev1(double *psi_re_new,
+				    double *psi_re, double *psi_im,
+				    double *phi_re, double *phi_im,
+				    double *psi_fixed,
+				    double *WW, double *SS,
+				    double *bf, double *xx,
+				    int ncomp, bool compute_fixed,
+				    input in) {
+
+  // Parallel calculations
+  #pragma omp parallel
+  {
+
+    double err;
+    size_t nevals;
+    double psi_new_tmp;
+    double *int_lev1_1  = malloc( sizeof(double) * in.nx);
+    double *int_lev1_2  = malloc( sizeof(double) * in.nx);
+    if (int_lev1_1 == NULL ||
+	int_lev1_2 == NULL){
+      fprintf(stderr, "Failed to allocate memory for calculation"
+	      " of the real part of the auxiliary density"
+	      " response function\n");
+      exit(EXIT_FAILURE);
+    }
+    
+    // Declare accelerator and spline objects
+    gsl_spline *int_lev1_1_sp_ptr;
+    gsl_interp_accel *int_lev1_1_acc_ptr;
+    gsl_spline *int_lev1_2_sp_ptr;
+    gsl_interp_accel *int_lev1_2_acc_ptr;
+    
+    // Allocate the accelerator and the spline objects
+    int_lev1_1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    int_lev1_1_acc_ptr = gsl_interp_accel_alloc();
+    int_lev1_2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    int_lev1_2_acc_ptr = gsl_interp_accel_alloc();
+    
+    // Integration workspace
+    gsl_integration_cquad_workspace *wsp
+      = gsl_integration_cquad_workspace_alloc(100);
+
+    // Loop over the wave-vectors
+    #pragma omp for // Distribute for loop over the threads
+    for (int ii=0; ii<in.nx; ii++){
+
+      // Loop over the frequencies (the zero frequency contribution is computed separately)
+      for (int jj=1; jj<in.nW; jj++) {
+	
+	// Integration function
+	gsl_function ff_int_lev1;
+	ff_int_lev1.function = &adr_re_lev1_xW;
+
+	// Integrand (part 1)
+	if (ncomp == 1)
+	  compute_dynamic_adr_fd_re_lev1_p1_1(int_lev1_1, psi_re, psi_im,
+					      phi_re, phi_im, SS, bf,
+					      jj, in);
+	else
+	  compute_dynamic_adr_fd_re_lev1_p2_1(int_lev1_1, psi_re, psi_im,
+					      phi_re, phi_im, SS,
+					      jj, in);
+	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
+	  
+	// Integrand (part 2)
+	if (compute_fixed) {
+	  if (ncomp == 1)
+	    compute_dynamic_adr_re_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
+	  else
+	    compute_dynamic_adr_im_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
+	  write_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	}
+	else
+	  read_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
+	      
+	// Integral over w
+	struct adr_lev1_params plev1 = {int_lev1_1_sp_ptr,
+					int_lev1_1_acc_ptr,
+					int_lev1_2_sp_ptr,
+					int_lev1_2_acc_ptr};
+	ff_int_lev1.params = &plev1;
+	gsl_integration_cquad(&ff_int_lev1,
+			      xx[0], xx[in.nx-1],
+			      0.0, QUAD_REL_ERR,
+			      wsp,
+			      &psi_new_tmp,
+			      &err, &nevals);
+
+	// Output
+	if (ncomp == 1)
+	  psi_re_new[idx2(ii,jj,in.nx)] = psi_new_tmp;
+	else
+	  psi_re_new[idx2(ii,jj,in.nx)] -= psi_new_tmp;
+
+	// Zero-frequency contribution (this must be changed!)
+	if (WW[jj] == 0.0){
+	  psi_re_new[idx2(ii,jj,in.nx)] = 0.0;
+	}
+
+      }
+    }
+    
+    // Free memory
+    free(int_lev1_1);
+    free(int_lev1_2);
+    gsl_integration_cquad_workspace_free(wsp);
+    gsl_spline_free(int_lev1_1_sp_ptr);
+    gsl_interp_accel_free(int_lev1_1_acc_ptr);
+    gsl_spline_free(int_lev1_2_sp_ptr);
+    gsl_interp_accel_free(int_lev1_2_acc_ptr);
+    
+  }
+
+ 
+}
+
+// Integrand for level 1 of the first component of the real auxiliary density response (part 1)
+void compute_dynamic_adr_fd_re_lev1_p1_1(double *int_lev1_1, double *psi_re,
+					 double *psi_im, double *phi_re,
+					 double *phi_im, double *SS,
+					 double *bf, int jj, input in){
+  
+  double numer;
+  double denom;
+  double phir;
+  double phii;
+  double psir;
+  double psii;
+  
+  for (int ii=0; ii<in.nx; ii++){
+    if (ii==0) int_lev1_1[ii] = 0.0;
+    else {
+      phir = phi_re[idx2(ii,jj,in.nx)];
+      phii = phi_im[idx2(ii,jj,in.nx)];
+      psir = psi_re[idx2(ii,jj,in.nx)];
+      psii = psi_im[idx2(ii,jj,in.nx)];
+      numer = phir*psir + phii*psii;
+      denom = phir*phir + phii*phii;
+      int_lev1_1[ii] = SS[ii]*(1.0 - bf[ii]) - (numer/denom)*(SS[ii] - 1.0);
+    }
+  }
+  
+}
+
+
+// Integrand for level 1 of the first component of the real auxiliary density response (part 1)
+void compute_dynamic_adr_fd_re_lev1_p2_1(double *int_lev1_1, double *psi_re,
+					 double *psi_im, double *phi_re,
+					 double *phi_im, double *SS,
+					 int jj, input in){
+  
+  double numer;
+  double denom;
+  double phir;
+  double phii;
+  double psir;
+  double psii;
+  
+  for (int ii=0; ii<in.nx; ii++){
+    if (ii==0) int_lev1_1[ii] = 0.0;
+    else {
+      phir = phi_re[idx2(ii,jj,in.nx)];
+      phii = phi_im[idx2(ii,jj,in.nx)];
+      psir = psi_re[idx2(ii,jj,in.nx)];
+      psii = psi_im[idx2(ii,jj,in.nx)];
+      numer = phii*psir - phir*psii;
+      denom = phir*phir + phii*phii;
+      int_lev1_1[ii] = (numer/denom)*(SS[ii] - 1.0);
+    }
+  }
+  
+}
+
+
+// ------------------------------------------------------------------
+// FUNCTIONS USED TO DEFINE THE IMAGINARY PART OF THE AUXILIARY
+// DENSITY RESPONSE (FULLY DYNAMIC)
+// ------------------------------------------------------------------
+
+// Imaginary part of the auxiliary density response (level 1)
+void compute_dynamic_adr_fd_im(double *psi_im_new,
+			       double *psi_re, double *psi_im,
+			       double *phi_re, double *phi_im,
+			       double *psi_fixed_p1,
+			       double *psi_fixed_p2,
+			       double *psi_fixed_p3,
+			       double *WW, double *SS,
+			       double *bf, double *xx,
+			       bool compute_fixed, input in){
+
+
+  // Zero-frequency contribution, first component
+  compute_dynamic_adr_fd_im_zero_frequency_lev1(psi_im_new, 
+						psi_re, psi_im,
+						phi_re, psi_fixed_p1,
+						SS, bf, xx, 1,
+						compute_fixed,
+						in);
+
+  // Zero frequency contribution, second component
+  compute_dynamic_adr_fd_im_zero_frequency_lev1(psi_im_new, 
+						psi_re, psi_im,
+						phi_re, psi_fixed_p3,
+						SS, bf, xx, 2,
+						compute_fixed,
+						in);
+
+  
+  // First component (one triple integral)
+  compute_dynamic_adr_fd_im_lev1(psi_im_new, psi_re, psi_im,
+				 phi_re, phi_im, psi_fixed_p1,
+				 WW, SS, bf, xx, 1, compute_fixed,
+				 in);
+  
+  // Second component (one triple integral)
+  compute_dynamic_adr_fd_im_lev1(psi_im_new, psi_re, psi_im,
+				 phi_re, phi_im, psi_fixed_p2,
+				 WW, SS, bf, xx, 2, compute_fixed,
+				 in);
+  
+  
+}
+
+
+// Imaginary part of the auxiliary density response (one component, level 1)
+void compute_dynamic_adr_fd_im_lev1(double *psi_im_new,
+				    double *psi_re, double *psi_im,
+				    double *phi_re, double *phi_im,
+				    double *psi_fixed,
+				    double *WW, double *SS,
+				    double *bf, double *xx,
+				    int ncomp, bool compute_fixed,
+				    input in) {
+
+  // Parallel calculations
+  #pragma omp parallel
+  {
+
+    double err;
+    size_t nevals;
+    double psi_new_tmp;
+    double *int_lev1_1  = malloc( sizeof(double) * in.nx);
+    double *int_lev1_2  = malloc( sizeof(double) * in.nx);
+    if (int_lev1_1 == NULL ||
+	int_lev1_2 == NULL){
+      fprintf(stderr, "Failed to allocate memory for calculation"
+	      " of the real part of the auxiliary density"
+	      " response function\n");
+      exit(EXIT_FAILURE);
+    }
+    
+    // Declare accelerator and spline objects
+    gsl_spline *int_lev1_1_sp_ptr;
+    gsl_interp_accel *int_lev1_1_acc_ptr;
+    gsl_spline *int_lev1_2_sp_ptr;
+    gsl_interp_accel *int_lev1_2_acc_ptr;
+    
+    // Allocate the accelerator and the spline objects
+    int_lev1_1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    int_lev1_1_acc_ptr = gsl_interp_accel_alloc();
+    int_lev1_2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    int_lev1_2_acc_ptr = gsl_interp_accel_alloc();
+    
+    // Integration workspace
+    gsl_integration_cquad_workspace *wsp
+      = gsl_integration_cquad_workspace_alloc(100);
+    
+    // Loop over the wave-vectors
+    #pragma omp for // Distribute for loop over the threads
+    for (int ii=0; ii<in.nx; ii++){
+
+      // Loop over the frequencies (the zero frequency contribution is computed separately)
+      for (int jj=1; jj<in.nW; jj++) {
+	
+	// Integration function
+	gsl_function ff_int_lev1;
+	ff_int_lev1.function = &adr_re_lev1_xW;
+
+	// Integrand (part 1)
+	if (ncomp == 1)
+	  compute_dynamic_adr_fd_re_lev1_p2_1(int_lev1_1, psi_re, psi_im,
+					      phi_re, phi_im, SS,
+					      jj, in);
+	else
+	  compute_dynamic_adr_fd_re_lev1_p1_1(int_lev1_1, psi_re, psi_im,
+					      phi_re, phi_im, SS, bf,
+					      jj, in);
+	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
+	  
+	// Integrand (part 2)
+	if (compute_fixed){
+	  if (ncomp == 1)
+	    compute_dynamic_adr_re_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
+	  else
+	    compute_dynamic_adr_im_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
+	  write_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	}
+	else
+	  read_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
+	      
+	// Integral over w
+	struct adr_lev1_params plev1 = {int_lev1_1_sp_ptr,
+					int_lev1_1_acc_ptr,
+					int_lev1_2_sp_ptr,
+					int_lev1_2_acc_ptr};
+	ff_int_lev1.params = &plev1;
+	gsl_integration_cquad(&ff_int_lev1,
+			      xx[0], xx[in.nx-1],
+			      0.0, QUAD_REL_ERR,
+			      wsp,
+			      &psi_new_tmp,
+			      &err, &nevals);
+
+	// Output
+	if (ncomp == 1)
+	  psi_im_new[idx2(ii,jj,in.nx)] = psi_new_tmp;
+	else
+	  psi_im_new[idx2(ii,jj,in.nx)] += psi_new_tmp;
+	
+      }
+    }
+    
+    // Free memory
+    free(int_lev1_1);
+    free(int_lev1_2);
+    gsl_integration_cquad_workspace_free(wsp);
+    gsl_spline_free(int_lev1_1_sp_ptr);
+    gsl_interp_accel_free(int_lev1_1_acc_ptr);
+    gsl_spline_free(int_lev1_2_sp_ptr);
+    gsl_interp_accel_free(int_lev1_2_acc_ptr);
+    
+  }
+  
+}
+
+
+// Imaginary part of the auxiliary density response (one component, level 1)
+void compute_dynamic_adr_fd_im_zero_frequency_lev1(double *psi_im_new,
+						   double *psi_re, double *psi_im,
+						   double *phi_re, 
+						   double *psi_fixed,
+						   double *SS, double *bf,
+						   double *xx, int ncomp,
+						   bool compute_fixed,
+						   input in){
+
+  // Parallel calculations
+  #pragma omp parallel
+  {
+
+    double err;
+    size_t nevals;
+    double psi_new_tmp;
+    double *int_lev1_1  = malloc( sizeof(double) * in.nx);
+    double *int_lev1_2  = malloc( sizeof(double) * in.nx);
+    if (int_lev1_1 == NULL ||
+	int_lev1_2 == NULL){
+      fprintf(stderr, "Failed to allocate memory for calculation"
+	      " of the real part of the auxiliary density"
+	      " response function\n");
+      exit(EXIT_FAILURE);
+    }
+    
+    // Declare accelerator and spline objects
+    gsl_spline *int_lev1_1_sp_ptr;
+    gsl_interp_accel *int_lev1_1_acc_ptr;
+    gsl_spline *int_lev1_2_sp_ptr;
+    gsl_interp_accel *int_lev1_2_acc_ptr;
+    
+    // Allocate the accelerator and the spline objects
+    int_lev1_1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    int_lev1_1_acc_ptr = gsl_interp_accel_alloc();
+    int_lev1_2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+    int_lev1_2_acc_ptr = gsl_interp_accel_alloc();
+    
+    // Integration workspace
+    gsl_integration_cquad_workspace *wsp
+      = gsl_integration_cquad_workspace_alloc(100);
+    
+    // Loop over the wave-vectors
+    #pragma omp for // Distribute for loop over the threads
+    for (int ii=0; ii<in.nx; ii++){
+
+      // Loop over the frequencies (the zero frequency contribution is computed separately)
+      for (int jj=0; jj<1; jj++) {
+	
+	// Integration function
+	gsl_function ff_int_lev1;
+	ff_int_lev1.function = &adr_re_lev1_xW;
+
+	// Integrand (part 1) 
+	if (ncomp == 1)
+	  compute_dynamic_adr_fd_im_lev1_p1_1(int_lev1_1, psi_re,
+					      psi_im, phi_re,
+					      SS, xx, xx[ii], in);
+	else
+	  compute_dynamic_adr_im_lev1_1(int_lev1_1, psi_re,
+					phi_re, SS, bf, in);
+	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
+	  
+	// Integrand (part 2)
+	if (compute_fixed){
+	  if (ncomp == 1)
+	    compute_dynamic_adr_re_lev2(int_lev1_2, 0.0, xx[ii], SS, xx, in);
+	  else
+	    compute_dynamic_adr_im_lev2(int_lev1_2, 0.0, xx[ii], SS, xx, in);
+	  write_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	}
+	else
+	  read_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
+	      
+	// Integral over w
+	struct adr_lev1_params plev1 = {int_lev1_1_sp_ptr,
+					int_lev1_1_acc_ptr,
+					int_lev1_2_sp_ptr,
+					int_lev1_2_acc_ptr};
+	ff_int_lev1.params = &plev1;
+	gsl_integration_cquad(&ff_int_lev1,
+			      xx[0], xx[in.nx-1],
+			      0.0, QUAD_REL_ERR,
+			      wsp,
+			      &psi_new_tmp,
+			      &err, &nevals);
+
+	// Output
+	if (ncomp == 1)
+	  psi_im_new[idx2(ii,jj,in.nx)] = psi_new_tmp;
+	else
+	  psi_im_new[idx2(ii,jj,in.nx)] += psi_new_tmp;
+	
+      }
+    }
+    
+    // Free memory
+    free(int_lev1_1);
+    free(int_lev1_2);
+    gsl_integration_cquad_workspace_free(wsp);
+    gsl_spline_free(int_lev1_1_sp_ptr);
+    gsl_interp_accel_free(int_lev1_1_acc_ptr);
+    gsl_spline_free(int_lev1_2_sp_ptr);
+    gsl_interp_accel_free(int_lev1_2_acc_ptr);
+    
+  }
+  
+}
+
+
+// Integrand for level 1 of the first component of the imaginary auxiliary density response (part 1)
+void compute_dynamic_adr_fd_im_lev1_p1_1(double *int_lev1_1, double *psi_re,
+					 double *psi_im, double *phi_re,
+					 double *SS, double *ww,
+					 double xx, input in){
+  
+  double ff;
+  double xx2 = xx*xx;
+  double ww2;
+  double phir;
+  double psir;
+  double psii;
+  double phir2;
+   
+  for (int ii=0; ii<in.nx; ii++){
+    if (ii==0) int_lev1_1[ii] = 0.0;
+    else {
+      ww2 = ww[ii]*ww[ii];
+      phir = phi_re[idx2(ii,0,in.nx)];
+      psir = psi_re[idx2(ii,0,in.nx)];
+      psii = psi_im[idx2(ii,0,in.nx)];
+      phir2 = phir*phir;
+      ff = ww[ii]*exp(ww2/(4.0*in.Theta) - in.mu) + 1.0;
+      int_lev1_1[ii] = xx2 * (SS[ii] - 1.0) * (ff*psir/phir2 - 4.0/M_PI*psii/phir ) ;
+    }
+  }
+  
+}
+
 // ---------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE DYNAMIC STRUCTURE FACTOR
 // ---------------------------------------------------------------------
@@ -1442,6 +2027,9 @@ void compute_dsf_qstls_iet(double *SSn, double *phi_re, double *phi_im,
   compute_bridge_function(bb, xb, in_tmp);
  
   // Dynamic structure factor
+  // NOTE: The zero frequency contribution of the imaginary
+  // part of the auxiliary density response (psi_im[0])
+  // is used to store its frequency derivative
   for (int ii=0; ii<in.nW; ii++){
 
     if (WW[ii] == 0.0) {
@@ -1643,201 +2231,3 @@ void check_dynamic_qstls_iet(double dx, int nx, double xmax,
   
 }
 
-
-
-
-// ------------------------------------------------------------------
-// FUNCTIONS USED TO DEFINE THE REAL PART OF THE AUXILIARY
-// DENSITY RESPONSE (FULLY DYNAMIC)
-// ------------------------------------------------------------------
-
-// Real part of the auxiliary density response (level 1)
-void compute_dynamic_adr_iet_fd_re(double *psi_re_new,
-				   double *psi_re, double *psi_im,
-				   double *phi_re, double *phi_im,
-				   double *psi_re_fixed_p1,
-				   double *psi_re_fixed_p2,
-				   double *WW, double *SS,
-				   double *bf, double *xx,
-				   input in) {
-
-  // First component (one triple integral)
-  compute_dynamic_adr_iet_fd_re_lev1(psi_re_new, psi_re, psi_im,
-				     phi_re, phi_im, psi_re_fixed_p1,
-				     WW, SS, bf, xx, 1, in);
-  
-  // Second component (one triple integral)
-  compute_dynamic_adr_iet_fd_re_lev1(psi_re_new, psi_re, psi_im,
-				     phi_re, phi_im, psi_re_fixed_p2,
-				     WW, SS, bf, xx, 2, in);
-  
-  
-}
-
-// Real part of the auxiliary density response (first component, level 1)
-void compute_dynamic_adr_iet_fd_re_lev1(double *psi_re_new,
-					double *psi_re, double *psi_im,
-					double *phi_re, double *phi_im,
-					double *psi_re_fixed,
-					double *WW, double *SS,
-					double *bf, double *xx,
-					int ncomp, input in) {
-
-  // Parallel calculations
-  #pragma omp parallel
-  {
-
-    bool compute_fixed = true;
-    double err;
-    size_t nevals;
-    double *int_lev1_1  = malloc( sizeof(double) * in.nx);
-    double *int_lev1_2  = malloc( sizeof(double) * in.nx);
-    if (int_lev1_1 == NULL ||
-	int_lev1_2 == NULL){
-      fprintf(stderr, "Failed to allocate memory for calculation"
-	      " of the real part of the auxiliary density"
-	      " response function\n");
-      exit(EXIT_FAILURE);
-    }
-    
-    // Declare accelerator and spline objects
-    gsl_spline *int_lev1_1_sp_ptr;
-    gsl_interp_accel *int_lev1_1_acc_ptr;
-    gsl_spline *int_lev1_2_sp_ptr;
-    gsl_interp_accel *int_lev1_2_acc_ptr;
-    
-    // Allocate the accelerator and the spline objects
-    int_lev1_1_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    int_lev1_1_acc_ptr = gsl_interp_accel_alloc();
-    int_lev1_2_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-    int_lev1_2_acc_ptr = gsl_interp_accel_alloc();
-    
-    // Integration workspace
-    gsl_integration_cquad_workspace *wsp
-      = gsl_integration_cquad_workspace_alloc(100);
-
-    if (psi_re_fixed[0] != INFINITY) compute_fixed = false;
-    
-    // Loop over the wave-vectors
-    #pragma omp for // Distribute for loop over the threads
-    for (int ii=0; ii<in.nx; ii++){
-
-      // Loop over the frequencies
-      for (int jj=0; jj<in.nW; jj++) {
-
-	// Integration function
-	gsl_function ff_int_lev1;
-	ff_int_lev1.function = &adr_iet_re_lev1_xW;
-
-	// Integrand (part 1)
-	if (ncomp == 1){
-	  compute_dynamic_adr_iet_fd_re_lev1_p1_1(int_lev1_1, psi_re, psi_im,
-						  phi_re, phi_im, SS, bf,
-						  jj, in);
-	}
-	else {
-	  compute_dynamic_adr_iet_fd_re_lev1_p2_1(int_lev1_1, psi_re, psi_im,
-						  phi_re, phi_im, SS,
-						  jj, in);
-	}
-	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
-	  
-	// Integrand (part 2)
-	if (compute_fixed) {
-	  if (ncomp == 1){
-	    compute_dynamic_adr_iet_re_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
-	  }
-	  else {
-	    compute_dynamic_adr_iet_im_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
-	  }
-	  write_dynamic_adr_iet_fixed(int_lev1_2, psi_re_fixed, ii, jj, in);
-	}
-	else {
-	  read_dynamic_adr_iet_fixed(int_lev1_2, psi_re_fixed, ii, jj, in);
-	}
-	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
-	      
-	// Integral over w
-	struct adr_lev1_params plev1 = {int_lev1_1_sp_ptr,
-					int_lev1_1_acc_ptr,
-					int_lev1_2_sp_ptr,
-					int_lev1_2_acc_ptr};
-	ff_int_lev1.params = &plev1;
-	gsl_integration_cquad(&ff_int_lev1,
-			      xx[0], xx[in.nx-1],
-			      0.0, QUAD_REL_ERR,
-			      wsp,
-			      &psi_re_new[idx2(ii,jj,in.nx)],
-			      &err, &nevals);
-      }
-    }
-    
-    // Free memory
-    free(int_lev1_1);
-    free(int_lev1_2);
-    gsl_integration_cquad_workspace_free(wsp);
-    gsl_spline_free(int_lev1_1_sp_ptr);
-    gsl_interp_accel_free(int_lev1_1_acc_ptr);
-    gsl_spline_free(int_lev1_2_sp_ptr);
-    gsl_interp_accel_free(int_lev1_2_acc_ptr);
-    
-  }
-  
-}
-
-// Integrand for level 1 of the first component of the real auxiliary density response (part 1)
-void compute_dynamic_adr_iet_fd_re_lev1_p1_1(double *int_lev1_1, double *psi_re,
-					     double *psi_im, double *phi_re,
-					     double *phi_im, double *SS,
-					     double *bf, int jj, input in){
-  
-  double numer;
-  double denom;
-  double phir;
-  double phii;
-  double psir;
-  double psii;
-  
-  for (int ii=0; ii<in.nx; ii++){
-    if (ii==0) int_lev1_1[ii] = 0.0;
-    else {
-      phir = phi_re[idx2(ii,jj,in.nx)];
-      phii = phi_im[idx2(ii,jj,in.nx)];
-      psir = psi_re[idx2(ii,jj,in.nx)];
-      psii = psi_im[idx2(ii,jj,in.nx)];
-      numer = phir*psir + phii*psii;
-      denom = phir*phir + phii*phii;
-      int_lev1_1[ii] = SS[ii]*(1.0 - bf[ii]) - (numer/denom)*(SS[ii] - 1.0);
-    }
-  }
-  
-}
-
-
-// Integrand for level 1 of the first component of the real auxiliary density response (part 1)
-void compute_dynamic_adr_iet_fd_re_lev1_p2_1(double *int_lev1_1, double *psi_re,
-					     double *psi_im, double *phi_re,
-					     double *phi_im, double *SS,
-					     int jj, input in){
-  
-  double numer;
-  double denom;
-  double phir;
-  double phii;
-  double psir;
-  double psii;
-  
-  for (int ii=0; ii<in.nx; ii++){
-    if (ii==0) int_lev1_1[ii] = 0.0;
-    else {
-      phir = phi_re[idx2(ii,jj,in.nx)];
-      phii = phi_im[idx2(ii,jj,in.nx)];
-      psir = psi_re[idx2(ii,jj,in.nx)];
-      psii = psi_im[idx2(ii,jj,in.nx)];
-      numer = phii*psir - phir*psii;
-      denom = phir*phir + phii*phii;
-      int_lev1_1[ii] = -(numer/denom)*(SS[ii] - 1.0);
-    }
-  }
-  
-}

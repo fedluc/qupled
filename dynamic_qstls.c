@@ -159,7 +159,7 @@ void compute_dynamic_qstls(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files: ");
-  write_text_dynamic_qstls(SSn, WW, psi_re, phi_re, in);
+  write_text_dynamic_qstls(SSn, WW, psi_re, psi_im, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -912,32 +912,32 @@ void write_text_dynamic_qstls(double *SSn, double *WW, double *psi_re,
   // Static structure factor
   write_text_dsf(SSn, WW, in);
 
-  /* FILE* fid; */
+  FILE* fid;
   
-  /* char out_name[100]; */
-  /* sprintf(out_name, "psire_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta, */
-  /* 	  in.dyn_xtarget, in.theory); */
-  /* fid = fopen(out_name, "w"); */
-  /* if (fid == NULL) { */
-  /*   fprintf(stderr, "Error while creating the output file for the dynamic structure factor\n"); */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
-  /* for (int ii = 0; ii < in.nW; ii++) */
-  /*   fprintf(fid, "%.8e %.8e\n", WW[ii], psi_re[ii]); */
+  char out_name[100];
+  sprintf(out_name, "psire_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta,
+  	  in.dyn_xtarget, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the dynamic structure factor\n");
+    exit(EXIT_FAILURE);
+  }
+  for (int ii = 0; ii < in.nW; ii++)
+    fprintf(fid, "%.8e %.8e\n", WW[ii], psi_re[ii]);
   
-  /* fclose(fid); */
+  fclose(fid);
 
   
-  /* sprintf(out_name, "psiim_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta, */
-  /* 	  in.dyn_xtarget, in.theory); */
-  /* fid = fopen(out_name, "w"); */
-  /* if (fid == NULL) { */
-  /*   fprintf(stderr, "Error while creating the output file for the dynamic structure factor\n"); */
-  /*   exit(EXIT_FAILURE); */
-  /* } */
-  /* for (int ii = 0; ii < in.nW; ii++) */
-  /*   fprintf(fid, "%.8e %.8e\n", WW[ii], psi_im[ii]); */
+  sprintf(out_name, "psiim_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta,
+  	  in.dyn_xtarget, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the dynamic structure factor\n");
+    exit(EXIT_FAILURE);
+  }
+  for (int ii = 0; ii < in.nW; ii++)
+    fprintf(fid, "%.8e %.8e\n", WW[ii], psi_im[ii]);
   
-  /* fclose(fid); */
+  fclose(fid);
   
 }
