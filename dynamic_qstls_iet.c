@@ -177,9 +177,8 @@ static void check_dynamic_qstls_iet(double dx, int nx, double xmax,
 // LOCAL CONSTANTS AND DATA STRUCTURES
 // -------------------------------------------------------------------
 
-// Parameters for the integrals in the real part of the auxiliary
-// density response
-struct adr_iet_re_lev1_params {
+// Parameters for the integrals in auxiliary density response
+struct adr_lev1_params {
 
   gsl_spline *int_lev1_1_sp_ptr;
   gsl_interp_accel *int_lev1_1_acc_ptr;
@@ -188,8 +187,13 @@ struct adr_iet_re_lev1_params {
 
 };
 
-struct adr_iet_re_lev2_params {
 
+struct adr_lev2_params {
+
+  double mu;
+  double Theta;
+  double xx;
+  double ww;
   gsl_spline *ssf_sp_ptr;
   gsl_interp_accel *ssf_acc_ptr;
   gsl_spline *int_lev2_sp_ptr;
@@ -197,7 +201,8 @@ struct adr_iet_re_lev2_params {
   
 };
 
-struct adr_iet_re_lev3_params {
+
+struct adr_lev3_params {
 
   double mu;
   double Theta;
@@ -207,43 +212,9 @@ struct adr_iet_re_lev3_params {
   double WW;
   
 };
-
 
 // Parameters for the integrals in the imaginary part of the auxiliary
 // density response
-struct adr_iet_im_lev1_params {
-
-  gsl_spline *int_lev1_1_sp_ptr;
-  gsl_interp_accel *int_lev1_1_acc_ptr;
-  gsl_spline *int_lev1_2_sp_ptr;
-  gsl_interp_accel *int_lev1_2_acc_ptr;
-
-};
-
-
-struct adr_iet_im_lev2_params {
-
-  double mu;
-  double Theta;
-  double xx;
-  double ww;
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-  gsl_spline *int_lev2_sp_ptr;
-  gsl_interp_accel *int_lev2_acc_ptr;
-  
-};
-
-struct adr_iet_im_lev3_params {
-
-  double mu;
-  double Theta;
-  double xx;
-  double ww;
-  double uu;
-  double WW;
-  
-};
 
 
 // -------------------------------------------------------------------
@@ -824,7 +795,7 @@ void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
 	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
 	      
 	// Integral over w
-	struct adr_iet_re_lev1_params plev1 = {int_lev1_1_sp_ptr,
+	struct adr_lev1_params plev1 = {int_lev1_1_sp_ptr,
 					       int_lev1_1_acc_ptr,
 					       int_lev1_2_sp_ptr,
 					       int_lev1_2_acc_ptr};
@@ -888,7 +859,7 @@ void write_dynamic_adr_iet_fixed(double *var, double *psi_re_fixed,
 // Integrand for level 1 of the real auxiliary density response (vector = x, frequency = W)
 double adr_iet_re_lev1_xW(double ww, void* pp) {
   
-  struct adr_iet_re_lev1_params* params = (struct adr_iet_re_lev1_params*)pp;
+  struct adr_lev1_params* params = (struct adr_lev1_params*)pp;
   gsl_spline* int_lev1_1_sp_ptr = (params->int_lev1_1_sp_ptr);
   gsl_interp_accel* int_lev1_1_acc_ptr = (params->int_lev1_1_acc_ptr);
   gsl_spline* int_lev1_2_sp_ptr = (params->int_lev1_2_sp_ptr);
@@ -962,11 +933,13 @@ void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
     gsl_spline_init(int_lev2_sp_ptr, ww, int_lev2, in.nx);
     
     // Integration over u (wave-vector squared)
-    struct adr_iet_re_lev2_params plev2 = {ssf_sp_ptr,
-				       ssf_acc_ptr,
-				       int_lev2_sp_ptr,
-				       int_lev2_acc_ptr};
-    
+    struct adr_lev2_params plev2 = {in.mu, in.Theta,
+				    xx, ww[ii],
+				    ssf_sp_ptr,
+				    ssf_acc_ptr,
+				    int_lev2_sp_ptr,
+				    int_lev2_acc_ptr};
+
     ff_int_lev2.params = &plev2;
     gsl_integration_cquad(&ff_int_lev2,
 			  u_min, u_max,
@@ -992,7 +965,7 @@ void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
 // Integrand for level 2 of the real auxiliary density response (vectors = {x,w}, frequency = W)
 double adr_iet_re_lev2_xwW(double uu, void* pp) {
   
-  struct adr_iet_re_lev2_params* params = (struct adr_iet_re_lev2_params*)pp;
+  struct adr_lev2_params* params = (struct adr_lev2_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
   gsl_spline* int_lev2_sp_ptr = (params->int_lev2_sp_ptr);
@@ -1028,7 +1001,7 @@ void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
   for (int ii=0; ii<in.nx; ii++){
 
     // Integrate over q (wave-vector)
-    struct adr_iet_re_lev3_params plev3 = {in.mu,in.Theta, xx, ww,
+    struct adr_lev3_params plev3 = {in.mu,in.Theta, xx, ww,
 					   uu[ii], WW};
     ff_int_lev3.params = &plev3;
     gsl_integration_cquad(&ff_int_lev3,
@@ -1047,7 +1020,7 @@ void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
 // Integrand for level 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = W)
 double adr_iet_re_lev3_xwuW(double qq, void* pp) {
   
-  struct adr_iet_re_lev3_params* params = (struct adr_iet_re_lev3_params*)pp;
+  struct adr_lev3_params* params = (struct adr_lev3_params*)pp;
   double mu = (params->mu);
   double Theta = (params->Theta);
   double xx = (params->xx);
@@ -1074,7 +1047,7 @@ double adr_iet_re_lev3_xwuW(double qq, void* pp) {
 // Integrand for level 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = 0)
 double adr_iet_re_lev3_xwu0(double qq, void* pp) {
   
-  struct adr_iet_re_lev3_params* params = (struct adr_iet_re_lev3_params*)pp;
+  struct adr_lev3_params* params = (struct adr_lev3_params*)pp;
   double mu = (params->mu);
   double Theta = (params->Theta);
   double xx = (params->xx);
@@ -1170,7 +1143,7 @@ void compute_dynamic_adr_iet_im_lev1(double *psi_im, double *psi_re,
 	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
 	      
 	// Integral over w
-	struct adr_iet_im_lev1_params plev1 = {int_lev1_1_sp_ptr,
+	struct adr_lev1_params plev1 = {int_lev1_1_sp_ptr,
 					       int_lev1_1_acc_ptr,
 					       int_lev1_2_sp_ptr,
 					       int_lev1_2_acc_ptr};
@@ -1217,7 +1190,7 @@ void compute_dynamic_adr_iet_im_lev1_1(double *int_lev1_1, double *psi_re,
 // Integrand for level 1 of the imaginary auxiliary density response (vector = x, frequency = W)
 double adr_iet_im_lev1_xW(double ww, void* pp) {
   
-  struct adr_iet_im_lev1_params* params = (struct adr_iet_im_lev1_params*)pp;
+  struct adr_lev1_params* params = (struct adr_lev1_params*)pp;
   gsl_spline* int_lev1_1_sp_ptr = (params->int_lev1_1_sp_ptr);
   gsl_interp_accel* int_lev1_1_acc_ptr = (params->int_lev1_1_acc_ptr);
   gsl_spline* int_lev1_2_sp_ptr = (params->int_lev1_2_sp_ptr);
@@ -1293,7 +1266,7 @@ void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
     gsl_spline_init(int_lev2_sp_ptr, ww, int_lev2, in.nx);
     
     // Integration over u (wave-vector squared)
-    struct adr_iet_im_lev2_params plev2 = {in.mu, in.Theta,
+    struct adr_lev2_params plev2 = {in.mu, in.Theta,
 					   xx, ww[ii],
 					   ssf_sp_ptr,
 					   ssf_acc_ptr,
@@ -1325,7 +1298,7 @@ void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
 // Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = W)
 double adr_iet_im_lev2_xwW(double uu, void* pp) {
   
-  struct adr_iet_im_lev2_params* params = (struct adr_iet_im_lev2_params*)pp;
+  struct adr_lev2_params* params = (struct adr_lev2_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
   gsl_spline* int_lev2_sp_ptr = (params->int_lev2_sp_ptr);
@@ -1341,7 +1314,7 @@ double adr_iet_im_lev2_xwW(double uu, void* pp) {
 // Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = 0)
 double adr_iet_im_lev2_xw0(double uu, void* pp) {
   
-  struct adr_iet_im_lev2_params* params = (struct adr_iet_im_lev2_params*)pp;
+  struct adr_lev2_params* params = (struct adr_lev2_params*)pp;
   double mu = (params->mu);
   double Theta = (params->Theta);
   double xx = (params->xx);
@@ -1395,7 +1368,7 @@ void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
     
     
     // Integrate over q (wave-vector)
-    struct adr_iet_im_lev3_params plev3 = {in.mu,in.Theta, xx, ww,
+    struct adr_lev3_params plev3 = {in.mu,in.Theta, xx, ww,
 					   uu[ii], WW};
     ff_int_lev3.params = &plev3;
     gsl_integration_cquad(&ff_int_lev3,
@@ -1414,7 +1387,7 @@ void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
 // Integrand for level 3 of the imaginary  auxiliary density response (vectors = {x,w,u}, frequency = W)
 double adr_iet_im_lev3_xwuW(double qq, void* pp) {
   
-  struct adr_iet_im_lev3_params* params = (struct adr_iet_im_lev3_params*)pp;
+  struct adr_lev3_params* params = (struct adr_lev3_params*)pp;
   double mu = (params->mu);
   double Theta = (params->Theta);
   double xx = (params->xx);
@@ -1785,10 +1758,10 @@ void compute_dynamic_adr_iet_fd_re_lev1(double *psi_re_new,
 	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
 	      
 	// Integral over w
-	struct adr_iet_re_lev1_params plev1 = {int_lev1_1_sp_ptr,
-					       int_lev1_1_acc_ptr,
-					       int_lev1_2_sp_ptr,
-					       int_lev1_2_acc_ptr};
+	struct adr_lev1_params plev1 = {int_lev1_1_sp_ptr,
+					int_lev1_1_acc_ptr,
+					int_lev1_2_sp_ptr,
+					int_lev1_2_acc_ptr};
 	ff_int_lev1.params = &plev1;
 	gsl_integration_cquad(&ff_int_lev1,
 			      xx[0], xx[in.nx-1],
