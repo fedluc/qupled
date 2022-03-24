@@ -5,7 +5,23 @@
 #include "read_input.h"
 
 // ----------------------------------------
-// CONSTANTS AND DATA STRUCTURES
+// LOCAL FUNCTIONS
+// ----------------------------------------
+
+// Default values to parser 
+static void set_default_parse_opt(input *in);
+
+// Define the wave-vector grid size
+static void get_grid_size(input *in);
+
+// Verify input validity
+static void check_input(input *in);
+
+// Debug input
+static void print_input(input *in);
+
+// ----------------------------------------
+// LOCAL CONSTANTS AND DATA STRUCTURES
 // ----------------------------------------
 
 static bool debug_input;
@@ -92,7 +108,7 @@ static struct argp_option options[] = {
    "File used to load fixed component of the density response function "
    "for the qslts-iet scheme"},
 
-  {"qstls-iet-static", ARGUMENT_QSTLS_IET_FIXED_SHORT, "0", 0,
+  {"qstls-iet-static", ARGUMENT_QSTLS_IET_STATIC_SHORT, "0", 0,
    "Use static approximation to compute the auxiliary density response "
    "in the qstls-iet scheme (0 = off, 1 = on)"},
 

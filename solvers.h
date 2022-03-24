@@ -34,5 +34,25 @@ void solve_qstls(input in, bool verbose);
 
 void solve_qstls_iet(input in, bool verbose);
 
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF THE CLASSICAL
+// SCHEMES (STLS, VS-STLS AND STLS-IET)
+// -------------------------------------------------------------------
+
+void compute_dynamic_stls(input in, bool verbose);
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF THE QSTLS
+// SCHEME
+// -------------------------------------------------------------------
+
+void compute_dynamic_qstls(input in, bool verbose);
+
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF THE QSTLS
+// SCHEME
+// -------------------------------------------------------------------
+
+void compute_dynamic_qstls_iet(input in, bool verbose);
 
 #endif

@@ -9,6 +9,123 @@
 #include "chemical_potential.h"
 #include "stls.h"
 
+// -------------------------------------------------------------------
+// LOCAL FUNCTIONS
+// -------------------------------------------------------------------
+
+// Iterations to solve the STLS scheme
+static void stls_iterations(double *SS, double *SSHF,
+			    double *GG, double *GG_new,
+			    double *phi, double *xx,
+			    input in, bool verbose);
+
+// Ideal density response at finite temperature
+static void compute_idr_one_frequency(double *phil, double *xx,
+				      int ll, input in);
+
+static double idr_xl(double yy, void *pp);
+
+static double idr_x0(double yy, void *pp);
+
+// Ideal density response at zero temperature
+static double idr_re_zero_temperature(double xx, double Omega);
+
+static double idr_im_zero_temperature(double xx, double Omega);
+
+static double idrp_re_zero_temperature(double xx, double Omega);
+
+// Static structure factor at finite temperature
+static void compute_ssf_stls_finite_temperature(double *SS, double *SSHF,
+						double *GG, double *phi, 
+						double *xx, input in);
+
+static void compute_ssf_HF_finite_temperature(double *SS,  double *xx,
+					      input in);
+
+static double ssf_HF_finite_temperature(double yy, void* pp);
+
+// Static structure factor at zero temperature
+static void compute_ssf_stls_zero_temperature(double *SS, double *SSHF,
+					      double *GG, double *xx,
+					      input in);
+
+static double ssf_stls_zero_temperature(double Omega, void* pp);
+
+static double ssf_plasmon(double xx, double GG, input in);
+
+static double drf_re_zero_temperature(double xx, void* pp);
+
+static double drfp_re_zero_temperature(double xx, double Omega,
+				       double GG, double rs);
+
+static void compute_ssf_HF_zero_temperature(double *SS,  double *xx,
+					    input in);
+
+// Static local fied correction
+static double slfc(double yy, void *pp);
+
+// Input and output
+static void write_text_slfc(double *GG, double *xx, input in);
+
+static void write_text_sdr(double *GG, double *phi, double *xx,
+			   input in);
+
+static void check_guess_stls(int nx, double dx, double xmax,
+			     input in, size_t it_read,
+			     size_t it_expected, FILE *fid,
+			     bool check_grid, bool check_items,
+			     bool check_eof);
+
+// -------------------------------------------------------------------
+// LOCAL DATA STRUCTURES
+// -------------------------------------------------------------------
+
+// Integration parameters for the ideal density response
+struct idr_params {
+
+  double xx;
+  double mu;
+  double Theta;
+  double ll;
+
+};
+
+// Integration parameters for the Hartree-Fock static structure factor
+struct ssf_HF_finite_temperature_params {
+
+  double xx;
+  double mu;
+  double Theta;
+
+};
+
+struct ssf_stls_zero_temperature_params {
+
+  double xx;
+  double rs;
+  double GG;
+  
+};
+
+// Parameters to find the zeros of the dielectric response at
+// zero temperature (for the plasmon contribution)
+struct eps_params {
+
+  double xx;
+  double GG;
+  double rs;
+
+};
+
+// Integration parameters for the static local field correction
+struct slfc_params {
+
+  double xx;
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+
+};
+
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO SOLVE THE STLS SCHEME
@@ -156,12 +273,7 @@ void init_fixed_stls_arrays(input *in, double *xx,
   
   // Static structure factor in the Hartree-Fock approximation
   if (verbose) printf("Static structure factor in the Hartree-Fock approximation: ");
-  if (in->Theta == 0) {
-    compute_ssf_HF_zero_temperature(SSHF, xx, *in);
-  }
-  else {
-    compute_ssf_HF_finite_temperature(SSHF, xx, *in);
-  }
+  compute_ssf_HF(SSHF, xx, *in);
   if (verbose) printf("Done.\n");
 
 }
@@ -279,15 +391,6 @@ void stls_update(double *GG, double *GG_new, input in){
 // FUNCTIONS USED TO COMPUTE THE NORMALIZED IDEAL LINDHARD DENSITY AT FINITE TEMPERATURE
 // -------------------------------------------------------------------------------------
 
-struct idr_params {
-
-  double xx;
-  double mu;
-  double Theta;
-  double ll;
-
-};
-
 // Ideal density response for all matsubara frequencies specified in input
 void compute_idr(double *phi, double *xx,  input in, bool verbose) {
 
@@ -325,8 +428,8 @@ void compute_idr_one_frequency(double *phil, double *xx,  int ll, input in) {
 
   // Integration function
   gsl_function ff_int;
-  if (ll == 0) ff_int.function = &idr_partial_x0;
-  else ff_int.function = &idr_partial_xl;
+  if (ll == 0) ff_int.function = &idr_x0;
+  else ff_int.function = &idr_xl;
 
   // Normalized ideal Lindhard density 
   for (int ii = 0; ii < in.nx; ii++) {
@@ -347,7 +450,7 @@ void compute_idr_one_frequency(double *phil, double *xx,  int ll, input in) {
 }
 
 // Partial ideal density response (frequency = l, vector = x)
-double idr_partial_xl(double yy, void *pp) {
+double idr_xl(double yy, void *pp) {
 
   struct idr_params *params = (struct idr_params*)pp;
   double xx = (params->xx);
@@ -369,7 +472,7 @@ double idr_partial_xl(double yy, void *pp) {
 
 
 // Partial ideal density response (frequency = 0, vector = x)
-double idr_partial_x0(double yy, void *pp) {
+double idr_x0(double yy, void *pp) {
 
   struct idr_params *params = (struct idr_params*)pp;
   double xx = (params->xx);
@@ -506,6 +609,23 @@ void compute_ssf_stls(double *SS, double *SSHF, double *GG,
 
 
 // --------------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE HARTREE-FOCK STATIC STRUCTURE FACTOR
+// --------------------------------------------------------------------------
+
+// Static structure factor from the fluctuation-dissipation theorem
+void compute_ssf_HF(double *SS, double *xx, input in){
+
+  if (in.Theta == 0) {
+    compute_ssf_HF_zero_temperature(SS, xx, in);
+  }
+  else {
+    compute_ssf_HF_finite_temperature(SS, xx, in);
+  }
+ 
+}
+
+
+// --------------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE STATIC STRUCTURE FACTOR AT FINITE TEMPERATURE
 // --------------------------------------------------------------------------
 
@@ -553,14 +673,6 @@ void compute_ssf_stls_finite_temperature(double *SS, double *SSHF, double *GG,
 }
 
 // Static structure factor within the Hartree-Fock approximation
-struct ssf_HF_finite_temperature_params {
-
-  double xx;
-  double mu;
-  double Theta;
-
-};
-
 void compute_ssf_HF_finite_temperature(double *SS,  double *xx,  input in){
 
   double err;
@@ -620,14 +732,6 @@ double ssf_HF_finite_temperature(double yy, void* pp) {
 // ------------------------------------------------------------------------
 
 // Static structure factor from the integral over the frequencies
-struct ssf_stls_zero_temperature_params {
-
-  double xx;
-  double rs;
-  double GG;
-  
-};
-
 
 void compute_ssf_stls_zero_temperature(double *SS, double *SSHF, double *GG, 
 				       double *xx, input in){
@@ -735,14 +839,6 @@ void compute_ssf_HF_zero_temperature(double *SS,  double *xx,  input in){
   }
   
 }
-
-struct eps_params {
-
-  double xx;
-  double GG;
-  double rs;
-
-};
 
 // Plasmon contribution to the static structure factor
 double ssf_plasmon(double xx, double GG, input in) {
@@ -878,15 +974,6 @@ double drfp_re_zero_temperature(double xx, double Omega, double GG, double rs){
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
-
-struct slfc_params {
-
-  double xx;
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-
-};
-
 
 void compute_slfc(double *GG, double *SS, double *xx, input in) {
 

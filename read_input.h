@@ -61,29 +61,5 @@ typedef struct {
 // ----------------------------------------
 
 void get_input(int argc, char **argv, input *in);
-
-// -------------------------------------------------
-// FUNCTION TO ASSIGN DEFAULT VALUES TO PARSER DATA
-// -------------------------------------------------
-
-void set_default_parse_opt(input *in);
-
-// ------------------------------------------------
-// FUNCTION TO COMPUTE THE NUMBER OF GRID POINTS
-// ------------------------------------------------
-
-void get_grid_size(input *in);
-
-// ------------------------------------------------------------
-// FUNCTION TO VERIFY THAT THE OPTIONS GIVEN IN INPUT ARE VALID
-// ------------------------------------------------------------
-
-void check_input(input *in);
-
-// ------------------------------------------------
-// FUNCTION TO DEBUG THE INPUT
-// ------------------------------------------------
-
-void print_input(input *in);
   
 #endif

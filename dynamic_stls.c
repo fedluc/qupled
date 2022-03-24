@@ -1,15 +1,80 @@
 #include <string.h>
-#include <omp.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_integration.h>
 #include "solvers.h"
 #include "utils.h"
-#include "restart.h"
 #include "chemical_potential.h"
-#include "stls.h"
-#include "qstls.h"
 #include "dynamic_stls.h"
+
+// -------------------------------------------------------------------
+// LOCAL FUNCTIONS
+// -------------------------------------------------------------------
+
+// Frequency grid
+static void frequency_grid(double *WW, input *in);
+
+// Ideal density response
+static void compute_dynamic_idr_re(double *phi_re, double *WW,
+				   input in);
+
+static void compute_dynamic_idr_im(double *phi_im, double *WW,
+				   input in);
+
+static double idr_re_xw(double yy, void *pp);
+
+static double idr_re_x0(double yy, void *pp);
+
+static double idr_im_xw(double yy, void *pp);
+
+static double idr_im_x0(double yy, void *pp);
+
+// Static local field correction (from file)
+static void get_slfc(double *GG, input in);
+
+// Dynamic structure factor
+static void compute_dsf(double *SSn, double *phi_re, double *phi_im,
+			double GG, double *WW, input in);
+
+// Intermediate scattering function
+static void compute_isf(double *FF, double *tt, double *SSn,
+			double *WW, input in);
+ 
+static double isf(double WW, void *pp);
+
+// Input and output
+static void write_text_dynamic_stls(double *SSn, double *WW, input in);
+
+static void write_text_isf(double *SSn, double *ww, input in);
+
+
+// -------------------------------------------------------------------
+// LOCAL CONSTANTS AND DATA STRUCTURES
+// -------------------------------------------------------------------
+
+// Number of data points for imaginary time (varies between 0 and 1)
+#define ISF_NTAU 100
+
+// Parameters for integrals in the ideal density response
+struct idr_params {
+
+  double xx;
+  double mu;
+  double Theta;
+  double WW;
+
+};
+
+// Parameters for the integrals in the intermediate scattering function
+struct isf_params {
+
+  double Theta;
+  double tau;
+  gsl_spline *dsf_sp_ptr;
+  gsl_interp_accel *dsf_acc_ptr;
+  
+};
+
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF THE CLASSICAL
@@ -171,15 +236,6 @@ void frequency_grid(double *WW, input *in){
 // FUNCTION USED TO DEFINE THE IDEAL DENSITY RESPONSE
 // ------------------------------------------------------------------
 
-struct idr_params {
-
-  double xx;
-  double mu;
-  double Theta;
-  double WW;
-
-};
-
 // Ideal density response (real and imaginary part)
 void compute_dynamic_idr(double *phi_re, double *phi_im,  double *WW,
 			 input in) {
@@ -206,8 +262,8 @@ void compute_dynamic_idr_re(double *phi_re, double *WW,
 
   // Integration function
   gsl_function ff_int;
-  if (WW == 0) ff_int.function = &idr_re_partial_x0;
-  else ff_int.function = &idr_re_partial_xw;
+  if (WW == 0) ff_int.function = &idr_re_x0;
+  else ff_int.function = &idr_re_xw;
 
   // Normalized ideal Lindhard density
   for (int ii=0; ii<in.nW; ii++) {
@@ -244,8 +300,8 @@ void compute_dynamic_idr_im(double *phi_im, double *WW,
 
   // Integration function
   gsl_function ff_int;
-  if (WW == 0) ff_int.function = &idr_im_partial_x0;
-  else ff_int.function = &idr_im_partial_xw;
+  if (WW == 0) ff_int.function = &idr_im_x0;
+  else ff_int.function = &idr_im_xw;
 
   // Normalized ideal Lindhard density
   for (int ii=0; ii<in.nW; ii++) {
@@ -275,7 +331,7 @@ void compute_dynamic_idr_im(double *phi_im, double *WW,
 }
 
 // Partial real part of the ideal density response (frequency = w, vector = x)
-double idr_re_partial_xw(double yy, void *pp) {
+double idr_re_xw(double yy, void *pp) {
 
   struct idr_params *params = (struct idr_params*)pp;
   double xx = (params->xx);
@@ -306,7 +362,7 @@ double idr_re_partial_xw(double yy, void *pp) {
 
 
 // Partial real part of the ideal density response (frequency = 0, vector = x)
-double idr_re_partial_x0(double yy, void *pp) {
+double idr_re_x0(double yy, void *pp) {
 
   struct idr_params *params = (struct idr_params*)pp;
   double xx = (params->xx);
@@ -337,7 +393,7 @@ double idr_re_partial_x0(double yy, void *pp) {
 
 
 // Partial imaginary part of the ideal density response (frequency = w, vector = x)
-double idr_im_partial_xw(double yy, void *pp) {
+double idr_im_xw(double yy, void *pp) {
 
   struct idr_params *params = (struct idr_params*)pp;
   double xx = (params->xx);
@@ -366,7 +422,7 @@ double idr_im_partial_xw(double yy, void *pp) {
 }
 
 // Partial imaginary part of the ideal density response (frequency = 0, vector = x)
-double idr_im_partial_x0(double yy, void *pp) {
+double idr_im_x0(double yy, void *pp) {
   return 0;
 }
 
@@ -398,7 +454,7 @@ void get_slfc(double *GG, input in){
   }
  
   // Get size of data stored in the input file
-  get_restart_data_format(slfc_file_name, &in.nx, &in.nl);
+  get_data_format_from_text(slfc_file_name, &in.nx, &in.nl);
 
   // Allocate temporary arrays to store the structural properties
   GG_file = malloc( sizeof(double) * in.nx);
@@ -411,8 +467,8 @@ void get_slfc(double *GG, input in){
   }
 
   // Get data from input file
-  get_restart_data(slfc_file_name, in.nx, in.nl,
-		   GG_file, xx_file, &in);
+  get_data_from_text(slfc_file_name, in.nx, in.nl,
+		     GG_file, xx_file, &in);
 
   // Static local field correction for the wave-vector given in input
   slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
@@ -477,16 +533,6 @@ void compute_dsf(double *SSn, double *phi_re, double *phi_im,
 // ---------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE INTERMEDIATE SCATTERING FUNCTION
 // ---------------------------------------------------------------------
-
-struct isf_params {
-
-  double Theta;
-  double tau;
-  gsl_spline *dsf_sp_ptr;
-  gsl_interp_accel *dsf_acc_ptr;
-  
-};
-
 
 // Intermediate scattering function
 void compute_isf(double *FF, double *tt, double *SSn,

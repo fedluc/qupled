@@ -7,6 +7,14 @@
 #include "qstls.h"
 
 // -------------------------------------------------------------------
+// LOCAL FUNCTIONS
+// -------------------------------------------------------------------
+
+// Set wave-vector grid size and Matsubara frequencies
+static void set_nx_nl(int nl1, int nl2, int nc1, int nc2,
+		      bool is_qstls, input *in);
+
+// -------------------------------------------------------------------
 // FUNCTION USED TO WRITE BINARY FILES FOR GUESS (OR RESTART) STARTING
 // FROM TEXT FILES OBTAINED FROM A SIMULATION
 // -------------------------------------------------------------------
@@ -33,8 +41,8 @@ void create_restart(input in){
   else is_qstls = false;
   
   // Get format of the data stored in the text files
-  get_restart_data_format(in.guess_file1, &n_lines_file1, &n_columns_file1);
-  get_restart_data_format(in.guess_file2, &n_lines_file2, &n_columns_file2);
+  get_data_format_from_text(in.guess_file1, &n_lines_file1, &n_columns_file1);
+  get_data_format_from_text(in.guess_file2, &n_lines_file2, &n_columns_file2);
 
   // Update input structure based on the content of the text files
   set_nx_nl(n_lines_file1, n_lines_file2, n_columns_file1,
@@ -56,18 +64,18 @@ void create_restart(input in){
   if(is_qstls) {
 
     // Static structure factor
-    get_restart_data(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
+    get_data_from_text(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
     // Auxiliary density response
-    get_restart_data(in.guess_file2, n_lines_file2, n_columns_file2, psi, NULL, &in);
+    get_data_from_text(in.guess_file2, n_lines_file2, n_columns_file2, psi, NULL, &in);
 
 
   }
   else{
     
     // Static structure factor
-    get_restart_data(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
+    get_data_from_text(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
     // Static local field correction
-    get_restart_data(in.guess_file2, n_lines_file2, n_columns_file2, GG, xx, &in);
+    get_data_from_text(in.guess_file2, n_lines_file2, n_columns_file2, GG, xx, &in);
 
   }
   
@@ -108,58 +116,6 @@ void create_restart(input in){
   
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO INFER THE FORMAT OF THE TEXT FILES
-// -------------------------------------------------------------------
-void get_restart_data_format(char * file_name, int *n_lines, int *n_columns){
-
-  // Variables
-  FILE *fid;
-  char * line = NULL;
-  char * value = NULL;
-  size_t len = 0;
-  ssize_t num_el;
-  int n_columns_check;
-  
-  // Open file
-  fid = NULL;
-  fid = fopen(file_name, "r");
-  if (fid == NULL) {
-    fprintf(stderr,"Error while opening file %s to construct the restart\n", file_name);
-    exit(EXIT_FAILURE);
-  }
-
-  // Get number of lines
-  *n_lines = 0;
-  *n_columns = 0;
-  n_columns_check = 0;
-  while ((num_el = getline(&line, &len, fid)) != -1) {
-
-    // Update line counter
-    *n_lines += 1;
-
-    // Get number of columns and check that format remains consistent
-    value = strtok(line, " \n");
-    while(value != NULL){
-      if(*n_lines == 1) *n_columns += 1;
-      else n_columns_check += 1;
-      value = strtok(NULL, " \n");
-    }
-    if (*n_lines > 1 && n_columns_check != *n_columns){
-      fprintf(stderr,"Error while reading line %d of file %s. Only %ld elements where read\n",
-	      *n_lines, file_name, num_el);
-      exit(EXIT_FAILURE);
-    }
-    n_columns_check = 0;
-    
-  }
-
-  // Close file 
-  fclose(fid);
-  
-}
-
-
-// -------------------------------------------------------------------
 // FUNCTION USED TO SET THE PARAMETERS FOR THE GRID SIZE AND FOR THE
 // NUMBER OF MATSUBARA FREQUENCIES
 // -------------------------------------------------------------------
@@ -183,73 +139,5 @@ void set_nx_nl(int nl1, int nl2, int nc1, int nc2, bool is_qstls, input *in){
   }
   
 }
-
-
-// -------------------------------------------------------------------
-// FUNCTION USED TO READ THE TEXT FILES
-// -------------------------------------------------------------------
-void get_restart_data(char *file_name, int n_lines, int n_columns,
-		      double *data, double *xx, input *in){
-
-  // Variables
-  FILE *fid;
-  char * line = NULL;
-  char * value = NULL;
-  size_t len = 0;
-  ssize_t num_el;
-
-  // Open file
-  fid = NULL;
-  fid = fopen(file_name, "r");
-  if (fid == NULL) {
-    fprintf(stderr,"Error while opening file %s to construct the restart\n", file_name);
-    exit(EXIT_FAILURE);
-  }
-
-  // Read file line by line
-  for (int ii=0; ii<n_lines; ii++) {
-
-    // Get line
-    num_el = getline(&line, &len, fid);
-    if (num_el == -1){
-      fprintf(stderr,"Error while reading file %s during data extraction\n", file_name);
-      exit(EXIT_FAILURE);
-    }
-    
-    // Extract information from the first column
-    value = strtok(line, " \n");
-    if (xx == NULL) {
-      // First column is data
-      data[idx2(ii,0,n_lines)] = atof(value);
-    }
-    else{
-      // First column is the grid
-      xx[ii] = atof(value);
-    }
-
-    // Extract information from the remaining columns
-    for (int jj=1; jj<n_columns; jj++) {
-      value = strtok(NULL, " \n");
-      if (xx == NULL) {
-	data[idx2(ii,jj,n_lines)] = atof(value);
-      }
-      else{
-	data[idx2(ii,jj-1,n_lines)] = atof(value);
-      }
-    }
-    
-  }
-
-  // Close file 
-  fclose(fid);
-
-  // Update input structure
-  if (xx != NULL) {
-    in->xmax = xx[in->nx - 1];
-    in->dx = xx[1] - xx[0];
-  }
-    
-}
-
 
 

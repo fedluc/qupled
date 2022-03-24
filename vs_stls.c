@@ -11,6 +11,157 @@
 #include "vs_stls.h"
 
 // -------------------------------------------------------------------
+// LOCAL FUNCTIONS
+// -------------------------------------------------------------------
+
+// Size of the grid used for thermodynamic integration
+static void get_grid_thermo_size(input *in);
+  
+// Allocate and free arrays
+static void alloc_vs_stls_arrays(input in, double **rsa, double **rsu);
+  
+static void free_vs_stls_arrays(double *rsu, double *rsa);
+
+// Initialize arrays
+static void init_fixed_vs_stls_arrays(input *in, input *vs_in,
+				      vs_struct xx, vs_thermo rsa,
+				      vs_thermo rsu, double *fxc,
+				      double *rs_co, bool verbose);
+
+static void init_tmp_vs_stls_arrays(input *vs_in, vs_struct xx,
+				    vs_struct phi, vs_struct SSHF,
+				    bool verbose);
+
+// Grid used for thermdodynamic integration
+static void rs_grid(double *rsp, input *in);
+
+// Initial guess
+static void initial_guess_vs_stls(vs_struct xx, vs_struct SS,
+				  vs_struct SSHF, vs_struct GG,
+				  vs_struct GG_new, vs_struct phi,
+				  input *vs_in);
+
+
+// Iterations used to solve the VS-STLS scheme
+static void vs_stls_thermo_iterations(vs_struct xx, vs_thermo rsu,
+				      vs_thermo rsa, double *fxc,
+				      double *rs_co, input *vs_in,
+				      bool verbose);
+
+static double vs_stls_thermo_err(double alpha, input *vs_in);
+
+static void vs_stls_thermo_update(double alpha, input *vs_in);
+
+static void vs_stls_struct_iterations(vs_struct SS, vs_struct SSHF,
+				      vs_struct GG, vs_struct GG_new,
+				      vs_struct phi, vs_struct xx,
+				      input *vs_in, bool verbose);
+
+static double vs_stls_struct_err(vs_struct GG, vs_struct GG_new,
+				 input *vs_in);
+
+static void vs_stls_struct_update(vs_struct GG, vs_struct GG_new,
+				  input *vs_in);
+
+
+// Chemical potential calculation
+static void compute_chemical_potential_vs_stls(input *vs_in);
+
+// Static structure factor
+static void compute_ssf_vs_stls(vs_struct SS, vs_struct SSHF, vs_struct GG,
+				vs_struct phi, vs_struct xx, input *vs_in);
+
+static void compute_ssf_HF_vs_stls(vs_struct SS, vs_struct xx, input *vs_in);
+
+
+// Static local field correction
+static void compute_slfc_vs_stls(vs_struct GG, vs_struct SS,
+				 vs_struct xx, input *vs_in);
+
+static void slfc_vs_stls_stls(vs_struct GG, vs_struct SS,
+			      vs_struct GG_stls, vs_struct xx,
+			      input *vs_in);
+
+static void slfc_vs_stls_dx(vs_struct GG, vs_struct GG_stls,
+			    vs_struct xx, input *vs_in);
+
+static void slfc_vs_stls_drs(vs_struct GG, vs_struct GG_stls,
+			     input *vs_in);
+
+static void slfc_vs_stls_dt(vs_struct GG, vs_struct GG_stls,
+			    input *vs_in);
+
+static double slfc_vs_stls_drs_centered(vs_struct GG, int ii, int jj,
+					input *vs_in);
+
+static double slfc_vs_stls_drs_forward(vs_struct GG, int ii, int jj,
+				       input *vs_in);
+
+static double slfc_vs_stls_drs_backward(vs_struct GG, int ii, int jj,
+					input *vs_in);
+
+static double slfc_vs_stls_dt_centered(vs_struct GG, int ii, int jj,
+				       input *vs_in);
+
+static double slfc_vs_stls_dt_forward(vs_struct GG, int ii, int jj,
+				      input *vs_in);
+
+static double slfc_vs_stls_dt_backward(vs_struct GG, int ii, int jj,
+				       input *vs_in);
+
+// Ideal density response
+static void compute_idr_vs_stls(vs_struct phi, vs_struct xx, input *vs_in);
+ 
+// Free parameter to enforce the compressibility sum-rule
+static double compute_alpha(vs_struct xx, vs_thermo rsu,
+			    vs_thermo rsa, double *fxc,
+			    double *rs_co, input *vs_in);
+
+// Integrand for free energy calculation via thermodynamic integration
+static void compute_rsu(vs_struct xx, vs_thermo rsu,
+			vs_thermo rsa, double *rs_co,
+			input *vs_in,
+			bool verbose);
+
+static void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
+			       vs_struct GG, vs_struct GG_new,
+			       vs_struct phi, vs_struct xx,
+			       vs_thermo rsu, vs_thermo rsa,
+			       double *rs_co, input *vs_in,
+			       bool verbose);
+
+// Free energy
+static double compute_free_energy(double *rsa, double *rsu,
+				  double rs_min, double rs_max,
+				  input in);
+
+static double fxc(double rs, void* pp);
+
+static void compute_free_energy_fixed(vs_thermo rsa, vs_thermo rsu,
+				      double *fxc, double *rs_co,
+				      input *vs_in);
+
+// Input and output
+static void write_text_vs_stls(double *SS, double *GG, double *phi,
+			       double *SSHF, double *xx, double *rsu,
+			       double *rsa, input in);
+
+static void write_text_fxc(double *rsu, double *rsp, input in);
+
+static void write_text_alpha_CSR(input in);
+
+static void read_guess_vs_stls(vs_struct SS, vs_struct GG, input *vs_in);
+
+static void write_thermo_vs_stls(vs_thermo rsa, vs_thermo rsu, input *vs_in);
+
+static void read_thermo_vs_stls(vs_thermo *rsa, vs_thermo *rsu,
+				int *nrs, input *vs_in);
+
+static void check_thermo_vs_stls(double dt, double Theta, input in,
+				 size_t it_read, size_t it_expected, FILE *fid,
+				 bool check_grid, bool check_items, bool check_eof);
+
+// -------------------------------------------------------------------
 // FUNCTION USED TO SOLVE THE VS-STLS SCHEME
 // -------------------------------------------------------------------
 
@@ -466,13 +617,7 @@ void compute_ssf_HF_vs_stls(vs_struct SS, vs_struct xx, input *vs_in){
 
   # pragma omp parallel for
   for (int ii=0; ii<VSS_NUMEL; ii++) {
-    if (vs_in[ii].Theta == 0) {
-      compute_ssf_HF_zero_temperature(SS.el[ii], xx.el[ii], vs_in[ii]);
-    }
-    else {
-      compute_ssf_HF_finite_temperature(SS.el[ii], xx.el[ii], vs_in[ii]);
-    }
-	
+    compute_ssf_HF(SS.el[ii], xx.el[ii], vs_in[ii]);
   }
   
 }

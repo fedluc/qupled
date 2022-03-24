@@ -10,6 +10,73 @@
 #include "stls_iet.h"
 
 // -------------------------------------------------------------------
+// LOCAL FUNCTIONS
+// -------------------------------------------------------------------
+
+// Iterations to solve the STLS-IET schemes
+static void stls_iet_iterations(double *SS, double *SSHF,
+			 double *GG, double *GG_new,
+			 double *phi, double *bf,
+			 double *xx, input in,
+			 bool verbose);
+
+// Static local field correction
+static void compute_slfc_iet(double *GG_new, double *GG, double *SS,
+			     double *bf, double *xx, input in);
+
+static double slfc_lev1(double uu, void* pp);
+
+static double slfc_lev2(double ww, void* pp);
+
+// Bridge function term
+static void bridge_function_hnc(double *bf, double *xx, input in);
+
+static void bridge_function_ocp_ioi(double *bf, double *xx, input in);
+
+static void bridge_function_ocp_lct(double *bf, double *xx, input in);
+
+static double rbfr(double rr, void *pp);
+
+// Input and output
+static void write_text_stls_iet(double *SS, double *GG, double *phi, 
+				double *SSHF, double *xx, double *bf,
+				input in);
+
+// -------------------------------------------------------------------
+// LOCAL DATA STRUCTURES
+// -------------------------------------------------------------------
+
+// Parameters for integrals in the static local field correction
+struct slfc_lev1_params {
+
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+  gsl_spline *slfc_sp_ptr;
+  gsl_interp_accel *slfc_acc_ptr;
+  gsl_spline *GG_lev1_sp_ptr;
+  gsl_interp_accel *GG_lev1_acc_ptr;
+  gsl_spline *bf_sp_ptr;
+  gsl_interp_accel *bf_acc_ptr;
+
+};
+
+struct slfc_lev2_params {
+
+  double xx;
+  double uu;
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+
+};
+
+// Parameters for the integrals in the bride function term
+struct bfr_params {
+
+  double Gamma;
+
+};
+
+// -------------------------------------------------------------------
 // FUNCTION USED TO ITERATIVELY SOLVE THE STLS-IET EQUATIONS
 // -------------------------------------------------------------------
 
@@ -135,29 +202,6 @@ void stls_iet_iterations(double *SS, double *SSHF,
 // FUNCTION USED TO COMPUTE THE STATIC LOCAL FIELD CORRECTION
 // -------------------------------------------------------------------
 
-struct slfc_partial_lev1_params {
-
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-  gsl_spline *slfc_sp_ptr;
-  gsl_interp_accel *slfc_acc_ptr;
-  gsl_spline *GG_lev1_sp_ptr;
-  gsl_interp_accel *GG_lev1_acc_ptr;
-  gsl_spline *bf_sp_ptr;
-  gsl_interp_accel *bf_acc_ptr;
-
-};
-
-struct slfc_partial_lev2_params {
-
-  double xx;
-  double uu;
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-
-};
-
-
 void compute_slfc_iet(double *GG_new, double *GG, double *SS,
                       double *bf, double *xx, input in) {
 
@@ -197,8 +241,8 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
 
   // Integration function
   gsl_function ff_lev1_int, ff_lev2_int;
-  ff_lev1_int.function = &slfc_partial_lev1;
-  ff_lev2_int.function = &slfc_partial_lev2;
+  ff_lev1_int.function = &slfc_lev1;
+  ff_lev2_int.function = &slfc_lev2;
 
   // STLS component of the static local field correction
   compute_slfc(GG_new, SS, xx, in);
@@ -214,7 +258,7 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
 	
 	if (xx[jj] >  0.0) {
 
-	  struct slfc_partial_lev2_params pp_lev2 = {xx[ii], xx[jj], 
+	  struct slfc_lev2_params pp_lev2 = {xx[ii], xx[jj], 
 					ssf_sp_ptr, ssf_acc_ptr};
 	  wmin = xx[jj] - xx[ii];
 	  if (wmin < 0.0) wmin = -wmin;
@@ -239,7 +283,7 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
       gsl_spline_init(GG_lev1_sp_ptr, xx, GG_lev1, in.nx);    
       
       // Evaluate integral over u
-      struct slfc_partial_lev1_params pp_lev1 = {ssf_sp_ptr, ssf_acc_ptr,
+      struct slfc_lev1_params pp_lev1 = {ssf_sp_ptr, ssf_acc_ptr,
 				    slfc_sp_ptr, slfc_acc_ptr,
 				    GG_lev1_sp_ptr, GG_lev1_acc_ptr,
 				    bf_sp_ptr, bf_acc_ptr};
@@ -272,9 +316,9 @@ void compute_slfc_iet(double *GG_new, double *GG, double *SS,
 
 }
 
-double slfc_partial_lev1(double uu, void* pp) {
+double slfc_lev1(double uu, void* pp) {
 
-  struct slfc_partial_lev1_params* params = (struct slfc_partial_lev1_params*)pp;
+  struct slfc_lev1_params* params = (struct slfc_lev1_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
   gsl_interp_accel* ssf_acc_ptr = (params->ssf_acc_ptr);
   gsl_spline* slfc_sp_ptr = (params->slfc_sp_ptr);
@@ -293,9 +337,9 @@ double slfc_partial_lev1(double uu, void* pp) {
     return 0;
 }
 
-double slfc_partial_lev2(double ww, void* pp) {
+double slfc_lev2(double ww, void* pp) {
 
-  struct slfc_partial_lev2_params* params = (struct slfc_partial_lev2_params*)pp;
+  struct slfc_lev2_params* params = (struct slfc_lev2_params*)pp;
   double xx = (params->xx);
   double uu = (params->uu);
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
@@ -413,13 +457,6 @@ void bridge_function_ocp_ioi(double *bf, double *xx, input in){
 }
 
 // Bridge function from the parameterization of Lucco Castello and Tolias
-struct bfr_params {
-
-  double Gamma;
-
-};
-
-
 void bridge_function_ocp_lct(double *bf, double *xx, input in){
 
   double ll = pow(4.0/(9.0*M_PI), 1.0/3.0);

@@ -5,13 +5,246 @@
 #include <gsl/gsl_integration.h>
 #include "solvers.h"
 #include "utils.h"
-#include "chemical_potential.h"
-#include "stls.h"
 #include "stls_iet.h"
-#include "qstls.h"
 #include "dynamic_stls.h"
 #include "dynamic_qstls.h"
-#include "dynamic_qstls_iet.h"
+
+// -------------------------------------------------------------------
+// LOCAL FUNCTIONS
+// -------------------------------------------------------------------
+
+// Allocate and free arrays
+static void alloc_dynamic_qstls_iet_arrays(input in,
+					   double **phi_re_2D,
+					   double **phi_im_2D,
+					   double **psi_re_2D,
+					   double **psi_im_2D,
+					   double **phi_re_1D,
+					   double **phi_im_1D,
+					   double **psi_re_1D,
+					   double **psi_im_1D);
+
+static void free_dynamic_qstls_iet_arrays(double *phi_re_2D,
+					  double *phi_im_2D,
+					  double *psi_re_2D,
+					  double *psi_im_2D,
+					  double *phi_re_1D,
+					  double *phi_im_1D,
+					  double *psi_re_1D,
+					  double *psi_im_1D);
+
+// Ideal density response
+static void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
+				    double *WW, double *xx, input in);
+// Bridge function term
+static void get_bf(double **bf, double *xx, input in);
+
+// Auxiliary density response 
+static void compute_dynamic_adr_iet(double *psi_re, double *psi_im,
+				    double *phi_re, double *phi_im,
+				    double *WW, double *SS,
+				    double *bf, double *xx,
+				    input in);
+
+// Auxiliary density response (partially dynamic) 
+static void compute_dynamic_adr_iet_pd(double *phi_re, double *phi_im,
+				       double *psi_re, double *psi_im,
+				       double *WW, double *SS,
+				       double *bf, double *xx,
+				       input in);
+
+// Auxiliary density response (fully dynamic) 
+static void compute_dynamic_adr_iet_fd(double *phi_re, double *phi_im,
+				       double *psi_re, double *psi_im,
+				       double *WW, double *SS,
+				       double *bf, double *xx,
+				       input in);
+
+// Iterations to determine the auxiliary density response
+static double adr_iet_err(double *psi_re, double *psi_re_new, input in);
+
+static void adr_iet_update(double *psi_re, double *psi_re_new, input in);
+
+// Auxiliary density response (partially dynamic, real part) 
+static void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
+					    double *psi_re_fixed, double *phi_re,
+					    double *WW, double *SS, double *bf,
+					    double *xx, input in);
+
+static void compute_dynamic_adr_iet_re_lev1_1(double *int_lev1_1, double *psi_re,
+					      double *phi_re, double *SS,
+					      double *bf, input in);
+
+static void read_dynamic_adr_iet_fixed(double *var, double *psi_re_fixed,
+				       int ii, int jj, input in);
+
+static void write_dynamic_adr_iet_fixed(double *var, double *psi_re_fixed,
+					int ii, int jj, input in);
+
+static double adr_iet_re_lev1_xW(double ww, void* pp);
+
+static void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
+					    double xx, double *SS,
+					    double *ww, input in);
+
+static double adr_iet_re_lev2_xwW(double uu, void* pp);
+
+static void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
+					    double xx, double ww,
+					    double *uu, input in);
+
+static double adr_iet_re_lev3_xwuW(double qq, void* pp);
+
+static double adr_iet_re_lev3_xwu0(double qq, void* pp);
+
+// Auxiliary density response (partially dynamic, imaginary part) 
+static void compute_dynamic_adr_iet_im_lev1(double *psi_im, double *psi_re,
+					    double *phi_re, double *WW,
+					    double *SS, double *bf,
+					    double *xx, input in);
+
+static void compute_dynamic_adr_iet_im_lev1_1(double *int_lev1_1, double *psi_re,
+					      double *phi_re, double *SS,
+					      double *bf, input in);
+
+static double adr_iet_im_lev1_xW(double ww, void* pp);
+
+static void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
+					    double xx, double *SS,
+					    double *ww, input in);
+
+static double adr_iet_im_lev2_xwW(double uu, void* pp);
+
+static double adr_iet_im_lev2_xw0(double uu, void* pp);
+
+static void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
+					    double xx, double ww,
+					    double *uu, input in);
+
+static double adr_iet_im_lev3_xwuW(double qq, void* pp);
+
+// Auxiliary density response (fully dynamic, real part) 
+static void compute_dynamic_adr_iet_fd_re(double *psi_re_new,
+					  double *psi_re, double *psi_im,
+					  double *phi_re, double *phi_im,
+					  double *psi_re_fixed_p1,
+					  double *psi_re_fixed_p2,
+					  double *WW, double *SS,
+					  double *bf, double *xx,
+					  input in);
+
+static void compute_dynamic_adr_iet_fd_re_lev1(double *psi_re_new,
+					       double *psi_re, double *psi_im,
+					       double *phi_re, double *phi_im,
+					       double *psi_re_fixed,
+					       double *WW, double *SS,
+					       double *bf, double *xx,
+					       int ncomp, input in);
+
+static void compute_dynamic_adr_iet_fd_re_lev1_p1_1(double *int_lev1_1, double *psi_re,
+						    double *psi_im, double *phi_re,
+						    double *phi_im, double *SS,
+						    double *bf, int jj, input in);
+
+static void compute_dynamic_adr_iet_fd_re_lev1_p2_1(double *int_lev1_1, double *psi_re,
+						    double *psi_im, double *phi_re,
+						    double *phi_im, double *SS,
+						    int jj, input in);
+
+// Dynamic structure factor
+static void compute_dsf_qstls_iet(double *SSn, double *phi_re, double *phi_im,
+				  double *psi_re, double *psi_im,
+				  double *WW ,input in);
+
+// Input and output
+static void write_fixed_dynamic_qstls_iet(double *phi_re, double *phi_im,
+					  double *psi_re, double *psi_im,
+					  input in);
+
+static void read_fixed_dynamic_qstls_iet(double *phi_re, double *phi_im,
+					 double *psi_re, double *psi_im,
+					 input in);
+
+static void check_dynamic_qstls_iet(double dx, int nx, double xmax,
+				    double dW, int nW, double Wmax,
+				    double Theta, double rs,
+				    input in, size_t it_read,
+				    size_t it_expected, FILE *fid,
+				    bool check_grid, bool check_items,
+				    bool check_eof);
+
+// -------------------------------------------------------------------
+// LOCAL CONSTANTS AND DATA STRUCTURES
+// -------------------------------------------------------------------
+
+// Parameters for the integrals in the real part of the auxiliary
+// density response
+struct adr_iet_re_lev1_params {
+
+  gsl_spline *int_lev1_1_sp_ptr;
+  gsl_interp_accel *int_lev1_1_acc_ptr;
+  gsl_spline *int_lev1_2_sp_ptr;
+  gsl_interp_accel *int_lev1_2_acc_ptr;
+
+};
+
+struct adr_iet_re_lev2_params {
+
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+  gsl_spline *int_lev2_sp_ptr;
+  gsl_interp_accel *int_lev2_acc_ptr;
+  
+};
+
+struct adr_iet_re_lev3_params {
+
+  double mu;
+  double Theta;
+  double xx;
+  double ww;
+  double uu;
+  double WW;
+  
+};
+
+
+// Parameters for the integrals in the imaginary part of the auxiliary
+// density response
+struct adr_iet_im_lev1_params {
+
+  gsl_spline *int_lev1_1_sp_ptr;
+  gsl_interp_accel *int_lev1_1_acc_ptr;
+  gsl_spline *int_lev1_2_sp_ptr;
+  gsl_interp_accel *int_lev1_2_acc_ptr;
+
+};
+
+
+struct adr_iet_im_lev2_params {
+
+  double mu;
+  double Theta;
+  double xx;
+  double ww;
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+  gsl_spline *int_lev2_sp_ptr;
+  gsl_interp_accel *int_lev2_acc_ptr;
+  
+};
+
+struct adr_iet_im_lev3_params {
+
+  double mu;
+  double Theta;
+  double xx;
+  double ww;
+  double uu;
+  double WW;
+  
+};
+
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF QSTLS SCHEME
@@ -524,15 +757,6 @@ void adr_iet_update(double *psi_re, double *psi_re_new, input in){
 
 // Real part of the auxiliary density response (level 1)
 
-struct adr_iet_re_lev1_params {
-
-  gsl_spline *int_lev1_1_sp_ptr;
-  gsl_interp_accel *int_lev1_1_acc_ptr;
-  gsl_spline *int_lev1_2_sp_ptr;
-  gsl_interp_accel *int_lev1_2_acc_ptr;
-
-};
-
 void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
 				     double *psi_re_fixed, double *phi_re,
 				     double *WW, double *SS,
@@ -583,7 +807,7 @@ void compute_dynamic_adr_iet_re_lev1(double *psi_re_new, double *psi_re,
 
 	// Integration function
 	gsl_function ff_int_lev1;
-	ff_int_lev1.function = &adr_iet_re_lev1_partial_xW;
+	ff_int_lev1.function = &adr_iet_re_lev1_xW;
 
 	// Integrand (part 1)
 	compute_dynamic_adr_iet_re_lev1_1(int_lev1_1, psi_re, phi_re, SS, bf, in);
@@ -662,7 +886,7 @@ void write_dynamic_adr_iet_fixed(double *var, double *psi_re_fixed,
 
 
 // Integrand for level 1 of the real auxiliary density response (vector = x, frequency = W)
-double adr_iet_re_lev1_partial_xW(double ww, void* pp) {
+double adr_iet_re_lev1_xW(double ww, void* pp) {
   
   struct adr_iet_re_lev1_params* params = (struct adr_iet_re_lev1_params*)pp;
   gsl_spline* int_lev1_1_sp_ptr = (params->int_lev1_1_sp_ptr);
@@ -681,15 +905,6 @@ double adr_iet_re_lev1_partial_xW(double ww, void* pp) {
 
 
 // Real part of the auxiliary density response (level 2)
-
-struct adr_iet_re_lev2_params {
-
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-  gsl_spline *int_lev2_sp_ptr;
-  gsl_interp_accel *int_lev2_acc_ptr;
-  
-};
 
 void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
 				     double xx, double *SS,
@@ -726,7 +941,7 @@ void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
      
   // Integration function
   gsl_function ff_int_lev2;
-  ff_int_lev2.function = &adr_iet_re_lev2_partial_xwW;
+  ff_int_lev2.function = &adr_iet_re_lev2_xwW;
 
   // Interpolation of the static structure factor
   gsl_spline_init(ssf_sp_ptr, ww, SS, in.nx);
@@ -775,7 +990,7 @@ void compute_dynamic_adr_iet_re_lev2(double *int_lev1, double WW,
 
 
 // Integrand for level 2 of the real auxiliary density response (vectors = {x,w}, frequency = W)
-double adr_iet_re_lev2_partial_xwW(double uu, void* pp) {
+double adr_iet_re_lev2_xwW(double uu, void* pp) {
   
   struct adr_iet_re_lev2_params* params = (struct adr_iet_re_lev2_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
@@ -791,17 +1006,6 @@ double adr_iet_re_lev2_partial_xwW(double uu, void* pp) {
 
 // Real part of the auxiliary density response (level 3)
 
-struct adr_iet_re_lev3_params {
-
-  double mu;
-  double Theta;
-  double xx;
-  double ww;
-  double uu;
-  double WW;
-  
-};
-
 void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
 				     double xx, double ww,
 				     double *uu, input in) {
@@ -816,9 +1020,9 @@ void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
   // Integration function
   gsl_function ff_int_lev3;
   if (WW == 0.0)
-    ff_int_lev3.function = &adr_iet_re_lev3_partial_xwu0;
+    ff_int_lev3.function = &adr_iet_re_lev3_xwu0;
   else
-    ff_int_lev3.function = &adr_iet_re_lev3_partial_xwuW;
+    ff_int_lev3.function = &adr_iet_re_lev3_xwuW;
   
   // Loop over u (wave-vector)
   for (int ii=0; ii<in.nx; ii++){
@@ -841,7 +1045,7 @@ void compute_dynamic_adr_iet_re_lev3(double *int_lev2, double WW,
 }
 
 // Integrand for level 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = W)
-double adr_iet_re_lev3_partial_xwuW(double qq, void* pp) {
+double adr_iet_re_lev3_xwuW(double qq, void* pp) {
   
   struct adr_iet_re_lev3_params* params = (struct adr_iet_re_lev3_params*)pp;
   double mu = (params->mu);
@@ -868,7 +1072,7 @@ double adr_iet_re_lev3_partial_xwuW(double qq, void* pp) {
 
 
 // Integrand for level 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = 0)
-double adr_iet_re_lev3_partial_xwu0(double qq, void* pp) {
+double adr_iet_re_lev3_xwu0(double qq, void* pp) {
   
   struct adr_iet_re_lev3_params* params = (struct adr_iet_re_lev3_params*)pp;
   double mu = (params->mu);
@@ -908,15 +1112,6 @@ double adr_iet_re_lev3_partial_xwu0(double qq, void* pp) {
 // ------------------------------------------------------------------
 
 // Imaginary part of the auxiliary density response (level 1)
-
-struct adr_iet_im_lev1_params {
-
-  gsl_spline *int_lev1_1_sp_ptr;
-  gsl_interp_accel *int_lev1_1_acc_ptr;
-  gsl_spline *int_lev1_2_sp_ptr;
-  gsl_interp_accel *int_lev1_2_acc_ptr;
-
-};
 
 void compute_dynamic_adr_iet_im_lev1(double *psi_im, double *psi_re,
 				     double *phi_re, double *WW,
@@ -964,7 +1159,7 @@ void compute_dynamic_adr_iet_im_lev1(double *psi_im, double *psi_re,
 
 	// Integration function
 	gsl_function ff_int_lev1;
-	ff_int_lev1.function = &adr_iet_im_lev1_partial_xW;
+	ff_int_lev1.function = &adr_iet_im_lev1_xW;
 
 	// Integrand (part 1)
 	compute_dynamic_adr_iet_im_lev1_1(int_lev1_1, psi_re, phi_re, SS, bf, in);
@@ -1020,7 +1215,7 @@ void compute_dynamic_adr_iet_im_lev1_1(double *int_lev1_1, double *psi_re,
 }
 
 // Integrand for level 1 of the imaginary auxiliary density response (vector = x, frequency = W)
-double adr_iet_im_lev1_partial_xW(double ww, void* pp) {
+double adr_iet_im_lev1_xW(double ww, void* pp) {
   
   struct adr_iet_im_lev1_params* params = (struct adr_iet_im_lev1_params*)pp;
   gsl_spline* int_lev1_1_sp_ptr = (params->int_lev1_1_sp_ptr);
@@ -1038,19 +1233,6 @@ double adr_iet_im_lev1_partial_xW(double ww, void* pp) {
 }
 
 // Imaginary part of the auxiliary density response (level 2)
-
-struct adr_iet_im_lev2_params {
-
-  double mu;
-  double Theta;
-  double xx;
-  double ww;
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-  gsl_spline *int_lev2_sp_ptr;
-  gsl_interp_accel *int_lev2_acc_ptr;
-  
-};
 
 void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
 				     double xx, double *SS,
@@ -1088,9 +1270,9 @@ void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
   // Integration function
   gsl_function ff_int_lev2;
   if (WW == 0.0)
-    ff_int_lev2.function = &adr_iet_im_lev2_partial_xw0;
+    ff_int_lev2.function = &adr_iet_im_lev2_xw0;
   else
-    ff_int_lev2.function = &adr_iet_im_lev2_partial_xwW;
+    ff_int_lev2.function = &adr_iet_im_lev2_xwW;
 
   // Interpolation of the static structure factor
   gsl_spline_init(ssf_sp_ptr, ww, SS, in.nx);
@@ -1141,7 +1323,7 @@ void compute_dynamic_adr_iet_im_lev2(double *int_lev1, double WW,
 
 
 // Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = W)
-double adr_iet_im_lev2_partial_xwW(double uu, void* pp) {
+double adr_iet_im_lev2_xwW(double uu, void* pp) {
   
   struct adr_iet_im_lev2_params* params = (struct adr_iet_im_lev2_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
@@ -1157,7 +1339,7 @@ double adr_iet_im_lev2_partial_xwW(double uu, void* pp) {
 
 
 // Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = 0)
-double adr_iet_im_lev2_partial_xw0(double uu, void* pp) {
+double adr_iet_im_lev2_xw0(double uu, void* pp) {
   
   struct adr_iet_im_lev2_params* params = (struct adr_iet_im_lev2_params*)pp;
   double mu = (params->mu);
@@ -1181,17 +1363,6 @@ double adr_iet_im_lev2_partial_xw0(double uu, void* pp) {
 
 // Imaginary part of the auxiliary density response (level 3)
 
-struct adr_iet_im_lev3_params {
-
-  double mu;
-  double Theta;
-  double xx;
-  double ww;
-  double uu;
-  double WW;
-  
-};
-
 void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
 				     double xx, double ww,
 				     double *uu, input in) {
@@ -1210,7 +1381,7 @@ void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
     
   // Integration function
   gsl_function ff_int_lev3;
-  ff_int_lev3.function = &adr_iet_im_lev3_partial_xwuW;
+  ff_int_lev3.function = &adr_iet_im_lev3_xwuW;
   
   // Loop over u (wave-vector)
   for (int ii=0; ii<in.nx; ii++){
@@ -1241,7 +1412,7 @@ void compute_dynamic_adr_iet_im_lev3(double *int_lev2, double WW,
 }
 
 // Integrand for level 3 of the imaginary  auxiliary density response (vectors = {x,w,u}, frequency = W)
-double adr_iet_im_lev3_partial_xwuW(double qq, void* pp) {
+double adr_iet_im_lev3_xwuW(double qq, void* pp) {
   
   struct adr_iet_im_lev3_params* params = (struct adr_iet_im_lev3_params*)pp;
   double mu = (params->mu);
@@ -1583,7 +1754,7 @@ void compute_dynamic_adr_iet_fd_re_lev1(double *psi_re_new,
 
 	// Integration function
 	gsl_function ff_int_lev1;
-	ff_int_lev1.function = &adr_iet_re_lev1_partial_xW;
+	ff_int_lev1.function = &adr_iet_re_lev1_xW;
 
 	// Integrand (part 1)
 	if (ncomp == 1){

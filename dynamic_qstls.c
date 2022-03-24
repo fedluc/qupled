@@ -5,12 +5,138 @@
 #include <gsl/gsl_integration.h>
 #include "solvers.h"
 #include "utils.h"
-#include "restart.h"
-#include "chemical_potential.h"
-#include "stls.h"
-#include "qstls.h"
 #include "dynamic_stls.h"
 #include "dynamic_qstls.h"
+
+// -------------------------------------------------------------------
+// LOCAL FUNCTIONS
+// -------------------------------------------------------------------
+
+// Auxiliary density response
+static void compute_dynamic_adr(double *psi_re,  double *psi_im,
+				double *WW,  double *SS,
+				double *xx, input in);
+
+// Auxiliary density response (real part)
+static void compute_dynamic_adr_re_lev1(double *psi_re,  double *WW,
+					double *SS,  double *xx,
+					input in);
+
+static double adr_re_lev1_xW(double ww,  void* pp);
+
+static void compute_dynamic_adr_re_lev2(double *int_lev1,  double WW,
+					double *ww, input in);
+
+static double adr_re_lev2_xwW(double uu,  void* pp);
+
+static void compute_dynamic_adr_re_lev3(double *int_lev2,  double WW,
+					double ww,  double *qq,  double *uu,
+					input in);
+
+static double adr_re_lev3_xwuW(double qq,  void* pp);
+
+static double adr_re_lev3_xwu0(double qq,  void* pp);
+
+// Auxiliary density response (imaginary part)
+static void compute_dynamic_adr_im_lev1(double *psi_re,  double *WW,
+					double *SS,  double *xx,
+					input in);
+
+static double adr_im_lev1_xW(double ww,  void* pp);
+
+static void compute_dynamic_adr_im_lev2(double *psi_im_lev1,  double WW,
+					double *ww, input in);
+
+static double adr_im_lev2_xwW(double uu,  void* pp);
+
+static double adr_im_lev2_xw0(double uu,  void* pp);
+
+static void compute_dynamic_adr_im_lev3(double *psi_im_lev2, double WW,
+					double ww,  double *qq,
+					double *uu, input in);
+
+static double adr_im_lev3_xwuW(double qq,  void* pp);
+
+// Dynamic structure factor
+static void compute_dsf_qstls(double *SSn,  double *phi_re,
+			      double *phi_im, double *psi_re,
+			      double *psi_im, double *WW,
+			      input in);
+
+// -------------------------------------------------------------------
+// LOCAL CONSTANTS AND DATA STRUCTURES
+// -------------------------------------------------------------------
+
+// Number of data points for the integration of the second part
+// auxiliary density response
+#define ADR_NU 201
+
+// Parameters for the integrals in the real part of the auxiliary
+// density response
+struct adr_re_lev1_params {
+
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+  gsl_spline *int_lev1_sp_ptr;
+  gsl_interp_accel *int_lev1_acc_ptr;
+
+};
+
+
+struct adr_re_lev2_params {
+
+  double ww;
+  double xx;
+  gsl_spline *int_lev2_sp_ptr;
+  gsl_interp_accel *int_lev2_acc_ptr;
+  
+};
+
+struct adr_re_lev3_params {
+
+  double mu;
+  double Theta;
+  double xx;
+  double ww;
+  double uu;
+  double WW;
+  
+};
+
+// Parameters for the integrals in the imaginary part of the auxiliary
+// density response
+struct adr_im_lev1_params {
+
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+  gsl_spline *psi_im_lev1_sp_ptr;
+  gsl_interp_accel *psi_im_lev1_acc_ptr;
+
+};
+
+struct adr_im_lev2_params {
+
+  double ww;
+  double xx;
+  double Theta;
+  double mu;
+  gsl_spline *psi_im_lev2_sp_ptr;
+  gsl_interp_accel *psi_im_lev2_acc_ptr;
+
+  
+};
+
+struct adr_im_lev3_params {
+
+  double mu;
+  double Theta;
+  double xx;
+  double ww;
+  double uu;
+  double WW;
+  
+};
+
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF QSTLS SCHEME
@@ -138,7 +264,7 @@ void get_ssf(double **SS, double **xx, input *in){
   }
  
   // Get size of data stored in the input file
-  get_restart_data_format(ssf_file_name, &in_tmp.nx, &in_tmp.nl);
+  get_data_format_from_text(ssf_file_name, &in_tmp.nx, &in_tmp.nl);
 
   // Allocate temporary arrays to store the structural properties
   *SS = malloc( sizeof(double) * in_tmp.nx);
@@ -151,8 +277,8 @@ void get_ssf(double **SS, double **xx, input *in){
   }
 
   // Get data from input file
-  get_restart_data(ssf_file_name, in_tmp.nx, in_tmp.nl,
-		   *SS, *xx, &in_tmp);
+  get_data_from_text(ssf_file_name, in_tmp.nx, in_tmp.nl,
+		     *SS, *xx, &in_tmp);
   in->nx=in_tmp.nx;
   in->dx=in_tmp.dx; // Set by get_restart_data
   in->xmax=in_tmp.xmax; // Set by get_restart_data
@@ -186,15 +312,6 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
 // ------------------------------------------------------------------
 
 // Real part of the auxiliary density response (level 1)
-
-struct adr_re_lev1_params {
-
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-  gsl_spline *int_lev1_sp_ptr;
-  gsl_interp_accel *int_lev1_acc_ptr;
-
-};
 
 void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
 				  double *SS, double *xx,
@@ -239,7 +356,7 @@ void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
 
       // Integration function
       gsl_function ff_int_lev1;
-      ff_int_lev1.function = &adr_re_lev1_partial_xW;
+      ff_int_lev1.function = &adr_re_lev1_xW;
       
       // Inner integrals
       compute_dynamic_adr_re_lev2(int_lev1, WW[ii], xx, in);
@@ -273,7 +390,7 @@ void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
 }
 
 // Integrand for level 1 of the real auxiliary density response (vector = x, frequency = W)
-double adr_re_lev1_partial_xW(double ww, void* pp) {
+double adr_re_lev1_xW(double ww, void* pp) {
   
   struct adr_re_lev1_params* params = (struct adr_re_lev1_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
@@ -289,15 +406,6 @@ double adr_re_lev1_partial_xW(double ww, void* pp) {
 
 
 // Real part of the auxiliary density response (level 2)
-
-struct adr_re_lev2_params {
-
-  double ww;
-  double xx;
-  gsl_spline *int_lev2_sp_ptr;
-  gsl_interp_accel *int_lev2_acc_ptr;
-  
-};
 
 void compute_dynamic_adr_re_lev2(double *int_lev1, double WW,
 				  double *ww, input in) {
@@ -325,7 +433,7 @@ void compute_dynamic_adr_re_lev2(double *int_lev1, double WW,
      
   // Integration function
   gsl_function ff_int_lev2;
-  ff_int_lev2.function = &adr_re_lev2_partial_xwW;
+  ff_int_lev2.function = &adr_re_lev2_xwW;
   
 
   // Fill array with integration variable (u)
@@ -365,7 +473,7 @@ void compute_dynamic_adr_re_lev2(double *int_lev1, double WW,
 
 
 // Integrand for level 2 of the real auxiliary density response (vectors = {x,w}, frequency = W)
-double adr_re_lev2_partial_xwW(double uu, void* pp) {
+double adr_re_lev2_xwW(double uu, void* pp) {
   
   struct adr_re_lev2_params* params = (struct adr_re_lev2_params*)pp;
   double xx = (params->xx);
@@ -383,17 +491,6 @@ double adr_re_lev2_partial_xwW(double uu, void* pp) {
 
 // Real part of the auxiliary density response (level 3)
 
-struct adr_re_lev3_params {
-
-  double mu;
-  double Theta;
-  double xx;
-  double ww;
-  double uu;
-  double WW;
-  
-};
-
 void compute_dynamic_adr_re_lev3(double *int_lev2, double WW,
 				  double ww, double *qq, double *uu,
 				  input in) {
@@ -409,9 +506,9 @@ void compute_dynamic_adr_re_lev3(double *int_lev2, double WW,
   // Integration function
   gsl_function ff_int_lev3;
   if (WW == 0.0)
-    ff_int_lev3.function = &adr_re_lev3_partial_xwu0;
+    ff_int_lev3.function = &adr_re_lev3_xwu0;
   else
-    ff_int_lev3.function = &adr_re_lev3_partial_xwuW;
+    ff_int_lev3.function = &adr_re_lev3_xwuW;
   
   // Loop over u (wave-vector squared)
   for (int ii=0; ii<ADR_NU; ii++){
@@ -433,7 +530,7 @@ void compute_dynamic_adr_re_lev3(double *int_lev2, double WW,
 }
 
 // Integrand for level 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = W)
-double adr_re_lev3_partial_xwuW(double qq, void* pp) {
+double adr_re_lev3_xwuW(double qq, void* pp) {
   
   struct adr_re_lev3_params* params = (struct adr_re_lev3_params*)pp;
   double mu = (params->mu);
@@ -462,7 +559,7 @@ double adr_re_lev3_partial_xwuW(double qq, void* pp) {
 
 
 // Integrand for level 3 of the real  auxiliary density response (vectors = {x,w,u}, frequency = 0)
-double adr_re_lev3_partial_xwu0(double qq, void* pp) {
+double adr_re_lev3_xwu0(double qq, void* pp) {
   
   struct adr_re_lev3_params* params = (struct adr_re_lev3_params*)pp;
   double mu = (params->mu);
@@ -504,15 +601,6 @@ double adr_re_lev3_partial_xwu0(double qq, void* pp) {
 
 // Imaginary part of the auxiliary density response (level 1)
 
-struct adr_im_lev1_params {
-
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-  gsl_spline *psi_im_lev1_sp_ptr;
-  gsl_interp_accel *psi_im_lev1_acc_ptr;
-
-};
-
 void compute_dynamic_adr_im_lev1(double *psi_im, double *WW,
 				  double *SS, double *xx,
 				  input in) {
@@ -553,7 +641,7 @@ void compute_dynamic_adr_im_lev1(double *psi_im, double *WW,
       
       // Integration function
       gsl_function ff_int_lev1;
-      ff_int_lev1.function = &adr_im_lev1_partial_xW;
+      ff_int_lev1.function = &adr_im_lev1_xW;
       
       // Inner integrals
       compute_dynamic_adr_im_lev2(psi_im_lev1, WW[ii], xx, in);
@@ -588,7 +676,7 @@ void compute_dynamic_adr_im_lev1(double *psi_im, double *WW,
 }
 
 // Integrand for level 1 of the imaginary auxiliary density response (vector = x, frequency = W)
-double adr_im_lev1_partial_xW(double ww, void* pp) {
+double adr_im_lev1_xW(double ww, void* pp) {
   
   struct adr_im_lev1_params* params = (struct adr_im_lev1_params*)pp;
   gsl_spline* ssf_sp_ptr = (params->ssf_sp_ptr);
@@ -604,18 +692,6 @@ double adr_im_lev1_partial_xW(double ww, void* pp) {
 
 
 // Imaginary part of the auxiliary density response (level 2)
-
-struct adr_im_lev2_params {
-
-  double ww;
-  double xx;
-  double Theta;
-  double mu;
-  gsl_spline *psi_im_lev2_sp_ptr;
-  gsl_interp_accel *psi_im_lev2_acc_ptr;
-
-  
-};
 
 void compute_dynamic_adr_im_lev2(double *psi_im_lev1, double WW,
 				  double *ww, input in) {
@@ -644,9 +720,9 @@ void compute_dynamic_adr_im_lev2(double *psi_im_lev1, double WW,
   // Integration function
   gsl_function ff_int_lev2;
   if (WW == 0.0) 
-    ff_int_lev2.function = &adr_im_lev2_partial_xw0;
+    ff_int_lev2.function = &adr_im_lev2_xw0;
   else 
-    ff_int_lev2.function = &adr_im_lev2_partial_xwW;
+    ff_int_lev2.function = &adr_im_lev2_xwW;
 
   // Fill array with integration variable (u)
   for (int ii=0; ii<ADR_NU; ii++){
@@ -693,7 +769,7 @@ void compute_dynamic_adr_im_lev2(double *psi_im_lev1, double WW,
 
 
 // Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = W)
-double adr_im_lev2_partial_xwW(double uu, void* pp) {
+double adr_im_lev2_xwW(double uu, void* pp) {
   
   struct adr_im_lev2_params* params = (struct adr_im_lev2_params*)pp;
   double xx = (params->xx);
@@ -710,7 +786,7 @@ double adr_im_lev2_partial_xwW(double uu, void* pp) {
 }
 
 // Integrand for level 2 of the imaginary auxiliary density response (vectors = {x,w}, frequency = 0)
-double adr_im_lev2_partial_xw0(double uu, void* pp) {
+double adr_im_lev2_xw0(double uu, void* pp) {
   
   struct adr_im_lev2_params* params = (struct adr_im_lev2_params*)pp;
   double xx = (params->xx);
@@ -729,17 +805,6 @@ double adr_im_lev2_partial_xw0(double uu, void* pp) {
 
 
 // Imaginary part of the auxiliary density response (level 3)
-
-struct adr_im_lev3_params {
-
-  double mu;
-  double Theta;
-  double xx;
-  double ww;
-  double uu;
-  double WW;
-  
-};
 
 void compute_dynamic_adr_im_lev3(double *psi_im_lev2, double WW,
 				  double ww, double *qq, double *uu,
@@ -760,7 +825,7 @@ void compute_dynamic_adr_im_lev3(double *psi_im_lev2, double WW,
     
   // Integration function
   gsl_function ff_int_lev3;
-  ff_int_lev3.function = &adr_im_lev3_partial_xwuW;
+  ff_int_lev3.function = &adr_im_lev3_xwuW;
   
   // Loop over u (wave-vector squared)
   for (int ii=0; ii<ADR_NU; ii++){
@@ -789,7 +854,7 @@ void compute_dynamic_adr_im_lev3(double *psi_im_lev2, double WW,
 }
 
 // Integrand for level 3 of the imaginary auxiliary density response (vectors = {x,w,u}, frequency = W)
-double adr_im_lev3_partial_xwuW(double qq, void* pp) {
+double adr_im_lev3_xwuW(double qq, void* pp) {
   
   struct adr_im_lev3_params* params = (struct adr_im_lev3_params*)pp;
   double mu = (params->mu);

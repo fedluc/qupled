@@ -44,6 +44,15 @@ int idx3(int xx, int yy, int zz,
 
 int get_sign(double num);
 
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO READ DATA FROM TEXT FILES
+// -------------------------------------------------------------------
+
+void get_data_format_from_text(char * file_name, int *n_lines,
+			       int *n_columns);
+
+void get_data_from_text(char *file_name, int n_lines, int n_columns,
+			double *data, double *xx, input *in);
 
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE INTERNAL ENERGY
@@ -51,15 +60,11 @@ int get_sign(double num);
 
 double compute_internal_energy(double *SS, double *xx, input in);
 
-double uex(double yy, void *pp);
-
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE RADIAL DISTRIBUTION FUNCTION
 // -------------------------------------------------------------------
 
 void compute_rdf(double *gg, double *rr, double *SS,
 		 double *xx, input in);
-
-double xssf(double xx, void *pp);
 
 #endif

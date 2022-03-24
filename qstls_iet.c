@@ -6,9 +6,102 @@
 #include "solvers.h"
 #include "utils.h"
 #include "stls.h"
-#include "qstls.h"
-#include "qstls_iet.h"
 #include "stls_iet.h"
+#include "qstls.h"
+
+// -------------------------------------------------------------------
+// LOCAL FUNCTIONS
+// -------------------------------------------------------------------
+
+// Allocate and free arrays
+static void alloc_qstls_iet_arrays(input in, double **psi_new);
+
+static void free_qstls_iet_arrays(double *psi_new);
+
+// Initial guess
+static void initial_guess_qstls_iet(double *xx, double *SS,
+				    double *SSHF, double *psi,
+				    double *phi, double *bf,
+				    input in);
+
+// Iterative solution
+static void qstls_iet_iterations(double *SS, double *SS_new,
+			  double *SSHF, double *psi,
+			  double *psi_new, double *psi_fixed_qstls,
+			  double *phi, double *bf, 
+			  double *xx, input in,
+			  bool verbose);
+
+static void qstls_iet_update(double *SS, double *SS_new,
+		      double *psi, double *psi_new,
+		      input in);
+
+
+// Fixed component of the auxiliary density response
+static void init_fixed_qstls_iet_arrays(double *xx, input in,
+					bool verbose);
+
+static void compute_adr_iet_fixed(double *xx, input in);
+
+static double adr_iet_fixed_xuwl(double yy, void* pp);
+
+static double adr_iet_fixed_xuw0(double yy, void* pp);
+
+// Auxiliary density response
+static void compute_adr_iet(double *psi_new, double *psi,
+			    double *psi_fixed_qstls,
+			    double *phi, double *SS,
+			    double *bf, double *xx,
+			    input in);
+
+static double adr_iet_lev1_partial(double uu, void* pp);
+
+static double adr_iet_lev2_partial(double ww, void* pp);
+
+// Static structure factor
+static void compute_ssf_qstls_iet(double *SS, double *SSHF,
+				  double *psi, double *phi,
+				  double *bf, double *xx, input in);
+
+// Input and output
+static void write_text_qstls_iet(double *SS, double *psi, double *phi,
+				 double *SSHF, double *bf, double *xx,
+				 input in);
+
+static void write_text_sdr_qstls_iet(double *psi, double *phi,
+				     double *bf, double *xx,
+				     input in);
+
+// -------------------------------------------------------------------
+// LOCAL DATA STRUCTURES 
+// -------------------------------------------------------------------
+
+struct adr_iet_fixed_params {
+
+  double mu;
+  double Theta;
+  double ll;
+  double xx;
+  double uu;
+  double ww;
+
+};
+
+
+struct adr_iet_lev1_params {
+
+  gsl_spline *adr_lev1_sp_ptr;
+  gsl_interp_accel *adr_lev1_acc_ptr;
+
+};
+
+
+struct adr_iet_lev2_params {
+
+  gsl_spline *adr_lev2_sp_ptr;
+  gsl_interp_accel *adr_lev2_acc_ptr;
+
+};
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS EQUATIONS
@@ -213,18 +306,6 @@ void init_fixed_qstls_iet_arrays(double *xx, input in, bool verbose){
   
 };
 
-
-struct adr_iet_fixed_params {
-
-  double mu;
-  double Theta;
-  double ll;
-  double xx;
-  double uu;
-  double ww;
-
-};
-
 // Fixed component of the auxiliary density response within the QSTLS-IET scheme
 void compute_adr_iet_fixed(double *xx, input in) {
 
@@ -267,10 +348,10 @@ void compute_adr_iet_fixed(double *xx, input in) {
     	// Integration function
     	gsl_function ff_int;
     	if (ll == 0){
-    	  ff_int.function = &adr_iet_fixed_partial_xuw0;
+    	  ff_int.function = &adr_iet_fixed_xuw0;
     	}
     	else {
-    	  ff_int.function = &adr_iet_fixed_partial_xuwl;
+    	  ff_int.function = &adr_iet_fixed_xuwl;
     	}
 	
     	// Loop over u (wave-vector)
@@ -316,7 +397,7 @@ void compute_adr_iet_fixed(double *xx, input in) {
 }
 
 // Partial auxiliary density response (vectors = {x,u,w}, frequency = 0)
-double adr_iet_fixed_partial_xuwl(double yy, void* pp) {
+double adr_iet_fixed_xuwl(double yy, void* pp) {
   
   struct adr_iet_fixed_params* params = (struct adr_iet_fixed_params*)pp;
   double mu = (params->mu);
@@ -340,7 +421,7 @@ double adr_iet_fixed_partial_xuwl(double yy, void* pp) {
 
 
 // Partial auxiliary density response (vectors = {x,u,w}, frequency = 0)
-double adr_iet_fixed_partial_xuw0(double yy, void* pp) {
+double adr_iet_fixed_xuw0(double yy, void* pp) {
 
   struct adr_iet_fixed_params* params = (struct adr_iet_fixed_params*)pp;
   double mu = (params->mu);
@@ -366,20 +447,6 @@ double adr_iet_fixed_partial_xuw0(double yy, void* pp) {
 // FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE
 // ---------------------------------------------------------------------------
 
-struct adr_iet_lev1_params {
-
-  gsl_spline *adr_lev1_sp_ptr;
-  gsl_interp_accel *adr_lev1_acc_ptr;
-
-};
-
-
-struct adr_iet_lev2_params {
-
-  gsl_spline *adr_lev2_sp_ptr;
-  gsl_interp_accel *adr_lev2_acc_ptr;
-
-};
 
 void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls, 
 		     double *phi, double *SS, double *bf, double *xx, 

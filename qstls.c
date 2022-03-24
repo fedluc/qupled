@@ -9,6 +9,79 @@
 #include "qstls.h"
 
 // -------------------------------------------------------------------
+// LOCAL FUNCTIONS
+// -------------------------------------------------------------------
+
+// Iterations for the qSTLS scheme
+static void qstls_iterations(double *SS, double *SS_new,
+			     double *SSHF, double *psi,
+			     double *psi_fixed, double *phi,
+			     double *xx, input in,
+			     bool verbose);
+  
+// Fixed component of the auxiliary density response
+static void compute_adr_fixed(double *psi_fixed, double *xx, input in);
+
+static double adr_fixed_lev1_xwl(double qq, void* pp);
+
+static double adr_fixed_lev1_xw0(double qq, void* pp);
+
+static double adr_fixed_lev2_xwq0(double tt, void* pp);
+
+static double adr_fixed_lev2_xwql(double tt, void* pp);
+
+// Auxiliary density response
+static double adr_partial(double ww, void* pp);
+
+// Static structure factor
+static void compute_ssf_qstls(double *SS, double *SSHF, double *psi,
+			      double *phi, double *xx, input in);
+
+// Input and output
+static void write_text_qstls(double *SS, double *psi, double *phi, 
+			double *SSHF, double *xx, input in);
+
+static void write_text_sdr_qstls(double *psi, double *phi,
+			  double *xx,  input in);
+
+static void write_fixed_qstls(double *psi_fixed, input in);
+
+static void read_fixed_qstls(double *psi_fixed, input in);
+
+
+// -------------------------------------------------------------------
+// LOCAL DATA STRUCTURES
+// -------------------------------------------------------------------
+
+struct adr_fixed_lev1_params {
+
+  double mu;
+  double Theta;
+  gsl_spline *psi_fixed_lev1_sp_ptr;
+  gsl_interp_accel *psi_fixed_lev1_acc_ptr;
+
+};
+
+struct adr_fixed_lev2_params {
+
+  double Theta;
+  double ww;
+  double xx;
+  double ll;
+  double qq;
+
+};
+
+struct adr_params {
+
+  gsl_spline *adr_fixed_sp_ptr;
+  gsl_interp_accel *adr_fixed_acc_ptr;
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+
+};
+
+// -------------------------------------------------------------------
 // FUNCTION USED TO ITERATIVELY SOLVE THE QSTLS EQUATIONS
 // -------------------------------------------------------------------
 
@@ -202,26 +275,6 @@ void init_fixed_qstls_arrays(double *psi_fixed, double *xx,
   
 }
 
-
-struct adr_fixed_lev1_params {
-
-  double mu;
-  double Theta;
-  gsl_spline *psi_fixed_lev1_sp_ptr;
-  gsl_interp_accel *psi_fixed_lev1_acc_ptr;
-
-};
-
-struct adr_fixed_lev2_params {
-
-  double Theta;
-  double ww;
-  double xx;
-  double ll;
-  double qq;
-
-};
-
 // Fixed component of the auxiliary density response
 void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
 
@@ -261,12 +314,12 @@ void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
 	// Integration function
 	gsl_function ff_int_lev1, ff_int_lev2;
 	if (ll == 0){
-	  ff_int_lev1.function = &adr_fixed_lev1_partial_xw0;
-	  ff_int_lev2.function = &adr_fixed_lev2_partial_xwq0;
+	  ff_int_lev1.function = &adr_fixed_lev1_xw0;
+	  ff_int_lev2.function = &adr_fixed_lev2_xwq0;
 	}
 	else {
-	  ff_int_lev1.function = &adr_fixed_lev1_partial_xwl;
-	  ff_int_lev2.function = &adr_fixed_lev2_partial_xwql;
+	  ff_int_lev1.function = &adr_fixed_lev1_xwl;
+	  ff_int_lev2.function = &adr_fixed_lev2_xwql;
 	}
 	
 	// Loop over w (wave-vector)
@@ -323,7 +376,7 @@ void compute_adr_fixed(double *psi_fixed, double *xx, input in) {
 
 
 // Partial auxiliary density response (vectors = {x,w}, frequency = l)
-double adr_fixed_lev1_partial_xwl(double qq, void* pp) {
+double adr_fixed_lev1_xwl(double qq, void* pp) {
   
   struct adr_fixed_lev1_params* params = (struct adr_fixed_lev1_params*)pp;
   double mu = (params->mu);
@@ -339,7 +392,7 @@ double adr_fixed_lev1_partial_xwl(double qq, void* pp) {
 
 
 // Partial auxiliary density response (vectors = {x,w}, frequency = 0)
-double adr_fixed_lev1_partial_xw0(double qq, void* pp) {
+double adr_fixed_lev1_xw0(double qq, void* pp) {
 
   struct adr_fixed_lev1_params* params = (struct adr_fixed_lev1_params*)pp;
   double mu = (params->mu);
@@ -355,7 +408,7 @@ double adr_fixed_lev1_partial_xw0(double qq, void* pp) {
 
 
 // Partial auxiliary density response (vectors = {x,q,w}, frequency = l)
-double adr_fixed_lev2_partial_xwql(double tt, void* pp) {
+double adr_fixed_lev2_xwql(double tt, void* pp) {
   
   struct adr_fixed_lev2_params* params = (struct adr_fixed_lev2_params*)pp;
   double xx = (params->xx);
@@ -377,7 +430,7 @@ double adr_fixed_lev2_partial_xwql(double tt, void* pp) {
 }
 
 // Partial auxiliary density response (vectors = {x,q,w}, frequency = 0)
-double adr_fixed_lev2_partial_xwq0(double tt, void* pp) {
+double adr_fixed_lev2_xwq0(double tt, void* pp) {
 
   struct adr_fixed_lev2_params* params = (struct adr_fixed_lev2_params*)pp;
   double xx = (params->xx);
@@ -407,16 +460,6 @@ double adr_fixed_lev2_partial_xwq0(double tt, void* pp) {
 // ---------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE CHANGING COMPONENT OF THE AUXILIARY RESPONSE
 // ---------------------------------------------------------------------------
-
-struct adr_params {
-
-  gsl_spline *adr_fixed_sp_ptr;
-  gsl_interp_accel *adr_fixed_acc_ptr;
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-
-};
-
 
 void compute_adr(double *psi, double *psi_fixed, double *SS, 
 		 double *xx, input in){

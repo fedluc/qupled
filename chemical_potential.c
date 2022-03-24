@@ -6,24 +6,26 @@
 #include "chemical_potential.h"
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO COMPUTE THE CHEMICAL POTENTIAL
+// LOCAL FUNCTIONS
 // -------------------------------------------------------------------
 
+// Normalization condition to compute the chemical potential
+static double normalization_condition(double mu, void *pp);
+
+// -------------------------------------------------------------------
+// LOCAL DATA STRUCTURES
+// -------------------------------------------------------------------
+
+// Structure used to solve the normalization condition
 struct nc_params {
 
   double Theta;
 
 };
 
-double normalization_condition(double mu, void *pp) {
-
-  struct nc_params *params = (struct nc_params*)pp;
-  double Theta = (params->Theta);
-
-  return gsl_sf_gamma(1.5)*gsl_sf_fermi_dirac_half(mu) 
-    - 2.0/(3.0*pow(Theta, 3.0/2.0));
-
-}
+// -------------------------------------------------------------------
+// FUNCTION USED TO COMPUTE THE CHEMICAL POTENTIAL
+// -------------------------------------------------------------------
 
 double compute_chemical_potential(input in) {
   
@@ -81,3 +83,13 @@ double compute_chemical_potential(input in) {
 
 }
 
+
+double normalization_condition(double mu, void *pp) {
+
+  struct nc_params *params = (struct nc_params*)pp;
+  double Theta = (params->Theta);
+
+  return gsl_sf_gamma(1.5)*gsl_sf_fermi_dirac_half(mu) 
+    - 2.0/(3.0*pow(Theta, 3.0/2.0));
+
+}

@@ -1,7 +1,39 @@
+#include <string.h>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_integration.h>
 #include "utils.h"
+
+// -------------------------------------------------------------------
+// LOCAL FUNCTIONS
+// -------------------------------------------------------------------
+
+// Internal energy
+static double uex(double yy, void* pp);
+
+// Radial distribution function
+static double  xssf(double xx, void *pp);
+
+// -------------------------------------------------------------------
+// LOCAL DATA STRUCTURES
+// -------------------------------------------------------------------
+
+// Parameters for the integration in the internal energy expression
+struct uex_params {
+
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+
+};
+
+// Parameters for the integration in the radial distribution function
+struct rdf_params {
+
+  double cutoff;
+  gsl_spline *ssf_sp_ptr;
+  gsl_interp_accel *ssf_acc_ptr;
+  
+};
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO ACCESS ONE ELEMENT OF A TWO-DIMENSIONAL ARRAY
@@ -25,6 +57,7 @@ int idx3(int xx, int yy, int zz,
 // -------------------------------------------------------------------
 // FUNCTION USED TO GET THE SIGN OF A NUMBER
 // -------------------------------------------------------------------
+
 int get_sign(double num) {
 
   if (num < 0)
@@ -36,15 +69,125 @@ int get_sign(double num) {
 
 
 // -------------------------------------------------------------------
-// FUNCTIONS USED TO COMPUTE THE INTERNAL ENERGY
+// FUNCTIONS USED TO READ DATA FROM TEXT FILES
 // -------------------------------------------------------------------
 
-struct uex_params {
+void get_data_format_from_text(char * file_name, int *n_lines,
+			       int *n_columns){
 
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
+  // Variables
+  FILE *fid;
+  char * line = NULL;
+  char * value = NULL;
+  size_t len = 0;
+  ssize_t num_el;
+  int n_columns_check;
+  
+  // Open file
+  fid = NULL;
+  fid = fopen(file_name, "r");
+  if (fid == NULL) {
+    fprintf(stderr,"Error while opening text file %s\n", file_name);
+    exit(EXIT_FAILURE);
+  }
 
-};
+  // Get number of lines
+  *n_lines = 0;
+  *n_columns = 0;
+  n_columns_check = 0;
+  while ((num_el = getline(&line, &len, fid)) != -1) {
+
+    // Update line counter
+    *n_lines += 1;
+
+    // Get number of columns and check that format remains consistent
+    value = strtok(line, " \n");
+    while(value != NULL){
+      if(*n_lines == 1) *n_columns += 1;
+      else n_columns_check += 1;
+      value = strtok(NULL, " \n");
+    }
+    if (*n_lines > 1 && n_columns_check != *n_columns){
+      fprintf(stderr,"Error while reading line %d of file %s." 
+	      " Only %ld elements where read\n",
+	      *n_lines, file_name, num_el);
+      exit(EXIT_FAILURE);
+    }
+    n_columns_check = 0;
+    
+  }
+
+  // Close file 
+  fclose(fid);
+  
+}
+
+void get_data_from_text(char *file_name, int n_lines, int n_columns,
+			double *data, double *xx, input *in){
+
+  // Variables
+  FILE *fid;
+  char * line = NULL;
+  char * value = NULL;
+  size_t len = 0;
+  ssize_t num_el;
+
+  // Open file
+  fid = NULL;
+  fid = fopen(file_name, "r");
+  if (fid == NULL) {
+    fprintf(stderr,"Error while opening text file %s\n", file_name);
+    exit(EXIT_FAILURE);
+  }
+
+  // Read file line by line
+  for (int ii=0; ii<n_lines; ii++) {
+
+    // Get line
+    num_el = getline(&line, &len, fid);
+    if (num_el == -1){
+      fprintf(stderr,"Error while reading text file %s\n", file_name);
+      exit(EXIT_FAILURE);
+    }
+    
+    // Extract information from the first column
+    value = strtok(line, " \n");
+    if (xx == NULL) {
+      // First column is data
+      data[idx2(ii,0,n_lines)] = atof(value);
+    }
+    else{
+      // First column is the grid
+      xx[ii] = atof(value);
+    }
+
+    // Extract information from the remaining columns
+    for (int jj=1; jj<n_columns; jj++) {
+      value = strtok(NULL, " \n");
+      if (xx == NULL) {
+	data[idx2(ii,jj,n_lines)] = atof(value);
+      }
+      else{
+	data[idx2(ii,jj-1,n_lines)] = atof(value);
+      }
+    }
+    
+  }
+
+  // Close file 
+  fclose(fid);
+
+  // Update input structure
+  if (xx != NULL) {
+    in->xmax = xx[in->nx - 1];
+    in->dx = xx[1] - xx[0];
+  }
+    
+}
+
+// -------------------------------------------------------------------
+// FUNCTIONS USED TO COMPUTE THE INTERNAL ENERGY
+// -------------------------------------------------------------------
 
 double compute_internal_energy(double *SS, double *xx,  input in) {
 
@@ -103,14 +246,6 @@ double uex(double yy, void* pp) {
 // -------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE RADIAL DISTRIBUTION FUNCTION
 // -------------------------------------------------------------------
-
-struct rdf_params {
-
-  double cutoff;
-  gsl_spline *ssf_sp_ptr;
-  gsl_interp_accel *ssf_acc_ptr;
-  
-};
 
 void compute_rdf(double *gg, double *rr, double *SS, double *xx, input in){
 

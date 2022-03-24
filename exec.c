@@ -5,9 +5,6 @@
 #include "read_input.h"
 #include "solvers.h"
 #include "restart.h"
-#include "dynamic_stls.h"
-#include "dynamic_qstls.h"
-#include "dynamic_qstls_iet.h"
 
 void run_static_mode(input in);
 void run_dynamic_mode(input in);
