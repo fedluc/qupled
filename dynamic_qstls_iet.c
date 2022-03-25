@@ -250,12 +250,8 @@ struct adr_lev3_params {
   
 };
 
-// Parameters for the integrals in the imaginary part of the auxiliary
-// density response
-
-
 // -------------------------------------------------------------------
-// FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF QSTLS SCHEME
+// FUNCTION USED TO COMPUTE THE DYNAMIC PROPERTIES OF QSTLS-IET SCHEME
 // -------------------------------------------------------------------
 
 void compute_dynamic_qstls_iet(input in, bool verbose) {
@@ -308,7 +304,7 @@ void compute_dynamic_qstls_iet(input in, bool verbose) {
   if (verbose) printf("Auxiliary density calculation: ");
   fflush(stdout);
   compute_dynamic_adr(psi_re, psi_im, phi_re, phi_im, WW, SS,
-			  bf, xx, in);
+		      bf, xx, in);
   if (verbose) printf("Done.\n");
 
   // Dynamic structure factor
@@ -707,6 +703,7 @@ void compute_dynamic_adr_fd(double *phi_re, double *phi_im,
       for (int kk=0; kk<in.nx; kk++){
 	psi_fixed_p1[idx3(ii,jj,kk,in.nx,in.nW)] = 0.0;
 	psi_fixed_p2[idx3(ii,jj,kk,in.nx,in.nW)] = 0.0;
+	psi_fixed_p3[idx3(ii,jj,kk,in.nx,in.nW)] = 0.0;
       }
     }
   }
@@ -743,38 +740,35 @@ void compute_dynamic_adr_fd(double *phi_re, double *phi_im,
     
     // Update diagnostics
     iter_counter++;
-    iter_err = adr_err(psi_re, psi_re_new, in);
+    iter_err = adr_err(psi_im, psi_im_new, in);
     adr_update(psi_re, psi_re_new, in);
     adr_update(psi_im, psi_im_new, in);
-    printf("iteration %d, error %.5e\n", iter_counter, iter_err);
 
   }
-
   
   // Free memory
   free(psi_re_new);
   free(psi_im_new);
   free(psi_fixed_p1);
   free(psi_fixed_p2);
-
+  free(psi_fixed_p3);
   
 }
 
 
 // Relative error for the iterations
-double adr_err(double *psi_re, double *psi_re_new, input in){
+double adr_err(double *psi, double *psi_new, input in){
 
   double err = 0.0;
   double err_tmp;
   
   for (int ii=0; ii<in.nx; ii++){
-    err_tmp = 0.0;
     for (int jj=0; jj<in.nW; jj++){
-      err_tmp = psi_re[idx2(ii,jj,in.nx)] - psi_re_new[idx2(ii,jj,in.nx)];
+      err_tmp = psi[idx2(ii,jj,in.nx)] - psi_new[idx2(ii,jj,in.nx)];
+      err += err_tmp*err_tmp;
     }
-    err += err_tmp*err_tmp;
   }
-
+  
   return sqrt(err);
   
 }
@@ -874,8 +868,6 @@ void compute_dynamic_adr_re_lev1(double *psi_re_new, double *psi_re,
 			      wsp,
 			      &psi_re_new[idx2(ii,jj,in.nx)],
 			      &err, &nevals);
-	if (jj==0 && ii<5) 
-	  printf("xx[ii] = %f, psi_re[ii,jj] = %f\n", xx[ii], psi_re_new[idx2(ii,jj,in.nx)]);
       }
     }
     
@@ -1502,9 +1494,9 @@ void compute_dynamic_adr_fd_re(double *psi_re_new,
 
   // Zero frequency contribution
   compute_dynamic_adr_re_lev1(psi_re_new, psi_re,
-			      psi_fixed_p1, phi_re,
-			      WW, SS, bf, xx,
-			      compute_fixed, in);
+  			      psi_fixed_p1, phi_re,
+  			      WW, SS, bf, xx,
+  			      compute_fixed, in);
 	 
   // First component (one triple integral)
   compute_dynamic_adr_fd_re_lev1(psi_re_new, psi_re, psi_im,
@@ -1617,11 +1609,6 @@ void compute_dynamic_adr_fd_re_lev1(double *psi_re_new,
 	else
 	  psi_re_new[idx2(ii,jj,in.nx)] -= psi_new_tmp;
 
-	// Zero-frequency contribution (this must be changed!)
-	if (WW[jj] == 0.0){
-	  psi_re_new[idx2(ii,jj,in.nx)] = 0.0;
-	}
-
       }
     }
     
@@ -1715,34 +1702,32 @@ void compute_dynamic_adr_fd_im(double *psi_im_new,
 
 
   // Zero-frequency contribution, first component
-  compute_dynamic_adr_fd_im_zero_frequency_lev1(psi_im_new, 
-						psi_re, psi_im,
-						phi_re, psi_fixed_p1,
-						SS, bf, xx, 1,
-						compute_fixed,
-						in);
+  compute_dynamic_adr_fd_im_zero_frequency_lev1(psi_im_new,
+  						psi_re, psi_im,
+  						phi_re, psi_fixed_p1,
+  						SS, bf, xx, 1,
+  						compute_fixed,
+  						in);
 
   // Zero frequency contribution, second component
-  compute_dynamic_adr_fd_im_zero_frequency_lev1(psi_im_new, 
-						psi_re, psi_im,
-						phi_re, psi_fixed_p3,
-						SS, bf, xx, 2,
-						compute_fixed,
-						in);
+  compute_dynamic_adr_fd_im_zero_frequency_lev1(psi_im_new,
+  						psi_re, psi_im,
+  						phi_re, psi_fixed_p3,
+  						SS, bf, xx, 2,
+  						compute_fixed,
+  						in);
 
-  
-  // First component (one triple integral)
+  // Finite frequency contribution, first component 
   compute_dynamic_adr_fd_im_lev1(psi_im_new, psi_re, psi_im,
 				 phi_re, phi_im, psi_fixed_p1,
 				 WW, SS, bf, xx, 1, compute_fixed,
 				 in);
   
-  // Second component (one triple integral)
+  // Finite frequency contribution, second component
   compute_dynamic_adr_fd_im_lev1(psi_im_new, psi_re, psi_im,
 				 phi_re, phi_im, psi_fixed_p2,
 				 WW, SS, bf, xx, 2, compute_fixed,
 				 in);
-  
   
 }
 
@@ -1907,7 +1892,7 @@ void compute_dynamic_adr_fd_im_zero_frequency_lev1(double *psi_im_new,
     #pragma omp for // Distribute for loop over the threads
     for (int ii=0; ii<in.nx; ii++){
 
-      // Loop over the frequencies (the zero frequency contribution is computed separately)
+      // Loop over the frequencies
       for (int jj=0; jj<1; jj++) {
 	
 	// Integration function
@@ -1994,8 +1979,12 @@ void compute_dynamic_adr_fd_im_lev1_p1_1(double *int_lev1_1, double *psi_re,
       psir = psi_re[idx2(ii,0,in.nx)];
       psii = psi_im[idx2(ii,0,in.nx)];
       phir2 = phir*phir;
-      ff = ww[ii]*exp(ww2/(4.0*in.Theta) - in.mu) + 1.0;
-      int_lev1_1[ii] = xx2 * (SS[ii] - 1.0) * (ff*psir/phir2 - 4.0/M_PI*psii/phir ) ;
+      ff = ww[ii] * (exp(ww2/(4.0*in.Theta) - in.mu) + 1.0);
+      int_lev1_1[ii] = -(4.0/3.0) * xx2 * (SS[ii] - 1.0) * (psir/(phir2*ff) - 4.0/M_PI*psii/phir );
+      // In the above -(4.0/3.0) compensates for the -3.0/(8.0) factor in
+      // compute_dynamic_adr_re_lev2 and includes also an additional 1/2
+      // factor for the correct calculation of the dynamic structure factor
+      // (see, compute_dsf_qstls_iet)
     }
   }
   
