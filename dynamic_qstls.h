@@ -22,8 +22,8 @@ void get_ssf(double **SS, double **xx, input *in);
 // FUNCTIONS FOR OUTPUT AND INPUT
 // -------------------------------------------------------------------
 
-void write_text_dynamic_qstls(double *SSn, double *WW, double *psi_re,
-			      double *psi_im, input in);
+void write_text_dynamic_qstls(double *psi_re, double *psi_im,
+			      double *WW, input in);
 
 
 #endif

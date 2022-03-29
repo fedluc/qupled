@@ -37,6 +37,8 @@ void compute_dynamic_idr(double *phi_re, double *phi_im,
 // FUNCTIONS FOR OUTPUT AND INPUT
 // ---------------------------------------------------------------------
 
-void write_text_dsf(double *SSn, double *WW, input in);
+void write_text_dynamic_stls(double *SSn, double *phi_re,
+			     double *phi_im, double *WW,
+			     input in);
 
 #endif

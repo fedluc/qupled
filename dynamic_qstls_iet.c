@@ -314,7 +314,8 @@ void compute_dynamic_qstls_iet(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files: ");
-  write_text_dynamic_qstls(SSn, WW, psi_re, psi_im, in);
+  write_text_dynamic_stls(SSn, phi_re, phi_im, WW, in);
+  write_text_dynamic_qstls(psi_re, psi_im, WW, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -1935,8 +1936,9 @@ void compute_dynamic_adr_fd_im_zero_frequency_lev1(double *psi_im_new,
 			      &err, &nevals);
 
 	// Output
-	if (ncomp == 1)
+	if (ncomp == 1) {
 	  psi_im_new[idx2(ii,jj,in.nx)] = psi_new_tmp;
+	}
 	else
 	  psi_im_new[idx2(ii,jj,in.nx)] += psi_new_tmp;
 	

@@ -58,10 +58,14 @@ static void compute_dynamic_adr_im_lev3(double *psi_im_lev2, double WW,
 static double adr_im_lev3_xwuW(double qq,  void* pp);
 
 // Dynamic structure factor
-static void compute_dsf_qstls(double *SSn,  double *phi_re,
+static void compute_dsf_qstls(double *SSn, double *phi_re,
 			      double *phi_im, double *psi_re,
 			      double *psi_im, double *WW,
 			      input in);
+
+// Input and output
+static void write_text_adr(double *psi_re, double *psi_im,
+			   double *WW, input in);
 
 // -------------------------------------------------------------------
 // LOCAL CONSTANTS AND DATA STRUCTURES
@@ -159,7 +163,8 @@ void compute_dynamic_qstls(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files: ");
-  write_text_dynamic_qstls(SSn, WW, psi_re, psi_im, in);
+  write_text_dynamic_stls(SSn, phi_re, phi_im, WW, in);
+  write_text_dynamic_qstls(psi_re, psi_im, WW, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -906,37 +911,29 @@ void compute_dsf_qstls(double *SSn, double *phi_re, double *phi_im,
 // -------------------------------------------------------------------
 
 // write text files for output
-void write_text_dynamic_qstls(double *SSn, double *WW, double *psi_re,
-			      double *psi_im, input in){
+void write_text_dynamic_qstls(double *psi_re, double *psi_im,
+			      double *WW, input in){
 
-  // Static structure factor
-  write_text_dsf(SSn, WW, in);
+  // Auxiliary density response
+  write_text_adr(psi_re, psi_im, WW, in);
+
+}
+
+// write ideal density response
+void write_text_adr(double *psi_re, double *psi_im, double *WW, input in){
 
   FILE* fid;
-  
-  char out_name[100];
-  sprintf(out_name, "psire_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta,
-  	  in.dyn_xtarget, in.theory);
-  fid = fopen(out_name, "w");
-  if (fid == NULL) {
-    fprintf(stderr, "Error while creating the output file for the dynamic structure factor\n");
-    exit(EXIT_FAILURE);
-  }
-  for (int ii = 0; ii < in.nW; ii++)
-    fprintf(fid, "%.8e %.8e\n", WW[ii], psi_re[ii]);
-  
-  fclose(fid);
 
-  
-  sprintf(out_name, "psiim_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta,
-  	  in.dyn_xtarget, in.theory);
+  char out_name[100];
+  sprintf(out_name, "adr_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta,
+	  in.dyn_xtarget, in.theory);
   fid = fopen(out_name, "w");
   if (fid == NULL) {
-    fprintf(stderr, "Error while creating the output file for the dynamic structure factor\n");
+    fprintf(stderr, "Error while creating the output file for the ideal density response\n");
     exit(EXIT_FAILURE);
   }
   for (int ii = 0; ii < in.nW; ii++)
-    fprintf(fid, "%.8e %.8e\n", WW[ii], psi_im[ii]);
+    fprintf(fid, "%.8e %.8e %.8e\n", WW[ii], psi_re[ii], psi_im[ii]);
   
   fclose(fid);
   

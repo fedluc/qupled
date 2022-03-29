@@ -43,10 +43,12 @@ static void compute_isf(double *FF, double *tt, double *SSn,
 static double isf(double WW, void *pp);
 
 // Input and output
-static void write_text_dynamic_stls(double *SSn, double *WW, input in);
+static void write_text_dsf(double *SSn, double *WW, input in);
 
 static void write_text_isf(double *SSn, double *ww, input in);
 
+static void write_text_idr(double *phi_re, double *phi_im,
+			   double *WW, input in);
 
 // -------------------------------------------------------------------
 // LOCAL CONSTANTS AND DATA STRUCTURES
@@ -126,7 +128,7 @@ void compute_dynamic_stls(input in, bool verbose) {
   
   // Output to file
   if (verbose) printf("Writing output files: ");
-  write_text_dynamic_stls(SSn, WW, in);
+  write_text_dynamic_stls(SSn, phi_re, phi_im, WW, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -608,13 +610,18 @@ double isf(double WW, void *pp) {
 // -------------------------------------------------------------------
 
 // write text files for output
-void write_text_dynamic_stls(double *SSn, double *WW, input in){
+void write_text_dynamic_stls(double *SSn, double *phi_re,
+			     double *phi_im, double *WW,
+			     input in){
 
-  // Static structure factor
+  // Dynamic structure factor
   write_text_dsf(SSn, WW, in);
 
   // Intermediate scattering function
   write_text_isf(SSn, WW, in);
+
+  // Ideal density response
+  write_text_idr(phi_re, phi_im, WW, in);
   
 }
 
@@ -660,6 +667,27 @@ void write_text_isf(double *SSn, double *WW, input in){
   
   for (int ii = 0; ii<ISF_NTAU; ii++)
     fprintf(fid, "%.8e %.8e\n", tt[ii], FF[ii]);
+  
+  fclose(fid);
+  
+}
+
+
+// write ideal density response
+void write_text_idr(double *phi_re, double *phi_im, double *WW, input in){
+
+  FILE* fid;
+
+  char out_name[100];
+  sprintf(out_name, "idr_rs%.3f_theta%.3f_x%.3f_%s.dat", in.rs, in.Theta,
+	  in.dyn_xtarget, in.theory);
+  fid = fopen(out_name, "w");
+  if (fid == NULL) {
+    fprintf(stderr, "Error while creating the output file for the ideal density response\n");
+    exit(EXIT_FAILURE);
+  }
+  for (int ii = 0; ii < in.nW; ii++)
+    fprintf(fid, "%.8e %.8e %.8e\n", WW[ii], phi_re[ii], phi_im[ii]);
   
   fclose(fid);
   
