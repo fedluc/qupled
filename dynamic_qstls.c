@@ -140,16 +140,16 @@ void compute_dynamic_qstls(input in, bool verbose) {
   // Chemical potential and frequency grid
   init_fixed_dynamic_stls_arrays(&in, WW, verbose);
 
-  // Ideal density response
-  if (verbose) printf("Normalized ideal Lindhard density calculation: ");
-  compute_dynamic_idr(phi_re, phi_im, WW, in);
-  if (verbose) printf("Done.\n");
-  
   // Static structure factor
   if (verbose) printf("Static structure factor (from file): ");
   get_ssf(&SS, &xx, &in);
   if (verbose) printf("Done.\n");
 
+  // Ideal density response
+  if (verbose) printf("Normalized ideal Lindhard density calculation: ");
+  compute_dynamic_idr(phi_re, phi_im, WW, xx, in);
+  if (verbose) printf("Done.\n");
+ 
   // Auxiliary density response
   if (verbose) printf("Auxiliary density calculation: ");
   fflush(stdout);
@@ -168,7 +168,7 @@ void compute_dynamic_qstls(input in, bool verbose) {
   if (verbose) printf("Done.\n");
 
   // Free memory
-  free_dynamic_stls_arrays(WW, phi_re, phi_im, SSn);
+  free_dynamic_stls_arrays(WW, phi_re, phi_im, SSn, NULL); //NULL should be replaced with xx
   free_dynamic_qstls_arrays(psi_re, psi_im, SS, xx);
   
  

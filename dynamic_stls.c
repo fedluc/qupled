@@ -11,15 +11,26 @@
 // LOCAL FUNCTIONS
 // -------------------------------------------------------------------
 
+// Allocate and free arrays
+static void alloc_dynamic_stls_2Darrays(input in, double **phi_re,
+				 double **phi_im);
+
+static void free_dynamic_stls_2Darrays(double *phi_re,
+				       double *phi_im);
+
 // Frequency grid
 static void frequency_grid(double *WW, input *in);
 
 // Ideal density response
-static void compute_dynamic_idr_re(double *phi_re, double *WW,
+static void compute_dynamic_idr_2D(double *phi_re, double *phi_im,
+				   double *WW, double *xx,
 				   input in);
 
+static void compute_dynamic_idr_re(double *phi_re, double *WW,
+				   double *xx, input in);
+
 static void compute_dynamic_idr_im(double *phi_im, double *WW,
-				   input in);
+				   double *xx, input in);
 
 static double idr_re_xw(double yy, void *pp);
 
@@ -30,7 +41,7 @@ static double idr_im_xw(double yy, void *pp);
 static double idr_im_x0(double yy, void *pp);
 
 // Static local field correction (from file)
-static void get_slfc(double *GG, input in);
+static void get_slfc(double *GG, double **xx, input in);
 
 // Dynamic structure factor
 static void compute_dsf(double *SSn, double *phi_re, double *phi_im,
@@ -49,6 +60,9 @@ static void write_text_isf(double *SSn, double *ww, input in);
 
 static void write_text_idr(double *phi_re, double *phi_im,
 			   double *WW, input in);
+
+static void write_fixed_dynamic_idr(double *phi_re, double *phi_im,
+				    input in);
 
 // -------------------------------------------------------------------
 // LOCAL CONSTANTS AND DATA STRUCTURES
@@ -90,6 +104,7 @@ void compute_dynamic_stls(input in, bool verbose) {
   double *phi_re = NULL;
   double *phi_im = NULL;
   double *SSn = NULL;
+  double *xx = NULL;
   
   // Scalars
   double GG;
@@ -111,14 +126,14 @@ void compute_dynamic_stls(input in, bool verbose) {
   // Chemical potential and frequency grid
   init_fixed_dynamic_stls_arrays(&in, WW, verbose);
 
-  // Ideal density response
-  if (verbose) printf("Normalized ideal Lindhard density calculation: ");
-  compute_dynamic_idr(phi_re, phi_im, WW, in);
+  // Static local field correction (this sets xx)
+  if (verbose) printf("Static local field correction (from file): ");
+  get_slfc(&GG, &xx, in);
   if (verbose) printf("Done.\n");
   
-  // Static local field correction
-  if (verbose) printf("Static local field correction (from file): ");
-  get_slfc(&GG, in);
+  // Ideal density response
+  if (verbose) printf("Normalized ideal Lindhard density calculation: ");
+  compute_dynamic_idr(phi_re, phi_im, WW, xx, in);
   if (verbose) printf("Done.\n");
   
   // Dynamic structure factor
@@ -132,7 +147,7 @@ void compute_dynamic_stls(input in, bool verbose) {
   if (verbose) printf("Done.\n");
 
   // Free memory
-  free_dynamic_stls_arrays(WW, phi_re, phi_im, SSn);
+  free_dynamic_stls_arrays(WW, phi_re, phi_im, SSn, xx);
 
  
 }
@@ -182,14 +197,43 @@ void alloc_dynamic_stls_arrays(input in, double **WW, double **phi_re,
 
 }
 
+void alloc_dynamic_stls_2Darrays(input in, double **phi_re,
+				 double **phi_im){
+ 
+  *phi_re = malloc( sizeof(double) * in.nx * in.nW);
+  if (*phi_re == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the real part of"
+	    " the ideal density response\n");
+    exit(EXIT_FAILURE);
+  }
+  
+  *phi_im = malloc( sizeof(double) * in.nx * in.nW);
+  if (*phi_im == NULL) {
+    fprintf(stderr, "Failed to allocate memory for the imaginary part of"
+	    " the ideal density response\n");
+    exit(EXIT_FAILURE);
+  }
+ 
+}
+
+
 void free_dynamic_stls_arrays(double *WW, double *phi_re, 
-			      double *phi_im, double *SSn){
+			      double *phi_im, double *SSn,
+			      double *xx){
 
   free(WW);
   free(phi_re);
   free(phi_im);
   free(SSn);
+  free(xx);
  
+}
+
+void free_dynamic_stls_2Darrays(double *phi_re, double *phi_im){
+
+  free(phi_re);
+  free(phi_im);
+
 }
 
 // -------------------------------------------------------------------
@@ -239,22 +283,90 @@ void frequency_grid(double *WW, input *in){
 // ------------------------------------------------------------------
 
 // Ideal density response (real and imaginary part)
-void compute_dynamic_idr(double *phi_re, double *phi_im,  double *WW,
-			 input in) {
+void compute_dynamic_idr(double *phi_re, double *phi_im,
+			 double *WW, double *xx, input in) {
 
+
+  // We compute the ideal density response for all the
+  // wave-vectors in xx (loaded from the static local
+  // field correction file). Then we store the all these
+  // ideal density responses to file for later use and
+  // we interpolate them to the wave-vector xTarget
+  // in order to proceed with the calculations.
+
+  // Target wave vector
+  double xTarget = in.dyn_xtarget;
+
+  // Temporary arrays to store results for multiple wave vectors
+  double *phi_re_2D = NULL;
+  double *phi_im_2D = NULL;
+  double *phi_re_1D = NULL;
+  double *phi_im_1D = NULL;
+
+  // Temporary input structure
+  input in_1D = in;
+  in_1D.nx = 1;
+  
+  // Variables for interpolation
+  gsl_spline *phi_re_sp_ptr;
+  gsl_interp_accel *phi_re_acc_ptr;
+  gsl_spline *phi_im_sp_ptr;
+  gsl_interp_accel *phi_im_acc_ptr;
+
+  // Allocate arrays
+  alloc_dynamic_stls_2Darrays(in, &phi_re_2D, &phi_im_2D);
+  alloc_dynamic_stls_2Darrays(in_1D, &phi_re_1D, &phi_im_1D);
+  phi_re_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  phi_re_acc_ptr = gsl_interp_accel_alloc();
+  phi_im_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  phi_im_acc_ptr = gsl_interp_accel_alloc();
+
+  // Ideal density response for multiple wave vectors
+  compute_dynamic_idr_2D(phi_re_2D, phi_im_2D, WW, xx, in);
+
+  // Write the ideal density response to file
+  write_fixed_dynamic_idr(phi_re_2D, phi_im_2D, in);
+
+  // Interpolate to wave-vector given in input
+  for (int jj=0; jj<in.nW; jj++){
+    for (int ii=0; ii<in.nx; ii++){
+      phi_re_1D[ii] = phi_re_2D[idx2(ii,jj,in.nx)];
+      phi_im_1D[ii] = phi_im_2D[idx2(ii,jj,in.nx)];
+    }
+    gsl_spline_init(phi_re_sp_ptr, xx, phi_re_1D, in.nx);
+    gsl_spline_init(phi_im_sp_ptr, xx, phi_im_1D, in.nx);
+    phi_re[jj] = gsl_spline_eval(phi_re_sp_ptr, xTarget, phi_re_acc_ptr);
+    phi_im[jj] = gsl_spline_eval(phi_im_sp_ptr, xTarget, phi_im_acc_ptr);
+  }
+
+  // Free memory
+  free_dynamic_stls_2Darrays(phi_re_2D, phi_im_2D);
+  free_dynamic_stls_2Darrays(phi_re_1D, phi_im_1D);
+  gsl_spline_free(phi_re_sp_ptr);
+  gsl_interp_accel_free(phi_re_acc_ptr);
+  gsl_spline_free(phi_im_sp_ptr);
+  gsl_interp_accel_free(phi_im_acc_ptr);
+
+  
+}
+
+// Ideal density response (real and imaginary part)
+void compute_dynamic_idr_2D(double *phi_re, double *phi_im,
+			    double *WW, double *xx, input in) {
+
+  
   // Real component
-  compute_dynamic_idr_re(phi_re, WW, in);
+  compute_dynamic_idr_re(phi_re, WW, xx, in);
 
   // Imaginary component
-  compute_dynamic_idr_im(phi_im, WW, in);
+  compute_dynamic_idr_im(phi_im, WW, xx, in);
   
 }
 
 // Real part of the ideal density response
 void compute_dynamic_idr_re(double *phi_re, double *WW,
-			    input in) {
+			    double *xx, input in) {
 
-  double xx = in.dyn_xtarget;
   double err;
   size_t nevals;
   
@@ -268,16 +380,18 @@ void compute_dynamic_idr_re(double *phi_re, double *WW,
   else ff_int.function = &idr_re_xw;
 
   // Normalized ideal Lindhard density
-  for (int ii=0; ii<in.nW; ii++) {
+  for (int ii=0; ii<in.nx; ii++) {
+    for (int jj=0; jj<in.nW; jj++) {
 
-    struct idr_params phixwp = {xx, in.mu, in.Theta, WW[ii]};
-    ff_int.params = &phixwp;
-    gsl_integration_cquad(&ff_int, 
-			  0.0, in.xmax, 
-			  0.0, QUAD_REL_ERR, 
-			  wsp, 
-			  &phi_re[ii], &err, &nevals);
+      struct idr_params phixwp = {xx[ii], in.mu, in.Theta, WW[jj]};
+      ff_int.params = &phixwp;
+      gsl_integration_cquad(&ff_int, 
+			    0.0, in.xmax, 
+			    0.0, QUAD_REL_ERR, 
+			    wsp, 
+			    &phi_re[jj], &err, &nevals);
 
+    }
   }
   
   // Free memory
@@ -287,9 +401,8 @@ void compute_dynamic_idr_re(double *phi_re, double *WW,
 
 // Imaginary part of the ideal density response
 void compute_dynamic_idr_im(double *phi_im, double *WW,
-			     input in) {
-
-  double xx = in.dyn_xtarget;
+			    double *xx, input in) {
+ 
   double ymin;
   double ymax;
   double err;
@@ -306,25 +419,27 @@ void compute_dynamic_idr_im(double *phi_im, double *WW,
   else ff_int.function = &idr_im_xw;
 
   // Normalized ideal Lindhard density
-  for (int ii=0; ii<in.nW; ii++) {
-
-    if (xx == 0.0){
-      phi_im[ii] = 0.0;
-      continue;
+  for (int ii=0; ii<in.nx; ii++){
+    for (int jj=0; jj<in.nW; jj++) {
+      
+      if (xx[ii] == 0.0){
+	phi_im[jj] = 0.0;
+	continue;
+      }
+      
+      ymin = (xx[ii]/2.0) - WW[jj]/(2.0*xx[ii]);
+      if (ymin < 0.0) ymin = -ymin;
+      ymax = (xx[ii]/2.0) + WW[jj]/(2.0*xx[ii]);
+      
+      struct idr_params phixwp = {xx[ii], in.mu, in.Theta, WW[jj]};
+      ff_int.params = &phixwp;
+      gsl_integration_cquad(&ff_int, 
+			    ymin, ymax, 
+			    0.0, QUAD_REL_ERR, 
+			    wsp, 
+			    &phi_im[jj], &err, &nevals);
+      
     }
-    
-    ymin = (xx/2.0) - WW[ii]/(2.0*xx);
-    if (ymin < 0.0) ymin = -ymin;
-    ymax = (xx/2.0) + WW[ii]/(2.0*xx);
-    
-    struct idr_params phixwp = {xx, in.mu, in.Theta, WW[ii]};
-    ff_int.params = &phixwp;
-    gsl_integration_cquad(&ff_int, 
-			  ymin, ymax, 
-			  0.0, QUAD_REL_ERR, 
-			  wsp, 
-			  &phi_im[ii], &err, &nevals);
-
   }
   
   // Free memory
@@ -433,13 +548,12 @@ double idr_im_x0(double yy, void *pp) {
 // FUNCTION USED TO OBTAIN THE STATIC LOCAL FIELD CORRECTION (FROM FILE)
 // ---------------------------------------------------------------------
 
-void get_slfc(double *GG, input in){
+void get_slfc(double *GG, double **xx, input in){
 
   // Variables
   size_t slfc_file_name_len = 1000;
   char *slfc_file_name;
   double *GG_file = NULL;
-  double *xx_file = NULL;
   gsl_spline *slfc_sp_ptr;
   gsl_interp_accel *slfc_acc_ptr;
 
@@ -460,9 +574,9 @@ void get_slfc(double *GG, input in){
 
   // Allocate temporary arrays to store the structural properties
   GG_file = malloc( sizeof(double) * in.nx);
-  xx_file = malloc( sizeof(double) * in.nx);
+  *xx = malloc( sizeof(double) * in.nx);
   if (GG_file == NULL ||
-      xx_file == NULL) {
+      *xx == NULL) {
     fprintf(stderr, "Failed to allocate memory for the data read"
   	    " from file\n");
     exit(EXIT_FAILURE);
@@ -470,18 +584,17 @@ void get_slfc(double *GG, input in){
 
   // Get data from input file
   get_data_from_text(slfc_file_name, in.nx, in.nl,
-		     GG_file, xx_file, &in);
+		     GG_file, *xx, &in);
 
   // Static local field correction for the wave-vector given in input
   slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   slfc_acc_ptr = gsl_interp_accel_alloc();
-  gsl_spline_init(slfc_sp_ptr, xx_file, GG_file, in.nx);
+  gsl_spline_init(slfc_sp_ptr, *xx, GG_file, in.nx);
   *GG = gsl_spline_eval(slfc_sp_ptr, in.dyn_xtarget, slfc_acc_ptr);
   
   // Free memory
   free(slfc_file_name);
   free(GG_file);
-  free(xx_file);
   gsl_spline_free(slfc_sp_ptr);
   gsl_interp_accel_free(slfc_acc_ptr);
  
@@ -673,7 +786,7 @@ void write_text_isf(double *SSn, double *WW, input in){
 }
 
 
-// write ideal density response
+// write ideal density response to file
 void write_text_idr(double *phi_re, double *phi_im, double *WW, input in){
 
   FILE* fid;
@@ -691,4 +804,42 @@ void write_text_idr(double *phi_re, double *phi_im, double *WW, input in){
   
   fclose(fid);
   
+}
+
+
+// write ideal density response to binary file
+void write_fixed_dynamic_idr(double *phi_re, double *phi_im,
+			     input in){
+  
+  // Name of output file
+  char out_name[100];
+  sprintf(out_name, "dynamic_restart_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta,
+	  in.theory);
+
+  // Open binary file
+  FILE *fid = NULL;
+  fid = fopen(out_name, "wb");
+  if (fid == NULL) {
+    fprintf(stderr,"Error while creating file to store the density"
+	    " responses\n");
+    exit(EXIT_FAILURE);
+  }
+
+  // Input data
+  fwrite(&in.nx, sizeof(int), 1, fid);
+  fwrite(&in.dx, sizeof(double), 1, fid);
+  fwrite(&in.xmax, sizeof(double), 1, fid);
+  fwrite(&in.nW, sizeof(int), 1, fid);
+  fwrite(&in.dyn_dW, sizeof(double), 1, fid);
+  fwrite(&in.dyn_Wmax, sizeof(double), 1, fid);
+  fwrite(&in.Theta, sizeof(double), 1, fid);
+  fwrite(&in.rs, sizeof(double), 1, fid);
+  
+  // Density response
+  fwrite(phi_re, sizeof(double), in.nx * in.nW, fid);
+  fwrite(phi_im, sizeof(double), in.nx * in.nW, fid);
+
+  // Close binary file
+  fclose(fid);
+
 }

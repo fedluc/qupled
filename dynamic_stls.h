@@ -17,7 +17,8 @@ void alloc_dynamic_stls_arrays(input in, double **WW, double **phi_re,
 			       double **phi_im, double **SSn);
 
 void free_dynamic_stls_arrays(double *WW, double *phi_re,
-			      double *phi_im, double *SSn);
+			      double *phi_im, double *SSn,
+			      double *xx);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO INITIALIZE ARRAYS
@@ -31,7 +32,7 @@ void init_fixed_dynamic_stls_arrays(input *in, double *WW,
 // ------------------------------------------------------------------
 
 void compute_dynamic_idr(double *phi_re, double *phi_im,
-			 double *WW, input in);
+			 double *WW, double *xx, input in);
 
 // -------------------------------------------------------------------
 // FUNCTIONS FOR OUTPUT AND INPUT

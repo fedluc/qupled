@@ -284,17 +284,17 @@ void compute_dynamic_qstls_iet(input in, bool verbose) {
   
   // Chemical potential and frequency grid
   init_fixed_dynamic_stls_arrays(&in, WW, verbose);
-  
-  // Ideal density response
-  if (verbose) printf("Normalized ideal Lindhard density calculation: ");
-  compute_dynamic_idr(phi_re, phi_im, WW, in);
-  if (verbose) printf("Done.\n");
-
+ 
   // Static structure factor
   if (verbose) printf("Static structure factor (from file): ");
   get_ssf(&SS, &xx, &in);
   if (verbose) printf("Done.\n");
-  
+
+  // Ideal density response
+  if (verbose) printf("Normalized ideal Lindhard density calculation: ");
+  compute_dynamic_idr(phi_re, phi_im, WW, xx, in);
+  if (verbose) printf("Done.\n");
+
   // Bridge function term
   if (verbose) printf("Bridge function Fourier transform: ");
   get_bf(&bf, xx, in);
@@ -319,7 +319,7 @@ void compute_dynamic_qstls_iet(input in, bool verbose) {
   if (verbose) printf("Done.\n");
 
   // Free memory
-  free_dynamic_stls_arrays(WW, phi_re, phi_im, SSn);
+  free_dynamic_stls_arrays(WW, phi_re, phi_im, SSn, NULL); // NULL should be replaced with xx
   free_dynamic_qstls_arrays(psi_re, psi_im, SS, xx);
   free_stls_iet_arrays(bf);
   
@@ -461,7 +461,7 @@ void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
 
     // Ideal density response for one wave-vector
     in.dyn_xtarget = xx[ii];
-    compute_dynamic_idr(phi_re_tmp, phi_im_tmp, WW, in);
+    compute_dynamic_idr(phi_re_tmp, phi_im_tmp, WW, xx, in);
 
     // Copy temporary arrays
     for (int jj=0; jj<in.nW; jj++) {
