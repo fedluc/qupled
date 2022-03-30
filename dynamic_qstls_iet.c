@@ -13,29 +13,6 @@
 // LOCAL FUNCTIONS
 // -------------------------------------------------------------------
 
-// Allocate and free arrays
-static void alloc_dynamic_qstls_iet_arrays(input in,
-					   double **phi_re_2D,
-					   double **phi_im_2D,
-					   double **psi_re_2D,
-					   double **psi_im_2D,
-					   double **phi_re_1D,
-					   double **phi_im_1D,
-					   double **psi_re_1D,
-					   double **psi_im_1D);
-
-static void free_dynamic_qstls_iet_arrays(double *phi_re_2D,
-					  double *phi_im_2D,
-					  double *psi_re_2D,
-					  double *psi_im_2D,
-					  double *phi_re_1D,
-					  double *phi_im_1D,
-					  double *psi_re_1D,
-					  double *psi_im_1D);
-
-// Ideal density response
-static void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
-				    double *WW, double *xx, input in);
 // Bridge function term
 static void get_bf(double **bf, double *xx, input in);
 
@@ -192,23 +169,6 @@ static void compute_dynamic_adr_fd_im_lev1_p1_1(double *int_lev1_1, double *psi_
 static void compute_dsf_qstls_iet(double *SSn, double *phi_re, double *phi_im,
 				  double *psi_re, double *psi_im,
 				  double *WW ,input in);
-
-// Input and output
-static void write_fixed_dynamic_qstls_iet(double *phi_re, double *phi_im,
-					  double *psi_re, double *psi_im,
-					  input in);
-
-static void read_fixed_dynamic_qstls_iet(double *phi_re, double *phi_im,
-					 double *psi_re, double *psi_im,
-					 input in);
-
-static void check_dynamic_qstls_iet(double dx, int nx, double xmax,
-				    double dW, int nW, double Wmax,
-				    double Theta, double rs,
-				    input in, size_t it_read,
-				    size_t it_expected, FILE *fid,
-				    bool check_grid, bool check_items,
-				    bool check_eof);
 
 // -------------------------------------------------------------------
 // LOCAL CONSTANTS AND DATA STRUCTURES
@@ -484,48 +444,44 @@ void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
 
 // Auxiliary density response (real and imaginary part)
 void compute_dynamic_adr(double *psi_re, double *psi_im,
-			     double *phi_re, double *phi_im,
-			     double *WW, double *SS,
-			     double *bf, double *xx,
-			     input in) {
+			 double *phi_re, double *phi_im,
+			 double *WW, double *SS,
+			 double *bf, double *xx,
+			 input in) {
 
   // For the auxiliary density response we need to know the
   // density response functions on a grid of wave-vectors. This
   // requires to allocate some dedicated 2D arrays and to
   // recompute the ideal density response
 
+  // Target wave vector
   double xTarget = in.dyn_xtarget;
-  double *phi_re_grid = NULL;
-  double *phi_im_grid = NULL;
-  double *psi_re_grid = NULL;
-  double *psi_im_grid = NULL;
-  double *phi_re_tmp = NULL;
-  double *phi_im_tmp = NULL;
-  double *psi_re_tmp = NULL;
-  double *psi_im_tmp = NULL;
-  gsl_spline *phi_re_sp_ptr;
-  gsl_interp_accel *phi_re_acc_ptr;
-  gsl_spline *phi_im_sp_ptr;
-  gsl_interp_accel *phi_im_acc_ptr;
+
+  // Temporary arrays to store results for multiple wave vectors
+  double *phi_re_2D = NULL;
+  double *phi_im_2D = NULL;
+  double *psi_re_2D = NULL;
+  double *psi_im_2D = NULL;
+  double *phi_re_1D = NULL;
+  double *phi_im_1D = NULL;
+  double *psi_re_1D = NULL;
+  double *psi_im_1D = NULL;
+
+  // Temporary input structure
+  input in_1D = in;
+  in_1D.nx = 1;
+
+  // Variables for interpolation
   gsl_spline *psi_re_sp_ptr;
   gsl_interp_accel *psi_re_acc_ptr;
   gsl_spline *psi_im_sp_ptr;
   gsl_interp_accel *psi_im_acc_ptr;
-
   
   // Allocate arrays
-  alloc_dynamic_qstls_iet_arrays(in, &phi_re_grid,
-				 &phi_im_grid,
-				 &psi_re_grid,
-				 &psi_im_grid,
-				 &phi_re_tmp,
-				 &phi_im_tmp,
-				 &psi_re_tmp,
-				 &psi_im_tmp);  
-  phi_re_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-  phi_re_acc_ptr = gsl_interp_accel_alloc();
-  phi_im_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
-  phi_im_acc_ptr = gsl_interp_accel_alloc();
+  alloc_dynamic_stls_2Darrays(in, &phi_re_2D, &phi_im_2D);
+  alloc_dynamic_qstls_2Darrays(in, &psi_re_2D, &psi_im_2D);
+  alloc_dynamic_stls_2Darrays(in_1D, &phi_re_1D, &phi_im_1D);
+  alloc_dynamic_qstls_2Darrays(in_1D, &psi_re_1D, &psi_im_1D);
   psi_re_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   psi_re_acc_ptr = gsl_interp_accel_alloc();
   psi_im_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
@@ -533,67 +489,48 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
 
   // Density response
   if (strcmp(in.dyn_adr_file, NO_FILE_STR)!=0) {
-
-    // Load from file
-    read_fixed_dynamic_qstls_iet(phi_re_grid, phi_im_grid,
-				 psi_re_grid, psi_im_grid,
-				 in);
-      
+    read_bin_dynamic_adr_2D(psi_re_2D, psi_im_2D, in);      
   }
   else {
 
 
     // Ideal
-    compute_dynamic_idr_iet(phi_re_grid, phi_im_grid,
+    compute_dynamic_idr_iet(phi_re_2D, phi_im_2D,
 			    WW, xx, in);
     
-    // Auxiliary
+    // Auxiliary (fully or partially dynamic)
     if (in.qstls_iet_static)
-      // Partially dynamic
-      compute_dynamic_adr_pd(phi_re_grid, phi_im_grid,
-				 psi_re_grid, psi_im_grid,
-				 WW, SS, bf, xx, in);
-    else {
-      // Fully dynamic
-      compute_dynamic_adr_fd(phi_re_grid, phi_im_grid,
-			    psi_re_grid, psi_im_grid,
+      compute_dynamic_adr_pd(phi_re_2D, phi_im_2D,
+			     psi_re_2D, psi_im_2D,
 			     WW, SS, bf, xx, in);
-    }
+    else
+      compute_dynamic_adr_fd(phi_re_2D, phi_im_2D,
+			     psi_re_2D, psi_im_2D,
+			     WW, SS, bf, xx, in);
+
+    // Write to file
+    write_bin_dynamic_adr_2D(psi_re_2D, psi_im_2D, in);
+     
   }
 
   // Interpolate to wave-vector given in input
   for (int jj=0; jj<in.nW; jj++){
 
     for (int ii=0; ii<in.nx; ii++){
-      phi_re_tmp[ii] = phi_re_grid[idx2(ii,jj,in.nx)];
-      phi_im_tmp[ii] = phi_im_grid[idx2(ii,jj,in.nx)];
-      psi_re_tmp[ii] = psi_re_grid[idx2(ii,jj,in.nx)];
-      psi_im_tmp[ii] = psi_im_grid[idx2(ii,jj,in.nx)];
+      psi_re_1D[ii] = psi_re_2D[idx2(ii,jj,in.nx)];
+      psi_im_1D[ii] = psi_im_2D[idx2(ii,jj,in.nx)];
     }
-    gsl_spline_init(phi_re_sp_ptr, xx, phi_re_tmp, in.nx);
-    gsl_spline_init(phi_im_sp_ptr, xx, phi_im_tmp, in.nx);
-    gsl_spline_init(psi_re_sp_ptr, xx, psi_re_tmp, in.nx);
-    gsl_spline_init(psi_im_sp_ptr, xx, psi_im_tmp, in.nx);
-    phi_re[jj] = gsl_spline_eval(phi_re_sp_ptr, xTarget, phi_re_acc_ptr);
-    phi_im[jj] = gsl_spline_eval(phi_im_sp_ptr, xTarget, phi_im_acc_ptr);
+    gsl_spline_init(psi_re_sp_ptr, xx, psi_re_1D, in.nx);
+    gsl_spline_init(psi_im_sp_ptr, xx, psi_im_1D, in.nx);
     psi_re[jj] = gsl_spline_eval(psi_re_sp_ptr, xTarget, psi_re_acc_ptr);
     psi_im[jj] = gsl_spline_eval(psi_im_sp_ptr, xTarget, psi_im_acc_ptr);
   }
 
-  // Write 2D array with density response to file
-  write_fixed_dynamic_qstls_iet(phi_re_grid, phi_im_grid,
-				psi_re_grid, psi_im_grid,
-				in);
-  
   // Free memory
-  free_dynamic_qstls_iet_arrays(phi_re_grid, phi_im_grid,
-				psi_re_grid, psi_im_grid,
-				phi_re_tmp, phi_im_tmp,
-				psi_re_tmp, psi_im_tmp);
-  gsl_spline_free(phi_re_sp_ptr);
-  gsl_interp_accel_free(phi_re_acc_ptr);
-  gsl_spline_free(phi_im_sp_ptr);
-  gsl_interp_accel_free(phi_im_acc_ptr);
+  free_dynamic_stls_2Darrays(phi_re_2D, phi_im_2D);
+  free_dynamic_qstls_2Darrays(psi_re_2D, psi_im_2D);
+  free_dynamic_qstls_2Darrays(phi_re_1D, phi_im_1D);
+  free_dynamic_qstls_2Darrays(psi_re_1D, psi_im_1D);
   gsl_spline_free(psi_re_sp_ptr);
   gsl_interp_accel_free(psi_re_acc_ptr);
   gsl_spline_free(psi_im_sp_ptr);
@@ -2054,171 +1991,3 @@ void compute_dsf_qstls_iet(double *SSn, double *phi_re, double *phi_im,
   }
 
 }
-
-
-// -------------------------------------------------------------------
-// FUNCTIONS FOR OUTPUT AND INPUT
-// -------------------------------------------------------------------
-
-// write binary file to store the density responses  
-void write_fixed_dynamic_qstls_iet(double *phi_re, double *phi_im,
-				   double *psi_re, double *psi_im,
-				   input in){
-
-  // Name of output file
-  char out_name[100];
-  sprintf(out_name, "dynamic_adr_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta,
-	  in.theory);
-
-  // Open binary file
-  FILE *fid = NULL;
-  fid = fopen(out_name, "wb");
-  if (fid == NULL) {
-    fprintf(stderr,"Error while creating file to store the density"
-	    " responses\n");
-    exit(EXIT_FAILURE);
-  }
-
-  // Input data
-  fwrite(&in.nx, sizeof(int), 1, fid);
-  fwrite(&in.dx, sizeof(double), 1, fid);
-  fwrite(&in.xmax, sizeof(double), 1, fid);
-  fwrite(&in.nW, sizeof(int), 1, fid);
-  fwrite(&in.dyn_dW, sizeof(double), 1, fid);
-  fwrite(&in.dyn_Wmax, sizeof(double), 1, fid);
-  fwrite(&in.Theta, sizeof(double), 1, fid);
-  fwrite(&in.rs, sizeof(double), 1, fid);
-  
-  // Density response
-  fwrite(phi_re, sizeof(double), in.nx * in.nW, fid);
-  fwrite(phi_im, sizeof(double), in.nx * in.nW, fid);
-  fwrite(psi_re, sizeof(double), in.nx * in.nW, fid);
-  fwrite(psi_im, sizeof(double), in.nx * in.nW, fid);
-
-  // Close binary file
-  fclose(fid);
-
-}
-
-// read binary file with the fixed component of the auxilliary density response
-void read_fixed_dynamic_qstls_iet(double *phi_re, double *phi_im,
-				  double *psi_re, double *psi_im,
-				  input in){
-
-  // Variables
-  size_t it_read;
-  int nx_file;
-  double dx_file;
-  double xmax_file;
-  int nW_file;
-  double dW_file;
-  double Wmax_file;
-  double Theta_file;
-  double rs_file;
-
-  // Open binary file
-  FILE *fid = NULL;
-  fid = fopen(in.dyn_adr_file, "rb");
-  if (fid == NULL) {
-    fprintf(stderr,"Error while opening file for initial guess or restart\n");
-    exit(EXIT_FAILURE);
-  }
-
-  // Initialize number of items read from input file
-  it_read = 0;
-
-  // Check that the data for the guess file is consistent
-  it_read += fread(&nx_file, sizeof(int), 1, fid);
-  it_read += fread(&dx_file, sizeof(double), 1, fid);
-  it_read += fread(&xmax_file, sizeof(double), 1, fid);
-  it_read += fread(&nW_file, sizeof(int), 1, fid);
-  it_read += fread(&dW_file, sizeof(double), 1, fid);
-  it_read += fread(&Wmax_file, sizeof(double), 1, fid);
-  it_read += fread(&Theta_file, sizeof(double), 1, fid);
-  it_read += fread(&rs_file, sizeof(double), 1, fid);
-  check_dynamic_qstls_iet(dx_file, nx_file, xmax_file,
-			  dW_file, nW_file, Wmax_file,
-			  Theta_file, rs_file,
-			  in, it_read, 8, fid, true, true, false);
-  
-
-  // Fixed component of the auxiliary density response 
-  it_read += fread(phi_re, sizeof(double), nx_file * nW_file, fid);
-  it_read += fread(phi_im, sizeof(double), nx_file * nW_file, fid);
-  it_read += fread(psi_re, sizeof(double), nx_file * nW_file, fid);
-  it_read += fread(psi_im, sizeof(double), nx_file * nW_file, fid);
-  check_dynamic_qstls_iet(dx_file, nx_file, xmax_file,
-			  dW_file, nW_file, Wmax_file,
-			  Theta_file, rs_file,
-			  in, it_read, 4*nx_file*nW_file + 8,
-			  fid, false, true, true);
-  
-  
-  // Close binary file
-  fclose(fid);
-	    
-}
-
-
-// Check consistency of the guess data
-void check_dynamic_qstls_iet(double dx, int nx, double xmax,
-			     double dW, int nW, double Wmax,
-			     double Theta, double rs,
-			     input in, size_t it_read,
-			     size_t it_expected, FILE *fid,
-			     bool check_grid, bool check_items,
-			     bool check_eof){
-  
-  int buffer;
-  
-  // Check that the grid in the imported data is consistent with input
-  if (check_grid) {
-
-    if (nx != in.nx || fabs(dx-in.dx) > DBL_TOL || fabs(xmax-in.xmax) > DBL_TOL){
-      fprintf(stderr,"Wave-vector grid from imported file is incompatible with input\n");
-      fprintf(stderr,"Grid points (nx) : %d (input), %d (file)\n", in.nx, nx);
-      fprintf(stderr,"Resolution (dx)  : %.16f (input), %.16f (file)\n", in.dx, dx);
-      fprintf(stderr,"Cutoff (xmax)    : %.16f (input), %.16f (file)\n", in.xmax, xmax);
-      fclose(fid);
-      exit(EXIT_FAILURE);
-    }
-    if (nW != in.nW || fabs(dW-in.dyn_dW) > DBL_TOL || fabs(Wmax-in.dyn_Wmax) > DBL_TOL){
-      fprintf(stderr,"Frequency grid from imported file is incompatible with input\n");
-      fprintf(stderr,"Grid points (nW) : %d (input), %d (file)\n", in.nW, nW);
-      fprintf(stderr,"Resolution (dW)  : %.16f (input), %.16f (file)\n", in.dyn_dW, dW);
-      fprintf(stderr,"Cutoff (Wmax)    : %.16f (input), %.16f (file)\n", in.dyn_Wmax, Wmax);
-      fclose(fid);
-      exit(EXIT_FAILURE);
-    }
-    if (fabs(Theta-in.Theta) > DBL_TOL || fabs(rs-in.rs) > DBL_TOL){
-      fprintf(stderr,"State point from imported file is incompatible with input\n");
-      fprintf(stderr,"Degeneracy parameter (theta) : %f (input), %f (file)\n", in.Theta, Theta);
-      fclose(fid);
-      exit(EXIT_FAILURE);
-    }
-    
-  }
-
-  // Check that all the expected items where read
-  if (check_items) {
-    if (it_read != it_expected ) {
-      fprintf(stderr,"Error while reading file for the density response.\n");
-      fprintf(stderr,"%ld Elements expected, %ld elements read\n", it_expected, it_read);
-      fclose(fid);
-      exit(EXIT_FAILURE);
-    }
-  }
-  
-  // Check for end of file
-  if (check_eof){
-    it_read = fread(&buffer, sizeof(int), 1, fid); // Trigger end-of-file activation
-    if (!feof(fid)) {
-      fprintf(stderr,"Error while reading file for the density response.\n");
-      fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
-      fclose(fid);
-      exit(EXIT_FAILURE);
-    }
-  }
-  
-}
-

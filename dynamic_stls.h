@@ -16,9 +16,15 @@ void get_frequency_grid_size(input *in);
 void alloc_dynamic_stls_arrays(input in, double **WW, double **phi_re,
 			       double **phi_im, double **SSn);
 
+void alloc_dynamic_stls_2Darrays(input in, double **phi_re,
+				 double **phi_im);
+
 void free_dynamic_stls_arrays(double *WW, double *phi_re,
 			      double *phi_im, double *SSn,
 			      double *xx);
+
+void free_dynamic_stls_2Darrays(double *phi_re,
+				double *phi_im);
 
 // -------------------------------------------------------------------
 // FUNCTION USED TO INITIALIZE ARRAYS

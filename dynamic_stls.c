@@ -11,13 +11,6 @@
 // LOCAL FUNCTIONS
 // -------------------------------------------------------------------
 
-// Allocate and free arrays
-static void alloc_dynamic_stls_2Darrays(input in, double **phi_re,
-				 double **phi_im);
-
-static void free_dynamic_stls_2Darrays(double *phi_re,
-				       double *phi_im);
-
 // Frequency grid
 static void frequency_grid(double *WW, input *in);
 

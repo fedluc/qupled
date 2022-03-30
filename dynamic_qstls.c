@@ -12,13 +12,6 @@
 // LOCAL FUNCTIONS
 // -------------------------------------------------------------------
 
-// Allocate and free arrays
-static void alloc_dynamic_qstls_2Darrays(input in, double **psi_re,
-					 double **psi_im);
-
-static void free_dynamic_qstls_2Darrays(double *psi_re,
-					double *psi_im);
-
 // Auxiliary density response
 static void compute_dynamic_adr(double *psi_re,  double *psi_im,
 				double *WW,  double *SS,
@@ -78,12 +71,6 @@ static void compute_dsf_qstls(double *SSn, double *phi_re,
 static void write_text_adr(double *psi_re, double *psi_im,
 			   double *WW, input in);
 
-
-static void write_bin_adr_2D(double *psi_re, double *psi_im,
-				    input in);
-
-static void read_bin_adr_2D(double *psi_re, double *psi_im,
-			    input in);
 
 // -------------------------------------------------------------------
 // LOCAL CONSTANTS AND DATA STRUCTURES
@@ -347,12 +334,12 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
 
   // Auxiliary density response for multiple wave vectors
   if (strcmp(in.dyn_adr_file, NO_FILE_STR) != 0) {
-    read_bin_adr_2D(psi_re_2D, psi_im_2D, in);
+    read_bin_dynamic_adr_2D(psi_re_2D, psi_im_2D, in);
   }
   else{
     compute_dynamic_adr_2D(psi_re_2D, psi_im_2D,
 			   WW, SS, xx, in);
-    write_bin_adr_2D(psi_re_2D, psi_im_2D, in);
+    write_bin_dynamic_adr_2D(psi_re_2D, psi_im_2D, in);
   }
   
   // Interpolate to wave-vector given in input
@@ -1053,8 +1040,8 @@ void write_text_adr(double *psi_re, double *psi_im, double *WW, input in){
 }
 
 // write auxiliary density response to binary file
-void write_bin_adr_2D(double *psi_re, double *psi_im,
-		      input in){
+void write_bin_dynamic_adr_2D(double *psi_re, double *psi_im,
+			      input in){
   
   // Name of output file
   char out_name[100];
@@ -1090,7 +1077,7 @@ void write_bin_adr_2D(double *psi_re, double *psi_im,
 }
 
 // read auxiliary density response from binary file
-void read_bin_adr_2D(double *psi_re, double *psi_im, input in){
+void read_bin_dynamic_adr_2D(double *psi_re, double *psi_im, input in){
   
   // Variables
   size_t it_read;
