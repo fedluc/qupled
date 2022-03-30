@@ -42,4 +42,12 @@ void write_text_dynamic_stls(double *SSn, double *phi_re,
 			     double *phi_im, double *WW,
 			     input in);
 
+void check_bin_dynamic(double dx, int nx, double xmax,
+		       double dW, int nW, double Wmax,
+		       double Theta, double rs,
+		       input in, size_t it_read,
+		       size_t it_expected, FILE *fid,
+		       bool check_grid, bool check_items,
+		       bool check_eof);
+
 #endif

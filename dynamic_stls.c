@@ -61,8 +61,12 @@ static void write_text_isf(double *SSn, double *ww, input in);
 static void write_text_idr(double *phi_re, double *phi_im,
 			   double *WW, input in);
 
-static void write_fixed_dynamic_idr(double *phi_re, double *phi_im,
-				    input in);
+static void write_bin_idr_2D(double *phi_re, double *phi_im,
+			     input in);
+
+static void read_bin_idr_2D(double *phi_re, double *phi_im,
+			    input in);
+
 
 // -------------------------------------------------------------------
 // LOCAL CONSTANTS AND DATA STRUCTURES
@@ -322,10 +326,14 @@ void compute_dynamic_idr(double *phi_re, double *phi_im,
   phi_im_acc_ptr = gsl_interp_accel_alloc();
 
   // Ideal density response for multiple wave vectors
-  compute_dynamic_idr_2D(phi_re_2D, phi_im_2D, WW, xx, in);
-
-  // Write the ideal density response to file
-  write_fixed_dynamic_idr(phi_re_2D, phi_im_2D, in);
+  if (strcmp(in.dyn_adr_file, NO_FILE_STR) != 0) {
+    read_bin_idr_2D(phi_re_2D, phi_im_2D, in);
+  }
+  else{
+    compute_dynamic_idr_2D(phi_re_2D, phi_im_2D,
+			   WW, xx, in);
+    write_bin_idr_2D(phi_re_2D, phi_im_2D, in);
+  }
 
   // Interpolate to wave-vector given in input
   for (int jj=0; jj<in.nW; jj++){
@@ -810,8 +818,8 @@ void write_text_idr(double *phi_re, double *phi_im, double *WW, input in){
 
 
 // write ideal density response to binary file
-void write_fixed_dynamic_idr(double *phi_re, double *phi_im,
-			     input in){
+void write_bin_idr_2D(double *phi_re, double *phi_im,
+		   input in){
   
   // Name of output file
   char out_name[100];
@@ -845,3 +853,122 @@ void write_fixed_dynamic_idr(double *phi_re, double *phi_im,
   fclose(fid);
 
 }
+
+// read ideal density response from binary file
+void read_bin_idr_2D(double *phi_re, double *phi_im, input in){
+  
+  // Variables
+  size_t it_read;
+  int nx_file;
+  double dx_file;
+  double xmax_file;
+  int nW_file;
+  double dW_file;
+  double Wmax_file;
+  double Theta_file;
+  double rs_file;
+
+  // Open binary file
+  FILE *fid = NULL;
+  fid = fopen(in.dyn_adr_file, "rb");
+  if (fid == NULL) {
+    fprintf(stderr,"Error while opening file for initial guess or restart\n");
+    exit(EXIT_FAILURE);
+  }
+
+  // Initialize number of items read from input file
+  it_read = 0;
+
+  // Check that the data for the guess file is consistent
+  it_read += fread(&nx_file, sizeof(int), 1, fid);
+  it_read += fread(&dx_file, sizeof(double), 1, fid);
+  it_read += fread(&xmax_file, sizeof(double), 1, fid);
+  it_read += fread(&nW_file, sizeof(int), 1, fid);
+  it_read += fread(&dW_file, sizeof(double), 1, fid);
+  it_read += fread(&Wmax_file, sizeof(double), 1, fid);
+  it_read += fread(&Theta_file, sizeof(double), 1, fid);
+  it_read += fread(&rs_file, sizeof(double), 1, fid);
+  check_bin_dynamic(dx_file, nx_file, xmax_file,
+		    dW_file, nW_file, Wmax_file,
+		    Theta_file, rs_file,
+		    in, it_read, 8, fid, true, true, false);
+  
+
+  // Fixed component of the auxiliary density response 
+  it_read += fread(phi_re, sizeof(double), nx_file * nW_file, fid);
+  it_read += fread(phi_im, sizeof(double), nx_file * nW_file, fid);
+  check_bin_dynamic(dx_file, nx_file, xmax_file,
+		    dW_file, nW_file, Wmax_file,
+		    Theta_file, rs_file,
+		    in, it_read, 2*nx_file*nW_file + 8,
+		    fid, false, true, false);
+  
+  
+  // Close binary file
+  fclose(fid);
+	    
+}
+
+
+// Check consistency of the guess data
+void check_bin_dynamic(double dx, int nx, double xmax,
+		       double dW, int nW, double Wmax,
+		       double Theta, double rs,
+		       input in, size_t it_read,
+		       size_t it_expected, FILE *fid,
+		       bool check_grid, bool check_items,
+		       bool check_eof){
+  
+  int buffer;
+  
+  // Check that the grid in the imported data is consistent with input
+  if (check_grid) {
+
+    if (nx != in.nx || fabs(dx-in.dx) > DBL_TOL || fabs(xmax-in.xmax) > DBL_TOL){
+      fprintf(stderr,"Wave-vector grid from imported file is incompatible with input\n");
+      fprintf(stderr,"Grid points (nx) : %d (input), %d (file)\n", in.nx, nx);
+      fprintf(stderr,"Resolution (dx)  : %.16f (input), %.16f (file)\n", in.dx, dx);
+      fprintf(stderr,"Cutoff (xmax)    : %.16f (input), %.16f (file)\n", in.xmax, xmax);
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+    if (nW != in.nW || fabs(dW-in.dyn_dW) > DBL_TOL || fabs(Wmax-in.dyn_Wmax) > DBL_TOL){
+      fprintf(stderr,"Frequency grid from imported file is incompatible with input\n");
+      fprintf(stderr,"Grid points (nW) : %d (input), %d (file)\n", in.nW, nW);
+      fprintf(stderr,"Resolution (dW)  : %.16f (input), %.16f (file)\n", in.dyn_dW, dW);
+      fprintf(stderr,"Cutoff (Wmax)    : %.16f (input), %.16f (file)\n", in.dyn_Wmax, Wmax);
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+    if (fabs(Theta-in.Theta) > DBL_TOL || fabs(rs-in.rs) > DBL_TOL){
+      fprintf(stderr,"State point from imported file is incompatible with input\n");
+      fprintf(stderr,"Degeneracy parameter (theta) : %f (input), %f (file)\n", in.Theta, Theta);
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+    
+  }
+
+  // Check that all the expected items where read
+  if (check_items) {
+    if (it_read != it_expected ) {
+      fprintf(stderr,"Error while reading file for the density response.\n");
+      fprintf(stderr,"%ld Elements expected, %ld elements read\n", it_expected, it_read);
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+  }
+  
+  // Check for end of file
+  if (check_eof){
+    it_read = fread(&buffer, sizeof(int), 1, fid); // Trigger end-of-file activation
+    if (!feof(fid)) {
+      fprintf(stderr,"Error while reading file for the density response.\n");
+      fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
+      fclose(fid);
+      exit(EXIT_FAILURE);
+    }
+  }
+  
+}
+

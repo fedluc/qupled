@@ -79,9 +79,11 @@ static void write_text_adr(double *psi_re, double *psi_im,
 			   double *WW, input in);
 
 
-static void write_fixed_dynamic_adr(double *psi_re, double *psi_im,
+static void write_bin_adr_2D(double *psi_re, double *psi_im,
 				    input in);
 
+static void read_bin_adr_2D(double *psi_re, double *psi_im,
+			    input in);
 
 // -------------------------------------------------------------------
 // LOCAL CONSTANTS AND DATA STRUCTURES
@@ -344,10 +346,14 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
   psi_im_acc_ptr = gsl_interp_accel_alloc();
 
   // Auxiliary density response for multiple wave vectors
-  compute_dynamic_adr_2D(psi_re_2D, psi_im_2D, WW, SS, xx, in);
-
-  // Write the auxiliary density response to file
-  write_fixed_dynamic_adr(psi_re_2D, psi_im_2D, in);
+  if (strcmp(in.dyn_adr_file, NO_FILE_STR) != 0) {
+    read_bin_adr_2D(psi_re_2D, psi_im_2D, in);
+  }
+  else{
+    compute_dynamic_adr_2D(psi_re_2D, psi_im_2D,
+			   WW, SS, xx, in);
+    write_bin_adr_2D(psi_re_2D, psi_im_2D, in);
+  }
   
   // Interpolate to wave-vector given in input
   for (int jj=0; jj<in.nW; jj++){
@@ -1047,16 +1053,26 @@ void write_text_adr(double *psi_re, double *psi_im, double *WW, input in){
 }
 
 // write auxiliary density response to binary file
-void write_fixed_dynamic_adr(double *psi_re, double *psi_im,
-			     input in){
+void write_bin_adr_2D(double *psi_re, double *psi_im,
+		      input in){
   
   // Name of output file
   char out_name[100];
   sprintf(out_name, "dynamic_restart_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta,
 	  in.theory);
 
-  // Open binary file (we append to the file created for the ideal density response)
+  
+  // Check that binary file created for the ideal density response exists
   FILE *fid = NULL;
+  fid = fopen(out_name, "r");
+  if (fid == NULL) {
+    fprintf(stderr,"Error while opening file to store the density"
+	    " responses. File does not exist.\n");
+    exit(EXIT_FAILURE);
+  }
+  fclose(fid);
+  
+  // Open binary file (append to the file created for the ideal density response)
   fid = fopen(out_name, "ab");
   if (fid == NULL) {
     fprintf(stderr,"Error while opening file to store the density"
@@ -1071,4 +1087,61 @@ void write_fixed_dynamic_adr(double *psi_re, double *psi_im,
   // Close binary file
   fclose(fid);
 
+}
+
+// read auxiliary density response from binary file
+void read_bin_adr_2D(double *psi_re, double *psi_im, input in){
+  
+  // Variables
+  size_t it_read;
+  int nx_file;
+  double dx_file;
+  double xmax_file;
+  int nW_file;
+  double dW_file;
+  double Wmax_file;
+  double Theta_file;
+  double rs_file;
+
+  // Open binary file
+  FILE *fid = NULL;
+  fid = fopen(in.dyn_adr_file, "rb");
+  if (fid == NULL) {
+    fprintf(stderr,"Error while opening file for initial guess or restart\n");
+    exit(EXIT_FAILURE);
+  }
+
+  // Initialize number of items read from input file
+  it_read = 0;
+
+  // Check that the data for the guess file is consistent
+  it_read += fread(&nx_file, sizeof(int), 1, fid);
+  it_read += fread(&dx_file, sizeof(double), 1, fid);
+  it_read += fread(&xmax_file, sizeof(double), 1, fid);
+  it_read += fread(&nW_file, sizeof(int), 1, fid);
+  it_read += fread(&dW_file, sizeof(double), 1, fid);
+  it_read += fread(&Wmax_file, sizeof(double), 1, fid);
+  it_read += fread(&Theta_file, sizeof(double), 1, fid);
+  it_read += fread(&rs_file, sizeof(double), 1, fid);
+  check_bin_dynamic(dx_file, nx_file, xmax_file,
+		    dW_file, nW_file, Wmax_file,
+		    Theta_file, rs_file,
+		    in, it_read, 8, fid, true, true, false);
+  
+  // Skip data for the ideal density response
+  fseek(fid, sizeof(double)*2*nx_file*nW_file, SEEK_CUR);
+  
+  // Fixed component of the auxiliary density response 
+  it_read += fread(psi_re, sizeof(double), nx_file * nW_file, fid);
+  it_read += fread(psi_im, sizeof(double), nx_file * nW_file, fid);
+  check_bin_dynamic(dx_file, nx_file, xmax_file,
+		    dW_file, nW_file, Wmax_file,
+		    Theta_file, rs_file,
+		    in, it_read, 2*nx_file*nW_file + 8,
+		    fid, false, true, true);
+  
+  
+  // Close binary file
+  fclose(fid);
+	    
 }
