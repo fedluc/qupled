@@ -282,7 +282,7 @@ void frequency_grid(double *WW, input *in){
 // FUNCTION USED TO DEFINE THE IDEAL DENSITY RESPONSE
 // ------------------------------------------------------------------
 
-// Ideal density response (real and imaginary part)
+// Ideal density response
 void compute_dynamic_idr(double *phi_re, double *phi_im,
 			 double *WW, double *xx, input in) {
 
@@ -350,7 +350,7 @@ void compute_dynamic_idr(double *phi_re, double *phi_im,
   
 }
 
-// Ideal density response (real and imaginary part)
+// Ideal density response (for multiple wave vectors)
 void compute_dynamic_idr_2D(double *phi_re, double *phi_im,
 			    double *WW, double *xx, input in) {
 
@@ -389,7 +389,8 @@ void compute_dynamic_idr_re(double *phi_re, double *WW,
 			    0.0, in.xmax, 
 			    0.0, QUAD_REL_ERR, 
 			    wsp, 
-			    &phi_re[jj], &err, &nevals);
+			    &phi_re[idx2(ii,jj,in.nx)],
+			    &err, &nevals);
 
     }
   }
@@ -437,7 +438,8 @@ void compute_dynamic_idr_im(double *phi_im, double *WW,
 			    ymin, ymax, 
 			    0.0, QUAD_REL_ERR, 
 			    wsp, 
-			    &phi_im[jj], &err, &nevals);
+			    &phi_im[idx2(ii,jj,in.nx)],
+			    &err, &nevals);
       
     }
   }
