@@ -76,7 +76,7 @@ Once the iterative procedure is completed, the results are written to a set of d
  
   * One text file with the auxiliary density response (adr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and n<sub>l</sub> columns. Each column corresponds to the ideal density response for a given value of the Matsubara frequency, starting from l = 0 in the first column
   * One binary file which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS scheme via the option `--qstls-fix`  (fixed_rs\*\_theta\*\*\_\*\*\*.bin) **(only for the qSLTLS scheme)** 
-  * One binary file per wave-vector which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS-IET scheme via the option `--qstls-iet-fix`  (psi_fixed_theta\*\*\_xx\*\*\*\*.bin, n<sub>x</sub> files are generated) **(only for the qSTLS-IET scheme)**
+  * One binary file per wave-vector which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS-IET scheme via the option `--qstls-iet-fix`  (adr_iet_fixed_theta\*\*\_xx\*\*\*\*.bin, n<sub>x</sub> files are generated) **(only for the qSTLS-IET scheme)**
   
 In the above, \* corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter, \*\*\* to the dielectric scheme that was solved and \*\*\*\* is the wave-vector value.
 
@@ -184,7 +184,7 @@ The following command line options can be employed to control the calculations p
   
   * `--vs-solve-csr` speficies whether to enforce the compressibility sum-rule in the VS-STLS scheme or not. If this parameter is set to 0, the self consistent calculation for the free parameter in the VS-STLS is by-passed completely and the structural properties are determined via the free parameter specified with `vs-alpha`. Default `--vs-solve-csr=1`
   
-  * `--vs-thermo-file` speficies the name of the binary file used to load part of the exchange free energy integrand in the VS-STLS scheme. The binary file with the free energy integrand is written at the end of any successfull VS-STLS calculation, see [here](#output). If no file name is given, the free energy integrand is computed starting from 0. Note that the same value for the free parameter used to enforce the compressibility sum-rule, &alpha;, is adopted for all the state points that are not included in the imported binary file. Hence, if &alpha; is expected to vary significantly with the coupling parameter, computing the free energy integrand from 0 could lead to erroneous results.  Default: no file name is specified.
+  * `--vs-thermo` speficies the name of the binary file used to load part of the exchange free energy integrand in the VS-STLS scheme. The binary file with the free energy integrand is written at the end of any successfull VS-STLS calculation, see [here](#output). If no file name is given, the free energy integrand is computed starting from 0. Note that the same value for the free parameter used to enforce the compressibility sum-rule, &alpha;, is adopted for all the state points that are not included in the imported binary file. Hence, if &alpha; is expected to vary significantly with the coupling parameter, computing the free energy integrand from 0 could lead to erroneous results.  Default: no file name is specified.
 
   * `--xmax` specifies the cutoff for wave-vector grid. Default `--xcut=20`
  
