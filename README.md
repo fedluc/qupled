@@ -15,6 +15,10 @@ STLS can be used to compute the properties of quantum one component plasmas via 
 
 Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC, STLS-IET and VS-STLS) and are limited to static and thermodynamic properties.
 
+## Limitations
+
+All the calculations are performed in normalized units. The wave vectors are normalized to the Fermi wave-vector and the frequencies are normalized to 2&pi;E<sub>F</sub>/h. Here E<sub>F</sub> is the Fermi energy and h is Planck's constant.
+
 ## Compiling
 
 The code can be compiled with gcc and with the [make file](Makefile) provided with the source code. In order to correctly compile the code it is necessary that the following libraries are installed
