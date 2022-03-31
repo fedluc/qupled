@@ -144,9 +144,11 @@ static void compute_free_energy_fixed(vs_thermo rsa, vs_thermo rsu,
 // Input and output
 static void write_text_vs_stls(double *SS, double *GG, double *phi,
 			       double *SSHF, double *xx, double *rsu,
-			       double *rsa, input in);
+			       double *rsa, double rs_co, double fxc,
+			       input in);
 
-static void write_text_fxc(double *rsu, double *rsp, input in);
+static void write_text_fxc(double *rsu, double *rsa, double rs_co,
+			   double fxc, input in);
 
 static void write_text_alpha_CSR(input in);
 
@@ -240,7 +242,8 @@ void solve_vs_stls(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_vs_stls(SS.rst, GG.rst, phi.rst, SSHF.rst, xx.rst,
-  		     rsu.rst, rsa.rst, vs_in[VSS_IDXIN]);
+  		     rsu.rst, rsa.rst, rs_co[VST_IDXIN],
+		     fxc[VST_IDXIN], vs_in[VSS_IDXIN]);
   write_restart_stls(SS.rst, GG.rst, vs_in[VSS_IDXIN]);
   write_thermo_vs_stls(rsa, rsu, vs_in);
   if (verbose) printf("Done.\n");
@@ -1198,13 +1201,14 @@ void compute_free_energy_fixed(vs_thermo rsa, vs_thermo rsu,
 // write text files for output
 void write_text_vs_stls(double *SS, double *GG, double *phi,
 			double *SSHF, double *xx, double *rsu,
-			double *rsa, input in){
+			double *rsa, double rs_co, double fxc,
+			input in){
 
   // STLS arrays
   write_text_stls(SS, GG, phi, SSHF, xx, in);
   
   // Free energy output
-  write_text_fxc(rsu, rsa, in);
+  write_text_fxc(rsu, rsa, rs_co, fxc, in);
 
   // Free parameter output
   write_text_alpha_CSR(in);
@@ -1213,7 +1217,8 @@ void write_text_vs_stls(double *SS, double *GG, double *phi,
 
 
 // Write free energy to text file
-void write_text_fxc(double *rsu, double *rsa, input in){
+void write_text_fxc(double *rsu, double *rsa, double rs_co,
+		    double fxc, input in){
 
   FILE* fid;
   char out_name[100];
@@ -1224,8 +1229,10 @@ void write_text_fxc(double *rsu, double *rsa, input in){
     fprintf(stderr, "Error while creating the output file for the free energy\n");
     exit(EXIT_FAILURE);
   }
+
+  fxc += compute_free_energy(rsa, rsu, rs_co, in.rs, in);
   
-  //fprintf(fid, "%.8e %.8e %.8e\n", in.rs, in.Theta, compute_free_energy(rsu, rsa, in));
+  fprintf(fid, "%.8e %.8e %.8e\n", in.rs, in.Theta, fxc);
   
   fclose(fid);
 

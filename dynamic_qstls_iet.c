@@ -1395,7 +1395,7 @@ double adr_im_lev3_xwuW(double qq, void* pp) {
   double xx2 = xx*xx;
   double ww2 = ww*ww;
   double uu2 = uu*uu;
-  double tt = (xx2 + ww2 - uu2)/2.0; 
+  double tt = (xx2 + ww2 - uu2)/2.0;
   double hh1 = (tt + WW)/(2.0*xx);
   double hh2 = (tt - WW)/(2.0*xx);
   double hh12 = hh1*hh1;
@@ -1403,7 +1403,7 @@ double adr_im_lev3_xwuW(double qq, void* pp) {
   int out1 = 0;
   int out2 = 0;
   
-  if (qq2 > hh12) 
+  if (qq2 > hh12)
     out1 = 1;
 
   if (qq2 > hh22)
@@ -1506,26 +1506,41 @@ void compute_dynamic_adr_fd_re_lev1(double *psi_re_new,
 	ff_int_lev1.function = &adr_re_lev1_xW;
 
 	// Integrand (part 1)
-	if (ncomp == 1)
+	switch(ncomp) {
+	case 1:
 	  compute_dynamic_adr_fd_re_lev1_p1_1(int_lev1_1, psi_re, psi_im,
 					      phi_re, phi_im, SS, bf,
 					      jj, in);
-	else
+	  break;
+	case 2:
 	  compute_dynamic_adr_fd_re_lev1_p2_1(int_lev1_1, psi_re, psi_im,
 					      phi_re, phi_im, SS,
 					      jj, in);
+	  break;
+	default:
+	  fprintf(stderr, "Unexpected error in the evaluation of the auxiliary"
+		  " density response\n");
+	  exit(EXIT_FAILURE);
+	}
 	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
 	  
 	// Integrand (part 2)
 	if (compute_fixed) {
-	  if (ncomp == 1)
+	  
+	  switch(ncomp) {
+	  case 1:
 	    compute_dynamic_adr_re_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
-	  else
+	    break;
+	  case 2:
 	    compute_dynamic_adr_im_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
+	    break;
+	  }
 	  write_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	  
 	}
-	else
+	else {
 	  read_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	}
 	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
 	      
 	// Integral over w
@@ -1542,11 +1557,14 @@ void compute_dynamic_adr_fd_re_lev1(double *psi_re_new,
 			      &err, &nevals);
 
 	// Output
-	if (ncomp == 1)
+	switch(ncomp) {
+	case 1:
 	  psi_re_new[idx2(ii,jj,in.nx)] = psi_new_tmp;
-	else
+	  break;
+	case 2:
 	  psi_re_new[idx2(ii,jj,in.nx)] -= psi_new_tmp;
-
+	  break;
+	}
       }
     }
     
@@ -1558,10 +1576,9 @@ void compute_dynamic_adr_fd_re_lev1(double *psi_re_new,
     gsl_interp_accel_free(int_lev1_1_acc_ptr);
     gsl_spline_free(int_lev1_2_sp_ptr);
     gsl_interp_accel_free(int_lev1_2_acc_ptr);
-    
+      
   }
 
- 
 }
 
 // Integrand for level 1 of the first component of the real auxiliary density response (part 1)
@@ -1655,7 +1672,7 @@ void compute_dynamic_adr_fd_im(double *psi_im_new,
   						compute_fixed,
   						in);
 
-  // Finite frequency contribution, first component 
+  // Finite frequency contribution, first component
   compute_dynamic_adr_fd_im_lev1(psi_im_new, psi_re, psi_im,
 				 phi_re, phi_im, psi_fixed_p1,
 				 WW, SS, bf, xx, 1, compute_fixed,
@@ -1725,26 +1742,41 @@ void compute_dynamic_adr_fd_im_lev1(double *psi_im_new,
 	ff_int_lev1.function = &adr_re_lev1_xW;
 
 	// Integrand (part 1)
-	if (ncomp == 1)
+	switch(ncomp) {
+	case 1:
 	  compute_dynamic_adr_fd_re_lev1_p2_1(int_lev1_1, psi_re, psi_im,
 					      phi_re, phi_im, SS,
 					      jj, in);
-	else
+	  break;
+	case 2:
 	  compute_dynamic_adr_fd_re_lev1_p1_1(int_lev1_1, psi_re, psi_im,
 					      phi_re, phi_im, SS, bf,
 					      jj, in);
+	  break;
+	default:
+	  fprintf(stderr, "Unexpected error in the evaluation of the auxiliary"
+		  " density response\n");
+	  exit(EXIT_FAILURE);
+	}
 	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
 	  
 	// Integrand (part 2)
 	if (compute_fixed){
-	  if (ncomp == 1)
+
+	  switch(ncomp) {
+	  case 1:
 	    compute_dynamic_adr_re_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
-	  else
+	    break;
+	  case 2:
 	    compute_dynamic_adr_im_lev2(int_lev1_2, WW[jj], xx[ii], SS, xx, in);
+	    break;
+	  }
 	  write_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	  
 	}
-	else
+	else {
 	  read_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	}
 	gsl_spline_init(int_lev1_2_sp_ptr, xx, int_lev1_2, in.nx);
 	      
 	// Integral over w
@@ -1761,10 +1793,14 @@ void compute_dynamic_adr_fd_im_lev1(double *psi_im_new,
 			      &err, &nevals);
 
 	// Output
-	if (ncomp == 1)
+	switch(ncomp) {
+	case 1:
 	  psi_im_new[idx2(ii,jj,in.nx)] = psi_new_tmp;
-	else
+	  break;
+	case 2:
 	  psi_im_new[idx2(ii,jj,in.nx)] += psi_new_tmp;
+	  break;
+	}
 	
       }
     }
@@ -1786,7 +1822,7 @@ void compute_dynamic_adr_fd_im_lev1(double *psi_im_new,
 // Imaginary part of the auxiliary density response (one component, level 1)
 void compute_dynamic_adr_fd_im_zero_frequency_lev1(double *psi_im_new,
 						   double *psi_re, double *psi_im,
-						   double *phi_re, 
+						   double *phi_re,
 						   double *psi_fixed,
 						   double *SS, double *bf,
 						   double *xx, int ncomp,
@@ -1837,23 +1873,37 @@ void compute_dynamic_adr_fd_im_zero_frequency_lev1(double *psi_im_new,
 	gsl_function ff_int_lev1;
 	ff_int_lev1.function = &adr_re_lev1_xW;
 
-	// Integrand (part 1) 
-	if (ncomp == 1)
+	// Integrand (part 1)
+	switch(ncomp) {
+	case 1:
 	  compute_dynamic_adr_fd_im_lev1_p1_1(int_lev1_1, psi_re,
 					      psi_im, phi_re,
 					      SS, xx, xx[ii], in);
-	else
+	  break;
+	case 2:
 	  compute_dynamic_adr_im_lev1_1(int_lev1_1, psi_re,
 					phi_re, SS, bf, in);
+	  break;
+	default:
+	  fprintf(stderr, "Unexpected error in the evaluation of the auxiliary"
+		  " density response\n");
+	  exit(EXIT_FAILURE);
+	}
 	gsl_spline_init(int_lev1_1_sp_ptr, xx, int_lev1_1, in.nx);
 	  
 	// Integrand (part 2)
 	if (compute_fixed){
-	  if (ncomp == 1)
+
+	  switch(ncomp) {
+	  case 1:
 	    compute_dynamic_adr_re_lev2(int_lev1_2, 0.0, xx[ii], SS, xx, in);
-	  else
+	    break;
+	  case 2:
 	    compute_dynamic_adr_im_lev2(int_lev1_2, 0.0, xx[ii], SS, xx, in);
+	    break;
+	  }
 	  write_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
+	  
 	}
 	else
 	  read_dynamic_adr_fixed(int_lev1_2, psi_fixed, ii, jj, in);
@@ -1873,11 +1923,14 @@ void compute_dynamic_adr_fd_im_zero_frequency_lev1(double *psi_im_new,
 			      &err, &nevals);
 
 	// Output
-	if (ncomp == 1) {
+	switch(ncomp) {
+	case 1:
 	  psi_im_new[idx2(ii,jj,in.nx)] = psi_new_tmp;
-	}
-	else
+	  break;
+	case 2:
 	  psi_im_new[idx2(ii,jj,in.nx)] += psi_new_tmp;
+	  break;
+	}
 	
       }
     }
