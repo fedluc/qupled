@@ -15,8 +15,8 @@ static void set_nx_nl(int nl1, int nl2, int nc1, int nc2,
 		      bool is_qstls, input *in);
 
 // -------------------------------------------------------------------
-// FUNCTION USED TO WRITE BINARY FILES FOR GUESS (OR RESTART) STARTING
-// FROM TEXT FILES OBTAINED FROM A SIMULATION
+// FUNCTION USED TO WRITE BINARY FILES FOR RESTART FROM TEXT FILES
+// OBTAINED FROM A SIMULATION
 // -------------------------------------------------------------------
 
 void create_restart(input in){
@@ -41,8 +41,8 @@ void create_restart(input in){
   else is_qstls = false;
   
   // Get format of the data stored in the text files
-  get_data_format_from_text(in.guess_file1, &n_lines_file1, &n_columns_file1);
-  get_data_format_from_text(in.guess_file2, &n_lines_file2, &n_columns_file2);
+  get_data_format_from_text(in.restart_file1, &n_lines_file1, &n_columns_file1);
+  get_data_format_from_text(in.restart_file2, &n_lines_file2, &n_columns_file2);
 
   // Update input structure based on the content of the text files
   set_nx_nl(n_lines_file1, n_lines_file2, n_columns_file1,
@@ -64,28 +64,28 @@ void create_restart(input in){
   if(is_qstls) {
 
     // Static structure factor
-    get_data_from_text(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
+    get_data_from_text(in.restart_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
     // Auxiliary density response
-    get_data_from_text(in.guess_file2, n_lines_file2, n_columns_file2, psi, NULL, &in);
+    get_data_from_text(in.restart_file2, n_lines_file2, n_columns_file2, psi, NULL, &in);
 
 
   }
   else{
     
     // Static structure factor
-    get_data_from_text(in.guess_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
+    get_data_from_text(in.restart_file1, n_lines_file1, n_columns_file1, SS, xx, &in);
     // Static local field correction
-    get_data_from_text(in.guess_file2, n_lines_file2, n_columns_file2, GG, xx, &in);
+    get_data_from_text(in.restart_file2, n_lines_file2, n_columns_file2, GG, xx, &in);
 
   }
   
   // Write restart files
   sprintf(out_name, "restart_rs%.3f_theta%.3f_%s.bin", in.rs, in.Theta, in.theory);
   if(is_qstls) {
-    write_guess_qstls(SS, psi, in);
+    write_restart_qstls(SS, psi, in);
   }
   else{
-    write_guess_stls(SS, GG, in);
+    write_restart_stls(SS, GG, in);
   }
 
   
@@ -99,12 +99,12 @@ void create_restart(input in){
   printf("Cutoff for wave-vector grid: %f\n", in.xmax);
   if(is_qstls) {
     printf("Number of Matsubara frequencies: %d\n", in.nl);
-    printf("Source file for the static structure factor: %s\n", in.guess_file1);
-    printf("Source file for the static local field correction: %s\n", in.guess_file2);
+    printf("Source file for the static structure factor: %s\n", in.restart_file1);
+    printf("Source file for the static local field correction: %s\n", in.restart_file2);
   }
   else{
-    printf("Source file for the static structure factor: %s\n", in.guess_file1);
-    printf("Source file for the static local field correction: %s\n", in.guess_file2); 
+    printf("Source file for the static structure factor: %s\n", in.restart_file1);
+    printf("Source file for the static local field correction: %s\n", in.restart_file2); 
   }
   printf("Output file: %s\n", out_name); 
   
@@ -127,8 +127,8 @@ void set_nx_nl(int nl1, int nl2, int nc1, int nc2, bool is_qstls, input *in){
   }
   else {
     fprintf(stderr,"The files used to construct the restart are inconsistent\n");
-    fprintf(stderr, "File: %s\n %d lines, %d columns\n", in->stls_guess_file, nl1, nc1);
-    fprintf(stderr, "File: %s\n %d lines, %d columns\n", in->stls_guess_file, nl2, nc2);
+    fprintf(stderr, "File: %s\n %d lines, %d columns\n", in->stls_restart_file, nl1, nc1);
+    fprintf(stderr, "File: %s\n %d lines, %d columns\n", in->stls_restart_file, nl2, nc2);
     exit(EXIT_FAILURE);
   }
 

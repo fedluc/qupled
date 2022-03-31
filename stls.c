@@ -70,11 +70,11 @@ static void write_text_slfc(double *GG, double *xx, input in);
 static void write_text_sdr(double *GG, double *phi, double *xx,
 			   input in);
 
-static void check_guess_stls(int nx, double dx, double xmax,
-			     input in, size_t it_read,
-			     size_t it_expected, FILE *fid,
-			     bool check_grid, bool check_items,
-			     bool check_eof);
+static void check_restart_stls(int nx, double dx, double xmax,
+			       input in, size_t it_read,
+			       size_t it_expected, FILE *fid,
+			       bool check_grid, bool check_items,
+			       bool check_eof);
 
 // -------------------------------------------------------------------
 // LOCAL DATA STRUCTURES
@@ -160,7 +160,7 @@ void solve_stls(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_stls(SS, GG, phi, SSHF, xx, in);
-  write_guess_stls(SS, GG, in);
+  write_restart_stls(SS, GG, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -299,7 +299,7 @@ void initial_guess_stls(double *xx, double *SS, double *SSHF,
 			double *GG, double *GG_new, double *phi,
 			input in){
 
-  if (strcmp(in.stls_guess_file, NO_FILE_STR)==0){
+  if (strcmp(in.stls_restart_file, NO_FILE_STR)==0){
 
     // Static local field correction
     for (int ii=0; ii < in.nx; ii++) {
@@ -314,7 +314,7 @@ void initial_guess_stls(double *xx, double *SS, double *SSHF,
   else {
 
     // Read from file
-    read_guess_stls(SS, GG, in);
+    read_restart_stls(SS, GG, in);
     
   }
   
@@ -1251,8 +1251,8 @@ void write_text_uint(double *SS, double *xx, input in){
 
 }
 
-// write binary file to use as initial guess (or restart)
-void write_guess_stls(double *SS, double *GG, input in){
+// write binary file to use for restart (or initial guess)
+void write_restart_stls(double *SS, double *GG, input in){
 
   // Name of output file
   char out_name[100];
@@ -1262,7 +1262,7 @@ void write_guess_stls(double *SS, double *GG, input in){
   FILE *fid = NULL;
   fid = fopen(out_name, "wb");
   if (fid == NULL) {
-    fprintf(stderr,"Error while creating file for initial guess or restart\n");
+    fprintf(stderr,"Error while creating file for restart\n");
     exit(EXIT_FAILURE);
   }
 
@@ -1283,8 +1283,8 @@ void write_guess_stls(double *SS, double *GG, input in){
 }
 
 
-// read binary file to use as initial guess (or restart)
-void read_guess_stls(double *SS, double *GG, input in){
+// read binary file to use for restart (or initial guess)
+void read_restart_stls(double *SS, double *GG, input in){
 
   // Variables
   size_t it_read;
@@ -1294,21 +1294,21 @@ void read_guess_stls(double *SS, double *GG, input in){
 
   // Open binary file
   FILE *fid = NULL;
-  fid = fopen(in.stls_guess_file, "rb");
+  fid = fopen(in.stls_restart_file, "rb");
   if (fid == NULL) {
-    fprintf(stderr,"Error while opening file for initial guess or restart\n");
+    fprintf(stderr,"Error while opening file for restart\n");
     exit(EXIT_FAILURE);
   }
 
   // Initialize number of items read from input file
   it_read = 0;
 
-  // Check that the data for the guess file is consistent
+  // Check that the data for the restart file is consistent
   it_read += fread(&nx_file, sizeof(int), 1, fid);
   it_read += fread(&dx_file, sizeof(double), 1, fid);
   it_read += fread(&xmax_file, sizeof(double), 1, fid);
-  check_guess_stls(nx_file, dx_file, xmax_file, in, it_read, 3,
-		   fid, true, true, false);   
+  check_restart_stls(nx_file, dx_file, xmax_file, in, it_read, 3,
+		     fid, true, true, false);   
   
   // Static structure factor in the Hartree-Fock approximation
   it_read += fread(SS, sizeof(double), nx_file, fid);
@@ -1317,8 +1317,8 @@ void read_guess_stls(double *SS, double *GG, input in){
   it_read += fread(GG, sizeof(double), nx_file, fid);
 
   // Check that all items where read and the end-of-file was reached
-  check_guess_stls(nx_file, dx_file, xmax_file, in, it_read,
-		   2*nx_file + 3, fid, false, true, true);   
+  check_restart_stls(nx_file, dx_file, xmax_file, in, it_read,
+		     2*nx_file + 3, fid, false, true, true);   
  
   // Close binary file
   fclose(fid);
@@ -1326,18 +1326,18 @@ void read_guess_stls(double *SS, double *GG, input in){
 }
 
 
-// Check consistency of the guess data
-void check_guess_stls(int nx, double dx, double xmax, input in,
-		      size_t it_read, size_t it_expected, FILE *fid,
-		      bool check_grid, bool check_items, bool check_eof){
-
+// Check consistency of the restart data
+void check_restart_stls(int nx, double dx, double xmax, input in,
+			size_t it_read, size_t it_expected, FILE *fid,
+			bool check_grid, bool check_items, bool check_eof){
+  
   int buffer;
   
-  // Check that the grid in the guess data is consistent with input
+  // Check that the grid in the restart data is consistent with input
   if (check_grid) {
     
     if (nx != in.nx || fabs(dx-in.dx) > DBL_TOL || fabs(xmax-in.xmax) > DBL_TOL){
-      fprintf(stderr,"Grid from guess file is incompatible with input\n");
+      fprintf(stderr,"Grid from restart file is incompatible with input\n");
       fprintf(stderr,"Grid points (nx) : %d (input), %d (file)\n", in.nx, nx);
       fprintf(stderr,"Resolution (dx)  : %.16f (input), %.16f (file)\n", in.dx, dx);
       fprintf(stderr,"Cutoff (xmax)    : %.16f (input), %.16f (file)\n", in.xmax, xmax);
@@ -1350,7 +1350,7 @@ void check_guess_stls(int nx, double dx, double xmax, input in,
   // Check that all the expected items where read
   if (check_items) {
     if (it_read != it_expected ) {
-      fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+      fprintf(stderr,"Error while reading file for restart.\n");
       fprintf(stderr,"%ld Elements expected, %ld elements read\n", it_expected, it_read);
       fclose(fid);
       exit(EXIT_FAILURE);
@@ -1361,7 +1361,7 @@ void check_guess_stls(int nx, double dx, double xmax, input in,
   if (check_eof){
     it_read = fread(&buffer, sizeof(int), 1, fid); // Trigger end-of-file activation
     if (!feof(fid)) {
-      fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+      fprintf(stderr,"Error while reading file for restart.\n");
       fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
       fclose(fid);
       exit(EXIT_FAILURE);

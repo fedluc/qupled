@@ -36,14 +36,14 @@ void write_text_slfc_qstls(double *psi, double *phi,
 			   double *xx,  input in);
 void write_text_adr(double *psi, input in);
 
-void write_guess_qstls(double *SS, double *psi, input in);
+void write_restart_qstls(double *SS, double *psi, input in);
 
-void read_guess_qstls(double *SS, double *psi, input in);
+void read_restart_qstls(double *SS, double *psi, input in);
 
-void check_guess_qstls(int nx, double dx, double xmax,
-		       int nl, double Theta, input in,
-		       size_t it_read, size_t it_expected,
-		       FILE *fid, bool check_grid,
-		       bool check_items, bool check_eof);
+void check_restart_qstls(int nx, double dx, double xmax,
+			 int nl, double Theta, input in,
+			 size_t it_read, size_t it_expected,
+			 FILE *fid, bool check_grid,
+			 bool check_items, bool check_eof);
 
 #endif

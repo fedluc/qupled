@@ -156,7 +156,7 @@ void compute_dynamic_stls(input in, bool verbose) {
 void get_frequency_grid_size(input *in){
 
   // Number of grid points in the frequency grid
-  in->nW = (int)floor(in->dyn_Wmax/in->dyn_dW);
+  in->dyn_nW = (int)floor(in->dyn_Wmax/in->dyn_dW);
   
 }
 // -------------------------------------------------------------------
@@ -166,27 +166,27 @@ void get_frequency_grid_size(input *in){
 void alloc_dynamic_stls_arrays(input in, double **WW, double **phi_re, 
 			       double **phi_im, double **SSn){
 
-  *WW = malloc( sizeof(double) * in.nW);
+  *WW = malloc( sizeof(double) * in.dyn_nW);
   if (*WW == NULL) {
     fprintf(stderr, "Failed to allocate memory for the frequency grid\n");
     exit(EXIT_FAILURE);
   }
 
-  *phi_re = malloc( sizeof(double) * in.nW);
+  *phi_re = malloc( sizeof(double) * in.dyn_nW);
   if (*phi_re == NULL) {
     fprintf(stderr, "Failed to allocate memory for the real part of"
 	    " the ideal density response\n");
     exit(EXIT_FAILURE);
   }
   
-  *phi_im = malloc( sizeof(double) * in.nW);
+  *phi_im = malloc( sizeof(double) * in.dyn_nW);
   if (*phi_im == NULL) {
     fprintf(stderr, "Failed to allocate memory for the imaginary part of"
 	    " the ideal density response\n");
     exit(EXIT_FAILURE);
   }
   
-  *SSn = malloc( sizeof(double) * in.nW);
+  *SSn = malloc( sizeof(double) * in.dyn_nW);
   if (*SSn == NULL) {
     fprintf(stderr, "Failed to allocate memory for the dynamic structure factor\n");
     exit(EXIT_FAILURE);
@@ -197,14 +197,14 @@ void alloc_dynamic_stls_arrays(input in, double **WW, double **phi_re,
 void alloc_dynamic_stls_2Darrays(input in, double **phi_re,
 				 double **phi_im){
  
-  *phi_re = malloc( sizeof(double) * in.nx * in.nW);
+  *phi_re = malloc( sizeof(double) * in.nx * in.dyn_nW);
   if (*phi_re == NULL) {
     fprintf(stderr, "Failed to allocate memory for the real part of"
 	    " the ideal density response\n");
     exit(EXIT_FAILURE);
   }
   
-  *phi_im = malloc( sizeof(double) * in.nx * in.nW);
+  *phi_im = malloc( sizeof(double) * in.nx * in.dyn_nW);
   if (*phi_im == NULL) {
     fprintf(stderr, "Failed to allocate memory for the imaginary part of"
 	    " the ideal density response\n");
@@ -271,7 +271,7 @@ void init_fixed_dynamic_stls_arrays(input *in, double *WW, bool verbose){
 void frequency_grid(double *WW, input *in){
  
   WW[0] = 0.0;
-  for (int ii=1; ii < in->nW; ii++) WW[ii] = WW[ii-1] + in->dyn_dW;
+  for (int ii=1; ii < in->dyn_nW; ii++) WW[ii] = WW[ii-1] + in->dyn_dW;
 
 }
 
@@ -302,7 +302,7 @@ void compute_dynamic_idr(double *phi_re, double *phi_im,
 
   // Temporary input structure
   input in_1D = in;
-  in_1D.nW = 1;
+  in_1D.dyn_nW = 1;
   
   // Variables for interpolation
   gsl_spline *phi_re_sp_ptr;
@@ -330,7 +330,7 @@ void compute_dynamic_idr(double *phi_re, double *phi_im,
   }
   
   // Interpolate to wave-vector given in input
-  for (int jj=0; jj<in.nW; jj++){
+  for (int jj=0; jj<in.dyn_nW; jj++){
     for (int ii=0; ii<in.nx; ii++){
       phi_re_1D[ii] = phi_re_2D[idx2(ii,jj,in.nx)];
       phi_im_1D[ii] = phi_im_2D[idx2(ii,jj,in.nx)];
@@ -382,7 +382,7 @@ void compute_dynamic_idr_re(double *phi_re, double *WW,
 
   // Normalized ideal Lindhard density
   for (int ii=0; ii<in.nx; ii++) {
-    for (int jj=0; jj<in.nW; jj++) {
+    for (int jj=0; jj<in.dyn_nW; jj++) {
 
       struct idr_params phixwp = {xx[ii], in.mu, in.Theta, WW[jj]};
       ff_int.params = &phixwp;
@@ -422,7 +422,7 @@ void compute_dynamic_idr_im(double *phi_im, double *WW,
 
   // Normalized ideal Lindhard density
   for (int ii=0; ii<in.nx; ii++){
-    for (int jj=0; jj<in.nW; jj++) {
+    for (int jj=0; jj<in.dyn_nW; jj++) {
       
       if (xx[ii] == 0.0){
 	phi_im[idx2(ii,jj,in.nx)] = 0.0;
@@ -618,7 +618,7 @@ void compute_dsf(double *SSn, double *phi_re, double *phi_im,
   double ff2;
   double denom, denom_re, denom_im;
   
-  for (int ii=0; ii<in.nW; ii++){
+  for (int ii=0; ii<in.dyn_nW; ii++){
 
     if (xx == 0.0) {
       SSn[ii] = 0.0;
@@ -665,11 +665,11 @@ void compute_isf(double *FF, double *tt, double *SSn,
   gsl_interp_accel *dsf_acc_ptr;
   
   // Allocate the accelerator and the spline objects
-  dsf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nW);
+  dsf_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.dyn_nW);
   dsf_acc_ptr = gsl_interp_accel_alloc();
   
   // Initialize the spline
-  gsl_spline_init(dsf_sp_ptr, WW, SSn, in.nW);
+  gsl_spline_init(dsf_sp_ptr, WW, SSn, in.dyn_nW);
 
   // Integration workspace 
   gsl_integration_cquad_workspace *wsp 
@@ -691,7 +691,7 @@ void compute_isf(double *FF, double *tt, double *SSn,
 			      dsf_sp_ptr, dsf_acc_ptr};
     ff_int.params = &isfp;
     gsl_integration_cquad(&ff_int, 
-			  WW[0], WW[in.nW-1], 
+			  WW[0], WW[in.dyn_nW-1], 
 			  0.0, QUAD_REL_ERR, 
 			  wsp, 
 			  &FF[ii], &err, &nevals);
@@ -756,7 +756,7 @@ void write_text_dsf(double *SSn, double *WW, input in){
     exit(EXIT_FAILURE);
   }
     
-  for (int ii = 0; ii<in.nW; ii++)
+  for (int ii = 0; ii<in.dyn_nW; ii++)
     fprintf(fid, "%.8e %.8e\n", WW[ii], SSn[ii]);
   
   fclose(fid);
@@ -804,7 +804,7 @@ void write_text_idr(double *phi_re, double *phi_im, double *WW, input in){
     exit(EXIT_FAILURE);
   }
   
-  for (int ii = 0; ii < in.nW; ii++)
+  for (int ii = 0; ii < in.dyn_nW; ii++)
     fprintf(fid, "%.8e %.8e %.8e\n", WW[ii], phi_re[ii], phi_im[ii]);
   
   fclose(fid);
@@ -834,15 +834,15 @@ void write_bin_idr_2D(double *phi_re, double *phi_im,
   fwrite(&in.nx, sizeof(int), 1, fid);
   fwrite(&in.dx, sizeof(double), 1, fid);
   fwrite(&in.xmax, sizeof(double), 1, fid);
-  fwrite(&in.nW, sizeof(int), 1, fid);
+  fwrite(&in.dyn_nW, sizeof(int), 1, fid);
   fwrite(&in.dyn_dW, sizeof(double), 1, fid);
   fwrite(&in.dyn_Wmax, sizeof(double), 1, fid);
   fwrite(&in.Theta, sizeof(double), 1, fid);
   fwrite(&in.rs, sizeof(double), 1, fid);
   
   // Density response
-  fwrite(phi_re, sizeof(double), in.nx * in.nW, fid);
-  fwrite(phi_im, sizeof(double), in.nx * in.nW, fid);
+  fwrite(phi_re, sizeof(double), in.nx * in.dyn_nW, fid);
+  fwrite(phi_im, sizeof(double), in.nx * in.dyn_nW, fid);
 
   // Close binary file
   fclose(fid);
@@ -857,7 +857,7 @@ void read_bin_idr_2D(double *phi_re, double *phi_im, input in){
   int nx_file;
   double dx_file;
   double xmax_file;
-  int nW_file;
+  int dyn_nW_file;
   double dW_file;
   double Wmax_file;
   double Theta_file;
@@ -878,24 +878,24 @@ void read_bin_idr_2D(double *phi_re, double *phi_im, input in){
   it_read += fread(&nx_file, sizeof(int), 1, fid);
   it_read += fread(&dx_file, sizeof(double), 1, fid);
   it_read += fread(&xmax_file, sizeof(double), 1, fid);
-  it_read += fread(&nW_file, sizeof(int), 1, fid);
+  it_read += fread(&dyn_nW_file, sizeof(int), 1, fid);
   it_read += fread(&dW_file, sizeof(double), 1, fid);
   it_read += fread(&Wmax_file, sizeof(double), 1, fid);
   it_read += fread(&Theta_file, sizeof(double), 1, fid);
   it_read += fread(&rs_file, sizeof(double), 1, fid);
   check_bin_dynamic(dx_file, nx_file, xmax_file,
-		    dW_file, nW_file, Wmax_file,
+		    dW_file, dyn_nW_file, Wmax_file,
 		    Theta_file, rs_file,
 		    in, it_read, 8, fid, true, true, false);
   
 
   // Fixed component of the auxiliary density response 
-  it_read += fread(phi_re, sizeof(double), nx_file * nW_file, fid);
-  it_read += fread(phi_im, sizeof(double), nx_file * nW_file, fid);
+  it_read += fread(phi_re, sizeof(double), nx_file * dyn_nW_file, fid);
+  it_read += fread(phi_im, sizeof(double), nx_file * dyn_nW_file, fid);
   check_bin_dynamic(dx_file, nx_file, xmax_file,
-		    dW_file, nW_file, Wmax_file,
+		    dW_file, dyn_nW_file, Wmax_file,
 		    Theta_file, rs_file,
-		    in, it_read, 2*nx_file*nW_file + 8,
+		    in, it_read, 2*nx_file*dyn_nW_file + 8,
 		    fid, false, true, false);
   
   
@@ -907,7 +907,7 @@ void read_bin_idr_2D(double *phi_re, double *phi_im, input in){
 
 // Check consistency of the guess data
 void check_bin_dynamic(double dx, int nx, double xmax,
-		       double dW, int nW, double Wmax,
+		       double dW, int dyn_nW, double Wmax,
 		       double Theta, double rs,
 		       input in, size_t it_read,
 		       size_t it_expected, FILE *fid,
@@ -927,9 +927,9 @@ void check_bin_dynamic(double dx, int nx, double xmax,
       fclose(fid);
       exit(EXIT_FAILURE);
     }
-    if (nW != in.nW || fabs(dW-in.dyn_dW) > DBL_TOL || fabs(Wmax-in.dyn_Wmax) > DBL_TOL){
+    if (dyn_nW != in.dyn_nW || fabs(dW-in.dyn_dW) > DBL_TOL || fabs(Wmax-in.dyn_Wmax) > DBL_TOL){
       fprintf(stderr,"Frequency grid from imported file is incompatible with input\n");
-      fprintf(stderr,"Grid points (nW) : %d (input), %d (file)\n", in.nW, nW);
+      fprintf(stderr,"Grid points (dyn_nW) : %d (input), %d (file)\n", in.dyn_nW, dyn_nW);
       fprintf(stderr,"Resolution (dW)  : %.16f (input), %.16f (file)\n", in.dyn_dW, dW);
       fprintf(stderr,"Cutoff (Wmax)    : %.16f (input), %.16f (file)\n", in.dyn_Wmax, Wmax);
       fclose(fid);

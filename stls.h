@@ -89,8 +89,8 @@ void write_text_uint(double *SS, double *xx, input in);
   
 void write_text_rdf(double *SS, double *xx, input in);
 
-void write_guess_stls(double *SS, double *GG, input in);
+void write_restart_stls(double *SS, double *GG, input in);
 
-void read_guess_stls(double *SS, double *GG, input in);
+void read_restart_stls(double *SS, double *GG, input in);
 
 #endif

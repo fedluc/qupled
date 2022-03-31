@@ -20,12 +20,12 @@ typedef struct {
   bool vs_solve_csr;
   char *dyn_restart_file;
   char *dyn_struct_file;
-  char *guess_file1;
-  char *guess_file2;
+  char *restart_file1;
+  char *restart_file2;
   char *mode;
   char *iet_mapping;
-  char *stls_guess_file;
-  char *qstls_guess_file;
+  char *stls_restart_file;
+  char *qstls_restart_file;
   char *qstls_fixed_file;
   char *qstls_iet_fixed_file;
   char *theory;
@@ -47,11 +47,11 @@ typedef struct {
   double vs_dt;
   double vs_err_min_iter;
   double xmax;
+  int dyn_nW;
   int nl;
   int nx;
   int nIter;
   int nThreads;
-  int nW;
   int vs_nrs;
   
 } input;

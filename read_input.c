@@ -40,16 +40,16 @@ static char doc[] =
 #define ARGUMENT_MIN_ERR_SHORT 0x86
 #define ARGUMENT_MIX_SHORT 0x87
 #define ARGUMENT_MU_GUESS_SHORT 0x88
-#define ARGUMENT_STLS_GUESS_SHORT 0x89
+#define ARGUMENT_STLS_RESTART_SHORT 0x89
 #define ARGUMENT_THEORY_SHORT 0x90
 #define ARGUMENT_OMP_SHORT 0x91
-#define ARGUMENT_QSTLS_GUESS_SHORT 0x92
+#define ARGUMENT_QSTLS_RESTART_SHORT 0x92
 #define ARGUMENT_QSTLS_FIXED_SHORT 0x93
 #define ARGUMENT_QSTLS_IET_FIXED_SHORT 0x94
 #define ARGUMENT_QSTLS_IET_STATIC_SHORT 0x95
 #define ARGUMENT_DEBUG_SHORT 0x96
 #define ARGUMENT_MODE_SHORT 0x97
-#define ARGUMENT_GUESS_FILES_SHORT 0x98
+#define ARGUMENT_RESTART_FILES_SHORT 0x98
 #define ARGUMENT_IET_MAPPING_SHORT 0x99
 #define ARGUMENT_VS_DRS_SHORT 0x100
 #define ARGUMENT_VS_DT_SHORT 0x101
@@ -68,106 +68,106 @@ static char doc[] =
 static struct argp_option options[] = {
 				       
   {"Theta", ARGUMENT_THETA_SHORT, "1.0", 0,
-   "Quantum degeneracy parameter"},
+   "Quantum degeneracy parameter\n"},
   
   {"rs", ARGUMENT_RS_SHORT, "1.0", 0,
-   "Quantum coupling parameter"},
+   "Quantum coupling parameter\n"},
   
   {"xmax", ARGUMENT_XMAX_SHORT, "20.0", 0,
-   "Cutoff for wave-vector grid"},
+   "Cutoff for wave-vector grid\n"},
   
   {"dx", ARGUMENT_DX_SHORT, "0.1", 0,
-   "Resolution for wave-vector grid"},
+   "Resolution for wave-vector grid\n"},
 
   {"nl", ARGUMENT_NL_SHORT, "128", 0,
-   "Number of Matsubara frequencies"},
+   "Number of Matsubara frequencies\n"},
 
   {"iter", ARGUMENT_ITER_SHORT, "1000", 0,
-   "Maximum number of iterations"},
+   "Maximum number of iterations\n"},
 
   {"min-err", ARGUMENT_MIN_ERR_SHORT, "1e-5", 0,
-   "Minimum error for convergence in the iterations"},
+   "Minimum error for convergence in the iterations\n"},
 
   {"mix", ARGUMENT_MIX_SHORT, "0.1", 0,
-   "Mixing parameter for iterative solution"},
+   "Mixing parameter for iterative solution\n"},
 
   {"mu-guess", ARGUMENT_MU_GUESS_SHORT, "-10,10", 0,
-   "Initial guess for chemical potential"},
+   "Initial guess for chemical potential\n"},
 
-  {"stls-guess", ARGUMENT_STLS_GUESS_SHORT, "file", 0,
-   "File used to load the stls and stls-iet schemes"},
+  {"stls-restart", ARGUMENT_STLS_RESTART_SHORT, "file", 0,
+   "File used to load the stls and stls-iet schemes\n"},
 
-  {"qstls-guess", ARGUMENT_QSTLS_GUESS_SHORT, "file", 0,
-   "File used to load the qstls and qstls-iet schemes"},
+  {"qstls-restart", ARGUMENT_QSTLS_RESTART_SHORT, "file", 0,
+   "File used to load the qstls and qstls-iet schemes\n"},
 
   {"qstls-fix", ARGUMENT_QSTLS_FIXED_SHORT, "file", 0,
    "File used to load the fixed component of the density response function "
-   "for the qslts scheme"},
+   "for the qslts scheme\n"},
 
   {"qstls-iet-fix", ARGUMENT_QSTLS_IET_FIXED_SHORT, "file", 0,
    "File used to load fixed component of the density response function "
-   "for the qslts-iet scheme"},
+   "for the qslts-iet scheme\n"},
 
   {"qstls-iet-static", ARGUMENT_QSTLS_IET_STATIC_SHORT, "0", 0,
    "Use static approximation to compute the auxiliary density response "
-   "in the qstls-iet scheme (0 = off, 1 = on)"},
+   "in the qstls-iet scheme (0 = off, 1 = on)\n"},
 
   {"theory", ARGUMENT_THEORY_SHORT, "STLS", 0,
-   "Scheme to be solved"},
+   "Scheme to be solved\n"},
 
   {"omp", ARGUMENT_OMP_SHORT, "1",0,
-   "Number of omp threads to use in the solution"},
+   "Number of omp threads to use in the solution\n"},
 
   {"debug-input", ARGUMENT_DEBUG_SHORT, "0", 0,
-   "Print content of the input structure on screen (0 = off, 1 = on)"},
+   "Print content of the input structure on screen (0 = off, 1 = on)\n"},
 
   {"mode", ARGUMENT_MODE_SHORT, "static", 0,
-   "Select working mode of the code (static, dynamic, guess)"},
+   "Select working mode of the code (static, dynamic, restart)\n"},
 
-  {"guess-files", ARGUMENT_GUESS_FILES_SHORT, "file1,file2", 0,
-   "Name of the two text files used to write binary restart files"},
+  {"restart-files", ARGUMENT_RESTART_FILES_SHORT, "file1,file2", 0,
+   "Name of the two text files used to write binary restart files\n"},
 
   {"iet-mapping", ARGUMENT_IET_MAPPING_SHORT, "standard", 0,
-   "Mapping between quantum and classical state points for IET-based schemes"},
+   "Mapping between quantum and classical state points for IET-based schemes\n"},
 
   {"vs-drs", ARGUMENT_VS_DRS_SHORT, "0.01", 0,
-   "Resolution of the coupling parameter grid for the VS schemes"},
+   "Resolution of the coupling parameter grid for the VS schemes\n"},
 
   {"vs-dt", ARGUMENT_VS_DT_SHORT, "0.01", 0,
-   "Resolution of the degeneracy parameter grid for the VS schemes"},
+   "Resolution of the degeneracy parameter grid for the VS schemes\n"},
 
   {"vs-alpha", ARGUMENT_VS_ALPHA_SHORT, "0.5", 0,
-   "Initial guess for the free parameter in the VS schemes"},
+   "Initial restart for the free parameter in the VS schemes\n"},
 
   {"vs-thermo-file", ARGUMENT_VS_THERMO_SHORT, "file", 0,
-   "File used to load the thermodynamic integration data for the VS schemes"},
+   "File used to load the thermodynamic integration data for the VS schemes\n"},
 
   {"vs-min-err", ARGUMENT_VS_MIN_ERR_SHORT, "1e-3", 0,
-   "Minimum error for convergence in the iterations for the VS schemes "},
+   "Minimum error for convergence in the iterations for the VS schemes \n"},
 
   {"vs-mix", ARGUMENT_VS_MIX_SHORT, "1.0", 0,
-   "Mixing parameter for iterative solution in the VS schemes "},
+   "Mixing parameter for iterative solution in the VS schemes \n"},
   
   {"vs-solve-csr", ARGUMENT_VS_SOLVE_CSR_SHORT, "1", 0,
-   "Enforce CSR in the VS schemes (0 = off, 1 = on)"},
+   "Enforce CSR in the VS schemes (0 = off, 1 = on)\n"},
 
   {"dyn-dw", ARGUMENT_DYN_DW_SHORT, "0.1", 0,
-   "Resolution for the frequency grid for the dynamic properties"},
+   "Resolution for the frequency grid for the dynamic properties\n"},
 
   {"dyn-wmax", ARGUMENT_DYN_WMAX_SHORT, "20.0", 0,
-   "Cutoff for the frequency grid for the dynamic properties"},
+   "Cutoff for the frequency grid for the dynamic properties\n"},
 
   {"dyn-xtarget", ARGUMENT_DYN_XTARGET_SHORT, "1.0", 0,
-   "Wave-vector used to compute the dynamic properties"},
+   "Wave-vector used to compute the dynamic properties\n"},
 
-  {"dyn-struct-file", ARGUMENT_DYN_STRUCT_SHORT, "file", 0,
+  {"dyn-struct", ARGUMENT_DYN_STRUCT_SHORT, "file", 0,
    "File used to load the structural properties used to "
-   " compute the dynamic properties"},
+   " compute the dynamic properties\n"},
   
-  {"dyn-adr-file", ARGUMENT_DYN_RESTART_SHORT, "file", 0,
+  {"dyn-restart", ARGUMENT_DYN_RESTART_SHORT, "file", 0,
    "File used to load the density response for the"
    " calculation of the dynamic properties in the qstsls-iet"
-   " scheme"},
+   " scheme\n"},
   
   { 0 }
   
@@ -193,12 +193,12 @@ parse_opt (int key, char *arg, struct argp_state *state)
       in->err_min_iter = atof(arg);
       break;
       
-    case  ARGUMENT_STLS_GUESS_SHORT:
-      in->stls_guess_file = arg;
+    case  ARGUMENT_STLS_RESTART_SHORT:
+      in->stls_restart_file = arg;
       break;
       
-    case  ARGUMENT_QSTLS_GUESS_SHORT:
-      in->qstls_guess_file = arg;
+    case  ARGUMENT_QSTLS_RESTART_SHORT:
+      in->qstls_restart_file = arg;
       break;
       
     case  ARGUMENT_QSTLS_FIXED_SHORT:
@@ -266,15 +266,15 @@ parse_opt (int key, char *arg, struct argp_state *state)
       in->mode = arg;
       break;  
 
-    case  ARGUMENT_GUESS_FILES_SHORT:
+    case  ARGUMENT_RESTART_FILES_SHORT:
       value = strtok(arg, ",");
       if(value != NULL ) {
-	in->guess_file1 = value;
+	in->restart_file1 = value;
       }
       else exit(EXIT_FAILURE);
       value = strtok(NULL, ",");
       if(value != NULL ) {
-	in->guess_file2 = value;
+	in->restart_file2 = value;
       }
       else exit(EXIT_FAILURE);
       break;
@@ -376,8 +376,8 @@ void get_input(int argc, char **argv, input *in){
 void set_default_parse_opt(input *in){
 
   debug_input = false;
-  in->stls_guess_file = NO_FILE_STR; // File with initial guess for STLS and STLS-IET schemes
-  in->qstls_guess_file = NO_FILE_STR; // File with initial guess for QSTLS and QSTLS-IET schemes
+  in->stls_restart_file = NO_FILE_STR; // File with initial restart for STLS and STLS-IET schemes
+  in->qstls_restart_file = NO_FILE_STR; // File with initial restart for QSTLS and QSTLS-IET schemes
   in->qstls_fixed_file = NO_FILE_STR; // File with fixed component of the density response for the QSTLS scheme
   in->qstls_iet_fixed_file = NO_FILE_STR; // File with fixed component of the density response for the QSTLS-IET scheme
   in->qstls_iet_static = 0; // Use static approximation to compute the auxiliary density response for the QSTLS-IET scheme
@@ -394,12 +394,12 @@ void set_default_parse_opt(input *in){
   in->theory = "STLS"; // Theory to solve
   in->nThreads = 1; // Number of OMP threads to use in the solution
   in->mode = "static"; // Working mode of the code
-  in->guess_file1 = NO_FILE_STR; // File of the first file used to construct the guess (static structure factor)
-  in->guess_file2 = NO_FILE_STR; // File of the second file used to construct the guess (static local field correction or auxiliary density response)
+  in->restart_file1 = NO_FILE_STR; // File of the first file used to construct the restart (static structure factor)
+  in->restart_file2 = NO_FILE_STR; // File of the second file used to construct the restart (static local field correction or auxiliary density response)
   in->iet_mapping = "standard"; // Mapping between the quantum and classical state points for the IET-based schemes
   in->vs_drs = 0.01; // Resolution of the coupling parameter grid for the VS schemes
   in->vs_dt = 0.01; // Resolution of the degeneracy parameter grid for the VS schemes
-  in->vs_alpha = 0.5; // Initial guess for the free parameter in the VS schemes
+  in->vs_alpha = 0.5; // Initial restart for the free parameter in the VS schemes
   in->vs_thermo_file = NO_FILE_STR; // File with thermodynamic integration data for the VS schemes
   in->vs_err_min_iter = 1e-3; // Minimum error for convergence in the iterations for the VS schemes
   in->vs_a_mix = 1.0; // Mixing parameter for iterative procedure for the VS schemes 
@@ -523,8 +523,8 @@ void check_input(input *in){
 void print_input(input *in){
   
   printf("------ Input parameters -------------\n");
-  printf("File for initial guess (STLS): %s\n", in->stls_guess_file);
-  printf("File for initial guess (qSTLS): %s\n", in->qstls_guess_file);
+  printf("File for initial restart (STLS): %s\n", in->stls_restart_file);
+  printf("File for initial restart (qSTLS): %s\n", in->qstls_restart_file);
   printf("File for fixed component (qSTLS): %s\n", in->qstls_fixed_file);
   printf("File for fixed component (qSTLS-IET): %s\n", in->qstls_iet_fixed_file);
   printf("Static approximation (qSTLS-IET): %d\n", in->qstls_iet_static);
@@ -542,8 +542,8 @@ void print_input(input *in){
   printf("Maximum number of iterations: %d\n", in->nIter);
   printf("Number of threads: %d\n", in->nThreads);
   printf("Mode: %s\n", in->mode);
-  printf("Guess file 1: %s\n", in->guess_file1);
-  printf("Guess file 2: %s\n", in->guess_file2);
+  printf("Restart file 1: %s\n", in->restart_file1);
+  printf("Restart file 2: %s\n", in->restart_file2);
   printf("IET mapping: %s\n", in->iet_mapping);
   printf("Coupling parameter resolution (VS schemes): %f\n", in->vs_drs);
   printf("Degeneracy parameter resolution (VS schemes): %f\n", in->vs_dt);

@@ -150,7 +150,7 @@ static void write_text_fxc(double *rsu, double *rsp, input in);
 
 static void write_text_alpha_CSR(input in);
 
-static void read_guess_vs_stls(vs_struct SS, vs_struct GG, input *vs_in);
+static void read_restart_vs_stls(vs_struct SS, vs_struct GG, input *vs_in);
 
 static void write_thermo_vs_stls(vs_thermo rsa, vs_thermo rsu, input *vs_in);
 
@@ -241,7 +241,7 @@ void solve_vs_stls(input in, bool verbose) {
   if (verbose) printf("Writing output files...\n");
   write_text_vs_stls(SS.rst, GG.rst, phi.rst, SSHF.rst, xx.rst,
   		     rsu.rst, rsa.rst, vs_in[VSS_IDXIN]);
-  write_guess_stls(SS.rst, GG.rst, vs_in[VSS_IDXIN]);
+  write_restart_stls(SS.rst, GG.rst, vs_in[VSS_IDXIN]);
   write_thermo_vs_stls(rsa, rsu, vs_in);
   if (verbose) printf("Done.\n");
 
@@ -431,7 +431,7 @@ void initial_guess_vs_stls(vs_struct xx, vs_struct SS, vs_struct SSHF,
 
   input in = vs_in[VSS_IDXIN];
   
-  if (strcmp(in.stls_guess_file, NO_FILE_STR)==0){
+  if (strcmp(in.stls_restart_file, NO_FILE_STR)==0){
 
     for (int ii=0; ii<VSS_NUMEL; ii++){
       initial_guess_stls(xx.el[ii], SS.el[ii], SSHF.el[ii],
@@ -443,7 +443,7 @@ void initial_guess_vs_stls(vs_struct xx, vs_struct SS, vs_struct SSHF,
   else {
 
     // Read from file
-    read_guess_vs_stls(SS, GG, vs_in);
+    read_restart_vs_stls(SS, GG, vs_in);
     
   }
   
@@ -1252,10 +1252,10 @@ void write_text_alpha_CSR(input in){
 }
 
 // Read guess from input file
-void read_guess_vs_stls(vs_struct SS, vs_struct GG, input *vs_in){
+void read_restart_vs_stls(vs_struct SS, vs_struct GG, input *vs_in){
   
   for (int ii=0;  ii<VSS_NUMEL; ii++) {
-    read_guess_stls(SS.el[ii], GG.el[ii], vs_in[ii]);
+    read_restart_stls(SS.el[ii], GG.el[ii], vs_in[ii]);
   }
   
 }
@@ -1371,12 +1371,13 @@ void read_thermo_vs_stls(vs_thermo *rsa, vs_thermo *rsu,
 
 // Check consistency of the thermodynamic integration data
 void check_thermo_vs_stls(double dt, double Theta, input in,
-			  size_t it_read, size_t it_expected, FILE *fid,
-			  bool check_grid, bool check_items, bool check_eof){
+			  size_t it_read, size_t it_expected,
+			  FILE *fid, bool check_grid, bool check_items,
+			  bool check_eof){
 
   int buffer;
   
-  // Check that the grid in the guess data is consistent with input
+  // Check that the grid in the thermodynamic integration data is consistent with input
   if (check_grid) {
     
     if (fabs(dt-in.vs_dt) > DBL_TOL){

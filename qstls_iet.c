@@ -157,7 +157,7 @@ void solve_qstls_iet(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_qstls_iet(SS, psi, phi, SSHF, bf, xx, in);
-  write_guess_qstls(SS, psi, in);
+  write_restart_qstls(SS, psi, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -257,12 +257,11 @@ void qstls_iet_update(double *SS, double *SS_new,
 // ---------------------------------------------------------------------
 // FUNCTION USED TO DEFINE THE INITIAL GUESS
 // ---------------------------------------------------------------------
-
 void initial_guess_qstls_iet(double *xx, double *SS, double *SSHF,
 			     double *psi, double *phi, double *bf,
 			     input in){
 
-  if (strcmp(in.qstls_guess_file, NO_FILE_STR)==0){
+  if (strcmp(in.qstls_restart_file, NO_FILE_STR)==0){
 
     // Auxilirary density response
     for (int ii=0; ii<in.nx; ii++){
@@ -279,7 +278,7 @@ void initial_guess_qstls_iet(double *xx, double *SS, double *SSHF,
   else {
 
     // Read from file
-    read_guess_qstls(SS, psi, in);
+    read_restart_qstls(SS, psi, in);
     
   }
   
@@ -531,7 +530,7 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
       it_read += fread(&dx_file, sizeof(double), 1, fid);
       it_read += fread(&xmax_file, sizeof(double), 1, fid);
       it_read += fread(&Theta_file, sizeof(double), 1, fid);
-      check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
+      check_restart_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
 			in, it_read, 5, fid, true, true, false);
       
       // Loop over the Matsubara frequencies
@@ -603,7 +602,7 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
       }
 
       // Check that all the binary file was read
-      check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
+      check_restart_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
 			in, it_read, 0, fid, false, false, true);
       
       // Close binary file for output

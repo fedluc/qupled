@@ -189,14 +189,14 @@ void compute_dynamic_qstls(input in, bool verbose) {
 void alloc_dynamic_qstls_arrays(input in, double **psi_re, 
 			       double **psi_im){
 
-  *psi_re = malloc( sizeof(double) * in.nW);
+  *psi_re = malloc( sizeof(double) * in.dyn_nW);
   if (*psi_re == NULL) {
     fprintf(stderr, "Failed to allocate memory for the real part of"
 	    " the auxiliary density response\n");
     exit(EXIT_FAILURE);
   }
   
-  *psi_im = malloc( sizeof(double) * in.nW);
+  *psi_im = malloc( sizeof(double) * in.dyn_nW);
   if (*psi_im == NULL) {
     fprintf(stderr, "Failed to allocate memory for the imaginary part of"
 	    " the auxiliary density response\n");
@@ -208,14 +208,14 @@ void alloc_dynamic_qstls_arrays(input in, double **psi_re,
 void alloc_dynamic_qstls_2Darrays(input in, double **psi_re,
 				 double **psi_im){
  
-  *psi_re = malloc( sizeof(double) * in.nx * in.nW);
+  *psi_re = malloc( sizeof(double) * in.nx * in.dyn_nW);
   if (*psi_re == NULL) {
     fprintf(stderr, "Failed to allocate memory for the real part of"
 	    " the auxiliary density response\n");
     exit(EXIT_FAILURE);
   }
   
-  *psi_im = malloc( sizeof(double) * in.nx * in.nW);
+  *psi_im = malloc( sizeof(double) * in.nx * in.dyn_nW);
   if (*psi_im == NULL) {
     fprintf(stderr, "Failed to allocate memory for the imaginary part of"
 	    " the auxiliary density response\n");
@@ -318,7 +318,7 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
 
   // Temporary input structure
   input in_1D = in;
-  in_1D.nW = 1;
+  in_1D.dyn_nW = 1;
   
   // Variables for interpolation
   gsl_spline *psi_re_sp_ptr;
@@ -345,7 +345,7 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
   }
   
   // Interpolate to wave-vector given in input
-  for (int jj=0; jj<in.nW; jj++){
+  for (int jj=0; jj<in.dyn_nW; jj++){
     for (int ii=0; ii<in.nx; ii++){
       psi_re_1D[ii] = psi_re_2D[idx2(ii,jj,in.nx)];
       psi_im_1D[ii] = psi_im_2D[idx2(ii,jj,in.nx)];
@@ -427,7 +427,7 @@ void compute_dynamic_adr_re_lev1(double *psi_re, double *WW,
     // Loop over the frequency
     #pragma omp for // Distribute for loop over the threads
     for (int ii=0; ii<in.nx; ii++){
-      for (int jj=0; jj<in.nW; jj++){
+      for (int jj=0; jj<in.dyn_nW; jj++){
 
 	// Integration function
 	gsl_function ff_int_lev1;
@@ -712,7 +712,7 @@ void compute_dynamic_adr_im_lev1(double *psi_im, double *WW,
     // Loop over the frequency
     #pragma omp for // Distribute for loop over the threads
     for (int ii=0; ii<in.nx; ii++){
-      for (int jj=0; jj<in.nW; jj++){
+      for (int jj=0; jj<in.dyn_nW; jj++){
 	
 	// Integration function
 	gsl_function ff_int_lev1;
@@ -973,7 +973,7 @@ void compute_dsf_qstls(double *SSn, double *phi_re, double *phi_im,
   double denom_re;
   double denom_im;
   
-  for (int ii=0; ii<in.nW; ii++){
+  for (int ii=0; ii<in.dyn_nW; ii++){
 
     if (WW[ii] == 0.0) {
 
@@ -1034,7 +1034,7 @@ void write_text_adr(double *psi_re, double *psi_im, double *WW, input in){
     fprintf(stderr, "Error while creating the output file for the ideal density response\n");
     exit(EXIT_FAILURE);
   }
-  for (int ii = 0; ii < in.nW; ii++)
+  for (int ii = 0; ii < in.dyn_nW; ii++)
     fprintf(fid, "%.8e %.8e %.8e\n", WW[ii], psi_re[ii], psi_im[ii]);
   
   fclose(fid);
@@ -1070,8 +1070,8 @@ void write_bin_dynamic_adr_2D(double *psi_re, double *psi_im,
   }
   
   // Density response
-  fwrite(psi_re, sizeof(double), in.nx * in.nW, fid);
-  fwrite(psi_im, sizeof(double), in.nx * in.nW, fid);
+  fwrite(psi_re, sizeof(double), in.nx * in.dyn_nW, fid);
+  fwrite(psi_im, sizeof(double), in.nx * in.dyn_nW, fid);
 
   // Close binary file
   fclose(fid);
@@ -1086,7 +1086,7 @@ void read_bin_dynamic_adr_2D(double *psi_re, double *psi_im, input in){
   int nx_file;
   double dx_file;
   double xmax_file;
-  int nW_file;
+  int dyn_nW_file;
   double dW_file;
   double Wmax_file;
   double Theta_file;
@@ -1107,26 +1107,26 @@ void read_bin_dynamic_adr_2D(double *psi_re, double *psi_im, input in){
   it_read += fread(&nx_file, sizeof(int), 1, fid);
   it_read += fread(&dx_file, sizeof(double), 1, fid);
   it_read += fread(&xmax_file, sizeof(double), 1, fid);
-  it_read += fread(&nW_file, sizeof(int), 1, fid);
+  it_read += fread(&dyn_nW_file, sizeof(int), 1, fid);
   it_read += fread(&dW_file, sizeof(double), 1, fid);
   it_read += fread(&Wmax_file, sizeof(double), 1, fid);
   it_read += fread(&Theta_file, sizeof(double), 1, fid);
   it_read += fread(&rs_file, sizeof(double), 1, fid);
   check_bin_dynamic(dx_file, nx_file, xmax_file,
-		    dW_file, nW_file, Wmax_file,
+		    dW_file, dyn_nW_file, Wmax_file,
 		    Theta_file, rs_file,
 		    in, it_read, 8, fid, true, true, false);
   
   // Skip data for the ideal density response
-  fseek(fid, sizeof(double)*2*nx_file*nW_file, SEEK_CUR);
+  fseek(fid, sizeof(double)*2*nx_file*dyn_nW_file, SEEK_CUR);
   
   // Fixed component of the auxiliary density response 
-  it_read += fread(psi_re, sizeof(double), nx_file * nW_file, fid);
-  it_read += fread(psi_im, sizeof(double), nx_file * nW_file, fid);
+  it_read += fread(psi_re, sizeof(double), nx_file * dyn_nW_file, fid);
+  it_read += fread(psi_im, sizeof(double), nx_file * dyn_nW_file, fid);
   check_bin_dynamic(dx_file, nx_file, xmax_file,
-		    dW_file, nW_file, Wmax_file,
+		    dW_file, dyn_nW_file, Wmax_file,
 		    Theta_file, rs_file,
-		    in, it_read, 2*nx_file*nW_file + 8,
+		    in, it_read, 2*nx_file*dyn_nW_file + 8,
 		    fid, false, true, true);
   
   

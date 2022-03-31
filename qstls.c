@@ -128,7 +128,7 @@ void solve_qstls(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_qstls(SS, psi, phi, SSHF, xx, in);
-  write_guess_qstls(SS, psi, in);
+  write_restart_qstls(SS, psi, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
@@ -175,7 +175,7 @@ void free_qstls_arrays(double *psi, double *psi_fixed){
 void initial_guess_qstls(double *xx, double *SS, double *SSHF,
 			 double *psi, double *phi, input in){
 
-  if (strcmp(in.qstls_guess_file, NO_FILE_STR)==0){
+  if (strcmp(in.qstls_restart_file, NO_FILE_STR)==0){
 
     // Auxilirary density response
     for (int ii=0; ii<in.nx; ii++){
@@ -191,7 +191,7 @@ void initial_guess_qstls(double *xx, double *SS, double *SSHF,
   else {
 
     // Read from file
-    read_guess_qstls(SS, psi, in);
+    read_restart_qstls(SS, psi, in);
     
   }
   
@@ -713,8 +713,8 @@ void write_text_adr(double *psi, input in){
 }
 
 
-// write binary file to use as initial guess (or restart)
-void write_guess_qstls(double *SS, double *psi, input in){
+// write binary file to usefor for restart (or initial guess)
+void write_restart_qstls(double *SS, double *psi, input in){
 
   // Name of output file
   char out_name[100];
@@ -724,7 +724,7 @@ void write_guess_qstls(double *SS, double *psi, input in){
   FILE *fid = NULL;
   fid = fopen(out_name, "wb");
   if (fid == NULL) {
-    fprintf(stderr,"Error while creating file for initial guess or restart\n");
+    fprintf(stderr,"Error while creating file for restart\n");
     exit(EXIT_FAILURE);
   }
 
@@ -746,8 +746,8 @@ void write_guess_qstls(double *SS, double *psi, input in){
 }
 
 
-// read binary file to use as initial guess (or restart)
-void read_guess_qstls(double *SS, double *psi, input in){
+// read binary file to use for restart (or initial guess)
+void read_restart_qstls(double *SS, double *psi, input in){
 
   // Variables
   size_t it_read;
@@ -758,22 +758,22 @@ void read_guess_qstls(double *SS, double *psi, input in){
 
   // Open binary file
   FILE *fid = NULL;
-  fid = fopen(in.qstls_guess_file, "rb");
+  fid = fopen(in.qstls_restart_file, "rb");
   if (fid == NULL) {
-    fprintf(stderr,"Error while opening file for initial guess or restart\n");
+    fprintf(stderr,"Error while opening file for restart\n");
     exit(EXIT_FAILURE);
   }
 
   // Initialize number of items read from input file
   it_read = 0;
 
-  // Check that the data for the guess file is consistent
+  // Check that the data for the restart file is consistent
   it_read += fread(&nx_file, sizeof(int), 1, fid);
   it_read += fread(&nl_file, sizeof(int), 1, fid);
   it_read += fread(&dx_file, sizeof(double), 1, fid);
   it_read += fread(&xmax_file, sizeof(double), 1, fid);
-  check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, in.Theta,
-		   in, it_read, 4, fid, true, true, false);
+  check_restart_qstls(nx_file, dx_file, xmax_file, nl_file, in.Theta,
+		      in, it_read, 4, fid, true, true, false);
   
   
   // Static structure factor
@@ -783,9 +783,9 @@ void read_guess_qstls(double *SS, double *psi, input in){
   it_read += fread(psi, sizeof(double), nx_file * nl_file, fid);
 
   // Check that all the expected items where read
-  check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, in.Theta,
-		   in, it_read, nx_file + nl_file*nx_file + 4,
-		   fid, false, true, true);
+  check_restart_qstls(nx_file, dx_file, xmax_file, nl_file, in.Theta,
+		      in, it_read, nx_file + nl_file*nx_file + 4,
+		      fid, false, true, true);
   
 
   // Close binary file
@@ -838,49 +838,49 @@ void read_fixed_qstls(double *psi_fixed, input in){
   FILE *fid = NULL;
   fid = fopen(in.qstls_fixed_file, "rb");
   if (fid == NULL) {
-    fprintf(stderr,"Error while opening file for initial guess or restart\n");
+    fprintf(stderr,"Error while opening file for restart\n");
     exit(EXIT_FAILURE);
   }
 
   // Initialize number of items read from input file
   it_read = 0;
 
-  // Check that the data for the guess file is consistent
+  // Check that the data for the restart file is consistent
   it_read += fread(&nx_file, sizeof(int), 1, fid);
   it_read += fread(&nl_file, sizeof(int), 1, fid);
   it_read += fread(&dx_file, sizeof(double), 1, fid);
   it_read += fread(&xmax_file, sizeof(double), 1, fid);
   it_read += fread(&Theta_file, sizeof(double), 1, fid);
-  check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
-		   in, it_read, 5, fid, true, true, false);
+  check_restart_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
+		      in, it_read, 5, fid, true, true, false);
   
 
   // Fixed component of the auxiliary density response
   it_read += fread(psi_fixed, sizeof(double), nx_file * nl_file * nx_file, fid);
 
   // Check that all items where read and the end-of-file was reached
-  check_guess_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
-		   in, it_read, nx_file*nl_file*nx_file + 5, fid,
-		   false, true, true);
+  check_restart_qstls(nx_file, dx_file, xmax_file, nl_file, Theta_file,
+		      in, it_read, nx_file*nl_file*nx_file + 5, fid,
+		      false, true, true);
   
   // Close binary file
   fclose(fid);
 	    
 }
 
-// Check consistency of the guess data
-void check_guess_qstls(int nx, double dx, double xmax, int nl,
-		       double Theta, input in, size_t it_read,
-		       size_t it_expected, FILE *fid, bool check_grid,
-		       bool check_items, bool check_eof){
+// Check consistency of the restart data
+void check_restart_qstls(int nx, double dx, double xmax, int nl,
+			 double Theta, input in, size_t it_read,
+			 size_t it_expected, FILE *fid, bool check_grid,
+			 bool check_items, bool check_eof){
   
   int buffer;
   
-  // Check that the grid in the guess data is consistent with input
+  // Check that the grid in the restart data is consistent with input
   if (check_grid) {
     
     if (nx != in.nx || fabs(dx-in.dx) > DBL_TOL || fabs(xmax-in.xmax) > DBL_TOL){
-      fprintf(stderr,"Grid from guess file is incompatible with input\n");
+      fprintf(stderr,"Grid from restart file is incompatible with input\n");
       fprintf(stderr,"Grid points (nx) : %d (input), %d (file)\n", in.nx, nx);
       fprintf(stderr,"Resolution (dx)  : %.16f (input), %.16f (file)\n", in.dx, dx);
       fprintf(stderr,"Cutoff (xmax)    : %.16f (input), %.16f (file)\n", in.xmax, xmax);
@@ -905,7 +905,7 @@ void check_guess_qstls(int nx, double dx, double xmax, int nl,
   // Check that all the expected items where read
   if (check_items) {
     if (it_read != it_expected ) {
-      fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+      fprintf(stderr,"Error while reading file for restart.\n");
       fprintf(stderr,"%ld Elements expected, %ld elements read\n", it_expected, it_read);
       fclose(fid);
       exit(EXIT_FAILURE);
@@ -916,7 +916,7 @@ void check_guess_qstls(int nx, double dx, double xmax, int nl,
   if (check_eof){
     it_read = fread(&buffer, sizeof(int), 1, fid); // Trigger end-of-file activation
     if (!feof(fid)) {
-      fprintf(stderr,"Error while reading file for initial guess or restart.\n");
+      fprintf(stderr,"Error while reading file for restart.\n");
       fprintf(stderr,"Expected end of file, but there is still data left to read.\n");
       fclose(fid);
       exit(EXIT_FAILURE);

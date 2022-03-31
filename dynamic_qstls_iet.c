@@ -300,28 +300,28 @@ void alloc_dynamic_qstls_iet_arrays(input in, double **phi_re_2D,
 				    double **psi_re_1D,
 				    double **psi_im_1D){
 
-  *phi_re_2D = malloc( sizeof(double) * in.nx * in.nW);
+  *phi_re_2D = malloc( sizeof(double) * in.nx * in.dyn_nW);
   if (*phi_re_2D == NULL) {
     fprintf(stderr, "Failed to allocate memory for the real part of"
 	    " the ideal density response\n");
     exit(EXIT_FAILURE);
   }
   
-  *phi_im_2D = malloc( sizeof(double) * in.nx * in.nW);
+  *phi_im_2D = malloc( sizeof(double) * in.nx * in.dyn_nW);
   if (*phi_im_2D == NULL) {
     fprintf(stderr, "Failed to allocate memory for the imaginary part of"
 	    " the ideal density response\n");
     exit(EXIT_FAILURE);
   }
   
-  *psi_re_2D = malloc( sizeof(double) * in.nx * in.nW);
+  *psi_re_2D = malloc( sizeof(double) * in.nx * in.dyn_nW);
   if (*psi_re_2D == NULL) {
     fprintf(stderr, "Failed to allocate memory for the real part of"
 	    " the auxiliary density response\n");
     exit(EXIT_FAILURE);
   }
   
-  *psi_im_2D = malloc( sizeof(double) * in.nx * in.nW);
+  *psi_im_2D = malloc( sizeof(double) * in.nx * in.dyn_nW);
   if (*psi_im_2D == NULL) {
     fprintf(stderr, "Failed to allocate memory for the imaginary part of"
 	    " the auxiliary density response\n");
@@ -407,8 +407,8 @@ void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
 			     double *WW, double *xx, input in) {
 
   // Allocate temporary arrays
-  double *phi_re_tmp = malloc( sizeof(double) * in.nW);
-  double *phi_im_tmp = malloc( sizeof(double) * in.nW);
+  double *phi_re_tmp = malloc( sizeof(double) * in.dyn_nW);
+  double *phi_im_tmp = malloc( sizeof(double) * in.dyn_nW);
   if (phi_re_tmp == NULL ||
       phi_im_tmp == NULL){
     fprintf(stderr, "Failed to allocate memory for calculation"
@@ -424,7 +424,7 @@ void compute_dynamic_idr_iet(double *phi_re, double *phi_im,
     compute_dynamic_idr(phi_re_tmp, phi_im_tmp, WW, xx, in);
 
     // Copy temporary arrays
-    for (int jj=0; jj<in.nW; jj++) {
+    for (int jj=0; jj<in.dyn_nW; jj++) {
       phi_re[idx2(ii,jj,in.nx)] = phi_re_tmp[jj];
       phi_im[idx2(ii,jj,in.nx)] = phi_im_tmp[jj];
     }
@@ -469,7 +469,7 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
 
   // Temporary input structure
   input in_1D = in;
-  in_1D.nW = 1;
+  in_1D.dyn_nW = 1;
 
   // Variables for interpolation
   gsl_spline *psi_re_sp_ptr;
@@ -514,7 +514,7 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
   }
 
   // Interpolate to wave-vector given in input
-  for (int jj=0; jj<in.nW; jj++){
+  for (int jj=0; jj<in.dyn_nW; jj++){
 
     for (int ii=0; ii<in.nx; ii++){
       psi_re_1D[ii] = psi_re_2D[idx2(ii,jj,in.nx)];
@@ -553,8 +553,8 @@ void compute_dynamic_adr_pd(double *phi_re, double *phi_im,
   bool compute_fixed;
 
   // Allocate temporary arrays
-  double *psi_re_new = malloc( sizeof(double) * in.nx * in.nW);
-  double *psi_fixed = malloc( sizeof(double) * in.nx * in.nW * in.nx);
+  double *psi_re_new = malloc( sizeof(double) * in.nx * in.dyn_nW);
+  double *psi_fixed = malloc( sizeof(double) * in.nx * in.dyn_nW * in.nx);
   if (psi_re_new == NULL ||
       psi_fixed == NULL){
     fprintf(stderr, "Failed to allocate memory for calculation"
@@ -565,7 +565,7 @@ void compute_dynamic_adr_pd(double *phi_re, double *phi_im,
 
   // Initialize the auxiliary density response
   for (int ii=0; ii<in.nx; ii++){
-    for (int jj=0; jj<in.nW; jj++){
+    for (int jj=0; jj<in.dyn_nW; jj++){
       psi_re[idx2(ii,jj,in.nx)] = 0.0;
       psi_fixed[idx2(ii,jj,in.nx)] = 0.0;
     }
@@ -617,11 +617,11 @@ void compute_dynamic_adr_fd(double *phi_re, double *phi_im,
   bool compute_fixed;
   
   // Allocate temporary arrays
-  double *psi_re_new = malloc( sizeof(double) * in.nx * in.nW);
-  double *psi_im_new = malloc( sizeof(double) * in.nx * in.nW);
-  double *psi_fixed_p1 = malloc( sizeof(double) * in.nx * in.nW * in.nx);
-  double *psi_fixed_p2 = malloc( sizeof(double) * in.nx * in.nW * in.nx);
-  double *psi_fixed_p3 = malloc( sizeof(double) * in.nx * in.nW * in.nx);
+  double *psi_re_new = malloc( sizeof(double) * in.nx * in.dyn_nW);
+  double *psi_im_new = malloc( sizeof(double) * in.nx * in.dyn_nW);
+  double *psi_fixed_p1 = malloc( sizeof(double) * in.nx * in.dyn_nW * in.nx);
+  double *psi_fixed_p2 = malloc( sizeof(double) * in.nx * in.dyn_nW * in.nx);
+  double *psi_fixed_p3 = malloc( sizeof(double) * in.nx * in.dyn_nW * in.nx);
   if (psi_re_new == NULL ||
       psi_im_new == NULL ||
       psi_fixed_p1 == NULL ||
@@ -635,13 +635,13 @@ void compute_dynamic_adr_fd(double *phi_re, double *phi_im,
 
   // Initialize the auxiliary density response
   for (int ii=0; ii<in.nx; ii++){
-    for (int jj=0; jj<in.nW; jj++){
+    for (int jj=0; jj<in.dyn_nW; jj++){
       psi_re[idx2(ii,jj,in.nx)] = 0.0;
       psi_im[idx2(ii,jj,in.nx)] = 0.0;
       for (int kk=0; kk<in.nx; kk++){
-	psi_fixed_p1[idx3(ii,jj,kk,in.nx,in.nW)] = 0.0;
-	psi_fixed_p2[idx3(ii,jj,kk,in.nx,in.nW)] = 0.0;
-	psi_fixed_p3[idx3(ii,jj,kk,in.nx,in.nW)] = 0.0;
+	psi_fixed_p1[idx3(ii,jj,kk,in.nx,in.dyn_nW)] = 0.0;
+	psi_fixed_p2[idx3(ii,jj,kk,in.nx,in.dyn_nW)] = 0.0;
+	psi_fixed_p3[idx3(ii,jj,kk,in.nx,in.dyn_nW)] = 0.0;
       }
     }
   }
@@ -701,7 +701,7 @@ double adr_err(double *psi, double *psi_new, input in){
   double err_tmp;
   
   for (int ii=0; ii<in.nx; ii++){
-    for (int jj=0; jj<in.nW; jj++){
+    for (int jj=0; jj<in.dyn_nW; jj++){
       err_tmp = psi[idx2(ii,jj,in.nx)] - psi_new[idx2(ii,jj,in.nx)];
       err += err_tmp*err_tmp;
     }
@@ -715,7 +715,7 @@ double adr_err(double *psi, double *psi_new, input in){
 void adr_update(double *psi, double *psi_new, input in){
 
   for (int ii=0; ii<in.nx; ii++){
-    for (int jj=0; jj<in.nW; jj++){
+    for (int jj=0; jj<in.dyn_nW; jj++){
       psi[idx2(ii,jj,in.nx)] = in.a_mix * psi_new[idx2(ii,jj,in.nx)]
       + (1 - in.a_mix)*psi[idx2(ii,jj,in.nx)];
     }
@@ -774,7 +774,7 @@ void compute_dynamic_adr_re_lev1(double *psi_re_new, double *psi_re,
     for (int ii=0; ii<in.nx; ii++){
 
       // Loop over the frequencies
-      for (int jj=0; jj<in.nW; jj++) {
+      for (int jj=0; jj<in.dyn_nW; jj++) {
 
 	// Integration function
 	gsl_function ff_int_lev1;
@@ -843,7 +843,7 @@ void compute_dynamic_adr_re_lev1_1(double *int_lev1_1, double *psi_re,
 void read_dynamic_adr_fixed(double *var, double *psi_fixed,
 			    int ii, int jj, input in){
   for (int kk=0; kk<in.nx; kk++)
-    var[kk] = psi_fixed[idx3(ii,jj,kk,in.nx,in.nW)];
+    var[kk] = psi_fixed[idx3(ii,jj,kk,in.nx,in.dyn_nW)];
 }
 
 
@@ -851,7 +851,7 @@ void read_dynamic_adr_fixed(double *var, double *psi_fixed,
 void write_dynamic_adr_fixed(double *var, double *psi_fixed,
 			     int ii, int jj, input in){
   for (int kk=0; kk<in.nx; kk++){
-    psi_fixed[idx3(ii,jj,kk,in.nx,in.nW)] = var[kk];
+    psi_fixed[idx3(ii,jj,kk,in.nx,in.dyn_nW)] = var[kk];
   }
 }
 
@@ -1125,7 +1125,7 @@ void compute_dynamic_adr_im_lev1(double *psi_im, double *psi_re,
     for (int ii=0; ii<in.nx; ii++){
 
       // Loop over the frequencies
-      for (int jj=0; jj<in.nW; jj++) {
+      for (int jj=0; jj<in.dyn_nW; jj++) {
 
 	// Integration function
 	gsl_function ff_int_lev1;
@@ -1499,7 +1499,7 @@ void compute_dynamic_adr_fd_re_lev1(double *psi_re_new,
     for (int ii=0; ii<in.nx; ii++){
 
       // Loop over the frequencies (the zero frequency contribution is computed separately)
-      for (int jj=1; jj<in.nW; jj++) {
+      for (int jj=1; jj<in.dyn_nW; jj++) {
 	
 	// Integration function
 	gsl_function ff_int_lev1;
@@ -1718,7 +1718,7 @@ void compute_dynamic_adr_fd_im_lev1(double *psi_im_new,
     for (int ii=0; ii<in.nx; ii++){
 
       // Loop over the frequencies (the zero frequency contribution is computed separately)
-      for (int jj=1; jj<in.nW; jj++) {
+      for (int jj=1; jj<in.dyn_nW; jj++) {
 	
 	// Integration function
 	gsl_function ff_int_lev1;
@@ -1958,7 +1958,7 @@ void compute_dsf_qstls_iet(double *SSn, double *phi_re, double *phi_im,
   // NOTE: The zero frequency contribution of the imaginary
   // part of the auxiliary density response (psi_im[0])
   // is used to store its frequency derivative
-  for (int ii=0; ii<in.nW; ii++){
+  for (int ii=0; ii<in.dyn_nW; ii++){
 
     if (WW[ii] == 0.0) {
 

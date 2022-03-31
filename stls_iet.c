@@ -113,7 +113,7 @@ void solve_stls_iet(input in, bool verbose) {
   // Output to file
   if (verbose) printf("Writing output files...\n");
   write_text_stls_iet(SS, GG, phi, SSHF, xx, bf, in);
-  write_guess_stls(SS, GG, in);
+  write_restart_stls(SS, GG, in);
   if (verbose) printf("Done.\n");
 
   // Free memory
