@@ -270,7 +270,7 @@ void init_fixed_dynamic_stls_arrays(input *in, double *WW, bool verbose){
 
 void frequency_grid(double *WW, input *in){
  
-  WW[0] = 0.0;
+  WW[0] = in->dyn_Wmin;
   for (int ii=1; ii < in->dyn_nW; ii++) WW[ii] = WW[ii-1] + in->dyn_dW;
 
 }
@@ -420,7 +420,7 @@ void compute_dynamic_idr_im(double *phi_im, double *WW,
   if (WW == 0) ff_int.function = &idr_im_x0;
   else ff_int.function = &idr_im_xw;
 
-  // Normalized ideal Lindhard density
+  // Ideal density response
   for (int ii=0; ii<in.nx; ii++){
     for (int jj=0; jj<in.dyn_nW; jj++) {
       
@@ -837,6 +837,7 @@ void write_bin_idr_2D(double *phi_re, double *phi_im,
   fwrite(&in.dyn_nW, sizeof(int), 1, fid);
   fwrite(&in.dyn_dW, sizeof(double), 1, fid);
   fwrite(&in.dyn_Wmax, sizeof(double), 1, fid);
+  fwrite(&in.dyn_Wmin, sizeof(double), 1, fid);
   fwrite(&in.Theta, sizeof(double), 1, fid);
   fwrite(&in.rs, sizeof(double), 1, fid);
   
@@ -860,6 +861,7 @@ void read_bin_idr_2D(double *phi_re, double *phi_im, input in){
   int dyn_nW_file;
   double dW_file;
   double Wmax_file;
+  double Wmin_file;
   double Theta_file;
   double rs_file;
 
@@ -881,12 +883,13 @@ void read_bin_idr_2D(double *phi_re, double *phi_im, input in){
   it_read += fread(&dyn_nW_file, sizeof(int), 1, fid);
   it_read += fread(&dW_file, sizeof(double), 1, fid);
   it_read += fread(&Wmax_file, sizeof(double), 1, fid);
+  it_read += fread(&Wmin_file, sizeof(double), 1, fid);
   it_read += fread(&Theta_file, sizeof(double), 1, fid);
   it_read += fread(&rs_file, sizeof(double), 1, fid);
   check_bin_dynamic(dx_file, nx_file, xmax_file,
 		    dW_file, dyn_nW_file, Wmax_file,
-		    Theta_file, rs_file,
-		    in, it_read, 8, fid, true, true, false);
+		    Wmin_file, Theta_file, rs_file,
+		    in, it_read, 9, fid, true, true, false);
   
 
   // Fixed component of the auxiliary density response 
@@ -894,8 +897,8 @@ void read_bin_idr_2D(double *phi_re, double *phi_im, input in){
   it_read += fread(phi_im, sizeof(double), nx_file * dyn_nW_file, fid);
   check_bin_dynamic(dx_file, nx_file, xmax_file,
 		    dW_file, dyn_nW_file, Wmax_file,
-		    Theta_file, rs_file,
-		    in, it_read, 2*nx_file*dyn_nW_file + 8,
+		    Wmin_file, Theta_file, rs_file,
+		    in, it_read, 2*nx_file*dyn_nW_file + 9,
 		    fid, false, true, false);
   
   
@@ -908,7 +911,7 @@ void read_bin_idr_2D(double *phi_re, double *phi_im, input in){
 // Check consistency of the guess data
 void check_bin_dynamic(double dx, int nx, double xmax,
 		       double dW, int dyn_nW, double Wmax,
-		       double Theta, double rs,
+		       double Wmin, double Theta, double rs,
 		       input in, size_t it_read,
 		       size_t it_expected, FILE *fid,
 		       bool check_grid, bool check_items,
@@ -927,11 +930,13 @@ void check_bin_dynamic(double dx, int nx, double xmax,
       fclose(fid);
       exit(EXIT_FAILURE);
     }
-    if (dyn_nW != in.dyn_nW || fabs(dW-in.dyn_dW) > DBL_TOL || fabs(Wmax-in.dyn_Wmax) > DBL_TOL){
+    if (dyn_nW != in.dyn_nW || fabs(dW-in.dyn_dW) > DBL_TOL
+	|| fabs(Wmax-in.dyn_Wmax) > DBL_TOL || fabs(Wmin-in.dyn_Wmin) > DBL_TOL){
       fprintf(stderr,"Frequency grid from imported file is incompatible with input\n");
       fprintf(stderr,"Grid points (dyn_nW) : %d (input), %d (file)\n", in.dyn_nW, dyn_nW);
-      fprintf(stderr,"Resolution (dW)  : %.16f (input), %.16f (file)\n", in.dyn_dW, dW);
-      fprintf(stderr,"Cutoff (Wmax)    : %.16f (input), %.16f (file)\n", in.dyn_Wmax, Wmax);
+      fprintf(stderr,"Resolution (dW) : %.16f (input), %.16f (file)\n", in.dyn_dW, dW);
+      fprintf(stderr,"Upper cutoff (Wmax) : %.16f (input), %.16f (file)\n", in.dyn_Wmax, Wmax);
+      fprintf(stderr,"Lower cutoff (Wmax) : %.16f (input), %.16f (file)\n", in.dyn_Wmin, Wmin);
       fclose(fid);
       exit(EXIT_FAILURE);
     }

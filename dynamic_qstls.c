@@ -1089,6 +1089,7 @@ void read_bin_dynamic_adr_2D(double *psi_re, double *psi_im, input in){
   int dyn_nW_file;
   double dW_file;
   double Wmax_file;
+  double Wmin_file;
   double Theta_file;
   double rs_file;
 
@@ -1110,12 +1111,13 @@ void read_bin_dynamic_adr_2D(double *psi_re, double *psi_im, input in){
   it_read += fread(&dyn_nW_file, sizeof(int), 1, fid);
   it_read += fread(&dW_file, sizeof(double), 1, fid);
   it_read += fread(&Wmax_file, sizeof(double), 1, fid);
+  it_read += fread(&Wmin_file, sizeof(double), 1, fid);
   it_read += fread(&Theta_file, sizeof(double), 1, fid);
   it_read += fread(&rs_file, sizeof(double), 1, fid);
   check_bin_dynamic(dx_file, nx_file, xmax_file,
 		    dW_file, dyn_nW_file, Wmax_file,
-		    Theta_file, rs_file,
-		    in, it_read, 8, fid, true, true, false);
+		    Wmin_file, Theta_file, rs_file,
+		    in, it_read, 9, fid, true, true, false);
   
   // Skip data for the ideal density response
   fseek(fid, sizeof(double)*2*nx_file*dyn_nW_file, SEEK_CUR);
@@ -1125,8 +1127,8 @@ void read_bin_dynamic_adr_2D(double *psi_re, double *psi_im, input in){
   it_read += fread(psi_im, sizeof(double), nx_file * dyn_nW_file, fid);
   check_bin_dynamic(dx_file, nx_file, xmax_file,
 		    dW_file, dyn_nW_file, Wmax_file,
-		    Theta_file, rs_file,
-		    in, it_read, 2*nx_file*dyn_nW_file + 8,
+		    Wmin_file, Theta_file, rs_file,
+		    in, it_read, 2*nx_file*dyn_nW_file + 9,
 		    fid, false, true, true);
   
   

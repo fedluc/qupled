@@ -36,6 +36,7 @@ typedef struct {
   double dx;
   double dyn_dW;
   double dyn_Wmax;
+  double dyn_Wmin;
   double dyn_xtarget;
   double err_min_iter;
   double mu_lo;

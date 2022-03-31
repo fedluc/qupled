@@ -19,7 +19,7 @@ static void set_nx_nl(int nl1, int nl2, int nc1, int nc2,
 // OBTAINED FROM A SIMULATION
 // -------------------------------------------------------------------
 
-void create_restart(input in){
+void create_restart_files(input in){
 
   // Variables
   bool is_qstls;

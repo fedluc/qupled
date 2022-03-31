@@ -6,9 +6,9 @@
 #include "solvers.h"
 #include "restart.h"
 
-void run_static_mode(input in);
-void run_dynamic_mode(input in);
-void run_guess_mode(input in);
+static void run_static_mode(input in);
+static void run_dynamic_mode(input in);
+static void run_restart_mode(input in);
 
 int main (int argc, char **argv){
 
@@ -30,8 +30,8 @@ int main (int argc, char **argv){
   else if (strcmp(in.mode, "dynamic") == 0) {
     run_dynamic_mode(in);
   }
-  else if (strcmp(in.mode, "guess") == 0) {
-    run_guess_mode(in);
+  else if (strcmp(in.mode, "restart") == 0) {
+    run_restart_mode(in);
   }
   else {
 
@@ -115,8 +115,8 @@ void run_dynamic_mode(input in){
 
 
 // Run the code in guess mode
-void run_guess_mode(input in){
+void run_restart_mode(input in){
 
-  create_restart(in);
+  create_restart_files(in);
       
 }

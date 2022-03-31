@@ -8,6 +8,6 @@
 // FROM TEXT FILES OBTAINED FROM A SIMULATION
 // -------------------------------------------------------------------
 
-void create_restart(input in);
+void create_restart_files(input in);
 
 #endif
