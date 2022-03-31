@@ -2,7 +2,7 @@
 
 ## Introduction
 
-STLS can be used to compute the static and thermodynamic properties of quantum one component plasmas via theoretical approaches based on the dielectric formalism. The theoretical approaches which can be solved with STLS include:
+STLS can be used to compute the properties of quantum one component plasmas via theoretical approaches based on the dielectric formalism. The theoretical approaches which can be solved with STLS include:
 
 * The classical STLS scheme as discussed by [Tanaka and Ichimaru](https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278)
 * The classical VS-STLS scheme discussed by [Vashishta and Singwi](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875) extended to finite temperatures
@@ -13,16 +13,20 @@ STLS can be used to compute the static and thermodynamic properties of quantum o
  
 ## Limitations
 
-Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC, STLS-IET). Calculations of ground state properties for the quantum schemes (qSTLS and qSTLS-IET) will be implemented in the future.
+Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC, STLS-IET and VS-STLS) and are limited to static and thermodynamic properties.
 
 ## Compiling
 
-The code can be compiled with gcc and with the [make file](Makefile) provided in the source directory. Please note that in order to correctly compile the code it is necessary that the following libraries are installed
+The code can be compiled with gcc and with the [make file](Makefile) provided with the source code. In order to correctly compile the code it is necessary that the following libraries are installed
 
 * [GNU scientific library](https://www.gnu.org/software/gsl/). This library must be explicitly included by calling `make GSL="PATH"`, where `PATH` is the path to the folder containing the header files of the library. Alternatively, it is possible to change the default value of the GSL variable in the Makefile and then to simply compile via `make`.
 * [OpenMP library](https://en.wikipedia.org/wiki/OpenMP). In most cases it is not necessary to explicitly include the path to this library. However, if this should be necessary, it should be possible to do so by modifying the `INCLUDE` variables which appear in the Makefile.
 
 ## Running 
+
+
+
+### Hello
 
 Given a state point defined via the quantum degeneracy parameter (&theta;) and via the quantum coupling parameter (r<sub>s</sub>), SLTS computes the static structure factor with the following procedure:
 
@@ -46,7 +50,7 @@ Given a state point defined via the quantum degeneracy parameter (&theta;) and v
   * The static structure factor and the part of the auxiliary density response that depends explicitly on the static structure factor are computed via an iterative solution which employs [mixing](https://aip.scitation.org/doi/abs/10.1063/1.1682399]) and is assumed converged if the condition 
 ||S<sub>i</sub>(x) - S<sub>i-1</sub>(x)|| < epsilon is satisfied between two successive iterations. Here S(x) is the static structure factor and epsilon is a tolerance specified in input.
 
-All the integrals are computed with the doubly-adaptive Clenshaw-Curtis quadrature scheme as implemented in the [CQUAD](https://www.gnu.org/software/gsl/doc/html/integration.html) function of the GSL library. Once the iterative procedure is completed, the results are written to a set of dedicated output files (see [Output](https://github.com/fedluc/STLS/edit/master/README.md#output))
+All the integrals are computed with the doubly-adaptive Clenshaw-Curtis quadrature scheme as implemented in the [CQUAD](https://www.gnu.org/software/gsl/doc/html/integration.html) function of the GSL library. Once the iterative procedure is completed, the results are written to a set of dedicated output files (see [Output](#output))
 
 The following command line options can be employed to control the calculations performed by STLS (the same information can also be retrieved by running STLS with the option `--help`) :
 
