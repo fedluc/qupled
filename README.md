@@ -9,7 +9,7 @@ STLS can be used to compute the properties of quantum one component plasmas via 
 * The classical STLS-HNC scheme as discussed by [Tanaka](https://aip.scitation.org/doi/full/10.1063/1.4969071)
 * The classical STLS-IET scheme as discussed by [Tolias and collaborators](https://aip.scitation.org/doi/10.1063/5.0065988)
 * The quantum STLS (qSTLS) scheme as discussed by [Schweng and Böhm](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037)
-* The quantum qSTLS-IET approach 
+* The quantum qSTLS-IET scheme 
  
 ## Limitations
 
@@ -19,48 +19,95 @@ Ground state (zero temperature) calculations are available only for the classica
 
 The code can be compiled with gcc and with the [make file](Makefile) provided with the source code. In order to correctly compile the code it is necessary that the following libraries are installed
 
-* [GNU scientific library](https://www.gnu.org/software/gsl/). This library must be explicitly included by calling `make GSL="PATH"`, where `PATH` is the path to the folder containing the header files of the library. Alternatively, it is possible to change the default value of the GSL variable in the Makefile and then to simply compile via `make`.
-* [OpenMP library](https://en.wikipedia.org/wiki/OpenMP). In most cases it is not necessary to explicitly include the path to this library. However, if this should be necessary, it should be possible to do so by modifying the `INCLUDE` variables which appear in the Makefile.
+* [GNU scientific library](https://www.gnu.org/software/gsl/). This library must be explicitly included by calling `make GSL="PATH"`, where `PATH` is the path to the folder containing the header files of the library. Alternatively, it is possible to change the default value of the GSL variable in the [make file](Makefile) and then to simply compile via `make`.
+* [OpenMP library](https://en.wikipedia.org/wiki/OpenMP). In most cases it is not necessary to explicitly include the path to this library. However, if this should be necessary, it should be possible to do so by modifying the `INCLUDE` variables which appear in the [make file](Makefile).
 
-## Running 
+## Running
 
+SLTS can run in three different modes: `static`,`dynamic` and `restart`. Each of these modes is described in detail below and `static` is the default working mode of the code. The user is free to specify how the code should run via the run-time option `mode`, but only one mode at the time can be executed. All the integrals that appear in the various dielectric schemes are computed with the doubly-adaptive Clenshaw-Curtis quadrature scheme as implemented in the [CQUAD](https://www.gnu.org/software/gsl/doc/html/integration.html) function of the GSL library. The run-time options that can be specified by the user are summarized in a [dedicated section](#run-time-options).
 
+### Static mode 
 
-### Hello
-
-Given a state point defined via the quantum degeneracy parameter (&theta;) and via the quantum coupling parameter (r<sub>s</sub>), SLTS computes the static structure factor with the following procedure:
+In the static mode, SLTS computes the static structure factor and related static and thermodynamic properties with an iterative procedure that depends on the theory specified by the user:
 
 * For the classical schemes (STLS, STLS-HNC, STLS-IET)
-  * The chemical potential is determined from the normalization condition for the Fermi-Dirac distribution function which is solved with a bisection method
+  * The chemical potential is determined from the normalization condition for the Fermi-Dirac distribution function which is solved with a bisection method. The initial guess for the bisection method is controlled via the input option `mu-guess`.
   * The ideal density response is computed for various values of the wave-vector and of the Matsubara frequency
   * The static structure factor and the static local field correction are computed via an iterative solution which employs [mixing](https://aip.scitation.org/doi/abs/10.1063/1.1682399]) and is assumed converged if the condition 
-||G<sub>i</sub>(x) - G<sub>i-1</sub>(x)|| < &epsilon; is satisfied between two successive iterations. Here G(x) is the static local field correction and &epsilon; is a tolerance specified in input
+||G<sub>i</sub>(x) - G<sub>i-1</sub>(x)|| < &epsilon; is satisfied between two successive iterations. Here G(x) is the static local field correction and &epsilon; is a tolerance specified in input via the option `min-err`. Unless specified otherwise (see option `stls-guess`), the initial guess for the iterative calculations corresponds to the RPA solution, G(x) = 0.
 
 * For the classical VS-STLS scheme
-  * The free parameter used to enforce the compressibility sum-rule (&alpha;) is guessed from input
+  * The free parameter used to enforce the compressibility sum-rule (&alpha;) is read from input (see option `vs-alpha`)
   * The static structure factor and the static local field correction are computed with the an iterative procedure similar to the one employed for the other classical schemes (see above). In order to compute the state point derivatives that appear in the expression for the static local field correction, nine state points are solved simultaneously
   * The interaction energy is computed from the static structure factor
   * The exchange free energy is computed from the internal energy
-  * A new value for the free parameter used to enforce the compressibility sum-rule is obtained from the interaction energy and from the exchange free energy. If the condition |&alpha;<sub>i</sub>(x) - &alpha;<sub>i-1</sub>(x)|/ &alpha;<sub>i</sub>(x) < &epsilon; is satisfied, the calculation is complete. Otherwise, the new value for &alpha; is used to start a new computational cycle. The tolerance &epsilon; used to check the convergence of the free parameter does not have to be equal to the tolerance used to compute the structural properties
+  * A new value for the free parameter used to enforce the compressibility sum-rule is obtained from the interaction energy and from the exchange free energy. If the condition |&alpha;<sub>i</sub>(x) - &alpha;<sub>i-1</sub>(x)|/ &alpha;<sub>i</sub>(x) < &epsilon; is satisfied, the calculation is complete. Otherwise, the new value for &alpha; is used to start a new computational cycle. The tolerance &epsilon; used to check the convergence of the free parameter is specified via the option `vs-min-err` and does not have to be equal to the tolerance used to compute the structural properties
 
 * For the quantum schemes (qSTLS, qSTLS-IET)
   * The chemical potential is determined from the normalization condition for the Fermi-Dirac distribution function which is solved with a bisection method
   * The ideal density response is computed for various values of the wave-vector and of the Matsubara frequency 
   * The fixed component of the auxiliary density response (defined as the product between the dynamic local field correction and the ideal density response) that does not depend explicitly on the static structure factor is computed and stored. 
   * The static structure factor and the part of the auxiliary density response that depends explicitly on the static structure factor are computed via an iterative solution which employs [mixing](https://aip.scitation.org/doi/abs/10.1063/1.1682399]) and is assumed converged if the condition 
-||S<sub>i</sub>(x) - S<sub>i-1</sub>(x)|| < epsilon is satisfied between two successive iterations. Here S(x) is the static structure factor and epsilon is a tolerance specified in input.
+||S<sub>i</sub>(x) - S<sub>i-1</sub>(x)|| < &epsilon; is satisfied between two successive iterations. Here S(x) is the static structure factor and &epsilon; is a tolerance specified via the option `min-err`. Unless specified otherwise (see option `qstls-guess`), the initial guess for the iterative calculations corresponds to zero auxiliary density response.
 
-All the integrals are computed with the doubly-adaptive Clenshaw-Curtis quadrature scheme as implemented in the [CQUAD](https://www.gnu.org/software/gsl/doc/html/integration.html) function of the GSL library. Once the iterative procedure is completed, the results are written to a set of dedicated output files (see [Output](#output))
+
+Once the iterative procedure is completed, the results are written to a set of dedicated output files which include (n<sub>x</sub> is the number of wave-vectors used in the solution and n<sub>l</sub> is the number of Matsubara frequencies):
+  
+  * One text file with the static structure factor (ssf_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
+  * One text file with the static local field correction (slfc_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
+  * One text file with the static density response (sdr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
+  * One text file with the ideal density response (idr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and n<sub>l</sub> columns
+  * One text file with the static structure factor within the Hartree-Fock approximation (ssfHF_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
+  * One text file with the interaction energy (uint_rs\*\_theta\*\*\_\*\*\*.dat) 
+  * One binary file (restart_rs\*\_theta\*\*\_\*\*\*.bin) which which can be used to restart simulations that were interrupted before they reached convergence or that can be employed to provide an initial guess for subsequent calculations. In order to understand how to use these binary files, see options `--stls-guess` and `--qstls-guess`. 
+   
+ For the VS-STLS, additional files are produced: 
+ 
+ * One text file with the free parameter obtained by enforcing the compressibility sum-rule (alpha_csr_rs\*\_theta\*\*\_\*\*\*.dat) 
+  * One text file with the exchange free energy (fxc_rs\*\_theta\*\*\_\*\*\*.dat) 
+  * One binary file with the free energy integrand that can be used for subsequent calculations via the option `vs-thermo-file` (thermo_int_rs\*\_theta\*\*\_\*\*\*.bin)
+  
+ For the quantum schemes, additional files are produced: 
+ 
+  * One text file with the auxiliary density response (adr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and n<sub>l</sub> columns
+  * One binary file which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS scheme via the option `--qstls-fix`  (fixed_rs\*\_theta\*\*\_\*\*\*.bin) **(only for the qSLTLS scheme)** 
+  * One binary file per wave-vector which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS-IET scheme via the option `--qstls-iet-fix`  (psi_fixed_theta\*\*\_xx\*\*\*\*.bin, n<sub>x</sub> files are generated) **(only for the qSTLS-IET scheme)**
+  
+In the above \* corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter, \*\*\* to the dielectric scheme that was solved and \*\*\*\* is the wave-vector value.
+
+### Dynamic mode
+
+
+
+### Restart mode
+
+Upon completion of a calculation in the static mode, STLS writes a binary restart file that can be used to restart the simulation (or as a guess file for subsquent calculations). However, should this restart file not be available, the restart mode can be used to create the missing binary file. In the restart mode the information necessary to construct the restart file is read from two text files provided by the user via the option `--restart-files`.  The format of the text files depends on the type of restart file that should be generated: 
+
+ * Restart file for the classical schemes: The first text file must contain the static structure factor, the second file must contain the static local field correction. The format of the files must be consistent with the one described [here](#static-mode).
+
+* Restart file for the quantum schemes: The first text file must contain the static structure factor, the second file must contain the auxiliary density response. The format of the files must be consistent with the one described [here](#static-mode).
+
+The information concerning the grid and number of Matsubara frequencies is inferred from the structure of the text files, but information concerning the state point and the scheme is obtained from the input parameters specified by the user. A summary of the parameters used to construct the binary file is written on screen. After reading the text files, STLS writes a binary file called restart_rs\*\_theta\*\*\_\*\*\*.bin, where \*  corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter and \*\*\* to the dielectric scheme  specified in input.  
+
+## Run-time options
 
 The following command line options can be employed to control the calculations performed by STLS (the same information can also be retrieved by running STLS with the option `--help`) :
 
   * `--debug-input` can be used to print the content of the entire input structure to the screen, mainly useful for debugging purposes. The entire input structure is printed if `--debug-input=1` is specified, otherwise only a summary of the most relevant input parameters is printed. Default `--debug-input=0`
   
-  * `--dx` specifies the  resolution for wave-vector grid. Default `--dx=0.01`
+  * `--dx` specifies the  resolution for wave-vector grid. Default `--dx=0.1`
+   
+  * `--dyn-dw` specifies the resolution for the frequency grid for the dynamic properties. Default `--dyn-dw=0.1`'
+
+  * `--dyn-restart` specifies the name of the binary file used to load the density response (ideal and auxiliary) for the calculation of the dynamic properties. Default: no file is specified and the density response is computed from scratch
+
+  * `--dyn-struct` specifies the name of the text file used to load the structural properties for the calculation of the dynamic properties. Default: for the classical schemes the static local field correction file slfc_rs\*\_theta\*\*\_\*\*\*.dat is loaded, for the quantum schemes the static structure factor file ssf_rs\*\_theta\*\*\_\*\*\*.dat is loaded. Here,  \* corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter and \*\*\* to the dielectric scheme.
+
+  * `--dyn-wmax` specifies the upper cutoff for the frequency grid used in the calculation of the dynamic properties. Default `--dyn-wmax=20.0` 
+
+  * `--dyn-wmin` specifies the lower cutoff for the frequency grid used in the calculation of the dynamic properties. Default `--dyn-wmin=0.0` 
   
-  * `--guess-files` specifies the names of the two text files used to construct the binary files that can be supplied as an initial guess for the code. More information on the files for the initial guess are given in the section [Guess and restart](https://github.com/fedluc/STLS/edit/master/README.md#guess-and-restart). Default: no file names are specified.
-  
-  * `--guess-write` can be used to run the code in "guess" mode by setting `--guess-write=1`. More information on what this means is given in the section [Guess and restart](https://github.com/fedluc/STLS/edit/master/README.md#guess-and-restart). Default `--guess-write=0` (the code runs in the normal mode and solves the theory specified by `--theory`)
+  * `--dyn-xtarget` specifies the wave-vector used to compute the dynamic properties. Default `--dyn-xtarget=1.0`.
   
   * `--iet-mapping` specifies what mapping to use between classical state points specified by &Gamma; and quantum state points specified by (r<sub>s</sub>, &theta;) for the IET-based theories (STLS-IET, qSTLS-IET). Default `--iet-mapping=standard`. Accepted options are: 
      * `standard` : &Gamma; = 2&lambda;<sup>2</sup>r<sub>s</sub>/&theta;  (NOTE: this cannot be used in the ground state)
@@ -73,6 +120,8 @@ The following command line options can be employed to control the calculations p
   
   * `--mix` specifies the mixing parameter for iterative solution.  Default `--mix=0.1`
 
+  * `--mode` specifies the working mode of the code. Default: `--mode=static`.
+
   * `--mu-guess` specifies the initial guess for the bisection procedure used to compute the chemical potential.  Default `--mgu-guess=-10,10`
   
   * `--nl`  specifies the number of Matsubara frequencies.  Default `--nl=128`.
@@ -81,15 +130,19 @@ The following command line options can be employed to control the calculations p
 
   * `qstls-fix` specifies the name of the binary file used to load the fixed component of the auxiliary density response function in the solution of the qSTLS scheme. If a file name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the qSTLS scheme can be expected. It is useful to note that state points with the same degeneracy parameter share the same fixed component of the auxiliary density response. Default: no file name is specified.
 
-  * `qstls-guess` specifies the name of the binary file used as initial guess for the solution of the quantum schemes. If a file name is not specified, the iterative scheme is started by setting the auxiliary density response to zero (which is equivalent to set the dynamic local field correction to zero). Default: no file name is specified.
+* `qstls-iet-fix` specifies the name of the folder containing the binary files used to load the fixed component of the auxiliary density response function in the solution of the qSTLS-IET scheme.  The files are assumed to have the name psi_fixed_theta\*_xx\**_.bin, where \* is the value of the quantum degeneracy parameter and \** is the value of the wave-vector. One file for each wave-vector is expected. If a folder name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the qSTLS-IET scheme can be expected. It is useful to note that state points with the same degeneracy parameter share the same fixed component of the auxiliary density response. Default: no file name is specified.
 
-  * `qstls-iet-fix` specifies the name of the folder containing the binary files used to load the fixed component of the auxiliary density response function in the solution of the qSTLS-IET scheme.  The files are assumed to have the name psi_fixed_theta\*_xx\**_.bin, where \* is the value of the quantum degeneracy parameter and \** is the value of the wave-vector. One file for each wave-vector is expected. If a folder name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the qSTLS-IET scheme can be expected. It is useful to note that state points with the same degeneracy parameter share the same fixed component of the auxiliary density response. Default: no file name is specified.
+* `qstls-iet-static` specifies how the auxiliary density response should be computed within the qSTLS-IET scheme. If `qstls-iet-static=0` the auxiliary density response is computed within the fully dynamic approximation. Otherwise, If `qstls-iet-static=1` the auxiliary density response is computed within the partially dynamic approximation. Default `qstls-iet-static=0`.
 
+  * `qstls-restart` specifies the name of the binary file used as initial guess for the solution of the quantum schemes. If a file name is not specified, the iterative scheme is started by setting the auxiliary density response to zero (which is equivalent to set the dynamic local field correction to zero). Default: no file name is specified.
+ 
+ * `--restart-files` specifies the names of the two text files used to construct the binary files when the code is run in restart mode. Default: no file names are specified and the code is run in static mode.
+  
   * `--rs`  specifies the  quantum coupling parameter. Default `--rs=1.0`.
   
-  * `--stls-guess` specifies the name of the binary file used as initial guess for the solution of the classical schemes. If a file name is not specified, the iterative scheme is started by setting the static local field correction to zero. Default: no file is specified 
+  * `--stls-restart` specifies the name of the binary file used as initial guess for the solution of the classical schemes. If a file name is not specified, the iterative scheme is started with the RPA approximation (zero static local field correction). Default: no file is specified 
   
-  * `--theory` specifies which scheme should be employed to compute the static structure factor. Default `--theory=STLS`. Accepted options are: 
+  * `--theory` specifies which dielectric scheme should be solved . Default `--theory=STLS`. Accepted options are: 
      * `STLS` (classical STLS scheme), 
      * `STLS-HNC` (classical STLS-HNC scheme) 
      * `STLS-IET-IOI` (classical STLS-IET scheme with the [IOI bridge function](https://journals.aps.org/pra/abstract/10.1103/PhysRevA.46.1051))
@@ -121,40 +174,4 @@ The following command line options can be employed to control the calculations p
   
   The file [utils.h](https://github.com/fedluc/STLS/blob/master/utils.h) contains five constants defined at compile time which are used to define the relative errors and maximum number of iterations for the root solvers and quadrature schemes. For state points where it is hard to obtain convergence it can be useful to adjust the values of such constants.
  
-  ## Output 
-  
-  Regardless of the theory that is being solved, STLS produces the following output (in what follows, n<sub>x</sub> is the number of wave-vectors used in the solution and n<sub>l</sub> is the number of Matsubara frequencies):
-  
-  * One text file with the static structure factor (ssf_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
-  * One text file with the static local field correction (slfc_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
-  * One text file with the static density response (sdr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
-  * One text file with the ideal density response (idr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and n<sub>l</sub> columns
-  * One text file with the static structure factor within the Hartree-Fock approximation (ssfHF_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns
-  * One text file with the interaction energy (uint_rs\*\_theta\*\*\_\*\*\*.dat) 
-  * One binary file which can be used as an initial guess for subsequent calculations via the options `--stls-guess` and `--qstls-guess` (restart_rs\*\_theta\*\*\_\*\*\*.bin)
-   
- For the VS-STLS, additional files are produced: 
- 
- * One text file with the free parameter obtained by enforcing the compressibility sum-rule (alpha_csr_rs\*\_theta\*\*\_\*\*\*.dat) 
-  * One text file with the exchange free energy (fxc_rs\*\_theta\*\*\_\*\*\*.dat) 
-  * One binary file with the free energy integrand that can be used for subsequent calculations via the option `vs-thermo-file` (thermo_int_rs\*\_theta\*\*\_\*\*\*.bin)
-  
- For the quantum schemes, additional files are produced: 
- 
-  * One text file with the auxiliary density response (adr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and n<sub>l</sub> columns
-  * One binary file which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS scheme via the option `--qstls-fix`  (fixed_rs\*\_theta\*\*\_\*\*\*.bin) **(only for the qSLTLS scheme)** 
-  * One binary file per wave-vector which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS-IET scheme via the option `--qstls-iet-fix`  (psi_fixed_theta\*\*\_xx\*\*\*\*.bin, n<sub>x</sub> files are generated) **(only for the qSTLS-IET scheme)**
-  
-In the above \* corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter, \*\*\* to the dielectric scheme that was solved and \*\*\*\* is the wave-vector value.
 
-## Guess and restart
-
-All the schemes solved by STLS are solved iteratively. In order to improve convergence, it is often beneficial to provide a suitable initial guess. This can be done via the options `stls-guess` and `qslts-guess`, that can be used to provide binary guess files which contain the initial guess (information on how to use these options is given in the section [Running](https://github.com/fedluc/STLS/edit/master/README.md#Running)). The guess files for the classical schemes (STLS, STLS-HNC and STLS-IET) contain information regarding the static structure factor and the static local field correction, while the guess files for the quantum schemes (qSTLS, qSTLS-HNC and qSTLS-IET) contain information regarding the static structure factor and the auxiliary density response. Hence, guess files for classical and quantum scheme are not interchangeable. The guess files can also be used as a restart point for all those calculations that were stopped before it was possible to achieve the desired level of accuracy. For instance, this could happen if the limit on the maximum number of iterations is hit before the error falls below the desider threshold.
-
-The binary files used as guess are writtent directly by the program upon completion (see section [Output](https://github.com/fedluc/STLS/edit/master/README.md#output)). However, should the binary files not be available, it is also possible to run STLS in the so-called "guess" mode in which the information necessary to construct the binary files is read from text files provided by the user. To run STLS in "guess" mode it is sufficient to set `--guess-write=1` and to provide the name of two text file via the option `--guess-files`. The format of the text files depends on the type of guess files that must be generated: 
-
- * Guess files for the classical schemes: The first text file must contain the static structure factor, the second file must contain the static local field correction. The format of the files must be consistent with the one described in the section [Output](https://github.com/fedluc/STLS/edit/master/README.md#output)
-
-* Guess files for the quantum schemes: The first text file must contain the static structure factor, the second file must contain the auxiliary density response. The format of the files must be consistent with the one described in the section [Output](https://github.com/fedluc/STLS/edit/master/README.md#output)
-
-The information concerning the grid and number of Matsubara frequencies is inferred from the structure of the text files, but information concerning the state point and the scheme is obtained from the input parameters specified by the user. After reading the text files, STLS writes a binary file called fixed_rs\*\_theta\*\*\_\*\*\*.bin, where \*  corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter and \*\*\* to the dielectric scheme  specified in input. Upon completion, STLS writes a summary on the screen and terminates. It should be noted that, in "guess mode", STLS writs the guess files, but it does not perform any iterative calculation for the solution of the dielectric scheme prescribed in input.
