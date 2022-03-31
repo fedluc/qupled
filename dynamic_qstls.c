@@ -34,7 +34,8 @@ static void compute_dynamic_adr_re_lev2(double *int_lev1,  double WW,
 static double adr_re_lev2_xwW(double uu,  void* pp);
 
 static void compute_dynamic_adr_re_lev3(double *int_lev2,  double WW,
-					double ww,  double *qq,  double *uu,
+					double xx, double ww,
+					double *qq,  double *uu,
 					input in);
 
 static double adr_re_lev3_xwuW(double qq,  void* pp);
@@ -56,8 +57,9 @@ static double adr_im_lev2_xwW(double uu,  void* pp);
 static double adr_im_lev2_xw0(double uu,  void* pp);
 
 static void compute_dynamic_adr_im_lev3(double *psi_im_lev2, double WW,
-					double ww,  double *qq,
-					double *uu, input in);
+					double xx, double ww,
+					double *qq, double *uu,
+					input in);
 
 static double adr_im_lev3_xwuW(double qq,  void* pp);
 
@@ -151,12 +153,12 @@ void compute_dynamic_qstls(input in, bool verbose) {
   if (verbose) printf("Done.\n");
 
   // Ideal density response
-  if (verbose) printf("Normalized ideal Lindhard density calculation: ");
+  if (verbose) printf("Ideal density response calculation: ");
   compute_dynamic_idr(phi_re, phi_im, WW, xx, in);
   if (verbose) printf("Done.\n");
  
   // Auxiliary density response
-  if (verbose) printf("Auxiliary density calculation: ");
+  if (verbose) printf("Auxiliary density response calculation: ");
   fflush(stdout);
   compute_dynamic_adr(psi_re, psi_im, WW, SS, xx, in);
   if (verbose) printf("Done.\n");
@@ -316,7 +318,7 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
 
   // Temporary input structure
   input in_1D = in;
-  in_1D.nx = 1;
+  in_1D.nW = 1;
   
   // Variables for interpolation
   gsl_spline *psi_re_sp_ptr;
@@ -333,7 +335,7 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
   psi_im_acc_ptr = gsl_interp_accel_alloc();
 
   // Auxiliary density response for multiple wave vectors
-  if (strcmp(in.dyn_adr_file, NO_FILE_STR) != 0) {
+  if (strcmp(in.dyn_restart_file, NO_FILE_STR) != 0) {
     read_bin_dynamic_adr_2D(psi_re_2D, psi_im_2D, in);
   }
   else{
@@ -518,7 +520,7 @@ void compute_dynamic_adr_re_lev2(double *int_lev1, double WW,
   for (int ii=0; ii<in.nx; ii++) {
 
     // Inner integral
-    compute_dynamic_adr_re_lev3(int_lev2, WW, ww[ii], ww, uu, in);
+    compute_dynamic_adr_re_lev3(int_lev2, WW, xx, ww[ii], ww, uu, in);
     gsl_spline_init(int_lev2_sp_ptr, uu, int_lev2, ADR_NU);
     
     // Integration over u (wave-vector squared)
@@ -565,12 +567,12 @@ double adr_re_lev2_xwW(double uu, void* pp) {
 
 // Real part of the auxiliary density response (level 3)
 void compute_dynamic_adr_re_lev3(double *int_lev2, double WW,
-				  double ww, double *qq, double *uu,
-				  input in) {
+				 double xx, double ww,
+				 double *qq, double *uu,
+				 input in) {
 
   double err;
   size_t nevals;
-  double xx = in.dyn_xtarget;
  
   // Integration workspace
   gsl_integration_cquad_workspace *wsp
@@ -807,7 +809,7 @@ void compute_dynamic_adr_im_lev2(double *int_lev1, double WW,
     if (WW > 0.0) {
 
       // Inner integral
-      compute_dynamic_adr_im_lev3(int_lev2, WW, ww[ii], ww, uu, in);
+      compute_dynamic_adr_im_lev3(int_lev2, WW, xx, ww[ii], ww, uu, in);
       
       // Construct integrand
       gsl_spline_init(int_lev2_sp_ptr, uu, int_lev2, ADR_NU);
@@ -878,14 +880,14 @@ double adr_im_lev2_xw0(double uu, void* pp) {
 
 // Imaginary part of the auxiliary density response (level 3)
 void compute_dynamic_adr_im_lev3(double *int_lev2, double WW,
-				 double ww, double *qq, double *uu,
+				 double xx, double ww,
+				 double *qq, double *uu,
 				 input in) {
 
   double err;
   size_t nevals;
   double q_min;
   double q_max;
-  double xx = in.dyn_xtarget;
   double xx2 = xx*xx;
   double xw = xx*ww;
   double x2mxwu;
@@ -1092,7 +1094,7 @@ void read_bin_dynamic_adr_2D(double *psi_re, double *psi_im, input in){
 
   // Open binary file
   FILE *fid = NULL;
-  fid = fopen(in.dyn_adr_file, "rb");
+  fid = fopen(in.dyn_restart_file, "rb");
   if (fid == NULL) {
     fprintf(stderr,"Error while opening file for initial guess or restart\n");
     exit(EXIT_FAILURE);

@@ -108,9 +108,9 @@ void get_data_format_from_text(char * file_name, int *n_lines,
       value = strtok(NULL, " \n");
     }
     if (*n_lines > 1 && n_columns_check != *n_columns){
-      fprintf(stderr,"Error while reading line %d of file %s." 
-	      " Only %ld elements where read\n",
-	      *n_lines, file_name, num_el);
+      fprintf(stderr,"Error while reading line %d of file %s."
+  	      " Only %ld elements where read\n",
+  	      *n_lines, file_name, num_el);
       exit(EXIT_FAILURE);
     }
     n_columns_check = 0;
@@ -119,6 +119,9 @@ void get_data_format_from_text(char * file_name, int *n_lines,
 
   // Close file 
   fclose(fid);
+
+  // Free memory
+  free(line);
   
 }
 
@@ -182,7 +185,10 @@ void get_data_from_text(char *file_name, int n_lines, int n_columns,
     in->xmax = xx[in->nx - 1];
     in->dx = xx[1] - xx[0];
   }
-    
+
+  // Free memory
+  free(line);
+  
 }
 
 // -------------------------------------------------------------------

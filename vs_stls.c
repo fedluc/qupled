@@ -522,7 +522,7 @@ void vs_stls_struct_iterations(vs_struct SS, vs_struct SSHF,
   input in = vs_in[VSS_IDXIN];
     
   // Iterations
-  if (verbose) printf("SSF and SLFC calculation...\n");
+  if (verbose) printf("Structural properties calculation...\n");
   double iter_err = 1.0;
   int iter_counter = 0;
   while (iter_counter < in.nIter && iter_err > in.err_min_iter) {

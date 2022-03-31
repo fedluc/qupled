@@ -251,7 +251,7 @@ void compute_dynamic_qstls_iet(input in, bool verbose) {
   if (verbose) printf("Done.\n");
 
   // Ideal density response
-  if (verbose) printf("Normalized ideal Lindhard density calculation: ");
+  if (verbose) printf("Ideal density response calculation: ");
   compute_dynamic_idr(phi_re, phi_im, WW, xx, in);
   if (verbose) printf("Done.\n");
 
@@ -261,7 +261,7 @@ void compute_dynamic_qstls_iet(input in, bool verbose) {
   if (verbose) printf("Done.\n");
   
   // Auxiliary density response
-  if (verbose) printf("Auxiliary density calculation: ");
+  if (verbose) printf("Auxiliary density response calculation: ");
   fflush(stdout);
   compute_dynamic_adr(psi_re, psi_im, phi_re, phi_im, WW, SS,
 		      bf, xx, in);
@@ -469,7 +469,7 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
 
   // Temporary input structure
   input in_1D = in;
-  in_1D.nx = 1;
+  in_1D.nW = 1;
 
   // Variables for interpolation
   gsl_spline *psi_re_sp_ptr;
@@ -488,7 +488,7 @@ void compute_dynamic_adr(double *psi_re, double *psi_im,
   psi_im_acc_ptr = gsl_interp_accel_alloc();
 
   // Density response
-  if (strcmp(in.dyn_adr_file, NO_FILE_STR)!=0) {
+  if (strcmp(in.dyn_restart_file, NO_FILE_STR)!=0) {
     read_bin_dynamic_adr_2D(psi_re_2D, psi_im_2D, in);      
   }
   else {

@@ -266,7 +266,7 @@ void init_fixed_stls_arrays(input *in, double *xx,
   
   // Normalized ideal Lindhard density response
   if (in->Theta > 0) {
-    if (verbose) printf("Normalized ideal Lindhard density calculation: ");
+    if (verbose) printf("Ideal density response calculation: ");
     compute_idr(phi, xx, *in, verbose);
     if (verbose) printf("Done.\n");
   }
@@ -332,7 +332,7 @@ void stls_iterations(double *SS, double *SSHF,
   double iter_err = 1.0;
   int iter_counter = 0;
 
-  if (verbose) printf("SSF and SLFC calculation...\n");
+  if (verbose) printf("Structural properties calculation...\n");
 
   while (iter_counter < in.nIter && iter_err > in.err_min_iter ) {
     

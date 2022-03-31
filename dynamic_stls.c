@@ -123,13 +123,13 @@ void compute_dynamic_stls(input in, bool verbose) {
   // Chemical potential and frequency grid
   init_fixed_dynamic_stls_arrays(&in, WW, verbose);
 
-  // Static local field correction (this sets xx)
+  /* // Static local field correction (this sets xx) */
   if (verbose) printf("Static local field correction (from file): ");
   get_slfc(&GG, &xx, in);
   if (verbose) printf("Done.\n");
   
   // Ideal density response
-  if (verbose) printf("Normalized ideal Lindhard density calculation: ");
+  if (verbose) printf("Ideal density response calculation: ");
   compute_dynamic_idr(phi_re, phi_im, WW, xx, in);
   if (verbose) printf("Done.\n");
   
@@ -138,7 +138,7 @@ void compute_dynamic_stls(input in, bool verbose) {
   compute_dsf(SSn, phi_re, phi_im, GG, WW, in);
   if (verbose) printf("Done.\n");
   
-  // Output to file
+  /* // Output to file */
   if (verbose) printf("Writing output files: ");
   write_text_dynamic_stls(SSn, phi_re, phi_im, WW, in);
   if (verbose) printf("Done.\n");
@@ -302,7 +302,7 @@ void compute_dynamic_idr(double *phi_re, double *phi_im,
 
   // Temporary input structure
   input in_1D = in;
-  in_1D.nx = 1;
+  in_1D.nW = 1;
   
   // Variables for interpolation
   gsl_spline *phi_re_sp_ptr;
@@ -313,21 +313,22 @@ void compute_dynamic_idr(double *phi_re, double *phi_im,
   // Allocate arrays
   alloc_dynamic_stls_2Darrays(in, &phi_re_2D, &phi_im_2D);
   alloc_dynamic_stls_2Darrays(in_1D, &phi_re_1D, &phi_im_1D);
+  
   phi_re_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   phi_re_acc_ptr = gsl_interp_accel_alloc();
   phi_im_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
   phi_im_acc_ptr = gsl_interp_accel_alloc();
 
   // Ideal density response for multiple wave vectors
-  if (strcmp(in.dyn_adr_file, NO_FILE_STR) != 0) {
+  if (strcmp(in.dyn_restart_file, NO_FILE_STR) != 0) {
     read_bin_idr_2D(phi_re_2D, phi_im_2D, in);
   }
   else{
     compute_dynamic_idr_2D(phi_re_2D, phi_im_2D,
-			   WW, xx, in);
+  			   WW, xx, in);
     write_bin_idr_2D(phi_re_2D, phi_im_2D, in);
   }
-
+  
   // Interpolate to wave-vector given in input
   for (int jj=0; jj<in.nW; jj++){
     for (int ii=0; ii<in.nx; ii++){
@@ -348,7 +349,6 @@ void compute_dynamic_idr(double *phi_re, double *phi_im,
   gsl_spline_free(phi_im_sp_ptr);
   gsl_interp_accel_free(phi_im_acc_ptr);
 
-  
 }
 
 // Ideal density response (for multiple wave vectors)
@@ -425,7 +425,7 @@ void compute_dynamic_idr_im(double *phi_im, double *WW,
     for (int jj=0; jj<in.nW; jj++) {
       
       if (xx[ii] == 0.0){
-	phi_im[jj] = 0.0;
+	phi_im[idx2(ii,jj,in.nx)] = 0.0;
 	continue;
       }
       
@@ -564,7 +564,7 @@ void get_slfc(double *GG, double **xx, input in){
   if (strcmp(in.dyn_struct_file, NO_FILE_STR)==0){
     slfc_file_name = malloc( sizeof(char) * slfc_file_name_len);
     sprintf(slfc_file_name, "slfc_rs%.3f_theta%.3f_%s.dat",
-	    in.rs, in.Theta, in.theory);
+  	    in.rs, in.Theta, in.theory);
   }
   else {
     slfc_file_name_len = strlen(in.dyn_struct_file) + 1;
@@ -587,7 +587,7 @@ void get_slfc(double *GG, double **xx, input in){
 
   // Get data from input file
   get_data_from_text(slfc_file_name, in.nx, in.nl,
-		     GG_file, *xx, &in);
+  		     GG_file, *xx, &in);
 
   // Static local field correction for the wave-vector given in input
   slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
@@ -755,7 +755,8 @@ void write_text_dsf(double *SSn, double *WW, input in){
     fprintf(stderr, "Error while creating the output file for the dynamic structure factor\n");
     exit(EXIT_FAILURE);
   }
-  for (int ii = 0; ii < in.nW; ii++)
+    
+  for (int ii = 0; ii<in.nW; ii++)
     fprintf(fid, "%.8e %.8e\n", WW[ii], SSn[ii]);
   
   fclose(fid);
@@ -802,6 +803,7 @@ void write_text_idr(double *phi_re, double *phi_im, double *WW, input in){
     fprintf(stderr, "Error while creating the output file for the ideal density response\n");
     exit(EXIT_FAILURE);
   }
+  
   for (int ii = 0; ii < in.nW; ii++)
     fprintf(fid, "%.8e %.8e %.8e\n", WW[ii], phi_re[ii], phi_im[ii]);
   
@@ -812,7 +814,7 @@ void write_text_idr(double *phi_re, double *phi_im, double *WW, input in){
 
 // write ideal density response to binary file
 void write_bin_idr_2D(double *phi_re, double *phi_im,
-		   input in){
+		      input in){
   
   // Name of output file
   char out_name[100];
@@ -863,7 +865,7 @@ void read_bin_idr_2D(double *phi_re, double *phi_im, input in){
 
   // Open binary file
   FILE *fid = NULL;
-  fid = fopen(in.dyn_adr_file, "rb");
+  fid = fopen(in.dyn_restart_file, "rb");
   if (fid == NULL) {
     fprintf(stderr,"Error while opening file for initial guess or restart\n");
     exit(EXIT_FAILURE);
