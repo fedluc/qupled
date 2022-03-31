@@ -326,7 +326,7 @@ void compute_adr_iet_fixed(double *xx, input in) {
 
       // Open binary file for output
       char out_name[100];
-      sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
+      sprintf(out_name, "adr_iet_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
       FILE *fid = NULL;
       fid = fopen(out_name, "wb");
       if (fid == NULL) {

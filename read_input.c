@@ -140,7 +140,7 @@ static struct argp_option options[] = {
   {"vs-alpha", ARGUMENT_VS_ALPHA_SHORT, "0.5", 0,
    "Initial restart for the free parameter in the VS schemes\n"},
 
-  {"vs-thermo-file", ARGUMENT_VS_THERMO_SHORT, "file", 0,
+  {"vs-thermo", ARGUMENT_VS_THERMO_SHORT, "file", 0,
    "File used to load the thermodynamic integration data for the VS schemes\n"},
 
   {"vs-min-err", ARGUMENT_VS_MIN_ERR_SHORT, "1e-3", 0,
