@@ -242,6 +242,7 @@ void init_fixed_stls_arrays(input *in, double *xx,
   printf("------ Parameters used in the solution -------------\n");
   printf("Quantum degeneracy parameter: %f\n", in->Theta);
   printf("Quantum coupling parameter: %f\n", in->rs);
+  printf("Dielectric scheme: %s\n", in->theory);
   printf("Chemical potential (low and high bound): %f %f\n", 
 	 in->mu_lo, in->mu_hi);
   printf("Wave-vector cutoff: %f\n", in->xmax);

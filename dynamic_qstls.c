@@ -148,7 +148,7 @@ void compute_dynamic_qstls(input in, bool verbose) {
   init_fixed_dynamic_stls_arrays(&in, WW, verbose);
 
   // Static structure factor
-  if (verbose) printf("Static structure factor (from file): ");
+  if (verbose) printf("Static structure factor: ");
   get_ssf(&SS, &xx, &in);
   if (verbose) printf("Done.\n");
 
@@ -265,7 +265,8 @@ void get_ssf(double **SS, double **xx, input *in){
     ssf_file_name = malloc( sizeof(char) * ssf_file_name_len);
     strcpy(ssf_file_name, in->dyn_struct_file);
   }
- 
+  printf("Loading from file %s, ", ssf_file_name); 
+   
   // Get size of data stored in the input file
   get_data_format_from_text(ssf_file_name, &in_tmp.nx, &in_tmp.nl);
 
@@ -282,9 +283,11 @@ void get_ssf(double **SS, double **xx, input *in){
   // Get data from input file
   get_data_from_text(ssf_file_name, in_tmp.nx, in_tmp.nl,
 		     *SS, *xx, &in_tmp);
+
+  // Update data for wave-vector grid
   in->nx=in_tmp.nx;
-  in->dx=in_tmp.dx; // Set by get_restart_data
-  in->xmax=in_tmp.xmax; // Set by get_restart_data
+  in->dx=in_tmp.dx; 
+  in->xmax=in_tmp.xmax;
 
   // Free memory
   free(ssf_file_name);
@@ -1122,7 +1125,7 @@ void read_bin_dynamic_adr_2D(double *psi_re, double *psi_im, input in){
   // Skip data for the ideal density response
   fseek(fid, sizeof(double)*2*nx_file*dyn_nW_file, SEEK_CUR);
   
-  // Fixed component of the auxiliary density response 
+  // Fixed component of the auxiliary density response
   it_read += fread(psi_re, sizeof(double), nx_file * dyn_nW_file, fid);
   it_read += fread(psi_im, sizeof(double), nx_file * dyn_nW_file, fid);
   check_bin_dynamic(dx_file, nx_file, xmax_file,

@@ -34,7 +34,7 @@ static double idr_im_xw(double yy, void *pp);
 static double idr_im_x0(double yy, void *pp);
 
 // Static local field correction (from file)
-static void get_slfc(double *GG, double **xx, input in);
+static void get_slfc(double *GG, double **xx, input *in);
 
 // Dynamic structure factor
 static void compute_dsf(double *SSn, double *phi_re, double *phi_im,
@@ -123,9 +123,9 @@ void compute_dynamic_stls(input in, bool verbose) {
   // Chemical potential and frequency grid
   init_fixed_dynamic_stls_arrays(&in, WW, verbose);
 
-  /* // Static local field correction (this sets xx) */
-  if (verbose) printf("Static local field correction (from file): ");
-  get_slfc(&GG, &xx, in);
+  // Static local field correction (this sets xx)
+  if (verbose) printf("Static local field correction: ");
+  get_slfc(&GG, &xx, &in);
   if (verbose) printf("Done.\n");
   
   // Ideal density response
@@ -156,7 +156,7 @@ void compute_dynamic_stls(input in, bool verbose) {
 void get_frequency_grid_size(input *in){
 
   // Number of grid points in the frequency grid
-  in->dyn_nW = (int)floor(in->dyn_Wmax/in->dyn_dW);
+  in->dyn_nW = (int)floor((in->dyn_Wmax - in->dyn_Wmin)/in->dyn_dW);
   
 }
 // -------------------------------------------------------------------
@@ -243,6 +243,7 @@ void init_fixed_dynamic_stls_arrays(input *in, double *WW, bool verbose){
   printf("------ Parameters used in the solution -------------\n");
   printf("Quantum degeneracy parameter: %f\n", in->Theta);
   printf("Quantum coupling parameter: %f\n", in->rs);
+  printf("Dielectric scheme: %s\n", in->theory);
   printf("Chemical potential (low and high bound): %f %f\n", 
 	 in->mu_lo, in->mu_hi);
   printf("Target wave-vector: %f\n", in->dyn_xtarget);
@@ -551,7 +552,7 @@ double idr_im_x0(double yy, void *pp) {
 // FUNCTION USED TO OBTAIN THE STATIC LOCAL FIELD CORRECTION (FROM FILE)
 // ---------------------------------------------------------------------
 
-void get_slfc(double *GG, double **xx, input in){
+void get_slfc(double *GG, double **xx, input *in){
 
   // Variables
   size_t slfc_file_name_len = 1000;
@@ -559,25 +560,27 @@ void get_slfc(double *GG, double **xx, input in){
   double *GG_file = NULL;
   gsl_spline *slfc_sp_ptr;
   gsl_interp_accel *slfc_acc_ptr;
-
+  input in_tmp = *in;
+  
   // File with static local field correction
-  if (strcmp(in.dyn_struct_file, NO_FILE_STR)==0){
+  if (strcmp(in->dyn_struct_file, NO_FILE_STR)==0){
     slfc_file_name = malloc( sizeof(char) * slfc_file_name_len);
     sprintf(slfc_file_name, "slfc_rs%.3f_theta%.3f_%s.dat",
-  	    in.rs, in.Theta, in.theory);
+  	    in->rs, in->Theta, in->theory);
   }
   else {
-    slfc_file_name_len = strlen(in.dyn_struct_file) + 1;
+    slfc_file_name_len = strlen(in->dyn_struct_file) + 1;
     slfc_file_name = malloc( sizeof(char) * slfc_file_name_len);
-    strcpy(slfc_file_name, in.dyn_struct_file);
+    strcpy(slfc_file_name, in->dyn_struct_file);
   }
- 
+  printf("Loading from file %s, ", slfc_file_name); 
+  
   // Get size of data stored in the input file
-  get_data_format_from_text(slfc_file_name, &in.nx, &in.nl);
+  get_data_format_from_text(slfc_file_name, &in_tmp.nx, &in_tmp.nl);
 
   // Allocate temporary arrays to store the structural properties
-  GG_file = malloc( sizeof(double) * in.nx);
-  *xx = malloc( sizeof(double) * in.nx);
+  GG_file = malloc( sizeof(double) * in_tmp.nx);
+  *xx = malloc( sizeof(double) * in_tmp.nx);
   if (GG_file == NULL ||
       *xx == NULL) {
     fprintf(stderr, "Failed to allocate memory for the data read"
@@ -586,14 +589,19 @@ void get_slfc(double *GG, double **xx, input in){
   }
 
   // Get data from input file
-  get_data_from_text(slfc_file_name, in.nx, in.nl,
-  		     GG_file, *xx, &in);
+  get_data_from_text(slfc_file_name, in_tmp.nx, in_tmp.nl,
+  		     GG_file, *xx, &in_tmp);
 
+  // Update data for wave-vector grid
+  in->nx=in_tmp.nx;
+  in->dx=in_tmp.dx; 
+  in->xmax=in_tmp.xmax;
+  
   // Static local field correction for the wave-vector given in input
-  slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in.nx);
+  slfc_sp_ptr = gsl_spline_alloc(gsl_interp_cspline, in->nx);
   slfc_acc_ptr = gsl_interp_accel_alloc();
-  gsl_spline_init(slfc_sp_ptr, *xx, GG_file, in.nx);
-  *GG = gsl_spline_eval(slfc_sp_ptr, in.dyn_xtarget, slfc_acc_ptr);
+  gsl_spline_init(slfc_sp_ptr, *xx, GG_file, in->nx);
+  *GG = gsl_spline_eval(slfc_sp_ptr, in->dyn_xtarget, slfc_acc_ptr);
   
   // Free memory
   free(slfc_file_name);
@@ -936,7 +944,7 @@ void check_bin_dynamic(double dx, int nx, double xmax,
       fprintf(stderr,"Grid points (dyn_nW) : %d (input), %d (file)\n", in.dyn_nW, dyn_nW);
       fprintf(stderr,"Resolution (dW) : %.16f (input), %.16f (file)\n", in.dyn_dW, dW);
       fprintf(stderr,"Upper cutoff (Wmax) : %.16f (input), %.16f (file)\n", in.dyn_Wmax, Wmax);
-      fprintf(stderr,"Lower cutoff (Wmax) : %.16f (input), %.16f (file)\n", in.dyn_Wmin, Wmin);
+      fprintf(stderr,"Lower cutoff (Wmin) : %.16f (input), %.16f (file)\n", in.dyn_Wmin, Wmin);
       fclose(fid);
       exit(EXIT_FAILURE);
     }
