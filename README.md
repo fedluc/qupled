@@ -13,7 +13,7 @@ STLS can be used to compute the properties of quantum one component plasmas via 
  
 ## Limitations
 
-Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC, STLS-IET and VS-STLS) and are limited to static and thermodynamic properties.
+Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC, STLS-IET and VS-STLS).
 
 ## Limitations
 
