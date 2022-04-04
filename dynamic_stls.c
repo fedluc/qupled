@@ -5,6 +5,7 @@
 #include "solvers.h"
 #include "utils.h"
 #include "chemical_potential.h"
+#include "stls.h"
 #include "dynamic_stls.h"
 
 // -------------------------------------------------------------------
@@ -51,8 +52,8 @@ static void write_text_dsf(double *SSn, double *WW, input in);
 
 static void write_text_isf(double *SSn, double *ww, input in);
 
-static void write_text_idr(double *phi_re, double *phi_im,
-			   double *WW, input in);
+static void write_text_dynamic_idr(double *phi_re, double *phi_im,
+				   double *WW, input in);
 
 static void write_bin_idr_2D(double *phi_re, double *phi_im,
 			     input in);
@@ -105,13 +106,6 @@ void compute_dynamic_stls(input in, bool verbose) {
   
   // Scalars
   double GG;
- 
-  // Safeguard
-  if (in.Theta == 0) {
-    printf("Ground state calculations of the dynamic properties"
-	   " are not yet implemented.");
-    exit(EXIT_FAILURE);
-  }
       
   // Get the size of the frequency grid
   get_frequency_grid_size(&in);
@@ -385,15 +379,21 @@ void compute_dynamic_idr_re(double *phi_re, double *WW,
   for (int ii=0; ii<in.nx; ii++) {
     for (int jj=0; jj<in.dyn_nW; jj++) {
 
-      struct idr_params phixwp = {xx[ii], in.mu, in.Theta, WW[jj]};
-      ff_int.params = &phixwp;
-      gsl_integration_cquad(&ff_int, 
-			    0.0, in.xmax, 
-			    0.0, QUAD_REL_ERR, 
-			    wsp, 
-			    &phi_re[idx2(ii,jj,in.nx)],
-			    &err, &nevals);
+      if (in.Theta == 0.0){
+	phi_re[idx2(ii,jj,in.nx)] = idr_re_zero_temperature(xx[ii], WW[jj]);
+      }
+      else {	
+	struct idr_params phixwp = {xx[ii], in.mu, in.Theta, WW[jj]};
+	ff_int.params = &phixwp;
+	gsl_integration_cquad(&ff_int, 
+			      0.0, in.xmax, 
+			      0.0, QUAD_REL_ERR, 
+			      wsp, 
+			      &phi_re[idx2(ii,jj,in.nx)],
+			      &err, &nevals);
+      }
 
+      
     }
   }
   
@@ -429,20 +429,25 @@ void compute_dynamic_idr_im(double *phi_im, double *WW,
 	phi_im[idx2(ii,jj,in.nx)] = 0.0;
 	continue;
       }
-      
-      ymin = (xx[ii]/2.0) - WW[jj]/(2.0*xx[ii]);
-      if (ymin < 0.0) ymin = -ymin;
-      ymax = (xx[ii]/2.0) + WW[jj]/(2.0*xx[ii]);
-      
-      struct idr_params phixwp = {xx[ii], in.mu, in.Theta, WW[jj]};
-      ff_int.params = &phixwp;
-      gsl_integration_cquad(&ff_int, 
-			    ymin, ymax, 
-			    0.0, QUAD_REL_ERR, 
-			    wsp, 
-			    &phi_im[idx2(ii,jj,in.nx)],
-			    &err, &nevals);
-      
+
+      if (in.Theta == 0.0) {
+	phi_im[idx2(ii,jj,in.nx)] = idr_im_zero_temperature(xx[ii], WW[jj]);
+      }
+      else {	
+	ymin = (xx[ii]/2.0) - WW[jj]/(2.0*xx[ii]);
+	if (ymin < 0.0) ymin = -ymin;
+	ymax = (xx[ii]/2.0) + WW[jj]/(2.0*xx[ii]);
+	
+	struct idr_params phixwp = {xx[ii], in.mu, in.Theta, WW[jj]};
+	ff_int.params = &phixwp;
+	gsl_integration_cquad(&ff_int, 
+			      ymin, ymax, 
+			      0.0, QUAD_REL_ERR, 
+			      wsp, 
+			      &phi_im[idx2(ii,jj,in.nx)],
+			      &err, &nevals);
+      }
+	
     }
   }
   
@@ -745,7 +750,7 @@ void write_text_dynamic_stls(double *SSn, double *phi_re,
   write_text_isf(SSn, WW, in);
 
   // Ideal density response
-  write_text_idr(phi_re, phi_im, WW, in);
+  write_text_dynamic_idr(phi_re, phi_im, WW, in);
   
 }
 
@@ -799,7 +804,7 @@ void write_text_isf(double *SSn, double *WW, input in){
 
 
 // write ideal density response to file
-void write_text_idr(double *phi_re, double *phi_im, double *WW, input in){
+void write_text_dynamic_idr(double *phi_re, double *phi_im, double *WW, input in){
 
   FILE* fid;
 

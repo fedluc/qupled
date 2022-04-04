@@ -28,10 +28,6 @@ static double idr_xl(double yy, void *pp);
 static double idr_x0(double yy, void *pp);
 
 // Ideal density response at zero temperature
-static double idr_re_zero_temperature(double xx, double Omega);
-
-static double idr_im_zero_temperature(double xx, double Omega);
-
 static double idrp_re_zero_temperature(double xx, double Omega);
 
 // Static structure factor at finite temperature
@@ -521,16 +517,20 @@ double idr_re_zero_temperature(double xx, double Omega) {
   double adder1 = 0.0;
   double adder2 = 0.0;
 
-  if (sum_factor != 1.0) {
-    log_sum_arg = (sum_factor + 1.0)/(sum_factor - 1.0);
-    if (log_sum_arg < 0.0) log_sum_arg = -log_sum_arg;
-    adder1 = 1.0/(4.0*xx)*(1.0 - sum_factor2)*log(log_sum_arg);
-  }
-
-  if (diff_factor != 1.0 && diff_factor != -1.0) {
-    log_diff_arg = (diff_factor + 1.0)/(diff_factor - 1.0);
-    if (log_diff_arg < 0.0) log_diff_arg = -log_diff_arg;
-    adder2 = 1.0/(4.0*xx)*(1.0 - diff_factor2)*log(log_diff_arg);
+  if (xx > 0.0) {
+    
+    if (sum_factor != 1.0) {
+      log_sum_arg = (sum_factor + 1.0)/(sum_factor - 1.0);
+      if (log_sum_arg < 0.0) log_sum_arg = -log_sum_arg;
+      adder1 = 1.0/(4.0*xx)*(1.0 - sum_factor2)*log(log_sum_arg);
+    }
+    
+    if (diff_factor != 1.0 && diff_factor != -1.0) {
+      log_diff_arg = (diff_factor + 1.0)/(diff_factor - 1.0);
+      if (log_diff_arg < 0.0) log_diff_arg = -log_diff_arg;
+      adder2 = 1.0/(4.0*xx)*(1.0 - diff_factor2)*log(log_diff_arg);
+    }
+    
   }
   
   return 0.5 + adder1 + adder2;
@@ -546,18 +546,25 @@ double idr_im_zero_temperature(double xx, double Omega) {
   double diff_factor = x_2 - Omega_2x;
   double sum_factor2 = sum_factor*sum_factor;
   double diff_factor2 = diff_factor*diff_factor;
+  double pre_factor = 0.0;
   double adder1 = 0.0;
   double adder2 = 0.0;
+  
+  if (xx > 0.0) {
 
-  if (sum_factor2 < 1.0) {
-    adder1 = 1 - sum_factor2;
-  }
+    pre_factor = -M_PI/(4.0*xx);
+      
+    if (sum_factor2 < 1.0) {
+      adder1 = 1 - sum_factor2;
+    }
+    
+    if (diff_factor2 < 1.0) {
+      adder2 = 1 - diff_factor2;
+    }
 
-  if (diff_factor2 < 1.0) {
-    adder2 = 1 - diff_factor2;
   }
   
-  return -M_PI/(4.0*xx) * (adder1 - adder2);
+  return pre_factor * (adder1 - adder2);
   
 }
 

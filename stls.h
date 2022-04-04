@@ -51,6 +51,10 @@ void stls_update(double *GG, double *GG_new, input in);
 
 void compute_idr(double *phi, double *xx, input in, bool verbose);
 
+double idr_re_zero_temperature(double xx, double Omega);
+
+double idr_im_zero_temperature(double xx, double Omega);
+
 // ---------------------------------------------------------------------------
 // FUNCTIONS USED TO COMPUTE THE STATIC STRUCTURE FACTOR
 // ---------------------------------------------------------------------------
