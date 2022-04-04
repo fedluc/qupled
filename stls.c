@@ -516,8 +516,11 @@ double idr_re_zero_temperature(double xx, double Omega) {
   double log_diff_arg;
   double adder1 = 0.0;
   double adder2 = 0.0;
-
+  double pre_factor = 0.0;
+  
   if (xx > 0.0) {
+
+    pre_factor = 0.5;
     
     if (sum_factor != 1.0) {
       log_sum_arg = (sum_factor + 1.0)/(sum_factor - 1.0);
@@ -533,7 +536,7 @@ double idr_re_zero_temperature(double xx, double Omega) {
     
   }
   
-  return 0.5 + adder1 + adder2;
+  return pre_factor + adder1 + adder2;
   
 }
 
