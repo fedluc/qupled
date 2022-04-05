@@ -15,7 +15,7 @@ STLS can be used to compute the properties of quantum one component plasmas via 
 
 Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC, STLS-IET and VS-STLS).
 
-## Limitations
+## Units
 
 All the calculations are performed in normalized units. The wave vectors are normalized to the Fermi wave-vector and the frequencies are normalized to 2&pi;E<sub>F</sub>/h. Here E<sub>F</sub> is the Fermi energy and h is Planck's constant.
 
@@ -58,26 +58,26 @@ In the static mode, SLTS computes the static structure factor and related static
 
 Once the iterative procedure is completed, the results are written to a set of dedicated output files which include (n<sub>x</sub> is the number of wave-vectors used in the solution and n<sub>l</sub> is the number of Matsubara frequencies):
   
-  * Text file ssf_rs\*\_theta\*\*\_\*\*\*.dat with n<sub>x</sub> rows and two columns. The first column is the wave vector, the second column is the static structure factor
-  * Text file ssfHF_rs\*\_theta\*\*\_\*\*\*.dat with n<sub>x</sub> rows and two columns. The first column is the wave vector, the second column is the static structure factor within the Hartree-Fock approximation
-  * Text file slfc_rs\*\_theta\*\*\_\*\*\*.dat with n<sub>x</sub> rows and two columns. The first column is the wave vector, the second column is the static local field correction
-  * Text file sdr_rs\*\_theta\*\*\_\*\*\*.dat with n<sub>x</sub> rows and two columns. The first column is the wave vector, the second column is the static density response
-  * Text file with the ideal density response (idr_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and n<sub>l</sub> columns. Each column corresponds to the ideal density response for a given value of the Matsubara frequency, starting from l = 0 in the first column
-  * Text file with the radial distribution function (rdf_rs\*\_theta\*\*\_\*\*\*.dat) with n<sub>x</sub> rows and two columns. The first column is the inter-particle distance (with a fixed resolution of 0.01), the second column is the radial distribution function
-  * Text file uint_rs\*\_theta\*\*\_\*\*\*.dat with three elements: the quantum coupling parameter, the quantum degeneracy parameter and the interaction energy.
-  * Binary file restart_rs\*\_theta\*\*\_\*\*\*.bin which which can be used to restart simulations that were interrupted before they reached convergence or that can be employed to provide an initial guess for subsequent calculations. In order to understand how to use this binary file, see the options `--stls-restart` and `--qstls-restart`
+  * ssf_rs\*\_theta\*\*\_\*\*\*.dat, a text file with n<sub>x</sub> rows and two columns. The first column is the wave vector, the second column is the static structure factor
+  * ssfHF_rs\*\_theta\*\*\_\*\*\*.dat, a text file with n<sub>x</sub> rows and two columns. The first column is the wave vector, the second column is the static structure factor within the Hartree-Fock approximation
+  * slfc_rs\*\_theta\*\*\_\*\*\*.dat, a text file with n<sub>x</sub> rows and two columns. The first column is the wave vector, the second column is the static local field correction
+  * sdr_rs\*\_theta\*\*\_\*\*\*.dat, a text file with n<sub>x</sub> rows and two columns. The first column is the wave vector, the second column is the static density response
+  * idr_rs\*\_theta\*\*\_\*\*\*.dat, a text file with n<sub>x</sub> rows and n<sub>l</sub> columns. Each column corresponds to the ideal density response for a given value of the Matsubara frequency, starting from l = 0 in the first column
+  * rdf_rs\*\_theta\*\*\_\*\*\*.dat, a text file with n<sub>x</sub> rows and two columns. The first column is the inter-particle distance (with a fixed resolution of 0.01), the second column is the radial distribution function
+  * uint_rs\*\_theta\*\*\_\*\*\*.dat, a text file with three elements: the quantum coupling parameter, the quantum degeneracy parameter and the interaction energy.
+  * restart_rs\*\_theta\*\*\_\*\*\*.bin, a binary file which can be used to restart simulations that were interrupted before they reached convergence or that can be employed to provide an initial guess for subsequent calculations. In order to understand how to use this binary file, see the options `--stls-restart` and `--qstls-restart`
    
  For the VS-STLS, additional files are produced: 
  
- * Text file alpha_csr_rs\*\_theta\*\*\_\*\*\*.dat with three elements: the quantum coupling parameter, the quantum degeneracy parameter and the free parameter used to enforce the compressibility sum rule.
-  * Text file fxc_rs\*\_theta\*\*\_\*\*\*.dat) with three elements: the quantum coupling parameter, the quantum degeneracy parameter and the exchange free energy.
-  * Binary file thermo_int_rs\*\_theta\*\*\_\*\*\*.bin with the free energy integrand that can be used for subsequent calculations via the option `vs-thermo-file` 
+ * alpha_csr_rs\*\_theta\*\*\_\*\*\*.dat, a text file with three elements: the quantum coupling parameter, the quantum degeneracy parameter and the free parameter used to enforce the compressibility sum rule.
+  * fxc_rs\*\_theta\*\*\_\*\*\*.dat, a text file with three elements: the quantum coupling parameter, the quantum degeneracy parameter and the exchange free energy.
+  * thermo_int_rs\*\_theta\*\*\_\*\*\*.bin, a binary file with the free energy integrand that can be used for subsequent calculations via the option `vs-thermo-file` 
   
  For the quantum schemes, additional files are produced: 
  
-  * Text file adr_rs\*\_theta\*\*\_\*\*\*.dat with n<sub>x</sub> rows and n<sub>l</sub> columns. Each column corresponds to the auxiliary density response for a given value of the Matsubara frequency, starting from l = 0 in the first column
-  * Binary file fixed_rs\*\_theta\*\*\_\*\*\*.bin which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS scheme via the option `--qstls-fix`  () **(only for the qSLTLS scheme)** 
-  * Binary files adr_iet_fixed_theta\*\*\_xx\*\*\*\*.bin ( n<sub>x</sub> files are generated) which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS-IET scheme via the option `--qstls-iet-fix` **(only for the qSTLS-IET scheme)**
+  * adr_rs\*\_theta\*\*\_\*\*\*.dat, a text file with n<sub>x</sub> rows and n<sub>l</sub> columns. Each column corresponds to the auxiliary density response for a given value of the Matsubara frequency, starting from l = 0 in the first column
+  * fixed_rs\*\_theta\*\*\_\*\*\*.bin, a binary file which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS scheme via the option `--qstls-fix`  () **(only for the qSLTLS scheme)** 
+  * adr_iet_fixed_theta\*\*\_xx\*\*\*\*.bin, n<sub>x</sub> binary files which can be used to avoid recomputing the fixed component of the auxiliary density response in the qSTLS-IET scheme via the option `--qstls-iet-fix` **(only for the qSTLS-IET scheme)**
   
 In the above, \* corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter, \*\*\* to the dielectric scheme that was solved and \*\*\*\* is the wave-vector value.
 
@@ -91,16 +91,16 @@ The dynamic properties are computed over a grid of frequencies whose cutoffs and
 
 Once the calculation is completed, the results are written to a set of dedicated output files which include (n<sub>W</sub> is the number of frequencies used in the solution):
  
-  * Text file dsf_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat with n<sub>W</sub> rows and two columns. The first column is the frequency, the second column is the dynamic structure factor for the wave-vector specified via the run-time option `dyn-xtarget`
-  * Text file isf_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat with n<sub>W</sub> rows and two columns. The first column is the imaginary time (defined between 0 and 1), the second column is the intermediate scattering function for the wave-vector specified via the run-time option `dyn-xtarget`
-  * Text file idr_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat with n<sub>W</sub> rows and three columns. The first column is the frequency, the second column the real part of the ideal density response and the third column the imaginary part of the ideal density response. All the density responses refer to the wave-vector specified via the run-time option `dyn-xtarget`
-  * Binary file dynamic_restart_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat which contains the ideal density response for all the wave-vectors contained in the input file with the structural properties. This file can be used in subsequent calculations with different values of `dyn-xtarget` in order to compute the dynamic properties at different wave vectors without having to recompute the density response from scratch. In order to understand how to use this binary file, see the option `--dyn-restart`
+  * dsf_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat, a text file with n<sub>W</sub> rows and two columns. The first column is the frequency, the second column is the dynamic structure factor for the wave-vector specified via the run-time option `dyn-xtarget`
+  * isf_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat, a text file with n<sub>W</sub> rows and two columns. The first column is the imaginary time (defined between 0 and 1), the second column is the intermediate scattering function for the wave-vector specified via the run-time option `dyn-xtarget`
+  * idr_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat, a text file with n<sub>W</sub> rows and three columns. The first column is the frequency, the second column the real part of the ideal density response and the third column the imaginary part of the ideal density response. All the density responses refer to the wave-vector specified via the run-time option `dyn-xtarget`
+  * dynamic_restart_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat, a binary file which contains the ideal density response for all the wave-vectors contained in the input file with the structural properties. This file can be used in subsequent calculations with different values of `dyn-xtarget` in order to compute the dynamic properties at different wave vectors without having to recompute the density response from scratch. In order to understand how to use this binary file, see the option `--dyn-restart`
 
  For the quantum schemes, additional files are produced: 
  
-  * Text file adr_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat with n<sub>W</sub> rows and three columns. The first column is the frequency, the second column the real part of the auxiliary density response and the third column the imaginary part of the auxiliary density response. All the density responses refer to the wave-vector specified via the run-time option `dyn-xtarget`. 
+  * adr_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat, a text file with n<sub>W</sub> rows and three columns. The first column is the frequency, the second column the real part of the auxiliary density response and the third column the imaginary part of the auxiliary density response. All the density responses refer to the wave-vector specified via the run-time option `dyn-xtarget`. 
   
-  * Binary file dynamic_restart_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat which contains the ideal and auxiliary density response for all the wave-vectors contained in the input file with the structural properties. This file can be used in subsequent calculations with different values of `dyn-xtarget` in order to compute the dynamic properties at different wave vectors without having to recompute the density response from scratch. In order to understand how to use this binary file, see the option `--dyn-restart`
+  * dynamic_restart_rs\*\_theta\*\*\_x\*\*\*\_\*\*\*\*\.dat, a binary file which contains the ideal and auxiliary density response for all the wave-vectors contained in the input file with the structural properties. This file can be used in subsequent calculations with different values of `dyn-xtarget` in order to compute the dynamic properties at different wave vectors without having to recompute the density response from scratch. In order to understand how to use this binary file, see the option `--dyn-restart`
 
 In the above, \* corresponds to the value of the quantum coupling parameter, \*\* to the value of the quantum degeneracy parameter,  \*\*\* to the wave-vector value specified via  `dyn-xtarget` and \*\*\*\* to the dielectric scheme that was solved.
 
@@ -153,13 +153,13 @@ The following command line options can be employed to control the calculations p
 
   * `--omp` specifies how many omp threads to use for the parts of the code that can be executed in parallel. Since the classical schemes can usually be run efficiently with a single thread, parallelization is available only for the quantum schemes. Default `omp=1`
 
-  * `qstls-fix` specifies the name of the binary file used to load the fixed component of the auxiliary density response function in the solution of the qSTLS scheme. If a file name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the qSTLS scheme can be expected. It is useful to note that state points with the same degeneracy parameter share the same fixed component of the auxiliary density response. Default: no file name is specified
+  * `--qstls-fix` specifies the name of the binary file used to load the fixed component of the auxiliary density response function in the solution of the qSTLS scheme. If a file name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the qSTLS scheme can be expected. It is useful to note that state points with the same degeneracy parameter share the same fixed component of the auxiliary density response. Default: no file name is specified
 
-* `qstls-iet-fix` specifies the name of the folder containing the binary files used to load the fixed component of the auxiliary density response function in the solution of the qSTLS-IET scheme.  The files are assumed to have the name psi_fixed_theta\*_xx\**_.bin, where \* is the value of the quantum degeneracy parameter and \** is the value of the wave-vector. One file for each wave-vector is expected. If a folder name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the qSTLS-IET scheme can be expected. It is useful to note that state points with the same degeneracy parameter share the same fixed component of the auxiliary density response. Default: no file name is specified
+* `--qstls-iet-fix` specifies the name of the folder containing the binary files used to load the fixed component of the auxiliary density response function in the solution of the qSTLS-IET scheme.  The files are assumed to have the name psi_fixed_theta\*_xx\**_.bin, where \* is the value of the quantum degeneracy parameter and \** is the value of the wave-vector. One file for each wave-vector is expected. If a folder name is not specified, the fixed component of the auxiliary density response is computed from scratch and a significant increase in the computational cost for the solution of the qSTLS-IET scheme can be expected. It is useful to note that state points with the same degeneracy parameter share the same fixed component of the auxiliary density response. Default: no file name is specified
 
-* `qstls-iet-static` specifies how the auxiliary density response should be computed within the qSTLS-IET scheme. If `qstls-iet-static=0` the auxiliary density response is computed within the fully dynamic approximation. Otherwise, If `qstls-iet-static=1` the auxiliary density response is computed within the partially dynamic approximation. Default `qstls-iet-static=0`
+* `--qstls-iet-static` specifies how the auxiliary density response should be computed within the qSTLS-IET scheme. If `qstls-iet-static=0` the auxiliary density response is computed within the fully dynamic approximation. Otherwise, If `qstls-iet-static=1` the auxiliary density response is computed within the partially dynamic approximation. Default `qstls-iet-static=0`
 
-  * `qstls-restart` specifies the name of the binary file used as initial guess for the solution of the quantum schemes. If a file name is not specified, the iterative scheme is started by setting the auxiliary density response to zero (which is equivalent to set the dynamic local field correction to zero). Default: no file name is specified
+  * `--qstls-restart` specifies the name of the binary file used as initial guess for the solution of the quantum schemes. If a file name is not specified, the iterative scheme is started by setting the auxiliary density response to zero (which is equivalent to set the dynamic local field correction to zero). Default: no file name is specified
  
  * `--restart-files` specifies the names of the two text files used to construct the binary files when the code is run in restart mode. Default: no file names are specified and the code is run in static mode
   
