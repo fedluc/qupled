@@ -491,8 +491,8 @@ void check_input(input *in){
     invalid_input = true;
   }
 
-  if (in->vs_alpha <= 0.0) {
-    fprintf(stderr, "The free parameter for the VS schemes must be larger than zero\n");
+  if (in->vs_alpha < 0.0) {
+    fprintf(stderr, "The free parameter for the VS schemes can't be smaller than zero\n");
     invalid_input = true;
   }
 

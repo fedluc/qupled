@@ -912,7 +912,6 @@ double compute_alpha(vs_struct xx, vs_thermo rsu, vs_thermo rsa,
              +(1.0/3.0)*in.Theta*dfdt;
     denom += (2.0/3.0)*in.Theta*dudt;
   }
-  
   alpha = numer/denom;
   
   // Output
@@ -1042,12 +1041,12 @@ void compute_rsu_blocks(vs_struct SS, vs_struct SSHF,
       
       // Free energy integrand 
       rsu.el[jj][ii] = vs_in_tmp[kk].rs*u_int[kk];
-
+      
       // Free energy integrand of neighboring points (in rs)
-      if (ii>0 && ii<nrs-1){
-	rsu.el[jj][ii-1] = vs_in_tmp[kk-1].rs*u_int[kk-1];
+      if (ii>0)
+	rsu.el[jj][ii-1] = vs_in_tmp[kk-1].rs*u_int[kk-1];	
+      if (ii<nrs-1)
 	rsu.el[jj][ii+1] = vs_in_tmp[kk+1].rs*u_int[kk+1];
-      }
       
     }
     
