@@ -2,6 +2,7 @@
 #include <string.h>
 #include <math.h>
 #include <argp.h>
+#include "utils.h"
 #include "read_input.h"
 
 // ----------------------------------------
@@ -486,6 +487,11 @@ void check_input(input *in){
     invalid_input = true;
   }
 
+  if (fmod(round(in->rs/DBL_TOL), round(in->vs_drs/DBL_TOL)) != 0.0) {
+    fprintf(stderr, "The coupling parameter must be a multiple of the resolution of the coupling parameter grid\n");
+    invalid_input = true;
+  }
+  
   if (in->vs_dt <= 0.0) {
     fprintf(stderr, "The resolution of the degeneracy parameter grid must be larger than zero\n");
     invalid_input = true;
