@@ -21,10 +21,11 @@ All the calculations are performed in normalized units. The wave vectors are nor
 
 ## Compiling
 
-The code can be compiled with gcc and with the [make file](Makefile) provided with the source code. In order to correctly compile the code it is necessary that the following libraries are installed
+The code can be compiled with gcc or clang. Example make files are provided with the source code, see [Makefile.lnx](https://github.com/fedluc/STLS/blob/master/Makefile.lnx) and [Makefile.mac](https://github.com/fedluc/STLS/blob/master/Makefile.mac). In order to correctly compile the code it is necessary that the following libraries are installed
 
-* [GNU scientific library](https://www.gnu.org/software/gsl/). This library must be explicitly included by calling `make GSL="PATH"`, where `PATH` is the path to the folder containing the header files of the library. Alternatively, it is possible to change the default value of the GSL variable in the [make file](Makefile) and then to simply compile via `make`.
-* [OpenMP library](https://en.wikipedia.org/wiki/OpenMP). In most cases it is not necessary to explicitly include the path to this library. However, if this should be necessary, it should be possible to do so by modifying the `INCLUDE` variables which appear in the [make file](Makefile).
+* [GNU scientific library](https://www.gnu.org/software/gsl/)
+* [OpenMP library](https://en.wikipedia.org/wiki/OpenMP)
+* [argp](https://www.gnu.org/software/libc/manual/html_node/Argp.html) 
 
 ## Running
 
