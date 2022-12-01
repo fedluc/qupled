@@ -120,16 +120,16 @@ void Input::assignInputToBaseData(const string &keyword, const string &value){
 }
 
 void Input::assignInputToStaticData(const string &keyword, const string &value){
-  
+  stat.assignInputToData(keyword, value);
 }
 
 void Input::assignInputToStlsData(const string &keyword, const string &value){
   cout << keyword << " = " << value << endl;
 }
 
-// --- staticInput ---
+// --- StaticInput ---
 
-staticInput::staticInput(){
+StaticInput::StaticInput(){
   aMix = 1.0;
   errMin = 1e-5;
   dx = 0.1;
@@ -140,82 +140,128 @@ staticInput::staticInput(){
   nIter = 1000;
 }
 
-double staticInput::getMixingParameter(){
+double StaticInput::getMixingParameter(){
   return aMix;
 }
 
-double staticInput::getErrMin(){
+double StaticInput::getErrMin(){
   return errMin;
 }
 
-double staticInput::getWaveVectorGridRes(){
+double StaticInput::getWaveVectorGridRes(){
   return dx;
 }
 
-double staticInput::getWaveVectorGridCutoff(){
+double StaticInput::getWaveVectorGridCutoff(){
   return xmax;
 }
  
-vector<double> staticInput::getChemicalPotentialGuess(){
+vector<double> StaticInput::getChemicalPotentialGuess(){
   return muGuess;
 }
 
-size_t staticInput::getNMatsubara(){
+size_t StaticInput::getNMatsubara(){
   return nl;
 }
 
-size_t staticInput::getNIter(){
+size_t StaticInput::getNIter(){
   return nIter;
 }
 
-void staticInput::setMixingParameter(double aMix){
+void StaticInput::setMixingParameter(const double aMix){
+  if (aMix < 0.0 || aMix > 1.0) {
+    throw runtime_error("The mixing parameter must be a number between zero and one");
+  }
   this->aMix = aMix;
 }
 
-void staticInput::setErrMin(double errMin){
+void StaticInput::setErrMin(const double errMin){
+  if (errMin <= 0.0) {
+    throw runtime_error("The minimum error for convergence must be larger than zero");
+  }
   this->errMin = errMin;
 }
 
-void staticInput::setChemicalPotentialGuess(vector<double> muGuess){
+void StaticInput::setChemicalPotentialGuess(const string &muGuessStr){
+  vector<string> muGuessVecStr = Input::tokenize(muGuessStr, ',');
+  if (muGuessVecStr.size() != 2) {
+    throw runtime_error("Wrong format for the chemical potential input.");
+  }
+  vector<double> muGuess;
+  for (string mu : muGuessVecStr) muGuess.push_back(stod(mu));
   this->muGuess.assign(muGuess.begin(), muGuess.end());
 }
  
-void staticInput::setWaveVectorGridRes(double dx){
+void StaticInput::setWaveVectorGridRes(const double dx){
+  if (dx <= 0.0) {
+    throw runtime_error("The wave-vector grid resolution must be larger than zero");
+  }
   this->dx = dx;
 }
 
-void staticInput::setWaveVectorGridCutoff(double xmax){
+void StaticInput::setWaveVectorGridCutoff(const double xmax){
+  if (xmax <= 0.0) {
+    throw runtime_error("The wave-vector grid cutoff must be larger than zero");
+  }
+  if (xmax < dx) {
+    throw runtime_error("The wave-vector grid cutoff must be larger than the resolution");
+  }
   this->xmax = xmax;
 }
 
-void staticInput::setNMatsubara(size_t nl){
+void StaticInput::setNMatsubara(const size_t nl){
+  if (nl < 0.0) {
+    throw runtime_error("The number of matsubara frequencies can't be negative");
+  }
   this->nl = nl;
 }
 
-void staticInput::setNIter(size_t nIter){
+void StaticInput::setNIter(const size_t nIter){
+  if (nIter < 0.0) {
+    throw runtime_error("The maximum number of iterations can't be negative");
+  }
   this->nIter = nIter; 
 }
 
-// --- stlsInput ---
+void StaticInput::assignInputToData(const string &keyword, const string &value){
+  if (keyword == allowedKeywords[0])
+    setMixingParameter(stod(value));
+  else if (keyword == allowedKeywords[1])
+    setErrMin(stod(value));
+  else if (keyword == allowedKeywords[2])
+    setWaveVectorGridRes(stod(value));
+  else if (keyword == allowedKeywords[3])
+    setWaveVectorGridCutoff(stod(value));
+  else if (keyword == allowedKeywords[4])
+    setChemicalPotentialGuess(value);
+  else if (keyword == allowedKeywords[5])
+    setNMatsubara(stoi(value));
+  else if (keyword == allowedKeywords[6])
+    setNIter(stoi(value));
+  else
+    throw runtime_error("Unknown keyword: " + keyword);
+}
 
-stlsInput::stlsInput(){
+// --- StlsInput ---
+
+StlsInput::StlsInput(){
   IETMapping = "standard";
   restartFileName = NO_FILE_NAME;
 }
 
-string stlsInput::getIETMapping(){
+string StlsInput::getIETMapping(){
   return IETMapping;
 }
 
-string stlsInput::getRestartFileName(){
+string StlsInput::getRestartFileName(){
   return restartFileName;
 }
 
-void stlsInput::setIETMapping(string IETMapping){
+void StlsInput::setIETMapping(string IETMapping){
   this->IETMapping = IETMapping;
 }
 
-void stlsInput::setRestartFileName(string restartFileName){
+void StlsInput::setRestartFileName(string restartFileName){
   this->restartFileName = restartFileName;
 } 
   

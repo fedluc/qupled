@@ -9,7 +9,7 @@ using namespace std;
 
 #define NO_FILE_NAME "noFileName"
 
-class staticInput {
+class StaticInput {
 
 private:
 
@@ -27,11 +27,18 @@ private:
   size_t nl;
   // Maximum number of iterations
   size_t nIter;
+  // Helper methods to read the input file
+  const string allowedKeywords[7] = {"mixing", "error", "waveVectorResolution",
+                                     "waveVectorCutoff", "chemicalPotential",
+				     "matsubaraFrequencies", "iterations"};
+  void assignInputToData(const string &keyword, const string &value);
+  // Friends
+  friend class Input;
   
 public:
   
   //Constructor
-  staticInput();
+  StaticInput();
   // Getters
   double getMixingParameter();
   double getErrMin();
@@ -41,17 +48,17 @@ public:
   size_t getNMatsubara();
   size_t getNIter();
   // Setters 
-  void setMixingParameter(double aMix);
-  void setErrMin(double errMin);
-  void setWaveVectorGridRes(double waveVectorGridRes);
-  void setWaveVectorGridCutoff(double waveVectorGridCutoff);
-  void setChemicalPotentialGuess(vector<double> muGuess);
-  void setNMatsubara(size_t nMatsubara);
-  void setNIter(size_t nIter);
-
+  void setMixingParameter(const double aMix);
+  void setErrMin(const double errMin);
+  void setWaveVectorGridRes(const double waveVectorGridRes);
+  void setWaveVectorGridCutoff(const double waveVectorGridCutoff);
+  void setChemicalPotentialGuess(const string &muGuessStr);
+  void setNMatsubara(const size_t nMatsubara);
+  void setNIter(const size_t nIter);
+  
 };
 
-class stlsInput {
+class StlsInput {
 
 private:
  
@@ -63,7 +70,7 @@ private:
 public:
 
   //Constructor
-  stlsInput();
+  StlsInput();
   // Getters
   string getIETMapping();
   string getRestartFileName();
@@ -87,19 +94,22 @@ private:
   // Number of threads for parallel calculations
   size_t nThreads;
   // input for static calcualtions
-  staticInput stat;
+  StaticInput stat;
   // input for stls calculations
-  stlsInput stls;
+  StlsInput stls;
   // Helper methods to read the input file
   const string allowedKeywords[7] = {"base", "theory", "degeneracy" ,
                                      "coupling", "threads", "static",
 				     "stls"};
   void parseInputLine(const string &line);
-  vector<string> tokenize(const string &str, const char separator);
+  static vector<string> tokenize(const string &str, const char separator);
   void assignInputToData(const vector<string> &input);
   void assignInputToBaseData(const string &keyword, const string &value);
   void assignInputToStaticData(const string &keyword, const string &value);
   void assignInputToStlsData(const string &keyword, const string &value);
+  // Friends
+  friend class StaticInput;
+  friend class StlsInput;
   
   // --- Additional members that will be added later
   // string mode;
@@ -117,8 +127,8 @@ public:
   string getTheory();
   double getDegeneracy();
   double getCoupling();
-  staticInput getStatic();
-  stlsInput getStsl();
+  StaticInput getStatic();
+  StlsInput getStsl();
   // Setters
   void setTheory(const string &theory);
   void setDegeneracy(const double Theta);
