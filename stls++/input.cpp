@@ -1,7 +1,6 @@
 #include <string>
 #include <fstream>
 #include <sstream>
-#include <vector>
 #include "input.hpp"
 
 // --- Input ---
@@ -25,35 +24,38 @@ double Input::getCoupling(){
   return rs;
 }
 
-void Input::setTheory(const string &theory){
+void Input::setTheory(cString &theory){
   if (theory != "stls") {
     throw runtime_error("Unknown theory: " + theory);
   }
   this->theory = theory;
 }
 
-void Input::setDegeneracy(const double Theta){
-  if (Theta < 0.0) {
+void Input::setDegeneracy(cString &Theta){
+  double ThetaNum = stod(Theta);
+  if (ThetaNum < 0.0) {
     throw runtime_error("The quantum degeneracy parameter can't be negative");
   }
-  this->Theta = Theta;
+  this->Theta = ThetaNum;
 }
 
-void Input::setCoupling(const double rs){
-  if (rs <= 0.0) {
+void Input::setCoupling(cString &rs){
+  double rsNum = stod(rs);
+  if (rsNum <= 0.0) {
     throw runtime_error("The quantum coupling parameter must be larger than zero");
   }
-  this->rs = rs;
+  this->rs = rsNum;
 }
 
-void Input::setThreads(const int nThreads){
-  if (nThreads <= 0.0) {
+void Input::setThreads(cString  &nThreads){
+  int nThreadsNum = stoi(nThreads);
+  if (nThreadsNum <= 0.0) {
     throw runtime_error("The number of threads must be positive");
   }
-  this->nThreads = nThreads;
+  this->nThreads = nThreadsNum;
 }
 
-void Input::readInput(const string &fileName){
+void Input::readInput(cString &fileName){
   ifstream file(fileName);
   if (file.is_open()) {
     string line;
@@ -67,7 +69,7 @@ void Input::readInput(const string &fileName){
   }   
 }
 
-void Input::parseInputLine(const string &line){
+void Input::parseInputLine(cString &line){
   bool isComment = line[0] == '#';
   bool isEmpty = line[0] == '\n' || line.length()==0;
   if (!isComment && !isEmpty) {
@@ -79,7 +81,7 @@ void Input::parseInputLine(const string &line){
   }
 }
 
-vector<string> Input::tokenize(const string &str, const char separator){
+vector<string> Input::tokenize(cString &str, const char separator){
  stringstream strStream(str);
  string token;
  vector<string> tokens;
@@ -89,42 +91,62 @@ vector<string> Input::tokenize(const string &str, const char separator){
  return tokens;
 }
 
-void Input::assignInputToData(const vector<string> &input){
-  const vector<string> keyword = tokenize(input[0], '.');
+void Input::assignInputToData(cVector<string> &input){
+  cVector<string> keyword = tokenize(input[0], '.');
+  map<string, function<void(cString &, cString &)>> funcArr;
+  funcArr["base"] = [this](cString &s1, cString &s2) {this->assignInputToBaseData(s1, s2);};
+  funcArr["static"] = [this](cString &s1, cString &s2) {this->assignInputToStaticData(s1, s2);};
+  funcArr["stls"] = [this](cString &s1, cString &s2) {this->assignInputToStlsData(s1, s2);};
   try{
-    if (keyword[0] == allowedKeywords[0])
-      assignInputToBaseData(keyword[1], input[1]);
-    else if (keyword[0] == allowedKeywords[5])
-      assignInputToStaticData(keyword[1], input[1]);
-    else if (keyword[0] == allowedKeywords[6])
-      assignInputToStlsData(keyword[1], input[1]);
-    else
-      throw runtime_error("Unknown keyword: " + input[0]);  
+    matchKeyAndData(keyword, input, funcArr);
   }
   catch (const runtime_error& err) {
     cerr << err.what() << endl;
   }
 }
 
-void Input::assignInputToBaseData(const string &keyword, const string &value){
-  if (keyword == allowedKeywords[1])
-    setTheory(value);
-  else if (keyword == allowedKeywords[2])
-    setDegeneracy(stod(value));
-  else if (keyword == allowedKeywords[3])
-    setCoupling(stod(value));
-  else if (keyword == allowedKeywords[4])
-    setThreads(stoi(value));
-  else
-    throw runtime_error("Unknown keyword: " + keyword);
+void Input::assignInputToBaseData(cString &keyword, cString &value){
+  map<string, function<void(cString &)>> funcArr;
+  funcArr["theory"] = [this](cString &s1) {this->setTheory(s1);};
+  funcArr["degeneracy"] = [this](cString &s1) {this->setDegeneracy(s1);};
+  funcArr["coupling"] = [this](cString &s1) {this->setCoupling(s1);};
+  funcArr["threads"] = [this](cString &s1) {this->setThreads(s1);};
+  try{
+    matchKeyAndData(keyword, value, funcArr);
+  }
+  catch (const runtime_error& err) {
+    cerr << err.what() << endl;
+  }
 }
 
-void Input::assignInputToStaticData(const string &keyword, const string &value){
+void Input::assignInputToStaticData(cString &keyword, cString &value){
   stat.assignInputToData(keyword, value);
 }
 
-void Input::assignInputToStlsData(const string &keyword, const string &value){
+void Input::assignInputToStlsData(cString &keyword, cString &value){
   cout << keyword << " = " << value << endl;
+}
+
+void Input::matchKeyAndData(cVector<string> &keyword,
+			    cVector<string> &input,
+			    map<string,function<void(cString&, cString&)>> &funcArr){
+  if (funcArr.find(keyword[0]) != funcArr.end()){
+    funcArr[keyword[0]](keyword[1], input[1]);
+  }
+  else {
+    throw runtime_error("Unknown keyword: " + input[0]);
+  }
+}
+
+void Input::matchKeyAndData(cString &keyword,
+			    cString &input,
+			    map<string,function<void(cString&)>> &funcArr){
+  if (funcArr.find(keyword) != funcArr.end()){
+    funcArr[keyword](input);
+  }
+  else {
+    throw runtime_error("Unknown keyword: " + keyword);
+  }
 }
 
 // --- StaticInput ---
@@ -224,22 +246,22 @@ void StaticInput::setNIter(const size_t nIter){
 }
 
 void StaticInput::assignInputToData(const string &keyword, const string &value){
-  if (keyword == allowedKeywords[0])
-    setMixingParameter(stod(value));
-  else if (keyword == allowedKeywords[1])
-    setErrMin(stod(value));
-  else if (keyword == allowedKeywords[2])
-    setWaveVectorGridRes(stod(value));
-  else if (keyword == allowedKeywords[3])
-    setWaveVectorGridCutoff(stod(value));
-  else if (keyword == allowedKeywords[4])
-    setChemicalPotentialGuess(value);
-  else if (keyword == allowedKeywords[5])
-    setNMatsubara(stoi(value));
-  else if (keyword == allowedKeywords[6])
-    setNIter(stoi(value));
-  else
-    throw runtime_error("Unknown keyword: " + keyword);
+  // if (keyword == allowedKeywords[0])
+  //   setMixingParameter(stod(value));
+  // else if (keyword == allowedKeywords[1])
+  //   setErrMin(stod(value));
+  // else if (keyword == allowedKeywords[2])
+  //   setWaveVectorGridRes(stod(value));
+  // else if (keyword == allowedKeywords[3])
+  //   setWaveVectorGridCutoff(stod(value));
+  // else if (keyword == allowedKeywords[4])
+  //   setChemicalPotentialGuess(value);
+  // else if (keyword == allowedKeywords[5])
+  //   setNMatsubara(stoi(value));
+  // else if (keyword == allowedKeywords[6])
+  //   setNIter(stoi(value));
+  // else
+  //   throw runtime_error("Unknown keyword: " + keyword);
 }
 
 // --- StlsInput ---

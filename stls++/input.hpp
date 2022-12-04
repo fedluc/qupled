@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <map>
+#include <functional>
 
 using namespace std;
 
@@ -28,9 +30,9 @@ private:
   // Maximum number of iterations
   size_t nIter;
   // Helper methods to read the input file
-  const string allowedKeywords[7] = {"mixing", "error", "waveVectorResolution",
-                                     "waveVectorCutoff", "chemicalPotential",
-				     "matsubaraFrequencies", "iterations"};
+  // const string allowedKeywords[7] = {"mixing", "error", "waveVectorResolution",
+  //                                    "waveVectorCutoff", "chemicalPotential",
+  // 				     "matsubaraFrequencies", "iterations"};
   void assignInputToData(const string &keyword, const string &value);
   // Friends
   friend class Input;
@@ -85,6 +87,9 @@ class Input {
 
 private:
 
+  // Types
+  typedef const string cString;
+  template<typename T> using cVector = const vector<T>;
   // theory to be solved
   string theory; 
   // degeneracy parameter
@@ -98,15 +103,16 @@ private:
   // input for stls calculations
   StlsInput stls;
   // Helper methods to read the input file
-  const string allowedKeywords[7] = {"base", "theory", "degeneracy" ,
-                                     "coupling", "threads", "static",
-				     "stls"};
-  void parseInputLine(const string &line);
-  static vector<string> tokenize(const string &str, const char separator);
-  void assignInputToData(const vector<string> &input);
-  void assignInputToBaseData(const string &keyword, const string &value);
-  void assignInputToStaticData(const string &keyword, const string &value);
-  void assignInputToStlsData(const string &keyword, const string &value);
+  static vector<string> tokenize(cString &str, const char separator);
+  static void matchKeyAndData(cVector<string> &keyword,
+			      cVector<string> &input,
+			      map<string,function<void(cString&, cString&)>> &funcArr);
+  void parseInputLine(cString &line);
+  void assignInputToData(cVector<string> &input);
+  void assignInputToBaseData(cString &keyword, cString &value);
+  void assignInputToStaticData(cString &keyword, cString &value);
+  void assignInputToStlsData(cString &keyword, cString &value);
+
   // Friends
   friend class StaticInput;
   friend class StlsInput;
@@ -130,11 +136,11 @@ public:
   StaticInput getStatic();
   StlsInput getStsl();
   // Setters
-  void setTheory(const string &theory);
-  void setDegeneracy(const double Theta);
-  void setCoupling(const double rs);
-  void setThreads(const int nThreads);
-  void readInput(const string &fileName);
+  void setTheory(cString &theory);
+  void setDegeneracy(cString &Theta);
+  void setCoupling(cString &rs);
+  void setThreads(cString &nThreads);
+  void readInput(cString &fileName);
   
 };
 // class qstlsInput { // Input properties for the qSTLS methods
