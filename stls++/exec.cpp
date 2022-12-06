@@ -9,6 +9,7 @@ int main(int argc, char** argv) {
   Input input;
   try {
     input.readInput(argv[1]);
+    input.print();
   }
   catch (const runtime_error& err) {
     cout << err.what() << endl;

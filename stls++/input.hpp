@@ -6,90 +6,21 @@
 #include <iostream>
 #include <map>
 #include <functional>
+#include "inpututil.hpp"
 
 using namespace std;
+using namespace inpututil;
 
 #define NO_FILE_NAME "noFileName"
 
-class StaticInput {
-
-private:
-
-  // Mixing parameter for the iterative procedure
-  double aMix;
-  // Minimum error for convergence in the iterative procedure
-  double errMin;  
-  // Wave-vector grid resolution
-  double dx;
-  // cutoff for the wave-vector grid
-  double xmax;
-  // Initial guess for the chemical potential calculation
-  vector<double> muGuess;
-  // Number of matsubara frequencies
-  size_t nl;
-  // Maximum number of iterations
-  size_t nIter;
-  // Helper methods to read the input file
-  // const string allowedKeywords[7] = {"mixing", "error", "waveVectorResolution",
-  //                                    "waveVectorCutoff", "chemicalPotential",
-  // 				     "matsubaraFrequencies", "iterations"};
-  void assignInputToData(const string &keyword, const string &value);
-  // Friends
-  friend class Input;
-  
-public:
-  
-  //Constructor
-  StaticInput();
-  // Getters
-  double getMixingParameter();
-  double getErrMin();
-  double getWaveVectorGridRes();
-  double getWaveVectorGridCutoff();
-  vector<double> getChemicalPotentialGuess();
-  size_t getNMatsubara();
-  size_t getNIter();
-  // Setters 
-  void setMixingParameter(const double aMix);
-  void setErrMin(const double errMin);
-  void setWaveVectorGridRes(const double waveVectorGridRes);
-  void setWaveVectorGridCutoff(const double waveVectorGridCutoff);
-  void setChemicalPotentialGuess(const string &muGuessStr);
-  void setNMatsubara(const size_t nMatsubara);
-  void setNIter(const size_t nIter);
-  
-};
-
-class StlsInput {
-
-private:
- 
-  // Mapping between the quantum and classical state points for the IET-based schemes
-  string IETMapping;
-  // Name of the file used to store the restart data
-  string restartFileName;
-  
-public:
-
-  //Constructor
-  StlsInput();
-  // Getters
-  string getIETMapping();
-  string getRestartFileName();
-  // Setters 
-  void setIETMapping(string IETMapping);
-  void setRestartFileName(string restartFileName);
-
-};
-
+class Input;
+class StaticInput;
+class StlsInput;
 
 class Input {
 
 private:
 
-  // Types
-  typedef const string cString;
-  template<typename T> using cVector = const vector<T>;
   // theory to be solved
   string theory; 
   // degeneracy parameter
@@ -99,23 +30,20 @@ private:
   // Number of threads for parallel calculations
   size_t nThreads;
   // input for static calcualtions
-  StaticInput stat;
+  shared_ptr<StaticInput> stat;
   // input for stls calculations
-  StlsInput stls;
+  shared_ptr<StlsInput> stls;
+  // Setters
+  void setTheory(cString &theory);
+  void setDegeneracy(cString &Theta);
+  void setCoupling(cString &rs);
+  void setThreads(cString &nThreads);
   // Helper methods to read the input file
-  static vector<string> tokenize(cString &str, const char separator);
-  static void matchKeyAndData(cVector<string> &keyword,
-			      cVector<string> &input,
-			      map<string,function<void(cString&, cString&)>> &funcArr);
   void parseInputLine(cString &line);
   void assignInputToData(cVector<string> &input);
   void assignInputToBaseData(cString &keyword, cString &value);
   void assignInputToStaticData(cString &keyword, cString &value);
   void assignInputToStlsData(cString &keyword, cString &value);
-
-  // Friends
-  friend class StaticInput;
-  friend class StlsInput;
   
   // --- Additional members that will be added later
   // string mode;
@@ -135,14 +63,89 @@ public:
   double getCoupling();
   StaticInput getStatic();
   StlsInput getStsl();
-  // Setters
-  void setTheory(cString &theory);
-  void setDegeneracy(cString &Theta);
-  void setCoupling(cString &rs);
-  void setThreads(cString &nThreads);
+  // Read input file
   void readInput(cString &fileName);
+  void print();
   
 };
+
+class StaticInput {
+
+private:
+
+  // Mixing parameter for the iterative procedure
+  double aMix;
+  // Minimum error for convergence in the iterative procedure
+  double errMin;  
+  // Wave-vector grid resolution
+  double dx;
+  // cutoff for the wave-vector grid
+  double xmax;
+  // Initial guess for the chemical potential calculation
+  vector<double> muGuess;
+  // Number of matsubara frequencies
+  size_t nl;
+  // Maximum number of iterations
+  size_t nIter;
+  // Setters 
+  void setMixingParameter(cString  &aMix);
+  void setErrMin(cString &errMin);
+  void setWaveVectorGridRes(cString &waveVectorGridRes);
+  void setWaveVectorGridCutoff(cString  &waveVectorGridCutoff);
+  void setChemicalPotentialGuess(cString &muGuessStr);
+  void setNMatsubara(cString &nMatsubara);
+  void setNIter(cString &nIter);
+  // Helper methods to read the input file
+  void assignInputToData(const string &keyword, const string &value);
+  // Print content of the data structure
+  void print();
+  // Friends
+  friend class Input;
+  
+public:
+  
+  //Constructor
+  StaticInput();
+  // Getters
+  double getMixingParameter();
+  double getErrMin();
+  double getWaveVectorGridRes();
+  double getWaveVectorGridCutoff();
+  vector<double> getChemicalPotentialGuess();
+  size_t getNMatsubara();
+  size_t getNIter();
+  
+};
+
+class StlsInput {
+
+private:
+ 
+  // Mapping between the quantum and classical state points for the IET-based schemes
+  string IETMapping;
+  // Name of the file used to store the restart data
+  string restartFileName;
+  // Setters
+  void setIETMapping(cString &IETMapping);
+  void setRestartFileName(cString &restartFileName);
+  // Helper methods to read the input file
+  void assignInputToData(const string &keyword, const string &value);
+  // Print content of the data structure
+  void print();
+  // Friends
+  friend class Input;
+  
+public:
+
+  //Constructor
+  StlsInput();
+  // Getters
+  string getIETMapping();
+  string getRestartFileName();
+
+
+};
+
 // class qstlsInput { // Input properties for the qSTLS methods
 
 // private:

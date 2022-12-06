@@ -10,6 +10,8 @@ Input::Input(){
   Theta = 1.0;
   rs = 1.0;
   nThreads = 1;
+  stat = make_shared<StaticInput>();
+  stls = make_shared<StlsInput>();
 }
 
 string Input::getTheory(){
@@ -32,27 +34,24 @@ void Input::setTheory(cString &theory){
 }
 
 void Input::setDegeneracy(cString &Theta){
-  double ThetaNum = stod(Theta);
-  if (ThetaNum < 0.0) {
+  if (isNegative<double>(Theta)) {
     throw runtime_error("The quantum degeneracy parameter can't be negative");
   }
-  this->Theta = ThetaNum;
+  this->Theta = stod(Theta);
 }
 
 void Input::setCoupling(cString &rs){
-  double rsNum = stod(rs);
-  if (rsNum <= 0.0) {
+  if (isNotPositive<double>(rs)) {
     throw runtime_error("The quantum coupling parameter must be larger than zero");
   }
-  this->rs = rsNum;
+  this->rs = stod(rs);
 }
 
 void Input::setThreads(cString  &nThreads){
-  int nThreadsNum = stoi(nThreads);
-  if (nThreadsNum <= 0.0) {
+  if (isNotPositive<int>(nThreads)) {
     throw runtime_error("The number of threads must be positive");
   }
-  this->nThreads = nThreadsNum;
+  this->nThreads = stoi(nThreads);
 }
 
 void Input::readInput(cString &fileName){
@@ -81,16 +80,6 @@ void Input::parseInputLine(cString &line){
   }
 }
 
-vector<string> Input::tokenize(cString &str, const char separator){
- stringstream strStream(str);
- string token;
- vector<string> tokens;
- while(getline(strStream, token, separator)) {
-   tokens.push_back(token);
- }
- return tokens;
-}
-
 void Input::assignInputToData(cVector<string> &input){
   cVector<string> keyword = tokenize(input[0], '.');
   map<string, function<void(cString &, cString &)>> funcArr;
@@ -98,7 +87,7 @@ void Input::assignInputToData(cVector<string> &input){
   funcArr["static"] = [this](cString &s1, cString &s2) {this->assignInputToStaticData(s1, s2);};
   funcArr["stls"] = [this](cString &s1, cString &s2) {this->assignInputToStlsData(s1, s2);};
   try{
-    matchKeyAndData(keyword, input, funcArr);
+    matchKeyAndData(keyword, input[1], funcArr);
   }
   catch (const runtime_error& err) {
     cerr << err.what() << endl;
@@ -120,33 +109,20 @@ void Input::assignInputToBaseData(cString &keyword, cString &value){
 }
 
 void Input::assignInputToStaticData(cString &keyword, cString &value){
-  stat.assignInputToData(keyword, value);
+  stat->assignInputToData(keyword, value);
 }
 
 void Input::assignInputToStlsData(cString &keyword, cString &value){
-  cout << keyword << " = " << value << endl;
+  stls->assignInputToData(keyword, value);
 }
 
-void Input::matchKeyAndData(cVector<string> &keyword,
-			    cVector<string> &input,
-			    map<string,function<void(cString&, cString&)>> &funcArr){
-  if (funcArr.find(keyword[0]) != funcArr.end()){
-    funcArr[keyword[0]](keyword[1], input[1]);
-  }
-  else {
-    throw runtime_error("Unknown keyword: " + input[0]);
-  }
-}
-
-void Input::matchKeyAndData(cString &keyword,
-			    cString &input,
-			    map<string,function<void(cString&)>> &funcArr){
-  if (funcArr.find(keyword) != funcArr.end()){
-    funcArr[keyword](input);
-  }
-  else {
-    throw runtime_error("Unknown keyword: " + keyword);
-  }
+void Input::print(){
+  cout << "base.theory = " << theory << endl;
+  cout << "base.degeneracy = " << Theta << endl;
+  cout << "base.coupling = " << rs << endl;
+  cout << "base.threads = " << nThreads << endl;
+  stat->print();
+  stls->print();
 }
 
 // --- StaticInput ---
@@ -190,78 +166,86 @@ size_t StaticInput::getNIter(){
   return nIter;
 }
 
-void StaticInput::setMixingParameter(const double aMix){
-  if (aMix < 0.0 || aMix > 1.0) {
+void StaticInput::setMixingParameter(cString &aMix){
+  if (isNegative<double>(aMix) || isLarger<double>(aMix, 1.0)) {
     throw runtime_error("The mixing parameter must be a number between zero and one");
   }
-  this->aMix = aMix;
+  this->aMix = stod(aMix);
 }
 
-void StaticInput::setErrMin(const double errMin){
-  if (errMin <= 0.0) {
+void StaticInput::setErrMin(cString &errMin){
+  if (isNotPositive<double>(errMin)) {
     throw runtime_error("The minimum error for convergence must be larger than zero");
   }
-  this->errMin = errMin;
+  this->errMin = stod(errMin);
 }
 
-void StaticInput::setChemicalPotentialGuess(const string &muGuessStr){
-  vector<string> muGuessVecStr = Input::tokenize(muGuessStr, ',');
-  if (muGuessVecStr.size() != 2) {
+void StaticInput::setChemicalPotentialGuess(cString &muGuess){
+  vector<string> muGuessVec = tokenize(muGuess, ',');
+  if (muGuessVec.size() != 2) {
     throw runtime_error("Wrong format for the chemical potential input.");
   }
-  vector<double> muGuess;
-  for (string mu : muGuessVecStr) muGuess.push_back(stod(mu));
-  this->muGuess.assign(muGuess.begin(), muGuess.end());
+  vector<double> muGuessNum;
+  for (string mu : muGuessVec) muGuessNum.push_back(stod(mu));
+  this->muGuess.assign(muGuessNum.begin(), muGuessNum.end());
 }
  
-void StaticInput::setWaveVectorGridRes(const double dx){
-  if (dx <= 0.0) {
+void StaticInput::setWaveVectorGridRes(cString &dx){
+  if (isNotPositive<double>(dx)) {
     throw runtime_error("The wave-vector grid resolution must be larger than zero");
   }
-  this->dx = dx;
+  this->dx = stod(dx);
 }
 
-void StaticInput::setWaveVectorGridCutoff(const double xmax){
-  if (xmax <= 0.0) {
+void StaticInput::setWaveVectorGridCutoff(cString &xmax){
+  if (isNotPositive<double>(xmax)) {
     throw runtime_error("The wave-vector grid cutoff must be larger than zero");
   }
-  if (xmax < dx) {
+  if (!isLarger<double>(xmax, dx)) {
     throw runtime_error("The wave-vector grid cutoff must be larger than the resolution");
   }
-  this->xmax = xmax;
+  this->xmax = stod(xmax);
 }
 
-void StaticInput::setNMatsubara(const size_t nl){
-  if (nl < 0.0) {
+void StaticInput::setNMatsubara(cString &nl){
+  if (isNegative<int>(nl)) {
     throw runtime_error("The number of matsubara frequencies can't be negative");
   }
-  this->nl = nl;
+  this->nl = stoi(nl);
 }
 
-void StaticInput::setNIter(const size_t nIter){
-  if (nIter < 0.0) {
+void StaticInput::setNIter(cString &nIter){
+  if (isNegative<int>(nIter)) {
     throw runtime_error("The maximum number of iterations can't be negative");
   }
-  this->nIter = nIter; 
+  this->nIter = stoi(nIter); 
 }
 
 void StaticInput::assignInputToData(const string &keyword, const string &value){
-  // if (keyword == allowedKeywords[0])
-  //   setMixingParameter(stod(value));
-  // else if (keyword == allowedKeywords[1])
-  //   setErrMin(stod(value));
-  // else if (keyword == allowedKeywords[2])
-  //   setWaveVectorGridRes(stod(value));
-  // else if (keyword == allowedKeywords[3])
-  //   setWaveVectorGridCutoff(stod(value));
-  // else if (keyword == allowedKeywords[4])
-  //   setChemicalPotentialGuess(value);
-  // else if (keyword == allowedKeywords[5])
-  //   setNMatsubara(stoi(value));
-  // else if (keyword == allowedKeywords[6])
-  //   setNIter(stoi(value));
-  // else
-  //   throw runtime_error("Unknown keyword: " + keyword);
+  map<string, function<void(cString &)>> funcArr;
+  funcArr["mixing"] = [this](cString &s1) {this->setMixingParameter(s1);};
+  funcArr["error"] = [this](cString &s1) {this->setErrMin(s1);};
+  funcArr["waveVectorResolution"] = [this](cString &s1) {this->setWaveVectorGridRes(s1);};
+  funcArr["waveVectorCutoff"] = [this](cString &s1) {this->setWaveVectorGridCutoff(s1);};
+  funcArr["chemicalPotential"] = [this](cString &s1) {this->setChemicalPotentialGuess(s1);};
+  funcArr["matsubara"] = [this](cString &s1) {this->setNMatsubara(s1);};
+  funcArr["iterations"] = [this](cString &s1) {this->setNIter(s1);};
+  try{
+    matchKeyAndData(keyword, value, funcArr);
+  }
+  catch (const runtime_error& err) {
+    cerr << err.what() << endl;
+  }
+}
+
+void StaticInput::print(){
+  cout << "static.mixing = " << aMix << endl;
+  cout << "static.error = " << errMin << endl;
+  cout << "static.waveVectorResolution = " << dx << endl;
+  cout << "static.waveVectorCutoff = " << xmax << endl;
+  cout << "static.chemicalPotential = " << muGuess.at(0) << "," << muGuess.at(1) << endl;
+  cout << "static.matsubara = " << nl << endl;
+  cout << "static.iterations = " << nIter << endl;
 }
 
 // --- StlsInput ---
@@ -279,12 +263,36 @@ string StlsInput::getRestartFileName(){
   return restartFileName;
 }
 
-void StlsInput::setIETMapping(string IETMapping){
+void StlsInput::setIETMapping(cString &IETMapping){
+  if (IETMapping != "standard" &&
+      IETMapping != "sqrt" &&
+      IETMapping != "linear") {
+    throw runtime_error("Unknown IET mapping" + IETMapping);
+  }
   this->IETMapping = IETMapping;
 }
 
-void StlsInput::setRestartFileName(string restartFileName){
+void StlsInput::setRestartFileName(cString &restartFileName){
+  if (restartFileName == NO_FILE_NAME) {
+    throw runtime_error("Restart file name " + restartFileName + "is not allowed");
+  }
   this->restartFileName = restartFileName;
 } 
   
- 
+void StlsInput::assignInputToData(const string &keyword, const string &value){
+  map<string, function<void(cString &)>> funcArr;
+  funcArr["iet"] = [this](cString &s1) {this->setIETMapping(s1);};
+  funcArr["restart"] = [this](cString &s1) {this->setRestartFileName(s1);};
+  try{
+    matchKeyAndData(keyword, value, funcArr);
+  }
+  catch (const runtime_error& err) {
+    cerr << err.what() << endl;
+  }
+} 
+
+void StlsInput::print(){
+  string outputName = (restartFileName == NO_FILE_NAME) ? "" : restartFileName;
+  cout << "stls.iet = " << IETMapping << endl;
+  cout << "stls.restart = " << outputName  << endl;
+}
