@@ -14,18 +14,6 @@ Input::Input(){
   stls = make_shared<StlsInput>();
 }
 
-string Input::getTheory(){
-  return theory;
-}
-
-double Input::getDegeneracy(){
-  return Theta;
-}
-
-double Input::getCoupling(){
-  return rs;
-}
-
 void Input::setTheory(cString &theory){
   if (theory != "stls") {
     throw runtime_error("Unknown theory: " + theory);
@@ -117,12 +105,14 @@ void Input::assignInputToStlsData(cString &keyword, cString &value){
 }
 
 void Input::print(){
+  cout << "----- Content of the input data structure ----" << endl;
   cout << "base.theory = " << theory << endl;
   cout << "base.degeneracy = " << Theta << endl;
   cout << "base.coupling = " << rs << endl;
   cout << "base.threads = " << nThreads << endl;
   stat->print();
   stls->print();
+  cout << "----------------------------------------------" << endl;
 }
 
 // --- StaticInput ---
@@ -136,34 +126,6 @@ StaticInput::StaticInput(){
   muGuess.assign(muGuessDefault.begin(), muGuessDefault.end());
   nl = 128;
   nIter = 1000;
-}
-
-double StaticInput::getMixingParameter(){
-  return aMix;
-}
-
-double StaticInput::getErrMin(){
-  return errMin;
-}
-
-double StaticInput::getWaveVectorGridRes(){
-  return dx;
-}
-
-double StaticInput::getWaveVectorGridCutoff(){
-  return xmax;
-}
- 
-vector<double> StaticInput::getChemicalPotentialGuess(){
-  return muGuess;
-}
-
-size_t StaticInput::getNMatsubara(){
-  return nl;
-}
-
-size_t StaticInput::getNIter(){
-  return nIter;
 }
 
 void StaticInput::setMixingParameter(cString &aMix){
@@ -253,14 +215,6 @@ void StaticInput::print(){
 StlsInput::StlsInput(){
   IETMapping = "standard";
   restartFileName = NO_FILE_NAME;
-}
-
-string StlsInput::getIETMapping(){
-  return IETMapping;
-}
-
-string StlsInput::getRestartFileName(){
-  return restartFileName;
 }
 
 void StlsInput::setIETMapping(cString &IETMapping){

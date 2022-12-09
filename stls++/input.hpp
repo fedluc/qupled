@@ -58,11 +58,11 @@ public:
   //Constructor
   Input();
   // Getters
-  string getTheory();
-  double getDegeneracy();
-  double getCoupling();
-  StaticInput getStatic();
-  StlsInput getStsl();
+  string getTheory() { return theory; };
+  double getDegeneracy() {return Theta; };
+  double getCoupling() { return rs; };
+  shared_ptr<StaticInput> getStaticInput() { return stat; };
+  shared_ptr<StlsInput> getStlsInput() { return stls; };
   // Read input file
   void readInput(cString &fileName);
   void print();
@@ -107,13 +107,13 @@ public:
   //Constructor
   StaticInput();
   // Getters
-  double getMixingParameter();
-  double getErrMin();
-  double getWaveVectorGridRes();
-  double getWaveVectorGridCutoff();
-  vector<double> getChemicalPotentialGuess();
-  size_t getNMatsubara();
-  size_t getNIter();
+  double getMixingParameter() { return aMix; };
+  double getErrMin() { return errMin; };
+  double getWaveVectorGridRes() { return dx; };
+  double getWaveVectorGridCutoff() { return xmax; };
+  vector<double> getChemicalPotentialGuess() { return muGuess; };
+  size_t getNMatsubara() { return nl; };
+  size_t getNIter() { return nIter; };
   
 };
 
@@ -140,8 +140,8 @@ public:
   //Constructor
   StlsInput();
   // Getters
-  string getIETMapping();
-  string getRestartFileName();
+  string getIETMapping() { return IETMapping; };
+  string getRestartFileName() { return restartFileName; };
 
 
 };
