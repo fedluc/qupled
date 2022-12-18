@@ -18,3 +18,15 @@ void RootSolver::solve(const function<double(double)> func,
     iter++;
   } while (status == GSL_CONTINUE && iter < maxIter);
 }
+
+void Integrator1D::compute(const function<double(double)> func,
+			   const double xMin, double xMax){
+  // Set up function
+  GslFunctionWrap<decltype(func)> Fp(func);
+  F = static_cast<gsl_function*>(&Fp);
+  // Integrate
+  gsl_integration_cquad(F, xMin, xMax, 
+			0.0, relErr, 
+			wsp, &sol,
+			&err, &nEvals);
+}

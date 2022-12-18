@@ -3,7 +3,7 @@
 #include "chemicalpotential.hpp"
 #include "numerics.hpp"
 
-void ChemicalPotential::compute(const vector<double> &guess){
+void ChemicalPotential::compute(cVector<double> &guess){
   auto func = [this](double mu)->double{return normalizationCondition(mu);};
   RootSolver rs;
   rs.solve(func, guess);

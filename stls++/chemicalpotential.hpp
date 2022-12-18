@@ -5,8 +5,10 @@
 #include <iostream>
 #include <gsl/gsl_roots.h>
 #include "numerics.hpp"
+#include "inpututil.hpp"
 
 using namespace std;
+using namespace inpututil;
 
 class ChemicalPotential {
 
@@ -19,7 +21,7 @@ private:
 public:
 
   ChemicalPotential(double Theta_) : Theta(Theta_) {};
-  void compute(const vector<double> &guess);
+  void compute(cVector<double> &guess);
   double get() {return mu;};
   
 };

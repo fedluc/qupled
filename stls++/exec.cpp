@@ -1,7 +1,7 @@
 #include <omp.h>
 #include <iostream>
 #include "input.hpp"
-#include "chemicalpotential.hpp"
+#include "stls.hpp"
 
 int main(int argc, char** argv) {
 
@@ -19,11 +19,8 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  // Compute chemical potential
-  shared_ptr<StaticInput> statIn = in.getStaticInput();
-  vector<double> guess = statIn->getChemicalPotentialGuess();
-  ChemicalPotential mu(in.getDegeneracy());
-  mu.compute(guess);
-  cout << "Chemical potential = " << mu.get() << endl;
+  // Compute slts scheme
+  Stls stls(in);
+  stls.compute();
   return 0;
 }
