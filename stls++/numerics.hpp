@@ -5,6 +5,7 @@
 #include <iostream>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_integration.h>
+#include <gsl/gsl_spline.h>
 
 using namespace std;
 
@@ -28,7 +29,7 @@ public:
   
 };
 
-// Root solvers
+// Root solver
 class RootSolver {
 
 private:
@@ -63,7 +64,7 @@ public:
 };
 
 
-// Root solvers
+// Integrator for 1D integrals
 class Integrator1D {
 
 private:
@@ -95,6 +96,43 @@ public:
 	       const double xMin,
 	       const double xMax);
   double getSolution() { return sol; };
+  
+};
+
+
+// Data interpolator
+class Interpolator {
+
+private:
+
+  // Data to interpolate
+  const vector<double> xData;
+  const vector<double> yData;
+  // Spline
+  gsl_spline *spline;
+  // Accelerator
+  gsl_interp_accel *acc;
+  
+  
+public:
+
+  // Constructor
+  Interpolator(vector<double> xData_, vector<double> yData_)
+    : xData(xData_), yData(yData_) {
+    assert(xData.size() == yData.size());
+    spline = gsl_spline_alloc(gsl_interp_cspline, xData.size());
+    acc = gsl_interp_accel_alloc();
+    gsl_spline_init(spline, &xData[0], &yData[0], xData.size());
+  };
+  // Destructor
+  ~Interpolator(){
+    gsl_spline_free(spline);
+    gsl_interp_accel_free(acc);
+  }
+  // Evaluate
+  double eval(double x){
+    return gsl_spline_eval(spline, x, acc);
+  }
   
 };
 
