@@ -2,6 +2,7 @@
 #define NUMERICS_HPP
 
 #include <vector>
+#include <numeric>
 #include <iostream>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_integration.h>
@@ -130,10 +131,28 @@ public:
     gsl_interp_accel_free(acc);
   }
   // Evaluate
-  double eval(double x){
+  double eval(double x) const {
     return gsl_spline_eval(spline, x, acc);
-  }
+  };
   
 };
+
+// Util functions to manipulate vector
+namespace vecUtil {
+
+  // Element-wise sum between two vectors
+  vector<double> sum(const vector<double> &v1,
+		     const vector<double> &v2);
+  // Element-wise difference between two vectors
+  vector<double> diff(const vector<double> &v1,
+		      const vector<double> &v2);
+  // Root mean square difference between two vectors
+  double rms(const vector<double> &v1,
+	     const vector<double> &v2,
+	     const bool normalize);
+  // Element-wise multiplication of a vector and a scalar
+  vector<double> mult(const vector<double> &v,
+		      const double a);
+}
 
 #endif

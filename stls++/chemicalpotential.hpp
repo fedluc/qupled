@@ -3,8 +3,6 @@
 
 #include <vector>
 #include <iostream>
-#include <gsl/gsl_roots.h>
-#include "numerics.hpp"
 #include "inpututil.hpp"
 
 using namespace std;
