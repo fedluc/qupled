@@ -5,9 +5,13 @@
 
 void ChemicalPotential::compute(cVector<double> &guess){
   auto func = [this](double mu)->double{return normalizationCondition(mu);};
-  RootSolver rs;
-  rs.solve(func, guess);
-  mu = rs.getSolution();
+  RootSolver rsol;
+  rsol.solve(func, guess);
+  if (!rsol.success()) {
+    throw runtime_error("Chemical potential: the root solver "
+			"did not converge to the desired accuracy.");
+  }
+  mu = rsol.getSolution();
 }
 
 double  ChemicalPotential::normalizationCondition(double mu){

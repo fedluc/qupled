@@ -1,4 +1,3 @@
-#include <gsl/gsl_errno.h>
 #include "numerics.hpp"
 
 // Run root solver

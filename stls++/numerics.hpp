@@ -4,6 +4,7 @@
 #include <vector>
 #include <numeric>
 #include <iostream>
+#include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_spline.h>
@@ -60,7 +61,8 @@ public:
     relErr(relErr_), maxIter(maxIter_) {;};
   void solve(const function<double(double)> func,
 	     const vector<double> guess);
-  double getSolution() { return sol; };
+  bool success() const { return status == GSL_SUCCESS; };
+  double getSolution() const { return sol; };
   
 };
 

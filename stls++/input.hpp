@@ -58,14 +58,14 @@ public:
   //Constructor
   Input();
   // Getters
-  string getTheory() { return theory; };
-  double getDegeneracy() {return Theta; };
-  double getCoupling() { return rs; };
-  shared_ptr<StaticInput> getStaticInput() { return stat; };
-  shared_ptr<StlsInput> getStlsInput() { return stls; };
+  string getTheory() const { return theory; };
+  double getDegeneracy() const {return Theta; };
+  double getCoupling() const { return rs; };
+  shared_ptr<StaticInput> getStaticInput() const { return stat; };
+  shared_ptr<StlsInput> getStlsInput() const { return stls; };
   // Read input file
   void readInput(cString &fileName);
-  void print();
+  void print() const;
   
 };
 
@@ -98,7 +98,7 @@ private:
   // Helper methods to read the input file
   void assignInputToData(const string &keyword, const string &value);
   // Print content of the data structure
-  void print();
+  void print() const;
   // Friends
   friend class Input;
   
@@ -107,13 +107,13 @@ public:
   //Constructor
   StaticInput();
   // Getters
-  double getMixingParameter() { return aMix; };
-  double getErrMin() { return errMin; };
-  double getWaveVectorGridRes() { return dx; };
-  double getWaveVectorGridCutoff() { return xmax; };
-  vector<double> getChemicalPotentialGuess() { return muGuess; };
-  size_t getNMatsubara() { return nl; };
-  size_t getNIter() { return nIter; };
+  double getMixingParameter() const { return aMix; };
+  double getErrMin() const { return errMin; };
+  double getWaveVectorGridRes() const { return dx; };
+  double getWaveVectorGridCutoff() const { return xmax; };
+  vector<double> getChemicalPotentialGuess() const { return muGuess; };
+  size_t getNMatsubara() const { return nl; };
+  size_t getNIter() const { return nIter; };
   
 };
 
@@ -131,7 +131,7 @@ private:
   // Helper methods to read the input file
   void assignInputToData(const string &keyword, const string &value);
   // Print content of the data structure
-  void print();
+  void print() const ;
   // Friends
   friend class Input;
   
@@ -140,8 +140,8 @@ public:
   //Constructor
   StlsInput();
   // Getters
-  string getIETMapping() { return IETMapping; };
-  string getRestartFileName() { return restartFileName; };
+  string getIETMapping() const { return IETMapping; };
+  string getRestartFileName() const { return restartFileName; };
 
 
 };

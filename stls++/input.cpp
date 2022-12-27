@@ -44,16 +44,14 @@ void Input::setThreads(cString  &nThreads){
 
 void Input::readInput(cString &fileName){
   ifstream file(fileName);
-  if (file.is_open()) {
-    string line;
-    while (getline(file, line)) {
-      parseInputLine(line);
-    }
-    file.close();
+  if (!file.is_open()) {
+    throw runtime_error("Input file " + fileName + " could not be opened.");
   }
-  else {
-    throw runtime_error("Input file " + fileName + " could not be opened.");    
-  }   
+  string line;
+  while (getline(file, line)) {
+    parseInputLine(line);
+  }
+  file.close();
 }
 
 void Input::parseInputLine(cString &line){
@@ -104,7 +102,7 @@ void Input::assignInputToStlsData(cString &keyword, cString &value){
   stls->assignInputToData(keyword, value);
 }
 
-void Input::print(){
+void Input::print() const {
   cout << "----- Content of the input data structure ----" << endl;
   cout << "base.theory = " << theory << endl;
   cout << "base.degeneracy = " << Theta << endl;
@@ -200,7 +198,7 @@ void StaticInput::assignInputToData(const string &keyword, const string &value){
   }
 }
 
-void StaticInput::print(){
+void StaticInput::print() const {
   cout << "static.mixing = " << aMix << endl;
   cout << "static.error = " << errMin << endl;
   cout << "static.waveVectorResolution = " << dx << endl;
@@ -245,7 +243,7 @@ void StlsInput::assignInputToData(const string &keyword, const string &value){
   }
 } 
 
-void StlsInput::print(){
+void StlsInput::print() const {
   string outputName = (restartFileName == NO_FILE_NAME) ? "" : restartFileName;
   cout << "stls.iet = " << IETMapping << endl;
   cout << "stls.restart = " << outputName  << endl;

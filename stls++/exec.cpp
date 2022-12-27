@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     in.print();
   }
   catch (const runtime_error& err) {
-    cout << err.what() << endl;
+    cerr << err.what() << endl;
     return 1;
   }
 
