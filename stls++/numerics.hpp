@@ -2,7 +2,6 @@
 #define NUMERICS_HPP
 
 #include <vector>
-#include <numeric>
 #include <iostream>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
@@ -103,6 +102,51 @@ public:
 };
 
 
+// Integrator for 1D integrals of Fourier type
+class Integrator1DFourier {
+
+private:
+
+  // Function to integrate
+  gsl_function *F;
+  // Integration workspace limit
+  const size_t limit = 1000;
+  // Integration workspace
+  gsl_integration_workspace *wsp
+  = gsl_integration_workspace_alloc(limit);
+  gsl_integration_workspace *wspc
+  = gsl_integration_workspace_alloc(limit);
+  gsl_integration_qawo_table *qtab
+  = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, limit);
+  // Spatial position
+  double r;
+  // Accuracy
+  const double relErr = 1e-5;
+  // Residual error
+  double err;
+  // Solution
+  double sol;
+  
+public:
+
+  // Constructors
+  Integrator1DFourier(const double r_) : r(r_) {;};
+  Integrator1DFourier(const double r_, const double relErr_)
+    : r(r_), relErr(relErr_) {;};
+  // Set spatial position (to re-use the integrator for different r)
+  void setR(const double r_) {r = r_;};
+  // Destructor
+  ~Integrator1DFourier(){
+    gsl_integration_workspace_free(wsp);
+    gsl_integration_workspace_free(wspc); 
+    gsl_integration_qawo_table_free(qtab);
+  }
+  void compute(const function<double(double)> func);
+  double getSolution() { return sol; };
+  
+};
+
+
 // Data interpolator
 class Interpolator {
 
@@ -139,22 +183,6 @@ public:
   
 };
 
-// Util functions to manipulate vector
-namespace vecUtil {
 
-  // Element-wise sum between two vectors
-  vector<double> sum(const vector<double> &v1,
-		     const vector<double> &v2);
-  // Element-wise difference between two vectors
-  vector<double> diff(const vector<double> &v1,
-		      const vector<double> &v2);
-  // Root mean square difference between two vectors
-  double rms(const vector<double> &v1,
-	     const vector<double> &v2,
-	     const bool normalize);
-  // Element-wise multiplication of a vector and a scalar
-  vector<double> mult(const vector<double> &v,
-		      const double a);
-}
 
 #endif

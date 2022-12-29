@@ -31,6 +31,8 @@ private:
   // Chemical potential
   double mu;
   bool computedChemicalPotential;
+  // Constant for unit conversion
+  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // Construct wave vector grid
   void buildWvGrid();
   // Compute chemical potential
@@ -52,6 +54,15 @@ private:
   void initialGuess();
   double computeError();
   void updateSolution();
+  // Write output files
+  void writeOutput();
+  void writeSsf();
+  void writeSsfHF();
+  void writeSlfc();
+  void writeSdr();
+  void writeIdr();
+  void writeRdf();
+  void writeUInt();
 
 public:
 

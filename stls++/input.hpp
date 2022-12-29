@@ -6,7 +6,7 @@
 #include <iostream>
 #include <map>
 #include <functional>
-#include "inpututil.hpp"
+#include "util.hpp"
 
 using namespace std;
 using namespace inpututil;

@@ -1,8 +1,11 @@
 #include <omp.h>
+#include <fstream>
 #include "stls.hpp"
 #include "chemicalpotential.hpp"
 
 using namespace vecUtil;
+using namespace stringUtil;
+using namespace thermoUtil;
 
 // -----------------------------------------------------------------
 // STLS class
@@ -14,6 +17,7 @@ void Stls::compute(){
   computeIdr();
   computeSsfHF();
   doIterations();
+  writeOutput();
 }
 
 // Set up wave-vector grid
@@ -24,6 +28,7 @@ void Stls::buildWvGrid(){
   const double dx = inStat->getWaveVectorGridRes();
   const double xmax = inStat->getWaveVectorGridCutoff();
   while(wvg.back() < xmax){
+    cout << wvg.back() + dx << endl;
     wvg.push_back(wvg.back() + dx);
   }
   cout << "Done" << endl;
@@ -195,6 +200,161 @@ void Stls::updateSolution(){
   const shared_ptr<StaticInput> &statIn = in.getStaticInput();
   const double aMix = statIn->getMixingParameter();
   slfcOld = sum(mult(slfc, aMix), mult(slfcOld, 1 - aMix));
+}
+
+// Write output files
+void Stls::writeOutput(){
+  cout << "Writing output files: ";
+  writeSsf();
+  writeSsfHF();
+  writeSlfc();
+  writeSdr();
+  writeIdr();
+  writeUInt();
+  writeRdf();
+  cout << "Done" << endl;
+}
+
+void Stls::writeSsf(){
+  const string fileName = format<double,double>("ssf_rs%.3f_theta%.3f"
+						+ in.getTheory() + ".dat",
+						in.getCoupling(),
+						in.getDegeneracy());
+  ofstream file;
+  file.open(fileName);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be created.");
+  }
+  for (int i=0; i<wvg.size(); ++i){
+    const string line = format<double, double>("%.8e %.8e", wvg[i], ssf[i]);
+    file << line << endl;
+  }
+  file.close();
+}
+
+void Stls::writeSsfHF(){
+  const string fileName = format<double,double>("ssfHF_rs%.3f_theta%.3f"
+						+ in.getTheory() + ".dat",
+						in.getCoupling(),
+						in.getDegeneracy());
+  ofstream file;
+  file.open(fileName);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be created.");
+  }
+  for (int i=0; i<wvg.size(); ++i){
+    const string line = format<double, double>("%.8e %.8e", wvg[i], ssfHF[i]);
+    file << line << endl;
+  }
+  file.close();
+}
+
+
+void Stls::writeSlfc(){
+  const string fileName = format<double,double>("slfc_rs%.3f_theta%.3f"
+						+ in.getTheory() + ".dat",
+						in.getCoupling(),
+						in.getDegeneracy());
+  ofstream file;
+  file.open(fileName);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be created.");
+  }
+  for (int i=0; i<wvg.size(); ++i){
+    const string line = format<double, double>("%.8e %.8e", wvg[i], slfc[i]);
+    file << line << endl;
+  }
+  file.close();
+}
+
+void Stls::writeSdr(){
+  if (in.getDegeneracy() == 0.0) return;
+  const string fileName = format<double,double>("sdr_rs%.3f_theta%.3f"
+						+ in.getTheory() + ".dat",
+						in.getCoupling(),
+						in.getDegeneracy());
+  ofstream file;
+  file.open(fileName);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be created.");
+  }
+  const double fact = 4 *lambda * in.getCoupling() /M_PI;
+  for (int i=0; i<wvg.size(); ++i){
+    const double sdr = -1.5 *in.getDegeneracy() * idr[i][0]/
+      (1.0 + fact/(wvg[i] * wvg[i]) * (1.0 - slfc[i]) * idr[i][0]);
+    const string line = format<double, double>("%.8e %.8e", wvg[i], sdr);
+    file << line << endl;
+  }
+  file.close();
+}
+
+void Stls::writeIdr(){
+   if (in.getDegeneracy() == 0.0) return;
+  const string fileName = format<double,double>("idr_rs%.3f_theta%.3f"
+						+ in.getTheory() + ".dat",
+						in.getCoupling(),
+						in.getDegeneracy());
+  ofstream file;
+  file.open(fileName);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be created.");
+  }
+  for (int i=0; i<idr.size(); ++i){
+    const string el1 = format<double>("%.8e", wvg[i]);
+    file << el1;
+    for (int l=0; l<idr[i].size(); ++l) {
+      const string el2 = format<double>("%.8e ", idr[i][l]);
+      file << el2;
+    }
+    file << endl;
+  }
+  file.close();
+}
+
+void Stls::writeUInt(){
+  const string fileName = format<double,double>("uint_rs%.3f_theta%.3f"
+						+ in.getTheory() + ".dat",
+						in.getCoupling(),
+						in.getDegeneracy());
+  ofstream file;
+  file.open(fileName);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be created.");
+  }
+  const shared_ptr<Interpolator> itp = make_shared<Interpolator>(wvg,ssf);
+  const InternalEnergy uInt = InternalEnergy(in.getCoupling(),
+					     wvg.front(),
+					     wvg.back(),
+					     itg, itp);
+  const string line = format<double, double>("%.8e %.8e %.8e",
+					     in.getCoupling(),
+					     in.getDegeneracy(),
+					     uInt.get());
+  file << line << endl;
+  file.close();
+}
+
+void Stls::writeRdf(){
+  const string fileName = format<double,double>("rdf_rs%.3f_theta%.3f"
+						+ in.getTheory() + ".dat",
+						in.getCoupling(),
+						in.getDegeneracy());
+  ofstream file;
+  file.open(fileName);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be created.");
+  }
+  const double dr = in.getStaticInput()->getWaveVectorGridRes();
+  const double r0 = dr/10; // Avoid starting from 0 to avoid divergence
+  const shared_ptr<Interpolator> itp = make_shared<Interpolator>(wvg,ssf);
+  const shared_ptr<Integrator1DFourier> itgF = make_shared<Integrator1DFourier>(r0);
+  for (int i=0; i<wvg.size()-1; ++i){
+    const double r = r0 + i*dr;
+    const Rdf rdf(r, wvg.back(), itgF, itp);
+    const string line = format<double, double>("%.8e %.8e", r, rdf.get());
+    file << line << endl;
+  }
+  file.close();
 }
 
 // -----------------------------------------------------------------

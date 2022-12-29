@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <iostream>
-#include "inpututil.hpp"
+#include "util.hpp"
 
 using namespace std;
 using namespace inpututil;
