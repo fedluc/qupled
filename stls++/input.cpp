@@ -6,7 +6,7 @@
 // --- Input ---
  
 Input::Input(){
-  theory = "stls";
+  theory = "STLS";
   Theta = 1.0;
   rs = 1.0;
   nThreads = 1;
@@ -15,7 +15,10 @@ Input::Input(){
 }
 
 void Input::setTheory(cString &theory){
-  if (theory != "stls") {
+  if (theory != "STLS" &&
+      theory != "STLS-HNC" &&
+      theory != "STLS-IOI" &&
+      theory != "STLS-LCT") {
     throw runtime_error("Unknown theory: " + theory);
   }
   this->theory = theory;

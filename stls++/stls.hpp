@@ -8,7 +8,7 @@
 using namespace std;
 
 class Stls {
-
+  
 private: 
 
   // Wave vector grid
@@ -31,6 +31,10 @@ private:
   // Chemical potential
   double mu;
   bool computedChemicalPotential;
+  // iet schemes
+  bool useIet;
+  // Bridge function (for iet schemes)
+  vector<double> bf;
   // Constant for unit conversion
   const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // Construct wave vector grid
@@ -49,6 +53,10 @@ private:
   void computeSsfGround();
   // Compute static local field correction
   void computeSlfc();
+  void computeSlfcStls();
+  void computeSlfcIet();
+  // Compute bridge function
+  void computeBf();
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
@@ -68,7 +76,10 @@ public:
 
   // Constructors
   Stls(const Input in_)
-    : in(in_), verbose(true), computedChemicalPotential(false) {;};
+    : in(in_), verbose(true), computedChemicalPotential(false) {
+      useIet = in.getTheory() == "STLS-HNC" ||
+	       in.getTheory() == "STLS-IOI" ||
+	       in.getTheory() == "STLS-LCT";};
   Stls(const Input in_, const bool verbose_)
     : in(in_), verbose(verbose_), computedChemicalPotential(false) {;};
   // Compute stls scheme
@@ -235,7 +246,7 @@ public:
 // Class for the static local field correction
 class Slfc {
 
-private:
+protected:
   
   // Wave-vector
   const double x = 0;
@@ -245,11 +256,11 @@ private:
   // Integrator object
   const shared_ptr<Integrator1D> itg;
   // Integrand
-  double integrand(const double y);
+  double integrand(const double y) const;
   // Static structure factor interpolator
   const shared_ptr<Interpolator> ssfi;
   // Compute static structure factor
-  double ssf(double x_);
+  double ssf(double x_) const;
   
 public:
 
@@ -262,8 +273,98 @@ public:
     : x(x_), yMin(yMin_), yMax(yMax_),
       itg(itg_), ssfi(ssfi_) {;};
   // Get result of integration 
-  double get();
+  double get() const;
   
 };
+
+// Class for the bridge function
+class BridgeFunction {
+
+public:
+
+  typedef struct {
+    string type;
+    string mapping;
+    double rs;
+    double Theta;
+  } bfData;
+
+private:
+
+  // Theory to be solved
+  const string theory;
+  // Iet mapping
+  const string mapping;
+  // Coupling parameter
+  const double rs;
+  // Degeneracy parameter
+  const double Theta;
+  // Wave vector
+  const double x;
+  // Integrator object
+  const shared_ptr<Integrator1DFourier> itg;
+  // Constant for unit conversion
+  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  // Hypernetted-chain bridge function
+  double hnc() const ;
+  // Ichimaru bridge function
+  double ioi() const;
+  // Lucco Castello and Tolias bridge function
+  double lct() const;
+  double lctIntegrand(const double r, const double Gamma) const;
+  // Coupling parameter to compute the bridge function
+  double couplingParameter() const;
+
+public:
+
+  // Constructor
+  BridgeFunction(const string theory_, const string mapping_,
+		 const double rs_, const double Theta_,
+		 const double x_, const shared_ptr<Integrator1DFourier> &itg_)
+    : theory(theory_), mapping(mapping_), rs(rs_), Theta(Theta_),
+      x(x_), itg(itg_) {;};
+  // getter
+  double get() const;
+  
+};
+
+// Class for the static local field correction for the iet schemes
+class SlfcIet : public Slfc {
+
+private:
+  
+  // Integrator object
+  const shared_ptr<Integrator1D> itg2;
+  // Integrands
+  double integrand(const double y) const;
+  double integrand2(const double w,
+		    const double y) const;
+  // Static local field correction interpolator
+  const shared_ptr<Interpolator> slfci;
+  // Bridge function interpolator
+  const shared_ptr<Interpolator> bfi;
+  // Compute static local field correction
+  double slfc(double x_) const;
+  // Compute bridge function
+  double bf(double x_) const;
+  
+public:
+
+  // Constructor
+  SlfcIet(const double x_,
+	  const double yMin_,
+	  const double yMax_,
+	  const shared_ptr<Integrator1D> &itg_,
+	  const shared_ptr<Interpolator> &ssfi_,
+	  const shared_ptr<Integrator1D> &itg2_,
+	  const shared_ptr<Interpolator> &slfci_,
+	  const shared_ptr<Interpolator> &bfi_)
+    : Slfc(x_, yMin_, yMax_, itg_, ssfi_),
+      itg2(itg2_), slfci(slfci_), bfi(bfi_) {;};
+  // Get result of integration 
+  double get() const;
+
+};
+
 
 #endif

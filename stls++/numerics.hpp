@@ -120,7 +120,6 @@ private:
   = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, limit);
   // Spatial position
   double r;
-  // Accuracy
   const double relErr = 1e-5;
   // Residual error
   double err;
@@ -145,7 +144,6 @@ public:
   double getSolution() { return sol; };
   
 };
-
 
 // Data interpolator
 class Interpolator {

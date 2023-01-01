@@ -21,7 +21,8 @@ void RootSolver::solve(const function<double(double)> func,
 
 // Compute 1D integrals 
 void Integrator1D::compute(const function<double(double)> func,
-			   const double xMin, double xMax){
+			   const double xMin,
+			   const double xMax){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
@@ -44,5 +45,3 @@ void Integrator1DFourier::compute(const function<double(double)> func){
 		       limit, wsp, wspc,
 		       qtab, &sol, &err);
 }
-
-
