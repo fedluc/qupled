@@ -127,6 +127,7 @@ StaticInput::StaticInput(){
   muGuess.assign(muGuessDefault.begin(), muGuessDefault.end());
   nl = 128;
   nIter = 1000;
+  outIter = 10;
 }
 
 void StaticInput::setMixingParameter(cString &aMix){
@@ -184,6 +185,13 @@ void StaticInput::setNIter(cString &nIter){
   this->nIter = stoi(nIter); 
 }
 
+void StaticInput::setOutIter(cString &outIter){
+  if (isNegative<int>(outIter)) {
+    throw runtime_error("The output frequency can't be negative");
+  }
+  this->outIter = stoi(outIter); 
+}
+
 void StaticInput::assignInputToData(const string &keyword, const string &value){
   map<string, function<void(cString &)>> funcArr;
   funcArr["mixing"] = [this](cString &s1) {this->setMixingParameter(s1);};
@@ -193,6 +201,7 @@ void StaticInput::assignInputToData(const string &keyword, const string &value){
   funcArr["chemicalPotential"] = [this](cString &s1) {this->setChemicalPotentialGuess(s1);};
   funcArr["matsubara"] = [this](cString &s1) {this->setNMatsubara(s1);};
   funcArr["iterations"] = [this](cString &s1) {this->setNIter(s1);};
+  funcArr["outputFrequency"] = [this](cString &s1) {this->setOutIter(s1);};
   try{
     matchKeyAndData(keyword, value, funcArr);
   }
@@ -209,6 +218,7 @@ void StaticInput::print() const {
   cout << "static.chemicalPotential = " << muGuess.at(0) << "," << muGuess.at(1) << endl;
   cout << "static.matsubara = " << nl << endl;
   cout << "static.iterations = " << nIter << endl;
+  cout << "static.outputFrequency = " << outIter << endl;
 }
 
 // --- StlsInput ---

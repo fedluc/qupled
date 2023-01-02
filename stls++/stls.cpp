@@ -151,14 +151,14 @@ void Stls::computeSlfcStls() {
 }
 
 void Stls::computeSlfcIet() {
-   const shared_ptr<Integrator1D> itg2 = make_shared<Integrator1D>();
+   const shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>();
    const shared_ptr<Interpolator> ssfItp = make_shared<Interpolator>(wvg,ssf);
    const shared_ptr<Interpolator> slfcItp = make_shared<Interpolator>(wvg,slfcOld);
    if (bf.size() == 0) computeBf();
    const shared_ptr<Interpolator> bfItp = make_shared<Interpolator>(wvg,bf);
    for (int i=0; i<wvg.size(); ++i){
      SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),
-		     itg, ssfItp, itg2, slfcItp, bfItp);
+		     itg2, ssfItp, slfcItp, bfItp);
      slfc[i] += slfcTmp.get();
    }
 }
@@ -181,19 +181,22 @@ void Stls::computeBf() {
 void Stls::doIterations() {
   const shared_ptr<StaticInput> &statIn = in.getStaticInput();
   const int maxIter = statIn->getNIter();
+  const int outIter = statIn->getOutIter();
   const double minErr = statIn->getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess
   initialGuess();
   if (verbose) cout << "Structural properties calculation..." << endl;
-  while (counter < maxIter && err > minErr ) {
+  while (counter < maxIter+1 && err > minErr ) {
     // Start timing
     double tic = omp_get_wtime();
     // Update SSF
     computeSsf();
     // Update SLFC
     computeSlfc();
+    // Write output
+    if (counter % outIter) { writeOutput();};
     // Update diagnostic
     counter++;
     err = computeError();
@@ -206,7 +209,7 @@ void Stls::doIterations() {
        printf("Elapsed time: %f seconds\n", toc - tic);
        printf("Residual error: %.5e\n", err);
        fflush(stdout);
-     }
+    }
   }
   if (verbose) cout << "Done" << endl;
 }
@@ -216,8 +219,20 @@ void Stls::initialGuess() {
   const int nx = wvg.size();
   slfcOld.resize(nx);
   slfc.resize(nx);
+  if (in.getStlsInput()->getRestartFileName() != "") {
+    vector<double> wvgFile;
+    vector<double> slfcFile;
+    readRestart(wvgFile, slfcFile);
+    const Interpolator slfci(wvgFile, slfcFile);
+    const double xmaxi = wvgFile.back();
+    for (int i=0; i<wvg.size(); ++i) {
+      const double x = wvg[i];
+      if (x <= xmaxi) { slfcOld[i] = slfci.eval(x);}
+      else { slfcOld[i] = 1.0; }
+    }
+    return;
+  }
   fill(slfcOld.begin(), slfcOld.end(), 0.0);
-  fill(slfc.begin(), slfc.end(), 1.0);
 }
 
 // Compute residual error for the stls iterations
@@ -242,6 +257,8 @@ void Stls::writeOutput(){
   writeIdr();
   writeUInt();
   writeRdf();
+  if (useIet) writeBf();
+  writeRestart();
   cout << "Done" << endl;
 }
 
@@ -385,6 +402,69 @@ void Stls::writeRdf(){
     file << line << endl;
   }
   file.close();
+}
+
+void Stls::writeBf(){
+  const string fileName = format<double,double>("bf_rs%.3f_theta%.3f_"
+						+ in.getTheory() + ".dat",
+						in.getCoupling(),
+						in.getDegeneracy());
+  ofstream file;
+  file.open(fileName);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be created.");
+  }
+  for (int i=0; i<wvg.size(); ++i){
+    const string line = format<double, double>("%.8e %.8e", wvg[i], bf[i]);
+    file << line << endl;
+  }
+  file.close();
+}
+
+
+// Restart files
+void Stls::writeRestart(){
+  const string fileName = format<double,double>("restart_rs%.3f_theta%.3f_"
+						+ in.getTheory() + ".bin",
+						in.getCoupling(),
+						in.getDegeneracy());
+  ofstream file;
+  file.open(fileName, ios::binary);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be created.");
+  }
+  int nx = wvg.size();
+  file.write(reinterpret_cast<char*>(&nx), sizeof(nx));
+  writeVectorToRestart(file, wvg);
+  writeVectorToRestart(file, slfc);
+  file.close();
+}
+
+void Stls::writeVectorToRestart(ofstream &file, vector<double> &vec) {
+  for (double &el : vec) {
+    file.write(reinterpret_cast<char*>(&el), sizeof(el));
+  }
+}
+
+void Stls::readRestart(vector<double> &wvgFile, vector<double> &slfcFile){
+  const string fileName = in.getStlsInput()->getRestartFileName();
+  ifstream file;
+  file.open(fileName, ios::binary);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be opened.");
+  }
+  int nx;
+  file.read((char*)&nx, sizeof(int));
+  readVectorFromRestart(file, wvgFile, nx);
+  readVectorFromRestart(file, slfcFile, nx);
+  file.close();
+}
+
+void Stls::readVectorFromRestart(ifstream &file, vector<double> &vec, int sz){
+  vec.resize(sz);
+  for (int i=0; i<sz; ++i) {
+    file.read((char*)&vec[i], sizeof(double));
+  }
 }
 
 // -----------------------------------------------------------------
@@ -725,27 +805,46 @@ double SlfcIet::bf(const double x_) const {
 // Get at finite temperature
 double SlfcIet::get() const {
   if (x == 0.0) return 0.0;
-  auto func = [&](double y)->double{return integrand(y);};
-  itg->compute(func, yMin, yMax);
-  return 3.0/(8.0*x) * itg->getSolution() + bf(x);
+  auto wMin = [&](double y)->double{return (y > x) ? y - x : x - y;};
+  auto wMax = [&](double y)->double{return min(yMax, x + y);};
+  if (wvg.size() > 0) {
+    const int nx = wvg.size();
+    vector<double> func2Vec;
+    Integrator1D itgTmp;
+    func2Vec.resize(nx);
+    for (int i=0; i<nx; ++i) {
+      const double y = wvg[i];
+      auto funcTmp = [&](double w)->double{return integrand2(y,w);};
+      itgTmp.compute(funcTmp, wMin(y), wMax(y));
+      func2Vec[i] = itgTmp.getSolution();
+    }
+    //const shared_ptr<Interpolator> itp = make_shared<Interpolator>(wvg,func2Vec);
+    //Interpolator itp(wvg,func2Vec);
+  }
+  else {
+    auto func1 = [&](double y)->double{return integrand1(y);};
+    auto func2 = [&](double w)->double{return integrand2(w);};
+    itg2->compute(func1, func2, yMin, yMax, wMin, wMax);
+  }
+  return 3.0/(8.0*x) * itg2->getSolution() + bf(x);
 }
 
 // Level 1 integrand
-double SlfcIet::integrand(const double y) const {
+double SlfcIet::integrand1(const double y) const {
   if (y == 0.0) return 0.0;
-  auto func = [&](double w)->double{return integrand2(w, y);};
-  const double wMin = (y > x) ? y - x : x - y;
-  const double wMax = min(yMax, x + y);
-  itg2->compute(func, wMin, wMax);
-  return itg2->getSolution() * (-bf(y) - (ssf(y) - 1.0)*(slfc(y) - 1.0)) / y;
+  return (-bf(y) - (ssf(y) - 1.0)*(slfc(y) - 1.0)) / y;
 }
 
 // Level 2 integrand
-double SlfcIet::integrand2(const double w,
-			   const double y) const {
+double SlfcIet::integrand2(const double w) const {
+  const double y = itg2->getX();
+  return integrand2(y,w);
+}
+
+double SlfcIet::integrand2(const double y, const double w) const {
+  const double y2 = y*y;
   const double w2 = w*w;
   const double x2 = x*x;
-  const double y2 = y*y;
   return (w2 - y2 - x2) * w * (ssf(w) - 1.0);
 }
 

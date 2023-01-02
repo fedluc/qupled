@@ -45,3 +45,21 @@ void Integrator1DFourier::compute(const function<double(double)> func){
 		       limit, wsp, wspc,
 		       qtab, &sol, &err);
 }
+
+// Compute 2D integrals 
+void Integrator2D::compute(const function<double(double)> func1,
+			   const function<double(double)> func2,
+			   const double xMin,
+			   const double xMax,
+			   const function<double(double)> yMin,
+			   const function<double(double)> yMax){
+  // Level 2 integration
+  auto func = [&](double x_)->double{
+    x = x_;
+    itg2.compute(func2, yMin(x_), yMax(x_));
+    return func1(x_) * itg2.getSolution();
+  };
+  itg1.compute(func, xMin, xMax);
+  sol = itg1.getSolution();
+}
+

@@ -69,9 +69,16 @@ private:
   void writeSlfc();
   void writeSdr();
   void writeIdr();
-  void writeRdf();
   void writeUInt();
-
+  void writeRdf();
+  void writeBf();
+  // Restart files
+  void writeRestart();
+  void writeVectorToRestart(ofstream &file, vector<double> &vec);
+  void readRestart(vector<double> &wvgFile, vector<double> &slfcFile);
+  void readVectorFromRestart(ifstream &file, vector<double> &vec,
+			     int sz);
+			
 public:
 
   // Constructors
@@ -277,17 +284,49 @@ public:
   
 };
 
-// Class for the bridge function
-class BridgeFunction {
 
+// Class for the static local field correction for the iet schemes
+class SlfcIet : public Slfc {
+
+private:
+
+  // Integrator object
+  const shared_ptr<Integrator2D> itg2;
+  // Integrands
+  double integrand1(const double y) const;
+  double integrand2(const double w) const;
+  double integrand2(const double y, const double w) const;
+  // Static local field correction interpolator
+  const shared_ptr<Interpolator> slfci;
+  // Bridge function interpolator
+  const shared_ptr<Interpolator> bfi;
+  // Compute static local field correction
+  double slfc(double x_) const;
+  // Compute bridge function
+  double bf(double x_) const;
+  // Wave-vector grid (we should make this a shared pointer, but this requires to update also the interpolator to work with shared pointers). Possible redefinition of ssf, slfc and other quantities in stls class.
+  vector<double> wvg;
+  
 public:
 
-  typedef struct {
-    string type;
-    string mapping;
-    double rs;
-    double Theta;
-  } bfData;
+  // Constructor
+  SlfcIet(const double x_,
+	  const double yMin_,
+	  const double yMax_,
+	  const shared_ptr<Integrator2D> &itg2_,
+	  const shared_ptr<Interpolator> &ssfi_,
+	  const shared_ptr<Interpolator> &slfci_,
+	  const shared_ptr<Interpolator> &bfi_)
+    : Slfc(x_, yMin_, yMax_, NULL, ssfi_),
+      itg2(itg2_), slfci(slfci_), bfi(bfi_) {;};
+  // Get result of integration 
+  double get() const;
+
+};
+
+
+// Class for the bridge function
+class BridgeFunction {
 
 private:
 
@@ -327,44 +366,5 @@ public:
   double get() const;
   
 };
-
-// Class for the static local field correction for the iet schemes
-class SlfcIet : public Slfc {
-
-private:
-  
-  // Integrator object
-  const shared_ptr<Integrator1D> itg2;
-  // Integrands
-  double integrand(const double y) const;
-  double integrand2(const double w,
-		    const double y) const;
-  // Static local field correction interpolator
-  const shared_ptr<Interpolator> slfci;
-  // Bridge function interpolator
-  const shared_ptr<Interpolator> bfi;
-  // Compute static local field correction
-  double slfc(double x_) const;
-  // Compute bridge function
-  double bf(double x_) const;
-  
-public:
-
-  // Constructor
-  SlfcIet(const double x_,
-	  const double yMin_,
-	  const double yMax_,
-	  const shared_ptr<Integrator1D> &itg_,
-	  const shared_ptr<Interpolator> &ssfi_,
-	  const shared_ptr<Integrator1D> &itg2_,
-	  const shared_ptr<Interpolator> &slfci_,
-	  const shared_ptr<Interpolator> &bfi_)
-    : Slfc(x_, yMin_, yMax_, itg_, ssfi_),
-      itg2(itg2_), slfci(slfci_), bfi(bfi_) {;};
-  // Get result of integration 
-  double get() const;
-
-};
-
 
 #endif

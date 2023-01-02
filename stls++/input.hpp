@@ -11,7 +11,7 @@
 using namespace std;
 using namespace inpututil;
 
-#define NO_FILE_NAME "noFileName"
+#define NO_FILE_NAME ""
 
 class Input;
 class StaticInput;
@@ -87,6 +87,8 @@ private:
   size_t nl;
   // Maximum number of iterations
   size_t nIter;
+  // Output frequency
+  size_t outIter;
   // Setters 
   void setMixingParameter(cString  &aMix);
   void setErrMin(cString &errMin);
@@ -95,6 +97,7 @@ private:
   void setChemicalPotentialGuess(cString &muGuessStr);
   void setNMatsubara(cString &nMatsubara);
   void setNIter(cString &nIter);
+  void setOutIter(cString &outIter);
   // Helper methods to read the input file
   void assignInputToData(const string &keyword, const string &value);
   // Print content of the data structure
@@ -114,6 +117,7 @@ public:
   vector<double> getChemicalPotentialGuess() const { return muGuess; };
   size_t getNMatsubara() const { return nl; };
   size_t getNIter() const { return nIter; };
+  size_t getOutIter() const { return outIter; };
   
 };
 
