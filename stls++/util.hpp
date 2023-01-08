@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <fstream>
 #include <map>
 #include <functional>
 #include "numerics.hpp"
@@ -33,7 +34,9 @@ namespace inpututil {
   ///
   template<typename T> bool isNotPositive(cString &str);
   ///
-  template<typename T> bool isLarger(cString &str1, T num);
+  template<typename T> bool isLarger(cString &str, T num);
+  ///
+  template<typename T> bool isEqual(cString &str, T num);
   
 };
 
@@ -143,6 +146,51 @@ namespace thermoUtil {
     // Get result of integration 
     double get() const;
   
+  };
+  
+}
+
+
+namespace binUtil {
+
+  template<typename T>
+  void writeNum(ofstream &file, const T &num) {
+    file.write(reinterpret_cast<const char*>(&num), sizeof(num));
+  };
+  
+  template<typename T>
+  void writeDataToBinary(ofstream &file, const double &data) {
+    writeNum<double>(file, data);
+  };
+  
+  template<typename T>
+  void writeDataToBinary(ofstream &file, const int &data) {
+    writeNum<int>(file, data);
+  };
+  
+  template<class T>
+  void writeDataToBinary(ofstream &file, const T &data) {
+    for (auto &el : data) { writeDataToBinary<decltype(el)>(file, el); }
+  };
+  
+  template<typename T>
+  void readNum(ifstream &file, T &num) {
+    file.read((char*)&num, sizeof(T));
+  };
+  
+  template<typename T>
+  void readDataFromBinary(ifstream &file, double &data) {
+    readNum<double>(file, data);
+  };
+  
+  template<typename T>
+  void readDataFromBinary(ifstream &file, int &data) {
+    readNum<int>(file, data);
+  };
+  
+  template<class T>
+  void readDataFromBinary(ifstream &file, T &data) {
+    for (auto &el : data) { readDataFromBinary<decltype(el)>(file, el);}
   };
   
 }

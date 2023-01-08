@@ -12,15 +12,18 @@ class ChemicalPotential {
 
 private:
 
-  double normalizationCondition(double mu);
-  double Theta;
+  // Degeneracy parameter
+  const double Theta;
+  // Chemical potential
   double mu;
+  // Normalization condition
+  double normalizationCondition(double mu) const;
   
 public:
 
   ChemicalPotential(double Theta_) : Theta(Theta_) {};
   void compute(cVector<double> &guess);
-  double get() {return mu;};
+  double get() const {return mu;};
   
 };
 

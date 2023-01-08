@@ -23,7 +23,7 @@ private:
 public:
 
   // Constructor
-  Interpolator(vector<double> &x, vector<double> &y) {
+  Interpolator(const vector<double> &x, const vector<double> &y) {
     assert(x.size() == y.size());
     spline = gsl_spline_alloc(gsl_interp_cspline, x.size());
     acc = gsl_interp_accel_alloc();
@@ -132,7 +132,7 @@ public:
 	       const double xMin,
 	       const double xMax);
   // Getters
-  double getSolution() { return sol; };
+  double getSolution() const { return sol; };
   
 };
 
@@ -162,8 +162,8 @@ public:
 	       const function<double(double)> yMin,
 	       const function<double(double)> yMax);
   // Getters
-  double getX() { return x; };
-  double getSolution() { return sol; };
+  double getX() const { return x; };
+  double getSolution() const { return sol; };
 };
 
 
@@ -208,7 +208,7 @@ public:
   // Compute integral
   void compute(const function<double(double)> func);
   // Getters
-  double getSolution() { return sol; };
+  double getSolution() const { return sol; };
   
 };
 

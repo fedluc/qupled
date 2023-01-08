@@ -38,28 +38,32 @@ namespace inpututil {
     }
   }
 
-  template <> bool isNegative<int>(cString &str) {
+  template<> bool isNegative<int>(cString &str) {
     return stoi(str)<0;
   }
 
-  template <> bool isNegative<double>(cString &str) {
+  template<> bool isNegative<double>(cString &str) {
     return stod(str)<0;
   }
 
-  template <> bool isNotPositive<int>(cString &str) {
+  template<> bool isNotPositive<int>(cString &str) {
     return stoi(str)<=0;
   }
 
-  template <> bool isNotPositive<double>(cString &str) {
+  template<> bool isNotPositive<double>(cString &str) {
     return stod(str)<=0;
   }
 
-  template <> bool isLarger<int>(cString &str1, int num){
-    return stoi(str1)>num;
+  template<> bool isLarger<int>(cString &str, int num){
+    return stoi(str)>num;
   }
 
-  template <> bool isLarger<double>(cString &str1, double num){
-    return stod(str1)>num;
+  template<> bool isLarger<double>(cString &str, double num){
+    return stod(str)>num;
+  }
+
+  template<> bool isEqual(cString &str, int num){
+    return stoi(str)==num;
   }
   
 }
@@ -69,7 +73,7 @@ namespace vecUtil {
 
 // Element-wise sum between two vectors
 vector<double> sum(const vector<double> &v1,
-			const vector<double> &v2) {
+		   const vector<double> &v2) {
   assert(v1.size() == v2.size());
   vector<double> res;
   transform(v1.begin(), v1.end(),
@@ -80,7 +84,7 @@ vector<double> sum(const vector<double> &v1,
 
 // Element-wise difference between two vectors
 vector<double> diff(const vector<double> &v1,
-			     const vector<double> &v2) {
+		    const vector<double> &v2) {
   assert(v1.size() == v2.size());
   vector<double> res;
   transform(v1.begin(), v1.end(),

@@ -8,8 +8,8 @@
 using namespace std;
 
 class Stls {
-  
-private: 
+
+protected: 
 
   // Wave vector grid
   vector<double> wvg;
@@ -28,6 +28,8 @@ private:
   const Input in;
   // Output verbosity
   const bool verbose;
+  // Flag to write the outputfiles
+  const bool writeFiles;
   // Chemical potential
   double mu;
   bool computedChemicalPotential;
@@ -37,6 +39,8 @@ private:
   vector<double> bf;
   // Constant for unit conversion
   const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  // Initialization
+  void init();
   // Construct wave vector grid
   void buildWvGrid();
   // Compute chemical potential
@@ -63,34 +67,37 @@ private:
   double computeError();
   void updateSolution();
   // Write output files
-  void writeOutput();
-  void writeSsf();
-  void writeSsfHF();
-  void writeSlfc();
-  void writeSdr();
-  void writeIdr();
-  void writeUInt();
-  void writeRdf();
-  void writeBf();
+  void writeOutput() const;
+  void writeSsf() const;
+  void writeSsfHF() const;
+  void writeSlfc() const;
+  void writeSdr() const;
+  void writeIdr() const;
+  void writeUInt() const;
+  void writeRdf() const;
+  void writeBf() const;
   // Restart files
-  void writeRestart();
-  void writeVectorToRestart(ofstream &file, vector<double> &vec);
-  void readRestart(vector<double> &wvgFile, vector<double> &slfcFile);
-  void readVectorFromRestart(ifstream &file, vector<double> &vec,
-			     int sz);
-			
+  void writeRestart() const;
+  void readRestart(vector<double> &wvgFile,
+		   vector<double> &slfcFile) const;
+  // Check if iet schemes should be used
+  void checkIet() { useIet = in.getTheory() == "STLS-HNC" ||
+      in.getTheory() == "STLS-IOI" ||
+      in.getTheory() == "STLS-LCT";}
+  
 public:
 
   // Constructors
   Stls(const Input in_)
-    : in(in_), verbose(true), computedChemicalPotential(false) {
-      useIet = in.getTheory() == "STLS-HNC" ||
-	       in.getTheory() == "STLS-IOI" ||
-	       in.getTheory() == "STLS-LCT";};
-  Stls(const Input in_, const bool verbose_)
-    : in(in_), verbose(verbose_), computedChemicalPotential(false) {;};
+    : in(in_), verbose(true),
+      writeFiles(true), computedChemicalPotential(false) {checkIet();};
+  Stls(const Input in_, const bool verbose_, const bool writeFiles_)
+    : in(in_), verbose(verbose_),
+      writeFiles(writeFiles_), computedChemicalPotential(false) {checkIet();};
   // Compute stls scheme
-  void compute(); 
+  void compute();
+  // Getters
+  void getSsf(vector<double> &ssf_);
 
 };
 
@@ -113,9 +120,9 @@ private:
   const double yMin = 0;
   const double yMax = 0;
   // Idr integrand for frequency = l and wave-vector x
-  double integrand(const double y, const int l);
+  double integrand(const double y, const int l) const;
   // Idr integrand for frequency = 0 and wave-vector x
-  double integrand(const double y);  
+  double integrand(const double y) const;  
   // Integrator object
   const shared_ptr<Integrator1D> itg;
   
@@ -137,7 +144,7 @@ public:
       const double x_)
     : Omega(Omega_), x(x_) {;};
   // Get at finite temperature
-  vector<double> get();
+  vector<double> get() const;
   // Get real part at zero temperature
   double re0() const;
   // Get imaginary part at zero temperature
@@ -164,9 +171,9 @@ private:
   // Integrator object
   const shared_ptr<Integrator1D> itg;
   // Get integrand
-  double integrand(double y);
+  double integrand(double y) const;
   // Get at zero temperature
-  double get0();
+  double get0() const;
   
 public:
 
@@ -182,7 +189,7 @@ public:
   // Constructor for zero temperature calculations
   SsfHF(const double x_) : x(x_) {;};
   // Get at any temperature
-  double get();
+  double get() const;
   
 };
 
@@ -202,6 +209,8 @@ private:
   const double ssfHF = 0;
   // Ideal density response
   const vector<double> idr;
+  // Auxiliary density response
+  const vector<double> adr;
   // Static local field correction
   const double slfc = 0;
   // Constant for unit conversion
@@ -212,15 +221,17 @@ private:
   // Integrator object
   const shared_ptr<Integrator1D> itg;
   // Integrand for zero temperature calculations
-  double integrand(const double Omega);
+  double integrand(const double Omega) const ;
   // Plasmon contribution
-  double plasmon();
+  double plasmon() const;
   // Dielectric response function
-  double drf(const double Omega);
+  double drf(const double Omega) const;
   // Frequency derivative of the dielectric response function
-  double drfDer(const double Omega);
+  double drfDer(const double Omega) const;
   // Get at zero temperature
-  double get0();
+  double get0() const;
+  // Get for quantum schemes
+  double getQuantum() const;
   
 public:
 
@@ -244,8 +255,17 @@ public:
     : x(x_), rs(rs_), ssfHF(ssfHF_),
       slfc(slfc_), yMin(yMin_), yMax(yMax_),
       itg(itg_) {;};
+  // Constructor for finite temperature calculations for quantum schemes
+  Ssf(const double x_,
+      const double Theta_,
+      const double rs_,
+      const double ssfHF_,
+      const vector<double> &idr_,
+      const vector<double> &adr_)
+    : x(x_), Theta(Theta_), rs(rs_),
+      ssfHF(ssfHF_), idr(idr_), adr(adr_) {;};
   // Get at any temperature
-  double get();
+  double get() const;
  
   
 };
@@ -295,7 +315,6 @@ private:
   // Integrands
   double integrand1(const double y) const;
   double integrand2(const double w) const;
-  double integrand2(const double y, const double w) const;
   // Static local field correction interpolator
   const shared_ptr<Interpolator> slfci;
   // Bridge function interpolator
@@ -304,8 +323,6 @@ private:
   double slfc(double x_) const;
   // Compute bridge function
   double bf(double x_) const;
-  // Wave-vector grid (we should make this a shared pointer, but this requires to update also the interpolator to work with shared pointers). Possible redefinition of ssf, slfc and other quantities in stls class.
-  vector<double> wvg;
   
 public:
 

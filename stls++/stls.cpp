@@ -1,28 +1,46 @@
 #include <omp.h>
-#include <fstream>
+#include "util.hpp"
 #include "stls.hpp"
 #include "chemicalpotential.hpp"
 
 using namespace vecUtil;
 using namespace stringUtil;
 using namespace thermoUtil;
+using namespace binUtil;
 
 // -----------------------------------------------------------------
 // STLS class
 // -----------------------------------------------------------------
 
 void Stls::compute(){
-  buildWvGrid();
-  computeChemicalPotential();
-  computeIdr();
-  computeSsfHF();
+  init();  
+  if (verbose) cout << "Structural properties calculation ..." << endl;
   doIterations();
+  if (verbose) cout << "Done" << endl;
+  if (verbose) cout << "Writing output files: ";
   writeOutput();
+  if (writeFiles) writeRestart();
+  if (verbose) cout << "Done" << endl;
+}
+
+// Initialization
+void Stls::init(){
+  if (verbose) cout << "Assembling wave vector grid: ";
+  buildWvGrid();
+  if (verbose) cout << "Done" << endl;
+  if (verbose) cout << "Computing chemical potential: "; 
+  computeChemicalPotential();
+  if (verbose) cout << "Done" << endl;
+  if (verbose) cout << "Computing ideal density response: "; 
+  computeIdr();
+  if (verbose) cout << "Done" << endl;
+  if (verbose) cout << "Computing HF static structure factor: "; 
+  computeSsfHF();
+  if (verbose) cout << "Done" << endl;
 }
 
 // Set up wave-vector grid
 void Stls::buildWvGrid(){
-  cout << "Assembling wave vector grid: ";
   wvg.push_back(0.0);
   const shared_ptr<StaticInput> &inStat = in.getStaticInput();
   const double dx = inStat->getWaveVectorGridRes();
@@ -30,13 +48,11 @@ void Stls::buildWvGrid(){
   while(wvg.back() < xmax){
     wvg.push_back(wvg.back() + dx);
   }
-  cout << "Done" << endl;
 }
 
 // Compute chemical potential
 void Stls::computeChemicalPotential(){
   if (in.getDegeneracy() == 0.0) return;
-  cout << "Computing chemical potential: "; 
   const shared_ptr<StaticInput> &statIn = in.getStaticInput();
   const vector<double> &guess = statIn->getChemicalPotentialGuess();
   ChemicalPotential mu_(in.getDegeneracy());
@@ -48,13 +64,11 @@ void Stls::computeChemicalPotential(){
   }
   mu = mu_.get();
   computedChemicalPotential = true;
-  cout << "Done" << endl;
 }
 
 // Compute ideal density response
 void Stls::computeIdr(){
   if (in.getDegeneracy() == 0.0) return;
-  cout << "Computing ideal density response: "; 
   assert(computedChemicalPotential);
   assert(itg != NULL);
   const shared_ptr<StaticInput> &statIn = in.getStaticInput();
@@ -66,17 +80,14 @@ void Stls::computeIdr(){
 	       wvg.front(), wvg.back(), itg);
     idr[i] = idrTmp.get();
   }
-  cout << "Done" << endl;
 }
 
 // Compute Hartree-Fock static structure factor
 void Stls::computeSsfHF(){
-  cout << "Computing HF static structure factor: "; 
   const int nx = wvg.size();
   ssfHF.resize(nx);
   if (in.getDegeneracy() > 0) computeSsfHFFinite();
   else computeSsfHFGround();
-  cout << "Done" << endl;
 }
 
 void Stls::computeSsfHFFinite(){
@@ -187,16 +198,16 @@ void Stls::doIterations() {
   int counter = 0;
   // Define initial guess
   initialGuess();
-  if (verbose) cout << "Structural properties calculation..." << endl;
+  
   while (counter < maxIter+1 && err > minErr ) {
     // Start timing
     double tic = omp_get_wtime();
-    // Update SSF
+    // Update static structure factor
     computeSsf();
-    // Update SLFC
+    // Update static local field correction
     computeSlfc();
     // Write output
-    if (counter % outIter) { writeOutput();};
+    if (counter % outIter == 0) { writeOutput();};
     // Update diagnostic
     counter++;
     err = computeError();
@@ -211,7 +222,6 @@ void Stls::doIterations() {
        fflush(stdout);
     }
   }
-  if (verbose) cout << "Done" << endl;
 }
 
 // Initial guess for stls iterations
@@ -219,6 +229,7 @@ void Stls::initialGuess() {
   const int nx = wvg.size();
   slfcOld.resize(nx);
   slfc.resize(nx);
+  // From file
   if (in.getStlsInput()->getRestartFileName() != "") {
     vector<double> wvgFile;
     vector<double> slfcFile;
@@ -232,6 +243,7 @@ void Stls::initialGuess() {
     }
     return;
   }
+  // Default
   fill(slfcOld.begin(), slfcOld.end(), 0.0);
 }
 
@@ -248,8 +260,8 @@ void Stls::updateSolution(){
 }
 
 // Write output files
-void Stls::writeOutput(){
-  cout << "Writing output files: ";
+void Stls::writeOutput() const{
+  if (!writeFiles) return; 
   writeSsf();
   writeSsfHF();
   writeSlfc();
@@ -257,12 +269,11 @@ void Stls::writeOutput(){
   writeIdr();
   writeUInt();
   writeRdf();
-  if (useIet) writeBf();
-  writeRestart();
-  cout << "Done" << endl;
+  writeBf();
 }
 
-void Stls::writeSsf(){
+void Stls::writeSsf() const {
+  assert(ssf.size() > 0 && wvg.size() > 0);
   const string fileName = format<double,double>("ssf_rs%.3f_theta%.3f_"
 						+ in.getTheory() + ".dat",
 						in.getCoupling(),
@@ -279,7 +290,8 @@ void Stls::writeSsf(){
   file.close();
 }
 
-void Stls::writeSsfHF(){
+void Stls::writeSsfHF() const {
+  assert(ssfHF.size() > 0 && wvg.size() > 0);
   const string fileName = format<double,double>("ssfHF_rs%.3f_theta%.3f_"
 						+ in.getTheory() + ".dat",
 						in.getCoupling(),
@@ -297,7 +309,8 @@ void Stls::writeSsfHF(){
 }
 
 
-void Stls::writeSlfc(){
+void Stls::writeSlfc() const {
+  assert(slfc.size() > 0 && wvg.size() > 0);
   const string fileName = format<double,double>("slfc_rs%.3f_theta%.3f_"
 						+ in.getTheory() + ".dat",
 						in.getCoupling(),
@@ -314,8 +327,9 @@ void Stls::writeSlfc(){
   file.close();
 }
 
-void Stls::writeSdr(){
+void Stls::writeSdr() const {
   if (in.getDegeneracy() == 0.0) return;
+  assert(slfc.size() > 0 && wvg.size() > 0);
   const string fileName = format<double,double>("sdr_rs%.3f_theta%.3f_"
 						+ in.getTheory() + ".dat",
 						in.getCoupling(),
@@ -335,8 +349,9 @@ void Stls::writeSdr(){
   file.close();
 }
 
-void Stls::writeIdr(){
-   if (in.getDegeneracy() == 0.0) return;
+void Stls::writeIdr() const {
+  if (in.getDegeneracy() == 0.0) return;
+  assert(idr.size() > 0 && wvg.size() > 0);
   const string fileName = format<double,double>("idr_rs%.3f_theta%.3f_"
 						+ in.getTheory() + ".dat",
 						in.getCoupling(),
@@ -358,7 +373,8 @@ void Stls::writeIdr(){
   file.close();
 }
 
-void Stls::writeUInt(){
+void Stls::writeUInt() const {
+  assert(ssf.size() > 0 && wvg.size() > 0);
   const string fileName = format<double,double>("uint_rs%.3f_theta%.3f_"
 						+ in.getTheory() + ".dat",
 						in.getCoupling(),
@@ -381,7 +397,8 @@ void Stls::writeUInt(){
   file.close();
 }
 
-void Stls::writeRdf(){
+void Stls::writeRdf() const {
+  assert(ssf.size() > 0 && wvg.size() > 0);
   const string fileName = format<double,double>("rdf_rs%.3f_theta%.3f_"
 						+ in.getTheory() + ".dat",
 						in.getCoupling(),
@@ -404,7 +421,9 @@ void Stls::writeRdf(){
   file.close();
 }
 
-void Stls::writeBf(){
+void Stls::writeBf() const {
+  if (!useIet) return;
+  assert(bf.size() > 0 && wvg.size() > 0);
   const string fileName = format<double,double>("bf_rs%.3f_theta%.3f_"
 						+ in.getTheory() + ".dat",
 						in.getCoupling(),
@@ -423,7 +442,7 @@ void Stls::writeBf(){
 
 
 // Restart files
-void Stls::writeRestart(){
+void Stls::writeRestart() const {
   const string fileName = format<double,double>("restart_rs%.3f_theta%.3f_"
 						+ in.getTheory() + ".bin",
 						in.getCoupling(),
@@ -434,19 +453,15 @@ void Stls::writeRestart(){
     throw runtime_error("Output file " + fileName + " could not be created.");
   }
   int nx = wvg.size();
-  file.write(reinterpret_cast<char*>(&nx), sizeof(nx));
-  writeVectorToRestart(file, wvg);
-  writeVectorToRestart(file, slfc);
+  writeDataToBinary<int>(file, nx);
+  writeDataToBinary<decltype(wvg)>(file, wvg);
+  writeDataToBinary<decltype(slfc)>(file, slfc);
   file.close();
+  // ADD ERROR CHECK
 }
 
-void Stls::writeVectorToRestart(ofstream &file, vector<double> &vec) {
-  for (double &el : vec) {
-    file.write(reinterpret_cast<char*>(&el), sizeof(el));
-  }
-}
-
-void Stls::readRestart(vector<double> &wvgFile, vector<double> &slfcFile){
+void Stls::readRestart(vector<double> &wvgFile,
+		       vector<double> &slfcFile) const {
   const string fileName = in.getStlsInput()->getRestartFileName();
   ifstream file;
   file.open(fileName, ios::binary);
@@ -454,17 +469,20 @@ void Stls::readRestart(vector<double> &wvgFile, vector<double> &slfcFile){
     throw runtime_error("Output file " + fileName + " could not be opened.");
   }
   int nx;
-  file.read((char*)&nx, sizeof(int));
-  readVectorFromRestart(file, wvgFile, nx);
-  readVectorFromRestart(file, slfcFile, nx);
+  readDataFromBinary<int>(file, nx);
+  wvgFile.resize(nx);
+  slfcFile.resize(nx);
+  readDataFromBinary<decltype(wvgFile)>(file, wvgFile);
+  readDataFromBinary<decltype(slfcFile)>(file, slfcFile);
   file.close();
+  // ADD ERROR CHECK
 }
 
-void Stls::readVectorFromRestart(ifstream &file, vector<double> &vec, int sz){
-  vec.resize(sz);
-  for (int i=0; i<sz; ++i) {
-    file.read((char*)&vec[i], sizeof(double));
-  }
+// Getters
+
+void Stls::getSsf(vector<double> &ssf_){
+  ssf_.resize(0);
+  copy(ssf.begin(), ssf.end(), back_inserter(ssf_));
 }
 
 // -----------------------------------------------------------------
@@ -472,7 +490,7 @@ void Stls::readVectorFromRestart(ifstream &file, vector<double> &vec, int sz){
 // -----------------------------------------------------------------
 
 // Integrand for frequency = l and wave-vector = x
-double Idr::integrand(const double y, const int l) {
+double Idr::integrand(const double y, const int l) const {
   double y2 = y*y;
   double x2 = x*x;
   double txy = 2*x*y; 
@@ -488,7 +506,7 @@ double Idr::integrand(const double y, const int l) {
 }
 
 // Integrand for frequency = 0 and vector = x
-double Idr::integrand(const double y) {
+double Idr::integrand(const double y) const {
   double y2 = y*y;
   double x2 = x*x;
   double xy = x*y;
@@ -511,7 +529,7 @@ double Idr::integrand(const double y) {
 }
 
 // Get at finite temperature
-vector<double> Idr::get() {
+vector<double> Idr::get() const {
   assert(Theta > 0.0);
   vector<double> res(nl);
   for (int l=0; l<nl; ++l){
@@ -605,7 +623,7 @@ double Idr::re0Der() const {
 // -----------------------------------------------------------------
 
 // Integrand for finite temperature calculations
-double SsfHF::integrand(const double y) {
+double SsfHF::integrand(const double y) const {
   double y2 = y*y;
   double ypx = y + x;
   double ymx = y - x;
@@ -619,7 +637,7 @@ double SsfHF::integrand(const double y) {
 }
 
 // Get at any temperature
-double SsfHF::get() {
+double SsfHF::get() const {
   if (Theta == 0.0) return get0();
   auto func = [&](double y)->double{return integrand(y);};
   itg->compute(func, yMin, yMax);
@@ -627,7 +645,7 @@ double SsfHF::get() {
 }
 
 // Get static structure factor at zero temperature
-double SsfHF::get0(){
+double SsfHF::get0() const {
   assert(Theta == 0.0);
   if (x < 2.0) {
     return (x/16.0)*(12.0 - x*x);
@@ -642,8 +660,9 @@ double SsfHF::get0(){
 // Static structure factor class
 // -----------------------------------------------------------------
 
-// Get at any temperature
-double Ssf::get() {
+// Get at any temperature and for any scheme
+double Ssf::get() const {
+  if (adr.size() > 0) return getQuantum();
   if (Theta == 0.0) return get0();
   if (x == 0.0) return 0.0;
   const int nl = idr.size();
@@ -660,7 +679,7 @@ double Ssf::get() {
 }
 
 // Get at zero temperature
-double Ssf::get0() {
+double Ssf::get0() const {
   if (x == 0.0) return 0.0;
   auto func = [&](double y)->double{return integrand(y);};
   itg->compute(func, yMin, yMax);
@@ -675,7 +694,7 @@ double Ssf::get0() {
 }
 
 // Integrand for zero temperature calculations
-double Ssf::integrand(const double Omega) {
+double Ssf::integrand(const double Omega) const {
   double x2 = x*x;
   double fact = (4.0 * lambda * rs)/(M_PI * x2);
   Idr idrTmp(Omega, x);
@@ -697,7 +716,7 @@ double Ssf::integrand(const double Omega) {
 // valid
 
 // Plasmon contribution to the static structure factor
-double Ssf::plasmon() {
+double Ssf::plasmon() const {
   // Look for a region where the dielectric function changes sign
   bool search_root = false;
   const double wCo = x*x + 2*x;
@@ -730,7 +749,7 @@ double Ssf::plasmon() {
 }
 
 // Dielectric response function
-double Ssf::drf(const double Omega){
+double Ssf::drf(const double Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
   const double idrRe = Idr(Omega, x).re0();
   const double wCo = x*x + 2*x;     
@@ -740,7 +759,7 @@ double Ssf::drf(const double Omega){
 
 
 // Frequency derivative of the dielectric response function  
-double Ssf::drfDer(const double Omega){
+double Ssf::drfDer(const double Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
   const Idr idrTmp(Omega, x);
   const double idrRe = idrTmp.re0();
@@ -749,6 +768,23 @@ double Ssf::drfDer(const double Omega){
   double w_co = x*x + 2*x;
   assert(Omega >= w_co); 
   return fact * idrReDer / (denom * denom);
+}
+
+// Get for quantum schemes
+double Ssf::getQuantum() const {
+  assert(Theta != 0);
+  if (x == 0.0) return 0.0;
+  const int nl = idr.size();
+  const double fact1 = 4.0*lambda*rs/M_PI;
+  const double x2 = x*x;
+  double fact2 = 0.0;
+  for (int l=0; l<nl; ++l) {
+    const double fact3 = 1.0 + fact1/x2*(1.0 - adr[l]/idr[l])*idr[l];
+    double fact4 = idr[l]*idr[l]*(1.0 - adr[l]/idr[l])/fact3;
+    if (l>0) fact4 *= 2;
+    fact2 += fact4;
+  }
+  return ssfHF - 1.5 * fact1/x2 * Theta * fact2;
 }
 
 // -----------------------------------------------------------------
@@ -807,25 +843,9 @@ double SlfcIet::get() const {
   if (x == 0.0) return 0.0;
   auto wMin = [&](double y)->double{return (y > x) ? y - x : x - y;};
   auto wMax = [&](double y)->double{return min(yMax, x + y);};
-  if (wvg.size() > 0) {
-    const int nx = wvg.size();
-    vector<double> func2Vec;
-    Integrator1D itgTmp;
-    func2Vec.resize(nx);
-    for (int i=0; i<nx; ++i) {
-      const double y = wvg[i];
-      auto funcTmp = [&](double w)->double{return integrand2(y,w);};
-      itgTmp.compute(funcTmp, wMin(y), wMax(y));
-      func2Vec[i] = itgTmp.getSolution();
-    }
-    //const shared_ptr<Interpolator> itp = make_shared<Interpolator>(wvg,func2Vec);
-    //Interpolator itp(wvg,func2Vec);
-  }
-  else {
-    auto func1 = [&](double y)->double{return integrand1(y);};
-    auto func2 = [&](double w)->double{return integrand2(w);};
-    itg2->compute(func1, func2, yMin, yMax, wMin, wMax);
-  }
+  auto func1 = [&](double y)->double{return integrand1(y);};
+  auto func2 = [&](double w)->double{return integrand2(w);};
+  itg2->compute(func1, func2, yMin, yMax, wMin, wMax);
   return 3.0/(8.0*x) * itg2->getSolution() + bf(x);
 }
 
@@ -838,15 +858,12 @@ double SlfcIet::integrand1(const double y) const {
 // Level 2 integrand
 double SlfcIet::integrand2(const double w) const {
   const double y = itg2->getX();
-  return integrand2(y,w);
-}
-
-double SlfcIet::integrand2(const double y, const double w) const {
   const double y2 = y*y;
   const double w2 = w*w;
   const double x2 = x*x;
   return (w2 - y2 - x2) * w * (ssf(w) - 1.0);
 }
+
 
 // -----------------------------------------------------------------
 // Bridge function class

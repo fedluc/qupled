@@ -2,6 +2,7 @@
 #include <iostream>
 #include "input.hpp"
 #include "stls.hpp"
+#include "qstls.hpp"
 
 int main(int argc, char** argv) {
 
@@ -22,9 +23,13 @@ int main(int argc, char** argv) {
   }
 
 
-  // Compute slts scheme
-  Stls stls(in);
-  stls.compute();
+  // // Compute slts scheme
+  // Stls stls(in);
+  // stls.compute();
+
+  // Compute qstls scheme
+  Qstls qstls(in);
+  qstls.compute();
   return 0;
   
 }

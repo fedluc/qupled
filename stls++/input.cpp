@@ -12,13 +12,13 @@ Input::Input(){
   nThreads = 1;
   stat = make_shared<StaticInput>();
   stls = make_shared<StlsInput>();
+  qstls = make_shared<QstlsInput>();
 }
 
 void Input::setTheory(cString &theory){
-  if (theory != "STLS" &&
-      theory != "STLS-HNC" &&
-      theory != "STLS-IOI" &&
-      theory != "STLS-LCT") {
+  cVector<string> knownTheories = {"STLS", "STLS-HNC", "STLS-IOI",
+				   "STLS-LCT", "QSTLS"};
+  if (count(knownTheories.begin(), knownTheories.end(), theory) == 0) {
     throw runtime_error("Unknown theory: " + theory);
   }
   this->theory = theory;
@@ -75,11 +75,12 @@ void Input::assignInputToData(cVector<string> &input){
   funcArr["base"] = [this](cString &s1, cString &s2) {this->assignInputToBaseData(s1, s2);};
   funcArr["static"] = [this](cString &s1, cString &s2) {this->assignInputToStaticData(s1, s2);};
   funcArr["stls"] = [this](cString &s1, cString &s2) {this->assignInputToStlsData(s1, s2);};
+  funcArr["qstls"] = [this](cString &s1, cString &s2) {this->assignInputToQstlsData(s1, s2);};
   try{
     matchKeyAndData(keyword, input[1], funcArr);
   }
   catch (const runtime_error& err) {
-    cerr << err.what() << endl;
+    throw err;
   }
 }
 
@@ -93,7 +94,7 @@ void Input::assignInputToBaseData(cString &keyword, cString &value){
     matchKeyAndData(keyword, value, funcArr);
   }
   catch (const runtime_error& err) {
-    cerr << err.what() << endl;
+    throw err;
   }
 }
 
@@ -105,6 +106,10 @@ void Input::assignInputToStlsData(cString &keyword, cString &value){
   stls->assignInputToData(keyword, value);
 }
 
+void Input::assignInputToQstlsData(cString &keyword, cString &value){
+  qstls->assignInputToData(keyword, value);
+}
+
 void Input::print() const {
   cout << "----- Content of the input data structure ----" << endl;
   cout << "base.theory = " << theory << endl;
@@ -113,6 +118,7 @@ void Input::print() const {
   cout << "base.threads = " << nThreads << endl;
   stat->print();
   stls->print();
+  qstls->print();
   cout << "----------------------------------------------" << endl;
 }
 
@@ -206,7 +212,7 @@ void StaticInput::assignInputToData(const string &keyword, const string &value){
     matchKeyAndData(keyword, value, funcArr);
   }
   catch (const runtime_error& err) {
-    cerr << err.what() << endl;
+    throw err;
   }
 }
 
@@ -238,9 +244,6 @@ void StlsInput::setIETMapping(cString &IETMapping){
 }
 
 void StlsInput::setRestartFileName(cString &restartFileName){
-  if (restartFileName == NO_FILE_NAME) {
-    throw runtime_error("Restart file name " + restartFileName + "is not allowed");
-  }
   this->restartFileName = restartFileName;
 } 
   
@@ -252,12 +255,47 @@ void StlsInput::assignInputToData(const string &keyword, const string &value){
     matchKeyAndData(keyword, value, funcArr);
   }
   catch (const runtime_error& err) {
-    cerr << err.what() << endl;
+    throw err;
   }
 } 
 
 void StlsInput::print() const {
-  string outputName = (restartFileName == NO_FILE_NAME) ? "" : restartFileName;
   cout << "stls.iet = " << IETMapping << endl;
-  cout << "stls.restart = " << outputName  << endl;
+  cout << "stls.restart = " << restartFileName  << endl;
+}
+
+
+
+// --- QstlsInput ---
+
+QstlsInput::QstlsInput(){
+  useStaticAdr = false;
+  fixedFileName = NO_FILE_NAME;
+}
+
+void QstlsInput::setUseStaticAdr(cString &useStaticAdr){
+  if (isEqual<int>(useStaticAdr, 0)) this->useStaticAdr = false;
+  else if (isEqual<int>(useStaticAdr, 1)) this->useStaticAdr = true;
+  else throw runtime_error("The output frequency can't be negative");
+}
+
+void QstlsInput::setFixedFileName(cString &fixedFileName){
+  this->fixedFileName = fixedFileName;
+} 
+
+void QstlsInput::assignInputToData(const string &keyword, const string &value){
+  map<string, function<void(cString &)>> funcArr;
+  funcArr["useStatic"] = [this](cString &s1) {this->setUseStaticAdr(s1);};
+  funcArr["fixed"] = [this](cString &s1) {this->setFixedFileName(s1);};
+  try{
+    matchKeyAndData(keyword, value, funcArr);
+  }
+  catch (const runtime_error& err) {
+    throw err;
+  }
+}
+
+void QstlsInput::print() const {
+  cout << "qstls.useStatic = " << useStaticAdr << endl;
+  cout << "qstls.fixed = " << fixedFileName  << endl;
 }

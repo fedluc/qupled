@@ -16,6 +16,7 @@ using namespace inpututil;
 class Input;
 class StaticInput;
 class StlsInput;
+class QstlsInput;
 
 class Input {
 
@@ -33,6 +34,8 @@ private:
   shared_ptr<StaticInput> stat;
   // input for stls calculations
   shared_ptr<StlsInput> stls;
+  // input for qstls calculations
+  shared_ptr<QstlsInput> qstls;
   // Setters
   void setTheory(cString &theory);
   void setDegeneracy(cString &Theta);
@@ -44,15 +47,8 @@ private:
   void assignInputToBaseData(cString &keyword, cString &value);
   void assignInputToStaticData(cString &keyword, cString &value);
   void assignInputToStlsData(cString &keyword, cString &value);
-  
-  // --- Additional members that will be added later
-  // string mode;
-  // string ssfRestartFileName;
-  // string slfcRestartFileName;
-  // qstlsInput qstls;
-  // vsInput vs;
-  // dynInput dyn;
-  
+  void assignInputToQstlsData(cString &keyword, cString &value);
+   
 public:
 
   //Constructor
@@ -63,6 +59,7 @@ public:
   double getCoupling() const { return rs; };
   shared_ptr<StaticInput> getStaticInput() const { return stat; };
   shared_ptr<StlsInput> getStlsInput() const { return stls; };
+  shared_ptr<QstlsInput> getQstlsInput() const { return qstls; };
   // Read input file
   void readInput(cString &fileName);
   void print() const;
@@ -84,11 +81,11 @@ private:
   // Initial guess for the chemical potential calculation
   vector<double> muGuess;
   // Number of matsubara frequencies
-  size_t nl;
+  int nl;
   // Maximum number of iterations
-  size_t nIter;
+  int nIter;
   // Output frequency
-  size_t outIter;
+  int outIter;
   // Setters 
   void setMixingParameter(cString  &aMix);
   void setErrMin(cString &errMin);
@@ -115,9 +112,9 @@ public:
   double getWaveVectorGridRes() const { return dx; };
   double getWaveVectorGridCutoff() const { return xmax; };
   vector<double> getChemicalPotentialGuess() const { return muGuess; };
-  size_t getNMatsubara() const { return nl; };
-  size_t getNIter() const { return nIter; };
-  size_t getOutIter() const { return outIter; };
+  int getNMatsubara() const { return nl; };
+  int getNIter() const { return nIter; };
+  int getOutIter() const { return outIter; };
   
 };
 
@@ -150,33 +147,33 @@ public:
 
 };
 
-// class qstlsInput { // Input properties for the qSTLS methods
+class QstlsInput { // Input properties for the qSTLS methods
 
-// private:
+private:
 
-//   // Use static approximation to compute the auxiliary density response (adr)
-//   bool useStaticAdr;
-//   // Name of the file used to store the restart data
-//   string restartFileName;
-//   // Name of the files used to store the fixed component of the adr
-//   string fixedFileName;
-//   // Name of the files used to store the fixed component of the adr with qIET approximation
-//   string fixedIETFileName;
+  // Use static approximation to compute the auxiliary density response (adr)
+  bool useStaticAdr;
+  // Name of the files used to store the fixed component of the adr
+  string fixedFileName;
+  // Setters 
+  void setUseStaticAdr(cString &useStaticAdr);
+  void setFixedFileName(cString &fixedFileName);
+    // Helper methods to read the input file
+  void assignInputToData(const string &keyword, const string &value);
+   // Print content of the data structure
+  void print() const ;
+  // Friends
+  friend class Input;
 
-// public:
+public:
 
-//   //Constructor
-//   qstlsInput();
-//   // Getters
-//   bool useStaticAdr();
-//   string getRestartName();
-//   string getFixedName(const bool iet);
-//   // Setters 
-//   void setUseStatic(bool useStaticAdr);
-//   void setRestartName(string restartName, const bool iet);
-//   void setFixedName(string fixedName);
+  //Constructor
+  QstlsInput();
+  // Getters
+  bool getUseStaticAdr() const { return useStaticAdr; };
+  string getFixedFileName() const {return fixedFileName; };
 
-// };
+};
 
 // class vsInput { // Input properties for the vs-stls methods
 
