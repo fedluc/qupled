@@ -139,4 +139,44 @@ public:
 };
 
 
+class AdrFixedIet {
+
+private:
+
+  // Number of matsubara frequencies
+  const int nl = 0;
+  // Wave-vectors
+  const double x = 0;
+  // Degeneracy parameter
+  const double Theta = 0;
+  // Chemical potential
+  const double mu = 0;
+  // Integration limits
+  const double tMin = 0;
+  const double tMax = 0;
+  // Integrands 
+  double integrand(const double t, const double y,
+		   const double q, const double l) const;
+  // Integrator object
+  const shared_ptr<Integrator1D> itg;
+  
+public:
+
+  // Constructor for finite temperature calculations
+  AdrFixedIet(const int nl_,
+	      const double x_,
+	      const double Theta_,
+	      const double mu_,
+	      const double tMin_,
+	      const double tMax_,
+	      const shared_ptr<Integrator1D> &itg_)
+    : nl(nl_), x(x_), Theta(Theta_), mu(mu_),
+      tMin(tMin_), tMax(tMax_), itg(itg_) {;};
+  // Get integration result
+  void get(vector<double> &wvg,
+	   vector<vector<vector<double>>> &res) const;
+  
+};
+
+
 #endif

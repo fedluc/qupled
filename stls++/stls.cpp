@@ -19,7 +19,6 @@ void Stls::compute(){
   if (verbose) cout << "Done" << endl;
   if (verbose) cout << "Writing output files: ";
   writeOutput();
-  if (writeFiles) writeRestart();
   if (verbose) cout << "Done" << endl;
 }
 
@@ -270,6 +269,7 @@ void Stls::writeOutput() const{
   writeUInt();
   writeRdf();
   writeBf();
+  writeRestart();
 }
 
 void Stls::writeSsf() const {

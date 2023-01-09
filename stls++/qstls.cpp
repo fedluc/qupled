@@ -21,7 +21,6 @@ void Qstls::compute(){
   if (verbose) cout << "Done" << endl;
   if (verbose) cout << "Writing output files: ";
   writeOutput();
-  writeRestart();
   if (verbose) cout << "Done" << endl;
 }
 
@@ -90,14 +89,14 @@ void Qstls::computeAdrFixed() {
   const int nx = wvg.size();
   const int nl = statIn->getNMatsubara();
   adrFixed.resize(nx);
-  //#pragma omp for
+  #pragma omp parallel for
   for (int i=0; i<nx; ++i) {
     const shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>();
     AdrFixed adrTmp(nl, wvg[i], in.getDegeneracy(), mu,
 		    wvg.front(), wvg.back(), itg2);
     adrTmp.get(wvg, adrFixed[i]);
   }
-  //writeRestart();
+  writeRestart();
   cout << "Done" << endl;
 }
 
@@ -117,17 +116,18 @@ void Qstls::loadAdrFixed() {
   if (nlFile != in.getStaticInput()->getNMatsubara()) {
     throw runtime_error(errMsg + ", wrong number of Matsubara frequencies.");
   }
-  if (ThetaFile - in.getDegeneracy() > tol) {
+  if (abs(ThetaFile - in.getDegeneracy()) > tol) {
     throw runtime_error(errMsg + ", wrong degeneracy parameter.");
   }
   if (wvgFile.size() != wvg.size()) {
     throw runtime_error(errMsg + ", wrong wave-vector grid.");
   }
   wvgFile = diff(wvgFile, wvg);
-  if (*max_element(wvgFile.begin(), wvgFile.end()) > tol) {
+  if (abs(*max_element(wvgFile.begin(), wvgFile.end())) > tol) {
     throw runtime_error(errMsg + ", wrong wave-vector grid.");
   }
   adrFixed = adrFixedFile;
+  cout << "Loaded from file " << fileName << endl;
 }
 
 
@@ -160,7 +160,7 @@ void Qstls::initialGuess() {
   ssf.resize(nx);
   // From file
   const string fileName = in.getStlsInput()->getRestartFileName();
-  if (fileName.size() > 0) {
+  if (fileName != "") {
     vector<double> wvgFile;
     vector<double> ssfFile;
     readRestart(fileName, wvgFile, ssfFile);
@@ -196,6 +196,7 @@ void Qstls::updateSolution(){
 void Qstls::writeOutput() const{
   Stls::writeOutput();
   writeAdr();
+  writeRestart();
 }
 
 void Qstls::writeAdr() const {
@@ -280,7 +281,6 @@ void Qstls::readRestart(const string &fileName,
   if (!file) {
     throw runtime_error("Error in reading the file " + fileName);
   }
-  cout << wvg.size() << " " << nx << " " << nl << " " << Theta << endl; 
   wvgFile.resize(nx);
   ssfFile.resize(nx);
   readDataFromBinary<decltype(wvgFile)>(file, wvgFile);
@@ -379,4 +379,51 @@ double AdrFixed::integrand2(const double t, const double y, const double l) cons
   const double txqmt2 = txqmt*txqmt;
   const double logarg = (txqpt2 + tplT2)/(txqmt2 + tplT2);
   return 1.0/(2.0*t + y*y - x*x)*log(logarg);
+}
+
+void AdrFixedIet::get(vector<double> &wvg,
+		      vector<vector<vector<double>>> &res) const {
+  res.resize(nl);
+  const int nx = wvg.size();
+  for (int l = 0; l < nl; ++l){
+    res[l].resize(nx);
+    for (int i = 0; i < nx; ++i) {
+      res[l][i].resize(nx);
+      if (x == 0 || wvg[i] == 0.0) {
+	fill(res[l][i].begin(), res[l][i].end(), 0.0);
+	continue;
+      }
+      for (int j = 0; j < nx; ++j) {
+	auto func = [&](double t)->double{return integrand(t, wvg[j], wvg[i], l);};
+	itg->compute(func, tMin, tMax);
+	res[l][i][j] = itg->getSolution();
+      }  
+    }
+  }
+}
+
+double AdrFixedIet::integrand(const double t, const double y,
+			      const double q, const double l) const {
+  // l ---> l
+  // x ---> x
+  // u ---> q
+  // w ---> y
+  // y ---> t
+  const double x2 = x*x;
+  const double q2 = q*q;
+  const double y2 = y*y;
+  const double t2 = t*t;
+  const double fxt = 4.0*x*t;
+  const double qmypx = q2 - y2 + x2;
+  if (l == 0) {
+    double logarg = (qmypx + fxt)/(qmypx - fxt);
+    if (logarg < 0.0) logarg = -logarg;
+    return t / (exp(t2/Theta - mu) + exp(-t2/Theta + mu) + 2.0)*
+      ((t2 - qmypx*qmypx/(16.0*x2))*log(logarg) + (t/x)*qmypx/2.0);
+  }
+  const double fplT = 4.0*M_PI*l*Theta;
+  const double fplT2 = fplT*fplT;
+  const double logarg = ((qmypx + fxt)*(qmypx + fxt) + fplT2)/
+    ((qmypx - fxt)*(qmypx - fxt) + fplT2);
+  return t / (exp(y2/Theta - mu) + 1.0)*log(logarg);
 }
