@@ -14,19 +14,35 @@ private:
 
   // Auxiliary density response
   vector<vector<double>> adr;
+  vector<vector<double>> adrOld;
   vector<vector<vector<double>>> adrFixed;
+  map<int,pair<string,bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
   vector<double> ssfOld;
   // Compute auxiliary density response
   void computeAdr();
   void computeAdrFixed();
   void loadAdrFixed();
+  void checkAdrFixedFromFile(const decltype(wvg) &wvg_,
+			     const double Theta_,
+			     const int nl_) const;
+  void computeAdrIet();
+  void computeAdrFixedIet();
+  void getAdrFixedIetFileInfo();
+  void writeAdrFixedIetFile(const decltype(adrFixed) &res,
+			    const int i) const;
+  void readAdrFixedIetFile(decltype(adrFixed) &res,
+			   const int i) const;
   // Compute static structure factor at finite temperature
   void computeSsf();
   void computeSsfFinite();
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
+  void initialGuessSsf(const decltype(wvg) &wvg_,
+		       const decltype(ssf) &adr_);
+  void initialGuessAdr(const decltype(wvg) &wvg_,
+		       const decltype(adr) &adr_);
   double computeError();
   void updateSolution();
    // Write output files
@@ -35,22 +51,28 @@ private:
   // Restart files
   void writeRestart() const;
   void readRestart(const string &fileName,
-		   decltype(wvg) &wvgFile,
-		   decltype(ssf) &ssfFile) const;
+		   decltype(wvg) &wvg_,
+		   decltype(ssf) &ssf_,
+		   decltype(adr) &adr_) const;
   void readRestart(const string &fileName,
-		   decltype(wvg) &wvgFile,
-		   decltype(adrFixed) &adrFixedFile,
+		   decltype(wvg) &wvg_,
+		   decltype(adrFixed) &adrFixed_,
 		   double &Theta) const;
   void readRestart(const string &fileName,
-		   decltype(wvg) &wvgFile,
-		   decltype(ssf) &ssfFile,
-		   decltype(adrFixed) &adrFixedFile,
+		   decltype(wvg) &wvg_,
+		   decltype(ssf) &ssf_,
+		   decltype(adr) &adr,
+		   decltype(adrFixed) &adrFixed_,
 		   double &Theta) const;
+  // Check if iet schemes should be used
+  void checkIet() { useIet = in.getTheory() == "QSTLS-HNC" ||
+      in.getTheory() == "QSTLS-IOI" ||
+      in.getTheory() == "QSTLS-LCT";}
 
 public:
 
   // Constructors
-  Qstls(const Input in_) : Stls(in_) {;};
+  Qstls(const Input in_) : Stls(in_) {checkIet();};
   // Compute qstls scheme
   void compute(); 
 
@@ -59,15 +81,18 @@ public:
 // Class for the auxiliary density response calculation
 class Adr {
 
-private:
+protected:
   
   // Number of matsubara frequency
-  const int nl = 0;
+  const int nl;
   // Degeneracy parameter
-  const double Theta = 0;
+  const double Theta;
   // Integration limits
-  const double yMin = 0;
-  const double yMax = 0;
+  const double yMin;
+  const double yMax;
+
+private:
+  
   // integrand 
   double integrand(const double y) const;
   // Integrator object
@@ -99,21 +124,20 @@ public:
   
 };
 
-class AdrFixed {
+class AdrFixed : public Adr {
+
+protected:
+
+  // Wave-vector
+  const double x;
+  // Chemical potential
+  const double mu;
 
 private:
-
-  // Number of matsubara frequencies
-  const int nl = 0;
-  // Wave-vectors
-  const double x = 0;
-  // Degeneracy parameter
-  const double Theta = 0;
-  // Chemical potential
-  const double mu = 0;
+  
   // Integration limits
-  const double qMin = 0;
-  const double qMax = 0;
+  const double &qMin = yMin;
+  const double &qMax = yMax;
   // Integrands 
   double integrand1(const double q, const double l) const;
   double integrand2(const double t, const double y, const double l) const;
@@ -124,14 +148,14 @@ public:
 
   // Constructor for finite temperature calculations
   AdrFixed(const int nl_,
-	   const double x_,
 	   const double Theta_,
-	   const double mu_,
 	   const double qMin_,
 	   const double qMax_,
+	   const double x_,
+	   const double mu_,
 	   const shared_ptr<Integrator2D> &itg_)
-    : nl(nl_), x(x_), Theta(Theta_), mu(mu_),
-      qMin(qMin_), qMax(qMax_), itg(itg_) {;};
+    : Adr(nl_, Theta_, qMin_, qMax_, NULL, NULL),
+      x(x_), mu(mu_), itg(itg_) {;};
   // Get integration result
   void get(vector<double> &wvg,
 	   vector<vector<double>> &res) const;
@@ -139,21 +163,13 @@ public:
 };
 
 
-class AdrFixedIet {
+class AdrFixedIet : public AdrFixed {
 
 private:
 
-  // Number of matsubara frequencies
-  const int nl = 0;
-  // Wave-vectors
-  const double x = 0;
-  // Degeneracy parameter
-  const double Theta = 0;
-  // Chemical potential
-  const double mu = 0;
   // Integration limits
-  const double tMin = 0;
-  const double tMax = 0;
+  const double &tMin = yMin;
+  const double &tMax = yMax;
   // Integrands 
   double integrand(const double t, const double y,
 		   const double q, const double l) const;
@@ -164,14 +180,13 @@ public:
 
   // Constructor for finite temperature calculations
   AdrFixedIet(const int nl_,
-	      const double x_,
 	      const double Theta_,
+	      const double x_,
 	      const double mu_,
 	      const double tMin_,
 	      const double tMax_,
 	      const shared_ptr<Integrator1D> &itg_)
-    : nl(nl_), x(x_), Theta(Theta_), mu(mu_),
-      tMin(tMin_), tMax(tMax_), itg(itg_) {;};
+    : AdrFixed(nl_, Theta_, x_, mu_, tMin_, tMax_, NULL), itg(itg_){;};
   // Get integration result
   void get(vector<double> &wvg,
 	   vector<vector<vector<double>>> &res) const;

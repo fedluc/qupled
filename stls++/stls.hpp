@@ -280,10 +280,16 @@ protected:
   // Integration limits
   const double yMin = 0;
   const double yMax = 0;
+
+private:
+  
   // Integrator object
   const shared_ptr<Integrator1D> itg;
   // Integrand
   double integrand(const double y) const;
+
+protected:
+  
   // Static structure factor interpolator
   const shared_ptr<Interpolator> ssfi;
   // Compute static structure factor

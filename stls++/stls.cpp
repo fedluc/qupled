@@ -870,9 +870,9 @@ double SlfcIet::integrand2(const double w) const {
 // -----------------------------------------------------------------
 
 double BridgeFunction::get() const {
-  if (theory == "STLS-HNC") return hnc();
-  else if (theory == "STLS-IOI") return ioi();
-  else if (theory == "STLS-LCT") return lct();
+  if (theory == "STLS-HNC" || theory == "QSTLS-HNC") return hnc();
+  else if (theory == "STLS-IOI" || theory == "QSTLS-IOI") return ioi();
+  else if (theory == "STLS-LCT" || theory == "QSTLS-LCT") return lct();
   else {
     throw runtime_error("Unknown theory to compute the bridge function term");
   }

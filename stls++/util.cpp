@@ -71,46 +71,65 @@ namespace inpututil {
 
 namespace vecUtil {
 
-// Element-wise sum between two vectors
-vector<double> sum(const vector<double> &v1,
-		   const vector<double> &v2) {
-  assert(v1.size() == v2.size());
-  vector<double> res;
-  transform(v1.begin(), v1.end(),
-	    v2.begin(), back_inserter(res),
-	    plus<double>());
-  return res;
-}
+  // Element-wise sum between two vectors
+  vector<double> sum(const vector<double> &v1,
+		     const vector<double> &v2) {
+    assert(v1.size() == v2.size());
+    vector<double> res;
+    transform(v1.begin(), v1.end(),
+	      v2.begin(), back_inserter(res),
+	      plus<double>());
+    return res;
+  }
 
-// Element-wise difference between two vectors
-vector<double> diff(const vector<double> &v1,
-		    const vector<double> &v2) {
-  assert(v1.size() == v2.size());
-  vector<double> res;
-  transform(v1.begin(), v1.end(),
-	    v2.begin(), back_inserter(res),
-	    minus<double>());
-  return res;
-}
+  // Element-wise difference between two vectors
+  vector<double> diff(const vector<double> &v1,
+		      const vector<double> &v2) {
+    assert(v1.size() == v2.size());
+    vector<double> res;
+    transform(v1.begin(), v1.end(),
+	      v2.begin(), back_inserter(res),
+	      minus<double>());
+    return res;
+  }
+  
+  // Root square difference between two vectors
+  double rms(const vector<double> &v1,
+	     const vector<double> &v2,
+	     const bool normalize) {
+    const vector<double> tmp = diff(v1,v2);
+    double rms = inner_product(tmp.begin(), tmp.end(), tmp.begin(), 0.0);
+    if (normalize) rms /= tmp.size();
+    return sqrt(rms);
+  }
 
-// Root square difference between two vectors
-double rms(const vector<double> &v1,
-		    const vector<double> &v2,
-		    const bool normalize) {
-  const vector<double> tmp = diff(v1,v2);
-  double rms = inner_product(tmp.begin(), tmp.end(), tmp.begin(), 0.0);
-  if (normalize) rms /= tmp.size();
-  return sqrt(rms);
-}
+  // Element-wise multiplication of a vector and a scalar
+  vector<double> mult(const vector<double> &v,
+		    const double a) {
+    vector<double> res = v;
+    transform(res.begin(), res.end(), res.begin(), [&a](double c){return c*a;});
+    return res;
+  }
 
-// Element-wise multiplication of a vector and a scalar
-vector<double> mult(const vector<double> &v,
-			     const double a) {
-  vector<double> res = v;
-  transform(res.begin(), res.end(), res.begin(), [&a](double c){return c*a;});
-  return res;
-}
+  // Resize two dimensional vectors
+  void resize(vector<vector<double>> &v,
+	      const int s1,
+	      const int s2) {
+    v.resize(s1);
+    for (auto &el : v) {
+      el.resize(s2);
+    }
+  }
 
+  // Resize three dimensional vectors
+  void resize(vector<vector<vector<double>>> &v,
+	      const int s1,
+	      const int s2,
+	      const int s3) {
+    v.resize(s1);
+    for (auto &el : v) { resize(el, s2, s3); }
+  }
+  
 }
 
 namespace thermoUtil {

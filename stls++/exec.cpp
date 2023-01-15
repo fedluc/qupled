@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
   else {
     try {
       in.readInput(argv[1]);
-      in.print();
+      //in.print();
     }
     catch (const runtime_error& err) {
       cerr << err.what() << endl;

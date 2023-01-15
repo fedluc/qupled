@@ -17,7 +17,8 @@ Input::Input(){
 
 void Input::setTheory(cString &theory){
   cVector<string> knownTheories = {"STLS", "STLS-HNC", "STLS-IOI",
-				   "STLS-LCT", "QSTLS"};
+				   "STLS-LCT", "QSTLS", "QSTLS-HNC",
+				   "QSTLS-IOI", "QSTLS-LCT"};
   if (count(knownTheories.begin(), knownTheories.end(), theory) == 0) {
     throw runtime_error("Unknown theory: " + theory);
   }

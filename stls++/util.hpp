@@ -72,6 +72,15 @@ namespace vecUtil {
   double rms(const vector<double> &v1,
 	     const vector<double> &v2,
 	     const bool normalize);
+  // Resize two dimensional vectors
+  void resize(vector<vector<double>> &v,
+	      const int s1,
+	      const int s2);
+  // Resize three dimensional vectors
+  void resize(vector<vector<vector<double>>> &v,
+	      const int s1,
+	      const int s2,
+	      const int s3);
 }
 
 
