@@ -97,6 +97,9 @@ private:
   double integrand(const double y) const;
   // Integrator object
   const shared_ptr<Integrator1D> itg;
+
+protected:
+  
   // Interpolator for the static structure factor
   const shared_ptr<Interpolator> ssfi;
   // Interpolator for the fixed component
@@ -162,6 +165,40 @@ public:
   
 };
 
+// Class for the auxiliary density response calculation in the IET scheme
+class AdrIet : public Adr {
+
+private:
+  
+  // Integrands 
+  double integrand1(const double q, const double l) const;
+  double integrand2(const double t, const double y, const double l) const;
+  // Integrator object
+  const shared_ptr<Integrator2D> itg;
+  // Interpolators for the ideal density response
+  shared_ptr<vector<Interpolator>> idri;
+  // Interpolators for the auxiliary density response
+  shared_ptr<vector<Interpolator>> adri;
+  // Interpolator for the fixed component 
+  shared_ptr<vector<Interpolator>> fixi;
+  
+public:
+
+  // Constructor for finite temperature calculations
+  // AdrIet(const int nl_,
+  // 	   const double Theta_,
+  // 	   const double qMin_,
+  // 	   const double qMax_,
+  // 	   const double x_,
+  // 	   const double mu_,
+  // 	   const shared_ptr<Integrator2D> &itg_)
+  //   : Adr(nl_, Theta_, qMin_, qMax_, NULL, NULL),
+  //     x(x_), mu(mu_), itg(itg_) {;};
+  // // Get integration result
+  // void get(vector<double> &wvg,
+  // 	   vector<vector<double>> &res) const;
+  
+};
 
 class AdrFixedIet : public AdrFixed {
 

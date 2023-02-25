@@ -41,23 +41,23 @@ void Qstls::doIterations() {
     // Update auxiliary density response
     computeAdr();
     err = 0;
-    // // Update static structure factor
-    // computeSsf();
-    // // Write output
-    // if (counter % outIter == 0) { writeOutput();};
-    // // Update diagnostic
-    // counter++;
-    // err = computeError();
-    // updateSolution();
-    // // End timing
-    // double toc = omp_get_wtime();
-    // // Print diagnostic
-    // if (verbose) {
-    //    printf("--- iteration %d ---\n", counter);
-    //    printf("Elapsed time: %f seconds\n", toc - tic);
-    //    printf("Residual error: %.5e\n", err);
-    //    fflush(stdout);
-    // }
+    // Update static structure factor
+    computeSsf();
+    // Write output
+    if (counter % outIter == 0) { writeOutput();};
+    // Update diagnostic
+    counter++;
+    err = computeError();
+    updateSolution();
+    // End timing
+    double toc = omp_get_wtime();
+    // Print diagnostic
+    if (verbose) {
+       printf("--- iteration %d ---\n", counter);
+       printf("Elapsed time: %f seconds\n", toc - tic);
+       printf("Residual error: %.5e\n", err);
+       fflush(stdout);
+    }
   }
 }
 
@@ -70,16 +70,16 @@ void Qstls::computeAdr() {
   const int nl = statIn->getNMatsubara();
   if (adr.size() == 0) adr.resize(nx);
   if (slfc.size() == 0) slfc.resize(nx);
-  // assert(wvg.size() == ssfOld.size());
-  // if (adrFixed.size() == 0) computeAdrFixed();
-  // const shared_ptr<Interpolator> ssfi = make_shared<Interpolator>(wvg, ssfOld);
-  // for (int i=0; i<nx; ++i) {
-  //   Adr adrTmp(nl, in.getDegeneracy(), wvg.front(),
-  // 	       wvg.back(), itg, ssfi);
-  //   adrTmp.get(wvg, adrFixed[i], adr[i]);
-  // }
+  assert(wvg.size() == ssfOld.size());
+  if (adrFixed.size() == 0) computeAdrFixed();
+  const shared_ptr<Interpolator> ssfi = make_shared<Interpolator>(wvg, ssfOld);
+  for (int i=0; i<nx; ++i) {
+    Adr adrTmp(nl, in.getDegeneracy(), wvg.front(),
+	       wvg.back(), itg, ssfi);
+    adrTmp.get(wvg, adrFixed[i], adr[i]);
+  }
   if (useIet) computeAdrIet();
-  // for (int i=0; i<nx; ++i) {slfc[i] = adr[i][0]; };
+  for (int i=0; i<nx; ++i) {slfc[i] = adr[i][0]; };
 }
 
 void Qstls::computeAdrFixed() {
@@ -121,8 +121,8 @@ void Qstls::checkAdrFixedFromFile(const decltype(wvg) &wvg_,
 				  const int nl_) const {
   const double tol = 1e-15;
   const string errMsg = "Data loaded from file for the fixed component "
-    "of the auxiliary density response is not "
-    "compatible with input";
+                        "of the auxiliary density response is not "
+                        "compatible with input";
   if (nl_ != in.getStaticInput()->getNMatsubara()) {
     throw runtime_error(errMsg + ", wrong number of Matsubara frequencies.");
   }
@@ -133,7 +133,7 @@ void Qstls::checkAdrFixedFromFile(const decltype(wvg) &wvg_,
     throw runtime_error(errMsg + ", wrong wave-vector grid.");
   }
   const vector<double> wvgDiff = diff(wvg_, wvg);
-  if (abs(*max_element(wvg_.begin(), wvg_.end())) > tol) {
+  if (abs(*max_element(wvgDiff.begin(), wvgDiff.end())) > tol) {
     throw runtime_error(errMsg + ", wrong wave-vector grid.");
   }
 }
@@ -141,13 +141,11 @@ void Qstls::checkAdrFixedFromFile(const decltype(wvg) &wvg_,
 void Qstls::computeAdrIet() {
   if (bf.size() == 0) computeBf();
   const int nx = wvg.size();
-  getAdrFixedIetFileInfo();
   computeAdrFixedIet();
   for (int i=0; i<nx; ++i) {
     assert(adrFixedIetFileInfo.at(i).second);
     vector<vector<vector<double>>> fix;
     readAdrFixedIetFile(fix, i);
-    //if(!filePair.second) {"Fixed adr file " + filePair.first);
   }
 }
 
@@ -172,10 +170,13 @@ void Qstls::computeAdrFixedIet() {
   const int nx = wvg.size();
   const int nl = statIn->getNMatsubara();
   vector<int> idx;
+  // Check which files have to be created
+  getAdrFixedIetFileInfo();
   for (const auto &member : adrFixedIetFileInfo) {
     if(!member.second.second) { idx.push_back(member.first); };
   }
   if (idx.size() == 0) return;
+  // Write necessary files
   cout << "#######" << endl;
   cout << "Writing files for the fixed component "
           "of the iet auxiliary density response" << endl;
@@ -189,6 +190,8 @@ void Qstls::computeAdrFixedIet() {
     adrTmp.get(wvg, res);
     writeAdrFixedIetFile(res, idx[i]);
   }
+  // Update content of adrFixedIetFileInfo
+  getAdrFixedIetFileInfo();
 }
 
 void Qstls::writeAdrFixedIetFile(const decltype(adrFixed) &res,
@@ -221,7 +224,6 @@ void Qstls::readAdrFixedIetFile(decltype(adrFixed) &res,
   const int nl = statIn->getNMatsubara();
   const double Theta = in.getDegeneracy();
   const string fileName = adrFixedIetFileInfo.at(i).first;
-  cout << "Loading " << fileName;
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
@@ -512,6 +514,7 @@ void AdrFixed::get(vector<double> &wvg,
   }
 }
 
+// Integrands for the fixed component
 double AdrFixed::integrand1(const double q, const double l) const {
   if (l == 0) return q/(exp(q*q/Theta - mu) + exp(-q*q/Theta + mu) + 2.0);
   return q/(exp(q*q/Theta - mu) + 1.0);
@@ -541,6 +544,20 @@ double AdrFixed::integrand2(const double t, const double y, const double l) cons
   return 1.0/(2.0*t + y*y - x*x)*log(logarg);
 }
 
+// -----------------------------------------------------------------
+// Auxiliary density response classes for the iet schemes
+// -----------------------------------------------------------------
+
+double AdrIet::integrand1(const double q, const double l) const {
+  return 0.0;
+}
+
+double AdrIet::integrand2(const double t, const double y,
+			  const double l) const {
+  return 0.0;
+}
+
+// get fixed component
 void AdrFixedIet::get(vector<double> &wvg,
 		      vector<vector<vector<double>>> &res) const {
   res.resize(nl);
@@ -562,6 +579,7 @@ void AdrFixedIet::get(vector<double> &wvg,
   }
 }
 
+// Integrand for the fixed component
 double AdrFixedIet::integrand(const double t, const double y,
 			      const double q, const double l) const {
   // l ---> l
