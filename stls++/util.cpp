@@ -111,25 +111,6 @@ namespace vecUtil {
     return res;
   }
 
-  // Resize two dimensional vectors
-  void resize(vector<vector<double>> &v,
-	      const int s1,
-	      const int s2) {
-    v.resize(s1);
-    for (auto &el : v) {
-      el.resize(s2);
-    }
-  }
-
-  // Resize three dimensional vectors
-  void resize(vector<vector<vector<double>>> &v,
-	      const int s1,
-	      const int s2,
-	      const int s3) {
-    v.resize(s1);
-    for (auto &el : v) { resize(el, s2, s3); }
-  }
-  
 }
 
 namespace thermoUtil {

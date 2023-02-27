@@ -54,7 +54,7 @@ void Integrator2D::compute(const function<double(double)> func1,
 			   const function<double(double)> yMin,
 			   const function<double(double)> yMax){
   // Level 2 integration
-  auto func = [&](double x_)->double{
+  auto func = [&](double x_)->double {
     x = x_;
     itg2.compute(func2, yMin(x_), yMax(x_));
     return func1(x_) * itg2.getSolution();

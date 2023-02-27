@@ -7,10 +7,12 @@
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_integration.h>
 #include <gsl/gsl_spline.h>
+#include <gsl/gsl_interp2d.h>
+#include <gsl/gsl_spline2d.h>
 
 using namespace std;
 
-// Data interpolator
+// Interpolator for 1D data
 class Interpolator {
 
 private:
@@ -35,8 +37,45 @@ public:
     gsl_interp_accel_free(acc);
   }
   // Evaluate
-  double eval(double x) const {
+  double eval(const double x) const {
     return gsl_spline_eval(spline, x, acc);
+  };
+  
+};
+
+// Interpolator for 2D data
+class Interpolator2D {
+
+private:
+
+  // Spline
+  gsl_spline2d *spline;
+  // Accelerator
+  gsl_interp_accel *xacc;
+  gsl_interp_accel *yacc;
+  
+public:
+
+  // Constructor
+  Interpolator2D(const vector<double> &x,
+		 const vector<double> &y,
+		 const vector<double> &z) {
+    assert(x.size() == y.size());
+    assert(x.size() * y.size() == z.size());
+    spline = gsl_spline2d_alloc(gsl_interp2d_bicubic, x.size(), y.size());
+    xacc = gsl_interp_accel_alloc();
+    yacc = gsl_interp_accel_alloc();
+    gsl_spline2d_init(spline, &x[0], &y[0], &z[0], x.size(), y.size());
+  };
+  // Destructor
+  ~Interpolator2D(){
+    gsl_spline2d_free(spline);
+    gsl_interp_accel_free(xacc);
+    gsl_interp_accel_free(yacc);
+  }
+  // Evaluate
+  double eval(const double x, const double y) const {
+    return gsl_spline2d_eval(spline, x, y, xacc, yacc);
   };
   
 };

@@ -6,6 +6,7 @@
 #include "numerics.hpp"
 
 using namespace std;
+using namespace vecUtil;
 
 class Stls {
 
@@ -14,7 +15,7 @@ protected:
   // Wave vector grid
   vector<double> wvg;
   // Ideal density response
-  vector<vector<double>> idr;
+  Vector2D<double> idr;
   // Static local field correction
   vector<double> slfcOld;
   vector<double> slfc;

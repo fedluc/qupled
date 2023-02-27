@@ -7,15 +7,16 @@
 #include "numerics.hpp"
 
 using namespace std;
+using namespace vecUtil;
 
 class Qstls : public Stls {
   
 private: 
 
   // Auxiliary density response
-  vector<vector<double>> adr;
-  vector<vector<double>> adrOld;
-  vector<vector<vector<double>>> adrFixed;
+  Vector2D<double> adr;
+  Vector2D<double> adrOld;
+  Vector3D<double> adrFixed;
   map<int,pair<string,bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
   vector<double> ssfOld;
@@ -122,7 +123,7 @@ public:
       yMax(yMax_), itg(itg_), ssfi(ssfi_) {;};
   // Get result of integration
   void get(const vector<double> &wvg,
-	   const vector<vector<double>> &fixed,
+	   const Vector2D<double> &fixed,
 	   vector<double> &res);
   
 };
@@ -135,7 +136,7 @@ protected:
   const double x;
   // Chemical potential
   const double mu;
-
+  
 private:
   
   // Integration limits
@@ -161,7 +162,7 @@ public:
       x(x_), mu(mu_), itg(itg_) {;};
   // Get integration result
   void get(vector<double> &wvg,
-	   vector<vector<double>> &res) const;
+	   Vector2D<double> &res) const;
   
 };
 
@@ -169,34 +170,56 @@ public:
 class AdrIet : public Adr {
 
 private:
-  
+
+  // Wave-vector
+  const double x;
+  // Matsubara frequency
+  const int l;
+   // Integration limits
+  const double &qMin = yMin;
+  const double &qMax = yMax;
   // Integrands 
-  double integrand1(const double q, const double l) const;
-  double integrand2(const double t, const double y, const double l) const;
+  double integrand1(const double q) const;
+  double integrand2(const double y) const;
   // Integrator object
   const shared_ptr<Integrator2D> itg;
-  // Interpolators for the ideal density response
-  shared_ptr<vector<Interpolator>> idri;
-  // Interpolators for the auxiliary density response
-  shared_ptr<vector<Interpolator>> adri;
+  // Interpolator for the ideal density response
+  const shared_ptr<Interpolator> idri;
+  // Interpolator for the auxiliary density response
+  const shared_ptr<Interpolator> adri;
+  // Interpolator for the bridge function contribution
+  const shared_ptr<Interpolator> bfi;
   // Interpolator for the fixed component 
-  shared_ptr<vector<Interpolator>> fixi;
+  shared_ptr<Interpolator2D> fixi;
+  // Compute ideal density response
+  double idr(const double y) const;
+  // Compute auxiliary density
+  double adr(const double y) const;
+  // Compute bridge function contribution
+  double bf(const double y) const;
+  // Compute fixed component
+  double fix(const double x, const double y) const;
   
 public:
 
   // Constructor for finite temperature calculations
-  // AdrIet(const int nl_,
-  // 	   const double Theta_,
-  // 	   const double qMin_,
-  // 	   const double qMax_,
-  // 	   const double x_,
-  // 	   const double mu_,
-  // 	   const shared_ptr<Integrator2D> &itg_)
-  //   : Adr(nl_, Theta_, qMin_, qMax_, NULL, NULL),
-  //     x(x_), mu(mu_), itg(itg_) {;};
-  // // Get integration result
-  // void get(vector<double> &wvg,
-  // 	   vector<vector<double>> &res) const;
+  AdrIet(const double Theta_,
+	 const double qMin_,
+	 const double qMax_,
+	 const double x_,
+	 const int l_,
+	 const shared_ptr<Integrator2D> &itg_,
+	 const shared_ptr<Interpolator> &ssfi_,
+	 const shared_ptr<Interpolator> &idri_,
+	 const shared_ptr<Interpolator> &adri_,
+	 const shared_ptr<Interpolator> &bfi_)
+    : Adr(0, Theta_, qMin_, qMax_, NULL, ssfi_),
+      x(x_), l(l_), itg(itg_), idri(idri_),
+      adri(adri_), bfi(bfi_) {;};
+  // Get integration result
+  void get(const vector<double> &wvg,
+	   const Vector2D<double> &fixed,
+	   double &res);
   
 };
 
@@ -226,7 +249,7 @@ public:
     : AdrFixed(nl_, Theta_, x_, mu_, tMin_, tMax_, NULL), itg(itg_){;};
   // Get integration result
   void get(vector<double> &wvg,
-	   vector<vector<vector<double>>> &res) const;
+	   Vector3D<double> &res) const;
   
 };
 

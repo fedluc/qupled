@@ -2,7 +2,6 @@
 #include "util.hpp"
 #include "qstls.hpp"
 
-using namespace vecUtil;
 using namespace stringUtil;
 using namespace binUtil;
 
@@ -144,7 +143,7 @@ void Qstls::computeAdrIet() {
   computeAdrFixedIet();
   for (int i=0; i<nx; ++i) {
     assert(adrFixedIetFileInfo.at(i).second);
-    vector<vector<vector<double>>> fix;
+    Vector3D<double> fix;
     readAdrFixedIetFile(fix, i);
   }
 }
@@ -237,7 +236,7 @@ void Qstls::readAdrFixedIetFile(decltype(adrFixed) &res,
   readDataFromBinary<int>(file, nl_);
   readDataFromBinary<double>(file, Theta_);
   wvg_.resize(nx);
-  resize(res, nx, nl, nx);
+  res.resize(nx, nl, nx);
   readDataFromBinary<decltype(wvg)>(file, wvg_);
   readDataFromBinary<decltype(res)>(file, res);
   file.close();
@@ -275,13 +274,13 @@ void Qstls::initialGuess() {
   const int nl = in.getStaticInput()->getNMatsubara();
   ssfOld.resize(nx);
   ssf.resize(nx);
-  resize(adrOld, nx, nl);
+  adrOld.resize(nx, nl);
   // From file
   const string fileName = in.getStlsInput()->getRestartFileName();
   if (fileName != "") {
     vector<double> wvg_;
     vector<double> ssf_;
-    vector<vector<double>> adr_;
+    Vector2D<double> adr_;
     readRestart(fileName, wvg_, ssf_, adr_);
     assert(wvg_.size() == ssf_.size());
     assert(wvg_.size() == adr_.size());
@@ -294,7 +293,7 @@ void Qstls::initialGuess() {
   stls.compute();
   stls.getSsf(ssfOld);
   if (useIet) {
-    resize(adrOld, nx, nl);
+    adrOld.resize(nx, nl);
     for (auto &el : adrOld) { fill(el.begin(), el.end(), 0.0); }
   }
 }
@@ -446,8 +445,8 @@ void Qstls::readRestart(const string &fileName,
   readDataFromBinary<double>(file, Theta);
   wvg_.resize(nx);
   ssf_.resize(nx);
-  resize(adr_, nx, nl);
-  resize(adrFixed_, nx, nl, nx);
+  adr_.resize(nx, nl);
+  adrFixed_.resize(nx, nl, nx);
   readDataFromBinary<decltype(wvg_)>(file, wvg_);
   readDataFromBinary<decltype(ssf_)>(file, ssf_);
   readDataFromBinary<decltype(adr_)>(file, adr_);
@@ -466,7 +465,8 @@ void Qstls::readRestart(const string &fileName,
 double Adr::ssf(const double y) const {
   return ssfi->eval(y);
 }
-// Compute fixed component (from interpolator)
+
+// Compute fixed component
 double Adr::fix(const double y) const {
   return fixi->eval(y);
 }
@@ -478,7 +478,7 @@ double Adr::integrand(const double y) const{
 
 // Get result of integration
 void Adr::get(const vector<double> &wvg,
-	      const vector<vector<double>> &fixed,
+	      const Vector2D<double> &fixed,
 	      vector<double> &res) {
   res.resize(nl);
   for (int l = 0; l < nl; ++l){
@@ -494,9 +494,10 @@ void Adr::get(const vector<double> &wvg,
 
 // Get fixed component
 void AdrFixed::get(vector<double> &wvg,
-		   vector<vector<double>> &res) const {
+		   Vector2D<double> &res) const {
   res.resize(nl);
   const int nx = wvg.size();
+  const double x2 = x*x;
   for (int l = 0; l < nl; ++l){
     res[l].resize(nx);
     if (x == 0.0) {
@@ -504,8 +505,9 @@ void AdrFixed::get(vector<double> &wvg,
       continue;
     }
     for (int i = 0; i < nx; ++i) {
-      auto tMin = [&](double q)->double{return x*x - x*wvg[i];};
-      auto tMax = [&](double q)->double{return x*x + x*wvg[i];};
+      const double xq = x*wvg[i];
+      auto tMin = [&](double q)->double{return x2 - xq;};
+      auto tMax = [&](double q)->double{return x2 + xq;};
       auto func1 = [&](double q)->double{return integrand1(q, l);};
       auto func2 = [&](double t)->double{return integrand2(t, wvg[i], l);};
       itg->compute(func1, func2, qMin, qMax, tMin, tMax);
@@ -548,18 +550,77 @@ double AdrFixed::integrand2(const double t, const double y, const double l) cons
 // Auxiliary density response classes for the iet schemes
 // -----------------------------------------------------------------
 
-double AdrIet::integrand1(const double q, const double l) const {
-  return 0.0;
+// Compute ideal density response
+double AdrIet::idr(const double y) const {
+  return idri->eval(y);
 }
 
-double AdrIet::integrand2(const double t, const double y,
-			  const double l) const {
-  return 0.0;
+// Compute auxiliary density response
+double AdrIet::adr(const double y) const {
+  return adri->eval(y);
+}
+
+// Compute auxiliary density response
+double AdrIet::bf(const double y) const {
+  return bfi->eval(y);
+}
+
+// Compute fixed component
+double AdrIet::fix(const double x, const double y) const {
+  return fixi->eval(x,y);
+}
+
+// Integrands
+double AdrIet::integrand1(const double q) const {
+  if (q == 0.0) return 0.0;
+  return (1 - bf(q)) * ssf(q) + (adr(q)/idr(q) * (ssf(q) - 1.0) - 1.0) / q;
+}
+
+double AdrIet::integrand2(const double y) const {
+  const double q = itg->getX();
+  return y * fix(q,y) * (ssf(y) - 1.0);
+}
+
+// Get result of integration
+// for now we work with a single matsubara frequency. If we want results for all
+// frequencies then fixed has to become Vector3D and res a vector<double>
+void AdrIet::get(const vector<double> &wvg,
+		 const Vector2D<double> &fixed,
+		 double &res) {
+  const int nx = wvg.size();
+  if (x == 0.0) {
+    res = 0.0;
+    return;
+  }
+  fixi.reset(new Interpolator2D(wvg, wvg, fixed.flatten()));
+  auto yMin = [&](double q)->double{return q + x;};
+  auto yMax = [&](double q)->double{return (q > x) ? q - x : x - q;};
+  auto func1 = [&](double q)->double{return integrand1(q);};
+  auto func2 = [&](double y)->double{return integrand2(y);};
+  itg->compute(func1, func2, qMin, qMax, yMin, yMax);
+  res = itg->getSolution();
+  //res[l][i] = itg->getSolution();
+  // for (int l = 0; l < nl; ++l){
+  //   res[l].resize(nx);
+  //   if (x == 0.0) {
+  //     fill(res[l].begin(), res[l].end(), 0.0);
+  //     continue;
+  //   }
+  //   for (int i = 0; i < nx; ++i) {
+  //     const double xq = x*wvg[i];
+  //     auto tMin = [&](double q)->double{return x2 - xq;};
+  //     auto tMax = [&](double q)->double{return x2 + xq;};
+  //     auto func1 = [&](double q)->double{return integrand1(q, l);};
+  //     auto func2 = [&](double t)->double{return integrand2(t, wvg[i], l);};
+  //     itg->compute(func1, func2, qMin, qMax, tMin, tMax);
+  //     res[l][i] = itg->getSolution();
+  //   }
+  // }
 }
 
 // get fixed component
 void AdrFixedIet::get(vector<double> &wvg,
-		      vector<vector<vector<double>>> &res) const {
+		      Vector3D<double> &res) const {
   res.resize(nl);
   const int nx = wvg.size();
   for (int l = 0; l < nl; ++l){
