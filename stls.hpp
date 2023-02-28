@@ -25,6 +25,7 @@ protected:
   vector<double> ssfHF;
   // Integrator object
   const shared_ptr<Integrator1D> itg = make_shared<Integrator1D>();
+  const Integrator1D itgTmp;
   // Input data
   const Input in;
   // Output verbosity
@@ -125,7 +126,7 @@ private:
   // Idr integrand for frequency = 0 and wave-vector x
   double integrand(const double y) const;  
   // Integrator object
-  const shared_ptr<Integrator1D> itg;
+  const Integrator1D &itg;
   
 public:
 
@@ -136,14 +137,15 @@ public:
       const double mu_,
       const double yMin_,
       const double yMax_,
-      const shared_ptr<Integrator1D> &itg_)
+      const Integrator1D &itg_)
     : nl(nl_), x(x_), Theta(Theta_),
       mu(mu_), yMin(yMin_), yMax(yMax_),
       itg(itg_) {;};
   // Constructor for zero temperature calculations
   Idr(const double Omega_,
-      const double x_)
-    : Omega(Omega_), x(x_) {;};
+      const double x_,
+      const Integrator1D &itg_)
+    : Omega(Omega_), x(x_), itg(itg_) {;};
   // Get at finite temperature
   vector<double> get() const;
   // Get real part at zero temperature
@@ -188,7 +190,8 @@ public:
     : x(x_), Theta(Theta_), mu(mu_),
       yMin(yMin_), yMax(yMax_), itg(itg_) {;};
   // Constructor for zero temperature calculations
-  SsfHF(const double x_) : x(x_) {;};
+  SsfHF(const double x_,
+	const Integrator1D &itg_) : x(x_) {;};
   // Get at any temperature
   double get() const;
   
@@ -292,7 +295,7 @@ private:
 protected:
   
   // Static structure factor interpolator
-  const shared_ptr<Interpolator> ssfi;
+  const Interpolator &ssfi;
   // Compute static structure factor
   double ssf(double x_) const;
   
@@ -303,7 +306,7 @@ public:
        const double yMin_,
        const double yMax_,
        const shared_ptr<Integrator1D> &itg_,
-       const shared_ptr<Interpolator> &ssfi_)
+       const Interpolator &ssfi_)
     : x(x_), yMin(yMin_), yMax(yMax_),
       itg(itg_), ssfi(ssfi_) {;};
   // Get result of integration 
@@ -323,9 +326,9 @@ private:
   double integrand1(const double y) const;
   double integrand2(const double w) const;
   // Static local field correction interpolator
-  const shared_ptr<Interpolator> slfci;
+  const Interpolator &slfci;
   // Bridge function interpolator
-  const shared_ptr<Interpolator> bfi;
+  const Interpolator &bfi;
   // Compute static local field correction
   double slfc(double x_) const;
   // Compute bridge function
@@ -338,9 +341,9 @@ public:
 	  const double yMin_,
 	  const double yMax_,
 	  const shared_ptr<Integrator2D> &itg2_,
-	  const shared_ptr<Interpolator> &ssfi_,
-	  const shared_ptr<Interpolator> &slfci_,
-	  const shared_ptr<Interpolator> &bfi_)
+	  const Interpolator &ssfi_,
+	  const Interpolator &slfci_,
+	  const Interpolator &bfi_)
     : Slfc(x_, yMin_, yMax_, NULL, ssfi_),
       itg2(itg2_), slfci(slfci_), bfi(bfi_) {;};
   // Get result of integration 

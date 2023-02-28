@@ -10,9 +10,6 @@ Input::Input(){
   Theta = 1.0;
   rs = 1.0;
   nThreads = 1;
-  stat = make_shared<StaticInput>();
-  stls = make_shared<StlsInput>();
-  qstls = make_shared<QstlsInput>();
 }
 
 void Input::setTheory(cString &theory){
@@ -100,15 +97,15 @@ void Input::assignInputToBaseData(cString &keyword, cString &value){
 }
 
 void Input::assignInputToStaticData(cString &keyword, cString &value){
-  stat->assignInputToData(keyword, value);
+  stat.assignInputToData(keyword, value);
 }
 
 void Input::assignInputToStlsData(cString &keyword, cString &value){
-  stls->assignInputToData(keyword, value);
+  stls.assignInputToData(keyword, value);
 }
 
 void Input::assignInputToQstlsData(cString &keyword, cString &value){
-  qstls->assignInputToData(keyword, value);
+  qstls.assignInputToData(keyword, value);
 }
 
 void Input::print() const {
@@ -117,9 +114,9 @@ void Input::print() const {
   cout << "base.degeneracy = " << Theta << endl;
   cout << "base.coupling = " << rs << endl;
   cout << "base.threads = " << nThreads << endl;
-  stat->print();
-  stls->print();
-  qstls->print();
+  stat.print();
+  stls.print();
+  qstls.print();
   cout << "----------------------------------------------" << endl;
 }
 

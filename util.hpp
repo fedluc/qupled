@@ -146,7 +146,7 @@ namespace thermoUtil {
     // Integrator object
     const shared_ptr<Integrator1D> itg;
     // Static structure factor interpolator
-    const shared_ptr<Interpolator> ssfi;
+    const Interpolator &ssfi;
     // Integrand
     double integrand(const double y) const ;
     // Compute static structure factor
@@ -161,7 +161,7 @@ namespace thermoUtil {
 		   const double yMin_,
 		   const double yMax_,
 		   const shared_ptr<Integrator1D> &itg_,
-		   const shared_ptr<Interpolator> &ssfi_)
+		   const Interpolator &ssfi_)
       : rs(rs_), yMin(yMin_), yMax(yMax_),
 	itg(itg_), ssfi(ssfi_) {;};
     // Get result of integration 
@@ -182,7 +182,7 @@ namespace thermoUtil {
     // Integrator object
     const shared_ptr<Integrator1DFourier> itg;
     // Static structure factor interpolator
-    const shared_ptr<Interpolator> ssfi;
+    const Interpolator &ssfi;
     // Integrand
     double integrand(const double y) const ;
     // Compute static structure factor
@@ -194,7 +194,7 @@ namespace thermoUtil {
     Rdf(const double r_,
 	const double cutoff_,
 	const shared_ptr<Integrator1DFourier> &itg_,
-	const shared_ptr<Interpolator> &ssfi_)
+	const Interpolator &ssfi_)
       : r(r_), cutoff(cutoff_), itg(itg_), ssfi(ssfi_) {
       assert(r>0);
       itg->setR(r);

@@ -13,59 +13,6 @@ using namespace inpututil;
 
 #define NO_FILE_NAME ""
 
-class Input;
-class StaticInput;
-class StlsInput;
-class QstlsInput;
-
-class Input {
-
-private:
-
-  // theory to be solved
-  string theory; 
-  // degeneracy parameter
-  double Theta;
-  // quantum coupling parameter
-  double rs;
-  // Number of threads for parallel calculations
-  size_t nThreads;
-  // input for static calcualtions
-  shared_ptr<StaticInput> stat;
-  // input for stls calculations
-  shared_ptr<StlsInput> stls;
-  // input for qstls calculations
-  shared_ptr<QstlsInput> qstls;
-  // Setters
-  void setTheory(cString &theory);
-  void setDegeneracy(cString &Theta);
-  void setCoupling(cString &rs);
-  void setThreads(cString &nThreads);
-  // Helper methods to read the input file
-  void parseInputLine(cString &line);
-  void assignInputToData(cVector<string> &input);
-  void assignInputToBaseData(cString &keyword, cString &value);
-  void assignInputToStaticData(cString &keyword, cString &value);
-  void assignInputToStlsData(cString &keyword, cString &value);
-  void assignInputToQstlsData(cString &keyword, cString &value);
-   
-public:
-
-  //Constructor
-  Input();
-  // Getters
-  string getTheory() const { return theory; };
-  double getDegeneracy() const {return Theta; };
-  double getCoupling() const { return rs; };
-  shared_ptr<StaticInput> getStaticInput() const { return stat; };
-  shared_ptr<StlsInput> getStlsInput() const { return stls; };
-  shared_ptr<QstlsInput> getQstlsInput() const { return qstls; };
-  // Read input file
-  void readInput(cString &fileName);
-  void print() const;
-  
-};
-
 class StaticInput {
 
 private:
@@ -173,6 +120,55 @@ public:
   bool getUseStaticAdr() const { return useStaticAdr; };
   string getFixedFileName() const {return fixedFileName; };
 
+};
+
+
+class Input {
+
+private:
+
+  // theory to be solved
+  string theory; 
+  // degeneracy parameter
+  double Theta;
+  // quantum coupling parameter
+  double rs;
+  // Number of threads for parallel calculations
+  size_t nThreads;
+  // input for static calcualtions
+  StaticInput stat;
+  // input for stls calculations
+  StlsInput stls;
+  // input for qstls calculations
+  QstlsInput qstls;
+  // Setters
+  void setTheory(cString &theory);
+  void setDegeneracy(cString &Theta);
+  void setCoupling(cString &rs);
+  void setThreads(cString &nThreads);
+  // Helper methods to read the input file
+  void parseInputLine(cString &line);
+  void assignInputToData(cVector<string> &input);
+  void assignInputToBaseData(cString &keyword, cString &value);
+  void assignInputToStaticData(cString &keyword, cString &value);
+  void assignInputToStlsData(cString &keyword, cString &value);
+  void assignInputToQstlsData(cString &keyword, cString &value);
+   
+public:
+
+  //Constructor
+  Input();
+  // Getters
+  string getTheory() const { return theory; };
+  double getDegeneracy() const {return Theta; };
+  double getCoupling() const { return rs; };
+  const StaticInput& getStaticInput() const { return stat; };
+  const StlsInput& getStlsInput() const { return stls; };
+  const QstlsInput& getQstlsInput() const { return qstls; };
+  // Read input file
+  void readInput(cString &fileName);
+  void print() const;
+  
 };
 
 // class vsInput { // Input properties for the vs-stls methods

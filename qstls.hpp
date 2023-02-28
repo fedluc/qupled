@@ -102,9 +102,9 @@ private:
 protected:
   
   // Interpolator for the static structure factor
-  const shared_ptr<Interpolator> ssfi;
+  const Interpolator &ssfi;
   // Interpolator for the fixed component
-  shared_ptr<Interpolator> fixi;
+  Interpolator fixi;
   // Compute static structure factor
   double ssf(const double y) const;
   // Compute fixed component
@@ -118,7 +118,7 @@ public:
       const double yMin_,
       const double yMax_,
       const shared_ptr<Integrator1D> &itg_,
-      const shared_ptr<Interpolator> &ssfi_)
+      const Interpolator &ssfi_)
     : nl(nl_), Theta(Theta_), yMin(yMin_),
       yMax(yMax_), itg(itg_), ssfi(ssfi_) {;};
   // Get result of integration
@@ -128,10 +128,17 @@ public:
   
 };
 
-class AdrFixed : public Adr {
+class AdrFixed {
 
 protected:
 
+  // Number of matsubara frequency
+  const int nl;
+  // Degeneracy parameter
+  const double Theta;
+  // Integration limits
+  const double qMin;
+  const double qMax;
   // Wave-vector
   const double x;
   // Chemical potential
@@ -139,9 +146,6 @@ protected:
   
 private:
   
-  // Integration limits
-  const double &qMin = yMin;
-  const double &qMax = yMax;
   // Integrands 
   double integrand1(const double q, const double l) const;
   double integrand2(const double t, const double y, const double l) const;
@@ -158,8 +162,8 @@ public:
 	   const double x_,
 	   const double mu_,
 	   const shared_ptr<Integrator2D> &itg_)
-    : Adr(nl_, Theta_, qMin_, qMax_, NULL, NULL),
-      x(x_), mu(mu_), itg(itg_) {;};
+    : nl(nl_), Theta(Theta_), qMin(qMin_),
+      qMax(qMax_), x(x_), mu(mu_), itg(itg_) {;};
   // Get integration result
   void get(vector<double> &wvg,
 	   Vector2D<double> &res) const;
@@ -184,13 +188,13 @@ private:
   // Integrator object
   const shared_ptr<Integrator2D> itg;
   // Interpolator for the ideal density response
-  const shared_ptr<Interpolator> idri;
+  const Interpolator &idri;
   // Interpolator for the auxiliary density response
-  const shared_ptr<Interpolator> adri;
+  const Interpolator &adri;
   // Interpolator for the bridge function contribution
-  const shared_ptr<Interpolator> bfi;
+  const Interpolator &bfi;
   // Interpolator for the fixed component 
-  shared_ptr<Interpolator2D> fixi;
+  Interpolator2D fixi;
   // Compute ideal density response
   double idr(const double y) const;
   // Compute auxiliary density
@@ -209,10 +213,10 @@ public:
 	 const double x_,
 	 const int l_,
 	 const shared_ptr<Integrator2D> &itg_,
-	 const shared_ptr<Interpolator> &ssfi_,
-	 const shared_ptr<Interpolator> &idri_,
-	 const shared_ptr<Interpolator> &adri_,
-	 const shared_ptr<Interpolator> &bfi_)
+	 const Interpolator &ssfi_,
+	 const Interpolator &idri_,
+	 const Interpolator &adri_,
+	 const Interpolator &bfi_)
     : Adr(0, Theta_, qMin_, qMax_, NULL, ssfi_),
       x(x_), l(l_), itg(itg_), idri(idri_),
       adri(adri_), bfi(bfi_) {;};
@@ -228,8 +232,8 @@ class AdrFixedIet : public AdrFixed {
 private:
 
   // Integration limits
-  const double &tMin = yMin;
-  const double &tMax = yMax;
+  const double &tMin = qMin;
+  const double &tMax = qMax;
   // Integrands 
   double integrand(const double t, const double y,
 		   const double q, const double l) const;

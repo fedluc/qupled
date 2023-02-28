@@ -41,9 +41,9 @@ void Stls::init(){
 // Set up wave-vector grid
 void Stls::buildWvGrid(){
   wvg.push_back(0.0);
-  const shared_ptr<StaticInput> &inStat = in.getStaticInput();
-  const double dx = inStat->getWaveVectorGridRes();
-  const double xmax = inStat->getWaveVectorGridCutoff();
+  const auto &inStat = in.getStaticInput();
+  const double dx = inStat.getWaveVectorGridRes();
+  const double xmax = inStat.getWaveVectorGridCutoff();
   while(wvg.back() < xmax){
     wvg.push_back(wvg.back() + dx);
   }
@@ -52,8 +52,8 @@ void Stls::buildWvGrid(){
 // Compute chemical potential
 void Stls::computeChemicalPotential(){
   if (in.getDegeneracy() == 0.0) return;
-  const shared_ptr<StaticInput> &statIn = in.getStaticInput();
-  const vector<double> &guess = statIn->getChemicalPotentialGuess();
+  const auto &statIn = in.getStaticInput();
+  const vector<double> &guess = statIn.getChemicalPotentialGuess();
   ChemicalPotential mu_(in.getDegeneracy());
   try {
     mu_.compute(guess);
@@ -70,9 +70,9 @@ void Stls::computeIdr(){
   if (in.getDegeneracy() == 0.0) return;
   assert(computedChemicalPotential);
   assert(itg != NULL);
-  const shared_ptr<StaticInput> &statIn = in.getStaticInput();
+  const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
-  const int nl = statIn->getNMatsubara();
+  const int nl = statIn.getNMatsubara();
   idr.resize(nx);
   for (int i=0; i<nx; ++i){
     Idr idrTmp(nl, wvg[i], in.getDegeneracy(), mu,
@@ -153,7 +153,7 @@ void Stls::computeSlfc(){
 }
 
 void Stls::computeSlfcStls() {
-  const shared_ptr<Interpolator> itp = make_shared<Interpolator>(wvg,ssf);
+  const Interpolator itp = Interpolator(wvg,ssf);
   for (int i=0; i<wvg.size(); ++i) {
     Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itg, itp);
     slfc[i] = slfcTmp.get();
@@ -162,10 +162,10 @@ void Stls::computeSlfcStls() {
 
 void Stls::computeSlfcIet() {
    const shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>();
-   const shared_ptr<Interpolator> ssfItp = make_shared<Interpolator>(wvg,ssf);
-   const shared_ptr<Interpolator> slfcItp = make_shared<Interpolator>(wvg,slfcOld);
+   const Interpolator ssfItp = Interpolator(wvg,ssf);
+   const Interpolator slfcItp = Interpolator(wvg,slfcOld);
    if (bf.size() == 0) computeBf();
-   const shared_ptr<Interpolator> bfItp = make_shared<Interpolator>(wvg,bf);
+   const Interpolator bfItp = Interpolator(wvg,bf);
    for (int i=0; i<wvg.size(); ++i){
      SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),
 		     itg2, ssfItp, slfcItp, bfItp);
@@ -176,11 +176,11 @@ void Stls::computeSlfcIet() {
 // Compute bridge function
 void Stls::computeBf() {
   const int nx = wvg.size();
-  const shared_ptr<StlsInput> sIn = in.getStlsInput();
+  const auto &stlsIn = in.getStlsInput();
   shared_ptr<Integrator1DFourier> itgF = make_shared<Integrator1DFourier>(0, 1e-10);
   bf.resize(nx);
   for (int i=0; i<nx; ++i){ 
-    BridgeFunction bfTmp(in.getTheory(), sIn->getIETMapping(),
+    BridgeFunction bfTmp(in.getTheory(), stlsIn.getIETMapping(),
 			 in.getCoupling(), in.getDegeneracy(),
 			 wvg[i], itgF);
     bf[i] = bfTmp.get();
@@ -189,10 +189,10 @@ void Stls::computeBf() {
 
 // stls iterations
 void Stls::doIterations() {
-  const shared_ptr<StaticInput> &statIn = in.getStaticInput();
-  const int maxIter = statIn->getNIter();
-  const int outIter = statIn->getOutIter();
-  const double minErr = statIn->getErrMin();
+  const auto &statIn = in.getStaticInput();
+  const int maxIter = statIn.getNIter();
+  const int outIter = statIn.getOutIter();
+  const double minErr = statIn.getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess
@@ -229,7 +229,8 @@ void Stls::initialGuess() {
   slfcOld.resize(nx);
   slfc.resize(nx);
   // From file
-  if (in.getStlsInput()->getRestartFileName() != "") {
+  const auto &stlsIn = in.getStlsInput();
+  if (stlsIn.getRestartFileName() != "") {
     vector<double> wvgFile;
     vector<double> slfcFile;
     readRestart(wvgFile, slfcFile);
@@ -253,8 +254,8 @@ double Stls::computeError(){
 
 // Update solution during stls iterations
 void Stls::updateSolution(){
-  const shared_ptr<StaticInput> &statIn = in.getStaticInput();
-  const double aMix = statIn->getMixingParameter();
+  const auto &statIn = in.getStaticInput();
+  const double aMix = statIn.getMixingParameter();
   slfcOld = sum(mult(slfc, aMix), mult(slfcOld, 1 - aMix));
 }
 
@@ -384,7 +385,7 @@ void Stls::writeUInt() const {
   if (!file.is_open()) {
     throw runtime_error("Output file " + fileName + " could not be created.");
   }
-  const shared_ptr<Interpolator> itp = make_shared<Interpolator>(wvg,ssf);
+  const Interpolator itp = Interpolator(wvg,ssf);
   const InternalEnergy uInt = InternalEnergy(in.getCoupling(),
 					     wvg.front(),
 					     wvg.back(),
@@ -408,9 +409,10 @@ void Stls::writeRdf() const {
   if (!file.is_open()) {
     throw runtime_error("Output file " + fileName + " could not be created.");
   }
-  const double dr = in.getStaticInput()->getWaveVectorGridRes();
+  const auto &statIn = in.getStaticInput();
+  const double dr = statIn.getWaveVectorGridRes();
   const double r0 = dr/10; // Avoid starting from 0 to avoid divergence
-  const shared_ptr<Interpolator> itp = make_shared<Interpolator>(wvg,ssf);
+  const Interpolator itp = Interpolator(wvg,ssf);
   const shared_ptr<Integrator1DFourier> itgF = make_shared<Integrator1DFourier>(r0);
   for (int i=0; i<wvg.size()-1; ++i){
     const double r = r0 + i*dr;
@@ -462,7 +464,8 @@ void Stls::writeRestart() const {
 
 void Stls::readRestart(vector<double> &wvgFile,
 		       vector<double> &slfcFile) const {
-  const string fileName = in.getStlsInput()->getRestartFileName();
+  const auto &stlsIn = in.getStlsInput();
+  const string fileName = stlsIn.getRestartFileName();
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
@@ -793,7 +796,7 @@ double Ssf::getQuantum() const {
 
 // Compute static structure factor from interpolator
 double Slfc::ssf(const double x_) const {
-  return ssfi->eval(x_);
+  return ssfi.eval(x_);
 }
 
 // Get at finite temperature
@@ -830,12 +833,12 @@ double Slfc::integrand(const double y) const {
 
 // Compute static local field correction from interpolator
 double SlfcIet::slfc(const double x_) const{
-  return slfci->eval(x_);
+  return slfci.eval(x_);
 }
 
 // Compute bridge function from interpolator
 double SlfcIet::bf(const double x_) const {
-  return bfi->eval(x_);
+  return bfi.eval(x_);
 }
 
 // Get at finite temperature

@@ -116,7 +116,7 @@ namespace vecUtil {
 namespace thermoUtil {
 
   double InternalEnergy::ssf(double y) const {
-    return ssfi->eval(y);
+    return ssfi.eval(y);
   }
   
   double InternalEnergy::integrand(double y) const {
@@ -130,7 +130,7 @@ namespace thermoUtil {
   }
 
   double Rdf::ssf(double y) const {
-    return ssfi->eval(y);
+    return ssfi.eval(y);
   }
 
   double Rdf::integrand(double y) const {
