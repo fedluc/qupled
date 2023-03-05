@@ -75,6 +75,30 @@ namespace vecUtil {
   double rms(const vector<double> &v1,
 	     const vector<double> &v2,
 	     const bool normalize);
+
+  // Wrapper for vector<vector<T>>
+  template<typename T>
+  class Vector2DContiguous {
+  protected:
+    const vector<T> v;
+    const size_t s1;
+    const size_t s2;
+  public:
+    Vector2DContiguous(size_t s1_, size_t s2_) : v(s1_*s2_,0), s1(s1_), s2(s2_) {;};
+    Vector2DContiguous() : Vector2DContiguous(0,0) {;};
+    size_t size(const size_t i) const { return (i == 0) ? s1 : s2; };
+    vector<T>& operator()(const size_t i, const size_t j) { return v[i + j*s1]; };
+    const vector<T>& operator()(const int i, const size_t j) const { return v[i + j*s1]; };
+    // typename decltype(v)::iterator begin() { return v.begin(); };
+    // typename decltype(v)::iterator end() { return v.end(); };
+    // typename decltype(v)::const_iterator begin() const { return v.begin(); };
+    // typename decltype(v)::const_iterator end() const { return v.end(); };
+    // vector<T> flatten() const {
+    //   vector<T> out;
+    //   for (const auto &w : v) { out.insert(out.end(), w.begin(), w.end()); };
+    //   return out;
+    // }
+  };
   
   // Wrapper for vector<vector<T>>
   template<typename T>

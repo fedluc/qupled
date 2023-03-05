@@ -25,7 +25,7 @@ protected:
   vector<double> ssfHF;
   // Integrator object
   const shared_ptr<Integrator1D> itg = make_shared<Integrator1D>();
-  const Integrator1D itgTmp;
+  Integrator1D itgTmp;
   // Input data
   const Input in;
   // Output verbosity
@@ -126,7 +126,7 @@ private:
   // Idr integrand for frequency = 0 and wave-vector x
   double integrand(const double y) const;  
   // Integrator object
-  const Integrator1D &itg;
+  Integrator1D &itg;
   
 public:
 
@@ -137,14 +137,14 @@ public:
       const double mu_,
       const double yMin_,
       const double yMax_,
-      const Integrator1D &itg_)
+      Integrator1D &itg_)
     : nl(nl_), x(x_), Theta(Theta_),
       mu(mu_), yMin(yMin_), yMax(yMax_),
       itg(itg_) {;};
   // Constructor for zero temperature calculations
   Idr(const double Omega_,
       const double x_,
-      const Integrator1D &itg_)
+      Integrator1D &itg_)
     : Omega(Omega_), x(x_), itg(itg_) {;};
   // Get at finite temperature
   vector<double> get() const;
@@ -224,6 +224,7 @@ private:
   const double yMax = 0;
   // Integrator object
   const shared_ptr<Integrator1D> itg;
+  Integrator1D itgTmp;
   // Integrand for zero temperature calculations
   double integrand(const double Omega) const ;
   // Plasmon contribution

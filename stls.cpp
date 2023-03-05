@@ -76,7 +76,7 @@ void Stls::computeIdr(){
   idr.resize(nx);
   for (int i=0; i<nx; ++i){
     Idr idrTmp(nl, wvg[i], in.getDegeneracy(), mu,
-	       wvg.front(), wvg.back(), itg);
+	       wvg.front(), wvg.back(), itgTmp);
     idr[i] = idrTmp.get();
   }
 }
@@ -99,7 +99,7 @@ void Stls::computeSsfHFFinite(){
 
 void Stls::computeSsfHFGround(){
   for (int i=0; i<wvg.size(); ++i) {
-    SsfHF ssfTmp(wvg[i]);
+    SsfHF ssfTmp(wvg[i], itgTmp);
     ssfHF[i] = ssfTmp.get();
   }
 }
@@ -538,13 +538,13 @@ vector<double> Idr::get() const {
   for (int l=0; l<nl; ++l){
     if (l == 0) {
       auto func = [&](double y)->double{return integrand(y);};
-      itg->compute(func, yMin, yMax);
+      itg.compute(func, yMin, yMax);
     }
     else {
       auto func = [&](double y)->double{return integrand(y,l);};;
-      itg->compute(func, yMin, yMax);
+      itg.compute(func, yMin, yMax);
     }
-    res[l] = itg->getSolution();
+    res[l] = itg.getSolution();
   }
   return res;
 }
@@ -698,16 +698,18 @@ double Ssf::get0() const {
 
 // Integrand for zero temperature calculations
 double Ssf::integrand(const double Omega) const {
-  double x2 = x*x;
-  double fact = (4.0 * lambda * rs)/(M_PI * x2);
-  Idr idrTmp(Omega, x);
-  const double idrRe = idrTmp.re0();
-  const double idrIm = idrTmp.im0();
-  const double factRe = 1 + fact * (1 - slfc) * idrRe;
-  const double factIm = fact * (1 - slfc) * idrIm;
-  const double factRe2 = factRe * factRe;
-  const double factIm2 = factIm * factIm;
-  return 1.5/(M_PI)* idrIm * (1.0/(factRe2 + factIm2) - 1.0);
+  // double x2 = x*x;
+  // double fact = (4.0 * lambda * rs)/(M_PI * x2);
+  Integrator1D itgTmp2;
+  Idr idrTmp(Omega, x, itgTmp2);
+  // const double idrRe = idrTmp.re0();
+  // const double idrIm = idrTmp.im0();
+  // const double factRe = 1 + fact * (1 - slfc) * idrRe;
+  // const double factIm = fact * (1 - slfc) * idrIm;
+  // const double factRe2 = factRe * factRe;
+  // const double factIm2 = factIm * factIm;
+  // return 1.5/(M_PI)* idrIm * (1.0/(factRe2 + factIm2) - 1.0);
+  return 0.0;
 }
 
 // NOTE: At the plasmon frequency, the imaginary part of the ideal
@@ -753,24 +755,27 @@ double Ssf::plasmon() const {
 
 // Dielectric response function
 double Ssf::drf(const double Omega) const {
-  const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
-  const double idrRe = Idr(Omega, x).re0();
-  const double wCo = x*x + 2*x;     
-  assert(Omega >= wCo);
-  return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
+  // const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
+  // const double idrRe = Idr(Omega, x, itgTmp).re0();
+  // const double wCo = x*x + 2*x;     
+  // assert(Omega >= wCo);
+  // return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
+  return 0.0;
 }
 
 
 // Frequency derivative of the dielectric response function  
 double Ssf::drfDer(const double Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
-  const Idr idrTmp(Omega, x);
-  const double idrRe = idrTmp.re0();
-  const double idrReDer = idrTmp.re0Der();
-  double denom = (1.0 - fact * slfc * idrRe);
-  double w_co = x*x + 2*x;
-  assert(Omega >= w_co); 
-  return fact * idrReDer / (denom * denom);
+  // Integrator1D itgTmp;
+  // const Idr idrTmp(Omega, x, itgTmp);
+  // const double idrRe = idrTmp.re0();
+  // const double idrReDer = idrTmp.re0Der();
+  // double denom = (1.0 - fact * slfc * idrRe);
+  // double w_co = x*x + 2*x;
+  // assert(Omega >= w_co); 
+  // return fact * idrReDer / (denom * denom);
+  return 0.0;
 }
 
 // Get for quantum schemes
