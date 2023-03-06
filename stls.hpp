@@ -8,6 +8,10 @@
 using namespace std;
 using namespace vecUtil;
 
+// -----------------------------------------------------------------
+// Solver for the STLS-based schemes
+// -----------------------------------------------------------------
+
 class Stls {
 
 protected: 
@@ -24,8 +28,7 @@ protected:
   // Hartree-Fock static structure factor
   vector<double> ssfHF;
   // Integrator object
-  const shared_ptr<Integrator1D> itg = make_shared<Integrator1D>();
-  Integrator1D itgTmp;
+  Integrator1D itg;
   // Input data
   const Input in;
   // Output verbosity
@@ -90,12 +93,14 @@ protected:
 public:
 
   // Constructors
-  Stls(const Input in_)
-    : in(in_), verbose(true),
-      writeFiles(true), computedChemicalPotential(false) {checkIet();};
-  Stls(const Input in_, const bool verbose_, const bool writeFiles_)
-    : in(in_), verbose(verbose_),
-      writeFiles(writeFiles_), computedChemicalPotential(false) {checkIet();};
+  Stls(const Input in_) :in(in_), verbose(true),
+			 writeFiles(true),
+			 computedChemicalPotential(false) {checkIet();};
+  Stls(const Input in_,
+       const bool verbose_,
+       const bool writeFiles_) : in(in_), verbose(verbose_),
+				 writeFiles(writeFiles_),
+				 computedChemicalPotential(false) {checkIet();};
   // Compute stls scheme
   void compute();
   // Getters
@@ -103,24 +108,25 @@ public:
 
 };
 
-// Class for the ideal density response calculation
+// -----------------------------------------------------------------
+// Classes for the ideal density response
+// -----------------------------------------------------------------
+
 class Idr {
 
 private:
   
   // Number of matsubara frequency
-  const int nl = 0;
-  // Frequency for zero temperature calculations
-  const double Omega = 0;
+  const int nl;
   // Wave-vector
-  const double x = 0;
+  const double x;
   // Degeneracy parameter
-  const double Theta = 0;
+  const double Theta;
   // Chemical potential
-  const double mu = 0;
+  const double mu;
   // Integration limits for finite temperature calculations
-  const double yMin = 0;
-  const double yMax = 0;
+  const double yMin;
+  const double yMax;
   // Idr integrand for frequency = l and wave-vector x
   double integrand(const double y, const int l) const;
   // Idr integrand for frequency = 0 and wave-vector x
@@ -130,7 +136,7 @@ private:
   
 public:
 
-  // Constructor for finite temperature calculations
+  // Constructor
   Idr(const int nl_,
       const double x_,
       const double Theta_,
@@ -141,38 +147,53 @@ public:
     : nl(nl_), x(x_), Theta(Theta_),
       mu(mu_), yMin(yMin_), yMax(yMax_),
       itg(itg_) {;};
-  // Constructor for zero temperature calculations
-  Idr(const double Omega_,
-      const double x_,
-      Integrator1D &itg_)
-    : Omega(Omega_), x(x_), itg(itg_) {;};
-  // Get at finite temperature
+  // Get result of integration
   vector<double> get() const;
-  // Get real part at zero temperature
+  
+};
+
+class IdrGround {
+
+private:
+  
+  // Frequency
+  const double Omega;
+  // Wave-vector
+  const double x;
+  
+public:
+
+  // Constructor
+  IdrGround(const double Omega_,
+	    const double x_) : Omega(Omega_), x(x_) {;};
+  // Get real part
   double re0() const;
-  // Get imaginary part at zero temperature
+  // Get imaginary part 
   double im0() const;
-  // Get frequency derivative of the real part at zero temperature
+  // Get frequency derivative of the real part
   double re0Der() const;
   
 };
 
-// Class for the Hartree-Fock static structure factor
+// -----------------------------------------------------------------
+// Classes for the Hartree-Fock static structure factor
+// -----------------------------------------------------------------
+
 class SsfHF {
 
 private:
   
   // Wave-vector
-  const double x = 0;
+  const double x;
   // Degeneracy parameter
-  const double Theta = 0;
+  const double Theta;
   // Chemical potential
-  const double mu = 0;
+  const double mu;
   // Integration limits for finite temperature calculations
-  const double yMin = 0;
-  const double yMax = 0;
+  const double yMin;
+  const double yMax;
   // Integrator object
-  const shared_ptr<Integrator1D> itg;
+  Integrator1D &itg;
   // Get integrand
   double integrand(double y) const;
   // Get at zero temperature
@@ -186,61 +207,60 @@ public:
 	const double mu_,
 	const double yMin_,
 	const double yMax_,
-	const shared_ptr<Integrator1D> &itg_)
-    : x(x_), Theta(Theta_), mu(mu_),
-      yMin(yMin_), yMax(yMax_), itg(itg_) {;};
-  // Constructor for zero temperature calculations
-  SsfHF(const double x_,
-	const Integrator1D &itg_) : x(x_) {;};
+	Integrator1D &itg_) : x(x_), Theta(Theta_), mu(mu_),
+			      yMin(yMin_), yMax(yMax_),
+			      itg(itg_) {;};
   // Get at any temperature
   double get() const;
   
 };
 
+class SsfHFGround {
 
-// Class for the static structure factor
+private:
+  
+  // Wave-vector
+  const double x;
+  
+public:
+
+  // Constructor for zero temperature calculations
+  SsfHFGround(const double x_) : x(x_) {;};
+  // Get result
+  double get() const;
+  
+};
+
+// -----------------------------------------------------------------
+// Classes for the static structure factor
+// -----------------------------------------------------------------
+
 class Ssf {
 
 private:
   
   // Wave-vector
-  const double x = 0;
+  const double x;
   // Degeneracy parameter
-  const double Theta = 0;
+  const double Theta;
   // Coupling parameter
-  const double rs = 0;
+  const double rs;
   // Hartree-Fock contribution
-  const double ssfHF = 0;
+  const double ssfHF;
+  // Static local field correction
+  const double slfc = 0.0;
   // Ideal density response
   const vector<double> idr;
   // Auxiliary density response
   const vector<double> adr;
-  // Static local field correction
-  const double slfc = 0;
   // Constant for unit conversion
   const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  // Integration limits for zero temperature calculations
-  const double yMin = 0;
-  const double yMax = 0;
-  // Integrator object
-  const shared_ptr<Integrator1D> itg;
-  Integrator1D itgTmp;
-  // Integrand for zero temperature calculations
-  double integrand(const double Omega) const ;
-  // Plasmon contribution
-  double plasmon() const;
-  // Dielectric response function
-  double drf(const double Omega) const;
-  // Frequency derivative of the dielectric response function
-  double drfDer(const double Omega) const;
-  // Get at zero temperature
-  double get0() const;
   // Get for quantum schemes
   double getQuantum() const;
   
 public:
 
-  // Constructor for finite temperature calculations
+  // Constructor for classical schemes
   Ssf(const double x_,
       const double Theta_,
       const double rs_,
@@ -248,19 +268,8 @@ public:
       const vector<double> &idr_,
       const double slfc_)
     : x(x_), Theta(Theta_), rs(rs_),
-      ssfHF(ssfHF_), idr(idr_), slfc(slfc_) {;};
-  // Constructor for zero temperature calculations
-  Ssf(const double x_,
-      const double rs_,
-      const double ssfHF_,
-      const double slfc_,
-      const double yMin_,
-      const double yMax_,
-      const shared_ptr<Integrator1D> &itg_)
-    : x(x_), rs(rs_), ssfHF(ssfHF_),
-      slfc(slfc_), yMin(yMin_), yMax(yMax_),
-      itg(itg_) {;};
-  // Constructor for finite temperature calculations for quantum schemes
+      ssfHF(ssfHF_), slfc(slfc_), idr(idr_) {;};
+  // Constructor for quantum schemes
   Ssf(const double x_,
       const double Theta_,
       const double rs_,
@@ -275,26 +284,67 @@ public:
   
 };
 
-// Class for the static local field correction
-class Slfc {
+
+class SsfGround {
+
+private:
+  
+  // Wave-vector
+  const double x;
+  // Coupling parameter
+  const double rs;
+  // Hartree-Fock contribution
+  const double ssfHF;
+  // Static local field correction
+  const double slfc;
+  // Constant for unit conversion
+  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  // Integration limits for zero temperature calculations
+  const double yMin;
+  const double yMax;
+  // Integrator object
+  Integrator1D &itg;
+  // Integrand for zero temperature calculations
+  double integrand(const double Omega) const ;
+  // Plasmon contribution
+  double plasmon() const;
+  // Dielectric response function
+  double drf(const double Omega) const;
+  // Frequency derivative of the dielectric response function
+  double drfDer(const double Omega) const;
+  
+public:
+
+  // Constructor for zero temperature calculations
+  SsfGround(const double x_,
+	    const double rs_,
+	    const double ssfHF_,
+	    const double slfc_,
+	    const double yMin_,
+	    const double yMax_,
+	    Integrator1D &itg_)
+    : x(x_), rs(rs_), ssfHF(ssfHF_),
+      slfc(slfc_), yMin(yMin_), yMax(yMax_),
+      itg(itg_) {;};
+  // Get result
+  double get() const;
+ 
+  
+};
+
+// -----------------------------------------------------------------
+// Classes for the static local field correction
+// -----------------------------------------------------------------
+
+class SlfcBase {
 
 protected:
   
   // Wave-vector
-  const double x = 0;
+  const double x;
   // Integration limits
-  const double yMin = 0;
-  const double yMax = 0;
-
-private:
-  
-  // Integrator object
-  const shared_ptr<Integrator1D> itg;
-  // Integrand
-  double integrand(const double y) const;
-
-protected:
-  
+  const double yMin;
+  const double yMax;
   // Static structure factor interpolator
   const Interpolator &ssfi;
   // Compute static structure factor
@@ -303,26 +353,44 @@ protected:
 public:
 
   // Constructor
+  SlfcBase(const double x_,
+	   const double yMin_,
+	   const double yMax_,
+	   const Interpolator &ssfi_) : x(x_), yMin(yMin_),
+					yMax(yMax_), ssfi(ssfi_) {;};
+  
+};
+
+class Slfc : public SlfcBase {
+
+private:
+  
+  // Integrator object
+  Integrator1D &itg;
+  // Integrand
+  double integrand(const double y) const;
+  
+public:
+
+  // Constructor
   Slfc(const double x_,
        const double yMin_,
        const double yMax_,
-       const shared_ptr<Integrator1D> &itg_,
-       const Interpolator &ssfi_)
-    : x(x_), yMin(yMin_), yMax(yMax_),
-      itg(itg_), ssfi(ssfi_) {;};
+       const Interpolator &ssfi_,
+       Integrator1D &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_),
+			     itg(itg_) { ; };
   // Get result of integration 
   double get() const;
   
 };
 
 
-// Class for the static local field correction for the iet schemes
-class SlfcIet : public Slfc {
+class SlfcIet : public SlfcBase {
 
 private:
 
   // Integrator object
-  const shared_ptr<Integrator2D> itg2;
+  Integrator2D &itg;
   // Integrands
   double integrand1(const double y) const;
   double integrand2(const double w) const;
@@ -341,19 +409,17 @@ public:
   SlfcIet(const double x_,
 	  const double yMin_,
 	  const double yMax_,
-	  const shared_ptr<Integrator2D> &itg2_,
 	  const Interpolator &ssfi_,
 	  const Interpolator &slfci_,
-	  const Interpolator &bfi_)
-    : Slfc(x_, yMin_, yMax_, NULL, ssfi_),
-      itg2(itg2_), slfci(slfci_), bfi(bfi_) {;};
+	  const Interpolator &bfi_,
+	  Integrator2D &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_),
+				itg(itg_), slfci(slfci_), bfi(bfi_)  {;};
   // Get result of integration 
   double get() const;
 
 };
 
 
-// Class for the bridge function
 class BridgeFunction {
 
 private:
@@ -369,7 +435,7 @@ private:
   // Wave vector
   const double x;
   // Integrator object
-  const shared_ptr<Integrator1DFourier> itg;
+  Integrator1DFourier &itg;
   // Constant for unit conversion
   const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // Hypernetted-chain bridge function
@@ -385,12 +451,16 @@ private:
 public:
 
   // Constructor
-  BridgeFunction(const string theory_, const string mapping_,
-		 const double rs_, const double Theta_,
-		 const double x_, const shared_ptr<Integrator1DFourier> &itg_)
-    : theory(theory_), mapping(mapping_), rs(rs_), Theta(Theta_),
-      x(x_), itg(itg_) {;};
-  // getter
+  BridgeFunction(const string theory_,
+		 const string mapping_,
+		 const double rs_,
+		 const double Theta_,
+		 const double x_,
+		 Integrator1DFourier &itg_) : theory(theory_),
+					      mapping(mapping_),
+					      rs(rs_), Theta(Theta_),
+					      x(x_), itg(itg_) {;};
+  // Get result of the integration
   double get() const;
   
 };

@@ -163,12 +163,12 @@ namespace thermoUtil {
   private:
 
     // Coupling parameter
-    const double rs = 0;
+    const double rs;
     // Integration limits
-    const double yMin = 0;
-    const double yMax = 0;
+    const double yMin;
+    const double yMax;
     // Integrator object
-    const shared_ptr<Integrator1D> itg;
+    Integrator1D &itg;
     // Static structure factor interpolator
     const Interpolator &ssfi;
     // Integrand
@@ -184,10 +184,9 @@ namespace thermoUtil {
     InternalEnergy(const double rs_,
 		   const double yMin_,
 		   const double yMax_,
-		   const shared_ptr<Integrator1D> &itg_,
-		   const Interpolator &ssfi_)
-      : rs(rs_), yMin(yMin_), yMax(yMax_),
-	itg(itg_), ssfi(ssfi_) {;};
+		   const Interpolator &ssfi_,
+		   Integrator1D &itg_) : rs(rs_), yMin(yMin_), yMax(yMax_),
+					 itg(itg_), ssfi(ssfi_) {;};
     // Get result of integration 
     double get() const;
   
@@ -200,11 +199,11 @@ namespace thermoUtil {
   private:
 
     // Spatial position
-    const double r = 0;
+    const double r;
     // Cutoff in the wave-vector grid
-    const double cutoff = 0;
+    const double cutoff;
     // Integrator object
-    const shared_ptr<Integrator1DFourier> itg;
+    Integrator1DFourier &itg;
     // Static structure factor interpolator
     const Interpolator &ssfi;
     // Integrand
@@ -217,11 +216,11 @@ namespace thermoUtil {
     // Constructor
     Rdf(const double r_,
 	const double cutoff_,
-	const shared_ptr<Integrator1DFourier> &itg_,
-	const Interpolator &ssfi_)
-      : r(r_), cutoff(cutoff_), itg(itg_), ssfi(ssfi_) {
-      assert(r>0);
-      itg->setR(r);
+	const Interpolator &ssfi_,
+	Integrator1DFourier &itg_) : r(r_), cutoff(cutoff_), itg(itg_),
+				     ssfi(ssfi_)
+    {
+
     };
     // Get result of integration 
     double get() const;

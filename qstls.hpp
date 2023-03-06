@@ -13,6 +13,8 @@ class Qstls : public Stls {
   
 private: 
 
+  // Temporary member
+  const shared_ptr<Integrator1D> itg = make_shared<Integrator1D>();
   // Auxiliary density response
   Vector2D<double> adr;
   Vector2D<double> adrOld;

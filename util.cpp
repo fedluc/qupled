@@ -125,8 +125,8 @@ namespace thermoUtil {
 
   double InternalEnergy::get() const  {
     auto func = [&](double y)->double{return integrand(y);};
-    itg->compute(func, yMin, yMax);
-    return itg->getSolution()/(M_PI * rs * lambda);
+    itg.compute(func, yMin, yMax);
+    return itg.getSolution()/(M_PI * rs * lambda);
   }
 
   double Rdf::ssf(double y) const {
@@ -139,9 +139,11 @@ namespace thermoUtil {
   }
 
   double Rdf::get() const {
+    assert(r>0);
     auto func = [&](double y)->double{return integrand(y);};
-    itg->compute(func);
-    return 1 + 1.5 * itg->getSolution()/r;
+    itg.setR(r);
+    itg.compute(func);
+    return 1 + 1.5 * itg.getSolution()/r;
   }
 
 }

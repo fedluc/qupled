@@ -69,14 +69,13 @@ void Stls::computeChemicalPotential(){
 void Stls::computeIdr(){
   if (in.getDegeneracy() == 0.0) return;
   assert(computedChemicalPotential);
-  assert(itg != NULL);
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
   const int nl = statIn.getNMatsubara();
   idr.resize(nx);
   for (int i=0; i<nx; ++i){
     Idr idrTmp(nl, wvg[i], in.getDegeneracy(), mu,
-	       wvg.front(), wvg.back(), itgTmp);
+	       wvg.front(), wvg.back(), itg);
     idr[i] = idrTmp.get();
   }
 }
@@ -99,7 +98,7 @@ void Stls::computeSsfHFFinite(){
 
 void Stls::computeSsfHFGround(){
   for (int i=0; i<wvg.size(); ++i) {
-    SsfHF ssfTmp(wvg[i], itgTmp);
+    SsfHFGround ssfTmp(wvg[i]);
     ssfHF[i] = ssfTmp.get();
   }
 }
@@ -128,7 +127,6 @@ void Stls::computeSsfFinite(){
 
 // Compute static structure factor at zero temperature
 void Stls::computeSsfGround(){
-  assert(itg != NULL);
   assert(slfc.size() > 0);
   const double rs = in.getCoupling();
   const int nx = wvg.size();
@@ -138,7 +136,7 @@ void Stls::computeSsfGround(){
     double yMin = 0.0;
     if (x > 2.0) yMin = x * (x - 2.0);
     const double yMax = x * (x + 2.0);
-    Ssf ssfTmp(x, rs, ssfHF[i], slfcOld[i], yMin, yMax, itg);
+    SsfGround ssfTmp(x, rs, ssfHF[i], slfcOld[i], yMin, yMax, itg);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -155,20 +153,20 @@ void Stls::computeSlfc(){
 void Stls::computeSlfcStls() {
   const Interpolator itp = Interpolator(wvg,ssf);
   for (int i=0; i<wvg.size(); ++i) {
-    Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itg, itp);
+    Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
     slfc[i] = slfcTmp.get();
   }
 }
 
 void Stls::computeSlfcIet() {
-   const shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>();
+   Integrator2D itg2;
    const Interpolator ssfItp = Interpolator(wvg,ssf);
    const Interpolator slfcItp = Interpolator(wvg,slfcOld);
    if (bf.size() == 0) computeBf();
    const Interpolator bfItp = Interpolator(wvg,bf);
    for (int i=0; i<wvg.size(); ++i){
      SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),
-		     itg2, ssfItp, slfcItp, bfItp);
+		     ssfItp, slfcItp, bfItp, itg2);
      slfc[i] += slfcTmp.get();
    }
 }
@@ -177,7 +175,7 @@ void Stls::computeSlfcIet() {
 void Stls::computeBf() {
   const int nx = wvg.size();
   const auto &stlsIn = in.getStlsInput();
-  shared_ptr<Integrator1DFourier> itgF = make_shared<Integrator1DFourier>(0, 1e-10);
+  Integrator1DFourier itgF(0, 1e-10);
   bf.resize(nx);
   for (int i=0; i<nx; ++i){ 
     BridgeFunction bfTmp(in.getTheory(), stlsIn.getIETMapping(),
@@ -386,10 +384,11 @@ void Stls::writeUInt() const {
     throw runtime_error("Output file " + fileName + " could not be created.");
   }
   const Interpolator itp = Interpolator(wvg,ssf);
+  Integrator1D itgU;
   const InternalEnergy uInt = InternalEnergy(in.getCoupling(),
 					     wvg.front(),
 					     wvg.back(),
-					     itg, itp);
+					     itp, itgU);
   const string line = format<double, double>("%.8e %.8e %.8e",
 					     in.getCoupling(),
 					     in.getDegeneracy(),
@@ -413,10 +412,10 @@ void Stls::writeRdf() const {
   const double dr = statIn.getWaveVectorGridRes();
   const double r0 = dr/10; // Avoid starting from 0 to avoid divergence
   const Interpolator itp = Interpolator(wvg,ssf);
-  const shared_ptr<Integrator1DFourier> itgF = make_shared<Integrator1DFourier>(r0);
+  Integrator1DFourier itgF(r0);
   for (int i=0; i<wvg.size()-1; ++i){
     const double r = r0 + i*dr;
-    const Rdf rdf(r, wvg.back(), itgF, itp);
+    const Rdf rdf(r, wvg.back(), itp, itgF);
     const string line = format<double, double>("%.8e %.8e", r, rdf.get());
     file << line << endl;
   }
@@ -489,7 +488,7 @@ void Stls::getSsf(vector<double> &ssf_){
 }
 
 // -----------------------------------------------------------------
-// Ideal density response class
+// Idr class
 // -----------------------------------------------------------------
 
 // Integrand for frequency = l and wave-vector = x
@@ -531,7 +530,7 @@ double Idr::integrand(const double y) const {
   }
 }
 
-// Get at finite temperature
+// Get result of integration
 vector<double> Idr::get() const {
   assert(Theta > 0.0);
   vector<double> res(nl);
@@ -549,8 +548,12 @@ vector<double> Idr::get() const {
   return res;
 }
 
+// -----------------------------------------------------------------
+// IdrGround class
+// -----------------------------------------------------------------
+
 // Real part at zero temperature
-double Idr::re0() const {
+double IdrGround::re0() const {
   double adder1 = 0.0;
   double adder2 = 0.0;
   double preFactor = 0.0;
@@ -577,7 +580,7 @@ double Idr::re0() const {
 }
 
 // Imaginary part at zero temperature
-double Idr::im0() const {
+double IdrGround::im0() const {
   double preFactor = 0.0;
   double adder1 = 0.0;
   double adder2 = 0.0;
@@ -600,7 +603,7 @@ double Idr::im0() const {
 }
 
 // Frequency derivative of the real part at zero temperature
-double Idr::re0Der() const {
+double IdrGround::re0Der() const {
   double adder1 = 0.0;
   double adder2 = 0.0;
   double x_2 = x/2.0;
@@ -622,10 +625,10 @@ double Idr::re0Der() const {
 
 
 // -----------------------------------------------------------------
-// Hartree-Fock static structure factor class
+// SsfHF class
 // -----------------------------------------------------------------
 
-// Integrand for finite temperature calculations
+// Integrand
 double SsfHF::integrand(const double y) const {
   double y2 = y*y;
   double ypx = y + x;
@@ -639,17 +642,20 @@ double SsfHF::integrand(const double y) const {
   }
 }
 
-// Get at any temperature
+// Get result of integration
 double SsfHF::get() const {
-  if (Theta == 0.0) return get0();
+  assert(Theta > 0.0);
   auto func = [&](double y)->double{return integrand(y);};
-  itg->compute(func, yMin, yMax);
-  return 1.0 + itg->getSolution();
+  itg.compute(func, yMin, yMax);
+  return 1.0 + itg.getSolution();
 }
 
-// Get static structure factor at zero temperature
-double SsfHF::get0() const {
-  assert(Theta == 0.0);
+// -----------------------------------------------------------------
+// SsfHFGround class
+// -----------------------------------------------------------------
+
+// Static structure factor at zero temperature
+double SsfHFGround::get() const {
   if (x < 2.0) {
     return (x/16.0)*(12.0 - x*x);
   }
@@ -660,13 +666,13 @@ double SsfHF::get0() const {
 
 
 // -----------------------------------------------------------------
-// Static structure factor class
+// Ssf class
 // -----------------------------------------------------------------
 
-// Get at any temperature and for any scheme
+// Get at finite temperature for any scheme
 double Ssf::get() const {
+  assert(Theta > 0.0);
   if (adr.size() > 0) return getQuantum();
-  if (Theta == 0.0) return get0();
   if (x == 0.0) return 0.0;
   const int nl = idr.size();
   const double fact1 = 4.0*lambda*rs/M_PI;
@@ -681,11 +687,32 @@ double Ssf::get() const {
   return ssfHF - 1.5 * fact1/x2 * Theta * (1 - slfc) * fact2;
 }
 
-// Get at zero temperature
-double Ssf::get0() const {
+// Get for quantum schemes
+double Ssf::getQuantum() const {
+  assert(Theta > 0);
+  if (x == 0.0) return 0.0;
+  const int nl = idr.size();
+  const double fact1 = 4.0*lambda*rs/M_PI;
+  const double x2 = x*x;
+  double fact2 = 0.0;
+  for (int l=0; l<nl; ++l) {
+    const double fact3 = 1.0 + fact1/x2*(1.0 - adr[l]/idr[l])*idr[l];
+    double fact4 = idr[l]*idr[l]*(1.0 - adr[l]/idr[l])/fact3;
+    if (l>0) fact4 *= 2;
+    fact2 += fact4;
+  }
+  return ssfHF - 1.5 * fact1/x2 * Theta * fact2;
+}
+
+// -----------------------------------------------------------------
+// SsfGround class
+// -----------------------------------------------------------------
+
+// Get result of integration
+double SsfGround::get() const {
   if (x == 0.0) return 0.0;
   auto func = [&](double y)->double{return integrand(y);};
-  itg->compute(func, yMin, yMax);
+  itg.compute(func, yMin, yMax);
   double ssfP;
   try {
     ssfP = plasmon();
@@ -693,23 +720,21 @@ double Ssf::get0() const {
   catch (const runtime_error& err) {
     cerr << err.what() << endl;
   }
-  return ssfHF + itg->getSolution() + ssfP;
+  return ssfHF + itg.getSolution() + ssfP;
 }
 
 // Integrand for zero temperature calculations
-double Ssf::integrand(const double Omega) const {
-  // double x2 = x*x;
-  // double fact = (4.0 * lambda * rs)/(M_PI * x2);
-  Integrator1D itgTmp2;
-  Idr idrTmp(Omega, x, itgTmp2);
-  // const double idrRe = idrTmp.re0();
-  // const double idrIm = idrTmp.im0();
-  // const double factRe = 1 + fact * (1 - slfc) * idrRe;
-  // const double factIm = fact * (1 - slfc) * idrIm;
-  // const double factRe2 = factRe * factRe;
-  // const double factIm2 = factIm * factIm;
-  // return 1.5/(M_PI)* idrIm * (1.0/(factRe2 + factIm2) - 1.0);
-  return 0.0;
+double SsfGround::integrand(const double Omega) const {
+  double x2 = x*x;
+  double fact = (4.0 * lambda * rs)/(M_PI * x2);
+  IdrGround idrTmp(Omega, x);
+  const double idrRe = idrTmp.re0();
+  const double idrIm = idrTmp.im0();
+  const double factRe = 1 + fact * (1 - slfc) * idrRe;
+  const double factIm = fact * (1 - slfc) * idrIm;
+  const double factRe2 = factRe * factRe;
+  const double factIm2 = factIm * factIm;
+  return 1.5/(M_PI)* idrIm * (1.0/(factRe2 + factIm2) - 1.0);
 }
 
 // NOTE: At the plasmon frequency, the imaginary part of the ideal
@@ -721,7 +746,7 @@ double Ssf::integrand(const double Omega) const {
 // valid
 
 // Plasmon contribution to the static structure factor
-double Ssf::plasmon() const {
+double SsfGround::plasmon() const {
   // Look for a region where the dielectric function changes sign
   bool search_root = false;
   const double wCo = x*x + 2*x;
@@ -754,86 +779,64 @@ double Ssf::plasmon() const {
 }
 
 // Dielectric response function
-double Ssf::drf(const double Omega) const {
-  // const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
-  // const double idrRe = Idr(Omega, x, itgTmp).re0();
-  // const double wCo = x*x + 2*x;     
-  // assert(Omega >= wCo);
-  // return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
-  return 0.0;
+double SsfGround::drf(const double Omega) const {
+  const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
+  const double idrRe = IdrGround(Omega, x).re0();
+  const double wCo = x*x + 2*x;     
+  assert(Omega >= wCo);
+  return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
 }
 
 
 // Frequency derivative of the dielectric response function  
-double Ssf::drfDer(const double Omega) const {
+double SsfGround::drfDer(const double Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
-  // Integrator1D itgTmp;
-  // const Idr idrTmp(Omega, x, itgTmp);
-  // const double idrRe = idrTmp.re0();
-  // const double idrReDer = idrTmp.re0Der();
-  // double denom = (1.0 - fact * slfc * idrRe);
-  // double w_co = x*x + 2*x;
-  // assert(Omega >= w_co); 
-  // return fact * idrReDer / (denom * denom);
-  return 0.0;
-}
-
-// Get for quantum schemes
-double Ssf::getQuantum() const {
-  assert(Theta != 0);
-  if (x == 0.0) return 0.0;
-  const int nl = idr.size();
-  const double fact1 = 4.0*lambda*rs/M_PI;
-  const double x2 = x*x;
-  double fact2 = 0.0;
-  for (int l=0; l<nl; ++l) {
-    const double fact3 = 1.0 + fact1/x2*(1.0 - adr[l]/idr[l])*idr[l];
-    double fact4 = idr[l]*idr[l]*(1.0 - adr[l]/idr[l])/fact3;
-    if (l>0) fact4 *= 2;
-    fact2 += fact4;
-  }
-  return ssfHF - 1.5 * fact1/x2 * Theta * fact2;
+  Integrator1D itgTmp;
+  const IdrGround idrTmp(Omega, x);
+  const double idrRe = idrTmp.re0();
+  const double idrReDer = idrTmp.re0Der();
+  double denom = (1.0 - fact * slfc * idrRe);
+  double w_co = x*x + 2*x;
+  assert(Omega >= w_co); 
+  return fact * idrReDer / (denom * denom);
 }
 
 // -----------------------------------------------------------------
-// Static local field correction class
+// SlfcBase class
 // -----------------------------------------------------------------
 
 // Compute static structure factor from interpolator
-double Slfc::ssf(const double x_) const {
+double SlfcBase::ssf(const double x_) const {
   return ssfi.eval(x_);
 }
 
-// Get at finite temperature
+// -----------------------------------------------------------------
+// Slfc class
+// -----------------------------------------------------------------
+
+// Get result of integration
 double Slfc::get() const {
   auto func = [&](double y)->double{return integrand(y);};
-  itg->compute(func, yMin, yMax);
-  return itg->getSolution();
+  itg.compute(func, yMin, yMax);
+  return itg.getSolution();
 }
 
-// Integrand for finite temperature calculations
+// Integrand
 double Slfc::integrand(const double y) const {
   double y2 = y*y;
   double x2 = x*x;
-  if (x > 0.0 && y > 0.0){
-    if (x > y){
-      return -(3.0/4.0) * y2 * (ssf(y) - 1.0)
-	* (1 + (x2 - y2)/(2*x*y)*log((x + y)/(x - y)));
-    }
-    else if (x < y) {
-      return -(3.0/4.0) * y2 * (ssf(y) - 1.0)
-	* (1 + (x2 - y2)/(2*x*y)*log((x + y)/(y - x)));
-    }
-    else {
-      return -(3.0/4.0) * y2 * (ssf(y) - 1.0);
-    }
-  }
-  else
-    return 0;
+  if (x == 0.0 || y == 0.0) { return 0.0; }
+  if (x == y) { return -(3.0/4.0) * y2 * (ssf(y) - 1.0); };
+  if (x > y){
+    return -(3.0/4.0) * y2 * (ssf(y) - 1.0)
+      * (1 + (x2 - y2)/(2*x*y)*log((x + y)/(x - y)));
+  } 
+  return -(3.0/4.0) * y2 * (ssf(y) - 1.0)
+    * (1 + (x2 - y2)/(2*x*y)*log((x + y)/(y - x)));
 }
 
 // -----------------------------------------------------------------
-// Static local field correction class for iet schemes
+// SlfcIet class
 // -----------------------------------------------------------------
 
 // Compute static local field correction from interpolator
@@ -853,8 +856,8 @@ double SlfcIet::get() const {
   auto wMax = [&](double y)->double{return min(yMax, x + y);};
   auto func1 = [&](double y)->double{return integrand1(y);};
   auto func2 = [&](double w)->double{return integrand2(w);};
-  itg2->compute(func1, func2, yMin, yMax, wMin, wMax);
-  return 3.0/(8.0*x) * itg2->getSolution() + bf(x);
+  itg.compute(func1, func2, yMin, yMax, wMin, wMax);
+  return 3.0/(8.0*x) * itg.getSolution() + bf(x);
 }
 
 // Level 1 integrand
@@ -865,7 +868,7 @@ double SlfcIet::integrand1(const double y) const {
 
 // Level 2 integrand
 double SlfcIet::integrand2(const double w) const {
-  const double y = itg2->getX();
+  const double y = itg.getX();
   const double y2 = y*y;
   const double w2 = w*w;
   const double x2 = x*x;
@@ -874,32 +877,23 @@ double SlfcIet::integrand2(const double w) const {
 
 
 // -----------------------------------------------------------------
-// Bridge function class
+// BridgeFunction class
 // -----------------------------------------------------------------
 
 double BridgeFunction::get() const {
-  if (theory == "STLS-HNC" || theory == "QSTLS-HNC") return hnc();
-  else if (theory == "STLS-IOI" || theory == "QSTLS-IOI") return ioi();
-  else if (theory == "STLS-LCT" || theory == "QSTLS-LCT") return lct();
-  else {
-    throw runtime_error("Unknown theory to compute the bridge function term");
-  }
+  if (theory == "STLS-HNC" || theory == "QSTLS-HNC") { return hnc(); }
+  if (theory == "STLS-IOI" || theory == "QSTLS-IOI") { return ioi(); }
+  if (theory == "STLS-LCT" || theory == "QSTLS-LCT") { return lct(); }
+  throw runtime_error("Unknown theory to compute the bridge function term");
 }
 
 double BridgeFunction::couplingParameter() const {
   const double fact = 2 * lambda * lambda * rs;
-  if (mapping == "sqrt") {
-    return fact/sqrt(1 + Theta * Theta);
-  }
-  else if (mapping == "linear") {
-    return fact/(1 + Theta);
-  }
-  // Standard mapping
-  if (Theta == 0.0) {
-    throw runtime_error("The standard iet mapping cannot be used in the "
-			"ground state");
-  }
-  return fact/Theta;
+  if (mapping == "sqrt") { return fact/sqrt(1 + Theta * Theta); }
+  if (mapping == "linear") { return fact/(1 + Theta); }
+  if (Theta != 0.0) { return fact/Theta; }
+  throw runtime_error("The standard iet mapping cannot be used in the "
+		      "ground state");
 }
 
 double BridgeFunction::hnc() const {
@@ -972,9 +966,9 @@ double BridgeFunction::ioi() const {
 double BridgeFunction::lct() const {
   const double Gamma = couplingParameter();
   auto func = [&](double r)->double{return lctIntegrand(r,Gamma);};
-  itg->setR(x/lambda);
-  itg->compute(func);
-  return itg->getSolution() * (x/lambda) / Gamma;
+  itg.setR(x/lambda);
+  itg.compute(func);
+  return itg.getSolution() * (x/lambda) / Gamma;
   return 0.0;
 }
 
