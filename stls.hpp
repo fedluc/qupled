@@ -235,9 +235,9 @@ public:
 // Classes for the static structure factor
 // -----------------------------------------------------------------
 
-class Ssf {
+class SsfBase {
 
-private:
+protected:
   
   // Wave-vector
   const double x;
@@ -248,13 +248,29 @@ private:
   // Hartree-Fock contribution
   const double ssfHF;
   // Static local field correction
-  const double slfc = 0.0;
+  const double slfc;
+  // Constant for unit conversion
+  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  // Constructor
+  SsfBase(const double x_,
+	  const double Theta_,
+	  const double rs_,
+	  const double ssfHF_,
+	  const double slfc_) : x(x_), Theta(Theta_), rs(rs_),
+				ssfHF(ssfHF_), slfc(slfc_) {;};
+  
+};
+
+class Ssf : public SsfBase {
+
+private:
+  
+  // Degeneracy parameter
+  // const double Theta;
   // Ideal density response
   const vector<double> idr;
   // Auxiliary density response
   const vector<double> adr;
-  // Constant for unit conversion
-  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // Get for quantum schemes
   double getQuantum() const;
   
@@ -266,39 +282,27 @@ public:
       const double rs_,
       const double ssfHF_,
       const vector<double> &idr_,
-      const double slfc_)
-    : x(x_), Theta(Theta_), rs(rs_),
-      ssfHF(ssfHF_), slfc(slfc_), idr(idr_) {;};
+      const double slfc_) : SsfBase(x_, Theta_, rs_, ssfHF_, slfc_),
+			    idr(idr_) {;};
   // Constructor for quantum schemes
   Ssf(const double x_,
       const double Theta_,
       const double rs_,
       const double ssfHF_,
       const vector<double> &idr_,
-      const vector<double> &adr_)
-    : x(x_), Theta(Theta_), rs(rs_),
-      ssfHF(ssfHF_), idr(idr_), adr(adr_) {;};
-  // Get at any temperature
+      const vector<double> &adr_) : SsfBase(x_, Theta_, rs_, ssfHF_, 0),
+				    idr(idr_), adr(adr_) {;};
+  // Get for any scheme
   double get() const;
  
   
 };
 
 
-class SsfGround {
+class SsfGround : public SsfBase {
 
 private:
   
-  // Wave-vector
-  const double x;
-  // Coupling parameter
-  const double rs;
-  // Hartree-Fock contribution
-  const double ssfHF;
-  // Static local field correction
-  const double slfc;
-  // Constant for unit conversion
-  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // Integration limits for zero temperature calculations
   const double yMin;
   const double yMax;
@@ -322,11 +326,9 @@ public:
 	    const double slfc_,
 	    const double yMin_,
 	    const double yMax_,
-	    Integrator1D &itg_)
-    : x(x_), rs(rs_), ssfHF(ssfHF_),
-      slfc(slfc_), yMin(yMin_), yMax(yMax_),
-      itg(itg_) {;};
-  // Get result
+	    Integrator1D &itg_) : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
+				  yMin(yMin_), yMax(yMax_), itg(itg_) {;};
+  // Get result of integration
   double get() const;
  
   
@@ -349,9 +351,6 @@ protected:
   const Interpolator &ssfi;
   // Compute static structure factor
   double ssf(double x_) const;
-  
-public:
-
   // Constructor
   SlfcBase(const double x_,
 	   const double yMin_,
