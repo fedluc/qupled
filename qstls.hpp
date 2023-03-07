@@ -9,12 +9,14 @@
 using namespace std;
 using namespace vecUtil;
 
+// -----------------------------------------------------------------
+// Solver for the STLS-based schemes
+// -----------------------------------------------------------------
+
 class Qstls : public Stls {
   
 private: 
 
-  // Temporary member
-  const shared_ptr<Integrator1D> itg = make_shared<Integrator1D>();
   // Auxiliary density response
   Vector2D<double> adr;
   Vector2D<double> adrOld;
@@ -81,8 +83,11 @@ public:
 
 };
 
-// Class for the auxiliary density response calculation
-class Adr {
+// -----------------------------------------------------------------
+// Classes for the auxiliary density response
+// -----------------------------------------------------------------
+
+class AdrBase {
 
 protected:
   
@@ -93,44 +98,26 @@ protected:
   // Integration limits
   const double yMin;
   const double yMax;
-
-private:
-  
-  // integrand 
-  double integrand(const double y) const;
-  // Integrator object
-  const shared_ptr<Integrator1D> itg;
-
-protected:
-  
   // Interpolator for the static structure factor
   const Interpolator &ssfi;
   // Interpolator for the fixed component
   Interpolator fixi;
   // Compute static structure factor
   double ssf(const double y) const;
-  // Compute fixed component
-  double fix(const double y) const;
   
 public:
 
-  // Constructor for finite temperature calculations
-  Adr(const int nl_,
-      const double Theta_,
-      const double yMin_,
-      const double yMax_,
-      const shared_ptr<Integrator1D> &itg_,
-      const Interpolator &ssfi_)
-    : nl(nl_), Theta(Theta_), yMin(yMin_),
-      yMax(yMax_), itg(itg_), ssfi(ssfi_) {;};
-  // Get result of integration
-  void get(const vector<double> &wvg,
-	   const Vector2D<double> &fixed,
-	   vector<double> &res);
+  // Constructor
+  AdrBase(const int nl_,
+	  const double Theta_,
+	  const double yMin_,
+	  const double yMax_,
+	  const Interpolator &ssfi_) : nl(nl_), Theta(Theta_), yMin(yMin_),
+				       yMax(yMax_), ssfi(ssfi_) {;};
   
 };
 
-class AdrFixed {
+class AdrFixedBase {
 
 protected:
 
@@ -146,13 +133,59 @@ protected:
   // Chemical potential
   const double mu;
   
+public:
+
+  // Constructor for finite temperature calculations
+  AdrFixedBase(const int nl_,
+	       const double Theta_,
+	       const double qMin_,
+	       const double qMax_,
+	       const double x_,
+	       const double mu_) : nl(nl_), Theta(Theta_), qMin(qMin_),
+				   qMax(qMax_), x(x_), mu(mu_) {;};
+  
+};
+
+class Adr : public AdrBase {
+
+private:
+
+  // Compute fixed component
+  double fix(const double y) const;
+  // integrand 
+  double integrand(const double y) const;
+  // Integrator object
+  Integrator1D &itg;
+  
+public:
+
+  // Constructor for finite temperature calculations
+  Adr(const int nl_,
+      const double Theta_,
+      const double yMin_,
+      const double yMax_,
+      const Interpolator &ssfi_,
+      Integrator1D &itg_) : AdrBase(nl_, Theta_, yMin_, yMax_, ssfi_),
+			    itg(itg_) {;};
+  // Get result of integration
+  void get(const vector<double> &wvg,
+	   const Vector2D<double> &fixed,
+	   vector<double> &res);
+  
+};
+
+class AdrFixed : public AdrFixedBase {
+  
 private:
   
   // Integrands 
-  double integrand1(const double q, const double l) const;
-  double integrand2(const double t, const double y, const double l) const;
+  double integrand1(const double q,
+		    const double l) const;
+  double integrand2(const double t,
+		    const double y,
+		    const double l) const;
   // Integrator object
-  const shared_ptr<Integrator2D> itg;
+  Integrator2D &itg;
   
 public:
 
@@ -163,9 +196,8 @@ public:
 	   const double qMax_,
 	   const double x_,
 	   const double mu_,
-	   const shared_ptr<Integrator2D> &itg_)
-    : nl(nl_), Theta(Theta_), qMin(qMin_),
-      qMax(qMax_), x(x_), mu(mu_), itg(itg_) {;};
+	   Integrator2D &itg_) : AdrFixedBase(nl_, Theta_, qMin_, qMax_, x_, mu_),
+				 itg(itg_) {;};
   // Get integration result
   void get(vector<double> &wvg,
 	   Vector2D<double> &res) const;
@@ -173,7 +205,7 @@ public:
 };
 
 // Class for the auxiliary density response calculation in the IET scheme
-class AdrIet : public Adr {
+class AdrIet : public AdrBase {
 
 private:
 
@@ -188,7 +220,7 @@ private:
   double integrand1(const double q) const;
   double integrand2(const double y) const;
   // Integrator object
-  const shared_ptr<Integrator2D> itg;
+  Integrator2D &itg;
   // Interpolator for the ideal density response
   const Interpolator &idri;
   // Interpolator for the auxiliary density response
@@ -214,14 +246,13 @@ public:
 	 const double qMax_,
 	 const double x_,
 	 const int l_,
-	 const shared_ptr<Integrator2D> &itg_,
 	 const Interpolator &ssfi_,
 	 const Interpolator &idri_,
 	 const Interpolator &adri_,
-	 const Interpolator &bfi_)
-    : Adr(0, Theta_, qMin_, qMax_, NULL, ssfi_),
-      x(x_), l(l_), itg(itg_), idri(idri_),
-      adri(adri_), bfi(bfi_) {;};
+	 const Interpolator &bfi_,
+	 Integrator2D &itg_) : AdrBase(0, Theta_, qMin_, qMax_, ssfi_),
+			       x(x_), l(l_), itg(itg_), idri(idri_),
+			       adri(adri_), bfi(bfi_) {;};
   // Get integration result
   void get(const vector<double> &wvg,
 	   const Vector2D<double> &fixed,
@@ -229,7 +260,7 @@ public:
   
 };
 
-class AdrFixedIet : public AdrFixed {
+class AdrFixedIet : public AdrFixedBase {
 
 private:
 
@@ -240,19 +271,19 @@ private:
   double integrand(const double t, const double y,
 		   const double q, const double l) const;
   // Integrator object
-  const shared_ptr<Integrator1D> itg;
+  Integrator1D &itg;
   
 public:
 
   // Constructor for finite temperature calculations
   AdrFixedIet(const int nl_,
 	      const double Theta_,
+	      const double qMin_,
+	      const double qMax_,
 	      const double x_,
 	      const double mu_,
-	      const double tMin_,
-	      const double tMax_,
-	      const shared_ptr<Integrator1D> &itg_)
-    : AdrFixed(nl_, Theta_, x_, mu_, tMin_, tMax_, NULL), itg(itg_){;};
+	      Integrator1D &itg_) : AdrFixedBase(nl_, Theta_, qMin_, qMax_, x_, mu_),
+				    itg(itg_) {;};
   // Get integration result
   void get(vector<double> &wvg,
 	   Vector3D<double> &res) const;

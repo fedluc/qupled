@@ -62,7 +62,6 @@ void Qstls::doIterations() {
 
 // Compute auxiliary density response
 void Qstls::computeAdr() {
-  assert(itg != NULL);
   assert(ssfOld.size() > 0);
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
@@ -74,7 +73,7 @@ void Qstls::computeAdr() {
   const Interpolator ssfi = Interpolator(wvg, ssfOld);
   for (int i=0; i<nx; ++i) {
     Adr adrTmp(nl, in.getDegeneracy(), wvg.front(),
-	       wvg.back(), itg, ssfi);
+	       wvg.back(), ssfi, itg);
     adrTmp.get(wvg, adrFixed[i], adr[i]);
   }
   if (useIet) computeAdrIet();
@@ -93,7 +92,7 @@ void Qstls::computeAdrFixed() {
   adrFixed.resize(nx);
 #pragma omp parallel for
   for (int i=0; i<nx; ++i) {
-    const shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>();
+    Integrator2D itg2;
     AdrFixed adrTmp(nl, wvg[i], in.getDegeneracy(), mu,
 		    wvg.front(), wvg.back(), itg2);
     adrTmp.get(wvg, adrFixed[i]);
@@ -183,7 +182,7 @@ void Qstls::computeAdrFixedIet() {
   cout << "#######" << endl;
 #pragma omp parallel for
   for (int i=0; i<idx.size(); ++i) {
-    const shared_ptr<Integrator1D> itgT = make_shared<Integrator1D>();
+    Integrator1D itgT;
     decltype(adrFixed) res;
     AdrFixedIet adrTmp(nl, wvg[idx[i]], in.getDegeneracy(), mu,
 		       wvg.front(), wvg.back(), itgT);
@@ -464,13 +463,17 @@ void Qstls::readRestart(const string &fileName,
 }
 
 // -----------------------------------------------------------------
-// Auxiliary density response classes
+// AdrBase class
 // -----------------------------------------------------------------
 
 // Compute static structure factor
-double Adr::ssf(const double y) const {
+double AdrBase::ssf(const double y) const {
   return ssfi.eval(y);
 }
+
+// -----------------------------------------------------------------
+// Adr class
+// -----------------------------------------------------------------
 
 // Compute fixed component
 double Adr::fix(const double y) const {
@@ -492,11 +495,15 @@ void Adr::get(const vector<double> &wvg,
     assert(fixed[l].size() == wvg.size());
     fixi = Interpolator(wvg, fixed[l]);
     auto func = [&](double y)->double{return integrand(y);};
-    itg->compute(func, yMin, yMax);
-    res[l] = itg->getSolution();
+    itg.compute(func, yMin, yMax);
+    res[l] = itg.getSolution();
     res[l] *= (l==0) ? -3.0/(4.0*Theta) : -3.0/8.0;
   }
 }
+
+// -----------------------------------------------------------------
+// AdrFixed class
+// -----------------------------------------------------------------
 
 // Get fixed component
 void AdrFixed::get(vector<double> &wvg,
@@ -516,8 +523,8 @@ void AdrFixed::get(vector<double> &wvg,
       auto tMax = [&](double q)->double{return x2 + xq;};
       auto func1 = [&](double q)->double{return integrand1(q, l);};
       auto func2 = [&](double t)->double{return integrand2(t, wvg[i], l);};
-      itg->compute(func1, func2, qMin, qMax, tMin, tMax);
-      res[l][i] = itg->getSolution();
+      itg.compute(func1, func2, qMin, qMax, tMin, tMax);
+      res[l][i] = itg.getSolution();
     }
   }
 }
@@ -529,7 +536,7 @@ double AdrFixed::integrand1(const double q, const double l) const {
 }
 
 double AdrFixed::integrand2(const double t, const double y, const double l) const {
-  const double q = itg->getX();
+  const double q = itg.getX();
   if (q == 0) return 0;
   const double x2 = x*x;
   const double y2 = y*y;
@@ -553,7 +560,7 @@ double AdrFixed::integrand2(const double t, const double y, const double l) cons
 }
 
 // -----------------------------------------------------------------
-// Auxiliary density response classes for the iet schemes
+// AdrIet class
 // -----------------------------------------------------------------
 
 // Compute ideal density response
@@ -583,7 +590,7 @@ double AdrIet::integrand1(const double q) const {
 }
 
 double AdrIet::integrand2(const double y) const {
-  const double q = itg->getX();
+  const double q = itg.getX();
   return y * fix(q,y) * (ssf(y) - 1.0);
 }
 
@@ -603,9 +610,9 @@ void AdrIet::get(const vector<double> &wvg,
   auto yMax = [&](double q)->double{return (q > x) ? q - x : x - q;};
   auto func1 = [&](double q)->double{return integrand1(q);};
   auto func2 = [&](double y)->double{return integrand2(y);};
-  itg->compute(func1, func2, qMin, qMax, yMin, yMax);
-  res = itg->getSolution();
-  //res[l][i] = itg->getSolution();
+  itg.compute(func1, func2, qMin, qMax, yMin, yMax);
+  res = itg.getSolution();
+  //res[l][i] = itg.getSolution();
   // for (int l = 0; l < nl; ++l){
   //   res[l].resize(nx);
   //   if (x == 0.0) {
@@ -618,11 +625,15 @@ void AdrIet::get(const vector<double> &wvg,
   //     auto tMax = [&](double q)->double{return x2 + xq;};
   //     auto func1 = [&](double q)->double{return integrand1(q, l);};
   //     auto func2 = [&](double t)->double{return integrand2(t, wvg[i], l);};
-  //     itg->compute(func1, func2, qMin, qMax, tMin, tMax);
-  //     res[l][i] = itg->getSolution();
+  //     itg.compute(func1, func2, qMin, qMax, tMin, tMax);
+  //     res[l][i] = itg.getSolution();
   //   }
   // }
 }
+
+// -----------------------------------------------------------------
+// AdrFixedIet class
+// -----------------------------------------------------------------
 
 // get fixed component
 void AdrFixedIet::get(vector<double> &wvg,
@@ -639,8 +650,8 @@ void AdrFixedIet::get(vector<double> &wvg,
       }
       for (int j = 0; j < nx; ++j) {
 	auto func = [&](double t)->double{return integrand(t, wvg[j], wvg[i], l);};
-	itg->compute(func, tMin, tMax);
-	res[l][i][j] = itg->getSolution();
+	itg.compute(func, tMin, tMax);
+	res[l][i][j] = itg.getSolution();
       }  
     }
   }
