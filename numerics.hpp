@@ -12,6 +12,10 @@
 
 using namespace std;
 
+// -----------------------------------------------------------------
+// Classes to interpolate data
+// -----------------------------------------------------------------
+
 // Interpolator for 1D data
 class Interpolator {
 
@@ -22,40 +26,20 @@ private:
   // Accelerator
   gsl_interp_accel *acc;
   // Size
-  size_t sz;
+  size_t n;
   
 public:
 
   // Constructor
-  Interpolator() {
-    spline = gsl_spline_alloc(gsl_interp_cspline, 0);
-    acc = gsl_interp_accel_alloc();
-  };
-  Interpolator(const vector<double> &x, const vector<double> &y) {
-    assert(x.size() == y.size());
-    sz = x.size();
-    spline = gsl_spline_alloc(gsl_interp_cspline, sz);
-    acc = gsl_interp_accel_alloc();
-    gsl_spline_init(spline, &x[0], &y[0], sz);
-  };
-  Interpolator(const Interpolator &it) {
-    if (spline) gsl_spline_free(spline);
-    if (acc) gsl_interp_accel_free(acc);
-    sz = it.sz;
-    spline = gsl_spline_alloc(gsl_interp_cspline, sz);
-    acc = gsl_interp_accel_alloc();
-    *spline = *it.spline;
-    *acc = *it.acc;
-  };
+  Interpolator(const double &x,
+	       const double &y,
+	       const size_t sz_);
+  Interpolator(const Interpolator &it);
+  Interpolator();
   // Destructor
-  ~Interpolator(){
-    gsl_spline_free(spline);
-    gsl_interp_accel_free(acc);
-  }
+  ~Interpolator();
   // Evaluate
-  double eval(const double x) const {
-    return gsl_spline_eval(spline, x, acc);
-  };
+  double eval(const double x) const;
   
 };
 
@@ -70,57 +54,29 @@ private:
   gsl_interp_accel *xacc;
   gsl_interp_accel *yacc;
   // Size
-  size_t szx;
-  size_t szy;
+  size_t nx;
+  size_t ny;
   
 public:
 
   // Constructor
-  Interpolator2D() {
-    spline = gsl_spline2d_alloc(gsl_interp2d_bicubic, 1, 1);
-    xacc = gsl_interp_accel_alloc();
-    yacc = gsl_interp_accel_alloc();
-  };
-  Interpolator2D(const vector<double> &x,
-		 const vector<double> &y,
-		 const vector<double> &z) {
-    assert(x.size() == y.size());
-    assert(x.size() * y.size() == z.size());
-    szx = x.size();
-    szy = y.size();
-    spline = gsl_spline2d_alloc(gsl_interp2d_bicubic, szx, szy);
-    xacc = gsl_interp_accel_alloc();
-    yacc = gsl_interp_accel_alloc();
-    gsl_spline2d_init(spline, &x[0], &y[0], &z[0], szx, szy);
-  };
-  Interpolator2D(const Interpolator2D &it) {
-    if (spline) gsl_spline2d_free(spline);
-    if (xacc) gsl_interp_accel_free(xacc);
-    if (yacc) gsl_interp_accel_free(yacc);
-    szx = it.szx;
-    szy = it.szy;
-    spline = gsl_spline2d_alloc(gsl_interp2d_bicubic, szx, szy);
-    xacc = gsl_interp_accel_alloc();
-    yacc = gsl_interp_accel_alloc();
-    *spline = *it.spline;
-    *xacc = *it.xacc;
-    *yacc = *it.yacc;
-  };
+  Interpolator2D();
+  Interpolator2D(const double &x,
+		 const double &y,
+		 const double &z,
+		 const int szx_,
+		 const int szy_);
+  Interpolator2D(const Interpolator2D &it);
   // Destructor
-  ~Interpolator2D(){
-    gsl_spline2d_free(spline);
-    gsl_interp_accel_free(xacc);
-    gsl_interp_accel_free(yacc);
-  }
+  ~Interpolator2D();
   // Evaluate
-  double eval(const double x, const double y) const {
-    return gsl_spline2d_eval(spline, x, y, xacc, yacc);
-  };
-  
+  double eval(const double x, const double y) const;
 };
 
+// -----------------------------------------------------------------
+// C++ wrappers to gsl_function objects
+// -----------------------------------------------------------------
 
-// Wrapper for gsl_function objects
 template< typename T >
 class GslFunctionWrap : public gsl_function {
 
@@ -140,7 +96,11 @@ public:
   
 };
 
-// Root solver
+  
+// -----------------------------------------------------------------
+// Classes to find roots of equations
+// -----------------------------------------------------------------
+
 class RootSolver {
 
 private:
@@ -175,6 +135,9 @@ public:
   
 };
 
+// -----------------------------------------------------------------
+// Classes to compute integrals
+// -----------------------------------------------------------------
 
 // Integrator for 1D integrals
 class Integrator1D {

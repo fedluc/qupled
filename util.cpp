@@ -111,6 +111,66 @@ namespace vecUtil {
     return res;
   }
 
+  // Vector2D class
+  size_t Vector2D::size() const {
+    return s1*s2;
+  }
+  
+  size_t Vector2D::size(const size_t i) const {
+    assert(i == 0 || i == 1);
+    return (i == 0) ? s1 : s2;
+  }
+
+  void Vector2D::resize(const size_t s1_, const size_t s2_) {
+    if (s1_ == s1 && s2_ == s2) { return; }
+    v.clear();
+    v.resize(s1_*s2_, 0.0);
+  }
+
+  double& Vector2D::operator()(const size_t i, const size_t j) {
+    return v[j + i*s2];
+  }
+  
+  const double& Vector2D::operator()(const size_t i, const size_t j) const {
+    return v[j + i*s2];
+  }
+
+  const double& Vector2D::operator()(const size_t i) const {
+    return v[i*s2];
+  }
+
+  vector<double>::iterator Vector2D::begin() {
+    return v.begin();
+  }
+
+  vector<double>::iterator Vector2D::end() {
+    return v.end();
+  }
+
+  vector<double>::const_iterator Vector2D::begin() const {
+    return v.begin();
+  }
+
+  vector<double>::const_iterator Vector2D::end() const {
+    return v.end();
+  }
+  
+  
+  void Vector2D::fill(const double &num) {
+    std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;});
+  }
+
+  void Vector2D::fillRow(const size_t i, const double &num) {
+    const auto &dest = v.begin() + i*s2;
+    std::for_each(dest, dest + s2, [&](double &vi){ vi = num;});
+  }
+  
+  void Vector2D::fillRow(const size_t i, const vector<double> &num) {
+    assert(num.size() == s2);
+    std::copy(num.begin(), num.end(), v.begin() + i*s2);
+  }
+  
+  
 }
 
 namespace thermoUtil {

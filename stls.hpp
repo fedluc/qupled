@@ -19,7 +19,7 @@ protected:
   // Wave vector grid
   vector<double> wvg;
   // Ideal density response
-  Vector2D<double> idr;
+  Vector2D idr;
   // Static local field correction
   vector<double> slfcOld;
   vector<double> slfc;
@@ -263,36 +263,25 @@ protected:
 
 class Ssf : public SsfBase {
 
-private:
-  
-  // Degeneracy parameter
-  // const double Theta;
+protected:
+
+  // Number of Matsubara frequencies
+  const int nl;
   // Ideal density response
-  const vector<double> idr;
-  // Auxiliary density response
-  const vector<double> adr;
-  // Get for quantum schemes
-  double getQuantum() const;
+  const double *idr;
   
 public:
 
-  // Constructor for classical schemes
+  // Constructor
   Ssf(const double x_,
       const double Theta_,
       const double rs_,
       const double ssfHF_,
-      const vector<double> &idr_,
-      const double slfc_) : SsfBase(x_, Theta_, rs_, ssfHF_, slfc_),
-			    idr(idr_) {;};
-  // Constructor for quantum schemes
-  Ssf(const double x_,
-      const double Theta_,
-      const double rs_,
-      const double ssfHF_,
-      const vector<double> &idr_,
-      const vector<double> &adr_) : SsfBase(x_, Theta_, rs_, ssfHF_, 0),
-				    idr(idr_), adr(adr_) {;};
-  // Get for any scheme
+      const double slfc_,
+      const int nl_,
+      const double *idr_) : SsfBase(x_, Theta_, rs_, ssfHF_, slfc_),
+			    nl(nl_), idr(idr_) {;};
+  // Get static structore factor
   double get() const;
  
   

@@ -10,7 +10,7 @@ using namespace std;
 using namespace vecUtil;
 
 // -----------------------------------------------------------------
-// Solver for the STLS-based schemes
+// Solver for the qSTLS-based schemes
 // -----------------------------------------------------------------
 
 class Qstls : public Stls {
@@ -18,9 +18,9 @@ class Qstls : public Stls {
 private: 
 
   // Auxiliary density response
-  Vector2D<double> adr;
-  Vector2D<double> adrOld;
-  Vector3D<double> adrFixed;
+  Vector2D adr;
+  Vector2D adrOld;
+  Vector2D adrFixed;
   map<int,pair<string,bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
   vector<double> ssfOld;
@@ -83,6 +83,33 @@ public:
 
 };
 
+// -----------------------------------------------------------------
+// Class for the static structure factor
+// -----------------------------------------------------------------
+
+class Qssf : public Ssf {
+
+private:
+
+  // Auxiliary density response
+  const double *adr;
+  
+public:
+
+  // Constructor for quantum schemes
+  Qssf(const double x_,
+       const double Theta_,
+       const double rs_,
+       const double ssfHF_,
+       const int nl_,
+       const double *idr_,
+       const double *adr_) : Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_),
+			     adr(adr_) {;};
+  // Get static structure factor
+  double get() const;
+ 
+  
+};
 // -----------------------------------------------------------------
 // Classes for the auxiliary density response
 // -----------------------------------------------------------------
@@ -169,7 +196,7 @@ public:
 			    itg(itg_) {;};
   // Get result of integration
   void get(const vector<double> &wvg,
-	   const Vector2D<double> &fixed,
+	   const Vector2D &fixed,
 	   vector<double> &res);
   
 };
@@ -200,7 +227,7 @@ public:
 				 itg(itg_) {;};
   // Get integration result
   void get(vector<double> &wvg,
-	   Vector2D<double> &res) const;
+	   Vector2D &res) const;
   
 };
 
@@ -255,7 +282,7 @@ public:
 			       adri(adri_), bfi(bfi_) {;};
   // Get integration result
   void get(const vector<double> &wvg,
-	   const Vector2D<double> &fixed,
+	   const Vector2D &fixed,
 	   double &res);
   
 };
@@ -285,8 +312,8 @@ public:
 	      Integrator1D &itg_) : AdrFixedBase(nl_, Theta_, qMin_, qMax_, x_, mu_),
 				    itg(itg_) {;};
   // Get integration result
-  void get(vector<double> &wvg,
-	   Vector3D<double> &res) const;
+  // void get(vector<double> &wvg,
+  // 	   Vector3D<double> &res) const;
   
 };
 

@@ -72,11 +72,11 @@ void Stls::computeIdr(){
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
   const int nl = statIn.getNMatsubara();
-  idr.resize(nx);
+  idr.resize(nx, nl);
   for (int i=0; i<nx; ++i){
     Idr idrTmp(nl, wvg[i], in.getDegeneracy(), mu,
 	       wvg.front(), wvg.back(), itg);
-    idr[i] = idrTmp.get();
+    idr.fillRow(i, idrTmp.get());
   }
 }
 
@@ -120,7 +120,7 @@ void Stls::computeSsfFinite(){
   const int nx = wvg.size();
   if (ssf.size() == 0) ssf.resize(nx);
   for (int i=0; i<nx; ++i){
-    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], idr[i], slfcOld[i]);
+    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfcOld[i], idr.size(1), &idr(i));
     ssf[i] = ssfTmp.get();
   }
 }
@@ -151,8 +151,9 @@ void Stls::computeSlfc(){
 }
 
 void Stls::computeSlfcStls() {
-  const Interpolator itp = Interpolator(wvg,ssf);
-  for (int i=0; i<wvg.size(); ++i) {
+  const int nx = wvg.size();
+  const Interpolator itp = Interpolator(wvg[0],ssf[0], nx);
+  for (int i=0; i<nx; ++i) {
     Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
     slfc[i] = slfcTmp.get();
   }
@@ -160,10 +161,11 @@ void Stls::computeSlfcStls() {
 
 void Stls::computeSlfcIet() {
    Integrator2D itg2;
-   const Interpolator ssfItp = Interpolator(wvg,ssf);
-   const Interpolator slfcItp = Interpolator(wvg,slfcOld);
+   const int nx = wvg.size();
+   const Interpolator ssfItp = Interpolator(wvg[0], ssf[0], nx);
+   const Interpolator slfcItp = Interpolator(wvg[0], slfcOld[0], nx);
    if (bf.size() == 0) computeBf();
-   const Interpolator bfItp = Interpolator(wvg,bf);
+   const Interpolator bfItp = Interpolator(wvg[0], bf[0], nx);
    for (int i=0; i<wvg.size(); ++i){
      SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),
 		     ssfItp, slfcItp, bfItp, itg2);
@@ -232,7 +234,7 @@ void Stls::initialGuess() {
     vector<double> wvgFile;
     vector<double> slfcFile;
     readRestart(wvgFile, slfcFile);
-    const Interpolator slfci(wvgFile, slfcFile);
+    const Interpolator slfci(wvgFile[0], slfcFile[0], wvgFile.size());
     const double xmaxi = wvgFile.back();
     for (int i=0; i<wvg.size(); ++i) {
       const double x = wvg[i];
@@ -340,8 +342,8 @@ void Stls::writeSdr() const {
   }
   const double fact = 4 *lambda * in.getCoupling() /M_PI;
   for (int i=0; i<wvg.size(); ++i){
-    const double sdr = -1.5 *in.getDegeneracy() * idr[i][0]/
-      (1.0 + fact/(wvg[i] * wvg[i]) * (1.0 - slfc[i]) * idr[i][0]);
+    const double sdr = -1.5 *in.getDegeneracy() * idr(i,0)/
+      (1.0 + fact/(wvg[i] * wvg[i]) * (1.0 - slfc[i]) * idr(i,0));
     const string line = format<double, double>("%.8e %.8e", wvg[i], sdr);
     file << line << endl;
   }
@@ -360,11 +362,13 @@ void Stls::writeIdr() const {
   if (!file.is_open()) {
     throw runtime_error("Output file " + fileName + " could not be created.");
   }
-  for (int i=0; i<idr.size(); ++i){
+  const int nx = idr.size(0);
+  const int nl = idr.size(1);
+  for (int i=0; i<nx; ++i){
     const string el1 = format<double>("%.8e", wvg[i]);
     file << el1;
-    for (int l=0; l<idr[i].size(); ++l) {
-      const string el2 = format<double>("%.8e ", idr[i][l]);
+    for (int l=0; l<nl; ++l) {
+      const string el2 = format<double>("%.8e ", idr(i,l));
       file << el2;
     }
     file << endl;
@@ -383,7 +387,7 @@ void Stls::writeUInt() const {
   if (!file.is_open()) {
     throw runtime_error("Output file " + fileName + " could not be created.");
   }
-  const Interpolator itp = Interpolator(wvg,ssf);
+  const Interpolator itp = Interpolator(wvg[0], ssf[0], wvg.size());
   Integrator1D itgU;
   const InternalEnergy uInt = InternalEnergy(in.getCoupling(),
 					     wvg.front(),
@@ -411,7 +415,7 @@ void Stls::writeRdf() const {
   const auto &statIn = in.getStaticInput();
   const double dr = statIn.getWaveVectorGridRes();
   const double r0 = dr/10; // Avoid starting from 0 to avoid divergence
-  const Interpolator itp = Interpolator(wvg,ssf);
+  const Interpolator itp = Interpolator(wvg[0], ssf[0], wvg.size());
   Integrator1DFourier itgF(r0);
   for (int i=0; i<wvg.size()-1; ++i){
     const double r = r0 + i*dr;
@@ -672,9 +676,7 @@ double SsfHFGround::get() const {
 // Get at finite temperature for any scheme
 double Ssf::get() const {
   assert(Theta > 0.0);
-  if (adr.size() > 0) return getQuantum();
   if (x == 0.0) return 0.0;
-  const int nl = idr.size();
   const double fact1 = 4.0*lambda*rs/M_PI;
   const double x2 = x*x;
   double fact2 = 0.0;
@@ -685,23 +687,6 @@ double Ssf::get() const {
     fact2 += fact4;
   }
   return ssfHF - 1.5 * fact1/x2 * Theta * (1 - slfc) * fact2;
-}
-
-// Get for quantum schemes
-double Ssf::getQuantum() const {
-  assert(Theta > 0);
-  if (x == 0.0) return 0.0;
-  const int nl = idr.size();
-  const double fact1 = 4.0*lambda*rs/M_PI;
-  const double x2 = x*x;
-  double fact2 = 0.0;
-  for (int l=0; l<nl; ++l) {
-    const double fact3 = 1.0 + fact1/x2*(1.0 - adr[l]/idr[l])*idr[l];
-    double fact4 = idr[l]*idr[l]*(1.0 - adr[l]/idr[l])/fact3;
-    if (l>0) fact4 *= 2;
-    fact2 += fact4;
-  }
-  return ssfHF - 1.5 * fact1/x2 * Theta * fact2;
 }
 
 // -----------------------------------------------------------------
