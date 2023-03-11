@@ -76,7 +76,7 @@ void Stls::computeIdr(){
   for (int i=0; i<nx; ++i){
     Idr idrTmp(nl, wvg[i], in.getDegeneracy(), mu,
 	       wvg.front(), wvg.back(), itg);
-    idr.fillRow(i, idrTmp.get());
+    idr.fill(i, idrTmp.get());
   }
 }
 
@@ -120,7 +120,7 @@ void Stls::computeSsfFinite(){
   const int nx = wvg.size();
   if (ssf.size() == 0) ssf.resize(nx);
   for (int i=0; i<nx; ++i){
-    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfcOld[i], idr.size(1), &idr(i));
+    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfcOld[i], idr.size(1), idr(i));
     ssf[i] = ssfTmp.get();
   }
 }

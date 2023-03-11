@@ -31,6 +31,9 @@ private:
 public:
 
   // Constructor
+  Interpolator(const double *x,
+	       const double *y,
+	       const size_t sz_);
   Interpolator(const double &x,
 	       const double &y,
 	       const size_t sz_);
@@ -61,6 +64,11 @@ public:
 
   // Constructor
   Interpolator2D();
+  Interpolator2D(const double *x,
+		 const double *y,
+		 const double *z,
+		 const int szx_,
+		 const int szy_);
   Interpolator2D(const double &x,
 		 const double &y,
 		 const double &z,

@@ -135,8 +135,8 @@ namespace vecUtil {
     return v[j + i*s2];
   }
 
-  const double& Vector2D::operator()(const size_t i) const {
-    return v[i*s2];
+  const double* Vector2D::operator()(const size_t i) const {
+    return &operator()(i,0);
   }
 
   vector<double>::iterator Vector2D::begin() {
@@ -160,15 +160,87 @@ namespace vecUtil {
     std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;});
   }
 
-  void Vector2D::fillRow(const size_t i, const double &num) {
+  void Vector2D::fill(const size_t i, const double &num) {
     const auto &dest = v.begin() + i*s2;
     std::for_each(dest, dest + s2, [&](double &vi){ vi = num;});
   }
   
-  void Vector2D::fillRow(const size_t i, const vector<double> &num) {
+  void Vector2D::fill(const size_t i, const vector<double> &num) {
     assert(num.size() == s2);
     std::copy(num.begin(), num.end(), v.begin() + i*s2);
   }
+
+    // Vector3D class
+  size_t Vector3D::size() const {
+    return s1*s2*s3;
+  }
+  
+  size_t Vector3D::size(const size_t i) const {
+    assert(i == 0 || i == 1 || i == 2);
+    if (i == 0) return s1;
+    if (i == 1) return s2;
+    return s3;
+  }
+
+  void Vector3D::resize(const size_t s1_,
+			const size_t s2_,
+			const size_t s3_) {
+    if (s1_ == s1 && s2_ == s2 && s3_ == s3) { return; }
+    v.clear();
+    v.resize(s1_*s2_*s3_, 0.0);
+  }
+
+  double& Vector3D::operator()(const size_t i,
+			       const size_t j,
+			       const size_t k) {
+    return v[k + j*s3 + i*s2*s3];
+  }
+  
+  const double& Vector3D::operator()(const size_t i,
+				     const size_t j,
+				     const size_t k) const {
+    return v[k + j*s3 + i*s2*s3];
+  }
+
+  const double* Vector3D::operator()(const size_t i,
+				     const size_t j) const {
+    return &operator()(i, j, 0);
+  }
+
+  const double* Vector3D::operator()(const size_t i) const {
+    return operator()(i, 0);
+  }
+
+  vector<double>::iterator Vector3D::begin() {
+    return v.begin();
+  }
+
+  vector<double>::iterator Vector3D::end() {
+    return v.end();
+  }
+
+  vector<double>::const_iterator Vector3D::begin() const {
+    return v.begin();
+  }
+
+  vector<double>::const_iterator Vector3D::end() const {
+    return v.end();
+  }
+  
+  
+  // void Vector3D::fill(const double &num) {
+  //   std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;});
+  // }
+
+  // void Vector3D::fill(const size_t i, const double &num) {
+  //   const auto &dest = v.begin() + i*s2;
+  //   std::for_each(dest, dest + s2, [&](double &vi){ vi = num;});
+  // }
+  
+  // void Vector3D::fill(const size_t i, const vector<double> &num) {
+  //   assert(num.size() == s2);
+  //   std::copy(num.begin(), num.end(), v.begin() + i*s2);
+  // }
   
   
 }

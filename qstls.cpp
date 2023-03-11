@@ -264,7 +264,7 @@ void Qstls::computeSsfFinite(){
   const int nl = idr.size(1);
   if (ssf.size() == 0) ssf.resize(nx);
   for (int i=0; i<nx; ++i){
-    Qssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i));
+    Qssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, idr(i), adr(i));
     ssf[i] = ssfTmp.get();
   }
 }
@@ -337,7 +337,7 @@ void Qstls::initialGuessAdr(const decltype(wvg) &wvg_,
   for (int i=0; i<nx; ++i) {
     const double x = wvg[i];
     if (x > xMax) {
-      adrOld.fillRow(i, 0.0);
+      adrOld.fill(i, 0.0);
       continue;
     }
     for (int l=0; l<nl; ++l) {
@@ -518,7 +518,7 @@ void Adr::get(const vector<double> &wvg,
   assert(fixed.size(1) > 0);
   assert(fixed.size(1) == nx);
   for (int l = 0; l < nl; ++l){
-    fixi = Interpolator(wvg[0], fixed(l), nx);
+    fixi = Interpolator(&wvg[0], fixed(l), nx);
     auto func = [&](double y)->double{return integrand(y);};
     itg.compute(func, yMin, yMax);
     res[l] = itg.getSolution();
@@ -627,7 +627,7 @@ void AdrIet::get(const vector<double> &wvg,
     return;
   }
   // NOT SURE ABOUT THIS INTERPOLATOR CALL
-  fixi = Interpolator2D(wvg[0], wvg[0], fixed(l), nx, nx);
+  fixi = Interpolator2D(&wvg[0], &wvg[0], fixed(l), nx, nx);
   auto yMin = [&](double q)->double{return q + x;};
   auto yMax = [&](double q)->double{return (q > x) ? q - x : x - q;};
   auto func1 = [&](double q)->double{return integrand1(q);};

@@ -83,74 +83,70 @@ namespace vecUtil {
     size_t s1;
     size_t s2;
   public:
-    Vector2D(size_t s1_, size_t s2_) : v(s1_*s2_,0.0), s1(s1_), s2(s2_) {;};
-    Vector2D() : Vector2D(0,0.0) {;};
+    Vector2D(const size_t s1_,
+	     const size_t s2_)
+      : v(s1_*s2_,0.0), s1(s1_), s2(s2_) {;};
+    Vector2D()
+      : Vector2D(0, 0) {;};
     size_t size() const;
     size_t size(const size_t i) const;
-    void resize(const size_t s1_, const size_t s2_);
-    double& operator()(const size_t i, const size_t j);
-    const double& operator()(const size_t i, const size_t j) const;
-    const double& operator()(const size_t i) const;
+    void resize(const size_t s1_,
+		const size_t s2_);
+    double& operator()(const size_t i,
+		       const size_t j);
+    const double& operator()(const size_t i,
+			     const size_t j) const;
+    const double* operator()(const size_t i) const;
     vector<double>::iterator begin();
     vector<double>::iterator end();
     vector<double>::const_iterator begin() const;
     vector<double>::const_iterator end() const;
     void fill(const double &num);
-    void fillRow(const size_t i, const double &num);
-    void fillRow(const size_t i, const vector<double> &num);
+    void fill(const size_t i,
+	      const double &num);
+    void fill(const size_t i,
+	      const vector<double> &num);
   };
   
-  // // Wrapper for vector<vector<T>>
-  // template<typename T>
-  // class Vector2D {
-  // protected:
-  //   vector<vector<T>> v;
-  // public:
-  //   size_t size() const { return v.size(); };
-  //   size_t size(const int i) const { return v[i].size(); };
-  //   void resize(const int s1) { v.resize(s1); };
-  //   void resize(const int s1, const int s2) {
-  //     resize(s1);
-  //     for_each(v.begin(), v.end(), [&](vector<T> &vT){ vT.resize(s2); });
-  //   }
-  //   vector<T>& operator[](const int i) { return v[i]; };
-  //   const vector<T>& operator[](const int i) const { return v[i]; };
-  //   typename decltype(v)::iterator begin() { return v.begin(); };
-  //   typename decltype(v)::iterator end() { return v.end(); };
-  //   typename decltype(v)::const_iterator begin() const { return v.begin(); };
-  //   typename decltype(v)::const_iterator end() const { return v.end(); };
-  //   vector<T> flatten() const {
-  //     vector<T> out;
-  //     for (const auto &w : v) { out.insert(out.end(), w.begin(), w.end()); };
-  //     return out;
-  //   }
-  // };
+  // Class to represent 3D vectors
+  class Vector3D {
+  private:
+    vector<double> v;
+    size_t s1;
+    size_t s2;
+    size_t s3;
+  public:
+    Vector3D(const size_t s1_,
+	     const size_t s2_,
+	     const size_t s3_)
+      : v(s1_*s2_*s3_,0.0), s1(s1_), s2(s2_), s3(s3_) {;};
+    Vector3D()
+      : Vector3D(0, 0, 0) {;};
+    size_t size() const;
+    size_t size(const size_t i) const;
+    void resize(const size_t s1_,
+		const size_t s2_,
+		const size_t s3_);
+    double& operator()(const size_t i,
+		       const size_t j,
+		       const size_t k);
+    const double& operator()(const size_t i,
+			     const size_t j,
+			     const size_t k) const;
+    const double* operator()(const size_t i,
+			     const size_t j) const;
+    const double* operator()(const size_t i) const;
+    vector<double>::iterator begin();
+    vector<double>::iterator end();
+    vector<double>::const_iterator begin() const;
+    vector<double>::const_iterator end() const;
+    // void fill(const double &num);
+    // void fill(const size_t i,
+    // 	      const double &num);
+    // void fill(const size_t i,
+    // 	      const vector<double> &num);
+  };
   
-  // Wrapper for vector<vector<vector<T>>>
-  // template<typename T>
-  // class Vector3D {
-  // protected:
-  //   vector<Vector2D<T>> v;
-  // public:
-  //   size_t size() const { return v.size(); };
-  //   size_t size(const int i) const { return v[i].size(); };
-  //   size_t size(const int i, const int j) const { return v[i][j].size(); };
-  //   void resize(const int s1) { v.resize(s1); };
-  //   void resize(const int s1, const int s2) {
-  //     resize(s1);
-  //     for_each(v.begin(), v.end(), [&](vector<T> &vT){ vT.resize(s2); });
-  //   }
-  //   void resize(const int s1, const int s2, const int s3) {
-  //     resize(s1);
-  //     for_each(v.begin(), v.end(), [&](Vector2D<T> &vT){ vT.resize(s2, s3); });
-  //   }
-  //   Vector2D<T>& operator[](const int i) { return v[i]; };
-  //   const Vector2D<T>& operator[](const int i) const { return v[i]; };
-  //   typename decltype(v)::iterator begin() { return v.begin(); };
-  //   typename decltype(v)::iterator end() { return v.end(); };
-  //   typename decltype(v)::const_iterator begin() const { return v.begin(); };
-  //   typename decltype(v)::const_iterator end() const { return v.end(); };
-  // };
     
 }
 
