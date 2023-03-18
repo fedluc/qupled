@@ -118,9 +118,10 @@ void Stls::computeSsfFinite(){
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const int nx = wvg.size();
+  const int nl = idr.size(1);
   if (ssf.size() == 0) ssf.resize(nx);
   for (int i=0; i<nx; ++i){
-    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfcOld[i], idr.size(1), idr(i));
+    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfcOld[i], nl, &idr(i));
     ssf[i] = ssfTmp.get();
   }
 }
@@ -152,7 +153,7 @@ void Stls::computeSlfc(){
 
 void Stls::computeSlfcStls() {
   const int nx = wvg.size();
-  const Interpolator itp = Interpolator(wvg[0],ssf[0], nx);
+  const Interpolator1D itp(wvg,ssf);
   for (int i=0; i<nx; ++i) {
     Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
     slfc[i] = slfcTmp.get();
@@ -161,11 +162,10 @@ void Stls::computeSlfcStls() {
 
 void Stls::computeSlfcIet() {
    Integrator2D itg2;
-   const int nx = wvg.size();
-   const Interpolator ssfItp = Interpolator(wvg[0], ssf[0], nx);
-   const Interpolator slfcItp = Interpolator(wvg[0], slfcOld[0], nx);
+   const Interpolator1D ssfItp(wvg, ssf);
+   const Interpolator1D slfcItp(wvg, slfcOld);
    if (bf.size() == 0) computeBf();
-   const Interpolator bfItp = Interpolator(wvg[0], bf[0], nx);
+   const Interpolator1D bfItp(wvg, bf);
    for (int i=0; i<wvg.size(); ++i){
      SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),
 		     ssfItp, slfcItp, bfItp, itg2);
@@ -197,7 +197,6 @@ void Stls::doIterations() {
   int counter = 0;
   // Define initial guess
   initialGuess();
-  
   while (counter < maxIter+1 && err > minErr ) {
     // Start timing
     double tic = omp_get_wtime();
@@ -234,7 +233,7 @@ void Stls::initialGuess() {
     vector<double> wvgFile;
     vector<double> slfcFile;
     readRestart(wvgFile, slfcFile);
-    const Interpolator slfci(wvgFile[0], slfcFile[0], wvgFile.size());
+    const Interpolator1D slfci(wvgFile, slfcFile);
     const double xmaxi = wvgFile.back();
     for (int i=0; i<wvg.size(); ++i) {
       const double x = wvg[i];
@@ -387,12 +386,12 @@ void Stls::writeUInt() const {
   if (!file.is_open()) {
     throw runtime_error("Output file " + fileName + " could not be created.");
   }
-  const Interpolator itp = Interpolator(wvg[0], ssf[0], wvg.size());
+  const Interpolator1D itp(wvg, ssf);
   Integrator1D itgU;
-  const InternalEnergy uInt = InternalEnergy(in.getCoupling(),
-					     wvg.front(),
-					     wvg.back(),
-					     itp, itgU);
+  const InternalEnergy uInt(in.getCoupling(),
+			    wvg.front(),
+			    wvg.back(),
+			    itp, itgU);
   const string line = format<double, double>("%.8e %.8e %.8e",
 					     in.getCoupling(),
 					     in.getDegeneracy(),
@@ -415,7 +414,7 @@ void Stls::writeRdf() const {
   const auto &statIn = in.getStaticInput();
   const double dr = statIn.getWaveVectorGridRes();
   const double r0 = dr/10; // Avoid starting from 0 to avoid divergence
-  const Interpolator itp = Interpolator(wvg[0], ssf[0], wvg.size());
+  const Interpolator1D itp(wvg, ssf);
   Integrator1DFourier itgF(r0);
   for (int i=0; i<wvg.size()-1; ++i){
     const double r = r0 + i*dr;

@@ -17,7 +17,7 @@ using namespace std;
 // -----------------------------------------------------------------
 
 // Interpolator for 1D data
-class Interpolator {
+class Interpolator1D {
 
 private:
 
@@ -31,16 +31,18 @@ private:
 public:
 
   // Constructor
-  Interpolator(const double *x,
-	       const double *y,
-	       const size_t sz_);
-  Interpolator(const double &x,
-	       const double &y,
-	       const size_t sz_);
-  Interpolator(const Interpolator &it);
-  Interpolator();
+  Interpolator1D(const vector<double> &x,
+		 const vector<double> &y);
+  Interpolator1D(const double &x,
+		 const double &y,
+		 const size_t sz_);
+  Interpolator1D();
   // Destructor
-  ~Interpolator();
+  ~Interpolator1D();
+  // Reset
+  void reset(const double &x,
+	     const double &y,
+	     const size_t sz_);
   // Evaluate
   double eval(const double x) const;
   
@@ -63,18 +65,13 @@ private:
 public:
 
   // Constructor
-  Interpolator2D();
-  Interpolator2D(const double *x,
-		 const double *y,
-		 const double *z,
-		 const int szx_,
-		 const int szy_);
   Interpolator2D(const double &x,
 		 const double &y,
 		 const double &z,
 		 const int szx_,
 		 const int szy_);
   Interpolator2D(const Interpolator2D &it);
+  Interpolator2D();
   // Destructor
   ~Interpolator2D();
   // Evaluate

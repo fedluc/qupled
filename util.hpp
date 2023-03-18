@@ -96,7 +96,7 @@ namespace vecUtil {
 		       const size_t j);
     const double& operator()(const size_t i,
 			     const size_t j) const;
-    const double* operator()(const size_t i) const;
+    const double& operator()(const size_t i) const;
     vector<double>::iterator begin();
     vector<double>::iterator end();
     vector<double>::const_iterator begin() const;
@@ -106,6 +106,8 @@ namespace vecUtil {
 	      const double &num);
     void fill(const size_t i,
 	      const vector<double> &num);
+    void mult(const size_t i,
+	      const double &num);
   };
   
   // Class to represent 3D vectors
@@ -133,18 +135,23 @@ namespace vecUtil {
     const double& operator()(const size_t i,
 			     const size_t j,
 			     const size_t k) const;
-    const double* operator()(const size_t i,
+    const double& operator()(const size_t i,
 			     const size_t j) const;
-    const double* operator()(const size_t i) const;
+    const double& operator()(const size_t i) const;
     vector<double>::iterator begin();
     vector<double>::iterator end();
     vector<double>::const_iterator begin() const;
     vector<double>::const_iterator end() const;
-    // void fill(const double &num);
-    // void fill(const size_t i,
-    // 	      const double &num);
-    // void fill(const size_t i,
-    // 	      const vector<double> &num);
+    void fill(const double &num);
+    void fill(const size_t i,
+	      const size_t j,
+	      const double &num);
+    void fill(const size_t i,
+	      const size_t j,
+	      const vector<double> &num);
+    void mult(const size_t i,
+	      const size_t j,
+	      const double &num);
   };
   
     
@@ -166,7 +173,7 @@ namespace thermoUtil {
     // Integrator object
     Integrator1D &itg;
     // Static structure factor interpolator
-    const Interpolator &ssfi;
+    const Interpolator1D &ssfi;
     // Integrand
     double integrand(const double y) const ;
     // Compute static structure factor
@@ -180,7 +187,7 @@ namespace thermoUtil {
     InternalEnergy(const double rs_,
 		   const double yMin_,
 		   const double yMax_,
-		   const Interpolator &ssfi_,
+		   const Interpolator1D &ssfi_,
 		   Integrator1D &itg_) : rs(rs_), yMin(yMin_), yMax(yMax_),
 					 itg(itg_), ssfi(ssfi_) {;};
     // Get result of integration 
@@ -201,7 +208,7 @@ namespace thermoUtil {
     // Integrator object
     Integrator1DFourier &itg;
     // Static structure factor interpolator
-    const Interpolator &ssfi;
+    const Interpolator1D &ssfi;
     // Integrand
     double integrand(const double y) const ;
     // Compute static structure factor
@@ -212,7 +219,7 @@ namespace thermoUtil {
     // Constructor
     Rdf(const double r_,
 	const double cutoff_,
-	const Interpolator &ssfi_,
+	const Interpolator1D &ssfi_,
 	Integrator1DFourier &itg_) : r(r_), cutoff(cutoff_), itg(itg_),
 				     ssfi(ssfi_)
     {

@@ -20,7 +20,7 @@ private:
   // Auxiliary density response
   Vector2D adr;
   Vector2D adrOld;
-  Vector2D adrFixed;
+  Vector3D adrFixed;
   map<int,pair<string,bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
   vector<double> ssfOld;
@@ -125,10 +125,12 @@ protected:
   // Integration limits
   const double yMin;
   const double yMax;
+  // Wave-vector
+  const double x;
   // Interpolator for the static structure factor
-  const Interpolator &ssfi;
+  const Interpolator1D &ssfi;
   // Interpolator for the fixed component
-  Interpolator fixi;
+  Interpolator1D fixi;
   // Compute static structure factor
   double ssf(const double y) const;
   
@@ -139,8 +141,9 @@ public:
 	  const double Theta_,
 	  const double yMin_,
 	  const double yMax_,
-	  const Interpolator &ssfi_) : nl(nl_), Theta(Theta_), yMin(yMin_),
-				       yMax(yMax_), ssfi(ssfi_) {;};
+	  const double x_,
+	  const Interpolator1D &ssfi_) : nl(nl_), Theta(Theta_), yMin(yMin_),
+					 yMax(yMax_), x(x_), ssfi(ssfi_) {;};
   
 };
 
@@ -181,6 +184,9 @@ private:
   double fix(const double y) const;
   // integrand 
   double integrand(const double y) const;
+  // Integrand scaling constants
+  const double isc;
+  const double isc0; 
   // Integrator object
   Integrator1D &itg;
   
@@ -191,13 +197,14 @@ public:
       const double Theta_,
       const double yMin_,
       const double yMax_,
-      const Interpolator &ssfi_,
-      Integrator1D &itg_) : AdrBase(nl_, Theta_, yMin_, yMax_, ssfi_),
-			    itg(itg_) {;};
+      const double x_,
+      const Interpolator1D &ssfi_,
+      Integrator1D &itg_) : AdrBase(nl_, Theta_, yMin_, yMax_, x_, ssfi_),
+			    isc(-3.0/8.0), isc0(isc*2.0/Theta), itg(itg_) {;};
   // Get result of integration
   void get(const vector<double> &wvg,
-	   const Vector2D &fixed,
-	   vector<double> &res);
+	   const Vector3D &fixed,
+	   Vector2D &res);
   
 };
 
@@ -227,7 +234,7 @@ public:
 				 itg(itg_) {;};
   // Get integration result
   void get(vector<double> &wvg,
-	   Vector2D &res) const;
+	   Vector3D &res) const;
   
 };
 
@@ -235,9 +242,7 @@ public:
 class AdrIet : public AdrBase {
 
 private:
-
-  // Wave-vector
-  const double x;
+;
   // Matsubara frequency
   const int l;
    // Integration limits
@@ -249,11 +254,11 @@ private:
   // Integrator object
   Integrator2D &itg;
   // Interpolator for the ideal density response
-  const Interpolator &idri;
+  const Interpolator1D &idri;
   // Interpolator for the auxiliary density response
-  const Interpolator &adri;
+  const Interpolator1D &adri;
   // Interpolator for the bridge function contribution
-  const Interpolator &bfi;
+  const Interpolator1D &bfi;
   // Interpolator for the fixed component 
   Interpolator2D fixi;
   // Compute ideal density response
@@ -273,12 +278,12 @@ public:
 	 const double qMax_,
 	 const double x_,
 	 const int l_,
-	 const Interpolator &ssfi_,
-	 const Interpolator &idri_,
-	 const Interpolator &adri_,
-	 const Interpolator &bfi_,
-	 Integrator2D &itg_) : AdrBase(0, Theta_, qMin_, qMax_, ssfi_),
-			       x(x_), l(l_), itg(itg_), idri(idri_),
+	 const Interpolator1D &ssfi_,
+	 const Interpolator1D &idri_,
+	 const Interpolator1D &adri_,
+	 const Interpolator1D &bfi_,
+	 Integrator2D &itg_) : AdrBase(0, Theta_, qMin_, qMax_, x_, ssfi_),
+			       l(l_), itg(itg_), idri(idri_),
 			       adri(adri_), bfi(bfi_) {;};
   // Get integration result
   void get(const vector<double> &wvg,

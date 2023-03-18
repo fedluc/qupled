@@ -70,11 +70,11 @@ void Qstls::computeAdr() {
   if (slfc.size() == 0) slfc.resize(nx);
   assert(wvg.size() == ssfOld.size());
   if (adrFixed.size() == 0) computeAdrFixed();
-  const Interpolator ssfi = Interpolator(wvg[0], ssfOld[0], nx);
+  const Interpolator1D ssfi(wvg, ssfOld);
   for (int i=0; i<nx; ++i) {
     Adr adrTmp(nl, in.getDegeneracy(), wvg.front(),
-	       wvg.back(), ssfi, itg);
-    //adrTmp.get(wvg, adrFixed[i], adr[i]);
+	       wvg.back(), wvg[i], ssfi, itg);
+    adrTmp.get(wvg, adrFixed, adr);
   }
   if (useIet) computeAdrIet();
   for (int i=0; i<nx; ++i) {slfc[i] = adr(i,0); };
@@ -84,18 +84,18 @@ void Qstls::computeAdrFixed() {
   cout << "#######" << endl;
   cout << "Computing fixed component of the auxiliary density response: ";
   fflush(stdout);
-  loadAdrFixed();
-  if (adrFixed.size() > 0) { return; }
+  //loadAdrFixed(); TMP_COMMENT
+  // if (adrFixed.size() > 0) { return; } TMP_COMMENT
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
   const int nl = statIn.getNMatsubara();
-  //adrFixed.resize(nx);
+  adrFixed.resize(nx, nl, nx);
 #pragma omp parallel for
   for (int i=0; i<nx; ++i) {
     Integrator2D itg2;
-    AdrFixed adrTmp(nl, wvg[i], in.getDegeneracy(), mu,
+    AdrFixed adrTmp(nl, in.getDegeneracy(), mu, wvg[i],
 		    wvg.front(), wvg.back(), itg2);
-    //adrTmp.get(wvg, adrFixed[i]);
+    adrTmp.get(wvg, adrFixed);
   }
   writeRestart();
   cout << "Done" << endl;
@@ -110,7 +110,7 @@ void Qstls::loadAdrFixed() {
   decltype(adrFixed) adrFixed_;
   double Theta_;
   readRestart(fileName, wvg_, adrFixed_, Theta_);
-  //checkAdrFixedFromFile(wvg_, Theta_, adrFixed_[0].size());
+  checkAdrFixedFromFile(wvg_, Theta_, adrFixed_.size(1));
   adrFixed = adrFixed_;
   cout << endl << "Loaded from file " << fileName << endl;
 }
@@ -118,7 +118,7 @@ void Qstls::loadAdrFixed() {
 void Qstls::checkAdrFixedFromFile(const decltype(wvg) &wvg_,
 				  const double Theta_,
 				  const int nl_) const {
-  const double tol = 1e-15;
+  constexpr double tol = 1e-15;
   const string errMsg = "Data loaded from file for the fixed component "
                         "of the auxiliary density response is not "
                         "compatible with input";
@@ -143,8 +143,8 @@ void Qstls::computeAdrIet() {
   computeAdrFixedIet();
   for (int i=0; i<nx; ++i) {
     assert(adrFixedIetFileInfo.at(i).second);
-    //Vector3D<double> fix;
-    //readAdrFixedIetFile(fix, i);
+    //Vector3D<double> fix; TMP_COMMENT
+    //readAdrFixedIetFile(fix, i); TMP_COMMENT
   }
 }
 
@@ -186,7 +186,7 @@ void Qstls::computeAdrFixedIet() {
     decltype(adrFixed) res;
     AdrFixedIet adrTmp(nl, wvg[idx[i]], in.getDegeneracy(), mu,
 		       wvg.front(), wvg.back(), itgT);
-    //adrTmp.get(wvg, res);
+    //adrTmp.get(wvg, res); TMP_COMMENT
     writeAdrFixedIetFile(res, idx[i]);
   }
   // Update content of adrFixedIetFileInfo
@@ -236,7 +236,7 @@ void Qstls::readAdrFixedIetFile(decltype(adrFixed) &res,
   readDataFromBinary<int>(file, nl_);
   readDataFromBinary<double>(file, Theta_);
   wvg_.resize(nx);
-  //res.resize(nx, nl, nx);
+  //res.resize(nx, nl, nx); #TMP_COMMENT
   readDataFromBinary<decltype(wvg)>(file, wvg_);
   readDataFromBinary<decltype(res)>(file, res);
   file.close();
@@ -264,7 +264,7 @@ void Qstls::computeSsfFinite(){
   const int nl = idr.size(1);
   if (ssf.size() == 0) ssf.resize(nx);
   for (int i=0; i<nx; ++i){
-    Qssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, idr(i), adr(i));
+    Qssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i));
     ssf[i] = ssfTmp.get();
   }
 }
@@ -298,7 +298,6 @@ void Qstls::initialGuess() {
   if (useIet) {
     adrOld.resize(nx, nl);
     adrOld.fill(0.0);
-    //for (auto &el : adrOld) { fill(el.begin(), el.end(), 0.0); }
   }
 }
 
@@ -307,7 +306,7 @@ void Qstls::initialGuessSsf(const decltype(wvg) &wvg_,
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
   const int nl = statIn.getNMatsubara();
-  const Interpolator ssfi(wvg_[0], ssf_[0], wvg_.size());
+  const Interpolator1D ssfi(wvg, ssf);
   const double xMax = wvg_.back();
   for (int i=0; i<nx; ++i) {
     const double x = wvg[i];
@@ -326,13 +325,13 @@ void Qstls::initialGuessAdr(const decltype(wvg) &wvg_,
   const int nl = statIn.getNMatsubara();
   const int nlMax = adr_.size(1);
   const int xMax = wvg_.back();
-  vector<Interpolator> itp;
+  vector<Interpolator1D> itp;
   for (int l=0; l<nlMax; ++l) {
     vector<double> tmp;
     for (int i=0; i<adr_.size(); ++i){
       tmp.push_back(adr_(i,l));
     }
-    itp.push_back(Interpolator(wvg_[0],tmp[0], wvg_.size()));
+    itp.push_back(Interpolator1D(wvg_,tmp));
   }
   for (int i=0; i<nx; ++i) {
     const double x = wvg[i];
@@ -455,7 +454,7 @@ void Qstls::readRestart(const string &fileName,
   wvg_.resize(nx);
   ssf_.resize(nx);
   adr_.resize(nx, nl);
-  //adrFixed_.resize(nx, nl, nx);
+  adrFixed_.resize(nx, nl, nx);
   readDataFromBinary<decltype(wvg_)>(file, wvg_);
   readDataFromBinary<decltype(ssf_)>(file, ssf_);
   readDataFromBinary<decltype(adr_)>(file, adr_);
@@ -511,18 +510,21 @@ double Adr::integrand(const double y) const{
 
 // Get result of integration
 void Adr::get(const vector<double> &wvg,
-	      const Vector2D &fixed,
-	      vector<double> &res) {
+	      const Vector3D &fixed,
+	      Vector2D &res) {
   const int nx = wvg.size();
-  res.resize(nl);
-  assert(fixed.size(1) > 0);
-  assert(fixed.size(1) == nx);
+  assert(fixed.size(0) == nx);
+  assert(fixed.size(1) == nl);
+  assert(fixed.size(2) == nx);
+  auto it = find(wvg.begin(), wvg.end(), x);
+  assert(it != wvg.end());
+  size_t ix = distance(wvg.begin(), it);
   for (int l = 0; l < nl; ++l){
-    fixi = Interpolator(&wvg[0], fixed(l), nx);
+    fixi.reset(wvg[0], fixed(ix,l), nx);
     auto func = [&](double y)->double{return integrand(y);};
     itg.compute(func, yMin, yMax);
-    res[l] = itg.getSolution();
-    res[l] *= (l==0) ? -3.0/(4.0*Theta) : -3.0/8.0;
+    res(ix, l) = itg.getSolution();
+    res(ix, l) *= (l==0) ? isc0 : isc;
   }
 }
 
@@ -532,11 +534,16 @@ void Adr::get(const vector<double> &wvg,
 
 // Get fixed component
 void AdrFixed::get(vector<double> &wvg,
-		   Vector2D &res) const {
+		   Vector3D &res) const {
   const int nx = wvg.size();
-  res.resize(nl, nx);
+  assert(res.size(0) == nx);
+  assert(res.size(1) == nl);
+  assert(res.size(2) == nx);
   if ( x == 0.0 ) { res.fill(0.0); };
   const double x2 = x*x;
+  auto it = find(wvg.begin(), wvg.end(), x);
+  assert(it != wvg.end());
+  size_t ix = distance(wvg.begin(), it);
   for (int l = 0; l < nl; ++l){
     for (int i = 0; i < nx; ++i) {
       const double xq = x*wvg[i];
@@ -545,7 +552,7 @@ void AdrFixed::get(vector<double> &wvg,
       auto func1 = [&](double q)->double{return integrand1(q, l);};
       auto func2 = [&](double t)->double{return integrand2(t, wvg[i], l);};
       itg.compute(func1, func2, qMin, qMax, tMin, tMax);
-      res(l,i) = itg.getSolution();
+      res(ix, l, i) = itg.getSolution();
     }
   }
 }
@@ -558,13 +565,13 @@ double AdrFixed::integrand1(const double q, const double l) const {
 
 double AdrFixed::integrand2(const double t, const double y, const double l) const {
   const double q = itg.getX();
-  if (q == 0) return 0;
+  if (q == 0 || t == 0 || y == 0) { return 0; };
   const double x2 = x*x;
   const double y2 = y*y;
   const double q2 = q*q;
   const double txq = 2.0 * x * q;
   if (l == 0) {
-    if (t == txq) return 2.0*q2/(y2 + 2.0*txq - x2);
+    if (t == txq) { return 2.0*q2/(y2 + 2.0*txq - x2); };
     const double t2 = t*t;
     double logarg = (t + txq)/(t - txq);
     logarg = (logarg < 0.0) ? -logarg : logarg;
@@ -626,14 +633,15 @@ void AdrIet::get(const vector<double> &wvg,
     res = 0.0;
     return;
   }
-  // NOT SURE ABOUT THIS INTERPOLATOR CALL
-  fixi = Interpolator2D(&wvg[0], &wvg[0], fixed(l), nx, nx);
-  auto yMin = [&](double q)->double{return q + x;};
-  auto yMax = [&](double q)->double{return (q > x) ? q - x : x - q;};
-  auto func1 = [&](double q)->double{return integrand1(q);};
-  auto func2 = [&](double y)->double{return integrand2(y);};
-  itg.compute(func1, func2, qMin, qMax, yMin, yMax);
-  res = itg.getSolution();
+  // // NOT SURE ABOUT THIS INTERPOLATOR CALL
+  // fixi = Interpolator2D(&wvg[0], &wvg[0], fixed(l), nx, nx);
+  // auto yMin = [&](double q)->double{return q + x;};
+  // auto yMax = [&](double q)->double{return (q > x) ? q - x : x - q;};
+  // auto func1 = [&](double q)->double{return integrand1(q);};
+  // auto func2 = [&](double y)->double{return integrand2(y);};
+  // itg.compute(func1, func2, qMin, qMax, yMin, yMax);
+  // res = itg.getSolution();
+  // # TMP_COMMENT
   //res[l][i] = itg.getSolution();
   // for (int l = 0; l < nl; ++l){
   //   res[l].resize(nx);
@@ -657,7 +665,7 @@ void AdrIet::get(const vector<double> &wvg,
 // AdrFixedIet class
 // -----------------------------------------------------------------
 
-// get fixed component
+// // get fixed component
 // void AdrFixedIet::get(vector<double> &wvg,
 // 		      Vector3D<double> &res) const {
 //   res.resize(nl);

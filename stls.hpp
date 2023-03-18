@@ -337,15 +337,15 @@ protected:
   const double yMin;
   const double yMax;
   // Static structure factor interpolator
-  const Interpolator &ssfi;
+  const Interpolator1D &ssfi;
   // Compute static structure factor
   double ssf(double x_) const;
   // Constructor
   SlfcBase(const double x_,
 	   const double yMin_,
 	   const double yMax_,
-	   const Interpolator &ssfi_) : x(x_), yMin(yMin_),
-					yMax(yMax_), ssfi(ssfi_) {;};
+	   const Interpolator1D &ssfi_) : x(x_), yMin(yMin_),
+					  yMax(yMax_), ssfi(ssfi_) {;};
   
 };
 
@@ -364,7 +364,7 @@ public:
   Slfc(const double x_,
        const double yMin_,
        const double yMax_,
-       const Interpolator &ssfi_,
+       const Interpolator1D &ssfi_,
        Integrator1D &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_),
 			     itg(itg_) { ; };
   // Get result of integration 
@@ -383,9 +383,9 @@ private:
   double integrand1(const double y) const;
   double integrand2(const double w) const;
   // Static local field correction interpolator
-  const Interpolator &slfci;
+  const Interpolator1D &slfci;
   // Bridge function interpolator
-  const Interpolator &bfi;
+  const Interpolator1D &bfi;
   // Compute static local field correction
   double slfc(double x_) const;
   // Compute bridge function
@@ -397,9 +397,9 @@ public:
   SlfcIet(const double x_,
 	  const double yMin_,
 	  const double yMax_,
-	  const Interpolator &ssfi_,
-	  const Interpolator &slfci_,
-	  const Interpolator &bfi_,
+	  const Interpolator1D &ssfi_,
+	  const Interpolator1D &slfci_,
+	  const Interpolator1D &bfi_,
 	  Integrator2D &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_),
 				itg(itg_), slfci(slfci_), bfi(bfi_)  {;};
   // Get result of integration 

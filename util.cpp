@@ -122,8 +122,9 @@ namespace vecUtil {
   }
 
   void Vector2D::resize(const size_t s1_, const size_t s2_) {
-    if (s1_ == s1 && s2_ == s2) { return; }
     v.clear();
+    s1 = s1_;
+    s2 = s2_;
     v.resize(s1_*s2_, 0.0);
   }
 
@@ -135,8 +136,8 @@ namespace vecUtil {
     return v[j + i*s2];
   }
 
-  const double* Vector2D::operator()(const size_t i) const {
-    return &operator()(i,0);
+  const double& Vector2D::operator()(const size_t i) const {
+    return operator()(i,0);
   }
 
   vector<double>::iterator Vector2D::begin() {
@@ -170,6 +171,11 @@ namespace vecUtil {
     std::copy(num.begin(), num.end(), v.begin() + i*s2);
   }
 
+  // void Vector2D::mult(const size_t i, const double &num) {
+  //   const auto &dest = v.begin() + i*s2;
+  //   std::for_each(dest, dest + s2, [&](double &vi){ vi *= num;});
+  // }
+
     // Vector3D class
   size_t Vector3D::size() const {
     return s1*s2*s3;
@@ -185,8 +191,10 @@ namespace vecUtil {
   void Vector3D::resize(const size_t s1_,
 			const size_t s2_,
 			const size_t s3_) {
-    if (s1_ == s1 && s2_ == s2 && s3_ == s3) { return; }
     v.clear();
+    s1 = s1_;
+    s2 = s2_;
+    s3 = s3_;
     v.resize(s1_*s2_*s3_, 0.0);
   }
 
@@ -202,12 +210,12 @@ namespace vecUtil {
     return v[k + j*s3 + i*s2*s3];
   }
 
-  const double* Vector3D::operator()(const size_t i,
+  const double& Vector3D::operator()(const size_t i,
 				     const size_t j) const {
-    return &operator()(i, j, 0);
+    return operator()(i, j, 0);
   }
 
-  const double* Vector3D::operator()(const size_t i) const {
+  const double& Vector3D::operator()(const size_t i) const {
     return operator()(i, 0);
   }
 
@@ -226,22 +234,31 @@ namespace vecUtil {
   vector<double>::const_iterator Vector3D::end() const {
     return v.end();
   }
-  
-  
-  // void Vector3D::fill(const double &num) {
-  //   std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;});
-  // }
 
-  // void Vector3D::fill(const size_t i, const double &num) {
-  //   const auto &dest = v.begin() + i*s2;
-  //   std::for_each(dest, dest + s2, [&](double &vi){ vi = num;});
-  // }
+  void Vector3D::fill(const double &num) {
+    std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;});
+  }
+
+  void Vector3D::fill(const size_t i,
+		      const size_t j,
+		      const double &num) {
+    const auto &dest = v.begin() + j*s3 + i*s2*s3;
+    std::for_each(dest, dest + s3, [&](double &vi){ vi = num;});
+  }
   
-  // void Vector3D::fill(const size_t i, const vector<double> &num) {
-  //   assert(num.size() == s2);
-  //   std::copy(num.begin(), num.end(), v.begin() + i*s2);
+  void Vector3D::fill(const size_t i,
+		      const size_t j,
+		      const vector<double> &num) {
+    assert(num.size() == s3);
+    std::copy(num.begin(), num.end(), v.begin() + j*s3 + i*s2*s3);
+  }  
+
+  // void Vector3D::mult(const size_t i,
+  // 		      const size_t j,
+  // 		      const double &num) {
+  //   const auto &dest = v.begin() + j*s3 + i*s2*s3;
+  //   std::for_each(dest, dest + s3, [&](double &vi){ vi *= num;});
   // }
-  
   
 }
 
