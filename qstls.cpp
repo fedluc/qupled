@@ -93,8 +93,8 @@ void Qstls::computeAdrFixed() {
 #pragma omp parallel for
   for (int i=0; i<nx; ++i) {
     Integrator2D itg2;
-    AdrFixed adrTmp(nl, in.getDegeneracy(), mu, wvg[i],
-		    wvg.front(), wvg.back(), itg2);
+    AdrFixed adrTmp(nl, in.getDegeneracy(), wvg.front(), wvg.back(),
+		    wvg[i], mu, itg2);
     adrTmp.get(wvg, adrFixed);
   }
   writeRestart();
