@@ -70,10 +70,12 @@ void Qstls::computeAdr() {
   if (slfc.size() == 0) slfc.resize(nx);
   assert(wvg.size() == ssfOld.size());
   if (adrFixed.size() == 0) computeAdrFixed();
-  const Interpolator1D ssfi(wvg, ssfOld);
+#pragma omp parallel for
   for (int i=0; i<nx; ++i) {
+    const Interpolator1D ssfi(wvg, ssfOld);
+    Integrator1D itgPrivate;
     Adr adrTmp(nl, in.getDegeneracy(), wvg.front(),
-	       wvg.back(), wvg[i], ssfi, itg);
+	       wvg.back(), wvg[i], ssfi, itgPrivate);
     adrTmp.get(wvg, adrFixed, adr);
   }
   if (useIet) computeAdrIet();
@@ -84,8 +86,8 @@ void Qstls::computeAdrFixed() {
   cout << "#######" << endl;
   cout << "Computing fixed component of the auxiliary density response: ";
   fflush(stdout);
-  //loadAdrFixed(); TMP_COMMENT
-  // if (adrFixed.size() > 0) { return; } TMP_COMMENT
+  loadAdrFixed();
+  if (adrFixed.size() > 0) { return; }
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
   const int nl = statIn.getNMatsubara();
@@ -106,35 +108,34 @@ void Qstls::loadAdrFixed() {
   const auto &qstlsIn = in.getQstlsInput();
   const string fileName = qstlsIn.getFixedFileName();
   if (fileName == "") return;
-  decltype(wvg) wvg_;
-  decltype(adrFixed) adrFixed_;
+  vector<double> wvg_;
+  Vector3D adrFixed_;
   double Theta_;
-  readRestart(fileName, wvg_, adrFixed_, Theta_);
-  checkAdrFixedFromFile(wvg_, Theta_, adrFixed_.size(1));
+  int nl_;
+  readRestart(fileName, wvg_, adrFixed_, Theta_, nl_);
+  if (checkAdrFixedFromFile(wvg_, Theta_, nl_) != 0) {
+    throw runtime_error("Fixed component of the auxiliary density response"
+			"loaded from from file is incompatible with input");
+  }
   adrFixed = adrFixed_;
   cout << endl << "Loaded from file " << fileName << endl;
 }
 
-void Qstls::checkAdrFixedFromFile(const decltype(wvg) &wvg_,
-				  const double Theta_,
-				  const int nl_) const {
+int Qstls::checkAdrFixedFromFile(const vector<double> &wvg_,
+				 const double Theta_,
+				 const int nl_) const {
   constexpr double tol = 1e-15;
-  const string errMsg = "Data loaded from file for the fixed component "
-                        "of the auxiliary density response is not "
-                        "compatible with input";
-  if (nl_ != in.getStaticInput().getNMatsubara()) {
-    throw runtime_error(errMsg + ", wrong number of Matsubara frequencies.");
-  }
-  if (abs(Theta_ - in.getDegeneracy()) > tol) {
-    throw runtime_error(errMsg + ", wrong degeneracy parameter.");
-  }
-  if (wvg_.size() != wvg.size()) {
-    throw runtime_error(errMsg + ", wrong wave-vector grid.");
-  }
   const vector<double> wvgDiff = diff(wvg_, wvg);
-  if (abs(*max_element(wvgDiff.begin(), wvgDiff.end())) > tol) {
-    throw runtime_error(errMsg + ", wrong wave-vector grid.");
+  const double &wvgMaxDiff = abs(*max_element(wvgDiff.begin(), wvgDiff.end()));
+  const bool consistentMatsubara = nl_ == in.getStaticInput().getNMatsubara();
+  const bool consistentTheta = abs(Theta_ - in.getDegeneracy()) <= tol;
+  const bool consistentGrid = wvg_.size() == wvg.size() && wvgMaxDiff <= tol;
+  if (!consistentMatsubara ||
+      !consistentTheta ||
+      !consistentGrid) {
+    return 1;
   }
+  return 0;
 }
 
 void Qstls::computeAdrIet() {
@@ -183,7 +184,7 @@ void Qstls::computeAdrFixedIet() {
 #pragma omp parallel for
   for (int i=0; i<idx.size(); ++i) {
     Integrator1D itgT;
-    decltype(adrFixed) res;
+    Vector3D res;
     AdrFixedIet adrTmp(nl, wvg[idx[i]], in.getDegeneracy(), mu,
 		       wvg.front(), wvg.back(), itgT);
     //adrTmp.get(wvg, res); TMP_COMMENT
@@ -193,7 +194,7 @@ void Qstls::computeAdrFixedIet() {
   getAdrFixedIetFileInfo();
 }
 
-void Qstls::writeAdrFixedIetFile(const decltype(adrFixed) &res,
+void Qstls::writeAdrFixedIetFile(const Vector3D &res,
 				 const int i) const {
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
@@ -208,7 +209,7 @@ void Qstls::writeAdrFixedIetFile(const decltype(adrFixed) &res,
   writeDataToBinary<int>(file, nx);
   writeDataToBinary<int>(file, nl);
   writeDataToBinary<double>(file, Theta);
-  writeDataToBinary<decltype(wvg)>(file, wvg);
+  writeDataToBinary<vector<double>>(file, wvg);
   writeDataToBinary<decltype(res)>(file, res);
   file.close();
   if (!file) {
@@ -216,7 +217,7 @@ void Qstls::writeAdrFixedIetFile(const decltype(adrFixed) &res,
   }
 }
 
-void Qstls::readAdrFixedIetFile(decltype(adrFixed) &res,
+void Qstls::readAdrFixedIetFile(Vector3D &res,
 				const int i) const {
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
@@ -230,14 +231,14 @@ void Qstls::readAdrFixedIetFile(decltype(adrFixed) &res,
   }
   int nx_;
   int nl_;
-  decltype(wvg) wvg_;
+  vector<double> wvg_;
   double Theta_;
   readDataFromBinary<int>(file, nx_);
   readDataFromBinary<int>(file, nl_);
   readDataFromBinary<double>(file, Theta_);
   wvg_.resize(nx);
   //res.resize(nx, nl, nx); #TMP_COMMENT
-  readDataFromBinary<decltype(wvg)>(file, wvg_);
+  readDataFromBinary<vector<double>>(file, wvg_);
   readDataFromBinary<decltype(res)>(file, res);
   file.close();
   if (!file) {
@@ -273,10 +274,8 @@ void Qstls::computeSsfFinite(){
 void Qstls::initialGuess() {
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
-  const int nl = statIn.getNMatsubara();
   ssfOld.resize(nx);
   ssf.resize(nx);
-  adrOld.resize(nx, nl);
   // From file
   const auto &stlsIn = in.getStlsInput();
   const string fileName = stlsIn.getRestartFileName();
@@ -284,11 +283,15 @@ void Qstls::initialGuess() {
     vector<double> wvg_;
     vector<double> ssf_;
     Vector2D adr_;
-    readRestart(fileName, wvg_, ssf_, adr_);
-    assert(wvg_.size() == ssf_.size());
-    assert(wvg_.size() == adr_.size());
+    Vector3D adrFixed_;
+    double Theta;
+    int nl;
+    readRestart(fileName, wvg_, ssf_, adr_, adrFixed_, Theta, nl);
     initialGuessSsf(wvg_, ssf_);
-    if (useIet) initialGuessAdr(wvg_, adr_);
+    if (checkAdrFixedFromFile(wvg_, Theta, nl) == 0) {
+      adrFixed = adrFixed_;
+    }
+    if (useIet) { initialGuessAdr(wvg_, adr_); }
     return;
   }
   // Default
@@ -296,30 +299,27 @@ void Qstls::initialGuess() {
   stls.compute();
   stls.getSsf(ssfOld);
   if (useIet) {
+    const int nl = statIn.getNMatsubara();
     adrOld.resize(nx, nl);
     adrOld.fill(0.0);
   }
 }
 
-void Qstls::initialGuessSsf(const decltype(wvg) &wvg_,
-			    const decltype(ssf) &ssf_) {
+void Qstls::initialGuessSsf(const vector<double> &wvg_,
+			    const vector<double> &ssf_) {
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
   const int nl = statIn.getNMatsubara();
-  const Interpolator1D ssfi(wvg, ssf);
+  const Interpolator1D ssfi(wvg_, ssf_);
   const double xMax = wvg_.back();
   for (int i=0; i<nx; ++i) {
-    const double x = wvg[i];
-    if (x > xMax) {
-      ssfOld[i] = 1.0;
-      continue;
-    }
-    ssfOld[i] = ssfi.eval(x);
+    const double &x = wvg[i];
+    ssfOld[i] = (x <= xMax) ? ssfi.eval(x) : 1.0;
   }
 }
 
-void Qstls::initialGuessAdr(const decltype(wvg) &wvg_,
-			    const decltype(adr) &adr_) {
+void Qstls::initialGuessAdr(const vector<double> &wvg_,
+			    const Vector2D &adr_) {
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
   const int nl = statIn.getNMatsubara();
@@ -334,14 +334,13 @@ void Qstls::initialGuessAdr(const decltype(wvg) &wvg_,
     itp.push_back(Interpolator1D(wvg_,tmp));
   }
   for (int i=0; i<nx; ++i) {
-    const double x = wvg[i];
+    const double &x = wvg[i];
     if (x > xMax) {
       adrOld.fill(i, 0.0);
       continue;
     }
     for (int l=0; l<nl; ++l) {
-      if (l <= nlMax) { adrOld(i,l) = itp[l].eval(x); }
-      else { adrOld(i,l) = 0.0; }
+      adrOld(i,l) = (l <= nlMax) ? itp[l].eval(x) : 0.0;
     }
   }
 }
@@ -407,10 +406,10 @@ void Qstls::writeRestart() const {
   writeDataToBinary<int>(file, nx);
   writeDataToBinary<int>(file, nl);
   writeDataToBinary<double>(file, in.getDegeneracy());
-  writeDataToBinary<decltype(wvg)>(file, wvg);
-  writeDataToBinary<decltype(ssf)>(file, ssf);
-  writeDataToBinary<decltype(adr)>(file, adr);
-  writeDataToBinary<decltype(adrFixed)>(file, adrFixed);
+  writeDataToBinary<vector<double>>(file, wvg);
+  writeDataToBinary<vector<double>>(file, ssf);
+  writeDataToBinary<Vector2D>(file, adr);
+  writeDataToBinary<Vector3D>(file, adrFixed);
   file.close();
   if (!file) {
     throw runtime_error("Error in writing the file " + fileName);
@@ -418,36 +417,28 @@ void Qstls::writeRestart() const {
 }
 
 void Qstls::readRestart(const string &fileName,
-			decltype(wvg) &wvg_,
-			decltype(ssf) &ssf_,
-			decltype(adr) &adr_) const {
-  decltype(adrFixed) tmp1;
-  double tmp2;
-  readRestart(fileName, wvg_, ssf_, adr_, tmp1, tmp2);
+			vector<double> &wvg_,
+			Vector3D &adrFixed_,
+			double &Theta,
+			int &nl) const {
+  vector<double> tmp1;
+  Vector2D tmp2;
+  readRestart(fileName, wvg_, tmp1, tmp2, adrFixed_, Theta, nl);
 }
 
 void Qstls::readRestart(const string &fileName,
-			decltype(wvg) &wvg_,
-			decltype(adrFixed) &adrFixed_,
-			double &Theta) const {
-  decltype(wvg) tmp1;
-  decltype(adr) tmp2;
-  readRestart(fileName, wvg_, tmp1, tmp2, adrFixed_, Theta);
-}
-
-void Qstls::readRestart(const string &fileName,
-			decltype(wvg) &wvg_,
-			decltype(ssf) &ssf_,
-			decltype(adr) &adr_,
-			decltype(adrFixed) &adrFixed_,
-			double &Theta) const {
+			vector<double> &wvg_,
+			vector<double> &ssf_,
+			Vector2D &adr_,
+			Vector3D &adrFixed_,
+			double &Theta,
+			int &nl) const {
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
     throw runtime_error("Input file " + fileName + " could not be opened.");
   }
   int nx;
-  int nl;
   readDataFromBinary<int>(file, nx);
   readDataFromBinary<int>(file, nl);
   readDataFromBinary<double>(file, Theta);

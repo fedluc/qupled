@@ -28,15 +28,15 @@ private:
   void computeAdr();
   void computeAdrFixed();
   void loadAdrFixed();
-  void checkAdrFixedFromFile(const decltype(wvg) &wvg_,
+  int  checkAdrFixedFromFile(const vector<double> &wvg_,
 			     const double Theta_,
 			     const int nl_) const;
   void computeAdrIet();
   void computeAdrFixedIet();
   void getAdrFixedIetFileInfo();
-  void writeAdrFixedIetFile(const decltype(adrFixed) &res,
+  void writeAdrFixedIetFile(const Vector3D &res,
 			    const int i) const;
-  void readAdrFixedIetFile(decltype(adrFixed) &res,
+  void readAdrFixedIetFile(Vector3D &res,
 			   const int i) const;
   // Compute static structure factor at finite temperature
   void computeSsf();
@@ -44,10 +44,10 @@ private:
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
-  void initialGuessSsf(const decltype(wvg) &wvg_,
-		       const decltype(ssf) &adr_);
-  void initialGuessAdr(const decltype(wvg) &wvg_,
-		       const decltype(adr) &adr_);
+  void initialGuessSsf(const vector<double> &wvg_,
+		       const vector<double> &adr_);
+  void initialGuessAdr(const vector<double> &wvg_,
+		       const Vector2D &adr_);
   double computeError();
   void updateSolution();
    // Write output files
@@ -56,19 +56,17 @@ private:
   // Restart files
   void writeRestart() const;
   void readRestart(const string &fileName,
-		   decltype(wvg) &wvg_,
-		   decltype(ssf) &ssf_,
-		   decltype(adr) &adr_) const;
+		   vector<double> &wvg_,
+		   Vector3D &adrFixed_,
+		   double &Theta,
+		   int &nl) const;
   void readRestart(const string &fileName,
-		   decltype(wvg) &wvg_,
-		   decltype(adrFixed) &adrFixed_,
-		   double &Theta) const;
-  void readRestart(const string &fileName,
-		   decltype(wvg) &wvg_,
-		   decltype(ssf) &ssf_,
-		   decltype(adr) &adr,
-		   decltype(adrFixed) &adrFixed_,
-		   double &Theta) const;
+		   vector<double> &wvg_,
+		   vector<double> &ssf_,
+		   Vector2D &adr_,
+		   Vector3D &adrFixed_,
+		   double &Theta,
+		   int &nl) const;
   // Check if iet schemes should be used
   void checkIet() { useIet = in.getTheory() == "QSTLS-HNC" ||
       in.getTheory() == "QSTLS-IOI" ||
