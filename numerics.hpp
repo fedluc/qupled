@@ -27,6 +27,11 @@ private:
   gsl_interp_accel *acc;
   // Size
   size_t n;
+  // 
+  // Setup interpolator
+  void setup(const double &x,
+	     const double &y,
+	     const size_t sz_);
   
 public:
 
@@ -61,7 +66,12 @@ private:
   // Size
   size_t nx;
   size_t ny;
-  
+  // Setup interpolator
+  void setup(const double &x,
+	     const double &y,
+	     const double &z,
+	     const int szx_,
+	     const int szy_);
 public:
 
   // Constructor
@@ -74,6 +84,12 @@ public:
   Interpolator2D();
   // Destructor
   ~Interpolator2D();
+  // Reset
+  void reset(const double &x,
+	     const double &y,
+	     const double &z,
+	     const int szx_,
+	     const int szy_);
   // Evaluate
   double eval(const double x, const double y) const;
 };

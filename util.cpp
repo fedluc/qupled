@@ -171,12 +171,12 @@ namespace vecUtil {
     std::copy(num.begin(), num.end(), v.begin() + i*s2);
   }
 
-  // void Vector2D::mult(const size_t i, const double &num) {
-  //   const auto &dest = v.begin() + i*s2;
-  //   std::for_each(dest, dest + s2, [&](double &vi){ vi *= num;});
-  // }
-
-    // Vector3D class
+  void Vector2D::sum(const Vector2D &vSum) {
+    assert(vSum.size() == v.size());
+    v = vecUtil::sum(v, vSum.v);
+  }
+  
+  // Vector3D class
   size_t Vector3D::size() const {
     return s1*s2*s3;
   }
@@ -253,12 +253,10 @@ namespace vecUtil {
     std::copy(num.begin(), num.end(), v.begin() + j*s3 + i*s2*s3);
   }  
 
-  // void Vector3D::mult(const size_t i,
-  // 		      const size_t j,
-  // 		      const double &num) {
-  //   const auto &dest = v.begin() + j*s3 + i*s2*s3;
-  //   std::for_each(dest, dest + s3, [&](double &vi){ vi *= num;});
-  // }
+  void Vector3D::sum(const Vector3D &vSum) {
+    assert(vSum.size() == v.size());
+    v = vecUtil::sum(v, vSum.v);
+  }
   
 }
 

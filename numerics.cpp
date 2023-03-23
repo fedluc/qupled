@@ -6,18 +6,15 @@
 
 // Constructors
 Interpolator1D::Interpolator1D(const vector<double> &x,
-			       const vector<double> &y)
-  : Interpolator1D(x[0], y[0], x.size()) {
+			       const vector<double> &y) {
   assert(x.size() == y.size());
+  setup(x[0], y[0], x.size());
 }
 
 Interpolator1D::Interpolator1D(const double &x,
 			       const double &y,
 			       const size_t n_) {
-  n = n_;
-  spline = gsl_spline_alloc(gsl_interp_cspline, n);
-  acc = gsl_interp_accel_alloc();
-  gsl_spline_init(spline, &x, &y, n);
+  setup(x, y, n);
 }
 
 Interpolator1D::Interpolator1D() {
@@ -32,16 +29,23 @@ Interpolator1D::~Interpolator1D(){
   if (acc) gsl_interp_accel_free(acc);
 }
 
-// set
+// Setup interpolator
+void Interpolator1D::setup(const double &x,
+			   const double &y,
+			   const size_t n_) {
+  n = n_;
+  spline = gsl_spline_alloc(gsl_interp_cspline, n);
+  acc = gsl_interp_accel_alloc();
+  gsl_spline_init(spline, &x, &y, n);
+}
+
+// Reset existing interpolator
 void Interpolator1D::reset(const double &x,
 			   const double &y,
 			   const size_t n_) {
   if (spline) gsl_spline_free(spline);
   if (acc) gsl_interp_accel_free(acc);
-  n = n_;
-  spline = gsl_spline_alloc(gsl_interp_cspline, n);
-  acc = gsl_interp_accel_alloc();
-  gsl_spline_init(spline, &x, &y, n);
+  setup(x, y, n_);
 }
 
 // Evaluate interpolation
@@ -59,6 +63,30 @@ Interpolator2D::Interpolator2D(const double &x,
 			       const double &z,
 			       const int nx_,
 			       const int ny_) {
+  setup(x, y, z, nx, ny);
+}
+
+Interpolator2D::Interpolator2D() {
+  nx = 0;
+  ny = 0;
+  spline = nullptr;
+  xacc = nullptr;
+  yacc = nullptr;
+}
+
+// Destructor
+Interpolator2D::~Interpolator2D(){
+  gsl_spline2d_free(spline);
+  gsl_interp_accel_free(xacc);
+  gsl_interp_accel_free(yacc);
+}
+
+// Setup interpolator
+void Interpolator2D::setup(const double &x,
+			   const double &y,
+			   const double &z,
+			   const int nx_,
+			   const int ny_) {
   nx = nx_;
   ny = ny_;
   spline = gsl_spline2d_alloc(gsl_interp2d_bicubic, nx, ny);
@@ -75,34 +103,19 @@ Interpolator2D::Interpolator2D(const double &x,
   free(za);
 }
 
-Interpolator2D::Interpolator2D(const Interpolator2D &it) {
+// Reset existing interpolator
+void Interpolator2D::reset(const double &x,
+			   const double &y,
+			   const double &z,
+			   const int nx_,
+			   const int ny_) {
   if (spline) gsl_spline2d_free(spline);
   if (xacc) gsl_interp_accel_free(xacc);
   if (yacc) gsl_interp_accel_free(yacc);
-  nx = it.nx;
-  ny = it.ny;
-  spline = gsl_spline2d_alloc(gsl_interp2d_bicubic, nx, ny);
-  xacc = gsl_interp_accel_alloc();
-  yacc = gsl_interp_accel_alloc();
-  *spline = *it.spline;
-  *xacc = *it.xacc;
-  *yacc = *it.yacc;
+  setup(x, y, z, nx_, ny_);
 }
 
-Interpolator2D::Interpolator2D() {
-  spline = gsl_spline2d_alloc(gsl_interp2d_bicubic, 1, 1);
-  xacc = gsl_interp_accel_alloc();
-  yacc = gsl_interp_accel_alloc();
-}
-
-// Destructor
-Interpolator2D::~Interpolator2D(){
-  gsl_spline2d_free(spline);
-  gsl_interp_accel_free(xacc);
-  gsl_interp_accel_free(yacc);
-}
-
-// Evaluate
+// Evaluate interpolation
 double Interpolator2D::eval(const double x, const double y) const {
   return gsl_spline2d_eval(spline, x, y, xacc, yacc);
 };

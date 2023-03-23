@@ -106,8 +106,8 @@ namespace vecUtil {
 	      const double &num);
     void fill(const size_t i,
 	      const vector<double> &num);
-    void mult(const size_t i,
-	      const double &num);
+    void sum(const Vector2D &vSum);
+    
   };
   
   // Class to represent 3D vectors
@@ -149,9 +149,7 @@ namespace vecUtil {
     void fill(const size_t i,
 	      const size_t j,
 	      const vector<double> &num);
-    void mult(const size_t i,
-	      const size_t j,
-	      const double &num);
+    void sum(const Vector3D &vSum);
   };
   
     

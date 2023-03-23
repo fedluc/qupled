@@ -204,12 +204,13 @@ void Stls::doIterations() {
     computeSsf();
     // Update static local field correction
     computeSlfc();
-    // Write output
-    if (counter % outIter == 0) { writeOutput();};
     // Update diagnostic
     counter++;
     err = computeError();
+    // Update solution
     updateSolution();
+    // Write output
+    if (counter % outIter == 0) { writeOutput();};
     // End timing
     double toc = omp_get_wtime();
     // Print diagnostic
