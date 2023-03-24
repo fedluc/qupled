@@ -513,10 +513,10 @@ void compute_adr_iet(double *psi_new, double *psi, double *psi_fixed_qstls,
       double Theta_file;
       FILE *fid = NULL;
       if (strcmp(in.qstls_iet_fixed_file, NO_FILE_STR)==0){
-	sprintf(out_name, "psi_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
+	sprintf(out_name, "adr_iet_fixed_theta%.3f_xx%.5f.bin", in.Theta, xx[ii]);
       }
       else{
-	sprintf(out_name, "%s/psi_fixed_theta%.3f_xx%.5f.bin", in.qstls_iet_fixed_file, in.Theta, xx[ii]);
+	sprintf(out_name, "%s/adr_iet_fixed_theta%.3f_xx%.5f.bin", in.qstls_iet_fixed_file, in.Theta, xx[ii]);
       }
       fid = fopen(out_name, "rb");
       if (fid == NULL) {
