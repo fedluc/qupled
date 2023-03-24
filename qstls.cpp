@@ -60,13 +60,88 @@ void Qstls::doIterations() {
   }
 }
 
-// Compute auxiliary density response
-void Qstls::computeAdr() {
+// Initial guess for qstls iterations
+void Qstls::initialGuess() {
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
   const int nl = statIn.getNMatsubara();
+  // Resize variables used in iterations
+  ssf.resize(nx);
+  adr.resize(nx, nl);
+  ssfOld.resize(nx);
+  if (useIet) { adrOld.resize(nx, nl); }
+  // From file
+  const auto &stlsIn = in.getStlsInput();
+  const string fileName = stlsIn.getRestartFileName();
+  if (fileName != "") {
+    vector<double> wvg_;
+    vector<double> ssf_;
+    Vector2D adr_;
+    Vector3D adrFixed_;
+    double Theta;
+    int nl;
+    readRestart(fileName, wvg_, ssf_, adr_, adrFixed_, Theta, nl);
+    initialGuessSsf(wvg_, ssf_);
+    if (checkAdrFixedFromFile(wvg_, Theta, nl) == 0) {
+      adrFixed = adrFixed_;
+    }
+    if (useIet) { initialGuessAdr(wvg_, adr_); }
+    return;
+  }
+  // Default
+  adr.fill(0.0);
+  computeSsf();
+  ssfOld = ssf;
+  if (useIet) { adrOld.fill(0.0); }
+  
+}
+
+void Qstls::initialGuessSsf(const vector<double> &wvg_,
+			    const vector<double> &ssf_) {
+  const int nx = wvg.size();
+  const Interpolator1D ssfi(wvg_, ssf_);
+  const double xMax = wvg_.back();
+  for (int i=0; i<nx; ++i) {
+    const double &x = wvg[i];
+    ssfOld[i] = (x <= xMax) ? ssfi.eval(x) : 1.0;
+  }
+}
+
+void Qstls::initialGuessAdr(const vector<double> &wvg_,
+			    const Vector2D &adr_) {
+  const auto &statIn = in.getStaticInput();
+  const int nx = wvg.size();
+  const int nl = statIn.getNMatsubara();
+  const int nlMax = adr_.size(1);
+  const int xMax = wvg_.back();
+  vector<Interpolator1D> itp;
+  assert(false);
+  // THIS DOES NOT WORK! adr_size is not equal to the number of columns in adr_
+  for (int l=0; l<nlMax; ++l) {
+    vector<double> tmp;
+    for (int i=0; i<adr_.size(); ++i){
+      tmp.push_back(adr_(i,l));
+    }
+    itp.push_back(Interpolator1D(wvg_,tmp));
+  }
+  for (int i=0; i<nx; ++i) {
+    const double &x = wvg[i];
+    if (x > xMax) {
+      adrOld.fill(i, 0.0);
+      continue;
+    }
+    for (int l=0; l<nl; ++l) {
+      adrOld(i,l) = (l <= nlMax) ? itp[l].eval(x) : 0.0;
+    }
+  }
+}
+
+// Compute auxiliary density response
+void Qstls::computeAdr() {
+  const int nx = wvg.size();
+  assert(adr.size() > 0);
+  assert(ssfOld.size() > 0);
   if (slfc.size() == 0) slfc.resize(nx);
-  if (adr.size() == 0) adr.resize(nx, nl);
   if (adrFixed.size() == 0) computeAdrFixed();
   const Interpolator1D ssfi(wvg, ssfOld);
 #pragma omp parallel for
@@ -78,6 +153,44 @@ void Qstls::computeAdr() {
   }
   if (useIet) computeAdrIet();
   for (int i=0; i<nx; ++i) {slfc[i] = adr(i,0); };
+}
+
+// Compute static structure factor
+void Qstls::computeSsf(){
+  computeSsfFinite();
+}
+
+// Compute static structure factor at finite temperature
+void Qstls::computeSsfFinite(){
+  assert(computedChemicalPotential);
+  assert(ssf.size() > 0);
+  assert(adr.size() > 0);
+  assert(idr.size() > 0);
+  const double Theta = in.getDegeneracy();
+  const double rs = in.getCoupling();
+  const int nx = wvg.size();
+  const int nl = idr.size(1);
+  for (int i=0; i<nx; ++i){
+    Qssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i));
+    ssf[i] = ssfTmp.get();
+  }
+}
+
+// Compute residual error for the qstls iterations
+double Qstls::computeError(){
+  return rms(ssf, ssfOld, false);
+}
+
+// Update solution during qstls iterations
+void Qstls::updateSolution(){
+  const auto &statIn = in.getStaticInput();
+  const double aMix = statIn.getMixingParameter();
+  ssfOld = sum(mult(ssf, aMix), mult(ssfOld, 1 - aMix));
+  if (useIet) {
+    adrOld.mult(1 - aMix);
+    adr.mult(aMix);
+    adrOld.sum(adr);
+  }
 }
 
 void Qstls::computeAdrFixed() {
@@ -140,18 +253,27 @@ void Qstls::computeAdrIet() {
   const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
   const int nl = statIn.getNMatsubara();
+  assert(adrOld.size() > 0);
   // Compute bridge function
   if (bf.size() == 0) computeBf();
   // Compute fixed part
   computeAdrFixedIet();
   // Setup interpolators
   const Interpolator1D ssfi(wvg, ssfOld);
+  // // DEBUG
+  // for (int i=0; i<nx; ++i) {
+  //   printf("%f %f %f\n", wvg[i], ssfOld[i], ssfi.eval(wvg[i]));
+  // }
+  // // DEBUG
   const Interpolator1D bfi(wvg, bf);
-  vector<Interpolator1D> idri(nl);
-  vector<Interpolator1D> adri(nl);
+  vector<Interpolator1D> dlfci(nl);
+  Interpolator1D tmp(wvg, ssfOld);
   for (int l=0; l<nl; ++l) {
-    idri[l].reset(wvg[0], idr(l), wvg.size());
-    adri[l].reset(wvg[0], adrOld(l), wvg.size());
+    vector<double> dlfc(nx);
+    for (int i = 0; i<nx; ++i) {
+      dlfc[i] = (idr(i,l) > 0.0) ? adrOld(i,l)/idr(i,l) : 0;
+    }
+    dlfci[l].reset(wvg[0], dlfc[0], nx);
   }
   Vector2D adrIet(nx, nl);
 #pragma omp parallel for
@@ -160,7 +282,7 @@ void Qstls::computeAdrIet() {
     Vector3D adrFixedPrivate;
     readAdrFixedIetFile(adrFixedPrivate, i);
     AdrIet adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
-		  wvg[i], ssfi, idri, adri, bfi, itgPrivate);
+		  wvg[i], ssfi, dlfci, bfi, itgPrivate);
     adrTmp.get(wvg, adrFixedPrivate, adrIet);
   }
   // Sum qstls and qstls-iet contributions to adr
@@ -265,114 +387,6 @@ void Qstls::readAdrFixedIetFile(Vector3D &res,
   }
 }
 
-// Compute static structure factor
-void Qstls::computeSsf(){
-  const int nx = wvg.size();
-  if (ssf.size() == 0) ssf.resize(nx);
-  computeSsfFinite();
-}
-
-// Compute static structure factor at finite temperature
-void Qstls::computeSsfFinite(){
-  assert(computedChemicalPotential);
-  assert(adr.size() > 0);
-  assert(idr.size() > 0);
-  const double Theta = in.getDegeneracy();
-  const double rs = in.getCoupling();
-  const int nx = wvg.size();
-  const int nl = idr.size(1);
-  if (ssf.size() == 0) ssf.resize(nx);
-  for (int i=0; i<nx; ++i){
-    Qssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i));
-    ssf[i] = ssfTmp.get();
-  }
-}
-
-// Initial guess for qstls iterations
-void Qstls::initialGuess() {
-  const auto &statIn = in.getStaticInput();
-  const int nx = wvg.size();
-  ssfOld.resize(nx);
-  ssf.resize(nx);
-  // From file
-  const auto &stlsIn = in.getStlsInput();
-  const string fileName = stlsIn.getRestartFileName();
-  if (fileName != "") {
-    vector<double> wvg_;
-    vector<double> ssf_;
-    Vector2D adr_;
-    Vector3D adrFixed_;
-    double Theta;
-    int nl;
-    readRestart(fileName, wvg_, ssf_, adr_, adrFixed_, Theta, nl);
-    initialGuessSsf(wvg_, ssf_);
-    if (checkAdrFixedFromFile(wvg_, Theta, nl) == 0) {
-      adrFixed = adrFixed_;
-    }
-    if (useIet) { initialGuessAdr(wvg_, adr_); }
-    return;
-  }
-  // Default
-  Stls stls(in, false, false);
-  stls.compute();
-  stls.getSsf(ssfOld);
-  if (useIet) {
-    const int nl = statIn.getNMatsubara();
-    adrOld.resize(nx, nl);
-    adrOld.fill(0.0);
-  }
-}
-
-void Qstls::initialGuessSsf(const vector<double> &wvg_,
-			    const vector<double> &ssf_) {
-  const int nx = wvg.size();
-  const Interpolator1D ssfi(wvg_, ssf_);
-  const double xMax = wvg_.back();
-  for (int i=0; i<nx; ++i) {
-    const double &x = wvg[i];
-    ssfOld[i] = (x <= xMax) ? ssfi.eval(x) : 1.0;
-  }
-}
-
-void Qstls::initialGuessAdr(const vector<double> &wvg_,
-			    const Vector2D &adr_) {
-  const auto &statIn = in.getStaticInput();
-  const int nx = wvg.size();
-  const int nl = statIn.getNMatsubara();
-  const int nlMax = adr_.size(1);
-  const int xMax = wvg_.back();
-  vector<Interpolator1D> itp;
-  for (int l=0; l<nlMax; ++l) {
-    vector<double> tmp;
-    for (int i=0; i<adr_.size(); ++i){
-      tmp.push_back(adr_(i,l));
-    }
-    itp.push_back(Interpolator1D(wvg_,tmp));
-  }
-  for (int i=0; i<nx; ++i) {
-    const double &x = wvg[i];
-    if (x > xMax) {
-      adrOld.fill(i, 0.0);
-      continue;
-    }
-    for (int l=0; l<nl; ++l) {
-      adrOld(i,l) = (l <= nlMax) ? itp[l].eval(x) : 0.0;
-    }
-  }
-}
-
-// Compute residual error for the qstls iterations
-double Qstls::computeError(){
-  return rms(ssf, ssfOld, false);
-}
-
-// Update solution during qstls iterations
-void Qstls::updateSolution(){
-  const auto &statIn = in.getStaticInput();
-  const double aMix = statIn.getMixingParameter();
-  ssfOld = sum(mult(ssf, aMix), mult(ssfOld, 1 - aMix));
-}
-
 // Write output files
 void Qstls::writeOutput() const{
   Stls::writeOutput();
@@ -394,7 +408,7 @@ void Qstls::writeAdr() const {
   const int nx = adr.size(0);
   const int nl = adr.size(1);
   for (int i=0; i<nx; ++i){
-    const string el1 = format<double>("%.8e", wvg[i]);
+    const string el1 = format<double>("%.8e ", wvg[i]);
     file << el1;
     for (int l=0; l<nl; ++l) {
       const string el2 = format<double>("%.8e ", adr(i,l));
@@ -598,16 +612,10 @@ double AdrFixed::integrand2(const double t, const double y, const double l) cons
 // AdrIet class
 // -----------------------------------------------------------------
 
-// Compute ideal density response
-double AdrIet::idr(const double y,
-		   const int l) const {
-  return idri[l].eval(y);
-}
-
-// Compute auxiliary density response
-double AdrIet::adr(const double y,
-		   const int l) const {
-  return adri[l].eval(y);
+// Compute dynamic local field correction
+double AdrIet::dlfc(const double y,
+		    const int l) const {
+  return dlfci[l].eval(y);
 }
 
 // Compute auxiliary density response
@@ -625,8 +633,8 @@ double AdrIet::integrand1(const double q,
 			  const int l) const {
   if (q == 0.0) { return 0.0; }
   const double p1 = (1 - bf(q)) * ssf(q);
-  const double p2 = adr(q,l)/idr(q,l) * (ssf(q) - 1.0);
-  return (p1 +  p2 - 1.0) / q;
+  const double p2 = dlfc(q,l) * (ssf(q) - 1.0);
+  return (p1 -  p2 - 1.0) / q;
 }
 
 double AdrIet::integrand2(const double y) const {
@@ -649,13 +657,13 @@ void AdrIet::get(const vector<double> &wvg,
   }
   for (int l = 0; l < nl; ++l) {
     fixi.reset(wvg[0], wvg[0], fixed(l), nx, nx);
-    auto yMin = [&](double q)->double{return min(qMax, q + x);};
-    auto yMax = [&](double q)->double{return (q > x) ? q - x : x - q;};
+    auto yMin = [&](double q)->double{return (q > x) ? q - x : x - q;};
+    auto yMax = [&](double q)->double{return min(qMax, q + x);};
     auto func1 = [&](double q)->double{return integrand1(q, l);};
     auto func2 = [&](double y)->double{return integrand2(y);};
     itg.compute(func1, func2, qMin, qMax, yMin, yMax);
     res(ix, l) = itg.getSolution();
-    res(ix, l) *= (l == 0) ? isc0 : isc; 
+    res(ix, l) *= (l == 0) ? isc0 : isc;
   }
 }
 
@@ -711,5 +719,5 @@ double AdrFixedIet::integrand(const double t, const double y,
   const double fplT2 = fplT*fplT;
   const double logarg = ((qmypx + fxt)*(qmypx + fxt) + fplT2)/
     ((qmypx - fxt)*(qmypx - fxt) + fplT2);
-  return t / (exp(y2/Theta - mu) + 1.0)*log(logarg);
+  return t / (exp(t2/Theta - mu) + 1.0)*log(logarg);
 }

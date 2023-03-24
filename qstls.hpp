@@ -247,19 +247,14 @@ private:
   double integrand2(const double y) const;
   // Integrator object
   Integrator2D &itg;
-  // Interpolator for the ideal density response
-  const vector<Interpolator1D> &idri;
-  // Interpolator for the auxiliary density response
-  const vector<Interpolator1D> &adri;
+  // Interpolator for the dynamic local field correction
+  const vector<Interpolator1D> &dlfci;
   // Interpolator for the bridge function contribution
   const Interpolator1D &bfi;
   // Interpolator for the fixed component 
   Interpolator2D fixi;
-  // Compute ideal density response
-  double idr(const double y,
-	     const int l) const;
-  // Compute auxiliary density
-  double adr(const double y,
+  // Compute dynamic local field correction
+  double dlfc(const double y,
 	     const int l) const;
   // Compute bridge function contribution
   double bf(const double y) const;
@@ -274,12 +269,11 @@ public:
 	 const double qMax_,
 	 const double x_,
 	 const Interpolator1D &ssfi_,
-	 const vector<Interpolator1D> &idri_,
-	 const vector<Interpolator1D> &adri_,
+	 const vector<Interpolator1D> &dlfci_,
 	 const Interpolator1D &bfi_,
 	 Integrator2D &itg_)
     : AdrBase(Theta_, qMin_, qMax_, x_, ssfi_),
-      itg(itg_), idri(idri_), adri(adri_), bfi(bfi_) {;};
+      itg(itg_), dlfci(dlfci_), bfi(bfi_) {;};
   
   // Get integration result
   void get(const vector<double> &wvg,

@@ -66,11 +66,19 @@ namespace vecUtil {
   // Element-wise difference between two vectors
   vector<double> diff(const vector<double> &v1,
 		      const vector<double> &v2);
+
+  // Element-wise multiplication of two vectors
+  vector<double> mult(const vector<double> &v1,
+		      const vector<double> &v2);
+
+  // Element-wise division of two vectors
+  vector<double> div(const vector<double> &v1,
+		     const vector<double> &v2);
   
   // Element-wise multiplication of a vector and a scalar
   vector<double> mult(const vector<double> &v,
 		      const double a);
-  
+
   // Root mean square difference between two vectors
   double rms(const vector<double> &v1,
 	     const vector<double> &v2,
@@ -106,8 +114,11 @@ namespace vecUtil {
 	      const double &num);
     void fill(const size_t i,
 	      const vector<double> &num);
-    void sum(const Vector2D &vSum);
-    
+    void sum(const Vector2D &v_);
+    void diff(const Vector2D &v_);
+    void mult(const Vector2D &v_);
+    void mult(const double &num);
+    void div(const Vector2D &v_);
   };
   
   // Class to represent 3D vectors
@@ -149,7 +160,11 @@ namespace vecUtil {
     void fill(const size_t i,
 	      const size_t j,
 	      const vector<double> &num);
-    void sum(const Vector3D &vSum);
+    void sum(const Vector3D &v_);
+    void diff(const Vector3D &v_);
+    void mult(const Vector3D &v_);
+    void mult(const double &num);
+    void div(const Vector3D &v_);
   };
   
     

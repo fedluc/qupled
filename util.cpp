@@ -75,9 +75,9 @@ namespace vecUtil {
   vector<double> sum(const vector<double> &v1,
 		     const vector<double> &v2) {
     assert(v1.size() == v2.size());
-    vector<double> res;
+    vector<double> res(v1.size());
     transform(v1.begin(), v1.end(),
-	      v2.begin(), back_inserter(res),
+	      v2.begin(), res.begin(),
 	      plus<double>());
     return res;
   }
@@ -86,10 +86,40 @@ namespace vecUtil {
   vector<double> diff(const vector<double> &v1,
 		      const vector<double> &v2) {
     assert(v1.size() == v2.size());
-    vector<double> res;
+    vector<double> res(v1.size());
     transform(v1.begin(), v1.end(),
-	      v2.begin(), back_inserter(res),
+	      v2.begin(), res.begin(),
 	      minus<double>());
+    return res;
+  }
+
+  // Element-wise multiplication between two vectors
+  vector<double> mult(const vector<double> &v1,
+		      const vector<double> &v2) {
+    assert(v1.size() == v2.size());
+    vector<double> res(v1.size());
+    transform(v1.begin(), v1.end(),
+	      v2.begin(), res.begin(),
+	      multiplies<double>());
+    return res;
+  }
+
+  // Element-wise multiplication between two vectors
+  vector<double> div(const vector<double> &v1,
+		     const vector<double> &v2) {
+    assert(v1.size() == v2.size());
+    vector<double> res(v1.size());
+    transform(v1.begin(), v1.end(),
+	      v2.begin(), res.begin(),
+	      divides<double>());
+    return res;
+  }
+  
+  // Element-wise multiplication of a vector and a scalar
+  vector<double> mult(const vector<double> &v,
+		    const double a) {
+    vector<double> res = v;
+    transform(res.begin(), res.end(), res.begin(), [&a](double c){return c*a;});
     return res;
   }
   
@@ -101,14 +131,6 @@ namespace vecUtil {
     double rms = inner_product(tmp.begin(), tmp.end(), tmp.begin(), 0.0);
     if (normalize) rms /= tmp.size();
     return sqrt(rms);
-  }
-
-  // Element-wise multiplication of a vector and a scalar
-  vector<double> mult(const vector<double> &v,
-		    const double a) {
-    vector<double> res = v;
-    transform(res.begin(), res.end(), res.begin(), [&a](double c){return c*a;});
-    return res;
   }
 
   // Vector2D class
@@ -170,12 +192,31 @@ namespace vecUtil {
     assert(num.size() == s2);
     std::copy(num.begin(), num.end(), v.begin() + i*s2);
   }
-
-  void Vector2D::sum(const Vector2D &vSum) {
-    assert(vSum.size() == v.size());
-    v = vecUtil::sum(v, vSum.v);
-  }
   
+  void Vector2D::sum(const Vector2D &v_) {
+    assert(v_.size() == v.size());
+    v = vecUtil::sum(v, v_.v);
+  }
+
+  void Vector2D::diff(const Vector2D &v_) {
+    assert(v_.size() == v.size());
+    v = vecUtil::diff(v, v_.v);
+  }
+
+  void Vector2D::mult(const Vector2D &v_) {
+    assert(v_.size() == v.size());
+    v = vecUtil::mult(v, v_.v);
+  }
+
+  void Vector2D::mult(const double &num) {
+    std::for_each(v.begin(), v.end(), [&](double &vi){ vi *= num;});
+  }
+
+  void Vector2D::div(const Vector2D &v_) {
+    assert(v_.size() == v.size());
+    v = vecUtil::div(v, v_.v);
+  }
+
   // Vector3D class
   size_t Vector3D::size() const {
     return s1*s2*s3;
@@ -253,9 +294,28 @@ namespace vecUtil {
     std::copy(num.begin(), num.end(), v.begin() + j*s3 + i*s2*s3);
   }  
 
-  void Vector3D::sum(const Vector3D &vSum) {
-    assert(vSum.size() == v.size());
-    v = vecUtil::sum(v, vSum.v);
+  void Vector3D::sum(const Vector3D &v_) {
+    assert(v_.size() == v.size());
+    v = vecUtil::sum(v, v_.v);
+  }
+
+  void Vector3D::diff(const Vector3D &v_) {
+    assert(v_.size() == v.size());
+    v = vecUtil::diff(v, v_.v);
+  }
+
+  void Vector3D::mult(const Vector3D &v_) {
+    assert(v_.size() == v.size());
+    v = vecUtil::mult(v, v_.v);
+  }
+
+  void Vector3D::mult(const double &num) {
+    std::for_each(v.begin(), v.end(), [&](double &vi){ vi *= num;});
+  }
+
+  void Vector3D::div(const Vector3D &v_) {
+    assert(v_.size() == v.size());
+    v = vecUtil::div(v, v_.v);
   }
   
 }

@@ -365,7 +365,7 @@ void Stls::writeIdr() const {
   const int nx = idr.size(0);
   const int nl = idr.size(1);
   for (int i=0; i<nx; ++i){
-    const string el1 = format<double>("%.8e", wvg[i]);
+    const string el1 = format<double>("%.8e ", wvg[i]);
     file << el1;
     for (int l=0; l<nl; ++l) {
       const string el2 = format<double>("%.8e ", idr(i,l));
