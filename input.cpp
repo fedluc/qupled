@@ -10,15 +10,20 @@ Input::Input(){
   Theta = 1.0;
   rs = 1.0;
   nThreads = 1;
+  int2DScheme = "full";
 }
 
 void Input::setTheory(cString &theory){
-  cVector<string> knownTheories = {"STLS", "STLS-HNC", "STLS-IOI",
-				   "STLS-LCT", "QSTLS", "QSTLS-HNC",
+  cVector<string> classicTheories = {"STLS", "STLS-HNC",
+				       "STLS-IOI", "STLS-LCT"};
+  cVector<string> quantumTheories = {"QSTLS", "QSTLS-HNC",
 				   "QSTLS-IOI", "QSTLS-LCT"};
-  if (count(knownTheories.begin(), knownTheories.end(), theory) == 0) {
+  isClassicTheory = count(classicTheories.begin(), classicTheories.end(), theory) != 0;
+  isQuantumTheory = count(quantumTheories.begin(), quantumTheories.end(), theory) != 0;
+  if (!isClassicTheory && !isQuantumTheory) {
     throw runtime_error("Unknown theory: " + theory);
   }
+  assert(!isClassicTheory || !isQuantumTheory);
   this->theory = theory;
 }
 
@@ -41,6 +46,14 @@ void Input::setThreads(cString  &nThreads){
     throw runtime_error("The number of threads must be positive");
   }
   this->nThreads = stoi(nThreads);
+}
+
+void Input::setInt2DScheme(cString  &int2DScheme){
+  cVector<string> knownEntries = {"full", "segregated"};
+  if (count(knownEntries.begin(), knownEntries.end(), int2DScheme) == 0) {
+    throw runtime_error("Unknown scheme for 2D integrals: " + int2DScheme);
+  }
+  this->int2DScheme = int2DScheme;
 }
 
 void Input::readInput(cString &fileName){
@@ -88,6 +101,7 @@ void Input::assignInputToBaseData(cString &keyword, cString &value){
   funcArr["degeneracy"] = [this](cString &s1) {this->setDegeneracy(s1);};
   funcArr["coupling"] = [this](cString &s1) {this->setCoupling(s1);};
   funcArr["threads"] = [this](cString &s1) {this->setThreads(s1);};
+  funcArr["int2DScheme"] = [this](cString&s1) {this->setInt2DScheme(s1);};
   try{
     matchKeyAndData(keyword, value, funcArr);
   }

@@ -184,40 +184,33 @@ void Integrator2D::compute(const function<double(double)> func1,
 			   const double xMin,
 			   const double xMax,
 			   const function<double(double)> yMin,
-			   const function<double(double)> yMax){
-  // Level 2 integration
-  auto func = [&](double x_)->double {
-    x = x_;
-    itg2.compute(func2, yMin(x_), yMax(x_));
-    return func1(x_) * itg2.getSolution();
-  };
-  // Level 1 integration
-  itg1.compute(func, xMin, xMax);
-  sol = itg1.getSolution();
-}
-
-void Integrator2D::compute(const function<double(double)> func1,
-			   const function<double(double)> func2,
-			   const double xMin,
-			   const double xMax,
-			   const function<double(double)> yMin,
 			   const function<double(double)> yMax,
 			   const vector<double> &xGrid){
-  
-  // Level 2 integration (only computed for the points given in xGrid)
   const int nx = xGrid.size();
-  vector<double> sol2(nx);
-  for (int i = 0; i < nx; ++i) {
-    x = xGrid[i];
-    itg1.compute(func2, yMin(x), yMax(x));
-    sol2[i] = itg1.getSolution();
+  function<double(double)> func;
+  Interpolator1D itp;
+  if (nx > 0) {
+    // Level 2 integration (only evaluated at the points in xGrid)
+    vector<double> sol2(nx);
+    for (int i = 0; i < nx; ++i) {
+      x = xGrid[i];
+      itg2.compute(func2, yMin(x), yMax(x));
+      sol2[i] = itg2.getSolution();
+    }
+    itp.reset(xGrid[0], sol2[0], nx);
+    func = [&](double x_)->double {
+      return func1(x_) * itp.eval(x_);
+    };
   }
-  Interpolator1D itp(xGrid, sol2);
+  else {
+    // Level 2 integration (evaluated at arbitrary points) 
+    func = [&](double x_)->double {
+      x = x_;
+      itg2.compute(func2, yMin(x_), yMax(x_));
+      return func1(x_) * itg2.getSolution();
+    };
+  }
   // Level 1 integration
-  auto func = [&](double x_)->double {
-    return func1(x_) * itp.eval(x_);
-  };
   itg1.compute(func, xMin, xMax);
   sol = itg1.getSolution();
-  
 }

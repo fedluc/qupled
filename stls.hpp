@@ -379,6 +379,8 @@ private:
 
   // Integrator object
   Integrator2D &itg;
+  // Grid for 2D integration
+  const vector<double> &itgGrid;
   // Integrands
   double integrand1(const double y) const;
   double integrand2(const double w) const;
@@ -400,8 +402,10 @@ public:
 	  const Interpolator1D &ssfi_,
 	  const Interpolator1D &slfci_,
 	  const Interpolator1D &bfi_,
-	  Integrator2D &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_),
-				itg(itg_), slfci(slfci_), bfi(bfi_)  {;};
+	  const vector<double> &itgGrid_,
+	  Integrator2D &itg_)
+    : SlfcBase(x_, yMin_, yMax_, ssfi_), itg(itg_),
+      itgGrid(itgGrid_), slfci(slfci_), bfi(bfi_) {;};
   // Get result of integration 
   double get() const;
 

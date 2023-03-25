@@ -91,6 +91,8 @@ private:
 
   // Auxiliary density response
   const double *adr;
+  // Bridge function
+  const double bf;
   
 public:
 
@@ -101,9 +103,10 @@ public:
        const double ssfHF_,
        const int nl_,
        const double *idr_,
-       const double *adr_)
+       const double *adr_,
+       const double bf_)
     : Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_),
-      adr(adr_) {;};
+      adr(adr_), bf(bf_) {;};
   // Get static structure factor
   double get() const;
  
@@ -214,6 +217,8 @@ private:
 		    const double l) const;
   // Integrator object
   Integrator2D &itg;
+  // Grid for 2D integration
+  const vector<double> &itgGrid;
   
 public:
 
@@ -223,9 +228,10 @@ public:
 	   const double qMax_,
 	   const double x_,
 	   const double mu_,
+	   const vector<double> &itgGrid_,
 	   Integrator2D &itg_)
     : AdrFixedBase(Theta_, qMin_, qMax_, x_, mu_),
-      itg(itg_) {;};
+      itg(itg_), itgGrid(itgGrid_) {;};
   
   // Get integration result
   void get(vector<double> &wvg,
@@ -247,6 +253,8 @@ private:
   double integrand2(const double y) const;
   // Integrator object
   Integrator2D &itg;
+  // Grid for 2D integration
+  const vector<double> &itgGrid;
   // Interpolator for the dynamic local field correction
   const vector<Interpolator1D> &dlfci;
   // Interpolator for the bridge function contribution
@@ -255,11 +263,12 @@ private:
   Interpolator2D fixi;
   // Compute dynamic local field correction
   double dlfc(const double y,
-	     const int l) const;
+	      const int l) const;
   // Compute bridge function contribution
   double bf(const double y) const;
   // Compute fixed component
-  double fix(const double x, const double y) const;
+  double fix(const double x,
+	     const double y) const;
   
 public:
 
@@ -271,9 +280,10 @@ public:
 	 const Interpolator1D &ssfi_,
 	 const vector<Interpolator1D> &dlfci_,
 	 const Interpolator1D &bfi_,
+	 const vector<double> &itgGrid_,
 	 Integrator2D &itg_)
     : AdrBase(Theta_, qMin_, qMax_, x_, ssfi_),
-      itg(itg_), dlfci(dlfci_), bfi(bfi_) {;};
+      itg(itg_), itgGrid(itgGrid_), dlfci(dlfci_), bfi(bfi_) {;};
   
   // Get integration result
   void get(const vector<double> &wvg,
@@ -290,8 +300,10 @@ private:
   const double &tMin = qMin;
   const double &tMax = qMax;
   // Integrands 
-  double integrand(const double t, const double y,
-		   const double q, const double l) const;
+  double integrand(const double t,
+		   const double y,
+		   const double q,
+		   const double l) const;
   // Integrator object
   Integrator1D &itg;
   

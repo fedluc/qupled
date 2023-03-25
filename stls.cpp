@@ -162,13 +162,15 @@ void Stls::computeSlfcStls() {
 
 void Stls::computeSlfcIet() {
    Integrator2D itg2;
+   const bool segregatedItg = in.getInt2DScheme() == "segregated";
+   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
    const Interpolator1D ssfItp(wvg, ssf);
    const Interpolator1D slfcItp(wvg, slfcOld);
    if (bf.size() == 0) computeBf();
    const Interpolator1D bfItp(wvg, bf);
    for (int i=0; i<wvg.size(); ++i){
      SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),
-		     ssfItp, slfcItp, bfItp, itg2);
+		     ssfItp, slfcItp, bfItp, itgGrid, itg2);
      slfc[i] += slfcTmp.get();
    }
 }
@@ -841,7 +843,7 @@ double SlfcIet::get() const {
   auto wMax = [&](double y)->double{return min(yMax, x + y);};
   auto func1 = [&](double y)->double{return integrand1(y);};
   auto func2 = [&](double w)->double{return integrand2(w);};
-  itg.compute(func1, func2, yMin, yMax, wMin, wMax);
+  itg.compute(func1, func2, yMin, yMax, wMin, wMax, itgGrid);
   return 3.0/(8.0*x) * itg.getSolution() + bf(x);
 }
 

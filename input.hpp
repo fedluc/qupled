@@ -128,13 +128,18 @@ class Input {
 private:
 
   // theory to be solved
-  string theory; 
+  string theory;
+  // type of theory
+  bool isClassicTheory;
+  bool isQuantumTheory;
   // degeneracy parameter
   double Theta;
   // quantum coupling parameter
   double rs;
-  // Number of threads for parallel calculations
+  // number of threads for parallel calculations
   size_t nThreads;
+  // scheme for 2D integrals
+  string int2DScheme;
   // input for static calcualtions
   StaticInput stat;
   // input for stls calculations
@@ -146,6 +151,7 @@ private:
   void setDegeneracy(cString &Theta);
   void setCoupling(cString &rs);
   void setThreads(cString &nThreads);
+  void setInt2DScheme(cString &int2DScheme);
   // Helper methods to read the input file
   void parseInputLine(cString &line);
   void assignInputToData(cVector<string> &input);
@@ -160,8 +166,11 @@ public:
   Input();
   // Getters
   string getTheory() const { return theory; };
+  bool isClassic() const { return isClassicTheory; };
   double getDegeneracy() const {return Theta; };
   double getCoupling() const { return rs; };
+  size_t getNThreads() const { return nThreads; }
+  string getInt2DScheme() const { return int2DScheme; }
   const StaticInput& getStaticInput() const { return stat; };
   const StlsInput& getStlsInput() const { return stls; };
   const QstlsInput& getQstlsInput() const { return qstls; };

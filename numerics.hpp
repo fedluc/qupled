@@ -222,12 +222,6 @@ public:
 	       const double xMin,
 	       const double xMax,
 	       const function<double(double)> yMin,
-	       const function<double(double)> yMax);
-  void compute(const function<double(double)> func1,
-	       const function<double(double)> func2,
-	       const double xMin,
-	       const double xMax,
-	       const function<double(double)> yMin,
 	       const function<double(double)> yMax,
 	       const vector<double> &xGrid);
   // Getters

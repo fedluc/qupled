@@ -5,7 +5,6 @@
 #include "qstls.hpp"
 
 int main(int argc, char** argv) {
-
   // Read input
   Input in;
   if (argc < 2) {
@@ -14,22 +13,29 @@ int main(int argc, char** argv) {
   else {
     try {
       in.readInput(argv[1]);
-      //in.print();
     }
     catch (const runtime_error& err) {
       cerr << err.what() << endl;
       return 1;
     }
   }
-
-
-  // Compute slts scheme
-  // Stls stls(in);
-  // stls.compute();
-
-  // Compute qstls scheme
-  Qstls qstls(in);
-  qstls.compute();
+  // Set number of omp threads
+  omp_set_num_threads(in.getNThreads());
+  // Compute scheme
+  try {
+    if (in.isClassic()) {
+      Stls stls(in);
+      stls.compute();
+    }
+    else {
+      Qstls qstls(in);
+      qstls.compute();
+    }
+  }
+  catch (const runtime_error& err) {
+    cerr << err.what() << endl;
+    return 1;
+  }
+  // Return success
   return 0;
-  
 }
