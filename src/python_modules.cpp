@@ -18,7 +18,7 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &Input::print);
 
 
-  class_<StlsInput>("StlsInput", init<const double, const double, const string>())
+  class_<StlsInput, bases<Input>>("StlsInput", init<const double, const double, const string>())
     .def("setChemicalPotentialGuess", &StlsInput::setChemicalPotentialGuess)
     .def("setErrMin", &StlsInput::setErrMin)
     .def("setMixingParameter", &StlsInput::setMixingParameter)
@@ -28,11 +28,12 @@ BOOST_PYTHON_MODULE(qupled)
     .def("setOutIter", &StlsInput::setOutIter)
     .def("setRestartFileName", &StlsInput::setRestartFileName)
     .def("setWaveVectorGridRes", &StlsInput::setWaveVectorGridRes)
-    .def("setWaveVectorGridCutoff", &StlsInput::setWaveVectorGridCutoff);
-
+    .def("setWaveVectorGridCutoff", &StlsInput::setWaveVectorGridCutoff)
+    .def("print", &StlsInput::print);
+    
   class_<QstlsInput>("QstlsInput")
     .def("setFixedFileName", &QstlsInput::setFixedFileName)
-    .def("setUseStaticAdr", &QstlsInput::setUseStaticAdr);
+    .def("print", &QstlsInput::print);
     
   // Class to solve classical schemes
   class_<Stls>("Stls", init<const StlsInput>())

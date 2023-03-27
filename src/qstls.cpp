@@ -10,10 +10,14 @@ using namespace binUtil;
 // -----------------------------------------------------------------
 
 void Qstls::compute(){
+  // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
     throw runtime_error("Ground state calculations are not available "
 			"for the quantum schemes");
   }
+  // Set number of OMP threads
+  omp_set_num_threads(in.getNThreads());
+  // Solve scheme
   Stls::init();
   if (verbose) cout << "Structural properties calculation ..." << endl;
   doIterations();

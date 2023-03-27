@@ -126,20 +126,16 @@ private:
 
   // Name of the files used to store the fixed component of the auxiliary density response (adr)
   string fixedFileName;
-  // Use static approximation to compute the adr
-  bool useStaticAdr;
 
 public:
 
   //Constructor
   QstlsInput()
-    : fixedFileName(EMPTY_STRING), useStaticAdr(false) { ; };
+    : fixedFileName(EMPTY_STRING) { ; };
   // Setters
   void setFixedFileName(const string &fixedFileName);
-  void setUseStaticAdr(const bool &useStaticAdr);
   // Getters
   string getFixedFileName() const {return fixedFileName; };
-  bool getUseStaticAdr() const { return useStaticAdr; };
   // Print content of the data structure
   void print() const ;
 

@@ -3,14 +3,14 @@
 // --- Input ---
 
 double Input::initCoupling(const double &rs_){
-  if (rs <= 0) {
+  if (rs_ <= 0) {
     throw runtime_error("The quantum coupling parameter must be larger than zero");
   }
   return rs_;
 }
 
 double Input::initDegeneracy(const double &Theta_){
-  if (Theta < 0.0) {
+  if (Theta_ < 0.0) {
     throw runtime_error("The quantum degeneracy parameter can't be negative");
   }
   return Theta_;
@@ -70,7 +70,10 @@ void Input::print() const {
 // --- StlsInput ---
 
 void StlsInput::setChemicalPotentialGuess(const double &muMin,
-					     const double &muMax){
+					  const double &muMax){
+  if (muMin >= muMax) {
+    throw runtime_error("Invalid guess for chemical potential calculation");
+  }
   muGuess.resize(2);
   muGuess[0] = muMin;
   muGuess[1] = muMax;
@@ -162,12 +165,7 @@ void QstlsInput::setFixedFileName(const string &fixedFileName){
   this->fixedFileName = fixedFileName;
 } 
 
-void QstlsInput::setUseStaticAdr(const bool &useStaticAdr){
-  this->useStaticAdr = useStaticAdr;
-}
-
 void QstlsInput::print() const {
   cout << "##### qSTLS-related input #####" << endl;
   cout << "File with fixed adr component = " << fixedFileName  << endl;
-  cout << "Static approximation for adr = " << useStaticAdr << endl;
 }
