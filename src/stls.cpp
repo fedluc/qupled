@@ -41,9 +41,8 @@ void Stls::init(){
 // Set up wave-vector grid
 void Stls::buildWvGrid(){
   wvg.push_back(0.0);
-  const auto &inStat = in.getStaticInput();
-  const double dx = inStat.getWaveVectorGridRes();
-  const double xmax = inStat.getWaveVectorGridCutoff();
+  const double dx = in.getWaveVectorGridRes();
+  const double xmax = in.getWaveVectorGridCutoff();
   while(wvg.back() < xmax){
     wvg.push_back(wvg.back() + dx);
   }
@@ -52,8 +51,7 @@ void Stls::buildWvGrid(){
 // Compute chemical potential
 void Stls::computeChemicalPotential(){
   if (in.getDegeneracy() == 0.0) return;
-  const auto &statIn = in.getStaticInput();
-  const vector<double> &guess = statIn.getChemicalPotentialGuess();
+  const vector<double> &guess = in.getChemicalPotentialGuess();
   ChemicalPotential mu_(in.getDegeneracy());
   try {
     mu_.compute(guess);
@@ -69,9 +67,8 @@ void Stls::computeChemicalPotential(){
 void Stls::computeIdr(){
   if (in.getDegeneracy() == 0.0) return;
   assert(computedChemicalPotential);
-  const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
-  const int nl = statIn.getNMatsubara();
+  const int nl = in.getNMatsubara();
   idr.resize(nx, nl);
   for (int i=0; i<nx; ++i){
     Idr idrTmp(nl, wvg[i], in.getDegeneracy(), mu,
@@ -178,11 +175,10 @@ void Stls::computeSlfcIet() {
 // Compute bridge function
 void Stls::computeBf() {
   const int nx = wvg.size();
-  const auto &stlsIn = in.getStlsInput();
   Integrator1DFourier itgF(0, 1e-10);
   bf.resize(nx);
   for (int i=0; i<nx; ++i){ 
-    BridgeFunction bfTmp(in.getTheory(), stlsIn.getIETMapping(),
+    BridgeFunction bfTmp(in.getTheory(), in.getIETMapping(),
 			 in.getCoupling(), in.getDegeneracy(),
 			 wvg[i], itgF);
     bf[i] = bfTmp.get();
@@ -191,10 +187,9 @@ void Stls::computeBf() {
 
 // stls iterations
 void Stls::doIterations() {
-  const auto &statIn = in.getStaticInput();
-  const int maxIter = statIn.getNIter();
-  const int outIter = statIn.getOutIter();
-  const double minErr = statIn.getErrMin();
+  const int maxIter = in.getNIter();
+  const int outIter = in.getOutIter();
+  const double minErr = in.getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess
@@ -231,8 +226,7 @@ void Stls::initialGuess() {
   slfcOld.resize(nx);
   slfc.resize(nx);
   // From file
-  const auto &stlsIn = in.getStlsInput();
-  if (stlsIn.getRestartFileName() != "") {
+  if (in.getRestartFileName() != EMPTY_STRING) {
     vector<double> wvgFile;
     vector<double> slfcFile;
     readRestart(wvgFile, slfcFile);
@@ -256,8 +250,7 @@ double Stls::computeError(){
 
 // Update solution during stls iterations
 void Stls::updateSolution(){
-  const auto &statIn = in.getStaticInput();
-  const double aMix = statIn.getMixingParameter();
+  const double aMix = in.getMixingParameter();
   slfcOld = sum(mult(slfc, aMix), mult(slfcOld, 1 - aMix));
 }
 
@@ -414,8 +407,7 @@ void Stls::writeRdf() const {
   if (!file.is_open()) {
     throw runtime_error("Output file " + fileName + " could not be created.");
   }
-  const auto &statIn = in.getStaticInput();
-  const double dr = statIn.getWaveVectorGridRes();
+  const double dr = in.getWaveVectorGridRes();
   const double r0 = dr/10; // Avoid starting from 0 to avoid divergence
   const Interpolator1D itp(wvg, ssf);
   Integrator1DFourier itgF(r0);
@@ -464,13 +456,14 @@ void Stls::writeRestart() const {
   writeDataToBinary<decltype(wvg)>(file, wvg);
   writeDataToBinary<decltype(slfc)>(file, slfc);
   file.close();
-  // ADD ERROR CHECK
+  if (!file) {
+    throw runtime_error("Error in writing to file " + fileName);
+  }
 }
 
 void Stls::readRestart(vector<double> &wvgFile,
 		       vector<double> &slfcFile) const {
-  const auto &stlsIn = in.getStlsInput();
-  const string fileName = stlsIn.getRestartFileName();
+  const string fileName = in.getRestartFileName();
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
@@ -483,11 +476,12 @@ void Stls::readRestart(vector<double> &wvgFile,
   readDataFromBinary<decltype(wvgFile)>(file, wvgFile);
   readDataFromBinary<decltype(slfcFile)>(file, slfcFile);
   file.close();
-  // ADD ERROR CHECK
+  if (!file) {
+    throw runtime_error("Error in reading from file " + fileName);
+  }
 }
 
 // Getters
-
 void Stls::getSsf(vector<double> &ssf_){
   ssf_.resize(0);
   copy(ssf.begin(), ssf.end(), back_inserter(ssf_));

@@ -1,4 +1,3 @@
-*.o
-*.~x
-stls
+*~
 Makefile
+build

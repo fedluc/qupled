@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "input.hpp"
+#include "util.hpp"
 #include "numerics.hpp"
 
 using namespace std;
@@ -15,7 +16,9 @@ using namespace vecUtil;
 class Stls {
 
 protected: 
-
+  
+  // Input data
+  const StlsInput in;
   // Wave vector grid
   vector<double> wvg;
   // Ideal density response
@@ -29,8 +32,6 @@ protected:
   vector<double> ssfHF;
   // Integrator object
   Integrator1D itg;
-  // Input data
-  const Input in;
   // Output verbosity
   const bool verbose;
   // Flag to write the outputfiles
@@ -86,21 +87,21 @@ protected:
   void readRestart(vector<double> &wvgFile,
 		   vector<double> &slfcFile) const;
   // Check if iet schemes should be used
-  void checkIet() { useIet = in.getTheory() == "STLS-HNC" ||
-      in.getTheory() == "STLS-IOI" ||
-      in.getTheory() == "STLS-LCT";}
+  bool checkIet() {
+   return in.getTheory() == "STLS-HNC" ||
+     in.getTheory() == "STLS-IOI" ||
+     in.getTheory() == "STLS-LCT";
+  };
   
 public:
 
   // Constructors
-  Stls(const Input in_) :in(in_), verbose(true),
-			 writeFiles(true),
-			 computedChemicalPotential(false) {checkIet();};
-  Stls(const Input in_,
-       const bool verbose_,
-       const bool writeFiles_) : in(in_), verbose(verbose_),
-				 writeFiles(writeFiles_),
-				 computedChemicalPotential(false) {checkIet();};
+  Stls(const StlsInput &in_,
+       const bool &verbose_,
+       const bool &writeFiles_)
+    : in(in_), verbose(verbose_), writeFiles(writeFiles_),
+      computedChemicalPotential(false), useIet(checkIet()) { ; };
+  Stls(const StlsInput &in_) : Stls(in_, true, true) { ; };
   // Compute stls scheme
   void compute();
   // Getters

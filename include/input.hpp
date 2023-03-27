@@ -1,30 +1,74 @@
 #ifndef INPUT_HPP
 #define INPUT_HPP
 
-#include <string>
 #include <vector>
 #include <iostream>
-#include <map>
-#include <functional>
-#include "util.hpp"
 
 using namespace std;
-using namespace inpututil;
 
-#define NO_FILE_NAME ""
+#define EMPTY_STRING ""
 
-class StaticInput {
+class Input {
+
+private:
+
+  // scheme for 2D integrals
+  string int2DScheme;
+  // type of theory
+  bool isClassicTheory;
+  bool isQuantumTheory;
+  // number of threads for parallel calculations
+  int nThreads;
+  // quantum coupling parameter
+  double rs;
+  // theory to be solved
+  string theory;
+  // degeneracy parameter
+  double Theta;
+  // Initializers
+  double initCoupling(const double &rs_);
+  double initDegeneracy(const double &Theta_);
+  string initTheory(const string &theory_);
+  
+public:
+
+  //Constructor
+  Input(const double &rs_,
+	const double &Theta_,
+	const string &theory_)
+    : int2DScheme("full"), isClassicTheory(false), isQuantumTheory(false),
+      nThreads(1), rs(initCoupling(rs_)), theory(initTheory(theory_)),
+      Theta(initDegeneracy(Theta_)) { ; };
+  // Setters
+  void setCoupling(const double &rs);
+  void setDegeneracy(const double &Theta);
+  void setInt2DScheme(const string &int2DScheme);
+  void setNThreads(const int &nThreads);
+  void setTheory(const string &theory);
+  // Getters
+  double getCoupling() const { return rs; };
+  double getDegeneracy() const {return Theta; };
+  string getInt2DScheme() const { return int2DScheme; }
+  int getNThreads() const { return nThreads; }
+  string getTheory() const { return theory; };
+  bool isClassic() const { return isClassicTheory; };
+  // Print content of the data structure
+  void print() const;
+  
+};
+
+class StlsInput : public Input {
 
 private:
 
   // Mixing parameter for the iterative procedure
   double aMix;
-  // Minimum error for convergence in the iterative procedure
-  double errMin;  
   // Wave-vector grid resolution
   double dx;
-  // cutoff for the wave-vector grid
-  double xmax;
+  // Minimum error for convergence in the iterative procedure
+  double errMin;
+  // Mapping between the quantum and classical state points for the IET-based schemes
+  string IETMapping;
   // Initial guess for the chemical potential calculation
   vector<double> muGuess;
   // Number of matsubara frequencies
@@ -33,231 +77,72 @@ private:
   int nIter;
   // Output frequency
   int outIter;
-  // Setters 
-  void setMixingParameter(cString  &aMix);
-  void setErrMin(cString &errMin);
-  void setWaveVectorGridRes(cString &waveVectorGridRes);
-  void setWaveVectorGridCutoff(cString  &waveVectorGridCutoff);
-  void setChemicalPotentialGuess(cString &muGuessStr);
-  void setNMatsubara(cString &nMatsubara);
-  void setNIter(cString &nIter);
-  void setOutIter(cString &outIter);
-  // Helper methods to read the input file
-  void assignInputToData(const string &keyword, const string &value);
-  // Print content of the data structure
-  void print() const;
-  // Friends
-  friend class Input;
+  // Name of the file used to store the restart data
+  string restartFileName;
+  // cutoff for the wave-vector grid
+  double xmax;
   
 public:
   
   //Constructor
-  StaticInput();
+  StlsInput(const double &rs_,
+	    const double &Theta_,
+	    const string &theory_)
+    : Input(rs_, Theta_, theory_), aMix(1.0), dx(0.1), errMin(1e-5),
+      IETMapping("standard"), muGuess({-10, 10}), nl(128), nIter(1000),
+      outIter(10), restartFileName(EMPTY_STRING), xmax(10.0) { ; };
+  // Setters
+  void setChemicalPotentialGuess(const double &muMin,
+				 const double &muMax);
+  void setErrMin(const double &errMin);
+  void setMixingParameter(const double  &aMix);
+  void setIETMapping(const string &IETMapping);
+  void setNMatsubara(const int &nMatsubara);
+  void setNIter(const int &nIter);
+  void setOutIter(const int &outIter);
+  void setRestartFileName(const string &restartFileName);
+  void setWaveVectorGridRes(const double &waveVectorGridRes);
+  void setWaveVectorGridCutoff(const double  &waveVectorGridCutoff);
   // Getters
-  double getMixingParameter() const { return aMix; };
-  double getErrMin() const { return errMin; };
-  double getWaveVectorGridRes() const { return dx; };
-  double getWaveVectorGridCutoff() const { return xmax; };
   vector<double> getChemicalPotentialGuess() const { return muGuess; };
+  double getErrMin() const { return errMin; };
+  string getIETMapping() const { return IETMapping; };
+  double getMixingParameter() const { return aMix; };
   int getNMatsubara() const { return nl; };
   int getNIter() const { return nIter; };
   int getOutIter() const { return outIter; };
-  
-};
-
-class StlsInput {
-
-private:
- 
-  // Mapping between the quantum and classical state points for the IET-based schemes
-  string IETMapping;
-  // Name of the file used to store the restart data
-  string restartFileName;
-  // Setters
-  void setIETMapping(cString &IETMapping);
-  void setRestartFileName(cString &restartFileName);
-  // Helper methods to read the input file
-  void assignInputToData(const string &keyword, const string &value);
-  // Print content of the data structure
-  void print() const ;
-  // Friends
-  friend class Input;
-  
-public:
-
-  //Constructor
-  StlsInput();
-  // Getters
-  string getIETMapping() const { return IETMapping; };
   string getRestartFileName() const { return restartFileName; };
-
-
-};
-
-class QstlsInput { // Input properties for the qSTLS methods
-
-private:
-
-  // Use static approximation to compute the auxiliary density response (adr)
-  bool useStaticAdr;
-  // Name of the files used to store the fixed component of the adr
-  string fixedFileName;
-  // Setters 
-  void setUseStaticAdr(cString &useStaticAdr);
-  void setFixedFileName(cString &fixedFileName);
-    // Helper methods to read the input file
-  void assignInputToData(const string &keyword, const string &value);
-   // Print content of the data structure
-  void print() const ;
-  // Friends
-  friend class Input;
-
-public:
-
-  //Constructor
-  QstlsInput();
-  // Getters
-  bool getUseStaticAdr() const { return useStaticAdr; };
-  string getFixedFileName() const {return fixedFileName; };
-
-};
-
-
-class Input {
-
-private:
-
-  // theory to be solved
-  string theory;
-  // type of theory
-  bool isClassicTheory;
-  bool isQuantumTheory;
-  // degeneracy parameter
-  double Theta;
-  // quantum coupling parameter
-  double rs;
-  // number of threads for parallel calculations
-  size_t nThreads;
-  // scheme for 2D integrals
-  string int2DScheme;
-  // input for static calcualtions
-  StaticInput stat;
-  // input for stls calculations
-  StlsInput stls;
-  // input for qstls calculations
-  QstlsInput qstls;
-  // Setters
-  void setTheory(cString &theory);
-  void setDegeneracy(cString &Theta);
-  void setCoupling(cString &rs);
-  void setThreads(cString &nThreads);
-  void setInt2DScheme(cString &int2DScheme);
-  // Helper methods to read the input file
-  void parseInputLine(cString &line);
-  void assignInputToData(cVector<string> &input);
-  void assignInputToBaseData(cString &keyword, cString &value);
-  void assignInputToStaticData(cString &keyword, cString &value);
-  void assignInputToStlsData(cString &keyword, cString &value);
-  void assignInputToQstlsData(cString &keyword, cString &value);
-   
-public:
-
-  //Constructor
-  Input();
-  // Getters
-  string getTheory() const { return theory; };
-  bool isClassic() const { return isClassicTheory; };
-  double getDegeneracy() const {return Theta; };
-  double getCoupling() const { return rs; };
-  size_t getNThreads() const { return nThreads; }
-  string getInt2DScheme() const { return int2DScheme; }
-  const StaticInput& getStaticInput() const { return stat; };
-  const StlsInput& getStlsInput() const { return stls; };
-  const QstlsInput& getQstlsInput() const { return qstls; };
-  // Read input file
-  void readInput(cString &fileName);
+  double getWaveVectorGridRes() const { return dx; };
+  double getWaveVectorGridCutoff() const { return xmax; };
+  // Print content of the data structure
   void print() const;
   
 };
 
-// class vsInput { // Input properties for the vs-stls methods
 
-// private:
+class QstlsInput {
 
-//   // Solve compressibility sum-rule (csr)
-//   bool solveCsr;
-//   // Name of the file used to store the thermodynamic integration data
-//   string thermoFileName;
-//   // Initial guess for the free parameter
-//   double alpha;
-//   // Mixing parameter for the iterative procedure used to enforce the csr
-//   double aMix;
-//   // Resolution of the coupling parameter grid
-//   double drs;
-//   // Resolution of the degeneracy parameter grid
-//   double dt;
-//   // Minimum error for convergence in the iterations used to enforce the csr
-//   double minErr;
+private:
 
-// public:
+  // Name of the files used to store the fixed component of the auxiliary density response (adr)
+  string fixedFileName;
+  // Use static approximation to compute the adr
+  bool useStaticAdr;
 
-//   //Constructor
-//   vsInput();
-//   // Getters
-//   bool solveCsr();
-//   string getThermoFileName();
-//   double getAlpha();
-//   double getAMix();
-//   double getDrs();
-//   double getDt();
-//   double getMinErr();
-//   // Setters
-//   void SetSolveCsr(bool solveCsr);
-//   void setThermoFileName(string thermoFileName);
-//   void setAlpha(double alpha);
-//   void setAMix(double aMix);
-//   void setDrs(double drs);
-//   void setDt(double dt);
-//   void setMinErr(double minErr);
+public:
 
-// };
+  //Constructor
+  QstlsInput()
+    : fixedFileName(EMPTY_STRING), useStaticAdr(false) { ; };
+  // Setters
+  void setFixedFileName(const string &fixedFileName);
+  void setUseStaticAdr(const bool &useStaticAdr);
+  // Getters
+  string getFixedFileName() const {return fixedFileName; };
+  bool getUseStaticAdr() const { return useStaticAdr; };
+  // Print content of the data structure
+  void print() const ;
 
-// class dynInput { // Input properties for the dynamic properties
-
-// private:
-
-//   // Name of the file with the density response used for the calculation of the dynamic properties
-//   string drFileName;
-//   // Name of the file with the structural properties used for the calculation of the dynamic properties
-//   string structFileName;
-//   // Resolution of the frequency grid 
-//   double dW;
-//   // Lower cutoff of the frequency grid
-//   double Wmin;
-//   // Upper cutoff of the frequency grid
-//   double Wmax;
-//   // Wave-vector used for the output
-//   double waveVector;
-
-// public:
-
-//   //Constructor
-//   dynInput();
-//   // Getters
-//   string getDrFileName();
-//   string getStructFileName();
-//   double getDw();
-//   double getWmin();
-//   double getWmax();
-//   double getWaveVector();
-//   // Setters
-//   void setDrFileName(string densityResponseFileName);
-//   void setStructFileName(string structureFileName);
-//   void setDw(double dW);
-//   void setWmin(double Wmin);
-//   void setWmax(double Wmax);
-//   void setWaveVector(double waveVector);
-
-// };
+};
 
 #endif

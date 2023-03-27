@@ -29,7 +29,7 @@ python_add_module(qupled
 		  src/chemicalpotential.cpp
 		  src/input.cpp
 		  src/numerics.cpp
-		  src/run.cpp	
+		  src/python_modules.cpp
 		  src/qstls.cpp
 		  src/stls.cpp
 		  src/util.cpp)
@@ -61,4 +61,4 @@ target_link_libraries(qupled
 add_custom_target(copy_python COMMAND
 		  ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_LIST_DIR}/copy-python.cmake)
 add_dependencies(qupled copy_python)
-set_target_properties(qupled PROPERTIES LIBRARY_OUTPUT_DIRECTORY python)
+set_target_properties(qupled PROPERTIES LIBRARY_OUTPUT_DIRECTORY qupled)

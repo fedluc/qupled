@@ -1,12 +1,10 @@
 #ifndef CHEMICALPOTENTIAL_HPP
 #define CHEMICALPOTENTIAL_HPP
 
-#include <vector>
-#include <iostream>
-#include "util.hpp"
+#include "numerics.hpp"
 
 using namespace std;
-using namespace inpututil;
+// using namespace inpututil;
 
 class ChemicalPotential {
 
@@ -22,7 +20,7 @@ private:
 public:
 
   ChemicalPotential(double Theta_) : Theta(Theta_) {};
-  void compute(cVector<double> &guess);
+  void compute(const vector<double> &guess);
   double get() const {return mu;};
   
 };

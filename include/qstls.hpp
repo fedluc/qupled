@@ -1,10 +1,8 @@
 #ifndef QSTLS_HPP
 #define QSTLS_HPP
 
-#include <vector>
-#include "input.hpp"
+#include <map>
 #include "stls.hpp"
-#include "numerics.hpp"
 
 using namespace std;
 using namespace vecUtil;
@@ -17,6 +15,8 @@ class Qstls : public Stls {
   
 private: 
 
+  // Input data
+  const QstlsInput qin;
   // Auxiliary density response
   Vector2D adr;
   Vector2D adrOld;
@@ -74,8 +74,10 @@ private:
 
 public:
 
-  // Constructors
-  Qstls(const Input in_) : Stls(in_) {checkIet();};
+  // Constructor
+  Qstls(const StlsInput &in_,
+	const QstlsInput &qin_)
+    : Stls(in_), qin(qin_) { ; };
   // Compute qstls scheme
   void compute(); 
 

@@ -26,10 +26,9 @@ void Qstls::compute(){
 
 // qstls iterations
 void Qstls::doIterations() {
-  const auto &statIn = in.getStaticInput();
-  const int maxIter = statIn.getNIter();
-  const int outIter = statIn.getOutIter();
-  const double minErr = statIn.getErrMin();
+  const int maxIter = in.getNIter();
+  const int outIter = in.getOutIter();
+  const double minErr = in.getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess
@@ -62,17 +61,15 @@ void Qstls::doIterations() {
 
 // Initial guess for qstls iterations
 void Qstls::initialGuess() {
-  const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
-  const int nl = statIn.getNMatsubara();
+  const int nl = in.getNMatsubara();
   // Resize variables used in iterations
   ssf.resize(nx);
   adr.resize(nx, nl);
   ssfOld.resize(nx);
   if (useIet) { adrOld.resize(nx, nl); }
   // From file
-  const auto &stlsIn = in.getStlsInput();
-  const string fileName = stlsIn.getRestartFileName();
+  const string fileName = in.getRestartFileName();
   if (fileName != "") {
     vector<double> wvg_;
     vector<double> ssf_;
@@ -108,9 +105,8 @@ void Qstls::initialGuessSsf(const vector<double> &wvg_,
 
 void Qstls::initialGuessAdr(const vector<double> &wvg_,
 			    const Vector2D &adr_) {
-  const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
-  const int nl = statIn.getNMatsubara();
+  const int nl = in.getNMatsubara();
   const int nx_ = adr_.size(0);
   const int nl_ = adr_.size(1);
   const double &xMax = wvg_.back();
@@ -183,8 +179,7 @@ double Qstls::computeError(){
 
 // Update solution during qstls iterations
 void Qstls::updateSolution(){
-  const auto &statIn = in.getStaticInput();
-  const double aMix = statIn.getMixingParameter();
+  const double aMix = in.getMixingParameter();
   ssfOld = sum(mult(ssf, aMix), mult(ssfOld, 1 - aMix));
   if (useIet) {
     Vector2D tmp = adr;
@@ -200,9 +195,8 @@ void Qstls::computeAdrFixed() {
   fflush(stdout);
   loadAdrFixed();
   if (adrFixed.size() > 0) { return; }
-  const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
-  const int nl = statIn.getNMatsubara();
+  const int nl = in.getNMatsubara();
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   adrFixed.resize(nx, nl, nx);
@@ -219,8 +213,7 @@ void Qstls::computeAdrFixed() {
 }
 
 void Qstls::loadAdrFixed() {
-  const auto &qstlsIn = in.getQstlsInput();
-  const string fileName = qstlsIn.getFixedFileName();
+  const string fileName = qin.getFixedFileName();
   if (fileName == "") return;
   vector<double> wvg_;
   Vector3D adrFixed_;
@@ -241,7 +234,7 @@ int Qstls::checkAdrFixedFromFile(const vector<double> &wvg_,
   constexpr double tol = 1e-15;
   const vector<double> wvgDiff = diff(wvg_, wvg);
   const double &wvgMaxDiff = abs(*max_element(wvgDiff.begin(), wvgDiff.end()));
-  const bool consistentMatsubara = nl_ == in.getStaticInput().getNMatsubara();
+  const bool consistentMatsubara = nl_ == in.getNMatsubara();
   const bool consistentTheta = abs(Theta_ - in.getDegeneracy()) <= tol;
   const bool consistentGrid = wvg_.size() == wvg.size() && wvgMaxDiff <= tol;
   if (!consistentMatsubara ||
@@ -253,9 +246,8 @@ int Qstls::checkAdrFixedFromFile(const vector<double> &wvg_,
 }
 
 void Qstls::computeAdrIet() {
-  const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
-  const int nl = statIn.getNMatsubara();
+  const int nl = in.getNMatsubara();
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   assert(adrOld.size() > 0);
   // Compute bridge function
@@ -291,9 +283,8 @@ void Qstls::computeAdrIet() {
 }
 
 void Qstls::computeAdrFixedIet() {
-  const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
-  const int nl = statIn.getNMatsubara();
+  const int nl = in.getNMatsubara();
   vector<int> idx;
   // Check which files have to be created
   getAdrFixedIetFileInfo();
@@ -335,9 +326,8 @@ void Qstls::getAdrFixedIetFileInfo() {
 
 void Qstls::writeAdrFixedIetFile(const Vector3D &res,
 				 const int i) const {
-  const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
-  const int nl = statIn.getNMatsubara();
+  const int nl = in.getNMatsubara();
   const double Theta = in.getDegeneracy();
   const string fileName = adrFixedIetFileInfo.at(i).first;
   ofstream file;
@@ -352,15 +342,14 @@ void Qstls::writeAdrFixedIetFile(const Vector3D &res,
   writeDataToBinary<Vector3D>(file, res);
   file.close();
   if (!file) {
-    throw runtime_error("Error in writing the file " + fileName);
+    throw runtime_error("Error in writing to file " + fileName);
   }
 }
 
 void Qstls::readAdrFixedIetFile(Vector3D &res,
 				const int i) const {
-  const auto &statIn = in.getStaticInput();
   const int nx = wvg.size();
-  const int nl = statIn.getNMatsubara();
+  const int nl = in.getNMatsubara();
   const string fileName = adrFixedIetFileInfo.at(i).first;
   ifstream file;
   file.open(fileName, ios::binary);
@@ -380,7 +369,7 @@ void Qstls::readAdrFixedIetFile(Vector3D &res,
   readDataFromBinary<Vector3D>(file, res);
   file.close();
   if (!file) {
-    throw runtime_error("Error in reading the file " + fileName);
+    throw runtime_error("Error in reading from file " + fileName);
   }
   if (checkAdrFixedFromFile(wvg_, Theta_, nl_) != 0) {
     throw runtime_error("Fixed component of the auxiliary density response"
@@ -431,9 +420,8 @@ void Qstls::writeRestart() const {
   if (!file.is_open()) {
     throw runtime_error("Output file " + fileName + " could not be created.");
   }
-  const auto &statIn = in.getStaticInput();
   int nx = wvg.size();
-  int nl = statIn.getNMatsubara();
+  int nl = in.getNMatsubara();
   writeDataToBinary<int>(file, nx);
   writeDataToBinary<int>(file, nl);
   writeDataToBinary<double>(file, in.getDegeneracy());

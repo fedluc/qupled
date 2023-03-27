@@ -1,9 +1,8 @@
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_fermi_dirac.h>
 #include "chemicalpotential.hpp"
-#include "numerics.hpp"
 
-void ChemicalPotential::compute(cVector<double> &guess){
+void ChemicalPotential::compute(const vector<double> &guess){
   auto func = [this](double mu)->double{return normalizationCondition(mu);};
   RootSolver rsol;
   rsol.solve(func, guess);
