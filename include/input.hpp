@@ -10,7 +10,7 @@ using namespace std;
 
 class Input {
 
-private:
+protected:
 
   // scheme for 2D integrals
   string int2DScheme;
@@ -54,6 +54,8 @@ public:
   bool isClassic() const { return isClassicTheory; };
   // Print content of the data structure
   void print() const;
+  // Compare two Input objects
+  bool isEqual(const Input &in) const;
   
 };
 
@@ -116,6 +118,8 @@ public:
   double getWaveVectorGridCutoff() const { return xmax; };
   // Print content of the data structure
   void print() const;
+  // Compare two StlsInput objects
+  bool isEqual(const StlsInput &in) const;
   
 };
 
@@ -138,7 +142,9 @@ public:
   string getFixedFileName() const {return fixedFileName; };
   // Print content of the data structure
   void print() const ;
-
+  // Compare two QstlsInput objects
+  bool isEqual(const QstlsInput &in) const;
+  
 };
 
 #endif

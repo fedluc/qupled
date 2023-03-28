@@ -15,8 +15,13 @@ BOOST_PYTHON_MODULE(qupled)
     .def("setInt2DScheme", &Input::setInt2DScheme)
     .def("setNThreads", &Input::setNThreads)
     .def("setTheory", &Input::setTheory)
-    .def("print", &Input::print);
-
+    .def("getCoupling", &Input::getCoupling)
+    .def("getDegeneracy", &Input::getDegeneracy)
+    .def("getInt2DScheme", &Input::getInt2DScheme)
+    .def("getNThreads", &Input::getNThreads)
+    .def("getTheory", &Input::getTheory)
+    .def("print", &Input::print)
+    .def("isEqual", &Input::isEqual);
 
   class_<StlsInput, bases<Input>>("StlsInput", init<const double, const double, const string>())
     .def("setChemicalPotentialGuess", &StlsInput::setChemicalPotentialGuess)
@@ -29,11 +34,24 @@ BOOST_PYTHON_MODULE(qupled)
     .def("setRestartFileName", &StlsInput::setRestartFileName)
     .def("setWaveVectorGridRes", &StlsInput::setWaveVectorGridRes)
     .def("setWaveVectorGridCutoff", &StlsInput::setWaveVectorGridCutoff)
-    .def("print", &StlsInput::print);
-    
+    .def("getChemicalPotentialGuess", &StlsInput::getChemicalPotentialGuess)
+    .def("getErrMin", &StlsInput::getErrMin)
+    .def("getMixingParameter", &StlsInput::getMixingParameter)
+    .def("getIETMapping", &StlsInput::getIETMapping)
+    .def("getNMatsubara", &StlsInput::getNMatsubara)
+    .def("getNIter", &StlsInput::getNIter)
+    .def("getOutIter", &StlsInput::getOutIter)
+    .def("getRestartFileName", &StlsInput::getRestartFileName)
+    .def("getWaveVectorGridRes", &StlsInput::getWaveVectorGridRes)
+    .def("getWaveVectorGridCutoff", &StlsInput::getWaveVectorGridCutoff)
+    .def("print", &StlsInput::print)
+    .def("isEqual", &StlsInput::isEqual);
+  
   class_<QstlsInput>("QstlsInput")
     .def("setFixedFileName", &QstlsInput::setFixedFileName)
-    .def("print", &QstlsInput::print);
+    .def("getFixedFileName", &QstlsInput::getFixedFileName)
+    .def("print", &QstlsInput::print)
+    .def("isEqual", &QstlsInput::isEqual);
     
   // Class to solve classical schemes
   class_<Stls>("Stls", init<const StlsInput>())

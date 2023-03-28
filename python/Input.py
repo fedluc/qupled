@@ -14,13 +14,32 @@ class Input:
             self.inputs = qp.Input(coupling, degeneracy, theory)
         else:
             self.throwInputFormatError("Input:")
-        self.isDefault = True
+
+    # Set coupling parameter
+    def setCoupling(self, num):
+        if (isinstance(num, int, float)):
+            self.inputs.setCoupling(num)
+        else:
+            self.throwInputFormatError("setCoupling")
+
+    # Set degeneracy parameter
+    def setDegeneracy(self, num):
+        if (isinstance(num, int, float)):
+            self.inputs.setDegeneracy(num)
+        else:
+            self.throwInputFormatError("setDegeneracy")
+
+    # Set theory to solve
+    def setTheory(self, name):
+        if (isinstance(num, str)):
+            self.inputs.setTheory(name)
+        else:
+            self.throwInputFormatError("setTheory")
             
     # Set number of OMP threads
     def setNThreads(self, num):
         if (isinstance(num, int)):
             self.inputs.setNThreads(num)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setNThreads")
     
@@ -28,14 +47,36 @@ class Input:
     def setInt2DScheme(self, name):
         if (isinstance(num, str)):
             self.inputs.setInt2DScheme(name)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setInt2DScheme")
+
+    # Get coupling parameter
+    def getCoupling(self):
+        return self.inputs.getCoupling()
+
+    # Get degeneracy parameter
+    def getDegeneracy(self):
+        return self.inputs.getDegeneracy()
+
+    # Get theory to be solved
+    def getTheory(self):
+        return self.inputs.getTheory()
+    
+    # Get number of OMP threads
+    def getNThreads(self):
+        return self.inputs.getNThreads()
+    
+    # Get scheme for 2D integrals
+    def getInt2DScheme(self):
+        return self.inputs.getInt2DScheme()
 
     # Print content of input structure
     def print(self):
         self.inputs.print()
-            
+
+    # Compare to another Input object
+    def isEqual(self, obj):
+        return self.inputs.isEqual(obj.inputs)
 
     # Throw error messages
     def throwInputFormatError(self, callerName):
@@ -53,7 +94,6 @@ class StlsInput(Input):
             self.inputs = qp.StlsInput(coupling, degeneracy, theory)
         else:
             self.throwInputFormatError("StlsInput:")
-        self.isDefault = True
         
     # Set initial guess for chemical potential
     def setChemicalPotentialGuess(self, num1, num2):
@@ -61,7 +101,6 @@ class StlsInput(Input):
                       isinstance(num2, (int, float)) )
         if (goodInput) :
             self.inputs.setChemicalPotentialGuess(num1, num2)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setChemicalPotentialGuess")
 
@@ -69,7 +108,6 @@ class StlsInput(Input):
     def setErrMin(self, num):
         if (isinstance(num, (int, float))):
             self.inputs.setErrMin(num)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setErrMin")
 
@@ -77,7 +115,6 @@ class StlsInput(Input):
     def setIETMapping(self, name):
         if (isinstance(name, str)):
             self.inputs.setIETMapping(name)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setIETMapping")
             
@@ -85,7 +122,6 @@ class StlsInput(Input):
     def setMixingParameter(self, num):
         if (isinstance(num, (int, float))):
             self.inputs.setMixingParameter(num)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setMixingParameter")
 
@@ -93,7 +129,6 @@ class StlsInput(Input):
     def setNIter(self, num):
         if (isinstance(num, int)):
             self.inputs.setNIter(num)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setNIter")
             
@@ -101,7 +136,6 @@ class StlsInput(Input):
     def setNMatsubara(self, num):
         if (isinstance(num, int)):
             self.inputs.setNMatsubara(num)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setNMatsubara")
 
@@ -109,7 +143,6 @@ class StlsInput(Input):
     def setOutIter(self, num):
         if (isinstance(num, int)):
             self.inputs.setOutIter(num)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setOutIter")
 
@@ -117,7 +150,6 @@ class StlsInput(Input):
     def setRestartFileName(self, name):
         if (isinstance(name, str)):
             self.inputs.setRestartFileName(name)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setRestartFileName")
 
@@ -125,7 +157,6 @@ class StlsInput(Input):
     def setWaveVectorGridRes(self, num):
         if (isinstance(num, (int, float))):
             self.inputs.setWaveVectorGridRes(num)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setWaveVectorGridRes")
 
@@ -133,10 +164,53 @@ class StlsInput(Input):
     def setWaveVectorGridCutoff(self, num):
         if (isinstance(num, (int, float))):
             self.inputs.setWaveVectorGridCutoff(num)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setWaveVectorGridCutoff")
-                    
+
+    # Get initial guess for chemical potential
+    def getChemicalPotentialGuess(self):
+        return self.inputs.getChemicalPotentialGuess()
+
+    # Get miminum error for convergence
+    def getErrMin(self):
+        return self.inputs.getErrMin()
+
+    # Get iet mapping
+    def getIETMapping(self):
+        return self.inputs.getIETMapping()
+            
+    # Get mixing parameter
+    def getMixingParameter(self):
+        return self.inputs.getMixingParameter()
+
+    # Get maximum number of iterations
+    def getNIter(self):
+        return self.inputs.getNIter()
+            
+    # Get miminum error for convergence
+    def getNMatsubara(self):
+        return self.inputs.getNMatsubara()
+
+    # Get output frequency
+    def getOutIter(self):
+        return self.inputs.getOutIter()
+
+    # Get name for restart file
+    def getRestartFileName(self):
+        return self.inputs.getRestartFileName()
+
+    # Get Wave-vector grid resolution
+    def getWaveVectorGridRes(self):
+        return self.inputs.getWaveVectorGridRes()
+
+    # Get Wave-vector grid cutoff
+    def getWaveVectorGridCutoff(self):
+        return self.inputs.getWaveVectorGridCutoff()
+
+    # Compare to another StlsInput object
+    def isEqual(self, obj):
+        return self.inputs.isEqual(obj.inputs)
+    
     # Print content of input structure
     def print(self):
         self.inputs.print()
@@ -154,16 +228,24 @@ class QstlsInput(StlsInput) :
             self.qinputs = qp.QstlsInput()
         else:
             self.throwInputFormatError("QstlsInput:")
-        self.isDefault = True
     
     # Set name for file storing the fixed component of the auxiliary density
     # response
     def setFixedAdrFileName(self, name):
         if (isinstance(name, str)):
             self.qinputs.setFixedFileName(name)
-            self.isDefault = False
         else:
             self.throwInputFormatError("setFixedAdrFileName")
+
+    # Get name for file storing the fixed component of the auxiliary density
+    # response
+    def getFixedAdrFileName(self):
+        return self.qinputs.setFixedFileName()
+
+    # Compare to another QstlsInput object
+    def isEqual(self, obj):
+        return ( self.inputs.isEqual(obj.inputs) and
+                 self.qinputs.isEqual(obj.qinputs) )
 
     # Print content of input structure
     def print(self):

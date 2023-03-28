@@ -67,6 +67,14 @@ void Input::print() const {
   cout << "Theory to be solved = " << theory << endl;
 }
 
+bool Input::isEqual(const Input &in) const {
+  return ( int2DScheme == in.int2DScheme &&
+	   nThreads == in.nThreads &&
+	   rs == in.rs &&
+	   theory == in.theory &&
+	   Theta == in.Theta ); 
+}
+
 // --- StlsInput ---
 
 void StlsInput::setChemicalPotentialGuess(const double &muMin,
@@ -158,6 +166,19 @@ void StlsInput::print() const {
   cout << "Wave-vector cutoff = " << xmax << endl;
 }
 
+bool StlsInput::isEqual(const StlsInput &in) const {
+  return ( Input::isEqual(in) &&
+	   aMix == in.aMix && 
+	   dx == in.dx && 
+	   errMin == in.errMin &&
+	   IETMapping == in.IETMapping &&
+	   muGuess == in.muGuess &&
+	   nl == in.nl &&
+	   nIter == in.nIter &&
+	   outIter == in.outIter &&
+	   restartFileName == in.restartFileName &&
+	   xmax == in.xmax);
+}
 
 // --- QstlsInput ---
 
@@ -168,4 +189,8 @@ void QstlsInput::setFixedFileName(const string &fixedFileName){
 void QstlsInput::print() const {
   cout << "##### qSTLS-related input #####" << endl;
   cout << "File with fixed adr component = " << fixedFileName  << endl;
+}
+
+bool QstlsInput::isEqual(const QstlsInput &in) const {
+  return ( fixedFileName == in.fixedFileName );
 }
