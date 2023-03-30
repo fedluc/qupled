@@ -24,7 +24,7 @@ string Input::initTheory(const string &theory_){
   isClassicTheory = count(cTheories.begin(), cTheories.end(), theory_) != 0;
   isQuantumTheory = count(qTheories.begin(), qTheories.end(), theory_) != 0;
   if (!isClassicTheory && !isQuantumTheory) {
-    throw runtime_error("Unknown theory: " + theory_);
+    throw runtime_error("Invalid dielectric theory: " + theory_);
   }
   // A theory can't both be classical and quantum at the same time
   assert(!isClassicTheory || !isQuantumTheory);

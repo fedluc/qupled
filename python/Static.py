@@ -5,11 +5,11 @@ import qupled.qupled as qp
 import qupled.Input as Input
 
 class Stls():
-
+            
     # Constructor
     def __init__(self,
                  coupling,
-                 degeneracy
+                 degeneracy,
                  chemicalPotential = None,
                  cutoff = None,
                  error = None,
@@ -19,8 +19,13 @@ class Stls():
                  outputFrequency = None,
                  restartFile = None,
                  resolution = None ):
+        # Allowed theories
+        self.allowedTheories = ["STLS"]
         # Default inputs
-        self.inputs = Input.StlsInput(coupling, degeneracy, "STLS")
+        self.inputs = Input.Stls(coupling, degeneracy, "STLS")
+        # Scheme to solve and associated input
+        self.scheme = None
+        self.__schemeInputs = None
         # Non-default inputs
         if (chemicalPotential != None):
             self.inputs.setChemicalPotential(-10, 10)
@@ -40,19 +45,21 @@ class Stls():
             self.inputs.setRestartFile(restartFile)
         if (resolution != None):
             self.inputs.setWaveVectorGridRes(resolution)
-        # Scheme to solve and associated input
-        self.scheme = None
-        self.__schemeInputs = None
         
     # Compute
     def compute(self):
+        self.checkInputs()
         self.__schemeInputs = self.inputs
         self.scheme = qp.Stls(self.__schemeInputs.inputs)
         self.scheme.compute()
 
-
+    # Check input before computing
+    def checkInputs(self):
+        if (self.inputs.getTheory() not in self.allowedTheories):
+            sys.exit("Invalid dielectric theory")
+        
 class StlsIet(Stls):
-
+            
     # Constructor
     def __init__(self,
                  coupling,
@@ -61,29 +68,27 @@ class StlsIet(Stls):
                  chemicalPotential = None,
                  cutoff = None,
                  error = None,
-                 iet = None,
+                 mapping = None,
                  mixing = None,
                  iterations = None,
                  matsubara = None,
                  outputFrequency = None,
                  restartFile = None,
-                 scheme2DIntegrals = None
+                 scheme2DIntegrals = None,
                  resolution = None ):
         # Call parent constructor
-        super().__init___(self, coupling, degeneracy,
-                          chemicalPotential, cutoff, error,
-                          mixing, iterations, matsubara,
-                          outputFrequency, restartFile,
-                          resolution)
+        super().__init__(coupling, degeneracy,
+                         chemicalPotential, cutoff, error,
+                         mixing, iterations, matsubara,
+                         outputFrequency, restartFile,
+                         resolution)
+        # Allowed theories
+        self.allowedTheories = ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
         # Set theory
-        if (theory == "STLS-HNC" or
-            theory == "STLS-IOI" or
-            theory == "STLS-LCT"):
-            self.inputs.setTheort(theory)
-        else:
-            sys.exit("StlsIet: Unknown theory")
+        self.inputs.setTheory(theory)
+        self.checkInputs()
         # Non-default inputs
-        if (iet != None):
+        if (mapping != None):
             self.inputs.IETMapping(iet)
         if (scheme2DIntegrals != None):
             self.inputs.setInt2DScheme(scheme2DIntegrals)

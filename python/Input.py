@@ -3,7 +3,7 @@
 import sys
 import qupled.qupled as qp
 
-class Input:
+class Base:
 
     # Constructor
     def __init__(self, coupling, degeneracy, theory):
@@ -17,21 +17,21 @@ class Input:
 
     # Set coupling parameter
     def setCoupling(self, num):
-        if (isinstance(num, int, float)):
+        if (isinstance(num, (int, float))):
             self.inputs.setCoupling(num)
         else:
             self.throwInputFormatError("setCoupling")
 
     # Set degeneracy parameter
     def setDegeneracy(self, num):
-        if (isinstance(num, int, float)):
+        if (isinstance(num, (int, float))):
             self.inputs.setDegeneracy(num)
         else:
             self.throwInputFormatError("setDegeneracy")
 
     # Set theory to solve
     def setTheory(self, name):
-        if (isinstance(num, str)):
+        if (isinstance(name, str)):
             self.inputs.setTheory(name)
         else:
             self.throwInputFormatError("setTheory")
@@ -45,7 +45,7 @@ class Input:
     
     # Set scheme for 2D integrals
     def setInt2DScheme(self, name):
-        if (isinstance(num, str)):
+        if (isinstance(name, str)):
             self.inputs.setInt2DScheme(name)
         else:
             self.throwInputFormatError("setInt2DScheme")
@@ -83,7 +83,7 @@ class Input:
         sys.exit(callerName + ": Wrong input format")
 
 
-class StlsInput(Input):
+class Stls(Base):
 
     # Constructor
     def __init__(self, coupling, degeneracy, theory):
@@ -216,7 +216,7 @@ class StlsInput(Input):
         self.inputs.print()
 
 
-class QstlsInput(StlsInput) :
+class Qstls(Stls) :
 
     # Constructor
     def __init__(self, coupling, degeneracy, theory):
