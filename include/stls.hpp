@@ -73,15 +73,15 @@ protected:
   double computeError();
   void updateSolution();
   // Write output files
-  void writeOutput() const;
-  void writeSsf() const;
-  void writeSsfHF() const;
-  void writeSlfc() const;
-  void writeSdr() const;
-  void writeIdr() const;
-  void writeUInt() const;
-  void writeRdf() const;
-  void writeBf() const;
+  // void writeOutput() const;
+  // void writeSsf() const;
+  // void writeSsfHF() const;
+  // void writeSlfc() const;
+  // void writeSdr() const;
+  // void writeIdr() const;
+  // void writeUInt() const;
+  // void writeRdf() const;
+  // void writeBf() const;
   // Restart files
   void writeRestart() const;
   void readRestart(vector<double> &wvgFile,
@@ -105,8 +105,15 @@ public:
   // Compute stls scheme
   void compute();
   // Getters
-  void getSsf(vector<double> &ssf_);
-
+  vector<double> getBf() const { return bf; }
+  vector<double> getSlfc() const { return slfc; }
+  vector<double> getSsf() const { return ssf; }
+  vector<double> getSsfHF() const { return ssfHF; }
+  vector<double> getWvg() const { return wvg; }
+  vector<double> getIdr() const;
+  vector<double> getRdf(const vector<double> &r) const;
+  vector<double> getSdr() const;
+  double getUInt() const;  
 };
 
 // -----------------------------------------------------------------

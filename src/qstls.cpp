@@ -92,7 +92,7 @@ void Qstls::initialGuess() {
   // Default
   Stls stls(in, false, false);
   stls.compute();
-  stls.getSsf(ssfOld);
+  ssfOld = stls.getSsf();
   if (useIet) { adrOld.fill(0.0); }
 }
 
@@ -383,7 +383,7 @@ void Qstls::readAdrFixedIetFile(Vector3D &res,
 
 // Write output files
 void Qstls::writeOutput() const{
-  Stls::writeOutput();
+  //Stls::writeOutput();
   writeAdr();
   writeRestart();
 }

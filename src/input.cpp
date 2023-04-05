@@ -40,7 +40,7 @@ void Input::setDegeneracy(const double &Theta){
 }
 
 
-void Input::setInt2DScheme(const string  &int2DScheme){
+void Input::setInt2DScheme(const string &int2DScheme){
   const vector<string> schemes = {"full", "segregated"};
   if (count(schemes.begin(), schemes.end(), int2DScheme) == 0) {
     throw runtime_error("Unknown scheme for 2D integrals: " + int2DScheme);

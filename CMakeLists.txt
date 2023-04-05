@@ -14,7 +14,8 @@ set(PYTHON_LIBRARY ${PYTHON_ROOT}/lib/libpython3.11.dylib)
 set(PYTHON_INCLUDE_DIR ${PYTHON_ROOT}/include/python3.11)
 find_package(PythonInterp 3)
 if (PYTHONINTERP_FOUND)
-   find_package(Boost COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
+   find_package(Boost
+		COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} REQUIRED)
    find_package(PythonLibs 3 REQUIRED)
 else()
    message("Python not found")
@@ -57,8 +58,14 @@ target_link_libraries(qupled
 		      ${MATH_LIBRARY}
 		      ${ARGP_LIBRARY})		   
 
-# Create python package
+# Create python package							
 add_custom_target(copy_python COMMAND
 		  ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_LIST_DIR}/copy-python.cmake)
 add_dependencies(qupled copy_python)
 set_target_properties(qupled PROPERTIES LIBRARY_OUTPUT_DIRECTORY qupled)
+
+# Clean target
+add_custom_target(true-clean COMMAND
+		  COMMAND ${CMAKE_BUILD_TOOL} clean
+		  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_LIST_DIR}/true-clean.cmake)
+

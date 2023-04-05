@@ -253,6 +253,7 @@ namespace binUtil {
   void readDataFromBinary(ifstream &file, T &data) {
     for (auto &el : data) { readDataFromBinary<decltype(el)>(file, el);}
   };
-  
+
 }
+
 #endif

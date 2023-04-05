@@ -49,7 +49,7 @@ namespace vecUtil {
   
   // Element-wise multiplication of a vector and a scalar
   vector<double> mult(const vector<double> &v,
-		    const double a) {
+		      const double a) {
     vector<double> res = v;
     transform(res.begin(), res.end(), res.begin(), [&a](double c){return c*a;});
     return res;
@@ -278,7 +278,7 @@ namespace thermoUtil {
   }
 
   double Rdf::get() const {
-    assert(r>0);
+    if (r == 0) { return 0.0; }
     auto func = [&](double y)->double{return integrand(y);};
     itg.setR(r);
     itg.compute(func);

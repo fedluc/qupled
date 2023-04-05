@@ -1,4 +1,5 @@
 #include <boost/python.hpp>
+#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "input.hpp"
 #include "stls.hpp"
 #include "qstls.hpp"
@@ -8,57 +9,86 @@ using namespace boost::python;
 BOOST_PYTHON_MODULE(qupled)
 {
 
+  // Wrapper for vector<double>
+  class_<std::vector<double>>("vector<double>")
+    .def(vector_indexing_suite<std::vector<double>>() );
+  
   // Classes to manage the input
   class_<Input>("Input", init<const double, const double, const string>())
-    .def("setCoupling", &Input::setCoupling)
-    .def("setDegeneracy", &Input::setDegeneracy)
-    .def("setInt2DScheme", &Input::setInt2DScheme)
-    .def("setNThreads", &Input::setNThreads)
-    .def("setTheory", &Input::setTheory)
-    .def("getCoupling", &Input::getCoupling)
-    .def("getDegeneracy", &Input::getDegeneracy)
-    .def("getInt2DScheme", &Input::getInt2DScheme)
-    .def("getNThreads", &Input::getNThreads)
-    .def("getTheory", &Input::getTheory)
+    .add_property("coupling",
+		  &Input::getCoupling,
+		  &Input::setCoupling)
+    .add_property("degeneracy",
+		  &Input::getDegeneracy,
+		  &Input::setDegeneracy)
+    .add_property("int2DScheme",
+		  &Input::getInt2DScheme,
+		  &Input::setInt2DScheme)
+    .add_property("threads",
+		  &Input::getNThreads,
+		  &Input::setNThreads)
+    .add_property("theory",
+		  &Input::getTheory,
+		  &Input::setTheory)
     .def("print", &Input::print)
     .def("isEqual", &Input::isEqual);
 
   class_<StlsInput, bases<Input>>("StlsInput", init<const double, const double, const string>())
-    .def("setChemicalPotentialGuess", &StlsInput::setChemicalPotentialGuess)
-    .def("setErrMin", &StlsInput::setErrMin)
-    .def("setMixingParameter", &StlsInput::setMixingParameter)
-    .def("setIETMapping", &StlsInput::setIETMapping)
-    .def("setNMatsubara", &StlsInput::setNMatsubara)
-    .def("setNIter", &StlsInput::setNIter)
-    .def("setOutIter", &StlsInput::setOutIter)
-    .def("setRestartFileName", &StlsInput::setRestartFileName)
-    .def("setWaveVectorGridRes", &StlsInput::setWaveVectorGridRes)
-    .def("setWaveVectorGridCutoff", &StlsInput::setWaveVectorGridCutoff)
-    .def("getChemicalPotentialGuess", &StlsInput::getChemicalPotentialGuess)
-    .def("getErrMin", &StlsInput::getErrMin)
-    .def("getMixingParameter", &StlsInput::getMixingParameter)
-    .def("getIETMapping", &StlsInput::getIETMapping)
-    .def("getNMatsubara", &StlsInput::getNMatsubara)
-    .def("getNIter", &StlsInput::getNIter)
-    .def("getOutIter", &StlsInput::getOutIter)
-    .def("getRestartFileName", &StlsInput::getRestartFileName)
-    .def("getWaveVectorGridRes", &StlsInput::getWaveVectorGridRes)
-    .def("getWaveVectorGridCutoff", &StlsInput::getWaveVectorGridCutoff)
+    .add_property("chemicalPotential",
+		  &StlsInput::getChemicalPotentialGuess,
+		  &StlsInput::setChemicalPotentialGuess)
+    .add_property("error",
+		  &StlsInput::getErrMin,
+		  &StlsInput::setErrMin)
+    .add_property("mixing",
+		  &StlsInput::getMixingParameter,
+		  &StlsInput::setMixingParameter)
+    .add_property("iet",
+		  &StlsInput::getIETMapping,
+		  &StlsInput::setIETMapping)
+    .add_property("matsubara",
+		  &StlsInput::getNMatsubara,
+		  &StlsInput::setNMatsubara)
+    .add_property("iterations",
+		  &StlsInput::getNIter,
+		  &StlsInput::setNIter)
+    .add_property("outputFrequency",
+		  &StlsInput::getOutIter,
+		  &StlsInput::setOutIter)
+    .add_property("restartFile",
+		  &StlsInput::getRestartFileName,
+		  &StlsInput::setRestartFileName)
+    .add_property("resolution",
+		  &StlsInput::getWaveVectorGridRes,
+		  &StlsInput::setWaveVectorGridRes)
+    .add_property("cutoff",
+		  &StlsInput::getWaveVectorGridCutoff,
+		  &StlsInput::setWaveVectorGridCutoff)
     .def("print", &StlsInput::print)
     .def("isEqual", &StlsInput::isEqual);
   
   class_<QstlsInput>("QstlsInput")
-    .def("setFixedFileName", &QstlsInput::setFixedFileName)
-    .def("getFixedFileName", &QstlsInput::getFixedFileName)
+    .add_property("setFixedFileName",
+		  &QstlsInput::getFixedFileName,
+		  &QstlsInput::setFixedFileName)
     .def("print", &QstlsInput::print)
     .def("isEqual", &QstlsInput::isEqual);
     
   // Class to solve classical schemes
   class_<Stls>("Stls", init<const StlsInput>())
-    .def("compute", &Stls::compute);
-
+    .def("compute", &Stls::compute)
+    .add_property("bf", &Stls::getBf)
+    .add_property("idr", &Stls::getIdr)
+    .add_property("rdf", &Stls::getRdf)
+    .add_property("sdr", &Stls::getSdr)
+    .add_property("slfc", &Stls::getSlfc)
+    .add_property("ssf", &Stls::getSsf)
+    .add_property("ssfHF", &Stls::getSsfHF)
+    .add_property("uInt", &Stls::getUInt)
+    .add_property("wvg", &Stls::getWvg);
+    
   // Class to solve quantum schemes
-  class_<Qstls>("Qstls", init<const StlsInput, const QstlsInput>())
+  class_<Qstls, bases<Stls>>("Qstls", init<const StlsInput, const QstlsInput>())
     .def("compute", &Qstls::compute);
   
 }

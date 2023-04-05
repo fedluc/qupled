@@ -18,7 +18,7 @@ void Stls::compute(){
   doIterations();
   if (verbose) cout << "Done" << endl;
   if (verbose) cout << "Writing output files: ";
-  writeOutput();
+  // writeOutput();
   if (verbose) cout << "Done" << endl;
 }
 
@@ -207,7 +207,7 @@ void Stls::doIterations() {
     // Update solution
     updateSolution();
     // Write output
-    if (counter % outIter == 0) { writeOutput();};
+    // if (counter % outIter == 0) { writeOutput();};
     // End timing
     double toc = omp_get_wtime();
     // Print diagnostic
@@ -254,212 +254,231 @@ void Stls::updateSolution(){
   slfcOld = sum(mult(slfc, aMix), mult(slfcOld, 1 - aMix));
 }
 
-// Write output files
-void Stls::writeOutput() const{
-  if (!writeFiles) return; 
-  writeSsf();
-  writeSsfHF();
-  writeSlfc();
-  writeSdr();
-  writeIdr();
-  writeUInt();
-  writeRdf();
-  writeBf();
-  writeRestart();
+// Getters
+vector<double> Stls::getIdr() const {
+  vector<double> idrTmp(idr.size());
+  std::copy(idr.begin(), idr.end(), idrTmp.begin());
+  return idrTmp;
 }
 
-void Stls::writeSsf() const {
+vector<double> Stls::getRdf(const vector<double> &r) const {
   assert(ssf.size() > 0 && wvg.size() > 0);
-  const string fileName = format<double,double>("ssf_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".dat",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
-  for (int i=0; i<wvg.size(); ++i){
-    const string line = format<double, double>("%.8e %.8e", wvg[i], ssf[i]);
-    file << line << endl;
-  }
-  file.close();
-}
-
-void Stls::writeSsfHF() const {
-  assert(ssfHF.size() > 0 && wvg.size() > 0);
-  const string fileName = format<double,double>("ssfHF_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".dat",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
-  for (int i=0; i<wvg.size(); ++i){
-    const string line = format<double, double>("%.8e %.8e", wvg[i], ssfHF[i]);
-    file << line << endl;
-  }
-  file.close();
-}
-
-
-void Stls::writeSlfc() const {
-  assert(slfc.size() > 0 && wvg.size() > 0);
-  const string fileName = format<double,double>("slfc_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".dat",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
-  for (int i=0; i<wvg.size(); ++i){
-    const string line = format<double, double>("%.8e %.8e", wvg[i], slfc[i]);
-    file << line << endl;
-  }
-  file.close();
-}
-
-void Stls::writeSdr() const {
-  if (in.getDegeneracy() == 0.0) return;
-  assert(slfc.size() > 0 && wvg.size() > 0);
-  const string fileName = format<double,double>("sdr_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".dat",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
-  const double fact = 4 *lambda * in.getCoupling() /M_PI;
-  for (int i=0; i<wvg.size(); ++i){
-    const double sdr = -1.5 *in.getDegeneracy() * idr(i,0)/
-      (1.0 + fact/(wvg[i] * wvg[i]) * (1.0 - slfc[i]) * idr(i,0));
-    const string line = format<double, double>("%.8e %.8e", wvg[i], sdr);
-    file << line << endl;
-  }
-  file.close();
-}
-
-void Stls::writeIdr() const {
-  if (in.getDegeneracy() == 0.0) return;
-  assert(idr.size() > 0 && wvg.size() > 0);
-  const string fileName = format<double,double>("idr_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".dat",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
-  const int nx = idr.size(0);
-  const int nl = idr.size(1);
-  for (int i=0; i<nx; ++i){
-    const string el1 = format<double>("%.8e ", wvg[i]);
-    file << el1;
-    for (int l=0; l<nl; ++l) {
-      const string el2 = format<double>("%.8e ", idr(i,l));
-      file << el2;
-    }
-    file << endl;
-  }
-  file.close();
-}
-
-void Stls::writeUInt() const {
-  assert(ssf.size() > 0 && wvg.size() > 0);
-  const string fileName = format<double,double>("uint_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".dat",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
   const Interpolator1D itp(wvg, ssf);
-  Integrator1D itgU;
-  const InternalEnergy uInt(in.getCoupling(),
-			    wvg.front(),
-			    wvg.back(),
-			    itp, itgU);
-  const string line = format<double, double>("%.8e %.8e %.8e",
-					     in.getCoupling(),
-					     in.getDegeneracy(),
-					     uInt.get());
-  file << line << endl;
-  file.close();
+  const int nr = r.size();
+  vector<double> rdf(nr);
+  Integrator1DFourier itgF(0.0);
+  for (int i=0; i<nr; ++i){
+    const Rdf rdfTmp(r[i], wvg.back(), itp, itgF);
+    rdf[i] = rdfTmp.get();
+  }
+  return rdf;
 }
 
-void Stls::writeRdf() const {
-  assert(ssf.size() > 0 && wvg.size() > 0);
-  const string fileName = format<double,double>("rdf_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".dat",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
-  const double dr = in.getWaveVectorGridRes();
-  const double r0 = dr/10; // Avoid starting from 0 to avoid divergence
-  const Interpolator1D itp(wvg, ssf);
-  Integrator1DFourier itgF(r0);
-  for (int i=0; i<wvg.size()-1; ++i){
-    const double r = r0 + i*dr;
-    const Rdf rdf(r, wvg.back(), itp, itgF);
-    const string line = format<double, double>("%.8e %.8e", r, rdf.get());
-    file << line << endl;
-  }
-  file.close();
-}
-
-void Stls::writeBf() const {
-  if (!useIet) return;
-  assert(bf.size() > 0 && wvg.size() > 0);
-  const string fileName = format<double,double>("bf_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".dat",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
+vector<double> Stls::getSdr() const {
+  if (in.getDegeneracy() == 0.0) {
+    throw runtime_error("The static density response cannot be computed in the ground state.");
+  };
+  vector<double> sdr(wvg.size());
+  const double fact = 4 *lambda * in.getCoupling() / M_PI;
+  const double Theta = -1.5 * in.getDegeneracy();
   for (int i=0; i<wvg.size(); ++i){
-    const string line = format<double, double>("%.8e %.8e", wvg[i], bf[i]);
-    file << line << endl;
+    sdr[i] = idr(i,0)/ (1.0 + fact/(wvg[i] * wvg[i]) * (1.0 - slfc[i]) * idr(i,0));
   }
-  file.close();
+  transform(sdr.begin(), sdr.end(), sdr.begin(), [&Theta](double el){return Theta*el;});
+  return sdr;
 }
 
-
-// Restart files
-void Stls::writeRestart() const {
-  const string fileName = format<double,double>("restart_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".bin",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName, ios::binary);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
-  int nx = wvg.size();
-  writeDataToBinary<int>(file, nx);
-  writeDataToBinary<decltype(wvg)>(file, wvg);
-  writeDataToBinary<decltype(slfc)>(file, slfc);
-  file.close();
-  if (!file) {
-    throw runtime_error("Error in writing to file " + fileName);
-  }
+double Stls::getUInt() const {
+  const Interpolator1D itp(wvg, ssf);
+  Integrator1D itgTmp;
+  const InternalEnergy uInt(in.getCoupling(), wvg.front(), wvg.back(), itp, itgTmp);
+  return uInt.get();
 }
+
+// // Write output files
+// void Stls::writeOutput() const{
+//   if (!writeFiles) return; 
+//   writeSsf();
+//   writeSsfHF();
+//   writeSlfc();
+//   writeSdr();
+//   writeIdr();
+//   writeUInt();
+//   writeRdf();
+//   writeBf();
+//   writeRestart();
+// }
+
+// void Stls::writeSsf() const {
+//   assert(ssf.size() > 0 && wvg.size() > 0);
+//   const string fileName = format<double,double>("ssf_rs%.3f_theta%.3f_"
+// 						+ in.getTheory() + ".dat",
+// 						in.getCoupling(),
+// 						in.getDegeneracy());
+//   ofstream file;
+//   file.open(fileName);
+//   if (!file.is_open()) {
+//     throw runtime_error("Output file " + fileName + " could not be created.");
+//   }
+//   For (int i=0; i<wvg.size(); ++i){
+//     const string line = format<double, double>("%.8e %.8e", wvg[i], ssf[i]);
+//     file << line << endl;
+//   }
+//   file.close();
+// }
+
+// void Stls::writeSsfHF() const {
+//   assert(ssfHF.size() > 0 && wvg.size() > 0);
+//   const string fileName = format<double,double>("ssfHF_rs%.3f_theta%.3f_"
+// 						+ in.getTheory() + ".dat",
+// 						in.getCoupling(),
+// 						in.getDegeneracy());
+//   ofstream file;
+//   file.open(fileName);
+//   if (!file.is_open()) {
+//     throw runtime_error("Output file " + fileName + " could not be created.");
+//   }
+//   for (int i=0; i<wvg.size(); ++i){
+//     const string line = format<double, double>("%.8e %.8e", wvg[i], ssfHF[i]);
+//     file << line << endl;
+//   }
+//   file.close();
+// }
+
+
+// void Stls::writeSlfc() const {
+//   assert(slfc.size() > 0 && wvg.size() > 0);
+//   const string fileName = format<double,double>("slfc_rs%.3f_theta%.3f_"
+// 						+ in.getTheory() + ".dat",
+// 						in.getCoupling(),
+// 						in.getDegeneracy());
+//   ofstream file;
+//   file.open(fileName);
+//   if (!file.is_open()) {
+//     throw runtime_error("Output file " + fileName + " could not be created.");
+//   }
+//   for (int i=0; i<wvg.size(); ++i){
+//     const string line = format<double, double>("%.8e %.8e", wvg[i], slfc[i]);
+//     file << line << endl;
+//   }
+//   file.close();
+// }
+
+// void Stls::writeSdr() const {
+//   if (in.getDegeneracy() == 0.0) return;
+//   assert(slfc.size() > 0 && wvg.size() > 0);
+//   const string fileName = format<double,double>("sdr_rs%.3f_theta%.3f_"
+// 						+ in.getTheory() + ".dat",
+// 						in.getCoupling(),
+// 						in.getDegeneracy());
+//   ofstream file;
+//   file.open(fileName);
+//   if (!file.is_open()) {
+//     throw runtime_error("Output file " + fileName + " could not be created.");
+//   }
+//   const double fact = 4 *lambda * in.getCoupling() /M_PI;
+//   for (int i=0; i<wvg.size(); ++i){
+//     const double sdr = -1.5 *in.getDegeneracy() * idr(i,0)/
+//       (1.0 + fact/(wvg[i] * wvg[i]) * (1.0 - slfc[i]) * idr(i,0));
+//     const string line = format<double, double>("%.8e %.8e", wvg[i], sdr);
+//     file << line << endl;
+//   }
+//   file.close();
+// }
+
+// void Stls::writeIdr() const {
+//   if (in.getDegeneracy() == 0.0) return;
+//   assert(idr.size() > 0 && wvg.size() > 0);
+//   const string fileName = format<double,double>("idr_rs%.3f_theta%.3f_"
+// 						+ in.getTheory() + ".dat",
+// 						in.getCoupling(),
+// 						in.getDegeneracy());
+//   ofstream file;
+//   file.open(fileName);
+//   if (!file.is_open()) {
+//     throw runtime_error("Output file " + fileName + " could not be created.");
+//   }
+//   const int nx = idr.size(0);
+//   const int nl = idr.size(1);
+//   for (int i=0; i<nx; ++i){
+//     const string el1 = format<double>("%.8e ", wvg[i]);
+//     file << el1;
+//     for (int l=0; l<nl; ++l) {
+//       const string el2 = format<double>("%.8e ", idr(i,l));
+//       file << el2;
+//     }
+//     file << endl;
+//   }
+//   file.close();
+// }
+
+// void Stls::writeUInt() const {
+//   assert(ssf.size() > 0 && wvg.size() > 0);
+//   const string fileName = format<double,double>("uint_rs%.3f_theta%.3f_"
+// 						+ in.getTheory() + ".dat",
+// 						in.getCoupling(),
+// 						in.getDegeneracy());
+//   ofstream file;
+//   file.open(fileName);
+//   if (!file.is_open()) {
+//     throw runtime_error("Output file " + fileName + " could not be created.");
+//   }
+//   const Interpolator1D itp(wvg, ssf);
+//   Integrator1D itgU;
+//   const InternalEnergy uInt(in.getCoupling(),
+// 			    wvg.front(),
+// 			    wvg.back(),
+// 			    itp, itgU);
+//   const string line = format<double, double>("%.8e %.8e %.8e",
+// 					     in.getCoupling(),
+// 					     in.getDegeneracy(),
+// 					     uInt.get());
+//   file << line << endl;
+//   file.close();
+// }
+
+
+
+// void Stls::writeBf() const {
+//   if (!useIet) return;
+//   assert(bf.size() > 0 && wvg.size() > 0);
+//   const string fileName = format<double,double>("bf_rs%.3f_theta%.3f_"
+// 						+ in.getTheory() + ".dat",
+// 						in.getCoupling(),
+// 						in.getDegeneracy());
+//   ofstream file;
+//   file.open(fileName);
+//   if (!file.is_open()) {
+//     throw runtime_error("Output file " + fileName + " could not be created.");
+//   }
+//   for (int i=0; i<wvg.size(); ++i){
+//     const string line = format<double, double>("%.8e %.8e", wvg[i], bf[i]);
+//     file << line << endl;
+//   }
+//   file.close();
+// }
+
+
+// // Restart files
+// void Stls::writeRestart() const {
+//   const string fileName = format<double,double>("restart_rs%.3f_theta%.3f_"
+// 						+ in.getTheory() + ".bin",
+// 						in.getCoupling(),
+// 						in.getDegeneracy());
+//   ofstream file;
+//   file.open(fileName, ios::binary);
+//   if (!file.is_open()) {
+//     throw runtime_error("Output file " + fileName + " could not be created.");
+//   }
+//   int nx = wvg.size();
+//   writeDataToBinary<int>(file, nx);
+//   writeDataToBinary<decltype(wvg)>(file, wvg);
+//   writeDataToBinary<decltype(slfc)>(file, slfc);
+//   file.close();
+//   if (!file) {
+//     throw runtime_error("Error in writing to file " + fileName);
+//   }
+// }
 
 void Stls::readRestart(vector<double> &wvgFile,
 		       vector<double> &slfcFile) const {
@@ -479,12 +498,6 @@ void Stls::readRestart(vector<double> &wvgFile,
   if (!file) {
     throw runtime_error("Error in reading from file " + fileName);
   }
-}
-
-// Getters
-void Stls::getSsf(vector<double> &ssf_){
-  ssf_.resize(0);
-  copy(ssf.begin(), ssf.end(), back_inserter(ssf_));
 }
 
 // -----------------------------------------------------------------
