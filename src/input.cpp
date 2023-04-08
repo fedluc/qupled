@@ -1,5 +1,6 @@
 #include "input.hpp"
 
+
 // --- Input ---
 
 double Input::initCoupling(const double &rs_){
@@ -77,14 +78,11 @@ bool Input::isEqual(const Input &in) const {
 
 // --- StlsInput ---
 
-void StlsInput::setChemicalPotentialGuess(const double &muMin,
-					  const double &muMax){
-  if (muMin >= muMax) {
+void StlsInput::setChemicalPotentialGuess(const vector<double> &muGuess){
+  if (muGuess.size() != 2 || muGuess[0] >= muGuess[1]) {
     throw runtime_error("Invalid guess for chemical potential calculation");
   }
-  muGuess.resize(2);
-  muGuess[0] = muMin;
-  muGuess[1] = muMax;
+  this->muGuess = muGuess;
 }
 
 void StlsInput::setErrMin(const double &errMin){

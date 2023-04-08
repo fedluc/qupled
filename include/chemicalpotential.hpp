@@ -3,9 +3,6 @@
 
 #include "numerics.hpp"
 
-using namespace std;
-// using namespace inpututil;
-
 class ChemicalPotential {
 
 private:

@@ -4,9 +4,6 @@
 #include <map>
 #include "stls.hpp"
 
-using namespace std;
-using namespace vecUtil;
-
 // -----------------------------------------------------------------
 // Solver for the qSTLS-based schemes
 // -----------------------------------------------------------------
@@ -18,9 +15,9 @@ private:
   // Input data
   const QstlsInput qin;
   // Auxiliary density response
-  Vector2D adr;
-  Vector2D adrOld;
-  Vector3D adrFixed;
+  vecUtil::Vector2D adr;
+  vecUtil::Vector2D adrOld;
+  vecUtil::Vector3D adrFixed;
   map<int,pair<string,bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
   vector<double> ssfOld;
@@ -34,9 +31,9 @@ private:
   void computeAdrIet();
   void computeAdrFixedIet();
   void getAdrFixedIetFileInfo();
-  void writeAdrFixedIetFile(const Vector3D &res,
+  void writeAdrFixedIetFile(const vecUtil::Vector3D &res,
 			    const int i) const;
-  void readAdrFixedIetFile(Vector3D &res,
+  void readAdrFixedIetFile(vecUtil::Vector3D &res,
 			   const int i) const;
   // Compute static structure factor at finite temperature
   void computeSsf();
@@ -47,7 +44,7 @@ private:
   void initialGuessSsf(const vector<double> &wvg_,
 		       const vector<double> &adr_);
   void initialGuessAdr(const vector<double> &wvg_,
-		       const Vector2D &adr_);
+		       const vecUtil::Vector2D &adr_);
   double computeError();
   void updateSolution();
    // Write output files
@@ -57,14 +54,14 @@ private:
   void writeRestart() const;
   void readRestart(const string &fileName,
 		   vector<double> &wvg_,
-		   Vector3D &adrFixed_,
+		   vecUtil::Vector3D &adrFixed_,
 		   double &Theta,
 		   int &nl) const;
   void readRestart(const string &fileName,
 		   vector<double> &wvg_,
 		   vector<double> &ssf_,
-		   Vector2D &adr_,
-		   Vector3D &adrFixed_,
+		   vecUtil::Vector2D &adr_,
+		   vecUtil::Vector3D &adrFixed_,
 		   double &Theta,
 		   int &nl) const;
   // Check if iet schemes should be used
@@ -202,8 +199,8 @@ public:
   
   // Get result of integration
   void get(const vector<double> &wvg,
-	   const Vector3D &fixed,
-	   Vector2D &res);
+	   const vecUtil::Vector3D &fixed,
+	   vecUtil::Vector2D &res);
   
 };
 
@@ -237,7 +234,7 @@ public:
   
   // Get integration result
   void get(vector<double> &wvg,
-	   Vector3D &res) const;
+	   vecUtil::Vector3D &res) const;
   
 };
 
@@ -289,8 +286,8 @@ public:
   
   // Get integration result
   void get(const vector<double> &wvg,
-	   const Vector3D &fixed,
-	   Vector2D &res);
+	   const vecUtil::Vector3D &fixed,
+	   vecUtil::Vector2D &res);
   
 };
 
@@ -323,7 +320,7 @@ public:
   
   //Get integration result
   void get(vector<double> &wvg,
-	   Vector3D &res) const;
+	   vecUtil::Vector3D &res) const;
   
 };
 

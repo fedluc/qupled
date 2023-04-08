@@ -2,6 +2,7 @@
 #include "util.hpp"
 #include "qstls.hpp"
 
+using namespace vecUtil;
 using namespace stringUtil;
 using namespace binUtil;
 

@@ -255,12 +255,6 @@ void Stls::updateSolution(){
 }
 
 // Getters
-vector<double> Stls::getIdr() const {
-  vector<double> idrTmp(idr.size());
-  std::copy(idr.begin(), idr.end(), idrTmp.begin());
-  return idrTmp;
-}
-
 vector<double> Stls::getRdf(const vector<double> &r) const {
   assert(ssf.size() > 0 && wvg.size() > 0);
   const Interpolator1D itp(wvg, ssf);

@@ -15,7 +15,8 @@ set(PYTHON_INCLUDE_DIR ${PYTHON_ROOT}/include/python3.11)
 find_package(PythonInterp 3)
 if (PYTHONINTERP_FOUND)
    find_package(Boost
-		COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} REQUIRED)
+		COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} REQUIRED
+		COMPONENTS numpy3 REQUIRED)
    find_package(PythonLibs 3 REQUIRED)
 else()
    message("Python not found")

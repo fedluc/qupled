@@ -6,9 +6,6 @@
 #include "util.hpp"
 #include "numerics.hpp"
 
-using namespace std;
-using namespace vecUtil;
-
 // -----------------------------------------------------------------
 // Solver for the STLS-based schemes
 // -----------------------------------------------------------------
@@ -22,7 +19,7 @@ protected:
   // Wave vector grid
   vector<double> wvg;
   // Ideal density response
-  Vector2D idr;
+  vecUtil::Vector2D idr;
   // Static local field correction
   vector<double> slfcOld;
   vector<double> slfc;
@@ -106,11 +103,11 @@ public:
   void compute();
   // Getters
   vector<double> getBf() const { return bf; }
+  vecUtil::Vector2D getIdr() const { return idr; }
   vector<double> getSlfc() const { return slfc; }
   vector<double> getSsf() const { return ssf; }
   vector<double> getSsfHF() const { return ssfHF; }
   vector<double> getWvg() const { return wvg; }
-  vector<double> getIdr() const;
   vector<double> getRdf(const vector<double> &r) const;
   vector<double> getSdr() const;
   double getUInt() const;  

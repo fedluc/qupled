@@ -4,10 +4,8 @@
 #include <fstream>
 #include "numerics.hpp"
 
-using namespace std;
-
 // Util functions to manipulate strings
-namespace stringUtil{
+namespace stringUtil {
   
   template<typename ... Args>
   string format(const string &format, Args ... args )
@@ -136,7 +134,7 @@ namespace vecUtil {
     
 }
 
-
+// Util functions to compute thermodynamic properties
 namespace thermoUtil {
 
   // Class for internal energy calculation
@@ -211,7 +209,7 @@ namespace thermoUtil {
   
 }
 
-
+// Util functions to manipulate binary files
 namespace binUtil {
 
   template<typename T>

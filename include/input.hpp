@@ -3,8 +3,7 @@
 
 #include <vector>
 #include <iostream>
-
-using namespace std;
+#include "util.hpp"
 
 #define EMPTY_STRING ""
 
@@ -94,8 +93,7 @@ public:
       IETMapping("standard"), muGuess({-10, 10}), nl(128), nIter(1000),
       outIter(10), restartFileName(EMPTY_STRING), xmax(10.0) { ; };
   // Setters
-  void setChemicalPotentialGuess(const double &muMin,
-				 const double &muMax);
+  void setChemicalPotentialGuess(const vector<double> &muGuess);
   void setErrMin(const double &errMin);
   void setMixingParameter(const double  &aMix);
   void setIETMapping(const string &IETMapping);

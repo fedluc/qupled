@@ -1,20 +1,113 @@
 #include <boost/python.hpp>
+#include <boost/python/numpy.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "input.hpp"
 #include "stls.hpp"
 #include "qstls.hpp"
 
-using namespace boost::python;
+namespace bp = boost::python;
+namespace bn = boost::python::numpy;
 
+// Methods that need wrapping to pass arrays between native and python
+namespace arrayWrappers {
+
+  vector<double> toVector(const bn::ndarray &nda){
+    const Py_intptr_t* shape = nda.get_shape();
+    const int dim = nda.get_nd();
+    Py_intptr_t n = 1;
+    for (int i = 0; i < dim; ++i){ n *= shape[i]; }
+    double* ptr = reinterpret_cast<double*>(nda.get_data());
+    std::vector<double> v(n);
+    for (int i = 0; i < n; ++i) { v[i] = *(ptr + i); }
+    return v;
+  }
+
+  vector<double> toVector(const bp::list &list){
+    int n = len(list);
+    std::vector<double> v(n);
+    for (int i = 0; i < n; ++i){ v[i] = bp::extract<double>(list[i]); }
+    return v;
+  }
+  
+  bn::ndarray toNdArray(const vector<double> &v){
+    Py_intptr_t shape[1];
+    shape[0] = v.size();
+    bn::ndarray result = bn::zeros(1, shape, bn::dtype::get_builtin<double>());
+    std::copy(v.begin(), v.end(), reinterpret_cast<double*>(result.get_data()));
+    return result;
+  }
+
+  bn::ndarray toNdArray(const vecUtil::Vector2D &v){
+    Py_intptr_t shape[1];
+    shape[0] = v.size();
+    bn::ndarray result = bn::zeros(1, shape, bn::dtype::get_builtin<double>());
+    std::copy(v.begin(), v.end(), reinterpret_cast<double*>(result.get_data()));
+    return result;
+  }
+  
+  void setChemicalPotentialGuess(StlsInput &in,
+				 const bp::list &muGuess){
+    in.setChemicalPotentialGuess(toVector(muGuess));
+  }
+  
+  bn::ndarray getBf(const Stls &stls){
+    return toNdArray(stls.getBf());
+  }
+
+  bn::ndarray getIdr(const Stls &stls){
+    const vecUtil::Vector2D &idrNative = stls.getIdr();
+    const size_t nx = idrNative.size(0);
+    const size_t nl = idrNative.size(1);
+    bn::ndarray idr = toNdArray(idrNative);
+    bp::tuple shape = bp::make_tuple(nx, nl);
+    idr = idr.reshape(shape);
+    return idr;
+  }
+
+  bn::ndarray getRdf(const Stls &stls,
+		     const bn::ndarray &r){
+    return toNdArray(stls.getRdf(toVector(r)));
+  }
+  
+  bn::ndarray getSdr(const Stls &stls){
+    return toNdArray(stls.getSdr());
+  }
+  
+  bn::ndarray getSlfc(const Stls &stls){
+    return toNdArray(stls.getSlfc());
+  }
+  
+  bn::ndarray getSsf(const Stls &stls){
+    return toNdArray(stls.getSsf());
+  }
+
+  bn::ndarray getSsfHF(const Stls &stls){
+    return toNdArray(stls.getSsfHF());
+  }
+  
+  bn::ndarray getWvg(const Stls &stls){
+    return toNdArray(stls.getWvg());
+  }
+  
+  
+}
+
+
+
+// Classes exposed to Python
 BOOST_PYTHON_MODULE(qupled)
 {
 
+  // Numpy library initialization
+  bn::initialize();
+    
   // Wrapper for vector<double>
-  class_<std::vector<double>>("vector<double>")
-    .def(vector_indexing_suite<std::vector<double>>() );
+  bp::class_<std::vector<double>>("vector<double>")
+    .def(bp::vector_indexing_suite<std::vector<double>>() );
   
   // Classes to manage the input
-  class_<Input>("Input", init<const double, const double, const string>())
+  bp::class_<Input>("Input",
+		    bp::init<const double, const double, const string>())
     .add_property("coupling",
 		  &Input::getCoupling,
 		  &Input::setCoupling)
@@ -33,10 +126,11 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &Input::print)
     .def("isEqual", &Input::isEqual);
 
-  class_<StlsInput, bases<Input>>("StlsInput", init<const double, const double, const string>())
+  bp::class_<StlsInput, bp::bases<Input>>("StlsInput",
+					  bp::init<const double, const double, const string>())
     .add_property("chemicalPotential",
 		  &StlsInput::getChemicalPotentialGuess,
-		  &StlsInput::setChemicalPotentialGuess)
+		  &arrayWrappers::setChemicalPotentialGuess)
     .add_property("error",
 		  &StlsInput::getErrMin,
 		  &StlsInput::setErrMin)
@@ -67,7 +161,7 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &StlsInput::print)
     .def("isEqual", &StlsInput::isEqual);
   
-  class_<QstlsInput>("QstlsInput")
+  bp::class_<QstlsInput>("QstlsInput")
     .add_property("setFixedFileName",
 		  &QstlsInput::getFixedFileName,
 		  &QstlsInput::setFixedFileName)
@@ -75,20 +169,21 @@ BOOST_PYTHON_MODULE(qupled)
     .def("isEqual", &QstlsInput::isEqual);
     
   // Class to solve classical schemes
-  class_<Stls>("Stls", init<const StlsInput>())
+  bp::class_<Stls>("Stls",
+		   bp::init<const StlsInput>())
     .def("compute", &Stls::compute)
-    .add_property("bf", &Stls::getBf)
-    .add_property("idr", &Stls::getIdr)
-    .add_property("rdf", &Stls::getRdf)
-    .add_property("sdr", &Stls::getSdr)
-    .add_property("slfc", &Stls::getSlfc)
-    .add_property("ssf", &Stls::getSsf)
-    .add_property("ssfHF", &Stls::getSsfHF)
+    .def("getRdf", arrayWrappers::getRdf)
+    .add_property("bf", arrayWrappers::getBf)
+    .add_property("idr", arrayWrappers::getIdr)
+    .add_property("sdr", arrayWrappers::getSdr)
+    .add_property("slfc", arrayWrappers::getSlfc)
+    .add_property("ssf", arrayWrappers::getSsf)
+    .add_property("ssfHF", arrayWrappers::getSsfHF)
     .add_property("uInt", &Stls::getUInt)
-    .add_property("wvg", &Stls::getWvg);
-    
+    .add_property("wvg", arrayWrappers::getWvg);
   // Class to solve quantum schemes
-  class_<Qstls, bases<Stls>>("Qstls", init<const StlsInput, const QstlsInput>())
+  bp::class_<Qstls, bp::bases<Stls>>("Qstls",
+				     bp::init<const StlsInput, const QstlsInput>())
     .def("compute", &Qstls::compute);
   
 }
