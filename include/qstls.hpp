@@ -76,7 +76,10 @@ public:
 	const QstlsInput &qin_)
     : Stls(in_), qin(qin_) { ; };
   // Compute qstls scheme
-  void compute(); 
+  void compute();
+  // Getters
+  vecUtil::Vector2D getAdr() const { return adr; }
+  vecUtil::Vector3D getAdrFixed() const { return adrFixed; }
 
 };
 

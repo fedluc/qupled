@@ -28,16 +28,9 @@ namespace arrayWrappers {
     for (int i = 0; i < n; ++i){ v[i] = bp::extract<double>(list[i]); }
     return v;
   }
-  
-  bn::ndarray toNdArray(const vector<double> &v){
-    Py_intptr_t shape[1];
-    shape[0] = v.size();
-    bn::ndarray result = bn::zeros(1, shape, bn::dtype::get_builtin<double>());
-    std::copy(v.begin(), v.end(), reinterpret_cast<double*>(result.get_data()));
-    return result;
-  }
 
-  bn::ndarray toNdArray(const vecUtil::Vector2D &v){
+  template<typename T>
+  bn::ndarray toNdArray(const T &v){
     Py_intptr_t shape[1];
     shape[0] = v.size();
     bn::ndarray result = bn::zeros(1, shape, bn::dtype::get_builtin<double>());
@@ -88,8 +81,27 @@ namespace arrayWrappers {
   bn::ndarray getWvg(const Stls &stls){
     return toNdArray(stls.getWvg());
   }
+
+  bn::ndarray getAdr(const Qstls &qstls){
+    const vecUtil::Vector2D &adrNative = qstls.getAdr();
+    const size_t nx = adrNative.size(0);
+    const size_t nl = adrNative.size(1);
+    bn::ndarray adr = toNdArray(adrNative);
+    bp::tuple shape = bp::make_tuple(nx, nl);
+    adr = adr.reshape(shape);
+    return adr;
+  }
   
-  
+  bn::ndarray getAdrFixed(const Qstls &qstls){
+    const vecUtil::Vector3D &adrNative = qstls.getAdrFixed();
+    const size_t nx = adrNative.size(0);
+    const size_t nl = adrNative.size(1);
+    bn::ndarray adr = toNdArray(adrNative);
+    bp::tuple shape = bp::make_tuple(nx, nl, nx);
+    adr = adr.reshape(shape);
+    return adr;
+  }
+
 }
 
 
@@ -181,9 +193,12 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("ssfHF", arrayWrappers::getSsfHF)
     .add_property("uInt", &Stls::getUInt)
     .add_property("wvg", arrayWrappers::getWvg);
+  
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",
 				     bp::init<const StlsInput, const QstlsInput>())
-    .def("compute", &Qstls::compute);
+    .def("compute", &Qstls::compute)
+    .add_property("adr", arrayWrappers::getAdr)
+    .add_property("adr_fixed", arrayWrappers::getAdrFixed);
   
 }

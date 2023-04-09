@@ -30,8 +30,10 @@ class Stls():
         self.inputs = qp.StlsInput(coupling, degeneracy, "STLS")
         # Scheme to solve and associated input and solution
         self.scheme = None
-        self.__schemeInputs = None
-        self.__schemeSolution = None     
+        self.schemeInputs = None
+        self.schemeSolution = None
+        # File to store output on disk
+        self.hdfFileName = None
         # Non-default inputs
         if (chemicalPotential is not None): self.inputs.chemicalPotential = chemicalPotential
         if (cutoff is not None): self.inputs.cutoff = cutoff
@@ -46,37 +48,45 @@ class Stls():
     # Compute
     def compute(self):
         self.checkInputs()
-        self.__schemeInputs = self.inputs
-        self.scheme = qp.Stls(self.__schemeInputs)
+        self.schemeInputs = self.inputs
+        self.scheme = qp.Stls(self.schemeInputs)
         self.scheme.compute()
+        self.setHdfFile()
         self.save()
         
     # Check input before computing
     def checkInputs(self):
         if (self.inputs.theory not in self.allowedTheories):
             sys.exit("Invalid dielectric theory")
-      
+
+    # Compute radial distribution function
+    def computeRdf(self, rdfGrid, writeToHdf = True):
+        if (self.schemeInputs == None):
+            sys.exit("No solution to compute the radial distribution function")
+        rdf = self.scheme.getRdf(rdfGrid)
+        if (writeToHdf) : pd.DataFrame(rdf).to_hdf(self.hdfFileName, key="rdf", mode="r+")
+        return rdf
+        
     # Plot results        
-    def plot(self, toPlot, matsubaraFrequencies = None, rdfGrid = None):
+    def plot(self, toPlot, matsubara = None, rdfGrid = None):
         wvg = self.scheme.wvg
         xlabel = "x = k/$k_F$"
-        if ("idr" in toPlot): self.plotIdr(matsubaraFrequencies)
+        if ("idr" in toPlot): self.plotIdr(matsubara)
         if ("rdf" in toPlot): self.plotRdf(rdfGrid)
         if ("sdr" in toPlot): self.plot1D(wvg, self.scheme.sdr, xlabel, "$\chi$(x)")
         if ("slfc" in toPlot): self.plot1D(wvg, self.scheme.slfc, xlabel, "G(x)")
         if ("ssf" in toPlot): self.plot1D(wvg, self.scheme.ssf, xlabel, "S(x)")
         if ("ssfHF" in toPlot): self.plot1D(wvg, self.scheme.ssfHF, xlabel, "$S_{HF}$(x)")
         
-    def plotIdr(self, matsubaraFrequencies):
-        if (matsubaraFrequencies is None) : matsubaraFrequencies = np.arange(self.inputs.matsubara)
+    def plotIdr(self, matsubara):
+        if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
         self.plot1DParametric(self.scheme.wvg, self.scheme.idr,
                               "x = k/k_F", "$\phi$(x)",
-                              matsubaraFrequencies)
+                              matsubara)
         
     def plotRdf(self, rdfGrid):
         if (rdfGrid is None) : rdfGrid = np.arange(0.01, 10.0, 0.01)
-        rdf = self.scheme.getRdf(rdfGrid)
-        self.plot1D(rdfGrid, rdf, "x = rk_F", "g(r)")
+        self.plot1D(rdfGrid, self.computeRdf(rdfGrid), "x = rk_F", "g(r)")
 
     def plot1D(self, x, y, xlabel, ylabel):
         plt.plot(x, y, "b")
@@ -94,41 +104,29 @@ class Stls():
         plt.ylabel(ylabel)
         plt.show()        
 
+    # Save results to disk
+    def setHdfFile(self):
+        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.schemeInputs.coupling,
+                                                           self.schemeInputs.degeneracy,
+                                                           self.schemeInputs.theory)
+    
     def save(self):
-        inputs = pd.DataFrame({
-            "coupling" : self.__schemeInputs.coupling,
-            "degeneracy" : self.__schemeInputs.degeneracy,
-            "theory" : self.__schemeInputs.theory,
-            "error" : self.__schemeInputs.error,
-            "resolution" : self.__schemeInputs.resolution,
-            "cutoff" : self.__schemeInputs.cutoff,
-            "matsubara" : self.__schemeInputs.matsubara
-            }, index=["inputs"]).to_csv("inputs.csv")
-        pd.DataFrame(self.scheme.idr).to_csv("idr.csv")
-        pd.DataFrame(self.scheme.sdr).to_csv("sdr.csv")
-        pd.DataFrame(self.scheme.slfc).to_csv("slfc.csv")
-        pd.DataFrame(self.scheme.ssf).to_csv("ssf.csv")
-        pd.DataFrame(self.scheme.ssfHF).to_csv("ssfHF.csv")
-        pd.DataFrame({"uint" : self.scheme.uInt}, index=[0]).to_csv("uint.csv")
-        pd.DataFrame(self.scheme.wvg).to_csv("wvg.csv")
-        file = tarfile.open("data.tar.gz","w:gz")
-        file.add("inputs.csv")
-        file.add("idr.csv")
-        file.add("sdr.csv")
-        file.add("slfc.csv")
-        file.add("ssf.csv")
-        file.add("ssfHF.csv")
-        file.add("uint.csv")
-        file.add("wvg.csv")
-        file.close()
-        os.remove("inputs.csv")
-        os.remove("idr.csv")
-        os.remove("sdr.csv")
-        os.remove("slfc.csv")
-        os.remove("ssf.csv")
-        os.remove("ssfHF.csv")
-        os.remove("uint.csv")
-        os.remove("wvg.csv")
+        pd.DataFrame({
+            "coupling" : self.schemeInputs.coupling,
+            "degeneracy" : self.schemeInputs.degeneracy,
+            "theory" : self.schemeInputs.theory,
+            "error" : self.schemeInputs.error,
+            "resolution" : self.schemeInputs.resolution,
+            "cutoff" : self.schemeInputs.cutoff,
+            "matsubara" : self.schemeInputs.matsubara
+            }, index=["inputs"]).to_hdf(self.hdfFileName, key="inputs", mode="w")
+        pd.DataFrame(self.scheme.idr).to_hdf(self.hdfFileName, key="idr")
+        pd.DataFrame(self.scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
+        pd.DataFrame(self.scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
+        pd.DataFrame(self.scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
+        pd.DataFrame(self.scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
+        pd.DataFrame({"uint" : self.scheme.uInt}, index=[0]).to_hdf(self.hdfFileName, key="uint")
+        pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
         
         
 class StlsIet(Stls):
@@ -160,11 +158,86 @@ class StlsIet(Stls):
         # Set theory
         self.inputs.theory = theory
         self.checkInputs()
+        # File to store output on disk
+        self.__hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
+                                                           self.inputs.degeneracy,
+                                                           self.inputs.theory)
         # Non-default inputs
         if (mapping is not None): self.inputs.iet = mapping
         if (scheme2DIntegrals is not None): self.inputs.int2DScheme = scheme2DIntegrals
             
     # Plot results        
-    def plot(self, toPlot, extraParameters = None):
-        super().plot(toPlot, extraParameters)
+    def plot(self, toPlot, matsubara = None, rdfGrid = None):
+        super().plot(toPlot, matsubara, rdfGrid)
         if ("bf" in toPlot): self.plot1D(self.scheme.wvg, self.scheme.bf, "x = k/k_F", "B(x)")
+        
+    # Save results to disk
+    def save(self):
+        super().save()
+        pd.DataFrame(self.scheme.bf).to_hdf(self.__hdfFileName, key="bf")
+
+
+
+class Qstls(Stls):
+            
+    # Constructor
+    def __init__(self,
+                 coupling,
+                 degeneracy,
+                 chemicalPotential = None,
+                 cutoff = None,
+                 error = None,
+                 mixing = None,
+                 iterations = None,
+                 matsubara = None,
+                 outputFrequency = None,
+                 restartFile = None,
+                 resolution = None ):
+        # Call parent constructor
+        super().__init__(coupling, degeneracy,
+                         chemicalPotential, cutoff, error,
+                         mixing, iterations, matsubara,
+                         outputFrequency, restartFile,
+                         resolution)
+        # Allowed theories
+        self.allowedTheories = ["QSTLS"]
+        # Set theory
+        self.inputs.theory = "QSTLS"
+        # Qstls inputs
+        self.qInputs = qp.QstlsInput()
+        self.schemeqInputs = None;
+        self.checkInputs()
+        # File to store output on disk
+        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
+                                                         self.inputs.degeneracy,
+                                                         self.inputs.theory)
+
+    # Compute
+    def compute(self):
+        self.checkInputs()
+        self.schemeInputs = self.inputs
+        self.schemeqInputs = self.qInputs
+        self.scheme = qp.Qstls(self.schemeInputs, self.schemeqInputs)
+        self.scheme.compute()
+        self.setHdfFile()
+        self.save()
+        
+    # Plot results        
+    def plot(self, toPlot, matsubara = None, rdfGrid = None):
+        super().plot(toPlot, matsubara, rdfGrid)
+        if ("adr" in toPlot): self.plotAdr(matsubara)
+
+    def plotAdr(self, matsubara):
+        if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
+        self.plot1DParametric(self.scheme.wvg, self.scheme.adr,
+                              "x = k/k_F", "$\psi$(x)",
+                              matsubara)
+        
+    # Save results to disk
+    def save(self):
+        super().save()
+        pd.DataFrame(self.scheme.adr).to_hdf(self.hdfFileName, key="adr")
+        #pd.DataFrame(self.scheme.adr_fixed).to_hdf(self.hdfFileName, key="adr_fixed")
+
+        
+

@@ -384,8 +384,6 @@ void Qstls::readAdrFixedIetFile(Vector3D &res,
 
 // Write output files
 void Qstls::writeOutput() const{
-  //Stls::writeOutput();
-  writeAdr();
   writeRestart();
 }
 

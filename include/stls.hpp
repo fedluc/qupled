@@ -69,17 +69,8 @@ protected:
   void initialGuess();
   double computeError();
   void updateSolution();
-  // Write output files
-  // void writeOutput() const;
-  // void writeSsf() const;
-  // void writeSsfHF() const;
-  // void writeSlfc() const;
-  // void writeSdr() const;
-  // void writeIdr() const;
-  // void writeUInt() const;
-  // void writeRdf() const;
-  // void writeBf() const;
-  // Restart files
+  // Write recovery files
+  void writeOutput() const;
   void writeRestart() const;
   void readRestart(vector<double> &wvgFile,
 		   vector<double> &slfcFile) const;
