@@ -74,7 +74,7 @@ public:
   // Constructor
   Qstls(const StlsInput &in_,
 	const QstlsInput &qin_)
-    : Stls(in_), qin(qin_) { ; };
+    : Stls(in_), qin(qin_) { checkIet(); };
   // Compute qstls scheme
   void compute();
   // Getters

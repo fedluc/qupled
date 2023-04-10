@@ -60,6 +60,13 @@ public:
 
 class StlsInput : public Input {
 
+public:
+  
+  struct StlsGuess {
+    vector<double> wvg = vector<double>(0);
+    vector<double> property = vector<double>(0);
+  };
+  
 private:
 
   // Mixing parameter for the iterative procedure
@@ -80,6 +87,8 @@ private:
   int outIter;
   // Name of the file used to store the restart data
   string restartFileName;
+  // Initial guess
+  StlsGuess guess;
   // cutoff for the wave-vector grid
   double xmax;
   
@@ -101,6 +110,7 @@ public:
   void setNIter(const int &nIter);
   void setOutIter(const int &outIter);
   void setRestartFileName(const string &restartFileName);
+  void setGuess(const StlsGuess &guess);
   void setWaveVectorGridRes(const double &waveVectorGridRes);
   void setWaveVectorGridCutoff(const double  &waveVectorGridCutoff);
   // Getters
@@ -112,6 +122,7 @@ public:
   int getNIter() const { return nIter; };
   int getOutIter() const { return outIter; };
   string getRestartFileName() const { return restartFileName; };
+  StlsGuess getGuess() const { return guess; };
   double getWaveVectorGridRes() const { return dx; };
   double getWaveVectorGridCutoff() const { return xmax; };
   // Print content of the data structure
@@ -124,6 +135,13 @@ public:
 
 class QstlsInput {
 
+  struct QstlsGuess {
+    vector<double> wvg = vector<double>(0);
+    vector<double> ssf = vector<double>(0);
+    Vector2D adr;
+    int matsubara;
+  };
+  
 private:
 
   // Name of the files used to store the fixed component of the auxiliary density response (adr)

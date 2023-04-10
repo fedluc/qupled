@@ -222,7 +222,7 @@ void Stls::initialGuess() {
   const int nx = wvg.size();
   slfcOld.resize(nx);
   slfc.resize(nx);
-  // From file
+  // From recovery file
   if (in.getRestartFileName() != EMPTY_STRING) {
     vector<double> wvgFile;
     vector<double> slfcFile;
@@ -236,6 +236,17 @@ void Stls::initialGuess() {
     }
     return;
   }
+  // From guess in input
+  if (in.getGuess().wvg.size() > 0) {
+    const Interpolator1D slfci(in.getGuess().wvg, in.getGuess().property);
+    const double xmaxi = in.getGuess().wvg.back();
+    for (int i=0; i<wvg.size(); ++i) {
+      const double x = wvg[i];
+      if (x <= xmaxi) { slfcOld[i] = slfci.eval(x);}
+      else { slfcOld[i] = 1.0; }
+    }
+    return;
+  }  
   // Default
   fill(slfcOld.begin(), slfcOld.end(), 0.0);
 }

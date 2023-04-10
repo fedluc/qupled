@@ -37,12 +37,39 @@ namespace arrayWrappers {
     std::copy(v.begin(), v.end(), reinterpret_cast<double*>(result.get_data()));
     return result;
   }
+
+  // Wrappers for StlsInput methods
+  bn::ndarray getChemicalPotentialGuess(StlsInput &in){
+    return toNdArray(in.getChemicalPotentialGuess());
+  }
   
   void setChemicalPotentialGuess(StlsInput &in,
 				 const bp::list &muGuess){
     in.setChemicalPotentialGuess(toVector(muGuess));
   }
+
+  struct StlsGuess {
+    bn::ndarray wvg = toNdArray(vector<double>(0));
+    bn::ndarray property = toNdArray(vector<double>(0));
+  };
+    
+  arrayWrappers::StlsGuess getGuess(StlsInput &in){
+    StlsInput::StlsGuess guess_ = in.getGuess();
+    arrayWrappers::StlsGuess guess;
+    guess.wvg = toNdArray(guess_.wvg);
+    guess.property = toNdArray(guess_.property);
+    return guess;
+  }
   
+  void setGuess(StlsInput &in,
+		const arrayWrappers::StlsGuess &guess){
+    StlsInput::StlsGuess guess_;
+    guess_.wvg = toVector(guess.wvg);
+    guess_.property = toVector(guess.property);
+    in.setGuess(guess_);
+  }
+  
+  // Wrappers for Stls methods
   bn::ndarray getBf(const Stls &stls){
     return toNdArray(stls.getBf());
   }
@@ -138,11 +165,15 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &Input::print)
     .def("isEqual", &Input::isEqual);
 
+  bp::class_<arrayWrappers::StlsGuess>("StlsGuess")
+    .def_readwrite("wvg", &arrayWrappers::StlsGuess::wvg)
+    .def_readwrite("property", &arrayWrappers::StlsGuess::property);
+    
   bp::class_<StlsInput, bp::bases<Input>>("StlsInput",
 					  bp::init<const double, const double, const string>())
     .add_property("chemicalPotential",
-		  &StlsInput::getChemicalPotentialGuess,
-		  &arrayWrappers::setChemicalPotentialGuess)
+		  arrayWrappers::getChemicalPotentialGuess,
+		  arrayWrappers::setChemicalPotentialGuess)
     .add_property("error",
 		  &StlsInput::getErrMin,
 		  &StlsInput::setErrMin)
@@ -164,6 +195,9 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("restartFile",
 		  &StlsInput::getRestartFileName,
 		  &StlsInput::setRestartFileName)
+    .add_property("guess",
+		  arrayWrappers::getGuess,
+		  arrayWrappers::setGuess)
     .add_property("resolution",
 		  &StlsInput::getWaveVectorGridRes,
 		  &StlsInput::setWaveVectorGridRes)

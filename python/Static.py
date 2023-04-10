@@ -2,7 +2,8 @@
 
 import sys
 import os
-import tarfile
+import glob
+import zipfile as zf
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -19,6 +20,7 @@ class Stls():
                  cutoff = None,
                  error = None,
                  mixing = None,
+                 guess = None,
                  iterations = None,
                  matsubara = None,
                  outputFrequency = None,
@@ -39,6 +41,7 @@ class Stls():
         if (cutoff is not None): self.inputs.cutoff = cutoff
         if (error is not None): self.inputs.error = error
         if (mixing is not None): self.inputs.mixing = mixing
+        if (guess is not None): self.inputs.guess = guess
         if (iterations is not None): self.inputs.iterations = iterations
         if (matsubara is not None): self.inputs.matsubara = matsubara
         if (outputFrequency is not None): self.inputs.outputFrequency = outputFrequency
@@ -70,23 +73,23 @@ class Stls():
     # Plot results        
     def plot(self, toPlot, matsubara = None, rdfGrid = None):
         wvg = self.scheme.wvg
-        xlabel = "x = k/$k_F$"
+        xlabel = "Wave vector"
         if ("idr" in toPlot): self.plotIdr(matsubara)
         if ("rdf" in toPlot): self.plotRdf(rdfGrid)
-        if ("sdr" in toPlot): self.plot1D(wvg, self.scheme.sdr, xlabel, "$\chi$(x)")
-        if ("slfc" in toPlot): self.plot1D(wvg, self.scheme.slfc, xlabel, "G(x)")
-        if ("ssf" in toPlot): self.plot1D(wvg, self.scheme.ssf, xlabel, "S(x)")
-        if ("ssfHF" in toPlot): self.plot1D(wvg, self.scheme.ssfHF, xlabel, "$S_{HF}$(x)")
+        if ("sdr" in toPlot): self.plot1D(wvg, self.scheme.sdr, xlabel, "Static density response")
+        if ("slfc" in toPlot): self.plot1D(wvg, self.scheme.slfc, xlabel, "Static local field correction")
+        if ("ssf" in toPlot): self.plot1D(wvg, self.scheme.ssf, xlabel, "Static structure factor")
+        if ("ssfHF" in toPlot): self.plot1D(wvg, self.scheme.ssfHF, xlabel, "Hartree-Fock static structure factor")
         
     def plotIdr(self, matsubara):
         if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
         self.plot1DParametric(self.scheme.wvg, self.scheme.idr,
-                              "x = k/k_F", "$\phi$(x)",
+                              "Wave vector", "Ideal density response",
                               matsubara)
         
     def plotRdf(self, rdfGrid):
         if (rdfGrid is None) : rdfGrid = np.arange(0.01, 10.0, 0.01)
-        self.plot1D(rdfGrid, self.computeRdf(rdfGrid), "x = rk_F", "g(r)")
+        self.plot1D(rdfGrid, self.computeRdf(rdfGrid), "Inter-particle distance", "radial distribution function")
 
     def plot1D(self, x, y, xlabel, ylabel):
         plt.plot(x, y, "b")
@@ -141,6 +144,7 @@ class StlsIet(Stls):
                  error = None,
                  mapping = None,
                  mixing = None,
+                 guess = None,
                  iterations = None,
                  matsubara = None,
                  outputFrequency = None,
@@ -150,9 +154,9 @@ class StlsIet(Stls):
         # Call parent constructor
         super().__init__(coupling, degeneracy,
                          chemicalPotential, cutoff, error,
-                         mixing, iterations, matsubara,
-                         outputFrequency, restartFile,
-                         resolution)
+                         mixing, guess, iterations,
+                         matsubara, outputFrequency,
+                         restartFile, resolution)
         # Allowed theories
         self.allowedTheories = ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
         # Set theory
@@ -169,7 +173,7 @@ class StlsIet(Stls):
     # Plot results        
     def plot(self, toPlot, matsubara = None, rdfGrid = None):
         super().plot(toPlot, matsubara, rdfGrid)
-        if ("bf" in toPlot): self.plot1D(self.scheme.wvg, self.scheme.bf, "x = k/k_F", "B(x)")
+        if ("bf" in toPlot): self.plot1D(self.scheme.wvg, self.scheme.bf, "Wave vector", "Bridge function adder")
         
     # Save results to disk
     def save(self):
@@ -188,17 +192,19 @@ class Qstls(Stls):
                  cutoff = None,
                  error = None,
                  mixing = None,
+                 guess = None,
                  iterations = None,
                  matsubara = None,
                  outputFrequency = None,
                  restartFile = None,
-                 resolution = None ):
+                 resolution = None,
+                 threads = None):
         # Call parent constructor
         super().__init__(coupling, degeneracy,
                          chemicalPotential, cutoff, error,
-                         mixing, iterations, matsubara,
-                         outputFrequency, restartFile,
-                         resolution)
+                         mixing, guess, iterations,
+                         matsubara, outputFrequency,
+                         restartFile, resolution)
         # Allowed theories
         self.allowedTheories = ["QSTLS"]
         # Set theory
@@ -211,6 +217,8 @@ class Qstls(Stls):
         self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
                                                          self.inputs.degeneracy,
                                                          self.inputs.theory)
+        # Non-default inputs
+        if (threads is not None): self.inputs.threads = threads
 
     # Compute
     def compute(self):
@@ -230,14 +238,71 @@ class Qstls(Stls):
     def plotAdr(self, matsubara):
         if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
         self.plot1DParametric(self.scheme.wvg, self.scheme.adr,
-                              "x = k/k_F", "$\psi$(x)",
+                              "Wave vector", "Auxiliary density response",
                               matsubara)
         
     # Save results to disk
     def save(self):
         super().save()
         pd.DataFrame(self.scheme.adr).to_hdf(self.hdfFileName, key="adr")
-        #pd.DataFrame(self.scheme.adr_fixed).to_hdf(self.hdfFileName, key="adr_fixed")
+        shape = self.scheme.adr_fixed.shape
+        pd.DataFrame(self.scheme.adr_fixed.reshape(shape[0], shape[1]*shape[2])).to_hdf(self.hdfFileName, key="adr_fixed")
 
         
 
+class QstlsIet(Qstls):
+            
+    # Constructor
+    def __init__(self,
+                 coupling,
+                 degeneracy,
+                 theory,
+                 chemicalPotential = None,
+                 cutoff = None,
+                 error = None,
+                 mapping = None,
+                 mixing = None,
+                 guess = None,
+                 iterations = None,
+                 matsubara = None,
+                 outputFrequency = None,
+                 restartFile = None,
+                 scheme2DIntegrals = None,
+                 resolution = None,
+                 threads = None):
+        # Call parent constructor
+        super().__init__(coupling, degeneracy,
+                         chemicalPotential, cutoff, error,
+                         mixing, guess, iterations,
+                         matsubara, outputFrequency,
+                         restartFile, resolution)
+        # Allowed theories
+        self.allowedTheories = ["QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"]
+        # Set theory
+        self.inputs.theory = theory
+        self.checkInputs()
+        # File to store output on disk
+        self.__hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
+                                                           self.inputs.degeneracy,
+                                                           self.inputs.theory)
+        # Non-default inputs
+        if (mapping is not None): self.inputs.iet = mapping
+        if (scheme2DIntegrals is not None): self.inputs.int2DScheme = scheme2DIntegrals
+            
+    # Plot results        
+    def plot(self, toPlot, matsubara = None, rdfGrid = None):
+        super().plot(toPlot, matsubara, rdfGrid)
+        if ("bf" in toPlot): self.plot1D(self.scheme.wvg, self.scheme.bf, "Wave vector", "Bridge function adder")
+        
+    # Save results to disk
+    def save(self):
+        super().save()
+        pd.DataFrame(self.scheme.bf).to_hdf(self.__hdfFileName, key="bf")
+        # Zip all files for the fixed component of the auxiliary density response
+        adrFileName = "adr_iet_fixed_rs%5.3f_theta%5.3f_%s" % (self.inputs.coupling,
+                                                               self.inputs.degeneracy,
+                                                               self.inputs.theory)
+        zipFile = zf.ZipFile(adrFileName + ".zip", "w")
+        for adrFile in glob.glob(adrFileName + "_wv*.bin"):
+            zipFile.write(adrFile)
+            os.remove(adrFile)

@@ -132,6 +132,16 @@ void StlsInput::setRestartFileName(const string &restartFileName){
   this->restartFileName = restartFileName;
 }
 
+void StlsInput::setGuess(const StlsGuess &guess){
+  if (guess.wvg.size() < 3 || guess.property.size() < 3) {
+    throw runtime_error("The initial guess does not contain enough points");
+  }
+  if (guess.wvg.size() != guess.property.size()) {
+    throw runtime_error("The initial guess is inconsistent");
+  }
+  this->guess = guess;
+}
+
 void StlsInput::setWaveVectorGridRes(const double &dx){
   if (dx <= 0.0) {
     throw runtime_error("The wave-vector grid resolution must be larger than zero");
