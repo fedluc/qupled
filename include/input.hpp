@@ -62,9 +62,9 @@ class StlsInput : public Input {
 
 public:
   
-  struct StlsGuess {
+  struct SlfcGuess {
     vector<double> wvg = vector<double>(0);
-    vector<double> property = vector<double>(0);
+    vector<double> slfc = vector<double>(0);
   };
   
 private:
@@ -85,10 +85,10 @@ private:
   int nIter;
   // Output frequency
   int outIter;
-  // Name of the file used to store the restart data
-  string restartFileName;
+  // Name of the file used to store the recovery data
+  string recoveryFileName;
   // Initial guess
-  StlsGuess guess;
+  SlfcGuess guess;
   // cutoff for the wave-vector grid
   double xmax;
   
@@ -100,7 +100,7 @@ public:
 	    const string &theory_)
     : Input(rs_, Theta_, theory_), aMix(1.0), dx(0.1), errMin(1e-5),
       IETMapping("standard"), muGuess({-10, 10}), nl(128), nIter(1000),
-      outIter(10), restartFileName(EMPTY_STRING), xmax(10.0) { ; };
+      outIter(10), recoveryFileName(EMPTY_STRING), xmax(10.0) { ; };
   // Setters
   void setChemicalPotentialGuess(const vector<double> &muGuess);
   void setErrMin(const double &errMin);
@@ -109,8 +109,8 @@ public:
   void setNMatsubara(const int &nMatsubara);
   void setNIter(const int &nIter);
   void setOutIter(const int &outIter);
-  void setRestartFileName(const string &restartFileName);
-  void setGuess(const StlsGuess &guess);
+  void setRecoveryFileName(const string &recoveryFileName);
+  void setGuess(const SlfcGuess &guess);
   void setWaveVectorGridRes(const double &waveVectorGridRes);
   void setWaveVectorGridCutoff(const double  &waveVectorGridCutoff);
   // Getters
@@ -121,8 +121,8 @@ public:
   int getNMatsubara() const { return nl; };
   int getNIter() const { return nIter; };
   int getOutIter() const { return outIter; };
-  string getRestartFileName() const { return restartFileName; };
-  StlsGuess getGuess() const { return guess; };
+  string getRecoveryFileName() const { return recoveryFileName; };
+  SlfcGuess getGuess() const { return guess; };
   double getWaveVectorGridRes() const { return dx; };
   double getWaveVectorGridCutoff() const { return xmax; };
   // Print content of the data structure
@@ -135,27 +135,36 @@ public:
 
 class QstlsInput {
 
+public:
+  
   struct QstlsGuess {
     vector<double> wvg = vector<double>(0);
     vector<double> ssf = vector<double>(0);
-    Vector2D adr;
-    int matsubara;
+    vecUtil::Vector2D adr;
+    int matsubara = 0;
   };
-  
+
 private:
 
   // Name of the files used to store the fixed component of the auxiliary density response (adr)
-  string fixedFileName;
+  string fixed;
+  string fixedIet;
+  // Initial guess
+  QstlsGuess guess;
 
 public:
 
   //Constructor
   QstlsInput()
-    : fixedFileName(EMPTY_STRING) { ; };
+    : fixed(EMPTY_STRING), fixedIet(EMPTY_STRING) { ; };
   // Setters
-  void setFixedFileName(const string &fixedFileName);
+  void setFixed(const string &fixed);
+  void setFixedIet(const string &fixedIet);
+  void setGuess(const QstlsGuess &guess);
   // Getters
-  string getFixedFileName() const {return fixedFileName; };
+  string getFixed() const {return fixed; };
+  string getFixedIet() const { return fixedIet; };
+  QstlsGuess getGuess() const { return guess; };
   // Print content of the data structure
   void print() const ;
   // Compare two QstlsInput objects

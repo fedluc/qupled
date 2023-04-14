@@ -24,17 +24,17 @@ private:
   // Compute auxiliary density response
   void computeAdr();
   void computeAdrFixed();
-  void loadAdrFixed();
-  int  checkAdrFixedFromFile(const vector<double> &wvg_,
-			     const double Theta_,
-			     const int nl_) const;
+  void writeAdrFixedFile(const vecUtil::Vector3D &res,
+			 const string &fileName) const;
+  void readAdrFixedFile(vecUtil::Vector3D &res,
+			const string &fileName,
+			const bool iet) const;
+  int  checkAdrFixed(const vector<double> &wvg_,
+		     const double Theta_,
+		     const int nl_) const;
   void computeAdrIet();
   void computeAdrFixedIet();
   void getAdrFixedIetFileInfo();
-  void writeAdrFixedIetFile(const vecUtil::Vector3D &res,
-			    const int i) const;
-  void readAdrFixedIetFile(vecUtil::Vector3D &res,
-			   const int i) const;
   // Compute static structure factor at finite temperature
   void computeSsf();
   void computeSsfFinite();
@@ -47,23 +47,20 @@ private:
 		       const vecUtil::Vector2D &adr_);
   double computeError();
   void updateSolution();
-   // Write output files
-  void writeOutput() const;
-  void writeAdr() const;
-  // Restart files
-  void writeRestart() const;
-  void readRestart(const string &fileName,
-		   vector<double> &wvg_,
-		   vecUtil::Vector3D &adrFixed_,
-		   double &Theta,
-		   int &nl) const;
-  void readRestart(const string &fileName,
-		   vector<double> &wvg_,
-		   vector<double> &ssf_,
-		   vecUtil::Vector2D &adr_,
-		   vecUtil::Vector3D &adrFixed_,
-		   double &Theta,
-		   int &nl) const;
+  // Recovery files
+  void writeRecovery();
+  void readRecovery(const string &fileName,
+		    vector<double> &wvg_,
+		    vecUtil::Vector3D &adrFixed_,
+		    double &Theta,
+		    int &nl) const;
+  void readRecovery(const string &fileName,
+		    vector<double> &wvg_,
+		    vector<double> &ssf_,
+		    vecUtil::Vector2D &adr_,
+		    vecUtil::Vector3D &adrFixed_,
+		    double &Theta,
+		    int &nl) const;
   // Check if iet schemes should be used
   void checkIet() { useIet = in.getTheory() == "QSTLS-HNC" ||
       in.getTheory() == "QSTLS-IOI" ||
@@ -76,7 +73,7 @@ public:
 	const QstlsInput &qin_)
     : Stls(in_), qin(qin_) { checkIet(); };
   // Compute qstls scheme
-  void compute();
+  int compute();
   // Getters
   vecUtil::Vector2D getAdr() const { return adr; }
   vecUtil::Vector3D getAdrFixed() const { return adrFixed; }

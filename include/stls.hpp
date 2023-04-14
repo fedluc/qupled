@@ -31,7 +31,9 @@ protected:
   Integrator1D itg;
   // Output verbosity
   const bool verbose;
-  // Flag to write the outputfiles
+  // Name of the recovery files
+  string recoveryFileName;
+  // Flag to write the recovery files
   const bool writeFiles;
   // Chemical potential
   double mu;
@@ -70,10 +72,9 @@ protected:
   double computeError();
   void updateSolution();
   // Write recovery files
-  void writeOutput() const;
-  void writeRestart() const;
-  void readRestart(vector<double> &wvgFile,
-		   vector<double> &slfcFile) const;
+  void writeRecovery();
+  void readRecovery(vector<double> &wvgFile,
+		    vector<double> &slfcFile) const;
   // Check if iet schemes should be used
   bool checkIet() {
    return in.getTheory() == "STLS-HNC" ||
@@ -87,21 +88,24 @@ public:
   Stls(const StlsInput &in_,
        const bool &verbose_,
        const bool &writeFiles_)
-    : in(in_), verbose(verbose_), writeFiles(writeFiles_),
-      computedChemicalPotential(false), useIet(checkIet()) { ; };
+    : in(in_), verbose(verbose_), recoveryFileName(EMPTY_STRING),
+      writeFiles(writeFiles_), computedChemicalPotential(false),
+      useIet(checkIet()) { ; };
   Stls(const StlsInput &in_) : Stls(in_, true, true) { ; };
   // Compute stls scheme
-  void compute();
+  int compute();
   // Getters
   vector<double> getBf() const { return bf; }
   vecUtil::Vector2D getIdr() const { return idr; }
+  string getRecoveryFileName() const { return recoveryFileName; }
   vector<double> getSlfc() const { return slfc; }
   vector<double> getSsf() const { return ssf; }
   vector<double> getSsfHF() const { return ssfHF; }
   vector<double> getWvg() const { return wvg; }
   vector<double> getRdf(const vector<double> &r) const;
   vector<double> getSdr() const;
-  double getUInt() const;  
+  double getUInt() const;
+  
 };
 
 // -----------------------------------------------------------------

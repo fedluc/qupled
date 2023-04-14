@@ -10,27 +10,32 @@ using namespace binUtil;
 // QSTLS class
 // -----------------------------------------------------------------
 
-void Qstls::compute(){
-  // Throw error message for ground state calculations
-  if (in.getDegeneracy() == 0.0) {
-    throw runtime_error("Ground state calculations are not available "
-			"for the quantum schemes");
+int Qstls::compute(){
+  try {
+    // Set number of OMP threads
+    omp_set_num_threads(in.getNThreads());
+    // Solve scheme
+    Stls::init();
+    if (verbose) cout << "Structural properties calculation ..." << endl;
+    doIterations();
+    if (verbose) cout << "Done" << endl;
+    return 0;
   }
-  // Set number of OMP threads
-  omp_set_num_threads(in.getNThreads());
-  // Solve scheme
-  Stls::init();
-  if (verbose) cout << "Structural properties calculation ..." << endl;
-  doIterations();
-  if (verbose) cout << "Done" << endl;
-  if (verbose) cout << "Writing output files: ";
-  writeOutput();
-  if (verbose) cout << "Done" << endl;
+  catch (const runtime_error& err) {
+    cerr << err.what() << endl;
+    return 1;
+  }
 }
 
 
 // qstls iterations
 void Qstls::doIterations() {
+  assert(false);
+  // Throw error message for ground state calculations
+  if (in.getDegeneracy() == 0.0) {
+    throw runtime_error("Ground state calculations are not available "
+			"for the quantum schemes");
+  }
   const int maxIter = in.getNIter();
   const int outIter = in.getOutIter();
   const double minErr = in.getErrMin();
@@ -51,7 +56,7 @@ void Qstls::doIterations() {
     // Update solution
     updateSolution();
     // Write output
-    if (counter % outIter == 0) { writeOutput(); };
+    if (counter % outIter == 0) { writeRecovery(); };
     // End timing
     double toc = omp_get_wtime();
     // Print diagnostic
@@ -73,26 +78,36 @@ void Qstls::initialGuess() {
   adr.resize(nx, nl);
   ssfOld.resize(nx);
   if (useIet) { adrOld.resize(nx, nl); }
-  // From file
-  const string fileName = in.getRestartFileName();
-  if (fileName != "") {
+  // From recovery file
+  const string fileName = in.getRecoveryFileName();
+  if (fileName != EMPTY_STRING) {
     vector<double> wvg_;
     vector<double> ssf_;
     Vector2D adr_;
     Vector3D adrFixed_;
     double Theta;
     int nl_;
-    readRestart(fileName, wvg_, ssf_, adr_, adrFixed_, Theta, nl_);
+    readRecovery(fileName, wvg_, ssf_, adr_, adrFixed_, Theta, nl_);
     initialGuessSsf(wvg_, ssf_);
     if (useIet) { initialGuessAdr(wvg_, adr_); }
-    if (checkAdrFixedFromFile(wvg_, Theta, nl_) == 0) {
+    if (checkAdrFixed(wvg_, Theta, nl_) == 0) {
       adrFixed = adrFixed_;
     }
     return;
   }
+  // From guess in input
+  if (qin.getGuess().wvg.size() > 0) {
+    const auto &guess = qin.getGuess();
+    initialGuessSsf(guess.wvg, guess.ssf);
+    if (useIet) { initialGuessAdr(guess.wvg, guess.adr); }
+    return;
+  }  
   // Default
   Stls stls(in, false, false);
-  stls.compute();
+  int status = stls.compute();
+  if (status != 0) {
+    throw runtime_error("Failed to compute the default initial guess");
+  }
   ssfOld = stls.getSsf();
   if (useIet) { adrOld.fill(0.0); }
 }
@@ -114,6 +129,10 @@ void Qstls::initialGuessAdr(const vector<double> &wvg_,
   const int nl = in.getNMatsubara();
   const int nx_ = adr_.size(0);
   const int nl_ = adr_.size(1);
+  if (nx_ == 0 || nl_ == 0) {
+    adrOld.fill(0.0);
+    return;
+  }
   const double &xMax = wvg_.back();
   vector<Interpolator1D> itp(nl_);
   for (int l=0; l<nl_; ++l) {
@@ -195,11 +214,12 @@ void Qstls::updateSolution(){
 }
 
 void Qstls::computeAdrFixed() {
-  cout << "#######" << endl;
+  // Check if it adrFixed can be loaded from input
+  readAdrFixedFile(adrFixed, qin.getFixed(), false);
+  if (adrFixed.size() > 0) { return; }
+  // Compute from scratch
   cout << "Computing fixed component of the auxiliary density response: ";
   fflush(stdout);
-  loadAdrFixed();
-  if (adrFixed.size() > 0) { return; }
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
@@ -212,28 +232,68 @@ void Qstls::computeAdrFixed() {
 		    wvg[i], mu, itgGrid, itg2);
     adrTmp.get(wvg, adrFixed);
   }
-  writeRestart();
+  // Write result to output file
+  const string fileName = format<double,double>("adr_fixed_rs%.3f_theta%.3f_QSTLS.bin",
+						in.getCoupling(), in.getDegeneracy());
+  writeAdrFixedFile(adrFixed, fileName);
   cout << "Done" << endl;
-  cout << "#######" << endl;
 }
 
-void Qstls::loadAdrFixed() {
-  const string fileName = qin.getFixedFileName();
-  if (fileName == "") return;
-  vector<double> wvg_;
-  Vector3D adrFixed_;
-  double Theta_;
+void Qstls::writeAdrFixedFile(const Vector3D &res,
+			      const string &fileName) const {
+  const int nx = wvg.size();
+  const int nl = in.getNMatsubara();
+  const double Theta = in.getDegeneracy();
+  ofstream file;
+  file.open(fileName, ios::binary);
+  if (!file.is_open()) {
+    throw runtime_error("Output file " + fileName + " could not be created.");
+  }
+  writeDataToBinary<int>(file, nx);
+  writeDataToBinary<int>(file, nl);
+  writeDataToBinary<double>(file, Theta);
+  writeDataToBinary<vector<double>>(file, wvg);
+  writeDataToBinary<Vector3D>(file, res);
+  file.close();
+  if (!file) {
+    throw runtime_error("Error in writing to file " + fileName);
+  }
+}
+
+void Qstls::readAdrFixedFile(Vector3D &res,
+			     const string &fileName,
+			     const bool iet) const {
+  if (fileName == EMPTY_STRING) { return; }
+  const int nx = wvg.size();
+  const int nl = in.getNMatsubara();
+  ifstream file;
+  file.open(fileName, ios::binary);
+  if (!file.is_open()) {
+    throw runtime_error("Input file " + fileName + " could not be opened.");
+  }
+  int nx_;
   int nl_;
-  readRestart(fileName, wvg_, adrFixed_, Theta_, nl_);
-  if (checkAdrFixedFromFile(wvg_, Theta_, nl_) != 0) {
+  vector<double> wvg_;
+  double Theta_;
+  readDataFromBinary<int>(file, nx_);
+  readDataFromBinary<int>(file, nl_);
+  readDataFromBinary<double>(file, Theta_);
+  wvg_.resize(nx);
+  readDataFromBinary<vector<double>>(file, wvg_);
+  if (iet) { res.resize(nl, nx, nx); }
+  else { res.resize(nx, nl, nx); }
+  readDataFromBinary<Vector3D>(file, res);
+  file.close();
+  if (!file) {
+    throw runtime_error("Error in reading from file " + fileName);
+  }
+  if (checkAdrFixed(wvg_, Theta_, nl_) != 0) {
     throw runtime_error("Fixed component of the auxiliary density response"
 			"loaded from from file is incompatible with input");
   }
-  adrFixed = adrFixed_;
-  cout << endl << "Loaded from file " << fileName << endl;
 }
 
-int Qstls::checkAdrFixedFromFile(const vector<double> &wvg_,
+int Qstls::checkAdrFixed(const vector<double> &wvg_,
 				 const double Theta_,
 				 const int nl_) const {
   constexpr double tol = 1e-15;
@@ -278,7 +338,7 @@ void Qstls::computeAdrIet() {
   for (int i=0; i<nx; ++i) {
     Integrator2D itgPrivate;
     Vector3D adrFixedPrivate;
-    readAdrFixedIetFile(adrFixedPrivate, i);
+    readAdrFixedFile(adrFixedPrivate, adrFixedIetFileInfo.at(i).first, true);
     AdrIet adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
 		  wvg[i], ssfi, dlfci, bfi, itgGrid, itgPrivate);
     adrTmp.get(wvg, adrFixedPrivate, adrIet);
@@ -298,10 +358,8 @@ void Qstls::computeAdrFixedIet() {
   }
   if (idx.size() == 0) { return; }
   // Write necessary files
-  cout << "#######" << endl;
-  cout << "Writing files for the fixed component "
-          "of the iet auxiliary density response" << endl;
-  cout << "#######" << endl;
+  cout << "Computing fixed component of the iet auxiliary density response: ";
+  fflush(stdout);
 #pragma omp parallel for
   for (int i=0; i<idx.size(); ++i) {
     Integrator1D itgPrivate;
@@ -309,10 +367,11 @@ void Qstls::computeAdrFixedIet() {
     AdrFixedIet adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
 		       wvg[idx[i]], mu, itgPrivate);
     adrTmp.get(wvg, res);
-    writeAdrFixedIetFile(res, idx[i]);
+    writeAdrFixedFile(res, adrFixedIetFileInfo.at(idx[i]).first);
   }
   // Update content of adrFixedIetFileInfo
   getAdrFixedIetFileInfo();
+  cout << "Done" << endl;
 }
 
 void Qstls::getAdrFixedIetFileInfo() {
@@ -320,108 +379,26 @@ void Qstls::getAdrFixedIetFileInfo() {
   const double Theta = in.getDegeneracy();
   adrFixedIetFileInfo.clear();
   for (int i=0; i<nx; ++i) {
-    const string name = format<double,double>("adr_iet_fixed_rs%.3f_theta%.3f_"
-					      + in.getTheory() + "_wv%.5f.bin",
-					      in.getCoupling(), Theta, wvg[i]);
+    string name = format<double,double>("adr_fixed_rs%.3f_theta%.3f_"
+					+ in.getTheory() + "_wv%.5f.bin",
+					in.getCoupling(), Theta, wvg[i]);
+    if (qin.getFixedIet() != EMPTY_STRING) {
+      __fs::filesystem::path fullPath = qin.getFixedIet();
+      fullPath /= name;
+      name = fullPath.string();
+    }
     const bool found = __fs::filesystem::exists(name);
     const pair<string,bool> filePair = pair<string,bool>(name,found);
     adrFixedIetFileInfo.insert(pair<int,decltype(filePair)>(i,filePair));
   }
 }
 
-void Qstls::writeAdrFixedIetFile(const Vector3D &res,
-				 const int i) const {
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  const double Theta = in.getDegeneracy();
-  const string fileName = adrFixedIetFileInfo.at(i).first;
+// Recovery files
+void Qstls::writeRecovery() {
   ofstream file;
-  file.open(fileName, ios::binary);
+  file.open(recoveryFileName, ios::binary);
   if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
-  writeDataToBinary<int>(file, nx);
-  writeDataToBinary<int>(file, nl);
-  writeDataToBinary<double>(file, Theta);
-  writeDataToBinary<vector<double>>(file, wvg);
-  writeDataToBinary<Vector3D>(file, res);
-  file.close();
-  if (!file) {
-    throw runtime_error("Error in writing to file " + fileName);
-  }
-}
-
-void Qstls::readAdrFixedIetFile(Vector3D &res,
-				const int i) const {
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  const string fileName = adrFixedIetFileInfo.at(i).first;
-  ifstream file;
-  file.open(fileName, ios::binary);
-  if (!file.is_open()) {
-    throw runtime_error("Input file " + fileName + " could not be opened.");
-  }
-  int nx_;
-  int nl_;
-  vector<double> wvg_;
-  double Theta_;
-  readDataFromBinary<int>(file, nx_);
-  readDataFromBinary<int>(file, nl_);
-  readDataFromBinary<double>(file, Theta_);
-  wvg_.resize(nx);
-  res.resize(nl, nx, nx);
-  readDataFromBinary<vector<double>>(file, wvg_);
-  readDataFromBinary<Vector3D>(file, res);
-  file.close();
-  if (!file) {
-    throw runtime_error("Error in reading from file " + fileName);
-  }
-  if (checkAdrFixedFromFile(wvg_, Theta_, nl_) != 0) {
-    throw runtime_error("Fixed component of the auxiliary density response"
-			"loaded from from file is incompatible with input");
-  }
-}
-
-// Write output files
-void Qstls::writeOutput() const{
-  writeRestart();
-}
-
-void Qstls::writeAdr() const {
-  if (in.getDegeneracy() == 0.0) return;
-  const string fileName = format<double,double>("adr_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".dat",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
-  }
-  const int nx = adr.size(0);
-  const int nl = adr.size(1);
-  for (int i=0; i<nx; ++i){
-    const string el1 = format<double>("%.8e ", wvg[i]);
-    file << el1;
-    for (int l=0; l<nl; ++l) {
-      const string el2 = format<double>("%.8e ", adr(i,l));
-      file << el2;
-    }
-    file << endl;
-  }
-  file.close();
-}
-
-// Restart files
-void Qstls::writeRestart() const {
-  const string fileName = format<double,double>("restart_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".bin",
-						in.getCoupling(),
-						in.getDegeneracy());
-  ofstream file;
-  file.open(fileName, ios::binary);
-  if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
+    throw runtime_error("Recovery file " + recoveryFileName + " could not be created.");
   }
   int nx = wvg.size();
   int nl = in.getNMatsubara();
@@ -434,27 +411,27 @@ void Qstls::writeRestart() const {
   writeDataToBinary<Vector3D>(file, adrFixed);
   file.close();
   if (!file) {
-    throw runtime_error("Error in writing the file " + fileName);
+    throw runtime_error("Error in writing the recovery file " + recoveryFileName);
   }
 }
 
-void Qstls::readRestart(const string &fileName,
+void Qstls::readRecovery(const string &fileName,
 			vector<double> &wvg_,
 			Vector3D &adrFixed_,
 			double &Theta,
 			int &nl) const {
   vector<double> tmp1;
   Vector2D tmp2;
-  readRestart(fileName, wvg_, tmp1, tmp2, adrFixed_, Theta, nl);
+  readRecovery(fileName, wvg_, tmp1, tmp2, adrFixed_, Theta, nl);
 }
 
-void Qstls::readRestart(const string &fileName,
-			vector<double> &wvg_,
-			vector<double> &ssf_,
-			Vector2D &adr_,
-			Vector3D &adrFixed_,
-			double &Theta,
-			int &nl) const {
+void Qstls::readRecovery(const string &fileName,
+			 vector<double> &wvg_,
+			 vector<double> &ssf_,
+			 Vector2D &adr_,
+			 Vector3D &adrFixed_,
+			 double &Theta,
+			 int &nl) const {
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {

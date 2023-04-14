@@ -9,11 +9,24 @@ namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 
 // Methods that need wrapping to pass arrays between native and python
-namespace arrayWrappers {
 
+namespace arrayWrapper {
+
+  void CheckRowMajor(const bn::ndarray &nda) {
+    const bn::ndarray::bitflag flags = nda.get_flags();
+    const bool isRowMajor = flags & bn::ndarray::C_CONTIGUOUS;
+    if (!isRowMajor) {
+      throw runtime_error("The numpy array is not stored in row major order (c-contiguous)");
+    }
+  }
+  
   vector<double> toVector(const bn::ndarray &nda){
+    if (nda.get_nd() != 1) {
+      throw runtime_error("Incorrect numpy array dimensions");
+    }
     const Py_intptr_t* shape = nda.get_shape();
     const int dim = nda.get_nd();
+    // the numpy array is flattened to a one dimensional std::vector
     Py_intptr_t n = 1;
     for (int i = 0; i < dim; ++i){ n *= shape[i]; }
     double* ptr = reinterpret_cast<double*>(nda.get_data());
@@ -29,6 +42,24 @@ namespace arrayWrappers {
     return v;
   }
 
+  vecUtil::Vector2D toVector2D(const bn::ndarray &nda){
+    if (nda.get_nd() != 2) {
+      throw runtime_error("Incorrect numpy array dimensions");
+    }
+    CheckRowMajor(nda);
+    const Py_intptr_t* shape = nda.get_shape();
+    const int sz1 = shape[0];
+    const int sz2 = shape[1];
+    vecUtil::Vector2D v(sz1, sz2);
+    double* ptr = reinterpret_cast<double*>(nda.get_data());
+    for (int i = 0; i < sz1; ++i){
+      for (int j = 0; j < sz2; ++j) {
+	v(i,j) = *(ptr + j + i*sz2);
+      }
+    }
+    return v;
+  }
+  
   template<typename T>
   bn::ndarray toNdArray(const T &v){
     Py_intptr_t shape[1];
@@ -37,48 +68,54 @@ namespace arrayWrappers {
     std::copy(v.begin(), v.end(), reinterpret_cast<double*>(result.get_data()));
     return result;
   }
+  
+}
 
-  // Wrappers for StlsInput methods
+namespace StlsInputWrapper {
+  
   bn::ndarray getChemicalPotentialGuess(StlsInput &in){
-    return toNdArray(in.getChemicalPotentialGuess());
+    return arrayWrapper::toNdArray(in.getChemicalPotentialGuess());
   }
   
   void setChemicalPotentialGuess(StlsInput &in,
 				 const bp::list &muGuess){
-    in.setChemicalPotentialGuess(toVector(muGuess));
+    in.setChemicalPotentialGuess(arrayWrapper::toVector(muGuess));
   }
 
-  struct StlsGuess {
-    bn::ndarray wvg = toNdArray(vector<double>(0));
-    bn::ndarray property = toNdArray(vector<double>(0));
+  struct SlfcGuess {
+    bn::ndarray wvg = arrayWrapper::toNdArray(vector<double>(0));
+    bn::ndarray slfc = arrayWrapper::toNdArray(vector<double>(0));
   };
     
-  arrayWrappers::StlsGuess getGuess(StlsInput &in){
-    StlsInput::StlsGuess guess_ = in.getGuess();
-    arrayWrappers::StlsGuess guess;
-    guess.wvg = toNdArray(guess_.wvg);
-    guess.property = toNdArray(guess_.property);
+  StlsInputWrapper::SlfcGuess getGuess(StlsInput &in){
+    StlsInput::SlfcGuess guess_ = in.getGuess();
+    StlsInputWrapper::SlfcGuess guess;
+    guess.wvg = arrayWrapper::toNdArray(guess_.wvg);
+    guess.slfc = arrayWrapper::toNdArray(guess_.slfc);
     return guess;
   }
   
   void setGuess(StlsInput &in,
-		const arrayWrappers::StlsGuess &guess){
-    StlsInput::StlsGuess guess_;
-    guess_.wvg = toVector(guess.wvg);
-    guess_.property = toVector(guess.property);
+		const StlsInputWrapper::SlfcGuess &guess){
+    StlsInput::SlfcGuess guess_;
+    guess_.wvg = arrayWrapper::toVector(guess.wvg);
+    guess_.slfc = arrayWrapper::toVector(guess.slfc);
     in.setGuess(guess_);
   }
-  
-  // Wrappers for Stls methods
+
+}
+
+namespace StlsWrapper {
+
   bn::ndarray getBf(const Stls &stls){
-    return toNdArray(stls.getBf());
+    return arrayWrapper::toNdArray(stls.getBf());
   }
 
   bn::ndarray getIdr(const Stls &stls){
     const vecUtil::Vector2D &idrNative = stls.getIdr();
     const size_t nx = idrNative.size(0);
     const size_t nl = idrNative.size(1);
-    bn::ndarray idr = toNdArray(idrNative);
+    bn::ndarray idr = arrayWrapper::toNdArray(idrNative);
     bp::tuple shape = bp::make_tuple(nx, nl);
     idr = idr.reshape(shape);
     return idr;
@@ -86,34 +123,75 @@ namespace arrayWrappers {
 
   bn::ndarray getRdf(const Stls &stls,
 		     const bn::ndarray &r){
-    return toNdArray(stls.getRdf(toVector(r)));
+    return arrayWrapper::toNdArray(stls.getRdf(arrayWrapper::toVector(r)));
   }
   
   bn::ndarray getSdr(const Stls &stls){
-    return toNdArray(stls.getSdr());
+    return arrayWrapper::toNdArray(stls.getSdr());
   }
   
   bn::ndarray getSlfc(const Stls &stls){
-    return toNdArray(stls.getSlfc());
+    return arrayWrapper::toNdArray(stls.getSlfc());
   }
   
   bn::ndarray getSsf(const Stls &stls){
-    return toNdArray(stls.getSsf());
+    return arrayWrapper::toNdArray(stls.getSsf());
   }
 
   bn::ndarray getSsfHF(const Stls &stls){
-    return toNdArray(stls.getSsfHF());
+    return arrayWrapper::toNdArray(stls.getSsfHF());
   }
   
   bn::ndarray getWvg(const Stls &stls){
-    return toNdArray(stls.getWvg());
+    return arrayWrapper::toNdArray(stls.getWvg());
   }
 
+}
+
+
+namespace QstlsInputWrapper {
+  
+  struct QstlsGuess {
+    bn::ndarray wvg = arrayWrapper::toNdArray(vector<double>(0));
+    bn::ndarray ssf = arrayWrapper::toNdArray(vector<double>(0));
+    bn::ndarray adr = arrayWrapper::toNdArray(vector<double>(0));
+    int matsubara = 0;
+  };
+
+  QstlsInputWrapper::QstlsGuess getGuess(QstlsInput &in){
+    QstlsInput::QstlsGuess guess_ = in.getGuess();
+    QstlsInputWrapper::QstlsGuess guess;
+    const int sz1 = guess_.adr.size(0);
+    const int sz2 = guess_.adr.size(1);
+    guess.wvg = arrayWrapper::toNdArray(guess_.wvg);
+    guess.ssf = arrayWrapper::toNdArray(guess_.ssf);
+    bn::ndarray adrTmp = arrayWrapper::toNdArray(guess_.adr);
+    guess.adr = adrTmp.reshape(bp::make_tuple(sz1, sz2));
+    guess.matsubara = guess_.matsubara;
+    return guess;
+  }
+  
+  void setGuess(QstlsInput &in,
+		const QstlsInputWrapper::QstlsGuess &guess){
+    QstlsInput::QstlsGuess guess_;
+    guess_.wvg = arrayWrapper::toVector(guess.wvg);
+    guess_.ssf = arrayWrapper::toVector(guess.ssf);
+    if (guess.adr.shape(0) > 0) {
+      guess_.adr = arrayWrapper::toVector2D(guess.adr);
+    }
+    guess_.matsubara = guess.matsubara;
+    in.setGuess(guess_);
+  }
+  
+}
+
+namespace QstlsWrapper {
+    
   bn::ndarray getAdr(const Qstls &qstls){
     const vecUtil::Vector2D &adrNative = qstls.getAdr();
     const size_t nx = adrNative.size(0);
     const size_t nl = adrNative.size(1);
-    bn::ndarray adr = toNdArray(adrNative);
+    bn::ndarray adr = arrayWrapper::toNdArray(adrNative);
     bp::tuple shape = bp::make_tuple(nx, nl);
     adr = adr.reshape(shape);
     return adr;
@@ -123,7 +201,7 @@ namespace arrayWrappers {
     const vecUtil::Vector3D &adrNative = qstls.getAdrFixed();
     const size_t nx = adrNative.size(0);
     const size_t nl = adrNative.size(1);
-    bn::ndarray adr = toNdArray(adrNative);
+    bn::ndarray adr = arrayWrapper::toNdArray(adrNative);
     bp::tuple shape = bp::make_tuple(nx, nl, nx);
     adr = adr.reshape(shape);
     return adr;
@@ -131,7 +209,26 @@ namespace arrayWrappers {
 
 }
 
+namespace thermoWrapper {
 
+  bn::ndarray computeRdf(const bn::ndarray &rIn,
+			 const bn::ndarray &wvgIn,
+			 const bn::ndarray &ssfIn) {
+    const vector<double> &r = arrayWrapper::toVector(rIn);
+    const vector<double> &wvg = arrayWrapper::toVector(wvgIn);
+    const vector<double> &ssf = arrayWrapper::toVector(ssfIn);
+    return arrayWrapper::toNdArray(thermoUtil::computeRdf(r, wvg, ssf));
+  }
+
+  double computeInternalEnergy(const bn::ndarray &wvgIn,
+			       const bn::ndarray &ssfIn,
+			       const double &coupling) {
+    const vector<double> &wvg = arrayWrapper::toVector(wvgIn);
+    const vector<double> &ssf = arrayWrapper::toVector(ssfIn);
+    return thermoUtil::computeInternalEnergy(wvg, ssf, coupling);
+  }
+  
+}
 
 // Classes exposed to Python
 BOOST_PYTHON_MODULE(qupled)
@@ -165,15 +262,15 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &Input::print)
     .def("isEqual", &Input::isEqual);
 
-  bp::class_<arrayWrappers::StlsGuess>("StlsGuess")
-    .def_readwrite("wvg", &arrayWrappers::StlsGuess::wvg)
-    .def_readwrite("property", &arrayWrappers::StlsGuess::property);
+  bp::class_<StlsInputWrapper::SlfcGuess>("SlfcGuess")
+    .def_readwrite("wvg", &StlsInputWrapper::SlfcGuess::wvg)
+    .def_readwrite("slfc", &StlsInputWrapper::SlfcGuess::slfc);
     
   bp::class_<StlsInput, bp::bases<Input>>("StlsInput",
 					  bp::init<const double, const double, const string>())
     .add_property("chemicalPotential",
-		  arrayWrappers::getChemicalPotentialGuess,
-		  arrayWrappers::setChemicalPotentialGuess)
+		  StlsInputWrapper::getChemicalPotentialGuess,
+		  StlsInputWrapper::setChemicalPotentialGuess)
     .add_property("error",
 		  &StlsInput::getErrMin,
 		  &StlsInput::setErrMin)
@@ -192,12 +289,12 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("outputFrequency",
 		  &StlsInput::getOutIter,
 		  &StlsInput::setOutIter)
-    .add_property("restartFile",
-		  &StlsInput::getRestartFileName,
-		  &StlsInput::setRestartFileName)
+    .add_property("recoveryFile",
+		  &StlsInput::getRecoveryFileName,
+		  &StlsInput::setRecoveryFileName)
     .add_property("guess",
-		  arrayWrappers::getGuess,
-		  arrayWrappers::setGuess)
+		  StlsInputWrapper::getGuess,
+		  StlsInputWrapper::setGuess)
     .add_property("resolution",
 		  &StlsInput::getWaveVectorGridRes,
 		  &StlsInput::setWaveVectorGridRes)
@@ -206,11 +303,23 @@ BOOST_PYTHON_MODULE(qupled)
 		  &StlsInput::setWaveVectorGridCutoff)
     .def("print", &StlsInput::print)
     .def("isEqual", &StlsInput::isEqual);
-  
+
+  bp::class_<QstlsInputWrapper::QstlsGuess>("QstlsGuess")
+    .def_readwrite("wvg", &QstlsInputWrapper::QstlsGuess::wvg)
+    .def_readwrite("ssf", &QstlsInputWrapper::QstlsGuess::ssf)
+    .def_readwrite("adr", &QstlsInputWrapper::QstlsGuess::adr)
+    .def_readwrite("matsubara", &QstlsInputWrapper::QstlsGuess::matsubara);
+
   bp::class_<QstlsInput>("QstlsInput")
-    .add_property("setFixedFileName",
-		  &QstlsInput::getFixedFileName,
-		  &QstlsInput::setFixedFileName)
+    .add_property("guess",
+		  QstlsInputWrapper::getGuess,
+		  QstlsInputWrapper::setGuess)
+    .add_property("fixed",
+		  &QstlsInput::getFixed,
+		  &QstlsInput::setFixed)
+    .add_property("fixediet",
+		  &QstlsInput::getFixedIet,
+		  &QstlsInput::setFixedIet)
     .def("print", &QstlsInput::print)
     .def("isEqual", &QstlsInput::isEqual);
     
@@ -218,21 +327,25 @@ BOOST_PYTHON_MODULE(qupled)
   bp::class_<Stls>("Stls",
 		   bp::init<const StlsInput>())
     .def("compute", &Stls::compute)
-    .def("getRdf", arrayWrappers::getRdf)
-    .add_property("bf", arrayWrappers::getBf)
-    .add_property("idr", arrayWrappers::getIdr)
-    .add_property("sdr", arrayWrappers::getSdr)
-    .add_property("slfc", arrayWrappers::getSlfc)
-    .add_property("ssf", arrayWrappers::getSsf)
-    .add_property("ssfHF", arrayWrappers::getSsfHF)
+    .def("getRdf", StlsWrapper::getRdf)
+    .add_property("bf", StlsWrapper::getBf)
+    .add_property("idr", StlsWrapper::getIdr)
+    .add_property("recovery", &Stls::getRecoveryFileName)
+    .add_property("sdr", StlsWrapper::getSdr)
+    .add_property("slfc", StlsWrapper::getSlfc)
+    .add_property("ssf", StlsWrapper::getSsf)
+    .add_property("ssfHF", StlsWrapper::getSsfHF)
     .add_property("uInt", &Stls::getUInt)
-    .add_property("wvg", arrayWrappers::getWvg);
+    .add_property("wvg", StlsWrapper::getWvg);
   
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",
 				     bp::init<const StlsInput, const QstlsInput>())
     .def("compute", &Qstls::compute)
-    .add_property("adr", arrayWrappers::getAdr)
-    .add_property("adr_fixed", arrayWrappers::getAdrFixed);
+    .add_property("adr", QstlsWrapper::getAdr);
+
+  // Post-process methods
+  bp::def("computeRdf", thermoWrapper::computeRdf);
+  bp::def("computeInternalEnergy", thermoWrapper::computeInternalEnergy);
   
 }

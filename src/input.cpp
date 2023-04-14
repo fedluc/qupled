@@ -128,15 +128,15 @@ void StlsInput::setIETMapping(const string &IETMapping){
   this->IETMapping = IETMapping;
 }
 
-void StlsInput::setRestartFileName(const string &restartFileName){
-  this->restartFileName = restartFileName;
+void StlsInput::setRecoveryFileName(const string &recoveryFileName){
+  this->recoveryFileName = recoveryFileName;
 }
 
-void StlsInput::setGuess(const StlsGuess &guess){
-  if (guess.wvg.size() < 3 || guess.property.size() < 3) {
+void StlsInput::setGuess(const SlfcGuess &guess){
+  if (guess.wvg.size() < 3 || guess.slfc.size() < 3) {
     throw runtime_error("The initial guess does not contain enough points");
   }
-  if (guess.wvg.size() != guess.property.size()) {
+  if (guess.wvg.size() != guess.slfc.size()) {
     throw runtime_error("The initial guess is inconsistent");
   }
   this->guess = guess;
@@ -169,7 +169,7 @@ void StlsInput::print() const {
   cout << "Mixing parameter = " << aMix << endl;
   cout << "Number of Matsubara frequencies = " << nl << endl;
   cout << "Output frequency = " << outIter << endl;
-  cout << "File with restart data = " << restartFileName << endl;
+  cout << "File with recovery data = " << recoveryFileName << endl;
   cout << "Wave-vector resolution = " << dx << endl;
   cout << "Wave-vector cutoff = " << xmax << endl;
 }
@@ -184,21 +184,43 @@ bool StlsInput::isEqual(const StlsInput &in) const {
 	   nl == in.nl &&
 	   nIter == in.nIter &&
 	   outIter == in.outIter &&
-	   restartFileName == in.restartFileName &&
+	   recoveryFileName == in.recoveryFileName &&
 	   xmax == in.xmax);
 }
 
 // --- QstlsInput ---
 
-void QstlsInput::setFixedFileName(const string &fixedFileName){
-  this->fixedFileName = fixedFileName;
+void QstlsInput::setFixed(const string &fixed){
+  this->fixed = fixed;
 } 
+
+void QstlsInput::setFixedIet(const string &fixedIet){
+  this->fixedIet = fixedIet;
+} 
+
+void QstlsInput::setGuess(const QstlsGuess &guess){
+  if (guess.wvg.size() < 3 || guess.ssf.size() < 3) {
+    throw runtime_error("The initial guess does not contain enough points");
+  }
+  bool consistentGuess = guess.wvg.size() == guess.ssf.size();
+  if (guess.adr.size(0) > 0) {
+    consistentGuess = consistentGuess
+      && guess.adr.size(0) == guess.wvg.size()
+      && guess.adr.size(1) == guess.matsubara;
+  }
+  if (!consistentGuess) {
+    throw runtime_error("The initial guess is inconsistent");
+  }
+  this->guess = guess;
+}
 
 void QstlsInput::print() const {
   cout << "##### qSTLS-related input #####" << endl;
-  cout << "File with fixed adr component = " << fixedFileName  << endl;
+  cout << "File with fixed adr component = " << fixed  << endl;
+  cout << "File with fixed adr component (iet) = " << fixedIet  << endl;
 }
 
 bool QstlsInput::isEqual(const QstlsInput &in) const {
-  return ( fixedFileName == in.fixedFileName );
+  return ( fixed == in.fixed &&
+	   fixedIet == in.fixedIet);
 }

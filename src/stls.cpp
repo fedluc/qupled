@@ -12,11 +12,18 @@ using namespace binUtil;
 // STLS class
 // -----------------------------------------------------------------
 
-void Stls::compute(){
-  init();  
-  if (verbose) cout << "Structural properties calculation ..." << endl;
-  doIterations();
-  if (verbose) cout << "Done" << endl;
+int Stls::compute(){
+  try {
+    init();  
+    if (verbose) cout << "Structural properties calculation ..." << endl;
+    doIterations();
+    if (verbose) cout << "Done" << endl;
+    return 0;
+  }
+  catch (const runtime_error& err) {
+    cerr << err.what() << endl;
+    return 1;
+  }
 }
 
 // Initialization
@@ -33,6 +40,10 @@ void Stls::init(){
   if (verbose) cout << "Computing HF static structure factor: "; 
   computeSsfHF();
   if (verbose) cout << "Done" << endl;
+  recoveryFileName = format<double,double>("recovery_rs%.3f_theta%.3f_"
+					   + in.getTheory() + ".bin",
+					   in.getCoupling(),
+					   in.getDegeneracy());
 }
 
 // Set up wave-vector grid
@@ -138,9 +149,8 @@ void Stls::computeSsfGround(){
 
 // Compute static local field correction
 void Stls::computeSlfc(){
-  const int nx = wvg.size();
-  assert(ssf.size() == nx);
-  assert(slfc.size() == nx);
+  assert(ssf.size() == wvg.size());
+  assert(slfc.size() == wvg.size());
   computeSlfcStls();
   if (useIet) computeSlfcIet();
 }
@@ -204,7 +214,7 @@ void Stls::doIterations() {
     // Update solution
     updateSolution();
     // Write output
-    if (counter % outIter == 0) { writeOutput();};
+    if (counter % outIter == 0 && writeFiles) { writeRecovery(); }
     // End timing
     double toc = omp_get_wtime();
     // Print diagnostic
@@ -223,10 +233,10 @@ void Stls::initialGuess() {
   slfcOld.resize(nx);
   slfc.resize(nx);
   // From recovery file
-  if (in.getRestartFileName() != EMPTY_STRING) {
+  if (in.getRecoveryFileName() != EMPTY_STRING) {
     vector<double> wvgFile;
     vector<double> slfcFile;
-    readRestart(wvgFile, slfcFile);
+    readRecovery(wvgFile, slfcFile);
     const Interpolator1D slfci(wvgFile, slfcFile);
     const double xmaxi = wvgFile.back();
     for (int i=0; i<wvg.size(); ++i) {
@@ -238,7 +248,7 @@ void Stls::initialGuess() {
   }
   // From guess in input
   if (in.getGuess().wvg.size() > 0) {
-    const Interpolator1D slfci(in.getGuess().wvg, in.getGuess().property);
+    const Interpolator1D slfci(in.getGuess().wvg, in.getGuess().slfc);
     const double xmaxi = in.getGuess().wvg.back();
     for (int i=0; i<wvg.size(); ++i) {
       const double x = wvg[i];
@@ -264,55 +274,32 @@ void Stls::updateSolution(){
 
 // Getters
 vector<double> Stls::getRdf(const vector<double> &r) const {
-  assert(ssf.size() > 0 && wvg.size() > 0);
-  const Interpolator1D itp(wvg, ssf);
-  const int nr = r.size();
-  vector<double> rdf(nr);
-  Integrator1DFourier itgF(0.0);
-  for (int i=0; i<nr; ++i){
-    const Rdf rdfTmp(r[i], wvg.back(), itp, itgF);
-    rdf[i] = rdfTmp.get();
-  }
-  return rdf;
+    return computeRdf(r, ssf, wvg);
 }
 
 vector<double> Stls::getSdr() const {
   if (in.getDegeneracy() == 0.0) {
-    throw runtime_error("The static density response cannot be computed in the ground state.");
-  };
-  vector<double> sdr(wvg.size());
+    throw runtime_error("The static density response cannot "
+			"be computed in the ground state.");
+  }
+  vector<double> sdr(wvg.size(), -1.5 * in.getDegeneracy());
   const double fact = 4 *lambda * in.getCoupling() / M_PI;
-  const double Theta = -1.5 * in.getDegeneracy();
   for (int i=0; i<wvg.size(); ++i){
     sdr[i] = idr(i,0)/ (1.0 + fact/(wvg[i] * wvg[i]) * (1.0 - slfc[i]) * idr(i,0));
   }
-  transform(sdr.begin(), sdr.end(), sdr.begin(), [&Theta](double el){return Theta*el;});
   return sdr;
 }
 
 double Stls::getUInt() const {
-  const Interpolator1D itp(wvg, ssf);
-  Integrator1D itgTmp;
-  const InternalEnergy uInt(in.getCoupling(), wvg.front(), wvg.back(), itp, itgTmp);
-  return uInt.get();
-}
+  return computeInternalEnergy(wvg, ssf, in.getCoupling());
+};  
 
-// Write output files
-void Stls::writeOutput() const{
-  if (!writeFiles) return; 
-  writeRestart();
-}
-
-// Restart files
-void Stls::writeRestart() const {
-  const string fileName = format<double,double>("restart_rs%.3f_theta%.3f_"
-						+ in.getTheory() + ".bin",
-						in.getCoupling(),
-						in.getDegeneracy());
+// Recovery files
+void Stls::writeRecovery() {
   ofstream file;
-  file.open(fileName, ios::binary);
+  file.open(recoveryFileName, ios::binary);
   if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
+    throw runtime_error("Recovery file " + recoveryFileName + " could not be created.");
   }
   int nx = wvg.size();
   writeDataToBinary<int>(file, nx);
@@ -320,13 +307,13 @@ void Stls::writeRestart() const {
   writeDataToBinary<decltype(slfc)>(file, slfc);
   file.close();
   if (!file) {
-    throw runtime_error("Error in writing to file " + fileName);
+    throw runtime_error("Error in writing the recovery file " + recoveryFileName);
   }
 }
 
-void Stls::readRestart(vector<double> &wvgFile,
+void Stls::readRecovery(vector<double> &wvgFile,
 		       vector<double> &slfcFile) const {
-  const string fileName = in.getRestartFileName();
+  const string fileName = in.getRecoveryFileName();
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
@@ -619,9 +606,8 @@ double SsfGround::plasmon() const {
 // Dielectric response function
 double SsfGround::drf(const double Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
-  const double idrRe = IdrGround(Omega, x).re0();
-  const double wCo = x*x + 2*x;     
-  assert(Omega >= wCo);
+  const double idrRe = IdrGround(Omega, x).re0();     
+  assert(Omega >= x*x + 2*x);
   return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
 }
 
@@ -634,8 +620,7 @@ double SsfGround::drfDer(const double Omega) const {
   const double idrRe = idrTmp.re0();
   const double idrReDer = idrTmp.re0Der();
   double denom = (1.0 - fact * slfc * idrRe);
-  double w_co = x*x + 2*x;
-  assert(Omega >= w_co); 
+  assert(Omega >= x*x + 2*x); 
   return fact * idrReDer / (denom * denom);
 }
 

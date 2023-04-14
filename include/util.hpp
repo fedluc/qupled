@@ -198,14 +198,19 @@ namespace thermoUtil {
 	const double cutoff_,
 	const Interpolator1D &ssfi_,
 	Integrator1DFourier &itg_) : r(r_), cutoff(cutoff_), itg(itg_),
-				     ssfi(ssfi_)
-    {
-
-    };
+				     ssfi(ssfi_) { ; };
     // Get result of integration 
     double get() const;
   
   };
+
+  double computeInternalEnergy(const vector<double> &wvg,
+			       const vector<double> &ssf,
+			       const double &coupling);
+  
+  vector<double> computeRdf(const vector<double> &r,
+			    const vector<double> &wvg,
+			    const vector<double> &ssf);
   
 }
 

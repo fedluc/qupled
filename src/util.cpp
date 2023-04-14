@@ -285,6 +285,30 @@ namespace thermoUtil {
     return 1 + 1.5 * itg.getSolution()/r;
   }
 
+  vector<double> computeRdf(const vector<double> &r,
+			    const vector<double> &wvg,
+			    const vector<double> &ssf) {
+    assert(ssf.size() > 0 && wvg.size() > 0);
+    const Interpolator1D itp(wvg, ssf);
+    const int nr = r.size();
+    vector<double> rdf(nr);
+    Integrator1DFourier itg(0.0);
+    for (int i=0; i<nr; ++i){
+      const Rdf rdfTmp(r[i], wvg.back(), itp, itg);
+      rdf[i] = rdfTmp.get();
+    }
+    return rdf;
+  }
+
+  double computeInternalEnergy(const vector<double> &wvg,
+			       const vector<double> &ssf,
+			       const double &coupling) {
+    const Interpolator1D itp(wvg, ssf);
+    Integrator1D itg;
+    const InternalEnergy uInt(coupling, wvg.front(), wvg.back(), itp, itg);
+    return uInt.get();
+  }
+  
 }
   
 
