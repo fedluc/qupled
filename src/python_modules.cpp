@@ -239,32 +239,47 @@ BOOST_PYTHON_MODULE(qupled)
     
   // Wrapper for vector<double>
   bp::class_<std::vector<double>>("vector<double>")
-    .def(bp::vector_indexing_suite<std::vector<double>>() );
+    .def(bp::vector_indexing_suite<std::vector<double>>());
   
   // Classes to manage the input
-  bp::class_<Input>("Input",
+  bp::class_<Input>("Input", 
+		    "Base class to handle the inputs ",
 		    bp::init<const double, const double, const string>())
     .add_property("coupling",
 		  &Input::getCoupling,
-		  &Input::setCoupling)
+		  &Input::setCoupling,
+		  "Coupling parameter")
     .add_property("degeneracy",
 		  &Input::getDegeneracy,
-		  &Input::setDegeneracy)
+		  &Input::setDegeneracy,
+		  "Degeneracy parameter")
     .add_property("int2DScheme",
 		  &Input::getInt2DScheme,
-		  &Input::setInt2DScheme)
+		  &Input::setInt2DScheme,
+		  "Scheme used to solve two-dimensional integrals, "
+		  "allowed options include: full (the inner integral "
+		  "is evaluated at arbitrary points decided by the "
+		  "quadrature rule) and segregated (the inner integral is "
+		  "evaluated on a fixed grid that depends on the integral "
+		  "at hand). Segregated is usually faster "
+		  "than full but it could become less accurate if the fixed "
+		  "points are not chosen correctly")
     .add_property("threads",
 		  &Input::getNThreads,
-		  &Input::setNThreads)
+		  &Input::setNThreads,
+		  "Number of OMP threads for parallel calculations")
     .add_property("theory",
 		  &Input::getTheory,
-		  &Input::setTheory)
-    .def("print", &Input::print)
-    .def("isEqual", &Input::isEqual);
+		  &Input::setTheory,
+		  "Theory to be solved")
+    .def("print", &Input::print, "Prints the content of the input structure")
+    .def("isEqual", &Input::isEqual, "Compares two input structures and returns "
+	 "true if they are identical");
 
-  bp::class_<StlsInputWrapper::SlfcGuess>("SlfcGuess")
-    .def_readwrite("wvg", &StlsInputWrapper::SlfcGuess::wvg)
-    .def_readwrite("slfc", &StlsInputWrapper::SlfcGuess::slfc);
+  bp::class_<StlsInputWrapper::SlfcGuess>("SlfcGuess", "Class used to define an initial guess"
+					  "for STLS and STLS-IET schemes")
+    .def_readwrite("wvg", &StlsInputWrapper::SlfcGuess::wvg, "Wave-vector grid")
+    .def_readwrite("slfc", &StlsInputWrapper::SlfcGuess::slfc, "Static local field correction");
     
   bp::class_<StlsInput, bp::bases<Input>>("StlsInput",
 					  bp::init<const double, const double, const string>())
