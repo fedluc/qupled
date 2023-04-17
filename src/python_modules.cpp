@@ -234,6 +234,11 @@ namespace thermoWrapper {
 BOOST_PYTHON_MODULE(qupled)
 {
 
+  // Docstring formatting
+  bp::docstring_options docopt;
+  docopt.enable_all();
+  docopt.disable_cpp_signatures();
+	
   // Numpy library initialization
   bn::initialize();
     
@@ -248,30 +253,31 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("coupling",
 		  &Input::getCoupling,
 		  &Input::setCoupling,
-		  "Coupling parameter")
+		  "float: Coupling parameter")
     .add_property("degeneracy",
 		  &Input::getDegeneracy,
 		  &Input::setDegeneracy,
-		  "Degeneracy parameter")
+		  "float: Degeneracy parameter")
     .add_property("int2DScheme",
 		  &Input::getInt2DScheme,
 		  &Input::setInt2DScheme,
-		  "Scheme used to solve two-dimensional integrals, "
-		  "allowed options include: full (the inner integral "
-		  "is evaluated at arbitrary points decided by the "
-		  "quadrature rule) and segregated (the inner integral is "
-		  "evaluated on a fixed grid that depends on the integral "
-		  "at hand). Segregated is usually faster "
-		  "than full but it could become less accurate if the fixed "
-		  "points are not chosen correctly")
+		  "str: Scheme used to solve two-dimensional integrals \n"
+		  "allowed options include: \n\n"
+		  "- full (the inner integral is evaluated at arbitrary points "
+		  "selected automatically by the quadrature rule \n\n"
+		  "- segregated (the inner integral is evaluated on a fixed "
+		  "grid that depends on the integrand that is being processed\n\n"
+		  "Segregated is usually faster than full but it could become "
+		  "less accurate if the fixed points are not chosen correctly"
+		  )
     .add_property("threads",
 		  &Input::getNThreads,
 		  &Input::setNThreads,
-		  "Number of OMP threads for parallel calculations")
+		  "int: Number of OMP threads for parallel calculations")
     .add_property("theory",
 		  &Input::getTheory,
 		  &Input::setTheory,
-		  "Theory to be solved")
+		  "str: Theory to be solved")
     .def("print", &Input::print, "Prints the content of the input structure")
     .def("isEqual", &Input::isEqual, "Compares two input structures and returns "
 	 "true if they are identical");

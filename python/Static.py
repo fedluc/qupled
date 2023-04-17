@@ -12,81 +12,76 @@ import matplotlib.cm as cm
 import qupled.qupled as qp
 
 class Stls():
+
+    """Class to solve the STLS scheme.
+
+    Class used to setup and solve the classical STLS scheme as descirbed by
+    `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
+    The inputs used to solve the scheme are defined when creating the class, but can be
+    later modified by changing the attribute :obj:`inputs`. After the solution is completed
+    the results are saved to an hdf file and can be plotted via the method :obj:`plot`
+
+    Args:
+        coupling: Coupling parameter.
+        degeneracy: Degeneracy parameter.  
+        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
+        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
+        error: Minimum error for covergence, defaults to 1.0e-5.
+        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
+        guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
+        iterations: Maximum number of iterations, defaults to 1000.
+        matsubara: Number of matsubara frequencies, defaults to 128.
+        outputFrequency: Frequency used to print the recovery files, defaults to 10.
+        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
+        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+    """
     
     # Constructor
     def __init__(self,
-                 coupling,
-                 degeneracy,
-                 chemicalPotential = None,
-                 cutoff = None,
-                 error = None,
-                 mixing = None,
-                 guess = None,
-                 iterations = None,
-                 matsubara = None,
-                 outputFrequency = None,
-                 recoveryFile = None,
-                 resolution = None ):
-        """ Class to save the STLS scheme
-        
-        Positional arguments:  
-        coupling -- coupling parameter  
-        degeneracy -- degeneracy parameter  
-        
-        Keyword arguments:  
-        chemicalPotential = initial guess for the chemical potential (default [-10.0, 10.0.])  
-        cutoff = cutoff for the wave-vector grid (default = 10.0)  
-        error = minimum error for covergence (default = 1e-5)  
-        mixing = mixing parameter for iterative solution (default = 1.0)  
-        guess = StlsGuess object with the initial guess for the iterative solution (default = None, i.e. slfc = 0)  
-        iterations = maximum number of iterations (default = 1000)  
-        matsubara = number of matsubara frequencies (default = 128)  
-        outputFrequency = frequency used to print the recovery files (default = 10)  
-        recoveryFile = name of the recovery file used to restart the simulation (defualt = None)  
-        resolution = resolution of the wave-vector grid (default = 0.1)
-        
-        """
+                 coupling : float,
+                 degeneracy : float,
+                 chemicalPotential : list[float] = [-10.0,10.0],
+                 cutoff : float = 10.0,
+                 error : float = 1.0e-5,
+                 mixing : float = 1.0,
+                 guess : qp.SlfcGuess = None,
+                 iterations : int = 1000,
+                 matsubara : int = 128,
+                 outputFrequency : int = 10,
+                 recoveryFile : str = None,
+                 resolution : float = 0.1 ):
         # Allowed theories
-        self.allowedTheories = ["STLS"]
-        # Default inputs
-        self.inputs = qp.StlsInput(coupling, degeneracy, "STLS")
+        self.allowedTheories : list[str] = ["STLS"]
+        # Input object
+        self.inputs : qp.StlsInput = qp.StlsInput(coupling, degeneracy, "STLS") #: Inputs to solve the scheme.
         # Scheme to solve and associated input and solution
-        self.scheme = None
-        self.schemeInputs = None
-        self.schemeSolution = None
+        self.scheme : qp.Stls = None #: Object that represents the scheme, performs the calculations and stores the solution.
+        self.schemeInputs : qp.StlsInput = None
         # File to store output on disk
-        self.hdfFileName = None
-        # Non-default inputs
-        if (chemicalPotential is not None):
-            self.inputs.chemicalPotential = chemicalPotential
-        if (cutoff is not None):
-            self.inputs.cutoff = cutoff
-        if (error is not None):
-            self.inputs.error = error
-        if (mixing is not None):
-            self.inputs.mixing = mixing
-        if (guess is not None):
-            self.inputs.guess = guess
-        if (iterations is not None):
-            self.inputs.iterations = iterations
-        if (matsubara is not None):
-            self.inputs.matsubara = matsubara
-        if (outputFrequency is not None):
-            self.inputs.outputFrequency = outputFrequency
-        if (recoveryFile is not None):
-            self.inputs.recoveryFile = recoveryFile
-        if (resolution is not None):
-            self.inputs.resolution = resolution
-        
+        self.hdfFileName : str = None #: Name of the hdf output file.
+        # Optional parameters
+        self.inputs.chemicalPotential = chemicalPotential
+        self.inputs.cutoff = cutoff
+        self.inputs.error = error
+        if (guess is not None): self.inputs.guess = guess
+        self.inputs.mixing = mixing
+        self.inputs.iterations = iterations
+        self.inputs.matsubara = matsubara
+        self.inputs.outputFrequency = outputFrequency
+        if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
+        self.inputs.resolution = resolution
+
     # Check input before computing
-    def checkInputs(self):
-        """ Checks that the content of self.inputs is correct """
+    def checkInputs(self) -> None:
+        """ Checks that the content of :obj:`inputs` is correct """
         if (self.inputs.theory not in self.allowedTheories):
             sys.exit("Invalid dielectric theory")
 
     # Compute
-    def compute(self):
-        """ Solves the scheme and saves the results to and hdf file. See the method save to see which results are saved """
+    def compute(self) -> None:
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.Static.Stls.save`
+        to see which results are saved
+        """
         self.checkInputs()
         self.schemeInputs = self.inputs
         self.scheme = qp.Stls(self.schemeInputs)
@@ -96,8 +91,12 @@ class Stls():
         self.save()
 
     # Check that the dielectric scheme was solved without errors
-    def checkStatusAndClean(self, status):
-        """ Checks that the scheme was solved correctly and removes temporarary files generated at run-time """
+    def checkStatusAndClean(self, status : bool) -> None:
+        """ Checks that the scheme was solved correctly and removes temporarary files generated at run-time
+        
+           Args:
+               status: status obtained from the native code. If status == 0 the scheme was solved correctly.
+        """
         if (status == 0):
             if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
             print("Dielectric theory solved successfully!")
@@ -105,34 +104,39 @@ class Stls():
             sys.exit("Error while solving the dielectric theory")
     
     # Save results to disk
-    def setHdfFile(self):
+    def setHdfFile(self) -> None:
         """ Sets the name of the hdf file used to store the output """
         self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.schemeInputs.coupling,
                                                          self.schemeInputs.degeneracy,
                                                          self.schemeInputs.theory)
     
-    def save(self):
+    def save(self) -> None:
         """ Stores the results obtained by solving the scheme.
+
+        The results are stored as pandas dataframes in an hdf file with the following keywords:
         
-        The results are stored as pandas dataframes in an hdf file with the following keywords:  
-        inputs -- A dataframe containing information on the input parameters, it includes:
-            coupling -- the coupling parameter,
-            degeneracy -- the degeneracy parameter,
-            theory -- the theory that is being solved,  
-            error -- the minimum error for convergence,   
-            resolution -- the resolution in the wave-vector grid, 
-            cutoff -- the cutoff in the wave-vector grid, 
-            matsubara -- the number of matsubara frequencies,    
-        idr -- A dataframe storing the ideal density response (a two-dimensional numpy array)  
-        sdr -- A dataframe storing the static density response (a numpy array)  
-        slfc -- A dataframe storing the static local field correction (a numpy array)  
-        ssf -- A dataframe storing the static structure factor (a numpy array)  
-        ssfHF -- A dataframe storing the Hartree-Fock static structure factor (a numpy array)
-        wvg -- A dataframe storing the wave-vector grid (a numpy array)
+        - inputs: A dataframe containing information on the input parameters, it includes:
+        
+          - coupling: the coupling parameter,
+          - degeneracy: the degeneracy parameter,
+          - theory: the theory that is being solved,  
+          - error: the minimum error for convergence,   
+          - resolution: the resolution in the wave-vector grid, 
+          - cutoff: the cutoff in the wave-vector grid, 
+          - matsubara: the number of matsubara frequencies
+        
+        - idr (*ndarray*, 2D): the ideal density response  
+        - sdr (*ndarray*):  the static density response   
+        - slfc (*ndarray*):  the static local field correction   
+        - ssf (*ndarray*):  the static structure factor   
+        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor 
+        - wvg (*ndarray*):  the wave-vector grid 
+        
         If the radial distribution function was computed (see computeRdf), then the hdf file contains
-        two additional keywords:  
-        rdf -- A dataframe storing the radial distribution function (a numpy array)  
-        rdfGrid -- A dataframe storing the grid used to compute the radial distribution function (a numpy array)
+        two additional keywords:
+        
+        - rdf (*ndarray*):  the radial distribution function   
+        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function 
         
         """
         pd.DataFrame({
@@ -152,13 +156,15 @@ class Stls():
         pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
         
     # Compute radial distribution function
-    def computeRdf(self, rdfGrid = None, writeToHdf = True):
-        """ Computes the radial distribution function and returns it as a numpy array.
+    def computeRdf(self, rdfGrid : np.ndarray = None, writeToHdf : bool = True) -> np.array:
+        """ Computes the radial distribution function from the data stored in :obj:`scheme`.
         
-        Keyword arguments:
-        rdfGrid -- A numpy array specifing the grid used to compute the radial distribution function
-        (default None, i.e. rdfGrid = np.arange(0.01, 10.0, 0.01)
-        writeToHdf -- Flag marking whether the rdf data should be added to the output hdf file (default = True)
+        Args:
+            rdfGrid: The grid used to compute the radial distribution functionm, defaults to numpy.arange(0.01, 10.0, 0.01)
+            writeToHdf: Flag marking whether the rdf data should be added to the output hdf file, default to True
+
+        Returns:
+            The radial distribution function
         
         """
         if (self.schemeInputs == None):
@@ -171,18 +177,17 @@ class Stls():
         return rdf
         
     # Plot results
-    def plot(self, toPlot, matsubara = None, rdfGrid = None):
-        """ Plots the results obtained by solving the scheme.
+    def plot(self, toPlot : list[str], matsubara : list[int] = None, rdfGrid : np.ndarray = None) -> None:
+        """ Plots the results obtained stored in :obj:`scheme`.
 
-        Positional arguments:  
-        toPlot -- A list of quantities to plot. This list can include idr (ideal density response), rdf
-        (radial distribution function), sdr (static density response), slfc (static local field correction)
-        ssf (static structure factor) and ssfHF (Hartree-Fock static structure factor)  
-        Keyword arguments:  
-        matsubara -- A list of matsubara frequencies to plot. Applies only when the idr is plotted.
-        (Default = None, see plotIdr)  
-        rdfGrid -- A numpy array specifing the grid used to compute the radial distribution function
-        (Default = None, see plotRdf)
+        Args:  
+            toPlot: A list of quantities to plot. This list can include idr (ideal density response), rdf
+                (radial distribution function), sdr (static density response), slfc (static local field correction)
+                ssf (static structure factor) and ssfHF (Hartree-Fock static structure factor)  
+            matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
+                (Default = None, see :func:`~qupled.Static.Stls.plotIdr`)  
+            rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
+                distribution function is plotted (Default = None, see :func:`~qupled.Static.Stls.computeRdf`)
         
         """
         wvg = self.scheme.wvg
@@ -200,12 +205,11 @@ class Stls():
         if ("ssfHF" in toPlot):
             Plot.plot1D(wvg, self.scheme.ssfHF, xlabel, "Hartree-Fock static structure factor")
         
-    def plotIdr(self, matsubara = None):
+    def plotIdr(self, matsubara : list[int] = None) -> None:
         """ Plots the ideal density response.
         
-        Keyword arguments:  
-        matsubara -- A list of matsubara frequencies to plot. Applies only when the idr is plotted.
-        (Default = None, i.e. results for all matsubara frequencies are plotted)
+        Args:  
+            matsubara:  A list of matsubara frequencies to plot. (Default =  all matsubara frequencies are plotted)
         
         """
         if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
@@ -213,11 +217,12 @@ class Stls():
                               "Wave vector", "Ideal density response",
                               matsubara)
         
-    def plotRdf(self, rdfGrid = None):
+    def plotRdf(self, rdfGrid : np.ndarray = None) -> None:
         """ Plot the radial distribution function.
         
-        Keyword arguments:  
-        rdfGrid -- A numpy array specifing the grid used to compute the radial distribution function (Default = None, see computeRdf)
+        Args:  
+            rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
+                distribution function is plotted (Default = None, see :func:`~qupled.Static.Stls.computeRdf`)
           
         """
         rdf = self.computeRdf(rdfGrid)
@@ -226,6 +231,8 @@ class Stls():
         
 class StlsIet(Stls):
 
+    """ Class to solve the STLS-IET schemes (STLS-HNC, STLS-IOI, STLS-LCT) """
+    
     # Constructor
     def __init__(self,
                  coupling,
@@ -243,8 +250,7 @@ class StlsIet(Stls):
                  recoveryFile = None,
                  scheme2DIntegrals = None,
                  resolution = None ):
-
-        """ Class to solve the STLS-IET schemes (STLS-HNC, STLS-IOI, STLS-LCT)
+        """
         
         Positional arguments:  
         coupling -- coupling parameter
@@ -308,7 +314,9 @@ class StlsIet(Stls):
 
 
 class Qstls(Stls):
-            
+
+    """ Class to solve the QSTLS scheme """
+    
     # Constructor
     def __init__(self,
                  coupling,
@@ -326,7 +334,7 @@ class Qstls(Stls):
                  resolution = None,
                  scheme2DIntegrals = None,
                  threads = None):
-        """ Class to solve the QSTLS scheme
+        """
         
         Positional arguments:  
         coupling -- coupling parameter
@@ -427,7 +435,8 @@ class Qstls(Stls):
         
 
 class QstlsIet(Qstls):
-            
+
+    """ Class to solve the QSTLS-IET schemes (QSTLS-HNC, QSTLS-IOI, QSTLS-LCT) """
     # Constructor
     def __init__(self,
                  coupling,
@@ -448,7 +457,7 @@ class QstlsIet(Qstls):
                  scheme2DIntegrals = None,
                  resolution = None,
                  threads = None):
-        """ Class to solve the QSTLS-IET schemes (QSTLS-HNC, QSTLS-IOI, QSTLS-LCT)
+        """ 
         
         Positional arguments:  
         coupling -- coupling parameter

@@ -2,3 +2,4 @@
 *#
 Makefile
 build
+docs/_build
