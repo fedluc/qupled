@@ -15,7 +15,7 @@ class Stls():
 
     """Class to solve the STLS scheme.
 
-    Class used to setup and solve the classical STLS scheme as descirbed by
+    Class used to setup and solve the classical STLS scheme as described by
     `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
     The inputs used to solve the scheme are defined when creating the class, but can be
     later modified by changing the attribute :obj:`inputs`. After the solution is completed
@@ -231,47 +231,47 @@ class Stls():
         
 class StlsIet(Stls):
 
-    """ Class to solve the STLS-IET schemes (STLS-HNC, STLS-IOI, STLS-LCT) """
+    """Class to solve the STLS-IET schemes.
+
+    Class used to setup and solve the classical STLS-IET scheme as described by
+    `Tanaka <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_ and by
+    `Tolias and collaborators <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_.
+    This class inherits most of its methods and attributes from :obj:`~qupled.Static`
+
+    Args:
+        coupling: Coupling parameter.
+        degeneracy: Degeneracy parameter.  
+        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
+        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
+        error: Minimum error for covergence, defaults to 1.0e-5.
+        mapping: Classical to quantum mapping. See :func:`~qupled.qupled.StlsInput.iet`
+        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
+        guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
+        iterations: Maximum number of iterations, defaults to 1000.
+        matsubara: Number of matsubara frequencies, defaults to 128.
+        outputFrequency: Frequency used to print the recovery files, defaults to 10.
+        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
+        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`~qupled.qupled.Input.int2DScheme`
+    """
     
     # Constructor
     def __init__(self,
-                 coupling,
-                 degeneracy,
-                 theory,
-                 chemicalPotential = None,
-                 cutoff = None,
-                 error = None,
-                 mapping = None,
-                 mixing = None,
-                 guess = None,
-                 iterations = None,
-                 matsubara = None,
-                 outputFrequency = None,
-                 recoveryFile = None,
-                 scheme2DIntegrals = None,
-                 resolution = None ):
-        """
-        
-        Positional arguments:  
-        coupling -- coupling parameter
-        degeneracy -- degeneracy parameter  
-        theory -- theory to be solved (accepted options: STLS-HNC, STLS-IOI, STLS-LCT)
-        
-        Keyword arguments:  
-        chemicalPotential = initial guess for the chemical potential (default [-10.0, 10.0.])  
-        cutoff = cutoff for the wave-vector grid (default = 10.0)  
-        error = minimum error for covergence (default = 1e-5)
-        mapping = classical-to-quantum mapping for the bridge function adder (default = standard)
-        mixing = mixing parameter for iterative solution (default = 1.0)  
-        guess = StlsGuess object with the initial guess for the iterative solution (default = None, i.e. slfc = 0)  
-        iterations = maximum number of iterations (default = 1000)  
-        matsubara = number of matsubara frequencies (default = 128)  
-        outputFrequency = frequency used to print the recovery files (default = 10)  
-        recoveryFile = name of the recovery file used to restart the simulation (defualt = None)
-        scheme2DIntegrals = scheme used to solve two-dimensional integrals (defualt = full)
-        resolution = resolution of the wave-vector grid (default = 0.1)
-        
-        """
+                 coupling : float,
+                 degeneracy : float,
+                 theory : str,
+                 chemicalPotential : list[float] = [-10.0,10.0],
+                 cutoff : float = 10.0,
+                 error : float = 1.0e-5,
+                 mapping : str = "standard",
+                 mixing : float = 1.0,
+                 guess : qp.SlfcGuess = None,
+                 iterations : int = 1000,
+                 matsubara : int = 128,
+                 outputFrequency : int = 10,
+                 recoveryFile : str = None,
+                 resolution : float = 0.1,
+                 scheme2DIntegrals : str = "full"):
         # Call parent constructor
         super().__init__(coupling, degeneracy,
                          chemicalPotential, cutoff, error,
@@ -285,28 +285,26 @@ class StlsIet(Stls):
         self.checkInputs()
         # File to store output on disk
         self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
-                                                           self.inputs.degeneracy,
-                                                           self.inputs.theory)
+                                                         self.inputs.degeneracy,
+                                                         self.inputs.theory)
         # Non-default inputs
-        if (mapping is not None):
-            self.inputs.iet = mapping
-        if (scheme2DIntegrals is not None):
-            self.inputs.int2DScheme = scheme2DIntegrals
+        self.inputs.iet = mapping
+        self.inputs.int2DScheme = scheme2DIntegrals
             
     # Plot results
-    def plot(self, toPlot, matsubara = None, rdfGrid = None):
-        """ Plots the results obtained by solving the scheme. Extends the corresponding method in the parent class
-        by adding the option to plot the bridge function adder (bf)        
+    def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
+        """ Plots the results obtained stored in :obj:`scheme`. Extends :func:`~qupled.Static.Stls.plot`
+        by adding the option to plot the bridge function adder by passing bf to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)
         if ("bf" in toPlot):
             Plot.plot1D(self.scheme.wvg, self.scheme.bf, "Wave vector", "Bridge function adder")
         
     # Save results to disk
-    def save(self):
-        """ Stores the results obtained by solving the scheme. Extends the corresponding method in the parent class
-        by adding the option to save the bridge function adder as a new dataframe in the hdf file which can be
-        accessed as bf
+    def save(self) -> None:
+        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Stls.save`
+        by adding the option to save the bridge function adder as a new dataframe in the hdf file. The
+        bridge function adder dataframe can be accessed as bf
         """
         super().save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
@@ -333,7 +331,7 @@ class Qstls(Stls):
                  recoveryFile = None,
                  resolution = None,
                  scheme2DIntegrals = None,
-                 threads = None):
+                 threads = None) :
         """
         
         Positional arguments:  

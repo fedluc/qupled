@@ -5,11 +5,15 @@ Welcome to qupled's documentation!
     :members:
     :undoc-members:
 
-.. autoclass:: qupled.qupled.Input
+.. autoclass:: qupled.Static.StlsIet
     :members:
     :undoc-members:
     :show-inheritance:
-	  
+       
+.. autoclass:: qupled.qupled.Input
+    :members:
+    :undoc-members:
+
 .. autoclass:: qupled.qupled.SlfcGuess
     :members:
     :undoc-members:
@@ -43,7 +47,6 @@ Welcome to qupled's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
 
 
 Indices and tables
