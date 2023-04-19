@@ -236,7 +236,7 @@ class StlsIet(Stls):
     Class used to setup and solve the classical STLS-IET scheme as described by
     `Tanaka <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_ and by
     `Tolias and collaborators <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_.
-    This class inherits most of its methods and attributes from :obj:`~qupled.Static`
+    This class inherits most of its methods and attributes from :obj:`~qupled.Static.Stls`
 
     Args:
         coupling: Coupling parameter.
@@ -293,8 +293,9 @@ class StlsIet(Stls):
             
     # Plot results
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`scheme`. Extends :func:`~qupled.Static.Stls.plot`
-        by adding the option to plot the bridge function adder by passing bf to toPlot
+        """ Plots the results obtained stored in :obj:`~qupled.Static.Stls.scheme`. Extends 
+        :func:`~qupled.Static.Stls.plot` by adding the option to plot the bridge function
+        adder by passing `bf` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)
         if ("bf" in toPlot):
@@ -304,7 +305,7 @@ class StlsIet(Stls):
     def save(self) -> None:
         """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Stls.save`
         by adding the option to save the bridge function adder as a new dataframe in the hdf file. The
-        bridge function adder dataframe can be accessed as bf
+        bridge function adder dataframe can be accessed as `bf`
         """
         super().save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
@@ -313,49 +314,49 @@ class StlsIet(Stls):
 
 class Qstls(Stls):
 
-    """ Class to solve the QSTLS scheme """
+    """Class to solve the STLS-IET schemes.
+
+    Class used to setup and solve the quantum QSTLS scheme as described by
+    `Schweng and Bohm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_ 
+    This class inherits most of its methods and attributes from :obj:`~qupled.Static.Stls`
+
+    Args:
+        coupling: Coupling parameter.
+        degeneracy: Degeneracy parameter.  
+        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
+        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
+        error: Minimum error for covergence, defaults to 1.0e-5.
+        fixed: The name of the file storing the fixed component of the auxiliary density response.
+               if no name is given the fixed component if computed from scratch
+        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
+        guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
+        iterations: Maximum number of iterations, defaults to 1000.
+        matsubara: Number of matsubara frequencies, defaults to 128.
+        outputFrequency: Frequency used to print the recovery files, defaults to 10.
+        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
+        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`~qupled.qupled.Input.int2DScheme`
+        threads: OMP threads for parallel calculations
+    """
     
     # Constructor
     def __init__(self,
-                 coupling,
-                 degeneracy,
-                 chemicalPotential = None,
-                 cutoff = None,
-                 error = None,
-                 fixed = None,
-                 mixing = None,
-                 guess = None,
-                 iterations = None,
-                 matsubara = None,
-                 outputFrequency = None,
-                 recoveryFile = None,
-                 resolution = None,
-                 scheme2DIntegrals = None,
-                 threads = None) :
-        """
+                 coupling : float, 
+                 degeneracy : float,
+                 chemicalPotential : list[float] = [-10.0,10.0],
+                 cutoff : float = 10.0,
+                 error : float = 1.0e-5,
+                 fixed : str = None,
+                 mixing : float = 1.0,
+                 guess : qp.SlfcGuess = None,
+                 iterations : int = 1000,
+                 matsubara : int = 128,
+                 outputFrequency : int = 10,
+                 recoveryFile : str = None,
+                 resolution : float = 0.1,
+                 scheme2DIntegrals : str = "full",
+                 threads : int = 1):
         
-        Positional arguments:  
-        coupling -- coupling parameter
-        degeneracy -- degeneracy parameter  
-        
-        Keyword arguments:  
-        chemicalPotential -- initial guess for the chemical potential (default [-10.0, 10.0.])  
-        cutoff -- cutoff for the wave-vector grid (default = 10.0)  
-        error -- minimum error for covergence (default = 1e-5)
-        fixed -- The name of the file storing the fixed component of the auxiliary
-        density response for the QSTLS scheme (default = None, the fixed component is computed from scratch)
-        mixing -- mixing parameter for iterative solution (default = 1.0)  
-        guess -- QstlsGuess object with the initial guess for the iterative solution (default = None, i.e.
-        ssf = ssf from STLS scheme)  
-        iterations -- maximum number of iterations (default = 1000)  
-        matsubara -- number of matsubara frequencies (default = 128)  
-        outputFrequency -- frequency used to print the recovery files (default = 10)  
-        recoveryFile -- name of the recovery file used to restart the simulation (defualt = None)
-        scheme2DIntegrals -- scheme used to solve two-dimensional integrals (defualt = full)
-        resolution -- resolution of the wave-vector grid (default = 0.1)
-        threads -- number of OMP threads for parallel calculations (default = 1)
-        
-        """
         # Call parent constructor
         super().__init__(coupling, degeneracy,
                          chemicalPotential, cutoff, error,
@@ -367,7 +368,7 @@ class Qstls(Stls):
         # Set theory
         self.inputs.theory = "QSTLS"
         # Qstls inputs
-        self.qInputs = qp.QstlsInput()
+        self.qInputs : qp.QstlsInput = qp.QstlsInput() #: Inputs to solve the quantum schemes.
         self.schemeqInputs = None;
         self.checkInputs()
         # File to store output on disk
@@ -375,17 +376,13 @@ class Qstls(Stls):
                                                          self.inputs.degeneracy,
                                                          self.inputs.theory)
         # Non-default inputs
-        if (fixed is not None):
-            self.qInputs.fixed = fixed
-        if (guess is not None):
-            self.qInputs.guess = guess
-        if (scheme2DIntegrals is not None):
-            self.inputs.int2DScheme = scheme2DIntegrals
-        if (threads is not None):
-            self.inputs.threads = threads
+        if (fixed is not None): self.qInputs.fixed = fixed
+        if (guess is not None): self.qInputs.guess = guess
+        self.inputs.int2DScheme = scheme2DIntegrals
+        self.inputs.threads = threads
 
     # Compute
-    def compute(self):
+    def compute(self) -> None:
         self.checkInputs()
         self.unpackFixedAdrFiles()
         self.schemeInputs = self.inputs
@@ -397,33 +394,33 @@ class Qstls(Stls):
         self.save()
 
     # Unpack zip folder with fixed component of the auxiliary density response
-    def unpackFixedAdrFiles(self):
-        """ A hook to the corresponding method in QstlsIet """
+    # This is only a hook to the corresponding method in QstlsIet
+    def unpackFixedAdrFiles(self) -> None:
         pass
     
     # Save results to disk
-    def save(self):
-        """ Stores the results obtained by solving the scheme. Extends the corresponding method in the parent class
-        by adding the option to save the auxiliary density response as a new dataframe in the hdf file which can be
-        accessed as adr
+    def save(self) -> None:
+        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Stls.save`
+        by adding the option to save the auxiliary density response as a new dataframe in the hdf file. The
+        auxiliary density response dataframe can be accessed as `adr`
         """
         super().save()
         pd.DataFrame(self.scheme.adr).to_hdf(self.hdfFileName, key="adr")
         
     # Plot results
-    def plot(self, toPlot, matsubara = None, rdfGrid = None):
-        """ Plots the results obtained by solving the scheme. Extends the corresponding method in the parent class
-        by adding the option to plot the auxiliary density response (adr)
+    def plot(self, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
+        """ Plots the results obtained stored in :obj:`~qupled.Static.Stls.scheme`. Extends
+        :func:`~qupled.Static.Stls.plot` by adding the option to plot the auxiliary density
+        response by passing `adr` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)
         if ("adr" in toPlot): self.plotAdr(matsubara)
 
-    def plotAdr(self, matsubara):
+    def plotAdr(self, matsubara : list[int]) -> None:
         """ Plots the auxiliary density response.
         
-        Keyword arguments:  
-        matsubara -- A list of matsubara frequencies to plot. Applies only when the idr is plotted.
-        (Default = None, i.e. results for all matsubara frequencies are plotted)
+        Args:  
+            matsubara:  A list of matsubara frequencies to plot. (Default =  all matsubara frequencies are plotted)
         
         """
         if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
@@ -434,55 +431,55 @@ class Qstls(Stls):
 
 class QstlsIet(Qstls):
 
-    """ Class to solve the QSTLS-IET schemes (QSTLS-HNC, QSTLS-IOI, QSTLS-LCT) """
+    """Class to solve the QSTLS-IET schemes.
+
+    Class used to setup and solve the classical STLS-IET scheme as described by
+    `Tolias <https://pubs.aip.org/aip/jcp/article/158/14/141102/
+    2877795/Quantum-version-of-the-integral-equation-theory>`_. This class inherits most of
+    its methods and attributes from :obj:`~qupled.Static.Qstls`
+
+    Args:
+        coupling: Coupling parameter.
+        degeneracy: Degeneracy parameter.  
+        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
+        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
+        error: Minimum error for covergence, defaults to 1.0e-5.
+        fixed: The name of the file storing the fixed component of the auxiliary density response.
+               if no name is given the fixed component is computed from scratch.
+        fixediet: The name of the zip file storing the files with the fixed component of the auxiliary
+                  density response for the IET schemes. If no name is given the fixed component
+                  is computed from scratch.
+        mapping: Classical to quantum mapping. See :func:`~qupled.qupled.StlsInput.iet`
+        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
+        guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
+        iterations: Maximum number of iterations, defaults to 1000.
+        matsubara: Number of matsubara frequencies, defaults to 128.
+        outputFrequency: Frequency used to print the recovery files, defaults to 10.
+        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
+        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`~qupled.qupled.Input.int2DScheme`
+        threads: OMP threads for parallel calculations
+    """
     # Constructor
     def __init__(self,
-                 coupling,
-                 degeneracy,
-                 theory,
-                 chemicalPotential = None,
-                 cutoff = None,
-                 error = None,
-                 fixed = None,
-                 fixediet = None,
-                 mapping = None,
-                 mixing = None,
-                 guess = None,
-                 iterations = None,
-                 matsubara = None,
-                 outputFrequency = None,
-                 recoveryFile = None,
-                 scheme2DIntegrals = None,
-                 resolution = None,
-                 threads = None):
-        """ 
+                 coupling : float, 
+                 degeneracy : float,
+                 chemicalPotential : list[float] = [-10.0,10.0],
+                 cutoff : float = 10.0,
+                 error : float = 1.0e-5,
+                 fixed : str = None,
+                 fixediet : str = None,
+                 mapping : str = "standard",
+                 mixing : float = 1.0,
+                 guess : qp.SlfcGuess = None,
+                 iterations : int = 1000,
+                 matsubara : int = 128,
+                 outputFrequency : int = 10,
+                 recoveryFile : str = None,
+                 resolution : float = 0.1,
+                 scheme2DIntegrals : str = "full",
+                 threads : int = 1):
         
-        Positional arguments:  
-        coupling -- coupling parameter
-        degeneracy -- degeneracy parameter  
-        theory -- theory to be solved (accepted options: QSTLS-HNC, QSTLS-IOI, QSTLS-LCT)
-        
-        Keyword arguments:  
-        chemicalPotential -- initial guess for the chemical potential (default [-10.0, 10.0.])  
-        cutoff -- cutoff for the wave-vector grid (default = 10.0)  
-        error -- minimum error for covergence (default = 1e-5)
-        fixed -- The name of the file storing the fixed component of the auxiliary
-        density response for the QSTLS scheme (default = None, the fixed component is computed from scratch)
-        fixediet -- The name of the zip file storing the files with the fixed component of the auxiliary
-        density response for the QSTLS-IET scheme (default = None, the fixed component is computed from scratch)
-        mapping = classical-to-quantum mapping for the bridge function adder (default = standard)
-        mixing -- mixing parameter for iterative solution (default = 1.0)  
-        guess -- QstlsGuess object with the initial guess for the iterative solution (default = None, i.e.
-        ssf = ssf from STLS scheme)  
-        iterations -- maximum number of iterations (default = 1000)  
-        matsubara -- number of matsubara frequencies (default = 128)  
-        outputFrequency -- frequency used to print the recovery files (default = 10)  
-        recoveryFile -- name of the recovery file used to restart the simulation (defualt = None)
-        scheme2DIntegrals -- scheme used to solve two-dimensional integrals (defualt = full)
-        resolution -- resolution of the wave-vector grid (default = 0.1)
-        threads -- number of OMP threads for parallel calculations (default = 1)
-        
-        """            
         # Call parent constructor
         super().__init__(coupling, degeneracy,
                          chemicalPotential, cutoff, error,
@@ -502,13 +499,11 @@ class QstlsIet(Qstls):
                                                            self.inputs.degeneracy,
                                                            self.inputs.theory)
         # Non-default inputs
-        if (fixediet is not None):
-            self.fixediet = fixediet
-        if (mapping is not None):
-            self.inputs.iet = mapping
+        if (fixediet is not None): self.fixediet = fixediet
+        self.inputs.iet = mapping
 
     # Unpack zip folder with fixed component of the auxiliary density response
-    def unpackFixedAdrFiles(self):
+    def unpackFixedAdrFiles(self) -> None:
         """ Unpacks the zip file storing the fixed component of the auxiliary density response """
         if (self.fixediet is not None):
             self.tmpRunDir = "qupled_tmp_run_directory"
@@ -517,7 +512,7 @@ class QstlsIet(Qstls):
             self.qInputs.fixediet = self.tmpRunDir
     
     # Check that the dielectric scheme was solved without errors
-    def checkStatusAndClean(self, status):
+    def checkStatusAndClean(self, status) -> None:
         if (self.fixediet is not None):
             rmtree(self.tmpRunDir)
         if (status == 0):
@@ -528,13 +523,20 @@ class QstlsIet(Qstls):
 
             
     # Save results to disk
-    def save(self):
+    def save(self) -> None:
         """ Stores the results obtained by solving the scheme. Extends the corresponding method in the parent class
         by:  
         adding the option to save the bridge function adder as a new dataframe in the hdf file which can be
         accessed as bf  
         creating a zip file to group all the files produced at run-time and containing the fixed component of
         the auxiliary density response
+
+        Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Qstls.save`
+        by adding two functionalities: (1) save the bridge function adder as a new dataframe in the hdf file. The
+        bridge function adder dataframe can be accessed as `bf` (2) create a zip file to group all the files
+        produced at run-time and containing the fixed component of the auxiliary density response for the
+        IET schemes
+        
         """
         super().save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
@@ -550,9 +552,10 @@ class QstlsIet(Qstls):
 
                 
     # Plot results        
-    def plot(self, toPlot, matsubara = None, rdfGrid = None):
-        """ Plots the results obtained by solving the scheme. Extends the corresponding method in the parent class
-        by adding the option to plot the bridge function adder (bf)        
+    def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
+        """ Plots the results obtained stored in :obj:`~qupled.Static.Stls.scheme`. Extends 
+        :func:`~qupled.Static.Qstls.plot` by adding the option to plot the bridge function
+        adder by passing `bf` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)
         if ("bf" in toPlot):
@@ -663,7 +666,7 @@ class Plot():
         plt.plot(x, y, "b")
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.show()        
+        plt.show(block=False)        
     
     # One dimensional plots with one parameter"
     def plot1DParametric(x, y, xlabel, ylabel, parameters):
@@ -683,4 +686,4 @@ class Plot():
             plt.plot(x, y[:,parameters[i]], color=color)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.show()        
+        plt.show(block=False)        
