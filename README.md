@@ -1,8 +1,8 @@
-# Dielectric formalism for strongly coupled plasmas
+# qupled: quantum plasmas's dielectric schemes
 
 ## Introduction
 
-STLS can be used to compute the properties of quantum one component plasmas via theoretical approaches based on the dielectric formalism. The theoretical approaches which can be solved with STLS include:
+qupled can be used to compute the properties of quantum one component plasmas via theoretical approaches based on the dielectric formalism. The theoretical approaches which can be solved with qupled include:
 
 * The classical STLS scheme as discussed by [Tanaka and Ichimaru](https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278)
 * The classical STLS-HNC scheme as discussed by [Tanaka](https://aip.scitation.org/doi/full/10.1063/1.4969071)
@@ -20,6 +20,6 @@ All the calculations are performed in normalized units. The wave vectors are nor
 
 ## Documentation
 
-The documentation is currently in preparation. A primitive version can be obtained by running `make html` in the [docs](https://github.com/fedluc/STLS/tree/master/docs) folder.
+The documentation is currently in preparation, but it can already be accessed [Read the Docs](http://qupled.readthedocs.io/)
  
 
