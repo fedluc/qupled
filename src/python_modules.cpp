@@ -248,168 +248,109 @@ BOOST_PYTHON_MODULE(qupled)
   
   // Classes to manage the input
   bp::class_<Input>("Input", 
-		    "Base class to handle the inputs ",
 		    bp::init<const double, const double, const string>())
     .add_property("coupling",
 		  &Input::getCoupling,
-		  &Input::setCoupling,
-		  "float: Coupling parameter")
+		  &Input::setCoupling)
     .add_property("degeneracy",
 		  &Input::getDegeneracy,
-		  &Input::setDegeneracy,
-		  "float: Degeneracy parameter")
+		  &Input::setDegeneracy)
     .add_property("int2DScheme",
 		  &Input::getInt2DScheme,
-		  &Input::setInt2DScheme,
-		  "str: Scheme used to solve two-dimensional integrals \n"
-		  "allowed options include: \n\n"
-		  "- full = the inner integral is evaluated at arbitrary points "
-		  "selected automatically by the quadrature rule \n\n"
-		  "- segregated = the inner integral is evaluated on a fixed "
-		  "grid that depends on the integrand that is being processed\n\n"
-		  "Segregated is usually faster than full but it could become "
-		  "less accurate if the fixed points are not chosen correctly")
+		  &Input::setInt2DScheme)
     .add_property("threads",
 		  &Input::getNThreads,
-		  &Input::setNThreads,
-		  "int: Number of OMP threads for parallel calculations")
+		  &Input::setNThreads)
     .add_property("theory",
 		  &Input::getTheory,
-		  &Input::setTheory,
-		  "str: Theory to be solved")
-    .def("print", &Input::print, "Prints the content of the input structure")
-    .def("isEqual", &Input::isEqual, "Compares two input structures and returns "
-	 "true if they are identical");
+		  &Input::setTheory)
+    .def("print", &Input::print)
+    .def("isEqual", &Input::isEqual);
 
-  bp::class_<StlsInputWrapper::SlfcGuess>("SlfcGuess", "Class used to define an initial guess"
-					  "for STLS and STLS-IET schemes")
-    .def_readwrite("wvg", &StlsInputWrapper::SlfcGuess::wvg, "ndarray: Wave-vector grid")
-    .def_readwrite("slfc", &StlsInputWrapper::SlfcGuess::slfc, "ndarray: Static local field correction");
+  bp::class_<StlsInputWrapper::SlfcGuess>("SlfcGuess")
+    .def_readwrite("wvg", &StlsInputWrapper::SlfcGuess::wvg)
+    .def_readwrite("slfc", &StlsInputWrapper::SlfcGuess::slfc);
     
   bp::class_<StlsInput, bp::bases<Input>>("StlsInput",
 					  bp::init<const double, const double, const string>())
     .add_property("chemicalPotential",
 		  StlsInputWrapper::getChemicalPotentialGuess,
-		  StlsInputWrapper::setChemicalPotentialGuess,
-		  "list[float]: initial guess for the chemical potential")
+		  StlsInputWrapper::setChemicalPotentialGuess)
     .add_property("error",
 		  &StlsInput::getErrMin,
-		  &StlsInput::setErrMin,
-		  "float: minimum error for convergence")
+		  &StlsInput::setErrMin)
     .add_property("mixing",
 		  &StlsInput::getMixingParameter,
-		  &StlsInput::setMixingParameter,
-		  "float: mixing parameter")
+		  &StlsInput::setMixingParameter)
     .add_property("iet",
 		  &StlsInput::getIETMapping,
-		  &StlsInput::setIETMapping,
-		  "str: classical to quantum mapping used in the iet schemes\n"
-		   "allowed options include: \n\n"
-		  "- standard = inversly proportional to the degeneracy parameter.  \n\n"
-		  "- sqrt = inversly proportional to the square root of the sum of the squares of"
-		  "         one and the degeneracy parameter \n\n"
-		  "- linear = inversly proportional to one plus the  degeneracy parameter\n\n"
-		  "Far from the ground state all mappings lead identical results, but at the"
-		  " ground state the standard mapping diverges")
+		  &StlsInput::setIETMapping)
     .add_property("matsubara",
 		  &StlsInput::getNMatsubara,
-		  &StlsInput::setNMatsubara,
-		  "int: number of matsubara frequencies")
+		  &StlsInput::setNMatsubara)
     .add_property("iterations",
 		  &StlsInput::getNIter,
-		  &StlsInput::setNIter,
-		  "int: maximum number of iterations")
+		  &StlsInput::setNIter)
     .add_property("outputFrequency",
 		  &StlsInput::getOutIter,
-		  &StlsInput::setOutIter,
-		  "int: output frequency to write the recovery file")
+		  &StlsInput::setOutIter)
     .add_property("recoveryFile",
 		  &StlsInput::getRecoveryFileName,
-		  &StlsInput::setRecoveryFileName,
-		  "str: name of the recovery file used to restart an unfinished simulation")
+		  &StlsInput::setRecoveryFileName)
     .add_property("guess",
 		  StlsInputWrapper::getGuess,
-		  StlsInputWrapper::setGuess,
-		  "qupled.SlfcGuess: initial guess")
+		  StlsInputWrapper::setGuess)
     .add_property("resolution",
 		  &StlsInput::getWaveVectorGridRes,
-		  &StlsInput::setWaveVectorGridRes,
-		  "float: resolution of the wave-vector grid")
+		  &StlsInput::setWaveVectorGridRes)
     .add_property("cutoff",
 		  &StlsInput::getWaveVectorGridCutoff,
-		  &StlsInput::setWaveVectorGridCutoff,
-		  "float: cutoff for the wave-vector grid")
-    .def("print", &StlsInput::print, "Prints the content of the input structure")
-    .def("isEqual", &StlsInput::isEqual, "Compares two input structures and returns "
-	 "true if they are identical");
+		  &StlsInput::setWaveVectorGridCutoff)
+    .def("print", &StlsInput::print)
+    .def("isEqual", &StlsInput::isEqual);
 
   bp::class_<QstlsInputWrapper::QstlsGuess>("QstlsGuess")
-    .def_readwrite("wvg", &QstlsInputWrapper::QstlsGuess::wvg, "ndarray: Wave-vector grid")
-    .def_readwrite("ssf", &QstlsInputWrapper::QstlsGuess::ssf, "ndarray: The static structure factor")
-    .def_readwrite("adr", &QstlsInputWrapper::QstlsGuess::adr, "ndarray (2D): The auxliary density response")
-    .def_readwrite("matsubara", &QstlsInputWrapper::QstlsGuess::matsubara, "int: the number of matsubara frequencies");
+    .def_readwrite("wvg", &QstlsInputWrapper::QstlsGuess::wvg)
+    .def_readwrite("ssf", &QstlsInputWrapper::QstlsGuess::ssf)
+    .def_readwrite("adr", &QstlsInputWrapper::QstlsGuess::adr)
+    .def_readwrite("matsubara", &QstlsInputWrapper::QstlsGuess::matsubara);
 
   bp::class_<QstlsInput>("QstlsInput")
     .add_property("guess",
 		  QstlsInputWrapper::getGuess,
-		  QstlsInputWrapper::setGuess,
-		  "qupled.QStlsGuess: initial guess")
+		  QstlsInputWrapper::setGuess)
     .add_property("fixed",
 		  &QstlsInput::getFixed,
-		  &QstlsInput::setFixed,
-		  "str: name of the file storing the fixed component of the auxiliary density\n"
-		  " response in the QSTLS schmeme. Note: The QSTLS auxiliary density response"
-		  " is computed also when the QSTLS-IET schemes are solved. So, if possible, it"
-		  " is a good idea to set this property also when solving the QSTLS-IET scheme "
-		  " because it allows to save quite some computational time")
+		  &QstlsInput::setFixed)
     .add_property("fixediet",
 		  &QstlsInput::getFixedIet,
-		  &QstlsInput::setFixedIet,
-		  "str: name of the zip file storing the fixed components of the auxiliary density\n"
-		  " response in the QSTLS-IET schemes. Note: Whenever possible, it"
-		  " is a good idea to set this property when solving the QSTLS-IET schemes "
-		  " because it allows to save quite some computational time")
-    .def("print", &QstlsInput::print, "Prints the content of the input structure")
-    .def("isEqual", &QstlsInput::isEqual,"Compares two input structures and returns "
-	 "true if they are identical");
+		  &QstlsInput::setFixedIet)
+    .def("print", &QstlsInput::print)
+    .def("isEqual", &QstlsInput::isEqual);
     
   // Class to solve classical schemes
   bp::class_<Stls>("Stls",
 		   bp::init<const StlsInput>())
-    .def("compute", &Stls::compute, "solves the scheme")
-    .def("getRdf", StlsWrapper::getRdf,
-	 "computes the radial distribution function")
-    .add_property("bf", StlsWrapper::getBf,
-		  "ndarray: the bridge function adder (applies only to the IET schemes)")
-    .add_property("idr", StlsWrapper::getIdr,
-		  "ndarray (2D): the ideal density response")
-    .add_property("recovery", &Stls::getRecoveryFileName,
-		  "str: the name of the recovery file")
-    .add_property("sdr", StlsWrapper::getSdr,
-		  "ndarray: the static density response")
-    .add_property("slfc", StlsWrapper::getSlfc,
-		  "ndarray: the static local field correction")
-    .add_property("ssf", StlsWrapper::getSsf,
-		  "ndarray: the static structure factor")
-    .add_property("ssfHF", StlsWrapper::getSsfHF,
-		  "ndarray: the Hartree-Fock static structure factor")
-    .add_property("uInt", &Stls::getUInt,
-		  "float: the internal energy")
-    .add_property("wvg", StlsWrapper::getWvg,
-		  "ndarray: the wave-vector grid");
+    .def("compute", &Stls::compute)
+    .def("getRdf", StlsWrapper::getRdf)
+    .add_property("bf", StlsWrapper::getBf)
+    .add_property("idr", StlsWrapper::getIdr)
+    .add_property("recovery", &Stls::getRecoveryFileName)
+    .add_property("sdr", StlsWrapper::getSdr)
+    .add_property("slfc", StlsWrapper::getSlfc)
+    .add_property("ssf", StlsWrapper::getSsf)
+    .add_property("ssfHF", StlsWrapper::getSsfHF)
+    .add_property("uInt", &Stls::getUInt)
+    .add_property("wvg", StlsWrapper::getWvg);
   
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",
 				     bp::init<const StlsInput, const QstlsInput>())
-    .def("compute", &Qstls::compute,
-	 "solves the scheme")
-    .add_property("adr", QstlsWrapper::getAdr,
-		  "ndarray (2D): the auxiiary density response");
+    .def("compute", &Qstls::compute)
+    .add_property("adr", QstlsWrapper::getAdr);
 
   // Post-process methods
-  bp::def("computeRdf", thermoWrapper::computeRdf,
-	  "computes the radial distribution function given a static structure factor");
-  bp::def("computeInternalEnergy", thermoWrapper::computeInternalEnergy,
-	  "computes the internal energy given a static structure factor");
+  bp::def("computeRdf", thermoWrapper::computeRdf);
+  bp::def("computeInternalEnergy", thermoWrapper::computeInternalEnergy);
   
 }
