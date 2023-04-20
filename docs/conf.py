@@ -13,8 +13,7 @@ author = 'Federico Lucco Castello'
 # -- Path to modules ---------------------------------------------------------
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../build'))
-
+sys.path.insert(0, os.path.abspath('../python'))
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
