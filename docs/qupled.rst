@@ -35,3 +35,37 @@ Python classes
 
 Exposed C++ methods
 -------------------
+
+.. autoclass:: qupled.qupled.Input
+    :members:
+    :undoc-members:
+
+.. autoclass:: qupled.qupled.SlfcGuess
+    :members:
+    :undoc-members:
+
+.. autoclass:: qupled.qupled.StlsInput
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: qupled.qupled.QstlsGuess
+    :members:
+    :undoc-members:
+    
+.. autoclass:: qupled.qupled.QstlsInput
+    :members:
+    :undoc-members:
+    
+.. autoclass:: qupled.qupled.Stls
+    :members:
+    :undoc-members:
+       
+.. autoclass:: qupled.qupled.Qstls
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automethod:: qupled.qupled.computeRdf
+
+.. automethod:: qupled.qupled.computeInternalEnergy
