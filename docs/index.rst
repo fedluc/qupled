@@ -4,9 +4,11 @@ Welcome to qupled's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-	     
-   qupled
 
+   introduction
+   qupled
+   examples
+   
 Indices and tables
 ==================
 

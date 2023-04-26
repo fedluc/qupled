@@ -1,5 +1,5 @@
-The qupled package
-==================
+The package
+===========
 
 The package is written in both python and C++. :ref:`Python classes` can be
 used to setup, run, save and postprocess a dielectric scheme of choice. C++

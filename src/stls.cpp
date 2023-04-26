@@ -274,7 +274,7 @@ void Stls::updateSolution(){
 
 // Getters
 vector<double> Stls::getRdf(const vector<double> &r) const {
-    return computeRdf(r, ssf, wvg);
+  return computeRdf(r, wvg, ssf);
 }
 
 vector<double> Stls::getSdr() const {

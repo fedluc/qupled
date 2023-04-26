@@ -156,11 +156,11 @@ class Stls():
         pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
         
     # Compute radial distribution function
-    def computeRdf(self, rdfGrid : np.ndarray = None, writeToHdf : bool = True) -> np.array:
+    def computeRdf(self, rdfGrid : np.ndarray, writeToHdf : bool = True) -> np.array:
         """ Computes the radial distribution function from the data stored in :obj:`scheme`.
         
         Args:
-            rdfGrid: The grid used to compute the radial distribution functionm, defaults to numpy.arange(0.01, 10.0, 0.01)
+            rdfGrid: The grid used to compute the radial distribution function
             writeToHdf: Flag marking whether the rdf data should be added to the output hdf file, default to True
 
         Returns:
@@ -169,7 +169,6 @@ class Stls():
         """
         if (self.schemeInputs == None):
             sys.exit("No solution to compute the radial distribution function")
-        if (rdfGrid is None) : rdfGrid = np.arange(0.01, 10.0, 0.01)
         rdf = self.scheme.getRdf(rdfGrid)
         if (writeToHdf) :
             pd.DataFrame(rdfGrid).to_hdf(self.hdfFileName, key="rdfGrid", mode="r+")
@@ -222,9 +221,10 @@ class Stls():
         
         Args:  
             rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
-                distribution function is plotted (Default = None, see :func:`~qupled.Static.Stls.computeRdf`)
+                distribution function is plotted (Default = None, i.e.  numpy.arange(0.01, 10.0, 0.01)`)
           
         """
+        if (rdfGrid is None) : rdfGrid = np.arange(0.01, 10.0, 0.01)
         rdf = self.computeRdf(rdfGrid)
         Plot.plot1D(rdfGrid, rdf, "Inter-particle distance", "radial distribution function")
         
@@ -666,7 +666,7 @@ class Plot():
         plt.plot(x, y, "b")
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.show(block=False)        
+        plt.show()        
     
     # One dimensional plots with one parameter"
     def plot1DParametric(x, y, xlabel, ylabel, parameters):
@@ -686,4 +686,4 @@ class Plot():
             plt.plot(x, y[:,parameters[i]], color=color)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.show(block=False)        
+        plt.show()        
