@@ -30,7 +30,6 @@ int Qstls::compute(){
 
 // qstls iterations
 void Qstls::doIterations() {
-  assert(false);
   // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
     throw runtime_error("Ground state calculations are not available "

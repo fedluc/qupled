@@ -1,5 +1,5 @@
-Introduction
-============
+Overview
+========
 
 qupled is a package that can be used to compute the properties of quantum one component
 plasmas via theoretical approaches based on the dielectric formalism. The theoretical
@@ -12,11 +12,12 @@ approaches which can be solved with qupled include:
   * The quantum QSTLS-IET scheme as discussed by `Tolias and others <https://pubs.aip.org/aip/jcp/article/158/14/141102/2877795/Quantum-version-of-the-integral-equation-theory>`_
 
 Limitations
-===========
+-----------
 
 Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC and STLS-IET).
 
 Units
-=====
+-----
 
 All the calculations are performed in normalized units. The wave vectors are normalized to the Fermi wave-vector and the frequencies are normalized to 2πEF/h. Here EF is the Fermi energy and h is Planck's constant.
+

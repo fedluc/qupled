@@ -176,7 +176,7 @@ class Stls():
         return rdf
         
     # Plot results
-    def plot(self, toPlot : list[str], matsubara : list[int] = None, rdfGrid : np.ndarray = None) -> None:
+    def plot(self, toPlot : list[str], matsubara : np.ndarray = None, rdfGrid : np.ndarray = None) -> None:
         """ Plots the results obtained stored in :obj:`scheme`.
 
         Args:  
@@ -204,7 +204,7 @@ class Stls():
         if ("ssfHF" in toPlot):
             Plot.plot1D(wvg, self.scheme.ssfHF, xlabel, "Hartree-Fock static structure factor")
         
-    def plotIdr(self, matsubara : list[int] = None) -> None:
+    def plotIdr(self, matsubara : np.ndarray = None) -> None:
         """ Plots the ideal density response.
         
         Args:  
@@ -408,7 +408,7 @@ class Qstls(Stls):
         pd.DataFrame(self.scheme.adr).to_hdf(self.hdfFileName, key="adr")
         
     # Plot results
-    def plot(self, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
+    def plot(self, toPlot : list[str],  matsubara : np.ndarray = None, rdfGrid : np.ndarray= None) -> None:
         """ Plots the results obtained stored in :obj:`~qupled.Static.Stls.scheme`. Extends
         :func:`~qupled.Static.Stls.plot` by adding the option to plot the auxiliary density
         response by passing `adr` to toPlot
@@ -464,6 +464,7 @@ class QstlsIet(Qstls):
     def __init__(self,
                  coupling : float, 
                  degeneracy : float,
+                 theory : str,
                  chemicalPotential : list[float] = [-10.0,10.0],
                  cutoff : float = 10.0,
                  error : float = 1.0e-5,

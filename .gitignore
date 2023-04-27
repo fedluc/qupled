@@ -4,3 +4,4 @@ Makefile
 build
 docs/_build
 *.DS_Store
+*__pycache__
