@@ -166,8 +166,6 @@ class Stls():
         """ The static structure factor. Read only. """
         self.ssfHF : np.ndarray = None
         """ The Hartree-Fock static structure factor. Read only. """
-        self.uInt : float = None
-        """ Internal energy. Read only. """
         self.wvg : np.ndarray = None
         """ The wave-vector grid """
 

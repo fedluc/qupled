@@ -174,6 +174,18 @@ class Stls():
             pd.DataFrame(rdfGrid).to_hdf(self.hdfFileName, key="rdfGrid", mode="r+")
             pd.DataFrame(rdf).to_hdf(self.hdfFileName, key="rdf", mode="r+")
         return rdf
+
+    # Compute the internal energy
+    def computeInternalEnergy(self) -> float:
+        """ Computes the internal energy from the data stored in :obj:`scheme`.
+
+        Returns:
+            The internal energy
+        
+        """
+        if (self.schemeInputs == None):
+            sys.exit("No solution to compute the internal energy")
+        return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.schemeInputs.coupling)
         
     # Plot results
     def plot(self, toPlot : list[str], matsubara : np.ndarray = None, rdfGrid : np.ndarray = None) -> None:
@@ -500,15 +512,15 @@ class QstlsIet(Qstls):
                                                            self.inputs.degeneracy,
                                                            self.inputs.theory)
         # Non-default inputs
-        if (fixediet is not None): self.fixediet = fixediet
+        if (fixediet is not None): self.qInputs.fixediet = fixediet
         self.inputs.iet = mapping
 
     # Unpack zip folder with fixed component of the auxiliary density response
     def unpackFixedAdrFiles(self) -> None:
         """ Unpacks the zip file storing the fixed component of the auxiliary density response """
-        if (self.fixediet is not None):
+        if (self.qInputs.fixediet != ""):
             self.tmpRunDir = "qupled_tmp_run_directory"
-            zipFile = zf.ZipFile(self.fixediet, "r")
+            zipFile = zf.ZipFile(self.qInputs.fixediet, "r")
             zipFile.extractall(self.tmpRunDir)
             self.qInputs.fixediet = self.tmpRunDir
     

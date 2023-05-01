@@ -9,8 +9,11 @@ A simple STLS solution
 This example sets up a simple STLS calculation plots some of the results 
 that are produced once the calculation are completed. In order not to clutter too 
 much the plot of the ideal density response we plot only the results for a few 
-matsubara frequencies. At the end of the example the data for the static structure 
-factor is extracted from the object used in the solution and printed on screen. 
+matsubara frequencies. There are two ways to access the results of the calculation:
+Directly from the object used to perform the calculation and from the output file
+created at the end of the run. The example illustrates how the static structure factor
+can be accessed with both these methods, other quantities can be accessed in the same
+way.
 
 .. literalinclude:: ../examples/solveStls.py
    :language: python
@@ -60,9 +63,41 @@ scheme.
    :language: python
 
 One should also pay attention to the fact the QSTLS-IET scheme 
-requires to specify an initial guess for the auxiliary density response and the number
+requires to specify an initial guess for the auxiliary density response and the number 
 of matsubara frequencies corresponding to such initial guess. These specifications 
 can be skipped in all other schemes.
 
 .. literalinclude:: ../examples/initialGuessQstlsIet.py
+   :language: python
+
+	      
+Speed-up the quantum schemes
+----------------------------
+
+The calculations for the quantum schemes can be made significantly faster if part of the 
+calculation of the auxiliary density response can be skipped. This can usually be done 
+by passing in input the so-called 'fixed' component of the auxiliary density response. The 
+fixed component of the auxiliary density response depends only on the degeneracy parameter 
+and is printed to specific ouput files when a quantum scheme is solved. These output files can 
+be used is successive calculations to avoid recomputing the fixed component and to speed-up 
+the solution of the quantum schemes. The following two examples illustrate how this can be 
+done for both the QSTLS and the QSTLS-IET schemes.
+
+For the QSTLS scheme it is sufficient to pass a binary file containing the fixed component. 
+This allows to obtain identical results (compare the internal energies printed at the end of 
+the example) in a fraction of the time. We can also recycle the same fixed component for 
+different coupling parameters provided that the degeneracy parameter stays the same. On the 
+other hand, when changing the degeneracy parameter the fixed component of must also be upated 
+otherwise the calculation fails as shown at the end of the example. 
+
+.. literalinclude:: ../examples/fixedAdrQstls.py
+   :language: python
+
+For the QSTLS-IET schemes we must pass the name of two files: the binary file with the 
+fixed auxiliary density response from the QSTLS scheme and a zip file containing a collection 
+of binary files representing the fixed component for the QSTLS-IET scheme. Here the fixed 
+component depends only on the degeneracy parameter but not on the coupling 
+parameter and not on the theory used for the bridge function.
+
+.. literalinclude:: ../examples/fixedAdrQstlsIet.py
    :language: python
