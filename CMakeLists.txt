@@ -47,6 +47,10 @@ add_custom_target(copy_python COMMAND
 add_dependencies(qupled copy_python)
 set_target_properties(qupled PROPERTIES LIBRARY_OUTPUT_DIRECTORY qupled)
 
+# Install
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/qupled
+	DESTINATION ${Python3_SITELIB})
+
 # Clean target
 add_custom_target(true-clean COMMAND
 		  COMMAND ${CMAKE_BUILD_TOOL} clean
