@@ -4,9 +4,7 @@ cmake_minimum_required (VERSION 3.24)
 project(qupled LANGUAGES CXX)
 
 # Set environment variables
-set(GSL_PATH /opt/homebrew/lib)
-set(OMP_PATH ${GSL_PATH})
-set(ARGP_PATH ${GSL_PATH})
+set(ARGP_PATH /opt/homebrew/lin)
 
 # Setup python environment
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
@@ -36,8 +34,7 @@ target_include_directories(qupled PUBLIC
 
 # External libraries
 find_package(OpenMP REQUIRED)
-find_library(GSL_LIBRARY NAMES gsl PATHS ${GSL_PATH} REQUIRED)
-find_library(GSLCBLAS_LIBRARY NAMES gslcblas PATH ${GSL_PATH} REQUIRED)
+find_package(GSL REQUIRED)
 find_library(MATH_LIBRARY NAMES m REQUIRED)
 find_library(ARGP_LIBRARY NAMES argp ${ARGP_PATH} REQUIRED)
 
@@ -46,8 +43,8 @@ target_link_libraries(qupled PUBLIC
 		      OpenMP::OpenMP_CXX
 		      ${PYTHON_LIBRARIES}
 		      ${Boost_LIBRARIES}
-		      ${GSL_LIBRARY}
-		      ${GSLCBLAS_LIBRARY}
+		      GSL::gsl
+		      GSL::gslcblas
 		      ${MATH_LIBRARY}
 		      ${ARGP_LIBRARY})		   
 
