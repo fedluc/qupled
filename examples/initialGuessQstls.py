@@ -19,10 +19,10 @@ guess = qp.QstlsGuess()
 fileName = "rs10.000_theta1.000_QSTLS.h5"
 guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
 guess.ssf = pd.read_hdf(fileName, "ssf")[0].to_numpy()
-qtls.qInputs.guess = guess
+qstls.qInputs.guess = guess
 
 # Change the coupling parameter
-qtls.input.coupling = 30.0
+qstls.inputs.coupling = 30.0
 
 # Solve the scheme again with the new initial guess and coupling parameter
-qtls.compute()
+qstls.compute()

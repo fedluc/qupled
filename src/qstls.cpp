@@ -288,7 +288,7 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   }
   if (checkAdrFixed(wvg_, Theta_, nl_) != 0) {
     throw runtime_error("Fixed component of the auxiliary density response"
-			"loaded from from file is incompatible with input");
+			" loaded from file is incompatible with input");
   }
 }
 

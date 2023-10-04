@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import qupled.Static as Static
 
 # Define an Stls object to solve the STLS scheme

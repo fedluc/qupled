@@ -20,7 +20,7 @@ guess.slfc = pd.read_hdf(fileName, "slfc")[0].to_numpy()
 stls.inputs.guess = guess
 
 # Change the coupling parameter
-stls.input.coupling = 30.0
+stls.inputs.coupling = 30.0
 
 # Solve the scheme again with the new initial guess and coupling parameter
 stls.compute()
