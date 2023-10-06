@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 3.24)
 
+set(CMAKE_DEBUG_POSTFIX _debug)
+
 # Define the project
 project(qupled LANGUAGES CXX)
 
