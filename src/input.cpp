@@ -203,10 +203,11 @@ void QstlsInput::setGuess(const QstlsGuess &guess){
     throw runtime_error("The initial guess does not contain enough points");
   }
   bool consistentGuess = guess.wvg.size() == guess.ssf.size();
+  const size_t nl = guess.matsubara;
   if (guess.adr.size(0) > 0) {
     consistentGuess = consistentGuess
       && guess.adr.size(0) == guess.wvg.size()
-      && guess.adr.size(1) == guess.matsubara;
+      && guess.adr.size(1) == nl;
   }
   if (!consistentGuess) {
     throw runtime_error("The initial guess is inconsistent");

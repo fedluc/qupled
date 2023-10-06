@@ -10,8 +10,8 @@ find_package(Boost
 	     COMPONENTS numpy3 REQUIRED)
 
 # Set compiler flags
-set(CMAKE_CXX_FLAGS "-O3 -Wall")
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 # Source code
 Python3_add_library(qupled MODULE

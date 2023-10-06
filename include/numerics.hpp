@@ -31,7 +31,7 @@ private:
   // Setup interpolator
   void setup(const double &x,
 	     const double &y,
-	     const size_t sz_);
+	     const size_t n_);
   
 public:
 
@@ -40,14 +40,14 @@ public:
 		 const vector<double> &y);
   Interpolator1D(const double &x,
 		 const double &y,
-		 const size_t sz_);
+		 const size_t n_);
   Interpolator1D();
   // Destructor
   ~Interpolator1D();
   // Reset
   void reset(const double &x,
 	     const double &y,
-	     const size_t sz_);
+	     const size_t n_);
   // Evaluate
   double eval(const double x) const;
   
@@ -70,16 +70,16 @@ private:
   void setup(const double &x,
 	     const double &y,
 	     const double &z,
-	     const int szx_,
-	     const int szy_);
+	     const int nx_,
+	     const int ny_);
 public:
 
   // Constructor
   Interpolator2D(const double &x,
 		 const double &y,
 		 const double &z,
-		 const int szx_,
-		 const int szy_);
+		 const int nx_,
+		 const int ny_);
   Interpolator2D(const Interpolator2D &it);
   Interpolator2D();
   // Destructor
@@ -223,6 +223,13 @@ public:
 	       const double xMax,
 	       const function<double(double)> yMin,
 	       const function<double(double)> yMax,
+	       const vector<double> &xGrid);
+  void compute(const function<double(double)> func1,
+	       const function<double(double)> func2,
+	       const double xMin,
+	       const double xMax,
+	       const function<double()> yMin,
+	       const function<double()> yMax,
 	       const vector<double> &xGrid);
   // Getters
   double getX() const { return x; };

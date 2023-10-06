@@ -95,14 +95,14 @@ void Stls::computeSsfHF(){
 
 void Stls::computeSsfHFFinite(){
   assert(computedChemicalPotential);
-  for (int i=0; i<wvg.size(); ++i) {
+  for (size_t i=0; i<wvg.size(); ++i) {
     SsfHF ssfTmp(wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
     ssfHF[i] = ssfTmp.get();
   }
 }
 
 void Stls::computeSsfHFGround(){
-  for (int i=0; i<wvg.size(); ++i) {
+  for (size_t i=0; i<wvg.size(); ++i) {
     SsfHFGround ssfTmp(wvg[i]);
     ssfHF[i] = ssfTmp.get();
   }
@@ -172,7 +172,7 @@ void Stls::computeSlfcIet() {
    const Interpolator1D slfcItp(wvg, slfcOld);
    if (bf.size() == 0) computeBf();
    const Interpolator1D bfItp(wvg, bf);
-   for (int i=0; i<wvg.size(); ++i){
+   for (size_t i=0; i<wvg.size(); ++i){
      SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),
 		     ssfItp, slfcItp, bfItp, itgGrid, itg2);
      slfc[i] += slfcTmp.get();
@@ -239,7 +239,7 @@ void Stls::initialGuess() {
     readRecovery(wvgFile, slfcFile);
     const Interpolator1D slfci(wvgFile, slfcFile);
     const double xmaxi = wvgFile.back();
-    for (int i=0; i<wvg.size(); ++i) {
+    for (size_t i=0; i<wvg.size(); ++i) {
       const double x = wvg[i];
       if (x <= xmaxi) { slfcOld[i] = slfci.eval(x);}
       else { slfcOld[i] = 1.0; }
@@ -250,7 +250,7 @@ void Stls::initialGuess() {
   if (in.getGuess().wvg.size() > 0) {
     const Interpolator1D slfci(in.getGuess().wvg, in.getGuess().slfc);
     const double xmaxi = in.getGuess().wvg.back();
-    for (int i=0; i<wvg.size(); ++i) {
+    for (size_t i=0; i<wvg.size(); ++i) {
       const double x = wvg[i];
       if (x <= xmaxi) { slfcOld[i] = slfci.eval(x);}
       else { slfcOld[i] = 1.0; }
@@ -284,7 +284,7 @@ vector<double> Stls::getSdr() const {
   }
   vector<double> sdr(wvg.size(), -1.5 * in.getDegeneracy());
   const double fact = 4 *lambda * in.getCoupling() / M_PI;
-  for (int i=0; i<wvg.size(); ++i){
+  for (size_t i=0; i<wvg.size(); ++i){
     sdr[i] = idr(i,0)/ (1.0 + fact/(wvg[i] * wvg[i]) * (1.0 - slfc[i]) * idr(i,0));
   }
   return sdr;

@@ -360,7 +360,7 @@ void Qstls::computeAdrFixedIet() {
   cout << "Computing fixed component of the iet auxiliary density response: ";
   fflush(stdout);
 #pragma omp parallel for
-  for (int i=0; i<idx.size(); ++i) {
+  for (size_t i=0; i<idx.size(); ++i) {
     Integrator1D itgPrivate;
     Vector3D res(nl, nx, nx);
     AdrFixedIet adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
@@ -537,8 +537,8 @@ void AdrFixed::get(vector<double> &wvg,
   for (int l = 0; l < nl; ++l){
     for (int i = 0; i < nx; ++i) {
       const double xq = x*wvg[i];
-      auto tMin = [&](double q)->double{return x2 - xq;};
-      auto tMax = [&](double q)->double{return x2 + xq;};
+      auto tMin = [&]()->double{return x2 - xq;};
+      auto tMax = [&]()->double{return x2 + xq;};
       auto func1 = [&](double q)->double{return integrand1(q, l);};
       auto func2 = [&](double t)->double{return integrand2(t, wvg[i], l);};
       itg.compute(func1, func2, qMin, qMax, tMin, tMax, itgGrid);

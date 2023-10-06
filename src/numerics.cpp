@@ -14,7 +14,7 @@ Interpolator1D::Interpolator1D(const vector<double> &x,
 Interpolator1D::Interpolator1D(const double &x,
 			       const double &y,
 			       const size_t n_) {
-  setup(x, y, n);
+  setup(x, y, n_);
 }
 
 Interpolator1D::Interpolator1D() {
@@ -63,7 +63,7 @@ Interpolator2D::Interpolator2D(const double &x,
 			       const double &z,
 			       const int nx_,
 			       const int ny_) {
-  setup(x, y, z, nx, ny);
+  setup(x, y, z, nx_, ny_);
 }
 
 Interpolator2D::Interpolator2D() {
@@ -213,4 +213,18 @@ void Integrator2D::compute(const function<double(double)> func1,
   // Level 1 integration
   itg1.compute(func, xMin, xMax);
   sol = itg1.getSolution();
+}
+
+
+void Integrator2D::compute(const function<double(double)> func1,
+			   const function<double(double)> func2,
+			   const double xMin,
+			   const double xMax,
+			   const function<double()> yMin,
+			   const function<double()> yMax,
+			   const vector<double> &xGrid){
+  // Wrappers around yMin and yMax to avoid compiler warnings
+  auto yMinTmp = [&](double x){(void)(x); return yMin(); };
+  auto yMaxTmp = [&](double x){(void)(x); return yMax(); };
+  compute(func1, func2, xMin, xMax, yMinTmp, yMaxTmp, xGrid);
 }
