@@ -1,6 +1,8 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 
+#include <memory>
+#include <functional>
 #include <fstream>
 #include "numerics.hpp"
 

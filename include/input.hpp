@@ -1,6 +1,7 @@
 #ifndef INPUT_HPP
 #define INPUT_HPP
 
+#include <cassert>
 #include <vector>
 #include <iostream>
 #include "util.hpp"

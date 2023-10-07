@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <omp.h>
 #include "util.hpp"
 #include "qstls.hpp"
@@ -382,7 +383,7 @@ void Qstls::getAdrFixedIetFileInfo() {
 					+ in.getTheory() + "_wv%.5f.bin",
 					in.getCoupling(), Theta, wvg[i]);
     if (qin.getFixedIet() != EMPTY_STRING) {
-      __fs::filesystem::path fullPath = qin.getFixedIet();
+      std::filesystem::path fullPath = qin.getFixedIet();
       fullPath /= name;
       name = fullPath.string();
     }
