@@ -1,7 +1,7 @@
-import qupled.Static as Static
+import qupled.static as static
 
 # Define an StlsIet object to solve an STLS-IET scheme
-stls = Static.StlsIet(10.0, 
+stls = static.StlsIet(10.0, 
                       1.0,
                       "STLS-HNC",
                       mixing = 0.5,

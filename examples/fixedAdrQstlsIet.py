@@ -1,7 +1,7 @@
-import qupled.Static as Static
+import qupled.static as static
 
 # Define a Qstls object to solve the QSTLS-HNC scheme
-qstls = Static.QstlsIet(30.0, 1.0, "QSTLS-HNC",
+qstls = static.QstlsIet(30.0, 1.0, "QSTLS-HNC",
                         mixing = 0.2,
                         resolution = 0.1,
                         cutoff = 5,

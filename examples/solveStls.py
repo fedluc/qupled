@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
-import qupled.Static as Static
+import qupled.static as static
 
 # Define an Stls object to solve the STLS scheme
-stls = Static.Stls(10.0, # Coupling parameter
+stls = static.Stls(10.0, # Coupling parameter
                    1.0,  # Degeneracy parameter
                    mixing = 0.5,
                    cutoff = 10)

@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 import qupled.qupled as qp
-import qupled.Static as Static
+import qupled.static as static
 
 # Define a QstlsIet object to solve a QSTLS-IET scheme
-stls = Static.QstlsIet(30.0, 1.0, "QSTLS-HNC",
+stls = static.QstlsIet(30.0, 1.0, "QSTLS-HNC",
                        mixing = 0.2,
                        resolution = 0.1,
                        cutoff = 5,
