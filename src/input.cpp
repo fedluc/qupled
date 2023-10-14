@@ -225,3 +225,69 @@ bool QstlsInput::isEqual(const QstlsInput &in) const {
   return ( fixed == in.fixed &&
 	   fixedIet == in.fixedIet);
 }
+
+// --- VSStlsInput ---
+
+void VSStlsInput::setCSRSolver(const bool& enforceCSR) {
+  this->enforceCSR = enforceCSR;
+}
+
+void VSStlsInput::setThermoFileName(const double &thermoFileName) {
+  this->thermoFileName = thermoFileName;
+}
+void VSStlsInput::setAlphaGuess(const double  &alpha) {
+  if (alpha < 0 || alpha > 1) {
+    throw runtime_error("The mixing parameter must be a number between zero and one");
+  }
+  this->alpha = alpha;
+}
+void VSStlsInput::setCouplingResolution(const double &drs) {
+  if (drs <= 0) {
+    throw runtime_error("The coupling parameter resolution must be larger than zero");
+  }
+  this->drs = drs;
+}
+
+void VSStlsInput::setDegeneracyResolution(const double &dTheta) {
+  if (dTheta <= 0) {
+    throw runtime_error("The degeneracy parameter resolution must be larger than zero");
+  }
+  this->dTheta = dTheta;
+}
+
+void VSStlsInput::setErrMinAlpha(const double &errMinAlpha){
+   if (errMinAlpha <= 0.0) {
+    throw runtime_error("The minimum error for convergence must be larger than zero");
+  }
+  this->errMinAlpha = errMinAlpha;
+}
+
+void VSStlsInput::setMixingParameterAlpha(const double &aMixAlpha) {
+    if (aMixAlpha < 0.0 || aMixAlpha > 1.0) {
+    throw runtime_error("The mixing parameter must be a number between zero and one");
+  }
+  this->aMixAlpha = aMixAlpha;
+}
+
+void VSStlsInput::print() const {
+  StlsInput::print();
+  cout << "##### VSSTLS-related input #####" << endl;
+  cout << "CSR is enforced = " << enforceCSR  << endl;
+  cout << "File with data for thermodynamic integration = " << thermoFileName << endl;
+  cout << "Initial guess for the free parameter = " << alpha << endl;
+  cout << "Resolution for the coupling parameter grid = " << drs << endl;
+  cout << "Resolution for the degeneracy parameter grid = " << dTheta << endl;
+  cout << "Minimum error for convergence (alpha) = " << errMinAlpha << endl;
+  cout << "Mixing parameter (alpha)" << aMixAlpha << endl;
+}
+
+bool VSStlsInput::isEqual(const VSStlsInput &in) const {
+  return ( StlsInput::isEqual(in) &&
+	   enforceCSR == in.enforceCSR && 
+	   thermoFileName == in.thermoFileName && 
+	   alpha == in.alpha &&
+	   drs == in.drs &&
+	   dTheta == in.dTheta &&
+	   errMinAlpha == in.errMinAlpha &&
+	   aMixAlpha == in.aMixAlpha);
+}

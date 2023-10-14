@@ -46,12 +46,12 @@ public:
   void setNThreads(const int &nThreads);
   void setTheory(const string &theory);
   // Getters
-  double getCoupling() const { return rs; };
-  double getDegeneracy() const {return Theta; };
+  double getCoupling() const { return rs; }
+  double getDegeneracy() const {return Theta; }
   string getInt2DScheme() const { return int2DScheme; }
   int getNThreads() const { return nThreads; }
-  string getTheory() const { return theory; };
-  bool isClassic() const { return isClassicTheory; };
+  string getTheory() const { return theory; }
+  bool isClassic() const { return isClassicTheory; }
   // Print content of the data structure
   void print() const;
   // Compare two Input objects
@@ -68,7 +68,7 @@ public:
     vector<double> slfc = vector<double>(0);
   };
   
-private:
+protected:
 
   // Mixing parameter for the iterative procedure
   double aMix;
@@ -115,17 +115,17 @@ public:
   void setWaveVectorGridRes(const double &waveVectorGridRes);
   void setWaveVectorGridCutoff(const double  &waveVectorGridCutoff);
   // Getters
-  vector<double> getChemicalPotentialGuess() const { return muGuess; };
-  double getErrMin() const { return errMin; };
-  string getIETMapping() const { return IETMapping; };
-  double getMixingParameter() const { return aMix; };
-  int getNMatsubara() const { return nl; };
-  int getNIter() const { return nIter; };
-  int getOutIter() const { return outIter; };
-  string getRecoveryFileName() const { return recoveryFileName; };
-  SlfcGuess getGuess() const { return guess; };
-  double getWaveVectorGridRes() const { return dx; };
-  double getWaveVectorGridCutoff() const { return xmax; };
+  vector<double> getChemicalPotentialGuess() const { return muGuess; }
+  double getErrMin() const { return errMin; }
+  string getIETMapping() const { return IETMapping; }
+  double getMixingParameter() const { return aMix; }
+  int getNMatsubara() const { return nl; }
+  int getNIter() const { return nIter; }
+  int getOutIter() const { return outIter; }
+  string getRecoveryFileName() const { return recoveryFileName; }
+  SlfcGuess getGuess() const { return guess; }
+  double getWaveVectorGridRes() const { return dx; }
+  double getWaveVectorGridCutoff() const { return xmax; }
   // Print content of the data structure
   void print() const;
   // Compare two StlsInput objects
@@ -163,13 +163,64 @@ public:
   void setFixedIet(const string &fixedIet);
   void setGuess(const QstlsGuess &guess);
   // Getters
-  string getFixed() const {return fixed; };
-  string getFixedIet() const { return fixedIet; };
-  QstlsGuess getGuess() const { return guess; };
+  string getFixed() const {return fixed; }
+  string getFixedIet() const { return fixedIet; }
+  QstlsGuess getGuess() const { return guess; }
   // Print content of the data structure
   void print() const ;
   // Compare two QstlsInput objects
-  bool isEqual(const QstlsInput &in) const;
+   bool isEqual(const QstlsInput &in) const;
+  
+};
+
+class VSStlsInput : StlsInput {
+
+private:
+
+  // Flag marking whether the compressibility sum-rule should be enforced
+  bool enforceCSR;
+  // Name of the file with the thermodynamic properties
+  string thermoFileName;
+  // Initial guess for the free parameter
+  double alpha;
+  // Resolution of the coupling parameter grid
+  double drs;
+  // Resolution of the degeneracy parameter grid
+  double dTheta;
+  // Minimum error for the iterations used to define the free parameter
+  double errMinAlpha;
+  // Mixing parameter for the iterations used to define the free parameter
+  double aMixAlpha;
+  
+public:
+
+  // Constructor
+  VSStlsInput(const double &rs_,
+	      const double &Theta_,
+	      const string &theory_)
+    : StlsInput(rs_, Theta_, theory_), enforceCSR(true),
+      thermoFileName(EMPTY_STRING), alpha(0.5), drs(0.01),
+      dTheta(0.01), errMinAlpha(0.001), aMixAlpha(1.0) { ; };
+  // Setters
+  void setCSRSolver(const bool &enforceCSR);
+  void setThermoFileName(const double &thermoFileName);
+  void setAlphaGuess(const double  &alpha);
+  void setCouplingResolution(const double &drs);
+  void setDegeneracyResolution(const double &dTheta);
+  void setErrMinAlpha(const double &errMinAlpha);
+  void setMixingParameterAlpha(const double &aMixAlpha);
+  // Getters 
+  bool isCSREnforced() const { return enforceCSR; }
+  string getThermoFileName() const { return thermoFileName; }
+  double getAlpha() const { return alpha; }
+  double getCouplingResolution() const { return drs; }
+  double getDegeneracyResolution() const { return dTheta; }
+  double getErrMinAlpha() const { return errMinAlpha; }
+  double getMixingParameterAlpha() const { return aMixAlpha; }
+  // Print content of the data structure
+  void print() const;
+  // Compare two VSStls objects
+  bool isEqual( const VSStlsInput &in ) const;
   
 };
 
