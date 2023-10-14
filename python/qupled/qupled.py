@@ -1,7 +1,7 @@
 # Placeholders used to document the c++ classes exposed with python::boost
 
 from __future__ import annotations
-import numpy
+import numpy as np
 
 class Input():
     """Base class to handle the inputs.
