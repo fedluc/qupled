@@ -173,7 +173,7 @@ public:
   
 };
 
-class VSStlsInput : StlsInput {
+class VSStlsInput : public StlsInput {
 
 private:
 

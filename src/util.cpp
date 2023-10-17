@@ -75,6 +75,10 @@ namespace vecUtil {
     return (i == 0) ? s1 : s2;
   }
 
+  bool Vector2D::empty() const {
+    return v.empty();
+  }
+  
   void Vector2D::resize(const size_t s1_, const size_t s2_) {
     v.clear();
     s1 = s1_;
@@ -152,13 +156,17 @@ namespace vecUtil {
   // Vector3D class
   size_t Vector3D::size() const {
     return s1*s2*s3;
-  }
+  } 
   
   size_t Vector3D::size(const size_t i) const {
     assert(i == 0 || i == 1 || i == 2);
     if (i == 0) return s1;
     if (i == 1) return s2;
     return s3;
+  }
+
+  bool Vector3D::empty() const {
+    return v.empty();
   }
 
   void Vector3D::resize(const size_t s1_,

@@ -64,6 +64,7 @@ namespace vecUtil {
       : Vector2D(0, 0) {;};
     size_t size() const;
     size_t size(const size_t i) const;
+    bool empty() const;
     void resize(const size_t s1_,
 		const size_t s2_);
     double& operator()(const size_t i,
@@ -103,6 +104,7 @@ namespace vecUtil {
       : Vector3D(0, 0, 0) {;};
     size_t size() const;
     size_t size(const size_t i) const;
+    bool empty() const;
     void resize(const size_t s1_,
 		const size_t s2_,
 		const size_t s3_);

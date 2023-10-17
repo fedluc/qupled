@@ -23,7 +23,8 @@ Python3_add_library(qupled MODULE
 		    src/python_modules.cpp
 		    src/qstls.cpp
 		    src/stls.cpp
-		    src/util.cpp)
+		    src/util.cpp
+		    src/vsstls.cpp)
 
 # Include directories
 target_include_directories(qupled PUBLIC
