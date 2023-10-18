@@ -65,6 +65,12 @@ namespace vecUtil {
     return sqrt(rms);
   }
 
+  // Fill vector with constant value
+  void fill(vector<double> &v,
+	    const double num) {
+   std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;}); 
+  }
+  
   // Vector2D class
   size_t Vector2D::size() const {
     return s1*s2;

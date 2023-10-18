@@ -160,6 +160,11 @@ void Qstls::computeAdr() {
   assert(adr.size() > 0);
   assert(ssfOld.size() > 0);
   if (slfc.size() == 0) slfc.resize(nx);
+  if (in.getCoupling() == 0) {
+    fill(slfc, 0.0);
+    adr.fill(0.0);
+    return;
+  }
   if (adrFixed.size() == 0) computeAdrFixed();
   const Interpolator1D ssfi(wvg, ssfOld);
 #pragma omp parallel for
@@ -180,11 +185,13 @@ void Qstls::computeSsf(){
 
 // Compute static structure factor at finite temperature
 void Qstls::computeSsfFinite(){
-  assert(computedChemicalPotential);
-  assert(ssf.size() > 0);
-  assert(adr.size() > 0);
-  assert(idr.size() > 0);
-  if (useIet) assert(bf.size() > 0);
+  if (in.getCoupling() > 0.0) {
+    assert(computedChemicalPotential);
+    assert(ssf.size() > 0);
+    assert(adr.size() > 0);
+    assert(idr.size() > 0);
+    if (useIet) assert(bf.size() > 0);
+  }
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const int nx = wvg.size();
@@ -461,6 +468,7 @@ void Qstls::readRecovery(const string &fileName,
 
 // Get static structure factor
 double Qssf::get() const {
+  if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
   const double f1 = 4.0*lambda*rs/M_PI;
   const double f2 = 1 - bf;

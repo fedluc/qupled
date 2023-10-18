@@ -4,8 +4,8 @@
 // --- Input ---
 
 double Input::initCoupling(const double &rs_){
-  if (rs_ <= 0) {
-    throw runtime_error("The quantum coupling parameter must be larger than zero");
+  if (rs_ < 0) {
+    throw runtime_error("The quantum coupling parameter can't be negative");
   }
   return rs_;
 }

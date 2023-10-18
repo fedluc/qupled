@@ -89,8 +89,11 @@ void Stls::computeIdr(){
 void Stls::computeSsfHF(){
   const int nx = wvg.size();
   ssfHF.resize(nx);
-  if (in.getDegeneracy() > 0) computeSsfHFFinite();
-  else computeSsfHFGround();
+  if (in.getDegeneracy() == 0.0) {
+    computeSsfHFGround();
+    return;
+  }
+  computeSsfHFFinite();
 }
 
 void Stls::computeSsfHFFinite(){
@@ -112,8 +115,11 @@ void Stls::computeSsfHFGround(){
 void Stls::computeSsf(){
   const int nx = wvg.size();
   if (ssf.size() == 0) ssf.resize(nx);
-  if (in.getDegeneracy() > 0) computeSsfFinite();
-  else computeSsfGround();
+  if (in.getDegeneracy() == 0.0) {
+    computeSsfGround();
+    return;
+  }
+  computeSsfFinite();
 }
 
 // Compute static structure factor at finite temperature
@@ -151,6 +157,10 @@ void Stls::computeSsfGround(){
 void Stls::computeSlfc(){
   assert(ssf.size() == wvg.size());
   assert(slfc.size() == wvg.size());
+  if (in.getCoupling() == 0.0) {
+    fill(slfc, 0.0);
+    return;
+  }
   computeSlfcStls();
   if (useIet) computeSlfcIet();
 }
@@ -516,6 +526,7 @@ double SsfHFGround::get() const {
 // Get at finite temperature for any scheme
 double Ssf::get() const {
   assert(Theta > 0.0);
+  if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
   const double fact1 = 4.0*lambda*rs/M_PI;
   const double x2 = x*x;
@@ -536,6 +547,7 @@ double Ssf::get() const {
 // Get result of integration
 double SsfGround::get() const {
   if (x == 0.0) return 0.0;
+  if (rs == 0.0) return ssfHF;
   auto func = [&](double y)->double{return integrand(y);};
   itg.compute(func, yMin, yMax);
   double ssfP;

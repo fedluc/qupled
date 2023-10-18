@@ -45,8 +45,6 @@ void StlsCSR::setDerivativeData(std::vector<std::unique_ptr<StlsCSR>>& stlsVecto
     // Centered difference for all state points with theta
     setDThetaData(stlsVector[thisIdx + 1]->slfc, stlsVector[thisIdx - 1]->slfc, CENTERED);
   }
-  // ADD SPECIAL CASES FOR WHEN RS[I-1] < 0 OR THETA[I-1] < 0, WHICH ESSENTIALLY MEANS THAT
-  // STLSVECTOR[THISIDX] IS A NULLPTR
 }
 
 void StlsCSR::setDrsData(vector<double> &slfcRsUp,
@@ -144,36 +142,36 @@ void StlsCSR::computeSlfc() {
 // -----------------------------------------------------------------
 
 StructProp::StructProp(const VSStlsInput &in_) : in(in_), stls(NPOINTS) {
-  const double& rs = in.getCoupling();
-  const double& theta = in.getDegeneracy();
   const double& drs = in.getCouplingResolution();
   const double& dTheta = in.getDegeneracyResolution();
+  double rs = in.getCoupling();
+  double theta = in.getDegeneracy();
+  // If there is a risk of having negative state parameters, shift the
+  // parameters so that rs - drs = 0 and/or theta - dtheta = 0
+  if (rs < drs) { rs = drs; }
+  if (theta < dTheta) { theta = dTheta; }
   VSStlsInput inTmp = in;
   size_t cnt = 0;
-  // Setup objects
+  // Setup objects  
   for (int i = -1; i < 1; ++i){
     for (int j = -1; j < 1; ++j) {
-      double rsTmp = rs + j * drs;
-      double thetaTmp = theta + i * dTheta;
-      if (rsTmp >= 0 && thetaTmp >= 0) { 
-	inTmp.setDegeneracy(rsTmp);
-	inTmp.setCoupling(thetaTmp);
-	assert(cnt < NPOINTS);
-	stls[cnt] = std::make_unique<StlsCSR>(inTmp);
-      }
+      inTmp.setDegeneracy(rs + j * drs);
+      inTmp.setCoupling(theta + i * dTheta);
+      assert(cnt < NPOINTS);
+      stls[cnt] = std::make_unique<StlsCSR>(inTmp);
       cnt++;
     }
   }
   // Setup derivative dependency in the StlsCSR objects
   for (size_t i = 0; i < stls.size(); ++i) {
-    if (stls[i]) { stls[i]->setDerivativeData(stls, i); }
+    stls[i]->setDerivativeData(stls, i);
   }
 }
 
 // Add a public call to compute where we do the initializations
 int StructProp::compute() {
   try {
-    for (auto& s : stls) { if (s) s->doAction(StlsCSR::Action::INITIALIZE); }  
+    for (auto& s : stls) { s->doAction(StlsCSR::Action::INITIALIZE); }  
     doIterations();
     return 0;
   }
@@ -189,21 +187,21 @@ void StructProp::doIterations() {
   double err = 1.0;
   int counter = 0;
   // Define initial guess
-  for (auto& s : stls) { if (s) s->doAction(StlsCSR::Action::GUESS); }
+  for (auto& s : stls) { s->doAction(StlsCSR::Action::GUESS); }
   // Iteration to solve for the structural properties
   while (counter < maxIter+1 && err > minErr ) {
     // Compute new solution and error
-    for (auto& s : stls) { if (s) s->doAction(StlsCSR::Action::SOLUTION); }
+    for (auto& s : stls) { s->doAction(StlsCSR::Action::SOLUTION); }
     // Update diagnostic
     counter++;
-    for (auto& s : stls) { if (s) s->doAction(StlsCSR::Action::ERROR); }
+    for (auto& s : stls) { s->doAction(StlsCSR::Action::ERROR); }
     // Update solution
-    for (auto& s : stls) { if (s) s->doAction(StlsCSR::Action::UPDATE); }
+    for (auto& s : stls) { s->doAction(StlsCSR::Action::UPDATE); }
   }
 }
 
 void StructProp::setAlpha(const double& alpha) {
-  for (auto& s : stls) { if (s) s->setAlpha(alpha); }
+  for (auto& s : stls) { s->setAlpha(alpha); }
 }
 
 // -----------------------------------------------------------------
@@ -311,5 +309,5 @@ void VSStls::updateSolution() {
 }
 
 void computeFreeEnergyIntegrand() {
-  
+  std::cerr << "computeFreeEnergyIntegrand in not implemented" << std::endl;
 }

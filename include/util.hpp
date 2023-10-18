@@ -50,6 +50,10 @@ namespace vecUtil {
 	     const vector<double> &v2,
 	     const bool normalize);
 
+  // Fill vector with constant values
+  void fill(vector<double> &v,
+	    const double num);
+  
   // Class to represent 2D vectors
   class Vector2D {
   private:
