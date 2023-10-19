@@ -324,7 +324,7 @@ class StlsIet(Stls):
 
 class Qstls(Stls):
 
-    """Class to solve the STLS-IET schemes.
+    """Class to solve the QSTLS scheme.
 
     Class used to setup and solve the quantum QSTLS scheme as described by
     `Schweng and Bohm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_ 
@@ -573,6 +573,54 @@ class QstlsIet(Qstls):
             Plot.plot1D(self.scheme.wvg, self.scheme.bf, "Wave vector", "Bridge function adder")
         
 
+
+class VSStls(Stls):
+
+    """Class to solve the VS-STLS scheme.
+
+    ... Implementation in progress ... 
+    """
+    
+    # Constructor
+    def __init__(self,
+                 coupling : float,
+                 degeneracy : float,
+                 chemicalPotential : list[float] = [-10.0,10.0],
+                 cutoff : float = 10.0,
+                 error : float = 1.0e-5,
+                 mixing : float = 1.0,
+                 guess : qp.SlfcGuess = None,
+                 iterations : int = 1000,
+                 matsubara : int = 128,
+                 outputFrequency : int = 10,
+                 recoveryFile : str = None,
+                 resolution : float = 0.1,
+                 couplingResolution : float = 0.01,
+                 degeneracyResolution : float = 0.01,
+                 mixingAlpha : float = 0.1):
+        # Allowed theories
+        self.allowedTheories : list[str] = ["VSSTLS"]
+        # Input object
+        self.inputs : qp.VSStlsInput = qp.VSStlsInput(coupling, degeneracy, "VSSTLS") 
+        # Scheme to solve and associated input and solution
+        self.scheme : qp.Stls = None #: Object that represents the scheme, performs the calculations and stores the solution.
+        self.schemeInputs : qp.StlsInput = None
+        # File to store output on disk
+        self.hdfFileName : str = None #: Name of the hdf output file.
+        # Optional parameters
+        self.inputs.chemicalPotential = chemicalPotential
+        self.inputs.cutoff = cutoff
+        self.inputs.error = error
+        if (guess is not None): self.inputs.guess = guess
+        self.inputs.mixing = mixing
+        self.inputs.iterations = iterations
+        self.inputs.matsubara = matsubara
+        self.inputs.outputFrequency = outputFrequency
+        if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
+        self.inputs.resolution = resolution
+        self.inputs.couplingResolution = couplingResolution
+        self.inputs.degeneracyResolution = degeneracyResolution
+        self.inputs.mixingAlpha = mixingAlpha
 
 class Hdf():
 

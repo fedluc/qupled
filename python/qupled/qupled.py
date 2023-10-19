@@ -101,7 +101,32 @@ class StlsInput(Input):
         """ Resolution of the wave-vector grid """
         self.cutoff : float = None
         """ cutoff for the wave-vector grid """
-        
+
+class VSStlsInput(StlsInput):
+    """Class to handle the inputs related to the classical VS scheme.
+
+    Args:
+        coupling: Coupling parameter.
+        degeneracy: Degeneracy parameter.
+    """
+    def __init__(self,
+                 coupling : float,
+                 degeneracy : float):
+        self.theory : str = None
+        """ Name of the theory that is solved """
+        self.thermoFile : str = None
+        """ Name of the file with the thermodynamic properties """
+        self.alpha : float = None
+        """ Initial guess for the free parameter """
+        self.couplingResolution : float = None
+        """ Resolution of the coupling parameter grid """
+        self.degeneracyResolution : float = None
+        """ Resolution of the degeneracy parameter grid """
+        self.mixingAlpha : float = None
+        """ Mixing parameter for the iterations to determine the free parameter """
+        self.errorAlpha : float = None
+        """ minimum error for convergence in the free parameter """    
+    
 class QstlsGuess():
     """Class used to define an initial guess for the quantum schemes (QSTLS, QSTLS-IET)"""
     def __init__(self):
@@ -181,6 +206,15 @@ class Stls():
         """
         pass
 
+
+class VSStls(Stls):
+    """Class to solve the VS-STLS scheme. This class inherits all the methods of its parent class.
+    
+    Args:
+        inputs: Input parameters.
+    """
+    def __init__(self,
+                 inputs : qupled.VSStlsInput):
     
 class Qstls(Stls):
     """Class to solve the quantum schemes (QSTLS, QSTLS-IET). This class inherits all the methods of its parent class.
@@ -193,7 +227,8 @@ class Qstls(Stls):
                  inputs : qupled.StlsInput,
                  qinputs: qupled.QstlsInput):
         self.adr : np.ndarray = None
-        """ The bridge function adder (applies only to the IET schemes). Read only. """
+        """ The auxiliary density response. Read only. """
+
     
 def computeRdf(rdfGrid : np.ndarray,
                wvg : np.ndarray,

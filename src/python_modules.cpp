@@ -4,6 +4,7 @@
 #include "input.hpp"
 #include "stls.hpp"
 #include "qstls.hpp"
+#include "vsstls.hpp"
 
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
@@ -309,6 +310,29 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &StlsInput::print)
     .def("isEqual", &StlsInput::isEqual);
 
+  bp::class_<VSStlsInput, bp::bases<StlsInput>>("VSStlsInput",
+						bp::init<const double, const double, const string>())
+    .add_property("errorAlpha",
+		  &VSStlsInput::getErrMinAlpha,
+		  &VSStlsInput::setErrMinAlpha)
+    .add_property("mixingAlpha",
+		  &VSStlsInput::getMixingParameterAlpha,
+		  &VSStlsInput::setMixingParameterAlpha)
+    .add_property("alpha",
+		  &VSStlsInput::getAlpha,
+		  &VSStlsInput::setAlpha)
+    .add_property("couplingResolution",
+		  &VSStlsInput::getCouplingResolution,
+		  &VSStlsInput::setCouplingResolution)
+    .add_property("degeneracyResolution",
+		  &VSStlsInput::getDegeneracyResolution,
+		  &VSStlsInput::setDegeneracyResolution)
+    .add_property("thermoFile",
+		  &VSStlsInput::getThermoFileName,
+		  &VSStlsInput::setThermoFileName)
+    .def("print", &VSStlsInput::print)
+    .def("isEqual", &VSStlsInput::isEqual);
+  
   bp::class_<QstlsInputWrapper::QstlsGuess>("QstlsGuess")
     .def_readwrite("wvg", &QstlsInputWrapper::QstlsGuess::wvg)
     .def_readwrite("ssf", &QstlsInputWrapper::QstlsGuess::ssf)
@@ -342,7 +366,12 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("ssfHF", StlsWrapper::getSsfHF)
     .add_property("uInt", &Stls::getUInt)
     .add_property("wvg", StlsWrapper::getWvg);
-  
+
+  // Class to solve the vs scheme
+  bp::class_<VSStls>("VSStls",
+		     bp::init<const VSStlsInput>())
+    .def("compute", &VSStls::compute);
+
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",
 				     bp::init<const StlsInput, const QstlsInput>())

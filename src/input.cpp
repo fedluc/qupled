@@ -19,7 +19,8 @@ double Input::initDegeneracy(const double &Theta_){
 
 string Input::initTheory(const string &theory_){
   const vector<string> cTheories = {"STLS", "STLS-HNC",
-				    "STLS-IOI", "STLS-LCT"};
+				    "STLS-IOI", "STLS-LCT",
+				    "VSSTLS"};
   const vector<string> qTheories = {"QSTLS", "QSTLS-HNC",
 				    "QSTLS-IOI", "QSTLS-LCT"};
   isClassicTheory = count(cTheories.begin(), cTheories.end(), theory_) != 0;
@@ -228,14 +229,10 @@ bool QstlsInput::isEqual(const QstlsInput &in) const {
 
 // --- VSStlsInput ---
 
-void VSStlsInput::setCSRSolver(const bool& enforceCSR) {
-  this->enforceCSR = enforceCSR;
-}
-
 void VSStlsInput::setThermoFileName(const double &thermoFileName) {
   this->thermoFileName = thermoFileName;
 }
-void VSStlsInput::setAlphaGuess(const double  &alpha) {
+void VSStlsInput::setAlpha(const double  &alpha) {
   if (alpha < 0 || alpha > 1) {
     throw runtime_error("The mixing parameter must be a number between zero and one");
   }
@@ -272,7 +269,6 @@ void VSStlsInput::setMixingParameterAlpha(const double &aMixAlpha) {
 void VSStlsInput::print() const {
   StlsInput::print();
   cout << "##### VSSTLS-related input #####" << endl;
-  cout << "CSR is enforced = " << enforceCSR  << endl;
   cout << "File with data for thermodynamic integration = " << thermoFileName << endl;
   cout << "Initial guess for the free parameter = " << alpha << endl;
   cout << "Resolution for the coupling parameter grid = " << drs << endl;
@@ -282,8 +278,7 @@ void VSStlsInput::print() const {
 }
 
 bool VSStlsInput::isEqual(const VSStlsInput &in) const {
-  return ( StlsInput::isEqual(in) &&
-	   enforceCSR == in.enforceCSR && 
+  return ( StlsInput::isEqual(in) && 
 	   thermoFileName == in.thermoFileName && 
 	   alpha == in.alpha &&
 	   drs == in.drs &&

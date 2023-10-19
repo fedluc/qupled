@@ -66,7 +66,7 @@ public:
 				    dTypeRs(CENTERED),
 				    dTypeTheta(CENTERED) { ; }
   // Set derivative data
-  void setDerivativeData(std::vector<std::unique_ptr<StlsCSR>>& stlsVector,
+  void setDerivativeData(std::vector<std::shared_ptr<StlsCSR>>& stlsVector,
 			 const size_t& thisIdx);
   // Set the free parameter
   void setAlpha(const double& alpha) { this->alpha = alpha; }
@@ -87,7 +87,7 @@ private:
   // Input data
   const VSStlsInput in;
   // Vector containing NPOINTS state points to be solved simultaneously
-  std::vector<std::unique_ptr<StlsCSR>> stls;
+  std::vector<std::shared_ptr<StlsCSR>> stls;
   // Perform iterations to compute structural properties
   void doIterations();
   
@@ -99,39 +99,44 @@ public:
   int compute();
   // Set free parameter
   void setAlpha(const double& alpha);
-  
+
 };
 
-class ThermoProp {
-private:
+// class ThermoProp {
+// private:
 
-  // Grid used for thermodynamic integration
-  std::vector<double> grid;
-  // Thermodynamic properties at NPOINTS state points
-  std::vector<std::vector<double>> prop;
+//   // Grid used for thermodynamic integration
+//   std::vector<double> grid;
+//   // Thermodynamic properties at NPOINTS state points
+//   std::vector<std::vector<double>> prop;
   
-public:
+// public:
   
-  static constexpr int NPOINTS = 3;
-  ThermoProp(const VSStlsInput &in);
+//   static constexpr int NPOINTS = 3;
+//   ThermoProp(const VSStlsInput &in);
+//   set(size_t i, size_double num) { prop[i] = num; }
+//   const std::vector<double>& getGrid() const { return grid; };
   
-};
+// };
 
 class VSStls {
 
 private: 
 
 
-  // Private members
+  // Input data
   VSStlsInput in;
+  // Structural properties 
   StructProp structProp;
-  ThermoProp freeEnergyIntegrand;
-  ThermoProp rsa;
-  std::vector<double> freeEnergy;
-  std::vector<double> rsCutOff;
+  // Thermodynamic properties
+  std::vector<double> rsGrid;
+  std::vector<double> freeEnergyIntegrand;
+  // ThermoProp internalEnergy;
+  // ThermoProp freeEnergy;
+  // ThermoProp freeEnergyIntegrand;
+  // Free parameter
   double alpha;
   double alphaNew;
-  double aMix;
   // Private methods
   void init();
   void computeFixedFreeEnergy();
@@ -145,11 +150,7 @@ private:
 public:
 
   // Constructors
-  VSStls(const VSStlsInput &in_) : in(in_), structProp(in_),
-				   freeEnergyIntegrand(in_),
-				   rsa(in_),
-				   freeEnergy(StructProp::NPOINTS),
-				   rsCutOff(StructProp::NPOINTS) { ; }
+  VSStls(const VSStlsInput &in_);
   // Compute stls scheme
   int compute();
   

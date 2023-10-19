@@ -10,7 +10,7 @@ using namespace binUtil;
 // StlsCSR class
 // -----------------------------------------------------------------
 
-void StlsCSR::setDerivativeData(std::vector<std::unique_ptr<StlsCSR>>& stlsVector,
+void StlsCSR::setDerivativeData(std::vector<std::shared_ptr<StlsCSR>>& stlsVector,
 				const size_t& thisIdx) {
   // Find the index that corresponds to this state point in the vector
   const double& rs = in.getCoupling();
@@ -158,7 +158,7 @@ StructProp::StructProp(const VSStlsInput &in_) : in(in_), stls(NPOINTS) {
       inTmp.setDegeneracy(rs + j * drs);
       inTmp.setCoupling(theta + i * dTheta);
       assert(cnt < NPOINTS);
-      stls[cnt] = std::make_unique<StlsCSR>(inTmp);
+      stls[cnt] = std::make_shared<StlsCSR>(inTmp);
       cnt++;
     }
   }
@@ -194,7 +194,8 @@ void StructProp::doIterations() {
     for (auto& s : stls) { s->doAction(StlsCSR::Action::SOLUTION); }
     // Update diagnostic
     counter++;
-    for (auto& s : stls) { s->doAction(StlsCSR::Action::ERROR); }
+    err = 0;
+    for (auto& s : stls) { err +=  s->doAction(StlsCSR::Action::ERROR); }
     // Update solution
     for (auto& s : stls) { s->doAction(StlsCSR::Action::UPDATE); }
   }
@@ -204,31 +205,45 @@ void StructProp::setAlpha(const double& alpha) {
   for (auto& s : stls) { s->setAlpha(alpha); }
 }
 
-// -----------------------------------------------------------------
-// ThermoProp class
-// -----------------------------------------------------------------
+// // -----------------------------------------------------------------
+// // ThermoProp class
+// // -----------------------------------------------------------------
 
-ThermoProp::ThermoProp(const VSStlsInput &in) : prop(NPOINTS) {
-  const double& rs = in.getCoupling();
-  const double& drs = in.getCouplingResolution();
-  // Build integration grid
-  grid.push_back(0.0);
-  const double rsMax = rs + 2.0*drs; // 2.0*drs is added to circumvent GSL errors
-  while(grid.back() < rsMax){
-    grid.push_back(grid.back() + drs);
-  }
-  // Resize vectors used to store the result of the integration
-  const size_t sz = grid.size();
-  for (auto& p : prop) {
-    p.resize(sz);
-  }
-}
+// ThermoProp::ThermoProp(const VSStlsInput &in) : prop(NPOINTS) {
+//   // const double& rs = in.getCoupling();
+//   // const double& drs = in.getCouplingResolution();
+//   // // Build integration grid
+//   // grid.push_back(0.0);
+//   // const double rsMax = rs + 2.0*drs; // 2.0*drs is added to circumvent GSL errors
+//   // while(grid.back() < rsMax){
+//   //   grid.push_back(grid.back() + drs);
+//   // }
+//   // // Resize vectors used to store the result of the integration
+//   // const size_t sz = grid.size();
+//   // for (auto& p : prop) {
+//   //   p.resize(sz);
+//   // }
+// }
 
 // -----------------------------------------------------------------
 // VSStls class
 // -----------------------------------------------------------------
 
-int VSStls::compute(){
+VSStls::VSStls(const VSStlsInput &in_) : in(in_), structProp(in_) {
+  const double& rs = in.getCoupling();
+  const double& drs = in.getCouplingResolution();
+  // Build integration grid
+  rsGrid.push_back(0.0);
+  const double rsMax = rs + 2.0*drs; // 2.0*drs is added to circumvent GSL errors
+  while(rsGrid.back() < rsMax){
+    rsGrid.push_back(rsGrid.back() + drs);
+  }
+  // Resize the vector to store the free energy integrand;
+  freeEnergyIntegrand.resize(rsGrid.size());
+  fill(freeEnergyIntegrand, 0.0);
+}
+
+int VSStls::compute() {
   try {
     init();  
     // if (verbose) cout << "Structural properties calculation ..." << endl;
@@ -243,7 +258,7 @@ int VSStls::compute(){
 }
 
 // Initialization
-void VSStls::init(){
+void VSStls::init() {
   computeFixedFreeEnergy();
 }
 
@@ -255,8 +270,9 @@ void VSStls::computeFixedFreeEnergy() {
 
 // stls iterations
 void VSStls::doIterations() {
-  const int maxIter = in.getNIter();
-  const int outIter = in.getOutIter();
+  const int maxIter = 0;
+  // const int maxIter = in.getNIter();
+  // const int outIter = in.getOutIter();
   const double minErr = in.getErrMin();
   double err = 1.0;
   int counter = 0;
@@ -291,7 +307,7 @@ void VSStls::initialGuess() {
 
 void VSStls::computeAlpha() {
   // Check if a finite temperature is used
-  const bool isFiniteTemperature = (in.getDegeneracy() > 0.0);
+  // const bool isFiniteTemperature = (in.getDegeneracy() > 0.0);
   // Compute the free energy integrand
   computeFreeEnergyIntegrand();
 }
@@ -308,6 +324,24 @@ void VSStls::updateSolution() {
   structProp.setAlpha(alpha);
 }
 
-void computeFreeEnergyIntegrand() {
-  std::cerr << "computeFreeEnergyIntegrand in not implemented" << std::endl;
+void VSStls::computeFreeEnergyIntegrand() {
+  const double drs = in.getCouplingResolution();
+  for (size_t i = 0; i < rsGrid.size(); ++i) {
+    const double& rs = rsGrid[i];
+    if (rs < in.getCoupling()) {
+      if (rs == 0.0) {
+	std::cout << "computeFreeEnergyIntegrand skipping rs = 0.0" << std::endl;
+	continue;
+      }
+      else if (rs == drs) {
+	VSStls vsstlsTmp(in);
+	vsstlsTmp.in.setCoupling(rs);
+	vsstlsTmp.compute();
+      }
+      else {
+	std::cout << "computeFreeEnergyIntegrand nothing to do here" << std::endl;
+      }
+    }
+    structProp.compute();
+  }
 }
