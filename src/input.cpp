@@ -274,7 +274,7 @@ void VSStlsInput::print() const {
   cout << "Resolution for the coupling parameter grid = " << drs << endl;
   cout << "Resolution for the degeneracy parameter grid = " << dTheta << endl;
   cout << "Minimum error for convergence (alpha) = " << errMinAlpha << endl;
-  cout << "Mixing parameter (alpha)" << aMixAlpha << endl;
+  cout << "Mixing parameter (alpha) = " << aMixAlpha << endl;
 }
 
 bool VSStlsInput::isEqual(const VSStlsInput &in) const {

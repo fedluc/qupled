@@ -215,6 +215,7 @@ class VSStls(Stls):
     """
     def __init__(self,
                  inputs : qupled.VSStlsInput):
+        pass
     
 class Qstls(Stls):
     """Class to solve the quantum schemes (QSTLS, QSTLS-IET). This class inherits all the methods of its parent class.

@@ -282,6 +282,12 @@ namespace thermoUtil {
     return itg.getSolution()/(M_PI * rs * lambda);
   }
 
+  double FreeEnergy::get() const  {
+    auto func = [&](double y)->double{return rsui.eval(y);};
+    itg.compute(func, 0.0, rs);
+    return itg.getSolution()/rs/rs;
+  }
+  
   double Rdf::ssf(double y) const {
     return ssfi.eval(y);
   }
@@ -299,6 +305,26 @@ namespace thermoUtil {
     return 1 + 1.5 * itg.getSolution()/r;
   }
 
+  double computeInternalEnergy(const vector<double> &wvg,
+			       const vector<double> &ssf,
+			       const double &coupling) {
+    const Interpolator1D itp(wvg, ssf);
+    Integrator1D itg;
+    const InternalEnergy uInt(coupling, wvg.front(), wvg.back(), itp, itg);
+    return uInt.get();
+  }
+
+  double computeFreeEnergy(const vector<double> &grid,
+			   const vector<double> &rsu,
+			   const double &coupling) {
+    if (coupling == 0.0) { return 0.0; }
+    const Interpolator1D itp(grid, rsu);
+    Integrator1D itg;
+    const FreeEnergy freeEnergy(coupling, itp, itg);
+    return freeEnergy.get();
+  }
+  
+  
   vector<double> computeRdf(const vector<double> &r,
 			    const vector<double> &wvg,
 			    const vector<double> &ssf) {
@@ -314,15 +340,6 @@ namespace thermoUtil {
     return rdf;
   }
 
-  double computeInternalEnergy(const vector<double> &wvg,
-			       const vector<double> &ssf,
-			       const double &coupling) {
-    const Interpolator1D itp(wvg, ssf);
-    Integrator1D itg;
-    const InternalEnergy uInt(coupling, wvg.front(), wvg.back(), itp, itg);
-    return uInt.get();
-  }
-  
 }
   
 

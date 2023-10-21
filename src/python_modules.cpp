@@ -228,6 +228,14 @@ namespace thermoWrapper {
     const vector<double> &ssf = arrayWrapper::toVector(ssfIn);
     return thermoUtil::computeInternalEnergy(wvg, ssf, coupling);
   }
+
+  double computeFreeEnergy(const bn::ndarray &gridIn,
+			   const bn::ndarray &rsuIn,
+			   const double &coupling) {
+    const vector<double> &grid = arrayWrapper::toVector(gridIn);
+    const vector<double> &rsu = arrayWrapper::toVector(rsuIn);
+    return thermoUtil::computeFreeEnergy(grid, rsu, coupling);
+  }
   
 }
 
@@ -381,5 +389,6 @@ BOOST_PYTHON_MODULE(qupled)
   // Post-process methods
   bp::def("computeRdf", thermoWrapper::computeRdf);
   bp::def("computeInternalEnergy", thermoWrapper::computeInternalEnergy);
+  bp::def("computeFreeEnergy", thermoWrapper::computeFreeEnergy);
   
 }

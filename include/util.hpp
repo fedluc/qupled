@@ -180,6 +180,31 @@ namespace thermoUtil {
   
   };
 
+  // Class for free energy calculation
+  class FreeEnergy {
+    
+  private:
+
+    // Coupling parameter
+    const double rs;
+    // Integrator object
+    Integrator1D &itg;
+    // Integrand interpolator (the integrand is given by rs * u)
+    const Interpolator1D &rsui;
+    // Integrand
+    double integrand(const double y) const ;
+
+  public:
+
+    // Constructor
+    FreeEnergy(const double rs_,
+	       const Interpolator1D &rsui_,
+	       Integrator1D &itg_) : rs(rs_), itg(itg_), rsui(rsui_) {;};
+    // Get result of integration 
+    double get() const;
+  
+  };
+
 
   // Class for radial distribution function calculation
   class Rdf {
@@ -215,6 +240,10 @@ namespace thermoUtil {
   double computeInternalEnergy(const vector<double> &wvg,
 			       const vector<double> &ssf,
 			       const double &coupling);
+
+  double computeFreeEnergy(const vector<double> &grid,
+			   const vector<double> &rsu,
+			   const double &coupling);
   
   vector<double> computeRdf(const vector<double> &r,
 			    const vector<double> &wvg,

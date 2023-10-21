@@ -58,6 +58,23 @@ class Stls():
         # File to store output on disk
         self.hdfFileName : str = None #: Name of the hdf output file.
         # Optional parameters
+        self.setOptionalParameters(chemicalPotential, cutoff, error, mixing,
+                                   guess, iterations, matsubara,
+                                   outputFrequency, recoveryFile,
+                                   resolution);
+
+    # Set values of optional parameters
+    def setOptionalParameters(self,
+                              chemicalPotential : list[float],
+                              cutoff : float,
+                              error : float,
+                              mixing : float,
+                              guess : qp.SlfcGuess,
+                              iterations : int,
+                              matsubara : int,
+                              outputFrequency : int,
+                              recoveryFile : str,
+                              resolution : float) -> None:
         self.inputs.chemicalPotential = chemicalPotential
         self.inputs.cutoff = cutoff
         self.inputs.error = error
@@ -68,7 +85,7 @@ class Stls():
         self.inputs.outputFrequency = outputFrequency
         if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
         self.inputs.resolution = resolution
-
+        
     # Check input before computing
     def checkInputs(self) -> None:
         """ Checks that the content of :obj:`inputs` is correct """
@@ -585,7 +602,7 @@ class VSStls(Stls):
     def __init__(self,
                  coupling : float,
                  degeneracy : float,
-                 chemicalPotential : list[float] = [-10.0,10.0],
+                 chemicalPotential : list[float] = [-100.0,100.0],
                  cutoff : float = 10.0,
                  error : float = 1.0e-5,
                  mixing : float = 1.0,
@@ -597,31 +614,40 @@ class VSStls(Stls):
                  resolution : float = 0.1,
                  couplingResolution : float = 0.01,
                  degeneracyResolution : float = 0.01,
-                 mixingAlpha : float = 0.1):
+                 mixingAlpha : float = 0.1,
+                 alpha : float = 0.5):
         # Allowed theories
         self.allowedTheories : list[str] = ["VSSTLS"]
         # Input object
         self.inputs : qp.VSStlsInput = qp.VSStlsInput(coupling, degeneracy, "VSSTLS") 
         # Scheme to solve and associated input and solution
-        self.scheme : qp.Stls = None #: Object that represents the scheme, performs the calculations and stores the solution.
-        self.schemeInputs : qp.StlsInput = None
+        self.scheme : qp.VSStls = None
+        self.schemeInputs : qp.VSStlsInput = None
         # File to store output on disk
         self.hdfFileName : str = None #: Name of the hdf output file.
         # Optional parameters
-        self.inputs.chemicalPotential = chemicalPotential
-        self.inputs.cutoff = cutoff
-        self.inputs.error = error
-        if (guess is not None): self.inputs.guess = guess
-        self.inputs.mixing = mixing
-        self.inputs.iterations = iterations
-        self.inputs.matsubara = matsubara
-        self.inputs.outputFrequency = outputFrequency
-        if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
-        self.inputs.resolution = resolution
+        super().setOptionalParameters(chemicalPotential, cutoff, error, mixing,
+                                      guess, iterations, matsubara,
+                                      outputFrequency, recoveryFile,
+                                      resolution);
         self.inputs.couplingResolution = couplingResolution
         self.inputs.degeneracyResolution = degeneracyResolution
         self.inputs.mixingAlpha = mixingAlpha
-
+        self.inputs.alpha = alpha
+        
+    # Compute
+    def compute(self) -> None:
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.Static.Stls.save`
+        to see which results are saved
+        """
+        self.checkInputs()
+        self.schemeInputs = self.inputs
+        self.scheme = qp.VSStls(self.schemeInputs)
+        status = self.scheme.compute()
+        # self.checkStatusAndClean(status)        
+        # self.setHdfFile()
+        # self.save()
+        
 class Hdf():
 
     """ Class to manipulate the hdf files produced when a scheme is solved """

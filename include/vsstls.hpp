@@ -14,7 +14,8 @@ public:
   // Enumerator to denote the numerical schemes used for the derivatives
   enum Derivative { CENTERED, FORWARD, BACKWARD };
   // Enumerator to denote the actions to perform when compute is called
-  enum Action { INITIALIZE, GUESS, SOLUTION, ERROR, UPDATE };
+  enum Action { INITIALIZE, GUESS, SSF, SLFC,
+		SLFC_DERIVATIVE, ERROR, UPDATE };
     
 private:
 
@@ -72,6 +73,10 @@ public:
   void setAlpha(const double& alpha) { this->alpha = alpha; }
   // Perform the action specified in input
   double doAction(const Action& action);
+  // Get degeneracy parameter
+  double getDegeneracy() const { return in.getDegeneracy(); }
+  // Compute the free energy integrand
+  double getFreeEnergyIntegrand() const;
   
 };
 
@@ -99,30 +104,14 @@ public:
   int compute();
   // Set free parameter
   void setAlpha(const double& alpha);
+  // Get internal energy
+  vector<double> getFreeEnergyIntegrand(const double& Theta);
 
 };
-
-// class ThermoProp {
-// private:
-
-//   // Grid used for thermodynamic integration
-//   std::vector<double> grid;
-//   // Thermodynamic properties at NPOINTS state points
-//   std::vector<std::vector<double>> prop;
-  
-// public:
-  
-//   static constexpr int NPOINTS = 3;
-//   ThermoProp(const VSStlsInput &in);
-//   set(size_t i, size_double num) { prop[i] = num; }
-//   const std::vector<double>& getGrid() const { return grid; };
-  
-// };
 
 class VSStls {
 
 private: 
-
 
   // Input data
   VSStlsInput in;
@@ -130,7 +119,7 @@ private:
   StructProp structProp;
   // Thermodynamic properties
   std::vector<double> rsGrid;
-  std::vector<double> freeEnergyIntegrand;
+  vector<vector<double>> freeEnergyIntegrand;
   // ThermoProp internalEnergy;
   // ThermoProp freeEnergy;
   // ThermoProp freeEnergyIntegrand;
