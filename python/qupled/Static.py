@@ -238,6 +238,7 @@ class Stls():
             matsubara:  A list of matsubara frequencies to plot. (Default =  all matsubara frequencies are plotted)
         
         """
+        if (self.inputs.degeneracy == 0) : return
         if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
         Plot.plot1DParametric(self.scheme.wvg, self.scheme.idr,
                               "Wave vector", "Ideal density response",

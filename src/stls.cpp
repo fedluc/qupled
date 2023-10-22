@@ -19,8 +19,8 @@ vector<double> StlsBase::getRdf(const vector<double> &r) const {
 
 vector<double> StlsBase::getSdr() const {
   if (in.getDegeneracy() == 0.0) {
-    throw runtime_error("The static density response cannot "
-			"be computed in the ground state.");
+    std::cout << "The static density response cannot be computed in the ground state." << std::endl;
+    return vector<double>();
   }
   vector<double> sdr(wvg.size(), -1.5 * in.getDegeneracy());
   const double fact = 4 *lambda * in.getCoupling() / M_PI;
