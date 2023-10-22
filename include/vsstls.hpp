@@ -9,18 +9,14 @@
 
 class StlsCSR : public Stls {
   
-public:
-
-  // Enumerator to denote the numerical schemes used for the derivatives
-  enum Derivative { CENTERED, FORWARD, BACKWARD };
-  // Enumerator to denote the actions to perform when compute is called
-  enum Action { INITIALIZE, GUESS, SSF, SLFC,
-		SLFC_DERIVATIVE, ERROR, UPDATE };
+  friend class StructProp;
     
 private:
 
   // Input data
   const VSStlsInput in;
+  // Enumerator to denote the numerical schemes used for the derivatives
+  enum Derivative { CENTERED, FORWARD, BACKWARD };
   // Free parameter
   double alpha;
   // Pointer to the static local field correction with rs = rs + drs
@@ -71,10 +67,6 @@ public:
 			 const size_t& thisIdx);
   // Set the free parameter
   void setAlpha(const double& alpha) { this->alpha = alpha; }
-  // Perform the action specified in input
-  double doAction(const Action& action);
-  // Get degeneracy parameter
-  double getDegeneracy() const { return in.getDegeneracy(); }
   // Compute the free energy integrand
   double getFreeEnergyIntegrand() const;
   
@@ -93,6 +85,8 @@ private:
   const VSStlsInput in;
   // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<std::shared_ptr<StlsCSR>> stls;
+  // Flag marking if the initialization for the stls data was already done
+  bool stlsIsInitialized;
   // Perform iterations to compute structural properties
   void doIterations();
   
@@ -106,10 +100,12 @@ public:
   void setAlpha(const double& alpha);
   // Get internal energy
   vector<double> getFreeEnergyIntegrand(const double& Theta);
-
+  // Get structural properties for output
+  const StlsCSR& getOutputProperties() const { return *(stls[STENCIL + 1]); }
+  
 };
 
-class VSStls {
+class VSStls : public StlsBase {
 
 private: 
 

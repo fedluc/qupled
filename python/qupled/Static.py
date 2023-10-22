@@ -644,9 +644,11 @@ class VSStls(Stls):
         self.schemeInputs = self.inputs
         self.scheme = qp.VSStls(self.schemeInputs)
         status = self.scheme.compute()
-        # self.checkStatusAndClean(status)        
-        # self.setHdfFile()
-        # self.save()
+        self.checkStatusAndClean(status)        
+        self.setHdfFile()
+        self.save()
+
+
         
 class Hdf():
 

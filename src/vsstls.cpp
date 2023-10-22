@@ -96,19 +96,6 @@ double StlsCSR::getDerivative(const double& f0,
   }
 }
 
-double StlsCSR::doAction(const Action& action) {
-  switch (action) {
-  case INITIALIZE : Stls::init(); return -1;
-  case GUESS: Stls::initialGuess(); return -1;
-  case SSF: Stls::computeSsf(); return -1;
-  case SLFC: Stls::computeSlfc(); return -1;
-  case SLFC_DERIVATIVE: computeSlfc(); return -1;
-  case ERROR: return Stls::computeError();
-  case UPDATE: Stls::updateSolution(); return -1;
-  default: return -1;
-  }
-}
-
 void StlsCSR::computeSlfc() {
   // Derivative contributions
   const double& rs = in.getCoupling();
@@ -144,7 +131,7 @@ double StlsCSR::getFreeEnergyIntegrand() const {
 // StructProp class
 // -----------------------------------------------------------------
 
-StructProp::StructProp(const VSStlsInput &in_) : in(in_) {
+StructProp::StructProp(const VSStlsInput &in_) : in(in_), stlsIsInitialized(false) {
   VSStlsInput inTmp = in;
   const double& drs = inTmp.getCouplingResolution();
   const double& dTheta = inTmp.getDegeneracyResolution();
@@ -173,7 +160,10 @@ StructProp::StructProp(const VSStlsInput &in_) : in(in_) {
 // Add a public call to compute where we do the initializations
 int StructProp::compute() {
   try {
-    for (auto& s : stls) { s->doAction(StlsCSR::Action::INITIALIZE); }  
+    if (!stlsIsInitialized) {
+      for (auto& s : stls) { s->init(); }
+      stlsIsInitialized = true;
+    }
     doIterations();
     return 0;
   }
@@ -189,19 +179,19 @@ void StructProp::doIterations() {
   double err = 1.0;
   int counter = 0;
   // Define initial guess
-  for (auto& s : stls) { s->doAction(StlsCSR::Action::GUESS); }
+  for (auto& s : stls) { s->initialGuess(); }
   // Iteration to solve for the structural properties
   while (counter < maxIter+1 && err > minErr ) {
     // Compute new solution and error
-    for (auto& s : stls) { s->doAction(StlsCSR::Action::SSF); }
-    for (auto& s : stls) { s->doAction(StlsCSR::Action::SLFC); }
-    for (auto& s : stls) { s->doAction(StlsCSR::Action::SLFC_DERIVATIVE); }
+    for (auto& s : stls) { s->computeSsf(); }
+    for (auto& s : stls) { s->Stls::computeSlfc(); }
+    for (auto& s : stls) { s->computeSlfc(); }
     // Update error and diagnostic
     counter++;
     err = 0;
-    for (auto& s : stls) { err +=  s->doAction(StlsCSR::Action::ERROR); }
+    for (auto& s : stls) { err +=  s->computeError(); }
     // Update solution
-    for (auto& s : stls) { s->doAction(StlsCSR::Action::UPDATE); }
+    for (auto& s : stls) { s->updateSolution(); }
   }
 }
 
@@ -212,7 +202,7 @@ void StructProp::setAlpha(const double& alpha) {
 vector<double> StructProp::getFreeEnergyIntegrand(const double& Theta) {
   vector<double> out;
   for (auto& s : stls) {
-    if (s->getDegeneracy() == Theta) { out.push_back(s->getFreeEnergyIntegrand()); }
+    if (s->in.getDegeneracy() == Theta) { out.push_back(s->getFreeEnergyIntegrand()); }
   }
   assert(out.size() == STENCIL);
   return out;
@@ -222,7 +212,7 @@ vector<double> StructProp::getFreeEnergyIntegrand(const double& Theta) {
 // VSStls class
 // -----------------------------------------------------------------
 
-VSStls::VSStls(const VSStlsInput &in_) : in(in_), structProp(in_) {
+VSStls::VSStls(const VSStlsInput &in_) : StlsBase(in_), in(in_), structProp(in_) {
   const double& rs = in.getCoupling();
   const double& drs = in.getCouplingResolution();
   // Build integration grid
@@ -334,7 +324,6 @@ void VSStls::computeAlpha() {
   const double frsptp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[2], rsp);
   // }
   // Internal energy derivatives
-  // const double dudrs = (urspt - ursmt)/(2.0*drs);
   const double dudrs = (freeEnergyIntegrand[1][nrs] - freeEnergyIntegrand[1][nrs - 2])/(2.0 * drs) - urst;
   //if (finite_temperature)
   const double dudt =  (urstp - urstm)/(2.0*dt);
@@ -362,10 +351,18 @@ double VSStls::computeError() {
 }
 
 void VSStls::updateSolution() {
+  // Update the free parameter
   const double aMix = in.getMixingParameterAlpha();
   alpha *= (1 - aMix);
   alpha += alphaNew * aMix;
   structProp.setAlpha(alpha);
+  // Update the structural properties used for output
+  const auto& stls = structProp.getOutputProperties();
+  wvg = stls.getWvg();
+  idr = stls.getIdr();
+  slfc = stls.getSlfc();
+  ssf = stls.getSsf();
+  ssfHF = stls.getSsfHF();
 }
 
 void VSStls::computeFreeEnergyIntegrand() {

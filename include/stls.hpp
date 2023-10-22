@@ -10,10 +10,12 @@
 // Solver for the STLS-based schemes
 // -----------------------------------------------------------------
 
-class Stls {
+class StlsBase {
 
-protected: 
-  
+protected:
+
+  // Constant for unit conversion
+  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // Input data
   const StlsInput in;
   // Wave vector grid
@@ -27,23 +29,47 @@ protected:
   vector<double> ssf;
   // Hartree-Fock static structure factor
   vector<double> ssfHF;
+  // Bridge function (for iet schemes)
+  vector<double> bf;
+  // iet schemes
+  bool useIet;
+  // Chemical potential
+  double mu;
+  bool computedChemicalPotential;
+  // Name of the recovery files
+  string recoveryFileName;
+  
+
+public:
+
+  // Constructor
+  StlsBase(const StlsInput &in_) : in(in_), useIet(false),
+				   computedChemicalPotential(false),
+				   recoveryFileName(EMPTY_STRING) { ; };
+  // Getters
+  vector<double> getBf() const { return bf; }
+  vecUtil::Vector2D getIdr() const { return idr; }
+  string getRecoveryFileName() const { return recoveryFileName; }
+  vector<double> getSlfc() const { return slfc; }
+  vector<double> getSsf() const { return ssf; }
+  vector<double> getSsfHF() const { return ssfHF; }
+  vector<double> getWvg() const { return wvg; }
+  vector<double> getRdf(const vector<double> &r) const;
+  vector<double> getSdr() const;
+  double getUInt() const;
+  
+};
+
+class Stls : public StlsBase {
+
+protected: 
+  
   // Integrator object
   Integrator1D itg;
   // Output verbosity
   const bool verbose;
-  // Name of the recovery files
-  string recoveryFileName;
   // Flag to write the recovery files
   const bool writeFiles;
-  // Chemical potential
-  double mu;
-  bool computedChemicalPotential;
-  // iet schemes
-  bool useIet;
-  // Bridge function (for iet schemes)
-  vector<double> bf;
-  // Constant for unit conversion
-  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // Initialization
   void init();
   // Construct wave vector grid
@@ -76,10 +102,10 @@ protected:
   void readRecovery(vector<double> &wvgFile,
 		    vector<double> &slfcFile) const;
   // Check if iet schemes should be used
-  bool checkIet() {
-   return in.getTheory() == "STLS-HNC" ||
-     in.getTheory() == "STLS-IOI" ||
-     in.getTheory() == "STLS-LCT";
+  void checkIet() {
+   useIet = in.getTheory() == "STLS-HNC"
+     || in.getTheory() == "STLS-IOI"
+     || in.getTheory() == "STLS-LCT";
   };
   
 public:
@@ -88,23 +114,12 @@ public:
   Stls(const StlsInput &in_,
        const bool &verbose_,
        const bool &writeFiles_)
-    : in(in_), verbose(verbose_), recoveryFileName(EMPTY_STRING),
-      writeFiles(writeFiles_), computedChemicalPotential(false),
-      useIet(checkIet()) { ; };
+    : StlsBase(in_), verbose(verbose_),
+      writeFiles(writeFiles_) { checkIet(); };
   Stls(const StlsInput &in_) : Stls(in_, true, true) { ; };
   // Compute stls scheme
   int compute();
-  // Getters
-  vector<double> getBf() const { return bf; }
-  vecUtil::Vector2D getIdr() const { return idr; }
-  string getRecoveryFileName() const { return recoveryFileName; }
-  vector<double> getSlfc() const { return slfc; }
-  vector<double> getSsf() const { return ssf; }
-  vector<double> getSsfHF() const { return ssfHF; }
-  vector<double> getWvg() const { return wvg; }
-  vector<double> getRdf(const vector<double> &r) const;
-  vector<double> getSdr() const;
-  double getUInt() const;
+
   
 };
 

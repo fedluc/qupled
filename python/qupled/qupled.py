@@ -208,8 +208,8 @@ class Stls():
 
 
 class VSStls(Stls):
-    """Class to solve the VS-STLS scheme. This class inherits all the methods of its parent class.
-    
+    """Class to solve the classical VS-STLS scheme  
+
     Args:
         inputs: Input parameters.
     """

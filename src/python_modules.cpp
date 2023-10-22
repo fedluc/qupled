@@ -106,13 +106,13 @@ namespace StlsInputWrapper {
 
 }
 
-namespace StlsWrapper {
+namespace StlsBaseWrapper {
 
-  bn::ndarray getBf(const Stls &stls){
+  bn::ndarray getBf(const StlsBase &stls){
     return arrayWrapper::toNdArray(stls.getBf());
   }
 
-  bn::ndarray getIdr(const Stls &stls){
+  bn::ndarray getIdr(const StlsBase &stls){
     const vecUtil::Vector2D &idrNative = stls.getIdr();
     const size_t nx = idrNative.size(0);
     const size_t nl = idrNative.size(1);
@@ -122,33 +122,41 @@ namespace StlsWrapper {
     return idr;
   }
 
-  bn::ndarray getRdf(const Stls &stls,
+  bn::ndarray getRdf(const StlsBase &stls,
 		     const bn::ndarray &r){
     return arrayWrapper::toNdArray(stls.getRdf(arrayWrapper::toVector(r)));
   }
   
-  bn::ndarray getSdr(const Stls &stls){
+  bn::ndarray getSdr(const StlsBase &stls){
     return arrayWrapper::toNdArray(stls.getSdr());
   }
   
-  bn::ndarray getSlfc(const Stls &stls){
+  bn::ndarray getSlfc(const StlsBase &stls){
     return arrayWrapper::toNdArray(stls.getSlfc());
   }
   
-  bn::ndarray getSsf(const Stls &stls){
+  bn::ndarray getSsf(const StlsBase &stls){
     return arrayWrapper::toNdArray(stls.getSsf());
   }
 
-  bn::ndarray getSsfHF(const Stls &stls){
+  bn::ndarray getSsfHF(const StlsBase &stls){
     return arrayWrapper::toNdArray(stls.getSsfHF());
   }
   
-  bn::ndarray getWvg(const Stls &stls){
+  bn::ndarray getWvg(const StlsBase &stls){
     return arrayWrapper::toNdArray(stls.getWvg());
   }
 
 }
 
+namespace StlsWrapper {
+
+  bn::ndarray getRdf(const Stls &stls,
+		     const bn::ndarray &r){
+    return arrayWrapper::toNdArray(stls.getRdf(arrayWrapper::toVector(r)));
+  }
+
+}
 
 namespace QstlsInputWrapper {
   
@@ -359,25 +367,29 @@ BOOST_PYTHON_MODULE(qupled)
 		  &QstlsInput::setFixedIet)
     .def("print", &QstlsInput::print)
     .def("isEqual", &QstlsInput::isEqual);
-    
-  // Class to solve classical schemes
-  bp::class_<Stls>("Stls",
+
+  // Base class to solve classical schemes
+  bp::class_<StlsBase>("StlsBase",
 		   bp::init<const StlsInput>())
+    .add_property("bf", StlsBaseWrapper::getBf)
+    .add_property("idr", StlsBaseWrapper::getIdr)
+    .add_property("recovery", &StlsBase::getRecoveryFileName)
+    .add_property("sdr", StlsBaseWrapper::getSdr)
+    .add_property("slfc", StlsBaseWrapper::getSlfc)
+    .add_property("ssf", StlsBaseWrapper::getSsf)
+    .add_property("ssfHF", StlsBaseWrapper::getSsfHF)
+    .add_property("uInt", &StlsBase::getUInt)
+    .add_property("wvg", StlsBaseWrapper::getWvg);
+  
+  // Class to solve classical schemes
+  bp::class_<Stls, bp::bases<StlsBase>>("Stls",
+					bp::init<const StlsInput>())
     .def("compute", &Stls::compute)
-    .def("getRdf", StlsWrapper::getRdf)
-    .add_property("bf", StlsWrapper::getBf)
-    .add_property("idr", StlsWrapper::getIdr)
-    .add_property("recovery", &Stls::getRecoveryFileName)
-    .add_property("sdr", StlsWrapper::getSdr)
-    .add_property("slfc", StlsWrapper::getSlfc)
-    .add_property("ssf", StlsWrapper::getSsf)
-    .add_property("ssfHF", StlsWrapper::getSsfHF)
-    .add_property("uInt", &Stls::getUInt)
-    .add_property("wvg", StlsWrapper::getWvg);
+    .def("getRdf", StlsWrapper::getRdf);
 
   // Class to solve the vs scheme
-  bp::class_<VSStls>("VSStls",
-		     bp::init<const VSStlsInput>())
+  bp::class_<VSStls, bp::bases<StlsBase>>("VSStls",
+					  bp::init<const VSStlsInput>())
     .def("compute", &VSStls::compute);
 
   // Class to solve quantum schemes
