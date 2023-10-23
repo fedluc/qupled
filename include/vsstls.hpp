@@ -17,27 +17,29 @@ private:
   const VSStlsInput in;
   // Enumerator to denote the numerical schemes used for the derivatives
   enum Derivative { CENTERED, FORWARD, BACKWARD };
+  // Stls static local field correction
+  vector<double> slfcStls;
   // Free parameter
   double alpha;
   // Pointer to the static local field correction with rs = rs + drs
-  vector<double>* slfcRsUp;
+  vector<double>* slfcStlsRsUp;
   // Pointer to the static local field correction with rs = rs - drs
-  vector<double>* slfcRsDown;
+  vector<double>* slfcStlsRsDown;
   // Pointer to the static local field correction with theta = theta + dtheta
-  vector<double>* slfcThetaUp;
+  vector<double>* slfcStlsThetaUp;
   // Pointer to the static local field correction with theta = theta - dtheta
-  vector<double>* slfcThetaDown;
+  vector<double>* slfcStlsThetaDown;
   // Numerical scheme used to compute the coupling parameter derivative
   Derivative dTypeRs;
   // Numerical scheme used to compute the degeneracy parametere derivative
   Derivative dTypeTheta;
   // Set the data to compute the coupling parameter derivative
-  void setDrsData(vector<double> &slfcRsUp,
-		  vector<double> &slfcRsDown,
+  void setDrsData(vector<double> &slfcStlsRsUp,
+		  vector<double> &slfcSltsRsDown,
 		  const Derivative &dTypeRs);
   // Set the data to compute the degeneracy parameter derivative
-  void setDThetaData(vector<double> &slfcThetaUp,
-		     vector<double> &slfcThetaDown,
+  void setDThetaData(vector<double> &slfcStlsThetaUp,
+		     vector<double> &slfcStlsThetaDown,
 		     const Derivative &dTypeTheta);
   // Helper methods to compute the derivatives
   double getDerivative(const vector<double>& f,
@@ -48,6 +50,7 @@ private:
 		       const double& f2,
 		       const Derivative& type);
   // Compute static local field correction
+  void computeSlfcStls();
   void computeSlfc();
   
 public:
@@ -56,10 +59,10 @@ public:
   StlsCSR(const VSStlsInput& in_) : Stls(in_, false, false),
 				    in(in_),
 				    alpha(in_.getAlpha()),
-				    slfcRsUp(nullptr),
-				    slfcRsDown(nullptr),
-				    slfcThetaUp(nullptr),
-				    slfcThetaDown(nullptr),
+				    slfcStlsRsUp(nullptr),
+				    slfcStlsRsDown(nullptr),
+				    slfcStlsThetaUp(nullptr),
+				    slfcStlsThetaDown(nullptr),
 				    dTypeRs(CENTERED),
 				    dTypeTheta(CENTERED) { ; }
   // Set derivative data
@@ -99,9 +102,10 @@ public:
   // Set free parameter
   void setAlpha(const double& alpha);
   // Get internal energy
-  vector<double> getFreeEnergyIntegrand(const double& Theta);
+  vector<double> getFreeEnergyIntegrand(const double& theta);
   // Get structural properties for output
-  const StlsCSR& getOutputProperties() const { return *(stls[STENCIL + 1]); }
+  const StlsCSR& getStls(const double& rs,
+			 const double& theta) const;
   
 };
 

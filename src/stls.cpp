@@ -185,10 +185,6 @@ void Stls::computeSsfGround(){
 void Stls::computeSlfc(){
   assert(ssf.size() == wvg.size());
   assert(slfc.size() == wvg.size());
-  if (in.getCoupling() == 0.0) {
-    fill(slfc, 0.0);
-    return;
-  }
   computeSlfcStls();
   if (useIet) computeSlfcIet();
 }

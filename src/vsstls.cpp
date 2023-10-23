@@ -47,19 +47,19 @@ void StlsCSR::setDerivativeData(std::vector<std::shared_ptr<StlsCSR>>& stlsVecto
   }
 }
 
-void StlsCSR::setDrsData(vector<double> &slfcRsUp,
-			 vector<double> &slfcRsDown,
+void StlsCSR::setDrsData(vector<double> &slfcStlsRsUp,
+			 vector<double> &slfcStlsRsDown,
 			 const Derivative &dTypeRs) {
-  this->slfcRsUp = &slfcRsUp;
-  this->slfcRsDown = &slfcRsDown;
+  this->slfcStlsRsUp = &slfcStlsRsUp;
+  this->slfcStlsRsDown = &slfcStlsRsDown;
   this->dTypeRs = dTypeRs;
 }
 
-void StlsCSR::setDThetaData(vector<double> &slfcThetaUp,
-			    vector<double> &slfcThetaDown,
+void StlsCSR::setDThetaData(vector<double> &slfcStlsThetaUp,
+			    vector<double> &slfcStlsThetaDown,
 			    const Derivative &dTypeTheta) {
-  this->slfcThetaUp = &slfcThetaUp;
-  this->slfcThetaDown = &slfcThetaDown;
+  this->slfcStlsThetaUp = &slfcStlsThetaUp;
+  this->slfcStlsThetaDown = &slfcStlsThetaDown;
   this->dTypeTheta = dTypeTheta;
 }
 
@@ -96,6 +96,11 @@ double StlsCSR::getDerivative(const double& f0,
   }
 }
 
+void StlsCSR::computeSlfcStls() {
+  Stls::computeSlfc();
+  slfcStls = slfc;
+}
+
 void StlsCSR::computeSlfc() {
   // Derivative contributions
   const double& rs = in.getCoupling();
@@ -103,10 +108,10 @@ void StlsCSR::computeSlfc() {
   const double& dx = in.getWaveVectorGridRes();
   const double& drs = in.getCouplingResolution();
   const double& dTheta = in.getDegeneracyResolution();
-  const vector<double>& rsUp = *slfcRsUp;
-  const vector<double>& rsDown = *slfcRsDown;
-  const vector<double>& thetaUp = *slfcThetaUp;
-  const vector<double>& thetaDown = *slfcThetaDown;
+  const vector<double>& rsUp = *slfcStlsRsUp;
+  const vector<double>& rsDown = *slfcStlsRsDown;
+  const vector<double>& thetaUp = *slfcStlsThetaUp;
+  const vector<double>& thetaDown = *slfcStlsThetaDown;
   const double a_drs = alpha * rs / (6.0 * drs);
   const double a_dx = alpha/(6.0 * dx);
   const double a_dtheta = alpha * theta / (3.0 * dTheta);
@@ -115,11 +120,15 @@ void StlsCSR::computeSlfc() {
     if (i == 0) { dType = FORWARD; }
     else if (i == wvg.size() - 1) { dType = BACKWARD; }
     // Wave-vector derivative
-    slfc[i] -= a_dx * wvg[i] * getDerivative(slfc, i, dType);
+    slfc[i] -= a_dx * wvg[i] * getDerivative(slfcStls, i, dType);
     // Coupling parameter derivative
-    slfc[i] -= a_drs * getDerivative(slfc[i], rsUp[i], rsDown[i], dTypeRs);
+    if (rs > 0) {
+      slfc[i] -= a_drs * getDerivative(slfcStls[i], rsUp[i], rsDown[i], dTypeRs);
+    }
     // Degeneracy parameter derivative
-    slfc[i] -= a_dtheta * getDerivative(slfc[i], thetaUp[i], thetaDown[i], dTypeTheta);
+    if (theta > 0) { 
+      slfc[i] -= a_dtheta * getDerivative(slfcStls[i], thetaUp[i], thetaDown[i], dTypeTheta);
+    }
   }
 }
 
@@ -137,7 +146,7 @@ StructProp::StructProp(const VSStlsInput &in_) : in(in_), stlsIsInitialized(fals
   const double& dTheta = inTmp.getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
   // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  if (inTmp.getCoupling() < drs) { inTmp.setCoupling(drs); }
+  if (inTmp.getCoupling() <= drs) { inTmp.setCoupling(2.0 * drs); }
   if (inTmp.getDegeneracy() < dTheta) { inTmp.setDegeneracy(dTheta); }
   double rs = inTmp.getCoupling();
   double theta = inTmp.getDegeneracy();
@@ -184,7 +193,7 @@ void StructProp::doIterations() {
   while (counter < maxIter+1 && err > minErr ) {
     // Compute new solution and error
     for (auto& s : stls) { s->computeSsf(); }
-    for (auto& s : stls) { s->Stls::computeSlfc(); }
+    for (auto& s : stls) { s->computeSlfcStls(); }
     for (auto& s : stls) { s->computeSlfc(); }
     // Update error and diagnostic
     counter++;
@@ -199,13 +208,24 @@ void StructProp::setAlpha(const double& alpha) {
   for (auto& s : stls) { s->setAlpha(alpha); }
 }
 
-vector<double> StructProp::getFreeEnergyIntegrand(const double& Theta) {
+vector<double> StructProp::getFreeEnergyIntegrand(const double& theta) {
   vector<double> out;
   for (auto& s : stls) {
-    if (s->in.getDegeneracy() == Theta) { out.push_back(s->getFreeEnergyIntegrand()); }
+    if (s->in.getDegeneracy() == theta) { out.push_back(s->getFreeEnergyIntegrand()); }
   }
   assert(out.size() == STENCIL);
   return out;
+}
+
+const StlsCSR& StructProp::getStls(const double& rs,
+				   const double& theta) const {
+  for (auto& s : stls) {
+    if (s->in.getCoupling() == rs && s->in.getDegeneracy() == theta) {
+      return *s;
+    }
+  }
+  assert(false);
+  return *stls[0];
 }
 
 // -----------------------------------------------------------------
@@ -217,14 +237,16 @@ VSStls::VSStls(const VSStlsInput &in_) : StlsBase(in_), in(in_), structProp(in_)
   const double& drs = in.getCouplingResolution();
   // Build integration grid
   rsGrid.push_back(0.0);
-  // const double rsMax = rs + 2.0*drs; // 2.0*drs is added to circumvent GSL errors
   const double rsMax = rs + drs;
   while(rsGrid.back() < rsMax){
     rsGrid.push_back(rsGrid.back() + drs);
   }
   // Resize the vector to store the free energy integrand;
   freeEnergyIntegrand.resize(StructProp::STENCIL);
-  for (auto& f : freeEnergyIntegrand) { f.resize(rsGrid.size()); }
+  for (auto& f : freeEnergyIntegrand) {
+    f.resize(rsGrid.size());
+    fill(f, 0.0);
+  }
 }
 
 int VSStls::compute() {
@@ -254,9 +276,8 @@ void VSStls::computeFixedFreeEnergy() {
 
 // stls iterations
 void VSStls::doIterations() {
-  // const int maxIter = 0;
   const int maxIter = in.getNIter();
-  // const int outIter = in.getOutIter();
+  const int outIter = in.getOutIter();
   const double minErr = in.getErrMin();
   double err = 1.0;
   int counter = 0;
@@ -297,52 +318,70 @@ void VSStls::computeAlpha() {
   const double rsm = rs - drs;
   const double rsp = rs + drs;
   const double rs2 = rs * rs;      
-  // Check if a finite temperature is used
+  // // Check if a finite temperature is used
+  // const bool isFiniteTemperature = (in.getDegeneracy() > 0.0);
+  // assert(isFiniteTemperature);
+  // // Compute the free energy integrand
+  // computeFreeEnergyIntegrand();
+  // // Compute internal energy
+  // const size_t nrs = rsGrid.size();
+  // const double urst = freeEnergyIntegrand[1][nrs - 2] / rs;
+  // // if (isFiniteTemperature) {
+  // const double urstm = freeEnergyIntegrand[0][nrs - 2] / rs;
+  // const double urstp = freeEnergyIntegrand[2][nrs - 2] / rs;
+  // // }
+  // // Compute free energy
+  // const double frsmt = computeFreeEnergy(rsGrid, freeEnergyIntegrand[1], rsm);
+  // const double frst = computeFreeEnergy(rsGrid, freeEnergyIntegrand[1], rs);
+  // const double frspt = computeFreeEnergy(rsGrid, freeEnergyIntegrand[1], rsp);
+  // // if (finite_temperature) {
+  // const double frsmtm = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rsm);
+  // const double frstm = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rs);
+  // const double frsptm = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rsp);
+  // const double frsmtp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[2], rsm);
+  // const double frstp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[2], rs);
+  // const double frsptp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[2], rsp);
+  // // }
+  // // Internal energy derivatives
+  // const double dudrs = (freeEnergyIntegrand[1][nrs - 1] - freeEnergyIntegrand[1][nrs - 3])/(2.0 * drs) - urst;
+  // // if (finite_temperature)
+  // const double dudt =  (urstp - urstm)/(2.0*dt);
+  // // Free energy derivatives
+  // const double dfdrs = (frspt - frsmt)/(2.0*drs);
+  // const double d2fdrs2 = (frspt -2.0*frst + frsmt)/(drs*drs);
+  // // if (finite_temperature) {
+  // const double dfdt = (frstp - frstm)/(2.0*dt);
+  // const double d2fdt2 = (frstp -2.0*frst + frstm)/(dt*dt);
+  // const double d2fdrsdt = (frsptp - frsmtp - frsptm + frsmtm)/(4.0*drs*dt);
+  // //  }
+  // // Parameter for the compressibility sum rule
+  // double numer = 2.0*frst - (1.0/6.0) * rs2 * d2fdrs2 + (4.0/3.0) * rs * dfdrs;
+  // double denom = urst + dudrs/3.0 ; // (1.0/3.0) * rs * dudrs; 
+  // numer += -(2.0/3.0) * theta * theta * d2fdt2
+  //   -(2.0/3.0) * theta * rs * d2fdrsdt
+  //   +(1.0/3.0) * theta * dfdt;
+  // denom += (2.0/3.0) * theta *dudt;
+  // alphaNew =  numer/denom;
+  // std::cerr << alphaNew << std::endl;
   const bool isFiniteTemperature = (in.getDegeneracy() > 0.0);
-  assert(isFiniteTemperature);
+  assert(!isFiniteTemperature);
   // Compute the free energy integrand
   computeFreeEnergyIntegrand();
-  // Compute internal energy
   const size_t nrs = rsGrid.size();
-  const double ursmt = freeEnergyIntegrand[1][nrs - 2] / rsm;
-  const double urst = freeEnergyIntegrand[1][nrs - 1] / rs;
-  const double urspt = freeEnergyIntegrand[1][nrs] / rsp;
-  // if (isFiniteTemperature) {
-  const double urstm = freeEnergyIntegrand[0][nrs - 1] / rs;
-  const double urstp = freeEnergyIntegrand[2][nrs - 1] / rs;
-  // }
-  // Compute free energy
-  const double frsmt = computeFreeEnergy(rsGrid, freeEnergyIntegrand[1], rsm);
-  const double frst = computeFreeEnergy(rsGrid, freeEnergyIntegrand[1], rs);
-  const double frspt = computeFreeEnergy(rsGrid, freeEnergyIntegrand[1], rsp);
-  // if (finite_temperature) {
-  const double frsmtm = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rsm);
-  const double frstm = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rs);
-  const double frsptm = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rsp);
-  const double frsmtp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[2], rsm);
-  const double frstp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[2], rs);
-  const double frsptp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[2], rsp);
-  // }
-  // Internal energy derivatives
-  const double dudrs = (freeEnergyIntegrand[1][nrs] - freeEnergyIntegrand[1][nrs - 2])/(2.0 * drs) - urst;
-  //if (finite_temperature)
-  const double dudt =  (urstp - urstm)/(2.0*dt);
-  // Free energy derivatives
-  const double dfdrs = (frspt - frsmt)/(2.0*drs);
-  const double d2fdrs2 = (frspt -2.0*frst + frsmt)/(drs*drs);
-  // if (finite_temperature) {
-  const double dfdt = (frstp - frstm)/(2.0*dt);
-  const double d2fdt2 = (frstp -2.0*frst + frstm)/(dt*dt);
-  const double d2fdrsdt = (frsptp - frsmtp - frsptm + frsmtm)/(4.0*drs*dt);
-  //  }
-  // Parameter for the compressibility sum rule
-  double numer = 2.0*frst - (1.0/6.0) * rs2 * d2fdrs2 + (4.0/3.0) * rs * dfdrs;
-  double denom = urst + (1.0/3.0) * rs * dudrs;
-  numer += -(2.0/3.0) * theta * theta * d2fdt2
-    -(2.0/3.0) * theta * rs * d2fdrsdt
-    +(1.0/3.0) * theta * dfdt;
-  denom += (2.0/3.0) * theta *dudt;
-  alphaNew =  numer/denom;
+  // Free energy
+  const double fxc = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rs);
+  const double fxcUp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rsp);
+  const double fxcDown = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rsm);
+  const double dfxcdrs = (fxcUp - fxcDown) / (2.0 * drs);
+  const double d2fxcdrs = (fxcUp - 2.0 * fxc + fxcDown) / (drs * drs);
+  // Internal energy
+  const double uint = freeEnergyIntegrand[0][nrs - 2] / rs;
+  const double drsudrs = (freeEnergyIntegrand[0][nrs - 1]
+			  - freeEnergyIntegrand[0][nrs - 3]) / (2.0 * drs) - uint;
+  // Alpha
+  const double numer = 2 * fxc - (1.0/6.0) * rs2 * d2fxcdrs + (4.0/3.0) * rs * dfxcdrs;
+  const double denom = uint + (1.0/3.0) * rs * drsudrs;
+  alphaNew = numer/denom;
 }
 
 double VSStls::computeError() {
@@ -357,7 +396,7 @@ void VSStls::updateSolution() {
   alpha += alphaNew * aMix;
   structProp.setAlpha(alpha);
   // Update the structural properties used for output
-  const auto& stls = structProp.getOutputProperties();
+  const auto& stls = structProp.getStls(in.getCoupling(), in.getDegeneracy());
   wvg = stls.getWvg();
   idr = stls.getIdr();
   slfc = stls.getSlfc();
@@ -373,8 +412,8 @@ void VSStls::computeFreeEnergyIntegrand() {
   for (size_t i = 0; i < rsGrid.size(); ++i) {
     const double& rs = rsGrid[i];
     if (rs < in.getCoupling()) {
-      if (rs == 0.0) {
-	std::cout << "computeFreeEnergyIntegrand skipping rs = 0.0" << std::endl;
+      if (rs == 0) {
+	std::cout << "computeFreeEnergyIntegrand skipping rs = " << rs << std::endl;
       }
       else if (rs == drs) {
 	std::cout << "computeFreeEnergyIntegrand solving rs = " << rs << std::endl;
@@ -390,8 +429,9 @@ void VSStls::computeFreeEnergyIntegrand() {
   if (in.getCoupling() == drs) {
     std::cerr << "structProp.compute() for rs = " << in.getCoupling() << std::endl;
     structProp.compute();
-    freeEnergyIntegrand[0] = structProp.getFreeEnergyIntegrand(Theta - dTheta);
-    freeEnergyIntegrand[1] = structProp.getFreeEnergyIntegrand(Theta);
-    freeEnergyIntegrand[2] = structProp.getFreeEnergyIntegrand(Theta + dTheta);
+    // freeEnergyIntegrand[0] = structProp.getFreeEnergyIntegrand(Theta - dTheta);
+    // freeEnergyIntegrand[1] = structProp.getFreeEnergyIntegrand(Theta);
+    // freeEnergyIntegrand[2] = structProp.getFreeEnergyIntegrand(Theta + dTheta);
+    freeEnergyIntegrand[0] = structProp.getFreeEnergyIntegrand(Theta);
   }
 }
