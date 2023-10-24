@@ -22,28 +22,28 @@ void StlsCSR::setDerivativeData(std::vector<std::shared_ptr<StlsCSR>>& stlsVecto
   // Set data for coupling parameter derivative
   if (thisIdx % STENCIL == 0) {
     // Forward difference for all state points with rs - drs
-    setDrsData(stlsVector[thisIdx + 1]->slfc, stlsVector[thisIdx + 2]->slfc, FORWARD);
+    setDrsData(stlsVector[thisIdx + 1]->slfcStls, stlsVector[thisIdx + 2]->slfcStls, FORWARD);
   }
   else if ( thisIdx % STENCIL == 2 ) {
     // Backward difference for all state points with rs + drs
-    setDrsData(stlsVector[thisIdx - 1]->slfc, stlsVector[thisIdx - 2]->slfc, BACKWARD);
+    setDrsData(stlsVector[thisIdx - 1]->slfcStls, stlsVector[thisIdx - 2]->slfcStls, BACKWARD);
   }
   else {
     // Centered difference for all state points with rs
-    setDrsData(stlsVector[thisIdx + 1]->slfc, stlsVector[thisIdx - 1]->slfc, CENTERED);
+    setDrsData(stlsVector[thisIdx + 1]->slfcStls, stlsVector[thisIdx - 1]->slfcStls, CENTERED);
   }
   // Set data for degeneracy parameter derivative
   if (thisIdx/STENCIL == 0) {
     // Forward difference for all state points with theta - dtheta
-    setDThetaData(stlsVector[thisIdx + 1]->slfc, stlsVector[thisIdx + 2]->slfc, FORWARD);
+    setDThetaData(stlsVector[thisIdx + 1]->slfcStls, stlsVector[thisIdx + 2]->slfcStls, FORWARD);
   }
   else if ( thisIdx/STENCIL == STENCIL - 1 ) {
     // Backward difference for all state points with theta - dtheta
-    setDThetaData(stlsVector[thisIdx - 1]->slfc, stlsVector[thisIdx - 2]->slfc, BACKWARD);
+    setDThetaData(stlsVector[thisIdx - 1]->slfcStls, stlsVector[thisIdx - 2]->slfcStls, BACKWARD);
   }
   else {
     // Centered difference for all state points with theta
-    setDThetaData(stlsVector[thisIdx + 1]->slfc, stlsVector[thisIdx - 1]->slfc, CENTERED);
+    setDThetaData(stlsVector[thisIdx + 1]->slfcStls, stlsVector[thisIdx - 1]->slfcStls, CENTERED);
   }
 }
 
@@ -146,7 +146,7 @@ StructProp::StructProp(const VSStlsInput &in_) : in(in_), stlsIsInitialized(fals
   const double& dTheta = inTmp.getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
   // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  if (inTmp.getCoupling() <= drs) { inTmp.setCoupling(2.0 * drs); }
+  if (inTmp.getCoupling() < drs) { inTmp.setCoupling(drs); }
   if (inTmp.getDegeneracy() < dTheta) { inTmp.setDegeneracy(dTheta); }
   double rs = inTmp.getCoupling();
   double theta = inTmp.getDegeneracy();
@@ -363,8 +363,8 @@ void VSStls::computeAlpha() {
   // denom += (2.0/3.0) * theta *dudt;
   // alphaNew =  numer/denom;
   // std::cerr << alphaNew << std::endl;
-  const bool isFiniteTemperature = (in.getDegeneracy() > 0.0);
-  assert(!isFiniteTemperature);
+  // const bool isFiniteTemperature = (in.getDegeneracy() > 0.0);
+  // assert(!isFiniteTemperature);
   // Compute the free energy integrand
   computeFreeEnergyIntegrand();
   const size_t nrs = rsGrid.size();
@@ -377,10 +377,10 @@ void VSStls::computeAlpha() {
   // Internal energy
   const double uint = freeEnergyIntegrand[0][nrs - 2] / rs;
   const double drsudrs = (freeEnergyIntegrand[0][nrs - 1]
-			  - freeEnergyIntegrand[0][nrs - 3]) / (2.0 * drs) - uint;
+			  - freeEnergyIntegrand[0][nrs - 3]) / (2.0 * drs);
   // Alpha
   const double numer = 2 * fxc - (1.0/6.0) * rs2 * d2fxcdrs + (4.0/3.0) * rs * dfxcdrs;
-  const double denom = uint + (1.0/3.0) * rs * drsudrs;
+  const double denom = (2.0/3.0) * uint + (1.0/3.0) * rs * drsudrs;
   alphaNew = numer/denom;
 }
 
