@@ -34,6 +34,7 @@ void Interpolator1D::setup(const double &x,
 			   const double &y,
 			   const size_t n_) {
   n = n_;
+  cutoff = *(&x + n - 1);
   spline = gsl_spline_alloc(gsl_interp_cspline, n);
   acc = gsl_interp_accel_alloc();
   gsl_spline_init(spline, &x, &y, n);
@@ -50,8 +51,8 @@ void Interpolator1D::reset(const double &x,
 
 // Evaluate interpolation
 double Interpolator1D::eval(const double x) const {
-  return gsl_spline_eval(spline, x, acc);
-};
+  return gsl_spline_eval(spline, (x < cutoff) ? x : cutoff, acc);
+}
 
 // -----------------------------------------------------------------
 // Interpolator2D class

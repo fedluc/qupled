@@ -104,6 +104,10 @@ namespace vecUtil {
     return operator()(i,0);
   }
 
+  bool Vector2D::operator==(const Vector2D& other) const {
+    return v == other.v && s1 == other.s1 && s2 == other.s2;
+  }
+  
   vector<double>::iterator Vector2D::begin() {
     return v.begin();
   }
@@ -206,6 +210,11 @@ namespace vecUtil {
     return operator()(i, 0);
   }
 
+  bool Vector3D::operator==(const Vector3D& other) const {
+    return v == other.v && s1 == other.s1
+      && s2 == other.s2 && s3 == other.s3;
+  }
+  
   vector<double>::iterator Vector3D::begin() {
     return v.begin();
   }
@@ -285,7 +294,8 @@ namespace thermoUtil {
   double FreeEnergy::get() const  {
     auto func = [&](double y)->double{return rsui.eval(y);};
     itg.compute(func, 0.0, rs);
-    return itg.getSolution()/rs/rs;
+    if (normalize) { return itg.getSolution()/rs/rs; };
+    return itg.getSolution();
   }
   
   double Rdf::ssf(double y) const {
@@ -314,16 +324,23 @@ namespace thermoUtil {
     return uInt.get();
   }
 
+    
   double computeFreeEnergy(const vector<double> &grid,
 			   const vector<double> &rsu,
 			   const double &coupling) {
+    return computeFreeEnergy(grid, rsu, coupling, true);
+  }
+  
+  double computeFreeEnergy(const vector<double> &grid,
+			   const vector<double> &rsu,
+			   const double &coupling,
+			   const bool normalize) {
     if (coupling == 0.0) { return 0.0; }
     const Interpolator1D itp(grid, rsu);
     Integrator1D itg;
-    const FreeEnergy freeEnergy(coupling, itp, itg);
+    const FreeEnergy freeEnergy(coupling, itp, itg, normalize);
     return freeEnergy.get();
   }
-  
   
   vector<double> computeRdf(const vector<double> &r,
 			    const vector<double> &wvg,

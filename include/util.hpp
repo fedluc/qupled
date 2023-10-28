@@ -76,6 +76,7 @@ namespace vecUtil {
     const double& operator()(const size_t i,
 			     const size_t j) const;
     const double& operator()(const size_t i) const;
+    bool operator==(const Vector2D& other) const;
     vector<double>::iterator begin();
     vector<double>::iterator end();
     vector<double>::const_iterator begin() const;
@@ -121,6 +122,7 @@ namespace vecUtil {
     const double& operator()(const size_t i,
 			     const size_t j) const;
     const double& operator()(const size_t i) const;
+    bool operator==(const Vector3D& other) const;
     vector<double>::iterator begin();
     vector<double>::iterator end();
     vector<double>::const_iterator begin() const;
@@ -193,13 +195,17 @@ namespace thermoUtil {
     const Interpolator1D &rsui;
     // Integrand
     double integrand(const double y) const ;
-
+    // Flag marking whether the free energy should be normalized with rs^2
+    const bool normalize;
+    
   public:
 
     // Constructor
     FreeEnergy(const double rs_,
 	       const Interpolator1D &rsui_,
-	       Integrator1D &itg_) : rs(rs_), itg(itg_), rsui(rsui_) {;};
+	       Integrator1D &itg_,
+	       const bool normalize_) : rs(rs_), itg(itg_),
+					rsui(rsui_), normalize(normalize_){;};
     // Get result of integration 
     double get() const;
   
@@ -244,6 +250,11 @@ namespace thermoUtil {
   double computeFreeEnergy(const vector<double> &grid,
 			   const vector<double> &rsu,
 			   const double &coupling);
+
+  double computeFreeEnergy(const vector<double> &grid,
+			   const vector<double> &rsu,
+			   const double &coupling,
+			   const bool normalize);
   
   vector<double> computeRdf(const vector<double> &r,
 			    const vector<double> &wvg,

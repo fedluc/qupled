@@ -114,8 +114,6 @@ class VSStlsInput(StlsInput):
                  degeneracy : float):
         self.theory : str = None
         """ Name of the theory that is solved """
-        self.thermoFile : str = None
-        """ Name of the file with the thermodynamic properties """
         self.alpha : float = None
         """ Initial guess for the free parameter """
         self.couplingResolution : float = None
@@ -125,7 +123,9 @@ class VSStlsInput(StlsInput):
         self.mixingAlpha : float = None
         """ Mixing parameter for the iterations to determine the free parameter """
         self.errorAlpha : float = None
-        """ minimum error for convergence in the free parameter """    
+        """ minimum error for convergence in the free parameter """
+        self.freeEnergyIntegrand : qupled.FreeEnergyIntegrand = None
+        """ Pre-compute free energy integrand """
     
 class QstlsGuess():
     """Class used to define an initial guess for the quantum schemes (QSTLS, QSTLS-IET)"""
@@ -215,7 +215,10 @@ class VSStls(Stls):
     """
     def __init__(self,
                  inputs : qupled.VSStlsInput):
-        pass
+        self.freeEnergyIntegrand : np.ndarray = None
+        """ Free energy integrand """
+        self.freeEnergyGrid : np.ndarray = None
+        """ Coupling parameter grid used to integrate the free energy integrand """
     
 class Qstls(Stls):
     """Class to solve the quantum schemes (QSTLS, QSTLS-IET). This class inherits all the methods of its parent class.

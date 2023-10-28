@@ -638,8 +638,7 @@ class VSStls(Stls):
         
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.Static.Stls.save`
-        to see which results are saved
+        """ ADD DESCRIPTION
         """
         self.checkInputs()
         self.schemeInputs = self.inputs
@@ -649,7 +648,21 @@ class VSStls(Stls):
         self.setHdfFile()
         self.save()
 
+    # Save results
+    def save(self) -> None:
+        """ ADD DESCRIPTION  
+        """
+        super().save()
+        #pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
+        pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
 
+    # Plot results        
+    def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
+        """ ADD DESCRIPTION
+        """
+        super().plot(toPlot, matsubara, rdfGrid)
+        if ("fxci" in toPlot):
+            Plot.plot1D(self.scheme.freeEnergyGrid, self.scheme.freeEnergyIntegrand, "Coupling parameter", "Free energy integrand")
         
 class Hdf():
 

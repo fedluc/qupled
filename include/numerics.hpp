@@ -27,6 +27,8 @@ private:
   gsl_spline *spline;
   // Accelerator
   gsl_interp_accel *acc;
+  // Cutoff (extrapolation for x > cutoff)
+  double cutoff;
   // Size
   size_t n;
   // 

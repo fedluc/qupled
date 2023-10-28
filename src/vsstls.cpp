@@ -104,7 +104,8 @@ void StlsCSR::computeSlfcStls() {
 void StlsCSR::computeSlfc() {
   // Derivative contributions
   const double& rs = in.getCoupling();
-  const double& theta = in.getDegeneracy();
+  //const double& theta = in.getDegeneracy();
+  const double& theta = 0.0;
   const double& dx = in.getWaveVectorGridRes();
   const double& drs = in.getCouplingResolution();
   const double& dTheta = in.getDegeneracyResolution();
@@ -232,29 +233,39 @@ const StlsCSR& StructProp::getStls(const double& rs,
 // VSStls class
 // -----------------------------------------------------------------
 
-VSStls::VSStls(const VSStlsInput &in_) : StlsBase(in_), in(in_), structProp(in_) {
+VSStls::VSStls(const VSStlsInput &in_) : StlsBase(in_), in(in_),
+					 structProp(in_), verbose(true) {
   const double& rs = in.getCoupling();
   const double& drs = in.getCouplingResolution();
   // Build integration grid
-  rsGrid.push_back(0.0);
+  rsGrid = std::make_shared<std::vector<double>>();
+  rsGrid->push_back(0.0);
   const double rsMax = rs + drs;
-  while(rsGrid.back() < rsMax){
-    rsGrid.push_back(rsGrid.back() + drs);
+  while(rsGrid->back() < rsMax){
+    rsGrid->push_back(rsGrid->back() + drs);
   }
   // Resize the vector to store the free energy integrand;
-  freeEnergyIntegrand.resize(StructProp::STENCIL);
-  for (auto& f : freeEnergyIntegrand) {
-    f.resize(rsGrid.size());
-    fill(f, 0.0);
+  fxcIntegrand = std::make_shared<doubleVector>();
+  fxcIntegrand->resize(StructProp::STENCIL);
+  const size_t nrs = rsGrid->size();
+  for (auto& f : *fxcIntegrand) {
+    f.resize(nrs);
+    fill(f, Inf);
   }
 }
 
+VSStls::VSStls(const VSStlsInput &in_,
+	       std::shared_ptr<std::vector<double>> &rsGrid_,
+	       std::shared_ptr<doubleVector> &fxcIntegrand_)
+  : StlsBase(in_), in(in_), structProp(in_), rsGrid(rsGrid_),
+    fxcIntegrand(fxcIntegrand_), verbose(false) { ; }
+
 int VSStls::compute() {
   try {
-    init();  
-    // if (verbose) cout << "Structural properties calculation ..." << endl;
+    init();
+    if (verbose) cout << "Free parameter calculation ..." << endl;
     doIterations();
-    // if (verbose) cout << "Done" << endl;
+    if (verbose) cout << "Done" << endl;
     return 0;
   }
   catch (const runtime_error& err) {
@@ -263,21 +274,15 @@ int VSStls::compute() {
   }
 }
 
-// Initialization
 void VSStls::init() {
-  computeFixedFreeEnergy();
-}
-
-// Compute fixed component of the free energy
-void VSStls::computeFixedFreeEnergy() {
-  // Compute the free energy from file passed in input, skipped for now
-  return; 
+  if (in.getFreeEnergyIntegrand().rsGrid.size() > 0) {
+    // setFreeEnergyIntegrand();
+  }
 }
 
 // stls iterations
 void VSStls::doIterations() {
   const int maxIter = in.getNIter();
-  const int outIter = in.getOutIter();
   const double minErr = in.getErrMin();
   double err = 1.0;
   int counter = 0;
@@ -293,16 +298,16 @@ void VSStls::doIterations() {
     err = computeError();
     // Update solution
     updateSolution();
-    // Write output
-    // if (counter % outIter == 0 && writeFiles) { writeRecovery(); }
     // End timing
     double toc = omp_get_wtime();
     // Print diagnostic
-    printf("--- iteration %d ---\n", counter);
-    printf("Elapsed time: %f seconds\n", toc - tic);
-    printf("Residual error: %.5e\n", err);
-    printf("alpha (CSR): %.5e\n", alpha);
-    fflush(stdout);
+    if (verbose) {
+      printf("--- iteration %d ---\n", counter);
+      printf("Elapsed time: %f seconds\n", toc - tic);
+      printf("Residual error: %.5e\n", err);
+      printf("alpha (CSR): %.5e\n", alpha);
+      fflush(stdout);
+    }
   }
 }
 
@@ -312,75 +317,28 @@ void VSStls::initialGuess() {
 
 void VSStls::computeAlpha() {
   const double drs = in.getCouplingResolution();
-  const double dt = in.getDegeneracyResolution();
   const double rs = in.getCoupling();
-  const double theta = in.getDegeneracy();
   const double rsm = rs - drs;
   const double rsp = rs + drs;
-  const double rs2 = rs * rs;      
-  // // Check if a finite temperature is used
-  // const bool isFiniteTemperature = (in.getDegeneracy() > 0.0);
-  // assert(isFiniteTemperature);
-  // // Compute the free energy integrand
-  // computeFreeEnergyIntegrand();
-  // // Compute internal energy
-  // const size_t nrs = rsGrid.size();
-  // const double urst = freeEnergyIntegrand[1][nrs - 2] / rs;
-  // // if (isFiniteTemperature) {
-  // const double urstm = freeEnergyIntegrand[0][nrs - 2] / rs;
-  // const double urstp = freeEnergyIntegrand[2][nrs - 2] / rs;
-  // // }
-  // // Compute free energy
-  // const double frsmt = computeFreeEnergy(rsGrid, freeEnergyIntegrand[1], rsm);
-  // const double frst = computeFreeEnergy(rsGrid, freeEnergyIntegrand[1], rs);
-  // const double frspt = computeFreeEnergy(rsGrid, freeEnergyIntegrand[1], rsp);
-  // // if (finite_temperature) {
-  // const double frsmtm = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rsm);
-  // const double frstm = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rs);
-  // const double frsptm = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rsp);
-  // const double frsmtp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[2], rsm);
-  // const double frstp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[2], rs);
-  // const double frsptp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[2], rsp);
-  // // }
-  // // Internal energy derivatives
-  // const double dudrs = (freeEnergyIntegrand[1][nrs - 1] - freeEnergyIntegrand[1][nrs - 3])/(2.0 * drs) - urst;
-  // // if (finite_temperature)
-  // const double dudt =  (urstp - urstm)/(2.0*dt);
-  // // Free energy derivatives
-  // const double dfdrs = (frspt - frsmt)/(2.0*drs);
-  // const double d2fdrs2 = (frspt -2.0*frst + frsmt)/(drs*drs);
-  // // if (finite_temperature) {
-  // const double dfdt = (frstp - frstm)/(2.0*dt);
-  // const double d2fdt2 = (frstp -2.0*frst + frstm)/(dt*dt);
-  // const double d2fdrsdt = (frsptp - frsmtp - frsptm + frsmtm)/(4.0*drs*dt);
-  // //  }
-  // // Parameter for the compressibility sum rule
-  // double numer = 2.0*frst - (1.0/6.0) * rs2 * d2fdrs2 + (4.0/3.0) * rs * dfdrs;
-  // double denom = urst + dudrs/3.0 ; // (1.0/3.0) * rs * dudrs; 
-  // numer += -(2.0/3.0) * theta * theta * d2fdt2
-  //   -(2.0/3.0) * theta * rs * d2fdrsdt
-  //   +(1.0/3.0) * theta * dfdt;
-  // denom += (2.0/3.0) * theta *dudt;
-  // alphaNew =  numer/denom;
-  // std::cerr << alphaNew << std::endl;
-  // const bool isFiniteTemperature = (in.getDegeneracy() > 0.0);
-  // assert(!isFiniteTemperature);
   // Compute the free energy integrand
   computeFreeEnergyIntegrand();
-  const size_t nrs = rsGrid.size();
   // Free energy
-  const double fxc = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rs);
-  const double fxcUp = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rsp);
-  const double fxcDown = computeFreeEnergy(rsGrid, freeEnergyIntegrand[0], rsm);
-  const double dfxcdrs = (fxcUp - fxcDown) / (2.0 * drs);
-  const double d2fxcdrs = (fxcUp - 2.0 * fxc + fxcDown) / (drs * drs);
+  const double fxc = computeFreeEnergy(rs, true);
+  const double fxcThis = computeFreeEnergy(rs, false);
+  const double fxcUp = computeFreeEnergy(rsp, false); // rs2 * fxc
+  const double fxcDown = computeFreeEnergy(rsm, false); // rs2 * fxc
+  const double dfxc_drs = (fxcUp - fxcDown) / (2.0 * drs * rs) - 2.0 * fxc;
+  const double d2fxc_drs = (fxcUp - 2.0 * fxcThis + fxcDown) / (drs * drs) - 2.0 * fxc - 4.0 * dfxc_drs;
   // Internal energy
-  const double uint = freeEnergyIntegrand[0][nrs - 2] / rs;
-  const double drsudrs = (freeEnergyIntegrand[0][nrs - 1]
-			  - freeEnergyIntegrand[0][nrs - 3]) / (2.0 * drs);
+  const auto& fxci = fxcIntegrand->at(0);
+  const size_t nrs = rsGridLocal.size();
+  const double uint = fxci[nrs - 2] / rs;
+  const double uUp = fxci[nrs - 1]; // rs * uint
+  const double uDown = fxci[nrs - 3]; // rs * uint
+  const double du_drs = (uUp - uDown) / (2.0 * drs) - uint;
   // Alpha
-  const double numer = 2 * fxc - (1.0/6.0) * rs2 * d2fxcdrs + (4.0/3.0) * rs * dfxcdrs;
-  const double denom = (2.0/3.0) * uint + (1.0/3.0) * rs * drsudrs;
+  const double numer = 2 * fxc - (1.0/6.0) * d2fxc_drs + (4.0/3.0) * dfxc_drs;
+  const double denom =  uint + (1.0/3.0) * du_drs;
   alphaNew = numer/denom;
 }
 
@@ -396,6 +354,7 @@ void VSStls::updateSolution() {
   alpha += alphaNew * aMix;
   structProp.setAlpha(alpha);
   // Update the structural properties used for output
+  if (!structProp.isComputed()) { structProp.compute(); }
   const auto& stls = structProp.getStls(in.getCoupling(), in.getDegeneracy());
   wvg = stls.getWvg();
   idr = stls.getIdr();
@@ -405,33 +364,55 @@ void VSStls::updateSolution() {
 }
 
 void VSStls::computeFreeEnergyIntegrand() {
-  const double drs = in.getCouplingResolution();
-  const double dTheta = in.getDegeneracyResolution();
+  // Recursive calls to solve the VS-STLS scheme for all state points
+  // with coupling parameter smaller than rs
   const double Theta = in.getDegeneracy();
+  const double nrs = rsGrid->size();
   VSStlsInput inTmp = in;
-  for (size_t i = 0; i < rsGrid.size(); ++i) {
-    const double& rs = rsGrid[i];
+  for (size_t i = 0; i < nrs; ++i) {
+    const double rs = rsGrid->at(i);
     if (rs < in.getCoupling()) {
-      if (rs == 0) {
-	std::cout << "computeFreeEnergyIntegrand skipping rs = " << rs << std::endl;
+      if (rs == 0 || fxcIntegrand->at(0)[i] != Inf) {
+	continue;
       }
-      else if (rs == drs) {
-	std::cout << "computeFreeEnergyIntegrand solving rs = " << rs << std::endl;
-	inTmp.setCoupling(rs);
-	VSStls vsstlsTmp(inTmp);
-	vsstlsTmp.compute();
-      }
-      else {
-	// std::cout << "computeFreeEnergyIntegrand nothing to do for rs = " << rs << std::endl;
-      }
+      printf("Free energy integrand calculation, solving VS-STLS scheme for rs = %.5f: ", rs);
+      inTmp.setCoupling(rs);
+      VSStls vsstlsTmp(inTmp, rsGrid, fxcIntegrand);
+      vsstlsTmp.compute();
+      printf("Done\n");
+    }
+    else if (rs == in.getCoupling()) {
+      structProp.compute();
+      fxcIntegrand->at(0)[i-1] = structProp.getFreeEnergyIntegrand(Theta)[0];
+      fxcIntegrand->at(0)[i] = structProp.getFreeEnergyIntegrand(Theta)[1];
+      fxcIntegrand->at(0)[i+1] = structProp.getFreeEnergyIntegrand(Theta)[2];
+      i += (i < nrs - 4) ? 3 : 0;
+    }
+    else {
+      break;
     }
   }
-  if (in.getCoupling() == drs) {
-    std::cerr << "structProp.compute() for rs = " << in.getCoupling() << std::endl;
-    structProp.compute();
-    // freeEnergyIntegrand[0] = structProp.getFreeEnergyIntegrand(Theta - dTheta);
-    // freeEnergyIntegrand[1] = structProp.getFreeEnergyIntegrand(Theta);
-    // freeEnergyIntegrand[2] = structProp.getFreeEnergyIntegrand(Theta + dTheta);
-    freeEnergyIntegrand[0] = structProp.getFreeEnergyIntegrand(Theta);
+}
+
+double VSStls::computeFreeEnergy(const double& rs,
+				 const bool& normalize) {
+  // Construct a local version of the free energy integrand that
+  // does not contain infinities. i.e. that it contains only
+  // the values that have been computed
+  const size_t nrs = rsGrid->size();
+  const auto& fxci = fxcIntegrand->at(0);
+  const auto& fxciBegin = fxci.begin();
+  const auto& fxciEnd = fxci.end();
+  if (rsGridLocal.size() == 0) {
+    auto isInf = [&](const double& num) { return num == Inf; };
+    const auto it = std::find_if(fxciBegin, fxciEnd, isInf);
+    size_t nCopy = std::distance(fxciBegin, it);
+    std::copy(rsGrid->begin(), rsGrid->begin() + nCopy, std::back_inserter(rsGridLocal));
+    fxcIntegrandLocal.resize(rsGridLocal.size());
   }
+  if (rsGridLocal.size() < nrs) {
+    std::copy(fxciBegin, fxciBegin + rsGridLocal.size(), fxcIntegrandLocal.begin());
+    return thermoUtil::computeFreeEnergy(rsGridLocal, fxcIntegrandLocal, rs, normalize);
+  }
+  return thermoUtil::computeFreeEnergy(*rsGrid, fxci, rs, normalize);
 }

@@ -186,7 +186,8 @@ bool StlsInput::isEqual(const StlsInput &in) const {
 	   nIter == in.nIter &&
 	   outIter == in.outIter &&
 	   recoveryFileName == in.recoveryFileName &&
-	   xmax == in.xmax);
+	   xmax == in.xmax &&
+	   guess == in.guess);
 }
 
 // --- QstlsInput ---
@@ -224,14 +225,12 @@ void QstlsInput::print() const {
 
 bool QstlsInput::isEqual(const QstlsInput &in) const {
   return ( fixed == in.fixed &&
-	   fixedIet == in.fixedIet);
+	   fixedIet == in.fixedIet &&
+	   guess == guess );
 }
 
 // --- VSStlsInput ---
 
-void VSStlsInput::setThermoFileName(const double &thermoFileName) {
-  this->thermoFileName = thermoFileName;
-}
 void VSStlsInput::setAlpha(const double  &alpha) {
   if (alpha < 0 || alpha > 1) {
     throw runtime_error("The mixing parameter must be a number between zero and one");
@@ -260,16 +259,25 @@ void VSStlsInput::setErrMinAlpha(const double &errMinAlpha){
 }
 
 void VSStlsInput::setMixingParameterAlpha(const double &aMixAlpha) {
-    if (aMixAlpha < 0.0 || aMixAlpha > 1.0) {
+  if (aMixAlpha < 0.0 || aMixAlpha > 1.0) {
     throw runtime_error("The mixing parameter must be a number between zero and one");
   }
   this->aMixAlpha = aMixAlpha;
 }
 
+void VSStlsInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand& fxcIntegrand) {
+  if (fxcIntegrand.rsGrid.size() < 3 || fxcIntegrand.fxci.size() < 3) {
+    throw runtime_error("The free energy integrand does not contain enough points");
+  }
+  if (fxcIntegrand.rsGrid.size() != fxcIntegrand.fxci.size()) {
+    throw runtime_error("The free energy integrand is inconsistent");
+  }
+  this->freeEnergyIntegrand = fxcIntegrand;
+}
+
 void VSStlsInput::print() const {
   StlsInput::print();
   cout << "##### VSSTLS-related input #####" << endl;
-  cout << "File with data for thermodynamic integration = " << thermoFileName << endl;
   cout << "Initial guess for the free parameter = " << alpha << endl;
   cout << "Resolution for the coupling parameter grid = " << drs << endl;
   cout << "Resolution for the degeneracy parameter grid = " << dTheta << endl;
@@ -279,10 +287,10 @@ void VSStlsInput::print() const {
 
 bool VSStlsInput::isEqual(const VSStlsInput &in) const {
   return ( StlsInput::isEqual(in) && 
-	   thermoFileName == in.thermoFileName && 
 	   alpha == in.alpha &&
 	   drs == in.drs &&
 	   dTheta == in.dTheta &&
 	   errMinAlpha == in.errMinAlpha &&
-	   aMixAlpha == in.aMixAlpha);
+	   aMixAlpha == in.aMixAlpha &&
+	   freeEnergyIntegrand == in.freeEnergyIntegrand);
 }

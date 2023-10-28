@@ -1,6 +1,7 @@
 #ifndef VSSTLS_HPP
 #define VSSTLS_HPP
 
+#include <limits>
 #include "stls.hpp"
 
 // -----------------------------------------------------------------
@@ -106,6 +107,7 @@ public:
   // Get structural properties for output
   const StlsCSR& getStls(const double& rs,
 			 const double& theta) const;
+  bool isComputed() const { return stlsIsInitialized; }
   
 };
 
@@ -113,28 +115,41 @@ class VSStls : public StlsBase {
 
 private: 
 
+  // Typedef
+  double Inf = numeric_limits<double>::infinity();  
+  using doubleVector = std::vector<std::vector<double>>;
   // Input data
   VSStlsInput in;
   // Structural properties 
   StructProp structProp;
   // Thermodynamic properties
-  std::vector<double> rsGrid;
-  vector<vector<double>> freeEnergyIntegrand;
-  // ThermoProp internalEnergy;
-  // ThermoProp freeEnergy;
-  // ThermoProp freeEnergyIntegrand;
+  std::shared_ptr<std::vector<double>> rsGrid;
+  std::shared_ptr<doubleVector> fxcIntegrand;
+  std::vector<double> rsGridLocal;
+  std::vector<double> fxcIntegrandLocal;
   // Free parameter
   double alpha;
   double alphaNew;
-  // Private methods
+  // Output verbosity
+  const bool verbose;
+  // Initialize data 
   void init();
-  void computeFixedFreeEnergy();
+  void setFreeEnergyIntegrand();
+  // Compute free parameter
+  void computeAlpha();
+  // Compute free energy
+  void computeFreeEnergyIntegrand();
+  double computeFreeEnergy(const double& rs,
+			   const bool& normalize);
+  // Iterations to solve the vs-stls scheme
   void doIterations();
   void initialGuess();
-  void computeAlpha();
   double computeError();
   void updateSolution();
-  void computeFreeEnergyIntegrand();
+  // Private constructor for nested calculations
+  VSStls(const VSStlsInput &in_,
+	 std::shared_ptr<std::vector<double>> &rsGrid_,
+	 std::shared_ptr<doubleVector> &fxcIntegrand_);
   
 public:
 
@@ -142,6 +157,11 @@ public:
   VSStls(const VSStlsInput &in_);
   // Compute stls scheme
   int compute();
+  // Getters
+  std::vector<double> getFreeEnergyIntegrand() const {
+    return fxcIntegrand->at(0);
+  }
+  std::vector<double> getFreeEnergyGrid() const { return *rsGrid; }
   
 };
 

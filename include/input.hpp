@@ -64,8 +64,11 @@ class StlsInput : public Input {
 public:
   
   struct SlfcGuess {
-    vector<double> wvg = vector<double>(0);
-    vector<double> slfc = vector<double>(0);
+    vector<double> wvg;
+    vector<double> slfc;
+    bool operator==(const SlfcGuess &other) const {
+      return wvg == other.wvg && slfc == other.slfc;
+    }
   };
   
 protected:
@@ -139,10 +142,14 @@ class QstlsInput {
 public:
   
   struct QstlsGuess {
-    vector<double> wvg = vector<double>(0);
-    vector<double> ssf = vector<double>(0);
+    vector<double> wvg;
+    vector<double> ssf;
     vecUtil::Vector2D adr;
     int matsubara = 0;
+    bool operator==(const QstlsGuess &other) const {
+      return wvg == other.wvg && ssf == other.ssf
+	&& adr == other.adr && matsubara == other.matsubara;
+    }
   };
 
 private:
@@ -175,6 +182,17 @@ public:
 
 class VSStlsInput : public StlsInput {
 
+public:
+  
+  struct FreeEnergyIntegrand {
+    vector<double> rsGrid;
+    vector<double> fxci;
+    bool operator==(const FreeEnergyIntegrand &other) const {
+      return rsGrid == other.rsGrid && fxci == other.fxci;
+    }
+  };
+  
+  
 private:
 
   // Name of the file with the thermodynamic properties
@@ -189,6 +207,8 @@ private:
   double errMinAlpha;
   // Mixing parameter for the iterations used to define the free parameter
   double aMixAlpha;
+  // Pre-computed free energy integrand
+  FreeEnergyIntegrand freeEnergyIntegrand;
   
 public:
 
@@ -196,23 +216,22 @@ public:
   VSStlsInput(const double &rs_,
 	      const double &Theta_,
 	      const string &theory_)
-    : StlsInput(rs_, Theta_, theory_),
-      thermoFileName(EMPTY_STRING), alpha(0.5), drs(0.01),
+    : StlsInput(rs_, Theta_, theory_), alpha(0.5), drs(0.01),
       dTheta(0.01), errMinAlpha(0.001), aMixAlpha(1.0) { ; };
   // Setters
-  void setThermoFileName(const double &thermoFileName);
   void setAlpha(const double  &alpha);
   void setCouplingResolution(const double &drs);
   void setDegeneracyResolution(const double &dTheta);
   void setErrMinAlpha(const double &errMinAlpha);
   void setMixingParameterAlpha(const double &aMixAlpha);
+  void setFreeEnergyIntegrand(const FreeEnergyIntegrand &freeEnergyIntegrand);
   // Getters 
-  string getThermoFileName() const { return thermoFileName; }
   double getAlpha() const { return alpha; }
   double getCouplingResolution() const { return drs; }
   double getDegeneracyResolution() const { return dTheta; }
   double getErrMinAlpha() const { return errMinAlpha; }
   double getMixingParameterAlpha() const { return aMixAlpha; }
+  FreeEnergyIntegrand getFreeEnergyIntegrand() const { return freeEnergyIntegrand; }
   // Print content of the data structure
   void print() const;
   // Compare two VSStls objects

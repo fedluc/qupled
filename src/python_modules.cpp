@@ -158,6 +158,43 @@ namespace StlsWrapper {
 
 }
 
+namespace VSStlsInputWrapper {
+
+  struct FreeEnergyIntegrand {
+    bn::ndarray rsGrid = arrayWrapper::toNdArray(vector<double>(0));
+    bn::ndarray fxci = arrayWrapper::toNdArray(vector<double>(0));
+  };
+  
+  VSStlsInputWrapper::FreeEnergyIntegrand getFreeEnergyIntegrand(VSStlsInput &in){
+    VSStlsInput::FreeEnergyIntegrand fxcIntegrand_ = in.getFreeEnergyIntegrand();
+    VSStlsInputWrapper::FreeEnergyIntegrand fxcIntegrand;
+    fxcIntegrand.rsGrid = arrayWrapper::toNdArray(fxcIntegrand_.rsGrid);
+    fxcIntegrand.fxci = arrayWrapper::toNdArray(fxcIntegrand_.fxci);
+    return fxcIntegrand;
+  }
+  
+  void setFreeEnergyIntegrand(VSStlsInput &in,
+			      const VSStlsInputWrapper::FreeEnergyIntegrand &fxcIntegrand){
+    VSStlsInput::FreeEnergyIntegrand fxcIntegrand_;
+    fxcIntegrand_.rsGrid = arrayWrapper::toVector(fxcIntegrand.rsGrid);
+    fxcIntegrand_.fxci = arrayWrapper::toVector(fxcIntegrand.fxci);
+    in.setFreeEnergyIntegrand(fxcIntegrand_);
+  }
+  
+}
+
+namespace VSStlsWrapper {
+    
+  bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls){
+    return arrayWrapper::toNdArray(vsstls.getFreeEnergyIntegrand());
+  }
+
+  bn::ndarray getFreeEnergyGrid(const VSStls &vsstls){
+    return arrayWrapper::toNdArray(vsstls.getFreeEnergyGrid());
+  }
+  
+}
+
 namespace QstlsInputWrapper {
   
   struct QstlsGuess {
@@ -343,9 +380,9 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("degeneracyResolution",
 		  &VSStlsInput::getDegeneracyResolution,
 		  &VSStlsInput::setDegeneracyResolution)
-    .add_property("thermoFile",
-		  &VSStlsInput::getThermoFileName,
-		  &VSStlsInput::setThermoFileName)
+    .add_property("freeEnergyIntegrand",
+		  VSStlsInputWrapper::getFreeEnergyIntegrand,
+		  VSStlsInputWrapper::setFreeEnergyIntegrand)
     .def("print", &VSStlsInput::print)
     .def("isEqual", &VSStlsInput::isEqual);
   
@@ -390,8 +427,10 @@ BOOST_PYTHON_MODULE(qupled)
   // Class to solve the vs scheme
   bp::class_<VSStls, bp::bases<StlsBase>>("VSStls",
 					  bp::init<const VSStlsInput>())
-    .def("compute", &VSStls::compute);
-
+    .def("compute", &VSStls::compute)
+    .add_property("freeEnergyIntegrand", VSStlsWrapper::getFreeEnergyIntegrand)
+    .add_property("freeEnergyGrid", VSStlsWrapper::getFreeEnergyGrid);
+  
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",
 				     bp::init<const StlsInput, const QstlsInput>())
