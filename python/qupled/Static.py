@@ -411,6 +411,9 @@ class Qstls(Stls):
 
     # Compute
     def compute(self) -> None:
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.Static.Qstls.save`
+        to see which results are saved
+        """
         self.checkInputs()
         self.unpackFixedAdrFiles()
         self.schemeInputs = self.inputs
@@ -596,7 +599,27 @@ class VSStls(Stls):
 
     """Class to solve the VS-STLS scheme.
 
-    DOCUMENTATION COMING SOON
+    Class used to setup and solve the classical VS-STLS scheme as described by
+    `Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_ and by
+    `Sjostrom and Dufty <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.88.115123>`_.
+    This class inherits most of its methods and attributes from :obj:`~qupled.Static.Stls`
+
+    Args:
+        coupling: Coupling parameter.
+        degeneracy: Degeneracy parameter.  
+        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
+        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
+        error: Minimum error for covergence, defaults to 1.0e-5.
+        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
+        iterations: Maximum number of iterations, defaults to 1000.
+        matsubara: Number of matsubara frequencies, defaults to 128.
+        outputFrequency: Frequency used to print the recovery files, defaults to 10.
+        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
+        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+        couplingResolution: Resolution of the coupling parameter grid, defaults to 0.01
+        degeneracyResolution: Resolution of the degeneracy parameter grid, defaults to 0.01
+        mixingAlpha: mixing parameter for the iterative solution of the free parameter, defaults to 0.1
+        alpha: initial guess for the free parameter, defaults to 0.5
     """
     
     # Constructor
@@ -607,7 +630,6 @@ class VSStls(Stls):
                  cutoff : float = 10.0,
                  error : float = 1.0e-5,
                  mixing : float = 1.0,
-                 guess : qp.SlfcGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,
                  outputFrequency : int = 10,
@@ -628,7 +650,7 @@ class VSStls(Stls):
         self.hdfFileName : str = None #: Name of the hdf output file.
         # Optional parameters
         super().setOptionalParameters(chemicalPotential, cutoff, error, mixing,
-                                      guess, iterations, matsubara,
+                                      None, iterations, matsubara,
                                       outputFrequency, recoveryFile,
                                       resolution);
         self.inputs.couplingResolution = couplingResolution
@@ -638,7 +660,8 @@ class VSStls(Stls):
         
     # Compute
     def compute(self) -> None:
-        """ DOCUMENTATION COMING SOON
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.Static.VSStls.save`
+        to see which results are saved
         """
         self.checkInputs()
         self.schemeInputs = self.inputs
@@ -650,7 +673,10 @@ class VSStls(Stls):
 
     # Save results
     def save(self) -> None:
-        """ DOCUMENTATION COMING SOON
+        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Stls.save`
+        by adding the option to save the free energy integrand and the corresponding coupling parameter grid
+        as a new dataframe in the hdf file. The free energy integrand dataframe can be accessed as `fxci`
+        and the corresponding coupling parameter grid data frame as `fxcGrid`
         """
         super().save()
         pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
@@ -658,7 +684,9 @@ class VSStls(Stls):
 
     # Plot results        
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ DOCUMENTATION COMING SOON
+        """ Plots the results obtained stored in :obj:`~qupled.Static.VSStls.scheme`. Extends 
+        :func:`~qupled.Static.Stls.plot` by adding the option to plot the free energy
+        integrand by passing `fxci` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)
         if ("fxci" in toPlot):

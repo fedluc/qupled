@@ -39,7 +39,7 @@ find_package(GSL REQUIRED)
 # Link external libraries
 target_link_libraries(qupled PUBLIC
 		      OpenMP::OpenMP_CXX
-		      ${PYTHON_LIBRARIES}
+		      ${Python3_LIBRARIES}
 		      ${Boost_LIBRARIES}
 		      GSL::gsl
 		      GSL::gslcblas)		   

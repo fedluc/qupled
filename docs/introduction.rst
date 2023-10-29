@@ -8,13 +8,14 @@ approaches which can be solved with qupled include:
   * The classical STLS scheme as discussed by `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_
   * The classical STLS-HNC scheme as discussed by `Tanaka <https://pubs.aip.org/aip/jcp/article/145/21/214104/196066/Correlational-and-thermodynamic-properties-of>`_
   * The classical STLS-IET scheme as discussed by `Tolias and collaborators <https://pubs.aip.org/aip/jcp/article/155/13/134115/353165/Integral-equation-theory-based-dielectric-scheme>`_
+  * The classical VS-STLS scheme as discussed by `Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_
   * The quantum STLS (QSTLS) scheme as discussed by `Schweng and Böhm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_ 
   * The quantum QSTLS-IET scheme as discussed by `Tolias and others <https://pubs.aip.org/aip/jcp/article/158/14/141102/2877795/Quantum-version-of-the-integral-equation-theory>`_
 
 Limitations
 -----------
 
-Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC and STLS-IET).
+Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC, STLS-IET and VS-STLS).
 
 Units
 -----
@@ -33,7 +34,7 @@ Qupled is a hybrid C++/python code that can be built by using the CMake build sy
    mkdir build
    cd build
    cmake ..
-   make
+   cmake --build .
    
 This will produce the folder ``/build/qupled`` which contains the python package that can be used to solve the dielectric schemes. The python package can be installed in a folder accessible when running python by typing ``cmake --install .`` from the build folder. The build directory can be cleaned by running ``make true-clean``.
 

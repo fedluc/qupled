@@ -25,10 +25,22 @@ This example shows how to solve two classical STLS-IET schemes. First the STLS-H
 scheme is solved, then the properties of the solution object are changed and the 
 STLS-LCT scheme is sovled
 
-
 .. literalinclude:: ../examples/solveStlsIet.py
    :language: python
 
+Solving the classical VS-STLS scheme
+------------------------------------
+
+This example shows how to solve the VS-STLS scheme for low coupling and zero
+temperature. First the scheme is solved up to rs = 0.2, then the results are
+plotted and then the calculation is resumed up to rs = 0.4. In the second
+part of the calculation, the pre-computed value of the free energy integrand
+available from the VS-STLS solution at rs = 0.2 is used in order to speed
+up the calculation
+
+.. literalinclude:: ../examples/solveVSStls.py
+   :language: python
+	      
 Solving the quantum schemes
 ---------------------------
 

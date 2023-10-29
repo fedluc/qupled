@@ -23,6 +23,12 @@ Python classes
     :undoc-members:
     :show-inheritance:
 
+.. autoclass:: qupled.Static.VSStls
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+              
 .. autoclass:: qupled.Static.Qstls
     :members:
     :show-inheritance:
@@ -49,6 +55,15 @@ Exposed C++ methods
     :undoc-members:
     :show-inheritance:
 
+.. autoclass:: qupled.qupled.FreeEnergyIntegrand
+    :members:
+    :undoc-members:
+       
+.. autoclass:: qupled.qupled.VSStlsInput
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 .. autoclass:: qupled.qupled.QstlsGuess
     :members:
     :undoc-members:
@@ -60,6 +75,10 @@ Exposed C++ methods
 .. autoclass:: qupled.qupled.Stls
     :members:
     :undoc-members:
+
+.. autoclass:: qupled.qupled.VSStls
+    :members:
+    :undoc-members:
        
 .. autoclass:: qupled.qupled.Qstls
     :members:
@@ -69,3 +88,7 @@ Exposed C++ methods
 .. automethod:: qupled.qupled.computeRdf
 
 .. automethod:: qupled.qupled.computeInternalEnergy
+
+.. automethod:: qupled.qupled.computeFreeEnergy
+
+				

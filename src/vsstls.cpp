@@ -69,16 +69,20 @@ double StlsCSR::getDerivative(const vector<double>& f,
 			      const Derivative& type) {
   switch(type) {
   case BACKWARD:
-    assert(idx - 2 >= 0);
+    assert(idx >= 2);
     return getDerivative(f[idx], f[idx - 1], f[idx - 2], type);
     break;
   case CENTERED:
-    assert(idx - 1 >= 0 && idx + 1 < f.size());
+    assert(idx >= 1 && idx < f.size() - 1);
     return getDerivative(f[idx], f[idx + 1], f[idx - 1], type);
     break;
   case FORWARD:
-    assert(idx + 2 < f.size());
+    assert(idx < f.size() - 2);
     return getDerivative(f[idx], f[idx + 1], f[idx + 2], type);
+    break;
+  default:
+    assert(false);
+    return -1;
     break;
   }
 }
@@ -94,6 +98,10 @@ double StlsCSR::getDerivative(const double& f0,
     return f1 - f2; break;
   case FORWARD:
     return -getDerivative(f0, f1, f2, BACKWARD); break;
+  default:
+    assert(false);
+    return -1;
+    break;
   }
 }
 
