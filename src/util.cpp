@@ -1,6 +1,13 @@
 #include <numeric>
 #include "util.hpp"
 
+namespace numUtil {
+
+  bool equalTol(const double& x, const double &y) {
+    return abs(x - y) < dtol;
+  }
+}
+
 namespace vecUtil {
 
   // Element-wise sum between two vectors
@@ -335,7 +342,10 @@ namespace thermoUtil {
 			   const vector<double> &rsu,
 			   const double &coupling,
 			   const bool normalize) {
-    if (coupling == 0.0) { return 0.0; }
+    if (coupling == 0.0) { return -numUtil::Inf; }
+    if (coupling - grid.back() > numUtil::dtol) {
+      throw runtime_error("The coupling parameter is out of range for the current grid, the free energy cannot be computed");
+    }
     const Interpolator1D itp(grid, rsu);
     Integrator1D itg;
     const FreeEnergy freeEnergy(coupling, itp, itg, normalize);

@@ -116,7 +116,6 @@ class VSStls : public StlsBase {
 private: 
 
   // Typedef
-  double Inf = numeric_limits<double>::infinity();  
   using doubleVector = std::vector<std::vector<double>>;
   // Input data
   VSStlsInput in;

@@ -6,6 +6,17 @@
 #include <fstream>
 #include "numerics.hpp"
 
+// Util functions to handle special cases for double numbers
+namespace numUtil {
+
+  constexpr double Inf = std::numeric_limits<double>::infinity();  
+  constexpr double dtol = 10 * std::numeric_limits<double>::epsilon();
+
+  // Compare two doubles within the tolerance in dTol
+  bool equalTol(const double& x, const double &y);
+  
+}
+
 // Util functions to manipulate strings
 namespace stringUtil {
   

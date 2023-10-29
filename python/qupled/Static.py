@@ -596,7 +596,7 @@ class VSStls(Stls):
 
     """Class to solve the VS-STLS scheme.
 
-    ... Implementation in progress ... 
+    DOCUMENTATION COMING SOON
     """
     
     # Constructor
@@ -638,7 +638,7 @@ class VSStls(Stls):
         
     # Compute
     def compute(self) -> None:
-        """ ADD DESCRIPTION
+        """ DOCUMENTATION COMING SOON
         """
         self.checkInputs()
         self.schemeInputs = self.inputs
@@ -650,15 +650,15 @@ class VSStls(Stls):
 
     # Save results
     def save(self) -> None:
-        """ ADD DESCRIPTION  
+        """ DOCUMENTATION COMING SOON
         """
         super().save()
-        #pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
         pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
+        pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
 
     # Plot results        
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ ADD DESCRIPTION
+        """ DOCUMENTATION COMING SOON
         """
         super().plot(toPlot, matsubara, rdfGrid)
         if ("fxci" in toPlot):

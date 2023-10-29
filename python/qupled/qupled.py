@@ -102,8 +102,17 @@ class StlsInput(Input):
         self.cutoff : float = None
         """ cutoff for the wave-vector grid """
 
+class FreeEnergyIntegrand():
+    """Class used to store the precomputed values of the free energy integrand"""
+    def __init__(self):
+        self.grid : np.ndarray = None
+        """ The coupling parameter grid used to compute the free energy """
+        self.integrand : np.ndarray = None
+        """ The free energy integrand for various coupling parameter values """
+
+        
 class VSStlsInput(StlsInput):
-    """Class to handle the inputs related to the classical VS scheme.
+    """Class to handle the inputs related to the classical VS-STLS scheme.
 
     Args:
         coupling: Coupling parameter.
@@ -125,7 +134,7 @@ class VSStlsInput(StlsInput):
         self.errorAlpha : float = None
         """ minimum error for convergence in the free parameter """
         self.freeEnergyIntegrand : qupled.FreeEnergyIntegrand = None
-        """ Pre-compute free energy integrand """
+        """ Pre-computed free energy integrand """
     
 class QstlsGuess():
     """Class used to define an initial guess for the quantum schemes (QSTLS, QSTLS-IET)"""
@@ -261,5 +270,20 @@ def computeInternalEnergy(wvg : np.ndarray,
     
     Returns:
         The internal energy
+    """
+    pass
+
+def computeFreeEnergy(rsGrid: np.ndarray,
+                      fxci : np.ndarray,
+                      coupling : float) -> float:
+    """ Computes the free energy for a given coupling parameter.
+
+    Args:
+        rsGrid: The coupling parameter grid.
+        fxci: The free energy integrand.
+        coupling: The coupling parameter.
+    
+    Returns:
+        The free energy
     """
     pass

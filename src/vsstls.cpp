@@ -1,6 +1,7 @@
 #include <omp.h>
 #include "vsstls.hpp"
 
+using namespace numUtil;
 using namespace vecUtil;
 using namespace stringUtil;
 using namespace thermoUtil;
@@ -241,7 +242,7 @@ VSStls::VSStls(const VSStlsInput &in_) : StlsBase(in_), in(in_),
   rsGrid = std::make_shared<std::vector<double>>();
   rsGrid->push_back(0.0);
   const double rsMax = rs + drs;
-  while(rsGrid->back() < rsMax){
+  while(!equalTol(rsGrid->back(), rsMax)){
     rsGrid->push_back(rsGrid->back() + drs);
   }
   // Resize the vector to store the free energy integrand;
@@ -275,8 +276,18 @@ int VSStls::compute() {
 }
 
 void VSStls::init() {
-  if (in.getFreeEnergyIntegrand().rsGrid.size() > 0) {
-    // setFreeEnergyIntegrand();
+  const auto& fxcIntegrandIn = in.getFreeEnergyIntegrand();
+  const size_t nrs = rsGrid->size();
+  const size_t nrsIn = fxcIntegrandIn.grid.size();
+  if (nrsIn == 0) {
+    return;
+  }
+  const Interpolator1D fxci(fxcIntegrandIn.grid, fxcIntegrandIn.integrand);
+  const double rsMaxi = fxcIntegrandIn.grid.back();
+  for (size_t i = 0; i < nrs; ++i) {
+    const double& rs = rsGrid->at(i);
+    if (rs > rsMaxi) { return; }
+    fxcIntegrand->at(0)[i] = fxci.eval(rs);
   }
 }
 
@@ -371,7 +382,14 @@ void VSStls::computeFreeEnergyIntegrand() {
   VSStlsInput inTmp = in;
   for (size_t i = 0; i < nrs; ++i) {
     const double rs = rsGrid->at(i);
-    if (rs < in.getCoupling()) {
+    if (equalTol(rs, in.getCoupling())) {
+      structProp.compute();
+      fxcIntegrand->at(0)[i-1] = structProp.getFreeEnergyIntegrand(Theta)[0];
+      fxcIntegrand->at(0)[i] = structProp.getFreeEnergyIntegrand(Theta)[1];
+      fxcIntegrand->at(0)[i+1] = structProp.getFreeEnergyIntegrand(Theta)[2];
+      i += (i < nrs - 4) ? 3 : 0;
+    }
+    else if (rs < in.getCoupling()) {
       if (rs == 0 || fxcIntegrand->at(0)[i] != Inf) {
 	continue;
       }
@@ -379,14 +397,7 @@ void VSStls::computeFreeEnergyIntegrand() {
       inTmp.setCoupling(rs);
       VSStls vsstlsTmp(inTmp, rsGrid, fxcIntegrand);
       vsstlsTmp.compute();
-      printf("Done\n");
-    }
-    else if (rs == in.getCoupling()) {
-      structProp.compute();
-      fxcIntegrand->at(0)[i-1] = structProp.getFreeEnergyIntegrand(Theta)[0];
-      fxcIntegrand->at(0)[i] = structProp.getFreeEnergyIntegrand(Theta)[1];
-      fxcIntegrand->at(0)[i+1] = structProp.getFreeEnergyIntegrand(Theta)[2];
-      i += (i < nrs - 4) ? 3 : 0;
+      if (verbose) printf("Done\n");
     }
     else {
       break;

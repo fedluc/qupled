@@ -266,13 +266,13 @@ void VSStlsInput::setMixingParameterAlpha(const double &aMixAlpha) {
 }
 
 void VSStlsInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand& fxcIntegrand) {
-  if (fxcIntegrand.rsGrid.size() < 3 || fxcIntegrand.fxci.size() < 3) {
+  if (fxcIntegrand.grid.size() < 3 || fxcIntegrand.integrand.size() < 3) {
     throw runtime_error("The free energy integrand does not contain enough points");
   }
-  if (fxcIntegrand.rsGrid.size() != fxcIntegrand.fxci.size()) {
+  if (fxcIntegrand.grid.size() != fxcIntegrand.integrand.size()) {
     throw runtime_error("The free energy integrand is inconsistent");
   }
-  this->freeEnergyIntegrand = fxcIntegrand;
+  this->fxcIntegrand = fxcIntegrand;
 }
 
 void VSStlsInput::print() const {
@@ -292,5 +292,5 @@ bool VSStlsInput::isEqual(const VSStlsInput &in) const {
 	   dTheta == in.dTheta &&
 	   errMinAlpha == in.errMinAlpha &&
 	   aMixAlpha == in.aMixAlpha &&
-	   freeEnergyIntegrand == in.freeEnergyIntegrand);
+	   fxcIntegrand == in.fxcIntegrand);
 }

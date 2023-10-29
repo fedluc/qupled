@@ -161,23 +161,23 @@ namespace StlsWrapper {
 namespace VSStlsInputWrapper {
 
   struct FreeEnergyIntegrand {
-    bn::ndarray rsGrid = arrayWrapper::toNdArray(vector<double>(0));
-    bn::ndarray fxci = arrayWrapper::toNdArray(vector<double>(0));
+    bn::ndarray grid = arrayWrapper::toNdArray(vector<double>(0));
+    bn::ndarray integrand = arrayWrapper::toNdArray(vector<double>(0));
   };
   
   VSStlsInputWrapper::FreeEnergyIntegrand getFreeEnergyIntegrand(VSStlsInput &in){
     VSStlsInput::FreeEnergyIntegrand fxcIntegrand_ = in.getFreeEnergyIntegrand();
     VSStlsInputWrapper::FreeEnergyIntegrand fxcIntegrand;
-    fxcIntegrand.rsGrid = arrayWrapper::toNdArray(fxcIntegrand_.rsGrid);
-    fxcIntegrand.fxci = arrayWrapper::toNdArray(fxcIntegrand_.fxci);
+    fxcIntegrand.grid = arrayWrapper::toNdArray(fxcIntegrand_.grid);
+    fxcIntegrand.integrand = arrayWrapper::toNdArray(fxcIntegrand_.integrand);
     return fxcIntegrand;
   }
   
   void setFreeEnergyIntegrand(VSStlsInput &in,
 			      const VSStlsInputWrapper::FreeEnergyIntegrand &fxcIntegrand){
     VSStlsInput::FreeEnergyIntegrand fxcIntegrand_;
-    fxcIntegrand_.rsGrid = arrayWrapper::toVector(fxcIntegrand.rsGrid);
-    fxcIntegrand_.fxci = arrayWrapper::toVector(fxcIntegrand.fxci);
+    fxcIntegrand_.grid = arrayWrapper::toVector(fxcIntegrand.grid);
+    fxcIntegrand_.integrand = arrayWrapper::toVector(fxcIntegrand.integrand);
     in.setFreeEnergyIntegrand(fxcIntegrand_);
   }
   
@@ -363,6 +363,10 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &StlsInput::print)
     .def("isEqual", &StlsInput::isEqual);
 
+  bp::class_<VSStlsInputWrapper::FreeEnergyIntegrand>("FreeEnergyIntegrand")
+    .def_readwrite("grid", &VSStlsInputWrapper::FreeEnergyIntegrand::grid)
+    .def_readwrite("integrand", &VSStlsInputWrapper::FreeEnergyIntegrand::integrand);
+  
   bp::class_<VSStlsInput, bp::bases<StlsInput>>("VSStlsInput",
 						bp::init<const double, const double, const string>())
     .add_property("errorAlpha",

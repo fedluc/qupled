@@ -9,7 +9,7 @@
 #define EMPTY_STRING ""
 
 class Input {
-
+  
 protected:
 
   // scheme for 2D integrals
@@ -185,10 +185,10 @@ class VSStlsInput : public StlsInput {
 public:
   
   struct FreeEnergyIntegrand {
-    vector<double> rsGrid;
-    vector<double> fxci;
+    vector<double> grid;
+    vector<double> integrand;
     bool operator==(const FreeEnergyIntegrand &other) const {
-      return rsGrid == other.rsGrid && fxci == other.fxci;
+      return grid == other.grid && integrand == other.integrand;
     }
   };
   
@@ -208,7 +208,7 @@ private:
   // Mixing parameter for the iterations used to define the free parameter
   double aMixAlpha;
   // Pre-computed free energy integrand
-  FreeEnergyIntegrand freeEnergyIntegrand;
+  FreeEnergyIntegrand fxcIntegrand;
   
 public:
 
@@ -231,7 +231,7 @@ public:
   double getDegeneracyResolution() const { return dTheta; }
   double getErrMinAlpha() const { return errMinAlpha; }
   double getMixingParameterAlpha() const { return aMixAlpha; }
-  FreeEnergyIntegrand getFreeEnergyIntegrand() const { return freeEnergyIntegrand; }
+  FreeEnergyIntegrand getFreeEnergyIntegrand() const { return fxcIntegrand; }
   // Print content of the data structure
   void print() const;
   // Compare two VSStls objects
