@@ -195,6 +195,7 @@ int StructProp::compute() {
 void StructProp::doIterations() {
   const int maxIter = in.getNIter();
   const double minErr = in.getErrMin();
+  vector<int> errThread(in.getNThreads());
   double err = 1.0;
   int counter = 0;
   // Define initial guess
@@ -202,15 +203,24 @@ void StructProp::doIterations() {
   // Iteration to solve for the structural properties
   while (counter < maxIter+1 && err > minErr ) {
     // Compute new solution and error
-    for (auto& s : stls) { s->computeSsf(); }
-    for (auto& s : stls) { s->computeSlfcStls(); }
-    for (auto& s : stls) { s->computeSlfc(); }
-    // Update error and diagnostic
+#pragma omp parallel
+    {
+      const int tid = omp_get_thread_num();
+      #pragma omp for
+      for (auto& s : stls) {
+	s->computeSsf();
+	s->computeSlfcStls();
+      }
+      #pragma omp for
+      for (auto& s : stls) {
+	s->computeSlfc();
+	errThread[tid] = s->computeError();
+	s->updateSolution();
+      }
+    }
     counter++;
     err = 0;
-    for (auto& s : stls) { err +=  s->computeError(); }
-    // Update solution
-    for (auto& s : stls) { s->updateSolution(); }
+    for (const auto e : errThread) { err += e; }
   }
 }
 
@@ -271,6 +281,7 @@ VSStls::VSStls(const VSStlsInput &in_,
 
 int VSStls::compute() {
   try {
+    omp_set_num_threads(in.getNThreads());
     init();
     if (verbose) cout << "Free parameter calculation ..." << endl;
     doIterations();

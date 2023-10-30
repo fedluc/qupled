@@ -382,7 +382,8 @@ class VSStls(Stls):
                  couplingResolution : float = 0.01,
                  degeneracyResolution : float = 0.01,
                  mixingAlpha : float = 0.1,
-                 alpha : float = 0.5):
+                 alpha : float = 0.5,
+                 threads : int = 1):
         # Allowed theories
         self.allowedTheories : list[str] = ["VSSTLS"]
         # Input object
@@ -401,6 +402,7 @@ class VSStls(Stls):
         self.inputs.degeneracyResolution = degeneracyResolution
         self.inputs.mixingAlpha = mixingAlpha
         self.inputs.alpha = alpha
+        self.inputs.threads = threads
         
     # Compute
     def compute(self) -> None:
