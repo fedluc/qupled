@@ -14,26 +14,26 @@ and that are discussed in the section :ref:`Exposed C++ methods`
 Python classes 
 --------------
 
-.. autoclass:: qupled.Static.Stls
+.. autoclass:: qupled.classic.Stls
     :members:
     :undoc-members:
 
-.. autoclass:: qupled.Static.StlsIet
+.. autoclass:: qupled.classic.StlsIet
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: qupled.Static.VSStls
+.. autoclass:: qupled.classic.VSStls
     :members:
     :undoc-members:
     :show-inheritance:
 
               
-.. autoclass:: qupled.Static.Qstls
+.. autoclass:: qupled.quantum.Qstls
     :members:
     :show-inheritance:
 
-.. autoclass:: qupled.Static.QstlsIet
+.. autoclass:: qupled.quantum.QstlsIet
     :members:
     :show-inheritance:
 
