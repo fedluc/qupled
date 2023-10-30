@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
 import qupled.qupled as qp
-import qupled.static as static
+import qupled.classic as qpc
 
 # Define an Stls object to solve the STLS scheme
-stls = static.Stls(10.0,
-                   1.0,
-                   mixing = 0.2,
-                   cutoff = 10)
+stls = qpc.Stls(10.0,
+                1.0,
+                mixing = 0.2,
+                cutoff = 10)
 
 # Solve scheme
 stls.compute()

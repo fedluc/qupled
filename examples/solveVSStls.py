@@ -1,16 +1,16 @@
 import pandas as pd
 import qupled.qupled as qp
-import qupled.static as static
+import qupled.classic as qpc
 
 # Define a VSStls object to solve the VS-STLS scheme
-stls = static.VSStls(0.2, 
-                     0.0,
-                     mixing = 0.8,
-                     resolution = 0.1,
-                     cutoff = 5,
-                     couplingResolution = 0.01,
-                     alpha = 0.0,
-                     mixingAlpha = 1.0)
+stls = qpc.VSStls(0.2, 
+                  0.0,
+                  mixing = 0.8,
+                  resolution = 0.1,
+                  cutoff = 5,
+                  couplingResolution = 0.01,
+                  alpha = 0.0,
+                  mixingAlpha = 1.0)
 
 # Compute
 stls.compute()

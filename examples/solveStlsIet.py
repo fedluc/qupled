@@ -1,11 +1,11 @@
-import qupled.static as static
+import qupled.classic as qpc
 
 # Define an StlsIet object to solve an STLS-IET scheme
-stls = static.StlsIet(10.0, 
-                      1.0,
-                      "STLS-HNC",
-                      mixing = 0.5,
-                      cutoff = 10)
+stls = qpc.StlsIet(10.0, 
+                   1.0,
+                   "STLS-HNC",
+                   mixing = 0.5,
+                   cutoff = 10)
 
 # Solve scheme with HNC bridge function
 stls.compute()

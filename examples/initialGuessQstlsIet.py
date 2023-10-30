@@ -1,16 +1,16 @@
 import numpy as np
 import pandas as pd
 import qupled.qupled as qp
-import qupled.static as static
+import qupled.quantum as qpq
 
 # Define a QstlsIet object to solve a QSTLS-IET scheme
-stls = static.QstlsIet(30.0, 1.0, "QSTLS-HNC",
-                       mixing = 0.2,
-                       resolution = 0.1,
-                       cutoff = 5,
-                       matsubara = 16,
-                       scheme2DIntegrals = "segregated",
-                       threads = 16)
+qstls = qpq.QstlsIet(30.0, 1.0, "QSTLS-HNC",
+                     mixing = 0.2,
+                     resolution = 0.1,
+                     cutoff = 5,
+                     matsubara = 16,
+                     scheme2DIntegrals = "segregated",
+                     threads = 16)
 
 # Solve the scheme
 qstls.compute()
@@ -23,10 +23,10 @@ guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
 guess.ssf = pd.read_hdf(fileName, "ssf")[0].to_numpy()
 guess.adr = np.ascontiguousarray(pd.read_hdf(fileName, "adr").to_numpy())
 guess.matsubara = pd.read_hdf(fileName, "inputs")["matsubara"][0].tolist()
-qtls.qInputs.guess = guess
+qstls.qInputs.guess = guess
 
 # Change the coupling parameter
-qtls.input.coupling = 20.0
+qstls.inputs.coupling = 20.0
 
 # Solve the scheme again with the new initial guess and coupling parameter
-qtls.compute()
+qstls.compute()
