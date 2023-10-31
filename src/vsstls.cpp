@@ -111,6 +111,8 @@ void StlsCSR::computeSlfcStls() {
 }
 
 void StlsCSR::computeSlfc() {
+  // Check that alpha has been set to a value that is not the default
+  assert(alpha != DEFAULT_ALPHA);
   // Derivative contributions
   const double& rs = in.getCoupling();
   //const double& theta = in.getDegeneracy();
@@ -195,7 +197,6 @@ int StructProp::compute() {
 void StructProp::doIterations() {
   const int maxIter = in.getNIter();
   const double minErr = in.getErrMin();
-  vector<double> errThread(in.getNThreads());
   double err = 1.0;
   int counter = 0;
   // Define initial guess
@@ -205,7 +206,6 @@ void StructProp::doIterations() {
     // Compute new solution and error
 #pragma omp parallel
     {
-      const int tid = omp_get_thread_num();
       #pragma omp for
       for (auto& s : stls) {
 	s->computeSsf();
@@ -214,14 +214,12 @@ void StructProp::doIterations() {
       #pragma omp for
       for (auto& s : stls) {
 	s->computeSlfc();
-	errThread[tid] += s->computeError();
 	s->updateSolution();
       }
     }
     counter++;
-    err = 0;
-    for (const auto e : errThread) { err += e; }
-    fill(errThread, 0.0);
+    // Compute the error only for the central state point (rs, theta)
+    err = stls[STENCIL + 1]->computeError();
   }
 }
 
@@ -313,40 +311,27 @@ void VSStls::init() {
 
 // stls iterations
 void VSStls::doIterations() {
-  const int maxIter = in.getNIter();
-  const double minErr = in.getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
-  initialGuess();
-  while (counter < maxIter+1 && err > minErr ) {
-    // Start timing
-    double tic = omp_get_wtime();
-    // Update static structure factor
-    computeAlpha();
-    // Update diagnostic
-    counter++;
-    err = computeError();
-    // Update solution
-    updateSolution();
-    // End timing
-    double toc = omp_get_wtime();
-    // Print diagnostic
-    if (verbose) {
-      printf("--- iteration %d ---\n", counter);
-      printf("Elapsed time: %f seconds\n", toc - tic);
-      printf("Residual error: %.5e\n", err);
-      printf("alpha (CSR): %.5e\n", alpha);
-      fflush(stdout);
-    }
+  auto func = [this](double alphaTmp)->double{return alphaDifference(alphaTmp);};
+  RootSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
+  rsol.solve(func, in.getAlphaGuess());
+  if (!rsol.success()) {
+    throw runtime_error("VSStls: the root solver did not converge to the desired accuracy.");
   }
+  alpha = rsol.getSolution();
+  if (verbose) {
+    std::cerr << "Free parameter = " << alpha << std::endl;
+  }
+  updateSolution();
 }
 
-void VSStls::initialGuess() {
-  alpha = in.getAlpha();
+double VSStls::alphaDifference(const double& alphaTmp) {
+  alpha = alphaTmp;
+  structProp.setAlpha(alpha);
+  const double alphaTheoretical = computeAlpha();
+  return alpha - alphaTheoretical;
 }
 
-void VSStls::computeAlpha() {
+double VSStls::computeAlpha() {
   const double drs = in.getCouplingResolution();
   const double rs = in.getCoupling();
   const double rsm = rs - drs;
@@ -370,20 +355,11 @@ void VSStls::computeAlpha() {
   // Alpha
   const double numer = 2 * fxc - (1.0/6.0) * d2fxc_drs + (4.0/3.0) * dfxc_drs;
   const double denom =  uint + (1.0/3.0) * du_drs;
-  alphaNew = numer/denom;
-}
-
-double VSStls::computeError() {
-  const double diff = alpha - alphaNew;
-  return sqrt(diff*diff);
+  // alphaNew = numer/denom;
+  return numer/denom;
 }
 
 void VSStls::updateSolution() {
-  // Update the free parameter
-  const double aMix = in.getMixingParameterAlpha();
-  alpha *= (1 - aMix);
-  alpha += alphaNew * aMix;
-  structProp.setAlpha(alpha);
   // Update the structural properties used for output
   if (!structProp.isComputed()) { structProp.compute(); }
   const auto& stls = structProp.getStls(in.getCoupling(), in.getDegeneracy());

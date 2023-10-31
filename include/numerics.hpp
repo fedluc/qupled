@@ -133,7 +133,8 @@ private:
   // Function to solve
   gsl_function *F;
   // Type of solver
-  const gsl_root_fsolver_type *rst = gsl_root_fsolver_bisection;
+  // const gsl_root_fsolver_type *rst = gsl_root_fsolver_bisection;
+  const gsl_root_fsolver_type * rst = gsl_root_fsolver_brent;
   // Solver
   gsl_root_fsolver *rs = gsl_root_fsolver_alloc(rst);
   // Accuracy
@@ -155,6 +156,8 @@ public:
     relErr(relErr_), maxIter(maxIter_) {;};
   void solve(const function<double(double)> func,
 	     const vector<double> guess);
+  void solveWithOutput(const function<double(double)> func,
+		       const vector<double> guess);
   bool success() const { return status == GSL_SUCCESS; };
   double getSolution() const { return sol; };
   

@@ -198,15 +198,15 @@ private:
   // Name of the file with the thermodynamic properties
   string thermoFileName;
   // Initial guess for the free parameter
-  double alpha;
+  vector<double> alphaGuess;
   // Resolution of the coupling parameter grid
   double drs;
   // Resolution of the degeneracy parameter grid
   double dTheta;
   // Minimum error for the iterations used to define the free parameter
   double errMinAlpha;
-  // Mixing parameter for the iterations used to define the free parameter
-  double aMixAlpha;
+  // Maximum number of iterations used to define the free parameter
+  double nIterAlpha;
   // Pre-computed free energy integrand
   FreeEnergyIntegrand fxcIntegrand;
   
@@ -216,21 +216,21 @@ public:
   VSStlsInput(const double &rs_,
 	      const double &Theta_,
 	      const string &theory_)
-    : StlsInput(rs_, Theta_, theory_), alpha(0.5), drs(0.01),
-      dTheta(0.01), errMinAlpha(0.001), aMixAlpha(1.0) { ; };
+    : StlsInput(rs_, Theta_, theory_), alphaGuess({0.5, 1.0}),
+      drs(0.01), dTheta(0.01), errMinAlpha(0.001), nIterAlpha(50) { ; };
   // Setters
-  void setAlpha(const double  &alpha);
+  void setAlphaGuess(const vector<double>  &alphaGuess);
   void setCouplingResolution(const double &drs);
   void setDegeneracyResolution(const double &dTheta);
   void setErrMinAlpha(const double &errMinAlpha);
-  void setMixingParameterAlpha(const double &aMixAlpha);
+  void setNIterAlpha(const int& nIterAlpha);
   void setFreeEnergyIntegrand(const FreeEnergyIntegrand &freeEnergyIntegrand);
   // Getters 
-  double getAlpha() const { return alpha; }
+  vector<double> getAlphaGuess() const { return alphaGuess; }
   double getCouplingResolution() const { return drs; }
   double getDegeneracyResolution() const { return dTheta; }
   double getErrMinAlpha() const { return errMinAlpha; }
-  double getMixingParameterAlpha() const { return aMixAlpha; }
+  double getNIterAlpha() const { return nIterAlpha; }
   FreeEnergyIntegrand getFreeEnergyIntegrand() const { return fxcIntegrand; }
   // Print content of the data structure
   void print() const;

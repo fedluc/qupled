@@ -14,6 +14,8 @@ class StlsCSR : public Stls {
     
 private:
 
+  // Default value of alpha
+  static constexpr double DEFAULT_ALPHA = numUtil::Inf;
   // Input data
   const VSStlsInput in;
   // Enumerator to denote the numerical schemes used for the derivatives
@@ -59,7 +61,7 @@ public:
   // Constructor
   StlsCSR(const VSStlsInput& in_) : Stls(in_, false, false),
 				    in(in_),
-				    alpha(in_.getAlpha()),
+				    alpha(DEFAULT_ALPHA),
 				    slfcStlsRsUp(nullptr),
 				    slfcStlsRsDown(nullptr),
 				    slfcStlsThetaUp(nullptr),
@@ -135,16 +137,15 @@ private:
   void init();
   void setFreeEnergyIntegrand();
   // Compute free parameter
-  void computeAlpha();
+  double computeAlpha();
   // Compute free energy
   void computeFreeEnergyIntegrand();
   double computeFreeEnergy(const double& rs,
 			   const bool& normalize);
   // Iterations to solve the vs-stls scheme
   void doIterations();
-  void initialGuess();
-  double computeError();
   void updateSolution();
+  double alphaDifference(const double& alphaTmp);
   // Private constructor for nested calculations
   VSStls(const VSStlsInput &in_,
 	 std::shared_ptr<std::vector<double>> &rsGrid_,

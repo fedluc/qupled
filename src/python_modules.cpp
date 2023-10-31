@@ -160,6 +160,15 @@ namespace StlsWrapper {
 
 namespace VSStlsInputWrapper {
 
+  bn::ndarray getAlphaGuess(VSStlsInput &in){
+    return arrayWrapper::toNdArray(in.getAlphaGuess());
+  }
+  
+  void setAlphaGuess(VSStlsInput &in,
+		     const bp::list &alphaGuess){
+    in.setAlphaGuess(arrayWrapper::toVector(alphaGuess));
+  }
+  
   struct FreeEnergyIntegrand {
     bn::ndarray grid = arrayWrapper::toNdArray(vector<double>(0));
     bn::ndarray integrand = arrayWrapper::toNdArray(vector<double>(0));
@@ -372,12 +381,12 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("errorAlpha",
 		  &VSStlsInput::getErrMinAlpha,
 		  &VSStlsInput::setErrMinAlpha)
-    .add_property("mixingAlpha",
-		  &VSStlsInput::getMixingParameterAlpha,
-		  &VSStlsInput::setMixingParameterAlpha)
+    .add_property("iterationsAlpha",
+		  &VSStlsInput::getNIterAlpha,
+		  &VSStlsInput::setNIterAlpha)
     .add_property("alpha",
-		  &VSStlsInput::getAlpha,
-		  &VSStlsInput::setAlpha)
+		  VSStlsInputWrapper::getAlphaGuess,
+		  VSStlsInputWrapper::setAlphaGuess)
     .add_property("couplingResolution",
 		  &VSStlsInput::getCouplingResolution,
 		  &VSStlsInput::setCouplingResolution)

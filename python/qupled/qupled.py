@@ -123,16 +123,16 @@ class VSStlsInput(StlsInput):
                  degeneracy : float):
         self.theory : str = None
         """ Name of the theory that is solved """
-        self.alpha : float = None
+        self.alpha : list[float] = None
         """ Initial guess for the free parameter """
         self.couplingResolution : float = None
         """ Resolution of the coupling parameter grid """
         self.degeneracyResolution : float = None
         """ Resolution of the degeneracy parameter grid """
-        self.mixingAlpha : float = None
-        """ Mixing parameter for the iterations to determine the free parameter """
         self.errorAlpha : float = None
-        """ minimum error for convergence in the free parameter """
+        """ Minimum error for convergence in the free parameter """
+        self.iterationsAlpha : int = None
+        """ Maximum number of iterations to determine the free parameter """
         self.freeEnergyIntegrand : qupled.FreeEnergyIntegrand = None
         """ Pre-computed free energy integrand """
     

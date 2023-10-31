@@ -231,12 +231,6 @@ bool QstlsInput::isEqual(const QstlsInput &in) const {
 
 // --- VSStlsInput ---
 
-void VSStlsInput::setAlpha(const double  &alpha) {
-  if (alpha < 0 || alpha > 1) {
-    throw runtime_error("The mixing parameter must be a number between zero and one");
-  }
-  this->alpha = alpha;
-}
 void VSStlsInput::setCouplingResolution(const double &drs) {
   if (drs <= 0) {
     throw runtime_error("The coupling parameter resolution must be larger than zero");
@@ -251,6 +245,14 @@ void VSStlsInput::setDegeneracyResolution(const double &dTheta) {
   this->dTheta = dTheta;
 }
 
+void VSStlsInput::setAlphaGuess(const vector<double>  &alphaGuess) {
+  if (alphaGuess.size() != 2 || alphaGuess[0] >= alphaGuess[1]) {
+    throw runtime_error("Invalid guess for chemical potential calculation");
+  }
+  this->alphaGuess = alphaGuess;
+}
+
+
 void VSStlsInput::setErrMinAlpha(const double &errMinAlpha){
    if (errMinAlpha <= 0.0) {
     throw runtime_error("The minimum error for convergence must be larger than zero");
@@ -258,11 +260,11 @@ void VSStlsInput::setErrMinAlpha(const double &errMinAlpha){
   this->errMinAlpha = errMinAlpha;
 }
 
-void VSStlsInput::setMixingParameterAlpha(const double &aMixAlpha) {
-  if (aMixAlpha < 0.0 || aMixAlpha > 1.0) {
-    throw runtime_error("The mixing parameter must be a number between zero and one");
+void VSStlsInput::setNIterAlpha(const int &nIterAlpha){
+  if (nIter < 0) {
+    throw runtime_error("The maximum number of iterations can't be negative");
   }
-  this->aMixAlpha = aMixAlpha;
+  this->nIterAlpha = nIterAlpha; 
 }
 
 void VSStlsInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand& fxcIntegrand) {
@@ -278,19 +280,19 @@ void VSStlsInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand& fxcIntegrand
 void VSStlsInput::print() const {
   StlsInput::print();
   cout << "##### VSSTLS-related input #####" << endl;
-  cout << "Initial guess for the free parameter = " << alpha << endl;
+  cout << "Guess for the free parameter = " << alphaGuess.at(0) << "," << alphaGuess.at(1) << endl;
   cout << "Resolution for the coupling parameter grid = " << drs << endl;
   cout << "Resolution for the degeneracy parameter grid = " << dTheta << endl;
   cout << "Minimum error for convergence (alpha) = " << errMinAlpha << endl;
-  cout << "Mixing parameter (alpha) = " << aMixAlpha << endl;
+  cout << "Maximum number of iterations (alpha) = " << nIterAlpha << endl;
 }
 
 bool VSStlsInput::isEqual(const VSStlsInput &in) const {
   return ( StlsInput::isEqual(in) && 
-	   alpha == in.alpha &&
+	   alphaGuess == in.alphaGuess &&
 	   drs == in.drs &&
 	   dTheta == in.dTheta &&
 	   errMinAlpha == in.errMinAlpha &&
-	   aMixAlpha == in.aMixAlpha &&
+	   nIterAlpha == in.nIterAlpha &&
 	   fxcIntegrand == in.fxcIntegrand);
 }

@@ -24,7 +24,7 @@ class Stls():
         degeneracy: Degeneracy parameter.  
         chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
-        error: Minimum error for covergence, defaults to 1.0e-5.
+        error: Minimum error for convergence, defaults to 1.0e-5.
         mixing: Mixing parameter for iterative solution, defaults to 1.0.  
         guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
         iterations: Maximum number of iterations, defaults to 1000.
@@ -271,7 +271,7 @@ class StlsIet(Stls):
         degeneracy: Degeneracy parameter.  
         chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
-        error: Minimum error for covergence, defaults to 1.0e-5.
+        error: Minimum error for convergence, defaults to 1.0e-5.
         mapping: Classical to quantum mapping. See :func:`~qupled.qupled.StlsInput.iet`
         mixing: Mixing parameter for iterative solution, defaults to 1.0.  
         guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
@@ -353,17 +353,19 @@ class VSStls(Stls):
         degeneracy: Degeneracy parameter.  
         chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
-        error: Minimum error for covergence, defaults to 1.0e-5.
+        error: Minimum error for convergence, defaults to 1.0e-5.
         mixing: Mixing parameter for iterative solution, defaults to 1.0.  
         iterations: Maximum number of iterations, defaults to 1000.
         matsubara: Number of matsubara frequencies, defaults to 128.
         outputFrequency: Frequency used to print the recovery files, defaults to 10.
         recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
         resolution: Resolution of the wave-vector grid, defaults to 0.1.
+        alpha: Initial guess for the free parameter, defaults to [0.5, 1.0]
         couplingResolution: Resolution of the coupling parameter grid, defaults to 0.01
         degeneracyResolution: Resolution of the degeneracy parameter grid, defaults to 0.01
-        mixingAlpha: mixing parameter for the iterative solution of the free parameter, defaults to 0.1
-        alpha: initial guess for the free parameter, defaults to 0.5
+        errorAlpha: Minimum error for convergence in the free parameter iterations, defaults to 1.0e-3
+        iterationsAlpha: Maximum number of iterations for the free parameter, defaults to 50
+        threads: number of OMP threads for parallel calculations, defualts to 1
     """
     
     # Constructor
@@ -379,10 +381,11 @@ class VSStls(Stls):
                  outputFrequency : int = 10,
                  recoveryFile : str = None,
                  resolution : float = 0.1,
+                 alpha : list[float] = [0.5, 1.0],
                  couplingResolution : float = 0.01,
                  degeneracyResolution : float = 0.01,
-                 mixingAlpha : float = 0.1,
-                 alpha : float = 0.5,
+                 errorAlpha : float = 1.0e-3,
+                 iterationsAlpha : int = 50,
                  threads : int = 1):
         # Allowed theories
         self.allowedTheories : list[str] = ["VSSTLS"]
@@ -398,10 +401,11 @@ class VSStls(Stls):
                                       None, iterations, matsubara,
                                       outputFrequency, recoveryFile,
                                       resolution);
+        self.inputs.alpha = alpha
         self.inputs.couplingResolution = couplingResolution
         self.inputs.degeneracyResolution = degeneracyResolution
-        self.inputs.mixingAlpha = mixingAlpha
-        self.inputs.alpha = alpha
+        self.inputs.errorAlpha = errorAlpha
+        self.inputs.iterationsAlpha = iterationsAlpha
         self.inputs.threads = threads
         
     # Compute
