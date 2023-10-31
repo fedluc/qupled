@@ -10,10 +10,13 @@
 namespace numUtil {
 
   constexpr double Inf = std::numeric_limits<double>::infinity();  
-  constexpr double dtol = 10 * std::numeric_limits<double>::epsilon();
+  constexpr double dtol = 1e-10;
 
   // Compare two doubles within the tolerance in dTol
   bool equalTol(const double& x, const double &y);
+
+  // Check that x > y with a dTol tolerance
+  bool largerThan(const double& x, const double &y);
   
 }
 

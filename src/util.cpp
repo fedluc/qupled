@@ -4,8 +4,13 @@
 namespace numUtil {
 
   bool equalTol(const double& x, const double &y) {
-    return abs(x - y) < dtol;
+    return abs(x - y) < x * dtol;
   }
+
+  bool largerThan(const double& x, const double &y) {
+    return x - y > x * dtol;
+  }
+  
 }
 
 namespace vecUtil {
@@ -343,7 +348,7 @@ namespace thermoUtil {
 			   const double &coupling,
 			   const bool normalize) {
     if (coupling == 0.0) { return -numUtil::Inf; }
-    if (coupling - grid.back() > numUtil::dtol) {
+    if (numUtil::largerThan(coupling, grid.back())) {
       throw runtime_error("The coupling parameter is out of range for the current grid, the free energy cannot be computed");
     }
     const Interpolator1D itp(grid, rsu);

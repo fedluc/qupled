@@ -195,7 +195,7 @@ int StructProp::compute() {
 void StructProp::doIterations() {
   const int maxIter = in.getNIter();
   const double minErr = in.getErrMin();
-  vector<int> errThread(in.getNThreads());
+  vector<double> errThread(in.getNThreads());
   double err = 1.0;
   int counter = 0;
   // Define initial guess
@@ -214,13 +214,14 @@ void StructProp::doIterations() {
       #pragma omp for
       for (auto& s : stls) {
 	s->computeSlfc();
-	errThread[tid] = s->computeError();
+	errThread[tid] += s->computeError();
 	s->updateSolution();
       }
     }
     counter++;
     err = 0;
     for (const auto e : errThread) { err += e; }
+    fill(errThread, 0.0);
   }
 }
 
