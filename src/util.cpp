@@ -306,7 +306,7 @@ namespace thermoUtil {
   double FreeEnergy::get() const  {
     auto func = [&](double y)->double{return rsui.eval(y);};
     itg.compute(func, 0.0, rs);
-    if (normalize) { return itg.getSolution()/rs/rs; };
+    if (normalize) { return (rs == 0.0) ? -numUtil::Inf : itg.getSolution()/rs/rs; };
     return itg.getSolution();
   }
   
@@ -347,7 +347,6 @@ namespace thermoUtil {
 			   const vector<double> &rsu,
 			   const double &coupling,
 			   const bool normalize) {
-    if (coupling == 0.0) { return -numUtil::Inf; }
     if (numUtil::largerThan(coupling, grid.back())) {
       throw runtime_error("The coupling parameter is out of range for the current grid, the free energy cannot be computed");
     }
