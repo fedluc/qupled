@@ -80,6 +80,7 @@ namespace vecUtil {
       : v(s1_*s2_,0.0), s1(s1_), s2(s2_) {;};
     Vector2D()
       : Vector2D(0, 0) {;};
+    Vector2D(const vector<vector<double>>& v_);
     size_t size() const;
     size_t size(const size_t i) const;
     bool empty() const;

@@ -84,6 +84,18 @@ namespace vecUtil {
   }
   
   // Vector2D class
+  Vector2D::Vector2D(const vector<vector<double>>& v_)  {
+    s1 = v_.size();
+    s2 = (s1 > 0) ? v_[0].size() : 0;
+    v = vector<double>(s1 * s2, 0.0);
+    size_t cnt = 0;
+    for (const auto& vi : v_) {
+      assert(vi.size() == s2);
+      std::copy(vi.begin(), vi.end(), v.begin() + cnt);
+      cnt += s2;
+    }
+  }
+  
   size_t Vector2D::size() const {
     return s1*s2;
   }

@@ -60,6 +60,25 @@ namespace arrayWrapper {
     }
     return v;
   }
+
+  vector<vector<double>> toDoubleVector(const bn::ndarray &nda){
+    if (nda.get_nd() != 2) {
+      throw runtime_error("Incorrect numpy array dimensions");
+    }
+    CheckRowMajor(nda);
+    const Py_intptr_t* shape = nda.get_shape();
+    const int sz1 = shape[0];
+    const int sz2 = shape[1];
+    vector<vector<double>> v(sz1);
+    double* ptr = reinterpret_cast<double*>(nda.get_data());
+    for (int i = 0; i < sz1; ++i){
+      v[i].resize(sz2);
+      for (int j = 0; j < sz2; ++j) {
+	v[i][j] = *(ptr + j + i*sz2);
+      }
+    }
+    return v;
+  }
   
   template<typename T>
   bn::ndarray toNdArray(const T &v){
@@ -67,6 +86,22 @@ namespace arrayWrapper {
     shape[0] = v.size();
     bn::ndarray result = bn::zeros(1, shape, bn::dtype::get_builtin<double>());
     std::copy(v.begin(), v.end(), reinterpret_cast<double*>(result.get_data()));
+    return result;
+  }
+  
+  bn::ndarray toNdArray2D(const vecUtil::Vector2D &v){
+    bn::ndarray result = toNdArray(v);
+    result.reshape(bp::make_tuple(v.size(0), v.size(1)));
+    return result;
+  }
+
+  bn::ndarray toNdArray2D(const vector<vector<double>> &v){
+    return toNdArray2D(vecUtil::Vector2D(v));
+  }
+  
+  bn::ndarray toNdArray3D(const vecUtil::Vector3D &v){
+    bn::ndarray result = toNdArray(v);
+    result.reshape(bp::make_tuple(v.size(0), v.size(1), v.size(2)));
     return result;
   }
   
@@ -113,13 +148,7 @@ namespace StlsBaseWrapper {
   }
 
   bn::ndarray getIdr(const StlsBase &stls){
-    const vecUtil::Vector2D &idrNative = stls.getIdr();
-    const size_t nx = idrNative.size(0);
-    const size_t nl = idrNative.size(1);
-    bn::ndarray idr = arrayWrapper::toNdArray(idrNative);
-    bp::tuple shape = bp::make_tuple(nx, nl);
-    idr = idr.reshape(shape);
-    return idr;
+    return arrayWrapper::toNdArray2D(stls.getIdr());
   }
 
   bn::ndarray getRdf(const StlsBase &stls,
@@ -243,23 +272,11 @@ namespace QstlsInputWrapper {
 namespace QstlsWrapper {
     
   bn::ndarray getAdr(const Qstls &qstls){
-    const vecUtil::Vector2D &adrNative = qstls.getAdr();
-    const size_t nx = adrNative.size(0);
-    const size_t nl = adrNative.size(1);
-    bn::ndarray adr = arrayWrapper::toNdArray(adrNative);
-    bp::tuple shape = bp::make_tuple(nx, nl);
-    adr = adr.reshape(shape);
-    return adr;
+    return arrayWrapper::toNdArray2D(qstls.getAdr());
   }
   
   bn::ndarray getAdrFixed(const Qstls &qstls){
-    const vecUtil::Vector3D &adrNative = qstls.getAdrFixed();
-    const size_t nx = adrNative.size(0);
-    const size_t nl = adrNative.size(1);
-    bn::ndarray adr = arrayWrapper::toNdArray(adrNative);
-    bp::tuple shape = bp::make_tuple(nx, nl, nx);
-    adr = adr.reshape(shape);
-    return adr;
+    return arrayWrapper::toNdArray3D(qstls.getAdrFixed());
   }
 
 }
