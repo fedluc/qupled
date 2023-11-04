@@ -14,6 +14,8 @@ protected:
 
   // scheme for 2D integrals
   string int2DScheme;
+  // Accuracy for the integrals
+  double intError;
   // type of theory
   bool isClassicTheory;
   bool isQuantumTheory;
@@ -35,20 +37,23 @@ public:
   //Constructor
   Input(const double &rs_,
 	const double &Theta_,
-	const string &theory_)
-    : int2DScheme("full"), isClassicTheory(false), isQuantumTheory(false),
-      nThreads(1), rs(initCoupling(rs_)), theory(initTheory(theory_)),
-      Theta(initDegeneracy(Theta_)) { ; };
+	const string &theory_) : int2DScheme("full"), intError(1.0e-5),
+				 isClassicTheory(false), isQuantumTheory(false),
+				 nThreads(1), rs(initCoupling(rs_)),
+				 theory(initTheory(theory_)),
+				 Theta(initDegeneracy(Theta_)) { ; };
   // Setters
   void setCoupling(const double &rs);
   void setDegeneracy(const double &Theta);
   void setInt2DScheme(const string &int2DScheme);
+  void setIntError(const double &intError);
   void setNThreads(const int &nThreads);
   void setTheory(const string &theory);
   // Getters
   double getCoupling() const { return rs; }
   double getDegeneracy() const {return Theta; }
   string getInt2DScheme() const { return int2DScheme; }
+  double getIntError() const { return intError; }
   int getNThreads() const { return nThreads; }
   string getTheory() const { return theory; }
   bool isClassic() const { return isClassicTheory; }

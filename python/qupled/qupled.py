@@ -15,6 +15,8 @@ class Input():
                  coupling : float,
                  degeneracy : float,
                  theory : float):
+        self.intError : float = None
+        """ Accuracy (expressed as a relative error) in the computation of the integrals """
         self.int2DScheme : str = None
         """ Scheme used to solve two-dimensional integrals
         allowed options include:

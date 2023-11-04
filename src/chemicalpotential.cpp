@@ -4,7 +4,7 @@
 
 void ChemicalPotential::compute(const vector<double> &guess){
   auto func = [this](double mu)->double{return normalizationCondition(mu);};
-  RootSolver rsol;
+  BrentRootSolver rsol;
   rsol.solve(func, guess);
   if (!rsol.success()) {
     throw runtime_error("Chemical potential: the root solver "

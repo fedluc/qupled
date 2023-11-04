@@ -351,7 +351,7 @@ class VSStls(Stls):
     Args:
         coupling: Coupling parameter.
         degeneracy: Degeneracy parameter.  
-        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
+        chemicalPotential: Initial guess for the chemical potential, defaults to [-100.0, 100.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
         error: Minimum error for convergence, defaults to 1.0e-5.
         mixing: Mixing parameter for iterative solution, defaults to 1.0.  
@@ -365,6 +365,7 @@ class VSStls(Stls):
         degeneracyResolution: Resolution of the degeneracy parameter grid, defaults to 0.01
         errorAlpha: Minimum error for convergence in the free parameter iterations, defaults to 1.0e-3
         iterationsAlpha: Maximum number of iterations for the free parameter, defaults to 50
+        errorIntegrals: Accuracy (as a relative error) for the integral computations, defaults to 1.0-5
         threads: number of OMP threads for parallel calculations, defualts to 1
     """
     
@@ -386,6 +387,7 @@ class VSStls(Stls):
                  degeneracyResolution : float = 0.01,
                  errorAlpha : float = 1.0e-3,
                  iterationsAlpha : int = 50,
+                 errorIntegrals : float = 1.0e-5,
                  threads : int = 1):
         # Allowed theories
         self.allowedTheories : list[str] = ["VSSTLS"]
@@ -407,6 +409,7 @@ class VSStls(Stls):
         self.inputs.errorAlpha = errorAlpha
         self.inputs.iterationsAlpha = iterationsAlpha
         self.inputs.threads = threads
+        self.inputs.intError = errorIntegrals
         
     # Compute
     def compute(self) -> None:

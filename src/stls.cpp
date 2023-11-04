@@ -199,18 +199,18 @@ void Stls::computeSlfcStls() {
 }
 
 void Stls::computeSlfcIet() {
-   Integrator2D itg2;
-   const bool segregatedItg = in.getInt2DScheme() == "segregated";
-   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
-   const Interpolator1D ssfItp(wvg, ssf);
-   const Interpolator1D slfcItp(wvg, slfcOld);
-   if (bf.size() == 0) computeBf();
-   const Interpolator1D bfItp(wvg, bf);
-   for (size_t i=0; i<wvg.size(); ++i){
-     SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),
-		     ssfItp, slfcItp, bfItp, itgGrid, itg2);
-     slfc[i] += slfcTmp.get();
-   }
+  Integrator2D itg2(in.getIntError());
+  const bool segregatedItg = in.getInt2DScheme() == "segregated";
+  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  const Interpolator1D ssfItp(wvg, ssf);
+  const Interpolator1D slfcItp(wvg, slfcOld);
+  if (bf.size() == 0) computeBf();
+  const Interpolator1D bfItp(wvg, bf);
+  for (size_t i=0; i<wvg.size(); ++i){
+    SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),
+		    ssfItp, slfcItp, bfItp, itgGrid, itg2);
+    slfc[i] += slfcTmp.get();
+  }
 }
 
 // Compute bridge function
@@ -606,7 +606,7 @@ double SsfGround::plasmon() const {
   // Compute plasmon frequency
   auto func = [this](double Omega)->double{return drf(Omega);};
   const double guess[] = {wLo, wHi};
-  RootSolver rsol;
+  BrentRootSolver rsol;
   rsol.solve(func, vector<double>(begin(guess),end(guess)));
   if (!rsol.success()) {
     throw runtime_error("Plasmon solver: the root solver "
@@ -629,7 +629,7 @@ double SsfGround::drf(const double Omega) const {
 // Frequency derivative of the dielectric response function  
 double SsfGround::drfDer(const double Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
-  Integrator1D itgTmp;
+  Integrator1D itgTmp = itg;
   const IdrGround idrTmp(Omega, x);
   const double idrRe = idrTmp.re0();
   const double idrReDer = idrTmp.re0Der();

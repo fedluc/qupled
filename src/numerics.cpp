@@ -122,11 +122,11 @@ double Interpolator2D::eval(const double x, const double y) const {
 };
 
 // -----------------------------------------------------------------
-// RootSolver class
+// BrentRootSolver class
 // -----------------------------------------------------------------
 
-void RootSolver::solve(const function<double(double)> func,
-		       const vector<double> guess){
+void BrentRootSolver::solve(const function<double(double)> func,
+			    const vector<double> guess){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
@@ -142,6 +142,28 @@ void RootSolver::solve(const function<double(double)> func,
     iter++;
   } while (status == GSL_CONTINUE && iter < maxIter);
 }
+
+void SecantSolver::solve(const function<double(double)> func,
+			 const vector<double> guess){
+  // Set up solver
+  double x0 = guess.at(0);
+  double x1 = guess.at(1);
+  double fx0;
+  double fx1 = func(x0);
+  status = GSL_CONTINUE;
+  // Call solver
+  do{
+    fx0 = fx1;
+    fx1 = func(x1);
+    sol = x1 - fx1 * (x1 - x0) / (fx1 - fx0);
+    if ( abs(sol - x1) < sol * relErr) { status = GSL_SUCCESS; }
+    x0 = x1;
+    x1 = sol;
+    iter++;
+  } while (status == GSL_CONTINUE && iter < maxIter);
+}
+
+
 
 // -----------------------------------------------------------------
 // Integrator1D class

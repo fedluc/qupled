@@ -114,7 +114,7 @@ public:
   Stls(const StlsInput &in_,
        const bool &verbose_,
        const bool &writeFiles_)
-    : StlsBase(in_), verbose(verbose_),
+    : StlsBase(in_), itg(in_.getIntError()), verbose(verbose_),
       writeFiles(writeFiles_) { checkIet(); };
   Stls(const StlsInput &in_) : Stls(in_, true, true) { ; };
   // Compute stls scheme

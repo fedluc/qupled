@@ -221,6 +221,7 @@ void StructProp::doIterations() {
     // Compute the error only for the central state point (rs, theta)
     err = stls[STENCIL + 1]->computeError();
   }
+  printf("Alpha = %.5e, Residual error (structural properties) = %.5e\n", stls[STENCIL + 1]->alpha, err);
 }
 
 void StructProp::setAlpha(const double& alpha) {
@@ -312,7 +313,7 @@ void VSStls::init() {
 // stls iterations
 void VSStls::doIterations() {
   auto func = [this](double alphaTmp)->double{return alphaDifference(alphaTmp);};
-  RootSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
+  SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
   rsol.solve(func, in.getAlphaGuess());
   if (!rsol.success()) {
     throw runtime_error("VSStls: the root solver did not converge to the desired accuracy.");
@@ -389,11 +390,12 @@ void VSStls::computeFreeEnergyIntegrand() {
       if (rs == 0 || fxcIntegrand->at(0)[i] != Inf) {
 	continue;
       }
-      printf("Free energy integrand calculation, solving VS-STLS scheme for rs = %.5f: ", rs);
+      printf("Free energy integrand calculation, solving VS-STLS scheme for rs = %.5f:\n", rs);
       inTmp.setCoupling(rs);
       VSStls vsstlsTmp(inTmp, rsGrid, fxcIntegrand);
       vsstlsTmp.compute();
       if (verbose) printf("Done\n");
+      printf("---------------------------------------------------------------------------\n");
     }
     else {
       break;

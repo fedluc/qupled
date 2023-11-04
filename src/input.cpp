@@ -50,6 +50,14 @@ void Input::setInt2DScheme(const string &int2DScheme){
   this->int2DScheme = int2DScheme;
 }
 
+void Input::setIntError(const double &intError){
+  if (intError <= 0) {
+    throw runtime_error("The accuracy for the integral computations must be larger than zero");
+  }
+  this->intError = intError;
+}
+
+
 void Input::setNThreads(const int &nThreads){
   if (nThreads <= 0) {
     throw runtime_error("The number of threads must be larger than zero");
@@ -66,6 +74,7 @@ void Input::print() const {
   cout << "Degeneracy parameter = " << Theta << endl;
   cout << "Number of OMP threads = " << nThreads << endl;
   cout << "Scheme for 2D integrals = " << int2DScheme << endl;
+  cout << "Integral relative error = " << intError << endl;
   cout << "Theory to be solved = " << theory << endl;
 }
 

@@ -116,50 +116,73 @@ public:
   
   GslFunctionWrap(const T& func_) : func(func_) {
     function = &GslFunctionWrap::invoke;
-    params=this;
+    params = this;
   }
   
 };
 
-  
 // -----------------------------------------------------------------
 // Classes to find roots of equations
 // -----------------------------------------------------------------
 
-class RootSolver {
+class RootSolverBase {
+
+protected:
+
+  // Accuracy
+  const double relErr;
+  // Iterations
+  const int maxIter;
+  int iter;
+  // Solver status
+  int status;
+  // Solution
+  double sol;
+  // Protected constructor
+  RootSolverBase(const double relErr_, const int maxIter_) : relErr(relErr_),
+							     maxIter(maxIter_),
+							     iter(0) { ; };
+  RootSolverBase() :  RootSolverBase(1.0e-10, 1000) { ; };
+  
+public:
+
+  bool success() const { return status == GSL_SUCCESS; };
+  double getSolution() const { return sol; };
+  
+};
+
+class BrentRootSolver : public RootSolverBase {
 
 private:
 
   // Function to solve
   gsl_function *F;
   // Type of solver
-  // const gsl_root_fsolver_type *rst = gsl_root_fsolver_bisection;
-  const gsl_root_fsolver_type * rst = gsl_root_fsolver_brent;
+  const gsl_root_fsolver_type *rst;
   // Solver
-  gsl_root_fsolver *rs = gsl_root_fsolver_alloc(rst);
-  // Accuracy
-  const double relErr = 1e-10;
-  // Iterations
-  const int maxIter = 1000;
-  int iter = 0;
-  // Solver status
-  int status;
-  // Solution
-  double sol;
+  gsl_root_fsolver *rs;
   
 public:
 
-  RootSolver() {;};
-  RootSolver(const double relErr_) : relErr(relErr_) {;};
-  RootSolver(const int maxIter_) : maxIter(maxIter_) {;};
-  RootSolver(const double relErr_, const int maxIter_) :
-    relErr(relErr_), maxIter(maxIter_) {;};
+  BrentRootSolver() : rst(gsl_root_fsolver_brent) { 
+    rs = gsl_root_fsolver_alloc(rst) ;
+  }
+  ~BrentRootSolver() {
+    gsl_root_fsolver_free(rs);
+  }
   void solve(const function<double(double)> func,
 	     const vector<double> guess);
-  void solveWithOutput(const function<double(double)> func,
-		       const vector<double> guess);
-  bool success() const { return status == GSL_SUCCESS; };
-  double getSolution() const { return sol; };
+};
+
+class SecantSolver : public RootSolverBase {
+  
+public:
+
+  SecantSolver(const double relErr_,
+	       const int maxIter_) : RootSolverBase(relErr_, maxIter_) { ; };
+  SecantSolver() { ; };
+  void solve(const function<double(double)> func,
+	     const vector<double> guess);
   
 };
 
@@ -175,12 +198,11 @@ private:
   // Function to integrate
   gsl_function *F;
   // Integration workspace limit
-  const size_t limit = 100;
+  const size_t limit;
   // Integration workspace
-  gsl_integration_cquad_workspace *wsp
-  = gsl_integration_cquad_workspace_alloc(limit);
+  gsl_integration_cquad_workspace *wsp;
   // Accuracy
-  const double relErr = 1e-5;
+  const double relErr;
   // Residual error
   double err;
   // Number of evaluations
@@ -191,7 +213,11 @@ private:
 public:
 
   // Constructors
-  Integrator1D() {;};
+  Integrator1D(const double &relErr_) : limit(100), relErr(relErr_) {
+    wsp = gsl_integration_cquad_workspace_alloc(limit);
+  }
+  Integrator1D(const Integrator1D& other) : Integrator1D(other.relErr) { ; }
+  Integrator1D() : Integrator1D(1.0e-5) { ; }
   // Destructor
   ~Integrator1D(){
     gsl_integration_cquad_workspace_free(wsp);
@@ -222,7 +248,8 @@ private:
 public:
 
   // Constructors
-  Integrator2D() {;};
+  Integrator2D(const double &relErr) : itg1(relErr), itg2(relErr) { ; }
+  Integrator2D() : Integrator2D(1.0e-5) { ; };
   // Compute integral
   void compute(const function<double(double)> func1,
 	       const function<double(double)> func2,
@@ -252,17 +279,14 @@ private:
   // Function to integrate
   gsl_function *F;
   // Integration workspace limit
-  const size_t limit = 1000;
+  const size_t limit;
   // Integration workspace
-  gsl_integration_workspace *wsp
-  = gsl_integration_workspace_alloc(limit);
-  gsl_integration_workspace *wspc
-  = gsl_integration_workspace_alloc(limit);
-  gsl_integration_qawo_table *qtab
-  = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, limit);
+  gsl_integration_workspace *wsp;
+  gsl_integration_workspace *wspc;
+  gsl_integration_qawo_table *qtab;
   // Spatial position
   double r;
-  const double relErr = 1e-5;
+  const double relErr;
   // Residual error
   double err;
   // Solution
@@ -271,9 +295,13 @@ private:
 public:
 
   // Constructors
-  Integrator1DFourier(const double r_) : r(r_) {;};
-  Integrator1DFourier(const double r_, const double relErr_)
-    : r(r_), relErr(relErr_) {;};
+  Integrator1DFourier(const double r_, const double relErr_) : limit(1000), r(r_),
+							       relErr(relErr_) {
+    wsp = gsl_integration_workspace_alloc(limit);
+    wspc = gsl_integration_workspace_alloc(limit);
+    qtab = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, limit);
+  }
+  Integrator1DFourier(const double r_) : Integrator1DFourier(r_, 1.0e-5) { ; }
   // Set spatial position (to re-use the integrator for different r)
   void setR(const double r_) {r = r_;};
   // Destructor

@@ -91,7 +91,7 @@ namespace arrayWrapper {
   
   bn::ndarray toNdArray2D(const vecUtil::Vector2D &v){
     bn::ndarray result = toNdArray(v);
-    result.reshape(bp::make_tuple(v.size(0), v.size(1)));
+    result = result.reshape(bp::make_tuple(v.size(0), v.size(1)));
     return result;
   }
 
@@ -101,7 +101,7 @@ namespace arrayWrapper {
   
   bn::ndarray toNdArray3D(const vecUtil::Vector3D &v){
     bn::ndarray result = toNdArray(v);
-    result.reshape(bp::make_tuple(v.size(0), v.size(1), v.size(2)));
+    result = result.reshape(bp::make_tuple(v.size(0), v.size(1), v.size(2)));
     return result;
   }
   
@@ -338,6 +338,9 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("int2DScheme",
 		  &Input::getInt2DScheme,
 		  &Input::setInt2DScheme)
+    .add_property("intError",
+		  &Input::getIntError,
+		  &Input::setIntError)
     .add_property("threads",
 		  &Input::getNThreads,
 		  &Input::setNThreads)
