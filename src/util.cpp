@@ -360,7 +360,8 @@ namespace thermoUtil {
 			   const double &coupling,
 			   const bool normalize) {
     if (numUtil::largerThan(coupling, grid.back())) {
-      throw runtime_error("The coupling parameter is out of range for the current grid, the free energy cannot be computed");
+      throw runtime_error("The coupling parameter is out of range"
+			  " for the current grid, the free energy cannot be computed");
     }
     const Interpolator1D itp(grid, rsu);
     Integrator1D itg;

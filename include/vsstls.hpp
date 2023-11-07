@@ -2,6 +2,7 @@
 #define VSSTLS_HPP
 
 #include <limits>
+#include <map>
 #include "stls.hpp"
 
 // -----------------------------------------------------------------
@@ -19,7 +20,9 @@ private:
   // Input data
   const VSStlsInput in;
   // Enumerator to denote the numerical schemes used for the derivatives
-  enum Derivative { CENTERED, FORWARD, BACKWARD };
+  enum Derivative { CENTERED,
+		    FORWARD,
+		    BACKWARD };
   // Stls static local field correction
   vector<double> slfcStls;
   // Free parameter
@@ -55,6 +58,12 @@ private:
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();
+  // Set the free parameter
+  void setAlpha(const double& alpha) { this->alpha = alpha; }
+  // Compute the internal energy
+  double getInternalEnergy() const;
+  // Compute the free energy integrand
+  double getFreeEnergyIntegrand() const;
   
 public:
 
@@ -68,29 +77,31 @@ public:
 				    slfcStlsThetaDown(nullptr),
 				    dTypeRs(CENTERED),
 				    dTypeTheta(CENTERED) { ; }
-  // Set derivative data
-  void setDerivativeData(std::vector<std::shared_ptr<StlsCSR>>& stlsVector,
-			 const size_t& thisIdx);
-  // Set the free parameter
-  void setAlpha(const double& alpha) { this->alpha = alpha; }
-  // Compute the free energy integrand
-  double getFreeEnergyIntegrand() const;
   
 };
 
 
 class StructProp {
+  
 public:
 
   static constexpr int NPOINTS = 9;
-  static constexpr int STENCIL = 3;
+  enum Idx {
+    RS_DOWN_THETA_DOWN,
+    RS_THETA_DOWN,
+    RS_UP_THETA_DOWN,
+    RS_DOWN_THETA,
+    RS_THETA,
+    RS_UP_THETA,
+    RS_DOWN_THETA_UP,
+    RS_THETA_UP,
+    RS_UP_THETA_UP,
+  };
   
 private:
 
-  // Input data
-  const VSStlsInput in;
   // Vector containing NPOINTS state points to be solved simultaneously
-  std::vector<std::shared_ptr<StlsCSR>> stls;
+  vector<std::shared_ptr<StlsCSR>> stls;
   // Flag marking if the initialization for the stls data was already done
   bool stlsIsInitialized;
   // Perform iterations to compute structural properties
@@ -104,12 +115,59 @@ public:
   int compute();
   // Set free parameter
   void setAlpha(const double& alpha);
-  // Get internal energy
-  vector<double> getFreeEnergyIntegrand(const double& theta);
+  // Get coupling parameters for all the state points
+  vector<double> getCouplingParameters() const;
+  // Get internal energy for all the state points
+  vector<double> getInternalEnergy() const;
+  // Get free energy integrand for all the state points
+  vector<double> getFreeEnergyIntegrand() const;
   // Get structural properties for output
-  const StlsCSR& getStls(const double& rs,
-			 const double& theta) const;
+  const StlsCSR& getStls(const Idx& idx) const { return *(stls[idx]); }
+  // Boolean marking whether the structural properties where computed or not
   bool isComputed() const { return stlsIsInitialized; }
+  
+};
+
+
+class ThermoProp {
+
+public:
+  
+private:
+
+  using SIdx = StructProp::Idx;
+  enum Idx {
+    THETA
+  };
+  // Map between struct and thermo indexes
+  static constexpr int NPOINTS = 3;
+  // Structural properties
+  StructProp structProp;
+  // Grid for thermodyamic integration
+  vector<double> rsGrid;
+  // Free energy integrand for NPOINTS state points
+  vector<vector<double>> fxcIntegrand;
+
+  
+public:
+
+  // Constructors
+  ThermoProp(const VSStlsInput &in);
+  ThermoProp(const VSStlsInput &in,
+	     const ThermoProp &other);
+  // Set the value of the free parameter in the structural properties
+  void setAlpha(const double& alpha);
+  // Compute the thermodynamic properties
+  void compute(const VSStlsInput &in);
+  const StlsCSR& getStructProp();
+  // Get free energy and free energy derivatives
+  vector<double> getFreeEnergyData();
+  // Get internal energy and internal energy derivatives
+  vector<double> getInternalEnergyData();
+  // Get free energy integrand
+  const vector<vector<double>>& getFreeEnergyIntegrand() const { return fxcIntegrand; }
+  // Get free energy grid
+  const vector<double>& getFreeEnergyGrid() const  { return rsGrid; }
   
 };
 
@@ -117,51 +175,40 @@ class VSStls : public StlsBase {
 
 private: 
 
-  // Typedef
-  using doubleVector = std::vector<std::vector<double>>;
   // Input data
   VSStlsInput in;
-  // Structural properties 
-  StructProp structProp;
   // Thermodynamic properties
-  std::shared_ptr<std::vector<double>> rsGrid;
-  std::shared_ptr<doubleVector> fxcIntegrand;
-  std::vector<double> rsGridLocal;
-  std::vector<double> fxcIntegrandLocal;
+  ThermoProp thermoProp;
   // Free parameter
   double alpha;
-  double alphaNew;
   // Output verbosity
   const bool verbose;
-  // Initialize data 
-  void init();
-  void setFreeEnergyIntegrand();
   // Compute free parameter
   double computeAlpha();
-  // Compute free energy
-  void computeFreeEnergyIntegrand();
-  double computeFreeEnergy(const double& rs,
-			   const bool& normalize);
   // Iterations to solve the vs-stls scheme
   void doIterations();
   void updateSolution();
   double alphaDifference(const double& alphaTmp);
-  // Private constructor for nested calculations
-  VSStls(const VSStlsInput &in_,
-	 std::shared_ptr<std::vector<double>> &rsGrid_,
-	 std::shared_ptr<doubleVector> &fxcIntegrand_);
-  
+ 
 public:
 
-  // Constructors
-  VSStls(const VSStlsInput &in_);
+  // Constructor from initial data
+  VSStls(const VSStlsInput &in_) : StlsBase(in_), in(in_),
+				   thermoProp(in_),
+				   verbose(true) { ; }
+  // Constructor for recursive calculations
+  VSStls(const VSStlsInput &in_,
+	 const ThermoProp& thermoProp_) : StlsBase(in_), in(in_),
+					  thermoProp(in_, thermoProp_),
+					  verbose(false) { ; }
   // Compute stls scheme
   int compute();
   // Getters
-  std::vector<double> getFreeEnergyIntegrand() const {
-    return fxcIntegrand->at(0);
+  const ThermoProp& getThermoProp() const { return thermoProp; }
+  vector<double> getFreeEnergyIntegrand() const {
+    return thermoProp.getFreeEnergyIntegrand()[0];
   }
-  std::vector<double> getFreeEnergyGrid() const { return *rsGrid; }
+  vector<double> getFreeEnergyGrid() const { return thermoProp.getFreeEnergyGrid(); }
   
 };
 
