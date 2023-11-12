@@ -86,6 +86,7 @@ class StructProp {
 public:
 
   static constexpr int NPOINTS = 9;
+  static constexpr int THETASTEP = 3;
   enum Idx {
     RS_DOWN_THETA_DOWN,
     RS_THETA_DOWN,
@@ -100,12 +101,18 @@ public:
   
 private:
 
+  // Typdef
+  using StlsCSRPtr = std::shared_ptr<StlsCSR>;
   // Vector containing NPOINTS state points to be solved simultaneously
-  vector<std::shared_ptr<StlsCSR>> stls;
+  vector<StlsCSRPtr> stls;
   // Flag marking if the initialization for the stls data was already done
   bool stlsIsInitialized;
   // Perform iterations to compute structural properties
   void doIterations();
+  // Generic getter function to return vector data
+  const vector<double>& getBase(function<double(const StlsCSRPtr&)> f) const;
+  // Vector used as output parameter in the getters functions
+  mutable vector<double> outVector;
   
 public:
 
@@ -117,6 +124,8 @@ public:
   void setAlpha(const double& alpha);
   // Get coupling parameters for all the state points
   vector<double> getCouplingParameters() const;
+  // Get degeneracy parameters for all the state points
+  vector<double> getDegeneracyParameters() const;
   // Get internal energy for all the state points
   vector<double> getInternalEnergy() const;
   // Get free energy integrand for all the state points
@@ -137,7 +146,9 @@ private:
 
   using SIdx = StructProp::Idx;
   enum Idx {
-    THETA
+    THETA_DOWN,
+    THETA,
+    THETA_UP
   };
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
@@ -147,7 +158,9 @@ private:
   vector<double> rsGrid;
   // Free energy integrand for NPOINTS state points
   vector<vector<double>> fxcIntegrand;
-
+  // Compute the free energy
+  double computeFreeEnergy(const SIdx iStruct,
+			   const bool normalize) const ;
   
 public:
 
@@ -161,9 +174,9 @@ public:
   void compute(const VSStlsInput &in);
   const StlsCSR& getStructProp();
   // Get free energy and free energy derivatives
-  vector<double> getFreeEnergyData();
+  vector<double> getFreeEnergyData() const;
   // Get internal energy and internal energy derivatives
-  vector<double> getInternalEnergyData();
+  vector<double> getInternalEnergyData() const;
   // Get free energy integrand
   const vector<vector<double>>& getFreeEnergyIntegrand() const { return fxcIntegrand; }
   // Get free energy grid
@@ -205,10 +218,8 @@ public:
   int compute();
   // Getters
   const ThermoProp& getThermoProp() const { return thermoProp; }
-  vector<double> getFreeEnergyIntegrand() const {
-    return thermoProp.getFreeEnergyIntegrand()[0];
-  }
-  vector<double> getFreeEnergyGrid() const { return thermoProp.getFreeEnergyGrid(); }
+  vector<vector<double>> getFreeEnergyIntegrand() const;
+  vector<double> getFreeEnergyGrid() const;
   
 };
 

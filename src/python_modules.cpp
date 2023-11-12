@@ -207,7 +207,7 @@ namespace VSStlsInputWrapper {
     VSStlsInput::FreeEnergyIntegrand fxcIntegrand_ = in.getFreeEnergyIntegrand();
     VSStlsInputWrapper::FreeEnergyIntegrand fxcIntegrand;
     fxcIntegrand.grid = arrayWrapper::toNdArray(fxcIntegrand_.grid);
-    fxcIntegrand.integrand = arrayWrapper::toNdArray(fxcIntegrand_.integrand);
+    fxcIntegrand.integrand = arrayWrapper::toNdArray2D(fxcIntegrand_.integrand);
     return fxcIntegrand;
   }
   
@@ -215,7 +215,7 @@ namespace VSStlsInputWrapper {
 			      const VSStlsInputWrapper::FreeEnergyIntegrand &fxcIntegrand){
     VSStlsInput::FreeEnergyIntegrand fxcIntegrand_;
     fxcIntegrand_.grid = arrayWrapper::toVector(fxcIntegrand.grid);
-    fxcIntegrand_.integrand = arrayWrapper::toVector(fxcIntegrand.integrand);
+    fxcIntegrand_.integrand = arrayWrapper::toDoubleVector(fxcIntegrand.integrand);
     in.setFreeEnergyIntegrand(fxcIntegrand_);
   }
   
@@ -224,7 +224,7 @@ namespace VSStlsInputWrapper {
 namespace VSStlsWrapper {
     
   bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls){
-    return arrayWrapper::toNdArray(vsstls.getFreeEnergyIntegrand());
+    return arrayWrapper::toNdArray2D(vsstls.getFreeEnergyIntegrand());
   }
 
   bn::ndarray getFreeEnergyGrid(const VSStls &vsstls){

@@ -191,7 +191,7 @@ public:
   
   struct FreeEnergyIntegrand {
     vector<double> grid;
-    vector<double> integrand;
+    vector<vector<double>> integrand;
     bool operator==(const FreeEnergyIntegrand &other) const {
       return grid == other.grid && integrand == other.integrand;
     }

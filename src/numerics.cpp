@@ -156,7 +156,7 @@ void SecantSolver::solve(const function<double(double)> func,
     fx0 = fx1;
     fx1 = func(x1);
     sol = x1 - fx1 * (x1 - x0) / (fx1 - fx0);
-    if ( abs(sol - x1) < sol * relErr) { status = GSL_SUCCESS; }
+    if ( abs(sol - x1) < abs(sol) * relErr) { status = GSL_SUCCESS; }
     x0 = x1;
     x1 = sol;
     iter++;

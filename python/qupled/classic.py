@@ -443,7 +443,7 @@ class VSStls(Stls):
         """
         super().plot(toPlot, matsubara, rdfGrid)
         if ("fxci" in toPlot):
-            Plot.plot1D(self.scheme.freeEnergyGrid, self.scheme.freeEnergyIntegrand, "Coupling parameter", "Free energy integrand")
+            Plot.plot1D(self.scheme.freeEnergyGrid, self.scheme.freeEnergyIntegrand[1,:], "Coupling parameter", "Free energy integrand")
         
 class Hdf():
 
