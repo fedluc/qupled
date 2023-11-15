@@ -40,12 +40,12 @@ private:
   // Numerical scheme used to compute the degeneracy parametere derivative
   Derivative dTypeTheta;
   // Set the data to compute the coupling parameter derivative
-  void setDrsData(vector<double> &slfcStlsRsUp,
-		  vector<double> &slfcSltsRsDown,
+  void setDrsData(StlsCSR &stlsRsUp,
+		  StlsCSR &sltsRsDown,
 		  const Derivative &dTypeRs);
   // Set the data to compute the degeneracy parameter derivative
-  void setDThetaData(vector<double> &slfcStlsThetaUp,
-		     vector<double> &slfcStlsThetaDown,
+  void setDThetaData(StlsCSR &stlsThetaUp,
+		     StlsCSR &stlsThetaDown,
 		     const Derivative &dTypeTheta);
   // Helper methods to compute the derivatives
   double getDerivative(const vector<double>& f,
@@ -101,16 +101,14 @@ public:
   
 private:
 
-  // Typdef
-  using StlsCSRPtr = std::shared_ptr<StlsCSR>;
   // Vector containing NPOINTS state points to be solved simultaneously
-  vector<StlsCSRPtr> stls;
+  vector<StlsCSR> stls;
   // Flag marking if the initialization for the stls data was already done
   bool stlsIsInitialized;
   // Perform iterations to compute structural properties
   void doIterations();
   // Generic getter function to return vector data
-  const vector<double>& getBase(function<double(const StlsCSRPtr&)> f) const;
+  const vector<double>& getBase(function<double(const StlsCSR&)> f) const;
   // Vector used as output parameter in the getters functions
   mutable vector<double> outVector;
   
@@ -131,7 +129,7 @@ public:
   // Get free energy integrand for all the state points
   vector<double> getFreeEnergyIntegrand() const;
   // Get structural properties for output
-  const StlsCSR& getStls(const Idx& idx) const { return *(stls[idx]); }
+  const StlsCSR& getStls(const Idx& idx) const { return stls[idx]; }
   // Boolean marking whether the structural properties where computed or not
   bool isComputed() const { return stlsIsInitialized; }
   

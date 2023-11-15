@@ -11,19 +11,19 @@ using namespace binUtil;
 // StlsCSR class
 // -----------------------------------------------------------------
 
-void StlsCSR::setDrsData(vector<double> &slfcStlsRsUp,
-			 vector<double> &slfcStlsRsDown,
+void StlsCSR::setDrsData(StlsCSR &stlsRsUp,
+			 StlsCSR &stlsRsDown,
 			 const Derivative &dTypeRs) {
-  this->slfcStlsRsUp = &slfcStlsRsUp;
-  this->slfcStlsRsDown = &slfcStlsRsDown;
+  this->slfcStlsRsUp = &stlsRsUp.slfcStls;
+  this->slfcStlsRsDown = &stlsRsDown.slfcStls;
   this->dTypeRs = dTypeRs;
 }
 
-void StlsCSR::setDThetaData(vector<double> &slfcStlsThetaUp,
-			    vector<double> &slfcStlsThetaDown,
+void StlsCSR::setDThetaData(StlsCSR &stlsThetaUp,
+			    StlsCSR &stlsThetaDown,
 			    const Derivative &dTypeTheta) {
-  this->slfcStlsThetaUp = &slfcStlsThetaUp;
-  this->slfcStlsThetaDown = &slfcStlsThetaDown;
+  this->slfcStlsThetaUp = &stlsThetaUp.slfcStls;
+  this->slfcStlsThetaDown = &stlsThetaDown.slfcStls;
   this->dTypeTheta = dTypeTheta;
 }
 
@@ -138,7 +138,7 @@ StructProp::StructProp(const VSStlsInput &in) : stlsIsInitialized(false), outVec
     for (int j = -1; j < 2; ++j) {
       inTmp.setDegeneracy(theta + i * dTheta);
       inTmp.setCoupling(rs + j * drs);
-      stls.push_back(std::make_shared<StlsCSR>(inTmp));
+      stls.push_back(StlsCSR(inTmp));
     }
   }
   assert(stls.size() == NPOINTS);
@@ -146,33 +146,27 @@ StructProp::StructProp(const VSStlsInput &in) : stlsIsInitialized(false), outVec
   for (size_t i = 0; i < stls.size(); ++i) {
     switch (i) {
     case RS_DOWN_THETA_DOWN: case RS_DOWN_THETA: case RS_DOWN_THETA_UP:
-      stls[i]->setDrsData(stls[i + 1]->slfcStls,
-			  stls[i + 2]->slfcStls,
-			  StlsCSR::Derivative::FORWARD); break;
+      stls[i].setDrsData(stls[i + 1], stls[i + 2],
+			 StlsCSR::Derivative::FORWARD); break;
     case RS_THETA_DOWN: case RS_THETA: case RS_THETA_UP:
-      stls[i]->setDrsData(stls[i + 1]->slfcStls,
-			  stls[i - 1]->slfcStls,
-			  StlsCSR::Derivative::CENTERED); break;
+      stls[i].setDrsData(stls[i + 1], stls[i - 1],
+			 StlsCSR::Derivative::CENTERED); break;
     case RS_UP_THETA_DOWN: case RS_UP_THETA: case RS_UP_THETA_UP:
-      stls[i]->setDrsData(stls[i - 1]->slfcStls,
-			  stls[i - 2]->slfcStls,
-			  StlsCSR::Derivative::BACKWARD); break;
+      stls[i].setDrsData(stls[i - 1], stls[i - 2],
+			 StlsCSR::Derivative::BACKWARD); break;
     }
   }
   for (size_t i = 0; i < stls.size(); ++i) {
     switch (i) {
     case RS_DOWN_THETA_DOWN: case RS_THETA_DOWN: case RS_UP_THETA_DOWN:
-      stls[i]->setDThetaData(stls[i + THETASTEP]->slfcStls,
-			     stls[i + 2 * THETASTEP]->slfcStls,
-			     StlsCSR::Derivative::FORWARD); break;
+      stls[i].setDThetaData(stls[i + THETASTEP], stls[i + 2 * THETASTEP],
+			    StlsCSR::Derivative::FORWARD); break;
     case RS_DOWN_THETA: case RS_THETA: case RS_UP_THETA:
-      stls[i]->setDThetaData(stls[i + THETASTEP]->slfcStls,
-			     stls[i - THETASTEP]->slfcStls,
-			     StlsCSR::Derivative::CENTERED); break;
+      stls[i].setDThetaData(stls[i + THETASTEP], stls[i - THETASTEP],
+			    StlsCSR::Derivative::CENTERED); break;
     case RS_DOWN_THETA_UP: case RS_THETA_UP: case RS_UP_THETA_UP:
-      stls[i]->setDrsData(stls[i - THETASTEP]->slfcStls,
-			  stls[i - 2 * THETASTEP]->slfcStls,
-			  StlsCSR::Derivative::BACKWARD); break;
+      stls[i].setDrsData(stls[i - THETASTEP], stls[i - 2 * THETASTEP],
+			 StlsCSR::Derivative::BACKWARD); break;
     }
   }
 }
@@ -181,7 +175,7 @@ StructProp::StructProp(const VSStlsInput &in) : stlsIsInitialized(false), outVec
 int StructProp::compute() {
   try {
     if (!stlsIsInitialized) {
-      for (auto& s : stls) { s->init(); }
+      for (auto& s : stls) { s.init(); }
       stlsIsInitialized = true;
     }
     doIterations();
@@ -194,12 +188,12 @@ int StructProp::compute() {
 }
 
 void StructProp::doIterations() {
-  const int maxIter = stls[0]->in.getNIter();
-  const double minErr = stls[0]->in.getErrMin();
+  const int maxIter = stls[0].in.getNIter();
+  const double minErr = stls[0].in.getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess
-  for (auto& s : stls) { s->initialGuess(); }
+  for (auto& s : stls) { s.initialGuess(); }
   // Iteration to solve for the structural properties
   while (counter < maxIter+1 && err > minErr ) {
     // Compute new solution and error
@@ -207,28 +201,28 @@ void StructProp::doIterations() {
     {
       #pragma omp for
       for (auto& s : stls) {
-	s->computeSsf();
-	s->computeSlfcStls();
+	s.computeSsf();
+	s.computeSlfcStls();
       }
       #pragma omp for
       for (auto& s : stls) {
-	s->computeSlfc();
-	s->updateSolution();
+	s.computeSlfc();
+	s.updateSolution();
       }
     }
     counter++;
     // Compute the error only for the central state point (rs, theta)
-    err = stls[RS_THETA]->computeError();
+    err = stls[RS_THETA].computeError();
   }
   printf("Alpha = %.5e, Residual error "
-	 "(structural properties) = %.5e\n", stls[RS_THETA]->alpha, err);
+	 "(structural properties) = %.5e\n", stls[RS_THETA].alpha, err);
 }
 
 void StructProp::setAlpha(const double& alpha) {
-  for (auto& s : stls) { s->setAlpha(alpha); }
+  for (auto& s : stls) { s.setAlpha(alpha); }
 }
 
-const vector<double>& StructProp::getBase(function<double(const StlsCSRPtr&)> f) const {
+const vector<double>& StructProp::getBase(function<double(const StlsCSR&)> f) const {
   for (size_t i = 0; i < NPOINTS; ++i) {
     outVector[i] = f(stls[i]);
   }
@@ -236,19 +230,19 @@ const vector<double>& StructProp::getBase(function<double(const StlsCSRPtr&)> f)
 }
 
 vector<double> StructProp::getCouplingParameters() const {
-  return getBase([&](const StlsCSRPtr& s){ return s->in.getCoupling();});
+  return getBase([&](const StlsCSR& s){ return s.in.getCoupling();});
 }
 
 vector<double> StructProp::getDegeneracyParameters() const {
-  return getBase([&](const StlsCSRPtr& s){return s->in.getDegeneracy();});
+  return getBase([&](const StlsCSR& s){return s.in.getDegeneracy();});
 }
 
 vector<double> StructProp::getInternalEnergy() const  {
-  return getBase([&](const StlsCSRPtr& s){return s->getInternalEnergy();});
+  return getBase([&](const StlsCSR& s){return s.getInternalEnergy();});
 }
 
 vector<double> StructProp::getFreeEnergyIntegrand() const  {
-  return getBase([&](const StlsCSRPtr& s){return s->getFreeEnergyIntegrand();});
+  return getBase([&](const StlsCSR& s){return s.getFreeEnergyIntegrand();});
 }
 
 // -----------------------------------------------------------------
