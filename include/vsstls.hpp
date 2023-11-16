@@ -85,8 +85,9 @@ class StructProp {
   
 public:
 
-  static constexpr int NPOINTS = 9;
-  static constexpr int THETASTEP = 3;
+  static constexpr int NRS = 3;
+  static constexpr int NTHETA = 3;
+  static constexpr int NPOINTS = NRS * NTHETA;
   enum Idx {
     RS_DOWN_THETA_DOWN,
     RS_THETA_DOWN,

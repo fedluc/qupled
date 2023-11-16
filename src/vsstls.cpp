@@ -134,10 +134,10 @@ StructProp::StructProp(const VSStlsInput &in) : stlsIsInitialized(false), outVec
   double rs = inTmp.getCoupling();
   double theta = inTmp.getDegeneracy();
   // Setup objects
-  for (int i = -1; i < 2; ++i){
-    for (int j = -1; j < 2; ++j) {
-      inTmp.setDegeneracy(theta + i * dTheta);
-      inTmp.setCoupling(rs + j * drs);
+  for (const double& thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
+    for (const double& rsTmp : {rs - drs, rs, rs + drs}){
+      inTmp.setDegeneracy(thetaTmp);
+      inTmp.setCoupling(rsTmp);
       stls.push_back(StlsCSR(inTmp));
     }
   }
@@ -159,13 +159,13 @@ StructProp::StructProp(const VSStlsInput &in) : stlsIsInitialized(false), outVec
   for (size_t i = 0; i < stls.size(); ++i) {
     switch (i) {
     case RS_DOWN_THETA_DOWN: case RS_THETA_DOWN: case RS_UP_THETA_DOWN:
-      stls[i].setDThetaData(stls[i + THETASTEP], stls[i + 2 * THETASTEP],
+      stls[i].setDThetaData(stls[i + NRS], stls[i + 2 * NRS],
 			    StlsCSR::Derivative::FORWARD); break;
     case RS_DOWN_THETA: case RS_THETA: case RS_UP_THETA:
-      stls[i].setDThetaData(stls[i + THETASTEP], stls[i - THETASTEP],
+      stls[i].setDThetaData(stls[i + NRS], stls[i - NRS],
 			    StlsCSR::Derivative::CENTERED); break;
     case RS_DOWN_THETA_UP: case RS_THETA_UP: case RS_UP_THETA_UP:
-      stls[i].setDrsData(stls[i - THETASTEP], stls[i - 2 * THETASTEP],
+      stls[i].setDThetaData(stls[i - NRS], stls[i - 2 * NRS],
 			 StlsCSR::Derivative::BACKWARD); break;
     }
   }
