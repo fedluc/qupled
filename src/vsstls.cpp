@@ -252,6 +252,9 @@ vector<double> StructProp::getFreeEnergyIntegrand() const  {
 ThermoProp::ThermoProp(const VSStlsInput &in) : structProp(in) {
   const double& rs = in.getCoupling();
   const double& drs = in.getCouplingResolution();
+  // Check if we are solving for particular state points
+  isZeroCoupling = (rs == 0.0);
+  isZeroDegeneracy = (in.getDegeneracy() == 0.0);
   // Build integration grid
   rsGrid.push_back(0.0);
   const double rsMax = rs + drs;
@@ -339,7 +342,16 @@ void ThermoProp::compute(const VSStlsInput& in) {
 
 const StlsCSR& ThermoProp::getStructProp() {
   if (!structProp.isComputed()) { structProp.compute(); }
-  return structProp.getStls(SIdx::RS_THETA);
+  if (isZeroCoupling && isZeroDegeneracy) {
+     return structProp.getStls(SIdx::RS_DOWN_THETA_DOWN); 
+  }
+  if (!isZeroCoupling && isZeroDegeneracy) {
+     return structProp.getStls(SIdx::RS_THETA_DOWN); 
+  }
+  if (isZeroCoupling && !isZeroDegeneracy) {
+     return structProp.getStls(SIdx::RS_DOWN_THETA); 
+  }
+  return structProp.getStls(SIdx::RS_THETA); 
 }
 
 double ThermoProp::computeFreeEnergy(const SIdx iStruct,

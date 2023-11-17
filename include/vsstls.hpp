@@ -157,6 +157,9 @@ private:
   vector<double> rsGrid;
   // Free energy integrand for NPOINTS state points
   vector<vector<double>> fxcIntegrand;
+  // Flags marking particular state points
+  bool isZeroCoupling;
+  bool isZeroDegeneracy;
   // Compute the free energy
   double computeFreeEnergy(const SIdx iStruct,
 			   const bool normalize) const ;
