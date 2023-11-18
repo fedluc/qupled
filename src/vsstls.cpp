@@ -370,53 +370,72 @@ double ThermoProp::computeFreeEnergy(const SIdx iStruct,
 }
 
 vector<double> ThermoProp::getFreeEnergyData() const {
-  const vector<double> rs = structProp.getCouplingParameters();
-  const vector<double> theta = structProp.getDegeneracyParameters();
-  const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
-  const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
-  const double rsThis = rs[SIdx::RS_THETA];
-  const double thetaThis = theta[SIdx::RS_THETA];
-  const double thetaThis2 = thetaThis * thetaThis;
+  const vector<double> rsVec = structProp.getCouplingParameters();
+  const vector<double> thetaVec = structProp.getDegeneracyParameters();
   // Free energy
   const double fxc = computeFreeEnergy(SIdx::RS_THETA, true);
-  const double fxcTup = computeFreeEnergy(SIdx::RS_THETA_UP, true);
-  const double fxcTDown = computeFreeEnergy(SIdx::RS_THETA_DOWN, true);
-  // Free energy derivatives
-  const double rs2fxc = computeFreeEnergy(SIdx::RS_THETA, false); 
-  const double rs2fxcUp = computeFreeEnergy(SIdx::RS_UP_THETA, false);
-  const double rs2fxcDown = computeFreeEnergy(SIdx::RS_DOWN_THETA, false);
-  const double rs2fxcUpTUp = computeFreeEnergy(SIdx::RS_UP_THETA_UP, false);
-  const double rs2fxcUpTDown = computeFreeEnergy(SIdx::RS_UP_THETA_DOWN, false);
-  const double rs2fxcDownTUp = computeFreeEnergy(SIdx::RS_DOWN_THETA_UP, false);
-  const double rs2fxcDownTDown = computeFreeEnergy(SIdx::RS_DOWN_THETA_DOWN, false);
-  const double dfxc_drs = (rs2fxcUp - rs2fxcDown) / (2.0 * drs * rsThis) - 2.0 * fxc;
-  const double d2fxc_drs = (rs2fxcUp - 2.0 * rs2fxc + rs2fxcDown) / (drs * drs)
-                            - 2.0 * fxc - 4.0 * dfxc_drs;
-  const double dfxc_dt = thetaThis * (fxcTup - fxcTDown) / (2.0 * dt);
-  const double d2fxc_dt = thetaThis2 * (fxcTup - 2.0 * fxc + fxcTDown) / (dt * dt);
-  double d2fxc_drsdt = (rs2fxcUpTUp - rs2fxcDownTUp
-			- rs2fxcUpTDown + rs2fxcDownTDown) / (4.0 * drs * dt);
-  d2fxc_drsdt *= thetaThis / rsThis;
-  d2fxc_drsdt -= 2.0 * dfxc_dt;
-  return vector<double>({fxc, dfxc_drs, d2fxc_drs, dfxc_dt, d2fxc_dt, d2fxc_drsdt});
+  // Free energy derivatives with respect to the coupling parameter
+  double fxcr;
+  double fxcrr;
+  {
+    const double rs = rsVec[SIdx::RS_THETA];
+    const double drs = rsVec[SIdx::RS_UP_THETA] - rsVec[SIdx::RS_THETA];
+    const double f0 = computeFreeEnergy(SIdx::RS_UP_THETA, false);
+    const double f1 = computeFreeEnergy(SIdx::RS_THETA, false);
+    const double f2 = computeFreeEnergy(SIdx::RS_DOWN_THETA, false);
+    fxcr = (f0 - f2) / (2.0 * drs * rs) - 2.0 * fxc;
+    fxcrr = (f0 - 2.0 * f1 + f2) / (drs * drs) - 2.0 * fxc - 4.0 * fxcr;
+  }
+  // Free energy derivatives with respect to the degeneracy parameter
+  double fxct;
+  double fxctt;
+  {
+    const double theta = thetaVec[SIdx::RS_THETA];
+    const double theta2 = theta * theta;
+    const double dt = thetaVec[SIdx::RS_THETA_UP] - thetaVec[SIdx::RS_THETA];
+    const double f0 = computeFreeEnergy(SIdx::RS_THETA_UP, true);
+    const double f1 = computeFreeEnergy(SIdx::RS_THETA_DOWN, true);
+    fxct = theta * (f0 - f1) / (2.0 * dt);
+    fxctt = theta2 * (f0 - 2.0 * fxc + f1) / (dt * dt);
+  }
+  // Free energy mixed derivatives
+  double fxcrt;
+  {
+    const double t_rs = thetaVec[SIdx::RS_THETA] / rsVec[SIdx::RS_THETA];
+    const double drs = rsVec[SIdx::RS_UP_THETA] - rsVec[SIdx::RS_THETA];
+    const double dt = thetaVec[SIdx::RS_THETA_UP] - thetaVec[SIdx::RS_THETA];
+    const double f0 = computeFreeEnergy(SIdx::RS_UP_THETA_UP, false);
+    const double f1 = computeFreeEnergy(SIdx::RS_UP_THETA_DOWN, false);
+    const double f2 = computeFreeEnergy(SIdx::RS_DOWN_THETA_UP, false);
+    const double f3 = computeFreeEnergy(SIdx::RS_DOWN_THETA_DOWN, false);
+    fxcrt = t_rs * (f0 - f1 - f2 + f3) / (4.0 * drs * dt) - 2.0 * fxct;
+  }
+  return vector<double>({fxc, fxcr, fxcrr, fxct, fxctt, fxcrt});
 }
 
 vector<double> ThermoProp::getInternalEnergyData() const {
-  const vector<double> rs = structProp.getCouplingParameters();
-  const vector<double> theta = structProp.getDegeneracyParameters();
-  const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
-  const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
   // Internal energy
-  const double uint = structProp.getInternalEnergy()[SIdx::RS_THETA];
-  const double uintTUp = structProp.getInternalEnergy()[SIdx::RS_THETA_UP];
-  const double uintTDown = structProp.getInternalEnergy()[SIdx::RS_THETA_DOWN];
-  // Internal energy derivative
-  const vector<double> rsUint = structProp.getFreeEnergyIntegrand();
-  const double& uUp = rsUint[SIdx::RS_UP_THETA];
-  const double& uDown = rsUint[SIdx::RS_DOWN_THETA];
-  const double du_drs = (uUp - uDown) / (2.0 * drs) - uint;
-  const double du_dt = theta[SIdx::RS_THETA] * (uintTUp - uintTDown) / (2.0 * dt);
-  return vector<double>({uint, du_drs, du_dt});
+  const double u = structProp.getInternalEnergy()[SIdx::RS_THETA];
+  // Internal energy derivative with respect to the coupling parameter
+  double ur;
+  {
+    const vector<double> rs = structProp.getCouplingParameters(); 
+    const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
+    const vector<double> rsu = structProp.getFreeEnergyIntegrand();
+    const double& u0 = rsu[SIdx::RS_UP_THETA];
+    const double& u1 = rsu[SIdx::RS_DOWN_THETA];
+    ur = (u0 - u1) / (2.0 * drs) - u;
+  }
+  // Internal energy derivative with respect to the degeneracy parameter
+  double ut;
+  {
+    const vector<double> theta = structProp.getDegeneracyParameters();
+    const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
+    const double u0 = structProp.getInternalEnergy()[SIdx::RS_THETA_UP];
+    const double u1 = structProp.getInternalEnergy()[SIdx::RS_THETA_DOWN];
+    ut = theta[SIdx::RS_THETA] * (u0 - u1) / (2.0 * dt);
+  }
+  return vector<double>({u, ur, ut});
 }
 
 // -----------------------------------------------------------------
@@ -463,24 +482,24 @@ double VSStls::computeAlpha() {
   // Free energy
   const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
   const double& fxc = freeEnergyData[0];
-  const double& dfxc_drs = freeEnergyData[1];
-  const double& d2fxc_drs = freeEnergyData[2];
-  const double& dfxc_dt = freeEnergyData[3];
-  const double& d2fxc_dt = freeEnergyData[4];
-  const double& d2fxc_drsdt = freeEnergyData[5];
+  const double& fxcr = freeEnergyData[1];
+  const double& fxcrr = freeEnergyData[2];
+  const double& fxct = freeEnergyData[3];
+  const double& fxctt = freeEnergyData[4];
+  const double& fxcrt = freeEnergyData[5];
   // Internal energy
   const vector<double> internalEnergyData = thermoProp.getInternalEnergyData();
   const double& uint = internalEnergyData[0];
-  const double& du_drs = internalEnergyData[1];
-  const double& du_dt = internalEnergyData[2];
+  const double& uintr = internalEnergyData[1];
+  const double& uintt = internalEnergyData[2];
   // Alpha
-  double numer = 2 * fxc - (1.0/6.0) * d2fxc_drs + (4.0/3.0) * dfxc_drs;
-  double denom =  uint + (1.0/3.0) * du_drs;
+  double numer = 2 * fxc - (1.0/6.0) * fxcrr + (4.0/3.0) * fxcr;
+  double denom =  uint + (1.0/3.0) * uintr;
   if (in.getDegeneracy() > 0.0) {
-    numer += - (2.0/3.0) * d2fxc_dt
-             - (2.0/3.0) * d2fxc_drsdt
-             + (1.0/3.0) * dfxc_dt;
-    denom += (2.0/3.0) * du_dt;
+    numer += - (2.0/3.0) * fxctt
+             - (2.0/3.0) * fxcrt
+             + (1.0/3.0) * fxct;
+    denom += (2.0/3.0) * uintt;
   }
   return numer/denom;
 }
