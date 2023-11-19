@@ -25,9 +25,7 @@ Python classes
 
 .. autoclass:: qupled.classic.VSStls
     :members:
-    :undoc-members:
     :show-inheritance:
-
               
 .. autoclass:: qupled.quantum.Qstls
     :members:

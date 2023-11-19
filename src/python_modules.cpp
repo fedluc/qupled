@@ -178,15 +178,6 @@ namespace StlsBaseWrapper {
 
 }
 
-namespace StlsWrapper {
-
-  bn::ndarray getRdf(const Stls &stls,
-		     const bn::ndarray &r){
-    return arrayWrapper::toNdArray(stls.getRdf(arrayWrapper::toVector(r)));
-  }
-
-}
-
 namespace VSStlsInputWrapper {
 
   bn::ndarray getAlphaGuess(VSStlsInput &in){
@@ -440,9 +431,10 @@ BOOST_PYTHON_MODULE(qupled)
 
   // Base class to solve classical schemes
   bp::class_<StlsBase>("StlsBase",
-		   bp::init<const StlsInput>())
+		       bp::init<const StlsInput>())
     .add_property("bf", StlsBaseWrapper::getBf)
     .add_property("idr", StlsBaseWrapper::getIdr)
+    .add_property("rdf", StlsBaseWrapper::getRdf)
     .add_property("recovery", &StlsBase::getRecoveryFileName)
     .add_property("sdr", StlsBaseWrapper::getSdr)
     .add_property("slfc", StlsBaseWrapper::getSlfc)
@@ -454,8 +446,7 @@ BOOST_PYTHON_MODULE(qupled)
   // Class to solve classical schemes
   bp::class_<Stls, bp::bases<StlsBase>>("Stls",
 					bp::init<const StlsInput>())
-    .def("compute", &Stls::compute)
-    .def("getRdf", StlsWrapper::getRdf);
+    .def("compute", &Stls::compute);
 
   // Class to solve the vs scheme
   bp::class_<VSStls, bp::bases<StlsBase>>("VSStls",
