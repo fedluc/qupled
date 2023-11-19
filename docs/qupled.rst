@@ -77,6 +77,7 @@ Exposed C++ methods
 .. autoclass:: qupled.qupled.VSStls
     :members:
     :undoc-members:
+    :show-inheritance:
        
 .. autoclass:: qupled.qupled.Qstls
     :members:

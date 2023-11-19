@@ -6,14 +6,12 @@ The following examples present some common use cases that show how to run qupled
 A simple STLS solution
 ----------------------
 
-This example sets up a simple STLS calculation plots some of the results 
-that are produced once the calculation are completed. In order not to clutter too 
-much the plot of the ideal density response we plot only the results for a few 
-matsubara frequencies. There are two ways to access the results of the calculation:
-Directly from the object used to perform the calculation and from the output file
-created at the end of the run. The example illustrates how the static structure factor
-can be accessed with both these methods, other quantities can be accessed in the same
-way.
+This example sets up a simple STLS calculation and  plots some of the results 
+that are produced once the calculation are completed. There are two ways to access
+the results of the calculation: Directly from the object used to perform the calculation
+or from the output file created at the end of the run. The example illustrates how
+the static structure factor can be accessed with both these methods. Other quantities
+can be accessed in the same way.
 
 .. literalinclude:: ../examples/solveStls.py
    :language: python
@@ -21,9 +19,9 @@ way.
 Solving the  classical IET schemes
 ----------------------------------
 
-This example shows how to solve two classical STLS-IET schemes. First the STLS-HNC 
-scheme is solved, then the properties of the solution object are changed and the 
-STLS-LCT scheme is sovled
+This example shows how to solve two classical STLS-IET schemes: the STLS-HNC and
+the STLS-LCT schemes. The schemes are solved one after the other by simply
+updating the properties of the solution object.
 
 .. literalinclude:: ../examples/solveStlsIet.py
    :language: python
@@ -31,11 +29,11 @@ STLS-LCT scheme is sovled
 Solving the classical VS-STLS scheme
 ------------------------------------
 
-This example shows how to solve the VS-STLS scheme for low coupling and zero
-temperature. First the scheme is solved up to rs = 0.2, then the results are
-plotted and then the calculation is resumed up to rs = 0.4. In the second
+This example shows how to solve the VS-STLS scheme at finite temperature.
+First the scheme is solved up to rs = 5.0, then the results are
+plotted and then the calculation is resumed up to rs = 10. In the second
 part of the calculation, the pre-computed value of the free energy integrand
-available from the VS-STLS solution at rs = 0.2 is used in order to speed
+available from the VS-STLS solution at rs = 5.0 is used in order to speed
 up the calculation
 
 .. literalinclude:: ../examples/solveVSStls.py
