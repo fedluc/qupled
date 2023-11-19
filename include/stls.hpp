@@ -10,6 +10,8 @@
 // Solver for the STLS-based schemes
 // -----------------------------------------------------------------
 
+#define EMPTY_STRING ""
+
 class StlsBase {
 
 protected:

@@ -6,42 +6,28 @@
 #include <iostream>
 #include "util.hpp"
 
-#define EMPTY_STRING ""
-
 class Input {
-  
+    
 protected:
 
-  // scheme for 2D integrals
-  string int2DScheme;
   // Accuracy for the integrals
   double intError;
+  // quantum coupling parameter
+  double rs;
+  // degeneracy parameter
+  double Theta;
+  // number of threads for parallel calculations
+  int nThreads;
   // type of theory
   bool isClassicTheory;
   bool isQuantumTheory;
-  // number of threads for parallel calculations
-  int nThreads;
-  // quantum coupling parameter
-  double rs;
+  // scheme for 2D integrals
+  string int2DScheme;
   // theory to be solved
   string theory;
-  // degeneracy parameter
-  double Theta;
-  // Initializers
-  double initCoupling(const double &rs_);
-  double initDegeneracy(const double &Theta_);
-  string initTheory(const string &theory_);
-  
+
 public:
 
-  //Constructor
-  Input(const double &rs_,
-	const double &Theta_,
-	const string &theory_) : int2DScheme("full"), intError(1.0e-5),
-				 isClassicTheory(false), isQuantumTheory(false),
-				 nThreads(1), rs(initCoupling(rs_)),
-				 theory(initTheory(theory_)),
-				 Theta(initDegeneracy(Theta_)) { ; };
   // Setters
   void setCoupling(const double &rs);
   void setDegeneracy(const double &Theta);
@@ -67,7 +53,7 @@ public:
 class StlsInput : public Input {
 
 public:
-  
+
   struct SlfcGuess {
     vector<double> wvg;
     vector<double> slfc;
@@ -84,32 +70,25 @@ protected:
   double dx;
   // Minimum error for convergence in the iterative procedure
   double errMin;
-  // Mapping between the quantum and classical state points for the IET-based schemes
-  string IETMapping;
-  // Initial guess for the chemical potential calculation
-  vector<double> muGuess;
+  // cutoff for the wave-vector grid
+  double xmax;
   // Number of matsubara frequencies
   int nl;
   // Maximum number of iterations
   int nIter;
   // Output frequency
   int outIter;
+  // Mapping between the quantum and classical state points for the IET-based schemes
+  string IETMapping;
   // Name of the file used to store the recovery data
   string recoveryFileName;
+  // Initial guess for the chemical potential calculation
+  vector<double> muGuess;
   // Initial guess
   SlfcGuess guess;
-  // cutoff for the wave-vector grid
-  double xmax;
   
 public:
   
-  //Constructor
-  StlsInput(const double &rs_,
-	    const double &Theta_,
-	    const string &theory_)
-    : Input(rs_, Theta_, theory_), aMix(1.0), dx(0.1), errMin(1e-5),
-      IETMapping("standard"), muGuess({-10, 10}), nl(128), nIter(1000),
-      outIter(10), recoveryFileName(EMPTY_STRING), xmax(10.0) { ; };
   // Setters
   void setChemicalPotentialGuess(const vector<double> &muGuess);
   void setErrMin(const double &errMin);
@@ -142,7 +121,7 @@ public:
 };
 
 
-class QstlsInput {
+class QstlsInput : public StlsInput {
 
 public:
   
@@ -159,17 +138,15 @@ public:
 
 private:
 
-  // Name of the files used to store the fixed component of the auxiliary density response (adr)
+  // Name of the file with the fixed component of the auxiliary density response (adr)
   string fixed;
+  // Name of the file with the fixed component of the adr for iet schemes
   string fixedIet;
   // Initial guess
   QstlsGuess guess;
 
 public:
 
-  //Constructor
-  QstlsInput()
-    : fixed(EMPTY_STRING), fixedIet(EMPTY_STRING) { ; };
   // Setters
   void setFixed(const string &fixed);
   void setFixedIet(const string &fixedIet);
@@ -188,7 +165,7 @@ public:
 class VSStlsInput : public StlsInput {
 
 public:
-  
+
   struct FreeEnergyIntegrand {
     vector<double> grid;
     vector<vector<double>> integrand;
@@ -197,11 +174,8 @@ public:
     }
   };
   
-  
 private:
 
-  // Name of the file with the thermodynamic properties
-  string thermoFileName;
   // Initial guess for the free parameter
   vector<double> alphaGuess;
   // Resolution of the coupling parameter grid
@@ -211,18 +185,12 @@ private:
   // Minimum error for the iterations used to define the free parameter
   double errMinAlpha;
   // Maximum number of iterations used to define the free parameter
-  double nIterAlpha;
+  int nIterAlpha;
   // Pre-computed free energy integrand
   FreeEnergyIntegrand fxcIntegrand;
   
 public:
 
-  // Constructor
-  VSStlsInput(const double &rs_,
-	      const double &Theta_,
-	      const string &theory_)
-    : StlsInput(rs_, Theta_, theory_), alphaGuess({0.5, 1.0}),
-      drs(0.01), dTheta(0.01), errMinAlpha(0.001), nIterAlpha(50) { ; };
   // Setters
   void setAlphaGuess(const vector<double>  &alphaGuess);
   void setCouplingResolution(const double &drs);
