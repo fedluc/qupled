@@ -42,43 +42,45 @@ class Stls():
                  cutoff : float = 10.0,
                  error : float = 1.0e-5,
                  mixing : float = 1.0,
-                 guess : qp.SlfcGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,
                  outputFrequency : int = 10,
                  recoveryFile : str = None,
                  resolution : float = 0.1 ):
         # Allowed theories
-        self.allowedTheories : list[str] = ["STLS"]
+        self.allowedTheories = ["STLS"]
         # Input object
-        self.inputs : qp.StlsInput = qp.StlsInput(coupling, degeneracy, "STLS") #: Inputs to solve the scheme.
+        self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
+        setInput(coupling, degeneracy, "STLS", chemicalPotential,
+                 cutoff, error, mixing, iterations, matsubara,
+                 outputFrequency, recoveryFile, resolution)
         # Scheme to solve and associated input and solution
-        self.scheme : qp.Stls = None #: Object that represents the scheme, performs the calculations and stores the solution.
-        self.schemeInputs : qp.StlsInput = None
+        self.scheme : qp.Stls = None
         # File to store output on disk
-        self.hdfFileName : str = None #: Name of the hdf output file.
-        # Optional parameters
-        self.setOptionalParameters(chemicalPotential, cutoff, error, mixing,
-                                   guess, iterations, matsubara,
-                                   outputFrequency, recoveryFile,
-                                   resolution);
+        self.hdfFileName : str = None
 
-    # Set values of optional parameters
-    def setOptionalParameters(self,
-                              chemicalPotential : list[float],
-                              cutoff : float,
-                              error : float,
-                              mixing : float,
-                              guess : qp.SlfcGuess,
-                              iterations : int,
-                              matsubara : int,
-                              outputFrequency : int,
-                              recoveryFile : str,
-                              resolution : float) -> None:
+    # Setup inputs object
+    def _setInputs(self,
+                   coupling : float,
+                   degeneracy : float,
+                   theory : str,
+                   chemicalPotential : list[float],
+                   cutoff : float,
+                   error : float,
+                   mixing : float,
+                   iterations : int,
+                   matsubara : int,
+                   outputFrequency : int,
+                   recoveryFile : str,
+                   resolution : float) -> None:
+        """ Sets up the content of :obj:`inputs` """
+        self.inputs.coupling = coupling
+        self.inputs.degeneracy = degeneracy
+        self.inputs.theory = theory
         self.inputs.chemicalPotential = chemicalPotential
         self.inputs.cutoff = cutoff
         self.inputs.error = error
-        if (guess is not None): self.inputs.guess = guess
+        # if (guess is not None): self.inputs.guess = guess
         self.inputs.mixing = mixing
         self.inputs.iterations = iterations
         self.inputs.matsubara = matsubara
@@ -87,7 +89,7 @@ class Stls():
         self.inputs.resolution = resolution
         
     # Check input before computing
-    def checkInputs(self) -> None:
+    def _checkInputs(self) -> None:
         """ Checks that the content of :obj:`inputs` is correct """
         if (self.inputs.theory not in self.allowedTheories):
             sys.exit("Invalid dielectric theory")
@@ -98,15 +100,14 @@ class Stls():
         to see which results are saved
         """
         self.checkInputs()
-        self.schemeInputs = self.inputs
-        self.scheme = qp.Stls(self.schemeInputs)
+        self.scheme = qp.Stls(self.inputs)
         status = self.scheme.compute()
         self.checkStatusAndClean(status)        
         self.setHdfFile()
         self.save()
 
     # Check that the dielectric scheme was solved without errors
-    def checkStatusAndClean(self, status : bool) -> None:
+    def _checkStatusAndClean(self, status : bool) -> None:
         """ Checks that the scheme was solved correctly and removes temporarary files generated at run-time
         
            Args:
@@ -119,13 +120,13 @@ class Stls():
             sys.exit("Error while solving the dielectric theory")
     
     # Save results to disk
-    def setHdfFile(self) -> None:
+    def _setHdfFile(self) -> None:
         """ Sets the name of the hdf file used to store the output """
-        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.schemeInputs.coupling,
-                                                         self.schemeInputs.degeneracy,
-                                                         self.schemeInputs.theory)
+        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
+                                                         self.inputs.degeneracy,
+                                                         self.inputs.theory)
     
-    def save(self) -> None:
+    def _save(self) -> None:
         """ Stores the results obtained by solving the scheme.
 
         The results are stored as pandas dataframes in an hdf file with the following keywords:
@@ -231,7 +232,7 @@ class Stls():
         if ("ssfHF" in toPlot):
             Plot.plot1D(wvg, self.scheme.ssfHF, xlabel, "Hartree-Fock static structure factor")
         
-    def plotIdr(self, matsubara : np.ndarray = None) -> None:
+    def _plotIdr(self, matsubara : np.ndarray = None) -> None:
         """ Plots the ideal density response.
         
         Args:  
@@ -244,7 +245,7 @@ class Stls():
                               "Wave vector", "Ideal density response",
                               matsubara)
         
-    def plotRdf(self, rdfGrid : np.ndarray = None) -> None:
+    def _plotRdf(self, rdfGrid : np.ndarray = None) -> None:
         """ Plot the radial distribution function.
         
         Args:  
@@ -293,31 +294,27 @@ class StlsIet(Stls):
                  error : float = 1.0e-5,
                  mapping : str = "standard",
                  mixing : float = 1.0,
-                 guess : qp.SlfcGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,
                  outputFrequency : int = 10,
                  recoveryFile : str = None,
                  resolution : float = 0.1,
                  scheme2DIntegrals : str = "full"):
-        # Call parent constructor
-        super().__init__(coupling, degeneracy,
-                         chemicalPotential, cutoff, error,
-                         mixing, guess, iterations,
-                         matsubara, outputFrequency,
-                         recoveryFile, resolution)
         # Allowed theories
-        self.allowedTheories = ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
-        # Set theory
-        self.inputs.theory = theory
-        self.checkInputs()
-        # File to store output on disk
-        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
-                                                         self.inputs.degeneracy,
-                                                         self.inputs.theory)
-        # Non-default inputs
+        self.allowedTheories : ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
+        # Input object
+        self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
+        super()._setInput(coupling, degeneracy, theory, chemicalPotential,
+                          cutoff, error, mixing, iterations, matsubara,
+                          outputFrequency, recoveryFile, resolution)
         self.inputs.iet = mapping
         self.inputs.int2DScheme = scheme2DIntegrals
+        self.checkInputs()
+        # Scheme to solve and associated input and solution
+        self.scheme : qp.Stls = None
+        self.schemeInputs : qp.StlsInput = None
+        # File to store output on disk
+        self.hdfFileName = None
             
     # Plot results
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
@@ -392,17 +389,10 @@ class VSStls(Stls):
         # Allowed theories
         self.allowedTheories : list[str] = ["VSSTLS"]
         # Input object
-        self.inputs : qp.VSStlsInput = qp.VSStlsInput(coupling, degeneracy, "VSSTLS") 
-        # Scheme to solve and associated input and solution
-        self.scheme : qp.VSStls = None
-        self.schemeInputs : qp.VSStlsInput = None
-        # File to store output on disk
-        self.hdfFileName : str = None #: Name of the hdf output file.
-        # Optional parameters
-        super().setOptionalParameters(chemicalPotential, cutoff, error, mixing,
-                                      None, iterations, matsubara,
-                                      outputFrequency, recoveryFile,
-                                      resolution);
+        self.inputs : qupled.qupled.VSStlsInput = qp.VSStlsInput()  #: Inputs to solve the scheme.
+        super()._setInput(coupling, degeneracy, "VSSTLS", chemicalPotential,
+                          cutoff, error, mixing, iterations, matsubara,
+                          outputFrequency, recoveryFile, resolution)
         self.inputs.alpha = alpha
         self.inputs.couplingResolution = couplingResolution
         self.inputs.degeneracyResolution = degeneracyResolution
@@ -410,6 +400,11 @@ class VSStls(Stls):
         self.inputs.iterationsAlpha = iterationsAlpha
         self.inputs.threads = threads
         self.inputs.intError = errorIntegrals
+        # Scheme to solve and associated input and solution
+        self.scheme : qp.VSStls = None
+        # File to store output on disk
+        self.hdfFileName = None
+
         
     # Compute
     def compute(self) -> None:
@@ -417,8 +412,7 @@ class VSStls(Stls):
         to see which results are saved
         """
         self.checkInputs()
-        self.schemeInputs = self.inputs
-        self.scheme = qp.VSStls(self.schemeInputs)
+        self.scheme = qp.VSStls(self.inputs)
         status = self.scheme.compute()
         self.checkStatusAndClean(status)        
         self.setHdfFile()

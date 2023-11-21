@@ -46,7 +46,6 @@ class Qstls(classic.Stls):
                  error : float = 1.0e-5,
                  fixed : str = None,
                  mixing : float = 1.0,
-                 guess : qp.SlfcGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,
                  outputFrequency : int = 10,
@@ -54,30 +53,19 @@ class Qstls(classic.Stls):
                  resolution : float = 0.1,
                  scheme2DIntegrals : str = "full",
                  threads : int = 1):
-        
-        # Call parent constructor
-        super().__init__(coupling, degeneracy,
-                         chemicalPotential, cutoff, error,
-                         mixing, None, iterations,
-                         matsubara, outputFrequency,
-                         recoveryFile, resolution)
         # Allowed theories
         self.allowedTheories = ["QSTLS"]
         # Set theory
-        self.inputs.theory = "QSTLS"
-        # Qstls inputs
-        self.qInputs : qp.QstlsInput = qp.QstlsInput() #: Inputs to solve the quantum schemes.
-        self.schemeqInputs = None;
-        self.checkInputs()
-        # File to store output on disk
-        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
-                                                         self.inputs.degeneracy,
-                                                         self.inputs.theory)
-        # Non-default inputs
-        if (fixed is not None): self.qInputs.fixed = fixed
-        if (guess is not None): self.qInputs.guess = guess
+        self.inputs : qupled.qupled.QstlsInput = qp.QstlsInput() #: Inputs to solve the scheme.
+        super()._setInput(coupling, degeneracy, "QSTLS", chemicalPotential,
+                          cutoff, error, mixing, iterations, matsubara,
+                          outputFrequency, recoveryFile, resolution)
         self.inputs.int2DScheme = scheme2DIntegrals
         self.inputs.threads = threads
+        if (fixed is not None): self.inputs.fixed = fixed
+        # if (guess is not None): self.inputs.guess = guess
+        # File to store output on disk
+        self.hdfFileName = None
 
     # Compute
     def compute(self) -> None:
@@ -86,9 +74,7 @@ class Qstls(classic.Stls):
         """
         self.checkInputs()
         self.unpackFixedAdrFiles()
-        self.schemeInputs = self.inputs
-        self.schemeqInputs = self.qInputs
-        self.scheme = qp.Qstls(self.schemeInputs, self.schemeqInputs)
+        self.scheme = qp.Qstls(self.inputs)
         status = self.scheme.compute()
         self.checkStatusAndClean(status)
         self.setHdfFile()
@@ -96,7 +82,7 @@ class Qstls(classic.Stls):
 
     # Unpack zip folder with fixed component of the auxiliary density response
     # This is only a hook to the corresponding method in QstlsIet
-    def unpackFixedAdrFiles(self) -> None:
+    def _unpackFixedAdrFiles(self) -> None:
         pass
     
     # Save results to disk
@@ -117,7 +103,7 @@ class Qstls(classic.Stls):
         super().plot(toPlot, matsubara, rdfGrid)
         if ("adr" in toPlot): self.plotAdr(matsubara)
 
-    def plotAdr(self, matsubara : list[int]) -> None:
+    def _plotAdr(self, matsubara : list[int]) -> None:
         """ Plots the auxiliary density response.
         
         Args:  
@@ -173,7 +159,6 @@ class QstlsIet(Qstls):
                  fixediet : str = None,
                  mapping : str = "standard",
                  mixing : float = 1.0,
-                 guess : qp.SlfcGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,
                  outputFrequency : int = 10,
@@ -185,27 +170,30 @@ class QstlsIet(Qstls):
         # Call parent constructor
         super().__init__(coupling, degeneracy,
                          chemicalPotential, cutoff, error,
-                         fixed, mixing, guess, iterations,
+                         fixed, mixing, iterations,
                          matsubara, outputFrequency,
                          recoveryFile, resolution)
         # Allowed theories
         self.allowedTheories = ["QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"]
         # Set theory
-        self.inputs.theory = theory
+        self.inputs : qupled.qupled.QstlsInput = qp.QstlsInput() #: Inputs to solve the scheme.
+        super()._setInput(coupling, degeneracy, theory, chemicalPotential,
+                          cutoff, error, mixing, iterations, matsubara,
+                          outputFrequency, recoveryFile, resolution)
+        self.inputs.int2DScheme = scheme2DIntegrals
+        self.inputs.threads = threads
+        if (fixediet is not None): self.inputs.fixediet = fixediet
+        self.inputs.iet = mapping
         self.checkInputs()
         # Temporary folder to store the unpacked files with the auxiliary density response
         self.fixediet = None
         self.tmpRunDir = None
         # File to store output on disk
-        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
-                                                           self.inputs.degeneracy,
-                                                           self.inputs.theory)
-        # Non-default inputs
-        if (fixediet is not None): self.qInputs.fixediet = fixediet
-        self.inputs.iet = mapping
+        self.hdfFileName = None
+
 
     # Unpack zip folder with fixed component of the auxiliary density response
-    def unpackFixedAdrFiles(self) -> None:
+    def _unpackFixedAdrFiles(self) -> None:
         """ Unpacks the zip file storing the fixed component of the auxiliary density response """
         if (self.qInputs.fixediet != ""):
             self.tmpRunDir = "qupled_tmp_run_directory"
@@ -214,7 +202,7 @@ class QstlsIet(Qstls):
             self.qInputs.fixediet = self.tmpRunDir
     
     # Check that the dielectric scheme was solved without errors
-    def checkStatusAndClean(self, status) -> None:
+    def _checkStatusAndClean(self, status) -> None:
         if (self.fixediet is not None):
             rmtree(self.tmpRunDir)
         if (status == 0):
@@ -244,9 +232,9 @@ class QstlsIet(Qstls):
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
         # Zip all files for the fixed component of the auxiliary density response
         if (self.schemeqInputs.fixediet == ""):
-            adrFileName = "adr_fixed_rs%5.3f_theta%5.3f_%s" % (self.schemeInputs.coupling,
-                                                               self.schemeInputs.degeneracy,
-                                                               self.schemeInputs.theory)
+            adrFileName = "adr_fixed_rs%5.3f_theta%5.3f_%s" % (self.inputs.coupling,
+                                                               self.inputs.degeneracy,
+                                                               self.inputs.theory)
             zipFile = zf.ZipFile(adrFileName + ".zip", "w")
             for adrFile in glob(adrFileName + "_wv*.bin"):
                 zipFile.write(adrFile)
