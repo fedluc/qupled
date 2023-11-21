@@ -27,7 +27,7 @@ vector<double> StlsBase::getSdr() const {
   for (size_t i=0; i<wvg.size(); ++i){
     const double x2 = wvg[i] * wvg[i];
     const double phi0 = idr(i,0);
-    sdr[i] = phi0/ (1.0 + fact/x2 * (1.0 - slfc[i]) * phi0);
+    sdr[i] *= phi0/ (1.0 + fact/x2 * (1.0 - slfc[i]) * phi0);
   }
   return sdr;
 }
