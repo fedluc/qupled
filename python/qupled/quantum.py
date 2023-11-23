@@ -16,7 +16,7 @@ class Qstls(classic.Stls):
 
     Class used to setup and solve the quantum QSTLS scheme as described by
     `Schweng and Bohm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_ 
-    This class inherits most of its methods and attributes from :obj:`~qupled.Static.Stls`
+    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Stls`
 
     Args:
         coupling: Coupling parameter.
@@ -69,7 +69,7 @@ class Qstls(classic.Stls):
 
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.Static.Qstls.save`
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.quantum.Qstls.save`
         to see which results are saved
         """
         self.checkInputs()
@@ -87,7 +87,7 @@ class Qstls(classic.Stls):
     
     # Save results to disk
     def save(self) -> None:
-        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Stls.save`
+        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
         by adding the option to save the auxiliary density response as a new dataframe in the hdf file. The
         auxiliary density response dataframe can be accessed as `adr`
         """
@@ -96,8 +96,8 @@ class Qstls(classic.Stls):
         
     # Plot results
     def plot(self, toPlot : list[str],  matsubara : np.ndarray = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`~qupled.Static.Stls.scheme`. Extends
-        :func:`~qupled.Static.Stls.plot` by adding the option to plot the auxiliary density
+        """ Plots the results obtained stored in :obj:`~qupled.classic.Stls.scheme`. Extends
+        :func:`~qupled.classic.Stls.plot` by adding the option to plot the auxiliary density
         response by passing `adr` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)
@@ -123,7 +123,7 @@ class QstlsIet(Qstls):
     Class used to setup and solve the classical STLS-IET scheme as described by
     `Tolias <https://pubs.aip.org/aip/jcp/article/158/14/141102/
     2877795/Quantum-version-of-the-integral-equation-theory>`_. This class inherits most of
-    its methods and attributes from :obj:`~qupled.Static.Qstls`
+    its methods and attributes from :obj:`~qupled.quantum.Qstls`
 
     Args:
         coupling: Coupling parameter.
@@ -221,7 +221,7 @@ class QstlsIet(Qstls):
         creating a zip file to group all the files produced at run-time and containing the fixed component of
         the auxiliary density response
 
-        Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Qstls.save`
+        Stores the results obtained by solving the scheme. Extends :func:`~qupled.quantum.Qstls.save`
         by adding two functionalities: (1) save the bridge function adder as a new dataframe in the hdf file. The
         bridge function adder dataframe can be accessed as `bf` (2) create a zip file to group all the files
         produced at run-time and containing the fixed component of the auxiliary density response for the
@@ -243,8 +243,8 @@ class QstlsIet(Qstls):
                 
     # Plot results        
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`~qupled.Static.Stls.scheme`. Extends 
-        :func:`~qupled.Static.Qstls.plot` by adding the option to plot the bridge function
+        """ Plots the results obtained stored in :obj:`~qupled.classic.Stls.scheme`. Extends 
+        :func:`~qupled.quantum.Qstls.plot` by adding the option to plot the bridge function
         adder by passing `bf` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)

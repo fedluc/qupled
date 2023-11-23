@@ -1,8 +1,7 @@
 # Placeholders used to document the c++ classes exposed with python::boost
 
 from __future__ import annotations
-import numpy as np
-        
+
 class StlsInput():
     """Class to handle the inputs related to the classical schemes"""
     def __init__(self):

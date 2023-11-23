@@ -96,7 +96,7 @@ class Stls():
 
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.Static.Stls.save`
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Stls.save`
         to see which results are saved
         """
         self.checkInputs()
@@ -212,9 +212,9 @@ class Stls():
                 (radial distribution function), sdr (static density response), slfc (static local field correction)
                 ssf (static structure factor) and ssfHF (Hartree-Fock static structure factor)  
             matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
-                (Default = None, see :func:`~qupled.Static.Stls.plotIdr`)  
+                (Default = None, see :func:`~qupled.classic.Stls.plotIdr`)  
             rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
-                distribution function is plotted (Default = None, see :func:`~qupled.Static.Stls.computeRdf`)
+                distribution function is plotted (Default = None, see :func:`~qupled.classic.Stls.computeRdf`)
         
         """
         wvg = self.scheme.wvg
@@ -265,7 +265,7 @@ class StlsIet(Stls):
     Class used to setup and solve the classical STLS-IET scheme as described by
     `Tanaka <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_ and by
     `Tolias and collaborators <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_.
-    This class inherits most of its methods and attributes from :obj:`~qupled.Static.Stls`
+    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Stls`
 
     Args:
         coupling: Coupling parameter.
@@ -318,8 +318,8 @@ class StlsIet(Stls):
             
     # Plot results
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`~qupled.Static.Stls.scheme`. Extends 
-        :func:`~qupled.Static.Stls.plot` by adding the option to plot the bridge function
+        """ Plots the results obtained stored in :obj:`~qupled.classic.Stls.scheme`. Extends 
+        :func:`~qupled.classic.Stls.plot` by adding the option to plot the bridge function
         adder by passing `bf` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)
@@ -328,7 +328,7 @@ class StlsIet(Stls):
         
     # Save results to disk
     def save(self) -> None:
-        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Stls.save`
+        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
         by adding the option to save the bridge function adder as a new dataframe in the hdf file. The
         bridge function adder dataframe can be accessed as `bf`
         """
@@ -343,7 +343,7 @@ class VSStls(Stls):
     Class used to setup and solve the classical VS-STLS scheme as described by
     `Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_ and by
     `Sjostrom and Dufty <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.88.115123>`_.
-    This class inherits most of its methods and attributes from :obj:`~qupled.Static.Stls`
+    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Stls`
 
     Args:
         coupling: Coupling parameter.
@@ -408,7 +408,7 @@ class VSStls(Stls):
         
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.Static.VSStls.save`
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.VSStls.save`
         to see which results are saved
         """
         self.checkInputs()
@@ -420,7 +420,7 @@ class VSStls(Stls):
 
     # Save results
     def save(self) -> None:
-        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Stls.save`
+        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
         by adding the option to save the free energy integrand and the corresponding coupling parameter grid
         as a new dataframe in the hdf file. The free energy integrand dataframe can be accessed as `fxci`
         and the corresponding coupling parameter grid data frame as `fxcGrid`
@@ -431,8 +431,8 @@ class VSStls(Stls):
 
     # Plot results        
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`~qupled.Static.VSStls.scheme`. Extends 
-        :func:`~qupled.Static.Stls.plot` by adding the option to plot the free energy
+        """ Plots the results obtained stored in :obj:`~qupled.classic.VSStls.scheme`. Extends 
+        :func:`~qupled.classic.Stls.plot` by adding the option to plot the free energy
         integrand by passing `fxci` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)
