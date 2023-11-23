@@ -57,9 +57,9 @@ class Qstls(classic.Stls):
         self.allowedTheories = ["QSTLS"]
         # Set theory
         self.inputs : qupled.qupled.QstlsInput = qp.QstlsInput() #: Inputs to solve the scheme.
-        super()._setInput(coupling, degeneracy, "QSTLS", chemicalPotential,
-                          cutoff, error, mixing, iterations, matsubara,
-                          outputFrequency, recoveryFile, resolution)
+        super()._setInputs(coupling, degeneracy, "QSTLS", chemicalPotential,
+                           cutoff, error, mixing, iterations, matsubara,
+                           outputFrequency, recoveryFile, resolution)
         self.inputs.int2DScheme = scheme2DIntegrals
         self.inputs.threads = threads
         if (fixed is not None): self.inputs.fixed = fixed
@@ -72,13 +72,13 @@ class Qstls(classic.Stls):
         """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.quantum.Qstls.save`
         to see which results are saved
         """
-        self.checkInputs()
-        self.unpackFixedAdrFiles()
+        self._checkInputs()
+        self._unpackFixedAdrFiles()
         self.scheme = qp.Qstls(self.inputs)
         status = self.scheme.compute()
-        self.checkStatusAndClean(status)
-        self.setHdfFile()
-        self.save()
+        self._checkStatusAndClean(status)
+        self._setHdfFile()
+        self._save()
 
     # Unpack zip folder with fixed component of the auxiliary density response
     # This is only a hook to the corresponding method in QstlsIet
@@ -86,12 +86,12 @@ class Qstls(classic.Stls):
         pass
     
     # Save results to disk
-    def save(self) -> None:
+    def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
         by adding the option to save the auxiliary density response as a new dataframe in the hdf file. The
         auxiliary density response dataframe can be accessed as `adr`
         """
-        super().save()
+        super()._save()
         pd.DataFrame(self.scheme.adr).to_hdf(self.hdfFileName, key="adr")
         
     # Plot results
@@ -101,7 +101,7 @@ class Qstls(classic.Stls):
         response by passing `adr` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)
-        if ("adr" in toPlot): self.plotAdr(matsubara)
+        if ("adr" in toPlot): self._plotAdr(matsubara)
 
     def _plotAdr(self, matsubara : list[int]) -> None:
         """ Plots the auxiliary density response.
@@ -177,14 +177,14 @@ class QstlsIet(Qstls):
         self.allowedTheories = ["QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"]
         # Set theory
         self.inputs : qupled.qupled.QstlsInput = qp.QstlsInput() #: Inputs to solve the scheme.
-        super()._setInput(coupling, degeneracy, theory, chemicalPotential,
-                          cutoff, error, mixing, iterations, matsubara,
-                          outputFrequency, recoveryFile, resolution)
+        super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
+                           cutoff, error, mixing, iterations, matsubara,
+                           outputFrequency, recoveryFile, resolution)
         self.inputs.int2DScheme = scheme2DIntegrals
         self.inputs.threads = threads
         if (fixediet is not None): self.inputs.fixediet = fixediet
         self.inputs.iet = mapping
-        self.checkInputs()
+        self._checkInputs()
         # Temporary folder to store the unpacked files with the auxiliary density response
         self.fixediet = None
         self.tmpRunDir = None
@@ -213,7 +213,7 @@ class QstlsIet(Qstls):
 
             
     # Save results to disk
-    def save(self) -> None:
+    def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. Extends the corresponding method in the parent class
         by:  
         adding the option to save the bridge function adder as a new dataframe in the hdf file which can be
@@ -228,7 +228,7 @@ class QstlsIet(Qstls):
         IET schemes
         
         """
-        super().save()
+        super()._save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
         # Zip all files for the fixed component of the auxiliary density response
         if (self.schemeqInputs.fixediet == ""):

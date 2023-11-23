@@ -51,11 +51,12 @@ class Stls():
         self.allowedTheories = ["STLS"]
         # Input object
         self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
-        setInput(coupling, degeneracy, "STLS", chemicalPotential,
-                 cutoff, error, mixing, iterations, matsubara,
-                 outputFrequency, recoveryFile, resolution)
+        self._setInputs(coupling, degeneracy, "STLS", chemicalPotential,
+                        cutoff, error, mixing, iterations, matsubara,
+                        outputFrequency, recoveryFile, resolution)
         # Scheme to solve and associated input and solution
         self.scheme : qp.Stls = None
+        self.solutionAvailable = False
         # File to store output on disk
         self.hdfFileName : str = None
 
@@ -87,6 +88,8 @@ class Stls():
         self.inputs.outputFrequency = outputFrequency
         if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
         self.inputs.resolution = resolution
+        self.inputs.intError = 1.0e-5
+        self.inputs.threads = 1
         
     # Check input before computing
     def _checkInputs(self) -> None:
@@ -99,13 +102,14 @@ class Stls():
         """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Stls.save`
         to see which results are saved
         """
-        self.checkInputs()
+        self._checkInputs()
         self.scheme = qp.Stls(self.inputs)
         status = self.scheme.compute()
-        self.checkStatusAndClean(status)        
-        self.setHdfFile()
-        self.save()
-
+        self._checkStatusAndClean(status)        
+        self._setHdfFile()
+        self._save()
+        self.solutionAvailable = True
+        
     # Check that the dielectric scheme was solved without errors
     def _checkStatusAndClean(self, status : bool) -> None:
         """ Checks that the scheme was solved correctly and removes temporarary files generated at run-time
@@ -156,13 +160,13 @@ class Stls():
         
         """
         pd.DataFrame({
-            "coupling" : self.schemeInputs.coupling,
-            "degeneracy" : self.schemeInputs.degeneracy,
-            "theory" : self.schemeInputs.theory,
-            "error" : self.schemeInputs.error,
-            "resolution" : self.schemeInputs.resolution,
-            "cutoff" : self.schemeInputs.cutoff,
-            "matsubara" : self.schemeInputs.matsubara
+            "coupling" : self.inputs.coupling,
+            "degeneracy" : self.inputs.degeneracy,
+            "theory" : self.inputs.theory,
+            "error" : self.inputs.error,
+            "resolution" : self.inputs.resolution,
+            "cutoff" : self.inputs.cutoff,
+            "matsubara" : self.inputs.matsubara
             }, index=["inputs"]).to_hdf(self.hdfFileName, key="inputs", mode="w")
         pd.DataFrame(self.scheme.idr).to_hdf(self.hdfFileName, key="idr")
         pd.DataFrame(self.scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
@@ -183,9 +187,9 @@ class Stls():
             The radial distribution function
         
         """
-        if (self.schemeInputs == None):
+        if (not self.solutionAvailable):
             sys.exit("No solution to compute the radial distribution function")
-        rdf = self.scheme.getRdf(rdfGrid)
+        rdf = self.scheme.rdf(rdfGrid)
         if (writeToHdf) :
             pd.DataFrame(rdfGrid).to_hdf(self.hdfFileName, key="rdfGrid", mode="r+")
             pd.DataFrame(rdf).to_hdf(self.hdfFileName, key="rdf", mode="r+")
@@ -199,9 +203,9 @@ class Stls():
             The internal energy
         
         """
-        if (self.schemeInputs == None):
+        if (not self.solutionAvailables):
             sys.exit("No solution to compute the internal energy")
-        return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.schemeInputs.coupling)
+        return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.inputs.coupling)
         
     # Plot results
     def plot(self, toPlot : list[str], matsubara : np.ndarray = None, rdfGrid : np.ndarray = None) -> None:
@@ -220,9 +224,9 @@ class Stls():
         wvg = self.scheme.wvg
         xlabel = "Wave vector"
         if ("idr" in toPlot):
-            self.plotIdr(matsubara)
+            self._plotIdr(matsubara)
         if ("rdf" in toPlot):
-            self.plotRdf(rdfGrid)
+            self._plotRdf(rdfGrid)
         if ("sdr" in toPlot):
             Plot.plot1D(wvg, self.scheme.sdr, xlabel, "Static density response")
         if ("slfc" in toPlot):
@@ -304,15 +308,14 @@ class StlsIet(Stls):
         self.allowedTheories : ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
         # Input object
         self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
-        super()._setInput(coupling, degeneracy, theory, chemicalPotential,
-                          cutoff, error, mixing, iterations, matsubara,
-                          outputFrequency, recoveryFile, resolution)
+        super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
+                           cutoff, error, mixing, iterations, matsubara,
+                           outputFrequency, recoveryFile, resolution)
         self.inputs.iet = mapping
         self.inputs.int2DScheme = scheme2DIntegrals
-        self.checkInputs()
+        self._checkInputs()
         # Scheme to solve and associated input and solution
         self.scheme : qp.Stls = None
-        self.schemeInputs : qp.StlsInput = None
         # File to store output on disk
         self.hdfFileName = None
             
@@ -327,12 +330,12 @@ class StlsIet(Stls):
             Plot.plot1D(self.scheme.wvg, self.scheme.bf, "Wave vector", "Bridge function adder")
         
     # Save results to disk
-    def save(self) -> None:
+    def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
         by adding the option to save the bridge function adder as a new dataframe in the hdf file. The
         bridge function adder dataframe can be accessed as `bf`
         """
-        super().save()
+        super()._save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
 
 
@@ -390,9 +393,9 @@ class VSStls(Stls):
         self.allowedTheories : list[str] = ["VSSTLS"]
         # Input object
         self.inputs : qupled.qupled.VSStlsInput = qp.VSStlsInput()  #: Inputs to solve the scheme.
-        super()._setInput(coupling, degeneracy, "VSSTLS", chemicalPotential,
-                          cutoff, error, mixing, iterations, matsubara,
-                          outputFrequency, recoveryFile, resolution)
+        super()._setInputs(coupling, degeneracy, "VSSTLS", chemicalPotential,
+                           cutoff, error, mixing, iterations, matsubara,
+                           outputFrequency, recoveryFile, resolution)
         self.inputs.alpha = alpha
         self.inputs.couplingResolution = couplingResolution
         self.inputs.degeneracyResolution = degeneracyResolution
@@ -411,21 +414,21 @@ class VSStls(Stls):
         """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.VSStls.save`
         to see which results are saved
         """
-        self.checkInputs()
+        self._checkInputs()
         self.scheme = qp.VSStls(self.inputs)
         status = self.scheme.compute()
-        self.checkStatusAndClean(status)        
-        self.setHdfFile()
-        self.save()
+        self._checkStatusAndClean(status)        
+        self._setHdfFile()
+        self._save()
 
     # Save results
-    def save(self) -> None:
+    def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
         by adding the option to save the free energy integrand and the corresponding coupling parameter grid
         as a new dataframe in the hdf file. The free energy integrand dataframe can be accessed as `fxci`
         and the corresponding coupling parameter grid data frame as `fxcGrid`
         """
-        super().save()
+        super()._save()
         pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
         pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
 

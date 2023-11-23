@@ -425,6 +425,20 @@ BOOST_PYTHON_MODULE(qupled)
 		  &QstlsInput::setFixedIet)
     .def("print", &QstlsInput::print)
     .def("isEqual", &QstlsInput::isEqual);
+
+  // Base class for all the schemes
+  bp::class_<StlsBase>("StlsBase",
+		       bp::init<const StlsInput>())
+    .def("rdf", StlsBaseWrapper::getRdf)
+    .add_property("bf", StlsBaseWrapper::getBf)
+    .add_property("idr", StlsBaseWrapper::getIdr)
+    .add_property("recovery", &StlsBase::getRecoveryFileName)
+    .add_property("sdr", StlsBaseWrapper::getSdr)
+    .add_property("slfc", StlsBaseWrapper::getSlfc)
+    .add_property("ssf", StlsBaseWrapper::getSsf)
+    .add_property("ssfHF", StlsBaseWrapper::getSsfHF)
+    .add_property("uInt", &StlsBase::getUInt)
+    .add_property("wvg", StlsBaseWrapper::getWvg);
   
   // Class to solve classical schemes
   bp::class_<Stls, bp::bases<StlsBase>>("Stls",
