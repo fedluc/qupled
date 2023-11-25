@@ -96,8 +96,8 @@ void Qstls::initialGuess() {
     return;
   }
   // From guess in input
-  if (qin.getGuess().wvg.size() > 0) {
-    const auto &guess = qin.getGuess();
+  if (in.getGuess().wvg.size() > 0) {
+    const auto &guess = in.getGuess();
     initialGuessSsf(guess.wvg, guess.ssf);
     if (useIet) { initialGuessAdr(guess.wvg, guess.adr); }
     return;
@@ -222,7 +222,7 @@ void Qstls::updateSolution(){
 
 void Qstls::computeAdrFixed() {
   // Check if it adrFixed can be loaded from input
-  readAdrFixedFile(adrFixed, qin.getFixed(), false);
+  readAdrFixedFile(adrFixed, in.getFixed(), false);
   if (adrFixed.size() > 0) { return; }
   // Compute from scratch
   cout << "Computing fixed component of the auxiliary density response: ";
@@ -389,8 +389,8 @@ void Qstls::getAdrFixedIetFileInfo() {
     string name = format<double,double>("adr_fixed_rs%.3f_theta%.3f_"
 					+ in.getTheory() + "_wv%.5f.bin",
 					in.getCoupling(), Theta, wvg[i]);
-    if (qin.getFixedIet() != EMPTY_STRING) {
-      std::filesystem::path fullPath = qin.getFixedIet();
+    if (in.getFixedIet() != EMPTY_STRING) {
+      std::filesystem::path fullPath = in.getFixedIet();
       fullPath /= name;
       name = fullPath.string();
     }

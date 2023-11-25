@@ -1,18 +1,16 @@
 The package
 ===========
 
-The package is written in both python and C++. :ref:`Python classes` can be
+The package is written in both Python and C++. Python can be
 used to setup, run, save and postprocess a dielectric scheme of choice. C++
-is used to perform the actual calculations involved in the solution of the scheme.
-The user should not worry about the details of the C++ code except for a few
-classes that are exposed via
-`python::boost <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
-and that are discussed in the section :ref:`Exposed C++ methods` 
+is used to perform the actual calculations involved in the solution of the schemes.
+Communication between Python and C++ is handled via
+`python::boost <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_.
+The following sections illustrate the classes used to solve classical and
+quantum schemes and the classes used to handle the inputs
 
-.. _Python classes:
-
-Python classes 
---------------
+Classic schemes
+---------------
 
 .. autoclass:: qupled.classic.Stls
     :members:
@@ -22,11 +20,14 @@ Python classes
     :members:
     :undoc-members:
     :show-inheritance:
-
+       
 .. autoclass:: qupled.classic.VSStls
     :members:
     :show-inheritance:
-              
+
+Quantum schemes
+---------------
+       
 .. autoclass:: qupled.quantum.Qstls
     :members:
     :show-inheritance:
@@ -34,13 +35,11 @@ Python classes
 .. autoclass:: qupled.quantum.QstlsIet
     :members:
     :show-inheritance:
+				
+Input
+-----
 
-.. _Exposed C++ methods:
-
-Exposed C++ methods
--------------------
-
-.. autoclass:: qupled.qupled.Input
+.. autoclass:: qupled.qupled.StlsInput
     :members:
     :undoc-members:
 
@@ -48,7 +47,7 @@ Exposed C++ methods
     :members:
     :undoc-members:
 
-.. autoclass:: qupled.qupled.StlsInput
+.. autoclass:: qupled.qupled.VSStlsInput
     :members:
     :undoc-members:
     :show-inheritance:
@@ -57,37 +56,11 @@ Exposed C++ methods
     :members:
     :undoc-members:
        
-.. autoclass:: qupled.qupled.VSStlsInput
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 .. autoclass:: qupled.qupled.QstlsGuess
     :members:
     :undoc-members:
-    
+
 .. autoclass:: qupled.qupled.QstlsInput
     :members:
     :undoc-members:
-    
-.. autoclass:: qupled.qupled.Stls
-    :members:
-    :undoc-members:
-
-.. autoclass:: qupled.qupled.VSStls
-    :members:
-    :undoc-members:
     :show-inheritance:
-       
-.. autoclass:: qupled.qupled.Qstls
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. automethod:: qupled.qupled.computeRdf
-
-.. automethod:: qupled.qupled.computeInternalEnergy
-
-.. automethod:: qupled.qupled.computeFreeEnergy
-
-				

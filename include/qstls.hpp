@@ -13,7 +13,7 @@ class Qstls : public Stls {
 private: 
 
   // Input data
-  const QstlsInput qin;
+  const QstlsInput in;
   // Auxiliary density response
   vecUtil::Vector2D adr;
   vecUtil::Vector2D adrOld;
@@ -69,9 +69,7 @@ private:
 public:
 
   // Constructor
-  Qstls(const StlsInput &in_,
-	const QstlsInput &qin_)
-    : Stls(in_), qin(qin_) { checkIet(); };
+  Qstls(const QstlsInput &in_) : Stls(in_), in(in_) { checkIet(); };
   // Compute qstls scheme
   int compute();
   // Getters

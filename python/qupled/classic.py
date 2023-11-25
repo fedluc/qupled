@@ -49,64 +49,69 @@ class Stls():
                  recoveryFile : str = None,
                  resolution : float = 0.1 ):
         # Allowed theories
-        self.allowedTheories : list[str] = ["STLS"]
+        self.allowedTheories = ["STLS"]
         # Input object
-        self.inputs : qp.StlsInput = qp.StlsInput(coupling, degeneracy, "STLS") #: Inputs to solve the scheme.
-        # Scheme to solve and associated input and solution
-        self.scheme : qp.Stls = None #: Object that represents the scheme, performs the calculations and stores the solution.
-        self.schemeInputs : qp.StlsInput = None
+        self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
+        self._setInputs(coupling, degeneracy, "STLS", chemicalPotential,
+                        cutoff, error, mixing, guess, iterations, matsubara,
+                        outputFrequency, recoveryFile, resolution)
+        # Scheme to solve
+        self.scheme : qp.Stls = None
         # File to store output on disk
-        self.hdfFileName : str = None #: Name of the hdf output file.
-        # Optional parameters
-        self.setOptionalParameters(chemicalPotential, cutoff, error, mixing,
-                                   guess, iterations, matsubara,
-                                   outputFrequency, recoveryFile,
-                                   resolution);
+        self.hdfFileName : str = None
 
-    # Set values of optional parameters
-    def setOptionalParameters(self,
-                              chemicalPotential : list[float],
-                              cutoff : float,
-                              error : float,
-                              mixing : float,
-                              guess : qp.SlfcGuess,
-                              iterations : int,
-                              matsubara : int,
-                              outputFrequency : int,
-                              recoveryFile : str,
-                              resolution : float) -> None:
+    # Setup inputs object
+    def _setInputs(self,
+                   coupling : float,
+                   degeneracy : float,
+                   theory : str,
+                   chemicalPotential : list[float],
+                   cutoff : float,
+                   error : float,
+                   mixing : float,
+                   guess : qp.SlfcGuess,
+                   iterations : int,
+                   matsubara : int,
+                   outputFrequency : int,
+                   recoveryFile : str,
+                   resolution : float) -> None:
+        """ Sets up the content of :obj:`inputs` """
+        self.inputs.coupling = coupling
+        self.inputs.degeneracy = degeneracy
+        self.inputs.theory = theory
         self.inputs.chemicalPotential = chemicalPotential
         self.inputs.cutoff = cutoff
         self.inputs.error = error
-        if (guess is not None): self.inputs.guess = guess
         self.inputs.mixing = mixing
+        if (guess is not None): self.inputs.guess = guess
         self.inputs.iterations = iterations
         self.inputs.matsubara = matsubara
         self.inputs.outputFrequency = outputFrequency
         if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
         self.inputs.resolution = resolution
+        self.inputs.intError = 1.0e-5
+        self.inputs.threads = 1
         
     # Check input before computing
-    def checkInputs(self) -> None:
+    def _checkInputs(self) -> None:
         """ Checks that the content of :obj:`inputs` is correct """
         if (self.inputs.theory not in self.allowedTheories):
             sys.exit("Invalid dielectric theory")
 
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.Static.Stls.save`
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Stls.save`
         to see which results are saved
         """
-        self.checkInputs()
-        self.schemeInputs = self.inputs
-        self.scheme = qp.Stls(self.schemeInputs)
+        self._checkInputs()
+        self.scheme = qp.Stls(self.inputs)
         status = self.scheme.compute()
-        self.checkStatusAndClean(status)        
-        self.setHdfFile()
-        self.save()
-
+        self._checkStatusAndClean(status)        
+        self._setHdfFile()
+        self._save()
+        
     # Check that the dielectric scheme was solved without errors
-    def checkStatusAndClean(self, status : bool) -> None:
+    def _checkStatusAndClean(self, status : bool) -> None:
         """ Checks that the scheme was solved correctly and removes temporarary files generated at run-time
         
            Args:
@@ -119,13 +124,13 @@ class Stls():
             sys.exit("Error while solving the dielectric theory")
     
     # Save results to disk
-    def setHdfFile(self) -> None:
+    def _setHdfFile(self) -> None:
         """ Sets the name of the hdf file used to store the output """
-        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.schemeInputs.coupling,
-                                                         self.schemeInputs.degeneracy,
-                                                         self.schemeInputs.theory)
+        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
+                                                         self.inputs.degeneracy,
+                                                         self.inputs.theory)
     
-    def save(self) -> None:
+    def _save(self) -> None:
         """ Stores the results obtained by solving the scheme.
 
         The results are stored as pandas dataframes in an hdf file with the following keywords:
@@ -154,14 +159,15 @@ class Stls():
         - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function 
         
         """
+        assert(self.scheme is not None)
         pd.DataFrame({
-            "coupling" : self.schemeInputs.coupling,
-            "degeneracy" : self.schemeInputs.degeneracy,
-            "theory" : self.schemeInputs.theory,
-            "error" : self.schemeInputs.error,
-            "resolution" : self.schemeInputs.resolution,
-            "cutoff" : self.schemeInputs.cutoff,
-            "matsubara" : self.schemeInputs.matsubara
+            "coupling" : self.inputs.coupling,
+            "degeneracy" : self.inputs.degeneracy,
+            "theory" : self.inputs.theory,
+            "error" : self.inputs.error,
+            "resolution" : self.inputs.resolution,
+            "cutoff" : self.inputs.cutoff,
+            "matsubara" : self.inputs.matsubara
             }, index=["inputs"]).to_hdf(self.hdfFileName, key="inputs", mode="w")
         pd.DataFrame(self.scheme.idr).to_hdf(self.hdfFileName, key="idr")
         pd.DataFrame(self.scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
@@ -182,9 +188,8 @@ class Stls():
             The radial distribution function
         
         """
-        if (self.schemeInputs == None):
-            sys.exit("No solution to compute the radial distribution function")
-        rdf = self.scheme.getRdf(rdfGrid)
+        self._checkSolution("compute the radial distribution function")
+        rdf = self.scheme.rdf(rdfGrid)
         if (writeToHdf) :
             pd.DataFrame(rdfGrid).to_hdf(self.hdfFileName, key="rdfGrid", mode="r+")
             pd.DataFrame(rdf).to_hdf(self.hdfFileName, key="rdf", mode="r+")
@@ -198,9 +203,8 @@ class Stls():
             The internal energy
         
         """
-        if (self.schemeInputs == None):
-            sys.exit("No solution to compute the internal energy")
-        return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.schemeInputs.coupling)
+        self._checkSolution("compute the internal energy")
+        return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.inputs.coupling)
         
     # Plot results
     def plot(self, toPlot : list[str], matsubara : np.ndarray = None, rdfGrid : np.ndarray = None) -> None:
@@ -211,17 +215,18 @@ class Stls():
                 (radial distribution function), sdr (static density response), slfc (static local field correction)
                 ssf (static structure factor) and ssfHF (Hartree-Fock static structure factor)  
             matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
-                (Default = None, see :func:`~qupled.Static.Stls.plotIdr`)  
+                (Default = None, see :func:`~qupled.classic.Stls.plotIdr`)  
             rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
-                distribution function is plotted (Default = None, see :func:`~qupled.Static.Stls.computeRdf`)
+                distribution function is plotted (Default = None, see :func:`~qupled.classic.Stls.computeRdf`)
         
         """
+        self._checkSolution("plot results")
         wvg = self.scheme.wvg
         xlabel = "Wave vector"
         if ("idr" in toPlot):
-            self.plotIdr(matsubara)
+            self._plotIdr(matsubara)
         if ("rdf" in toPlot):
-            self.plotRdf(rdfGrid)
+            self._plotRdf(rdfGrid)
         if ("sdr" in toPlot):
             Plot.plot1D(wvg, self.scheme.sdr, xlabel, "Static density response")
         if ("slfc" in toPlot):
@@ -230,21 +235,25 @@ class Stls():
             Plot.plot1D(wvg, self.scheme.ssf, xlabel, "Static structure factor")
         if ("ssfHF" in toPlot):
             Plot.plot1D(wvg, self.scheme.ssfHF, xlabel, "Hartree-Fock static structure factor")
-        
-    def plotIdr(self, matsubara : np.ndarray = None) -> None:
+
+    # Plot the ideal density response for a given set of matsubara frequencies
+    def _plotIdr(self, matsubara : np.ndarray = None) -> None:
         """ Plots the ideal density response.
         
         Args:  
-            matsubara:  A list of matsubara frequencies to plot. (Default =  all matsubara frequencies are plotted)
+            matsubara:  A list of matsubara frequencies to plot. (Default =  all matsubara frequencies
+        are plotted)
         
         """
+        assert(self.scheme is not None)
         if (self.inputs.degeneracy == 0) : return
         if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
         Plot.plot1DParametric(self.scheme.wvg, self.scheme.idr,
                               "Wave vector", "Ideal density response",
                               matsubara)
-        
-    def plotRdf(self, rdfGrid : np.ndarray = None) -> None:
+
+    # Plot the radial distribution function for a given grid
+    def _plotRdf(self, rdfGrid : np.ndarray = None) -> None:
         """ Plot the radial distribution function.
         
         Args:  
@@ -252,11 +261,22 @@ class Stls():
                 distribution function is plotted (Default = None, i.e.  numpy.arange(0.01, 10.0, 0.01)`)
           
         """
+        assert(self.scheme is not None)
         if (rdfGrid is None) : rdfGrid = np.arange(0.01, 10.0, 0.01)
         rdf = self.computeRdf(rdfGrid)
         Plot.plot1D(rdfGrid, rdf, "Inter-particle distance", "radial distribution function")
+
+    # Check if a solution is available to perform a given action
+    def _checkSolution(self, action : str) -> None:
+        """ Check if a solution is available to be used
         
-        
+        Args:  
+            action: Name of the action to be performed. Only used to print an error message if no solution is found
+          
+        """
+        if (self.scheme is None):
+            sys.exit("No solution to " + action)
+            
 class StlsIet(Stls):
 
     """Class to solve the STLS-IET schemes.
@@ -264,7 +284,7 @@ class StlsIet(Stls):
     Class used to setup and solve the classical STLS-IET scheme as described by
     `Tanaka <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_ and by
     `Tolias and collaborators <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_.
-    This class inherits most of its methods and attributes from :obj:`~qupled.Static.Stls`
+    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Stls`
 
     Args:
         coupling: Coupling parameter.
@@ -300,29 +320,25 @@ class StlsIet(Stls):
                  recoveryFile : str = None,
                  resolution : float = 0.1,
                  scheme2DIntegrals : str = "full"):
-        # Call parent constructor
-        super().__init__(coupling, degeneracy,
-                         chemicalPotential, cutoff, error,
-                         mixing, guess, iterations,
-                         matsubara, outputFrequency,
-                         recoveryFile, resolution)
         # Allowed theories
         self.allowedTheories = ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
-        # Set theory
-        self.inputs.theory = theory
-        self.checkInputs()
-        # File to store output on disk
-        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
-                                                         self.inputs.degeneracy,
-                                                         self.inputs.theory)
-        # Non-default inputs
+        # Input object
+        self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
+        super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
+                           cutoff, error, mixing, guess, iterations, matsubara,
+                           outputFrequency, recoveryFile, resolution)
         self.inputs.iet = mapping
         self.inputs.int2DScheme = scheme2DIntegrals
+        self._checkInputs()
+        # Scheme to solve
+        self.scheme : qp.Stls = None
+        # File to store output on disk
+        self.hdfFileName = None
             
     # Plot results
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`~qupled.Static.Stls.scheme`. Extends 
-        :func:`~qupled.Static.Stls.plot` by adding the option to plot the bridge function
+        """ Plots the results obtained stored in :obj:`~qupled.classic.Stls.scheme`. Extends 
+        :func:`~qupled.classic.Stls.plot` by adding the option to plot the bridge function
         adder by passing `bf` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)
@@ -330,12 +346,12 @@ class StlsIet(Stls):
             Plot.plot1D(self.scheme.wvg, self.scheme.bf, "Wave vector", "Bridge function adder")
         
     # Save results to disk
-    def save(self) -> None:
-        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Stls.save`
+    def _save(self) -> None:
+        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
         by adding the option to save the bridge function adder as a new dataframe in the hdf file. The
         bridge function adder dataframe can be accessed as `bf`
         """
-        super().save()
+        super()._save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
 
 
@@ -346,7 +362,7 @@ class VSStls(Stls):
     Class used to setup and solve the classical VS-STLS scheme as described by
     `Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_ and by
     `Sjostrom and Dufty <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.88.115123>`_.
-    This class inherits most of its methods and attributes from :obj:`~qupled.Static.Stls`
+    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Stls`
 
     Args:
         coupling: Coupling parameter.
@@ -392,17 +408,10 @@ class VSStls(Stls):
         # Allowed theories
         self.allowedTheories : list[str] = ["VSSTLS"]
         # Input object
-        self.inputs : qp.VSStlsInput = qp.VSStlsInput(coupling, degeneracy, "VSSTLS") 
-        # Scheme to solve and associated input and solution
-        self.scheme : qp.VSStls = None
-        self.schemeInputs : qp.VSStlsInput = None
-        # File to store output on disk
-        self.hdfFileName : str = None #: Name of the hdf output file.
-        # Optional parameters
-        super().setOptionalParameters(chemicalPotential, cutoff, error, mixing,
-                                      None, iterations, matsubara,
-                                      outputFrequency, recoveryFile,
-                                      resolution);
+        self.inputs : qupled.qupled.VSStlsInput = qp.VSStlsInput()  #: Inputs to solve the scheme.
+        super()._setInputs(coupling, degeneracy, "VSSTLS", chemicalPotential,
+                           cutoff, error, mixing, iterations, matsubara,
+                           outputFrequency, recoveryFile, resolution)
         self.inputs.alpha = alpha
         self.inputs.couplingResolution = couplingResolution
         self.inputs.degeneracyResolution = degeneracyResolution
@@ -410,35 +419,39 @@ class VSStls(Stls):
         self.inputs.iterationsAlpha = iterationsAlpha
         self.inputs.threads = threads
         self.inputs.intError = errorIntegrals
+        # Scheme to solve
+        self.scheme : qp.VSStls = None
+        # File to store output on disk
+        self.hdfFileName = None
+
         
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.Static.VSStls.save`
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.VSStls.save`
         to see which results are saved
         """
-        self.checkInputs()
-        self.schemeInputs = self.inputs
-        self.scheme = qp.VSStls(self.schemeInputs)
+        self._checkInputs()
+        self.scheme = qp.VSStls(self.inputs)
         status = self.scheme.compute()
-        self.checkStatusAndClean(status)        
-        self.setHdfFile()
-        self.save()
+        self._checkStatusAndClean(status)        
+        self._setHdfFile()
+        self._save()
 
     # Save results
-    def save(self) -> None:
-        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.Static.Stls.save`
+    def _save(self) -> None:
+        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
         by adding the option to save the free energy integrand and the corresponding coupling parameter grid
         as a new dataframe in the hdf file. The free energy integrand dataframe can be accessed as `fxci`
         and the corresponding coupling parameter grid data frame as `fxcGrid`
         """
-        super().save()
+        super()._save()
         pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
         pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
 
     # Plot results        
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`~qupled.Static.VSStls.scheme`. Extends 
-        :func:`~qupled.Static.Stls.plot` by adding the option to plot the free energy
+        """ Plots the results obtained stored in :obj:`~qupled.classic.VSStls.scheme`. Extends 
+        :func:`~qupled.classic.Stls.plot` by adding the option to plot the free energy
         integrand by passing `fxci` to toPlot
         """
         super().plot(toPlot, matsubara, rdfGrid)

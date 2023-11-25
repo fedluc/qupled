@@ -23,7 +23,7 @@ guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
 guess.ssf = pd.read_hdf(fileName, "ssf")[0].to_numpy()
 guess.adr = np.ascontiguousarray(pd.read_hdf(fileName, "adr").to_numpy())
 guess.matsubara = pd.read_hdf(fileName, "inputs")["matsubara"][0].tolist()
-qstls.qInputs.guess = guess
+qstls.inputs.guess = guess
 
 # Change the coupling parameter
 qstls.inputs.coupling = 20.0

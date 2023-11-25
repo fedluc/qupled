@@ -3,21 +3,21 @@
 
 // --- Input ---
 
-double Input::initCoupling(const double &rs_){
+void Input::setCoupling(const double &rs_){
   if (rs_ < 0) {
     throw runtime_error("The quantum coupling parameter can't be negative");
   }
-  return rs_;
+  this->rs = rs_;
 }
 
-double Input::initDegeneracy(const double &Theta_){
+void Input::setDegeneracy(const double &Theta_){
   if (Theta_ < 0.0) {
     throw runtime_error("The quantum degeneracy parameter can't be negative");
   }
-  return Theta_;
+  this->Theta = Theta_;
 }
 
-string Input::initTheory(const string &theory_){
+void Input::setTheory(const string &theory_){
   const vector<string> cTheories = {"STLS", "STLS-HNC",
 				    "STLS-IOI", "STLS-LCT",
 				    "VSSTLS"};
@@ -30,17 +30,8 @@ string Input::initTheory(const string &theory_){
   }
   // A theory can't both be classical and quantum at the same time
   assert(!isClassicTheory || !isQuantumTheory);
-  return theory_;
+  this->theory = theory_;
 }
-
-void Input::setCoupling(const double &rs){
-  this->rs = initCoupling(rs);
-}
-
-void Input::setDegeneracy(const double &Theta){
-  this->Theta = initDegeneracy(Theta);
-}
-
 
 void Input::setInt2DScheme(const string &int2DScheme){
   const vector<string> schemes = {"full", "segregated"};
@@ -63,10 +54,6 @@ void Input::setNThreads(const int &nThreads){
     throw runtime_error("The number of threads must be larger than zero");
   }
   this->nThreads = nThreads;
-}
-
-void Input::setTheory(const string &theory){
-  this->theory = initTheory(theory);
 }
 
 void Input::print() const {
@@ -227,15 +214,17 @@ void QstlsInput::setGuess(const QstlsGuess &guess){
 }
 
 void QstlsInput::print() const {
+  StlsInput::print();
   cout << "##### qSTLS-related input #####" << endl;
   cout << "File with fixed adr component = " << fixed  << endl;
   cout << "File with fixed adr component (iet) = " << fixedIet  << endl;
 }
 
 bool QstlsInput::isEqual(const QstlsInput &in) const {
-  return ( fixed == in.fixed &&
-	   fixedIet == in.fixedIet &&
-	   guess == guess );
+  return (StlsInput::isEqual(in) &&
+	  fixed == in.fixed &&
+	  fixedIet == in.fixedIet &&
+	  guess == in.guess );
 }
 
 // --- VSStlsInput ---
@@ -270,7 +259,7 @@ void VSStlsInput::setErrMinAlpha(const double &errMinAlpha){
 }
 
 void VSStlsInput::setNIterAlpha(const int &nIterAlpha){
-  if (nIter < 0) {
+  if (nIterAlpha < 0) {
     throw runtime_error("The maximum number of iterations can't be negative");
   }
   this->nIterAlpha = nIterAlpha; 

@@ -16,11 +16,12 @@ stls = qpc.VSStls(5.0,
                   iterations = 100,
                   threads = 9)
 
+
 # Compute
 stls.compute()
 
 # Plot the results
-stls.plot(["ssf", "slfc", "fxci"])
+stls.plot(["ssf", "slfc", "fxci", "sdr"])
 
 # Setup a new VSStls simulation for rs = 10.0 and use the free energy
 # integrand computed for rs = 5.0

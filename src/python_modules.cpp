@@ -318,8 +318,7 @@ BOOST_PYTHON_MODULE(qupled)
     .def(bp::vector_indexing_suite<std::vector<double>>());
   
   // Classes to manage the input
-  bp::class_<Input>("Input", 
-		    bp::init<const double, const double, const string>())
+  bp::class_<Input>("Input")
     .add_property("coupling",
 		  &Input::getCoupling,
 		  &Input::setCoupling)
@@ -345,8 +344,7 @@ BOOST_PYTHON_MODULE(qupled)
     .def_readwrite("wvg", &StlsInputWrapper::SlfcGuess::wvg)
     .def_readwrite("slfc", &StlsInputWrapper::SlfcGuess::slfc);
     
-  bp::class_<StlsInput, bp::bases<Input>>("StlsInput",
-					  bp::init<const double, const double, const string>())
+  bp::class_<StlsInput, bp::bases<Input>>("StlsInput")
     .add_property("chemicalPotential",
 		  StlsInputWrapper::getChemicalPotentialGuess,
 		  StlsInputWrapper::setChemicalPotentialGuess)
@@ -387,8 +385,7 @@ BOOST_PYTHON_MODULE(qupled)
     .def_readwrite("grid", &VSStlsInputWrapper::FreeEnergyIntegrand::grid)
     .def_readwrite("integrand", &VSStlsInputWrapper::FreeEnergyIntegrand::integrand);
   
-  bp::class_<VSStlsInput, bp::bases<StlsInput>>("VSStlsInput",
-						bp::init<const double, const double, const string>())
+  bp::class_<VSStlsInput, bp::bases<StlsInput>>("VSStlsInput")
     .add_property("errorAlpha",
 		  &VSStlsInput::getErrMinAlpha,
 		  &VSStlsInput::setErrMinAlpha)
@@ -416,7 +413,7 @@ BOOST_PYTHON_MODULE(qupled)
     .def_readwrite("adr", &QstlsInputWrapper::QstlsGuess::adr)
     .def_readwrite("matsubara", &QstlsInputWrapper::QstlsGuess::matsubara);
 
-  bp::class_<QstlsInput>("QstlsInput")
+  bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
     .add_property("guess",
 		  QstlsInputWrapper::getGuess,
 		  QstlsInputWrapper::setGuess)
@@ -429,12 +426,12 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &QstlsInput::print)
     .def("isEqual", &QstlsInput::isEqual);
 
-  // Base class to solve classical schemes
+  // Base class for all the schemes
   bp::class_<StlsBase>("StlsBase",
 		       bp::init<const StlsInput>())
+    .def("rdf", StlsBaseWrapper::getRdf)
     .add_property("bf", StlsBaseWrapper::getBf)
     .add_property("idr", StlsBaseWrapper::getIdr)
-    .add_property("rdf", StlsBaseWrapper::getRdf)
     .add_property("recovery", &StlsBase::getRecoveryFileName)
     .add_property("sdr", StlsBaseWrapper::getSdr)
     .add_property("slfc", StlsBaseWrapper::getSlfc)
@@ -448,7 +445,7 @@ BOOST_PYTHON_MODULE(qupled)
 					bp::init<const StlsInput>())
     .def("compute", &Stls::compute);
 
-  // Class to solve the vs scheme
+  // Class to solve the classical vs scheme
   bp::class_<VSStls, bp::bases<StlsBase>>("VSStls",
 					  bp::init<const VSStlsInput>())
     .def("compute", &VSStls::compute)
@@ -457,7 +454,7 @@ BOOST_PYTHON_MODULE(qupled)
   
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",
-				     bp::init<const StlsInput, const QstlsInput>())
+				     bp::init<const QstlsInput>())
     .def("compute", &Qstls::compute)
     .add_property("adr", QstlsWrapper::getAdr);
 
