@@ -65,14 +65,11 @@ for the quantum schemes.
 .. literalinclude:: ../examples/initialGuessStls.py
    :language: python
 
-Here it's important to notice how the initial guess in the quantum schemes is 
-assigned to the ``qInput`` field of the object used to describe the dielectric 
-scheme. 
 	   
 .. literalinclude:: ../examples/initialGuessQstls.py
    :language: python
 
-One should also pay attention to the fact the QSTLS-IET scheme 
+One should pay attention to the fact the QSTLS-IET scheme 
 requires to specify an initial guess for the auxiliary density response and the number 
 of matsubara frequencies corresponding to such initial guess. These specifications 
 can be skipped in all other schemes.
