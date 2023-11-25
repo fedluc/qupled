@@ -111,9 +111,9 @@ class Qstls(classic.Stls):
         
         """
         if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
-        Plot.plot1DParametric(self.scheme.wvg, self.scheme.adr,
-                              "Wave vector", "Auxiliary density response",
-                              matsubara)
+        classic.Plot.plot1DParametric(self.scheme.wvg, self.scheme.adr,
+                                      "Wave vector", "Auxiliary density response",
+                                      matsubara)
         
 
 class QstlsIet(Qstls):
@@ -195,11 +195,11 @@ class QstlsIet(Qstls):
     # Unpack zip folder with fixed component of the auxiliary density response
     def _unpackFixedAdrFiles(self) -> None:
         """ Unpacks the zip file storing the fixed component of the auxiliary density response """
-        if (self.qInputs.fixediet != ""):
+        if (self.inputs.fixediet != ""):
             self.tmpRunDir = "qupled_tmp_run_directory"
-            zipFile = zf.ZipFile(self.qInputs.fixediet, "r")
+            zipFile = zf.ZipFile(self.inputs.fixediet, "r")
             zipFile.extractall(self.tmpRunDir)
-            self.qInputs.fixediet = self.tmpRunDir
+            self.inputs.fixediet = self.tmpRunDir
     
     # Check that the dielectric scheme was solved without errors
     def _checkStatusAndClean(self, status) -> None:
@@ -231,7 +231,7 @@ class QstlsIet(Qstls):
         super()._save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
         # Zip all files for the fixed component of the auxiliary density response
-        if (self.schemeqInputs.fixediet == ""):
+        if (self.inputs.fixediet == ""):
             adrFileName = "adr_fixed_rs%5.3f_theta%5.3f_%s" % (self.inputs.coupling,
                                                                self.inputs.degeneracy,
                                                                self.inputs.theory)
@@ -249,5 +249,5 @@ class QstlsIet(Qstls):
         """
         super().plot(toPlot, matsubara, rdfGrid)
         if ("bf" in toPlot):
-            Plot.plot1D(self.scheme.wvg, self.scheme.bf, "Wave vector", "Bridge function adder")
+            classic.Plot.plot1D(self.scheme.wvg, self.scheme.bf, "Wave vector", "Bridge function adder")
         

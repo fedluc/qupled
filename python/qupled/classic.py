@@ -305,7 +305,7 @@ class StlsIet(Stls):
                  resolution : float = 0.1,
                  scheme2DIntegrals : str = "full"):
         # Allowed theories
-        self.allowedTheories : ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
+        self.allowedTheories = ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
         # Input object
         self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
         super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
