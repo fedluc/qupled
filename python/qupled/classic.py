@@ -42,6 +42,7 @@ class Stls():
                  cutoff : float = 10.0,
                  error : float = 1.0e-5,
                  mixing : float = 1.0,
+                 guess : qp.SlfcGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,
                  outputFrequency : int = 10,
@@ -52,11 +53,10 @@ class Stls():
         # Input object
         self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
         self._setInputs(coupling, degeneracy, "STLS", chemicalPotential,
-                        cutoff, error, mixing, iterations, matsubara,
+                        cutoff, error, mixing, guess, iterations, matsubara,
                         outputFrequency, recoveryFile, resolution)
-        # Scheme to solve and associated input and solution
+        # Scheme to solve
         self.scheme : qp.Stls = None
-        self.solutionAvailable = False
         # File to store output on disk
         self.hdfFileName : str = None
 
@@ -69,6 +69,7 @@ class Stls():
                    cutoff : float,
                    error : float,
                    mixing : float,
+                   guess : qp.SlfcGuess,
                    iterations : int,
                    matsubara : int,
                    outputFrequency : int,
@@ -81,8 +82,8 @@ class Stls():
         self.inputs.chemicalPotential = chemicalPotential
         self.inputs.cutoff = cutoff
         self.inputs.error = error
-        # if (guess is not None): self.inputs.guess = guess
         self.inputs.mixing = mixing
+        if (guess is not None): self.inputs.guess = guess
         self.inputs.iterations = iterations
         self.inputs.matsubara = matsubara
         self.inputs.outputFrequency = outputFrequency
@@ -108,7 +109,6 @@ class Stls():
         self._checkStatusAndClean(status)        
         self._setHdfFile()
         self._save()
-        self.solutionAvailable = True
         
     # Check that the dielectric scheme was solved without errors
     def _checkStatusAndClean(self, status : bool) -> None:
@@ -159,6 +159,7 @@ class Stls():
         - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function 
         
         """
+        assert(self.scheme is not None)
         pd.DataFrame({
             "coupling" : self.inputs.coupling,
             "degeneracy" : self.inputs.degeneracy,
@@ -187,8 +188,7 @@ class Stls():
             The radial distribution function
         
         """
-        if (not self.solutionAvailable):
-            sys.exit("No solution to compute the radial distribution function")
+        self._checkSolution("compute the radial distribution function")
         rdf = self.scheme.rdf(rdfGrid)
         if (writeToHdf) :
             pd.DataFrame(rdfGrid).to_hdf(self.hdfFileName, key="rdfGrid", mode="r+")
@@ -203,8 +203,7 @@ class Stls():
             The internal energy
         
         """
-        if (not self.solutionAvailables):
-            sys.exit("No solution to compute the internal energy")
+        self._checkSolution("compute the internal energy")
         return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.inputs.coupling)
         
     # Plot results
@@ -221,6 +220,7 @@ class Stls():
                 distribution function is plotted (Default = None, see :func:`~qupled.classic.Stls.computeRdf`)
         
         """
+        self._checkSolution("plot results")
         wvg = self.scheme.wvg
         xlabel = "Wave vector"
         if ("idr" in toPlot):
@@ -235,20 +235,24 @@ class Stls():
             Plot.plot1D(wvg, self.scheme.ssf, xlabel, "Static structure factor")
         if ("ssfHF" in toPlot):
             Plot.plot1D(wvg, self.scheme.ssfHF, xlabel, "Hartree-Fock static structure factor")
-        
+
+    # Plot the ideal density response for a given set of matsubara frequencies
     def _plotIdr(self, matsubara : np.ndarray = None) -> None:
         """ Plots the ideal density response.
         
         Args:  
-            matsubara:  A list of matsubara frequencies to plot. (Default =  all matsubara frequencies are plotted)
+            matsubara:  A list of matsubara frequencies to plot. (Default =  all matsubara frequencies
+        are plotted)
         
         """
+        assert(self.scheme is not None)
         if (self.inputs.degeneracy == 0) : return
         if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
         Plot.plot1DParametric(self.scheme.wvg, self.scheme.idr,
                               "Wave vector", "Ideal density response",
                               matsubara)
-        
+
+    # Plot the radial distribution function for a given grid
     def _plotRdf(self, rdfGrid : np.ndarray = None) -> None:
         """ Plot the radial distribution function.
         
@@ -257,11 +261,22 @@ class Stls():
                 distribution function is plotted (Default = None, i.e.  numpy.arange(0.01, 10.0, 0.01)`)
           
         """
+        assert(self.scheme is not None)
         if (rdfGrid is None) : rdfGrid = np.arange(0.01, 10.0, 0.01)
         rdf = self.computeRdf(rdfGrid)
         Plot.plot1D(rdfGrid, rdf, "Inter-particle distance", "radial distribution function")
+
+    # Check if a solution is available to perform a given action
+    def _checkSolution(self, action : str) -> None:
+        """ Check if a solution is available to be used
         
-        
+        Args:  
+            action: Name of the action to be performed. Only used to print an error message if no solution is found
+          
+        """
+        if (self.scheme is None):
+            sys.exit("No solution to " + action)
+            
 class StlsIet(Stls):
 
     """Class to solve the STLS-IET schemes.
@@ -298,6 +313,7 @@ class StlsIet(Stls):
                  error : float = 1.0e-5,
                  mapping : str = "standard",
                  mixing : float = 1.0,
+                 guess : qp.SlfcGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,
                  outputFrequency : int = 10,
@@ -309,12 +325,12 @@ class StlsIet(Stls):
         # Input object
         self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
         super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
-                           cutoff, error, mixing, iterations, matsubara,
+                           cutoff, error, mixing, guess, iterations, matsubara,
                            outputFrequency, recoveryFile, resolution)
         self.inputs.iet = mapping
         self.inputs.int2DScheme = scheme2DIntegrals
         self._checkInputs()
-        # Scheme to solve and associated input and solution
+        # Scheme to solve
         self.scheme : qp.Stls = None
         # File to store output on disk
         self.hdfFileName = None
@@ -403,7 +419,7 @@ class VSStls(Stls):
         self.inputs.iterationsAlpha = iterationsAlpha
         self.inputs.threads = threads
         self.inputs.intError = errorIntegrals
-        # Scheme to solve and associated input and solution
+        # Scheme to solve
         self.scheme : qp.VSStls = None
         # File to store output on disk
         self.hdfFileName = None

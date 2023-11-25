@@ -103,3 +103,32 @@ class QstlsInput(StlsInput):
         """ name of the zip file storing the fixed components of the auxiliary density
 	response in the QSTLS-IET schemes. Note: Whenever possible, it
 	is a good idea to set this property when solving the QSTLS-IET schemes """
+
+
+class SlfcGuess():
+    """Class used to define an initial guess for the classical schemes (STLS, STLS-IET)"""
+    def __init__(self):
+        self.wvg : np.ndarray = None
+        """ The wave-vector grid """
+        self.slfc : np.ndarray = None
+        """ The static local field correction """
+
+class QstlsGuess():
+    """Class used to define an initial guess for the quantum schemes (QSTLS, QSTLS-IET)"""
+    def __init__(self):
+        self.wvg : np.ndarray = None
+        """ The wave-vector grid """
+        self.ssf : np.ndarray = None
+        """ The static structure factor """
+        self.adr : np.ndarray = None
+        """ The auxiliary density response """
+        self.matsubara : int = None
+        """ The number of matsubara frequencies """
+        
+class FreeEnergyIntegrand():
+    """Class used to store the precomputed values of the free energy integrand for the VS-STLS scheme"""
+    def __init__(self):
+        self.grid : np.ndarray = None
+        """ The coupling parameter grid used to compute the free energy """
+        self.integrand : np.ndarray = None
+        """ The free energy integrand for various coupling parameter values """

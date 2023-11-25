@@ -27,7 +27,7 @@ class Qstls(classic.Stls):
         fixed: The name of the file storing the fixed component of the auxiliary density response.
                if no name is given the fixed component if computed from scratch
         mixing: Mixing parameter for iterative solution, defaults to 1.0.  
-        guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
+        guess:  Initial guess for the iterative solution, defaults to None, i.e. ssf from stls solution.
         iterations: Maximum number of iterations, defaults to 1000.
         matsubara: Number of matsubara frequencies, defaults to 128.
         outputFrequency: Frequency used to print the recovery files, defaults to 10.
@@ -46,6 +46,7 @@ class Qstls(classic.Stls):
                  error : float = 1.0e-5,
                  fixed : str = None,
                  mixing : float = 1.0,
+                 guess : qp.QstlsGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,
                  outputFrequency : int = 10,
@@ -57,16 +58,39 @@ class Qstls(classic.Stls):
         self.allowedTheories = ["QSTLS"]
         # Set theory
         self.inputs : qupled.qupled.QstlsInput = qp.QstlsInput() #: Inputs to solve the scheme.
-        super()._setInputs(coupling, degeneracy, "QSTLS", chemicalPotential,
-                           cutoff, error, mixing, iterations, matsubara,
-                           outputFrequency, recoveryFile, resolution)
-        self.inputs.int2DScheme = scheme2DIntegrals
-        self.inputs.threads = threads
-        if (fixed is not None): self.inputs.fixed = fixed
-        # if (guess is not None): self.inputs.guess = guess
+        self._setInputs(coupling, degeneracy, "QSTLS", chemicalPotential, cutoff,
+                        error, fixed, mixing, guess, iterations, matsubara,
+                        outputFrequency, recoveryFile, resolution, scheme2DIntegrals,
+                        threads)
         # File to store output on disk
         self.hdfFileName = None
 
+    # Setup inputs object
+    def _setInputs(self,
+                   coupling : float,
+                   degeneracy : float,
+                   theory : str,
+                   chemicalPotential : list[float],
+                   cutoff : float,
+                   error : float,
+                   fixed : str,
+                   mixing : float,
+                   guess : qp.QstlsGuess,
+                   iterations : int,
+                   matsubara : int,
+                   outputFrequency : int,
+                   recoveryFile : str,
+                   resolution : float,
+                   scheme2DIntegrals : str,
+                   threads : int) -> None:
+        super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
+                           cutoff, error, mixing, None, iterations, matsubara,
+                           outputFrequency, recoveryFile, resolution)
+        self.inputs.int2DScheme = scheme2DIntegrals
+        self.inputs.threads = threads
+        if (guess is not None): self.inputs.guess = guess
+        if (fixed is not None): self.inputs.fixed = fixed
+        
     # Compute
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.quantum.Qstls.save`
@@ -103,6 +127,7 @@ class Qstls(classic.Stls):
         super().plot(toPlot, matsubara, rdfGrid)
         if ("adr" in toPlot): self._plotAdr(matsubara)
 
+    # plot the auxiliary density response
     def _plotAdr(self, matsubara : list[int]) -> None:
         """ Plots the auxiliary density response.
         
@@ -110,6 +135,7 @@ class Qstls(classic.Stls):
             matsubara:  A list of matsubara frequencies to plot. (Default =  all matsubara frequencies are plotted)
         
         """
+        assert(self.scheme is not None)
         if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
         classic.Plot.plot1DParametric(self.scheme.wvg, self.scheme.adr,
                                       "Wave vector", "Auxiliary density response",
@@ -138,7 +164,7 @@ class QstlsIet(Qstls):
                   is computed from scratch.
         mapping: Classical to quantum mapping. See :func:`~qupled.qupled.StlsInput.iet`
         mixing: Mixing parameter for iterative solution, defaults to 1.0.  
-        guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
+        guess:  Initial guess for the iterative solution, defaults to None, i.e. ssf from stls solution.
         iterations: Maximum number of iterations, defaults to 1000.
         matsubara: Number of matsubara frequencies, defaults to 128.
         outputFrequency: Frequency used to print the recovery files, defaults to 10.
@@ -159,6 +185,7 @@ class QstlsIet(Qstls):
                  fixediet : str = None,
                  mapping : str = "standard",
                  mixing : float = 1.0,
+                 guess : qp.QstlsGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,
                  outputFrequency : int = 10,
@@ -166,22 +193,14 @@ class QstlsIet(Qstls):
                  resolution : float = 0.1,
                  scheme2DIntegrals : str = "full",
                  threads : int = 1):
-        
-        # Call parent constructor
-        super().__init__(coupling, degeneracy,
-                         chemicalPotential, cutoff, error,
-                         fixed, mixing, iterations,
-                         matsubara, outputFrequency,
-                         recoveryFile, resolution)
         # Allowed theories
         self.allowedTheories = ["QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"]
         # Set theory
         self.inputs : qupled.qupled.QstlsInput = qp.QstlsInput() #: Inputs to solve the scheme.
-        super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
-                           cutoff, error, mixing, iterations, matsubara,
-                           outputFrequency, recoveryFile, resolution)
-        self.inputs.int2DScheme = scheme2DIntegrals
-        self.inputs.threads = threads
+        self._setInputs(coupling, degeneracy, theory, chemicalPotential, cutoff,
+                        error, fixed, mixing, guess, iterations, matsubara,
+                        outputFrequency, recoveryFile, resolution, scheme2DIntegrals,
+                        threads)
         if (fixediet is not None): self.inputs.fixediet = fixediet
         self.inputs.iet = mapping
         self._checkInputs()

@@ -5,7 +5,7 @@ import qupled.quantum as qpq
 
 # Define a Qstls object to solve the QSTLS scheme
 qstls = qpq.Qstls(10.0, 1.0,
-                  mixing = 0.5,
+                  mixing = 0.4,
                   resolution = 0.1,
                   cutoff = 10,
                   matsubara = 16,
@@ -19,10 +19,10 @@ guess = qp.QstlsGuess()
 fileName = "rs10.000_theta1.000_QSTLS.h5"
 guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
 guess.ssf = pd.read_hdf(fileName, "ssf")[0].to_numpy()
-qstls.qInputs.guess = guess
+qstls.inputs.guess = guess
 
 # Change the coupling parameter
-qstls.inputs.coupling = 30.0
+qstls.inputs.coupling = 10.0
 
 # Solve the scheme again with the new initial guess and coupling parameter
 qstls.compute()
