@@ -175,7 +175,19 @@ class Stls():
         pd.DataFrame(self.scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
         pd.DataFrame(self.scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
         pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
-        
+
+    # Set the initial guess from a dataframe produced in output
+    def setGuess(self, fileName : str) -> None:
+        """ Constructs an initial guess object by extracting the information from an output file.
+
+        Args:
+            fileName : name of the file used to extract the information for the initial guess.
+        """
+        guess = qp.SlfcGuess()
+        guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
+        guess.slfc = pd.read_hdf(fileName, "slfc")[0].to_numpy()
+        self.inputs.guess = guess
+    
     # Compute radial distribution function
     def computeRdf(self, rdfGrid : np.ndarray, writeToHdf : bool = True) -> np.array:
         """ Computes the radial distribution function from the data stored in :obj:`scheme`.
@@ -276,7 +288,7 @@ class Stls():
         """
         if (self.scheme is None):
             sys.exit("No solution to " + action)
-            
+
 class StlsIet(Stls):
 
     """Class to solve the STLS-IET schemes.
@@ -410,7 +422,7 @@ class VSStls(Stls):
         # Input object
         self.inputs : qupled.qupled.VSStlsInput = qp.VSStlsInput()  #: Inputs to solve the scheme.
         super()._setInputs(coupling, degeneracy, "VSSTLS", chemicalPotential,
-                           cutoff, error, mixing, iterations, matsubara,
+                           cutoff, error, mixing, None, iterations, matsubara,
                            outputFrequency, recoveryFile, resolution)
         self.inputs.alpha = alpha
         self.inputs.couplingResolution = couplingResolution
@@ -448,6 +460,18 @@ class VSStls(Stls):
         pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
         pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
 
+    # Set the free energy integrand from a dataframe produced in output
+    def setFreeEnergyIntegrand(self, fileName : str) -> None:
+        """ Constructs the free energy integrand by extracting the information from an output file.
+
+        Args:
+            fileName : name of the file used to extract the information for the free energy integrand.
+        """
+        fxci = qp.FreeEnergyIntegrand()
+        fxci.grid = pd.read_hdf(fileName, "fxcGrid")[0].to_numpy()
+        fxci.integrand = np.ascontiguousarray(pd.read_hdf(fileName, "fxci").to_numpy());
+        self.inputs.freeEnergyIntegrand = fxci
+        
     # Plot results        
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
         """ Plots the results obtained stored in :obj:`~qupled.classic.VSStls.scheme`. Extends 

@@ -13,14 +13,10 @@ stls = qpc.Stls(10.0,
 stls.compute()
 
 # Create a custom initial guess from the output files of the previous run
-guess = qp.SlfcGuess()
-fileName = "rs10.000_theta1.000_STLS.h5"
-guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
-guess.slfc = pd.read_hdf(fileName, "slfc")[0].to_numpy()
-stls.inputs.guess = guess
+stls.setGuess("rs10.000_theta1.000_STLS.h5")
 
 # Change the coupling parameter
-stls.inputs.coupling = 30.0
+stls.inputs.coupling = 10.0
 
 # Solve the scheme again with the new initial guess and coupling parameter
 stls.compute()

@@ -15,11 +15,7 @@ qstls = qpq.Qstls(10.0, 1.0,
 qstls.compute()
 
 # Create a custom initial guess from the output files of the previous run
-guess = qp.QstlsGuess()
-fileName = "rs10.000_theta1.000_QSTLS.h5"
-guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
-guess.ssf = pd.read_hdf(fileName, "ssf")[0].to_numpy()
-qstls.inputs.guess = guess
+qstls.setGuess("rs10.000_theta1.000_QSTLS.h5")
 
 # Change the coupling parameter
 qstls.inputs.coupling = 10.0

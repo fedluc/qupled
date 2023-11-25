@@ -117,6 +117,13 @@ class Qstls(classic.Stls):
         """
         super()._save()
         pd.DataFrame(self.scheme.adr).to_hdf(self.hdfFileName, key="adr")
+
+    # Set the initial guess from a dataframe produced in output
+    def setGuess(self, fileName : str) -> None:
+        guess = qp.QstlsGuess()
+        guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
+        guess.ssf = pd.read_hdf(fileName, "ssf")[0].to_numpy()
+        self.inputs.guess = guess
         
     # Plot results
     def plot(self, toPlot : list[str],  matsubara : np.ndarray = None, rdfGrid : np.ndarray= None) -> None:
@@ -259,7 +266,15 @@ class QstlsIet(Qstls):
                 zipFile.write(adrFile)
                 os.remove(adrFile)
 
-                
+    # Set the initial guess from a dataframe produced in output
+    def setGuess(self, fileName : str) -> None:
+        guess = qp.QstlsGuess()
+        guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
+        guess.ssf = pd.read_hdf(fileName, "ssf")[0].to_numpy()
+        guess.adr = np.ascontiguousarray(pd.read_hdf(fileName, "adr").to_numpy())
+        guess.matsubara = pd.read_hdf(fileName, "inputs")["matsubara"][0].tolist()
+        self.inputs.guess = guess
+        
     # Plot results        
     def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
         """ Plots the results obtained stored in :obj:`~qupled.classic.Stls.scheme`. Extends 

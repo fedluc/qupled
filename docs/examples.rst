@@ -65,14 +65,16 @@ for the quantum schemes.
 .. literalinclude:: ../examples/initialGuessStls.py
    :language: python
 
-	   
+In the following example we solve the QSTLS scheme twice and the second time we
+specify the initial guess as the solution obtained from the first solution. Having
+provided a nearly exact initial guess the scheme converges in a single iteration.
+	      
 .. literalinclude:: ../examples/initialGuessQstls.py
    :language: python
 
-One should pay attention to the fact the QSTLS-IET scheme 
-requires to specify an initial guess for the auxiliary density response and the number 
-of matsubara frequencies corresponding to such initial guess. These specifications 
-can be skipped in all other schemes.
+The QSTLS-IET scheme  requires to specify an initial guess for the auxiliary density
+response and the number of matsubara frequencies corresponding to such initial guess.
+These specifications can be skipped in all other schemes.
 
 .. literalinclude:: ../examples/initialGuessQstlsIet.py
    :language: python

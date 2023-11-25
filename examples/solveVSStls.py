@@ -27,11 +27,7 @@ stls.plot(["ssf", "slfc", "fxci", "sdr"])
 # integrand computed for rs = 5.0
 stls.inputs.coupling = 10.0
 stls.inputs.alpha = [0.5, 0.7]
-fxci = qp.FreeEnergyIntegrand()
-fileName = "rs5.000_theta1.000_VSSTLS.h5"
-fxci.grid = pd.read_hdf(fileName, "fxcGrid")[0].to_numpy()
-fxci.integrand = np.ascontiguousarray(pd.read_hdf(fileName, "fxci").to_numpy());
-stls.inputs.freeEnergyIntegrand = fxci
+stls.setFreeEnergyIntegrand("rs5.000_theta1.000_VSSTLS.h5")
 
 # Compute
 stls.compute()
