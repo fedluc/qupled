@@ -5,6 +5,7 @@
 #include "stls.hpp"
 #include "qstls.hpp"
 #include "vsstls.hpp"
+#include "ESA.hpp"
 
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
@@ -405,7 +406,8 @@ BOOST_PYTHON_MODULE(qupled)
 		  VSStlsInputWrapper::getFreeEnergyIntegrand,
 		  VSStlsInputWrapper::setFreeEnergyIntegrand)
     .def("print", &VSStlsInput::print)
-    .def("isEqual", &VSStlsInput::isEqual);
+    .def("isEqual", &VSStlsInput::isEqual)
+    .def_readwrite("ThetaDeriv", &VSStlsInput::ThetaDeriv);
   
   bp::class_<QstlsInputWrapper::QstlsGuess>("QstlsGuess")
     .def_readwrite("wvg", &QstlsInputWrapper::QstlsGuess::wvg)
@@ -446,12 +448,17 @@ BOOST_PYTHON_MODULE(qupled)
     .def("compute", &Stls::compute);
 
   // Class to solve the classical vs scheme
-  bp::class_<VSStls, bp::bases<StlsBase>>("VSStls",
+  bp::class_<VSStls, bp::bases<StlsBase>>("VSStls", 
 					  bp::init<const VSStlsInput>())
     .def("compute", &VSStls::compute)
     .add_property("freeEnergyIntegrand", VSStlsWrapper::getFreeEnergyIntegrand)
     .add_property("freeEnergyGrid", VSStlsWrapper::getFreeEnergyGrid);
-  
+
+  // Class to solve the classical ESA scheme
+  bp::class_<ESA, bp::bases<StlsBase>>("ESA",
+            bp::init<const StlsInput>())
+     .def("compute", &ESA::compute);
+
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",
 				     bp::init<const QstlsInput>())

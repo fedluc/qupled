@@ -100,7 +100,7 @@ class Stls():
 
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Stls.save`
+        """ Solves the scheme and saves the results to an hdf file. See the method :func:`~qupled.classic.Stls.save`
         to see which results are saved
         """
         self._checkInputs()
@@ -395,6 +395,7 @@ class VSStls(Stls):
         iterationsAlpha: Maximum number of iterations for the free parameter, defaults to 50
         errorIntegrals: Accuracy (as a relative error) for the integral computations, defaults to 1.0-5
         threads: number of OMP threads for parallel calculations, defualts to 1
+        ThetaDeriv: Bool value to include (True) or not (False) the theta derivative in both SLFC and free parameter calculations, defaults to True.
     """
     
     # Constructor
@@ -416,7 +417,8 @@ class VSStls(Stls):
                  errorAlpha : float = 1.0e-3,
                  iterationsAlpha : int = 50,
                  errorIntegrals : float = 1.0e-5,
-                 threads : int = 1):
+                 threads : int = 1,
+                 ThetaDeriv : bool = True):
         # Allowed theories
         self.allowedTheories : list[str] = ["VSSTLS"]
         # Input object
@@ -431,6 +433,7 @@ class VSStls(Stls):
         self.inputs.iterationsAlpha = iterationsAlpha
         self.inputs.threads = threads
         self.inputs.intError = errorIntegrals
+        self.inputs.ThetaDeriv = ThetaDeriv
         # Scheme to solve
         self.scheme : qp.VSStls = None
         # File to store output on disk
@@ -481,7 +484,68 @@ class VSStls(Stls):
         super().plot(toPlot, matsubara, rdfGrid)
         if ("fxci" in toPlot):
             Plot.plot1D(self.scheme.freeEnergyGrid, self.scheme.freeEnergyIntegrand[1,:], "Coupling parameter", "Free energy integrand")
+
+class ESA(Stls):
+    """ Class to solve the hybrid ESA (Effective Static Approximation) scheme.
+
+    Class used to setup and solve the classical ESA scheme as described by
+    `Tobias Dornheim, Zhandos A. Moldabekov, and Panagiotis Tolias <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`
+    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Stls`
+
+    Args:
+        coupling: Coupling parameter.
+        degeneracy: Degeneracy parameter.  
+        chemicalPotential: Initial guess for the chemical potential, defaults to [-100.0, 100.0].
+        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
+        matsubara: Number of matsubara frequencies, defaults to 128.
+        outputFrequency: Frequency used to print the recovery files, defaults to 10.
+        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+    """
+
+    # Constructor
+    def __init__(self,
+                 coupling: float,
+                 degeneracy: float,
+                 chemicalPotential: list[float] = [-100.0, 100.0],
+                 cutoff: float = 10.0,
+                 matsubara: int = 128,
+                 outputFrequency: int = 10,
+                 resolution: float = 0.1):
+        # Allowed theories
+        self.allowedTheories : list[str] = ["ESA"]
+        # Input object
+        self.inputs : qupled.qupled.StlsInput = qp.StlsInput()  #: Inputs to solve the scheme.
+
+        # Define default values for the redundant STLS class parameters
+        default_error = 1.0e-5
+        default_mixing = 1.0
+        default_guess = None
+        default_iterations = 100
+        default_recoveryFile = None
+
+        # Call the superclass constructor with all necessary parameters
+        super()._setInputs(coupling, degeneracy, "ESA", chemicalPotential,
+                           cutoff, default_error, default_mixing, default_guess,
+                           default_iterations, matsubara, outputFrequency,
+                           default_recoveryFile, resolution)
+        # Scheme to solve
+        self.scheme : qp.ESA = None
+        # File to store output on disk
+        self.hdfFileName = None
+
         
+    # Compute
+    def compute(self) -> None:
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Stls.save`
+        to see which results are saved
+        """
+        self._checkInputs()
+        self.scheme = qp.ESA(self.inputs)
+        status = self.scheme.compute()
+        self._checkStatusAndClean(status)  
+        self._setHdfFile()    
+        self._save()
+
 class Hdf():
 
     """ Class to manipulate the hdf files produced when a scheme is solved """
@@ -585,7 +649,7 @@ class Plot():
         plt.plot(x, y, "b")
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        plt.show()        
+        plt.show()       
     
     # One dimensional plots with one parameter"
     def plot1DParametric(x, y, xlabel, ylabel, parameters):

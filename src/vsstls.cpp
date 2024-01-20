@@ -1,5 +1,7 @@
 #include <omp.h>
 #include "vsstls.hpp"
+#include <sstream>
+#include <iomanip>
 
 using namespace numUtil;
 using namespace vecUtil;
@@ -91,6 +93,7 @@ void StlsCSR::computeSlfc() {
   const double a_dx = alpha/(6.0 * dx);
   const double a_dt = alpha * theta / (3.0 * dTheta);
   const size_t nx = wvg.size();
+  const bool InclThetaDiv = in.ThetaDeriv;
   // Wave-vector derivative
   slfc[0] -= a_dx * wvg[0] * getDerivative(slfcStls, 0, FORWARD);
   for (size_t i = 1; i < nx - 1; ++i) {
@@ -104,11 +107,12 @@ void StlsCSR::computeSlfc() {
     }
   }
   // Degeneracy parameter contribution
+  if (InclThetaDiv) {
   if (theta > 0.0) {
     for (size_t i = 0; i < nx; ++i) {
       slfc[i] -= a_dt * getDerivative(slfcStls[i], thetaUp[i], thetaDown[i], dTypeTheta);
     }
-  }
+  }}
 }
 
 double StlsCSR::getInternalEnergy() const {
@@ -461,11 +465,24 @@ void VSStls::doIterations() {
   auto func = [this](double alphaTmp)->double{return alphaDifference(alphaTmp);};
   SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
   rsol.solve(func, in.getAlphaGuess());
-  if (!rsol.success()) {
-    throw runtime_error("VSStls: the root solver did not converge to the desired accuracy.");
-  }
+  const double& theta = in.getDegeneracy(); 
+  // if (!rsol.success()) {
+  //   throw runtime_error("VSStls: the root solver did not converge to the desired accuracy.");
+  // }
   alpha = rsol.getSolution();
-  if (verbose) { cout << "Free parameter = " << alpha << endl; }
+  // std::ostringstream filename_stream;
+  // filename_stream << "/home/fotios/examples/alpha_" << std::fixed << std::setprecision(3) << theta << ".txt";
+  // std::string filename = filename_stream.str();
+
+  // std::ofstream file(filename, std::ios::app); // Open file in append mode
+
+  //   if (file.is_open()) {
+  //       file << alpha << std::endl;
+  //   } else {
+  //       std::cout << "Unable to open file" << std::endl;
+  //     }
+
+  // if (verbose) { cout << "Free parameter = " << alpha << endl; }
   updateSolution();
 }
 
@@ -479,6 +496,7 @@ double VSStls::alphaDifference(const double& alphaTmp) {
 double VSStls::computeAlpha() {
   // Compute the free energy integrand
   thermoProp.compute(in);
+  const bool InclThetaDiv = in.ThetaDeriv;
   // Free energy
   const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
   const double& fxc = freeEnergyData[0];
@@ -495,12 +513,13 @@ double VSStls::computeAlpha() {
   // Alpha
   double numer = 2 * fxc - (1.0/6.0) * fxcrr + (4.0/3.0) * fxcr;
   double denom =  uint + (1.0/3.0) * uintr;
+  if (InclThetaDiv) {
   if (in.getDegeneracy() > 0.0) {
     numer += - (2.0/3.0) * fxctt
              - (2.0/3.0) * fxcrt
              + (1.0/3.0) * fxct;
     denom += (2.0/3.0) * uintt;
-  }
+  }}
   return numer/denom;
 }
 

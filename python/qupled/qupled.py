@@ -87,6 +87,8 @@ class VSStlsInput(StlsInput):
         """ Maximum number of iterations to determine the free parameter """
         self.freeEnergyIntegrand : qupled.FreeEnergyIntegrand = None
         """ Pre-computed free energy integrand """
+        self.ThetaDeriv : bool = None
+        """ Variable to enforce the degeneracy parameter derivatives """
 
         
 class QstlsInput(StlsInput):

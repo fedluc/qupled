@@ -14,4 +14,3 @@ add_subdirectory(src)
 # Install
 install(DIRECTORY ${QUPLED_OUTPUT_DIR}
 	DESTINATION ${QUPLED_INSTALL_DIR})
-
