@@ -50,7 +50,39 @@ public:
   
 };
 
-class StlsInput : public Input {
+class RpaInput : public Input {
+  
+protected:
+
+  // Wave-vector grid resolution
+  double dx;
+  // cutoff for the wave-vector grid
+  double xmax;
+  // Number of matsubara frequencies
+  int nl;
+  // Initial guess for the chemical potential calculation
+  vector<double> muGuess;
+  
+public:
+  
+  // Setters
+  void setChemicalPotentialGuess(const vector<double> &muGuess);
+  void setNMatsubara(const int &nMatsubara);
+  void setWaveVectorGridRes(const double &waveVectorGridRes);
+  void setWaveVectorGridCutoff(const double  &waveVectorGridCutoff);
+  // Getters
+  vector<double> getChemicalPotentialGuess() const { return muGuess; }
+  int getNMatsubara() const { return nl; }
+  double getWaveVectorGridRes() const { return dx; }
+  double getWaveVectorGridCutoff() const { return xmax; }
+  // Print content of the data structure
+  void print() const;
+  // Compare two StlsInput objects
+  bool isEqual(const RpaInput &in) const;
+  
+};
+
+class StlsInput : public RpaInput {
 
 public:
 
@@ -66,14 +98,8 @@ protected:
 
   // Mixing parameter for the iterative procedure
   double aMix;
-  // Wave-vector grid resolution
-  double dx;
   // Minimum error for convergence in the iterative procedure
   double errMin;
-  // cutoff for the wave-vector grid
-  double xmax;
-  // Number of matsubara frequencies
-  int nl;
   // Maximum number of iterations
   int nIter;
   // Output frequency
@@ -82,37 +108,27 @@ protected:
   string IETMapping;
   // Name of the file used to store the recovery data
   string recoveryFileName;
-  // Initial guess for the chemical potential calculation
-  vector<double> muGuess;
   // Initial guess
   SlfcGuess guess;
   
 public:
   
   // Setters
-  void setChemicalPotentialGuess(const vector<double> &muGuess);
   void setErrMin(const double &errMin);
   void setMixingParameter(const double  &aMix);
   void setIETMapping(const string &IETMapping);
-  void setNMatsubara(const int &nMatsubara);
   void setNIter(const int &nIter);
   void setOutIter(const int &outIter);
   void setRecoveryFileName(const string &recoveryFileName);
   void setGuess(const SlfcGuess &guess);
-  void setWaveVectorGridRes(const double &waveVectorGridRes);
-  void setWaveVectorGridCutoff(const double  &waveVectorGridCutoff);
   // Getters
-  vector<double> getChemicalPotentialGuess() const { return muGuess; }
   double getErrMin() const { return errMin; }
   string getIETMapping() const { return IETMapping; }
   double getMixingParameter() const { return aMix; }
-  int getNMatsubara() const { return nl; }
   int getNIter() const { return nIter; }
   int getOutIter() const { return outIter; }
   string getRecoveryFileName() const { return recoveryFileName; }
   SlfcGuess getGuess() const { return guess; }
-  double getWaveVectorGridRes() const { return dx; }
-  double getWaveVectorGridCutoff() const { return xmax; }
   // Print content of the data structure
   void print() const;
   // Compare two StlsInput objects

@@ -18,6 +18,7 @@ Python3_add_library(qupled MODULE
 		    numerics.cpp
 		    python_modules.cpp
 		    qstls.cpp
+		    rpa.cpp
 		    stls.cpp
 		    util.cpp
 		    vsstls.cpp)

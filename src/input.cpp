@@ -18,9 +18,9 @@ void Input::setDegeneracy(const double &Theta_){
 }
 
 void Input::setTheory(const string &theory_){
-  const vector<string> cTheories = {"STLS", "STLS-HNC",
-				    "STLS-IOI", "STLS-LCT",
-				    "VSSTLS"};
+  const vector<string> cTheories = {"RPA", "STLS",
+				    "STLS-HNC", "STLS-IOI",
+				    "STLS-LCT", "VSSTLS"};
   const vector<string> qTheories = {"QSTLS", "QSTLS-HNC",
 				    "QSTLS-IOI", "QSTLS-LCT"};
   isClassicTheory = count(cTheories.begin(), cTheories.end(), theory_) != 0;
@@ -73,14 +73,56 @@ bool Input::isEqual(const Input &in) const {
 	   Theta == in.Theta ); 
 }
 
-// --- StlsInput ---
+// --- RpaInput ---
 
-void StlsInput::setChemicalPotentialGuess(const vector<double> &muGuess){
+void RpaInput::setChemicalPotentialGuess(const vector<double> &muGuess){
   if (muGuess.size() != 2 || muGuess[0] >= muGuess[1]) {
     throw runtime_error("Invalid guess for chemical potential calculation");
   }
   this->muGuess = muGuess;
 }
+
+void RpaInput::setNMatsubara(const int &nl){
+  if (nl < 0) {
+    throw runtime_error("The number of matsubara frequencies can't be negative");
+  }
+  this->nl = nl;
+}
+
+void RpaInput::setWaveVectorGridRes(const double &dx){
+  if (dx <= 0.0) {
+    throw runtime_error("The wave-vector grid resolution must be larger than zero");
+  }
+  this->dx = dx;
+}
+
+void RpaInput::setWaveVectorGridCutoff(const double &xmax){
+  if (xmax <= 0.0) {
+    throw runtime_error("The wave-vector grid cutoff must be larger than zero");
+  }
+  if (xmax < dx) {
+    throw runtime_error("The wave-vector grid cutoff must be larger than the resolution");
+  }
+  this->xmax = xmax;
+}
+
+void RpaInput::print() const {
+  Input::print();
+  cout << "Guess for chemical potential = " << muGuess.at(0) << "," << muGuess.at(1) << endl;
+  cout << "Number of Matsubara frequencies = " << nl << endl;
+  cout << "Wave-vector resolution = " << dx << endl;
+  cout << "Wave-vector cutoff = " << xmax << endl;
+}
+
+bool RpaInput::isEqual(const RpaInput &in) const {
+  return ( Input::isEqual(in) &&
+	   dx == in.dx && 
+	   muGuess == in.muGuess &&
+	   nl == in.nl &&
+	   xmax == in.xmax );
+}
+
+// --- StlsInput ---
 
 void StlsInput::setErrMin(const double &errMin){
   if (errMin <= 0.0) {
@@ -94,13 +136,6 @@ void StlsInput::setMixingParameter(const double &aMix){
     throw runtime_error("The mixing parameter must be a number between zero and one");
   }
   this->aMix = aMix;
-}
-
-void StlsInput::setNMatsubara(const int &nl){
-  if (nl < 0) {
-    throw runtime_error("The number of matsubara frequencies can't be negative");
-  }
-  this->nl = nl;
 }
 
 void StlsInput::setNIter(const int &nIter){
@@ -139,50 +174,24 @@ void StlsInput::setGuess(const SlfcGuess &guess){
   this->guess = guess;
 }
 
-void StlsInput::setWaveVectorGridRes(const double &dx){
-  if (dx <= 0.0) {
-    throw runtime_error("The wave-vector grid resolution must be larger than zero");
-  }
-  this->dx = dx;
-}
-
-void StlsInput::setWaveVectorGridCutoff(const double &xmax){
-  if (xmax <= 0.0) {
-    throw runtime_error("The wave-vector grid cutoff must be larger than zero");
-  }
-  if (xmax < dx) {
-    throw runtime_error("The wave-vector grid cutoff must be larger than the resolution");
-  }
-  this->xmax = xmax;
-}
-
 void StlsInput::print() const {
   Input::print();
-  cout << "##### STLS-related input #####" << endl;
-  cout << "Guess for chemical potential = " << muGuess.at(0) << "," << muGuess.at(1) << endl;
   cout << "Iet mapping scheme" << IETMapping << endl;
   cout << "Maximum number of iterations = " << nIter << endl;
   cout << "Minimum error for convergence = " << errMin << endl;
   cout << "Mixing parameter = " << aMix << endl;
-  cout << "Number of Matsubara frequencies = " << nl << endl;
   cout << "Output frequency = " << outIter << endl;
   cout << "File with recovery data = " << recoveryFileName << endl;
-  cout << "Wave-vector resolution = " << dx << endl;
-  cout << "Wave-vector cutoff = " << xmax << endl;
 }
 
 bool StlsInput::isEqual(const StlsInput &in) const {
   return ( Input::isEqual(in) &&
 	   aMix == in.aMix && 
-	   dx == in.dx && 
 	   errMin == in.errMin &&
 	   IETMapping == in.IETMapping &&
-	   muGuess == in.muGuess &&
-	   nl == in.nl &&
 	   nIter == in.nIter &&
 	   outIter == in.outIter &&
 	   recoveryFileName == in.recoveryFileName &&
-	   xmax == in.xmax &&
 	   guess == in.guess);
 }
 
@@ -215,7 +224,6 @@ void QstlsInput::setGuess(const QstlsGuess &guess){
 
 void QstlsInput::print() const {
   StlsInput::print();
-  cout << "##### qSTLS-related input #####" << endl;
   cout << "File with fixed adr component = " << fixed  << endl;
   cout << "File with fixed adr component (iet) = " << fixedIet  << endl;
 }
@@ -285,7 +293,6 @@ void VSStlsInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand& fxcIntegrand
 
 void VSStlsInput::print() const {
   StlsInput::print();
-  cout << "##### VSSTLS-related input #####" << endl;
   cout << "Guess for the free parameter = " << alphaGuess.at(0) << "," << alphaGuess.at(1) << endl;
   cout << "Resolution for the coupling parameter grid = " << drs << endl;
   cout << "Resolution for the degeneracy parameter grid = " << dTheta << endl;

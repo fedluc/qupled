@@ -107,7 +107,7 @@ namespace arrayWrapper {
   
 }
 
-namespace StlsInputWrapper {
+namespace RpaInputWrapper {
   
   bn::ndarray getChemicalPotentialGuess(StlsInput &in){
     return arrayWrapper::toNdArray(in.getChemicalPotentialGuess());
@@ -118,6 +118,10 @@ namespace StlsInputWrapper {
     in.setChemicalPotentialGuess(arrayWrapper::toVector(muGuess));
   }
 
+}
+
+namespace StlsInputWrapper {
+  
   struct SlfcGuess {
     bn::ndarray wvg = arrayWrapper::toNdArray(vector<double>(0));
     bn::ndarray slfc = arrayWrapper::toNdArray(vector<double>(0));
@@ -343,11 +347,24 @@ BOOST_PYTHON_MODULE(qupled)
   bp::class_<StlsInputWrapper::SlfcGuess>("SlfcGuess")
     .def_readwrite("wvg", &StlsInputWrapper::SlfcGuess::wvg)
     .def_readwrite("slfc", &StlsInputWrapper::SlfcGuess::slfc);
-    
-  bp::class_<StlsInput, bp::bases<Input>>("StlsInput")
+
+    bp::class_<RpaInput, bp::bases<Input>>("RpaInput")
     .add_property("chemicalPotential",
-		  StlsInputWrapper::getChemicalPotentialGuess,
-		  StlsInputWrapper::setChemicalPotentialGuess)
+		  RpaInputWrapper::getChemicalPotentialGuess,
+		  RpaInputWrapper::setChemicalPotentialGuess)
+    .add_property("matsubara",
+		  &RpaInput::getNMatsubara,
+		  &RpaInput::setNMatsubara)
+    .add_property("resolution",
+		  &RpaInput::getWaveVectorGridRes,
+		  &RpaInput::setWaveVectorGridRes)
+    .add_property("cutoff",
+		  &RpaInput::getWaveVectorGridCutoff,
+		  &RpaInput::setWaveVectorGridCutoff)
+    .def("print", &RpaInput::print)
+    .def("isEqual", &RpaInput::isEqual);
+    
+  bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
     .add_property("error",
 		  &StlsInput::getErrMin,
 		  &StlsInput::setErrMin)
@@ -357,9 +374,6 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("iet",
 		  &StlsInput::getIETMapping,
 		  &StlsInput::setIETMapping)
-    .add_property("matsubara",
-		  &StlsInput::getNMatsubara,
-		  &StlsInput::setNMatsubara)
     .add_property("iterations",
 		  &StlsInput::getNIter,
 		  &StlsInput::setNIter)
@@ -372,12 +386,6 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("guess",
 		  StlsInputWrapper::getGuess,
 		  StlsInputWrapper::setGuess)
-    .add_property("resolution",
-		  &StlsInput::getWaveVectorGridRes,
-		  &StlsInput::setWaveVectorGridRes)
-    .add_property("cutoff",
-		  &StlsInput::getWaveVectorGridCutoff,
-		  &StlsInput::setWaveVectorGridCutoff)
     .def("print", &StlsInput::print)
     .def("isEqual", &StlsInput::isEqual);
 
