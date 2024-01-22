@@ -109,11 +109,11 @@ namespace arrayWrapper {
 
 namespace RpaInputWrapper {
   
-  bn::ndarray getChemicalPotentialGuess(StlsInput &in){
+  bn::ndarray getChemicalPotentialGuess(RpaInput &in){
     return arrayWrapper::toNdArray(in.getChemicalPotentialGuess());
   }
   
-  void setChemicalPotentialGuess(StlsInput &in,
+  void setChemicalPotentialGuess(RpaInput &in,
 				 const bp::list &muGuess){
     in.setChemicalPotentialGuess(arrayWrapper::toVector(muGuess));
   }
@@ -178,6 +178,39 @@ namespace StlsBaseWrapper {
   
   bn::ndarray getWvg(const StlsBase &stls){
     return arrayWrapper::toNdArray(stls.getWvg());
+  }
+
+}
+
+namespace RpaWrapper {
+
+  bn::ndarray getIdr(const Rpa &rpa){
+    return arrayWrapper::toNdArray2D(rpa.getIdr());
+  }
+
+  bn::ndarray getRdf(const Rpa &rpa,
+		     const bn::ndarray &r){
+    return arrayWrapper::toNdArray(rpa.getRdf(arrayWrapper::toVector(r)));
+  }
+  
+  bn::ndarray getSdr(const Rpa &rpa){
+    return arrayWrapper::toNdArray(rpa.getSdr());
+  }
+  
+  bn::ndarray getSlfc(const Rpa &rpa){
+    return arrayWrapper::toNdArray(rpa.getSlfc());
+  }
+  
+  bn::ndarray getSsf(const Rpa &rpa){
+    return arrayWrapper::toNdArray(rpa.getSsf());
+  }
+
+  bn::ndarray getSsfHF(const Rpa &rpa){
+    return arrayWrapper::toNdArray(rpa.getSsfHF());
+  }
+  
+  bn::ndarray getWvg(const Rpa &rpa){
+    return arrayWrapper::toNdArray(rpa.getWvg());
   }
 
 }
@@ -447,6 +480,18 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("ssfHF", StlsBaseWrapper::getSsfHF)
     .add_property("uInt", &StlsBase::getUInt)
     .add_property("wvg", StlsBaseWrapper::getWvg);
+
+  // Class to solve the RPA scheme
+  bp::class_<Rpa>("Rpa",
+		  bp::init<const RpaInput>())
+    .def("rdf", RpaWrapper::getRdf)
+    .add_property("idr", RpaWrapper::getIdr)
+    .add_property("sdr", RpaWrapper::getSdr)
+    .add_property("slfc", RpaWrapper::getSlfc)
+    .add_property("ssf", RpaWrapper::getSsf)
+    .add_property("ssfHF", RpaWrapper::getSsfHF)
+    .add_property("uInt", &Rpa::getUInt)
+    .add_property("wvg", RpaWrapper::getWvg);
   
   // Class to solve classical schemes
   bp::class_<Stls, bp::bases<StlsBase>>("Stls",

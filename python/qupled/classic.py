@@ -9,11 +9,11 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import qupled.qupled as qp
 
-class Stls():
+class Rpa():
 
-    """Class to solve the STLS scheme.
+    """Class to solve the Random-Phase approximation.
 
-    Class used to setup and solve the classical STLS scheme as described by
+    Class used to setup and solve the classical RPA scheme as described by
     `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
     The inputs used to solve the scheme are defined when creating the class, but can be
     later modified by changing the attribute :obj:`inputs`. After the solution is completed
@@ -24,13 +24,7 @@ class Stls():
         degeneracy: Degeneracy parameter.  
         chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
-        error: Minimum error for convergence, defaults to 1.0e-5.
-        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
-        guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
-        iterations: Maximum number of iterations, defaults to 1000.
         matsubara: Number of matsubara frequencies, defaults to 128.
-        outputFrequency: Frequency used to print the recovery files, defaults to 10.
-        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
         resolution: Resolution of the wave-vector grid, defaults to 0.1.
     """
     
@@ -40,23 +34,16 @@ class Stls():
                  degeneracy : float,
                  chemicalPotential : list[float] = [-10.0,10.0],
                  cutoff : float = 10.0,
-                 error : float = 1.0e-5,
-                 mixing : float = 1.0,
-                 guess : qp.SlfcGuess = None,
-                 iterations : int = 1000,
                  matsubara : int = 128,
-                 outputFrequency : int = 10,
-                 recoveryFile : str = None,
                  resolution : float = 0.1 ):
         # Allowed theories
-        self.allowedTheories = ["STLS"]
+        self.allowedTheories = ["RPA"]
         # Input object
-        self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
-        self._setInputs(coupling, degeneracy, "STLS", chemicalPotential,
-                        cutoff, error, mixing, guess, iterations, matsubara,
-                        outputFrequency, recoveryFile, resolution)
+        self.inputs : qupled.qupled.RpaInput = qp.RpaInput() #: Inputs to solve the scheme.
+        self._setInputs(coupling, degeneracy, "RPA", chemicalPotential,
+                        cutoff, matsubara, resolution)
         # Scheme to solve
-        self.scheme : qp.Stls = None
+        self.scheme : qp.Rpa = None
         # File to store output on disk
         self.hdfFileName : str = None
 
@@ -67,13 +54,7 @@ class Stls():
                    theory : str,
                    chemicalPotential : list[float],
                    cutoff : float,
-                   error : float,
-                   mixing : float,
-                   guess : qp.SlfcGuess,
-                   iterations : int,
                    matsubara : int,
-                   outputFrequency : int,
-                   recoveryFile : str,
                    resolution : float) -> None:
         """ Sets up the content of :obj:`inputs` """
         self.inputs.coupling = coupling
@@ -81,13 +62,7 @@ class Stls():
         self.inputs.theory = theory
         self.inputs.chemicalPotential = chemicalPotential
         self.inputs.cutoff = cutoff
-        self.inputs.error = error
-        self.inputs.mixing = mixing
-        if (guess is not None): self.inputs.guess = guess
-        self.inputs.iterations = iterations
         self.inputs.matsubara = matsubara
-        self.inputs.outputFrequency = outputFrequency
-        if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
         self.inputs.resolution = resolution
         self.inputs.intError = 1.0e-5
         self.inputs.threads = 1
@@ -100,13 +75,12 @@ class Stls():
 
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Stls.save`
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Rpa.save`
         to see which results are saved
         """
         self._checkInputs()
-        self.scheme = qp.Stls(self.inputs)
-        status = self.scheme.compute()
-        self._checkStatusAndClean(status)        
+        self.scheme = qp.Rpa(self.inputs)
+        self._checkStatusAndClean(0)        
         self._setHdfFile()
         self._save()
         
@@ -118,7 +92,6 @@ class Stls():
                status: status obtained from the native code. If status == 0 the scheme was solved correctly.
         """
         if (status == 0):
-            if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
             print("Dielectric theory solved successfully!")
         else:
             sys.exit("Error while solving the dielectric theory")
@@ -140,7 +113,6 @@ class Stls():
           - coupling: the coupling parameter,
           - degeneracy: the degeneracy parameter,
           - theory: the theory that is being solved,  
-          - error: the minimum error for convergence,   
           - resolution: the resolution in the wave-vector grid, 
           - cutoff: the cutoff in the wave-vector grid, 
           - matsubara: the number of matsubara frequencies
@@ -164,7 +136,6 @@ class Stls():
             "coupling" : self.inputs.coupling,
             "degeneracy" : self.inputs.degeneracy,
             "theory" : self.inputs.theory,
-            "error" : self.inputs.error,
             "resolution" : self.inputs.resolution,
             "cutoff" : self.inputs.cutoff,
             "matsubara" : self.inputs.matsubara
@@ -175,18 +146,6 @@ class Stls():
         pd.DataFrame(self.scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
         pd.DataFrame(self.scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
         pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
-
-    # Set the initial guess from a dataframe produced in output
-    def setGuess(self, fileName : str) -> None:
-        """ Constructs an initial guess object by extracting the information from an output file.
-
-        Args:
-            fileName : name of the file used to extract the information for the initial guess.
-        """
-        guess = qp.SlfcGuess()
-        guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
-        guess.slfc = pd.read_hdf(fileName, "slfc")[0].to_numpy()
-        self.inputs.guess = guess
     
     # Compute radial distribution function
     def computeRdf(self, rdfGrid : np.ndarray, writeToHdf : bool = True) -> np.array:
@@ -288,6 +247,138 @@ class Stls():
         """
         if (self.scheme is None):
             sys.exit("No solution to " + action)
+
+            
+class Stls(Rpa):
+
+    """Class to solve the STLS scheme.
+
+    Class used to setup and solve the classical STLS scheme as described by
+    `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
+    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Rpa`
+
+    Args:
+        coupling: Coupling parameter.
+        degeneracy: Degeneracy parameter.  
+        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
+        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
+        error: Minimum error for convergence, defaults to 1.0e-5.
+        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
+        guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
+        iterations: Maximum number of iterations, defaults to 1000.
+        matsubara: Number of matsubara frequencies, defaults to 128.
+        outputFrequency: Frequency used to print the recovery files, defaults to 10.
+        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
+        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+    """
+    
+    # Constructor
+    def __init__(self,
+                 coupling : float,
+                 degeneracy : float,
+                 chemicalPotential : list[float] = [-10.0,10.0],
+                 cutoff : float = 10.0,
+                 error : float = 1.0e-5,
+                 mixing : float = 1.0,
+                 guess : qp.SlfcGuess = None,
+                 iterations : int = 1000,
+                 matsubara : int = 128,
+                 outputFrequency : int = 10,
+                 recoveryFile : str = None,
+                 resolution : float = 0.1 ):
+        # Allowed theories
+        self.allowedTheories = ["STLS"]
+        # Input object
+        self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
+        self._setInputs(coupling, degeneracy, "STLS", chemicalPotential,
+                        cutoff, error, mixing, guess, iterations, matsubara,
+                        outputFrequency, recoveryFile, resolution)
+        # Scheme to solve
+        self.scheme : qp.Stls = None
+        # File to store output on disk
+        self.hdfFileName : str = None
+
+    # Setup inputs object
+    def _setInputs(self,
+                   coupling : float,
+                   degeneracy : float,
+                   theory : str,
+                   chemicalPotential : list[float],
+                   cutoff : float,
+                   error : float,
+                   mixing : float,
+                   guess : qp.SlfcGuess,
+                   iterations : int,
+                   matsubara : int,
+                   outputFrequency : int,
+                   recoveryFile : str,
+                   resolution : float) -> None:
+        """ Sets up the content of :obj:`inputs` """
+        super()._setInputs(coupling, degeneracy, "STLS", chemicalPotential,
+                           cutoff, matsubara, resolution)
+        self.inputs.error = error
+        self.inputs.mixing = mixing
+        if (guess is not None): self.inputs.guess = guess
+        self.inputs.iterations = iterations
+        self.inputs.outputFrequency = outputFrequency
+        if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
+        
+    # Check input before computing
+    def _checkInputs(self) -> None:
+        """ Checks that the content of :obj:`inputs` is correct """
+        if (self.inputs.theory not in self.allowedTheories):
+            sys.exit("Invalid dielectric theory")
+
+    # Compute
+    def compute(self) -> None:
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Rpa.save`
+        to see which results are saved
+        """
+        self._checkInputs()
+        self.scheme = qp.Stls(self.inputs)
+        status = self.scheme.compute()
+        self._checkStatusAndClean(status)        
+        self._setHdfFile()
+        self._save()
+
+    # Check that the dielectric scheme was solved without errors
+    def _checkStatusAndClean(self, status : bool) -> None:
+        """ Checks that the scheme was solved correctly and removes temporarary files generated at run-time
+        
+           Args:
+               status: status obtained from the native code. If status == 0 the scheme was solved correctly.
+        """
+        super()._checkStatusAndClean(status)
+        if (status == 0):
+            if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
+            
+    def _save(self) -> None:
+        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Rpa.save`
+        by adding the option to save the minimum error for convergence. The
+        information concerning the error can be accessed `error` in the `inputs` dataframe.
+        """
+        super()._save()
+        pd.DataFrame({
+            "coupling" : self.inputs.coupling,
+            "degeneracy" : self.inputs.degeneracy,
+            "theory" : self.inputs.theory,
+            "error" : self.inputs.error,
+            "resolution" : self.inputs.resolution,
+            "cutoff" : self.inputs.cutoff,
+            "matsubara" : self.inputs.matsubara
+            }, index=["inputs"]).to_hdf(self.hdfFileName, key="inputs")
+        
+    # Set the initial guess from a dataframe produced in output
+    def setGuess(self, fileName : str) -> None:
+        """ Constructs an initial guess object by extracting the information from an output file.
+
+        Args:
+            fileName : name of the file used to extract the information for the initial guess.
+        """
+        guess = qp.SlfcGuess()
+        guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
+        guess.slfc = pd.read_hdf(fileName, "slfc")[0].to_numpy()
+        self.inputs.guess = guess
 
 class StlsIet(Stls):
 
