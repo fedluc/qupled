@@ -18,6 +18,8 @@ protected:
   const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // Input data
   const RpaInput in;
+  // Output verbosity
+  const bool verbose;
   // Integrator
   Integrator1D itg;
   // Wave vector grid
@@ -52,7 +54,10 @@ protected:
 public:
 
   // Constructor
-  Rpa(const RpaInput &in_);
+  Rpa(const RpaInput &in_,
+      const bool verbose_,
+      const bool doFullCompute);
+  Rpa(const RpaInput& in_) : Rpa(in_, true, true) { ; }
   // Getters
   vecUtil::Vector2D getIdr() const { return idr; }
   vector<double> getSlfc() const { return slfc; }

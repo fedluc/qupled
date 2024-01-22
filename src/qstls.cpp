@@ -16,7 +16,6 @@ int Qstls::compute(){
     // Set number of OMP threads
     omp_set_num_threads(in.getNThreads());
     // Solve scheme
-    Stls::init();
     if (verbose) cout << "Structural properties calculation ..." << endl;
     doIterations();
     if (verbose) cout << "Done" << endl;
@@ -186,7 +185,6 @@ void Qstls::computeSsf(){
 // Compute static structure factor at finite temperature
 void Qstls::computeSsfFinite(){
   if (in.getCoupling() > 0.0) {
-    assert(computedChemicalPotential);
     assert(ssf.size() > 0);
     assert(adr.size() > 0);
     assert(idr.size() > 0);

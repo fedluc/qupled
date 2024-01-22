@@ -145,43 +145,6 @@ namespace StlsInputWrapper {
 
 }
 
-namespace StlsBaseWrapper {
-
-  bn::ndarray getBf(const StlsBase &stls){
-    return arrayWrapper::toNdArray(stls.getBf());
-  }
-
-  bn::ndarray getIdr(const StlsBase &stls){
-    return arrayWrapper::toNdArray2D(stls.getIdr());
-  }
-
-  bn::ndarray getRdf(const StlsBase &stls,
-		     const bn::ndarray &r){
-    return arrayWrapper::toNdArray(stls.getRdf(arrayWrapper::toVector(r)));
-  }
-  
-  bn::ndarray getSdr(const StlsBase &stls){
-    return arrayWrapper::toNdArray(stls.getSdr());
-  }
-  
-  bn::ndarray getSlfc(const StlsBase &stls){
-    return arrayWrapper::toNdArray(stls.getSlfc());
-  }
-  
-  bn::ndarray getSsf(const StlsBase &stls){
-    return arrayWrapper::toNdArray(stls.getSsf());
-  }
-
-  bn::ndarray getSsfHF(const StlsBase &stls){
-    return arrayWrapper::toNdArray(stls.getSsfHF());
-  }
-  
-  bn::ndarray getWvg(const StlsBase &stls){
-    return arrayWrapper::toNdArray(stls.getWvg());
-  }
-
-}
-
 namespace RpaWrapper {
 
   bn::ndarray getIdr(const Rpa &rpa){
@@ -214,6 +177,15 @@ namespace RpaWrapper {
   }
 
 }
+
+namespace StlsWrapper {
+
+  bn::ndarray getBf(const Stls &stls){
+    return arrayWrapper::toNdArray(stls.getBf());
+  }
+
+}
+
 
 namespace VSStlsInputWrapper {
 
@@ -467,20 +439,6 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &QstlsInput::print)
     .def("isEqual", &QstlsInput::isEqual);
 
-  // Base class for all the schemes
-  bp::class_<StlsBase>("StlsBase",
-		       bp::init<const StlsInput>())
-    .def("rdf", StlsBaseWrapper::getRdf)
-    .add_property("bf", StlsBaseWrapper::getBf)
-    .add_property("idr", StlsBaseWrapper::getIdr)
-    .add_property("recovery", &StlsBase::getRecoveryFileName)
-    .add_property("sdr", StlsBaseWrapper::getSdr)
-    .add_property("slfc", StlsBaseWrapper::getSlfc)
-    .add_property("ssf", StlsBaseWrapper::getSsf)
-    .add_property("ssfHF", StlsBaseWrapper::getSsfHF)
-    .add_property("uInt", &StlsBase::getUInt)
-    .add_property("wvg", StlsBaseWrapper::getWvg);
-
   // Class to solve the RPA scheme
   bp::class_<Rpa>("Rpa",
 		  bp::init<const RpaInput>())
@@ -494,13 +452,14 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("wvg", RpaWrapper::getWvg);
   
   // Class to solve classical schemes
-  bp::class_<Stls, bp::bases<StlsBase>>("Stls",
-					bp::init<const StlsInput>())
-    .def("compute", &Stls::compute);
+  bp::class_<Stls, bp::bases<Rpa>>("Stls",
+				   bp::init<const StlsInput>())
+    .def("compute", &Stls::compute)
+    .add_property("bf", StlsWrapper::getBf);
 
   // Class to solve the classical vs scheme
-  bp::class_<VSStls, bp::bases<StlsBase>>("VSStls",
-					  bp::init<const VSStlsInput>())
+  bp::class_<VSStls, bp::bases<Rpa>>("VSStls",
+				     bp::init<const VSStlsInput>())
     .def("compute", &VSStls::compute)
     .add_property("freeEnergyIntegrand", VSStlsWrapper::getFreeEnergyIntegrand)
     .add_property("freeEnergyGrid", VSStlsWrapper::getFreeEnergyGrid);

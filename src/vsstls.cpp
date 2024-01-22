@@ -123,7 +123,7 @@ double StlsCSR::getFreeEnergyIntegrand() const {
 // StructProp class
 // -----------------------------------------------------------------
 
-StructProp::StructProp(const VSStlsInput &in) : stlsIsInitialized(false), outVector(NPOINTS) {
+StructProp::StructProp(const VSStlsInput &in) : computed(false), outVector(NPOINTS) {
   VSStlsInput inTmp = in;
   const double& drs = inTmp.getCouplingResolution();
   const double& dTheta = inTmp.getDegeneracyResolution();
@@ -174,11 +174,8 @@ StructProp::StructProp(const VSStlsInput &in) : stlsIsInitialized(false), outVec
 // Add a public call to compute where we do the initializations
 int StructProp::compute() {
   try {
-    if (!stlsIsInitialized) {
-      for (auto& s : stls) { s.init(); }
-      stlsIsInitialized = true;
-    }
     doIterations();
+    computed = true;
     return 0;
   }
   catch (const runtime_error& err) {
@@ -507,11 +504,8 @@ double VSStls::computeAlpha() {
 void VSStls::updateSolution() {
   // Update the structural properties used for output
   const auto& stls = thermoProp.getStructProp();
-  wvg = stls.getWvg();
-  idr = stls.getIdr();
   slfc = stls.getSlfc();
   ssf = stls.getSsf();
-  ssfHF = stls.getSsfHF();
 }
 
 

@@ -13,82 +13,22 @@
 
 #define EMPTY_STRING ""
 
-class StlsBase {
-
-protected:
-
-  // Constant for unit conversion
-  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  // Input data
-  const StlsInput in;
-  // Wave vector grid
-  vector<double> wvg;
-  // Ideal density response
-  vecUtil::Vector2D idr;
-  // Static local field correction
-  vector<double> slfcOld;
-  vector<double> slfc;
-  // Static structure factor
-  vector<double> ssf;
-  // Hartree-Fock static structure factor
-  vector<double> ssfHF;
-  // Bridge function (for iet schemes)
-  vector<double> bf;
-  // iet schemes
-  bool useIet;
-  // Chemical potential
-  double mu;
-  bool computedChemicalPotential;
-  // Name of the recovery files
-  string recoveryFileName;
-  
-
-public:
-
-  // Constructor
-  StlsBase(const StlsInput &in_) : in(in_), useIet(false),
-				   computedChemicalPotential(false),
-				   recoveryFileName(EMPTY_STRING) { ; };
-  // Getters
-  vector<double> getBf() const { return bf; }
-  vecUtil::Vector2D getIdr() const { return idr; }
-  string getRecoveryFileName() const { return recoveryFileName; }
-  vector<double> getSlfc() const { return slfc; }
-  vector<double> getSsf() const { return ssf; }
-  vector<double> getSsfHF() const { return ssfHF; }
-  vector<double> getWvg() const { return wvg; }
-  vector<double> getRdf(const vector<double> &r) const;
-  vector<double> getSdr() const;
-  double getUInt() const;
-  
-};
-
-class Stls : public StlsBase {
+class Stls : public Rpa {
 
 protected: 
-  
-  // Integrator object
-  Integrator1D itg;
-  // Output verbosity
-  const bool verbose;
+
+  // Input parameters
+  StlsInput in;
   // Flag to write the recovery files
   const bool writeFiles;
-  // Initialization
-  void init();
-  // Construct wave vector grid
-  void buildWvGrid();
-  // Compute chemical potential
-  void computeChemicalPotential();
-  // Compute the ideal density response
-  void computeIdr();
-  // Compute Hartree-Fock static structure factor
-  void computeSsfHF();
-  void computeSsfHFFinite();
-  void computeSsfHFGround();
-  // Compute static structure factor at finite temperature
-  void computeSsf();
-  void computeSsfFinite();
-  void computeSsfGround();
+  // iet schemes
+  bool useIet;
+  // Name of the recovery files
+  string recoveryFileName;
+  // Static local field correction to use during the iterations
+  vector<double> slfcOld;
+  // Bridge function (for iet schemes)
+  vector<double> bf;
   // Compute static local field correction
   void computeSlfc();
   void computeSlfcStls();
@@ -104,25 +44,19 @@ protected:
   void writeRecovery();
   void readRecovery(vector<double> &wvgFile,
 		    vector<double> &slfcFile) const;
-  // Check if iet schemes should be used
-  void checkIet() {
-   useIet = in.getTheory() == "STLS-HNC"
-     || in.getTheory() == "STLS-IOI"
-     || in.getTheory() == "STLS-LCT";
-  };
   
 public:
 
   // Constructors
   Stls(const StlsInput &in_,
-       const bool &verbose_,
-       const bool &writeFiles_)
-    : StlsBase(in_), itg(in_.getIntError()), verbose(verbose_),
-      writeFiles(writeFiles_) { checkIet(); };
+       const bool verbose_,
+       const bool writeFiles_);
   Stls(const StlsInput &in_) : Stls(in_, true, true) { ; };
   // Compute stls scheme
   int compute();
-
+  // Getters
+  vector<double> getBf() const { return bf; }
+  string getRecoveryFileName() const { return recoveryFileName; }
   
 };
 

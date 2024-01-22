@@ -9,40 +9,29 @@ using namespace thermoUtil;
 using namespace binUtil;
 
 // -----------------------------------------------------------------
-// STLS base class
-// -----------------------------------------------------------------
-
-// Getters
-vector<double> StlsBase::getRdf(const vector<double> &r) const {
-  return computeRdf(r, wvg, ssf);
-}
-
-vector<double> StlsBase::getSdr() const {
-  if (in.getDegeneracy() == 0.0) {
-    std::cout << "The static density response cannot be computed in the ground state." << std::endl;
-    return vector<double>();
-  }
-  vector<double> sdr(wvg.size(), -1.5 * in.getDegeneracy());
-  const double fact = 4 *lambda * in.getCoupling() / M_PI;
-  for (size_t i=0; i<wvg.size(); ++i){
-    const double x2 = wvg[i] * wvg[i];
-    const double phi0 = idr(i,0);
-    sdr[i] *= phi0/ (1.0 + fact/x2 * (1.0 - slfc[i]) * phi0);
-  }
-  return sdr;
-}
-
-double StlsBase::getUInt() const {
-  return computeInternalEnergy(wvg, ssf, in.getCoupling());
-};  
-
-// -----------------------------------------------------------------
 // STLS class
 // -----------------------------------------------------------------
 
+Stls::Stls(const StlsInput& in_,
+	   const bool verbose_,
+	   const bool writeFiles_) : Rpa(in_, verbose_, false),
+				     in(in_),
+				     writeFiles(writeFiles_) {
+  useIet = in.getTheory() == "STLS-HNC"
+    || in.getTheory() == "STLS-IOI"
+    || in.getTheory() == "STLS-LCT";
+  recoveryFileName = format<double,double>("recovery_rs%.3f_theta%.3f_"
+					   + in.getTheory() + ".bin",
+					   in.getCoupling(),
+					   in.getDegeneracy());
+  const size_t nx = wvg.size();
+  ssf.resize(nx);
+  slfc.resize(nx);
+  slfcOld.resize(nx);
+}
+
 int Stls::compute(){
   try {
-    init();  
     if (verbose) cout << "Structural properties calculation ..." << endl;
     doIterations();
     if (verbose) cout << "Done" << endl;
@@ -51,133 +40,6 @@ int Stls::compute(){
   catch (const runtime_error& err) {
     cerr << err.what() << endl;
     return 1;
-  }
-}
-
-// Initialization
-void Stls::init(){
-  if (verbose) cout << "Assembling wave vector grid: ";
-  buildWvGrid();
-  if (verbose) cout << "Done" << endl;
-  if (verbose) cout << "Computing chemical potential: "; 
-  computeChemicalPotential();
-  if (verbose) cout << "Done" << endl;
-  if (verbose) cout << "Computing ideal density response: "; 
-  computeIdr();
-  if (verbose) cout << "Done" << endl;
-  if (verbose) cout << "Computing HF static structure factor: "; 
-  computeSsfHF();
-  if (verbose) cout << "Done" << endl;
-  recoveryFileName = format<double,double>("recovery_rs%.3f_theta%.3f_"
-					   + in.getTheory() + ".bin",
-					   in.getCoupling(),
-					   in.getDegeneracy());
-}
-
-// Set up wave-vector grid
-void Stls::buildWvGrid(){
-  wvg.push_back(0.0);
-  const double dx = in.getWaveVectorGridRes();
-  const double xmax = in.getWaveVectorGridCutoff();
-  while(wvg.back() < xmax){
-    wvg.push_back(wvg.back() + dx);
-  }
-}
-
-// Compute chemical potential
-void Stls::computeChemicalPotential(){
-  if (in.getDegeneracy() == 0.0) return;
-  const vector<double> &guess = in.getChemicalPotentialGuess();
-  ChemicalPotential mu_(in.getDegeneracy());
-  try {
-    mu_.compute(guess);
-  }
-  catch (const runtime_error& err) {
-    cerr << err.what() << endl;
-  }
-  mu = mu_.get();
-  computedChemicalPotential = true;
-}
-
-// Compute ideal density response
-void Stls::computeIdr(){
-  if (in.getDegeneracy() == 0.0) return;
-  assert(computedChemicalPotential);
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  idr.resize(nx, nl);
-  for (int i=0; i<nx; ++i){
-    Idr idrTmp(nl, wvg[i], in.getDegeneracy(), mu,
-	       wvg.front(), wvg.back(), itg);
-    idr.fill(i, idrTmp.get());
-  }
-}
-
-// Compute Hartree-Fock static structure factor
-void Stls::computeSsfHF(){
-  const int nx = wvg.size();
-  ssfHF.resize(nx);
-  if (in.getDegeneracy() == 0.0) {
-    computeSsfHFGround();
-    return;
-  }
-  computeSsfHFFinite();
-}
-
-void Stls::computeSsfHFFinite(){
-  assert(computedChemicalPotential);
-  for (size_t i=0; i<wvg.size(); ++i) {
-    SsfHF ssfTmp(wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
-    ssfHF[i] = ssfTmp.get();
-  }
-}
-
-void Stls::computeSsfHFGround(){
-  for (size_t i=0; i<wvg.size(); ++i) {
-    SsfHFGround ssfTmp(wvg[i]);
-    ssfHF[i] = ssfTmp.get();
-  }
-}
-
-// Compute static structure factor
-void Stls::computeSsf(){
-  const int nx = wvg.size();
-  if (ssf.size() == 0) ssf.resize(nx);
-  if (in.getDegeneracy() == 0.0) {
-    computeSsfGround();
-    return;
-  }
-  computeSsfFinite();
-}
-
-// Compute static structure factor at finite temperature
-void Stls::computeSsfFinite(){
-  assert(computedChemicalPotential);
-  assert(slfc.size() > 0);
-  const double Theta = in.getDegeneracy();
-  const double rs = in.getCoupling();
-  const int nx = wvg.size();
-  const int nl = idr.size(1);
-  if (ssf.size() == 0) ssf.resize(nx);
-  for (int i=0; i<nx; ++i){
-    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfcOld[i], nl, &idr(i));
-    ssf[i] = ssfTmp.get();
-  }
-}
-
-// Compute static structure factor at zero temperature
-void Stls::computeSsfGround(){
-  assert(slfc.size() > 0);
-  const double rs = in.getCoupling();
-  const int nx = wvg.size();
-  if (ssf.size() == 0) ssf.resize(nx);
-  for (int i=0; i<nx; ++i){
-    const double x = wvg[i];
-    double yMin = 0.0;
-    if (x > 2.0) yMin = x * (x - 2.0);
-    const double yMax = x * (x + 2.0);
-    SsfGround ssfTmp(x, rs, ssfHF[i], slfcOld[i], yMin, yMax, itg);
-    ssf[i] = ssfTmp.get();
   }
 }
 

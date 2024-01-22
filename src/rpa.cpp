@@ -9,8 +9,11 @@ using namespace thermoUtil;
 using namespace binUtil;
 
 // Constructor
-Rpa::Rpa(const RpaInput &in_) : in(in_) {
-  constexpr bool verbose = true;
+Rpa::Rpa(const RpaInput &in_,
+	 const bool verbose_,
+	 const bool doFullCompute) : in(in_),
+				     verbose(verbose_),
+				     itg(in_.getIntError()) {
   if (verbose) cout << "Assembling wave vector grid: ";
   buildWvGrid();
   if (verbose) cout << "Done" << endl;
@@ -23,13 +26,15 @@ Rpa::Rpa(const RpaInput &in_) : in(in_) {
   if (verbose) cout << "Computing HF static structure factor: "; 
   computeSsfHF();
   if (verbose) cout << "Done" << endl;
-  if (verbose) cout << "Computing static local field correction: "; 
-  computeSlfc();
-  if (verbose) cout << "Done" << endl;
-  if (verbose) cout << "Computing static structure factor: "; 
-  computeSsf();
-  if (verbose) cout << "Done" << endl;
-};
+  if (doFullCompute) {
+    if (verbose) cout << "Computing static local field correction: "; 
+    computeSlfc();
+    if (verbose) cout << "Done" << endl;
+    if (verbose) cout << "Computing static structure factor: "; 
+    computeSsf();
+    if (verbose) cout << "Done" << endl;
+  }
+}
 
 // Set up wave-vector grid
 void Rpa::buildWvGrid(){

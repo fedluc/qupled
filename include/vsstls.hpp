@@ -104,8 +104,8 @@ private:
 
   // Vector containing NPOINTS state points to be solved simultaneously
   vector<StlsCSR> stls;
-  // Flag marking if the initialization for the stls data was already done
-  bool stlsIsInitialized;
+  // Flag marking whether the structural properties were computed
+  bool computed;
   // Perform iterations to compute structural properties
   void doIterations();
   // Generic getter function to return vector data
@@ -132,7 +132,7 @@ public:
   // Get structural properties for output
   const StlsCSR& getStls(const Idx& idx) const { return stls[idx]; }
   // Boolean marking whether the structural properties where computed or not
-  bool isComputed() const { return stlsIsInitialized; }
+  bool isComputed() const { return computed; }
   
 };
 
@@ -186,7 +186,7 @@ public:
   
 };
 
-class VSStls : public StlsBase {
+class VSStls : public Rpa {
 
 private: 
 
@@ -208,12 +208,14 @@ private:
 public:
 
   // Constructor from initial data
-  VSStls(const VSStlsInput &in_) : StlsBase(in_), in(in_),
+  VSStls(const VSStlsInput &in_) : Rpa(in_, false, false),
+				   in(in_),
 				   thermoProp(in_),
 				   verbose(true) { ; }
   // Constructor for recursive calculations
   VSStls(const VSStlsInput &in_,
-	 const ThermoProp& thermoProp_) : StlsBase(in_), in(in_),
+	 const ThermoProp& thermoProp_) : Rpa(in_, false, false),
+					  in(in_),
 					  thermoProp(in_, thermoProp_),
 					  verbose(false) { ; }
   // Compute stls scheme
