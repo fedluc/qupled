@@ -1,7 +1,8 @@
 #include "input.hpp"
 
-
-// --- Input ---
+// -----------------------------------------------------------------
+// Input class
+// -----------------------------------------------------------------
 
 void Input::setCoupling(const double &rs_){
   if (rs_ < 0) {
@@ -73,7 +74,9 @@ bool Input::isEqual(const Input &in) const {
 	   Theta == in.Theta ); 
 }
 
-// --- RpaInput ---
+// -----------------------------------------------------------------
+// RpaInput class
+// -----------------------------------------------------------------
 
 void RpaInput::setChemicalPotentialGuess(const vector<double> &muGuess){
   if (muGuess.size() != 2 || muGuess[0] >= muGuess[1]) {
@@ -122,7 +125,9 @@ bool RpaInput::isEqual(const RpaInput &in) const {
 	   xmax == in.xmax );
 }
 
-// --- StlsInput ---
+// -----------------------------------------------------------------
+// STLSInput class
+// -----------------------------------------------------------------
 
 void StlsInput::setErrMin(const double &errMin){
   if (errMin <= 0.0) {
@@ -195,7 +200,9 @@ bool StlsInput::isEqual(const StlsInput &in) const {
 	   guess == in.guess);
 }
 
-// --- QstlsInput ---
+// -----------------------------------------------------------------
+// QStlsInput class
+// -----------------------------------------------------------------
 
 void QstlsInput::setFixed(const string &fixed){
   this->fixed = fixed;
@@ -235,7 +242,9 @@ bool QstlsInput::isEqual(const QstlsInput &in) const {
 	  guess == in.guess );
 }
 
-// --- VSStlsInput ---
+// -----------------------------------------------------------------
+// VSSTLS class
+// -----------------------------------------------------------------
 
 void VSStlsInput::setCouplingResolution(const double &drs) {
   if (drs <= 0) {

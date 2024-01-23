@@ -679,11 +679,6 @@ void AdrFixedIet::get(vector<double> &wvg,
 // Integrand for the fixed component
 double AdrFixedIet::integrand(const double t, const double y,
 			      const double q, const double l) const {
-  // l ---> l
-  // x ---> x
-  // u ---> q
-  // w ---> y
-  // y ---> t
   const double x2 = x*x;
   const double q2 = q*q;
   const double y2 = y*y;

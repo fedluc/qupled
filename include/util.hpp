@@ -6,7 +6,10 @@
 #include <fstream>
 #include "numerics.hpp"
 
-// Util functions to handle special cases for double numbers
+// -----------------------------------------------------------------
+// Utility functions to handle special cases for double numbers
+// -----------------------------------------------------------------
+
 namespace numUtil {
 
   constexpr double Inf = std::numeric_limits<double>::infinity();  
@@ -20,7 +23,10 @@ namespace numUtil {
   
 }
 
-// Util functions to manipulate strings
+// -----------------------------------------------------------------
+// Utility functions to manipulate strings
+// -----------------------------------------------------------------
+
 namespace stringUtil {
   
   template<typename ... Args>
@@ -36,7 +42,10 @@ namespace stringUtil {
   
 }
 
-// Util functions to manipulate vector
+// -----------------------------------------------------------------
+// Utility functions to manipulate multidimensional arrays (vectors)
+// -----------------------------------------------------------------
+
 namespace vecUtil {
 
   // Element-wise sum between two vectors
@@ -68,7 +77,7 @@ namespace vecUtil {
   void fill(vector<double> &v,
 	    const double num);
   
-  // Class to represent 2D vectors
+  // --- Class to represent 2D vectors --- 
   class Vector2D {
   private:
     vector<double> v;
@@ -108,7 +117,7 @@ namespace vecUtil {
     void div(const Vector2D &v_);
   };
   
-  // Class to represent 3D vectors
+  // --- Class to represent 3D vectors ---
   class Vector3D {
   private:
     vector<double> v;
@@ -159,10 +168,30 @@ namespace vecUtil {
     
 }
 
-// Util functions to compute thermodynamic properties
+// -----------------------------------------------------------------
+// Utility functions to compute thermodynamic properties
+// -----------------------------------------------------------------
+
 namespace thermoUtil {
 
-  // Class for internal energy calculation
+  double computeInternalEnergy(const vector<double> &wvg,
+			       const vector<double> &ssf,
+			       const double &coupling);
+
+  double computeFreeEnergy(const vector<double> &grid,
+			   const vector<double> &rsu,
+			   const double &coupling);
+
+  double computeFreeEnergy(const vector<double> &grid,
+			   const vector<double> &rsu,
+			   const double &coupling,
+			   const bool normalize);
+  
+  vector<double> computeRdf(const vector<double> &r,
+			    const vector<double> &wvg,
+			    const vector<double> &ssf);
+  
+  // --- Class for internal energy calculation --- 
   class InternalEnergy {
     
   private:
@@ -197,7 +226,7 @@ namespace thermoUtil {
   
   };
 
-  // Class for free energy calculation
+  // --- Class for free energy calculation --- 
   class FreeEnergy {
     
   private:
@@ -227,7 +256,7 @@ namespace thermoUtil {
   };
 
 
-  // Class for radial distribution function calculation
+  // --- Class for radial distribution function calculation ---
   class Rdf {
     
   private:
@@ -257,27 +286,13 @@ namespace thermoUtil {
     double get() const;
   
   };
-
-  double computeInternalEnergy(const vector<double> &wvg,
-			       const vector<double> &ssf,
-			       const double &coupling);
-
-  double computeFreeEnergy(const vector<double> &grid,
-			   const vector<double> &rsu,
-			   const double &coupling);
-
-  double computeFreeEnergy(const vector<double> &grid,
-			   const vector<double> &rsu,
-			   const double &coupling,
-			   const bool normalize);
-  
-  vector<double> computeRdf(const vector<double> &r,
-			    const vector<double> &wvg,
-			    const vector<double> &ssf);
   
 }
 
-// Util functions to manipulate binary files
+// -----------------------------------------------------------------
+// Utility functions to manipulate binary files
+// -----------------------------------------------------------------
+
 namespace binUtil {
 
   template<typename T>

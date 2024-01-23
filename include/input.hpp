@@ -6,6 +6,10 @@
 #include <iostream>
 #include "util.hpp"
 
+// -----------------------------------------------------------------
+// Base class to handle input for the dielectric schemes
+// -----------------------------------------------------------------
+
 class Input {
     
 protected:
@@ -50,6 +54,10 @@ public:
   
 };
 
+// -----------------------------------------------------------------
+// Class to handle input for the random phase approximation
+// -----------------------------------------------------------------
+
 class RpaInput : public Input {
   
 protected:
@@ -81,6 +89,10 @@ public:
   bool isEqual(const RpaInput &in) const;
   
 };
+
+// -----------------------------------------------------------------
+// Class to handle input for the STLS and STLS-IET schemes
+// -----------------------------------------------------------------
 
 class StlsInput : public RpaInput {
 
@@ -136,47 +148,9 @@ public:
   
 };
 
-
-class QstlsInput : public StlsInput {
-
-public:
-  
-  struct QstlsGuess {
-    vector<double> wvg;
-    vector<double> ssf;
-    vecUtil::Vector2D adr;
-    int matsubara = 0;
-    bool operator==(const QstlsGuess &other) const {
-      return wvg == other.wvg && ssf == other.ssf
-	&& adr == other.adr && matsubara == other.matsubara;
-    }
-  };
-
-private:
-
-  // Name of the file with the fixed component of the auxiliary density response (adr)
-  string fixed;
-  // Name of the file with the fixed component of the adr for iet schemes
-  string fixedIet;
-  // Initial guess
-  QstlsGuess guess;
-
-public:
-
-  // Setters
-  void setFixed(const string &fixed);
-  void setFixedIet(const string &fixedIet);
-  void setGuess(const QstlsGuess &guess);
-  // Getters
-  string getFixed() const {return fixed; }
-  string getFixedIet() const { return fixedIet; }
-  QstlsGuess getGuess() const { return guess; }
-  // Print content of the data structure
-  void print() const ;
-  // Compare two QstlsInput objects
-   bool isEqual(const QstlsInput &in) const;
-  
-};
+// -----------------------------------------------------------------
+// Class to handle input for the VSSTLS
+// -----------------------------------------------------------------
 
 class VSStlsInput : public StlsInput {
 
@@ -225,6 +199,51 @@ public:
   void print() const;
   // Compare two VSStls objects
   bool isEqual( const VSStlsInput &in ) const;
+  
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the QSTLS and QSTLS-IET schemes
+// -----------------------------------------------------------------
+
+class QstlsInput : public StlsInput {
+
+public:
+  
+  struct QstlsGuess {
+    vector<double> wvg;
+    vector<double> ssf;
+    vecUtil::Vector2D adr;
+    int matsubara = 0;
+    bool operator==(const QstlsGuess &other) const {
+      return wvg == other.wvg && ssf == other.ssf
+	&& adr == other.adr && matsubara == other.matsubara;
+    }
+  };
+
+private:
+
+  // Name of the file with the fixed component of the auxiliary density response (adr)
+  string fixed;
+  // Name of the file with the fixed component of the adr for iet schemes
+  string fixedIet;
+  // Initial guess
+  QstlsGuess guess;
+
+public:
+
+  // Setters
+  void setFixed(const string &fixed);
+  void setFixedIet(const string &fixedIet);
+  void setGuess(const QstlsGuess &guess);
+  // Getters
+  string getFixed() const {return fixed; }
+  string getFixedIet() const { return fixedIet; }
+  QstlsGuess getGuess() const { return guess; }
+  // Print content of the data structure
+  void print() const ;
+  // Compare two QstlsInput objects
+   bool isEqual(const QstlsInput &in) const;
   
 };
 

@@ -190,7 +190,7 @@ public:
 // Classes to compute integrals
 // -----------------------------------------------------------------
 
-// Integrator for 1D integrals
+// --- Integrator for 1D integrals ---
 class Integrator1D {
 
 private:
@@ -231,7 +231,7 @@ public:
   
 };
 
-// Integrator for 2D integrals
+// --- Integrator for 2D integrals ---
 class Integrator2D {
 
 private:
@@ -271,7 +271,7 @@ public:
 };
 
 
-// Integrator for 1D integrals of Fourier type
+// --- Integrator for 1D integrals of Fourier type --- 
 class Integrator1DFourier {
 
 private:
