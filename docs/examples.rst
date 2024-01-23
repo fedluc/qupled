@@ -3,15 +3,24 @@ Examples
 
 The following examples present some common use cases that show how to run qupled and how to post-process the results.
 
-A simple STLS solution
-----------------------
+RPA solution
+------------
 
-This example sets up a simple STLS calculation and  plots some of the results 
+This example sets up a simple RPA calculation and  plots some of the results 
 that are produced once the calculation are completed. There are two ways to access
 the results of the calculation: Directly from the object used to perform the calculation
 or from the output file created at the end of the run. The example illustrates how
 the static structure factor can be accessed with both these methods. Other quantities
 can be accessed in the same way.
+
+.. literalinclude:: ../examples/solveRpa.py
+   :language: python
+
+A simple STLS solution
+----------------------
+
+This example sets up a simple STLS calculation and  plots some of the results 
+that are produced once the calculation are completed. 
 
 .. literalinclude:: ../examples/solveStls.py
    :language: python
