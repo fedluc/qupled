@@ -8,10 +8,8 @@
 #include "rpa.hpp"
 
 // -----------------------------------------------------------------
-// Solver for the STLS-based schemes
+// Solver for the STLS scheme
 // -----------------------------------------------------------------
-
-#define EMPTY_STRING ""
 
 class Stls : public Rpa {
 
@@ -23,10 +21,8 @@ protected:
   const bool writeFiles;
   // iet schemes
   bool useIet;
-  // Name of the recovery files
-  string recoveryFileName;
   // Static local field correction to use during the iterations
-  vector<double> slfcOld;
+  vector<double> slfcNew;
   // Bridge function (for iet schemes)
   vector<double> bf;
   // Compute static local field correction
@@ -56,7 +52,6 @@ public:
   int compute();
   // Getters
   vector<double> getBf() const { return bf; }
-  string getRecoveryFileName() const { return recoveryFileName; }
   
 };
 

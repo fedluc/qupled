@@ -449,7 +449,8 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("ssf", RpaWrapper::getSsf)
     .add_property("ssfHF", RpaWrapper::getSsfHF)
     .add_property("uInt", &Rpa::getUInt)
-    .add_property("wvg", RpaWrapper::getWvg);
+    .add_property("wvg", RpaWrapper::getWvg)
+    .add_property("recovery", &Rpa::getRecoveryFileName);
   
   // Class to solve classical schemes
   bp::class_<Stls, bp::bases<Rpa>>("Stls",
@@ -463,7 +464,7 @@ BOOST_PYTHON_MODULE(qupled)
     .def("compute", &VSStls::compute)
     .add_property("freeEnergyIntegrand", VSStlsWrapper::getFreeEnergyIntegrand)
     .add_property("freeEnergyGrid", VSStlsWrapper::getFreeEnergyGrid);
-  
+      
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",
 				     bp::init<const QstlsInput>())

@@ -78,8 +78,8 @@ void Qstls::initialGuess() {
   ssfOld.resize(nx);
   if (useIet) { adrOld.resize(nx, nl); }
   // From recovery file
-  const string fileName = in.getRecoveryFileName();
-  if (fileName != EMPTY_STRING) {
+  const string& fileName = in.getRecoveryFileName();
+  if (!fileName.empty()) {
     vector<double> wvg_;
     vector<double> ssf_;
     Vector2D adr_;
@@ -268,7 +268,7 @@ void Qstls::writeAdrFixedFile(const Vector3D &res,
 void Qstls::readAdrFixedFile(Vector3D &res,
 			     const string &fileName,
 			     const bool iet) const {
-  if (fileName == EMPTY_STRING) { return; }
+  if (fileName.empty()) { return; }
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
   ifstream file;
@@ -387,7 +387,7 @@ void Qstls::getAdrFixedIetFileInfo() {
     string name = format<double,double>("adr_fixed_rs%.3f_theta%.3f_"
 					+ in.getTheory() + "_wv%.5f.bin",
 					in.getCoupling(), Theta, wvg[i]);
-    if (in.getFixedIet() != EMPTY_STRING) {
+    if (!in.getFixedIet().empty()) {
       std::filesystem::path fullPath = in.getFixedIet();
       fullPath /= name;
       name = fullPath.string();

@@ -20,6 +20,8 @@ protected:
   const RpaInput in;
   // Output verbosity
   const bool verbose;
+  // Name of the recovery files
+  string recoveryFileName;
   // Integrator
   Integrator1D itg;
   // Wave vector grid
@@ -67,6 +69,7 @@ public:
   vector<double> getRdf(const vector<double> &r) const;
   vector<double> getSdr() const;
   double getUInt() const;
+  string getRecoveryFileName() { return recoveryFileName; }
   
 };
 

@@ -27,7 +27,7 @@ Stls::Stls(const StlsInput& in_,
   const size_t nx = wvg.size();
   ssf.resize(nx);
   slfc.resize(nx);
-  slfcOld.resize(nx);
+  slfcNew.resize(nx);
 }
 
 int Stls::compute(){
@@ -56,7 +56,7 @@ void Stls::computeSlfcStls() {
   const Interpolator1D itp(wvg,ssf);
   for (int i=0; i<nx; ++i) {
     Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
-    slfc[i] = slfcTmp.get();
+    slfcNew[i] = slfcTmp.get();
   }
 }
 
@@ -65,13 +65,13 @@ void Stls::computeSlfcIet() {
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const Interpolator1D ssfItp(wvg, ssf);
-  const Interpolator1D slfcItp(wvg, slfcOld);
+  const Interpolator1D slfcItp(wvg, slfc);
   if (bf.size() == 0) computeBf();
   const Interpolator1D bfItp(wvg, bf);
   for (size_t i=0; i<wvg.size(); ++i){
     SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),
 		    ssfItp, slfcItp, bfItp, itgGrid, itg2);
-    slfc[i] += slfcTmp.get();
+    slfcNew[i] += slfcTmp.get();
   }
 }
 
@@ -125,11 +125,8 @@ void Stls::doIterations() {
 
 // Initial guess for stls iterations
 void Stls::initialGuess() {
-  const int nx = wvg.size();
-  slfcOld.resize(nx);
-  slfc.resize(nx);
   // From recovery file
-  if (in.getRecoveryFileName() != EMPTY_STRING) {
+  if (!in.getRecoveryFileName().empty()) {
     vector<double> wvgFile;
     vector<double> slfcFile;
     readRecovery(wvgFile, slfcFile);
@@ -137,8 +134,8 @@ void Stls::initialGuess() {
     const double xmaxi = wvgFile.back();
     for (size_t i=0; i<wvg.size(); ++i) {
       const double x = wvg[i];
-      if (x <= xmaxi) { slfcOld[i] = slfci.eval(x);}
-      else { slfcOld[i] = 1.0; }
+      if (x <= xmaxi) { slfc[i] = slfci.eval(x);}
+      else { slfc[i] = 1.0; }
     }
     return;
   }
@@ -148,24 +145,24 @@ void Stls::initialGuess() {
     const double xmaxi = in.getGuess().wvg.back();
     for (size_t i=0; i<wvg.size(); ++i) {
       const double x = wvg[i];
-      if (x <= xmaxi) { slfcOld[i] = slfci.eval(x);}
-      else { slfcOld[i] = 1.0; }
+      if (x <= xmaxi) { slfc[i] = slfci.eval(x);}
+      else { slfc[i] = 1.0; }
     }
     return;
   }  
   // Default
-  fill(slfcOld.begin(), slfcOld.end(), 0.0);
+  fill(slfc.begin(), slfc.end(), 0.0);
 }
 
 // Compute residual error for the stls iterations
 double Stls::computeError(){
-  return rms(slfc, slfcOld, false);
+  return rms(slfc, slfcNew, false);
 }
 
 // Update solution during stls iterations
 void Stls::updateSolution(){
   const double aMix = in.getMixingParameter();
-  slfcOld = sum(mult(slfc, aMix), mult(slfcOld, 1 - aMix));
+  slfc = sum(mult(slfcNew, aMix), mult(slfc, 1 - aMix));
 }
 
 // Recovery files

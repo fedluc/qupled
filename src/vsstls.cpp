@@ -70,7 +70,7 @@ double StlsCSR::getDerivative(const double& f0,
 
 void StlsCSR::computeSlfcStls() {
   Stls::computeSlfc();
-  slfcStls = slfc;
+  slfcStls = slfcNew;
 }
 
 void StlsCSR::computeSlfc() {
@@ -92,21 +92,21 @@ void StlsCSR::computeSlfc() {
   const double a_dt = alpha * theta / (3.0 * dTheta);
   const size_t nx = wvg.size();
   // Wave-vector derivative
-  slfc[0] -= a_dx * wvg[0] * getDerivative(slfcStls, 0, FORWARD);
+  slfcNew[0] -= a_dx * wvg[0] * getDerivative(slfcStls, 0, FORWARD);
   for (size_t i = 1; i < nx - 1; ++i) {
-    slfc[i] -= a_dx * wvg[i] * getDerivative(slfcStls, i, CENTERED);
+    slfcNew[i] -= a_dx * wvg[i] * getDerivative(slfcStls, i, CENTERED);
   }
-  slfc[nx - 1] -= a_dx * wvg[nx - 1] * getDerivative(slfcStls, nx - 1, BACKWARD);
+  slfcNew[nx - 1] -= a_dx * wvg[nx - 1] * getDerivative(slfcStls, nx - 1, BACKWARD);
   // Coupling parameter contribution
   if (rs > 0.0) {
     for (size_t i = 0; i < nx; ++i) {
-      slfc[i] -= a_drs * getDerivative(slfcStls[i], rsUp[i], rsDown[i], dTypeRs);
+      slfcNew[i] -= a_drs * getDerivative(slfcStls[i], rsUp[i], rsDown[i], dTypeRs);
     }
   }
   // Degeneracy parameter contribution
   if (theta > 0.0) {
     for (size_t i = 0; i < nx; ++i) {
-      slfc[i] -= a_dt * getDerivative(slfcStls[i], thetaUp[i], thetaDown[i], dTypeTheta);
+      slfcNew[i] -= a_dt * getDerivative(slfcStls[i], thetaUp[i], thetaDown[i], dTypeTheta);
     }
   }
 }

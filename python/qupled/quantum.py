@@ -10,6 +10,10 @@ import matplotlib.cm as cm
 import qupled.qupled as qp
 import qupled.classic as classic
 
+# -----------------------------------------------------------------------
+# Qstls class
+# -----------------------------------------------------------------------
+
 class Qstls(classic.Stls):
 
     """Class to solve the QSTLS scheme.
@@ -149,6 +153,10 @@ class Qstls(classic.Stls):
                                       matsubara)
         
 
+# -----------------------------------------------------------------------
+# QstlsIet class
+# -----------------------------------------------------------------------
+        
 class QstlsIet(Qstls):
 
     """Class to solve the QSTLS-IET schemes.

@@ -9,6 +9,10 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import qupled.qupled as qp
 
+# -----------------------------------------------------------------------
+# RPA class
+# -----------------------------------------------------------------------
+
 class Rpa():
 
     """Class to solve the Random-Phase approximation.
@@ -92,6 +96,7 @@ class Rpa():
                status: status obtained from the native code. If status == 0 the scheme was solved correctly.
         """
         if (status == 0):
+            if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
             print("Dielectric theory solved successfully!")
         else:
             sys.exit("Error while solving the dielectric theory")
@@ -248,7 +253,11 @@ class Rpa():
         if (self.scheme is None):
             sys.exit("No solution to " + action)
 
-            
+
+# -----------------------------------------------------------------------
+# Stls class
+# -----------------------------------------------------------------------
+
 class Stls(Rpa):
 
     """Class to solve the STLS scheme.
@@ -314,7 +323,7 @@ class Stls(Rpa):
                    recoveryFile : str,
                    resolution : float) -> None:
         """ Sets up the content of :obj:`inputs` """
-        super()._setInputs(coupling, degeneracy, "STLS", chemicalPotential,
+        super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
                            cutoff, matsubara, resolution)
         self.inputs.error = error
         self.inputs.mixing = mixing
@@ -341,17 +350,7 @@ class Stls(Rpa):
         self._setHdfFile()
         self._save()
 
-    # Check that the dielectric scheme was solved without errors
-    def _checkStatusAndClean(self, status : bool) -> None:
-        """ Checks that the scheme was solved correctly and removes temporarary files generated at run-time
-        
-           Args:
-               status: status obtained from the native code. If status == 0 the scheme was solved correctly.
-        """
-        super()._checkStatusAndClean(status)
-        if (status == 0):
-            if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
-            
+    # Save results to disk
     def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Rpa.save`
         by adding the option to save the minimum error for convergence. The
@@ -379,6 +378,11 @@ class Stls(Rpa):
         guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
         guess.slfc = pd.read_hdf(fileName, "slfc")[0].to_numpy()
         self.inputs.guess = guess
+
+
+# -----------------------------------------------------------------------
+# StlsIet class
+# -----------------------------------------------------------------------
 
 class StlsIet(Stls):
 
@@ -457,6 +461,10 @@ class StlsIet(Stls):
         super()._save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
 
+
+# -----------------------------------------------------------------------
+# VSStls class
+# -----------------------------------------------------------------------
 
 class VSStls(Stls):
 
@@ -572,7 +580,11 @@ class VSStls(Stls):
         super().plot(toPlot, matsubara, rdfGrid)
         if ("fxci" in toPlot):
             Plot.plot1D(self.scheme.freeEnergyGrid, self.scheme.freeEnergyIntegrand[1,:], "Coupling parameter", "Free energy integrand")
-        
+
+# -----------------------------------------------------------------------
+# Hdf class
+# -----------------------------------------------------------------------
+
 class Hdf():
 
     """ Class to manipulate the hdf files produced when a scheme is solved """
@@ -657,7 +669,10 @@ class Hdf():
         ssf = pd.read_hdf(hdf, "ssf")[0].to_numpy()
         coupling = pd.read_hdf(hdf, "inputs")["coupling"][0].tolist()
         return qp.computeInternalEnergy(wvg, ssf, coupling)
-
+    
+# -----------------------------------------------------------------------
+# Plot class
+# -----------------------------------------------------------------------
     
 class Plot():
 
