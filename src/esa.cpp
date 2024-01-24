@@ -10,41 +10,14 @@ using namespace std;
 // ESA class
 // -----------------------------------------------------------------
 
-// ESA compute function
-int ESA::compute(){
-  try {
-    init();  
-    if (verbose) cout << "Structural properties calculation ..." << endl;
-    doESA();
-    if (verbose) cout << "Done" << endl;
-    return 0;
-  }
-  catch (const runtime_error& err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
+ESA::ESA(const RpaInput &in_) : Rpa(in_, true, false) {
+  if (verbose) cout << "Computing static local field correction: "; 
+  computeSlfc();
+  if (verbose) cout << "Done" << endl;
+  if (verbose) cout << "Computing static structure factor: "; 
+  computeSsf();
+  if (verbose) cout << "Done" << endl;
 }
-
-
-// ESA main function
-void ESA::doESA() {
-
-// Start timing
-double tic = omp_get_wtime();
-// Compute ESA static local field correction
-computeSlfc();
-// Compute static structure factor
-computeSsf();
-// End timing
-double toc = omp_get_wtime();
-// Print diagnostic
-if (verbose) {
-    printf("Elapsed time: %f seconds\n", toc - tic);
-    fflush(stdout);
-}
-  
-}
-
 
 void ESA::computeSlfc() {
 
@@ -160,8 +133,6 @@ void ESA::computeSlfc() {
         
         slfc[i] = Gesa;
     }
-    // Assign slfc values to the slfcOld vector
-    slfcOld = slfc;
 }
 
 // QMC free energy function constants

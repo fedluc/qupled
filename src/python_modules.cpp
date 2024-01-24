@@ -440,7 +440,7 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &QstlsInput::print)
     .def("isEqual", &QstlsInput::isEqual);
 
-  // Class to solve the RPA scheme
+  // Class to solve the classical RPA scheme
   bp::class_<Rpa>("Rpa",
 		  bp::init<const RpaInput>())
     .def("rdf", RpaWrapper::getRdf)
@@ -452,7 +452,11 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("uInt", &Rpa::getUInt)
     .add_property("wvg", RpaWrapper::getWvg)
     .add_property("recovery", &Rpa::getRecoveryFileName);
-  
+
+  // Class to solve the classical ESA scheme
+  bp::class_<ESA, bp::bases<Rpa>>("ESA",
+				  bp::init<const RpaInput>());
+
   // Class to solve classical schemes
   bp::class_<Stls, bp::bases<Rpa>>("Stls",
 				   bp::init<const StlsInput>())
@@ -466,11 +470,6 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("freeEnergyIntegrand", VSStlsWrapper::getFreeEnergyIntegrand)
     .add_property("freeEnergyGrid", VSStlsWrapper::getFreeEnergyGrid);
       
-  // Class to solve the classical ESA scheme
-  bp::class_<ESA, bp::bases<StlsBase>>("ESA",
-            bp::init<const StlsInput>())
-     .def("compute", &ESA::compute);
-
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",
 				     bp::init<const QstlsInput>())

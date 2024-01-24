@@ -3,24 +3,25 @@ Examples
 
 The following examples present some common use cases that show how to run qupled and how to post-process the results.
 
-RPA solution
-------------
+Setup a scheme and analyze the output
+-------------------------------------
 
-This example sets up a simple RPA calculation and  plots some of the results 
-that are produced once the calculation are completed. There are two ways to access
-the results of the calculation: Directly from the object used to perform the calculation
-or from the output file created at the end of the run. The example illustrates how
-the static structure factor can be accessed with both these methods. Other quantities
-can be accessed in the same way.
+This example sets up all the necessary objects to solve the RPA and ESA schemes and
+shows how to access the information stored in the output files produced at the
+end of the calculations
 
-.. literalinclude:: ../examples/solveRpa.py
+.. literalinclude:: ../examples/solveRpaAndESA.py
    :language: python
 
 A simple STLS solution
 ----------------------
 
 This example sets up a simple STLS calculation and  plots some of the results 
-that are produced once the calculation are completed. 
+that are produced once the calculation are completed. There are two ways to access
+the results of the calculation: Directly from the object used to perform the calculation
+or from the output file created at the end of the run. The example illustrates how
+the static structure factor can be accessed with both these methods. Other quantities
+can be accessed in the same way.
 
 .. literalinclude:: ../examples/solveStls.py
    :language: python
