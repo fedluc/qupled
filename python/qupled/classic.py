@@ -505,7 +505,7 @@ class ESA(Stls):
                  degeneracy: float,
                  chemicalPotential: list[float] = [-100.0, 100.0],
                  cutoff: float = 10.0,
-                 matsubara: int = 5,
+                 matsubara: int = 128,
                  resolution: float = 0.1):
         # Allowed theories
         self.allowedTheories : list[str] = ["ESA"]
