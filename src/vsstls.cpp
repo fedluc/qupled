@@ -461,6 +461,7 @@ void VSStls::doIterations() {
   auto func = [this](double alphaTmp)->double{return alphaDifference(alphaTmp);};
   SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
   rsol.solve(func, in.getAlphaGuess());
+  const double& theta = in.getDegeneracy(); 
   if (!rsol.success()) {
     throw runtime_error("VSStls: the root solver did not converge to the desired accuracy.");
   }

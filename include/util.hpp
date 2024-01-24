@@ -236,8 +236,10 @@ namespace thermoUtil {
     const double r;
     // Cutoff in the wave-vector grid
     const double cutoff;
+    // Fourier Integrator object
+    Integrator1DFourier &itgf;
     // Integrator object
-    Integrator1DFourier &itg;
+    Integrator1D &itg;
     // Static structure factor interpolator
     const Interpolator1D &ssfi;
     // Integrand
@@ -249,10 +251,11 @@ namespace thermoUtil {
 
     // Constructor
     Rdf(const double r_,
-	const double cutoff_,
-	const Interpolator1D &ssfi_,
-	Integrator1DFourier &itg_) : r(r_), cutoff(cutoff_), itg(itg_),
-				     ssfi(ssfi_) { ; };
+	      const double cutoff_,
+	      const Interpolator1D &ssfi_,
+        Integrator1D &itg_,
+	      Integrator1DFourier &itgf_) : r(r_), cutoff(cutoff_),
+				itgf(itgf_), itg(itg_), ssfi(ssfi_) {;};
     // Get result of integration 
     double get() const;
   

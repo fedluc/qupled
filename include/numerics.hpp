@@ -301,7 +301,7 @@ public:
     wspc = gsl_integration_workspace_alloc(limit);
     qtab = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, limit);
   }
-  Integrator1DFourier(const double r_) : Integrator1DFourier(r_, 1.0e-5) { ; }
+  Integrator1DFourier(const double r_) : Integrator1DFourier(r_, 1.0e-6) { ; }
   // Set spatial position (to re-use the integrator for different r)
   void setR(const double r_) {r = r_;};
   // Destructor

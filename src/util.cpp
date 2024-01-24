@@ -328,15 +328,17 @@ namespace thermoUtil {
 
   double Rdf::integrand(double y) const {
     if (y > cutoff) return 0;
+    if (r == 0) return y*y * (ssf(y) - 1);
     return y*(ssf(y) - 1);
   }
 
   double Rdf::get() const {
-    if (r == 0) { return 0.0; }
     auto func = [&](double y)->double{return integrand(y);};
-    itg.setR(r);
-    itg.compute(func);
-    return 1 + 1.5 * itg.getSolution()/r;
+    if (r == 0) { itg.compute(func, 0.0, cutoff);
+    return 1 + 1.5 * itg.getSolution(); }
+    itgf.setR(r);
+    itgf.compute(func);
+    return 1 + 1.5 * itgf.getSolution()/r;
   }
 
   double computeInternalEnergy(const vector<double> &wvg,
@@ -376,9 +378,10 @@ namespace thermoUtil {
     const Interpolator1D itp(wvg, ssf);
     const int nr = r.size();
     vector<double> rdf(nr);
-    Integrator1DFourier itg(0.0);
+    Integrator1DFourier itgf(0.0);
+    Integrator1D itg(1.0e-6);
     for (int i=0; i<nr; ++i){
-      const Rdf rdfTmp(r[i], wvg.back(), itp, itg);
+      const Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf);
       rdf[i] = rdfTmp.get();
     }
     return rdf;

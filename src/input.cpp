@@ -20,7 +20,7 @@ void Input::setDegeneracy(const double &Theta_){
 void Input::setTheory(const string &theory_){
   const vector<string> cTheories = {"STLS", "STLS-HNC",
 				    "STLS-IOI", "STLS-LCT",
-				    "VSSTLS"};
+				    "VSSTLS", "ESA"};
   const vector<string> qTheories = {"QSTLS", "QSTLS-HNC",
 				    "QSTLS-IOI", "QSTLS-LCT"};
   isClassicTheory = count(cTheories.begin(), cTheories.end(), theory_) != 0;
