@@ -8,7 +8,8 @@ using namespace std;
 // -----------------------------------------------------------------
 
 ESA::ESA(const RpaInput &in_) : Rpa(in_, true, false) {
-  if (verbose) cout << "Computing static local field correction: "; 
+  if (verbose) cout << "Computing static local field correction: ";
+  slfc.resize(wvg.size());
   computeSlfc();
   if (verbose) cout << "Done" << endl;
   if (verbose) cout << "Computing static structure factor: "; 
