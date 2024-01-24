@@ -14,7 +14,8 @@ private:
   // Funtion for the ESA static local field correction
   void computeSlfc();
   // Function for free energy derivatives
-  double fxc(double theta, double rs) const;
+  double fxc(const double& theta,
+	     const double& rs) const;
   // Resolution for the free energy derivatives
   const double dx = 1e-6; 
 

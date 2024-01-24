@@ -90,23 +90,23 @@ void ESA::computeSlfc() {
     constexpr double cd2 = 1.07863273;
     constexpr double cd3 = -0.35630091;
 
-    const double aa = aa1 + aa2 * theta + aa3 * thetap3_2;
-    const double ba = ba1 + ba2 * theta + ba3 * thetap3_2;
-    const double ca = ca1 + ca2 * theta + ca3 * thetap3_2;
-    const double ab = ab1 + ab2 * theta + ab3 * thetap3_2;
-    const double bb = bb1 + bb2 * theta + bb3 * thetap3_2;
-    const double cb = cb1 + cb2 * theta + cb3 * thetap3_2;
-    const double ac = ac1 + ac2 * theta + ac3 * thetap3_2;
-    const double bc = bc1 + bc2 * theta + bc3 * thetap3_2;
-    const double cc = cc1 + cc2 * theta + cc3 * thetap3_2;
-    const double ad = ad1 + ad2 * theta + ad3 * thetap3_2;
-    const double bd = bd1 + bd2 * theta + bd3 * thetap3_2;
-    const double cd = cd1 + cd2 * theta + cd3 * thetap3_2;
+    const double aa = aa1 + aa2 * theta + aa3 * theta3_2;
+    const double ba = ba1 + ba2 * theta + ba3 * theta3_2;
+    const double ca = ca1 + ca2 * theta + ca3 * theta3_2;
+    const double ab = ab1 + ab2 * theta + ab3 * theta3_2;
+    const double bb = bb1 + bb2 * theta + bb3 * theta3_2;
+    const double cb = cb1 + cb2 * theta + cb3 * theta3_2;
+    const double ac = ac1 + ac2 * theta + ac3 * theta3_2;
+    const double bc = bc1 + bc2 * theta + bc3 * theta3_2;
+    const double cc = cc1 + cc2 * theta + cc3 * theta3_2;
+    const double ad = ad1 + ad2 * theta + ad3 * theta3_2;
+    const double bd = bd1 + bd2 * theta + bd3 * theta3_2;
+    const double cd = cd1 + cd2 * theta + cd3 * theta3_2;
     const double xm = Ax + Bx * theta + Cx * theta2; 
 
     const double g0a = (g0a0 + g0aa1 * theta)/(1.0 + g0ba1 * theta + g0ba2 * theta3);
     const double g0b = (g0b0 + g0ab1 * sqrtTheta)/(1.0 + g0bb1 * theta + g0bb2 * theta2);
-    const double g0c = ( (g0c0 + g0ac1 * sqrtTheta + g0ac2 * thetap3_2)
+    const double g0c = ( (g0c0 + g0ac1 * sqrtTheta + g0ac2 * theta3_2)
 			 /(1.0 + g0bc1 * theta + g0bc2 * theta2) );
     const double g0d = (g0d0 + g0ad1 * sqrtTheta)/(1.0 + g0bd1 * theta + g0bd2 * theta2);
     const double g = 1.0/2.0 * (1.0 + g0a * sqrtRs + g0b * rs)/(1.0 + g0c * rs + g0d * rs3);
@@ -117,22 +117,31 @@ void ESA::computeSlfc() {
     const double d = (ad + bd * rs)/(1.0 + cd * rs);
 
     // Assigning derivatives to variables
-    const double fxcr = (fxc(theta, rs + dx) - fxc(theta, rs - dx)) / (2.0 * dx);
-    const double fxct = (fxc(theta + dx, rs) - fxc(theta - dx, rs)) / (2.0 * dx);
-    const double fxcrr = (fxc(theta, rs + dx) - 2.0 * fxc(theta, rs) + fxc(theta, rs - dx)) / (dx * dx);
-    const double fxctt = (fxc(theta + dx, rs) - 2.0 * fxc(theta, rs) + fxc(theta - dx, rs)) / (dx * dx);
-    const double fxctr = (fxc(theta + dx, rs + dx) - fxc(theta + dx, rs - dx) - fxc(theta - dx, rs + dx) + fxc(theta - dx, rs - dx)) / (4.0 * dx * dx);
+    vector<double> fxcData;
+    for (const double& thetaTmp : {theta - dx, theta, theta + dx}) {
+      for (const double& rsTmp : {rs - dx, rs, rs + dx}){
+	fxcData.push_back(fxc(thetaTmp, rsTmp));
+      }
+    }
+    const double tdx = 2.0 * dx;
+    const double dx2 = dx * dx;
+    const double fdx2 = 4.0 * dx2;
+    const double fxcr = (fxcData[5] - fxcData[3]) / tdx;
+    const double fxct = (fxcData[7] - fxcData[1]) / tdx;
+    const double fxcrr = (fxcData[5] - 2.0 * fxcData[4] + fxcData[3]) / dx2;
+    const double fxctt = (fxcData[7] - 2.0 * fxcData[4] + fxcData[1]) / dx2;
+    const double fxctr = (fxcData[8] - fxcData[6] - fxcData[2] + fxcData[0]) / fdx2;
     
-    const int nx = wvg.size();
-    slfc.resize(nx);
     // Loop over the wave vector grid size
-    for (int i=0; i<nx; ++i) {
+    for (size_t i = 0; i < wvg.size(); ++i) {
       const double& x = wvg[i];
       const double x2 = x * x;
       const double sqrtX = sqrt(x);
       const double xp125 = pow(x, 1.25);
       const double AF = 1.0/2.0 * (1.0 + tanh(Eta * (x - xm)));
-      const double GCSR = lambdaRs * x2 * (4.0 * theta2 * fxctt + rs2 * fxcrr + 4.0 * theta * rs * fxctr - 2.0 * theta * fxct - 2.0 * rs * fxcr);
+      const double GCSR = lambdaRs * x2 * (4.0 * theta2 * fxctt + rs2 * fxcrr
+					   + 4.0 * theta * rs * fxctr
+					   - 2.0 * theta * fxct - 2.0 * rs * fxcr);
       const double Gnnfit = (1.0 + a * x + b * sqrtX)/(1.0 + c * x + d * xp125 + GCSR);
       const double Gesa = GCSR * Gnnfit * (1.0 - AF) + (1.0 - g) * AF;
       slfc[i] = Gesa;
@@ -140,7 +149,8 @@ void ESA::computeSlfc() {
 }
 
 // QMC free energy function constants
-double ESA::fxc(double theta, double rs) const {
+double ESA::fxc(const double& theta,
+		const double& rs) const {
 
   const double thetaInv = 1.0/theta;
   const double theta2 = theta * theta;
@@ -177,7 +187,7 @@ double ESA::fxc(double theta, double rs) const {
 					 / (1.0 + fd4 * theta2 + fd5 * theta4) );
   const double fe = tanhThetaInv * ( (fe1 + fe2 * theta2 + fe3 * theta4)
 				     / (1.0 + fe4 * theta2 + fe5 * theta4) );
-  const double fc = (fc1 + fc2 * exp(-ThetaInv) * fe;
+  const double fc = (fc1 + fc2 * exp(-thetaInv)) * fe;
 
   return -rsInv * (omega * fa + fb * sqrtRs + fc * rs) / (1.0 + fd * sqrtRs + fe * rs);
     
