@@ -22,8 +22,14 @@ void ESA::computeSlfc() {
     const double theta = in.getDegeneracy();
     const double rs = in.getCoupling();
     const double theta3_2 = pow(theta, 1.5);
-    const double theta2 = theta * theta
-      
+    const double theta2 = theta * theta;
+    const double theta3 = theta * theta2;
+    const double sqrtTheta = sqrt(theta);
+    const double sqrtRs = sqrt(rs);
+    const double rs2 = rs * rs;
+    const double rs3 = rs2 * rs;
+    const double lambdaRs = -(M_PI/12.0) * lambda * rs;
+    
     // Constants for the computation of the static local field correction
     constexpr double g0aa1 = 18.4376509088802;
     constexpr double g0ba1 = 24.1338558554951;
@@ -98,11 +104,12 @@ void ESA::computeSlfc() {
     const double cd = cd1 + cd2 * theta + cd3 * thetap3_2;
     const double xm = Ax + Bx * theta + Cx * theta2; 
 
-    const double g0a = (g0a0 + g0aa1 * theta)/(1.0 + g0ba1 * theta + g0ba2 * pow(theta, 3.0));
-    const double g0b = (g0b0 + g0ab1 * sqrt(theta))/(1.0 + g0bb1 * theta + g0bb2 * theta2);
-    const double g0c = (g0c0 + g0ac1 * sqrt(theta) + g0ac2 * theta_pow)/(1.0 + g0bc1 * theta + g0bc2 * theta2);
-    const double g0d = (g0d0 + g0ad1 * sqrt(theta))/(1.0 + g0bd1 * theta + g0bd2 * theta2);
-    const double g = 1.0/2.0 * (1.0 + g0a * sqrt(rs) + g0b * rs)/(1.0 + g0c * rs + g0d * pow(rs, 3.0));
+    const double g0a = (g0a0 + g0aa1 * theta)/(1.0 + g0ba1 * theta + g0ba2 * theta3);
+    const double g0b = (g0b0 + g0ab1 * sqrtTheta)/(1.0 + g0bb1 * theta + g0bb2 * theta2);
+    const double g0c = ( (g0c0 + g0ac1 * sqrtTheta + g0ac2 * thetap3_2)
+			 /(1.0 + g0bc1 * theta + g0bc2 * theta2) );
+    const double g0d = (g0d0 + g0ad1 * sqrtTheta)/(1.0 + g0bd1 * theta + g0bd2 * theta2);
+    const double g = 1.0/2.0 * (1.0 + g0a * sqrtRs + g0b * rs)/(1.0 + g0c * rs + g0d * rs3);
     
     const double a = (aa + ba * rs)/(1.0 + ca * rs);
     const double b = (ab + bb * rs)/(1.0 + cb * rs);
@@ -110,26 +117,25 @@ void ESA::computeSlfc() {
     const double d = (ad + bd * rs)/(1.0 + cd * rs);
 
     // Assigning derivatives to variables
-    const double dfxc_rs = (fxc(theta, rs + dx) - fxc(theta, rs - dx)) / (2.0 * dx);
-    const double dfxc_t = (fxc(theta + dx, rs) - fxc(theta - dx, rs)) / (2.0 * dx);
-    const double dfxc_rs2 = (fxc(theta, rs + dx) - 2.0 * fxc(theta, rs) + fxc(theta, rs - dx)) / (dx * dx);
-    const double dfxc_t2 = (fxc(theta + dx, rs) - 2.0 * fxc(theta, rs) + fxc(theta - dx, rs)) / (dx * dx);
-    const double dfxc_t_rs = (fxc(theta + dx, rs + dx) - fxc(theta + dx, rs - dx) - fxc(theta - dx, rs + dx) + fxc(theta - dx, rs - dx)) / (4.0 * dx * dx);
+    const double fxcr = (fxc(theta, rs + dx) - fxc(theta, rs - dx)) / (2.0 * dx);
+    const double fxct = (fxc(theta + dx, rs) - fxc(theta - dx, rs)) / (2.0 * dx);
+    const double fxcrr = (fxc(theta, rs + dx) - 2.0 * fxc(theta, rs) + fxc(theta, rs - dx)) / (dx * dx);
+    const double fxctt = (fxc(theta + dx, rs) - 2.0 * fxc(theta, rs) + fxc(theta - dx, rs)) / (dx * dx);
+    const double fxctr = (fxc(theta + dx, rs + dx) - fxc(theta + dx, rs - dx) - fxc(theta - dx, rs + dx) + fxc(theta - dx, rs - dx)) / (4.0 * dx * dx);
     
     const int nx = wvg.size();
     slfc.resize(nx);
     // Loop over the wave vector grid size
     for (int i=0; i<nx; ++i) {
-                
-        const double AF = 1.0/2.0 * (1.0 + tanh(Eta * (wvg[i] - xm)));
-
-        const double GCSR = -(M_PI/12.0) * lambda * rs * pow(wvg[i], 2.0) * (4.0 * theta2 * dfxc_t2 + pow(rs, 2.0) * dfxc_rs2 + 4.0 * theta * rs * dfxc_t_rs - 2.0 * theta * dfxc_t - 2.0 * rs * dfxc_rs);
-                
-        const double Gnnfit = (1.0 + a * wvg[i] + b * pow(wvg[i], 1.0/2.0))/(1.0 + c * wvg[i] + d * pow(wvg[i], 1.25) + GCSR);
-        
-        const double Gesa = GCSR * Gnnfit * (1.0 - AF) + (1.0 - g) * AF;
-        
-        slfc[i] = Gesa;
+      const double& x = wvg[i];
+      const double x2 = x * x;
+      const double sqrtX = sqrt(x);
+      const double xp125 = pow(x, 1.25);
+      const double AF = 1.0/2.0 * (1.0 + tanh(Eta * (x - xm)));
+      const double GCSR = lambdaRs * x2 * (4.0 * theta2 * fxctt + rs2 * fxcrr + 4.0 * theta * rs * fxctr - 2.0 * theta * fxct - 2.0 * rs * fxcr);
+      const double Gnnfit = (1.0 + a * x + b * sqrtX)/(1.0 + c * x + d * xp125 + GCSR);
+      const double Gesa = GCSR * Gnnfit * (1.0 - AF) + (1.0 - g) * AF;
+      slfc[i] = Gesa;
     }
 }
 
@@ -165,9 +171,12 @@ double ESA::fxc(double theta, double rs) const {
 
   const double fa = 0.610887 * tanhThetaInv * ( (0.75 + 3.04363 * theta2 - 0.09227 * theta3 + 1.7035 * theta4)
 						/ (1.0 + 8.31051 * theta2 + 5.1105 * theta4) );
-  const double fb = tanhSqrtThetaInv) * (fb1 + fb2 * theta2 + fb3 * theta4) / (1.0 + fb4 * theta2 + fb5 * theta4);
-  const double fd = tanhSqrtThetaInv) * (fd1 + fd2 * theta2 + fd3 * theta4) / (1.0 + fd4 * theta2 + fd5 * theta4);
-  const double fe = tanhThetaInv * (fe1 + fe2 * theta2 + fe3 * theta4) / (1.0 + fe4 * theta2 + fe5 * theta4);
+  const double fb = tanhSqrtThetaInv * ( (fb1 + fb2 * theta2 + fb3 * theta4)
+					 / (1.0 + fb4 * theta2 + fb5 * theta4) );
+  const double fd = tanhSqrtThetaInv * ( (fd1 + fd2 * theta2 + fd3 * theta4)
+					 / (1.0 + fd4 * theta2 + fd5 * theta4) );
+  const double fe = tanhThetaInv * ( (fe1 + fe2 * theta2 + fe3 * theta4)
+				     / (1.0 + fe4 * theta2 + fe5 * theta4) );
   const double fc = (fc1 + fc2 * exp(-ThetaInv) * fe;
 
   return -rsInv * (omega * fa + fb * sqrtRs + fc * rs) / (1.0 + fd * sqrtRs + fe * rs);
