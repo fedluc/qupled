@@ -319,6 +319,42 @@ namespace thermoUtil {
   // Stand-alone methods
   // -----------------------------------------------------------------
   
+  double InternalEnergy::integrand(double y) const {
+    return ssf(y) - 1;
+  }
+
+  double InternalEnergy::get() const  {
+    auto func = [&](double y)->double{return integrand(y);};
+    itg.compute(func, yMin, yMax);
+    return itg.getSolution()/(M_PI * rs * lambda);
+  }
+
+  double FreeEnergy::get() const  {
+    auto func = [&](double y)->double{return rsui.eval(y);};
+    itg.compute(func, 0.0, rs);
+    if (normalize) { return (rs == 0.0) ? -numUtil::Inf : itg.getSolution()/rs/rs; };
+    return itg.getSolution();
+  }
+  
+  double Rdf::ssf(double y) const {
+    return ssfi.eval(y);
+  }
+
+  double Rdf::integrand(double y) const {
+    if (y > cutoff) return 0;
+    if (r == 0) return y*y * (ssf(y) - 1);
+    return y*(ssf(y) - 1);
+  }
+
+  double Rdf::get() const {
+    auto func = [&](double y)->double{return integrand(y);};
+    if (r == 0) { itg.compute(func, 0.0, cutoff);
+    return 1 + 1.5 * itg.getSolution(); }
+    itgf.setR(r);
+    itgf.compute(func);
+    return 1 + 1.5 * itgf.getSolution()/r;
+  }
+
   double computeInternalEnergy(const vector<double> &wvg,
 			       const vector<double> &ssf,
 			       const double &coupling) {
@@ -356,9 +392,10 @@ namespace thermoUtil {
     const Interpolator1D itp(wvg, ssf);
     const int nr = r.size();
     vector<double> rdf(nr);
-    Integrator1DFourier itg(0.0);
+    Integrator1DFourier itgf(0.0);
+    Integrator1D itg(1.0e-6);
     for (int i=0; i<nr; ++i){
-      const Rdf rdfTmp(r[i], wvg.back(), itp, itg);
+      const Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf);
       rdf[i] = rdfTmp.get();
     }
     return rdf;

@@ -21,7 +21,8 @@ Python3_add_library(qupled MODULE
 		    rpa.cpp
 		    stls.cpp
 		    util.cpp
-		    vsstls.cpp)
+		    vsstls.cpp
+			esa.cpp)
 
 # Include directories
 target_include_directories(qupled PUBLIC
