@@ -21,7 +21,7 @@ Python3_add_library(qupled MODULE
 		    stls.cpp
 		    util.cpp
 		    vsstls.cpp
-			ESA.cpp)
+			esa.cpp)
 
 # Include directories
 target_include_directories(qupled PUBLIC

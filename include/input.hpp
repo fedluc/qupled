@@ -209,7 +209,6 @@ public:
   void print() const;
   // Compare two VSStls objects
   bool isEqual( const VSStlsInput &in ) const;
-  bool ThetaDeriv;
   
 };
 

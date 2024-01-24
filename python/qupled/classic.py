@@ -274,7 +274,7 @@ class Stls():
           
         """
         assert(self.scheme is not None)
-        if (rdfGrid is None) : rdfGrid = np.arange(0.01, 10.0, 0.01)
+        if (rdfGrid is None) : rdfGrid = np.arange(0.0, 10.0, 0.01)
         rdf = self.computeRdf(rdfGrid)
         Plot.plot1D(rdfGrid, rdf, "Inter-particle distance", "radial distribution function")
 
@@ -395,7 +395,6 @@ class VSStls(Stls):
         iterationsAlpha: Maximum number of iterations for the free parameter, defaults to 50
         errorIntegrals: Accuracy (as a relative error) for the integral computations, defaults to 1.0-5
         threads: number of OMP threads for parallel calculations, defualts to 1
-        ThetaDeriv: Bool value to include (True) or not (False) the theta derivative in both SLFC and free parameter calculations, defaults to True.
     """
     
     # Constructor
@@ -417,8 +416,7 @@ class VSStls(Stls):
                  errorAlpha : float = 1.0e-3,
                  iterationsAlpha : int = 50,
                  errorIntegrals : float = 1.0e-5,
-                 threads : int = 1,
-                 ThetaDeriv : bool = True):
+                 threads : int = 1):
         # Allowed theories
         self.allowedTheories : list[str] = ["VSSTLS"]
         # Input object
@@ -433,7 +431,6 @@ class VSStls(Stls):
         self.inputs.iterationsAlpha = iterationsAlpha
         self.inputs.threads = threads
         self.inputs.intError = errorIntegrals
-        self.inputs.ThetaDeriv = ThetaDeriv
         # Scheme to solve
         self.scheme : qp.VSStls = None
         # File to store output on disk
@@ -508,8 +505,7 @@ class ESA(Stls):
                  degeneracy: float,
                  chemicalPotential: list[float] = [-100.0, 100.0],
                  cutoff: float = 10.0,
-                 matsubara: int = 128,
-                 outputFrequency: int = 10,
+                 matsubara: int = 5,
                  resolution: float = 0.1):
         # Allowed theories
         self.allowedTheories : list[str] = ["ESA"]
@@ -522,11 +518,12 @@ class ESA(Stls):
         default_guess = None
         default_iterations = 100
         default_recoveryFile = None
+        default_outputFrequency = 10
 
         # Call the superclass constructor with all necessary parameters
         super()._setInputs(coupling, degeneracy, "ESA", chemicalPotential,
                            cutoff, default_error, default_mixing, default_guess,
-                           default_iterations, matsubara, outputFrequency,
+                           default_iterations, matsubara, default_outputFrequency,
                            default_recoveryFile, resolution)
         # Scheme to solve
         self.scheme : qp.ESA = None

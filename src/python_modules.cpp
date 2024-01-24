@@ -5,7 +5,7 @@
 #include "stls.hpp"
 #include "qstls.hpp"
 #include "vsstls.hpp"
-#include "ESA.hpp"
+#include "esa.hpp"
 
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
@@ -406,8 +406,7 @@ BOOST_PYTHON_MODULE(qupled)
 		  VSStlsInputWrapper::getFreeEnergyIntegrand,
 		  VSStlsInputWrapper::setFreeEnergyIntegrand)
     .def("print", &VSStlsInput::print)
-    .def("isEqual", &VSStlsInput::isEqual)
-    .def_readwrite("ThetaDeriv", &VSStlsInput::ThetaDeriv);
+    .def("isEqual", &VSStlsInput::isEqual);
   
   bp::class_<QstlsInputWrapper::QstlsGuess>("QstlsGuess")
     .def_readwrite("wvg", &QstlsInputWrapper::QstlsGuess::wvg)

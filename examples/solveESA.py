@@ -4,8 +4,8 @@ import qupled.classic as qpc
 
 # Define an ESA object to solve the ESA scheme
 ESA = qpc.ESA(15.0, # Coupling parameter
-                1.0,  # Degeneracy parameter
-                cutoff = 10)
+              1.0,  # Degeneracy parameter
+              cutoff = 10)
 
 # Solve scheme
 ESA.compute()
