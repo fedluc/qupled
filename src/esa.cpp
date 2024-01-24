@@ -1,8 +1,5 @@
 #include <omp.h>
 #include "esa.hpp"
-#include <sstream>
-#include <iomanip>
-#include <cmath>
 
 using namespace std;
 
@@ -24,7 +21,9 @@ void ESA::computeSlfc() {
     // Get the degeneracy and coupling parameters
     const double theta = in.getDegeneracy();
     const double rs = in.getCoupling();
-
+    const double theta3_2 = pow(theta, 1.5);
+    const double theta2 = theta * theta
+      
     // Constants for the computation of the static local field correction
     constexpr double g0aa1 = 18.4376509088802;
     constexpr double g0ba1 = 24.1338558554951;
@@ -85,25 +84,24 @@ void ESA::computeSlfc() {
     constexpr double cd2 = 1.07863273;
     constexpr double cd3 = -0.35630091;
 
-    const double theta_pow = pow(theta, 3.0/2.0);
-    const double aa = aa1 + aa2 * theta + aa3 * theta_pow;
-    const double ba = ba1 + ba2 * theta + ba3 * theta_pow;
-    const double ca = ca1 + ca2 * theta + ca3 * theta_pow;
-    const double ab = ab1 + ab2 * theta + ab3 * theta_pow;
-    const double bb = bb1 + bb2 * theta + bb3 * theta_pow;
-    const double cb = cb1 + cb2 * theta + cb3 * theta_pow;
-    const double ac = ac1 + ac2 * theta + ac3 * theta_pow;
-    const double bc = bc1 + bc2 * theta + bc3 * theta_pow;
-    const double cc = cc1 + cc2 * theta + cc3 * theta_pow;
-    const double ad = ad1 + ad2 * theta + ad3 * theta_pow;
-    const double bd = bd1 + bd2 * theta + bd3 * theta_pow;
-    const double cd = cd1 + cd2 * theta + cd3 * theta_pow;
-    const double xm = Ax + Bx * theta + Cx * pow(theta, 2.0); 
+    const double aa = aa1 + aa2 * theta + aa3 * thetap3_2;
+    const double ba = ba1 + ba2 * theta + ba3 * thetap3_2;
+    const double ca = ca1 + ca2 * theta + ca3 * thetap3_2;
+    const double ab = ab1 + ab2 * theta + ab3 * thetap3_2;
+    const double bb = bb1 + bb2 * theta + bb3 * thetap3_2;
+    const double cb = cb1 + cb2 * theta + cb3 * thetap3_2;
+    const double ac = ac1 + ac2 * theta + ac3 * thetap3_2;
+    const double bc = bc1 + bc2 * theta + bc3 * thetap3_2;
+    const double cc = cc1 + cc2 * theta + cc3 * thetap3_2;
+    const double ad = ad1 + ad2 * theta + ad3 * thetap3_2;
+    const double bd = bd1 + bd2 * theta + bd3 * thetap3_2;
+    const double cd = cd1 + cd2 * theta + cd3 * thetap3_2;
+    const double xm = Ax + Bx * theta + Cx * theta2; 
 
     const double g0a = (g0a0 + g0aa1 * theta)/(1.0 + g0ba1 * theta + g0ba2 * pow(theta, 3.0));
-    const double g0b = (g0b0 + g0ab1 * sqrt(theta))/(1.0 + g0bb1 * theta + g0bb2 * pow(theta, 2.0));
-    const double g0c = (g0c0 + g0ac1 * sqrt(theta) + g0ac2 * theta_pow)/(1.0 + g0bc1 * theta + g0bc2 * pow(theta, 2.0));
-    const double g0d = (g0d0 + g0ad1 * sqrt(theta))/(1.0 + g0bd1 * theta + g0bd2 * pow(theta, 2.0));
+    const double g0b = (g0b0 + g0ab1 * sqrt(theta))/(1.0 + g0bb1 * theta + g0bb2 * theta2);
+    const double g0c = (g0c0 + g0ac1 * sqrt(theta) + g0ac2 * theta_pow)/(1.0 + g0bc1 * theta + g0bc2 * theta2);
+    const double g0d = (g0d0 + g0ad1 * sqrt(theta))/(1.0 + g0bd1 * theta + g0bd2 * theta2);
     const double g = 1.0/2.0 * (1.0 + g0a * sqrt(rs) + g0b * rs)/(1.0 + g0c * rs + g0d * pow(rs, 3.0));
     
     const double a = (aa + ba * rs)/(1.0 + ca * rs);
@@ -125,7 +123,7 @@ void ESA::computeSlfc() {
                 
         const double AF = 1.0/2.0 * (1.0 + tanh(Eta * (wvg[i] - xm)));
 
-        const double GCSR = -(M_PI/12.0) * lambda * rs * pow(wvg[i], 2.0) * (4.0 * pow(theta, 2.0) * dfxc_t2 + pow(rs, 2.0) * dfxc_rs2 + 4.0 * theta * rs * dfxc_t_rs - 2.0 * theta * dfxc_t - 2.0 * rs * dfxc_rs);
+        const double GCSR = -(M_PI/12.0) * lambda * rs * pow(wvg[i], 2.0) * (4.0 * theta2 * dfxc_t2 + pow(rs, 2.0) * dfxc_rs2 + 4.0 * theta * rs * dfxc_t_rs - 2.0 * theta * dfxc_t - 2.0 * rs * dfxc_rs);
                 
         const double Gnnfit = (1.0 + a * wvg[i] + b * pow(wvg[i], 1.0/2.0))/(1.0 + c * wvg[i] + d * pow(wvg[i], 1.25) + GCSR);
         
@@ -138,30 +136,40 @@ void ESA::computeSlfc() {
 // QMC free energy function constants
 double ESA::fxc(double theta, double rs) const {
 
-    constexpr double omega = 1.0;
-    constexpr double fb1 = 0.3436902;
-    constexpr double fb2 = 7.82159531356;
-    constexpr double fb3 = 0.300483986662;
-    constexpr double fb4 = 15.8443467125;
-    const double fb5 = fb3*pow(3.0/2.0, 1.0/2.0)*omega/lambda;
-    constexpr double fc1 = 0.8759442;
-    constexpr double fc2 = -0.230130843551;
-    constexpr double fd1 = 0.72700876;
-    constexpr double fd2 = 2.38264734144;
-    constexpr double fd3 = 0.30221237251;
-    constexpr double fd4 = 4.39347718395;
-    constexpr double fd5 = 0.729951339845;
-    constexpr double fe1 = 0.25388214;
-    constexpr double fe2 = 0.815795138599;
-    constexpr double fe3 = 0.0646844410481;
-    constexpr double fe4 = 15.0984620477;
-    constexpr double fe5 = 0.230761357474;
+  const double thetaInv = 1.0/theta;
+  const double theta2 = theta * theta;
+  const double theta3 = theta * theta2;
+  const double theta4 = theta2 * theta2;
+  const double tanhThetaInv = tanh(thetaInv);
+  const double tanhSqrtThetaInv = tanh(sqrt(thetaInv));
+  const double rsInv = 1.0/rs;
+  const double sqrtRs = sqrt(rs);
+  constexpr double omega = 1.0;
+  constexpr double fb1 = 0.3436902;
+  constexpr double fb2 = 7.82159531356;
+  constexpr double fb3 = 0.300483986662;
+  constexpr double fb4 = 15.8443467125;
+  const double fb5 = fb3*pow(3.0/2.0, 1.0/2.0)*omega/lambda;
+  constexpr double fc1 = 0.8759442;
+  constexpr double fc2 = -0.230130843551;
+  constexpr double fd1 = 0.72700876;
+  constexpr double fd2 = 2.38264734144;
+  constexpr double fd3 = 0.30221237251;
+  constexpr double fd4 = 4.39347718395;
+  constexpr double fd5 = 0.729951339845;
+  constexpr double fe1 = 0.25388214;
+  constexpr double fe2 = 0.815795138599;
+  constexpr double fe3 = 0.0646844410481;
+  constexpr double fe4 = 15.0984620477;
+  constexpr double fe5 = 0.230761357474;
 
-    double fa = 0.610887 * tanh(pow(theta, -1.0)) * (0.75 + 3.04363 * pow(theta, 2.0) - 0.09227 * pow(theta, 3.0) + 1.7035 * pow(theta, 4.0)) / (1.0 + 8.31051 * pow(theta, 2.0) + 5.1105 * pow(theta, 4.0));
-    double fb = tanh(1.0 / sqrt(theta)) * (fb1 + fb2 * pow(theta, 2.0) + fb3 * pow(theta, 4.0)) / (1.0 + fb4 * pow(theta, 2.0) + fb5 * pow(theta, 4.0));
-    double fd = tanh(1.0 / sqrt(theta)) * (fd1 + fd2 * pow(theta, 2.0) + fd3 * pow(theta, 4.0)) / (1.0 + fd4 * pow(theta, 2.0) + fd5 * pow(theta, 4.0));
-    double fe = tanh(1.0 / theta) * (fe1 + fe2 * pow(theta, 2.0) + fe3 * pow(theta, 4.0)) / (1.0 + fe4 * pow(theta, 2.0) + fe5 * pow(theta, 4.0));
-    double fc = (fc1 + fc2 * exp(-(1.0 / theta))) * fe;
+  const double fa = 0.610887 * tanhThetaInv * ( (0.75 + 3.04363 * theta2 - 0.09227 * theta3 + 1.7035 * theta4)
+						/ (1.0 + 8.31051 * theta2 + 5.1105 * theta4) );
+  const double fb = tanhSqrtThetaInv) * (fb1 + fb2 * theta2 + fb3 * theta4) / (1.0 + fb4 * theta2 + fb5 * theta4);
+  const double fd = tanhSqrtThetaInv) * (fd1 + fd2 * theta2 + fd3 * theta4) / (1.0 + fd4 * theta2 + fd5 * theta4);
+  const double fe = tanhThetaInv * (fe1 + fe2 * theta2 + fe3 * theta4) / (1.0 + fe4 * theta2 + fe5 * theta4);
+  const double fc = (fc1 + fc2 * exp(-ThetaInv) * fe;
 
-    return -(1.0 / rs) * (omega * fa + fb * sqrt(rs) + fc * rs) / (1.0 + fd * sqrt(rs) + fe * rs);
-    }
+  return -rsInv * (omega * fa + fb * sqrtRs + fc * rs) / (1.0 + fd * sqrtRs + fe * rs);
+    
+}
