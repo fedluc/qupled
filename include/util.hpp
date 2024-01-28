@@ -6,6 +6,18 @@
 #include <fstream>
 #include "numerics.hpp"
 
+// Forward declarations
+namespace boost {
+  namespace python {
+    class list;
+    namespace numpy {
+      class ndarray;
+    }
+  }
+}
+namespace bp = boost::python;
+namespace bn = boost::python::numpy;
+
 // -----------------------------------------------------------------
 // Utility functions to handle special cases for double numbers
 // -----------------------------------------------------------------
@@ -165,7 +177,40 @@ namespace vecUtil {
     void div(const Vector3D &v_);
   };
   
-    
+  //  --- ethods to convert between Python and C++ arrays ---
+
+  namespace python {
+
+    // Check if numpy array is stored in row-major order
+    void CheckRowMajor(const bn::ndarray &nda);
+
+    // Convert a numpy array to vector<double>
+    vector<double> toVector(const bn::ndarray &nda);
+
+    // Convety a python list to a vector<double>
+    vector<double> toVector(const bp::list &list);
+
+    // Convert a numpy array to Vector2D
+    Vector2D toVector2D(const bn::ndarray &nda);
+
+    // Convery a numpy array to vector<vector<double>>
+    vector<vector<double>> toDoubleVector(const bn::ndarray &nda);
+
+    // Generic converter from vector type to numpy array
+    template<typename T>
+    bn::ndarray toNdArray(const T &v);
+
+    // Convert Vector2D to numpy array
+    bn::ndarray toNdArray2D(const Vector2D &v);
+
+    // Convert vector<vector<double>> to numpy array
+    bn::ndarray toNdArray2D(const vector<vector<double>> &v);
+
+    // Convert Vector3D to numpy array
+    bn::ndarray toNdArray3D(const Vector3D &v);
+
+  }  
+  
 }
 
 // -----------------------------------------------------------------
