@@ -124,7 +124,6 @@ bn::ndarray PyRpa::getSlfc(const Rpa& rpa) {
 }
 
 bn::ndarray PyRpa::getSsf(const Rpa& rpa) {
-  std::cerr << rpa.getSsf().size() << std::endl;
   return vp::toNdArray(rpa.getSsf());
 }
 
@@ -144,173 +143,72 @@ string PyRpa::getRecoveryFileName(const Rpa& rpa) {
   return rpa.getRecoveryFileName();
 }
 
-// namespace RpaInputWrapper {
-  
-//   bn::ndarray getChemicalPotentialGuess(RpaInput &in){
-//     return vp::toNdArray(in.getChemicalPotentialGuess());
-//   }
-  
-//   void setChemicalPotentialGuess(RpaInput &in,
-// 				 const bp::list &muGuess){
-//     in.setChemicalPotentialGuess(arrayWrapper::toVector(muGuess));
-//   }
+// -----------------------------------------------------------------
+// PyStls
+// -----------------------------------------------------------------
 
-// }
+int PyStls::compute(Stls& stls) {
+  return stls.compute();
+}
 
-// namespace StlsInputWrapper {
-  
-//   struct SlfcGuess {
-//     bn::ndarray wvg = arrayWrapper::toNdArray(vector<double>(0));
-//     bn::ndarray slfc = arrayWrapper::toNdArray(vector<double>(0));
-//   };
-    
-//   StlsInputWrapper::SlfcGuess getGuess(StlsInput &in){
-//     StlsInput::SlfcGuess guess_ = in.getGuess();
-//     StlsInputWrapper::SlfcGuess guess;
-//     guess.wvg = arrayWrapper::toNdArray(guess_.wvg);
-//     guess.slfc = arrayWrapper::toNdArray(guess_.slfc);
-//     return guess;
-//   }
-  
-//   void setGuess(StlsInput &in,
-// 		const StlsInputWrapper::SlfcGuess &guess){
-//     StlsInput::SlfcGuess guess_;
-//     guess_.wvg = arrayWrapper::toVector(guess.wvg);
-//     guess_.slfc = arrayWrapper::toVector(guess.slfc);
-//     in.setGuess(guess_);
-//   }
+bn::ndarray PyStls::getBf(const Stls& stls) {
+  return vp::toNdArray(stls.getBf());
+}
 
-// }
+// -----------------------------------------------------------------
+// PyVSStls
+// -----------------------------------------------------------------
 
+int PyVSStls::compute(VSStls& vsstls) {
+  return vsstls.compute();
+}
 
-// namespace StlsWrapper {
+bn::ndarray PyVSStls::getFreeEnergyIntegrand(const VSStls &vsstls){
+  return vp::toNdArray2D(vsstls.getFreeEnergyIntegrand());
+}
 
-//   bn::ndarray getBf(const Stls &stls){
-//     return arrayWrapper::toNdArray(stls.getBf());
-//   }
+bn::ndarray PyVSStls::getFreeEnergyGrid(const VSStls &vsstls){
+  return vp::toNdArray(vsstls.getFreeEnergyGrid());
+}
 
-// }
+// -----------------------------------------------------------------
+// PyQstls
+// -----------------------------------------------------------------
 
+int PyQstls::compute(Qstls& qstls) {
+  return qstls.compute();
+}
 
-// namespace VSStlsInputWrapper {
+bn::ndarray PyQstls::getAdr(const Qstls& qstls) {
+  return vp::toNdArray2D(qstls.getAdr());
+}
 
-//   bn::ndarray getAlphaGuess(VSStlsInput &in){
-//     return arrayWrapper::toNdArray(in.getAlphaGuess());
-//   }
-  
-//   void setAlphaGuess(VSStlsInput &in,
-// 		     const bp::list &alphaGuess){
-//     in.setAlphaGuess(arrayWrapper::toVector(alphaGuess));
-//   }
-  
-//   struct FreeEnergyIntegrand {
-//     bn::ndarray grid = arrayWrapper::toNdArray(vector<double>(0));
-//     bn::ndarray integrand = arrayWrapper::toNdArray(vector<double>(0));
-//   };
-  
-//   VSStlsInputWrapper::FreeEnergyIntegrand getFreeEnergyIntegrand(VSStlsInput &in){
-//     VSStlsInput::FreeEnergyIntegrand fxcIntegrand_ = in.getFreeEnergyIntegrand();
-//     VSStlsInputWrapper::FreeEnergyIntegrand fxcIntegrand;
-//     fxcIntegrand.grid = arrayWrapper::toNdArray(fxcIntegrand_.grid);
-//     fxcIntegrand.integrand = arrayWrapper::toNdArray2D(fxcIntegrand_.integrand);
-//     return fxcIntegrand;
-//   }
-  
-//   void setFreeEnergyIntegrand(VSStlsInput &in,
-// 			      const VSStlsInputWrapper::FreeEnergyIntegrand &fxcIntegrand){
-//     VSStlsInput::FreeEnergyIntegrand fxcIntegrand_;
-//     fxcIntegrand_.grid = arrayWrapper::toVector(fxcIntegrand.grid);
-//     fxcIntegrand_.integrand = arrayWrapper::toDoubleVector(fxcIntegrand.integrand);
-//     in.setFreeEnergyIntegrand(fxcIntegrand_);
-//   }
-  
-// }
+// -----------------------------------------------------------------
+// PyThermo
+// -----------------------------------------------------------------
 
-// namespace VSStlsWrapper {
-    
-//   bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls){
-//     return arrayWrapper::toNdArray2D(vsstls.getFreeEnergyIntegrand());
-//   }
+bn::ndarray PyThermo::computeRdf(const bn::ndarray &rIn,
+				 const bn::ndarray &wvgIn,
+				 const bn::ndarray &ssfIn) {
+  const vector<double> &r = vp::toVector(rIn);
+  const vector<double> &wvg = vp::toVector(wvgIn);
+  const vector<double> &ssf = vp::toVector(ssfIn);
+  return vp::toNdArray(thermoUtil::computeRdf(r, wvg, ssf));
+}
 
-//   bn::ndarray getFreeEnergyGrid(const VSStls &vsstls){
-//     return arrayWrapper::toNdArray(vsstls.getFreeEnergyGrid());
-//   }
-  
-// }
+double PyThermo::computeInternalEnergy(const bn::ndarray &wvgIn,
+				       const bn::ndarray &ssfIn,
+				       const double &coupling) {
+  const vector<double> &wvg = vp::toVector(wvgIn);
+  const vector<double> &ssf = vp::toVector(ssfIn);
+  return thermoUtil::computeInternalEnergy(wvg, ssf, coupling);
+}
 
-// namespace QstlsInputWrapper {
-  
-//   struct QstlsGuess {
-//     bn::ndarray wvg = arrayWrapper::toNdArray(vector<double>(0));
-//     bn::ndarray ssf = arrayWrapper::toNdArray(vector<double>(0));
-//     bn::ndarray adr = arrayWrapper::toNdArray(vector<double>(0));
-//     int matsubara = 0;
-//   };
+double PyThermo::computeFreeEnergy(const bn::ndarray &gridIn,
+				   const bn::ndarray &rsuIn,
+				   const double &coupling) {
+  const vector<double> &grid = vp::toVector(gridIn);
+  const vector<double> &rsu = vp::toVector(rsuIn);
+  return thermoUtil::computeFreeEnergy(grid, rsu, coupling);
+}
 
-//   QstlsInputWrapper::QstlsGuess getGuess(QstlsInput &in){
-//     QstlsInput::QstlsGuess guess_ = in.getGuess();
-//     QstlsInputWrapper::QstlsGuess guess;
-//     const int sz1 = guess_.adr.size(0);
-//     const int sz2 = guess_.adr.size(1);
-//     guess.wvg = arrayWrapper::toNdArray(guess_.wvg);
-//     guess.ssf = arrayWrapper::toNdArray(guess_.ssf);
-//     bn::ndarray adrTmp = arrayWrapper::toNdArray(guess_.adr);
-//     guess.adr = adrTmp.reshape(bp::make_tuple(sz1, sz2));
-//     guess.matsubara = guess_.matsubara;
-//     return guess;
-//   }
-  
-//   void setGuess(QstlsInput &in,
-// 		const QstlsInputWrapper::QstlsGuess &guess){
-//     QstlsInput::QstlsGuess guess_;
-//     guess_.wvg = arrayWrapper::toVector(guess.wvg);
-//     guess_.ssf = arrayWrapper::toVector(guess.ssf);
-//     if (guess.adr.shape(0) > 0) {
-//       guess_.adr = arrayWrapper::toVector2D(guess.adr);
-//     }
-//     guess_.matsubara = guess.matsubara;
-//     in.setGuess(guess_);
-//   }
-  
-// }
-
-// namespace QstlsWrapper {
-    
-//   bn::ndarray getAdr(const Qstls &qstls){
-//     return arrayWrapper::toNdArray2D(qstls.getAdr());
-//   }
-  
-//   bn::ndarray getAdrFixed(const Qstls &qstls){
-//     return arrayWrapper::toNdArray3D(qstls.getAdrFixed());
-//   }
-
-// }
-
-// namespace thermoWrapper {
-
-//   bn::ndarray computeRdf(const bn::ndarray &rIn,
-// 			 const bn::ndarray &wvgIn,
-// 			 const bn::ndarray &ssfIn) {
-//     const vector<double> &r = arrayWrapper::toVector(rIn);
-//     const vector<double> &wvg = arrayWrapper::toVector(wvgIn);
-//     const vector<double> &ssf = arrayWrapper::toVector(ssfIn);
-//     return arrayWrapper::toNdArray(thermoUtil::computeRdf(r, wvg, ssf));
-//   }
-
-//   double computeInternalEnergy(const bn::ndarray &wvgIn,
-// 			       const bn::ndarray &ssfIn,
-// 			       const double &coupling) {
-//     const vector<double> &wvg = arrayWrapper::toVector(wvgIn);
-//     const vector<double> &ssf = arrayWrapper::toVector(ssfIn);
-//     return thermoUtil::computeInternalEnergy(wvg, ssf, coupling);
-//   }
-
-//   double computeFreeEnergy(const bn::ndarray &gridIn,
-// 			   const bn::ndarray &rsuIn,
-// 			   const double &coupling) {
-//     const vector<double> &grid = arrayWrapper::toVector(gridIn);
-//     const vector<double> &rsu = arrayWrapper::toVector(rsuIn);
-//     return thermoUtil::computeFreeEnergy(grid, rsu, coupling);
-//   }
-  
-// }

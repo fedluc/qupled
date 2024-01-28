@@ -1,12 +1,7 @@
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "python_wrappers.hpp"
 #include "input.hpp"
-#include "stls.hpp"
-#include "qstls.hpp"
-#include "vsstls.hpp"
-#include "esa.hpp"
 
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
@@ -147,14 +142,6 @@ namespace StlsInputWrapper {
 
 }
 
-namespace StlsWrapper {
-
-  bn::ndarray getBf(const Stls &stls){
-    return arrayWrapper::toNdArray(stls.getBf());
-  }
-
-}
-
 
 namespace VSStlsInputWrapper {
 
@@ -186,18 +173,6 @@ namespace VSStlsInputWrapper {
     fxcIntegrand_.grid = arrayWrapper::toVector(fxcIntegrand.grid);
     fxcIntegrand_.integrand = arrayWrapper::toDoubleVector(fxcIntegrand.integrand);
     in.setFreeEnergyIntegrand(fxcIntegrand_);
-  }
-  
-}
-
-namespace VSStlsWrapper {
-    
-  bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls){
-    return arrayWrapper::toNdArray2D(vsstls.getFreeEnergyIntegrand());
-  }
-
-  bn::ndarray getFreeEnergyGrid(const VSStls &vsstls){
-    return arrayWrapper::toNdArray(vsstls.getFreeEnergyGrid());
   }
   
 }
@@ -238,47 +213,6 @@ namespace QstlsInputWrapper {
   
 }
 
-namespace QstlsWrapper {
-    
-  bn::ndarray getAdr(const Qstls &qstls){
-    return arrayWrapper::toNdArray2D(qstls.getAdr());
-  }
-  
-  bn::ndarray getAdrFixed(const Qstls &qstls){
-    return arrayWrapper::toNdArray3D(qstls.getAdrFixed());
-  }
-
-}
-
-namespace thermoWrapper {
-
-  bn::ndarray computeRdf(const bn::ndarray &rIn,
-			 const bn::ndarray &wvgIn,
-			 const bn::ndarray &ssfIn) {
-    const vector<double> &r = arrayWrapper::toVector(rIn);
-    const vector<double> &wvg = arrayWrapper::toVector(wvgIn);
-    const vector<double> &ssf = arrayWrapper::toVector(ssfIn);
-    return arrayWrapper::toNdArray(thermoUtil::computeRdf(r, wvg, ssf));
-  }
-
-  double computeInternalEnergy(const bn::ndarray &wvgIn,
-			       const bn::ndarray &ssfIn,
-			       const double &coupling) {
-    const vector<double> &wvg = arrayWrapper::toVector(wvgIn);
-    const vector<double> &ssf = arrayWrapper::toVector(ssfIn);
-    return thermoUtil::computeInternalEnergy(wvg, ssf, coupling);
-  }
-
-  double computeFreeEnergy(const bn::ndarray &gridIn,
-			   const bn::ndarray &rsuIn,
-			   const double &coupling) {
-    const vector<double> &grid = arrayWrapper::toVector(gridIn);
-    const vector<double> &rsu = arrayWrapper::toVector(rsuIn);
-    return thermoUtil::computeFreeEnergy(grid, rsu, coupling);
-  }
-  
-}
-
 // Classes exposed to Python
 BOOST_PYTHON_MODULE(qupled)
 {
@@ -290,10 +224,6 @@ BOOST_PYTHON_MODULE(qupled)
 	
   // Numpy library initialization
   bn::initialize();
-    
-  // Wrapper for vector<double>
-  bp::class_<std::vector<double>>("vector<double>")
-    .def(bp::vector_indexing_suite<std::vector<double>>());
   
   // Classes to manage the input
   bp::class_<Input>("Input")
@@ -425,28 +355,28 @@ BOOST_PYTHON_MODULE(qupled)
   bp::class_<ESA, bp::bases<Rpa>>("ESA",
 				  bp::init<const RpaInput>());
 
-  // // Class to solve classical schemes
-  // bp::class_<Stls, bp::bases<Rpa>>("Stls",
-  // 				   bp::init<const StlsInput>())
-  //   .def("compute", &Stls::compute)
-  //   .add_property("bf", StlsWrapper::getBf);
+  // Class to solve classical schemes
+  bp::class_<Stls, bp::bases<Rpa>>("Stls",
+				   bp::init<const StlsInput>())
+    .def("compute", &PyStls::compute)
+    .add_property("bf", &PyStls::getBf);
 
-  // // Class to solve the classical vs scheme
-  // bp::class_<VSStls, bp::bases<Rpa>>("VSStls",
-  // 				     bp::init<const VSStlsInput>())
-  //   .def("compute", &VSStls::compute)
-  //   .add_property("freeEnergyIntegrand", VSStlsWrapper::getFreeEnergyIntegrand)
-  //   .add_property("freeEnergyGrid", VSStlsWrapper::getFreeEnergyGrid);
+  // Class to solve the classical vs scheme
+  bp::class_<VSStls, bp::bases<Rpa>>("VSStls",
+				     bp::init<const VSStlsInput>())
+    .def("compute", &PyVSStls::compute)
+    .add_property("freeEnergyIntegrand", &PyVSStls::getFreeEnergyIntegrand)
+    .add_property("freeEnergyGrid", &PyVSStls::getFreeEnergyGrid);
       
-  // // Class to solve quantum schemes
-  // bp::class_<Qstls, bp::bases<Stls>>("Qstls",
-  // 				     bp::init<const QstlsInput>())
-  //   .def("compute", &Qstls::compute)
-  //   .add_property("adr", QstlsWrapper::getAdr);
+  // Class to solve quantum schemes
+  bp::class_<Qstls, bp::bases<Stls>>("Qstls",
+				     bp::init<const QstlsInput>())
+    .def("compute", &PyQstls::compute)
+    .add_property("adr", &PyQstls::getAdr);
 
-  // // Post-process methods
-  // bp::def("computeRdf", thermoWrapper::computeRdf);
-  // bp::def("computeInternalEnergy", thermoWrapper::computeInternalEnergy);
-  // bp::def("computeFreeEnergy", thermoWrapper::computeFreeEnergy);
+  // Post-process methods
+  bp::def("computeRdf", &PyThermo::computeRdf);
+  bp::def("computeInternalEnergy", &PyThermo::computeInternalEnergy);
+  bp::def("computeFreeEnergy", &PyThermo::computeFreeEnergy);
   
 }
