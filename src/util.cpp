@@ -385,16 +385,20 @@ namespace vecUtil {
   }
   
   template<typename T>
-  bn::ndarray python::toNdArray(const T &v){
+  bn::ndarray python::toNdArrayT(const T &v){
     Py_intptr_t shape[1];
     shape[0] = v.size();
     bn::ndarray result = bn::zeros(1, shape, bn::dtype::get_builtin<double>());
     std::copy(v.begin(), v.end(), reinterpret_cast<double*>(result.get_data()));
     return result;
   }
+
+  bn::ndarray python::toNdArray(const vector<double> &v){
+    return toNdArrayT(v);
+  }
   
   bn::ndarray python::toNdArray2D(const Vector2D &v){
-    bn::ndarray result = toNdArray(v);
+    bn::ndarray result = toNdArrayT(v);
     result = result.reshape(bp::make_tuple(v.size(0), v.size(1)));
     return result;
   }
@@ -404,7 +408,7 @@ namespace vecUtil {
   }
   
   bn::ndarray python::toNdArray3D(const Vector3D &v){
-    bn::ndarray result = toNdArray(v);
+    bn::ndarray result = toNdArrayT(v);
     result = result.reshape(bp::make_tuple(v.size(0), v.size(1), v.size(2)));
     return result;
   }

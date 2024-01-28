@@ -16,14 +16,14 @@ Python3_add_library(qupled MODULE
 		    chemicalpotential.cpp
 		    input.cpp
 		    numerics.cpp
-		    python_modules.cpp
-		    python_wrappers.cpp
 		    qstls.cpp
 		    rpa.cpp
 		    stls.cpp
 		    util.cpp
 		    vsstls.cpp
-		    esa.cpp)
+		    esa.cpp
+		    python_wrappers.cpp
+		    python_modules.cpp)
 
 # Include directories
 target_include_directories(qupled PUBLIC

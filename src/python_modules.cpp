@@ -9,45 +9,6 @@ namespace vp = vecUtil::python;
 
 // Methods that need wrapping to pass arrays between native and python
 
-namespace RpaInputWrapper {
-  
-  bn::ndarray getChemicalPotentialGuess(RpaInput &in){
-    return vp::toNdArray(in.getChemicalPotentialGuess());
-  }
-  
-  void setChemicalPotentialGuess(RpaInput &in,
-				 const bp::list &muGuess){
-    in.setChemicalPotentialGuess(vp::toVector(muGuess));
-  }
-
-}
-
-namespace StlsInputWrapper {
-  
-  struct SlfcGuess {
-    bn::ndarray wvg = vp::toNdArray(vector<double>(0));
-    bn::ndarray slfc = vp::toNdArray(vector<double>(0));
-  };
-    
-  StlsInputWrapper::SlfcGuess getGuess(StlsInput &in){
-    StlsInput::SlfcGuess guess_ = in.getGuess();
-    StlsInputWrapper::SlfcGuess guess;
-    guess.wvg = vp::toNdArray(guess_.wvg);
-    guess.slfc = vp::toNdArray(guess_.slfc);
-    return guess;
-  }
-  
-  void setGuess(StlsInput &in,
-		const StlsInputWrapper::SlfcGuess &guess){
-    StlsInput::SlfcGuess guess_;
-    guess_.wvg = vp::toVector(guess.wvg);
-    guess_.slfc = vp::toVector(guess.slfc);
-    in.setGuess(guess_);
-  }
-
-}
-
-
 namespace VSStlsInputWrapper {
 
   bn::ndarray getAlphaGuess(VSStlsInput &in){
@@ -94,12 +55,9 @@ namespace QstlsInputWrapper {
   QstlsInputWrapper::QstlsGuess getGuess(QstlsInput &in){
     QstlsInput::QstlsGuess guess_ = in.getGuess();
     QstlsInputWrapper::QstlsGuess guess;
-    const int sz1 = guess_.adr.size(0);
-    const int sz2 = guess_.adr.size(1);
     guess.wvg = vp::toNdArray(guess_.wvg);
     guess.ssf = vp::toNdArray(guess_.ssf);
-    bn::ndarray adrTmp = vp::toNdArray(guess_.adr);
-    guess.adr = adrTmp.reshape(bp::make_tuple(sz1, sz2));
+    bn::ndarray adrTmp = vp::toNdArray2D(guess_.adr);
     guess.matsubara = guess_.matsubara;
     return guess;
   }
@@ -129,38 +87,30 @@ BOOST_PYTHON_MODULE(qupled)
 	
   // Numpy library initialization
   bn::initialize();
-  
-  // Classes to manage the input
-  bp::class_<Input>("Input")
+
+  // Class for the input of the Rpa scheme
+  bp::class_<RpaInput>("RpaInput")
     .add_property("coupling",
-		  &Input::getCoupling,
-		  &Input::setCoupling)
+		  &RpaInput::getCoupling,
+		  &RpaInput::setCoupling)
     .add_property("degeneracy",
-		  &Input::getDegeneracy,
-		  &Input::setDegeneracy)
+		  &RpaInput::getDegeneracy,
+		  &RpaInput::setDegeneracy)
     .add_property("int2DScheme",
-		  &Input::getInt2DScheme,
-		  &Input::setInt2DScheme)
+		  &RpaInput::getInt2DScheme,
+		  &RpaInput::setInt2DScheme)
     .add_property("intError",
-		  &Input::getIntError,
-		  &Input::setIntError)
+		  &RpaInput::getIntError,
+		  &RpaInput::setIntError)
     .add_property("threads",
-		  &Input::getNThreads,
-		  &Input::setNThreads)
+		  &RpaInput::getNThreads,
+		  &RpaInput::setNThreads)
     .add_property("theory",
-		  &Input::getTheory,
-		  &Input::setTheory)
-    .def("print", &Input::print)
-    .def("isEqual", &Input::isEqual);
-
-  bp::class_<StlsInputWrapper::SlfcGuess>("SlfcGuess")
-    .def_readwrite("wvg", &StlsInputWrapper::SlfcGuess::wvg)
-    .def_readwrite("slfc", &StlsInputWrapper::SlfcGuess::slfc);
-
-    bp::class_<RpaInput, bp::bases<Input>>("RpaInput")
+		  &RpaInput::getTheory,
+		  &RpaInput::setTheory)
     .add_property("chemicalPotential",
-		  RpaInputWrapper::getChemicalPotentialGuess,
-		  RpaInputWrapper::setChemicalPotentialGuess)
+		  &PyInput::getChemicalPotentialGuess,
+		  &PyInput::setChemicalPotentialGuess)
     .add_property("matsubara",
 		  &RpaInput::getNMatsubara,
 		  &RpaInput::setNMatsubara)
@@ -172,7 +122,17 @@ BOOST_PYTHON_MODULE(qupled)
 		  &RpaInput::setWaveVectorGridCutoff)
     .def("print", &RpaInput::print)
     .def("isEqual", &RpaInput::isEqual);
-    
+
+  // Class for the initial guess of the Stls scheme
+  bp::class_<StlsInput::SlfcGuess>("SlfcGuess")
+    .add_property("wvg",
+		  &PyInput::getWvg,
+		  &PyInput::setWvg)
+    .add_property("slfc",
+		  &PyInput::getSlfc,
+		  &PyInput::setSlfc);
+
+  // Class for the input of the Stls scheme
   bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
     .add_property("error",
 		  &StlsInput::getErrMin,
@@ -193,15 +153,17 @@ BOOST_PYTHON_MODULE(qupled)
 		  &StlsInput::getRecoveryFileName,
 		  &StlsInput::setRecoveryFileName)
     .add_property("guess",
-		  StlsInputWrapper::getGuess,
-		  StlsInputWrapper::setGuess)
+		  &StlsInput::getGuess,
+		  &StlsInput::setGuess)
     .def("print", &StlsInput::print)
     .def("isEqual", &StlsInput::isEqual);
 
+  // Class for the free energy integrand of the VSStls scheme
   bp::class_<VSStlsInputWrapper::FreeEnergyIntegrand>("FreeEnergyIntegrand")
     .def_readwrite("grid", &VSStlsInputWrapper::FreeEnergyIntegrand::grid)
     .def_readwrite("integrand", &VSStlsInputWrapper::FreeEnergyIntegrand::integrand);
-  
+
+  // Class for the input of the VSStls scheme
   bp::class_<VSStlsInput, bp::bases<StlsInput>>("VSStlsInput")
     .add_property("errorAlpha",
 		  &VSStlsInput::getErrMinAlpha,
@@ -223,13 +185,15 @@ BOOST_PYTHON_MODULE(qupled)
 		  VSStlsInputWrapper::setFreeEnergyIntegrand)
     .def("print", &VSStlsInput::print)
     .def("isEqual", &VSStlsInput::isEqual);
-  
+
+  // Class for the initial guess of the Qstls scheme
   bp::class_<QstlsInputWrapper::QstlsGuess>("QstlsGuess")
     .def_readwrite("wvg", &QstlsInputWrapper::QstlsGuess::wvg)
     .def_readwrite("ssf", &QstlsInputWrapper::QstlsGuess::ssf)
     .def_readwrite("adr", &QstlsInputWrapper::QstlsGuess::adr)
     .def_readwrite("matsubara", &QstlsInputWrapper::QstlsGuess::matsubara);
 
+  // Class for the input of the Qstls scheme
   bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
     .add_property("guess",
 		  QstlsInputWrapper::getGuess,

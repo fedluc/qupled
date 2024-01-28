@@ -19,6 +19,26 @@ namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 
 // -----------------------------------------------------------------
+// Wrapper for exposing the Input classes to Python
+// -----------------------------------------------------------------
+
+class PyInput {
+public:
+  // RpaInput
+  static bn::ndarray getChemicalPotentialGuess(RpaInput &in);
+  static void setChemicalPotentialGuess(RpaInput &in,
+					const bp::list &muGuess);
+  // StlsInput
+  static bn::ndarray getWvg(const StlsInput::SlfcGuess &guess);
+  static bn::ndarray getSlfc(const StlsInput::SlfcGuess &guess);
+  static void setWvg(StlsInput::SlfcGuess &guess,
+		     const bn::ndarray& wvg);
+  static void setSlfc(StlsInput::SlfcGuess &guess,
+		      const bn::ndarray& slfc);
+  
+};
+
+// -----------------------------------------------------------------
 // Wrapper for exposing the class Rpa class to Python
 // -----------------------------------------------------------------
 

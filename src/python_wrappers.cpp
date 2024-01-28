@@ -7,6 +7,37 @@ namespace vp = vecUtil::python;
 using namespace thermoUtil;
 
 // -----------------------------------------------------------------
+// PyInput
+// -----------------------------------------------------------------
+
+bn::ndarray PyInput::getChemicalPotentialGuess(RpaInput &in){
+  return vp::toNdArray(in.getChemicalPotentialGuess());
+}
+  
+void PyInput::setChemicalPotentialGuess(RpaInput &in,
+					const bp::list &muGuess){
+  in.setChemicalPotentialGuess(vp::toVector(muGuess));
+}
+
+bn::ndarray PyInput::getWvg(const StlsInput::SlfcGuess &guess){
+  return vp::toNdArray(guess.wvg);
+}
+
+bn::ndarray PyInput::getSlfc(const StlsInput::SlfcGuess &guess){
+  return vp::toNdArray(guess.slfc);
+}
+
+void PyInput::setWvg(StlsInput::SlfcGuess &guess,
+		     const bn::ndarray& wvg) {
+  guess.wvg = vp::toVector(wvg);
+}
+
+void PyInput::setSlfc(StlsInput::SlfcGuess &guess,
+		      const bn::ndarray& slfc) {
+  guess.slfc = vp::toVector(slfc);
+}
+
+// -----------------------------------------------------------------
 // PyRpa
 // -----------------------------------------------------------------
 

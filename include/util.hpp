@@ -198,8 +198,11 @@ namespace vecUtil {
 
     // Generic converter from vector type to numpy array
     template<typename T>
-    bn::ndarray toNdArray(const T &v);
+    bn::ndarray toNdArrayT(const T &v);
 
+    // Convert vector<double> to numpy array
+    bn::ndarray toNdArray(const vector<double>& v);
+    
     // Convert Vector2D to numpy array
     bn::ndarray toNdArray2D(const Vector2D &v);
 
