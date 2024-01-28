@@ -15,27 +15,33 @@ namespace boost {
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 
-// PyRpa
+// -----------------------------------------------------------------
+// Wrapper for exposing the class Rpa class to Python
+// -----------------------------------------------------------------
 
-class PyRpa : virtual private Rpa {
+class PyRpa  {
 public:
-  PyRpa(const RpaInput& in) : Rpa(in) { ; }
-  bn::ndarray getIdr4py() const;
-  bn::ndarray getRdf4py(const bn::ndarray &r) const;
-  bn::ndarray getSdr4py() const;
-  bn::ndarray getSlfc4py() const;
-  bn::ndarray getSsf4py() const;
-  bn::ndarray getSsfHF4py() const;
-  bn::ndarray getWvg4py() const;
-  double getUInt4py() const;
-  string getRecoveryFileName4py() const;
+  static bn::ndarray getIdr(const Rpa& rpa);
+  static bn::ndarray getRdf(const Rpa&,
+			    const bn::ndarray &r);
+  static bn::ndarray getSdr(const Rpa& rpa);
+  static bn::ndarray getSlfc(const Rpa& rpa);
+  static bn::ndarray getSsf(const Rpa& rpa);
+  static bn::ndarray getSsfHF(const Rpa& rpa);
+  static bn::ndarray getWvg(const Rpa& rpa);
+  static double getUInt(const Rpa& rpa);
+  static string getRecoveryFileName(const Rpa& rpa);
 };
 
-// PyESA
+// // -----------------------------------------------------------------
+// // Wrapper for exposing the Stls class to Python
+// // -----------------------------------------------------------------
 
-class PyESA : private ESA, public PyRpa {
-public:
-  PyESA(const RpaInput& in) : Rpa(in, true, false), ESA(in), PyRpa(in) { ; }
-};
+// class PyStls : public PyRpa {
+// protected:
+//   Stls scheme;
+// public:
+//   PyStls(const StlsInput& in): PyRpa(in), scheme(in) { ; }
+// }
 
 #endif

@@ -102,53 +102,46 @@ namespace vp {
   
 }
 
+// -----------------------------------------------------------------
 // PyRpa
+// -----------------------------------------------------------------
 
-bn::ndarray PyRpa::getIdr4py() const {
-  return vp::toNdArray2D(idr);
+bn::ndarray PyRpa::getIdr(const Rpa& rpa) {
+  return vp::toNdArray2D(rpa.getIdr());
 }
 
-bn::ndarray PyRpa::getRdf4py(const bn::ndarray &r) const {
-  return vp::toNdArray(computeRdf(vp::toVector(r), wvg, ssf));
+bn::ndarray PyRpa::getRdf(const Rpa& rpa,
+			  const bn::ndarray &r) {
+  return vp::toNdArray(rpa.getRdf(vp::toVector(r)));
 }
 
-bn::ndarray PyRpa::getSdr4py() const {
-  if (in.getDegeneracy() == 0.0) {
-    std::cout << "The static density response cannot be computed in the ground state." << std::endl;
-    return vp::toNdArray(vector<double>());
-  }
-  vector<double> sdr(wvg.size(), -1.5 * in.getDegeneracy());
-  const double fact = 4 *lambda * in.getCoupling() / M_PI;
-  for (size_t i=0; i<wvg.size(); ++i){
-    const double x2 = wvg[i] * wvg[i];
-    const double phi0 = idr(i,0);
-    sdr[i] *= phi0/ (1.0 + fact/x2 * (1.0 - slfc[i]) * phi0);
-  }
-  return vp::toNdArray(sdr);
+bn::ndarray PyRpa::getSdr(const Rpa& rpa) {
+  return vp::toNdArray(rpa.getSdr());
 }
 
-bn::ndarray PyRpa::getSlfc4py() const {
-  return vp::toNdArray(slfc);
+bn::ndarray PyRpa::getSlfc(const Rpa& rpa) {
+  return vp::toNdArray(rpa.getSlfc());
 }
 
-bn::ndarray PyRpa::getSsf4py() const {
-  return vp::toNdArray(ssf);
+bn::ndarray PyRpa::getSsf(const Rpa& rpa) {
+  std::cerr << rpa.getSsf().size() << std::endl;
+  return vp::toNdArray(rpa.getSsf());
 }
 
-bn::ndarray PyRpa::getSsfHF4py() const {
-  return vp::toNdArray(ssfHF);
+bn::ndarray PyRpa::getSsfHF(const Rpa& rpa) {
+  return vp::toNdArray(rpa.getSsfHF());
 }
 
-bn::ndarray PyRpa::getWvg4py() const {
-  return vp::toNdArray(wvg);
+bn::ndarray PyRpa::getWvg(const Rpa& rpa) {
+  return vp::toNdArray(rpa.getWvg());
 }
 
-double PyRpa::getUInt4py() const {
-  return computeInternalEnergy(wvg, ssf, in.getCoupling());
+double PyRpa::getUInt(const Rpa& rpa) {
+  return rpa.getUInt();
 }
 
-string PyRpa::getRecoveryFileName4py() const {
-  return recoveryFileName;
+string PyRpa::getRecoveryFileName(const Rpa& rpa) {
+  return rpa.getRecoveryFileName();
 }
 
 // namespace RpaInputWrapper {

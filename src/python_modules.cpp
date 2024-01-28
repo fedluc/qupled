@@ -409,21 +409,21 @@ BOOST_PYTHON_MODULE(qupled)
     .def("isEqual", &QstlsInput::isEqual);
 
   // Class to solve the classical RPA scheme
-  bp::class_<PyRpa>("Rpa",
-		    bp::init<const RpaInput>())
-    .def("rdf", &PyRpa::getRdf4py)
-    .add_property("idr", &PyRpa::getIdr4py)
-    .add_property("sdr", &PyRpa::getSdr4py)
-    .add_property("slfc", &PyRpa::getSlfc4py)
-    .add_property("ssf", &PyRpa::getSsf4py)
-    .add_property("ssfHF", &PyRpa::getSsfHF4py)
-    .add_property("uInt", &PyRpa::getUInt4py)
-    .add_property("wvg", &PyRpa::getWvg4py)
-    .add_property("recovery", &PyRpa::getRecoveryFileName4py);
+  bp::class_<Rpa>("Rpa",
+		  bp::init<const RpaInput>())
+    .def("rdf", &PyRpa::getRdf)
+    .add_property("idr", &PyRpa::getIdr)
+    .add_property("sdr", &PyRpa::getSdr)
+    .add_property("slfc", &PyRpa::getSlfc)
+    .add_property("ssf", &PyRpa::getSsf)
+    .add_property("ssfHF", &PyRpa::getSsfHF)
+    .add_property("uInt", &PyRpa::getUInt)
+    .add_property("wvg", &PyRpa::getWvg)
+    .add_property("recovery", &PyRpa::getRecoveryFileName);
 
   // Class to solve the classical ESA scheme
-  bp::class_<PyESA, bp::bases<PyRpa>>("ESA",
-				      bp::init<const RpaInput>());
+  bp::class_<ESA, bp::bases<Rpa>>("ESA",
+				  bp::init<const RpaInput>());
 
   // // Class to solve classical schemes
   // bp::class_<Stls, bp::bases<Rpa>>("Stls",

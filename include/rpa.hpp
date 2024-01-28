@@ -60,11 +60,16 @@ public:
       const bool verbose_,
       const bool doFullCompute);
   Rpa(const RpaInput& in_) : Rpa(in_, true, true) { ; }
-  // Get static local field correction
+  // Getters
+  vecUtil::Vector2D getIdr() const { return idr; }
   vector<double> getSlfc() const { return slfc; }
-  // Get static structure factor
   vector<double> getSsf() const { return ssf; }
-  
+  vector<double> getSsfHF() const { return ssfHF; }
+  vector<double> getWvg() const { return wvg; }
+  vector<double> getRdf(const vector<double>& r) const;
+  vector<double> getSdr() const;
+  double getUInt() const;
+  string getRecoveryFileName() const { return recoveryFileName; }
 };
 
 // -----------------------------------------------------------------

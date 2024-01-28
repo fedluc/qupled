@@ -7,7 +7,7 @@
 // Solver for the ESA scheme
 // -----------------------------------------------------------------
 
-class ESA : virtual public Rpa {
+class ESA : public Rpa {
   
 protected:
 
