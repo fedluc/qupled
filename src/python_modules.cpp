@@ -1,6 +1,7 @@
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include "python_wrappers.hpp"
 #include "input.hpp"
 #include "stls.hpp"
 #include "qstls.hpp"
@@ -142,39 +143,6 @@ namespace StlsInputWrapper {
     guess_.wvg = arrayWrapper::toVector(guess.wvg);
     guess_.slfc = arrayWrapper::toVector(guess.slfc);
     in.setGuess(guess_);
-  }
-
-}
-
-namespace RpaWrapper {
-
-  bn::ndarray getIdr(const Rpa &rpa){
-    return arrayWrapper::toNdArray2D(rpa.getIdr());
-  }
-
-  bn::ndarray getRdf(const Rpa &rpa,
-		     const bn::ndarray &r){
-    return arrayWrapper::toNdArray(rpa.getRdf(arrayWrapper::toVector(r)));
-  }
-  
-  bn::ndarray getSdr(const Rpa &rpa){
-    return arrayWrapper::toNdArray(rpa.getSdr());
-  }
-  
-  bn::ndarray getSlfc(const Rpa &rpa){
-    return arrayWrapper::toNdArray(rpa.getSlfc());
-  }
-  
-  bn::ndarray getSsf(const Rpa &rpa){
-    return arrayWrapper::toNdArray(rpa.getSsf());
-  }
-
-  bn::ndarray getSsfHF(const Rpa &rpa){
-    return arrayWrapper::toNdArray(rpa.getSsfHF());
-  }
-  
-  bn::ndarray getWvg(const Rpa &rpa){
-    return arrayWrapper::toNdArray(rpa.getWvg());
   }
 
 }
@@ -441,44 +409,44 @@ BOOST_PYTHON_MODULE(qupled)
     .def("isEqual", &QstlsInput::isEqual);
 
   // Class to solve the classical RPA scheme
-  bp::class_<Rpa>("Rpa",
-		  bp::init<const RpaInput>())
-    .def("rdf", RpaWrapper::getRdf)
-    .add_property("idr", RpaWrapper::getIdr)
-    .add_property("sdr", RpaWrapper::getSdr)
-    .add_property("slfc", RpaWrapper::getSlfc)
-    .add_property("ssf", RpaWrapper::getSsf)
-    .add_property("ssfHF", RpaWrapper::getSsfHF)
-    .add_property("uInt", &Rpa::getUInt)
-    .add_property("wvg", RpaWrapper::getWvg)
-    .add_property("recovery", &Rpa::getRecoveryFileName);
+  bp::class_<PyRpa>("Rpa",
+		    bp::init<const RpaInput>())
+    .def("rdf", &PyRpa::getRdf4py)
+    .add_property("idr", &PyRpa::getIdr4py)
+    .add_property("sdr", &PyRpa::getSdr4py)
+    .add_property("slfc", &PyRpa::getSlfc4py)
+    .add_property("ssf", &PyRpa::getSsf4py)
+    .add_property("ssfHF", &PyRpa::getSsfHF4py)
+    .add_property("uInt", &PyRpa::getUInt4py)
+    .add_property("wvg", &PyRpa::getWvg4py)
+    .add_property("recovery", &PyRpa::getRecoveryFileName4py);
 
   // Class to solve the classical ESA scheme
-  bp::class_<ESA, bp::bases<Rpa>>("ESA",
-				  bp::init<const RpaInput>());
+  bp::class_<PyESA, bp::bases<PyRpa>>("ESA",
+				      bp::init<const RpaInput>());
 
-  // Class to solve classical schemes
-  bp::class_<Stls, bp::bases<Rpa>>("Stls",
-				   bp::init<const StlsInput>())
-    .def("compute", &Stls::compute)
-    .add_property("bf", StlsWrapper::getBf);
+  // // Class to solve classical schemes
+  // bp::class_<Stls, bp::bases<Rpa>>("Stls",
+  // 				   bp::init<const StlsInput>())
+  //   .def("compute", &Stls::compute)
+  //   .add_property("bf", StlsWrapper::getBf);
 
-  // Class to solve the classical vs scheme
-  bp::class_<VSStls, bp::bases<Rpa>>("VSStls",
-				     bp::init<const VSStlsInput>())
-    .def("compute", &VSStls::compute)
-    .add_property("freeEnergyIntegrand", VSStlsWrapper::getFreeEnergyIntegrand)
-    .add_property("freeEnergyGrid", VSStlsWrapper::getFreeEnergyGrid);
+  // // Class to solve the classical vs scheme
+  // bp::class_<VSStls, bp::bases<Rpa>>("VSStls",
+  // 				     bp::init<const VSStlsInput>())
+  //   .def("compute", &VSStls::compute)
+  //   .add_property("freeEnergyIntegrand", VSStlsWrapper::getFreeEnergyIntegrand)
+  //   .add_property("freeEnergyGrid", VSStlsWrapper::getFreeEnergyGrid);
       
-  // Class to solve quantum schemes
-  bp::class_<Qstls, bp::bases<Stls>>("Qstls",
-				     bp::init<const QstlsInput>())
-    .def("compute", &Qstls::compute)
-    .add_property("adr", QstlsWrapper::getAdr);
+  // // Class to solve quantum schemes
+  // bp::class_<Qstls, bp::bases<Stls>>("Qstls",
+  // 				     bp::init<const QstlsInput>())
+  //   .def("compute", &Qstls::compute)
+  //   .add_property("adr", QstlsWrapper::getAdr);
 
-  // Post-process methods
-  bp::def("computeRdf", thermoWrapper::computeRdf);
-  bp::def("computeInternalEnergy", thermoWrapper::computeInternalEnergy);
-  bp::def("computeFreeEnergy", thermoWrapper::computeFreeEnergy);
+  // // Post-process methods
+  // bp::def("computeRdf", thermoWrapper::computeRdf);
+  // bp::def("computeInternalEnergy", thermoWrapper::computeInternalEnergy);
+  // bp::def("computeFreeEnergy", thermoWrapper::computeFreeEnergy);
   
 }

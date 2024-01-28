@@ -7,9 +7,9 @@
 // Solver for the ESA scheme
 // -----------------------------------------------------------------
 
-class ESA : public Rpa {
+class ESA : virtual public Rpa {
   
-private:
+protected:
 
   // Funtion for the ESA static local field correction
   void computeSlfc();

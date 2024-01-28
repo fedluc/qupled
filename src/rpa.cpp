@@ -27,7 +27,7 @@ Rpa::Rpa(const RpaInput &in_,
   computeSsfHF();
   if (verbose) cout << "Done" << endl;
   if (doFullCompute) {
-    if (verbose) cout << "Computing static local field correction: "; 
+    if (verbose) cout << "Computing static local field correction(RPA): "; 
     computeSlfc();
     if (verbose) cout << "Done" << endl;
     if (verbose) cout << "Computing static structure factor: "; 
@@ -144,30 +144,6 @@ void Rpa::computeSlfc(){
   slfc.resize(wvg.size());
   for (auto& s : slfc) { s = 0; }
 }
-
-// Getters
-vector<double> Rpa::getRdf(const vector<double> &r) const {
-  return computeRdf(r, wvg, ssf);
-}
-
-vector<double> Rpa::getSdr() const {
-  if (in.getDegeneracy() == 0.0) {
-    std::cout << "The static density response cannot be computed in the ground state." << std::endl;
-    return vector<double>();
-  }
-  vector<double> sdr(wvg.size(), -1.5 * in.getDegeneracy());
-  const double fact = 4 *lambda * in.getCoupling() / M_PI;
-  for (size_t i=0; i<wvg.size(); ++i){
-    const double x2 = wvg[i] * wvg[i];
-    const double phi0 = idr(i,0);
-    sdr[i] *= phi0/ (1.0 + fact/x2 * (1.0 - slfc[i]) * phi0);
-  }
-  return sdr;
-}
-
-double Rpa::getUInt() const {
-  return computeInternalEnergy(wvg, ssf, in.getCoupling());
-};  
 
 // -----------------------------------------------------------------
 // Idr class

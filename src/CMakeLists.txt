@@ -17,12 +17,13 @@ Python3_add_library(qupled MODULE
 		    input.cpp
 		    numerics.cpp
 		    python_modules.cpp
+		    python_wrappers.cpp
 		    qstls.cpp
 		    rpa.cpp
 		    stls.cpp
 		    util.cpp
 		    vsstls.cpp
-			esa.cpp)
+		    esa.cpp)
 
 # Include directories
 target_include_directories(qupled PUBLIC
