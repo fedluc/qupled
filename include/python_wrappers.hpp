@@ -19,23 +19,73 @@ namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 
 // -----------------------------------------------------------------
-// Wrapper for exposing the Input classes to Python
+// Wrapper for exposing the Input class to Python
 // -----------------------------------------------------------------
 
-class PyInput {
+class PyRpaInput {
 public:
-  // RpaInput
   static bn::ndarray getChemicalPotentialGuess(RpaInput &in);
   static void setChemicalPotentialGuess(RpaInput &in,
 					const bp::list &muGuess);
-  // StlsInput
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the SlfcGuess class to Python
+// -----------------------------------------------------------------
+
+class PySlfcGuess {
+public:
   static bn::ndarray getWvg(const StlsInput::SlfcGuess &guess);
   static bn::ndarray getSlfc(const StlsInput::SlfcGuess &guess);
   static void setWvg(StlsInput::SlfcGuess &guess,
 		     const bn::ndarray& wvg);
   static void setSlfc(StlsInput::SlfcGuess &guess,
 		      const bn::ndarray& slfc);
-  
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the VSStlsInput class to Python
+// -----------------------------------------------------------------
+
+class PyVSStlsInput {
+public:
+  static bn::ndarray getAlphaGuess(VSStlsInput &in);
+  static void setAlphaGuess(VSStlsInput &in,
+			    const bp::list &alphaGuess);
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the FreeEnergyIntegrand class to Python
+// -----------------------------------------------------------------
+
+class PyFreeEnergyIntegrand {
+public:
+  static bn::ndarray getGrid(const VSStlsInput::FreeEnergyIntegrand& fxc);
+  static bn::ndarray getIntegrand(const VSStlsInput::FreeEnergyIntegrand& fxc);
+  static void setGrid(VSStlsInput::FreeEnergyIntegrand& fxc,
+		      const bn::ndarray& grid);
+  static void setIntegrand(VSStlsInput::FreeEnergyIntegrand &fxc,
+			   const bn::ndarray& integrand);
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the QstlsGuess class to Python
+// -----------------------------------------------------------------
+
+class PyQstlsGuess {
+public:
+  static bn::ndarray getWvg(const QstlsInput::QstlsGuess &guess);
+  static bn::ndarray getSsf(const QstlsInput::QstlsGuess &guess);
+  static bn::ndarray getAdr(const QstlsInput::QstlsGuess &guess);
+  static int getMatsubara(const QstlsInput::QstlsGuess &guess);
+  static void setWvg(QstlsInput::QstlsGuess &guess,
+		     const bn::ndarray& wvg);
+  static void setSsf(QstlsInput::QstlsGuess &guess,
+		      const bn::ndarray& ssf);
+  static void setAdr(QstlsInput::QstlsGuess &guess,
+		     const bn::ndarray& ssf);
+  static void setMatsubara(QstlsInput::QstlsGuess &guess,
+			   const int matsubara);
 };
 
 // -----------------------------------------------------------------

@@ -7,75 +7,6 @@ namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 namespace vp = vecUtil::python;
 
-// Methods that need wrapping to pass arrays between native and python
-
-namespace VSStlsInputWrapper {
-
-  bn::ndarray getAlphaGuess(VSStlsInput &in){
-    return vp::toNdArray(in.getAlphaGuess());
-  }
-  
-  void setAlphaGuess(VSStlsInput &in,
-		     const bp::list &alphaGuess){
-    in.setAlphaGuess(vp::toVector(alphaGuess));
-  }
-  
-  struct FreeEnergyIntegrand {
-    bn::ndarray grid = vp::toNdArray(vector<double>(0));
-    bn::ndarray integrand = vp::toNdArray(vector<double>(0));
-  };
-  
-  VSStlsInputWrapper::FreeEnergyIntegrand getFreeEnergyIntegrand(VSStlsInput &in){
-    VSStlsInput::FreeEnergyIntegrand fxcIntegrand_ = in.getFreeEnergyIntegrand();
-    VSStlsInputWrapper::FreeEnergyIntegrand fxcIntegrand;
-    fxcIntegrand.grid = vp::toNdArray(fxcIntegrand_.grid);
-    fxcIntegrand.integrand = vp::toNdArray2D(fxcIntegrand_.integrand);
-    return fxcIntegrand;
-  }
-  
-  void setFreeEnergyIntegrand(VSStlsInput &in,
-			      const VSStlsInputWrapper::FreeEnergyIntegrand &fxcIntegrand){
-    VSStlsInput::FreeEnergyIntegrand fxcIntegrand_;
-    fxcIntegrand_.grid = vp::toVector(fxcIntegrand.grid);
-    fxcIntegrand_.integrand = vp::toDoubleVector(fxcIntegrand.integrand);
-    in.setFreeEnergyIntegrand(fxcIntegrand_);
-  }
-  
-}
-
-namespace QstlsInputWrapper {
-  
-  struct QstlsGuess {
-    bn::ndarray wvg = vp::toNdArray(vector<double>(0));
-    bn::ndarray ssf = vp::toNdArray(vector<double>(0));
-    bn::ndarray adr = vp::toNdArray(vector<double>(0));
-    int matsubara = 0;
-  };
-
-  QstlsInputWrapper::QstlsGuess getGuess(QstlsInput &in){
-    QstlsInput::QstlsGuess guess_ = in.getGuess();
-    QstlsInputWrapper::QstlsGuess guess;
-    guess.wvg = vp::toNdArray(guess_.wvg);
-    guess.ssf = vp::toNdArray(guess_.ssf);
-    bn::ndarray adrTmp = vp::toNdArray2D(guess_.adr);
-    guess.matsubara = guess_.matsubara;
-    return guess;
-  }
-  
-  void setGuess(QstlsInput &in,
-		const QstlsInputWrapper::QstlsGuess &guess){
-    QstlsInput::QstlsGuess guess_;
-    guess_.wvg = vp::toVector(guess.wvg);
-    guess_.ssf = vp::toVector(guess.ssf);
-    if (guess.adr.shape(0) > 0) {
-      guess_.adr = vp::toVector2D(guess.adr);
-    }
-    guess_.matsubara = guess.matsubara;
-    in.setGuess(guess_);
-  }
-  
-}
-
 // Classes exposed to Python
 BOOST_PYTHON_MODULE(qupled)
 {
@@ -109,8 +40,8 @@ BOOST_PYTHON_MODULE(qupled)
 		  &RpaInput::getTheory,
 		  &RpaInput::setTheory)
     .add_property("chemicalPotential",
-		  &PyInput::getChemicalPotentialGuess,
-		  &PyInput::setChemicalPotentialGuess)
+		  &PyRpaInput::getChemicalPotentialGuess,
+		  &PyRpaInput::setChemicalPotentialGuess)
     .add_property("matsubara",
 		  &RpaInput::getNMatsubara,
 		  &RpaInput::setNMatsubara)
@@ -126,11 +57,11 @@ BOOST_PYTHON_MODULE(qupled)
   // Class for the initial guess of the Stls scheme
   bp::class_<StlsInput::SlfcGuess>("SlfcGuess")
     .add_property("wvg",
-		  &PyInput::getWvg,
-		  &PyInput::setWvg)
+		  &PySlfcGuess::getWvg,
+		  &PySlfcGuess::setWvg)
     .add_property("slfc",
-		  &PyInput::getSlfc,
-		  &PyInput::setSlfc);
+		  &PySlfcGuess::getSlfc,
+		  &PySlfcGuess::setSlfc);
 
   // Class for the input of the Stls scheme
   bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
@@ -159,9 +90,13 @@ BOOST_PYTHON_MODULE(qupled)
     .def("isEqual", &StlsInput::isEqual);
 
   // Class for the free energy integrand of the VSStls scheme
-  bp::class_<VSStlsInputWrapper::FreeEnergyIntegrand>("FreeEnergyIntegrand")
-    .def_readwrite("grid", &VSStlsInputWrapper::FreeEnergyIntegrand::grid)
-    .def_readwrite("integrand", &VSStlsInputWrapper::FreeEnergyIntegrand::integrand);
+  bp::class_<VSStlsInput::FreeEnergyIntegrand>("SlfcGuess")
+    .add_property("grid",
+		  &PyFreeEnergyIntegrand::getGrid,
+		  &PyFreeEnergyIntegrand::setGrid)
+    .add_property("integrand",
+		  &PyFreeEnergyIntegrand::getIntegrand,
+		  &PyFreeEnergyIntegrand::setIntegrand);
 
   // Class for the input of the VSStls scheme
   bp::class_<VSStlsInput, bp::bases<StlsInput>>("VSStlsInput")
@@ -172,8 +107,8 @@ BOOST_PYTHON_MODULE(qupled)
 		  &VSStlsInput::getNIterAlpha,
 		  &VSStlsInput::setNIterAlpha)
     .add_property("alpha",
-		  VSStlsInputWrapper::getAlphaGuess,
-		  VSStlsInputWrapper::setAlphaGuess)
+		  &PyVSStlsInput::getAlphaGuess,
+		  &PyVSStlsInput::setAlphaGuess)
     .add_property("couplingResolution",
 		  &VSStlsInput::getCouplingResolution,
 		  &VSStlsInput::setCouplingResolution)
@@ -181,23 +116,31 @@ BOOST_PYTHON_MODULE(qupled)
 		  &VSStlsInput::getDegeneracyResolution,
 		  &VSStlsInput::setDegeneracyResolution)
     .add_property("freeEnergyIntegrand",
-		  VSStlsInputWrapper::getFreeEnergyIntegrand,
-		  VSStlsInputWrapper::setFreeEnergyIntegrand)
+		  &VSStlsInput::getFreeEnergyIntegrand,
+		  &VSStlsInput::setFreeEnergyIntegrand)
     .def("print", &VSStlsInput::print)
     .def("isEqual", &VSStlsInput::isEqual);
 
   // Class for the initial guess of the Qstls scheme
-  bp::class_<QstlsInputWrapper::QstlsGuess>("QstlsGuess")
-    .def_readwrite("wvg", &QstlsInputWrapper::QstlsGuess::wvg)
-    .def_readwrite("ssf", &QstlsInputWrapper::QstlsGuess::ssf)
-    .def_readwrite("adr", &QstlsInputWrapper::QstlsGuess::adr)
-    .def_readwrite("matsubara", &QstlsInputWrapper::QstlsGuess::matsubara);
-
+  bp::class_<QstlsInput::QstlsGuess>("QstlsGuess")
+    .add_property("wvg",
+		  &PyQstlsGuess::getWvg,
+		  &PyQstlsGuess::setWvg)
+    .add_property("ssf",
+		  &PyQstlsGuess::getSsf,
+		  &PyQstlsGuess::setSsf)
+    .add_property("adr",
+		  &PyQstlsGuess::getAdr,
+		  &PyQstlsGuess::setAdr)
+    .add_property("matsubara",
+		  &PyQstlsGuess::getMatsubara,
+		  &PyQstlsGuess::setMatsubara);
+    
   // Class for the input of the Qstls scheme
   bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
     .add_property("guess",
-		  QstlsInputWrapper::getGuess,
-		  QstlsInputWrapper::setGuess)
+		  &QstlsInput::getGuess,
+		  &QstlsInput::setGuess)
     .add_property("fixed",
 		  &QstlsInput::getFixed,
 		  &QstlsInput::setFixed)
