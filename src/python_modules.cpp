@@ -90,7 +90,7 @@ BOOST_PYTHON_MODULE(qupled)
     .def("isEqual", &StlsInput::isEqual);
 
   // Class for the free energy integrand of the VSStls scheme
-  bp::class_<VSStlsInput::FreeEnergyIntegrand>("SlfcGuess")
+  bp::class_<VSStlsInput::FreeEnergyIntegrand>("FreeEnergyIntegrand")
     .add_property("grid",
 		  &PyFreeEnergyIntegrand::getGrid,
 		  &PyFreeEnergyIntegrand::setGrid)
