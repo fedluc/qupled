@@ -3,10 +3,7 @@
 #include "rpa.hpp"
 #include "chemicalpotential.hpp"
 
-using namespace vecUtil;
-using namespace stringUtil;
 using namespace thermoUtil;
-using namespace binUtil;
 
 // Constructor
 Rpa::Rpa(const RpaInput &in_,

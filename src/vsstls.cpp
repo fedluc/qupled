@@ -3,9 +3,7 @@
 
 using namespace numUtil;
 using namespace vecUtil;
-using namespace stringUtil;
 using namespace thermoUtil;
-using namespace binUtil;
 
 // -----------------------------------------------------------------
 // VSStls class
