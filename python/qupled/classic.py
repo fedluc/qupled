@@ -383,12 +383,6 @@ class Stls(Rpa):
         self.inputs.iterations = iterations
         self.inputs.outputFrequency = outputFrequency
         if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
-        
-    # Check input before computing
-    def _checkInputs(self) -> None:
-        """ Checks that the content of :obj:`inputs` is correct """
-        if (self.inputs.theory not in self.allowedTheories):
-            sys.exit("Invalid dielectric theory")
 
     # Compute
     def compute(self) -> None:
@@ -640,9 +634,45 @@ class VSStls(Stls):
 class Hdf():
 
     """ Class to manipulate the hdf files produced when a scheme is solved """
-            
+
+    # Read data in hdf file
+    def read(self, hdf, toRead) -> dict:
+        """ Reads an hdf file produced by coupled and returns the content in the form of a dictionary
+
+        Positional arguments:  
+        hdf -- Name of the hdf file to read  
+        toRead -- A list of quantities to read. The list of quantities that can be extracted from
+        the hdf file can be obtained by running `~qupled.classic.Hdf.entries`
+        
+        Returns:
+        A dictionary whose entries are the quantities listed in toRead
+        
+        """
+
+    # Get all quantities stored in an hdf file
+    def inspect(self, hdf) -> list[str]:
+        """ Allows to insepct the quantities stored in an hdf file
+
+        Positional arguments:  
+        hdf -- Name of the hdf file to analyze 
+        
+        Returns:
+        A dictionary containing all the quantities stored in the hdf file and a brief description for
+        each quantity
+        
+        """
+        with pd.HDFStore(hdf, mode='r') as store:
+            datasetNames =  [name[1:] if name.startswith('/') else name for name in store.keys()]
+            if "inputs" in datasetNames:
+                datasetNames.remove("inputs")
+                for name in store["inputs"].keys() : datasetNames.append(name)
+        output = dict.fromkeys(datasetNames)
+        for key in output.keys():
+            output[key] = self.description(key);
+        return output
+        
     # Plot from data in hdf file
-    def plot(hdf, toPlot, matsubara = None, rdfGrid = None):
+    def plot(self, hdf, toPlot, matsubara = None, rdfGrid = None):
         """ Plots the results stored in an hdf file.
 
         Positional arguments:  
@@ -660,36 +690,52 @@ class Hdf():
         (Default = None, see computeRdf)  
         
         """
-        if (matsubara is None) : matsubara = np.arange(pd.read_hdf(hdf, "inputs")["matsubara"][0].tolist())
-        wvg = pd.read_hdf(hdf, "wvg")[0].to_numpy()
-        xlabel = "Wave vector"
-        if ("adr" in toPlot):
-            adr = pd.read_hdf(hdf, "adr").to_numpy()
-            Plot.plot1DParametric(wvg, adr, xlabel, "Auxiliary density response", matsubara)
-        if ("bf" in toPlot):
-            bf = pd.read_hdf(hdf, "bf")[0].to_numpy()
-            Plot.plot1D(wvg, bf, xlabel, "Bridge function adder")
-        if ("idr" in toPlot):
-            idr = pd.read_hdf(hdf, "idr").to_numpy()
-            Plot.plot1DParametric(wvg, idr, xlabel, "Ideal density response", matsubara)
-        if ("rdf" in toPlot):
-            rdf = pd.read_hdf(hdf, "rdf")[0].to_numpy()
-            spg = pd.read_hdf(hdf, "rdfGrid")[0].to_numpy()
-            Plot.plot1D(spg, rdf, "Inter-particle distance", "Radial distribution function")
-        if ("sdr" in toPlot):
-            sdr = pd.read_hdf(hdf, "sdr")[0].to_numpy()
-            Plot.plot1D(wvg, sdr, xlabel, "Static density response")
-        if ("slfc" in toPlot):
-            slfc = pd.read_hdf(hdf, "slfc")[0].to_numpy()
-            Plot.plot1D(wvg, slfc, xlabel, "Static density response")
-        if ("ssf" in toPlot):
-            ssf = pd.read_hdf(hdf, "ssf")[0].to_numpy()
-            Plot.plot1D(wvg, ssf, xlabel, "Static structure factor")
-        if ("ssfHF" in toPlot):
-            ssfHF = pd.read_hdf(hdf, "ssfHF")[0].to_numpy()
-            Plot.plot1D(wvg, ssfHF, xlabel, "Hartree-Fock static structure factor")
+        for name in toPlot :
+            if ( name == "rdf" ) :
+                x = pd.read_hdf(hdf, "rdfGrid")[0].to_numpy()
+                y = pd.read_hdf(hdf, "rdf")[0].to_numpy()
+                Plot.plot1D(x, y, self.description("rdfGrid"), self.description(name))
+            elif ( name == "adr" or name == "idr") :
+                if (matsubara is None) : matsubara = np.arange(pd.read_hdf(hdf, "inputs")["matsubara"][0].tolist())
+                x = pd.read_hdf(hdf, "wvg")[0].to_numpy()
+                y = pd.read_hdf(hdf, name).to_numpy()
+                Plot.plot1DParametric(x, y, self.description("wvg"), self.description(name), matsubara)
+            else :
+                x = pd.read_hdf(hdf, "wvg")[0].to_numpy()
+                y = pd.read_hdf(hdf, name).to_numpy()
+                Plot.plot1D(x, y, self.description("wvg"), self.description(name))
 
-    def computeRdf(hdf, rdfGrid = None, saveRdf = True):
+
+    # Get descriptions for each quantity in an hdf file
+    def description(self, key) -> str:
+        """ Get the textual description of a given key stored in an hdf file
+
+        Positional arguments:  
+        key -- Name of the key
+        
+        Returns:
+        A string containing a textual description of the data stored under the key
+        
+        """
+        if key == "adr" : return "Auxiliary density response"
+        if key == "bf" : return "Bridge function adder"
+        if key == "coupling" : return "Coupling parameter"
+        if key == "cutoff" : return "Cutoff for the wave-vector grid"
+        if key == "degeneracy" : return "Degeneracy parameter"
+        if key == "matsubara" : return "Number of matsubara frequencies"
+        if key == "idr" : return "Ideal density response"
+        if key == "resolution" : return "Resolution for the wave-vector grid"
+        if key == "rdf" : return "Radial distribution function"
+        if key == "rdfGrid" : return "Inter-particle distance"       
+        if key == "sdr" : return "Static density response"
+        if key == "slfc" : return "Static local field correction"
+        if key == "ssf" : return "Static structure factor"
+        if key == "ssfHF" : return "Hartree-Fock static structure factor"
+        if key == "theory" : return "Theory that is being solved"
+        if key == "wvg" : return "Wave-vector"
+        sys.exit("Invalid key for hdf file: " + key)
+        
+    def computeRdf(self, hdf, rdfGrid = None, saveRdf = True):
         """ Computes the radial distribution function and returns it as a numpy array.
 
         Positional arguments:  
@@ -710,7 +756,7 @@ class Hdf():
             pd.DataFrame(rdf).to_hdf(hdf, key="rdf", mode="r+")
         return rdf
 
-    def computeInternalEnergy(hdf):
+    def computeInternalEnergy(self, hdf):
         """ Computes the internal energy and returns it to output.
 
         Positional arguments:  
