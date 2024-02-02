@@ -165,11 +165,7 @@ class Rpa():
         
         """
         self._checkSolution("compute the radial distribution function")
-        rdf = self.scheme.rdf(rdfGrid)
-        if (writeToHdf) :
-            pd.DataFrame(rdfGrid).to_hdf(self.hdfFileName, key="rdfGrid", mode="r+")
-            pd.DataFrame(rdf).to_hdf(self.hdfFileName, key="rdf", mode="r+")
-        return rdf
+        return Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
 
     # Compute the internal energy
     def computeInternalEnergy(self) -> float:
@@ -197,50 +193,9 @@ class Rpa():
         
         """
         self._checkSolution("plot results")
-        wvg = self.scheme.wvg
-        xlabel = "Wave vector"
-        if ("idr" in toPlot):
-            self._plotIdr(matsubara)
-        if ("rdf" in toPlot):
-            self._plotRdf(rdfGrid)
-        if ("sdr" in toPlot):
-            Plot.plot1D(wvg, self.scheme.sdr, xlabel, "Static density response")
-        if ("slfc" in toPlot):
-            Plot.plot1D(wvg, self.scheme.slfc, xlabel, "Static local field correction")
-        if ("ssf" in toPlot):
-            Plot.plot1D(wvg, self.scheme.ssf, xlabel, "Static structure factor")
-        if ("ssfHF" in toPlot):
-            Plot.plot1D(wvg, self.scheme.ssfHF, xlabel, "Hartree-Fock static structure factor")
+        if ("rdf" in toPlot) : self.computeRdf(rdfGrid)
+        Hdf().plot(self.hdfFileName, toPlot, matsubara, rdfGrid)
 
-    # Plot the ideal density response for a given set of matsubara frequencies
-    def _plotIdr(self, matsubara : np.ndarray = None) -> None:
-        """ Plots the ideal density response.
-        
-        Args:  
-            matsubara:  A list of matsubara frequencies to plot. (Default =  all matsubara frequencies
-        are plotted)
-        
-        """
-        assert(self.scheme is not None)
-        if (self.inputs.degeneracy == 0) : return
-        if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
-        Plot.plot1DParametric(self.scheme.wvg, self.scheme.idr,
-                              "Wave vector", "Ideal density response",
-                              matsubara)
-
-    # Plot the radial distribution function for a given grid
-    def _plotRdf(self, rdfGrid : np.ndarray = None) -> None:
-        """ Plot the radial distribution function.
-        
-        Args:  
-            rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
-                distribution function is plotted (Default = None, i.e.  numpy.arange(0.01, 10.0, 0.01)`)
-          
-        """
-        assert(self.scheme is not None)
-        if (rdfGrid is None) : rdfGrid = np.arange(0.0, 10.0, 0.01)
-        rdf = self.computeRdf(rdfGrid)
-        Plot.plot1D(rdfGrid, rdf, "Inter-particle distance", "radial distribution function")
 
     # Check if a solution is available to perform a given action
     def _checkSolution(self, action : str) -> None:
@@ -487,17 +442,7 @@ class StlsIet(Stls):
         self.scheme : qp.Stls = None
         # File to store output on disk
         self.hdfFileName = None
-            
-    # Plot results
-    def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`~qupled.classic.Stls.scheme`. Extends 
-        :func:`~qupled.classic.Stls.plot` by adding the option to plot the bridge function
-        adder by passing `bf` to toPlot
-        """
-        super().plot(toPlot, matsubara, rdfGrid)
-        if ("bf" in toPlot):
-            Plot.plot1D(self.scheme.wvg, self.scheme.bf, "Wave vector", "Bridge function adder")
-        
+                    
     # Save results to disk
     def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
@@ -616,16 +561,6 @@ class VSStls(Stls):
         fxci.grid = pd.read_hdf(fileName, "fxcGrid")[0].to_numpy()
         fxci.integrand = np.ascontiguousarray(pd.read_hdf(fileName, "fxci").to_numpy());
         self.inputs.freeEnergyIntegrand = fxci
-        
-    # Plot results        
-    def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`~qupled.classic.VSStls.scheme`. Extends 
-        :func:`~qupled.classic.Stls.plot` by adding the option to plot the free energy
-        integrand by passing `fxci` to toPlot
-        """
-        super().plot(toPlot, matsubara, rdfGrid)
-        if ("fxci" in toPlot):
-            Plot.plot1D(self.scheme.freeEnergyGrid, self.scheme.freeEnergyIntegrand[1,:], "Coupling parameter", "Free energy integrand")
 
 # -----------------------------------------------------------------------
 # Hdf class
@@ -634,7 +569,41 @@ class VSStls(Stls):
 class Hdf():
 
     """ Class to manipulate the hdf files produced when a scheme is solved """
+    
+    # Construct
+    def __init__(self):
+        # The first entry is a descriptive name of the 
+        self.entries = {
+            "adr"        : self.Entries("Auxiliary density response", "numpy2D"),
+            "bf"         : self.Entries("Bridge function adder", "numpy"),
+            "coupling"   : self.Entries("Coupling parameter", "number"),
+            "cutoff"     : self.Entries("Cutoff for the wave-vector grid", "number"),
+            "degeneracy" : self.Entries("Degeneracy parameter", "number"),
+            "fxcGrid"    : self.Entries("Coupling parameter", "numpy"),
+            "fxci"       : self.Entries("Free Energy integrand", "numpy2D"),
+            "matsubara"  : self.Entries("Number of matsubara frequencies", "number"),
+            "idr"        : self.Entries("Ideal density response", "numpy2D"),
+            "resolution" : self.Entries("Resolution for the wave-vector grid", "number"),
+            "rdf"        : self.Entries("Radial distribution function", "numpy"),
+            "rdfGrid"    : self.Entries("Inter-particle distance", "numpy"), 
+            "sdr"        : self.Entries("Static density response", "numpy"),
+            "slfc"       : self.Entries("Static local field correction", "numpy"),
+            "ssf"        : self.Entries("Static structure factor", "numpy"),
+            "ssfHF"      : self.Entries("Hartree-Fock static structure factor", "numpy"),
+            "theory"     : self.Entries("Theory that is being solved", "string"),
+            "wvg"        : self.Entries("Wave-vector", "numpy"),
+        }
 
+    # Structure used to cathegorize the entries stored in the hdf file
+    class Entries():
+        def __init__(self, description, entryType):
+            self.description = description # Descriptive string of the entry
+            self.entryType = entryType # Type of entry (numpy, numpy2, number or string)
+            assert(self.entryType == "numpy"
+                   or self.entryType == "numpy2D"
+                   or self.entryType == "number"
+                   or self.entryType == "string")
+            
     # Read data in hdf file
     def read(self, hdf, toRead) -> dict:
         """ Reads an hdf file produced by coupled and returns the content in the form of a dictionary
@@ -648,6 +617,19 @@ class Hdf():
         A dictionary whose entries are the quantities listed in toRead
         
         """
+        output = dict.fromkeys(toRead)
+        for name in toRead:
+            if ( self.entries[name].entryType == "numpy" ) :
+                output[name] = pd.read_hdf(hdf, name)[0].to_numpy()
+            elif ( self.entries[name].entryType == "numpy2D" ) :
+                output[name] = pd.read_hdf(hdf, name).to_numpy()
+            elif ( self.entries[name].entryType == "number") :
+                output[name] = pd.read_hdf(hdf, "inputs")[name][0].tolist()
+            elif ( self.entries[name].entryType == "string") :
+                output[name] = pd.read_hdf(hdf, "inputs")[name][0]
+            else:
+                sys.exit("Unknown entry type")
+        return output
 
     # Get all quantities stored in an hdf file
     def inspect(self, hdf) -> list[str]:
@@ -668,7 +650,7 @@ class Hdf():
                 for name in store["inputs"].keys() : datasetNames.append(name)
         output = dict.fromkeys(datasetNames)
         for key in output.keys():
-            output[key] = self.description(key);
+            output[key] = self.entries[key].description;
         return output
         
     # Plot from data in hdf file
@@ -692,48 +674,19 @@ class Hdf():
         """
         for name in toPlot :
             if ( name == "rdf" ) :
-                x = pd.read_hdf(hdf, "rdfGrid")[0].to_numpy()
-                y = pd.read_hdf(hdf, "rdf")[0].to_numpy()
-                Plot.plot1D(x, y, self.description("rdfGrid"), self.description(name))
-            elif ( name == "adr" or name == "idr") :
-                if (matsubara is None) : matsubara = np.arange(pd.read_hdf(hdf, "inputs")["matsubara"][0].tolist())
-                x = pd.read_hdf(hdf, "wvg")[0].to_numpy()
-                y = pd.read_hdf(hdf, name).to_numpy()
-                Plot.plot1DParametric(x, y, self.description("wvg"), self.description(name), matsubara)
+                x = self.read(hdf, [name, "rdfGrid"])
+                Plot.plot1D(x["rdfGrid"], x[name], self.entries["rdfGrid"].description, self.entries[name].description)
+            elif ( name == "adr" or name == "idr" ) :
+                x = self.read(hdf, [name, "wvg", "matsubara"])
+                if (matsubara is None) : matsubara = np.arange(x["matsubara"])
+                Plot.plot1DParametric(x["wvg"], x[name], self.entries["wvg"].description, self.entries[name].description, matsubara)
+            elif ( name == "fxci" ) :
+                x = self.read(hdf, [name, "fxcGrid"])
+                Plot.plot1D(x["fxcGrid"], x[name][:,1], self.entries["fxcGrid"].description, self.entries[name].description)
             else :
-                x = pd.read_hdf(hdf, "wvg")[0].to_numpy()
-                y = pd.read_hdf(hdf, name).to_numpy()
-                Plot.plot1D(x, y, self.description("wvg"), self.description(name))
+                x = self.read(hdf, [name, "wvg"])
+                Plot.plot1D(x["wvg"], x[name], self.entries["wvg"].description, self.entries[name].description)
 
-
-    # Get descriptions for each quantity in an hdf file
-    def description(self, key) -> str:
-        """ Get the textual description of a given key stored in an hdf file
-
-        Positional arguments:  
-        key -- Name of the key
-        
-        Returns:
-        A string containing a textual description of the data stored under the key
-        
-        """
-        if key == "adr" : return "Auxiliary density response"
-        if key == "bf" : return "Bridge function adder"
-        if key == "coupling" : return "Coupling parameter"
-        if key == "cutoff" : return "Cutoff for the wave-vector grid"
-        if key == "degeneracy" : return "Degeneracy parameter"
-        if key == "matsubara" : return "Number of matsubara frequencies"
-        if key == "idr" : return "Ideal density response"
-        if key == "resolution" : return "Resolution for the wave-vector grid"
-        if key == "rdf" : return "Radial distribution function"
-        if key == "rdfGrid" : return "Inter-particle distance"       
-        if key == "sdr" : return "Static density response"
-        if key == "slfc" : return "Static local field correction"
-        if key == "ssf" : return "Static structure factor"
-        if key == "ssfHF" : return "Hartree-Fock static structure factor"
-        if key == "theory" : return "Theory that is being solved"
-        if key == "wvg" : return "Wave-vector"
-        sys.exit("Invalid key for hdf file: " + key)
         
     def computeRdf(self, hdf, rdfGrid = None, saveRdf = True):
         """ Computes the radial distribution function and returns it as a numpy array.
@@ -747,10 +700,9 @@ class Hdf():
         saveRdf -- Flag marking whether the rdf data should be added to the hdf file (default = True)
         
         """
-        wvg = pd.read_hdf(hdf, "wvg")[0].to_numpy()
-        ssf = pd.read_hdf(hdf, "ssf")[0].to_numpy()
+        hdfData = self.read(hdf, ["wvg", "ssf"])
         if (rdfGrid is None) : rdfGrid = np.arange(0.01, 10.0, 0.01)
-        rdf = qp.computeRdf(rdfGrid, wvg, ssf)
+        rdf = qp.computeRdf(rdfGrid, hdfData["wvg"], hdfData["ssf"])
         if (saveRdf):
             pd.DataFrame(rdfGrid).to_hdf(hdf, key="rdfGrid", mode="r+")
             pd.DataFrame(rdf).to_hdf(hdf, key="rdf", mode="r+")

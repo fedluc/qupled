@@ -23,6 +23,8 @@ print("Static structure factor from the Stls object: ")
 print(ssf)
 
 # Access the static structure factor from the output file
-ssf =  pd.read_hdf("rs10.000_theta1.000_STLS.h5", "ssf")[0].to_numpy()
+ssf =  qpc.Hdf().read(stls.hdfFileName, ["ssf"])["ssf"]
 print("Static structure factor from the output file: ")
 print(ssf)
+
+print(stls.computeInternalEnergy())

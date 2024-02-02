@@ -128,15 +128,6 @@ class Qstls(classic.Stls):
         guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
         guess.ssf = pd.read_hdf(fileName, "ssf")[0].to_numpy()
         self.inputs.guess = guess
-        
-    # Plot results
-    def plot(self, toPlot : list[str],  matsubara : np.ndarray = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`~qupled.classic.Stls.scheme`. Extends
-        :func:`~qupled.classic.Stls.plot` by adding the option to plot the auxiliary density
-        response by passing `adr` to toPlot
-        """
-        super().plot(toPlot, matsubara, rdfGrid)
-        if ("adr" in toPlot): self._plotAdr(matsubara)
 
     # plot the auxiliary density response
     def _plotAdr(self, matsubara : list[int]) -> None:
@@ -282,14 +273,4 @@ class QstlsIet(Qstls):
         guess.adr = np.ascontiguousarray(pd.read_hdf(fileName, "adr").to_numpy())
         guess.matsubara = pd.read_hdf(fileName, "inputs")["matsubara"][0].tolist()
         self.inputs.guess = guess
-        
-    # Plot results        
-    def plot(self, toPlot, matsubara : list[int] = None, rdfGrid : np.ndarray= None) -> None:
-        """ Plots the results obtained stored in :obj:`~qupled.classic.Stls.scheme`. Extends 
-        :func:`~qupled.quantum.Qstls.plot` by adding the option to plot the bridge function
-        adder by passing `bf` to toPlot
-        """
-        super().plot(toPlot, matsubara, rdfGrid)
-        if ("bf" in toPlot):
-            classic.Plot.plot1D(self.scheme.wvg, self.scheme.bf, "Wave vector", "Bridge function adder")
         
