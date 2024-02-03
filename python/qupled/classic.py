@@ -682,7 +682,7 @@ class Hdf():
                 Plot.plot1DParametric(x["wvg"], x[name], self.entries["wvg"].description, self.entries[name].description, matsubara)
             elif ( name == "fxci" ) :
                 x = self.read(hdf, [name, "fxcGrid"])
-                Plot.plot1D(x["fxcGrid"], x[name][:,1], self.entries["fxcGrid"].description, self.entries[name].description)
+                Plot.plot1D(x["fxcGrid"], x[name][1,:], self.entries["fxcGrid"].description, self.entries[name].description)
             else :
                 x = self.read(hdf, [name, "wvg"])
                 Plot.plot1D(x["wvg"], x[name], self.entries["wvg"].description, self.entries[name].description)

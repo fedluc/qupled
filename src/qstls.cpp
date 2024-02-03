@@ -174,7 +174,7 @@ void Qstls::computeAdr() {
     adrTmp.get(wvg, adrFixed, adr);
   }
   if (useIet) computeAdrIet();
-  for (int i=0; i<nx; ++i) {slfc[i] = adr(i,0); };
+  for (int i=0; i<nx; ++i) {slfc[i] = adr(i,0)/idr(i,0); };
 }
 
 // Compute static structure factor
