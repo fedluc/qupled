@@ -13,7 +13,7 @@ qstls = qpq.Qstls(10.0, 1.0,
 qstls.compute()
 
 # Plot the density responses and the static local field correction 
-qstls.plot(["idr", "adr"], matsubara = np.arange(1, 10, 2))
+qstls.plot(["idr", "adr", "slfc"], matsubara = np.arange(1, 10, 2))
 
 # Define a QstlsIet object to solve one of the QSTLS-IET schemes
 qstls = qpq.QstlsIet(30.0, 1.0,

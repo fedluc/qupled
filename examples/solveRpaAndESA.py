@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import yaml
 import qupled.classic as qpc
+import qupled.util as qpu
 
 # Define an Rpa object to solve the RPA scheme
 print("######### Solving the RPA scheme #########")
@@ -26,13 +27,13 @@ esa.compute()
 outputFileRPA = rpa.hdfFileName
 outputFileESA = esa.hdfFileName
 print("########## Data stored for the RPA scheme #########")
-print(yaml.dump(qpc.Hdf().inspect(outputFileRPA)))
+print(yaml.dump(qpu.Hdf().inspect(outputFileRPA)))
 print("########## Data stored for the ESA scheme #########")
-print(yaml.dump(qpc.Hdf().inspect(outputFileESA)))
+print(yaml.dump(qpu.Hdf().inspect(outputFileESA)))
 
 # Retrieve some information that we want to plot from the output files
-hdfDataRPA = qpc.Hdf().read(outputFileRPA, ["coupling", "degeneracy", "theory", "ssf", "wvg"])
-hdfDataESA = qpc.Hdf().read(outputFileESA, ["coupling", "degeneracy", "theory", "ssf", "wvg"])
+hdfDataRPA = qpu.Hdf().read(outputFileRPA, ["coupling", "degeneracy", "theory", "ssf", "wvg"])
+hdfDataESA = qpu.Hdf().read(outputFileESA, ["coupling", "degeneracy", "theory", "ssf", "wvg"])
 
 # Compare the results for the from the two schemes in a plot
 plt.plot(hdfDataRPA["wvg"], hdfDataRPA["ssf"], color="b", label = hdfDataRPA["theory"])

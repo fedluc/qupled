@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import qupled.classic as qpc
+import qupled.util as qpu
 
 # Define an Stls object to solve the STLS scheme
 stls = qpc.Stls(10.0, # Coupling parameter
@@ -23,7 +24,7 @@ print("Static structure factor from the Stls object: ")
 print(ssf)
 
 # Access the static structure factor from the output file
-ssf =  qpc.Hdf().read(stls.hdfFileName, ["ssf"])["ssf"]
+ssf =  qpu.Hdf().read(stls.hdfFileName, ["ssf"])["ssf"]
 print("Static structure factor from the output file: ")
 print(ssf)
 

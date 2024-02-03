@@ -7,7 +7,7 @@ is used to perform the actual calculations involved in the solution of the schem
 Communication between Python and C++ is handled via
 `python::boost <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_.
 The following sections illustrate the classes used to solve classical and
-quantum schemes and the classes used to handle the inputs
+quantum schemes and the classes used to handle the inputs and outputs
 
 Classic schemes
 ---------------
@@ -24,7 +24,7 @@ Classic schemes
 .. autoclass:: qupled.classic.VSStls
     :members:
     :show-inheritance:
-
+       
 Quantum schemes
 ---------------
        
@@ -64,3 +64,9 @@ Input
     :members:
     :undoc-members:
     :show-inheritance:
+
+Output
+------
+
+.. autoclass:: qupled.util.Hdf
+   :members:
