@@ -8,6 +8,7 @@ using namespace std;
 // -----------------------------------------------------------------
 
 ESA::ESA(const RpaInput &in_) : Rpa(in_, true, false) {
+  verbose = verbose && MPIUtil::isRoot();
   if (verbose) cout << "Computing static local field correction (ESA): ";
   slfc.resize(wvg.size());
   computeSlfc();

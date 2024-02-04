@@ -4,6 +4,7 @@
 #include <memory>
 #include <functional>
 #include <fstream>
+#include <mpi.h>
 #include "numerics.hpp"
 
 // Forward declarations
@@ -386,6 +387,22 @@ namespace binUtil {
     for (auto &el : data) { readDataFromBinary<decltype(el)>(file, el);}
   };
 
+}
+
+// -----------------------------------------------------------------
+// Utility functions to handle calls to the MPI API
+// -----------------------------------------------------------------
+
+namespace MPIUtil {
+
+  constexpr MPI_Comm MPICommunicator = MPI_COMM_WORLD;
+
+  // Get rank of MPI process
+  int getRank();
+
+  // Check if the process is the root process
+  bool isRoot();
+  
 }
 
 #endif

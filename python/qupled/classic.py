@@ -2,8 +2,8 @@ import sys
 import os
 import numpy as np
 import pandas as pd
-import qupled.qupled as qp
 import qupled.util as qu
+import qupled.qupled as qp
 
 # -----------------------------------------------------------------------
 # RPA class
@@ -92,8 +92,9 @@ class Rpa():
                status: status obtained from the native code. If status == 0 the scheme was solved correctly.
         """
         if (status == 0):
-            if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
-            print("Dielectric theory solved successfully!")
+            if (qu.MPI().isRoot()) :
+                if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
+                print("Dielectric theory solved successfully!")
         else:
             sys.exit("Error while solving the dielectric theory")
     
@@ -132,21 +133,23 @@ class Rpa():
         - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function 
         
         """
-        assert(self.scheme is not None)
-        pd.DataFrame({
-            "coupling" : self.inputs.coupling,
-            "degeneracy" : self.inputs.degeneracy,
-            "theory" : self.inputs.theory,
-            "resolution" : self.inputs.resolution,
-            "cutoff" : self.inputs.cutoff,
-            "matsubara" : self.inputs.matsubara
+        if (qu.MPI().isRoot()) :
+            assert(self.scheme is not None)
+            pd.DataFrame({
+                "coupling" : self.inputs.coupling,
+                "degeneracy" : self.inputs.degeneracy,
+                "theory" : self.inputs.theory,
+                "resolution" : self.inputs.resolution,
+                "cutoff" : self.inputs.cutoff,
+                "matsubara" : self.inputs.matsubara
             }, index=["inputs"]).to_hdf(self.hdfFileName, key="inputs", mode="w")
-        pd.DataFrame(self.scheme.idr).to_hdf(self.hdfFileName, key="idr")
-        pd.DataFrame(self.scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
-        pd.DataFrame(self.scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
-        pd.DataFrame(self.scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
-        pd.DataFrame(self.scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
-        pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
+            pd.DataFrame(self.scheme.idr).to_hdf(self.hdfFileName, key="idr")
+            pd.DataFrame(self.scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
+            pd.DataFrame(self.scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
+            pd.DataFrame(self.scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
+            pd.DataFrame(self.scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
+            pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
+        qu.MPI().barrier()
     
     # Compute radial distribution function
     def computeRdf(self, rdfGrid : np.ndarray, writeToHdf : bool = True) -> np.array:
@@ -161,8 +164,9 @@ class Rpa():
             The radial distribution function
         
         """
-        self._checkSolution("compute the radial distribution function")
-        return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
+        if (qu.MPI().isRoot()) :
+            self._checkSolution("compute the radial distribution function")
+            return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
 
     # Compute the internal energy
     def computeInternalEnergy(self) -> float:
@@ -172,8 +176,9 @@ class Rpa():
             The internal energy
         
         """
-        self._checkSolution("compute the internal energy")
-        return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.inputs.coupling)
+        if (qu.MPI().isRoot()) :
+            self._checkSolution("compute the internal energy")
+            return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.inputs.coupling)
         
     # Plot results
     def plot(self, toPlot : list[str], matsubara : np.ndarray = None, rdfGrid : np.ndarray = None) -> None:
@@ -189,9 +194,10 @@ class Rpa():
                 distribution function is plotted (Default = None, see :func:`~qupled.classic.Stls.computeRdf`)
         
         """
-        self._checkSolution("plot results")
-        if ("rdf" in toPlot) : self.computeRdf(rdfGrid)
-        qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
+        if (qu.MPI().isRoot()):
+            self._checkSolution("plot results")
+            if ("rdf" in toPlot) : self.computeRdf(rdfGrid)
+            qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
 
 
     # Check if a solution is available to perform a given action

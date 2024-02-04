@@ -1,4 +1,4 @@
-#include <omp.h>
+#include <mpi.h>
 #include "util.hpp"
 #include "rpa.hpp"
 #include "chemicalpotential.hpp"
@@ -11,6 +11,7 @@ Rpa::Rpa(const RpaInput &in_,
 	 const bool doFullCompute) : in(in_),
 				     verbose(verbose_),
 				     itg(in_.getIntError()) {
+  verbose = verbose && MPIUtil::isRoot();
   if (verbose) cout << "Assembling wave vector grid: ";
   buildWvGrid();
   if (verbose) cout << "Done" << endl;
@@ -404,8 +405,8 @@ double SsfGround::integrand(const double Omega) const {
 // density response is zero. Hence, all the following definitions
 // for the dielectric function are constructed with the assumption
 // that the imaginary part of the ideal density response is zero
-// and should not be used for frequencies omega < 2*xx + xx^2 (with
-// xx a normalized wave-vector) where such approximation is not
+// and should not be used for frequencies omega < 2*x + x^2 (with
+// x a normalized wave-vector) where such approximation is not
 // valid
 
 // Plasmon contribution to the static structure factor

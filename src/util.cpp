@@ -525,4 +525,20 @@ namespace thermoUtil {
   
 }
   
+namespace MPIUtil {
 
+  // -----------------------------------------------------------------
+  // Stand-alone methods
+  // -----------------------------------------------------------------
+
+  int getRank() {
+    int rank;
+    MPI_Comm_rank(MPICommunicator, &rank);
+    return rank;
+  }
+
+  bool isRoot() {
+    return getRank() == 0;
+  }
+  
+}

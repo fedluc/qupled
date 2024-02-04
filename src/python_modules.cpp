@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
 #include "python_wrappers.hpp"
@@ -6,6 +7,15 @@
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 namespace vp = vecUtil::python;
+
+// Initialization code for the qupled module
+void qupledInitialization() {
+  int isMPIInit;
+  MPI_Initialized(&isMPIInit);
+  if (isMPIInit == 0) {
+    throw runtime_error("MPI has not been initialized correctly");
+  }
+}
 
 // Classes exposed to Python
 BOOST_PYTHON_MODULE(qupled)
@@ -19,6 +29,9 @@ BOOST_PYTHON_MODULE(qupled)
   // Numpy library initialization
   bn::initialize();
 
+  // Module initialization
+  qupledInitialization();
+  
   // Class for the input of the Rpa scheme
   bp::class_<RpaInput>("RpaInput")
     .add_property("coupling",
@@ -190,5 +203,6 @@ BOOST_PYTHON_MODULE(qupled)
   bp::def("computeRdf", &PyThermo::computeRdf);
   bp::def("computeInternalEnergy", &PyThermo::computeInternalEnergy);
   bp::def("computeFreeEnergy", &PyThermo::computeFreeEnergy);
+
   
 }

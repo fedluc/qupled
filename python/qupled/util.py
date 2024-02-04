@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from mpi4py import MPI as MPINative # This import initializes MPI
 import qupled.qupled as qp
 
 # -----------------------------------------------------------------------
@@ -205,3 +206,24 @@ class Plot():
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.show()        
+
+
+# -----------------------------------------------------------------------
+# MPI class
+# -----------------------------------------------------------------------
+
+class MPI():
+
+    """ Class to handle the calls to the MPI API """
+    def __init__(self):
+        self.communicator = MPINative.COMM_WORLD
+
+
+    def getRank(self):
+        return self.communicator.Get_rank()
+
+    def isRoot(self):
+        return self.getRank() == 0
+
+    def barrier(self):
+        self.communicator.Barrier()

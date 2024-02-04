@@ -19,7 +19,7 @@ protected:
   // Input data
   const RpaInput in;
   // Output verbosity
-  const bool verbose;
+  bool verbose;
   // Name of the recovery files
   string recoveryFileName;
   // Integrator
