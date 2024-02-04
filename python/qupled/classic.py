@@ -373,8 +373,9 @@ class Stls(Rpa):
             fileName : name of the file used to extract the information for the initial guess.
         """
         guess = qp.SlfcGuess()
-        guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
-        guess.slfc = pd.read_hdf(fileName, "slfc")[0].to_numpy()
+        hdfData = qu.Hdf().read(fileName, ["wvg", "slfc"])
+        guess.wvg = hdfData["wvg"]
+        guess.slfc = hdfData["slfc"]
         self.inputs.guess = guess
 
 
@@ -555,6 +556,7 @@ class VSStls(Stls):
             fileName : name of the file used to extract the information for the free energy integrand.
         """
         fxci = qp.FreeEnergyIntegrand()
-        fxci.grid = pd.read_hdf(fileName, "fxcGrid")[0].to_numpy()
-        fxci.integrand = np.ascontiguousarray(pd.read_hdf(fileName, "fxci").to_numpy());
+        hdfData = qu.Hdf().read(fileName, ["fxcGrid", "fxci"])
+        fxci.grid = hdfData["fxcGrid"]
+        fxci.integrand = np.ascontiguousarray(hdfData["fxci"])
         self.inputs.freeEnergyIntegrand = fxci

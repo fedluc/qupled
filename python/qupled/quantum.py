@@ -6,13 +6,14 @@ import zipfile as zf
 import numpy as np
 import pandas as pd
 import qupled.qupled as qp
-import qupled.classic as classic
+import qupled.classic as qc
+import qupled.util as qu
 
 # -----------------------------------------------------------------------
 # Qstls class
 # -----------------------------------------------------------------------
 
-class Qstls(classic.Stls):
+class Qstls(qc.Stls):
 
     """Class to solve the QSTLS scheme.
 
@@ -123,8 +124,9 @@ class Qstls(classic.Stls):
     # Set the initial guess from a dataframe produced in output
     def setGuess(self, fileName : str) -> None:
         guess = qp.QstlsGuess()
-        guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
-        guess.ssf = pd.read_hdf(fileName, "ssf")[0].to_numpy()
+        hdfData = qu.Hdf().read(fileName, ["wvg", "ssf"])
+        guess.wvg = hdfData["wvg"]
+        guess.ssf = hdfData["ssf"]
         self.inputs.guess = guess
 
     # plot the auxiliary density response
@@ -137,9 +139,9 @@ class Qstls(classic.Stls):
         """
         assert(self.scheme is not None)
         if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
-        classic.Plot.plot1DParametric(self.scheme.wvg, self.scheme.adr,
-                                      "Wave vector", "Auxiliary density response",
-                                      matsubara)
+        qc.Plot.plot1DParametric(self.scheme.wvg, self.scheme.adr,
+                                 "Wave vector", "Auxiliary density response",
+                                 matsubara)
         
 
 # -----------------------------------------------------------------------
@@ -266,9 +268,10 @@ class QstlsIet(Qstls):
     # Set the initial guess from a dataframe produced in output
     def setGuess(self, fileName : str) -> None:
         guess = qp.QstlsGuess()
-        guess.wvg = pd.read_hdf(fileName, "wvg")[0].to_numpy()
-        guess.ssf = pd.read_hdf(fileName, "ssf")[0].to_numpy()
-        guess.adr = np.ascontiguousarray(pd.read_hdf(fileName, "adr").to_numpy())
-        guess.matsubara = pd.read_hdf(fileName, "inputs")["matsubara"][0].tolist()
+        hdfData = qu.Hdf().read(fileName, ["wvg", "ssf", "adr", "matsubara"])
+        guess.wvg = hdfData["wvg"]
+        guess.ssf = hdfData["ssf"]
+        guess.adr = np.ascontiguousarray(hdfData["adr"])
+        guess.matsubara = hdfData["matsubara"]
         self.inputs.guess = guess
         
