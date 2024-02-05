@@ -5,17 +5,19 @@ qupled is a package that can be used to compute the properties of quantum one co
 plasmas via theoretical approaches based on the dielectric formalism. The theoretical
 approaches which can be solved with qupled include:
 
+  * The classical RPA scheme as discussed by `Böhm and Pines <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_
   * The classical STLS scheme as discussed by `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_
   * The classical STLS-HNC scheme as discussed by `Tanaka <https://pubs.aip.org/aip/jcp/article/145/21/214104/196066/Correlational-and-thermodynamic-properties-of>`_
   * The classical STLS-IET scheme as discussed by `Tolias and collaborators <https://pubs.aip.org/aip/jcp/article/155/13/134115/353165/Integral-equation-theory-based-dielectric-scheme>`_
   * The classical VS-STLS scheme as discussed by `Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_
+  * The hybrid ESA scheme as dicussed by `Dornheim and collaborators <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`_
   * The quantum STLS (QSTLS) scheme as discussed by `Schweng and Böhm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_ 
   * The quantum QSTLS-IET scheme as discussed by `Tolias and others <https://pubs.aip.org/aip/jcp/article/158/14/141102/2877795/Quantum-version-of-the-integral-equation-theory>`_
 
 Limitations
 -----------
 
-Ground state (zero temperature) calculations are available only for the classical schemes (STLS, STLS-HNC, STLS-IET and VS-STLS).
+Ground state (zero temperature) calculations are available only for the classical schemes (RPA, STLS, STLS-HNC, STLS-IET and VS-STLS) and the hybrid (ESA).
 
 Units
 -----

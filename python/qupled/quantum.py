@@ -15,11 +15,11 @@ import qupled.util as qu
 
 class Qstls(qc.Stls):
 
-    """Class to solve the QSTLS scheme.
+    """
 
     Class used to setup and solve the quantum QSTLS scheme as described by
     `Schweng and Bohm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_ 
-    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Stls`
+    This class inherits most of its methods and attributes from :obj:`qupled.classic.Stls`.
 
     Args:
         coupling: Coupling parameter.
@@ -36,7 +36,7 @@ class Qstls(qc.Stls):
         outputFrequency: Frequency used to print the recovery files, defaults to 10.
         recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
         resolution: Resolution of the wave-vector grid, defaults to 0.1.
-        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`~qupled.qupled.Input.int2DScheme`
+        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`qupled.qupled.Input.int2DScheme`
         threads: OMP threads for parallel calculations
     """
     
@@ -96,8 +96,9 @@ class Qstls(qc.Stls):
         
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.quantum.Qstls.save`
-        to see which results are saved
+        """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
+        :func:`qupled.classic.Stls.compute` by adding the option to save the auxiliary density response
+        as a new dataframe in the hdf file. The auxiliary density response dataframe can be accessed as `adr`.
         """
         self._checkInputs()
         self._unpackFixedAdrFiles()
@@ -114,9 +115,7 @@ class Qstls(qc.Stls):
     
     # Save results to disk
     def _save(self) -> None:
-        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
-        by adding the option to save the auxiliary density response as a new dataframe in the hdf file. The
-        auxiliary density response dataframe can be accessed as `adr`
+        """ Stores the results obtained by solving the scheme. 
         """
         super()._save()
         pd.DataFrame(self.scheme.adr).to_hdf(self.hdfFileName, key="adr")
@@ -128,20 +127,6 @@ class Qstls(qc.Stls):
         guess.wvg = hdfData["wvg"]
         guess.ssf = hdfData["ssf"]
         self.inputs.guess = guess
-
-    # plot the auxiliary density response
-    def _plotAdr(self, matsubara : list[int]) -> None:
-        """ Plots the auxiliary density response.
-        
-        Args:  
-            matsubara:  A list of matsubara frequencies to plot. (Default =  all matsubara frequencies are plotted)
-        
-        """
-        assert(self.scheme is not None)
-        if (matsubara is None) : matsubara = np.arange(self.inputs.matsubara)
-        qc.Plot.plot1DParametric(self.scheme.wvg, self.scheme.adr,
-                                 "Wave vector", "Auxiliary density response",
-                                 matsubara)
         
 
 # -----------------------------------------------------------------------
@@ -150,12 +135,11 @@ class Qstls(qc.Stls):
         
 class QstlsIet(Qstls):
 
-    """Class to solve the QSTLS-IET schemes.
-
+    """
     Class used to setup and solve the classical STLS-IET scheme as described by
     `Tolias <https://pubs.aip.org/aip/jcp/article/158/14/141102/
     2877795/Quantum-version-of-the-integral-equation-theory>`_. This class inherits most of
-    its methods and attributes from :obj:`~qupled.quantum.Qstls`
+    its methods and attributes from :obj:`qupled.quantum.Qstls`.
 
     Args:
         coupling: Coupling parameter.
@@ -168,7 +152,7 @@ class QstlsIet(Qstls):
         fixediet: The name of the zip file storing the files with the fixed component of the auxiliary
                   density response for the IET schemes. If no name is given the fixed component
                   is computed from scratch.
-        mapping: Classical to quantum mapping. See :func:`~qupled.qupled.StlsInput.iet`
+        mapping: Classical to quantum mapping. See :func:`qupled.qupled.StlsInput.iet`
         mixing: Mixing parameter for iterative solution, defaults to 1.0.  
         guess:  Initial guess for the iterative solution, defaults to None, i.e. ssf from stls solution.
         iterations: Maximum number of iterations, defaults to 1000.
@@ -176,7 +160,7 @@ class QstlsIet(Qstls):
         outputFrequency: Frequency used to print the recovery files, defaults to 10.
         recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
         resolution: Resolution of the wave-vector grid, defaults to 0.1.
-        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`~qupled.qupled.Input.int2DScheme`
+        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`qupled.qupled.Input.int2DScheme`
         threads: OMP threads for parallel calculations
     """
     # Constructor
@@ -217,6 +201,23 @@ class QstlsIet(Qstls):
         self.hdfFileName = None
 
 
+    # Compute
+    def compute(self) -> None:
+        """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
+        :func:`qupled.classic.Qstls.compute` by adding  by adding two functionalities: (1) save the
+        bridge function adder as a new dataframe in the hdf file. The bridge function adder dataframe
+        can be accessed as `bf` (2) create a zip file to group all the files produced at run-time
+        and containing the fixed component of the auxiliary density response for the IET schemes.
+        """
+        self._checkInputs()
+        self._unpackFixedAdrFiles()
+        self.scheme = qp.Qstls(self.inputs)
+        status = self.scheme.compute()
+        self._checkStatusAndClean(status)
+        self._setHdfFile()
+        self._save()
+        
+
     # Unpack zip folder with fixed component of the auxiliary density response
     def _unpackFixedAdrFiles(self) -> None:
         """ Unpacks the zip file storing the fixed component of the auxiliary density response """
@@ -239,19 +240,8 @@ class QstlsIet(Qstls):
             
     # Save results to disk
     def _save(self) -> None:
-        """ Stores the results obtained by solving the scheme. Extends the corresponding method in the parent class
-        by:  
-        adding the option to save the bridge function adder as a new dataframe in the hdf file which can be
-        accessed as bf  
-        creating a zip file to group all the files produced at run-time and containing the fixed component of
-        the auxiliary density response
-
-        Stores the results obtained by solving the scheme. Extends :func:`~qupled.quantum.Qstls.save`
-        by adding two functionalities: (1) save the bridge function adder as a new dataframe in the hdf file. The
-        bridge function adder dataframe can be accessed as `bf` (2) create a zip file to group all the files
-        produced at run-time and containing the fixed component of the auxiliary density response for the
-        IET schemes
-        
+        """ 
+        Stores the results obtained by solving the scheme. 
         """
         super()._save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
