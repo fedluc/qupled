@@ -12,9 +12,14 @@ quantum schemes and the classes used to handle the inputs and outputs
 Classic schemes
 ---------------
 
+.. autoclass:: qupled.classic.Rpa
+    :members:
+    :undoc-members:
+
 .. autoclass:: qupled.classic.Stls
     :members:
     :undoc-members:
+    :show-inheritance:
 
 .. autoclass:: qupled.classic.StlsIet
     :members:
@@ -24,7 +29,14 @@ Classic schemes
 .. autoclass:: qupled.classic.VSStls
     :members:
     :show-inheritance:
-       
+
+Hybrid scheme
+-------------
+.. autoclass:: qupled.classic.ESA
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    
 Quantum schemes
 ---------------
        
