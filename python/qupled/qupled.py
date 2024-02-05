@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-class StlsInput():
-    """Class to handle the inputs related to the classical schemes"""
+class RpaInput():
+    """Class to handle the inputs related to the classical RPA scheme
+    and the hybrid ESA scheme.
+    """
     def __init__(self):
         self.coupling : float
         """ Coupling parameter """
@@ -30,6 +32,16 @@ class StlsInput():
         """ Number of OMP threads for parallel calculations"""
         self.chemicalPotential : list[float] = None
         """ Initial guess for the chemical potential """
+        self.matsubara : int = None
+        """ Number of matsubara frequencies"""
+        self.resolution : float = None
+        """ Resolution of the wave-vector grid """
+        self.cutoff : float = None
+        """ cutoff for the wave-vector grid """
+
+class StlsInput(RpaInput):
+    """Class to handle the inputs related to the classical STLS and STLS-IET schemes."""
+    def __init__(self):
         self.error : float = None
         """ minimum error for convergence """
         self.mixing : float = None
@@ -50,18 +62,12 @@ class StlsInput():
         the ground state they can differ significantly (the standard
         mapping diverges)
         """
-        self.matsubara : int = None
-        """ NUmber of matsubara frequencies"""
         self.iterations : int = None
         """ Maximum number of iterations """
         self.outputFrequency : int = None
         """ Output frequency to write the recovery file """
         self.recoveryFile : str = None
         """ Initial guess """
-        self.resolution : float = None
-        """ Resolution of the wave-vector grid """
-        self.cutoff : float = None
-        """ cutoff for the wave-vector grid """
         
 class VSStlsInput(StlsInput):
     """Class to handle the inputs related to the classical VS-STLS scheme.
@@ -106,7 +112,7 @@ class QstlsInput(StlsInput):
 
 
 class SlfcGuess():
-    """Class used to define an initial guess for the classical schemes (STLS, STLS-IET)"""
+    """Class used to define an initial guess for the classical schemes (STLS, STLS-IET)."""
     def __init__(self):
         self.wvg : np.ndarray = None
         """ The wave-vector grid """
@@ -114,7 +120,7 @@ class SlfcGuess():
         """ The static local field correction """
 
 class QstlsGuess():
-    """Class used to define an initial guess for the quantum schemes (QSTLS, QSTLS-IET)"""
+    """Class used to define an initial guess for the quantum schemes (QSTLS, QSTLS-IET)."""
     def __init__(self):
         self.wvg : np.ndarray = None
         """ The wave-vector grid """
@@ -126,7 +132,7 @@ class QstlsGuess():
         """ The number of matsubara frequencies """
         
 class FreeEnergyIntegrand():
-    """Class used to store the precomputed values of the free energy integrand for the VS-STLS scheme"""
+    """Class used to store the precomputed values of the free energy integrand for the VS-STLS scheme."""
     def __init__(self):
         self.grid : np.ndarray = None
         """ The coupling parameter grid used to compute the free energy """

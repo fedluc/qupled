@@ -11,13 +11,12 @@ import qupled.util as qu
 
 class Rpa():
 
-    """Class to solve the Random-Phase approximation.
-
-    Class used to setup and solve the classical RPA scheme as described by
+    """
+    Class used to setup and solve the classical Randon-Phase approximaton scheme as described by
     `Bohm and Pines <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
     The inputs used to solve the scheme are defined when creating the class, but can be
     later modified by changing the attribute :obj:`inputs`. After the solution is completed
-    the results are saved to an hdf file and can be plotted via the method :obj:`plot`
+    the results are saved to an hdf file and can be plotted via the method :obj:`plot`.
 
     Args:
         coupling: Coupling parameter.
@@ -45,7 +44,7 @@ class Rpa():
         # Scheme to solve
         self.scheme : qp.Rpa = None
         # File to store output on disk
-        self.hdfFileName : str = None
+        self.hdfFileName : str = None #: Name of the output file
 
     # Setup inputs object
     def _setInputs(self,
@@ -56,7 +55,7 @@ class Rpa():
                    cutoff : float,
                    matsubara : int,
                    resolution : float) -> None:
-        """ Sets up the content of :obj:`inputs` """
+        # """ Sets up the content of :obj:`inputs` """
         self.inputs.coupling = coupling
         self.inputs.degeneracy = degeneracy
         self.inputs.theory = theory
@@ -75,8 +74,33 @@ class Rpa():
 
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Rpa.save`
-        to see which results are saved
+        """ Solves the scheme and saves the results.
+
+        The results are stored as pandas dataframes in an hdf file with the following keywords:
+        
+        - inputs: A dataframe containing information on the input parameters, it includes:
+        
+          - coupling: the coupling parameter,
+          - degeneracy: the degeneracy parameter,
+          - theory: the theory that is being solved,  
+          - resolution: the resolution in the wave-vector grid, 
+          - cutoff: the cutoff in the wave-vector grid, 
+          - matsubara: the number of matsubara frequencies
+        
+        - idr (*ndarray*, 2D): the ideal density response  
+        - sdr (*ndarray*):  the static density response   
+        - slfc (*ndarray*):  the static local field correction   
+        - ssf (*ndarray*):  the static structure factor   
+        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor 
+        - wvg (*ndarray*):  the wave-vector grid 
+        
+        If the radial distribution function was computed (see computeRdf), then the hdf file contains
+        two additional keywords:
+        
+        - rdf (*ndarray*):  the radial distribution function   
+        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
+
+        The name of the hdf file is stored in :obj:`hdfFileName`.
         """
         self._checkInputs()
         self.scheme = qp.Rpa(self.inputs)
@@ -106,30 +130,6 @@ class Rpa():
     
     def _save(self) -> None:
         """ Stores the results obtained by solving the scheme.
-
-        The results are stored as pandas dataframes in an hdf file with the following keywords:
-        
-        - inputs: A dataframe containing information on the input parameters, it includes:
-        
-          - coupling: the coupling parameter,
-          - degeneracy: the degeneracy parameter,
-          - theory: the theory that is being solved,  
-          - resolution: the resolution in the wave-vector grid, 
-          - cutoff: the cutoff in the wave-vector grid, 
-          - matsubara: the number of matsubara frequencies
-        
-        - idr (*ndarray*, 2D): the ideal density response  
-        - sdr (*ndarray*):  the static density response   
-        - slfc (*ndarray*):  the static local field correction   
-        - ssf (*ndarray*):  the static structure factor   
-        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor 
-        - wvg (*ndarray*):  the wave-vector grid 
-        
-        If the radial distribution function was computed (see computeRdf), then the hdf file contains
-        two additional keywords:
-        
-        - rdf (*ndarray*):  the radial distribution function   
-        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function 
         
         """
         assert(self.scheme is not None)
@@ -150,11 +150,11 @@ class Rpa():
     
     # Compute radial distribution function
     def computeRdf(self, rdfGrid : np.ndarray, writeToHdf : bool = True) -> np.array:
-        """ Computes the radial distribution function from the data stored in :obj:`scheme`.
+        """ Computes the radial distribution function from the data stored in the output file.
         
         Args:
             rdfGrid: The grid used to compute the radial distribution function.
-                (Defaults to None, see :func:`~qupled.util.Hdf.computeRdf)
+                (Defaults to None, see :func:`qupled.util.Hdf.computeRdf`)
             writeToHdf: Flag marking whether the rdf data should be added to the output hdf file, default to True
 
         Returns:
@@ -166,7 +166,7 @@ class Rpa():
 
     # Compute the internal energy
     def computeInternalEnergy(self) -> float:
-        """ Computes the internal energy from the data stored in :obj:`scheme`.
+        """ Computes the internal energy from the data stored in the output file.
 
         Returns:
             The internal energy
@@ -177,7 +177,7 @@ class Rpa():
         
     # Plot results
     def plot(self, toPlot : list[str], matsubara : np.ndarray = None, rdfGrid : np.ndarray = None) -> None:
-        """ Plots the results obtained stored in :obj:`scheme`.
+        """ Plots the results stored in the output file`.
 
         Args:  
             toPlot: A list of quantities to plot. This list can include all the values written to the
@@ -186,7 +186,7 @@ class Rpa():
             matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
                 (Default = None, all matsubara frequencies are plotted)  
             rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
-                distribution function is plotted (Default = None, see :func:`~qupled.classic.Stls.computeRdf`)
+                distribution function is plotted (Default = None, see :func:`qupled.classic.Stls.computeRdf`)
         
         """
         self._checkSolution("plot results")
@@ -212,11 +212,10 @@ class Rpa():
             
 class ESA(Rpa):
     
-    """ Class to solve the hybrid ESA (Effective Static Approximation) scheme.
-
-    Class used to setup and solve the classical ESA scheme as described by
-    `Dornheim and collaborators <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`
-    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Rpa`
+    """ 
+    Class used to setup and solve the hybrid Effective Static Approximation scheme as described by
+    `Dornheim and collaborators <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`_.
+    This class inherits most of its methods and attributes from :obj:`qupled.classic.Rpa`.
 
     Args:
         coupling: Coupling parameter.
@@ -249,8 +248,8 @@ class ESA(Rpa):
         
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Rpa.save`
-        to see which results are saved
+        """ Solves the scheme and saves the results to and hdf file. See the method :func:`qupled.classic.Rpa.compute`
+        to see which results are saved.
         """
         self._checkInputs()
         self.scheme = qp.ESA(self.inputs)
@@ -264,11 +263,10 @@ class ESA(Rpa):
 
 class Stls(Rpa):
 
-    """Class to solve the STLS scheme.
-
+    """
     Class used to setup and solve the classical STLS scheme as described by
     `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
-    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Rpa`
+    This class inherits most of its methods and attributes from :obj:`qupled.classic.Rpa`.
 
     Args:
         coupling: Coupling parameter.
@@ -338,8 +336,9 @@ class Stls(Rpa):
 
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.Rpa.save`
-        to see which results are saved
+        """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
+        :func:`qupled.classic.Rpa.compute` by adding the option to save the minimum error for convergence. The
+        information concerning the error can be accessed `error` in the `inputs` dataframe.
         """
         self._checkInputs()
         self.scheme = qp.Stls(self.inputs)
@@ -350,9 +349,7 @@ class Stls(Rpa):
 
     # Save results to disk
     def _save(self) -> None:
-        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Rpa.save`
-        by adding the option to save the minimum error for convergence. The
-        information concerning the error can be accessed `error` in the `inputs` dataframe.
+        """ Stores the results obtained by solving the scheme. 
         """
         super()._save()
         pd.DataFrame({
@@ -385,12 +382,12 @@ class Stls(Rpa):
 
 class StlsIet(Stls):
 
-    """Class to solve the STLS-IET schemes.
+    """
 
     Class used to setup and solve the classical STLS-IET scheme as described by
     `Tanaka <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_ and by
     `Tolias and collaborators <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_.
-    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Stls`
+    This class inherits most of its methods and attributes from :obj:`qupled.classic.Stls`.
 
     Args:
         coupling: Coupling parameter.
@@ -398,7 +395,7 @@ class StlsIet(Stls):
         chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
         error: Minimum error for convergence, defaults to 1.0e-5.
-        mapping: Classical to quantum mapping. See :func:`~qupled.qupled.StlsInput.iet`
+        mapping: Classical to quantum mapping. See :func:`qupled.qupled.StlsInput.iet`
         mixing: Mixing parameter for iterative solution, defaults to 1.0.  
         guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
         iterations: Maximum number of iterations, defaults to 1000.
@@ -406,7 +403,7 @@ class StlsIet(Stls):
         outputFrequency: Frequency used to print the recovery files, defaults to 10.
         recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
         resolution: Resolution of the wave-vector grid, defaults to 0.1.
-        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`~qupled.qupled.Input.int2DScheme`
+        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`qupled.qupled.Input.int2DScheme`
     """
     
     # Constructor
@@ -440,12 +437,24 @@ class StlsIet(Stls):
         self.scheme : qp.Stls = None
         # File to store output on disk
         self.hdfFileName = None
-                    
+
+
+    # Compute
+    def compute(self) -> None:
+        """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
+        :func:`qupled.classic.Stls.compute` by adding the option to save the bridge function adder
+        as a new dataframe in the hdf file. The bridge function adder dataframe can be accessed as `bf`.
+        """
+        self._checkInputs()
+        self.scheme = qp.Stls(self.inputs)
+        status = self.scheme.compute()
+        self._checkStatusAndClean(status)        
+        self._setHdfFile()
+        self._save()
+        
     # Save results to disk
     def _save(self) -> None:
-        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
-        by adding the option to save the bridge function adder as a new dataframe in the hdf file. The
-        bridge function adder dataframe can be accessed as `bf`
+        """ Stores the results obtained by solving the scheme. 
         """
         super()._save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
@@ -457,12 +466,11 @@ class StlsIet(Stls):
 
 class VSStls(Stls):
 
-    """Class to solve the VS-STLS scheme.
-
+    """
     Class used to setup and solve the classical VS-STLS scheme as described by
     `Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_ and by
     `Sjostrom and Dufty <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.88.115123>`_.
-    This class inherits most of its methods and attributes from :obj:`~qupled.classic.Stls`
+    This class inherits most of its methods and attributes from :obj:`qupled.classic.Stls`
 
     Args:
         coupling: Coupling parameter.
@@ -527,8 +535,11 @@ class VSStls(Stls):
         
     # Compute
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`~qupled.classic.VSStls.save`
-        to see which results are saved
+        """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
+        :func:`qupled.classic.Stls.compute` by adding the option to save the free energy integrand
+        and the corresponding coupling parameter grid as a new dataframe in the hdf file. The free
+        energy integrand dataframe can be accessed as `fxci` and the corresponding coupling parameter
+        grid data frame as `fxcGrid`.
         """
         self._checkInputs()
         self.scheme = qp.VSStls(self.inputs)
@@ -539,10 +550,7 @@ class VSStls(Stls):
 
     # Save results
     def _save(self) -> None:
-        """ Stores the results obtained by solving the scheme. Extends :func:`~qupled.classic.Stls.save`
-        by adding the option to save the free energy integrand and the corresponding coupling parameter grid
-        as a new dataframe in the hdf file. The free energy integrand dataframe can be accessed as `fxci`
-        and the corresponding coupling parameter grid data frame as `fxcGrid`
+        """ Stores the results obtained by solving the scheme. 
         """
         super()._save()
         pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")

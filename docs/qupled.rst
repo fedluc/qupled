@@ -7,7 +7,7 @@ is used to perform the actual calculations involved in the solution of the schem
 Communication between Python and C++ is handled via
 `python::boost <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_.
 The following sections illustrate the classes used to solve classical and
-quantum schemes and the classes used to handle the inputs and outputs
+quantum schemes and the classes used to handle the inputs, initial guesses and outputs.
 
 Classic schemes
 ---------------
@@ -30,11 +30,11 @@ Classic schemes
     :members:
     :show-inheritance:
 
-Hybrid scheme
--------------
+Hybrid schemes
+--------------
+
 .. autoclass:: qupled.classic.ESA
     :members:
-    :undoc-members:
     :show-inheritance:
     
 Quantum schemes
@@ -51,13 +51,14 @@ Quantum schemes
 Input
 -----
 
-.. autoclass:: qupled.qupled.StlsInput
+.. autoclass:: qupled.qupled.RpaInput
     :members:
     :undoc-members:
 
-.. autoclass:: qupled.qupled.SlfcGuess
+.. autoclass:: qupled.qupled.StlsInput
     :members:
     :undoc-members:
+    :show-inheritance:
 
 .. autoclass:: qupled.qupled.VSStlsInput
     :members:
@@ -67,15 +68,23 @@ Input
 .. autoclass:: qupled.qupled.FreeEnergyIntegrand
     :members:
     :undoc-members:
-       
-.. autoclass:: qupled.qupled.QstlsGuess
-    :members:
-    :undoc-members:
 
 .. autoclass:: qupled.qupled.QstlsInput
     :members:
     :undoc-members:
     :show-inheritance:
+
+Initial guess
+-------------
+
+.. autoclass:: qupled.qupled.SlfcGuess
+    :members:
+    :undoc-members:
+    
+.. autoclass:: qupled.qupled.QstlsGuess
+    :members:
+    :undoc-members:
+
 
 Output
 ------
