@@ -14,7 +14,7 @@ class Rpa():
     """Class to solve the Random-Phase approximation.
 
     Class used to setup and solve the classical RPA scheme as described by
-    `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
+    `Bohm and Pines <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
     The inputs used to solve the scheme are defined when creating the class, but can be
     later modified by changing the attribute :obj:`inputs`. After the solution is completed
     the results are saved to an hdf file and can be plotted via the method :obj:`plot`
