@@ -103,7 +103,7 @@ public:
   static bn::ndarray getSsfHF(const Rpa& rpa);
   static bn::ndarray getWvg(const Rpa& rpa);
   static double getUInt(const Rpa& rpa);
-  static string getRecoveryFileName(const Rpa& rpa);
+  static std::string getRecoveryFileName(const Rpa& rpa);
 };
 
 // -----------------------------------------------------------------

@@ -1,7 +1,10 @@
 #include <numeric>
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
+#include "numerics.hpp"
 #include "util.hpp"
+
+using namespace std;
 
 namespace numUtil {
 

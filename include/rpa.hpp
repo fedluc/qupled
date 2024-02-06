@@ -2,9 +2,13 @@
 #define RPA_HPP
 
 #include <vector>
-#include "input.hpp"
-#include "util.hpp"
-#include "numerics.hpp"
+
+// Forward declarations
+namespace vecUtil {
+  class Vector2D;
+}
+class RpaInput;
+class Integrator1D;
 
 // -----------------------------------------------------------------
 // Solver for the Random-Phase approximation scheme
@@ -21,19 +25,19 @@ protected:
   // Output verbosity
   const bool verbose;
   // Name of the recovery files
-  string recoveryFileName;
+  std::string recoveryFileName;
   // Integrator
   Integrator1D itg;
   // Wave vector grid
-  vector<double> wvg;
+  std::vector<double> wvg;
   // Ideal density response
   vecUtil::Vector2D idr;
   // Static local field correction
-  vector<double> slfc;
+  std::vector<double> slfc;
   // Static structure factor
-  vector<double> ssf;
+  std::vector<double> ssf;
   // Hartree-Fock static structure factor
-  vector<double> ssfHF;
+  std::vector<double> ssfHF;
   // Chemical potential
   double mu;
   // Construct wave vector grid
@@ -62,14 +66,14 @@ public:
   Rpa(const RpaInput& in_) : Rpa(in_, true, true) { ; }
   // Getters
   vecUtil::Vector2D getIdr() const { return idr; }
-  vector<double> getSlfc() const { return slfc; }
-  vector<double> getSsf() const { return ssf; }
-  vector<double> getSsfHF() const { return ssfHF; }
-  vector<double> getWvg() const { return wvg; }
-  vector<double> getRdf(const vector<double>& r) const;
-  vector<double> getSdr() const;
+  std::vector<double> getSlfc() const { return slfc; }
+  std::vector<double> getSsf() const { return ssf; }
+  std::vector<double> getSsfHF() const { return ssfHF; }
+  std::vector<double> getWvg() const { return wvg; }
+  std::vector<double> getRdf(const std::vector<double>& r) const;
+  std::vector<double> getSdr() const;
   double getUInt() const;
-  string getRecoveryFileName() const { return recoveryFileName; }
+  std::string getRecoveryFileName() const { return recoveryFileName; }
 };
 
 // -----------------------------------------------------------------
@@ -112,7 +116,7 @@ public:
       mu(mu_), yMin(yMin_), yMax(yMax_),
       itg(itg_) {;};
   // Get result of integration
-  vector<double> get() const;
+  std::vector<double> get() const;
   
 };
 

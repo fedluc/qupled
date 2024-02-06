@@ -1,9 +1,12 @@
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
 #include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
 #include "python_wrappers.hpp"
 
 namespace vp = vecUtil::python;
+using namespace std;
 using namespace thermoUtil;
 
 // -----------------------------------------------------------------

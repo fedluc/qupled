@@ -1,8 +1,11 @@
 #include <omp.h>
 #include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
 #include "rpa.hpp"
 #include "chemicalpotential.hpp"
 
+using namespace std;
 using namespace thermoUtil;
 
 // Constructor

@@ -1,8 +1,11 @@
 #include <omp.h>
 #include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
 #include "stls.hpp"
 #include "chemicalpotential.hpp"
 
+using namespace std;
 using namespace vecUtil;
 using namespace stringUtil;
 using namespace binUtil;

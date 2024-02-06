@@ -1,11 +1,19 @@
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
-#include "python_wrappers.hpp"
+#include "util.hpp"
 #include "input.hpp"
+#include "numerics.hpp"
+#include "python_wrappers.hpp"
 
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 namespace vp = vecUtil::python;
+
+// Initialization code for the qupled module
+void qupledInitialization() {
+  // Setup GSL error handler
+  gsl_set_error_handler(&qpGSLHandler);
+}
 
 // Classes exposed to Python
 BOOST_PYTHON_MODULE(qupled)
@@ -19,6 +27,9 @@ BOOST_PYTHON_MODULE(qupled)
   // Numpy library initialization
   bn::initialize();
 
+  // Module initialization
+  qupledInitialization();
+  
   // Class for the input of the Rpa scheme
   bp::class_<RpaInput>("RpaInput")
     .add_property("coupling",

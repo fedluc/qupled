@@ -1,4 +1,7 @@
+#include "util.hpp"
 #include "input.hpp"
+
+using namespace std;
 
 // -----------------------------------------------------------------
 // Input class

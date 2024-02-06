@@ -1,5 +1,20 @@
 #include "numerics.hpp"
 
+using namespace std;
+
+// -----------------------------------------------------------------
+// Custom GSL error handler
+// -----------------------------------------------------------------
+
+void qpGSLHandler(const char *reason,
+		  const char *file,
+		  int line,
+		  int gsl_errno) {
+  gsl_error(reason, file, line, gsl_errno);
+  throw runtime_error("Aborting application due to previous GSL error.");
+}
+
+
 // -----------------------------------------------------------------
 // Interpolator class
 // -----------------------------------------------------------------

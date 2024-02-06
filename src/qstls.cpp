@@ -1,8 +1,11 @@
 #include <filesystem>
 #include <omp.h>
 #include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
 #include "qstls.hpp"
 
+using namespace std;
 using namespace vecUtil;
 using namespace stringUtil;
 using namespace binUtil;

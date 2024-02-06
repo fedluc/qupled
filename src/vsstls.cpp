@@ -1,6 +1,10 @@
 #include <omp.h>
+#include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
 #include "vsstls.hpp"
 
+using namespace std;
 using namespace numUtil;
 using namespace vecUtil;
 using namespace thermoUtil;

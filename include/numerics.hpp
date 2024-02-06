@@ -12,7 +12,14 @@
 #include <gsl/gsl_interp2d.h>
 #include <gsl/gsl_spline2d.h>
 
-using namespace std;
+// -----------------------------------------------------------------
+// Custom GSL error handler
+// -----------------------------------------------------------------
+
+void qpGSLHandler(const char *reason,
+		  const char *file,
+		  int line,
+		  int gsl_errno);
 
 // -----------------------------------------------------------------
 // Classes to interpolate data
@@ -40,8 +47,8 @@ private:
 public:
 
   // Constructor
-  Interpolator1D(const vector<double> &x,
-		 const vector<double> &y);
+  Interpolator1D(const std::vector<double> &x,
+		 const std::vector<double> &y);
   Interpolator1D(const double &x,
 		 const double &y,
 		 const size_t n_);
@@ -170,8 +177,8 @@ public:
   ~BrentRootSolver() {
     gsl_root_fsolver_free(rs);
   }
-  void solve(const function<double(double)> func,
-	     const vector<double> guess);
+  void solve(const std::function<double(double)> func,
+	     const std::vector<double> guess);
 };
 
 class SecantSolver : public RootSolverBase {
@@ -181,8 +188,8 @@ public:
   SecantSolver(const double relErr_,
 	       const int maxIter_) : RootSolverBase(relErr_, maxIter_) { ; };
   SecantSolver() { ; };
-  void solve(const function<double(double)> func,
-	     const vector<double> guess);
+  void solve(const std::function<double(double)> func,
+	     const std::vector<double> guess);
   
 };
 
@@ -223,7 +230,7 @@ public:
     gsl_integration_cquad_workspace_free(wsp);
   }
   // Compute integral
-  void compute(const function<double(double)> func,
+  void compute(const std::function<double(double)> func,
 	       const double xMin,
 	       const double xMax);
   // Getters
@@ -251,20 +258,20 @@ public:
   Integrator2D(const double &relErr) : itg1(relErr), itg2(relErr) { ; }
   Integrator2D() : Integrator2D(1.0e-5) { ; };
   // Compute integral
-  void compute(const function<double(double)> func1,
-	       const function<double(double)> func2,
+  void compute(const std::function<double(double)> func1,
+	       const std::function<double(double)> func2,
 	       const double xMin,
 	       const double xMax,
-	       const function<double(double)> yMin,
-	       const function<double(double)> yMax,
-	       const vector<double> &xGrid);
-  void compute(const function<double(double)> func1,
-	       const function<double(double)> func2,
+	       const std::function<double(double)> yMin,
+	       const std::function<double(double)> yMax,
+	       const std::vector<double> &xGrid);
+  void compute(const std::function<double(double)> func1,
+	       const std::function<double(double)> func2,
 	       const double xMin,
 	       const double xMax,
-	       const function<double()> yMin,
-	       const function<double()> yMax,
-	       const vector<double> &xGrid);
+	       const std::function<double()> yMin,
+	       const std::function<double()> yMax,
+	       const std::vector<double> &xGrid);
   // Getters
   double getX() const { return x; };
   double getSolution() const { return sol; };
@@ -311,7 +318,7 @@ public:
     gsl_integration_qawo_table_free(qtab);
   }
   // Compute integral
-  void compute(const function<double(double)> func);
+  void compute(const std::function<double(double)> func);
   // Getters
   double getSolution() const { return sol; };
   

@@ -5,6 +5,9 @@
 #include <map>
 #include "stls.hpp"
 
+// Forward declarations
+class VSStlsInput;
+
 // -----------------------------------------------------------------
 // Solver for the VS-STLS scheme
 // -----------------------------------------------------------------
@@ -24,17 +27,17 @@ private:
 		    FORWARD,
 		    BACKWARD };
   // Stls static local field correction
-  vector<double> slfcStls;
+  std::vector<double> slfcStls;
   // Free parameter
   double alpha;
   // Pointer to the static local field correction with rs = rs + drs
-  vector<double>* slfcStlsRsUp;
+  std::vector<double>* slfcStlsRsUp;
   // Pointer to the static local field correction with rs = rs - drs
-  vector<double>* slfcStlsRsDown;
+  std::vector<double>* slfcStlsRsDown;
   // Pointer to the static local field correction with theta = theta + dtheta
-  vector<double>* slfcStlsThetaUp;
+  std::vector<double>* slfcStlsThetaUp;
   // Pointer to the static local field correction with theta = theta - dtheta
-  vector<double>* slfcStlsThetaDown;
+  std::vector<double>* slfcStlsThetaDown;
   // Numerical scheme used to compute the coupling parameter derivative
   Derivative dTypeRs;
   // Numerical scheme used to compute the degeneracy parametere derivative
@@ -48,7 +51,7 @@ private:
 		     StlsCSR &stlsThetaDown,
 		     const Derivative &dTypeTheta);
   // Helper methods to compute the derivatives
-  double getDerivative(const vector<double>& f,
+  double getDerivative(const std::vector<double>& f,
 		       const size_t& idx,
 		       const Derivative& type);
   double getDerivative(const double& f0,
@@ -103,15 +106,15 @@ public:
 private:
 
   // Vector containing NPOINTS state points to be solved simultaneously
-  vector<StlsCSR> stls;
+  std::vector<StlsCSR> stls;
   // Flag marking whether the structural properties were computed
   bool computed;
   // Perform iterations to compute structural properties
   void doIterations();
   // Generic getter function to return vector data
-  const vector<double>& getBase(function<double(const StlsCSR&)> f) const;
+  const std::vector<double>& getBase(std::function<double(const StlsCSR&)> f) const;
   // Vector used as output parameter in the getters functions
-  mutable vector<double> outVector;
+  mutable std::vector<double> outVector;
   
 public:
 
@@ -122,13 +125,13 @@ public:
   // Set free parameter
   void setAlpha(const double& alpha);
   // Get coupling parameters for all the state points
-  vector<double> getCouplingParameters() const;
+  std::vector<double> getCouplingParameters() const;
   // Get degeneracy parameters for all the state points
-  vector<double> getDegeneracyParameters() const;
+  std::vector<double> getDegeneracyParameters() const;
   // Get internal energy for all the state points
-  vector<double> getInternalEnergy() const;
+  std::vector<double> getInternalEnergy() const;
   // Get free energy integrand for all the state points
-  vector<double> getFreeEnergyIntegrand() const;
+  std::vector<double> getFreeEnergyIntegrand() const;
   // Get structural properties for output
   const StlsCSR& getStls(const Idx& idx) const { return stls[idx]; }
   // Boolean marking whether the structural properties where computed or not
@@ -154,9 +157,9 @@ private:
   // Structural properties
   StructProp structProp;
   // Grid for thermodyamic integration
-  vector<double> rsGrid;
+  std::vector<double> rsGrid;
   // Free energy integrand for NPOINTS state points
-  vector<vector<double>> fxcIntegrand;
+  std::vector<std::vector<double>> fxcIntegrand;
   // Flags marking particular state points
   bool isZeroCoupling;
   bool isZeroDegeneracy;
@@ -176,13 +179,13 @@ public:
   void compute(const VSStlsInput &in);
   const StlsCSR& getStructProp();
   // Get free energy and free energy derivatives
-  vector<double> getFreeEnergyData() const;
+  std::vector<double> getFreeEnergyData() const;
   // Get internal energy and internal energy derivatives
-  vector<double> getInternalEnergyData() const;
+  std::vector<double> getInternalEnergyData() const;
   // Get free energy integrand
-  const vector<vector<double>>& getFreeEnergyIntegrand() const { return fxcIntegrand; }
+  const std::vector<std::vector<double>>& getFreeEnergyIntegrand() const { return fxcIntegrand; }
   // Get free energy grid
-  const vector<double>& getFreeEnergyGrid() const  { return rsGrid; }
+  const std::vector<double>& getFreeEnergyGrid() const  { return rsGrid; }
   
 };
 
@@ -222,8 +225,8 @@ public:
   int compute();
   // Getters
   const ThermoProp& getThermoProp() const { return thermoProp; }
-  vector<vector<double>> getFreeEnergyIntegrand() const;
-  vector<double> getFreeEnergyGrid() const;
+  std::vector<std::vector<double>> getFreeEnergyIntegrand() const;
+  std::vector<double> getFreeEnergyGrid() const;
   
 };
 

@@ -1,4 +1,7 @@
 #include <omp.h>
+#include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
 #include "esa.hpp"
 
 using namespace std;

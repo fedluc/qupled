@@ -1,8 +1,6 @@
 #ifndef CHEMICALPOTENTIAL_HPP
 #define CHEMICALPOTENTIAL_HPP
 
-#include "numerics.hpp"
-
 class ChemicalPotential {
 
 private:
@@ -17,7 +15,7 @@ private:
 public:
 
   ChemicalPotential(double Theta_) : Theta(Theta_) {};
-  void compute(const vector<double> &guess);
+  void compute(const std::vector<double> &guess);
   double get() const {return mu;};
   
 };

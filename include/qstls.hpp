@@ -4,6 +4,17 @@
 #include <map>
 #include "stls.hpp"
 
+// Forward declarations
+namespace vecUtil {
+  class Vector2D;
+  class Vector3D;
+}
+class QsltsInput;
+class Interpolator1D;
+class Interpolator2D;
+class Integrator1D;
+class Integrator2D;
+
 // -----------------------------------------------------------------
 // Solver for the qSTLS-based schemes
 // -----------------------------------------------------------------
@@ -18,18 +29,18 @@ private:
   vecUtil::Vector2D adr;
   vecUtil::Vector2D adrOld;
   vecUtil::Vector3D adrFixed;
-  map<int,pair<string,bool>> adrFixedIetFileInfo;
+  std::map<int,std::pair<std::string,bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
-  vector<double> ssfOld;
+  std::vector<double> ssfOld;
   // Compute auxiliary density response
   void computeAdr();
   void computeAdrFixed();
   void writeAdrFixedFile(const vecUtil::Vector3D &res,
-			 const string &fileName) const;
+			 const std::string &fileName) const;
   void readAdrFixedFile(vecUtil::Vector3D &res,
-			const string &fileName,
+			const std::string &fileName,
 			const bool iet) const;
-  int  checkAdrFixed(const vector<double> &wvg_,
+  int  checkAdrFixed(const std::vector<double> &wvg_,
 		     const double Theta_,
 		     const int nl_) const;
   void computeAdrIet();
@@ -41,22 +52,22 @@ private:
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
-  void initialGuessSsf(const vector<double> &wvg_,
-		       const vector<double> &adr_);
-  void initialGuessAdr(const vector<double> &wvg_,
+  void initialGuessSsf(const std::vector<double> &wvg_,
+		       const std::vector<double> &adr_);
+  void initialGuessAdr(const std::vector<double> &wvg_,
 		       const vecUtil::Vector2D &adr_);
   double computeError();
   void updateSolution();
   // Recovery files
   void writeRecovery();
-  void readRecovery(const string &fileName,
-		    vector<double> &wvg_,
+  void readRecovery(const std::string &fileName,
+		    std::vector<double> &wvg_,
 		    vecUtil::Vector3D &adrFixed_,
 		    double &Theta,
 		    int &nl) const;
-  void readRecovery(const string &fileName,
-		    vector<double> &wvg_,
-		    vector<double> &ssf_,
+  void readRecovery(const std::string &fileName,
+		    std::vector<double> &wvg_,
+		    std::vector<double> &ssf_,
 		    vecUtil::Vector2D &adr_,
 		    vecUtil::Vector3D &adrFixed_,
 		    double &Theta,
@@ -196,7 +207,7 @@ public:
     : AdrBase(Theta_, yMin_, yMax_, x_, ssfi_), itg(itg_) {;};
   
   // Get result of integration
-  void get(const vector<double> &wvg,
+  void get(const std::vector<double> &wvg,
 	   const vecUtil::Vector3D &fixed,
 	   vecUtil::Vector2D &res);
   
@@ -215,7 +226,7 @@ private:
   // Integrator object
   Integrator2D &itg;
   // Grid for 2D integration
-  const vector<double> &itgGrid;
+  const std::vector<double> &itgGrid;
   
 public:
 
@@ -225,13 +236,13 @@ public:
 	   const double qMax_,
 	   const double x_,
 	   const double mu_,
-	   const vector<double> &itgGrid_,
+	   const std::vector<double> &itgGrid_,
 	   Integrator2D &itg_)
     : AdrFixedBase(Theta_, qMin_, qMax_, x_, mu_),
       itg(itg_), itgGrid(itgGrid_) {;};
   
   // Get integration result
-  void get(vector<double> &wvg,
+  void get(std::vector<double> &wvg,
 	   vecUtil::Vector3D &res) const;
   
 };
@@ -251,9 +262,9 @@ private:
   // Integrator object
   Integrator2D &itg;
   // Grid for 2D integration
-  const vector<double> &itgGrid;
+  const std::vector<double> &itgGrid;
   // Interpolator for the dynamic local field correction
-  const vector<Interpolator1D> &dlfci;
+  const std::vector<Interpolator1D> &dlfci;
   // Interpolator for the bridge function contribution
   const Interpolator1D &bfi;
   // Interpolator for the fixed component 
@@ -275,15 +286,15 @@ public:
 	 const double qMax_,
 	 const double x_,
 	 const Interpolator1D &ssfi_,
-	 const vector<Interpolator1D> &dlfci_,
+	 const std::vector<Interpolator1D> &dlfci_,
 	 const Interpolator1D &bfi_,
-	 const vector<double> &itgGrid_,
+	 const std::vector<double> &itgGrid_,
 	 Integrator2D &itg_)
     : AdrBase(Theta_, qMin_, qMax_, x_, ssfi_),
       itg(itg_), itgGrid(itgGrid_), dlfci(dlfci_), bfi(bfi_) {;};
   
   // Get integration result
-  void get(const vector<double> &wvg,
+  void get(const std::vector<double> &wvg,
 	   const vecUtil::Vector3D &fixed,
 	   vecUtil::Vector2D &res);
   
@@ -317,7 +328,7 @@ public:
       itg(itg_) {;};
   
   //Get integration result
-  void get(vector<double> &wvg,
+  void get(std::vector<double> &wvg,
 	   vecUtil::Vector3D &res) const;
   
 };
