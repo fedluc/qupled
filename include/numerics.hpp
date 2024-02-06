@@ -1,10 +1,8 @@
 #ifndef NUMERICS_HPP
 #define NUMERICS_HPP
 
-#include <cassert>
 #include <functional>
 #include <vector>
-#include <iostream>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_integration.h>

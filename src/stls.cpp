@@ -3,7 +3,6 @@
 #include "numerics.hpp"
 #include "input.hpp"
 #include "stls.hpp"
-#include "chemicalpotential.hpp"
 
 using namespace std;
 using namespace vecUtil;

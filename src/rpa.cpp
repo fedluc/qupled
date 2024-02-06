@@ -1,4 +1,3 @@
-#include <omp.h>
 #include "util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
