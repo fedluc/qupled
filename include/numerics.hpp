@@ -1,10 +1,9 @@
 #ifndef NUMERICS_HPP
 #define NUMERICS_HPP
 
-#include <cassert>
 #include <functional>
 #include <vector>
-#include <iostream>
+#include <string>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_integration.h>
@@ -12,7 +11,52 @@
 #include <gsl/gsl_interp2d.h>
 #include <gsl/gsl_spline2d.h>
 
-using namespace std;
+// -----------------------------------------------------------------
+// C++ wrappers to GSL objects
+// -----------------------------------------------------------------
+
+namespace GslWrappers {
+
+  // Wrapper to gsl_function
+  template< typename T >
+  class GslFunctionWrap : public gsl_function {
+
+  private:
+
+    const T& func;
+    static double invoke(double x, void *params) {
+      return static_cast<GslFunctionWrap*>(params)->func(x);
+    }
+  
+  public:
+  
+    GslFunctionWrap(const T& func_) : func(func_) {
+      function = &GslFunctionWrap::invoke;
+      params = this;
+    }
+  
+  };
+
+  // Wrappers to handle GSL errors
+  template<typename Func, typename... Args>
+  void callGSLFunction(Func&& gslFunction, Args&&... args) {
+    int status = gslFunction(std::forward<Args>(args)...);
+    if (status) {
+      throw std::runtime_error("GSL error: " + std::to_string(status) + ", "
+			       + std::string(gsl_strerror(status)));
+    }
+  }
+
+  template<typename Ptr, typename Func, typename... Args>
+  void callGSLAlloc(Ptr& ptr, Func&& gslFunction, Args&&... args) {
+    ptr = gslFunction(std::forward<Args>(args)...);
+    if (!ptr) {
+      throw std::runtime_error("GSL error: allocation error");
+    }
+  }
+
+ 
+}
 
 // -----------------------------------------------------------------
 // Classes to interpolate data
@@ -40,8 +84,8 @@ private:
 public:
 
   // Constructor
-  Interpolator1D(const vector<double> &x,
-		 const vector<double> &y);
+  Interpolator1D(const std::vector<double> &x,
+		 const std::vector<double> &y);
   Interpolator1D(const double &x,
 		 const double &y,
 		 const size_t n_);
@@ -99,29 +143,6 @@ public:
 };
 
 // -----------------------------------------------------------------
-// C++ wrappers to gsl_function objects
-// -----------------------------------------------------------------
-
-template< typename T >
-class GslFunctionWrap : public gsl_function {
-
-private:
-
-  const T& func;
-  static double invoke(double x, void *params) {
-    return static_cast<GslFunctionWrap*>(params)->func(x);
-  }
-  
-public:
-  
-  GslFunctionWrap(const T& func_) : func(func_) {
-    function = &GslFunctionWrap::invoke;
-    params = this;
-  }
-  
-};
-
-// -----------------------------------------------------------------
 // Classes to find roots of equations
 // -----------------------------------------------------------------
 
@@ -165,13 +186,13 @@ private:
 public:
 
   BrentRootSolver() : rst(gsl_root_fsolver_brent) { 
-    rs = gsl_root_fsolver_alloc(rst) ;
+    GslWrappers::callGSLAlloc(rs, gsl_root_fsolver_alloc, rst) ;
   }
   ~BrentRootSolver() {
     gsl_root_fsolver_free(rs);
   }
-  void solve(const function<double(double)> func,
-	     const vector<double> guess);
+  void solve(const std::function<double(double)> func,
+	     const std::vector<double> guess);
 };
 
 class SecantSolver : public RootSolverBase {
@@ -181,8 +202,8 @@ public:
   SecantSolver(const double relErr_,
 	       const int maxIter_) : RootSolverBase(relErr_, maxIter_) { ; };
   SecantSolver() { ; };
-  void solve(const function<double(double)> func,
-	     const vector<double> guess);
+  void solve(const std::function<double(double)> func,
+	     const std::vector<double> guess);
   
 };
 
@@ -214,7 +235,7 @@ public:
 
   // Constructors
   Integrator1D(const double &relErr_) : limit(100), relErr(relErr_) {
-    wsp = gsl_integration_cquad_workspace_alloc(limit);
+    GslWrappers::callGSLAlloc(wsp, gsl_integration_cquad_workspace_alloc, limit);
   }
   Integrator1D(const Integrator1D& other) : Integrator1D(other.relErr) { ; }
   Integrator1D() : Integrator1D(1.0e-5) { ; }
@@ -223,7 +244,7 @@ public:
     gsl_integration_cquad_workspace_free(wsp);
   }
   // Compute integral
-  void compute(const function<double(double)> func,
+  void compute(const std::function<double(double)> func,
 	       const double xMin,
 	       const double xMax);
   // Getters
@@ -251,20 +272,20 @@ public:
   Integrator2D(const double &relErr) : itg1(relErr), itg2(relErr) { ; }
   Integrator2D() : Integrator2D(1.0e-5) { ; };
   // Compute integral
-  void compute(const function<double(double)> func1,
-	       const function<double(double)> func2,
+  void compute(const std::function<double(double)> func1,
+	       const std::function<double(double)> func2,
 	       const double xMin,
 	       const double xMax,
-	       const function<double(double)> yMin,
-	       const function<double(double)> yMax,
-	       const vector<double> &xGrid);
-  void compute(const function<double(double)> func1,
-	       const function<double(double)> func2,
+	       const std::function<double(double)> yMin,
+	       const std::function<double(double)> yMax,
+	       const std::vector<double> &xGrid);
+  void compute(const std::function<double(double)> func1,
+	       const std::function<double(double)> func2,
 	       const double xMin,
 	       const double xMax,
-	       const function<double()> yMin,
-	       const function<double()> yMax,
-	       const vector<double> &xGrid);
+	       const std::function<double()> yMin,
+	       const std::function<double()> yMax,
+	       const std::vector<double> &xGrid);
   // Getters
   double getX() const { return x; };
   double getSolution() const { return sol; };
@@ -297,9 +318,9 @@ public:
   // Constructors
   Integrator1DFourier(const double r_, const double relErr_) : limit(1000), r(r_),
 							       relErr(relErr_) {
-    wsp = gsl_integration_workspace_alloc(limit);
-    wspc = gsl_integration_workspace_alloc(limit);
-    qtab = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, limit);
+    GslWrappers::callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
+    GslWrappers::callGSLAlloc(wspc, gsl_integration_workspace_alloc, limit);
+    GslWrappers::callGSLAlloc(qtab, gsl_integration_qawo_table_alloc, 0.0, 1.0, GSL_INTEG_SINE, limit);
   }
   Integrator1DFourier(const double r_) : Integrator1DFourier(r_, 1.0e-6) { ; }
   // Set spatial position (to re-use the integrator for different r)
@@ -311,7 +332,7 @@ public:
     gsl_integration_qawo_table_free(qtab);
   }
   // Compute integral
-  void compute(const function<double(double)> func);
+  void compute(const std::function<double(double)> func);
   // Getters
   double getSolution() const { return sol; };
   

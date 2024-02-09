@@ -2,10 +2,13 @@
 #define STLS_HPP
 
 #include <vector>
-#include "input.hpp"
-#include "util.hpp"
-#include "numerics.hpp"
 #include "rpa.hpp"
+
+// Forward declarations
+class StlsInput;
+class Interpolator1D;
+class Integrator1D;
+class Integrator2D;
 
 // -----------------------------------------------------------------
 // Solver for the STLS scheme
@@ -22,9 +25,9 @@ protected:
   // iet schemes
   bool useIet;
   // Static local field correction to use during the iterations
-  vector<double> slfcNew;
+  std::vector<double> slfcNew;
   // Bridge function (for iet schemes)
-  vector<double> bf;
+  std::vector<double> bf;
   // Compute static local field correction
   void computeSlfc();
   void computeSlfcStls();
@@ -38,8 +41,8 @@ protected:
   void updateSolution();
   // Write recovery files
   void writeRecovery();
-  void readRecovery(vector<double> &wvgFile,
-		    vector<double> &slfcFile) const;
+  void readRecovery(std::vector<double> &wvgFile,
+		    std::vector<double> &slfcFile) const;
   
 public:
 
@@ -51,7 +54,7 @@ public:
   // Compute stls scheme
   int compute();
   // Getters
-  vector<double> getBf() const { return bf; }
+  std::vector<double> getBf() const { return bf; }
   
 };
 
@@ -112,7 +115,7 @@ private:
   // Integrator object
   Integrator2D &itg;
   // Grid for 2D integration
-  const vector<double> &itgGrid;
+  const std::vector<double> &itgGrid;
   // Integrands
   double integrand1(const double y) const;
   double integrand2(const double w) const;
@@ -134,7 +137,7 @@ public:
 	  const Interpolator1D &ssfi_,
 	  const Interpolator1D &slfci_,
 	  const Interpolator1D &bfi_,
-	  const vector<double> &itgGrid_,
+	  const std::vector<double> &itgGrid_,
 	  Integrator2D &itg_)
     : SlfcBase(x_, yMin_, yMax_, ssfi_), itg(itg_),
       itgGrid(itgGrid_), slfci(slfci_), bfi(bfi_) {;};
@@ -149,9 +152,9 @@ class BridgeFunction {
 private:
 
   // Theory to be solved
-  const string theory;
+  const std::string theory;
   // Iet mapping
-  const string mapping;
+  const std::string mapping;
   // Coupling parameter
   const double rs;
   // Degeneracy parameter
@@ -175,8 +178,8 @@ private:
 public:
 
   // Constructor
-  BridgeFunction(const string theory_,
-		 const string mapping_,
+  BridgeFunction(const std::string theory_,
+		 const std::string mapping_,
 		 const double rs_,
 		 const double Theta_,
 		 const double x_,

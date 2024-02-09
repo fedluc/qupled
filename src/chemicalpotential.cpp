@@ -1,6 +1,9 @@
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_fermi_dirac.h>
+#include "numerics.hpp"
 #include "chemicalpotential.hpp"
+
+using namespace std;
 
 void ChemicalPotential::compute(const vector<double> &guess){
   auto func = [this](double mu)->double{return normalizationCondition(mu);};

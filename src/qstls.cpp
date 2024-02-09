@@ -1,8 +1,10 @@
-#include <filesystem>
 #include <omp.h>
 #include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
 #include "qstls.hpp"
 
+using namespace std;
 using namespace vecUtil;
 using namespace stringUtil;
 using namespace binUtil;
@@ -16,6 +18,7 @@ int Qstls::compute(){
     // Set number of OMP threads
     omp_set_num_threads(in.getNThreads());
     // Solve scheme
+    init();
     if (verbose) cout << "Structural properties calculation ..." << endl;
     doIterations();
     if (verbose) cout << "Done" << endl;

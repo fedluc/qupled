@@ -1,8 +1,10 @@
 #include <omp.h>
 #include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
 #include "stls.hpp"
-#include "chemicalpotential.hpp"
 
+using namespace std;
 using namespace vecUtil;
 using namespace stringUtil;
 using namespace binUtil;
@@ -13,7 +15,7 @@ using namespace binUtil;
 
 Stls::Stls(const StlsInput& in_,
 	   const bool verbose_,
-	   const bool writeFiles_) : Rpa(in_, verbose_, false),
+	   const bool writeFiles_) : Rpa(in_, verbose_),
 				     in(in_),
 				     writeFiles(writeFiles_) {
   useIet = in.getTheory() == "STLS-HNC"
@@ -23,14 +25,15 @@ Stls::Stls(const StlsInput& in_,
 					   + in.getTheory() + ".bin",
 					   in.getCoupling(),
 					   in.getDegeneracy());
+  // Allocate arrays
   const size_t nx = wvg.size();
-  ssf.resize(nx);
-  slfc.resize(nx);
   slfcNew.resize(nx);
+  if (useIet) { bf.resize(nx); }
 }
 
 int Stls::compute(){
   try {
+    init();
     if (verbose) cout << "Structural properties calculation ..." << endl;
     doIterations();
     if (verbose) cout << "Done" << endl;
@@ -76,10 +79,10 @@ void Stls::computeSlfcIet() {
 
 // Compute bridge function
 void Stls::computeBf() {
-  const int nx = wvg.size();
+  const size_t nx = wvg.size();
   Integrator1DFourier itgF(0, 1e-10);
-  bf.resize(nx);
-  for (int i=0; i<nx; ++i){ 
+  assert(bf.size() == nx);
+  for (size_t i=0; i<nx; ++i){ 
     BridgeFunction bfTmp(in.getTheory(), in.getIETMapping(),
 			 in.getCoupling(), in.getDegeneracy(),
 			 wvg[i], itgF);

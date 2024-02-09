@@ -104,7 +104,8 @@ class Rpa():
         """
         self._checkInputs()
         self.scheme = qp.Rpa(self.inputs)
-        self._checkStatusAndClean(0)        
+        status = self.scheme.compute()
+        self._checkStatusAndClean(status)
         self._setHdfFile()
         self._save()
         
@@ -259,7 +260,8 @@ class ESA(Rpa):
         """
         self._checkInputs()
         self.scheme = qp.ESA(self.inputs)
-        self._checkStatusAndClean(0)  
+        status = self.scheme.compute()
+        self._checkStatusAndClean(status)
         self._setHdfFile()    
         self._save()
             

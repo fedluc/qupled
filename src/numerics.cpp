@@ -1,4 +1,8 @@
+#include <iostream>
 #include "numerics.hpp"
+
+using namespace std;
+using namespace GslWrappers;
 
 // -----------------------------------------------------------------
 // Interpolator class
@@ -35,9 +39,9 @@ void Interpolator1D::setup(const double &x,
 			   const size_t n_) {
   n = n_;
   cutoff = *(&x + n - 1);
-  spline = gsl_spline_alloc(gsl_interp_cspline, n);
-  acc = gsl_interp_accel_alloc();
-  gsl_spline_init(spline, &x, &y, n);
+  callGSLAlloc(spline, gsl_spline_alloc, gsl_interp_cspline, n);
+  callGSLAlloc(acc, gsl_interp_accel_alloc);
+  callGSLFunction(gsl_spline_init, spline, &x, &y, n);
 }
 
 // Reset existing interpolator
@@ -51,7 +55,9 @@ void Interpolator1D::reset(const double &x,
 
 // Evaluate interpolation
 double Interpolator1D::eval(const double x) const {
-  return gsl_spline_eval(spline, (x < cutoff) ? x : cutoff, acc);
+  double out;
+  callGSLFunction(gsl_spline_eval_e, spline, (x < cutoff) ? x : cutoff, acc, &out);
+  return out;
 }
 
 // -----------------------------------------------------------------
@@ -90,17 +96,17 @@ void Interpolator2D::setup(const double &x,
 			   const int ny_) {
   nx = nx_;
   ny = ny_;
-  spline = gsl_spline2d_alloc(gsl_interp2d_bicubic, nx, ny);
-  xacc = gsl_interp_accel_alloc();
-  yacc = gsl_interp_accel_alloc();
+  callGSLAlloc(spline, gsl_spline2d_alloc, gsl_interp2d_bicubic, nx, ny);
+  callGSLAlloc(xacc, gsl_interp_accel_alloc);
+  callGSLAlloc(yacc, gsl_interp_accel_alloc);
   // Ensure that z is stored in the correct order
   double *za = (double*)malloc(nx * ny * sizeof(double));
   for (size_t i = 0; i < nx; ++i) {
     for (size_t j = 0; j < ny; ++j) {
-      gsl_spline2d_set(spline, za, i, j, *(&z + j + i*ny));
+      callGSLFunction(gsl_spline2d_set, spline, za, i, j, *(&z + j + i*ny));
     }
   }
-  gsl_spline2d_init(spline, &x, &y, za, nx, ny);
+  callGSLFunction(gsl_spline2d_init, spline, &x, &y, za, nx, ny);
   free(za);
 }
 
@@ -118,7 +124,9 @@ void Interpolator2D::reset(const double &x,
 
 // Evaluate interpolation
 double Interpolator2D::eval(const double x, const double y) const {
-  return gsl_spline2d_eval(spline, x, y, xacc, yacc);
+  double out;
+  callGSLFunction(gsl_spline2d_eval_e, spline, x, y, xacc, yacc, &out);
+  return out;
 };
 
 // -----------------------------------------------------------------
@@ -131,10 +139,10 @@ void BrentRootSolver::solve(const function<double(double)> func,
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
   // Set up solver
-  gsl_root_fsolver_set(rs, F, guess.at(0), guess.at(1));
+  callGSLFunction(gsl_root_fsolver_set, rs, F, guess.at(0), guess.at(1));
   // Call solver
   do{
-    status = gsl_root_fsolver_iterate(rs);
+    callGSLFunction(gsl_root_fsolver_iterate, rs);
     sol = gsl_root_fsolver_root(rs);
     double solLo = gsl_root_fsolver_x_lower(rs);
     double solHi = gsl_root_fsolver_x_upper(rs);
@@ -176,10 +184,11 @@ void Integrator1D::compute(const function<double(double)> func,
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
   // Integrate
-  gsl_integration_cquad(F, xMin, xMax, 
-			0.0, relErr, 
-			wsp, &sol,
-			&err, &nEvals);
+  callGSLFunction(gsl_integration_cquad,
+		  F, xMin, xMax, 
+		  0.0, relErr, 
+		  wsp, &sol,
+		  &err, &nEvals);
 }
 
 // -----------------------------------------------------------------
@@ -191,11 +200,13 @@ void Integrator1DFourier::compute(const function<double(double)> func){
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
   // Set wave-vector
-  gsl_integration_qawo_table_set(qtab, r, 1.0, GSL_INTEG_SINE);
+  callGSLFunction(gsl_integration_qawo_table_set,
+		  qtab, r, 1.0, GSL_INTEG_SINE);
   // Integrate
-  gsl_integration_qawf(F, 0.0, relErr, 
-		       limit, wsp, wspc,
-		       qtab, &sol, &err);
+  callGSLFunction(gsl_integration_qawf,
+		  F, 0.0, relErr, 
+		  limit, wsp, wspc,
+		  qtab, &sol, &err);
 }
 
 // -----------------------------------------------------------------

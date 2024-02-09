@@ -1,8 +1,10 @@
 #include <mpi.h>
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
-#include "python_wrappers.hpp"
+#include "util.hpp"
 #include "input.hpp"
+#include "numerics.hpp"
+#include "python_wrappers.hpp"
 
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
@@ -10,11 +12,14 @@ namespace vp = vecUtil::python;
 
 // Initialization code for the qupled module
 void qupledInitialization() {
+  // Check that the MPI library was loaded
   int isMPIInit;
   MPI_Initialized(&isMPIInit);
   if (isMPIInit == 0) {
     throw runtime_error("MPI has not been initialized correctly");
   }
+  // Deactivate default GSL error handler
+  gsl_set_error_handler_off();
 }
 
 // Classes exposed to Python
@@ -166,6 +171,7 @@ BOOST_PYTHON_MODULE(qupled)
   // Class to solve the classical RPA scheme
   bp::class_<Rpa>("Rpa",
 		  bp::init<const RpaInput>())
+    .def("compute", &PyRpa::compute)
     .def("rdf", &PyRpa::getRdf)
     .add_property("idr", &PyRpa::getIdr)
     .add_property("sdr", &PyRpa::getSdr)
@@ -178,7 +184,8 @@ BOOST_PYTHON_MODULE(qupled)
 
   // Class to solve the classical ESA scheme
   bp::class_<ESA, bp::bases<Rpa>>("ESA",
-				  bp::init<const RpaInput>());
+				  bp::init<const RpaInput>())
+    .def("compute", &ESA::compute);
 
   // Class to solve classical schemes
   bp::class_<Stls, bp::bases<Rpa>>("Stls",

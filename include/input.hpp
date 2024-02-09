@@ -4,7 +4,11 @@
 #include <cassert>
 #include <vector>
 #include <iostream>
-#include "util.hpp"
+
+// Forward declarations
+namespace vecUtil {
+  class Vector2D;
+}
 
 // -----------------------------------------------------------------
 // Base class to handle input for the dielectric schemes
@@ -26,26 +30,26 @@ protected:
   bool isClassicTheory;
   bool isQuantumTheory;
   // scheme for 2D integrals
-  string int2DScheme;
+  std::string int2DScheme;
   // theory to be solved
-  string theory;
+  std::string theory;
 
 public:
 
   // Setters
   void setCoupling(const double &rs);
   void setDegeneracy(const double &Theta);
-  void setInt2DScheme(const string &int2DScheme);
+  void setInt2DScheme(const std::string &int2DScheme);
   void setIntError(const double &intError);
   void setNThreads(const int &nThreads);
-  void setTheory(const string &theory);
+  void setTheory(const std::string &theory);
   // Getters
   double getCoupling() const { return rs; }
   double getDegeneracy() const {return Theta; }
-  string getInt2DScheme() const { return int2DScheme; }
+  std::string getInt2DScheme() const { return int2DScheme; }
   double getIntError() const { return intError; }
   int getNThreads() const { return nThreads; }
-  string getTheory() const { return theory; }
+  std::string getTheory() const { return theory; }
   bool isClassic() const { return isClassicTheory; }
   // Print content of the data structure
   void print() const;
@@ -69,17 +73,17 @@ protected:
   // Number of matsubara frequencies
   int nl;
   // Initial guess for the chemical potential calculation
-  vector<double> muGuess;
+  std::vector<double> muGuess;
   
 public:
   
   // Setters
-  void setChemicalPotentialGuess(const vector<double> &muGuess);
+  void setChemicalPotentialGuess(const std::vector<double> &muGuess);
   void setNMatsubara(const int &nMatsubara);
   void setWaveVectorGridRes(const double &waveVectorGridRes);
   void setWaveVectorGridCutoff(const double  &waveVectorGridCutoff);
   // Getters
-  vector<double> getChemicalPotentialGuess() const { return muGuess; }
+  std::vector<double> getChemicalPotentialGuess() const { return muGuess; }
   int getNMatsubara() const { return nl; }
   double getWaveVectorGridRes() const { return dx; }
   double getWaveVectorGridCutoff() const { return xmax; }
@@ -99,8 +103,8 @@ class StlsInput : public RpaInput {
 public:
 
   struct SlfcGuess {
-    vector<double> wvg;
-    vector<double> slfc;
+    std::vector<double> wvg;
+    std::vector<double> slfc;
     bool operator==(const SlfcGuess &other) const {
       return wvg == other.wvg && slfc == other.slfc;
     }
@@ -117,9 +121,9 @@ protected:
   // Output frequency
   int outIter;
   // Mapping between the quantum and classical state points for the IET-based schemes
-  string IETMapping;
+  std::string IETMapping;
   // Name of the file used to store the recovery data
-  string recoveryFileName;
+  std::string recoveryFileName;
   // Initial guess
   SlfcGuess guess;
   
@@ -128,18 +132,18 @@ public:
   // Setters
   void setErrMin(const double &errMin);
   void setMixingParameter(const double  &aMix);
-  void setIETMapping(const string &IETMapping);
+  void setIETMapping(const std::string &IETMapping);
   void setNIter(const int &nIter);
   void setOutIter(const int &outIter);
-  void setRecoveryFileName(const string &recoveryFileName);
+  void setRecoveryFileName(const std::string &recoveryFileName);
   void setGuess(const SlfcGuess &guess);
   // Getters
   double getErrMin() const { return errMin; }
-  string getIETMapping() const { return IETMapping; }
+  std::string getIETMapping() const { return IETMapping; }
   double getMixingParameter() const { return aMix; }
   int getNIter() const { return nIter; }
   int getOutIter() const { return outIter; }
-  string getRecoveryFileName() const { return recoveryFileName; }
+  std::string getRecoveryFileName() const { return recoveryFileName; }
   SlfcGuess getGuess() const { return guess; }
   // Print content of the data structure
   void print() const;
@@ -157,8 +161,8 @@ class VSStlsInput : public StlsInput {
 public:
 
   struct FreeEnergyIntegrand {
-    vector<double> grid;
-    vector<vector<double>> integrand;
+    std::vector<double> grid;
+    std::vector<std::vector<double>> integrand;
     bool operator==(const FreeEnergyIntegrand &other) const {
       return grid == other.grid && integrand == other.integrand;
     }
@@ -167,7 +171,7 @@ public:
 private:
 
   // Initial guess for the free parameter
-  vector<double> alphaGuess;
+  std::vector<double> alphaGuess;
   // Resolution of the coupling parameter grid
   double drs;
   // Resolution of the degeneracy parameter grid
@@ -182,14 +186,14 @@ private:
 public:
 
   // Setters
-  void setAlphaGuess(const vector<double>  &alphaGuess);
+  void setAlphaGuess(const std::vector<double>  &alphaGuess);
   void setCouplingResolution(const double &drs);
   void setDegeneracyResolution(const double &dTheta);
   void setErrMinAlpha(const double &errMinAlpha);
   void setNIterAlpha(const int& nIterAlpha);
   void setFreeEnergyIntegrand(const FreeEnergyIntegrand &freeEnergyIntegrand);
   // Getters 
-  vector<double> getAlphaGuess() const { return alphaGuess; }
+  std::vector<double> getAlphaGuess() const { return alphaGuess; }
   double getCouplingResolution() const { return drs; }
   double getDegeneracyResolution() const { return dTheta; }
   double getErrMinAlpha() const { return errMinAlpha; }
@@ -211,8 +215,8 @@ class QstlsInput : public StlsInput {
 public:
   
   struct QstlsGuess {
-    vector<double> wvg;
-    vector<double> ssf;
+    std::vector<double> wvg;
+    std::vector<double> ssf;
     vecUtil::Vector2D adr;
     int matsubara = 0;
     bool operator==(const QstlsGuess &other) const {
@@ -224,21 +228,21 @@ public:
 private:
 
   // Name of the file with the fixed component of the auxiliary density response (adr)
-  string fixed;
+  std::string fixed;
   // Name of the file with the fixed component of the adr for iet schemes
-  string fixedIet;
+  std::string fixedIet;
   // Initial guess
   QstlsGuess guess;
 
 public:
 
   // Setters
-  void setFixed(const string &fixed);
-  void setFixedIet(const string &fixedIet);
+  void setFixed(const std::string &fixed);
+  void setFixedIet(const std::string &fixedIet);
   void setGuess(const QstlsGuess &guess);
   // Getters
-  string getFixed() const {return fixed; }
-  string getFixedIet() const { return fixedIet; }
+  std::string getFixed() const {return fixed; }
+  std::string getFixedIet() const { return fixedIet; }
   QstlsGuess getGuess() const { return guess; }
   // Print content of the data structure
   void print() const ;
