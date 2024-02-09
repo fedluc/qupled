@@ -16,6 +16,7 @@ using namespace thermoUtil;
 int VSStls::compute() {
   try {
     omp_set_num_threads(in.getNThreads());
+    init();
     if (verbose) cout << "Free parameter calculation ..." << endl;
     doIterations();
     if (verbose) cout << "Done" << endl;
@@ -289,7 +290,9 @@ vector<double> ThermoProp::getInternalEnergyData() const {
 // StructProp class
 // -----------------------------------------------------------------
 
-StructProp::StructProp(const VSStlsInput &in) : computed(false), outVector(NPOINTS) {
+StructProp::StructProp(const VSStlsInput &in) : stlsIsInitialized(false),
+						computed(false),
+						outVector(NPOINTS) {
   VSStlsInput inTmp = in;
   const double& drs = inTmp.getCouplingResolution();
   const double& dTheta = inTmp.getDegeneracyResolution();
@@ -337,9 +340,12 @@ StructProp::StructProp(const VSStlsInput &in) : computed(false), outVector(NPOIN
   }
 }
 
-// Add a public call to compute where we do the initializations
 int StructProp::compute() {
   try {
+    if (!stlsIsInitialized) {
+      for (auto& s : stls) { s.init(); }
+      stlsIsInitialized = true;
+    }
     doIterations();
     computed = true;
     return 0;

@@ -9,13 +9,42 @@ using namespace thermoUtil;
 
 // Constructor
 Rpa::Rpa(const RpaInput &in_,
-	 const bool verbose_,
-	 const bool doFullCompute) : in(in_),
-				     verbose(verbose_),
-				     itg(in_.getIntError()) {
-  if (verbose) cout << "Assembling wave vector grid: ";
+	 const bool verbose_) : in(in_),
+				verbose(verbose_),
+				itg(in_.getIntError()) {
+  // Assemble the wave-vector grid
   buildWvGrid();
-  if (verbose) cout << "Done" << endl;
+  // Allocate arrays to the correct size
+  const size_t nx = wvg.size();
+  const size_t nl = in.getNMatsubara();
+  idr.resize(nx, nl);
+  slfc.resize(nx);
+  ssf.resize(nx);
+  ssfHF.resize(nx);
+}
+
+// Compute scheme
+int Rpa::compute(){
+  try {
+    init();
+    if (verbose) cout << "Structural properties calculation ..." << endl;
+    if (verbose) cout << "Computing static local field correction: "; 
+    computeSlfc();
+    if (verbose) cout << "Done" << endl;
+    if (verbose) cout << "Computing static structure factor: "; 
+    computeSsf();
+    if (verbose) cout << "Done" << endl;
+    if (verbose) cout << "Done" << endl;
+    return 0;
+  }
+  catch (const runtime_error& err) {
+    cerr << err.what() << endl;
+    return 1;
+  }
+}
+
+// Initialize basic properties
+void Rpa::init(){
   if (verbose) cout << "Computing chemical potential: "; 
   computeChemicalPotential();
   if (verbose) cout << "Done" << endl;
@@ -25,15 +54,8 @@ Rpa::Rpa(const RpaInput &in_,
   if (verbose) cout << "Computing HF static structure factor: "; 
   computeSsfHF();
   if (verbose) cout << "Done" << endl;
-  if (doFullCompute) {
-    if (verbose) cout << "Computing static local field correction(RPA): "; 
-    computeSlfc();
-    if (verbose) cout << "Done" << endl;
-    if (verbose) cout << "Computing static structure factor: "; 
-    computeSsf();
-    if (verbose) cout << "Done" << endl;
-  }
 }
+
 
 // Set up wave-vector grid
 void Rpa::buildWvGrid(){
@@ -62,10 +84,10 @@ void Rpa::computeChemicalPotential(){
 // Compute ideal density response
 void Rpa::computeIdr(){
   if (in.getDegeneracy() == 0.0) return;
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  idr.resize(nx, nl);
-  for (int i=0; i<nx; ++i){
+  const size_t nx = wvg.size();
+  const size_t nl = in.getNMatsubara();
+  assert(idr.size(0) == nx && idr.size(1) == nl);
+  for (size_t i=0; i<nx; ++i){
     Idr idrTmp(nl, wvg[i], in.getDegeneracy(), mu,
 	       wvg.front(), wvg.back(), itg);
     idr.fill(i, idrTmp.get());
@@ -74,8 +96,7 @@ void Rpa::computeIdr(){
 
 // Compute Hartree-Fock static structure factor
 void Rpa::computeSsfHF(){
-  const int nx = wvg.size();
-  ssfHF.resize(nx);
+  assert(ssfHF.size() == wvg.size());
   if (in.getDegeneracy() == 0.0) {
     computeSsfHFGround();
     return;
@@ -99,8 +120,7 @@ void Rpa::computeSsfHFGround(){
 
 // Compute static structure factor
 void Rpa::computeSsf(){
-  const int nx = wvg.size();
-  if (ssf.size() == 0) ssf.resize(nx);
+  assert(ssf.size() == wvg.size());
   if (in.getDegeneracy() == 0.0) {
     computeSsfGround();
     return;
@@ -110,13 +130,13 @@ void Rpa::computeSsf(){
 
 // Compute static structure factor at finite temperature
 void Rpa::computeSsfFinite(){
-  assert(slfc.size() > 0);
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
-  const int nx = wvg.size();
-  const int nl = idr.size(1);
-  if (ssf.size() == 0) ssf.resize(nx);
-  for (int i=0; i<nx; ++i){
+  const size_t nx = wvg.size();
+  const size_t nl = idr.size(1);
+  assert(slfc.size() == nx);
+  assert(ssf.size() == nx);
+  for (size_t i=0; i<nx; ++i){
     Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], nl, &idr(i));
     ssf[i] = ssfTmp.get();
   }
@@ -124,11 +144,11 @@ void Rpa::computeSsfFinite(){
 
 // Compute static structure factor at zero temperature
 void Rpa::computeSsfGround(){
-  assert(slfc.size() > 0);
   const double rs = in.getCoupling();
-  const int nx = wvg.size();
-  if (ssf.size() == 0) ssf.resize(nx);
-  for (int i=0; i<nx; ++i){
+  const size_t nx = wvg.size();
+  assert(slfc.size() == nx);
+  assert(ssf.size() == nx);
+  for (size_t i=0; i<nx; ++i){
     const double x = wvg[i];
     double yMin = 0.0;
     if (x > 2.0) yMin = x * (x - 2.0);
@@ -140,7 +160,7 @@ void Rpa::computeSsfGround(){
 
 // Compute static local field correction
 void Rpa::computeSlfc(){
-  slfc.resize(wvg.size());
+  assert(slfc.size() == wvg.size());
   for (auto& s : slfc) { s = 0; }
 }
 
@@ -419,7 +439,7 @@ double SsfGround::plasmon() const {
   const double wLo = wCo;
   double wHi;
   const int signLo = (drf(wLo) >= 0) ? 1 : -1;
-  for (int i=1; i<1000; i++) {
+  for (size_t i=1; i<1000; i++) {
     wHi = wLo + dw * i;
     const double signHi = (drf(wHi) >= 0) ? 1 : -1;;
     if (signHi != signLo) {

@@ -164,6 +164,7 @@ BOOST_PYTHON_MODULE(qupled)
   // Class to solve the classical RPA scheme
   bp::class_<Rpa>("Rpa",
 		  bp::init<const RpaInput>())
+    .def("compute", &PyRpa::compute)
     .def("rdf", &PyRpa::getRdf)
     .add_property("idr", &PyRpa::getIdr)
     .add_property("sdr", &PyRpa::getSdr)
@@ -176,7 +177,8 @@ BOOST_PYTHON_MODULE(qupled)
 
   // Class to solve the classical ESA scheme
   bp::class_<ESA, bp::bases<Rpa>>("ESA",
-				  bp::init<const RpaInput>());
+				  bp::init<const RpaInput>())
+    .def("compute", &ESA::compute);
 
   // Class to solve classical schemes
   bp::class_<Stls, bp::bases<Rpa>>("Stls",

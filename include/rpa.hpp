@@ -40,6 +40,8 @@ protected:
   std::vector<double> ssfHF;
   // Chemical potential
   double mu;
+  // Initialize basic properties
+  void init();
   // Construct wave vector grid
   void buildWvGrid();
   // Compute chemical potential
@@ -61,9 +63,10 @@ public:
 
   // Constructor
   Rpa(const RpaInput &in_,
-      const bool verbose_,
-      const bool doFullCompute);
-  Rpa(const RpaInput& in_) : Rpa(in_, true, true) { ; }
+      const bool verbose_);
+  Rpa(const RpaInput& in_) : Rpa(in_, true) { ; }
+  // Compute the scheme
+  int compute();
   // Getters
   vecUtil::Vector2D getIdr() const { return idr; }
   std::vector<double> getSlfc() const { return slfc; }

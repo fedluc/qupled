@@ -94,6 +94,7 @@ public:
 
 class PyRpa {
 public:
+  static int compute(Rpa& rpa);
   static bn::ndarray getIdr(const Rpa& rpa);
   static bn::ndarray getRdf(const Rpa& rpa,
 			    const bn::ndarray &r);

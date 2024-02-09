@@ -18,6 +18,7 @@ int Qstls::compute(){
     // Set number of OMP threads
     omp_set_num_threads(in.getNThreads());
     // Solve scheme
+    init();
     if (verbose) cout << "Structural properties calculation ..." << endl;
     doIterations();
     if (verbose) cout << "Done" << endl;

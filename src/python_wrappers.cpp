@@ -126,6 +126,10 @@ void PyQstlsGuess::setMatsubara(QstlsInput::QstlsGuess &guess,
 // PyRpa
 // -----------------------------------------------------------------
 
+int PyRpa::compute(Rpa& rpa) {
+  return rpa.compute();
+}
+
 bn::ndarray PyRpa::getIdr(const Rpa& rpa) {
   return vp::toNdArray2D(rpa.getIdr());
 }

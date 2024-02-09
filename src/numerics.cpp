@@ -1,3 +1,4 @@
+#include <iostream>
 #include "numerics.hpp"
 
 using namespace std;
@@ -10,8 +11,13 @@ void qpGSLHandler(const char *reason,
 		  const char *file,
 		  int line,
 		  int gsl_errno) {
-  gsl_error(reason, file, line, gsl_errno);
-  throw runtime_error("Aborting application due to previous GSL error.");
+  constexpr bool debug = true;
+  string errMsg = "GSL error: " + std::string(reason);
+  if (debug) {
+    errMsg += ", " + std::to_string(gsl_errno) + ", "
+      + std::string(file) + ":" + std::to_string(line);
+  }
+  throw runtime_error(errMsg);
 }
 
 
