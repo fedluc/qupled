@@ -27,7 +27,6 @@ int ESA::compute(){
     cerr << err.what() << endl;
     return 1;
   }
->>>>>>> a815ab47c3e25019115a1685792a453f29f6b5b1
 }
 
 void ESA::computeSlfc() {

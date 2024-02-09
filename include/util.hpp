@@ -7,7 +7,6 @@
 #include <mpi.h>
 #include <vector>
 #include <iostream>
->>>>>>> a815ab47c3e25019115a1685792a453f29f6b5b1
 
 // Forward declarations
 namespace boost {

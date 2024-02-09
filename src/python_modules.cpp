@@ -12,11 +12,11 @@ namespace vp = vecUtil::python;
 
 // Initialization code for the qupled module
 void qupledInitialization() {
-  // Check that the MPI library was loaded
+  // Check that the MPI library was initialized
   int isMPIInit;
   MPI_Initialized(&isMPIInit);
   if (isMPIInit == 0) {
-    throw runtime_error("MPI has not been initialized correctly");
+    throw std::runtime_error("MPI has not been initialized correctly");
   }
   // Deactivate default GSL error handler
   gsl_set_error_handler_off();
