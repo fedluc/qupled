@@ -394,12 +394,7 @@ double SsfGround::get() const {
   auto func = [&](double y)->double{return integrand(y);};
   itg.compute(func, yMin, yMax);
   double ssfP;
-  try {
-    ssfP = plasmon();
-  }
-  catch (const runtime_error& err) {
-    cerr << err.what() << endl;
-  }
+  ssfP = plasmon();
   return ssfHF + itg.getSolution() + ssfP;
 }
 
