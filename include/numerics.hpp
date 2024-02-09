@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <vector>
+#include <string>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_integration.h>
@@ -11,13 +12,51 @@
 #include <gsl/gsl_spline2d.h>
 
 // -----------------------------------------------------------------
-// Custom GSL error handler
+// C++ wrappers to GSL objects
 // -----------------------------------------------------------------
 
-void qpGSLHandler(const char *reason,
-		  const char *file,
-		  int line,
-		  int gsl_errno);
+namespace GslWrappers {
+
+  // Wrapper to gsl_function
+  template< typename T >
+  class GslFunctionWrap : public gsl_function {
+
+  private:
+
+    const T& func;
+    static double invoke(double x, void *params) {
+      return static_cast<GslFunctionWrap*>(params)->func(x);
+    }
+  
+  public:
+  
+    GslFunctionWrap(const T& func_) : func(func_) {
+      function = &GslFunctionWrap::invoke;
+      params = this;
+    }
+  
+  };
+
+  // Wrappers to handle GSL errors
+  template<typename Func, typename... Args>
+  void callGSLFunction(Func&& gslFunction, Args&&... args) {
+    int status = gslFunction(std::forward<Args>(args)...);
+    if (status) {
+      throw std::runtime_error("GSL error: " + std::to_string(status) + ", "
+			       + std::string(gsl_strerror(status)));
+    }
+  }
+
+  template<typename Ptr, typename Func, typename... Args>
+  void callGSLAlloc(Ptr& ptr, Func&& gslFunction, Args&&... args) {
+    ptr = gslFunction(std::forward<Args>(args)...);
+    if (!ptr) {
+      throw std::runtime_error("GSL error: allocation error");
+    }
+  }
+
+ 
+}
 
 // -----------------------------------------------------------------
 // Classes to interpolate data
@@ -104,29 +143,6 @@ public:
 };
 
 // -----------------------------------------------------------------
-// C++ wrappers to gsl_function objects
-// -----------------------------------------------------------------
-
-template< typename T >
-class GslFunctionWrap : public gsl_function {
-
-private:
-
-  const T& func;
-  static double invoke(double x, void *params) {
-    return static_cast<GslFunctionWrap*>(params)->func(x);
-  }
-  
-public:
-  
-  GslFunctionWrap(const T& func_) : func(func_) {
-    function = &GslFunctionWrap::invoke;
-    params = this;
-  }
-  
-};
-
-// -----------------------------------------------------------------
 // Classes to find roots of equations
 // -----------------------------------------------------------------
 
@@ -170,7 +186,7 @@ private:
 public:
 
   BrentRootSolver() : rst(gsl_root_fsolver_brent) { 
-    rs = gsl_root_fsolver_alloc(rst) ;
+    GslWrappers::callGSLAlloc(rs, gsl_root_fsolver_alloc, rst) ;
   }
   ~BrentRootSolver() {
     gsl_root_fsolver_free(rs);
@@ -219,7 +235,7 @@ public:
 
   // Constructors
   Integrator1D(const double &relErr_) : limit(100), relErr(relErr_) {
-    wsp = gsl_integration_cquad_workspace_alloc(limit);
+    GslWrappers::callGSLAlloc(wsp, gsl_integration_cquad_workspace_alloc, limit);
   }
   Integrator1D(const Integrator1D& other) : Integrator1D(other.relErr) { ; }
   Integrator1D() : Integrator1D(1.0e-5) { ; }
@@ -302,9 +318,9 @@ public:
   // Constructors
   Integrator1DFourier(const double r_, const double relErr_) : limit(1000), r(r_),
 							       relErr(relErr_) {
-    wsp = gsl_integration_workspace_alloc(limit);
-    wspc = gsl_integration_workspace_alloc(limit);
-    qtab = gsl_integration_qawo_table_alloc(0.0, 1.0, GSL_INTEG_SINE, limit);
+    GslWrappers::callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
+    GslWrappers::callGSLAlloc(wspc, gsl_integration_workspace_alloc, limit);
+    GslWrappers::callGSLAlloc(qtab, gsl_integration_qawo_table_alloc, 0.0, 1.0, GSL_INTEG_SINE, limit);
   }
   Integrator1DFourier(const double r_) : Integrator1DFourier(r_, 1.0e-6) { ; }
   // Set spatial position (to re-use the integrator for different r)

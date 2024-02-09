@@ -72,12 +72,7 @@ void Rpa::computeChemicalPotential(){
   if (in.getDegeneracy() == 0.0) return;
   const vector<double> &guess = in.getChemicalPotentialGuess();
   ChemicalPotential mu_(in.getDegeneracy());
-  try {
-    mu_.compute(guess);
-  }
-  catch (const runtime_error& err) {
-    cerr << err.what() << endl;
-  }
+  mu_.compute(guess);
   mu = mu_.get();
 }
 

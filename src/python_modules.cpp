@@ -11,8 +11,8 @@ namespace vp = vecUtil::python;
 
 // Initialization code for the qupled module
 void qupledInitialization() {
-  // Setup GSL error handler
-  gsl_set_error_handler(&qpGSLHandler);
+  // Deactivate default GSL error handler
+  gsl_set_error_handler_off();
 }
 
 // Classes exposed to Python
