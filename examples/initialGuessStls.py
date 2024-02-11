@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import qupled.qupled as qp
 import qupled.classic as qpc
 
 # Define an Stls object to solve the STLS scheme

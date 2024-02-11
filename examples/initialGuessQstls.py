@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import qupled.qupled as qp
 import qupled.quantum as qpq
 
 # Define a Qstls object to solve the QSTLS scheme
