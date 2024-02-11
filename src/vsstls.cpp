@@ -34,7 +34,7 @@ void VSStls::doIterations() {
   SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
   rsol.solve(func, in.getAlphaGuess());
   if (!rsol.success()) {
-    throw runtime_error("VSStls: the root solver did not converge to the desired accuracy.");
+    MPIUtil::throwError("VSStls: the root solver did not converge to the desired accuracy.");
   }
   alpha = rsol.getSolution();
   if (verbose) { cout << "Free parameter = " << alpha << endl; }

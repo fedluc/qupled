@@ -16,7 +16,7 @@ void qupledInitialization() {
   int isMPIInit;
   MPI_Initialized(&isMPIInit);
   if (isMPIInit == 0) {
-    throw std::runtime_error("MPI has not been initialized correctly");
+    MPIUtil::throwError("MPI has not been initialized correctly");
   }
   // Deactivate default GSL error handler
   gsl_set_error_handler_off();

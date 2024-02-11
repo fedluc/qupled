@@ -445,7 +445,7 @@ double SsfGround::plasmon() const {
   BrentRootSolver rsol;
   rsol.solve(func, vector<double>(begin(guess),end(guess)));
   if (!rsol.success()) {
-    throw runtime_error("Plasmon solver: the root solver "
+    MPIUtil::throwError("Plasmon solver: the root solver "
 			"did not converge to the desired accuracy.");
   }
   // Output

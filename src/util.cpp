@@ -324,13 +324,13 @@ namespace vecUtil {
     const bn::ndarray::bitflag flags = nda.get_flags();
     const bool isRowMajor = flags & bn::ndarray::C_CONTIGUOUS;
     if (!isRowMajor) {
-      throw runtime_error("The numpy array is not stored in row major order (c-contiguous)");
+      MPIUtil::throwError("The numpy array is not stored in row major order (c-contiguous)");
     }
   }
   
   vector<double> python::toVector(const bn::ndarray &nda){
     if (nda.get_nd() != 1) {
-      throw runtime_error("Incorrect numpy array dimensions");
+      MPIUtil::throwError("Incorrect numpy array dimensions");
     }
     const Py_intptr_t* shape = nda.get_shape();
     const int dim = nda.get_nd();
@@ -352,7 +352,7 @@ namespace vecUtil {
 
   Vector2D python::toVector2D(const bn::ndarray &nda){
     if (nda.get_nd() != 2) {
-      throw runtime_error("Incorrect numpy array dimensions");
+      MPIUtil::throwError("Incorrect numpy array dimensions");
     }
     CheckRowMajor(nda);
     const Py_intptr_t* shape = nda.get_shape();
@@ -370,7 +370,7 @@ namespace vecUtil {
 
   vector<vector<double>> python::toDoubleVector(const bn::ndarray &nda){
     if (nda.get_nd() != 2) {
-      throw runtime_error("Incorrect numpy array dimensions");
+      MPIUtil::throwError("Incorrect numpy array dimensions");
     }
     CheckRowMajor(nda);
     const Py_intptr_t* shape = nda.get_shape();
@@ -445,7 +445,7 @@ namespace thermoUtil {
 			   const double &coupling,
 			   const bool normalize) {
     if (numUtil::largerThan(coupling, grid.back())) {
-      throw runtime_error("The coupling parameter is out of range"
+      MPIUtil::throwError("The coupling parameter is out of range"
 			  " for the current grid, the free energy cannot be computed");
     }
     const Interpolator1D itp(grid, rsu);

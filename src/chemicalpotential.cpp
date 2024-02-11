@@ -10,7 +10,7 @@ void ChemicalPotential::compute(const vector<double> &guess){
   BrentRootSolver rsol;
   rsol.solve(func, guess);
   if (!rsol.success()) {
-    throw runtime_error("Chemical potential: the root solver "
+    MPIUtil::throwError("Chemical potential: the root solver "
 			"did not converge to the desired accuracy.");
   }
   mu = rsol.getSolution();

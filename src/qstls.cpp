@@ -35,7 +35,7 @@ int Qstls::compute(){
 void Qstls::doIterations() {
   // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
-    throw runtime_error("Ground state calculations are not available "
+    MPIUtil::throwError("Ground state calculations are not available "
 			"for the quantum schemes");
   }
   const int maxIter = in.getNIter();
@@ -108,7 +108,7 @@ void Qstls::initialGuess() {
   Stls stls(in, false, false);
   int status = stls.compute();
   if (status != 0) {
-    throw runtime_error("Failed to compute the default initial guess");
+    MPIUtil::throwError("Failed to compute the default initial guess");
   }
   ssfOld = stls.getSsf();
   if (useIet) { adrOld.fill(0.0); }
@@ -255,7 +255,7 @@ void Qstls::writeAdrFixedFile(const Vector3D &res,
   ofstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    throw runtime_error("Output file " + fileName + " could not be created.");
+    MPIUtil::throwError("Output file " + fileName + " could not be created.");
   }
   writeDataToBinary<int>(file, nx);
   writeDataToBinary<int>(file, nl);
@@ -264,7 +264,7 @@ void Qstls::writeAdrFixedFile(const Vector3D &res,
   writeDataToBinary<Vector3D>(file, res);
   file.close();
   if (!file) {
-    throw runtime_error("Error in writing to file " + fileName);
+    MPIUtil::throwError("Error in writing to file " + fileName);
   }
 }
 
@@ -277,7 +277,7 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    throw runtime_error("Input file " + fileName + " could not be opened.");
+    MPIUtil::throwError("Input file " + fileName + " could not be opened.");
   }
   int nx_;
   int nl_;
@@ -293,10 +293,10 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   readDataFromBinary<Vector3D>(file, res);
   file.close();
   if (!file) {
-    throw runtime_error("Error in reading from file " + fileName);
+    MPIUtil::throwError("Error in reading from file " + fileName);
   }
   if (checkAdrFixed(wvg_, Theta_, nl_) != 0) {
-    throw runtime_error("Fixed component of the auxiliary density response"
+    MPIUtil::throwError("Fixed component of the auxiliary density response"
 			" loaded from file is incompatible with input");
   }
 }
@@ -406,7 +406,7 @@ void Qstls::writeRecovery() {
   ofstream file;
   file.open(recoveryFileName, ios::binary);
   if (!file.is_open()) {
-    throw runtime_error("Recovery file " + recoveryFileName + " could not be created.");
+    MPIUtil::throwError("Recovery file " + recoveryFileName + " could not be created.");
   }
   int nx = wvg.size();
   int nl = in.getNMatsubara();
@@ -419,7 +419,7 @@ void Qstls::writeRecovery() {
   writeDataToBinary<Vector3D>(file, adrFixed);
   file.close();
   if (!file) {
-    throw runtime_error("Error in writing the recovery file " + recoveryFileName);
+    MPIUtil::throwError("Error in writing the recovery file " + recoveryFileName);
   }
 }
 
@@ -443,7 +443,7 @@ void Qstls::readRecovery(const string &fileName,
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    throw runtime_error("Input file " + fileName + " could not be opened.");
+    MPIUtil::throwError("Input file " + fileName + " could not be opened.");
   }
   int nx;
   readDataFromBinary<int>(file, nx);
@@ -459,7 +459,7 @@ void Qstls::readRecovery(const string &fileName,
   readDataFromBinary<Vector3D>(file, adrFixed_);
   file.close();
   if (!file) {
-    throw runtime_error("Error in reading the file " + fileName);
+    MPIUtil::throwError("Error in reading the file " + fileName);
   }
 }
 

@@ -9,14 +9,14 @@ using namespace std;
 
 void Input::setCoupling(const double &rs_){
   if (rs_ < 0) {
-    throw runtime_error("The quantum coupling parameter can't be negative");
+    MPIUtil::throwError("The quantum coupling parameter can't be negative");
   }
   this->rs = rs_;
 }
 
 void Input::setDegeneracy(const double &Theta_){
   if (Theta_ < 0.0) {
-    throw runtime_error("The quantum degeneracy parameter can't be negative");
+    MPIUtil::throwError("The quantum degeneracy parameter can't be negative");
   }
   this->Theta = Theta_;
 }
@@ -30,7 +30,7 @@ void Input::setTheory(const string &theory_){
   isClassicTheory = count(cTheories.begin(), cTheories.end(), theory_) != 0;
   isQuantumTheory = count(qTheories.begin(), qTheories.end(), theory_) != 0;
   if (!isClassicTheory && !isQuantumTheory) {
-    throw runtime_error("Invalid dielectric theory: " + theory_);
+    MPIUtil::throwError("Invalid dielectric theory: " + theory_);
   }
   // A theory can't both be classical and quantum at the same time
   assert(!isClassicTheory || !isQuantumTheory);
@@ -40,14 +40,14 @@ void Input::setTheory(const string &theory_){
 void Input::setInt2DScheme(const string &int2DScheme){
   const vector<string> schemes = {"full", "segregated"};
   if (count(schemes.begin(), schemes.end(), int2DScheme) == 0) {
-    throw runtime_error("Unknown scheme for 2D integrals: " + int2DScheme);
+    MPIUtil::throwError("Unknown scheme for 2D integrals: " + int2DScheme);
   }
   this->int2DScheme = int2DScheme;
 }
 
 void Input::setIntError(const double &intError){
   if (intError <= 0) {
-    throw runtime_error("The accuracy for the integral computations must be larger than zero");
+    MPIUtil::throwError("The accuracy for the integral computations must be larger than zero");
   }
   this->intError = intError;
 }
@@ -55,7 +55,7 @@ void Input::setIntError(const double &intError){
 
 void Input::setNThreads(const int &nThreads){
   if (nThreads <= 0) {
-    throw runtime_error("The number of threads must be larger than zero");
+    MPIUtil::throwError("The number of threads must be larger than zero");
   }
   this->nThreads = nThreads;
 }
@@ -83,31 +83,31 @@ bool Input::isEqual(const Input &in) const {
 
 void RpaInput::setChemicalPotentialGuess(const vector<double> &muGuess){
   if (muGuess.size() != 2 || muGuess[0] >= muGuess[1]) {
-    throw runtime_error("Invalid guess for chemical potential calculation");
+    MPIUtil::throwError("Invalid guess for chemical potential calculation");
   }
   this->muGuess = muGuess;
 }
 
 void RpaInput::setNMatsubara(const int &nl){
   if (nl < 0) {
-    throw runtime_error("The number of matsubara frequencies can't be negative");
+    MPIUtil::throwError("The number of matsubara frequencies can't be negative");
   }
   this->nl = nl;
 }
 
 void RpaInput::setWaveVectorGridRes(const double &dx){
   if (dx <= 0.0) {
-    throw runtime_error("The wave-vector grid resolution must be larger than zero");
+    MPIUtil::throwError("The wave-vector grid resolution must be larger than zero");
   }
   this->dx = dx;
 }
 
 void RpaInput::setWaveVectorGridCutoff(const double &xmax){
   if (xmax <= 0.0) {
-    throw runtime_error("The wave-vector grid cutoff must be larger than zero");
+    MPIUtil::throwError("The wave-vector grid cutoff must be larger than zero");
   }
   if (xmax < dx) {
-    throw runtime_error("The wave-vector grid cutoff must be larger than the resolution");
+    MPIUtil::throwError("The wave-vector grid cutoff must be larger than the resolution");
   }
   this->xmax = xmax;
 }
@@ -134,28 +134,28 @@ bool RpaInput::isEqual(const RpaInput &in) const {
 
 void StlsInput::setErrMin(const double &errMin){
   if (errMin <= 0.0) {
-    throw runtime_error("The minimum error for convergence must be larger than zero");
+    MPIUtil::throwError("The minimum error for convergence must be larger than zero");
   }
   this->errMin = errMin;
 }
 
 void StlsInput::setMixingParameter(const double &aMix){
   if (aMix < 0.0 || aMix > 1.0) {
-    throw runtime_error("The mixing parameter must be a number between zero and one");
+    MPIUtil::throwError("The mixing parameter must be a number between zero and one");
   }
   this->aMix = aMix;
 }
 
 void StlsInput::setNIter(const int &nIter){
   if (nIter < 0) {
-    throw runtime_error("The maximum number of iterations can't be negative");
+    MPIUtil::throwError("The maximum number of iterations can't be negative");
   }
   this->nIter = nIter; 
 }
 
 void StlsInput::setOutIter(const int &outIter){
   if (outIter < 0) {
-    throw runtime_error("The output frequency can't be negative");
+    MPIUtil::throwError("The output frequency can't be negative");
   }
   this->outIter = outIter; 
 }
@@ -163,7 +163,7 @@ void StlsInput::setOutIter(const int &outIter){
 void StlsInput::setIETMapping(const string &IETMapping){
   const vector<string> mappings = {"standard", "sqrt", "linear"};
   if (count(mappings.begin(), mappings.end(), IETMapping) == 0) {
-    throw runtime_error("Unknown IET mapping: " + IETMapping);
+    MPIUtil::throwError("Unknown IET mapping: " + IETMapping);
   }
   this->IETMapping = IETMapping;
 }
@@ -174,10 +174,10 @@ void StlsInput::setRecoveryFileName(const string &recoveryFileName){
 
 void StlsInput::setGuess(const SlfcGuess &guess){
   if (guess.wvg.size() < 3 || guess.slfc.size() < 3) {
-    throw runtime_error("The initial guess does not contain enough points");
+    MPIUtil::throwError("The initial guess does not contain enough points");
   }
   if (guess.wvg.size() != guess.slfc.size()) {
-    throw runtime_error("The initial guess is inconsistent");
+    MPIUtil::throwError("The initial guess is inconsistent");
   }
   this->guess = guess;
 }
@@ -217,7 +217,7 @@ void QstlsInput::setFixedIet(const string &fixedIet){
 
 void QstlsInput::setGuess(const QstlsGuess &guess){
   if (guess.wvg.size() < 3 || guess.ssf.size() < 3) {
-    throw runtime_error("The initial guess does not contain enough points");
+    MPIUtil::throwError("The initial guess does not contain enough points");
   }
   bool consistentGuess = guess.wvg.size() == guess.ssf.size();
   const size_t nl = guess.matsubara;
@@ -227,7 +227,7 @@ void QstlsInput::setGuess(const QstlsGuess &guess){
       && guess.adr.size(1) == nl;
   }
   if (!consistentGuess) {
-    throw runtime_error("The initial guess is inconsistent");
+    MPIUtil::throwError("The initial guess is inconsistent");
   }
   this->guess = guess;
 }
@@ -251,21 +251,21 @@ bool QstlsInput::isEqual(const QstlsInput &in) const {
 
 void VSStlsInput::setCouplingResolution(const double &drs) {
   if (drs <= 0) {
-    throw runtime_error("The coupling parameter resolution must be larger than zero");
+    MPIUtil::throwError("The coupling parameter resolution must be larger than zero");
   }
   this->drs = drs;
 }
 
 void VSStlsInput::setDegeneracyResolution(const double &dTheta) {
   if (dTheta <= 0) {
-    throw runtime_error("The degeneracy parameter resolution must be larger than zero");
+    MPIUtil::throwError("The degeneracy parameter resolution must be larger than zero");
   }
   this->dTheta = dTheta;
 }
 
 void VSStlsInput::setAlphaGuess(const vector<double>  &alphaGuess) {
   if (alphaGuess.size() != 2 || alphaGuess[0] >= alphaGuess[1]) {
-    throw runtime_error("Invalid guess for chemical potential calculation");
+    MPIUtil::throwError("Invalid guess for chemical potential calculation");
   }
   this->alphaGuess = alphaGuess;
 }
@@ -273,32 +273,32 @@ void VSStlsInput::setAlphaGuess(const vector<double>  &alphaGuess) {
 
 void VSStlsInput::setErrMinAlpha(const double &errMinAlpha){
    if (errMinAlpha <= 0.0) {
-    throw runtime_error("The minimum error for convergence must be larger than zero");
+    MPIUtil::throwError("The minimum error for convergence must be larger than zero");
   }
   this->errMinAlpha = errMinAlpha;
 }
 
 void VSStlsInput::setNIterAlpha(const int &nIterAlpha){
   if (nIterAlpha < 0) {
-    throw runtime_error("The maximum number of iterations can't be negative");
+    MPIUtil::throwError("The maximum number of iterations can't be negative");
   }
   this->nIterAlpha = nIterAlpha; 
 }
 
 void VSStlsInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand& fxcIntegrand) {
   if (fxcIntegrand.integrand.size() < 3) {
-    throw runtime_error("The free energy integrand does not contain enough temperature points");
+    MPIUtil::throwError("The free energy integrand does not contain enough temperature points");
   }
   for (const auto& fxci : fxcIntegrand.integrand) {
     if (fxci.size() != fxcIntegrand.integrand[0].size()) {
-      throw runtime_error("The free energy integrand is inconsistent");
+      MPIUtil::throwError("The free energy integrand is inconsistent");
     }
   }
   if (fxcIntegrand.grid.size() < 3 || fxcIntegrand.integrand[0].size() < 3) {
-    throw runtime_error("The free energy integrand does not contain enough points");
+    MPIUtil::throwError("The free energy integrand does not contain enough points");
   }
   if (fxcIntegrand.grid.size() != fxcIntegrand.integrand[0].size()) {
-    throw runtime_error("The free energy integrand is inconsistent");
+    MPIUtil::throwError("The free energy integrand is inconsistent");
   }
   this->fxcIntegrand = fxcIntegrand;
 }
