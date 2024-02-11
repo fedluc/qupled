@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import qupled.qupled as qp
 import qupled.classic as qpc
 
 # Define a VSStls object to solve the VS-STLS scheme

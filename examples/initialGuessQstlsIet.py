@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import qupled.qupled as qp
 import qupled.quantum as qpq
 
 # Define a QstlsIet object to solve a QSTLS-IET scheme
