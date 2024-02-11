@@ -534,29 +534,33 @@ namespace MPIUtil {
   // Stand-alone methods
   // -----------------------------------------------------------------
 
-  int getRank() {
+  int rank() {
     int rank;
     MPI_Comm_rank(MPICommunicator, &rank);
     return rank;
   }
-
-  bool isRoot() {
-    return getRank() == 0;
-  }
-
-  bool isSingleProcess() {
+  
+  int numberOfRanks() {
     int numRanks;
     MPI_Comm_size(MPICommunicator, &numRanks);
-    return numRanks == 1;
+    return numRanks;
+  }
+  
+  bool isRoot() {
+    return rank() == 0;
+  }
+  
+  bool isSingleProcess() {
+    return numberOfRanks() == 1;
   }
 
   void throwError(const string& errMsg) {
     if (MPIUtil::isSingleProcess()) {
       // Throw a catchable error if only one process is used
-      throw std::runtime_error(errMsg);
+      throw runtime_error(errMsg);
     }
     // Abort MPI if more than one process is running
-    std::cerr << errMsg << std::endl;
+    cerr << errMsg << endl;
     MPIUtil::abort();
   }
   
@@ -566,6 +570,25 @@ namespace MPIUtil {
 
   double timer() {
     return MPI_Wtime();
+  }
+
+  pair<int, int> getLoopIndexes(const int size) {
+    pair<int, int> idx = {0, size};
+    const int nRanks = numberOfRanks();
+    if (nRanks == 1) { return idx; }
+    const int thisRank = rank();
+    int localSize = size / nRanks;
+    int reminder = size % nRanks;
+    if (thisRank < reminder) { localSize++; }
+    idx.first = thisRank * localSize;
+    idx.second = min((thisRank + 1) * localSize, size);
+    return idx;
+  }
+
+  void allGather(double* data, const int size) {
+    MPI_Allgather(MPI_IN_PLACE, size, MPI_DOUBLE,
+		  data, size, MPI_DOUBLE,
+		  MPICommunicator);
   }
   
 }

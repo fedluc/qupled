@@ -38,6 +38,10 @@ void Qstls::doIterations() {
     MPIUtil::throwError("Ground state calculations are not available "
 			"for the quantum schemes");
   }
+  if (MPIUtil::numberOfRanks() > 1 && useIet) {
+    MPIUtil::throwError("Multi-process calculations are not available "
+			" for the QSTLS-IET schemes");
+  }
   const int maxIter = in.getNIter();
   const int outIter = in.getOutIter();
   const double minErr = in.getErrMin();
@@ -169,11 +173,9 @@ void Qstls::computeAdr() {
   }
   if (adrFixed.size() == 0) computeAdrFixed();
   const Interpolator1D ssfi(wvg, ssfOld);
-#pragma omp parallel for
   for (int i=0; i<nx; ++i) {
-    Integrator1D itgPrivate;
     Adr adrTmp(in.getDegeneracy(), wvg.front(),
-	       wvg.back(), wvg[i], ssfi, itgPrivate);
+	       wvg.back(), wvg[i], ssfi, itg);
     adrTmp.get(wvg, adrFixed, adr);
   }
   if (useIet) computeAdrIet();
@@ -226,25 +228,30 @@ void Qstls::computeAdrFixed() {
   readAdrFixedFile(adrFixed, in.getFixed(), false);
   if (adrFixed.size() > 0) { return; }
   // Compute from scratch
-  cout << "Computing fixed component of the auxiliary density response: ";
+  if (verbose) cout << "Computing fixed component of the auxiliary density response: ";
   fflush(stdout);
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   adrFixed.resize(nx, nl, nx);
-#pragma omp parallel for
-  for (int i=0; i<nx; ++i) {
+  // Parallel for loop (Hybrid MPI and OpenMP)
+  pair<int, int> idx = MPIUtil::getLoopIndexes(nx);
+  #pragma omp parallel for
+  for (int i=idx.first; i<idx.second; ++i) {
     Integrator2D itg2;
     AdrFixed adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
 		    wvg[i], mu, itgGrid, itg2);
     adrTmp.get(wvg, adrFixed);
   }
+  MPIUtil::allGather(&(*adrFixed.begin()), (idx.second - idx.first) * nx * nl);
   // Write result to output file
-  const string fileName = format<double,double>("adr_fixed_rs%.3f_theta%.3f_QSTLS.bin",
-						in.getCoupling(), in.getDegeneracy());
-  writeAdrFixedFile(adrFixed, fileName);
-  cout << "Done" << endl;
+  if (MPIUtil::isRoot()) {
+    const string fileName = format<double,double>("adr_fixed_rs%.3f_theta%.3f_QSTLS.bin",
+						  in.getCoupling(), in.getDegeneracy());
+    writeAdrFixedFile(adrFixed, fileName);
+  }
+  if (verbose) cout << "Done" << endl;
 }
 
 void Qstls::writeAdrFixedFile(const Vector3D &res,

@@ -5,9 +5,9 @@ from glob import glob
 import zipfile as zf
 import numpy as np
 import pandas as pd
+import qupled.util as qu
 import qupled.qupled as qp
 import qupled.classic as qc
-import qupled.util as qu
 
 # -----------------------------------------------------------------------
 # Qstls class
@@ -110,10 +110,12 @@ class Qstls(qc.Stls):
 
     # Unpack zip folder with fixed component of the auxiliary density response
     # This is only a hook to the corresponding method in QstlsIet
+    @qu.MPI.runOnlyOnRoot
     def _unpackFixedAdrFiles(self) -> None:
         pass
     
     # Save results to disk
+    @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. 
         """
@@ -219,6 +221,7 @@ class QstlsIet(Qstls):
         
 
     # Unpack zip folder with fixed component of the auxiliary density response
+    @qu.MPI.runOnlyOnRoot
     def _unpackFixedAdrFiles(self) -> None:
         """ Unpacks the zip file storing the fixed component of the auxiliary density response """
         if (self.inputs.fixediet != ""):
@@ -239,6 +242,7 @@ class QstlsIet(Qstls):
 
             
     # Save results to disk
+    @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
         """ 
         Stores the results obtained by solving the scheme. 

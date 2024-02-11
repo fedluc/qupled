@@ -402,8 +402,11 @@ namespace MPIUtil {
   constexpr MPI_Comm MPICommunicator = MPI_COMM_WORLD;
 
   // Get rank of MPI process
-  int getRank();
+  int rank();
 
+  // Get total number of MPI processes
+  int numberOfRanks();
+  
   // Check if the process is the root process
   bool isRoot();
 
@@ -418,7 +421,13 @@ namespace MPIUtil {
 
   // Get wall time
   double timer();
-  
+
+  // Get start and finish index for parallelized for loop
+  std::pair<int, int> getLoopIndexes(const int size);
+
+  // Synchronize data among all ranks
+  void allGather(double* data, const int size);
+ 
 }
 
 #endif
