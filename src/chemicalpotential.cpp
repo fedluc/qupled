@@ -1,5 +1,6 @@
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_fermi_dirac.h>
+#include "util.hpp"
 #include "numerics.hpp"
 #include "chemicalpotential.hpp"
 
