@@ -1,8 +1,30 @@
 #include <iostream>
+#include "util.hpp"
 #include "numerics.hpp"
 
 using namespace std;
 using namespace GslWrappers;
+
+// -----------------------------------------------------------------
+// C++ wrappers to GSL objects
+// -----------------------------------------------------------------
+
+template<typename Func, typename... Args>
+void GslWrappers::callGSLFunction(Func&& gslFunction, Args&&... args) {
+  int status = gslFunction(std::forward<Args>(args)...);
+  if (status) {
+    MPIUtil::throwError("GSL error: " + std::to_string(status) + ", "
+			+ std::string(gsl_strerror(status)));
+  }
+}
+
+template<typename Ptr, typename Func, typename... Args>
+void GslWrappers::callGSLAlloc(Ptr& ptr, Func&& gslFunction, Args&&... args) {
+  ptr = gslFunction(std::forward<Args>(args)...);
+  if (!ptr) {
+    MPIUtil::throwError("GSL error: allocation error");
+  }
+}
 
 // -----------------------------------------------------------------
 // Interpolator class
@@ -133,6 +155,17 @@ double Interpolator2D::eval(const double x, const double y) const {
 // BrentRootSolver class
 // -----------------------------------------------------------------
 
+// Constructor
+BrentRootSolver::BrentRootSolver() : rst(gsl_root_fsolver_brent) { 
+  callGSLAlloc(rs, gsl_root_fsolver_alloc, rst) ;
+}
+
+// Destructor 
+BrentRootSolver::~BrentRootSolver() {
+  gsl_root_fsolver_free(rs);
+}
+
+// Invoke root solver
 void BrentRootSolver::solve(const function<double(double)> func,
 			    const vector<double> guess){
   // Set up function
@@ -177,6 +210,17 @@ void SecantSolver::solve(const function<double(double)> func,
 // Integrator1D class
 // -----------------------------------------------------------------
 
+// Constructor
+Integrator1D::Integrator1D(const double &relErr_) : limit(100), relErr(relErr_) {
+  callGSLAlloc(wsp, gsl_integration_cquad_workspace_alloc, limit);
+}
+
+// Destructor
+Integrator1D::~Integrator1D(){
+  gsl_integration_cquad_workspace_free(wsp);
+}
+
+// Compute integral
 void Integrator1D::compute(const function<double(double)> func,
 			   const double xMin,
 			   const double xMax){
@@ -195,6 +239,22 @@ void Integrator1D::compute(const function<double(double)> func,
 // Integrator1DFourier class
 // -----------------------------------------------------------------
 
+// Constructor
+Integrator1DFourier::Integrator1DFourier(const double r_, const double relErr_) : limit(1000), r(r_),
+										  relErr(relErr_) {
+  callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
+  callGSLAlloc(wspc, gsl_integration_workspace_alloc, limit);
+  callGSLAlloc(qtab, gsl_integration_qawo_table_alloc, 0.0, 1.0, GSL_INTEG_SINE, limit);
+}
+
+// Destructor
+Integrator1DFourier:: ~Integrator1DFourier(){
+  gsl_integration_workspace_free(wsp);
+  gsl_integration_workspace_free(wspc); 
+  gsl_integration_qawo_table_free(qtab);
+}
+
+// Compute integral
 void Integrator1DFourier::compute(const function<double(double)> func){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
@@ -213,6 +273,7 @@ void Integrator1DFourier::compute(const function<double(double)> func){
 // Integrator2D class
 // -----------------------------------------------------------------
 
+// Compute integral
 void Integrator2D::compute(const function<double(double)> func1,
 			   const function<double(double)> func2,
 			   const double xMin,

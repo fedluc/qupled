@@ -1,4 +1,3 @@
-#include <mpi.h>
 #include "util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
@@ -11,10 +10,8 @@ using namespace thermoUtil;
 // Constructor
 Rpa::Rpa(const RpaInput &in_,
 	 const bool verbose_) : in(in_),
-				verbose(verbose_),
+				verbose(verbose_ && MPIUtil::isRoot()),
 				itg(in_.getIntError()) {
-  // Set verbosity so that only the root process can print
-  verbose = verbose && MPIUtil::isRoot();
   // Assemble the wave-vector grid
   buildWvGrid();
   // Allocate arrays to the correct size

@@ -543,5 +543,29 @@ namespace MPIUtil {
   bool isRoot() {
     return getRank() == 0;
   }
+
+  bool isSingleProcess() {
+    int numRanks;
+    MPI_Comm_size(MPICommunicator, &numRanks);
+    return numRanks == 1;
+  }
+
+  void throwError(const string& errMsg) {
+    if (MPIUtil::isSingleProcess()) {
+      // Throw a catchable error if only one process is used
+      throw std::runtime_error(errMsg);
+    }
+    // Abort MPI if more than one process is running
+    std::cerr << errMsg << std::endl;
+    MPIUtil::abort();
+  }
+  
+  void abort() {
+    MPI_Abort(MPICommunicator, 1);
+  }
+
+  double timer() {
+    return MPI_Wtime();
+  }
   
 }

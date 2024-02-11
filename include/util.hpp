@@ -406,6 +406,18 @@ namespace MPIUtil {
 
   // Check if the process is the root process
   bool isRoot();
+
+  // Check if only one rank is used
+  bool isSingleProcess();
+
+  // Throw error with description given in errMsg
+  void throwError(const std::string& errMsg);
+  
+  // Abort MPI
+  void abort();
+
+  // Get wall time
+  double timer();
   
 }
 

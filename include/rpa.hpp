@@ -23,7 +23,7 @@ protected:
   // Input data
   const RpaInput in;
   // Output verbosity
-  bool verbose;
+  const bool verbose;
   // Name of the recovery files
   std::string recoveryFileName;
   // Integrator

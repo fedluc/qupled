@@ -37,25 +37,14 @@ namespace GslWrappers {
   
   };
 
-  // Wrappers to handle GSL errors
+  // Wrapper to handle errors in GSL functions
   template<typename Func, typename... Args>
-  void callGSLFunction(Func&& gslFunction, Args&&... args) {
-    int status = gslFunction(std::forward<Args>(args)...);
-    if (status) {
-      throw std::runtime_error("GSL error: " + std::to_string(status) + ", "
-			       + std::string(gsl_strerror(status)));
-    }
-  }
+  void callGSLFunction(Func&& gslFunction, Args&&... args);
 
+  // Wrapper to handle allocation errors in GSL functions
   template<typename Ptr, typename Func, typename... Args>
-  void callGSLAlloc(Ptr& ptr, Func&& gslFunction, Args&&... args) {
-    ptr = gslFunction(std::forward<Args>(args)...);
-    if (!ptr) {
-      throw std::runtime_error("GSL error: allocation error");
-    }
-  }
+  void callGSLAlloc(Ptr& ptr, Func&& gslFunction, Args&&... args);
 
- 
 }
 
 // -----------------------------------------------------------------
@@ -185,12 +174,8 @@ private:
   
 public:
 
-  BrentRootSolver() : rst(gsl_root_fsolver_brent) { 
-    GslWrappers::callGSLAlloc(rs, gsl_root_fsolver_alloc, rst) ;
-  }
-  ~BrentRootSolver() {
-    gsl_root_fsolver_free(rs);
-  }
+  BrentRootSolver();
+  ~BrentRootSolver();
   void solve(const std::function<double(double)> func,
 	     const std::vector<double> guess);
 };
@@ -234,15 +219,11 @@ private:
 public:
 
   // Constructors
-  Integrator1D(const double &relErr_) : limit(100), relErr(relErr_) {
-    GslWrappers::callGSLAlloc(wsp, gsl_integration_cquad_workspace_alloc, limit);
-  }
+  Integrator1D(const double &relErr_);
   Integrator1D(const Integrator1D& other) : Integrator1D(other.relErr) { ; }
   Integrator1D() : Integrator1D(1.0e-5) { ; }
   // Destructor
-  ~Integrator1D(){
-    gsl_integration_cquad_workspace_free(wsp);
-  }
+  ~Integrator1D();
   // Compute integral
   void compute(const std::function<double(double)> func,
 	       const double xMin,
@@ -316,21 +297,12 @@ private:
 public:
 
   // Constructors
-  Integrator1DFourier(const double r_, const double relErr_) : limit(1000), r(r_),
-							       relErr(relErr_) {
-    GslWrappers::callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
-    GslWrappers::callGSLAlloc(wspc, gsl_integration_workspace_alloc, limit);
-    GslWrappers::callGSLAlloc(qtab, gsl_integration_qawo_table_alloc, 0.0, 1.0, GSL_INTEG_SINE, limit);
-  }
+  Integrator1DFourier(const double r_, const double relErr_);
   Integrator1DFourier(const double r_) : Integrator1DFourier(r_, 1.0e-6) { ; }
   // Set spatial position (to re-use the integrator for different r)
   void setR(const double r_) {r = r_;};
   // Destructor
-  ~Integrator1DFourier(){
-    gsl_integration_workspace_free(wsp);
-    gsl_integration_workspace_free(wspc); 
-    gsl_integration_qawo_table_free(qtab);
-  }
+  ~Integrator1DFourier();
   // Compute integral
   void compute(const std::function<double(double)> func);
   // Getters
