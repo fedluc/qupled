@@ -40,7 +40,7 @@ void Qstls::doIterations() {
   }
   if (MPIUtil::numberOfRanks() > 1 && useIet) {
     MPIUtil::throwError("Multi-process calculations are not available "
-			" for the QSTLS-IET schemes");
+			"for the QSTLS-IET schemes");
   }
   const int maxIter = in.getNIter();
   const int outIter = in.getOutIter();
