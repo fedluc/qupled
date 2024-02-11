@@ -110,6 +110,7 @@ class Rpa():
         self._save()
         
     # Check that the dielectric scheme was solved without errors
+    @qu.MPI.runOnlyOnRoot
     def _checkStatusAndClean(self, status : bool) -> None:
         """ Checks that the scheme was solved correctly and removes temporarary files generated at run-time
         
@@ -117,9 +118,8 @@ class Rpa():
                status: status obtained from the native code. If status == 0 the scheme was solved correctly.
         """
         if (status == 0):
-            if (qu.MPI().isRoot()) :
-                if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
-                print("Dielectric theory solved successfully!")
+            if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
+            print("Dielectric theory solved successfully!")
         else:
             sys.exit("Error while solving the dielectric theory")
     
@@ -129,30 +129,29 @@ class Rpa():
         self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
                                                          self.inputs.degeneracy,
                                                          self.inputs.theory)
-    
+    @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
         """ Stores the results obtained by solving the scheme.
         
         """
-        if (qu.MPI().isRoot()) :
-            assert(self.scheme is not None)
-            pd.DataFrame({
-                "coupling" : self.inputs.coupling,
-                "degeneracy" : self.inputs.degeneracy,
-                "theory" : self.inputs.theory,
-                "resolution" : self.inputs.resolution,
-                "cutoff" : self.inputs.cutoff,
-                "matsubara" : self.inputs.matsubara
-            }, index=["inputs"]).to_hdf(self.hdfFileName, key="inputs", mode="w")
-            pd.DataFrame(self.scheme.idr).to_hdf(self.hdfFileName, key="idr")
-            pd.DataFrame(self.scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
-            pd.DataFrame(self.scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
-            pd.DataFrame(self.scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
-            pd.DataFrame(self.scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
-            pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
-        qu.MPI().barrier()
+        assert(self.scheme is not None)
+        pd.DataFrame({
+            "coupling" : self.inputs.coupling,
+            "degeneracy" : self.inputs.degeneracy,
+            "theory" : self.inputs.theory,
+            "resolution" : self.inputs.resolution,
+            "cutoff" : self.inputs.cutoff,
+            "matsubara" : self.inputs.matsubara
+        }, index=["inputs"]).to_hdf(self.hdfFileName, key="inputs", mode="w")
+        pd.DataFrame(self.scheme.idr).to_hdf(self.hdfFileName, key="idr")
+        pd.DataFrame(self.scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
+        pd.DataFrame(self.scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
+        pd.DataFrame(self.scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
+        pd.DataFrame(self.scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
+        pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
     
     # Compute radial distribution function
+    @qu.MPI.runOnlyOnRoot
     def computeRdf(self, rdfGrid : np.ndarray, writeToHdf : bool = True) -> np.array:
         """ Computes the radial distribution function from the data stored in the output file.
         
@@ -165,11 +164,11 @@ class Rpa():
             The radial distribution function
         
         """
-        if (qu.MPI().isRoot()) :
-            self._checkSolution("compute the radial distribution function")
-            return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
+        self._checkSolution("compute the radial distribution function")
+        return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
 
     # Compute the internal energy
+    @qu.MPI.runOnlyOnRoot
     def computeInternalEnergy(self) -> float:
         """ Computes the internal energy from the data stored in the output file.
 
@@ -177,11 +176,11 @@ class Rpa():
             The internal energy
         
         """
-        if (qu.MPI().isRoot()) :
-            self._checkSolution("compute the internal energy")
-            return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.inputs.coupling)
+        self._checkSolution("compute the internal energy")
+        return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.inputs.coupling)
         
     # Plot results
+    @qu.MPI.runOnlyOnRoot
     def plot(self, toPlot : list[str], matsubara : np.ndarray = None, rdfGrid : np.ndarray = None) -> None:
         """ Plots the results stored in the output file`.
 
@@ -195,10 +194,9 @@ class Rpa():
                 distribution function is plotted (Default = None, see :func:`qupled.classic.Stls.computeRdf`)
         
         """
-        if (qu.MPI().isRoot()):
-            self._checkSolution("plot results")
-            if ("rdf" in toPlot) : self.computeRdf(rdfGrid)
-            qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
+        self._checkSolution("plot results")
+        if ("rdf" in toPlot) : self.computeRdf(rdfGrid)
+        qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
 
 
     # Check if a solution is available to perform a given action
@@ -356,6 +354,7 @@ class Stls(Rpa):
         self._save()
 
     # Save results to disk
+    @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. 
         """
@@ -461,6 +460,7 @@ class StlsIet(Stls):
         self._save()
         
     # Save results to disk
+    @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. 
         """
@@ -557,6 +557,7 @@ class VSStls(Stls):
         self._save()
 
     # Save results
+    @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. 
         """

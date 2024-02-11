@@ -215,15 +215,26 @@ class Plot():
 class MPI():
 
     """ Class to handle the calls to the MPI API """
+    
     def __init__(self):
         self.communicator = MPINative.COMM_WORLD
 
-
     def getRank(self):
+        """ Get rank of the process """
         return self.communicator.Get_rank()
 
     def isRoot(self):
+        """ Check if the current process is root (rank 0) """
         return self.getRank() == 0
 
     def barrier(self):
+        """ Setup and MPI barrier """
         self.communicator.Barrier()
+
+    def runOnlyOnRoot(func):
+        """ Python decorator for all methods that have to be run only by root """
+        def wrapper(*args, **kwargs):
+            if MPI().isRoot():
+                return func(*args, **kwargs)
+
+        return wrapper
