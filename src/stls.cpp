@@ -45,6 +45,17 @@ int Stls::compute(){
   }
 }
 
+// Initialize basic properties
+void Stls::init(){
+  Rpa::init();
+  if (useIet) {
+    if (verbose) cout << "Computing bridge function adder: ";
+    computeBf();
+    if (verbose) cout << "Done" << endl;
+  }
+}
+
+
 // Compute static local field correction
 void Stls::computeSlfc(){
   assert(ssf.size() == wvg.size());

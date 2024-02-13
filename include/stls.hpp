@@ -28,6 +28,8 @@ protected:
   std::vector<double> slfcNew;
   // Bridge function (for iet schemes)
   std::vector<double> bf;
+  // Initialize basic properties
+  void init();
   // Compute static local field correction
   void computeSlfc();
   void computeSlfcStls();
