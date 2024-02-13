@@ -24,6 +24,7 @@ class Hdf():
             "coupling"   : self.Entries("Coupling parameter", "number"),
             "cutoff"     : self.Entries("Cutoff for the wave-vector grid", "number"),
             "degeneracy" : self.Entries("Degeneracy parameter", "number"),
+            "error"      : self.Entries("Minimum error for convergence", "number"),
             "fxcGrid"    : self.Entries("Coupling parameter", "numpy"),
             "fxci"       : self.Entries("Free Energy integrand", "numpy2D"),
             "matsubara"  : self.Entries("Number of matsubara frequencies", "number"),
@@ -124,7 +125,7 @@ class Hdf():
             elif ( name == "fxci" ) :
                 x = self.read(hdf, [name, "fxcGrid"])
                 Plot.plot1D(x["fxcGrid"], x[name][1,:], self.entries["fxcGrid"].description, self.entries[name].description)
-            elif ( name in ["sdr", "slfc", "ssf", "ssfHF"] ) :
+            elif ( name in ["bf", "sdr", "slfc", "ssf", "ssfHF"] ) :
                 x = self.read(hdf, [name, "wvg"])
                 Plot.plot1D(x["wvg"], x[name], self.entries["wvg"].description, self.entries[name].description)
             else:
