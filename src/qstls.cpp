@@ -1,4 +1,4 @@
-#include <omp.h>
+#include <numeric>
 #include "util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
@@ -13,10 +13,30 @@ using namespace binUtil;
 // QSTLS class
 // -----------------------------------------------------------------
 
+Qstls::Qstls(const QstlsInput& in_) : Stls(in_),
+				      in(in_) {
+  // Check if iet scheme should be solved
+  useIet = in.getTheory() == "QSTLS-HNC" ||
+           in.getTheory() == "QSTLS-IOI" ||
+           in.getTheory() == "QSTLS-LCT";
+  // Allocate arrays
+  const size_t nx = wvg.size();
+  const size_t nl = in.getNMatsubara();
+  adr.resize(nx, nl);
+  ssfOld.resize(nx);
+  adrFixed.resize(nx, nl, nx);
+  if (useIet) {
+    bf.resize(nx);
+    adrOld.resize(nx, nl);
+  }
+  // Deallocate arrays that are inherited but not used
+  vector<double>().swap(slfcNew);
+  // Set number of OMP threads
+  omp_set_num_threads(in.getNThreads());
+}
+
 int Qstls::compute(){
   try {
-    // Set number of OMP threads
-    omp_set_num_threads(in.getNThreads());
     // Solve scheme
     init();
     if (verbose) cout << "Structural properties calculation ..." << endl;
@@ -27,6 +47,16 @@ int Qstls::compute(){
   catch (const runtime_error& err) {
     cerr << err.what() << endl;
     return 1;
+  }
+}
+
+void Qstls::init(){
+  Stls::init();
+  if (verbose) cout << "Computing fixed component of the auxiliary density response: ";
+  computeAdrFixed();
+  if (verbose) cout << "Done" << endl;
+  if (useIet) {
+    // Add calls to adrFixedIet
   }
 }
 
@@ -51,7 +81,7 @@ void Qstls::doIterations() {
   initialGuess();
   while (counter < maxIter+1 && err > minErr ) {
     // Start timing
-    double tic = omp_get_wtime();
+    double tic = MPIUtil::timer();
     // Update auxiliary density response
     computeAdr();
     // Update static structure factor
@@ -64,7 +94,7 @@ void Qstls::doIterations() {
     // Write output
     if (counter % outIter == 0) { writeRecovery(); };
     // End timing
-    double toc = omp_get_wtime();
+    double toc = MPIUtil::timer();
     // Print diagnostic
     if (verbose) {
        printf("--- iteration %d ---\n", counter);
@@ -77,13 +107,10 @@ void Qstls::doIterations() {
 
 // Initial guess for qstls iterations
 void Qstls::initialGuess() {
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  // Resize variables used in iterations
-  ssf.resize(nx);
-  adr.resize(nx, nl);
-  ssfOld.resize(nx);
-  if (useIet) { adrOld.resize(nx, nl); }
+  assert(!ssf.empty());
+  assert(!ssfOld.empty());
+  assert(!adr.empty());
+  assert(!useIet || !adrOld.empty());
   // From recovery file
   const string& fileName = in.getRecoveryFileName();
   if (!fileName.empty()) {
@@ -163,15 +190,11 @@ void Qstls::initialGuessAdr(const vector<double> &wvg_,
 // Compute auxiliary density response
 void Qstls::computeAdr() {
   const int nx = wvg.size();
-  assert(adr.size() > 0);
-  assert(ssfOld.size() > 0);
-  if (slfc.size() == 0) slfc.resize(nx);
   if (in.getCoupling() == 0) {
     fill(slfc, 0.0);
     adr.fill(0.0);
     return;
   }
-  if (adrFixed.size() == 0) computeAdrFixed();
   const Interpolator1D ssfi(wvg, ssfOld);
   for (int i=0; i<nx; ++i) {
     Adr adrTmp(in.getDegeneracy(), wvg.front(),
@@ -225,33 +248,32 @@ void Qstls::updateSolution(){
 
 void Qstls::computeAdrFixed() {
   // Check if it adrFixed can be loaded from input
-  readAdrFixedFile(adrFixed, in.getFixed(), false);
-  if (adrFixed.size() > 0) { return; }
+  if (!in.getFixed().empty()) {
+    readAdrFixedFile(adrFixed, in.getFixed(), false);
+    return;
+  }
   // Compute from scratch
-  if (verbose) cout << "Computing fixed component of the auxiliary density response: ";
   fflush(stdout);
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
+  const int nxnl = nx * nl;
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
-  adrFixed.resize(nx, nl, nx);
   // Parallel for loop (Hybrid MPI and OpenMP)
-  pair<int, int> idx = MPIUtil::getLoopIndexes(nx);
-  #pragma omp parallel for
-  for (int i=idx.first; i<idx.second; ++i) {
+  auto loopFunc = [&](int i)->void{
     Integrator2D itg2;
     AdrFixed adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
 		    wvg[i], mu, itgGrid, itg2);
     adrTmp.get(wvg, adrFixed);
-  }
-  MPIUtil::allGather(&(*adrFixed.begin()), (idx.second - idx.first) * nx * nl);
+  };
+  const auto& loopData = MPIUtil::parallelFor(loopFunc, nx, true);
+  MPIUtil::allGather(adrFixed.data(), loopData, nxnl);
   // Write result to output file
   if (MPIUtil::isRoot()) {
     const string fileName = format<double,double>("adr_fixed_rs%.3f_theta%.3f_QSTLS.bin",
 						  in.getCoupling(), in.getDegeneracy());
     writeAdrFixedFile(adrFixed, fileName);
   }
-  if (verbose) cout << "Done" << endl;
 }
 
 void Qstls::writeAdrFixedFile(const Vector3D &res,
@@ -330,8 +352,6 @@ void Qstls::computeAdrIet() {
   const int nl = in.getNMatsubara();
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   assert(adrOld.size() > 0);
-  // Compute bridge function
-  if (bf.size() == 0) computeBf();
   // Compute fixed part
   computeAdrFixedIet();
   // Setup interpolators
@@ -410,6 +430,9 @@ void Qstls::getAdrFixedIetFileInfo() {
 
 // Recovery files
 void Qstls::writeRecovery() {
+  if (!MPIUtil::isRoot()) {
+    return;
+  }
   ofstream file;
   file.open(recoveryFileName, ios::binary);
   if (!file.is_open()) {

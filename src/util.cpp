@@ -164,7 +164,14 @@ namespace vecUtil {
     return v.end();
   }
   
-  
+  double* Vector2D::data() {
+    return v.data();
+  }
+
+  const double* Vector2D::data() const {
+    return v.data();
+  }
+    
   void Vector2D::fill(const double &num) {
     std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;});
   }
@@ -274,6 +281,15 @@ namespace vecUtil {
     return v.end();
   }
 
+  double* Vector3D::data() {
+    return v.data();
+  }
+
+  const double* Vector3D::data() const {
+    return v.data();
+  }
+  
+  
   void Vector3D::fill(const double &num) {
     std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;});
   }
@@ -572,23 +588,57 @@ namespace MPIUtil {
     return MPI_Wtime();
   }
 
-  pair<int, int> getLoopIndexes(const int size) {
-    pair<int, int> idx = {0, size};
+  pair<int, int> getLoopIndexes(const int loopSize,
+				const int thisRank) {
+    pair<int, int> idx = {0, loopSize};
     const int nRanks = numberOfRanks();
     if (nRanks == 1) { return idx; }
-    const int thisRank = rank();
-    int localSize = size / nRanks;
-    int reminder = size % nRanks;
-    if (thisRank < reminder) { localSize++; }
-    idx.first = thisRank * localSize;
-    idx.second = min((thisRank + 1) * localSize, size);
+    int localSize = loopSize / nRanks;
+    int remainder = loopSize % nRanks;
+    idx.first = thisRank * localSize + std::min(thisRank, remainder);
+    idx.second = idx.first + localSize + (thisRank < remainder ? 1 : 0);
+    idx.second = std::min(idx.second, loopSize);
     return idx;
   }
 
-  void allGather(double* data, const int size) {
-    MPI_Allgather(MPI_IN_PLACE, size, MPI_DOUBLE,
-		  data, size, MPI_DOUBLE,
-		  MPICommunicator);
+  MPIParallelForData getAllLoopIndexes(const int loopSize) {
+    std::vector<pair<int, int>> out;
+    for (int i = 0; i < numberOfRanks(); ++i) {
+      out.push_back(getLoopIndexes(loopSize, i));
+    }
+    return out;
+  }
+
+  MPIParallelForData parallelFor(const function<void(int)>& loopFunc,
+				 const int loopSize,
+				 const bool useOMP) {
+    MPIParallelForData allIdx = getAllLoopIndexes(loopSize);
+    const auto& thisIdx = allIdx[rank()];
+    #pragma omp parallel for if (useOMP)
+    for (int i=thisIdx.first; i<thisIdx.second; ++i) {
+      loopFunc(i);
+    }
+    return allIdx;
+  }
+  
+  void allGather(double* dataToGather,
+		 const MPIParallelForData& loopData,
+		 const int countsPerLoop) {
+    std::vector<int> recieverCounts;
+    for (const auto& i : loopData) {
+      const int loopSpan = i.second - i.first;
+      recieverCounts.push_back(loopSpan * countsPerLoop);
+    }
+    std::vector<int> displacements(recieverCounts.size(), 0);
+    std::partial_sum(recieverCounts.begin(),
+		     recieverCounts.end()-1,
+		     displacements.begin()+1,
+		     plus<double>());
+    MPI_Allgatherv(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+		   dataToGather,
+		   recieverCounts.data(),
+		   displacements.data(),
+		   MPI_DOUBLE, MPI_COMM_WORLD);
   }
   
 }

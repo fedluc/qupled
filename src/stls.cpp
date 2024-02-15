@@ -80,7 +80,6 @@ void Stls::computeSlfcIet() {
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const Interpolator1D ssfItp(wvg, ssf);
   const Interpolator1D slfcItp(wvg, slfc);
-  if (bf.size() == 0) computeBf();
   const Interpolator1D bfItp(wvg, bf);
   for (size_t i=0; i<wvg.size(); ++i){
     SlfcIet slfcTmp(wvg[i], wvg.front(), wvg.back(),

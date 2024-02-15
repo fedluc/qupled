@@ -122,6 +122,8 @@ namespace vecUtil {
     std::vector<double>::iterator end();
     std::vector<double>::const_iterator begin() const;
     std::vector<double>::const_iterator end() const;
+    double* data();
+    const double* data() const;
     void fill(const double &num);
     void fill(const size_t i,
 	      const double &num);
@@ -168,6 +170,8 @@ namespace vecUtil {
     std::vector<double>::iterator end();
     std::vector<double>::const_iterator begin() const;
     std::vector<double>::const_iterator end() const;
+    double* data();
+    const double* data() const;
     void fill(const double &num);
     void fill(const size_t i,
 	      const size_t j,
@@ -400,7 +404,7 @@ namespace binUtil {
 namespace MPIUtil {
 
   constexpr MPI_Comm MPICommunicator = MPI_COMM_WORLD;
-
+  
   // Get rank of MPI process
   int rank();
 
@@ -422,12 +426,26 @@ namespace MPIUtil {
   // Get wall time
   double timer();
 
-  // Get start and finish index for parallelized for loop
-  std::pair<int, int> getLoopIndexes(const int size);
+  // Data structure to track how loop indexes are distributed
+  using MPIParallelForData = std::vector<std::pair<int, int>>;
+  
+  // Get start and finish index for parallel for loop on one rank
+  std::pair<int, int> getLoopIndexes(const int loopSize,
+				     const int thisRank);
 
+  // Get start and finish index for parallel for loop on all ranks
+  MPIParallelForData getAllLoopIndexes(const int loopSize);
+
+  // Wrapper for parallel for loop
+  MPIParallelForData parallelFor(const std::function<void(int)>& loopFunc,
+				 const int loopSize,
+				 const bool useOMP);
+  
   // Synchronize data among all ranks
-  void allGather(double* data, const int size);
- 
+  void allGather(double* dataToGather,
+		 const MPIParallelForData& loopData,
+		 const int countsPerLoop);
+  
 }
 
 #endif

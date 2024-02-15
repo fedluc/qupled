@@ -32,6 +32,8 @@ private:
   std::map<int,std::pair<std::string,bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
   std::vector<double> ssfOld;
+  // Initialize basic properties
+  void init();
   // Compute auxiliary density response
   void computeAdr();
   void computeAdrFixed();
@@ -72,15 +74,10 @@ private:
 		    vecUtil::Vector3D &adrFixed_,
 		    double &Theta,
 		    int &nl) const;
-  // Check if iet schemes should be used
-  void checkIet() { useIet = in.getTheory() == "QSTLS-HNC" ||
-      in.getTheory() == "QSTLS-IOI" ||
-      in.getTheory() == "QSTLS-LCT";}
-
 public:
 
   // Constructor
-  Qstls(const QstlsInput &in_) : Stls(in_), in(in_) { checkIet(); };
+  Qstls(const QstlsInput &in_);
   // Compute qstls scheme
   int compute();
   // Getters
