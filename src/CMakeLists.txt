@@ -1,6 +1,3 @@
-# Naming for debug target
-set(CMAKE_DEBUG_POSTFIX _debug)
-
 # Setup python environment
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(Boost
