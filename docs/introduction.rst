@@ -35,10 +35,10 @@ Qupled is a hybrid C++/python code that can be built by using the CMake build sy
    cd qupled
    mkdir build
    cd build
-   cmake ..
+   cmake -DCMAKE_BUILD_TYPE=Release ..
    cmake --build .
    
-This will produce the folder ``/build/qupled`` which contains the python package that can be used to solve the dielectric schemes. The python package can be installed in a folder accessible when running python by typing ``cmake --install .`` from the build folder. The build directory can be cleaned by running ``make true-clean``.
+This will produce the folder ``/build/qupled`` which contains the python package that can be used to solve the dielectric schemes. The python package can be installed in a folder accessible when running python by typing ``cmake --install .`` from the build folder. The build directory can be cleaned by running ``make true-clean``. For debugging purposes it is also possible to build a debug configuration by typing ``cmake -DCMAKE_BUILD_TYPE=Debug ..`` followed by the build command.
 
 Dependencies
 ------------
