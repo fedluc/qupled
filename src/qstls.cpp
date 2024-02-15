@@ -17,6 +17,11 @@ using namespace binUtil;
 
 Qstls::Qstls(const QstlsInput& in_) : Stls(in_),
 				      in(in_) {
+    // Throw error message for ground state calculations
+  if (in.getDegeneracy() == 0.0) {
+    MPIUtil::throwError("Ground state calculations are not available "
+			"for the quantum schemes");
+  }
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "QSTLS-HNC" ||
            in.getTheory() == "QSTLS-IOI" ||
@@ -39,7 +44,6 @@ Qstls::Qstls(const QstlsInput& in_) : Stls(in_),
 
 int Qstls::compute(){
   try {
-    // Solve scheme
     init();
     if (verbose) cout << "Structural properties calculation ..." << endl;
     doIterations();
@@ -58,22 +62,15 @@ void Qstls::init(){
   computeAdrFixed();
   if (verbose) cout << "Done" << endl;
   if (useIet) {
-    // Add calls to adrFixedIet
+    if (verbose) cout << "Computing fixed component of the iet auxiliary density response: ";
+    computeAdrFixedIet();
+    if (verbose) cout << "Done" << endl;
   }
 }
 
 
 // qstls iterations
 void Qstls::doIterations() {
-  // Throw error message for ground state calculations
-  if (in.getDegeneracy() == 0.0) {
-    MPIUtil::throwError("Ground state calculations are not available "
-			"for the quantum schemes");
-  }
-  if (MPIUtil::numberOfRanks() > 1 && useIet) {
-    MPIUtil::throwError("Multi-process calculations are not available "
-			"for the QSTLS-IET schemes");
-  }
   const int maxIter = in.getNIter();
   const int outIter = in.getOutIter();
   const double minErr = in.getErrMin();
@@ -354,8 +351,6 @@ void Qstls::computeAdrIet() {
   const int nl = in.getNMatsubara();
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   assert(adrOld.size() > 0);
-  // Compute fixed part
-  computeAdrFixedIet();
   // Setup interpolators
   const Interpolator1D ssfi(wvg, ssfOld);
   const Interpolator1D bfi(wvg, bf);
@@ -371,15 +366,16 @@ void Qstls::computeAdrIet() {
   // Compute qstls-iet contribution to the adr
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   Vector2D adrIet(nx, nl);
-#pragma omp parallel for
-  for (int i=0; i<nx; ++i) {
+  auto loopFunc = [&](int i)->void{
     Integrator2D itgPrivate;
     Vector3D adrFixedPrivate;
     readAdrFixedFile(adrFixedPrivate, adrFixedIetFileInfo.at(i).first, true);
     AdrIet adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
 		  wvg[i], ssfi, dlfci, bfi, itgGrid, itgPrivate);
     adrTmp.get(wvg, adrFixedPrivate, adrIet);
-  }
+  };
+  const auto& loopData = MPIUtil::parallelFor(loopFunc, nx, true);
+  MPIUtil::allGather(adrIet.data(), loopData, nl);
   // Sum qstls and qstls-iet contributions to adr
   adr.sum(adrIet);
 }
@@ -395,20 +391,18 @@ void Qstls::computeAdrFixedIet() {
   }
   if (idx.size() == 0) { return; }
   // Write necessary files
-  cout << "Computing fixed component of the iet auxiliary density response: ";
-  fflush(stdout);
-#pragma omp parallel for
-  for (size_t i=0; i<idx.size(); ++i) {
+  MPIUtil::barrier();
+  auto loopFunc = [&](int i)->void{
     Integrator1D itgPrivate;
     Vector3D res(nl, nx, nx);
     AdrFixedIet adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
 		       wvg[idx[i]], mu, itgPrivate);
     adrTmp.get(wvg, res);
     writeAdrFixedFile(res, adrFixedIetFileInfo.at(idx[i]).first);
-  }
+  };
+  const auto& loopData = MPIUtil::parallelFor(loopFunc, idx.size(), true);
   // Update content of adrFixedIetFileInfo
   getAdrFixedIetFileInfo();
-  cout << "Done" << endl;
 }
 
 void Qstls::getAdrFixedIetFileInfo() {

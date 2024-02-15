@@ -214,25 +214,33 @@ class QstlsIet(Qstls):
         and containing the fixed component of the auxiliary density response for the IET schemes.
         """
         self._checkInputs()
-        self._unpackFixedAdrFiles()
+        self._setFixedIetFileName()
         self.scheme = qp.Qstls(self.inputs)
         status = self.scheme.compute()
         self._checkStatusAndClean(status)
         self._setHdfFile()
         self._save()
-        
 
+    # Set name of the file with the fixed component of the auxiliary density response
+    @qu.MPI.synchronizeRanks
+    def _setFixedIetFileName(self) -> None:
+        """ Sets the file name for the file storing the fixed component of the auxiliary density response """
+        if (self.inputs.fixediet != ""):
+            self.tmpRunDir = "qupled_tmp_run_directory"
+            self._unpackFixedAdrFiles()
+            self.inputs.fixediet = self.tmpRunDir
+        
     # Unpack zip folder with fixed component of the auxiliary density response
     @qu.MPI.runOnlyOnRoot
     def _unpackFixedAdrFiles(self) -> None:
         """ Unpacks the zip file storing the fixed component of the auxiliary density response """
-        if (self.inputs.fixediet != ""):
-            self.tmpRunDir = "qupled_tmp_run_directory"
-            zipFile = zf.ZipFile(self.inputs.fixediet, "r")
-            zipFile.extractall(self.tmpRunDir)
-            self.inputs.fixediet = self.tmpRunDir
-    
+        assert(self.inputs.fixediet != "")
+        assert(self.tmpRunDir is not None)
+        zipFile = zf.ZipFile(self.inputs.fixediet, "r")
+        zipFile.extractall(self.tmpRunDir)
+        
     # Check that the dielectric scheme was solved without errors
+    @qu.MPI.runOnlyOnRoot
     def _checkStatusAndClean(self, status) -> None:
         if (self.fixediet is not None):
             rmtree(self.tmpRunDir)

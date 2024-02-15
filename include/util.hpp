@@ -412,6 +412,9 @@ namespace MPIUtil {
 
   // Get total number of MPI processes
   int numberOfRanks();
+
+  // Set an MPI Barrier
+  void barrier();
   
   // Check if the process is the root process
   bool isRoot();

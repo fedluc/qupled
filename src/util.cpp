@@ -561,6 +561,10 @@ namespace MPIUtil {
     MPI_Comm_size(MPICommunicator, &numRanks);
     return numRanks;
   }
+
+  void barrier() {
+    MPI_Barrier(MPICommunicator);
+  }
   
   bool isRoot() {
     return rank() == 0;
