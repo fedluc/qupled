@@ -211,6 +211,10 @@ double ThermoProp::computeFreeEnergy(const SIdx iStruct,
     iThermo = THETA; break;
   case SIdx::RS_DOWN_THETA_UP: case SIdx::RS_THETA_UP: case SIdx::RS_UP_THETA_UP:
     iThermo = THETA_UP; break;
+  default:
+    assert(false);
+    iThermo = THETA;
+    break;
   }
   const vector<double>& rs = structProp.getCouplingParameters();
   return thermoUtil::computeFreeEnergy(rsGrid, fxcIntegrand[iThermo], rs[iStruct], normalize);

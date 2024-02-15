@@ -6,6 +6,8 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include <limits>
+#include <cmath>
 
 // Forward declarations
 namespace boost {

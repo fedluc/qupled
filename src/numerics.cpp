@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cassert>
 #include "numerics.hpp"
 
 using namespace std;
