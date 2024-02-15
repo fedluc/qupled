@@ -232,10 +232,20 @@ class MPI():
         """ Setup and MPI barrier """
         self.communicator.Barrier()
 
+    @staticmethod
     def runOnlyOnRoot(func):
         """ Python decorator for all methods that have to be run only by root """
         def wrapper(*args, **kwargs):
             if MPI().isRoot():
                 return func(*args, **kwargs)
+
+        return wrapper
+
+    @staticmethod
+    def synchronizeRanks(func):
+        """ Python decorator for all methods that need to rank synchronization """
+        def wrapper(*args, **kwargs):
+            func(*args, **kwargs)
+            MPI().communicator.barrier()
 
         return wrapper

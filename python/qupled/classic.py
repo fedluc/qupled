@@ -73,6 +73,7 @@ class Rpa():
             sys.exit("Invalid dielectric theory")
 
     # Compute
+    @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results.
 
@@ -151,7 +152,6 @@ class Rpa():
         pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
     
     # Compute radial distribution function
-    @qu.MPI.runOnlyOnRoot
     def computeRdf(self, rdfGrid : np.ndarray, writeToHdf : bool = True) -> np.array:
         """ Computes the radial distribution function from the data stored in the output file.
         
@@ -165,10 +165,10 @@ class Rpa():
         
         """
         self._checkSolution("compute the radial distribution function")
+        if (qu.MPI().getRank() > 0) : writeToHdf = False;
         return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
 
     # Compute the internal energy
-    @qu.MPI.runOnlyOnRoot
     def computeInternalEnergy(self) -> float:
         """ Computes the internal energy from the data stored in the output file.
 
@@ -252,6 +252,7 @@ class ESA(Rpa):
 
         
     # Compute
+    @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. See the method :func:`qupled.classic.Rpa.compute`
         to see which results are saved.
@@ -341,6 +342,7 @@ class Stls(Rpa):
         if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
 
     # Compute
+    @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
         :func:`qupled.classic.Rpa.compute` by adding the option to save the minimum error for convergence. The
@@ -447,6 +449,7 @@ class StlsIet(Stls):
 
 
     # Compute
+    @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
         :func:`qupled.classic.Stls.compute` by adding the option to save the bridge function adder
@@ -542,6 +545,7 @@ class VSStls(Stls):
 
         
     # Compute
+    @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
         :func:`qupled.classic.Stls.compute` by adding the option to save the free energy integrand

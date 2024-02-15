@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <numeric>
 #include "util.hpp"
 #include "numerics.hpp"
