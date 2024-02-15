@@ -1,5 +1,8 @@
 #include <iostream>
 #include "util.hpp"
+=======
+#include <cassert>
+>>>>>>> master
 #include "numerics.hpp"
 
 using namespace std;
