@@ -5,14 +5,15 @@
 #include "chemicalpotential.hpp"
 
 using namespace std;
+using namespace parallelUtil;
 
 void ChemicalPotential::compute(const vector<double> &guess){
   auto func = [this](double mu)->double{return normalizationCondition(mu);};
   BrentRootSolver rsol;
   rsol.solve(func, guess);
   if (!rsol.success()) {
-    MPIUtil::throwError("Chemical potential: the root solver "
-			"did not converge to the desired accuracy.");
+    MPI::throwError("Chemical potential: the root solver "
+		    "did not converge to the desired accuracy.");
   }
   mu = rsol.getSolution();
 }

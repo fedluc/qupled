@@ -6,11 +6,12 @@
 
 using namespace std;
 using namespace thermoUtil;
+using namespace parallelUtil;
 
 // Constructor
 Rpa::Rpa(const RpaInput &in_,
 	 const bool verbose_) : in(in_),
-				verbose(verbose_ && MPIUtil::isRoot()),
+				verbose(verbose_ && MPI::isRoot()),
 				itg(in_.getIntError()) {
   // Assemble the wave-vector grid
   buildWvGrid();
@@ -445,8 +446,8 @@ double SsfGround::plasmon() const {
   BrentRootSolver rsol;
   rsol.solve(func, vector<double>(begin(guess),end(guess)));
   if (!rsol.success()) {
-    MPIUtil::throwError("Plasmon solver: the root solver "
-			"did not converge to the desired accuracy.");
+    MPI::throwError("Plasmon solver: the root solver "
+		    "did not converge to the desired accuracy.");
   }
   // Output
   const double fact = (4.0 *lambda *rs)/(M_PI * x * x);

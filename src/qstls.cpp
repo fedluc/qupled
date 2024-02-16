@@ -1,5 +1,4 @@
 #include <filesystem>
-#include <omp.h>
 #include <numeric>
 #include "util.hpp"
 #include "numerics.hpp"
@@ -10,6 +9,7 @@ using namespace std;
 using namespace vecUtil;
 using namespace stringUtil;
 using namespace binUtil;
+using namespace parallelUtil;
 
 // -----------------------------------------------------------------
 // QSTLS class
@@ -19,8 +19,8 @@ Qstls::Qstls(const QstlsInput& in_) : Stls(in_),
 				      in(in_) {
     // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
-    MPIUtil::throwError("Ground state calculations are not available "
-			"for the quantum schemes");
+    MPI::throwError("Ground state calculations are not available "
+		    "for the quantum schemes");
   }
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "QSTLS-HNC" ||
@@ -38,8 +38,6 @@ Qstls::Qstls(const QstlsInput& in_) : Stls(in_),
   }
   // Deallocate arrays that are inherited but not used
   vector<double>().swap(slfcNew);
-  // Set number of OMP threads
-  omp_set_num_threads(in.getNThreads());
 }
 
 int Qstls::compute(){
@@ -80,7 +78,7 @@ void Qstls::doIterations() {
   initialGuess();
   while (counter < maxIter+1 && err > minErr ) {
     // Start timing
-    double tic = MPIUtil::timer();
+    double tic = MPI::timer();
     // Update auxiliary density response
     computeAdr();
     // Update static structure factor
@@ -93,7 +91,7 @@ void Qstls::doIterations() {
     // Write output
     if (counter % outIter == 0) { writeRecovery(); };
     // End timing
-    double toc = MPIUtil::timer();
+    double toc = MPI::timer();
     // Print diagnostic
     if (verbose) {
        printf("--- iteration %d ---\n", counter);
@@ -138,7 +136,7 @@ void Qstls::initialGuess() {
   Stls stls(in, false, false);
   int status = stls.compute();
   if (status != 0) {
-    MPIUtil::throwError("Failed to compute the default initial guess");
+    MPI::throwError("Failed to compute the default initial guess");
   }
   ssfOld = stls.getSsf();
   if (useIet) { adrOld.fill(0.0); }
@@ -265,10 +263,10 @@ void Qstls::computeAdrFixed() {
 		    wvg[i], mu, itgGrid, itg2);
     adrTmp.get(wvg, adrFixed);
   };
-  const auto& loopData = MPIUtil::parallelFor(loopFunc, nx, true);
-  MPIUtil::allGather(adrFixed.data(), loopData, nxnl);
+  const auto& loopData = MPI::parallelFor(loopFunc, nx, in.getNThreads());
+  MPI::gatherLoopData(adrFixed.data(), loopData, nxnl);
   // Write result to output file
-  if (MPIUtil::isRoot()) {
+  if (MPI::isRoot()) {
     const string fileName = format<double,double>("adr_fixed_rs%.3f_theta%.3f_QSTLS.bin",
 						  in.getCoupling(), in.getDegeneracy());
     writeAdrFixedFile(adrFixed, fileName);
@@ -283,7 +281,7 @@ void Qstls::writeAdrFixedFile(const Vector3D &res,
   ofstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    MPIUtil::throwError("Output file " + fileName + " could not be created.");
+    MPI::throwError("Output file " + fileName + " could not be created.");
   }
   writeDataToBinary<int>(file, nx);
   writeDataToBinary<int>(file, nl);
@@ -292,7 +290,7 @@ void Qstls::writeAdrFixedFile(const Vector3D &res,
   writeDataToBinary<Vector3D>(file, res);
   file.close();
   if (!file) {
-    MPIUtil::throwError("Error in writing to file " + fileName);
+    MPI::throwError("Error in writing to file " + fileName);
   }
 }
 
@@ -305,7 +303,7 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    MPIUtil::throwError("Input file " + fileName + " could not be opened.");
+    MPI::throwError("Input file " + fileName + " could not be opened.");
   }
   int nx_;
   int nl_;
@@ -321,11 +319,11 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   readDataFromBinary<Vector3D>(file, res);
   file.close();
   if (!file) {
-    MPIUtil::throwError("Error in reading from file " + fileName);
+    MPI::throwError("Error in reading from file " + fileName);
   }
   if (checkAdrFixed(wvg_, Theta_, nl_) != 0) {
-    MPIUtil::throwError("Fixed component of the auxiliary density response"
-			" loaded from file is incompatible with input");
+    MPI::throwError("Fixed component of the auxiliary density response"
+		    " loaded from file is incompatible with input");
   }
 }
 
@@ -374,8 +372,8 @@ void Qstls::computeAdrIet() {
 		  wvg[i], ssfi, dlfci, bfi, itgGrid, itgPrivate);
     adrTmp.get(wvg, adrFixedPrivate, adrIet);
   };
-  const auto& loopData = MPIUtil::parallelFor(loopFunc, nx, true);
-  MPIUtil::allGather(adrIet.data(), loopData, nl);
+  const auto& loopData = MPI::parallelFor(loopFunc, nx, in.getNThreads());
+  MPI::gatherLoopData(adrIet.data(), loopData, nl);
   // Sum qstls and qstls-iet contributions to adr
   adr.sum(adrIet);
 }
@@ -389,9 +387,16 @@ void Qstls::computeAdrFixedIet() {
   for (const auto &member : adrFixedIetFileInfo) {
     if(!member.second.second) { idx.push_back(member.first); };
   }
-  if (idx.size() == 0) { return; }
+  // Check that all ranks found the same number of files
+  int nFilesToWrite = idx.size();
+  if (!MPI::isEqualOnAllRanks(idx.size())) {
+    MPI::throwError("Not all ranks can access the files with the fixed "
+		    " component of the auxiliary density response");
+  }
+  if (nFilesToWrite == 0) { return; }
+  // Barrier to ensure that all ranks have identified all the files that have to be written
+  MPI::barrier();  
   // Write necessary files
-  MPIUtil::barrier();
   auto loopFunc = [&](int i)->void{
     Integrator1D itgPrivate;
     Vector3D res(nl, nx, nx);
@@ -400,7 +405,7 @@ void Qstls::computeAdrFixedIet() {
     adrTmp.get(wvg, res);
     writeAdrFixedFile(res, adrFixedIetFileInfo.at(idx[i]).first);
   };
-  const auto& loopData = MPIUtil::parallelFor(loopFunc, idx.size(), true);
+  MPI::parallelFor(loopFunc, nFilesToWrite, in.getNThreads());
   // Update content of adrFixedIetFileInfo
   getAdrFixedIetFileInfo();
 }
@@ -426,13 +431,13 @@ void Qstls::getAdrFixedIetFileInfo() {
 
 // Recovery files
 void Qstls::writeRecovery() {
-  if (!MPIUtil::isRoot()) {
+  if (!MPI::isRoot()) {
     return;
   }
   ofstream file;
   file.open(recoveryFileName, ios::binary);
   if (!file.is_open()) {
-    MPIUtil::throwError("Recovery file " + recoveryFileName + " could not be created.");
+    MPI::throwError("Recovery file " + recoveryFileName + " could not be created.");
   }
   int nx = wvg.size();
   int nl = in.getNMatsubara();
@@ -445,7 +450,7 @@ void Qstls::writeRecovery() {
   writeDataToBinary<Vector3D>(file, adrFixed);
   file.close();
   if (!file) {
-    MPIUtil::throwError("Error in writing the recovery file " + recoveryFileName);
+    MPI::throwError("Error in writing the recovery file " + recoveryFileName);
   }
 }
 
@@ -469,7 +474,7 @@ void Qstls::readRecovery(const string &fileName,
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    MPIUtil::throwError("Input file " + fileName + " could not be opened.");
+    MPI::throwError("Input file " + fileName + " could not be opened.");
   }
   int nx;
   readDataFromBinary<int>(file, nx);
@@ -485,7 +490,7 @@ void Qstls::readRecovery(const string &fileName,
   readDataFromBinary<Vector3D>(file, adrFixed_);
   file.close();
   if (!file) {
-    MPIUtil::throwError("Error in reading the file " + fileName);
+    MPI::throwError("Error in reading the file " + fileName);
   }
 }
 

@@ -4,7 +4,6 @@
 #include <memory>
 #include <functional>
 #include <fstream>
-#include <mpi.h>
 #include <vector>
 #include <iostream>
 #include <limits>
@@ -399,58 +398,65 @@ namespace binUtil {
 
 }
 
-// -----------------------------------------------------------------
-// Utility functions to handle calls to the MPI API
-// -----------------------------------------------------------------
+// -------------------------------------------------------------------
+// Utility functions to handle parallel calculations with OMP and MPI
+// -------------------------------------------------------------------
 
-namespace MPIUtil {
+namespace parallelUtil {
 
-  constexpr MPI_Comm MPICommunicator = MPI_COMM_WORLD;
+  // --- MPI for distributed memory parallelism ---
+  namespace MPI {
   
-  // Get rank of MPI process
-  int rank();
+    // Get rank of MPI process
+    int rank();
 
-  // Get total number of MPI processes
-  int numberOfRanks();
+    // Get total number of MPI processes
+    int numberOfRanks();
 
-  // Set an MPI Barrier
-  void barrier();
+    // Set an MPI Barrier
+    void barrier();
   
-  // Check if the process is the root process
-  bool isRoot();
+    // Check if the process is the root process
+    bool isRoot();
 
-  // Check if only one rank is used
-  bool isSingleProcess();
+    // Check if only one rank is used
+    bool isSingleProcess();
 
-  // Throw error with description given in errMsg
-  void throwError(const std::string& errMsg);
+    // Throw error with description given in errMsg
+    void throwError(const std::string& errMsg);
   
-  // Abort MPI
-  void abort();
+    // Abort MPI
+    void abort();
+    
+    // Get wall time
+    double timer();
 
-  // Get wall time
-  double timer();
-
-  // Data structure to track how loop indexes are distributed
-  using MPIParallelForData = std::vector<std::pair<int, int>>;
+    // Check that a number is the same on all ranks
+    bool isEqualOnAllRanks(const int& myNumber);
   
-  // Get start and finish index for parallel for loop on one rank
-  std::pair<int, int> getLoopIndexes(const int loopSize,
-				     const int thisRank);
-
-  // Get start and finish index for parallel for loop on all ranks
-  MPIParallelForData getAllLoopIndexes(const int loopSize);
-
-  // Wrapper for parallel for loop
-  MPIParallelForData parallelFor(const std::function<void(int)>& loopFunc,
-				 const int loopSize,
-				 const bool useOMP);
+    // Data structure to track how loop indexes are distributed
+    using MPIParallelForData = std::vector<std::pair<int, int>>;
   
-  // Synchronize data among all ranks
-  void allGather(double* dataToGather,
-		 const MPIParallelForData& loopData,
-		 const int countsPerLoop);
+    // Get start and finish index for parallel for loop on one rank
+    std::pair<int, int> getLoopIndexes(const int loopSize,
+				       const int thisRank);
+
+    // Get start and finish index for parallel for loop on all ranks
+    MPIParallelForData getAllLoopIndexes(const int loopSize);
+
+    // Wrapper for parallel for loop
+    MPIParallelForData parallelFor(const std::function<void(int)>& loopFunc,
+				   const int loopSize,
+				   const int ompThreads);
+    
+    // Synchronize data from a parallel for loop among all ranks
+    void gatherLoopData(double* dataToGather,
+			const MPIParallelForData& loopData,
+			const int countsPerLoop);
+    
+  }
   
 }
+
 
 #endif

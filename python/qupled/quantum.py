@@ -242,8 +242,10 @@ class QstlsIet(Qstls):
     # Check that the dielectric scheme was solved without errors
     @qu.MPI.runOnlyOnRoot
     def _checkStatusAndClean(self, status) -> None:
-        if (self.fixediet is not None):
+        # Remove the temporary run directory
+        if (self.tmpRunDir is not None):
             rmtree(self.tmpRunDir)
+        # Check that the scheme was solved correctly
         if (status == 0):
             if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
             print("Dielectric theory solved successfully!")

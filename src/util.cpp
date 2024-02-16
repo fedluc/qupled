@@ -1,4 +1,6 @@
 #include <numeric>
+#include <omp.h>
+#include <mpi.h>
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
 #include "numerics.hpp"
@@ -340,13 +342,13 @@ namespace vecUtil {
     const bn::ndarray::bitflag flags = nda.get_flags();
     const bool isRowMajor = flags & bn::ndarray::C_CONTIGUOUS;
     if (!isRowMajor) {
-      MPIUtil::throwError("The numpy array is not stored in row major order (c-contiguous)");
+      parallelUtil::MPI::throwError("The numpy array is not stored in row major order (c-contiguous)");
     }
   }
   
   vector<double> python::toVector(const bn::ndarray &nda){
     if (nda.get_nd() != 1) {
-      MPIUtil::throwError("Incorrect numpy array dimensions");
+      parallelUtil::MPI::throwError("Incorrect numpy array dimensions");
     }
     const Py_intptr_t* shape = nda.get_shape();
     const int dim = nda.get_nd();
@@ -368,7 +370,7 @@ namespace vecUtil {
 
   Vector2D python::toVector2D(const bn::ndarray &nda){
     if (nda.get_nd() != 2) {
-      MPIUtil::throwError("Incorrect numpy array dimensions");
+      parallelUtil::MPI::throwError("Incorrect numpy array dimensions");
     }
     CheckRowMajor(nda);
     const Py_intptr_t* shape = nda.get_shape();
@@ -386,7 +388,7 @@ namespace vecUtil {
 
   vector<vector<double>> python::toDoubleVector(const bn::ndarray &nda){
     if (nda.get_nd() != 2) {
-      MPIUtil::throwError("Incorrect numpy array dimensions");
+      parallelUtil::MPI::throwError("Incorrect numpy array dimensions");
     }
     CheckRowMajor(nda);
     const Py_intptr_t* shape = nda.get_shape();
@@ -461,7 +463,7 @@ namespace thermoUtil {
 			   const double &coupling,
 			   const bool normalize) {
     if (numUtil::largerThan(coupling, grid.back())) {
-      MPIUtil::throwError("The coupling parameter is out of range"
+      parallelUtil::MPI::throwError("The coupling parameter is out of range"
 			  " for the current grid, the free energy cannot be computed");
     }
     const Interpolator1D itp(grid, rsu);
@@ -543,106 +545,121 @@ namespace thermoUtil {
   }
   
 }
-  
-namespace MPIUtil {
+
+
+namespace parallelUtil {
 
   // -----------------------------------------------------------------
-  // Stand-alone methods
+  // Stand-alone methods for MPI distributed memory parallelism
   // -----------------------------------------------------------------
-
-  int rank() {
-    int rank;
-    MPI_Comm_rank(MPICommunicator, &rank);
-    return rank;
-  }
   
-  int numberOfRanks() {
-    int numRanks;
-    MPI_Comm_size(MPICommunicator, &numRanks);
-    return numRanks;
-  }
+  namespace MPI {
 
-  void barrier() {
-    MPI_Barrier(MPICommunicator);
-  }
+    constexpr MPI_Comm MPICommunicator = MPI_COMM_WORLD;
   
-  bool isRoot() {
-    return rank() == 0;
-  }
-  
-  bool isSingleProcess() {
-    return numberOfRanks() == 1;
-  }
-
-  void throwError(const string& errMsg) {
-    if (MPIUtil::isSingleProcess()) {
-      // Throw a catchable error if only one process is used
-      throw runtime_error(errMsg);
+    int rank() {
+      int rank;
+      MPI_Comm_rank(MPICommunicator, &rank);
+      return rank;
     }
-    // Abort MPI if more than one process is running
-    cerr << errMsg << endl;
-    MPIUtil::abort();
-  }
   
-  void abort() {
-    MPI_Abort(MPICommunicator, 1);
-  }
-
-  double timer() {
-    return MPI_Wtime();
-  }
-
-  pair<int, int> getLoopIndexes(const int loopSize,
-				const int thisRank) {
-    pair<int, int> idx = {0, loopSize};
-    const int nRanks = numberOfRanks();
-    if (nRanks == 1) { return idx; }
-    int localSize = loopSize / nRanks;
-    int remainder = loopSize % nRanks;
-    idx.first = thisRank * localSize + std::min(thisRank, remainder);
-    idx.second = idx.first + localSize + (thisRank < remainder ? 1 : 0);
-    idx.second = std::min(idx.second, loopSize);
-    return idx;
-  }
-
-  MPIParallelForData getAllLoopIndexes(const int loopSize) {
-    std::vector<pair<int, int>> out;
-    for (int i = 0; i < numberOfRanks(); ++i) {
-      out.push_back(getLoopIndexes(loopSize, i));
+    int numberOfRanks() {
+      int numRanks;
+      MPI_Comm_size(MPICommunicator, &numRanks);
+      return numRanks;
     }
-    return out;
-  }
 
-  MPIParallelForData parallelFor(const function<void(int)>& loopFunc,
-				 const int loopSize,
-				 const bool useOMP) {
-    MPIParallelForData allIdx = getAllLoopIndexes(loopSize);
-    const auto& thisIdx = allIdx[rank()];
-    #pragma omp parallel for if (useOMP)
-    for (int i=thisIdx.first; i<thisIdx.second; ++i) {
-      loopFunc(i);
+    void barrier() {
+      MPI_Barrier(MPICommunicator);
     }
-    return allIdx;
-  }
   
-  void allGather(double* dataToGather,
-		 const MPIParallelForData& loopData,
-		 const int countsPerLoop) {
-    std::vector<int> recieverCounts;
-    for (const auto& i : loopData) {
-      const int loopSpan = i.second - i.first;
-      recieverCounts.push_back(loopSpan * countsPerLoop);
+    bool isRoot() {
+      return rank() == 0;
     }
-    std::vector<int> displacements(recieverCounts.size(), 0);
-    std::partial_sum(recieverCounts.begin(),
-		     recieverCounts.end()-1,
-		     displacements.begin()+1,
-		     plus<double>());
-    MPI_Allgatherv(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
-		   dataToGather,
-		   recieverCounts.data(),
-		   displacements.data(),
-		   MPI_DOUBLE, MPI_COMM_WORLD);
-  }
+  
+    bool isSingleProcess() {
+      return numberOfRanks() == 1;
+    }
+
+    void throwError(const string& errMsg) {
+      if (isSingleProcess()) {
+	// Throw a catchable error if only one process is used
+	throw runtime_error(errMsg);
+      }
+      // Abort MPI if more than one process is running
+      cerr << errMsg << endl;
+      abort();
+    }
+  
+    void abort() {
+      MPI_Abort(MPICommunicator, 1);
+    }
+
+    double timer() {
+      return MPI_Wtime();
+    }
+
+    bool isEqualOnAllRanks(const int& myNumber) {
+      int globalMininumNumber;
+      MPI_Allreduce(&myNumber, &globalMininumNumber, 1,
+		    MPI_INT, MPI_MIN, MPICommunicator);
+      return myNumber == globalMininumNumber;
+    }
+  
+    pair<int, int> getLoopIndexes(const int loopSize,
+				  const int thisRank) {
+      pair<int, int> idx = {0, loopSize};
+      const int nRanks = numberOfRanks();
+      if (nRanks == 1) { return idx; }
+      int localSize = loopSize / nRanks;
+      int remainder = loopSize % nRanks;
+      idx.first = thisRank * localSize + std::min(thisRank, remainder);
+      idx.second = idx.first + localSize + (thisRank < remainder ? 1 : 0);
+      idx.second = std::min(idx.second, loopSize);
+      return idx;
+    }
+
+    MPIParallelForData getAllLoopIndexes(const int loopSize) {
+      std::vector<pair<int, int>> out;
+      for (int i = 0; i < numberOfRanks(); ++i) {
+	out.push_back(getLoopIndexes(loopSize, i));
+      }
+      return out;
+    }
+
+    MPIParallelForData parallelFor(const function<void(int)>& loopFunc,
+				   const int loopSize,
+				   const int ompThreads) {
+      MPIParallelForData allIdx = getAllLoopIndexes(loopSize);
+      const auto& thisIdx = allIdx[rank()];
+      const bool useOMP = ompThreads > 1;
+      #pragma omp parallel for nThreads(ompThreads) if (useOMP)
+      for (int i=thisIdx.first; i<thisIdx.second; ++i) {
+	loopFunc(i);
+      }
+      return allIdx;
+    }
+  
+    void gatherLoopData(double* dataToGather,
+			const MPIParallelForData& loopData,
+			const int countsPerLoop) {
+      std::vector<int> recieverCounts;
+      for (const auto& i : loopData) {
+	const int loopSpan = i.second - i.first;
+	recieverCounts.push_back(loopSpan * countsPerLoop);
+      }
+      std::vector<int> displacements(recieverCounts.size(), 0);
+      std::partial_sum(recieverCounts.begin(),
+		       recieverCounts.end()-1,
+		       displacements.begin()+1,
+		       plus<double>());
+      MPI_Allgatherv(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
+		     dataToGather,
+		     recieverCounts.data(),
+		     displacements.data(),
+		     MPI_DOUBLE, MPI_COMM_WORLD);
+    }
+  
+}
   
 }

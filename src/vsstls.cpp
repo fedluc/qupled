@@ -1,4 +1,3 @@
-#include <omp.h>
 #include "util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
@@ -8,6 +7,7 @@ using namespace std;
 using namespace numUtil;
 using namespace vecUtil;
 using namespace thermoUtil;
+using namespace parallelUtil;
 
 // -----------------------------------------------------------------
 // VSStls class
@@ -15,7 +15,6 @@ using namespace thermoUtil;
 
 int VSStls::compute() {
   try {
-    omp_set_num_threads(in.getNThreads());
     init();
     if (verbose) cout << "Free parameter calculation ..." << endl;
     doIterations();
@@ -34,7 +33,7 @@ void VSStls::doIterations() {
   SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
   rsol.solve(func, in.getAlphaGuess());
   if (!rsol.success()) {
-    MPIUtil::throwError("VSStls: the root solver did not converge to the desired accuracy.");
+    MPI::throwError("VSStls: the root solver did not converge to the desired accuracy.");
   }
   alpha = rsol.getSolution();
   if (verbose) { cout << "Free parameter = " << alpha << endl; }
@@ -368,9 +367,10 @@ void StructProp::doIterations() {
   // Define initial guess
   for (auto& s : stls) { s.initialGuess(); }
   // Iteration to solve for the structural properties
+  const bool useOMP = in.getNThreads() > 1;
   while (counter < maxIter+1 && err > minErr ) {
     // Compute new solution and error
-#pragma omp parallel
+    #pragma omp parallel nThreads(in.getNThreads()) if (useOMP)
     {
       #pragma omp for
       for (auto& s : stls) {

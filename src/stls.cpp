@@ -7,6 +7,7 @@ using namespace std;
 using namespace vecUtil;
 using namespace stringUtil;
 using namespace binUtil;
+using namespace parallelUtil;
 
 // -----------------------------------------------------------------
 // STLS class
@@ -16,7 +17,7 @@ Stls::Stls(const StlsInput& in_,
 	   const bool verbose_,
 	   const bool writeFiles_) : Rpa(in_, verbose_),
 				     in(in_),
-				     writeFiles(writeFiles_ && MPIUtil::isRoot()) {
+				     writeFiles(writeFiles_ && MPI::isRoot()) {
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "STLS-HNC"
     || in.getTheory() == "STLS-IOI"
@@ -112,7 +113,7 @@ void Stls::doIterations() {
   initialGuess();
   while (counter < maxIter+1 && err > minErr ) {
     // Start timing
-    double tic = MPIUtil::timer();
+    double tic = MPI::timer();
     // Update static structure factor
     computeSsf();
     // Update static local field correction
@@ -125,7 +126,7 @@ void Stls::doIterations() {
     // Write output
     if (counter % outIter == 0 && writeFiles) { writeRecovery(); }
     // End timing
-    double toc = MPIUtil::timer();
+    double toc = MPI::timer();
     // Print diagnostic
     if (verbose) {
        printf("--- iteration %d ---\n", counter);
@@ -183,7 +184,7 @@ void Stls::writeRecovery() {
   ofstream file;
   file.open(recoveryFileName, ios::binary);
   if (!file.is_open()) {
-    MPIUtil::throwError("Recovery file " + recoveryFileName + " could not be created.");
+    MPI::throwError("Recovery file " + recoveryFileName + " could not be created.");
   }
   int nx = wvg.size();
   writeDataToBinary<int>(file, nx);
@@ -191,7 +192,7 @@ void Stls::writeRecovery() {
   writeDataToBinary<decltype(slfc)>(file, slfc);
   file.close();
   if (!file) {
-    MPIUtil::throwError("Error in writing the recovery file " + recoveryFileName);
+    MPI::throwError("Error in writing the recovery file " + recoveryFileName);
   }
 }
 
@@ -201,7 +202,7 @@ void Stls::readRecovery(vector<double> &wvgFile,
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    MPIUtil::throwError("Output file " + fileName + " could not be opened.");
+    MPI::throwError("Output file " + fileName + " could not be opened.");
   }
   int nx;
   readDataFromBinary<int>(file, nx);
@@ -211,7 +212,7 @@ void Stls::readRecovery(vector<double> &wvgFile,
   readDataFromBinary<decltype(slfcFile)>(file, slfcFile);
   file.close();
   if (!file) {
-    MPIUtil::throwError("Error in reading from file " + fileName);
+    MPI::throwError("Error in reading from file " + fileName);
   }
 }
 
@@ -298,7 +299,7 @@ double BridgeFunction::get() const {
   if (theory == "STLS-HNC" || theory == "QSTLS-HNC") { return hnc(); }
   if (theory == "STLS-IOI" || theory == "QSTLS-IOI") { return ioi(); }
   if (theory == "STLS-LCT" || theory == "QSTLS-LCT") { return lct(); }
-  MPIUtil::throwError("Unknown theory to compute the bridge function term");
+  MPI::throwError("Unknown theory to compute the bridge function term");
   return numUtil::Inf;
 }
 
@@ -307,7 +308,7 @@ double BridgeFunction::couplingParameter() const {
   if (mapping == "sqrt") { return fact/sqrt(1 + Theta * Theta); }
   if (mapping == "linear") { return fact/(1 + Theta); }
   if (Theta != 0.0) { return fact/Theta; }
-  MPIUtil::throwError("The standard iet mapping cannot be used in the "
+  MPI::throwError("The standard iet mapping cannot be used in the "
 		      "ground state");
   return numUtil::Inf;
 }
@@ -335,7 +336,7 @@ double BridgeFunction::ioi() const {
 				      "falls outside the range of validty of the "
 				      "bridge function parameterization\n",
 				      Gamma);
-    MPIUtil::throwError(msg); 
+    MPI::throwError(msg); 
   }
   const double c1 = 0.498 - 0.280*lnG + 0.0294*lnG2;
   const double c2 = -0.412 + 0.219*lnG - 0.0251*lnG2;
@@ -395,7 +396,7 @@ double BridgeFunction::lctIntegrand(const double r, const double Gamma) const {
 				     "falls outside the range of validty of the "
 				     "bridge function parameterization\n",
 				     Gamma);
-    MPIUtil::throwError(msg);
+    MPI::throwError(msg);
   }
   const double Gamma1_6 = pow(Gamma, 1./6.);
   const double lnG = log(Gamma);

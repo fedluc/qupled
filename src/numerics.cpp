@@ -5,6 +5,7 @@
 
 using namespace std;
 using namespace GslWrappers;
+using namespace parallelUtil;
 
 // -----------------------------------------------------------------
 // C++ wrappers to GSL objects
@@ -14,8 +15,8 @@ template<typename Func, typename... Args>
 void GslWrappers::callGSLFunction(Func&& gslFunction, Args&&... args) {
   int status = gslFunction(std::forward<Args>(args)...);
   if (status) {
-    MPIUtil::throwError("GSL error: " + std::to_string(status) + ", "
-			+ std::string(gsl_strerror(status)));
+    MPI::throwError("GSL error: " + std::to_string(status) + ", "
+		    + std::string(gsl_strerror(status)));
   }
 }
 
@@ -23,7 +24,7 @@ template<typename Ptr, typename Func, typename... Args>
 void GslWrappers::callGSLAlloc(Ptr& ptr, Func&& gslFunction, Args&&... args) {
   ptr = gslFunction(std::forward<Args>(args)...);
   if (!ptr) {
-    MPIUtil::throwError("GSL error: allocation error");
+    MPI::throwError("GSL error: allocation error");
   }
 }
 
