@@ -14,10 +14,12 @@ approaches which can be solved with qupled include:
   * The quantum STLS (QSTLS) scheme as discussed by `Schweng and Böhm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_ 
   * The quantum QSTLS-IET scheme as discussed by `Tolias and others <https://pubs.aip.org/aip/jcp/article/158/14/141102/2877795/Quantum-version-of-the-integral-equation-theory>`_
 
+The most computationally-intensive calculations in the quantum  and in the classical VS-STLS scheme are parallelized with a hybrid MPI/OpenMP strategy.
+    
 Limitations
 -----------
 
-Ground state (zero temperature) calculations are available only for the classical schemes (RPA, STLS, STLS-HNC, STLS-IET and VS-STLS) and the hybrid (ESA).
+Ground state (zero temperature) calculations are available only for the classical schemes (RPA, STLS, STLS-HNC, STLS-IET and VS-STLS) and for the hybrid scheme (ESA).
 
 Units
 -----
@@ -45,13 +47,14 @@ Dependencies
 
 To build the code, the following dependencies must be satisfied:
 
-  - `GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
+  - `GNU Scientific Library (v2.7) <https://www.gnu.org/software/gsl/>`_
   - `OpenMP (v5.0) <https://en.wikipedia.org/wiki/OpenMP>`_
+  - `MPICH (v4.0) <https://www.mpich.org>`_
   - `python::boost (v1.81) <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
 
 To run the code, the following python packages must be installed
 
   - `matplotlib (v>=3.7) <https://matplotlib.org>`_
+  - `mpi4py (v>=3.1) <https://mpi4py.readthedocs.io/en/stable/>`_
   - `numpy (v>=1.24)  <https://numpy.org>`_
   - `pandas (v>=2.0) <https://pandas.pydata.org>`_
-    
