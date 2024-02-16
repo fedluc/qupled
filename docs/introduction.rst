@@ -14,7 +14,7 @@ approaches which can be solved with qupled include:
   * The quantum STLS (QSTLS) scheme as discussed by `Schweng and Böhm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_ 
   * The quantum QSTLS-IET scheme as discussed by `Tolias and others <https://pubs.aip.org/aip/jcp/article/158/14/141102/2877795/Quantum-version-of-the-integral-equation-theory>`_
 
-The most computationally-intensive calculations in the quantum  and in the classical VS-STLS scheme are parallelized with a hybrid MPI/OpenMP strategy.
+qupled supports both MPI and OpenMP parallelizations to handle the most computationally-intensive calculations in the quantum and in the classical VS-STLS scheme.
     
 Limitations
 -----------
