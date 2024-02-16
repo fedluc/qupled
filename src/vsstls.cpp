@@ -360,17 +360,19 @@ int StructProp::compute() {
 }
 
 void StructProp::doIterations() {
-  const int maxIter = stls[0].in.getNIter();
-  const double minErr = stls[0].in.getErrMin();
+  const auto& in = stls[0].in;
+  const int maxIter = in.getNIter();
+  const int ompThreads = in.getNThreads();
+  const double minErr = in.getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess
   for (auto& s : stls) { s.initialGuess(); }
   // Iteration to solve for the structural properties
-  const bool useOMP = in.getNThreads() > 1;
+  const bool useOMP = ompThreads > 1;
   while (counter < maxIter+1 && err > minErr ) {
     // Compute new solution and error
-    #pragma omp parallel nThreads(in.getNThreads()) if (useOMP)
+    #pragma omp parallel num_threads(ompThreads) if (useOMP)
     {
       #pragma omp for
       for (auto& s : stls) {

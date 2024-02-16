@@ -633,7 +633,7 @@ namespace parallelUtil {
       MPIParallelForData allIdx = getAllLoopIndexes(loopSize);
       const auto& thisIdx = allIdx[rank()];
       const bool useOMP = ompThreads > 1;
-      #pragma omp parallel for nThreads(ompThreads) if (useOMP)
+      #pragma omp parallel for num_threads(ompThreads) if (useOMP)
       for (int i=thisIdx.first; i<thisIdx.second; ++i) {
 	loopFunc(i);
       }
