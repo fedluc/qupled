@@ -3,7 +3,7 @@ The package
 
 The package is written in both Python and C++. Python can be
 used to setup, run, save and postprocess a dielectric scheme of choice. C++
-is used to perform the actual calculations involved in the solution of the schemes.
+is used to perform the calculations involved in the solution of the schemes.
 Communication between Python and C++ is handled via
 `Boost <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_.
 The following sections illustrate the classes used to solve classical and

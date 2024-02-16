@@ -54,7 +54,7 @@ up the calculation.
 Solving the quantum schemes
 ---------------------------
 
-This example shows how to solve the quantum dielectric schemes QSTLS and QSTL-LCT. 
+This example shows how to solve the quantum dielectric schemes QSTLS and QSTLS-LCT. 
 Since these schemes can have a relatively high computational cost, in this example 
 we limit the number of matsubara frequencies to 16, we use 16 OMP threads to 
 speed up the calculation and we employ a segregated approach to solve the two-dimensional 
