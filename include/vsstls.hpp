@@ -12,57 +12,75 @@ class VSStlsInput;
 // Solver for the VS-STLS scheme
 // -----------------------------------------------------------------
 
-class StlsCSR : public Stls {
-  
-  friend class StructProp;
-    
-private:
+template <typename T>
+class CSR {
 
+protected:
+  
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
-  // Input data
-  const VSStlsInput in;
   // Enumerator to denote the numerical schemes used for the derivatives
   enum Derivative { CENTERED,
 		    FORWARD,
 		    BACKWARD };
-  // Stls static local field correction
-  std::vector<double> slfcStls;
+  // local field correction (static or dynamic)
+  T lfc;
   // Free parameter
   double alpha;
-  // Pointer to the static local field correction with rs = rs + drs
-  std::vector<double>* slfcStlsRsUp;
-  // Pointer to the static local field correction with rs = rs - drs
-  std::vector<double>* slfcStlsRsDown;
-  // Pointer to the static local field correction with theta = theta + dtheta
-  std::vector<double>* slfcStlsThetaUp;
-  // Pointer to the static local field correction with theta = theta - dtheta
-  std::vector<double>* slfcStlsThetaDown;
+  // Pointer to the local field correction with rs = rs + drs
+  T* lfcRsUp;
+  // Pointer to the local field correction with rs = rs - drs
+  T* lfcRsDown;
+  // Pointer to the local field correction with theta = theta + dtheta
+  T* lfcThetaUp;
+  // Pointer to the local field correction with theta = theta - dtheta
+  T* lfcThetaDown;
   // Numerical scheme used to compute the coupling parameter derivative
   Derivative dTypeRs;
   // Numerical scheme used to compute the degeneracy parametere derivative
   Derivative dTypeTheta;
   // Set the data to compute the coupling parameter derivative
-  void setDrsData(StlsCSR &stlsRsUp,
-		  StlsCSR &sltsRsDown,
+  void setDrsData(CSR<T> &csrRsUp,
+		  CSR<T> &csrRsDown,
 		  const Derivative &dTypeRs);
   // Set the data to compute the degeneracy parameter derivative
-  void setDThetaData(StlsCSR &stlsThetaUp,
-		     StlsCSR &stlsThetaDown,
+  void setDThetaData(CSR<T> &csrThetaUp,
+		     CSR<T> &csrThetaDown,
 		     const Derivative &dTypeTheta);
   // Helper methods to compute the derivatives
-  double getDerivative(const std::vector<double>& f,
+  double getDerivative(const T& f,
 		       const size_t& idx,
 		       const Derivative& type);
   double getDerivative(const double& f0,
 		       const double& f1,
 		       const double& f2,
 		       const Derivative& type);
+  // Set the free parameter
+  void setAlpha(const double& alpha) { this->alpha = alpha; }
+
+public:
+
+  // Constructor
+  CSR() : alpha(DEFAULT_ALPHA),
+	  lfcRsUp(nullptr),
+	  lfcRsDown(nullptr),
+	  lfcThetaUp(nullptr),
+	  lfcThetaDown(nullptr),
+	  dTypeRs(CENTERED),
+	  dTypeTheta(CENTERED) { ; }
+};
+
+class StlsCSR : public Stls, public CSR<std::vector<double>> {
+  
+  friend class StructProp;
+    
+private:
+
+  // Input data
+  const VSStlsInput in;
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();
-  // Set the free parameter
-  void setAlpha(const double& alpha) { this->alpha = alpha; }
   // Compute the internal energy
   double getInternalEnergy() const;
   // Compute the free energy integrand
@@ -72,14 +90,7 @@ public:
 
   // Constructor
   StlsCSR(const VSStlsInput& in_) : Stls(in_, false, false),
-				    in(in_),
-				    alpha(DEFAULT_ALPHA),
-				    slfcStlsRsUp(nullptr),
-				    slfcStlsRsDown(nullptr),
-				    slfcStlsThetaUp(nullptr),
-				    slfcStlsThetaDown(nullptr),
-				    dTypeRs(CENTERED),
-				    dTypeTheta(CENTERED) { ; }
+				    in(in_) { ; }
   
 };
 

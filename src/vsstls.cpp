@@ -421,28 +421,32 @@ vector<double> StructProp::getFreeEnergyIntegrand() const  {
 }
 
 // -----------------------------------------------------------------
-// StlsCSR class
+// CSR class
 // -----------------------------------------------------------------
 
-void StlsCSR::setDrsData(StlsCSR &stlsRsUp,
-			 StlsCSR &stlsRsDown,
-			 const Derivative &dTypeRs) {
-  this->slfcStlsRsUp = &stlsRsUp.slfcStls;
-  this->slfcStlsRsDown = &stlsRsDown.slfcStls;
+template<typename T>
+void CSR<T>::setDrsData(CSR<T> &csrRsUp,
+			CSR<T> &csrRsDown,
+			const Derivative &dTypeRs) {
+  this->lfcRsUp = &csrRsUp.lfc;
+  this->lfcRsDown = &csrRsDown.lfc;
   this->dTypeRs = dTypeRs;
 }
 
-void StlsCSR::setDThetaData(StlsCSR &stlsThetaUp,
-			    StlsCSR &stlsThetaDown,
-			    const Derivative &dTypeTheta) {
-  this->slfcStlsThetaUp = &stlsThetaUp.slfcStls;
-  this->slfcStlsThetaDown = &stlsThetaDown.slfcStls;
+template<typename T>
+void CSR<T>::setDThetaData(CSR<T> &csrThetaUp,
+			   CSR<T> &csrThetaDown,
+			   const Derivative &dTypeTheta) {
+  this->lfcThetaUp = &csrThetaUp.lfc;
+  this->lfcThetaDown = &csrThetaDown.lfc;
   this->dTypeTheta = dTypeTheta;
 }
 
-double StlsCSR::getDerivative(const vector<double>& f,
-			      const size_t& idx,
-			      const Derivative& type) {
+template<typename T>
+double CSR<T>::getDerivative(const T& f,
+			     const size_t& idx,
+			     const Derivative& type) {
+  // NOTE: If T does not have an operator[] this method would not compile
   switch(type) {
   case BACKWARD:
     assert(idx >= 2);
@@ -463,10 +467,11 @@ double StlsCSR::getDerivative(const vector<double>& f,
   }
 }
 
-double StlsCSR::getDerivative(const double& f0,
-			      const double& f1,
-			      const double& f2,
-			      const Derivative& type) {
+template<typename T>
+double CSR<T>::getDerivative(const double& f0,
+			     const double& f1,
+			     const double& f2,
+			     const Derivative& type) {
   switch(type) {
   case BACKWARD:
     return 3.0 * f0 - 4.0 * f1 + f2; break;
@@ -481,9 +486,13 @@ double StlsCSR::getDerivative(const double& f0,
   }
 }
 
+// -----------------------------------------------------------------
+// StlsCSR class
+// -----------------------------------------------------------------
+
 void StlsCSR::computeSlfcStls() {
   Stls::computeSlfc();
-  slfcStls = slfcNew;
+  lfc = slfcNew;
 }
 
 void StlsCSR::computeSlfc() {
@@ -496,30 +505,30 @@ void StlsCSR::computeSlfc() {
   const double& dx = in.getWaveVectorGridRes();
   const double& drs = in.getCouplingResolution();
   const double& dTheta = in.getDegeneracyResolution();
-  const vector<double>& rsUp = *slfcStlsRsUp;
-  const vector<double>& rsDown = *slfcStlsRsDown;
-  const vector<double>& thetaUp = *slfcStlsThetaUp;
-  const vector<double>& thetaDown = *slfcStlsThetaDown;
+  const vector<double>& rsUp = *lfcRsUp;
+  const vector<double>& rsDown = *lfcRsDown;
+  const vector<double>& thetaUp = *lfcThetaUp;
+  const vector<double>& thetaDown = *lfcThetaDown;
   const double a_drs = alpha * rs / (6.0 * drs);
   const double a_dx = alpha/(6.0 * dx);
   const double a_dt = alpha * theta / (3.0 * dTheta);
   const size_t nx = wvg.size();
   // Wave-vector derivative
-  slfcNew[0] -= a_dx * wvg[0] * getDerivative(slfcStls, 0, FORWARD);
+  slfcNew[0] -= a_dx * wvg[0] * getDerivative(lfc, 0, FORWARD);
   for (size_t i = 1; i < nx - 1; ++i) {
-    slfcNew[i] -= a_dx * wvg[i] * getDerivative(slfcStls, i, CENTERED);
+    slfcNew[i] -= a_dx * wvg[i] * getDerivative(lfc, i, CENTERED);
   }
-  slfcNew[nx - 1] -= a_dx * wvg[nx - 1] * getDerivative(slfcStls, nx - 1, BACKWARD);
+  slfcNew[nx - 1] -= a_dx * wvg[nx - 1] * getDerivative(lfc, nx - 1, BACKWARD);
   // Coupling parameter contribution
   if (rs > 0.0) {
     for (size_t i = 0; i < nx; ++i) {
-      slfcNew[i] -= a_drs * getDerivative(slfcStls[i], rsUp[i], rsDown[i], dTypeRs);
+      slfcNew[i] -= a_drs * getDerivative(lfc[i], rsUp[i], rsDown[i], dTypeRs);
     }
   }
   // Degeneracy parameter contribution
   if (theta > 0.0) {
     for (size_t i = 0; i < nx; ++i) {
-      slfcNew[i] -= a_dt * getDerivative(slfcStls[i], thetaUp[i], thetaDown[i], dTypeTheta);
+      slfcNew[i] -= a_dt * getDerivative(lfc[i], thetaUp[i], thetaDown[i], dTypeTheta);
     }
   }
 }
