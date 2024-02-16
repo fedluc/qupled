@@ -19,7 +19,7 @@ The most computationally-intensive calculations in the quantum  and in the class
 Limitations
 -----------
 
-Ground state (zero temperature) calculations are available only for the classical schemes (RPA, STLS, STLS-HNC, STLS-IET and VS-STLS) and for the hybrid scheme (ESA).
+Ground state (zero temperature) calculations are not available for the quantum schemes (QSTLS and QSTLS-IET).
 
 Units
 -----
@@ -47,10 +47,10 @@ Dependencies
 
 To build the code, the following dependencies must be satisfied:
 
+  - `Boost (v1.81) <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
   - `GNU Scientific Library (v2.7) <https://www.gnu.org/software/gsl/>`_
   - `OpenMP (v5.0) <https://en.wikipedia.org/wiki/OpenMP>`_
   - `MPICH (v4.0) <https://www.mpich.org>`_
-  - `python::boost (v1.81) <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
 
 To run the code, the following python packages must be installed
 

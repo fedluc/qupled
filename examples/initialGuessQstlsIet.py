@@ -17,8 +17,5 @@ qstls.compute()
 # Create a custom initial guess from the output files of the previous run
 qstls.setGuess("rs30.000_theta1.000_QSTLS-HNC.h5")
 
-# Change the coupling parameter
-qstls.inputs.coupling = 20.0
-
 # Solve the scheme again with the new initial guess and coupling parameter
 qstls.compute()

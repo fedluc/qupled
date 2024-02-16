@@ -95,6 +95,7 @@ class Qstls(qc.Stls):
         if (fixed is not None): self.inputs.fixed = fixed
         
     # Compute
+    @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
@@ -205,6 +206,7 @@ class QstlsIet(Qstls):
 
 
     # Compute
+    @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 

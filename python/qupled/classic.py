@@ -73,6 +73,7 @@ class Rpa():
             sys.exit("Invalid dielectric theory")
 
     # Compute
+    @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results.
@@ -252,6 +253,7 @@ class ESA(Rpa):
 
         
     # Compute
+    @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. See the method :func:`qupled.classic.Rpa.compute`
@@ -342,6 +344,7 @@ class Stls(Rpa):
         if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
 
     # Compute
+    @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
@@ -449,6 +452,7 @@ class StlsIet(Stls):
 
 
     # Compute
+    @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
@@ -545,6 +549,7 @@ class VSStls(Stls):
 
         
     # Compute
+    @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
