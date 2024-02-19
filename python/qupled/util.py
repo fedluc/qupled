@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib import colormaps as cm
+import matplotlib.cm as cm
 from mpi4py import MPI as MPINative # This import initializes MPI
 import qupled.qupled as qp
 
@@ -37,7 +37,7 @@ class Hdf():
             "ssf"        : self.Entries("Static structure factor", "numpy"),
             "ssfHF"      : self.Entries("Hartree-Fock static structure factor", "numpy"),
             "theory"     : self.Entries("Theory that is being solved", "string"),
-            "wvg"        : self.Entries("Wave-vector", "numpy")
+            "wvg"        : self.Entries("Wave-vector", "numpy"),
         }
 
     # Structure used to cathegorize the entries stored in the hdf file
@@ -132,7 +132,7 @@ class Hdf():
                 sys.exit("Unknown quantity to plot")
 
         
-    def computeRdf(self, hdf : str, rdfGrid : np.array = None, saveRdf : bool = True) -> None:
+    def computeRdf(self, hdf, rdfGrid : np.array = None, saveRdf : bool = True) -> None:
         """ Computes the radial distribution function and returns it as a numpy array.
 
         Args:  
@@ -200,7 +200,7 @@ class Plot():
         parameters -- list of parameters for which the results should be plotted
         """
         numParameters = parameters.size
-        cmap = cm["viridis"]
+        cmap = cm.get_cmap(name="viridis")
         for i in np.arange(numParameters):
             color = cmap(1.0*i/numParameters)
             plt.plot(x, y[:,parameters[i]], color=color)
