@@ -89,6 +89,9 @@ def test_read(hdf_instance):
                 assert readData[entry] == "theory"
             else:
                 assert False
+        with pytest.raises(SystemExit) as excinfo:
+            hdf_instance.read(hdfFileName, "dummyEntry")
+        assert excinfo.value.code == "Unknown entry"    
     finally:
         os.remove(hdfFileName)
 
@@ -114,6 +117,9 @@ def test_plot(hdf_instance, mocker):
     try:
         hdf_instance.plot(hdfFileName, toPlot)
         assert mockPlotShow.call_count == len(toPlot)
+        with pytest.raises(SystemExit) as excinfo:
+            hdf_instance.plot(hdfFileName, "dummyQuantityToPlot")
+        assert excinfo.value.code == "Unknown quantity to plot"    
     finally:
         os.remove(hdfFileName)
 

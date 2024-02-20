@@ -65,6 +65,8 @@ class Hdf():
         """
         output = dict.fromkeys(toRead)
         for name in toRead:
+            if name not in self.entries:
+                sys.exit("Unknown entry")
             if ( self.entries[name].entryType == "numpy" ) :
                 output[name] = pd.read_hdf(hdf, name)[0].to_numpy()
             elif ( self.entries[name].entryType == "numpy2D" ) :

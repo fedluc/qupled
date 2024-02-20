@@ -153,7 +153,7 @@ class Rpa():
         pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
     
     # Compute radial distribution function
-    def computeRdf(self, rdfGrid : np.ndarray, writeToHdf : bool = True) -> np.array:
+    def computeRdf(self, rdfGrid : np.ndarray = None, writeToHdf : bool = True) -> np.array:
         """ Computes the radial distribution function from the data stored in the output file.
         
         Args:
