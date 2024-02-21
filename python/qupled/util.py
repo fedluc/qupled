@@ -252,7 +252,7 @@ class MPI():
         """ Python decorator for all methods that need to rank synchronization """
         def wrapper(*args, **kwargs):
             func(*args, **kwargs)
-            MPI().communicator.barrier()
+            MPI().barrier()
 
         return wrapper
 
