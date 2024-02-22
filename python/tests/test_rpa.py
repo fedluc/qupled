@@ -78,6 +78,7 @@ def test_checkStatusAndClean(rpa_instance, mocker, capsys):
         rpa_instance._checkStatusAndClean(1)
     assert excinfo.value.code == "Error while solving the dielectric theory"
     
+    
 def test_setHdfFile(rpa_instance):
     rpa_instance._setHdfFile()
     assert rpa_instance.hdfFileName == "rs1.000_theta1.000_RPA.h5"

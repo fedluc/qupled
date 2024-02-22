@@ -196,6 +196,8 @@ class QstlsIet(Qstls):
         # Temporary folder to store the unpacked files with the auxiliary density response
         self.fixediet = None
         self.tmpRunDir = None
+        # Scheme to solve
+        self.scheme : qp.QstlsIet = None
         # File to store output on disk
         self.hdfFileName = None
 
@@ -233,14 +235,14 @@ class QstlsIet(Qstls):
         """ Unpacks the zip file storing the fixed component of the auxiliary density response """
         assert(self.inputs.fixediet != "")
         assert(self.tmpRunDir is not None)
-        zipFile = zf.ZipFile(self.inputs.fixediet, "r")
-        zipFile.extractall(self.tmpRunDir)
+        with zf.ZipFile(self.inputs.fixediet, "r") as zipFile:
+            zipFile.extractall(self.tmpRunDir)
         
     # Check that the dielectric scheme was solved without errors
     @qu.MPI.runOnlyOnRoot
     def _checkStatusAndClean(self, status) -> None:
         # Remove the temporary run directory
-        if (self.tmpRunDir is not None):
+        if (self.tmpRunDir is not None and os.path.isdir(self.tmpRunDir)) :
             rmtree(self.tmpRunDir)
         # Check that the scheme was solved correctly
         if (status == 0):
@@ -263,10 +265,10 @@ class QstlsIet(Qstls):
             adrFileName = "adr_fixed_rs%5.3f_theta%5.3f_%s" % (self.inputs.coupling,
                                                                self.inputs.degeneracy,
                                                                self.inputs.theory)
-            zipFile = zf.ZipFile(adrFileName + ".zip", "w")
-            for adrFile in glob(adrFileName + "_wv*.bin"):
-                zipFile.write(adrFile)
-                os.remove(adrFile)
+            with zf.ZipFile(adrFileName + ".zip", "w") as zipFile:
+                for adrFile in glob(adrFileName + "_wv*.bin"):
+                    zipFile.write(adrFile)
+                    os.remove(adrFile)
 
     # Set the initial guess from a dataframe produced in output
     def setGuess(self, fileName : str) -> None:
