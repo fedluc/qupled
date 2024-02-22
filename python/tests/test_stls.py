@@ -19,15 +19,15 @@ def test_default(stls_instance):
     assert stls_instance.inputs.theory == "STLS"
     assert all(x == y for x, y in zip(stls_instance.inputs.chemicalPotential, [-10.0, 10.0]))
     assert stls_instance.inputs.cutoff == 10.0
-    assert stls_instance.inputs.matsubara == 128
-    assert stls_instance.inputs.resolution == 0.1
-    assert stls_instance.inputs.intError == 1.0e-5
-    assert stls_instance.inputs.threads == 1
     assert stls_instance.inputs.error == 1.0e-5
     assert stls_instance.inputs.mixing == 1.0
     assert stls_instance.inputs.iterations == 1000
+    assert stls_instance.inputs.matsubara == 128
     assert stls_instance.inputs.outputFrequency == 10
     assert stls_instance.inputs.recoveryFile == ""
+    assert stls_instance.inputs.resolution == 0.1
+    assert stls_instance.inputs.intError == 1.0e-5
+    assert stls_instance.inputs.threads == 1
     assert stls_instance.scheme is None
     assert stls_instance.hdfFileName is None
 
