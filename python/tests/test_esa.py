@@ -1,8 +1,5 @@
 import os
 import pytest
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import set_path
 from qupled.classic import ESA
 

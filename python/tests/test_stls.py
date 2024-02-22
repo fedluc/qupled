@@ -1,8 +1,6 @@
 import os
 import pytest
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
@@ -88,7 +86,7 @@ def test_save(stls_instance, mocker):
         os.remove(stls_instance.hdfFileName)
 
 
-def test_save(stls_instance, mocker):
+def test_setGuess(stls_instance, mocker):
     arr = np.ones(10)
     mockHdfRead = mocker.patch("qupled.util.Hdf.read", return_value={"wvg" : arr, "slfc" : arr})
     stls_instance.setGuess("dummyFileName")
