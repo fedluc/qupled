@@ -65,6 +65,8 @@ class Qstls(qc.Stls):
                         error, fixed, mixing, guess, iterations, matsubara,
                         outputFrequency, recoveryFile, resolution, scheme2DIntegrals,
                         threads)
+        # Scheme to solve
+        self.scheme : qp.Qstls = None
         # File to store output on disk
         self.hdfFileName = None
 
@@ -103,19 +105,12 @@ class Qstls(qc.Stls):
         as a new dataframe in the hdf file. The auxiliary density response dataframe can be accessed as `adr`.
         """
         self._checkInputs()
-        self._unpackFixedAdrFiles()
         self.scheme = qp.Qstls(self.inputs)
         status = self.scheme.compute()
         self._checkStatusAndClean(status)
         self._setHdfFile()
         self._save()
 
-    # Unpack zip folder with fixed component of the auxiliary density response
-    # This is only a hook to the corresponding method in QstlsIet
-    @qu.MPI.runOnlyOnRoot
-    def _unpackFixedAdrFiles(self) -> None:
-        pass
-    
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:

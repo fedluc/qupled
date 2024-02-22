@@ -38,7 +38,7 @@ def test_default(vsstls_instance):
 
                                       
 def test_set_input():
-    vsstls = VSStls(2.0, 0.5, [-5, 5], 20, 1.0e-8, 0.5, 100,
+    vsstls = VSStls(2.0, 0.5, [-5, 5], 20, 1.0e-8, 0.5, None, 100,
                     32, 100, "recoveryFile", 0.01, [0.8, 1.2],
                     0.1, 0.2, 1.0e-5, 100, 1.0e-8, 9)
     assert vsstls.inputs.coupling == 2.0
