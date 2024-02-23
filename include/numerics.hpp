@@ -1,6 +1,7 @@
 #ifndef NUMERICS_HPP
 #define NUMERICS_HPP
 
+#include <stdexcept>
 #include <functional>
 #include <vector>
 #include <string>

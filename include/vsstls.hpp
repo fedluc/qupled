@@ -12,10 +12,10 @@ class VSStlsInput;
 // Solver for the VS-STLS scheme
 // -----------------------------------------------------------------
 
-template <typename T>
+template <typename T = std::vector<double>>
 class CSR {
 
-protected:
+public:
   
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
@@ -74,7 +74,7 @@ class StlsCSR : public Stls, public CSR<std::vector<double>> {
   
   friend class StructProp;
     
-private:
+public:
 
   // Input data
   const VSStlsInput in;
@@ -86,7 +86,7 @@ private:
   // Compute the free energy integrand
   double getFreeEnergyIntegrand() const;
   
-public:
+
 
   // Constructor
   StlsCSR(const VSStlsInput& in_) : Stls(in_, false, false),
@@ -114,7 +114,7 @@ public:
     RS_UP_THETA_UP,
   };
   
-private:
+
 
   // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<StlsCSR> stls;
@@ -129,7 +129,7 @@ private:
   // Vector used as output parameter in the getters functions
   mutable std::vector<double> outVector;
   
-public:
+
 
   // Constructor
   StructProp(const VSStlsInput &in_);
@@ -154,10 +154,8 @@ public:
 
 
 class ThermoProp {
-
-public:
   
-private:
+public:
 
   using SIdx = StructProp::Idx;
   enum Idx {
@@ -180,7 +178,7 @@ private:
   double computeFreeEnergy(const SIdx iStruct,
 			   const bool normalize) const ;
   
-public:
+
 
   // Constructors
   ThermoProp(const VSStlsInput &in);
@@ -204,7 +202,7 @@ public:
 
 class VSStls : public Rpa {
 
-private: 
+public: 
 
   // Input data
   VSStlsInput in;
@@ -221,7 +219,7 @@ private:
   void updateSolution();
   double alphaDifference(const double& alphaTmp);
  
-public:
+
 
   // Constructor from initial data
   VSStls(const VSStlsInput &in_) : Rpa(in_, false),
