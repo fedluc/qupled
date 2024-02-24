@@ -21,7 +21,7 @@ class Integrator2D;
 
 class Qstls : public Stls {
   
-public: 
+protected: 
 
   // Input data
   const QstlsInput in;
@@ -74,13 +74,8 @@ public:
 		    vecUtil::Vector3D &adrFixed_,
 		    double &Theta,
 		    int &nl) const;
+
 public:
-  // Check if iet schemes should be used
-  void checkIet() { useIet = in.getTheory() == "QSTLS-HNC" ||
-      in.getTheory() == "QSTLS-IOI" ||
-      in.getTheory() == "QSTLS-LCT";}
-
-
 
   // Constructor
   Qstls(const QstlsInput &in_);
@@ -218,7 +213,7 @@ public:
 
 class AdrFixed : public AdrFixedBase {
   
-public:
+private:
   
   // Integrands 
   double integrand1(const double q,
@@ -231,7 +226,7 @@ public:
   // Grid for 2D integration
   const std::vector<double> &itgGrid;
   
-
+public:
 
   // Constructor for finite temperature calculations
   AdrFixed(const double Theta_,
