@@ -120,6 +120,9 @@ private:
   std::vector<StlsCSR> stls;
   // Flag marking whether the initialization for the stls data is done
   bool stlsIsInitialized;
+
+protected:
+  
   // Flag marking whether the structural properties were computed
   bool computed;
   // Perform iterations to compute structural properties
@@ -154,8 +157,13 @@ public:
 
 
 class ThermoProp {
-  
+
 private:
+  
+  // Structural properties
+  StructProp structProp;
+  
+protected:
 
   using SIdx = StructProp::Idx;
   enum Idx {
@@ -165,8 +173,6 @@ private:
   };
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
-  // Structural properties
-  StructProp structProp;
   // Grid for thermodyamic integration
   std::vector<double> rsGrid;
   // Free energy integrand for NPOINTS state points
@@ -202,12 +208,15 @@ public:
 
 class VSStls : public Rpa {
 
-private: 
+private:
+
+  // Thermodynamic properties
+  ThermoProp thermoProp;
+  
+protected: 
 
   // Input data
   VSStlsInput in;
-  // Thermodynamic properties
-  ThermoProp thermoProp;
   // Free parameter
   double alpha;
   // Output verbosity
@@ -223,14 +232,14 @@ public:
 
   // Constructor from initial data
   VSStls(const VSStlsInput &in_) : Rpa(in_, false),
-				   in(in_),
 				   thermoProp(in_),
+				   in(in_),
 				   verbose(true) { ; }
   // Constructor for recursive calculations
   VSStls(const VSStlsInput &in_,
 	 const ThermoProp& thermoProp_) : Rpa(in_, false),
-					  in(in_),
 					  thermoProp(in_, thermoProp_),
+					  in(in_),
 					  verbose(false) { ; }
   // Compute vs-stls scheme
   int compute();

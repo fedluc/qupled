@@ -4,64 +4,40 @@
 #include <limits>
 #include <map>
 #include <functional>
+#include "numerics.hpp"
 #include "vsstls.hpp"
 #include "qstls.hpp"
 
 
-// -----------------------------------------------------------------
-// Solver for the qVS-STLS scheme
-// -----------------------------------------------------------------
+// // -----------------------------------------------------------------
+// // Class to handle simultaneous state point calculations
+// // -----------------------------------------------------------------
 
-class qVSStls : public VSStls, public Qssf {
+class qStlsCSR : public Qstls, public CSR<vecUtil::Vector2D> {
 
-protected:
+  friend class qStructProp;
 
-    void doIterations();
-    qThermoProp qthermoProp;
-    double computeAlpha();
-    double alphaDifference(const double& alphaTmp);
-    
+private:
 
-public:
-    void updateSolution();
-    int compute();
-  
-};
-
-
-// -----------------------------------------------------------------
-// Class to handle simultaneous state point calculations
-// -----------------------------------------------------------------
-
-
-template<typename T = std::vector<double>>
-class qStlsCSR : public CSR<T>, public Qstls {
-
-    friend class qStructProp;
-
-protected:
-
+  // Input data
+  const VSStlsInput in;
+  // Compute auxiliary density response
   void computeAdrStls();
   void computeAdr();
-  // Set the free parameter
+  // Compute the internal energy
   double getInternalEnergy() const;
   // Compute the free energy integrand
   double getFreeEnergyIntegrand() const;
   // Compute Q
   double getQ() const;
-  
+  // Convert VSStlsInput to QstlsInput
+  QstlsInput VStoQStlsInput(const VSStlsInput& in) const;
 
 public:
+  
   // Constructor
-  qStlsCSR(const QstlsInput& in_) : Qstls(in_),
-				    in(in_),
-				    alpha(DEFAULT_ALPHA),
-				    stlsAdrRsUp(nullptr),
-				    stlsAdrRsDown(nullptr),
-				    stlsAdrThetaUp(nullptr),
-				    stlsAdrThetaDown(nullptr),
-				    dTypeRs(CENTERED),
-				    dTypeTheta(CENTERED) { ; }
+  qStlsCSR(const VSStlsInput& in_) : Qstls(VStoQStlsInput(in_)),
+				     in(in_) { ; }
   
   
 };
@@ -73,35 +49,38 @@ public:
 
 class qStructProp : public StructProp {
 
-protected:
-    void doIterations();
-    // Flag marking whether the initialization for the stls data is done
-    bool stlsAdrIsInitialized;
-    // Vector containing NPOINTS state points to be solved simultaneously
-    std::vector<qStlsCSR<std::vector<double>>> Adr;
-    // Get Q
-    
-    std::vector<double> getCouplingParameters() const;
-    std::vector<double> getDegeneracyParameters() const;
-    std::vector<double> getInternalEnergy() const;
-    std::vector<double> getFreeEnergyIntegrand() const;
-    // Generic getter function to return vector data
-    const std::vector<double>& getBase(std::function<double(const qStlsCSR<std::vector<double>>&)> f) const;
+private:
 
-    template<typename T = std::vector<double>>
-    const qStlsCSR<T>& getAdrStls(const Idx& idx) const { return Adr[idx]; }
-
-    // Flag marking whether the structural properties were computed
-    bool computed;
-
+  // Vector containing NPOINTS state points to be solved simultaneously
+  std::vector<qStlsCSR> Adr;
+  // Flag marking whether the initialization for the stls data is done
+  bool adrIsInitialized;
+  // Perform iterations to compute structural properties
+  void doIterations();
+  // Generic getter function to return vector data
+  const std::vector<double>& getBase(std::function<double(const qStlsCSR&)> f) const;
+  
 public:
 
-    int compute();
-    void setAlpha(const double& alpha);
-    std::vector<double> getQ() const;
-    // Boolean marking whether the structural properties where computed or not
-    bool isComputed() const { return computed; }
-
+  // Constructor
+  qStructProp(const VSStlsInput &in_);
+  // Compute structural properties
+  int compute();
+  // Set free parameter
+  void setAlpha(const double& alpha);
+  // Get coupling parameters for all the state points
+  std::vector<double> getCouplingParameters() const;
+  // Get degeneracy parameters for all the state points
+  std::vector<double> getDegeneracyParameters() const;
+  // Get internal energy for all the state points
+  std::vector<double> getInternalEnergy() const;
+  // Get free energy integrand for all the state points
+  std::vector<double> getFreeEnergyIntegrand() const;
+  // Get Q term
+  std::vector<double> getQ() const;
+  const qStlsCSR& getAdrStls(const Idx& idx) const { return Adr[idx]; }
+  
+  
 };
 
 
@@ -111,37 +90,71 @@ public:
 
 class qThermoProp : public ThermoProp {
 
-protected:
+private:
 
-    // Compute the free energy
-    double computeQ(const SIdx iStruct,
-			   const bool normalize) const ;
-    qStructProp qstructProp;
-    void setAlpha(const double& alpha);
-
-    
-
+  // // Compute the free energy
+  // double computeQ(const SIdx iStruct,
+  // 		  const bool normalize) const ;
+  qStructProp qstructProp;
+  
 public:
 
-    void compute(const VSStlsInput& in);
-    // Get internal energy and internal energy derivatives
-    std::vector<double> getQData() const;
-    
-    template<typename T = std::vector<double>>
-    const qStlsCSR<T>& getStructProp();
+  // Constructors
+  qThermoProp(const VSStlsInput& in) : ThermoProp(in), qstructProp(in) { ; } 
+  qThermoProp(const VSStlsInput& in,
+	      const qThermoProp& other) : ThermoProp(in, other), qstructProp(in) { ; } 
+  void compute(const VSStlsInput& in);
+  // Get internal energy and internal energy derivatives
+  std::vector<double> getQData() const;
+  // Set the value of the free parameter in the structural properties
+  void setAlpha(const double& alpha);
+  const qStlsCSR& getStructProp();
+  
 };
 
-class Q : public AdrFixed {
-    // Get integration result
-    void get(std::vector<double> &wvg,
-	   vecUtil::Vector3D &res) const;
-    double integranddenom(const double q,
-		    const double l) const;
-    double integrandnum(const double t,
-		    const double y,
-		    const double l) const;
 
+
+// class Q : public AdrFixed {
+//     // Get integration result
+//     void get(std::vector<double> &wvg,
+// 	   vecUtil::Vector3D &res) const;
+//     double integranddenom(const double q,
+// 		    const double l) const;
+//     double integrandnum(const double t,
+// 		    const double y,
+// 		    const double l) const;
+
+// };
+
+
+// -----------------------------------------------------------------
+// Solver for the qVS-STLS scheme
+// -----------------------------------------------------------------
+
+class qVSStls : public VSStls {
+
+private:
+
+  qThermoProp qthermoProp;
+  double computeAlpha();
+  double alphaDifference(const double& alphaTmp);
+  void updateSolution();
+  // Auxiliary density response
+  vecUtil::Vector2D adr;
+  
+public:
+  
+  
+  // Constructor from initial data
+  qVSStls(const VSStlsInput &in_) : VSStls(in_),
+				    qthermoProp(in_) { ; }
+  // Constructor for recursive calculations
+  qVSStls(const VSStlsInput &in_,
+	  const qThermoProp& qthermoProp_) : VSStls(in_, qthermoProp_),
+					     qthermoProp(in_, qthermoProp_) { ; }
+  // Getters
+  const qThermoProp& getThermoProp() const { return qthermoProp; }
+  
 };
-
 
 #endif

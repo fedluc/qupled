@@ -236,6 +236,9 @@ private:
 
 public:
 
+  // Constructors
+  QstlsInput() { ; }
+  QstlsInput(const StlsInput& base) : StlsInput(base) { ; }
   // Setters
   void setFixed(const std::string &fixed);
   void setFixedIet(const std::string &fixedIet);
@@ -247,7 +250,8 @@ public:
   // Print content of the data structure
   void print() const ;
   // Compare two QstlsInput objects
-   bool isEqual(const QstlsInput &in) const;
+  bool isEqual(const QstlsInput &in) const;
+  
   
 };
 
