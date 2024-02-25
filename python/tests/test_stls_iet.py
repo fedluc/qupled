@@ -4,7 +4,7 @@ import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.classic import StlsIet
-
+from qupled.classic import Stls
 
 @pytest.fixture
 def stls_iet_instance():
@@ -12,6 +12,7 @@ def stls_iet_instance():
 
 
 def test_default(stls_iet_instance):
+    issubclass(StlsIet, Stls)
     assert all(x == y for x, y in zip(stls_iet_instance.allowedTheories, ["STLS-HNC",
                                                                           "STLS-IOI",
                                                                           "STLS-LCT"]))

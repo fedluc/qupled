@@ -190,8 +190,8 @@ void StlsInput::print() const {
   if (!MPI::isRoot()) {
     return;
   }
-  Input::print();
-  cout << "Iet mapping scheme" << IETMapping << endl;
+  RpaInput::print();
+  cout << "Iet mapping scheme = " << IETMapping << endl;
   cout << "Maximum number of iterations = " << nIter << endl;
   cout << "Minimum error for convergence = " << errMin << endl;
   cout << "Mixing parameter = " << aMix << endl;

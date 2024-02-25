@@ -5,7 +5,7 @@ import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.classic import Stls
-
+from qupled.classic import Rpa
 
 @pytest.fixture
 def stls_instance():
@@ -13,6 +13,7 @@ def stls_instance():
 
 
 def test_default(stls_instance):
+    issubclass(Stls, Rpa)
     assert all(x == y for x, y in zip(stls_instance.allowedTheories, ["STLS"]))
     assert stls_instance.inputs.coupling == 1.0
     assert stls_instance.inputs.degeneracy == 1.0

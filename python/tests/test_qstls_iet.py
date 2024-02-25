@@ -7,7 +7,7 @@ import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.quantum import QstlsIet
-
+from qupled.quantum import Qstls
 
 @pytest.fixture
 def qstls_iet_instance():
@@ -15,6 +15,7 @@ def qstls_iet_instance():
 
 
 def test_default(qstls_iet_instance):
+    issubclass(QstlsIet, Qstls)
     assert all(x == y for x, y in zip(qstls_iet_instance.allowedTheories, ["QSTLS-HNC",
                                                                            "QSTLS-IOI",
                                                                            "QSTLS-LCT"]))

@@ -2,13 +2,14 @@ import os
 import pytest
 import set_path
 from qupled.classic import ESA
-
+from qupled.classic import Rpa
 
 @pytest.fixture
 def esa_instance():
     return ESA(1.0, 1.0)
 
 def test_default(esa_instance):
+    assert issubclass(ESA, Rpa)
     assert all(x == y for x, y in zip(esa_instance.allowedTheories, ["ESA"]))
     assert esa_instance.inputs.coupling == 1.0
     assert esa_instance.inputs.degeneracy == 1.0

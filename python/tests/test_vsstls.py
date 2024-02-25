@@ -5,7 +5,7 @@ import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.classic import VSStls
-
+from qupled.classic import Stls
 
 @pytest.fixture
 def vsstls_instance():
@@ -13,6 +13,7 @@ def vsstls_instance():
 
 
 def test_default(vsstls_instance):
+    issubclass(VSStls, Stls)
     assert all(x == y for x, y in zip(vsstls_instance.allowedTheories, ["VSSTLS"]))
     assert vsstls_instance.inputs.coupling == 1.0
     assert vsstls_instance.inputs.degeneracy == 1.0
