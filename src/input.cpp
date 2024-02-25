@@ -110,9 +110,6 @@ void RpaInput::setWaveVectorGridCutoff(const double &xmax){
   if (xmax <= 0.0) {
     MPI::throwError("The wave-vector grid cutoff must be larger than zero");
   }
-  if (xmax < dx) {
-    MPI::throwError("The wave-vector grid cutoff must be larger than the resolution");
-  }
   this->xmax = xmax;
 }
 

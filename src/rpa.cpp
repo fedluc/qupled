@@ -63,6 +63,9 @@ void Rpa::buildWvGrid(){
   wvg.push_back(0.0);
   const double dx = in.getWaveVectorGridRes();
   const double xmax = in.getWaveVectorGridCutoff();
+  if (xmax < dx) {
+    MPI::throwError("The wave-vector grid cutoff must be larger than the resolution");
+  }
   while(wvg.back() < xmax){
     wvg.push_back(wvg.back() + dx);
   }
