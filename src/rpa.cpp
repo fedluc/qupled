@@ -165,6 +165,10 @@ void Rpa::computeSlfc(){
 
 // Getters
 vector<double> Rpa::getRdf(const vector<double> &r) const {
+  if (wvg.size() < 3 || ssf.size() < 3) {
+    MPI::throwError("No data to compute the radial distribution function");
+    return vector<double>();
+  }
   return computeRdf(r, wvg, ssf);
 }
 
@@ -184,6 +188,10 @@ vector<double> Rpa::getSdr() const {
 }
 
 double Rpa::getUInt() const {
+  if (wvg.size() < 3 || ssf.size() < 3) {
+    MPI::throwError("No data to compute the internal energy");
+    return numUtil::Inf;
+  }
   return computeInternalEnergy(wvg, ssf, in.getCoupling());
 };  
 
