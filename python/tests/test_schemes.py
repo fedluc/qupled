@@ -5,6 +5,7 @@ import numpy as np
 import set_path
 import qupled.qupled as qp
 import qupled.classic as qpc
+import qupled.quantum as qpq
 
 def tolerance():
     return 1e-10
@@ -55,7 +56,6 @@ def test_esa_compute():
     assert scheme.ssfHF.size == nx
     assert scheme.recovery == ""
     assert scheme.rdf(scheme.wvg).size == nx
-    print(scheme.uInt)
     assert math.isclose(scheme.uInt, -0.4801292597, rel_tol=tolerance())
                                      
 def test_stls_properties():
@@ -108,7 +108,74 @@ def test_stls_iet_compute():
             assert scheme.recovery == recovery
             assert os.path.isfile(scheme.recovery)
             assert scheme.rdf(scheme.wvg).size == nx
-            print(scheme.uInt)
             assert math.isclose(scheme.uInt, uInt, rel_tol=tolerance())
         finally:
             if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
+
+
+def test_vsstls_properties():
+    issubclass(qp.VSStls, qp.Rpa)
+    inputs = qpc.VSStls(1.0, 1.0).inputs
+    scheme = qp.VSStls(inputs)
+    assert hasattr(scheme, "freeEnergyIntegrand")
+    assert hasattr(scheme, "freeEnergyGrid")
+    
+def test_stls_compute():
+    inputs = qpc.VSStls(1.0, 1.0,
+                        couplingResolution=0.1,
+                        degeneracyResolution=0.1,
+                        cutoff=5).inputs
+    scheme = qp.VSStls(inputs)
+    scheme.compute()
+    try:
+        nx = scheme.wvg.size
+        assert nx >= 3
+        assert scheme.idr.shape[0] == nx
+        assert scheme.idr.shape[1] == inputs.matsubara
+        assert scheme.sdr.size == nx
+        assert scheme.slfc.size == nx
+        assert scheme.ssf.size == nx
+        assert scheme.ssfHF.size == nx
+        assert scheme.recovery == ""
+        assert scheme.rdf(scheme.wvg).size == nx
+        assert math.isclose(scheme.uInt, -0.5223739856, rel_tol=tolerance())
+    finally:
+        if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recover)
+
+
+def test_qstls_properties():
+    issubclass(qp.Qstls, qp.Stls)
+    inputs = qpq.Qstls(1.0, 1.0).inputs
+    scheme = qp.Qstls(inputs)
+    assert hasattr(scheme, "adr")
+
+def test_qstls_compute():
+    inputs = qpq.Qstls(1.0, 1.0,
+                       matsubara=32,
+                       cutoff=5,
+                       outputFrequency=2,
+                       threads=16).inputs
+    scheme = qp.Qstls(inputs)
+    scheme.compute()
+    try:
+        nx = scheme.wvg.size
+        assert nx >= 3
+        assert scheme.adr.shape[0] == nx
+        assert scheme.adr.shape[1] == inputs.matsubara
+        assert scheme.idr.shape[0] == nx
+        assert scheme.idr.shape[1] == inputs.matsubara
+        assert scheme.sdr.size == nx
+        assert scheme.slfc.size == nx
+        assert scheme.ssf.size == nx
+        assert scheme.ssfHF.size == nx
+        assert scheme.recovery == "recovery_rs1.000_theta1.000_QSTLS.bin"
+        assert os.path.isfile(scheme.recovery)
+        assert scheme.rdf(scheme.wvg).size == nx
+        assert math.isclose(scheme.uInt, -0.4873131719, rel_tol=tolerance())
+    finally:
+        fixedFile = "adr_fixed_rs1.000_theta1.000_QSTLS.bin"
+        if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
+        if (os.path.isfile(fixedFile)) : os.remove(fixedFile)
+
+
+
