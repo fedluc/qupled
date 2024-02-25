@@ -275,7 +275,7 @@ void VSStlsInput::setDegeneracyResolution(const double &dTheta) {
 
 void VSStlsInput::setAlphaGuess(const vector<double>  &alphaGuess) {
   if (alphaGuess.size() != 2 || alphaGuess[0] >= alphaGuess[1]) {
-    MPI::throwError("Invalid guess for chemical potential calculation");
+    MPI::throwError("Invalid guess for free parameter calculation");
   }
   this->alphaGuess = alphaGuess;
 }
