@@ -1,5 +1,6 @@
 import os
 import pytest
+import glob
 import math
 import set_path
 import qupled.qupled as qp
@@ -43,4 +44,40 @@ def test_qstls_compute():
         if (os.path.isfile(fixedFile)) : os.remove(fixedFile)
 
 
+def test_qstls_iet_properties():
+    inputs = qpq.QstlsIet(1.0, 1.0, "QSTLS-HNC").inputs
+    scheme = qp.Qstls(inputs)
+    assert hasattr(scheme, "bf")
 
+def test_qstls_iet_compute():
+    ietSchemes = {"QSTLS-HNC" : -0.07120637694,
+                  "QSTLS-IOI" : -0.07120642613,
+                  "QSTLS-LCT" : -0.07154361947}
+    for schemeName, uInt in ietSchemes.items():
+        inputs = qpq.QstlsIet(10.0, 1.0, schemeName,
+                              matsubara=16,
+                              cutoff=5,
+                              outputFrequency=2,
+                              mixing=0.5,
+                              threads=16).inputs
+        scheme = qp.Qstls(inputs)
+        scheme.compute()
+        try:
+            nx = scheme.wvg.size
+            assert nx >= 3
+            assert scheme.idr.shape[0] == nx
+            assert scheme.idr.shape[1] == inputs.matsubara
+            assert scheme.sdr.size == nx
+            assert scheme.slfc.size == nx
+            assert scheme.ssf.size == nx
+            assert scheme.ssfHF.size == nx
+            recovery = "recovery_rs10.000_theta1.000_" + schemeName + ".bin"
+            assert scheme.recovery == recovery
+            assert os.path.isfile(scheme.recovery)
+            assert scheme.rdf(scheme.wvg).size == nx
+            assert math.isclose(scheme.uInt, uInt, rel_tol=tolerance())
+        finally:
+            if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
+            fileNames = glob.glob("adr_fixed*.bin")
+            for fileName in fileNames :
+                os.remove(fileName)
