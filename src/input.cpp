@@ -110,9 +110,6 @@ void RpaInput::setWaveVectorGridCutoff(const double &xmax){
   if (xmax <= 0.0) {
     MPI::throwError("The wave-vector grid cutoff must be larger than zero");
   }
-  if (xmax < dx) {
-    MPI::throwError("The wave-vector grid cutoff must be larger than the resolution");
-  }
   this->xmax = xmax;
 }
 
@@ -193,8 +190,8 @@ void StlsInput::print() const {
   if (!MPI::isRoot()) {
     return;
   }
-  Input::print();
-  cout << "Iet mapping scheme" << IETMapping << endl;
+  RpaInput::print();
+  cout << "Iet mapping scheme = " << IETMapping << endl;
   cout << "Maximum number of iterations = " << nIter << endl;
   cout << "Minimum error for convergence = " << errMin << endl;
   cout << "Mixing parameter = " << aMix << endl;
@@ -278,7 +275,7 @@ void VSStlsInput::setDegeneracyResolution(const double &dTheta) {
 
 void VSStlsInput::setAlphaGuess(const vector<double>  &alphaGuess) {
   if (alphaGuess.size() != 2 || alphaGuess[0] >= alphaGuess[1]) {
-    MPI::throwError("Invalid guess for chemical potential calculation");
+    MPI::throwError("Invalid guess for free parameter calculation");
   }
   this->alphaGuess = alphaGuess;
 }

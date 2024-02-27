@@ -63,6 +63,9 @@ void Rpa::buildWvGrid(){
   wvg.push_back(0.0);
   const double dx = in.getWaveVectorGridRes();
   const double xmax = in.getWaveVectorGridCutoff();
+  if (xmax < dx) {
+    MPI::throwError("The wave-vector grid cutoff must be larger than the resolution");
+  }
   while(wvg.back() < xmax){
     wvg.push_back(wvg.back() + dx);
   }
@@ -162,6 +165,10 @@ void Rpa::computeSlfc(){
 
 // Getters
 vector<double> Rpa::getRdf(const vector<double> &r) const {
+  if (wvg.size() < 3 || ssf.size() < 3) {
+    MPI::throwError("No data to compute the radial distribution function");
+    return vector<double>();
+  }
   return computeRdf(r, wvg, ssf);
 }
 
@@ -181,6 +188,10 @@ vector<double> Rpa::getSdr() const {
 }
 
 double Rpa::getUInt() const {
+  if (wvg.size() < 3 || ssf.size() < 3) {
+    MPI::throwError("No data to compute the internal energy");
+    return numUtil::Inf;
+  }
   return computeInternalEnergy(wvg, ssf, in.getCoupling());
 };  
 

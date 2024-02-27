@@ -153,7 +153,7 @@ class Rpa():
         pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
     
     # Compute radial distribution function
-    def computeRdf(self, rdfGrid : np.ndarray, writeToHdf : bool = True) -> np.array:
+    def computeRdf(self, rdfGrid : np.ndarray = None, writeToHdf : bool = True) -> np.array:
         """ Computes the radial distribution function from the data stored in the output file.
         
         Args:
@@ -516,6 +516,7 @@ class VSStls(Stls):
                  cutoff : float = 10.0,
                  error : float = 1.0e-5,
                  mixing : float = 1.0,
+                 guess : qp.SlfcGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,
                  outputFrequency : int = 10,
@@ -533,7 +534,7 @@ class VSStls(Stls):
         # Input object
         self.inputs : qupled.qupled.VSStlsInput = qp.VSStlsInput()  #: Inputs to solve the scheme.
         super()._setInputs(coupling, degeneracy, "VSSTLS", chemicalPotential,
-                           cutoff, error, mixing, None, iterations, matsubara,
+                           cutoff, error, mixing, guess, iterations, matsubara,
                            outputFrequency, recoveryFile, resolution)
         self.inputs.alpha = alpha
         self.inputs.couplingResolution = couplingResolution
