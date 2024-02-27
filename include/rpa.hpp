@@ -77,6 +77,7 @@ public:
   std::vector<double> getSdr() const;
   double getUInt() const;
   std::string getRecoveryFileName() const { return recoveryFileName; }
+  
 };
 
 // -----------------------------------------------------------------

@@ -13,7 +13,7 @@
 // // Class to handle simultaneous state point calculations
 // // -----------------------------------------------------------------
 
-class qStlsCSR : public Qstls, public CSR<vecUtil::Vector2D> {
+class qStlsCSR : public CSR<vecUtil::Vector2D, Qstls> {
 
   friend class qStructProp;
 
@@ -24,10 +24,6 @@ private:
   // Compute auxiliary density response
   void computeAdrStls();
   void computeAdr();
-  // Compute the internal energy
-  double getInternalEnergy() const;
-  // Compute the free energy integrand
-  double getFreeEnergyIntegrand() const;
   // Compute Q
   double getQ() const;
   // Convert VSStlsInput to QstlsInput
@@ -36,9 +32,7 @@ private:
 public:
   
   // Constructor
-  qStlsCSR(const VSStlsInput& in_) : Qstls(VStoQStlsInput(in_)),
-				     in(in_) { ; }
-  
+  qStlsCSR(const VSStlsInput& in_) : CSR(in_, Qstls(VStoQStlsInput(in_))) { ; }
   
 };
 

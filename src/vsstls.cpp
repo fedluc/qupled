@@ -1,6 +1,7 @@
 #include "util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
+#include "qstls.hpp"
 #include "vsstls.hpp"
 
 using namespace std;
@@ -424,54 +425,29 @@ vector<double> StructProp::getFreeEnergyIntegrand() const  {
 // CSR class
 // -----------------------------------------------------------------
 
-template<typename T>
-void CSR<T>::setDrsData(CSR<T> &csrRsUp,
-			CSR<T> &csrRsDown,
-			const Derivative &dTypeRs) {
+template<typename T, typename Scheme>
+void CSR<T, Scheme>::setDrsData(CSR<T, Scheme> &csrRsUp,
+				CSR<T, Scheme> &csrRsDown,
+				const Derivative &dTypeRs) {
   this->lfcRsUp = &csrRsUp.lfc;
   this->lfcRsDown = &csrRsDown.lfc;
   this->dTypeRs = dTypeRs;
 }
 
-template<typename T>
-void CSR<T>::setDThetaData(CSR<T> &csrThetaUp,
-			   CSR<T> &csrThetaDown,
-			   const Derivative &dTypeTheta) {
+template<typename T, typename Scheme>
+void CSR<T, Scheme>::setDThetaData(CSR<T, Scheme> &csrThetaUp,
+				   CSR<T, Scheme> &csrThetaDown,
+				   const Derivative &dTypeTheta) {
   this->lfcThetaUp = &csrThetaUp.lfc;
   this->lfcThetaDown = &csrThetaDown.lfc;
   this->dTypeTheta = dTypeTheta;
 }
 
-template<typename T>
-double CSR<T>::getDerivative(const T& f,
-			     const size_t& idx,
-			     const Derivative& type) {
-  // NOTE: If T does not have an operator[] this method would not compile
-  switch(type) {
-  case BACKWARD:
-    assert(idx >= 2);
-    return getDerivative(f[idx], f[idx - 1], f[idx - 2], type);
-    break;
-  case CENTERED:
-    assert(idx >= 1 && idx < f.size() - 1);
-    return getDerivative(f[idx], f[idx + 1], f[idx - 1], type);
-    break;
-  case FORWARD:
-    assert(idx < f.size() - 2);
-    return getDerivative(f[idx], f[idx + 1], f[idx + 2], type);
-    break;
-  default:
-    assert(false);
-    return -1;
-    break;
-  }
-}
-
-template<typename T>
-double CSR<T>::getDerivative(const double& f0,
-			     const double& f1,
-			     const double& f2,
-			     const Derivative& type) {
+template<typename T, typename Scheme>
+double CSR<T, Scheme>::getDerivative(const double& f0,
+				     const double& f1,
+				     const double& f2,
+				     const Derivative& type) {
   switch(type) {
   case BACKWARD:
     return 3.0 * f0 - 4.0 * f1 + f2; break;
@@ -485,6 +461,18 @@ double CSR<T>::getDerivative(const double& f0,
     break;
   }
 }
+
+template<typename T, typename Scheme>
+double CSR<T, Scheme>::getInternalEnergy() const {
+  return computeInternalEnergy(Scheme::wvg, Scheme::ssf, in.getCoupling());
+}
+
+template<typename T, typename Scheme>
+double CSR<T, Scheme>::getFreeEnergyIntegrand() const {
+  return computeInternalEnergy(Scheme::wvg, Scheme::ssf, 1.0);
+}
+
+template class CSR<vecUtil::Vector2D, Qstls>;
 
 // -----------------------------------------------------------------
 // StlsCSR class
@@ -522,21 +510,37 @@ void StlsCSR::computeSlfc() {
   // Coupling parameter contribution
   if (rs > 0.0) {
     for (size_t i = 0; i < nx; ++i) {
-      slfcNew[i] -= a_drs * getDerivative(lfc[i], rsUp[i], rsDown[i], dTypeRs);
+      slfcNew[i] -= a_drs * CSR::getDerivative(lfc[i], rsUp[i], rsDown[i], dTypeRs);
     }
   }
   // Degeneracy parameter contribution
   if (theta > 0.0) {
     for (size_t i = 0; i < nx; ++i) {
-      slfcNew[i] -= a_dt * getDerivative(lfc[i], thetaUp[i], thetaDown[i], dTypeTheta);
+      slfcNew[i] -= a_dt * CSR::getDerivative(lfc[i], thetaUp[i], thetaDown[i], dTypeTheta);
     }
   }
 }
 
-double StlsCSR::getInternalEnergy() const {
-  return computeInternalEnergy(wvg, ssf, in.getCoupling());
-}
-
-double StlsCSR::getFreeEnergyIntegrand() const {
-  return computeInternalEnergy(wvg, ssf, 1.0);
+double StlsCSR::getDerivative(const vector<double>& f,
+			      const size_t& idx,
+			      const Derivative& type) {
+  // NOTE: If T does not have an operator[] this method would not compile
+  switch(type) {
+  case BACKWARD:
+    assert(idx >= 2);
+    return CSR::getDerivative(f[idx], f[idx - 1], f[idx - 2], type);
+    break;
+  case CENTERED:
+    assert(idx >= 1 && idx < f.size() - 1);
+    return CSR::getDerivative(f[idx], f[idx + 1], f[idx - 1], type);
+    break;
+  case FORWARD:
+    assert(idx < f.size() - 2);
+    return CSR::getDerivative(f[idx], f[idx + 1], f[idx + 2], type);
+    break;
+  default:
+    assert(false);
+    return -1;
+    break;
+  }
 }

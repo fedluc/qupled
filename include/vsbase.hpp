@@ -3,7 +3,6 @@
 
 #include <limits>
 #include <map>
-#include "stls.hpp"
 
 // Forward declarations
 class VSStlsInput;
@@ -12,7 +11,7 @@ class VSStlsInput;
 // Solver for the VS-STLS scheme
 // -----------------------------------------------------------------
 
-template <typename T, typename Scheme>
+template <typename T, Scheme>
 class CSR : public Scheme {
 
 protected:
@@ -42,14 +41,17 @@ protected:
   // Numerical scheme used to compute the degeneracy parametere derivative
   Derivative dTypeTheta;
   // Set the data to compute the coupling parameter derivative
-  void setDrsData(CSR<T, Scheme> &csrRsUp,
-		  CSR<T, Scheme> &csrRsDown,
+  void setDrsData(CSR<T> &csrRsUp,
+		  CSR<T> &csrRsDown,
 		  const Derivative &dTypeRs);
   // Set the data to compute the degeneracy parameter derivative
-  void setDThetaData(CSR<T, Scheme> &csrThetaUp,
-		     CSR<T, Scheme> &csrThetaDown,
+  void setDThetaData(CSR<T> &csrThetaUp,
+		     CSR<T> &csrThetaDown,
 		     const Derivative &dTypeTheta);
   // Helper methods to compute the derivatives
+  double getDerivative(const T& f,
+		       const size_t& idx,
+		       const Derivative& type);
   double getDerivative(const double& f0,
 		       const double& f1,
 		       const double& f2,
@@ -65,7 +67,7 @@ public:
 
   // Constructor
   CSR(const VSStlsInput& in_,
-      const Scheme& scheme) : Scheme(scheme),
+      const bool&&... args) : Scheme(in_, args),
 			      in(in_),
 			      alpha(DEFAULT_ALPHA),
 			      lfcRsUp(nullptr),
@@ -86,14 +88,15 @@ private:
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();
-  // Helper methods to compute the derivatives
-  double getDerivative(const std::vector<double>& f,
-		       const size_t& idx,
-		       const Derivative& type);
+  // Compute the internal energy
+  double getInternalEnergy() const;
+  // Compute the free energy integrand
+  double getFreeEnergyIntegrand() const;
+  
 public:
 
   // Constructor
-  StlsCSR(const VSStlsInput& in_) : CSR(in_, Stls(in_, false, false)) { ; }
+  StlsCSR(const VSStlsInput& in_) : CSR(in_, false, false, int) { ; }
   
 };
 
