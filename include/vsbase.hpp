@@ -4,10 +4,10 @@
 #include <limits>
 #include <map>
 
-// // Forward declarations
-// class VSStlsInput;
-// class SecantSolver;
-// class Interpolator1D;
+// Forward declarations
+class VSStlsInput;
+class SecantSolver;
+class Interpolator1D;
 
 // -----------------------------------------------------------------
 // VSBase class

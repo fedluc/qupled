@@ -25,7 +25,7 @@ Python3_add_library(qupled MODULE
 		    util.cpp
 		    vsstls.cpp
 		    esa.cpp
-		    # qvs.cpp
+		    qvs.cpp
 		    python_wrappers.cpp
 		    python_modules.cpp)
 

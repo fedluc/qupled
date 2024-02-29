@@ -15,25 +15,18 @@ using namespace parallelUtil;
 // qVSStls class
 // -----------------------------------------------------------------
 
-double qVSStls::alphaDifference(const double& alphaTmp) {
-  alpha = alphaTmp;
-  qthermoProp.setAlpha(alpha);
-  const double alphaTheoretical = computeAlpha();
-  return alpha - alphaTheoretical;
-}
-
 double qVSStls::computeAlpha() {
-  // Compute the free energy integrand
-  qthermoProp.compute(in);
+  //  Compute the free energy integrand
+  thermoProp.compute<qVSStls>(in);
   // Free energy
-  const vector<double> freeEnergyData = qthermoProp.getFreeEnergyData();
+  const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
   const double& fxcr = freeEnergyData[1];
   const double& fxcrr = freeEnergyData[2];
   const double& fxct = freeEnergyData[3];
   const double& fxctt = freeEnergyData[4];
   const double& fxcrt = freeEnergyData[5];
   // Q
-  const vector<double> QData = qthermoProp.getQData();
+  const vector<double> QData = thermoProp.getQData();
   const double& Q = QData[0];
   const double& Qr = QData[1];
   const double& Qt = QData[2];
@@ -51,70 +44,14 @@ double qVSStls::computeAlpha() {
 
 void qVSStls::updateSolution() {
   // Update the structural properties used for output
-  const auto& Adr = qthermoProp.getStructProp();
-  adr = Adr.getAdr();
-  ssf = Adr.getSsf();
+  const auto& qstls = thermoProp.getStructProp<qStlsCSR>();
+  adr = qstls.getAdr();
+  ssf = qstls.getSsf();
 }
 
 // -----------------------------------------------------------------
 // qThermoProp class
 // -----------------------------------------------------------------
-
-void qThermoProp::setAlpha(const double& alpha) {
-  qstructProp.setAlpha(alpha);
-}
-
-void qThermoProp::compute(const VSStlsInput& in) {
-  // Recursive calls to solve the VS-STLS scheme for all state points
-  // with coupling parameter smaller than rs
-  const double nrs = rsGrid.size();
-  VSStlsInput inTmp = in;
-  vector<double> fxciTmp(StructProp::NPOINTS);
-  for (size_t i = 0; i < nrs; ++i) {
-    const double& rs = rsGrid[i];
-    if (equalTol(rs, in.getCoupling())) {
-      qstructProp.compute();
-      fxciTmp = qstructProp.getFreeEnergyIntegrand();
-    }
-    else if (rs < in.getCoupling()) {
-      if (rs == 0.0 || fxcIntegrand[THETA][i] != Inf) { continue; }
-      printf("Free energy integrand calculation, solving VS-STLS scheme for rs = %.5f:\n", rs);
-      inTmp.setCoupling(rs);
-      qVSStls vsstlsTmp(inTmp, *this);
-      vsstlsTmp.compute();
-      fxciTmp = vsstlsTmp.getThermoProp().qstructProp.getFreeEnergyIntegrand();
-      printf("Done\n");
-      printf("---------------------------------------------------------------------------\n");
-    }
-    else {
-      break;
-    }
-    fxcIntegrand[THETA_DOWN][i-1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
-    fxcIntegrand[THETA_DOWN][i]   = fxciTmp[SIdx::RS_THETA_DOWN];
-    fxcIntegrand[THETA_DOWN][i+1] = fxciTmp[SIdx::RS_UP_THETA_DOWN];
-    fxcIntegrand[THETA][i-1]      = fxciTmp[SIdx::RS_DOWN_THETA];
-    fxcIntegrand[THETA][i]        = fxciTmp[SIdx::RS_THETA];
-    fxcIntegrand[THETA][i+1]      = fxciTmp[SIdx::RS_UP_THETA];
-    fxcIntegrand[THETA_UP][i-1]   = fxciTmp[SIdx::RS_DOWN_THETA_UP];
-    fxcIntegrand[THETA_UP][i]     = fxciTmp[SIdx::RS_THETA_UP];
-    fxcIntegrand[THETA_UP][i+1]   = fxciTmp[SIdx::RS_UP_THETA_UP];
-  }
-}
-
-const qStlsCSR& qThermoProp::getStructProp() {
-  if (!qstructProp.isComputed()) { qstructProp.compute(); }
-  if (isZeroCoupling && isZeroDegeneracy) {
-     return qstructProp.getAdrStls(SIdx::RS_DOWN_THETA_DOWN); 
-  }
-  if (!isZeroCoupling && isZeroDegeneracy) {
-     return qstructProp.getAdrStls(SIdx::RS_THETA_DOWN); 
-  }
-  if (isZeroCoupling && !isZeroDegeneracy) {
-     return qstructProp.getAdrStls(SIdx::RS_DOWN_THETA); 
-  }
-  return qstructProp.getAdrStls(SIdx::RS_THETA); 
-}
-
 
 vector<double> qThermoProp::getQData() const {
   // // Q
@@ -142,144 +79,32 @@ vector<double> qThermoProp::getQData() const {
   return vector<double>();
 }
 
-
-
 // -----------------------------------------------------------------
 // qStructProp class
 // -----------------------------------------------------------------
 
-qStructProp::qStructProp(const VSStlsInput &in) : StructProp(in),
-						  adrIsInitialized(false) {
-  VSStlsInput inTmp = in;
-  const double& drs = inTmp.getCouplingResolution();
-  const double& dTheta = inTmp.getDegeneracyResolution();
-  // If there is a risk of having negative state parameters, shift the
-  // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  if (inTmp.getCoupling() < drs) { inTmp.setCoupling(drs); }
-  if (inTmp.getDegeneracy() < dTheta) { inTmp.setDegeneracy(dTheta); }
-  double rs = inTmp.getCoupling();
-  double theta = inTmp.getDegeneracy();
-  // Setup objects
-  for (const double& thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
-    for (const double& rsTmp : {rs - drs, rs, rs + drs}){
-      inTmp.setDegeneracy(thetaTmp);
-      inTmp.setCoupling(rsTmp);
-      Adr.push_back(qStlsCSR(inTmp)); 
-    }
-  }
-  assert(Adr.size() == NPOINTS);
-  // Setup derivative dependency in the StlsCSR objects  
-  for (size_t i = 0; i < Adr.size(); ++i) {
-    switch (i) {
-    case RS_DOWN_THETA_DOWN: case RS_DOWN_THETA: case RS_DOWN_THETA_UP:
-      Adr[i].setDrsData(Adr[i + 1], Adr[i + 2],
-			qStlsCSR::Derivative::FORWARD); break;
-    case RS_THETA_DOWN: case RS_THETA: case RS_THETA_UP:
-      Adr[i].setDrsData(Adr[i + 1], Adr[i - 1],
-			qStlsCSR::Derivative::CENTERED); break;
-    case RS_UP_THETA_DOWN: case RS_UP_THETA: case RS_UP_THETA_UP:
-      Adr[i].setDrsData(Adr[i - 1], Adr[i - 2],
-			 qStlsCSR::Derivative::BACKWARD); break;
-    }
-  }
-  for (size_t i = 0; i < Adr.size(); ++i) {
-    switch (i) {
-    case RS_DOWN_THETA_DOWN: case RS_THETA_DOWN: case RS_UP_THETA_DOWN:
-      Adr[i].setDThetaData(Adr[i + NRS], Adr[i + 2 * NRS],
-			   qStlsCSR::Derivative::FORWARD); break;
-    case RS_DOWN_THETA: case RS_THETA: case RS_UP_THETA:
-      Adr[i].setDThetaData(Adr[i + NRS], Adr[i - NRS],
-			   qStlsCSR::Derivative::CENTERED); break;
-    case RS_DOWN_THETA_UP: case RS_THETA_UP: case RS_UP_THETA_UP:
-      Adr[i].setDThetaData(Adr[i - NRS], Adr[i - 2 * NRS],
-			   qStlsCSR::Derivative::BACKWARD); break;
-    }
-  }
-}
-
-int qStructProp::compute() {
-  try {
-    if (!adrIsInitialized) {
-      for (auto& q : Adr) { q.init(); }
-      adrIsInitialized = true;
-    }
-    doIterations();
-    computed = true;
-    return 0;
-  }
-  catch (const runtime_error& err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
-}
-
 void qStructProp::doIterations() {
-  const auto& in = Adr[0].in;
+  const auto& in = csr[0].in;
   const int maxIter = in.getNIter();
-  const int ompThreads = in.getNThreads();
   const double minErr = in.getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess
-  for (auto& q : Adr) { q.initialGuess(); }
+  for (auto& c : csr) { c.initialGuess(); }
   // Iteration to solve for the structural properties
-  const bool useOMP = ompThreads > 1;
   while (counter < maxIter+1 && err > minErr ) {
-    // Compute new solution and error
-    #pragma omp parallel num_threads(ompThreads) if (useOMP)
-    {
-      #pragma omp for
-      for (auto& q : Adr) {
-	q.computeAdrStls();
-	q.computeSsf();
-      }
-      #pragma omp for
-      for (auto& q : Adr) {
-	q.computeAdr();
-	q.updateSolution();
-      }
+    for (auto& c : csr) {
+      c.computeAdrStls();
+      c.computeSsf();
+      c.computeAdr();
+      c.updateSolution();
     }
     counter++;
     // Compute the error only for the central state point (rs, theta)
-    err = Adr[RS_THETA].computeError();
+    err = csr[RS_THETA].computeError();
   }
   printf("Alpha = %.5e, Residual error "
-	 "(structural properties) = %.5e\n", Adr[RS_THETA].alpha, err);
-}
-
-void qStructProp::setAlpha(const double& alpha) {
-  for (auto& q : Adr) { q.setAlpha(alpha); }
-}
-
-const vector<double>& qStructProp::getBase(std::function<double(const qStlsCSR&)> f) const {
-  for (size_t i = 0; i < NPOINTS; ++i) {
-    outVector[i] = f(Adr[i]);
-  }
-  return outVector; 
-}
-
-vector<double> qStructProp::getCouplingParameters() const {
-  return getBase([&](const qStlsCSR& q) -> double {
-    return q.in.getCoupling();
-  });
-}
-
-vector<double> qStructProp::getDegeneracyParameters() const {
-  return getBase([&](const qStlsCSR& q) -> double {
-    return q.in.getDegeneracy();
-  });
-}
-
-vector<double> qStructProp::getInternalEnergy() const  {
-  return getBase([&](const qStlsCSR& q) -> double {
-    return q.getInternalEnergy();
-  });
-}
-
-vector<double> qStructProp::getFreeEnergyIntegrand() const  {
-  return getBase([&](const qStlsCSR& q) -> double {
-    return q.getFreeEnergyIntegrand();
-  });
+	 "(structural properties) = %.5e\n", csr[RS_THETA].alpha, err);
 }
 
 vector<double> qStructProp::getQ() const  {
@@ -291,12 +116,6 @@ vector<double> qStructProp::getQ() const  {
 // -----------------------------------------------------------------
 // qStlsCSR class
 // -----------------------------------------------------------------
-
-QstlsInput qStlsCSR::VStoQStlsInput(const VSStlsInput& in) const {
-  StlsInput tmp = in;
-  return static_cast<QstlsInput>(tmp);
-}
-
 
 void qStlsCSR::computeAdrStls() {
   Qstls::computeAdr();

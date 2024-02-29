@@ -6,13 +6,12 @@
 #include <functional>
 #include "numerics.hpp"
 #include "vsbase.hpp"
-#include "vsstls.hpp"
 #include "qstls.hpp"
 
 
-// // -----------------------------------------------------------------
-// // Class to handle simultaneous state point calculations
-// // -----------------------------------------------------------------
+// -----------------------------------------------------------------
+// Class to handle simultaneous state point calculations
+// -----------------------------------------------------------------
 
 class qStlsCSR : public CSR<vecUtil::Vector2D, Qstls> {
 
@@ -27,13 +26,11 @@ private:
   void computeAdr();
   // Compute Q
   double getQ() const;
-  // Convert VSStlsInput to QstlsInput
-  QstlsInput VStoQStlsInput(const VSStlsInput& in) const;
 
 public:
   
   // Constructor
-  qStlsCSR(const VSStlsInput& in_) : CSR(in_, Qstls(VStoQStlsInput(in_))) { ; }
+  qStlsCSR(const VSStlsInput& in_) : CSR(in_, Qstls(QstlsInput(in_))) { ; }
   
 };
 
@@ -42,39 +39,20 @@ public:
 // Class to handle the state point derivatives
 // -----------------------------------------------------------------
 
-class qStructProp : public StructProp {
+class qStructProp : public StructPropBase<qStlsCSR> {
 
 private:
 
-  // Vector containing NPOINTS state points to be solved simultaneously
-  std::vector<qStlsCSR> Adr;
-  // Flag marking whether the initialization for the stls data is done
-  bool adrIsInitialized;
+  using StructPropBase = StructPropBase<qStlsCSR>;
   // Perform iterations to compute structural properties
   void doIterations();
-  // Generic getter function to return vector data
-  const std::vector<double>& getBase(std::function<double(const qStlsCSR&)> f) const;
   
 public:
 
   // Constructor
-  qStructProp(const VSStlsInput &in_);
-  // Compute structural properties
-  int compute();
-  // Set free parameter
-  void setAlpha(const double& alpha);
-  // Get coupling parameters for all the state points
-  std::vector<double> getCouplingParameters() const;
-  // Get degeneracy parameters for all the state points
-  std::vector<double> getDegeneracyParameters() const;
-  // Get internal energy for all the state points
-  std::vector<double> getInternalEnergy() const;
-  // Get free energy integrand for all the state points
-  std::vector<double> getFreeEnergyIntegrand() const;
+  qStructProp(const VSStlsInput &in_) : StructPropBase(in_) { ; }
   // Get Q term
-  std::vector<double> getQ() const;
-  const qStlsCSR& getAdrStls(const Idx& idx) const { return Adr[idx]; }
-  
+  std::vector<double> getQ() const;  
   
 };
 
@@ -83,31 +61,26 @@ public:
 // Class to handle the thermodynamic properties and derivatives
 // -----------------------------------------------------------------
 
-class qThermoProp : public ThermoProp {
+class qThermoProp : public ThermoPropBase<qStructProp> {
 
 private:
 
+  using ThermoPropBase = ThermoPropBase<qStructProp>;
   // // Compute the free energy
   // double computeQ(const SIdx iStruct,
   // 		  const bool normalize) const ;
-  qStructProp qstructProp;
-  
+
 public:
 
   // Constructors
-  qThermoProp(const VSStlsInput& in) : ThermoProp(in), qstructProp(in) { ; } 
+  qThermoProp(const VSStlsInput& in) : ThermoPropBase(in) { ; } 
   qThermoProp(const VSStlsInput& in,
-	      const qThermoProp& other) : ThermoProp(in, other), qstructProp(in) { ; } 
-  void compute(const VSStlsInput& in);
+	      const qThermoProp& other) : ThermoPropBase(in, other) { ; }
+  qThermoProp(const ThermoPropBase& other) : ThermoPropBase(other) { ; }
   // Get internal energy and internal energy derivatives
   std::vector<double> getQData() const;
-  // Set the value of the free parameter in the structural properties
-  void setAlpha(const double& alpha);
-  const qStlsCSR& getStructProp();
   
 };
-
-
 
 // class Q : public AdrFixed {
 //     // Get integration result
@@ -121,34 +94,30 @@ public:
 
 // };
 
-
 // -----------------------------------------------------------------
 // Solver for the qVS-STLS scheme
 // -----------------------------------------------------------------
 
-class qVSStls : public VSStls {
+class qVSStls : public VSBase<qThermoProp, Rpa> {
 
 private:
 
-  qThermoProp qthermoProp;
+  using VSBase = VSBase<qThermoProp, Rpa>;
+  // Compute free parameter
   double computeAlpha();
-  double alphaDifference(const double& alphaTmp);
+  // Iterations to solve the qvsstls-scheme
   void updateSolution();
   // Auxiliary density response
   vecUtil::Vector2D adr;
   
 public:
   
-  
   // Constructor from initial data
-  qVSStls(const VSStlsInput &in_) : VSStls(in_),
-				    qthermoProp(in_) { ; }
+  qVSStls(const VSStlsInput &in_) : VSBase(in_) { ; }
   // Constructor for recursive calculations
   qVSStls(const VSStlsInput &in_,
-	  const qThermoProp& qthermoProp_) : VSStls(in_, qthermoProp_),
-					     qthermoProp(in_, qthermoProp_) { ; }
-  // Getters
-  const qThermoProp& getThermoProp() const { return qthermoProp; }
+	  const qThermoProp& thermoProp_) : VSBase(in_, thermoProp_) { ; }
+  
   
 };
 
