@@ -5,6 +5,7 @@
 #include <map>
 #include <functional>
 #include "numerics.hpp"
+#include "vsbase.hpp"
 #include "vsstls.hpp"
 #include "qstls.hpp"
 
