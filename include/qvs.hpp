@@ -18,9 +18,10 @@ class qStlsCSR : public CSR<vecUtil::Vector2D, Qstls> {
   friend class qStructProp;
 
 private:
-
+  
   // Input data
   const VSStlsInput in;
+  Q QInstance;
   // Compute auxiliary density response
   void computeAdrStls();
   void computeAdr();
@@ -28,6 +29,10 @@ private:
   double getQ() const;
   // Convert VSStlsInput to QstlsInput
   QstlsInput VStoQStlsInput(const VSStlsInput& in) const;
+  double getqDerivative(const Vector2D& f,
+            const int &l,
+            const size_t& idx,
+            const Derivative& type);
 
 public:
   
@@ -108,17 +113,53 @@ public:
 
 
 
-// class Q : public AdrFixed {
-//     // Get integration result
-//     void get(std::vector<double> &wvg,
-// 	   vecUtil::Vector3D &res) const;
-//     double integranddenom(const double q,
-// 		    const double l) const;
-//     double integrandnum(const double t,
-// 		    const double y,
-// 		    const double l) const;
+class Q {
 
-// };
+private:
+
+  const VSStlsInput in;
+  // --Constructor variables--
+  // Degeneracy parameter
+  const double Theta;
+  // Coupling parameter
+  const double rs;
+  // Chemical potential
+  const double mu;
+  // Vector value for Numerator fixed part
+  std::vector<double> NumPart;
+  // Value for Numerator
+  double Numerator;
+  // Value for Denominator
+  double Denominator;
+  // Integrator object instance
+  Integrator1D &itg;
+  // Interpolator 1D class instance
+  Interpolator1D &interp;
+  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+
+  // Integrands 
+  double integrandDenominator(const double q) const;
+  double integrandNumerator(const double t,
+		    const double y) const;
+  // Get Integrals
+  void getIntNumerator(const vector<double> wvg,
+        std::vector<double> &res) const;
+  void getIntDenominator(const vector<double> wvg,
+        double &res) const;
+  void getTotalNumerator(const vector<double> wvg,
+      std::vector<double> &res,
+      std::vector<double> ssf,
+      double &Num) const;
+
+  
+public:
+  
+  double computeQ(const vector<double> &wvg, 
+                  const std::vector<double> ssf, 
+                  const double rs, 
+                  const double Theta);
+  
+};
 
 
 // -----------------------------------------------------------------

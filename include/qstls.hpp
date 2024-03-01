@@ -186,12 +186,15 @@ private:
 
   // Compute fixed component
   double fix(const double y) const;
-  // integrand 
-  double integrand(const double y) const;
   // Interpolator for the fixed component
   Interpolator1D fixi;
   // Integrator object
   Integrator1D &itg;
+
+protected:
+
+  // integrand 
+  double integrand(const double y) const;
   
 public:
 

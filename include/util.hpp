@@ -239,7 +239,7 @@ namespace thermoUtil {
   double computeFreeEnergy(const std::vector<double> &grid,
 			   const std::vector<double> &rsu,
 			   const double &coupling);
-
+  
   double computeFreeEnergy(const std::vector<double> &grid,
 			   const std::vector<double> &rsu,
 			   const double &coupling,

@@ -303,98 +303,151 @@ void qStlsCSR::computeAdrStls() {
   lfc = adr;
 }
 
+double qStlsCSR::getqDerivative(const Vector2D& f,
+           const int &l,
+			     const size_t& idx,
+			     const Derivative& type) {
+  // NOTE: If T does not have an operator[] this method would not compile
+  switch(type) {
+  case BACKWARD:
+    assert(idx >= 2);
+    return getDerivative(f(idx,l), f(idx - 1,l), f(idx - 2,l), type);
+    break;
+  case CENTERED:
+    assert(idx >= 1 && idx < f.size() - 1);
+    return getDerivative(f(idx,l), f(idx + 1,l), f(idx - 1,l), type);
+    break;
+  case FORWARD:
+    assert(idx < f.size() - 2);
+    return getDerivative(f(idx,l), f(idx + 1,l), f(idx + 2,l), type);
+    break;
+  default:
+    assert(false);
+    return -1;
+    break;
+  }
+}
+
 void qStlsCSR::computeAdr() {
-  
-  // HERE YOU HAVE TO CONSIDER THAT in qStlsCSR lfc is a Vector2D not a vector<double>
-  // I'LL LEAVE THIS AS AN EXERCISE TO FIX
-  
-  // // Check that alpha has been set to a value that is not the default
-  // assert(alpha != DEFAULT_ALPHA);
-  // // Derivative contributions
-  // const double& rs = in.getCoupling();
-  // //const double& theta = in.getDegeneracy();
-  // const double& theta = 0.0;
-  // const double& dx = in.getWaveVectorGridRes();
-  // const double& drs = in.getCouplingResolution();
-  // const double& dTheta = in.getDegeneracyResolution();
-  // const vector<double>& rsUp = *lfcRsUp;
-  // const vector<double>& rsDown = *lfcRsDown;
-  // const vector<double>& thetaUp = *lfcThetaUp;
-  // const vector<double>& thetaDown = *lfcThetaDown;
-  // const double a_drs = alpha * rs / (6.0 * drs);
-  // const double a_dx = alpha/(6.0 * dx);
-  // const double a_dt = alpha * theta / (3.0 * dTheta);
-  // const size_t nx = wvg.size();
-  // // Wave-vector derivative
-  // adr[0] -= a_dx * wvg[0] * getDerivative(lfc, 0, FORWARD);
-  // for (size_t i = 1; i < nx - 1; ++i) {
-  //   adr[i] -= a_dx * wvg[i] * getDerivative(lfc, i, CENTERED);
-  // }
-  // adr[nx - 1] -= a_dx * wvg[nx - 1] * getDerivative(lfc, nx - 1, BACKWARD);
-  // // Coupling parameter contribution
-  // if (rs > 0.0) {
-  //   for (size_t i = 0; i < nx; ++i) {
-  //     adr[i] -= a_drs * getDerivative(lfc[i], rsUp[i], rsDown[i], dTypeRs);
-  //   }
-  // }
-  // // Degeneracy parameter contribution
-  // if (theta > 0.0) {
-  //   for (size_t i = 0; i < nx; ++i) {
-  //     adr[i] -= a_dt * getDerivative(lfc[i], thetaUp[i], thetaDown[i], dTypeTheta);
-  //   }
-  // }
+  // Check that alpha has been set to a value that is not the default
+  assert(alpha != DEFAULT_ALPHA);
+  // Derivative contributions
+  const double& rs = in.getCoupling();
+  //const double& theta = in.getDegeneracy();
+  const double& theta = 0.0;
+  const double& dx = in.getWaveVectorGridRes();
+  const double& drs = in.getCouplingResolution();
+  const double& dTheta = in.getDegeneracyResolution();
+  const Vector2D& rsUp = *lfcRsUp;
+  const Vector2D& rsDown = *lfcRsDown;
+  const Vector2D& thetaUp = *lfcThetaUp;
+  const Vector2D& thetaDown = *lfcThetaDown;
+  const double a_drs = alpha * rs / (6.0 * drs);
+  const double a_dx = alpha/(6.0 * dx);
+  const double a_dt = alpha * theta / (3.0 * dTheta);
+  const size_t nx = wvg.size();
+  const int nl = adrFixed.size(1);
+  // Wave-vector derivative contribution
+  for (int l = 0; l < nl; ++l) {
+    adr(0,l) -= a_dx * wvg[0] * getqDerivative(lfc, l, 0, FORWARD);
+    for (size_t i = 1; i < nx - 1; ++i) {
+      adr(i,l) -= a_dx * wvg[i] * getqDerivative(lfc, l, i, CENTERED);
+    }
+    adr(nx - 1,l) -= a_dx * wvg[nx - 1] * getqDerivative(lfc, l, nx - 1, BACKWARD);
+    // Coupling parameter contribution
+    if (rs > 0.0) {
+      for (size_t i = 0; i < nx; ++i) {
+        adr(i,l) -= a_drs * getDerivative(lfc(i,l), rsUp(i,l), rsDown(i,l), dTypeRs);
+      }
+    }
+    // Degeneracy parameter contribution
+    if (theta > 0.0) {
+      for (size_t i = 0; i < nx; ++i) {
+        adr(i,l) -= a_dt * getDerivative(lfc(i,l), thetaUp(i,l), thetaDown(i,l), dTypeTheta);
+      }
+    }
+    // Extra 1/3 term present in the new adr for qVS
+    for (size_t i = 0; i < nx; ++i) {
+      adr(i,l) += alpha/3.0 * lfc(i,l);
+    }
+  }
 }
 
+// THIS PART STILL NEEDS WORK
 double qStlsCSR::getQ() const {
-  // PLACEHOLDER VALUE, REMOVE WHEN YOU HAVE A WORKING IMPLEMENTATION FOR THE Q TERM
-  return numUtil::Inf; 
+  return QInstance.computeQ(wvg, ssf, in.getCoupling(), in.getDegeneracy());
 }
 
-// // THIS PART STILL NEEDS WORK
-// template<typename T>
-// double qStlsCSR<T>::getQ() const {
+// Integrands for the fixed component
+double Q::integrandDenominator(const double y) const {
+  const double y2 = y*y;
+  return 1.0/(exp(y2/Theta - mu) + 1.0);
+}
 
-//   return computeQ(wvg, ssf, in.getCoupling(), in.getDegeneracy());
-// }
+double Q::integrandNumerator(const double q,
+			    const double w) const {
+  const double Theta = in.getDegeneracy();
+  //const double q = itg.getX();
+  if (q == 0 || w == 0) { return 0; };
+  const double w2 = w*w;
+  const double w3 = w2*w;
+  const double logarg = (w + 2*q)/(w - 2*q);
+  return q/(exp(q*q/Theta - mu) + 1.0) * q/w3 * (q/w*log(logarg) - 1.0);
+}
 
-// // Get fixed component
-// void Q::get(vector<double> &wvg,
-// 		   Vector3D &res) const {
-//   const int nx = wvg.size();
-//   const int nl = res.size(1);
-//   if ( x == 0.0 ) { res.fill(0.0); };
-//   const double x2 = x*x;
-//   auto it = find(wvg.begin(), wvg.end(), x);
-//   assert(it != wvg.end());
-//   size_t ix = distance(wvg.begin(), it);
-//   for (int l = 0; l < nl; ++l){
-//     for (int i = 0; i < nx; ++i) {
-//       const double xq = x*wvg[i];
-//       auto tMin = [&]()->double{return x2 - xq;};
-//       auto tMax = [&]()->double{return x2 + xq;};
-//       auto func1 = [&](double q)->double{return integrandnum(q, l);};
-//       auto func2 = [&](double t)->double{return integranddenom(t, wvg[i], l);};
-//       itg.compute(func1, func2, qMin, qMax, tMin, tMax, itgGrid);
-//       res(ix, l, i) = itg.getSolution();
-//     }
-//   }
-// }
+// Denominator integral
+void Q::getIntDenominator(const vector<double> wvg,
+        double &res) const {
+  auto yMin = wvg.front();
+  auto yMax = wvg.back();
+  auto func = [&](double y)->double{return integrandDenominator(y);};
+  itg.compute(func, yMin, yMax);
+  res = itg.getSolution();
+}
+// Numerator integral without ssf
+void Q::getIntNumerator(const vector<double> wvg,
+        std::vector<double> &res) const{
+  auto qMin = wvg.front();
+  auto qMax = wvg.back();
+  res.resize(wvg.size());
+  for (int i = 0; i < wvg.size(); ++i) {
+    double w = wvg[i];
+    auto func = [&](double q)->double{return integrandNumerator(q,w);};
+    itg.compute(func, qMin, qMax);
+    res[i] = itg.getSolution();
+  }
+}
 
-// // Integrands for the fixed component
-// double Q::integranddenom(const double q,
-// 			    const double l) const {
-//   if (l == 0) return q/(exp(q*q/Theta - mu) + exp(-q*q/Theta + mu) + 2.0);
-//   return 1.0/(exp(q*q/Theta - mu) + 1.0);
-// }
+void Q::getTotalNumerator(const vector<double> wvg,
+        std::vector<double> &NumPart,
+        std::vector<double> ssf,
+        double &Numerator) const{
+  getIntNumerator(wvg, NumPart);
+  double wMin = wvg.front();
+  double wMax = wvg.back();
+  assert(wvg.size() == NumPart.size() && wvg.size() == ssf.size());
+  interp.reset(wvg[0], NumPart[0], wvg.size());
 
-// double Q::integrandnum(const double t,
-// 			    const double y,
-// 			    const double l) const {
-//   const double q = itg.getX();
-//   if (q == 0 || t == 0 || y == 0) { return 0; };
-//   const double x2 = x*x;
-//   const double y2 = y*y;
-//   const double y3 = y2*y;
-//   const double logarg = (y + 2*q)/(y - 2*q);
-//   return q/(exp(q*q/Theta - mu) + 1.0) * q/y3 * (q/y*log(logarg) - 1.0);
-// }
+  auto totalIntegrand = [this, &wvg, &ssf](double w) -> double {
+    double interpolatedValue = this->interp.eval(w);
+    auto it = std::find(wvg.begin(), wvg.end(), w);
+    if (it == wvg.end()) {
+      return 0.0; 
+    }
+    size_t index = std::distance(wvg.begin(), it);
+    double WssfMinusOne = w * (ssf[index] - 1);
+    return WssfMinusOne * interpolatedValue;
+    };
+
+  itg.compute(totalIntegrand, wMin, wMax);
+  Numerator = itg.getSolution();
+}
+
+double Q::computeQ(const vector<double> &wvg, 
+                  const std::vector<double> ssf, 
+                  const double rs, 
+                  const double Theta) {
+  getIntDenominator(wvg, Denominator);
+return 12.0 / (M_PI * lambda * rs) * (Numerator / Denominator);
+}
+
