@@ -29,7 +29,7 @@ private:
   double getQ() const;
   // Convert VSStlsInput to QstlsInput
   QstlsInput VStoQStlsInput(const VSStlsInput& in) const;
-  double getqDerivative(const Vector2D& f,
+  double getqDerivative(const vecUtil::Vector2D& f,
             const int &l,
             const size_t& idx,
             const Derivative& type);

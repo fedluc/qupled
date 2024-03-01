@@ -4,6 +4,7 @@
 #include "qvs.hpp"
 
 using namespace std;
+using namespace vecUtil;
 
 // -----------------------------------------------------------------
 // qVSStls class
