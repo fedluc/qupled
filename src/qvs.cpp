@@ -48,29 +48,27 @@ void qVSStls::updateSolution() {
 // -----------------------------------------------------------------
 
 vector<double> qThermoProp::getQData() const {
-  // // Q
-  // const double q = qstructProp.getQ()[SIdx::RS_THETA];
-  // // Q derivative with respect to the coupling parameter
-  // double qr;
-  // {
-  //   const vector<double> rs = qstructProp.getCouplingParameters(); 
-  //   const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
-  //   const double& q0 = qstructProp.getQ()[SIdx::RS_UP_THETA];
-  //   const double& q1 = qstructProp.getQ()[SIdx::RS_DOWN_THETA];
-  //   qr = (q0 - q1) / (2.0 * drs);
-  // }
-  // // Q derivative with respect to the degeneracy parameter
-  // double qt;
-  // {
-  //   const vector<double> theta = qstructProp.getDegeneracyParameters();
-  //   const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
-  //   const double q0 = qstructProp.getQ()[SIdx::RS_THETA_UP];
-  //   const double q1 = qstructProp.getQ()[SIdx::RS_THETA_DOWN];
-  //   qt = theta[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
-  // }
-  // return vector<double>({q, qr, qt});
-  // PLACEHOLDER VALUE, REMOVE WHEN YOU HAVE A WORKING IMPLEMENTATION FOR THE Q TERM
-  return vector<double>();
+  // Q
+  const double q = qstructProp.getQ()[SIdx::RS_THETA];
+  // Q derivative with respect to the coupling parameter
+  double qr;
+  {
+    const vector<double> rs = qstructProp.getCouplingParameters(); 
+    const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
+    const double& q0 = qstructProp.getQ()[SIdx::RS_UP_THETA];
+    const double& q1 = qstructProp.getQ()[SIdx::RS_DOWN_THETA];
+    qr = (q0 - q1) / (2.0 * drs);
+  }
+  // Q derivative with respect to the degeneracy parameter
+  double qt;
+  {
+    const vector<double> theta = qstructProp.getDegeneracyParameters();
+    const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
+    const double q0 = qstructProp.getQ()[SIdx::RS_THETA_UP];
+    const double q1 = qstructProp.getQ()[SIdx::RS_THETA_DOWN];
+    qt = theta[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
+  }
+  return vector<double>({q, qr, qt});
 }
 
 // -----------------------------------------------------------------
@@ -120,7 +118,6 @@ double qStlsCSR::getqDerivative(const Vector2D& f,
            const int &l,
 			     const size_t& idx,
 			     const Derivative& type) {
-  // NOTE: If T does not have an operator[] this method would not compile
   switch(type) {
   case BACKWARD:
     assert(idx >= 2);
@@ -186,7 +183,6 @@ void qStlsCSR::computeAdr() {
   }
 }
 
-// THIS PART STILL NEEDS WORK
 double qStlsCSR::getQ() const {
   return QInstance.computeQ(wvg, ssf, in.getCoupling(), in.getDegeneracy());
 }
@@ -200,7 +196,6 @@ double Q::integrandDenominator(const double y) const {
 double Q::integrandNumerator(const double q,
 			    const double w) const {
   const double Theta = in.getDegeneracy();
-  //const double q = itg.getX();
   if (q == 0 || w == 0) { return 0; };
   const double w2 = w*w;
   const double w3 = w2*w;
