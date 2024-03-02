@@ -578,8 +578,8 @@ void AdrFixed::get(vector<double> &wvg,
   for (int l = 0; l < nl; ++l){
     for (int i = 0; i < nx; ++i) {
       const double xq = x*wvg[i];
-      auto tMin = [&]()->double{return x2 - xq;};
-      auto tMax = [&]()->double{return x2 + xq;};
+      auto tMin = x2 - xq;
+      auto tMax = x2 + xq;
       auto func1 = [&](double q)->double{return integrand1(q, l);};
       auto func2 = [&](double t)->double{return integrand2(t, wvg[i], l);};
       itg.compute(func1, func2, qMin, qMax, tMin, tMax, itgGrid);

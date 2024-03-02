@@ -10,11 +10,11 @@ private:
   // Chemical potential
   double mu;
   // Normalization condition
-  double normalizationCondition(double mu) const;
+  double normalizationCondition(const double& mu) const;
   
 public:
 
-  ChemicalPotential(double Theta_) : Theta(Theta_) {};
+  ChemicalPotential(const double& Theta_) : Theta(Theta_) {};
   void compute(const std::vector<double> &guess);
   double get() const {return mu;};
   

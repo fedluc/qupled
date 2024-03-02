@@ -99,9 +99,10 @@ private:
   const double yMin;
   const double yMax;
   // Idr integrand for frequency = l and wave-vector x
-  double integrand(const double y, const int l) const;
+  double integrand(const double& y,
+		   const int& l) const;
   // Idr integrand for frequency = 0 and wave-vector x
-  double integrand(const double y) const;  
+  double integrand(const double& y) const;  
   // Integrator object
   Integrator1D &itg;
   
@@ -109,11 +110,11 @@ public:
 
   // Constructor
   Idr(const int nl_,
-      const double x_,
-      const double Theta_,
-      const double mu_,
-      const double yMin_,
-      const double yMax_,
+      const double& x_,
+      const double& Theta_,
+      const double& mu_,
+      const double& yMin_,
+      const double& yMax_,
       Integrator1D &itg_)
     : nl(nl_), x(x_), Theta(Theta_),
       mu(mu_), yMin(yMin_), yMax(yMax_),
@@ -135,8 +136,8 @@ private:
 public:
 
   // Constructor
-  IdrGround(const double Omega_,
-	    const double x_) : Omega(Omega_), x(x_) {;};
+  IdrGround(const double& Omega_,
+	    const double& x_) : Omega(Omega_), x(x_) {;};
   // Get real part
   double re0() const;
   // Get imaginary part 
@@ -166,18 +167,18 @@ private:
   // Integrator object
   Integrator1D &itg;
   // Get integrand
-  double integrand(double y) const;
+  double integrand(const double& y) const;
   // Get at zero temperature
   double get0() const;
   
 public:
 
   // Constructor for finite temperature calculations
-  SsfHF(const double x_,
-	const double Theta_,
-	const double mu_,
-	const double yMin_,
-	const double yMax_,
+  SsfHF(const double& x_,
+	const double& Theta_,
+	const double& mu_,
+	const double& yMin_,
+	const double& yMax_,
 	Integrator1D &itg_) : x(x_), Theta(Theta_), mu(mu_),
 			      yMin(yMin_), yMax(yMax_),
 			      itg(itg_) {;};
@@ -196,7 +197,7 @@ private:
 public:
 
   // Constructor for zero temperature calculations
-  SsfHFGround(const double x_) : x(x_) {;};
+  SsfHFGround(const double& x_) : x(x_) {;};
   // Get result
   double get() const;
   
@@ -223,12 +224,12 @@ protected:
   // Constant for unit conversion
   const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // Constructor
-  SsfBase(const double x_,
-	  const double Theta_,
-	  const double rs_,
-	  const double ssfHF_,
-	  const double slfc_) : x(x_), Theta(Theta_), rs(rs_),
-				ssfHF(ssfHF_), slfc(slfc_) {;};
+  SsfBase(const double& x_,
+	  const double& Theta_,
+	  const double& rs_,
+	  const double& ssfHF_,
+	  const double& slfc_) : x(x_), Theta(Theta_), rs(rs_),
+				 ssfHF(ssfHF_), slfc(slfc_) {;};
   
 };
 
@@ -244,11 +245,11 @@ protected:
 public:
 
   // Constructor
-  Ssf(const double x_,
-      const double Theta_,
-      const double rs_,
-      const double ssfHF_,
-      const double slfc_,
+  Ssf(const double& x_,
+      const double& Theta_,
+      const double& rs_,
+      const double& ssfHF_,
+      const double& slfc_,
       const int nl_,
       const double *idr_) : SsfBase(x_, Theta_, rs_, ssfHF_, slfc_),
 			    nl(nl_), idr(idr_) {;};
@@ -269,23 +270,23 @@ private:
   // Integrator object
   Integrator1D &itg;
   // Integrand for zero temperature calculations
-  double integrand(const double Omega) const ;
+  double integrand(const double& Omega) const ;
   // Plasmon contribution
   double plasmon() const;
   // Dielectric response function
-  double drf(const double Omega) const;
+  double drf(const double& Omega) const;
   // Frequency derivative of the dielectric response function
-  double drfDer(const double Omega) const;
+  double drfDer(const double& Omega) const;
   
 public:
 
   // Constructor for zero temperature calculations
-  SsfGround(const double x_,
-	    const double rs_,
-	    const double ssfHF_,
-	    const double slfc_,
-	    const double yMin_,
-	    const double yMax_,
+  SsfGround(const double& x_,
+	    const double& rs_,
+	    const double& ssfHF_,
+	    const double& slfc_,
+	    const double& yMin_,
+	    const double& yMax_,
 	    Integrator1D &itg_) : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
 				  yMin(yMin_), yMax(yMax_), itg(itg_) {;};
   // Get result of integration

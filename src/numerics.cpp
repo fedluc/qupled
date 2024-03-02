@@ -223,9 +223,9 @@ Integrator1D::~Integrator1D(){
 }
 
 // Compute integral
-void Integrator1D::compute(const function<double(double)> func,
-			   const double xMin,
-			   const double xMax){
+void Integrator1D::compute(const function<double(double)>& func,
+			   const double& xMin,
+			   const double& xMax){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
@@ -242,8 +242,9 @@ void Integrator1D::compute(const function<double(double)> func,
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1DFourier::Integrator1DFourier(const double r_, const double relErr_) : limit(1000), r(r_),
-										  relErr(relErr_) {
+Integrator1DFourier::Integrator1DFourier(const double& r_,
+					 const double& relErr_) : limit(1000), r(r_),
+								  relErr(relErr_) {
   callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
   callGSLAlloc(wspc, gsl_integration_workspace_alloc, limit);
   callGSLAlloc(qtab, gsl_integration_qawo_table_alloc, 0.0, 1.0, GSL_INTEG_SINE, limit);
@@ -257,7 +258,7 @@ Integrator1DFourier:: ~Integrator1DFourier(){
 }
 
 // Compute integral
-void Integrator1DFourier::compute(const function<double(double)> func){
+void Integrator1DFourier::compute(const function<double(double)>& func){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
@@ -276,13 +277,13 @@ void Integrator1DFourier::compute(const function<double(double)> func){
 // -----------------------------------------------------------------
 
 // Compute integral
-void Integrator2D::compute(const function<double(double)> func1,
-			   const function<double(double)> func2,
-			   const double xMin,
-			   const double xMax,
-			   const function<double(double)> yMin,
-			   const function<double(double)> yMax,
-			   const vector<double> &xGrid){
+void Integrator2D::compute(const function<double(double)>& func1,
+			   const function<double(double)>& func2,
+			   const double& xMin,
+			   const double& xMax,
+			   const function<double(double)>& yMin,
+			   const function<double(double)>& yMax,
+			   const vector<double>& xGrid){
   const int nx = xGrid.size();
   function<double(double)> func;
   Interpolator1D itp;
@@ -313,15 +314,15 @@ void Integrator2D::compute(const function<double(double)> func1,
 }
 
 
-void Integrator2D::compute(const function<double(double)> func1,
-			   const function<double(double)> func2,
-			   const double xMin,
-			   const double xMax,
-			   const function<double()> yMin,
-			   const function<double()> yMax,
-			   const vector<double> &xGrid){
+void Integrator2D::compute(const function<double(double)>& func1,
+			   const function<double(double)>& func2,
+			   const double& xMin,
+			   const double& xMax,
+			   const double& yMin,
+			   const double& yMax,
+			   const vector<double>& xGrid){
   // Wrappers around yMin and yMax to avoid compiler warnings
-  auto yMinTmp = [&](double x){(void)(x); return yMin(); };
-  auto yMaxTmp = [&](double x){(void)(x); return yMax(); };
+  auto yMinTmp = [&](double x){(void)(x); return yMin; };
+  auto yMaxTmp = [&](double x){(void)(x); return yMax; };
   compute(func1, func2, xMin, xMax, yMinTmp, yMaxTmp, xGrid);
 }

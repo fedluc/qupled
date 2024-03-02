@@ -221,8 +221,8 @@ void Stls::readRecovery(vector<double> &wvgFile,
 // -----------------------------------------------------------------
 
 // Compute static structure factor from interpolator
-double SlfcBase::ssf(const double x_) const {
-  return ssfi.eval(x_);
+double SlfcBase::ssf(const double& y) const {
+  return ssfi.eval(y);
 }
 
 // -----------------------------------------------------------------
@@ -231,13 +231,13 @@ double SlfcBase::ssf(const double x_) const {
 
 // Get result of integration
 double Slfc::get() const {
-  auto func = [&](double y)->double{return integrand(y);};
+  auto func = [&](const double& y)->double{return integrand(y);};
   itg.compute(func, yMin, yMax);
   return itg.getSolution();
 }
 
 // Integrand
-double Slfc::integrand(const double y) const {
+double Slfc::integrand(const double& y) const {
   double y2 = y*y;
   double x2 = x*x;
   if (x == 0.0 || y == 0.0) { return 0.0; }
@@ -255,13 +255,13 @@ double Slfc::integrand(const double y) const {
 // -----------------------------------------------------------------
 
 // Compute static local field correction from interpolator
-double SlfcIet::slfc(const double x_) const{
-  return slfci.eval(x_);
+double SlfcIet::slfc(const double& y) const{
+  return slfci.eval(y);
 }
 
 // Compute bridge function from interpolator
-double SlfcIet::bf(const double x_) const {
-  return bfi.eval(x_);
+double SlfcIet::bf(const double& y) const {
+  return bfi.eval(y);
 }
 
 // Get at finite temperature
@@ -276,13 +276,13 @@ double SlfcIet::get() const {
 }
 
 // Level 1 integrand
-double SlfcIet::integrand1(const double y) const {
+double SlfcIet::integrand1(const double& y) const {
   if (y == 0.0) return 0.0;
   return (-bf(y) - (ssf(y) - 1.0)*(slfc(y) - 1.0)) / y;
 }
 
 // Level 2 integrand
-double SlfcIet::integrand2(const double w) const {
+double SlfcIet::integrand2(const double& w) const {
   const double y = itg.getX();
   const double y2 = y*y;
   const double w2 = w*w;
@@ -389,7 +389,8 @@ double BridgeFunction::lct() const {
   return 0.0;
 }
 
-double BridgeFunction::lctIntegrand(const double r, const double Gamma) const {
+double BridgeFunction::lctIntegrand(const double& r,
+				    const double& Gamma) const {
   if (Gamma < 5.0) {
     const string msg = format<double>("Error: The IET schemes cannot be applied "
 				     "to this state point because Gamma = %.8f "

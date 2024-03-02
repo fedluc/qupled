@@ -2,7 +2,7 @@
 #include "numerics.hpp"
 #include "input.hpp"
 #include "rpa.hpp"
-#include "chemicalpotential.hpp"
+#include "chemical_potential.hpp"
 
 using namespace std;
 using namespace thermoUtil;
@@ -201,7 +201,8 @@ double Rpa::getUInt() const {
 // -----------------------------------------------------------------
 
 // Integrand for frequency = l and wave-vector = x
-double Idr::integrand(const double y, const int l) const {
+double Idr::integrand(const double& y,
+		      const int& l) const {
   double y2 = y*y;
   double x2 = x*x;
   double txy = 2*x*y; 
@@ -217,7 +218,7 @@ double Idr::integrand(const double y, const int l) const {
 }
 
 // Integrand for frequency = 0 and vector = x
-double Idr::integrand(const double y) const {
+double Idr::integrand(const double& y) const {
   double y2 = y*y;
   double x2 = x*x;
   double xy = x*y;
@@ -338,7 +339,7 @@ double IdrGround::re0Der() const {
 // -----------------------------------------------------------------
 
 // Integrand
-double SsfHF::integrand(const double y) const {
+double SsfHF::integrand(const double& y) const {
   double y2 = y*y;
   double ypx = y + x;
   double ymx = y - x;
@@ -411,7 +412,7 @@ double SsfGround::get() const {
 }
 
 // Integrand for zero temperature calculations
-double SsfGround::integrand(const double Omega) const {
+double SsfGround::integrand(const double& Omega) const {
   double x2 = x*x;
   double fact = (4.0 * lambda * rs)/(M_PI * x2);
   IdrGround idrTmp(Omega, x);
@@ -466,7 +467,7 @@ double SsfGround::plasmon() const {
 }
 
 // Dielectric response function
-double SsfGround::drf(const double Omega) const {
+double SsfGround::drf(const double& Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
   const double idrRe = IdrGround(Omega, x).re0();     
   assert(Omega >= x*x + 2*x);
@@ -475,7 +476,7 @@ double SsfGround::drf(const double Omega) const {
 
 
 // Frequency derivative of the dielectric response function  
-double SsfGround::drfDer(const double Omega) const {
+double SsfGround::drfDer(const double& Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
   Integrator1D itgTmp = itg;
   const IdrGround idrTmp(Omega, x);

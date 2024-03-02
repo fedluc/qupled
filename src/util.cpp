@@ -94,7 +94,7 @@ namespace vecUtil {
 
   // Fill vector with constant value
   void fill(vector<double> &v,
-	    const double num) {
+	    const double& num) {
    std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;}); 
   }
   
@@ -492,11 +492,11 @@ namespace thermoUtil {
   // InternalEnergy class
   // -----------------------------------------------------------------
   
-  double InternalEnergy::ssf(double y) const {
+  double InternalEnergy::ssf(const double& y) const {
     return ssfi.eval(y);
   }
   
-  double InternalEnergy::integrand(double y) const {
+  double InternalEnergy::integrand(const double& y) const {
     return ssf(y) - 1;
   }
 
@@ -521,11 +521,11 @@ namespace thermoUtil {
   // Rdf class
   // -----------------------------------------------------------------
   
-  double Rdf::ssf(double y) const {
+  double Rdf::ssf(const double& y) const {
     return ssfi.eval(y);
   }
 
-  double Rdf::integrand(double y) const {
+  double Rdf::integrand(const double& y) const {
     if (y > cutoff) return 0;
     const double yssf = y * (ssf(y) - 1);
     return (r == 0.0) ? y * yssf : yssf;

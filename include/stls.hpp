@@ -76,11 +76,11 @@ protected:
   // Static structure factor interpolator
   const Interpolator1D &ssfi;
   // Compute static structure factor
-  double ssf(double x_) const;
+  double ssf(const double& y) const;
   // Constructor
-  SlfcBase(const double x_,
-	   const double yMin_,
-	   const double yMax_,
+  SlfcBase(const double& x_,
+	   const double& yMin_,
+	   const double& yMax_,
 	   const Interpolator1D &ssfi_) : x(x_), yMin(yMin_),
 					  yMax(yMax_), ssfi(ssfi_) {;};
   
@@ -93,14 +93,14 @@ private:
   // Integrator object
   Integrator1D &itg;
   // Integrand
-  double integrand(const double y) const;
+  double integrand(const double& y) const;
   
 public:
 
   // Constructor
-  Slfc(const double x_,
-       const double yMin_,
-       const double yMax_,
+  Slfc(const double& x_,
+       const double& yMin_,
+       const double& yMax_,
        const Interpolator1D &ssfi_,
        Integrator1D &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_),
 			     itg(itg_) { ; };
@@ -119,23 +119,23 @@ private:
   // Grid for 2D integration
   const std::vector<double> &itgGrid;
   // Integrands
-  double integrand1(const double y) const;
-  double integrand2(const double w) const;
+  double integrand1(const double& y) const;
+  double integrand2(const double& w) const;
   // Static local field correction interpolator
   const Interpolator1D &slfci;
   // Bridge function interpolator
   const Interpolator1D &bfi;
   // Compute static local field correction
-  double slfc(double x_) const;
+  double slfc(const double& x) const;
   // Compute bridge function
-  double bf(double x_) const;
+  double bf(const double& x_) const;
   
 public:
 
   // Constructor
-  SlfcIet(const double x_,
-	  const double yMin_,
-	  const double yMax_,
+  SlfcIet(const double& x_,
+	  const double& yMin_,
+	  const double& yMax_,
 	  const Interpolator1D &ssfi_,
 	  const Interpolator1D &slfci_,
 	  const Interpolator1D &bfi_,
@@ -173,18 +173,19 @@ private:
   double ioi() const;
   // Lucco Castello and Tolias bridge function
   double lct() const;
-  double lctIntegrand(const double r, const double Gamma) const;
+  double lctIntegrand(const double& r,
+		      const double& Gamma) const;
   // Coupling parameter to compute the bridge function
   double couplingParameter() const;
 
 public:
 
   // Constructor
-  BridgeFunction(const std::string theory_,
-		 const std::string mapping_,
-		 const double rs_,
-		 const double Theta_,
-		 const double x_,
+  BridgeFunction(const std::string& theory_,
+		 const std::string& mapping_,
+		 const double& rs_,
+		 const double& Theta_,
+		 const double& x_,
 		 Integrator1DFourier &itg_) : theory(theory_),
 					      mapping(mapping_),
 					      rs(rs_), Theta(Theta_),

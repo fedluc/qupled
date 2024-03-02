@@ -226,9 +226,9 @@ public:
   // Destructor
   ~Integrator1D();
   // Compute integral
-  void compute(const std::function<double(double)> func,
-	       const double xMin,
-	       const double xMax);
+  void compute(const std::function<double(double)>& func,
+	       const double& xMin,
+	       const double& xMax);
   // Getters
   double getSolution() const { return sol; };
   
@@ -254,20 +254,20 @@ public:
   Integrator2D(const double &relErr) : itg1(relErr), itg2(relErr) { ; }
   Integrator2D() : Integrator2D(1.0e-5) { ; };
   // Compute integral
-  void compute(const std::function<double(double)> func1,
-	       const std::function<double(double)> func2,
-	       const double xMin,
-	       const double xMax,
-	       const std::function<double(double)> yMin,
-	       const std::function<double(double)> yMax,
-	       const std::vector<double> &xGrid);
-  void compute(const std::function<double(double)> func1,
-	       const std::function<double(double)> func2,
-	       const double xMin,
-	       const double xMax,
-	       const std::function<double()> yMin,
-	       const std::function<double()> yMax,
-	       const std::vector<double> &xGrid);
+  void compute(const std::function<double(double)>& func1,
+	       const std::function<double(double)>& func2,
+	       const double& xMin,
+	       const double& xMax,
+	       const std::function<double(double)>& yMin,
+	       const std::function<double(double)>& yMax,
+	       const std::vector<double>& xGrid);
+  void compute(const std::function<double(double)>& func1,
+	       const std::function<double(double)>& func2,
+	       const double& xMin,
+	       const double& xMax,
+	       const double& yMin,
+	       const double& yMax,
+	       const std::vector<double>& xGrid);
   // Getters
   double getX() const { return x; };
   double getSolution() const { return sol; };
@@ -298,14 +298,15 @@ private:
 public:
 
   // Constructors
-  Integrator1DFourier(const double r_, const double relErr_);
-  Integrator1DFourier(const double r_) : Integrator1DFourier(r_, 1.0e-6) { ; }
+  Integrator1DFourier(const double& r_,
+		      const double& relErr_);
+  Integrator1DFourier(const double& r_) : Integrator1DFourier(r_, 1.0e-6) { ; }
   // Set spatial position (to re-use the integrator for different r)
   void setR(const double r_) {r = r_;};
   // Destructor
   ~Integrator1DFourier();
   // Compute integral
-  void compute(const std::function<double(double)> func);
+  void compute(const std::function<double(double)>& func);
   // Getters
   double getSolution() const { return sol; };
   
