@@ -521,7 +521,7 @@ double Qssf::get() const {
 // -----------------------------------------------------------------
 
 // Compute static structure factor
-double AdrBase::ssf(const double y) const {
+double AdrBase::ssf(const double& y) const {
   return ssfi.eval(y);
 }
 
@@ -530,12 +530,12 @@ double AdrBase::ssf(const double y) const {
 // -----------------------------------------------------------------
 
 // Compute fixed component
-double Adr::fix(const double y) const {
+double Adr::fix(const double& y) const {
   return fixi.eval(y);
 }
 
 // Integrand
-double Adr::integrand(const double y) const{
+double Adr::integrand(const double& y) const{
   return y * fix(y) * (ssf(y) - 1.0);
 }
 
@@ -554,7 +554,7 @@ void Adr::get(const vector<double> &wvg,
   }
   for (int l = 0; l < nl; ++l){
     fixi.reset(wvg[0], fixed(ix,l), nx);
-    auto func = [&](double y)->double{return integrand(y);};
+    auto func = [&](const double& y)->double{return integrand(y);};
     itg.compute(func, yMin, yMax);
     res(ix, l) = itg.getSolution();
     res(ix, l) *= (l==0) ? isc0 : isc;
@@ -578,10 +578,10 @@ void AdrFixed::get(vector<double> &wvg,
   for (int l = 0; l < nl; ++l){
     for (int i = 0; i < nx; ++i) {
       const double xq = x*wvg[i];
-      auto tMin = [&]()->double{return x2 - xq;};
-      auto tMax = [&]()->double{return x2 + xq;};
-      auto func1 = [&](double q)->double{return integrand1(q, l);};
-      auto func2 = [&](double t)->double{return integrand2(t, wvg[i], l);};
+      auto tMin = x2 - xq;
+      auto tMax = x2 + xq;
+      auto func1 = [&](const double& q)->double{return integrand1(q, l);};
+      auto func2 = [&](const double& t)->double{return integrand2(t, wvg[i], l);};
       itg.compute(func1, func2, qMin, qMax, tMin, tMax, itgGrid);
       res(ix, l, i) = itg.getSolution();
     }
@@ -589,15 +589,15 @@ void AdrFixed::get(vector<double> &wvg,
 }
 
 // Integrands for the fixed component
-double AdrFixed::integrand1(const double q,
-			    const double l) const {
+double AdrFixed::integrand1(const double& q,
+			    const double& l) const {
   if (l == 0) return q/(exp(q*q/Theta - mu) + exp(-q*q/Theta + mu) + 2.0);
   return q/(exp(q*q/Theta - mu) + 1.0);
 }
 
-double AdrFixed::integrand2(const double t,
-			    const double y,
-			    const double l) const {
+double AdrFixed::integrand2(const double& t,
+			    const double& y,
+			    const double& l) const {
   const double q = itg.getX();
   if (q == 0 || t == 0 || y == 0) { return 0; };
   const double x2 = x*x;
@@ -626,31 +626,32 @@ double AdrFixed::integrand2(const double t,
 // -----------------------------------------------------------------
 
 // Compute dynamic local field correction
-double AdrIet::dlfc(const double y,
-		    const int l) const {
+double AdrIet::dlfc(const double& y,
+		    const int& l) const {
   return dlfci[l].eval(y);
 }
 
 // Compute auxiliary density response
-double AdrIet::bf(const double y) const {
+double AdrIet::bf(const double& y) const {
   return bfi.eval(y);
 }
 
 // Compute fixed component
-double AdrIet::fix(const double x, const double y) const {
+double AdrIet::fix(const double& x,
+		   const double& y) const {
   return fixi.eval(x,y);
 }
 
 // Integrands
-double AdrIet::integrand1(const double q,
-			  const int l) const {
+double AdrIet::integrand1(const double& q,
+			  const int& l) const {
   if (q == 0.0) { return 0.0; }
   const double p1 = (1 - bf(q)) * ssf(q);
   const double p2 = dlfc(q,l) * (ssf(q) - 1.0);
   return (p1 -  p2 - 1.0) / q;
 }
 
-double AdrIet::integrand2(const double y) const {
+double AdrIet::integrand2(const double& y) const {
   const double q = itg.getX();
   return y * fix(q,y) * (ssf(y) - 1.0);
 }
@@ -670,10 +671,10 @@ void AdrIet::get(const vector<double> &wvg,
   }
   for (int l = 0; l < nl; ++l) {
     fixi.reset(wvg[0], wvg[0], fixed(l), nx, nx);
-    auto yMin = [&](double q)->double{return (q > x) ? q - x : x - q;};
-    auto yMax = [&](double q)->double{return min(qMax, q + x);};
-    auto func1 = [&](double q)->double{return integrand1(q, l);};
-    auto func2 = [&](double y)->double{return integrand2(y);};
+    auto yMin = [&](const double& q)->double{return (q > x) ? q - x : x - q;};
+    auto yMax = [&](const double& q)->double{return min(qMax, q + x);};
+    auto func1 = [&](const double& q)->double{return integrand1(q, l);};
+    auto func2 = [&](const double& y)->double{return integrand2(y);};
     itg.compute(func1, func2, qMin, qMax, yMin, yMax, itgGrid);
     res(ix, l) = itg.getSolution();
     res(ix, l) *= (l == 0) ? isc0 : isc;
@@ -700,7 +701,7 @@ void AdrFixedIet::get(vector<double> &wvg,
 	continue;
       }
       for (int j = 0; j < nx; ++j) {
-	auto func = [&](double t)->double{
+	auto func = [&](const double& t)->double{
 	  return integrand(t, wvg[j], wvg[i], l);
 	};
 	itg.compute(func, tMin, tMax);
@@ -711,8 +712,10 @@ void AdrFixedIet::get(vector<double> &wvg,
 }
 
 // Integrand for the fixed component
-double AdrFixedIet::integrand(const double t, const double y,
-			      const double q, const double l) const {
+double AdrFixedIet::integrand(const double& t,
+			      const double& y,
+			      const double& q,
+			      const double& l) const {
   const double x2 = x*x;
   const double q2 = q*q;
   const double y2 = y*y;

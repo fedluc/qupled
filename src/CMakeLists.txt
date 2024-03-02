@@ -16,7 +16,7 @@ add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 # Source code
 Python3_add_library(qupled MODULE
-		    chemicalpotential.cpp
+		    chemical_potential.cpp
 		    input.cpp
 		    numerics.cpp
 		    qstls.cpp

@@ -2,7 +2,7 @@
 #include "numerics.hpp"
 #include "input.hpp"
 #include "rpa.hpp"
-#include "chemicalpotential.hpp"
+#include "chemical_potential.hpp"
 
 using namespace std;
 using namespace thermoUtil;
@@ -201,7 +201,8 @@ double Rpa::getUInt() const {
 // -----------------------------------------------------------------
 
 // Integrand for frequency = l and wave-vector = x
-double Idr::integrand(const double y, const int l) const {
+double Idr::integrand(const double& y,
+		      const int& l) const {
   double y2 = y*y;
   double x2 = x*x;
   double txy = 2*x*y; 
@@ -217,7 +218,7 @@ double Idr::integrand(const double y, const int l) const {
 }
 
 // Integrand for frequency = 0 and vector = x
-double Idr::integrand(const double y) const {
+double Idr::integrand(const double& y) const {
   double y2 = y*y;
   double x2 = x*x;
   double xy = x*y;
@@ -245,11 +246,11 @@ vector<double> Idr::get() const {
   vector<double> res(nl);
   for (int l=0; l<nl; ++l){
     if (l == 0) {
-      auto func = [&](double y)->double{return integrand(y);};
+      auto func = [&](const double& y)->double{return integrand(y);};
       itg.compute(func, yMin, yMax);
     }
     else {
-      auto func = [&](double y)->double{return integrand(y,l);};;
+      auto func = [&](const double& y)->double{return integrand(y,l);};;
       itg.compute(func, yMin, yMax);
     }
     res[l] = itg.getSolution();
@@ -338,7 +339,7 @@ double IdrGround::re0Der() const {
 // -----------------------------------------------------------------
 
 // Integrand
-double SsfHF::integrand(const double y) const {
+double SsfHF::integrand(const double& y) const {
   double y2 = y*y;
   double ypx = y + x;
   double ymx = y - x;
@@ -354,7 +355,7 @@ double SsfHF::integrand(const double y) const {
 // Get result of integration
 double SsfHF::get() const {
   assert(Theta > 0.0);
-  auto func = [&](double y)->double{return integrand(y);};
+  auto func = [&](const double& y)->double{return integrand(y);};
   itg.compute(func, yMin, yMax);
   return 1.0 + itg.getSolution();
 }
@@ -403,7 +404,7 @@ double Ssf::get() const {
 double SsfGround::get() const {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
-  auto func = [&](double y)->double{return integrand(y);};
+  auto func = [&](const double& y)->double{return integrand(y);};
   itg.compute(func, yMin, yMax);
   double ssfP;
   ssfP = plasmon();
@@ -411,7 +412,7 @@ double SsfGround::get() const {
 }
 
 // Integrand for zero temperature calculations
-double SsfGround::integrand(const double Omega) const {
+double SsfGround::integrand(const double& Omega) const {
   double x2 = x*x;
   double fact = (4.0 * lambda * rs)/(M_PI * x2);
   IdrGround idrTmp(Omega, x);
@@ -452,7 +453,7 @@ double SsfGround::plasmon() const {
   // Return if no root can be found
   if (!search_root) return 0;
   // Compute plasmon frequency
-  auto func = [this](double Omega)->double{return drf(Omega);};
+  auto func = [this](const double& Omega)->double{return drf(Omega);};
   const double guess[] = {wLo, wHi};
   BrentRootSolver rsol;
   rsol.solve(func, vector<double>(begin(guess),end(guess)));
@@ -466,7 +467,7 @@ double SsfGround::plasmon() const {
 }
 
 // Dielectric response function
-double SsfGround::drf(const double Omega) const {
+double SsfGround::drf(const double& Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
   const double idrRe = IdrGround(Omega, x).re0();     
   assert(Omega >= x*x + 2*x);
@@ -475,7 +476,7 @@ double SsfGround::drf(const double Omega) const {
 
 
 // Frequency derivative of the dielectric response function  
-double SsfGround::drfDer(const double Omega) const {
+double SsfGround::drfDer(const double& Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
   Integrator1D itgTmp = itg;
   const IdrGround idrTmp(Omega, x);

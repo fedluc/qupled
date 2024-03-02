@@ -93,7 +93,7 @@ namespace vecUtil {
 
   // Fill vector with constant values
   void fill(std::vector<double> &v,
-	    const double num);
+	    const double& num);
   
   // --- Class to represent 2D vectors --- 
   class Vector2D {
@@ -264,18 +264,18 @@ namespace thermoUtil {
     // Static structure factor interpolator
     const Interpolator1D &ssfi;
     // Integrand
-    double integrand(const double y) const ;
+    double integrand(const double& y) const ;
     // Compute static structure factor
-    double ssf(double x_) const;
+    double ssf(const double& y) const;
     // Constant for unit conversion
     const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   
   public:
 
     // Constructor
-    InternalEnergy(const double rs_,
-		   const double yMin_,
-		   const double yMax_,
+    InternalEnergy(const double& rs_,
+		   const double& yMin_,
+		   const double& yMax_,
 		   const Interpolator1D &ssfi_,
 		   Integrator1D &itg_) : rs(rs_), yMin(yMin_), yMax(yMax_),
 					 itg(itg_), ssfi(ssfi_) {;};
@@ -303,7 +303,7 @@ namespace thermoUtil {
   public:
 
     // Constructor
-    FreeEnergy(const double rs_,
+    FreeEnergy(const double& rs_,
 	       const Interpolator1D &rsui_,
 	       Integrator1D &itg_,
 	       const bool normalize_) : rs(rs_), itg(itg_),
@@ -330,15 +330,15 @@ namespace thermoUtil {
     // Static structure factor interpolator
     const Interpolator1D &ssfi;
     // Integrand
-    double integrand(const double y) const ;
+    double integrand(const double& y) const;
     // Compute static structure factor
-    double ssf(double y_) const ;
+    double ssf(const double& y) const ;
   
   public:
 
     // Constructor
-    Rdf(const double r_,
-	const double cutoff_,
+    Rdf(const double& r_,
+	const double& cutoff_,
 	const Interpolator1D &ssfi_,
         Integrator1D &itg_,
 	Integrator1DFourier &itgf_) : r(r_), cutoff(cutoff_),

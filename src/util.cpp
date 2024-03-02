@@ -94,7 +94,7 @@ namespace vecUtil {
 
   // Fill vector with constant value
   void fill(vector<double> &v,
-	    const double num) {
+	    const double& num) {
    std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;}); 
   }
   
@@ -492,16 +492,16 @@ namespace thermoUtil {
   // InternalEnergy class
   // -----------------------------------------------------------------
   
-  double InternalEnergy::ssf(double y) const {
+  double InternalEnergy::ssf(const double& y) const {
     return ssfi.eval(y);
   }
   
-  double InternalEnergy::integrand(double y) const {
+  double InternalEnergy::integrand(const double& y) const {
     return ssf(y) - 1;
   }
 
   double InternalEnergy::get() const  {
-    auto func = [&](double y)->double{return integrand(y);};
+    auto func = [&](const double& y)->double{return integrand(y);};
     itg.compute(func, yMin, yMax);
     return itg.getSolution()/(M_PI * rs * lambda);
   }
@@ -511,7 +511,7 @@ namespace thermoUtil {
   // -----------------------------------------------------------------
   
   double FreeEnergy::get() const  {
-    auto func = [&](double y)->double{return rsui.eval(y);};
+    auto func = [&](const double& y)->double{return rsui.eval(y);};
     itg.compute(func, 0.0, rs);
     if (normalize) { return (rs == 0.0) ? -numUtil::Inf : itg.getSolution()/rs/rs; };
     return itg.getSolution();
@@ -521,18 +521,18 @@ namespace thermoUtil {
   // Rdf class
   // -----------------------------------------------------------------
   
-  double Rdf::ssf(double y) const {
+  double Rdf::ssf(const double& y) const {
     return ssfi.eval(y);
   }
 
-  double Rdf::integrand(double y) const {
+  double Rdf::integrand(const double& y) const {
     if (y > cutoff) return 0;
     const double yssf = y * (ssf(y) - 1);
     return (r == 0.0) ? y * yssf : yssf;
   }
 
   double Rdf::get() const {
-    auto func = [&](double y)->double{return integrand(y);};
+    auto func = [&](const double& y)->double{return integrand(y);};
     if (r == 0) {
       itg.compute(func, 0.0, cutoff);
       return 1 + 1.5 * itg.getSolution();

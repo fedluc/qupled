@@ -103,14 +103,14 @@ private:
 public:
 
   // Constructor for quantum schemes
-  Qssf(const double x_,
-       const double Theta_,
-       const double rs_,
-       const double ssfHF_,
-       const int nl_,
+  Qssf(const double& x_,
+       const double& Theta_,
+       const double& rs_,
+       const double& ssfHF_,
+       const int& nl_,
        const double *idr_,
        const double *adr_,
-       const double bf_)
+       const double& bf_)
     : Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_),
       adr(adr_), bf(bf_) {;};
   // Get static structure factor
@@ -139,15 +139,15 @@ protected:
   const double isc;
   const double isc0;
   // Compute static structure factor
-  double ssf(const double y) const;
+  double ssf(const double& y) const;
   
 public:
 
   // Constructor
-  AdrBase(const double Theta_,
-	  const double yMin_,
-	  const double yMax_,
-	  const double x_,
+  AdrBase(const double& Theta_,
+	  const double& yMin_,
+	  const double& yMax_,
+	  const double& x_,
 	  const Interpolator1D &ssfi_)
     : Theta(Theta_), yMin(yMin_), yMax(yMax_), x(x_),
       ssfi(ssfi_), isc(-3.0/8.0), isc0(isc*2.0/Theta) {;};
@@ -171,11 +171,11 @@ protected:
 public:
 
   // Constructor for finite temperature calculations
-  AdrFixedBase(const double Theta_,
-	       const double qMin_,
-	       const double qMax_,
-	       const double x_,
-	       const double mu_)
+  AdrFixedBase(const double& Theta_,
+	       const double& qMin_,
+	       const double& qMax_,
+	       const double& x_,
+	       const double& mu_)
     : Theta(Theta_), qMin(qMin_), qMax(qMax_), x(x_), mu(mu_) {;};
   
 };
@@ -185,24 +185,22 @@ class Adr : public AdrBase {
 private:
 
   // Compute fixed component
-  double fix(const double y) const;
+  double fix(const double& y) const;
+  // integrand 
+  double integrand(const double& y) const;
+>>>>>>> master
   // Interpolator for the fixed component
   Interpolator1D fixi;
   // Integrator object
   Integrator1D &itg;
-
-protected:
-
-  // integrand 
-  double integrand(const double y) const;
   
 public:
 
   // Constructor for finite temperature calculations
-  Adr(const double Theta_,
-      const double yMin_,
-      const double yMax_,
-      const double x_,
+  Adr(const double& Theta_,
+      const double& yMin_,
+      const double& yMax_,
+      const double& x_,
       const Interpolator1D &ssfi_,
       Integrator1D &itg_)
     : AdrBase(Theta_, yMin_, yMax_, x_, ssfi_), itg(itg_) {;};
@@ -219,11 +217,11 @@ class AdrFixed : public AdrFixedBase {
 private:
   
   // Integrands 
-  double integrand1(const double q,
-		    const double l) const;
-  double integrand2(const double t,
-		    const double y,
-		    const double l) const;
+  double integrand1(const double& q,
+		    const double& l) const;
+  double integrand2(const double& t,
+		    const double& y,
+		    const double& l) const;
   // Integrator object
   Integrator2D &itg;
   // Grid for 2D integration
@@ -232,11 +230,11 @@ private:
 public:
 
   // Constructor for finite temperature calculations
-  AdrFixed(const double Theta_,
-	   const double qMin_,
-	   const double qMax_,
-	   const double x_,
-	   const double mu_,
+  AdrFixed(const double& Theta_,
+	   const double& qMin_,
+	   const double& qMax_,
+	   const double& x_,
+	   const double& mu_,
 	   const std::vector<double> &itgGrid_,
 	   Integrator2D &itg_)
     : AdrFixedBase(Theta_, qMin_, qMax_, x_, mu_),
@@ -257,9 +255,9 @@ private:
   const double &qMin = yMin;
   const double &qMax = yMax;
   // Integrands 
-  double integrand1(const double q,
-		    const int l) const;
-  double integrand2(const double y) const;
+  double integrand1(const double& q,
+		    const int& l) const;
+  double integrand2(const double& y) const;
   // Integrator object
   Integrator2D &itg;
   // Grid for 2D integration
@@ -271,21 +269,21 @@ private:
   // Interpolator for the fixed component 
   Interpolator2D fixi;
   // Compute dynamic local field correction
-  double dlfc(const double y,
-	      const int l) const;
+  double dlfc(const double& y,
+	      const int& l) const;
   // Compute bridge function contribution
-  double bf(const double y) const;
+  double bf(const double& y) const;
   // Compute fixed component
-  double fix(const double x,
-	     const double y) const;
+  double fix(const double& x,
+	     const double& y) const;
   
 public:
 
   // Constructor for finite temperature calculations
-  AdrIet(const double Theta_,
-	 const double qMin_,
-	 const double qMax_,
-	 const double x_,
+  AdrIet(const double& Theta_,
+	 const double& qMin_,
+	 const double& qMax_,
+	 const double& x_,
 	 const Interpolator1D &ssfi_,
 	 const std::vector<Interpolator1D> &dlfci_,
 	 const Interpolator1D &bfi_,
@@ -309,21 +307,21 @@ private:
   const double &tMin = qMin;
   const double &tMax = qMax;
   // Integrands 
-  double integrand(const double t,
-		   const double y,
-		   const double q,
-		   const double l) const;
+  double integrand(const double& t,
+		   const double& y,
+		   const double& q,
+		   const double& l) const;
   // Integrator object
   Integrator1D &itg;
   
 public:
 
   // Constructor for finite temperature calculations
-  AdrFixedIet(const double Theta_,
-	      const double qMin_,
-	      const double qMax_,
-	      const double x_,
-	      const double mu_,
+  AdrFixedIet(const double& Theta_,
+	      const double& qMin_,
+	      const double& qMax_,
+	      const double& x_,
+	      const double& mu_,
 	      Integrator1D &itg_)
     : AdrFixedBase(Theta_, qMin_, qMax_, x_, mu_),
       itg(itg_) {;};
