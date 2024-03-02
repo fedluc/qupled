@@ -521,7 +521,7 @@ double Qssf::get() const {
 // -----------------------------------------------------------------
 
 // Compute static structure factor
-double AdrBase::ssf(const double y) const {
+double AdrBase::ssf(const double& y) const {
   return ssfi.eval(y);
 }
 
@@ -530,12 +530,12 @@ double AdrBase::ssf(const double y) const {
 // -----------------------------------------------------------------
 
 // Compute fixed component
-double Adr::fix(const double y) const {
+double Adr::fix(const double& y) const {
   return fixi.eval(y);
 }
 
 // Integrand
-double Adr::integrand(const double y) const{
+double Adr::integrand(const double& y) const{
   return y * fix(y) * (ssf(y) - 1.0);
 }
 
@@ -589,15 +589,15 @@ void AdrFixed::get(vector<double> &wvg,
 }
 
 // Integrands for the fixed component
-double AdrFixed::integrand1(const double q,
-			    const double l) const {
+double AdrFixed::integrand1(const double& q,
+			    const double& l) const {
   if (l == 0) return q/(exp(q*q/Theta - mu) + exp(-q*q/Theta + mu) + 2.0);
   return q/(exp(q*q/Theta - mu) + 1.0);
 }
 
-double AdrFixed::integrand2(const double t,
-			    const double y,
-			    const double l) const {
+double AdrFixed::integrand2(const double& t,
+			    const double& y,
+			    const double& l) const {
   const double q = itg.getX();
   if (q == 0 || t == 0 || y == 0) { return 0; };
   const double x2 = x*x;
@@ -626,31 +626,32 @@ double AdrFixed::integrand2(const double t,
 // -----------------------------------------------------------------
 
 // Compute dynamic local field correction
-double AdrIet::dlfc(const double y,
-		    const int l) const {
+double AdrIet::dlfc(const double& y,
+		    const int& l) const {
   return dlfci[l].eval(y);
 }
 
 // Compute auxiliary density response
-double AdrIet::bf(const double y) const {
+double AdrIet::bf(const double& y) const {
   return bfi.eval(y);
 }
 
 // Compute fixed component
-double AdrIet::fix(const double x, const double y) const {
+double AdrIet::fix(const double& x,
+		   const double& y) const {
   return fixi.eval(x,y);
 }
 
 // Integrands
-double AdrIet::integrand1(const double q,
-			  const int l) const {
+double AdrIet::integrand1(const double& q,
+			  const int& l) const {
   if (q == 0.0) { return 0.0; }
   const double p1 = (1 - bf(q)) * ssf(q);
   const double p2 = dlfc(q,l) * (ssf(q) - 1.0);
   return (p1 -  p2 - 1.0) / q;
 }
 
-double AdrIet::integrand2(const double y) const {
+double AdrIet::integrand2(const double& y) const {
   const double q = itg.getX();
   return y * fix(q,y) * (ssf(y) - 1.0);
 }
@@ -711,8 +712,10 @@ void AdrFixedIet::get(vector<double> &wvg,
 }
 
 // Integrand for the fixed component
-double AdrFixedIet::integrand(const double t, const double y,
-			      const double q, const double l) const {
+double AdrFixedIet::integrand(const double& t,
+			      const double& y,
+			      const double& q,
+			      const double& l) const {
   const double x2 = x*x;
   const double q2 = q*q;
   const double y2 = y*y;
