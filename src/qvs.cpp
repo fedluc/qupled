@@ -186,7 +186,15 @@ void qStlsCSR::computeAdr() {
 
 double qStlsCSR::getQ() const {
   return QInstance.computeQ(wvg, ssf, in.getCoupling(), in.getDegeneracy());
+  // COMMENT: Instead of calling Qinstance.computeQ simply create a local
+  // object of type Q and call computeQ on it. For example:
+  // Q q(<constructor parameters>);
+  // return q.compute(...);
 }
+
+// -----------------------------------------------------------------
+// Q class
+// -----------------------------------------------------------------
 
 // Integrands for the fixed component
 double Q::integrandDenominator(const double y) const {
