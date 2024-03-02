@@ -267,10 +267,10 @@ double SlfcIet::bf(const double& y) const {
 // Get at finite temperature
 double SlfcIet::get() const {
   if (x == 0.0) return 0.0;
-  auto wMin = [&](double y)->double{return (y > x) ? y - x : x - y;};
-  auto wMax = [&](double y)->double{return min(yMax, x + y);};
-  auto func1 = [&](double y)->double{return integrand1(y);};
-  auto func2 = [&](double w)->double{return integrand2(w);};
+  auto wMin = [&](const double& y)->double{return (y > x) ? y - x : x - y;};
+  auto wMax = [&](const double& y)->double{return min(yMax, x + y);};
+  auto func1 = [&](const double& y)->double{return integrand1(y);};
+  auto func2 = [&](const double& w)->double{return integrand2(w);};
   itg.compute(func1, func2, yMin, yMax, wMin, wMax, itgGrid);
   return 3.0/(8.0*x) * itg.getSolution() + bf(x);
 }
@@ -382,7 +382,7 @@ double BridgeFunction::ioi() const {
 
 double BridgeFunction::lct() const {
   const double Gamma = couplingParameter();
-  auto func = [&](double r)->double{return lctIntegrand(r,Gamma);};
+  auto func = [&](const double& r)->double{return lctIntegrand(r,Gamma);};
   itg.setR(x/lambda);
   itg.compute(func);
   return itg.getSolution() * (x/lambda) / Gamma;

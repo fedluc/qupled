@@ -78,7 +78,7 @@ void Interpolator1D::reset(const double &x,
 }
 
 // Evaluate interpolation
-double Interpolator1D::eval(const double x) const {
+double Interpolator1D::eval(const double& x) const {
   double out;
   callGSLFunction(gsl_spline_eval_e, spline, (x < cutoff) ? x : cutoff, acc, &out);
   return out;
@@ -147,7 +147,8 @@ void Interpolator2D::reset(const double &x,
 }
 
 // Evaluate interpolation
-double Interpolator2D::eval(const double x, const double y) const {
+double Interpolator2D::eval(const double& x,
+			    const double& y) const {
   double out;
   callGSLFunction(gsl_spline2d_eval_e, spline, x, y, xacc, yacc, &out);
   return out;
@@ -168,8 +169,8 @@ BrentRootSolver::~BrentRootSolver() {
 }
 
 // Invoke root solver
-void BrentRootSolver::solve(const function<double(double)> func,
-			    const vector<double> guess){
+void BrentRootSolver::solve(const function<double(double)>& func,
+			    const vector<double>& guess){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
@@ -186,8 +187,8 @@ void BrentRootSolver::solve(const function<double(double)> func,
   } while (status == GSL_CONTINUE && iter < maxIter);
 }
 
-void SecantSolver::solve(const function<double(double)> func,
-			 const vector<double> guess){
+void SecantSolver::solve(const function<double(double)>& func,
+			 const vector<double>& guess){
   // Set up solver
   double x0 = guess.at(0);
   double x1 = guess.at(1);
@@ -296,13 +297,13 @@ void Integrator2D::compute(const function<double(double)>& func1,
       sol2[i] = itg2.getSolution();
     }
     itp.reset(xGrid[0], sol2[0], nx);
-    func = [&](double x_)->double {
+    func = [&](const double& x_)->double {
       return func1(x_) * itp.eval(x_);
     };
   }
   else {
     // Level 2 integration (evaluated at arbitrary points) 
-    func = [&](double x_)->double {
+    func = [&](const double& x_)->double {
       x = x_;
       itg2.compute(func2, yMin(x_), yMax(x_));
       return func1(x_) * itg2.getSolution();
@@ -322,7 +323,7 @@ void Integrator2D::compute(const function<double(double)>& func1,
 			   const double& yMax,
 			   const vector<double>& xGrid){
   // Wrappers around yMin and yMax to avoid compiler warnings
-  auto yMinTmp = [&](double x){(void)(x); return yMin; };
-  auto yMaxTmp = [&](double x){(void)(x); return yMax; };
+  auto yMinTmp = [&](const double& x){(void)(x); return yMin; };
+  auto yMaxTmp = [&](const double& x){(void)(x); return yMax; };
   compute(func1, func2, xMin, xMax, yMinTmp, yMaxTmp, xGrid);
 }

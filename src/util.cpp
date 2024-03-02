@@ -501,7 +501,7 @@ namespace thermoUtil {
   }
 
   double InternalEnergy::get() const  {
-    auto func = [&](double y)->double{return integrand(y);};
+    auto func = [&](const double& y)->double{return integrand(y);};
     itg.compute(func, yMin, yMax);
     return itg.getSolution()/(M_PI * rs * lambda);
   }
@@ -511,7 +511,7 @@ namespace thermoUtil {
   // -----------------------------------------------------------------
   
   double FreeEnergy::get() const  {
-    auto func = [&](double y)->double{return rsui.eval(y);};
+    auto func = [&](const double& y)->double{return rsui.eval(y);};
     itg.compute(func, 0.0, rs);
     if (normalize) { return (rs == 0.0) ? -numUtil::Inf : itg.getSolution()/rs/rs; };
     return itg.getSolution();
@@ -532,7 +532,7 @@ namespace thermoUtil {
   }
 
   double Rdf::get() const {
-    auto func = [&](double y)->double{return integrand(y);};
+    auto func = [&](const double& y)->double{return integrand(y);};
     if (r == 0) {
       itg.compute(func, 0.0, cutoff);
       return 1 + 1.5 * itg.getSolution();

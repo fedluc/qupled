@@ -246,11 +246,11 @@ vector<double> Idr::get() const {
   vector<double> res(nl);
   for (int l=0; l<nl; ++l){
     if (l == 0) {
-      auto func = [&](double y)->double{return integrand(y);};
+      auto func = [&](const double& y)->double{return integrand(y);};
       itg.compute(func, yMin, yMax);
     }
     else {
-      auto func = [&](double y)->double{return integrand(y,l);};;
+      auto func = [&](const double& y)->double{return integrand(y,l);};;
       itg.compute(func, yMin, yMax);
     }
     res[l] = itg.getSolution();
@@ -355,7 +355,7 @@ double SsfHF::integrand(const double& y) const {
 // Get result of integration
 double SsfHF::get() const {
   assert(Theta > 0.0);
-  auto func = [&](double y)->double{return integrand(y);};
+  auto func = [&](const double& y)->double{return integrand(y);};
   itg.compute(func, yMin, yMax);
   return 1.0 + itg.getSolution();
 }
@@ -404,7 +404,7 @@ double Ssf::get() const {
 double SsfGround::get() const {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
-  auto func = [&](double y)->double{return integrand(y);};
+  auto func = [&](const double& y)->double{return integrand(y);};
   itg.compute(func, yMin, yMax);
   double ssfP;
   ssfP = plasmon();
@@ -453,7 +453,7 @@ double SsfGround::plasmon() const {
   // Return if no root can be found
   if (!search_root) return 0;
   // Compute plasmon frequency
-  auto func = [this](double Omega)->double{return drf(Omega);};
+  auto func = [this](const double& Omega)->double{return drf(Omega);};
   const double guess[] = {wLo, wHi};
   BrentRootSolver rsol;
   rsol.solve(func, vector<double>(begin(guess),end(guess)));

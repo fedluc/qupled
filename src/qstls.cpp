@@ -554,7 +554,7 @@ void Adr::get(const vector<double> &wvg,
   }
   for (int l = 0; l < nl; ++l){
     fixi.reset(wvg[0], fixed(ix,l), nx);
-    auto func = [&](double y)->double{return integrand(y);};
+    auto func = [&](const double& y)->double{return integrand(y);};
     itg.compute(func, yMin, yMax);
     res(ix, l) = itg.getSolution();
     res(ix, l) *= (l==0) ? isc0 : isc;
@@ -580,8 +580,8 @@ void AdrFixed::get(vector<double> &wvg,
       const double xq = x*wvg[i];
       auto tMin = x2 - xq;
       auto tMax = x2 + xq;
-      auto func1 = [&](double q)->double{return integrand1(q, l);};
-      auto func2 = [&](double t)->double{return integrand2(t, wvg[i], l);};
+      auto func1 = [&](const double& q)->double{return integrand1(q, l);};
+      auto func2 = [&](const double& t)->double{return integrand2(t, wvg[i], l);};
       itg.compute(func1, func2, qMin, qMax, tMin, tMax, itgGrid);
       res(ix, l, i) = itg.getSolution();
     }
@@ -671,10 +671,10 @@ void AdrIet::get(const vector<double> &wvg,
   }
   for (int l = 0; l < nl; ++l) {
     fixi.reset(wvg[0], wvg[0], fixed(l), nx, nx);
-    auto yMin = [&](double q)->double{return (q > x) ? q - x : x - q;};
-    auto yMax = [&](double q)->double{return min(qMax, q + x);};
-    auto func1 = [&](double q)->double{return integrand1(q, l);};
-    auto func2 = [&](double y)->double{return integrand2(y);};
+    auto yMin = [&](const double& q)->double{return (q > x) ? q - x : x - q;};
+    auto yMax = [&](const double& q)->double{return min(qMax, q + x);};
+    auto func1 = [&](const double& q)->double{return integrand1(q, l);};
+    auto func2 = [&](const double& y)->double{return integrand2(y);};
     itg.compute(func1, func2, qMin, qMax, yMin, yMax, itgGrid);
     res(ix, l) = itg.getSolution();
     res(ix, l) *= (l == 0) ? isc0 : isc;
@@ -701,7 +701,7 @@ void AdrFixedIet::get(vector<double> &wvg,
 	continue;
       }
       for (int j = 0; j < nx; ++j) {
-	auto func = [&](double t)->double{
+	auto func = [&](const double& t)->double{
 	  return integrand(t, wvg[j], wvg[i], l);
 	};
 	itg.compute(func, tMin, tMax);

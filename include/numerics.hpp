@@ -87,7 +87,7 @@ public:
 	     const double &y,
 	     const size_t n_);
   // Evaluate
-  double eval(const double x) const;
+  double eval(const double& x) const;
   
 };
 
@@ -129,7 +129,8 @@ public:
 	     const int szx_,
 	     const int szy_);
   // Evaluate
-  double eval(const double x, const double y) const;
+  double eval(const double& x,
+	      const double& y) const;
 };
 
 // -----------------------------------------------------------------
@@ -150,9 +151,10 @@ protected:
   // Solution
   double sol;
   // Protected constructor
-  RootSolverBase(const double relErr_, const int maxIter_) : relErr(relErr_),
-							     maxIter(maxIter_),
-							     iter(0) { ; };
+  RootSolverBase(const double& relErr_,
+		 const int maxIter_) : relErr(relErr_),
+				       maxIter(maxIter_),
+				       iter(0) { ; };
   RootSolverBase() :  RootSolverBase(1.0e-10, 1000) { ; };
   
 public:
@@ -177,8 +179,8 @@ public:
 
   BrentRootSolver();
   ~BrentRootSolver();
-  void solve(const std::function<double(double)> func,
-	     const std::vector<double> guess);
+  void solve(const std::function<double(double)>& func,
+	     const std::vector<double>& guess);
 };
 
 class SecantSolver : public RootSolverBase {
@@ -188,8 +190,8 @@ public:
   SecantSolver(const double relErr_,
 	       const int maxIter_) : RootSolverBase(relErr_, maxIter_) { ; };
   SecantSolver() { ; };
-  void solve(const std::function<double(double)> func,
-	     const std::vector<double> guess);
+  void solve(const std::function<double(double)>& func,
+	     const std::vector<double>& guess);
   
 };
 
