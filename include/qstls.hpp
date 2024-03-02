@@ -188,7 +188,6 @@ private:
   double fix(const double& y) const;
   // integrand 
   double integrand(const double& y) const;
->>>>>>> master
   // Interpolator for the fixed component
   Interpolator1D fixi;
   // Integrator object

@@ -32,7 +32,7 @@ protected:
   
   // Iterations to solve the vs scheme
   void doIterations() {
-    auto func = [this](double alphaTmp)->double{return alphaDifference(alphaTmp);};
+    auto func = [this](const double& alphaTmp)->double{return alphaDifference(alphaTmp);};
     SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
     rsol.solve(func, in.getAlphaGuess());
     if (!rsol.success()) {
