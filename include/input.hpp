@@ -163,63 +163,6 @@ public:
   
 };
 
-// -----------------------------------------------------------------
-// Class to handle input for the VSSTLS
-// -----------------------------------------------------------------
-
-class VSStlsInput : public StlsInput {
-
-public:
-
-  struct FreeEnergyIntegrand {
-    std::vector<double> grid;
-    std::vector<std::vector<double>> integrand;
-    bool operator==(const FreeEnergyIntegrand &other) const {
-      return grid == other.grid && integrand == other.integrand;
-    }
-  };
-  
-private:
-
-  // Initial guess for the free parameter
-  std::vector<double> alphaGuess;
-  // Resolution of the coupling parameter grid
-  double drs;
-  // Resolution of the degeneracy parameter grid
-  double dTheta;
-  // Minimum error for the iterations used to define the free parameter
-  double errMinAlpha;
-  // Maximum number of iterations used to define the free parameter
-  int nIterAlpha;
-  // Pre-computed free energy integrand
-  FreeEnergyIntegrand fxcIntegrand;
-  
-public:
-
-  // Contructor
-  VSStlsInput() : alphaGuess(std::vector<double>(2, 0)),
-		  drs(0), dTheta(0), errMinAlpha(0),
-		  nIterAlpha(0) { ; }
-  // Setters
-  void setAlphaGuess(const std::vector<double>  &alphaGuess);
-  void setCouplingResolution(const double &drs);
-  void setDegeneracyResolution(const double &dTheta);
-  void setErrMinAlpha(const double &errMinAlpha);
-  void setNIterAlpha(const int& nIterAlpha);
-  void setFreeEnergyIntegrand(const FreeEnergyIntegrand &freeEnergyIntegrand);
-  // Getters 
-  std::vector<double> getAlphaGuess() const { return alphaGuess; }
-  double getCouplingResolution() const { return drs; }
-  double getDegeneracyResolution() const { return dTheta; }
-  double getErrMinAlpha() const { return errMinAlpha; }
-  double getNIterAlpha() const { return nIterAlpha; }
-  FreeEnergyIntegrand getFreeEnergyIntegrand() const { return fxcIntegrand; }
-  // Print content of the data structure
-  void print() const;
-  // Compare two VSStls objects
-  bool isEqual( const VSStlsInput &in ) const;
-  
-};
 
 // -----------------------------------------------------------------
 // Class to handle input for the QSTLS and QSTLS-IET schemes
@@ -253,7 +196,6 @@ public:
 
   // Contructors
   QstlsInput() : fixed(""), fixedIet("") { ; }
-  QstlsInput(const StlsInput& base) : StlsInput(base) { ; }
   // Setters
   void setFixed(const std::string &fixed);
   void setFixedIet(const std::string &fixedIet);
@@ -266,6 +208,96 @@ public:
   void print() const ;
   // Compare two QstlsInput objects
   bool isEqual(const QstlsInput &in) const;
+  
+};
+
+
+// -----------------------------------------------------------------
+// Class to handle input for the VS schemes
+// -----------------------------------------------------------------
+
+class VSInput {
+
+public:
+
+  struct FreeEnergyIntegrand {
+    std::vector<double> grid;
+    std::vector<std::vector<double>> integrand;
+    bool operator==(const FreeEnergyIntegrand &other) const {
+      return grid == other.grid && integrand == other.integrand;
+    }
+  };
+  
+private:
+
+  // Initial guess for the free parameter
+  std::vector<double> alphaGuess;
+  // Resolution of the coupling parameter grid
+  double drs;
+  // Resolution of the degeneracy parameter grid
+  double dTheta;
+  // Minimum error for the iterations used to define the free parameter
+  double errMinAlpha;
+  // Maximum number of iterations used to define the free parameter
+  int nIterAlpha;
+  // Pre-computed free energy integrand
+  FreeEnergyIntegrand fxcIntegrand;
+  
+public:
+
+  // Contructor
+  VSInput() : alphaGuess(std::vector<double>(2, 0)),
+	      drs(0), dTheta(0), errMinAlpha(0),
+	      nIterAlpha(0) { ; }
+  // Setters
+  void setAlphaGuess(const std::vector<double>  &alphaGuess);
+  void setCouplingResolution(const double &drs);
+  void setDegeneracyResolution(const double &dTheta);
+  void setErrMinAlpha(const double &errMinAlpha);
+  void setNIterAlpha(const int& nIterAlpha);
+  void setFreeEnergyIntegrand(const FreeEnergyIntegrand &freeEnergyIntegrand);
+  // Getters 
+  std::vector<double> getAlphaGuess() const { return alphaGuess; }
+  double getCouplingResolution() const { return drs; }
+  double getDegeneracyResolution() const { return dTheta; }
+  double getErrMinAlpha() const { return errMinAlpha; }
+  double getNIterAlpha() const { return nIterAlpha; }
+  FreeEnergyIntegrand getFreeEnergyIntegrand() const { return fxcIntegrand; }
+  // Print content of the data structure
+  void print() const;
+  // Compare two VSStls objects
+  bool isEqual( const VSInput &in ) const;
+  
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the VSStls scheme
+// -----------------------------------------------------------------
+
+class VSStlsInput : public StlsInput, public VSInput {
+  
+public:
+
+  // Print content of the data structure
+  void print() const;
+  // Compare two VSStls objects
+  bool isEqual( const VSStlsInput &in ) const;
+  
+};
+
+
+// -----------------------------------------------------------------
+// Class to handle input for the QVSStls scheme
+// -----------------------------------------------------------------
+
+class QVSStlsInput : public QstlsInput, public VSInput {
+  
+public:
+
+  // Print content of the data structure
+  void print() const;
+  // Compare two VSStls objects
+  bool isEqual( const QVSStlsInput &in ) const;
   
 };
 

@@ -13,13 +13,13 @@ class Interpolator1D;
 // VSBase class
 // -----------------------------------------------------------------
 
-template<typename ThermoProp, typename Scheme>
+template<typename ThermoProp, typename Scheme, typename Input>
 class VSBase : public Scheme {
 
 protected: 
 
   // Input data
-  VSStlsInput in;
+  Input in;
   // Thermodynamic properties
   ThermoProp thermoProp;
   // Free parameter
@@ -59,12 +59,12 @@ protected:
 public:
 
   // Constructor from initial data
-  VSBase(const VSStlsInput &in_) : Scheme(in_),
-                                   in(in_),
-				   thermoProp(in_),
-				   verbose(true) { ; }
+  VSBase(const Input &in_) : Scheme(in_),
+			     in(in_),
+			     thermoProp(in_),
+			     verbose(true) { ; }
   // Constructor for recursive calculations
-  VSBase(const VSStlsInput &in_,
+  VSBase(const Input &in_,
 	 const ThermoProp& thermoProp_) : Scheme(in_),
 					  in(in_),
 					  thermoProp(in_, thermoProp_),
@@ -107,7 +107,7 @@ public:
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-template<typename StructProp>
+template<typename StructProp, typename Input>
 class ThermoPropBase {
 
 protected:
@@ -152,7 +152,7 @@ protected:
 public:
 
   // Constructors
-  ThermoPropBase(const VSStlsInput &in) : structProp(in) {
+  ThermoPropBase(const Input &in) : structProp(in) {
     const double& rs = in.getCoupling();
     const double& drs = in.getCouplingResolution();
     // Check if we are solving for particular state points
@@ -185,7 +185,7 @@ public:
     }
   }
   
-  ThermoPropBase(const VSStlsInput &in,
+  ThermoPropBase(const Input &in,
 		 const ThermoPropBase &other) : ThermoPropBase(in) {
     assert(other.rsGrid[1] - other.rsGrid[0] == rsGrid[1] - rsGrid[0]);
     const size_t nrs = rsGrid.size();
@@ -209,11 +209,11 @@ public:
   
   // Compute the thermodynamic properties
   template<typename Scheme>
-  void compute(const VSStlsInput &in) {
+  void compute(const Input &in) {
     // Recursive calls to solve the VS-STLS scheme for all state points
     // with coupling parameter smaller than rs
     const double nrs = rsGrid.size();
-    VSStlsInput inTmp = in;
+    Input inTmp = in;
     std::vector<double> fxciTmp(StructProp::NPOINTS);
     for (size_t i = 0; i < nrs; ++i) {
       const double& rs = rsGrid[i];
@@ -349,7 +349,7 @@ public:
 // StructPropBase class
 // -----------------------------------------------------------------
 
-template<typename CSR>
+template<typename CSR, typename Input>
 class StructPropBase {
 
 public:
@@ -395,10 +395,10 @@ protected:
 public:
 
   // Constructor
-  StructPropBase(const VSStlsInput &in_) : csrIsInitialized(false),
-					   computed(false),
-					   outVector(NPOINTS) {
-    VSStlsInput inTmp = in_;
+  StructPropBase(const Input &in_) : csrIsInitialized(false),
+				     computed(false),
+				     outVector(NPOINTS) {
+    Input inTmp = in_;
     const double& drs = inTmp.getCouplingResolution();
     const double& dTheta = inTmp.getDegeneracyResolution();
     // If there is a risk of having negative state parameters, shift the
@@ -498,7 +498,7 @@ public:
 // CSR base class
 // -----------------------------------------------------------------
 
-template <typename T, typename Scheme>
+template <typename T, typename Scheme, typename Input>
 class CSR : public Scheme {
 
 public:
@@ -513,7 +513,7 @@ protected:
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
   // Input data
-  const VSStlsInput in;
+  const Input in;
   // local field correction (static or dynamic)
   T lfc;
   // Free parameter
@@ -553,7 +553,7 @@ protected:
 public:
 
   // Constructor
-  CSR(const VSStlsInput& in_,
+  CSR(const Input& in_,
       const Scheme& scheme) : Scheme(scheme),
 			      in(in_),
 			      alpha(DEFAULT_ALPHA),
@@ -565,8 +565,8 @@ public:
 			      dTypeTheta(CENTERED) { ; }
 
   // Set the data to compute the coupling parameter derivative
-  void setDrsData(CSR<T, Scheme> &csrRsUp,
-		  CSR<T, Scheme> &csrRsDown,
+  void setDrsData(CSR<T, Scheme, Input> &csrRsUp,
+		  CSR<T, Scheme, Input> &csrRsDown,
 		  const Derivative &dTypeRs) {
     this->lfcRsUp = &csrRsUp.lfc;
     this->lfcRsDown = &csrRsDown.lfc;
@@ -574,8 +574,8 @@ public:
   }
   
   // Set the data to compute the degeneracy parameter derivative
-  void setDThetaData(CSR<T, Scheme> &csrThetaUp,
-		     CSR<T, Scheme> &csrThetaDown,
+  void setDThetaData(CSR<T, Scheme, Input> &csrThetaUp,
+		     CSR<T, Scheme, Input> &csrThetaDown,
 		     const Derivative &dTypeTheta) {
     this->lfcThetaUp = &csrThetaUp.lfc;
     this->lfcThetaDown = &csrThetaDown.lfc;

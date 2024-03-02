@@ -13,13 +13,13 @@ class VSStlsInput;
 // Solver for the VS-STLS scheme
 // -----------------------------------------------------------------
 
-class StlsCSR : public CSR<std::vector<double>, Stls> {
+class StlsCSR : public CSR<std::vector<double>, Stls, VSStlsInput> {
   
   friend class StructProp;
     
 private:
 
-  using CSR = CSR<std::vector<double>, Stls>;
+  using CSR = CSR<std::vector<double>, Stls, VSStlsInput>;
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();
@@ -34,11 +34,11 @@ public:
 
 };
 
-class StructProp : public StructPropBase<StlsCSR> {
+class StructProp : public StructPropBase<StlsCSR, VSStlsInput> {
 
 protected:
 
-  using StructPropBase = StructPropBase<StlsCSR>;
+  using StructPropBase = StructPropBase<StlsCSR, VSStlsInput>;
   // Perform iterations to compute structural properties
   void doIterations();
   
@@ -50,13 +50,13 @@ public:
 };
 
 
-using ThermoProp = ThermoPropBase<StructProp>;
+using ThermoProp = ThermoPropBase<StructProp, VSStlsInput>;
 
-class VSStls : public VSBase<ThermoProp, Rpa> {
+class VSStls : public VSBase<ThermoProp, Rpa, VSStlsInput> {
 
 private:
 
-  using VSBase = VSBase<ThermoProp, Rpa>;
+  using VSBase = VSBase<ThermoProp, Rpa, VSStlsInput>;
   // Compute free parameter
   double computeAlpha();
   // Iterations to solve the vs-stls scheme
