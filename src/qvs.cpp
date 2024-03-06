@@ -49,29 +49,28 @@ void qVSStls::updateSolution() {
 // -----------------------------------------------------------------
 
 vector<double> qThermoProp::getQData() const {
-  // // Q
-  // const double q = qstructProp.getQ()[SIdx::RS_THETA];
-  // // Q derivative with respect to the coupling parameter
-  // double qr;
-  // {
-  //   const vector<double> rs = qstructProp.getCouplingParameters(); 
-  //   const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
-  //   const double& q0 = qstructProp.getQ()[SIdx::RS_UP_THETA];
-  //   const double& q1 = qstructProp.getQ()[SIdx::RS_DOWN_THETA];
-  //   qr = (q0 - q1) / (2.0 * drs);
-  // }
-  // // Q derivative with respect to the degeneracy parameter
-  // double qt;
-  // {
-  //   const vector<double> theta = qstructProp.getDegeneracyParameters();
-  //   const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
-  //   const double q0 = qstructProp.getQ()[SIdx::RS_THETA_UP];
-  //   const double q1 = qstructProp.getQ()[SIdx::RS_THETA_DOWN];
-  //   qt = theta[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
-  // }
-  // return vector<double>({q, qr, qt});
-  parallelUtil::MPI::throwError("qThermoProp::getQData() temporarily disabled"); // REMOVE WHEN YOU HAVE A WORKING IMPLEMENTATION
-  return vector<double>();
+  const std::vector<double> rsVec = structProp.getCouplingParameters();
+  const std::vector<double> thetaVec = structProp.getDegeneracyParameters();
+  qStructProp qstructProp;
+  // QAdder
+  const double q = qstructProp.getQ()[SIdx::RS_THETA];
+  // QAdder derivative with respect to the coupling parameter
+  double qr;
+  {
+    const double drs = rsVec[SIdx::RS_UP_THETA] - rsVec[SIdx::RS_THETA];
+    const double& q0 = qstructProp.getQ()[SIdx::RS_UP_THETA];
+    const double& q1 = qstructProp.getQ()[SIdx::RS_DOWN_THETA];
+    qr = rsVec[SIdx::RS_THETA] * (q0 - q1) / (2.0 * drs);
+  }
+  // QAdder derivative with respect to the degeneracy parameter
+  double qt;
+  {
+    const double dt = thetaVec[SIdx::RS_THETA_UP] - thetaVec[SIdx::RS_THETA];
+    const double q0 = qstructProp.getQ()[SIdx::RS_THETA_UP];
+    const double q1 = qstructProp.getQ()[SIdx::RS_THETA_DOWN];
+    qt = thetaVec[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
+  }
+  return vector<double>({q, qr, qt});
 }
 
 // -----------------------------------------------------------------
@@ -104,7 +103,7 @@ void qStructProp::doIterations() {
 
 vector<double> qStructProp::getQ() const  {
   return getBase([&](const qStlsCSR& q) -> double {
-    return q.getQ();
+    return q.getQAdder();
   });
 }
 
@@ -186,89 +185,67 @@ void qStlsCSR::computeAdr() {
   }
 }
 
-double qStlsCSR::getQ() const {
-  //return QInstance.computeQ(wvg, ssf, in.getCoupling(), in.getDegeneracy());
-  // COMMENT: Instead of calling Qinstance.computeQ simply create a local
-  // object of type Q and call computeQ on it. For example:
-  // Q q(<constructor parameters>);
-  // return q.compute(...);
-  parallelUtil::MPI::throwError("qStlsCSR::getQ() temporarily disabled"); // REMOVE WHEN YOU HAVE A WORKING IMPLEMENTATION
-  return numUtil::Inf;
+double qStlsCSR::getQAdder() const {
+  Integrator1D itg1(in.getIntError());
+  Integrator2D itg2(in.getIntError());
+  const bool segregatedItg = in.getInt2DScheme() == "segregated";
+  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  const Interpolator1D ssfItp(wvg, ssf);
+  QAdder QTmp(in.getCoupling(), in.getDegeneracy(), mu, wvg, 
+              itgGrid, itg1, itg2, ssfItp); 
+  return QTmp.get();
 }
 
 // // -----------------------------------------------------------------
-// // Q class
+// // QAdder class
 // // -----------------------------------------------------------------
 
-// // Integrands for the fixed component
-// double Q::integrandDenominator(const double y) const {
-//   const double y2 = y*y;
-//   return 1.0/(exp(y2/Theta - mu) + 1.0);
-// }
+// SSF interpolation
+double QAdder::ssf(const double& y) const {
+  return interp.eval(y);
+}
 
-// double Q::integrandNumerator(const double q,
-// 			    const double w) const {
-//   const double Theta = in.getDegeneracy();
-//   if (q == 0 || w == 0) { return 0; };
-//   const double w2 = w*w;
-//   const double w3 = w2*w;
-//   const double logarg = (w + 2*q)/(w - 2*q);
-//   return q/(exp(q*q/Theta - mu) + 1.0) * q/w3 * (q/w*log(logarg) - 1.0);
-// }
+// Denominator integrand
+double QAdder::integrandDenominator(const double y) const {
+  const double y2 = y*y;
+  return 1.0/(exp(y2/Theta - mu) + 1.0);
+}
 
-// // Denominator integral
-// void Q::getIntDenominator(const vector<double> wvg,
-//         double &res) const {
-//   auto yMin = wvg.front();
-//   auto yMax = wvg.back();
-//   auto func = [&](double y)->double{return integrandDenominator(y);};
-//   itg.compute(func, yMin, yMax);
-//   res = itg.getSolution();
-// }
-// // Numerator integral without ssf
-// void Q::getIntNumerator(const vector<double> wvg,
-//         std::vector<double> &res) const{
-//   auto qMin = wvg.front();
-//   auto qMax = wvg.back();
-//   res.resize(wvg.size());
-//   for (int i = 0; i < wvg.size(); ++i) {
-//     double w = wvg[i];
-//     auto func = [&](double q)->double{return integrandNumerator(q,w);};
-//     itg.compute(func, qMin, qMax);
-//     res[i] = itg.getSolution();
-//   }
-// }
+// Numerator integrand1
+double QAdder::integrandNumerator1(const double q) const {
+  const double w = itg2.getX();
+  if (w == 0 || w == 2*q) { return 0; };
+  const double w2 = w*w;
+  const double w3 = w2*w;
+  const double logarg = (w + 2*q)/(w - 2*q);
+  return q/(exp(q*q/Theta - mu) + 1.0) * q/w3 * (q/w*log(logarg) - 1.0);
+}
 
-// void Q::getTotalNumerator(const vector<double> wvg,
-//         std::vector<double> &NumPart,
-//         std::vector<double> ssf,
-//         double &Numerator) const{
-//   getIntNumerator(wvg, NumPart);
-//   double wMin = wvg.front();
-//   double wMax = wvg.back();
-//   assert(wvg.size() == NumPart.size() && wvg.size() == ssf.size());
-//   interp.reset(wvg[0], NumPart[0], wvg.size());
+// Numerator integrand2
+double QAdder::integrandNumerator2(const double w) const {
+  if (w == 0.0) return 0.0;
+  return w * (ssf(w) - 1.0);
+}
 
-//   auto totalIntegrand = [this, &wvg, &ssf](double w) -> double {
-//     double interpolatedValue = this->interp.eval(w);
-//     auto it = std::find(wvg.begin(), wvg.end(), w);
-//     if (it == wvg.end()) {
-//       return 0.0; 
-//     }
-//     size_t index = std::distance(wvg.begin(), it);
-//     double WssfMinusOne = w * (ssf[index] - 1);
-//     return WssfMinusOne * interpolatedValue;
-//     };
+// Denominator integral
+void QAdder::getIntDenominator(double &res) const {
+  auto yMin = wvg.back();
+  auto yMax = wvg.front();
+  auto func = [&](double y)->double{return integrandDenominator(y);};
+  itg1.compute(func, yMin, yMax);
+  res = itg1.getSolution();
+}
 
-//   itg.compute(totalIntegrand, wMin, wMax);
-//   Numerator = itg.getSolution();
-// }
-
-// double Q::computeQ(const vector<double> &wvg, 
-//                   const std::vector<double> ssf, 
-//                   const double rs, 
-//                   const double Theta) {
-//   getIntDenominator(wvg, Denominator);
-// return 12.0 / (M_PI * lambda * rs) * (Numerator / Denominator);
-// }
-
+// Get at finite temperature
+double QAdder::get() const {
+  double Denominator;
+  getIntDenominator(Denominator);
+  auto wMin = wvg.back();
+  auto wMax = wvg.front();
+  auto yMin = wMin;
+  auto yMax = wMax;
+  auto func1 = [&](const double& q)->double{return integrandNumerator1(q);};
+  auto func2 = [&](const double& w)->double{return integrandNumerator2(w);};
+  itg2.compute(func1, func2, yMin, yMax, yMax, wMax, itgGrid);
+  return 12.0 / (M_PI * lambda * rs) * itg2.getSolution()/Denominator;
+}
