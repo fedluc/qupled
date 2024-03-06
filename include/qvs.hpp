@@ -48,13 +48,20 @@ private:
   
   const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // --Constructor variables--
-  // Degeneracy parameter
-  const double Theta;
   // Coupling parameter
   const double rs;
+  // Degeneracy parameter
+  const double Theta;
   // Chemical potential
   const double mu;
   // Wave-vector
+  // COMMENT: you use wvg only to determine the integration limits.
+  // Since the integration limits are the same for all integrals
+  // (wvg.front(), wvg.back()) you could just store two values
+  // instead of the full wave-vector grid. So, for example,
+  // you could replace std::vector<double> wvg with
+  // std::pair<double, double> limits and modify the constructor
+  // accordingly
   const std::vector<double> wvg;
   // Grid for 2D integration
   const std::vector<double> &itgGrid;
@@ -80,15 +87,15 @@ public:
 
   // Constructor
   QAdder(const double& rs_,
-    const double& Theta_,
-    const double& mu_,
-    const std::vector<double>& wvg_,
-    const std::vector<double>& itgGrid_,
-    Integrator1D &itg1_,
-    Integrator2D &itg2_,
-    const Interpolator1D &interp_) : 
-    rs(rs_), Theta(Theta_), mu(mu_), wvg(wvg_),
-    itgGrid(itgGrid_), itg1(itg1_), itg2(itg2_), interp(interp_) { ; }
+	 const double& Theta_,
+	 const double& mu_,
+	 const std::vector<double>& wvg_,
+	 const std::vector<double>& itgGrid_,
+	 Integrator1D &itg1_,
+	 Integrator2D &itg2_,
+	 const Interpolator1D &interp_) :  rs(rs_), Theta(Theta_), mu(mu_), wvg(wvg_),
+					   itgGrid(itgGrid_), itg1(itg1_), itg2(itg2_),
+					   interp(interp_) { ; }
   
   // Get Q-adder
   double get() const;

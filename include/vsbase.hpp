@@ -310,7 +310,8 @@ public:
   // Get internal energy and internal energy derivatives
   std::vector<double> getInternalEnergyData() const {
     // Internal energy
-    const double u = structProp.getInternalEnergy()[SIdx::RS_THETA];
+    const std::vector<double> uVec = structProp.getInternalEnergy();
+    const double u = uVec[SIdx::RS_THETA];
     // Internal energy derivative with respect to the coupling parameter
     double ur;
     {
@@ -326,8 +327,8 @@ public:
     {
       const std::vector<double> theta = structProp.getDegeneracyParameters();
       const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
-      const double u0 = structProp.getInternalEnergy()[SIdx::RS_THETA_UP];
-      const double u1 = structProp.getInternalEnergy()[SIdx::RS_THETA_DOWN];
+      const double u0 = uVec[SIdx::RS_THETA_UP];
+      const double u1 = uVec[SIdx::RS_THETA_DOWN];
       ut = theta[SIdx::RS_THETA] * (u0 - u1) / (2.0 * dt);
     }
     return std::vector<double>({u, ur, ut});

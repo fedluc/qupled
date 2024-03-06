@@ -49,26 +49,44 @@ void qVSStls::updateSolution() {
 // -----------------------------------------------------------------
 
 vector<double> qThermoProp::getQData() const {
-  const std::vector<double> rsVec = structProp.getCouplingParameters();
-  const std::vector<double> thetaVec = structProp.getDegeneracyParameters();
-  qStructProp qstructProp;
+  // COMMENTS:
+  // 1) We don't need to define a qStructProp object here, structProp already
+  // has a method called getQ because it is of type qStructProp. This might
+  // sound a bit confusing, but is an effect of using the templates: qThermoProp
+  // is equivalent to ThermoPropBase with StructProp = qStructProp,
+  // just look at line 124 in qvs.hpp. If you feel that you are getting lost
+  // try to attach a debugger and check the types of the variables inside
+  // qThermoProp.
+  // 2) QAdder diverges for rs = 0, this can cause you problems when computing
+  // the derivative with respect to the coupling parameter. To circumvent this
+  // problem (which appears also with the internal energy), check what I have
+  // done in ThermoPropBase::getInternalEnergyData(). Essentially, instead of
+  // using the derivatives of QAdder, work with the derivative of rs * QAdder,
+  // which is finite. My suggestion is to remove the 1/rs term from the definition
+  // of QAdder and then re-introduce it only here when you need q and qt, e.g.
+  // replace q = qVec[SIdx::RS_THETA] with q = qVec[SIdx::RS_THETA] / rs[SIdx::RS_THETA]
+  // Note that q and qt are not affected by the problem of the divergence because
+  // we never compute alpha directly for rs = 0, we always start at rs = drs.
   // QAdder
-  const double q = qstructProp.getQ()[SIdx::RS_THETA];
+  const std::vector<double> qVec = structProp.getQ();
+  const double q = qVec[SIdx::RS_THETA];
   // QAdder derivative with respect to the coupling parameter
   double qr;
   {
-    const double drs = rsVec[SIdx::RS_UP_THETA] - rsVec[SIdx::RS_THETA];
-    const double& q0 = qstructProp.getQ()[SIdx::RS_UP_THETA];
-    const double& q1 = qstructProp.getQ()[SIdx::RS_DOWN_THETA];
-    qr = rsVec[SIdx::RS_THETA] * (q0 - q1) / (2.0 * drs);
+    const std::vector<double> rs = structProp.getCouplingParameters(); 
+    const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
+    const double& q0 = qVec[SIdx::RS_UP_THETA];
+    const double& q1 = qVec[SIdx::RS_DOWN_THETA];
+    qr = rs[SIdx::RS_THETA] * (q0 - q1) / (2.0 * drs);
   }
   // QAdder derivative with respect to the degeneracy parameter
   double qt;
   {
-    const double dt = thetaVec[SIdx::RS_THETA_UP] - thetaVec[SIdx::RS_THETA];
-    const double q0 = qstructProp.getQ()[SIdx::RS_THETA_UP];
-    const double q1 = qstructProp.getQ()[SIdx::RS_THETA_DOWN];
-    qt = thetaVec[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
+    const std::vector<double> theta = structProp.getDegeneracyParameters();
+    const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
+    const double q0 = qVec[SIdx::RS_THETA_UP];
+    const double q1 = qVec[SIdx::RS_THETA_DOWN];
+    qt = theta[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
   }
   return vector<double>({q, qr, qt});
 }
@@ -229,6 +247,9 @@ double QAdder::integrandNumerator2(const double w) const {
 
 // Denominator integral
 void QAdder::getIntDenominator(double &res) const {
+  // COMMENT: back() refers to the last element in the vector, front() to
+  // the first one. You seem to use them backwards when defining yMin
+  // and yMax
   auto yMin = wvg.back();
   auto yMax = wvg.front();
   auto func = [&](double y)->double{return integrandDenominator(y);};
@@ -240,6 +261,9 @@ void QAdder::getIntDenominator(double &res) const {
 double QAdder::get() const {
   double Denominator;
   getIntDenominator(Denominator);
+  // COMMENT: back() refers to the last element in the vector, front() to
+  // the first one. You seem to use them backwards when defining yMin
+  // and yMax
   auto wMin = wvg.back();
   auto wMax = wvg.front();
   auto yMin = wMin;
