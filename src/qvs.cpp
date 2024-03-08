@@ -49,43 +49,25 @@ void qVSStls::updateSolution() {
 // -----------------------------------------------------------------
 
 vector<double> qThermoProp::getQData() const {
-  // COMMENTS:
-  // 1) We don't need to define a qStructProp object here, structProp already
-  // has a method called getQ because it is of type qStructProp. This might
-  // sound a bit confusing, but is an effect of using the templates: qThermoProp
-  // is equivalent to ThermoPropBase with StructProp = qStructProp,
-  // just look at line 124 in qvs.hpp. If you feel that you are getting lost
-  // try to attach a debugger and check the types of the variables inside
-  // qThermoProp.
-  // 2) QAdder diverges for rs = 0, this can cause you problems when computing
-  // the derivative with respect to the coupling parameter. To circumvent this
-  // problem (which appears also with the internal energy), check what I have
-  // done in ThermoPropBase::getInternalEnergyData(). Essentially, instead of
-  // using the derivatives of QAdder, work with the derivative of rs * QAdder,
-  // which is finite. My suggestion is to remove the 1/rs term from the definition
-  // of QAdder and then re-introduce it only here when you need q and qt, e.g.
-  // replace q = qVec[SIdx::RS_THETA] with q = qVec[SIdx::RS_THETA] / rs[SIdx::RS_THETA]
-  // Note that q and qt are not affected by the problem of the divergence because
-  // we never compute alpha directly for rs = 0, we always start at rs = drs.
   // QAdder
   const std::vector<double> qVec = structProp.getQ();
-  const double q = qVec[SIdx::RS_THETA];
+  const std::vector<double> rs = structProp.getCouplingParameters();
+  const double q = qVec[SIdx::RS_THETA] / rs[SIdx::RS_THETA];
   // QAdder derivative with respect to the coupling parameter
   double qr;
   {
-    const std::vector<double> rs = structProp.getCouplingParameters(); 
     const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
     const double& q0 = qVec[SIdx::RS_UP_THETA];
     const double& q1 = qVec[SIdx::RS_DOWN_THETA];
-    qr = rs[SIdx::RS_THETA] * (q0 - q1) / (2.0 * drs);
+    qr = (q0 - q1) / (2.0 * drs) - q;
   }
   // QAdder derivative with respect to the degeneracy parameter
   double qt;
   {
     const std::vector<double> theta = structProp.getDegeneracyParameters();
     const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
-    const double q0 = qVec[SIdx::RS_THETA_UP];
-    const double q1 = qVec[SIdx::RS_THETA_DOWN];
+    const double q0 = qVec[SIdx::RS_THETA_UP] / rs[SIdx::RS_THETA];
+    const double q1 = qVec[SIdx::RS_THETA_DOWN] / rs[SIdx::RS_THETA];
     qt = theta[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
   }
   return vector<double>({q, qr, qt});
@@ -196,7 +178,7 @@ void qStlsCSR::computeAdr() {
         adr(i,l) -= a_dt * CSR::getDerivative(lfc(i,l), thetaUp(i,l), thetaDown(i,l), dTypeTheta);
       }
     }
-    // Extra 1/3 term present in the new adr for qVS
+    // Extra 1/3 term present in the adr for qVS
     for (size_t i = 0; i < nx; ++i) {
       adr(i,l) += alpha/3.0 * lfc(i,l);
     }
@@ -209,7 +191,7 @@ double qStlsCSR::getQAdder() const {
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const Interpolator1D ssfItp(wvg, ssf);
-  QAdder QTmp(in.getCoupling(), in.getDegeneracy(), mu, wvg, 
+  QAdder QTmp(in.getCoupling(), in.getDegeneracy(), mu, wvg.front(), wvg.back(), 
               itgGrid, itg1, itg2, ssfItp); 
   return QTmp.get();
 }
@@ -247,29 +229,17 @@ double QAdder::integrandNumerator2(const double w) const {
 
 // Denominator integral
 void QAdder::getIntDenominator(double &res) const {
-  // COMMENT: back() refers to the last element in the vector, front() to
-  // the first one. You seem to use them backwards when defining yMin
-  // and yMax
-  auto yMin = wvg.back();
-  auto yMax = wvg.front();
   auto func = [&](double y)->double{return integrandDenominator(y);};
-  itg1.compute(func, yMin, yMax);
+  itg1.compute(func, limits.first, limits.second);
   res = itg1.getSolution();
 }
 
-// Get at finite temperature
+// Get total QAdder
 double QAdder::get() const {
   double Denominator;
   getIntDenominator(Denominator);
-  // COMMENT: back() refers to the last element in the vector, front() to
-  // the first one. You seem to use them backwards when defining yMin
-  // and yMax
-  auto wMin = wvg.back();
-  auto wMax = wvg.front();
-  auto yMin = wMin;
-  auto yMax = wMax;
   auto func1 = [&](const double& q)->double{return integrandNumerator1(q);};
   auto func2 = [&](const double& w)->double{return integrandNumerator2(w);};
-  itg2.compute(func1, func2, yMin, yMax, yMax, wMax, itgGrid);
-  return 12.0 / (M_PI * lambda * rs) * itg2.getSolution()/Denominator;
+  itg2.compute(func1, func2, limits.first, limits.second, limits.first, limits.second, itgGrid);
+  return 12.0 / (M_PI * lambda) * itg2.getSolution()/Denominator;
 }
