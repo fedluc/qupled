@@ -72,9 +72,9 @@ class Hdf():
             elif ( self.entries[name].entryType == "numpy2D" ) :
                 output[name] = pd.read_hdf(hdf, name).to_numpy()
             elif ( self.entries[name].entryType == "number") :
-                output[name] = pd.read_hdf(hdf, "inputs")[name][0].tolist()
+                output[name] = pd.read_hdf(hdf, "inputs")[name].iloc[0].tolist()
             elif ( self.entries[name].entryType == "string") :
-                output[name] = pd.read_hdf(hdf, "inputs")[name][0]
+                output[name] = pd.read_hdf(hdf, "inputs")[name].iloc[0]
             else:
                 sys.exit("Unknown entry type")
         return output
