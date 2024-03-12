@@ -555,7 +555,7 @@ namespace parallelUtil {
   
   namespace MPI {
 
-    constexpr MPI_Comm MPICommunicator = MPI_COMM_WORLD;
+    const MPI_Comm MPICommunicator = MPI_COMM_WORLD;
   
     int rank() {
       int rank;
