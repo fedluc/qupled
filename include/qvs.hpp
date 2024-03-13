@@ -15,9 +15,9 @@ class QVSStlsInput;
 // Class to handle simultaneous state point calculations
 // -----------------------------------------------------------------
 
-class qStlsCSR : public CSR<vecUtil::Vector2D, Qstls, QVSStlsInput> {
+class QStlsCSR : public CSR<vecUtil::Vector2D, Qstls, QVSStlsInput> {
 
-  friend class qStructProp;
+  friend class QStructProp;
 
 private:
   
@@ -33,7 +33,7 @@ private:
 public:
   
   // Constructor
-  qStlsCSR(const QVSStlsInput& in_) : CSR(in_, Qstls(in_)) { ; }
+  QStlsCSR(const QVSStlsInput& in_) : CSR(in_, Qstls(in_)) { ; }
   // Compute Q
   double getQAdder() const;
 };
@@ -99,11 +99,11 @@ public:
 // Class to handle the state point derivatives
 // -----------------------------------------------------------------
 
-class qStructProp : public StructPropBase<qStlsCSR, QVSStlsInput> {
+class QStructProp : public StructPropBase<QStlsCSR, QVSStlsInput> {
 
 private:
 
-  using StructPropBase = StructPropBase<qStlsCSR, QVSStlsInput>;
+  using StructPropBase = StructPropBase<QStlsCSR, QVSStlsInput>;
   // Perform iterations to compute structural properties
   void doIterations();
   
@@ -113,7 +113,7 @@ public:
   // Compute structural properties
   int compute();
   // Constructor
-  qStructProp(const QVSStlsInput &in_) : StructPropBase(in_) { ; }
+  QStructProp(const QVSStlsInput &in_) : StructPropBase(in_) { ; }
   // Get Q term
   std::vector<double> getQ() const;  
   
@@ -124,19 +124,19 @@ public:
 // Class to handle the thermodynamic properties and derivatives
 // -----------------------------------------------------------------
 
-class qThermoProp : public ThermoPropBase<qStructProp, QVSStlsInput> {
+class QThermoProp : public ThermoPropBase<QStructProp, QVSStlsInput> {
 
 private:
 
-  using ThermoPropBase = ThermoPropBase<qStructProp, QVSStlsInput>;
+  using ThermoPropBase = ThermoPropBase<QStructProp, QVSStlsInput>;
 
 public:
 
   // Constructors
-  qThermoProp(const QVSStlsInput& in) : ThermoPropBase(in) { ; } 
-  qThermoProp(const QVSStlsInput& in,
-	      const qThermoProp& other) : ThermoPropBase(in, other) { ; }
-  qThermoProp(const ThermoPropBase& other) : ThermoPropBase(other) { ; }
+  QThermoProp(const QVSStlsInput& in) : ThermoPropBase(in) { ; } 
+  QThermoProp(const QVSStlsInput& in,
+	      const QThermoProp& other) : ThermoPropBase(in, other) { ; }
+  QThermoProp(const ThermoPropBase& other) : ThermoPropBase(other) { ; }
   // Get internal energy and internal energy derivatives
   std::vector<double> getQData() const;
   
@@ -146,11 +146,11 @@ public:
 // Solver for the qVS-STLS scheme
 // -----------------------------------------------------------------
 
-class qVSStls : public VSBase<qThermoProp, Rpa, QVSStlsInput> {
+class QVSStls : public VSBase<QThermoProp, Rpa, QVSStlsInput> {
 
 private:
 
-  using VSBase = VSBase<qThermoProp, Rpa, QVSStlsInput>;
+  using VSBase = VSBase<QThermoProp, Rpa, QVSStlsInput>;
   // Compute free parameter
   double computeAlpha();
   // Iterations to solve the qvsstls-scheme
@@ -161,10 +161,10 @@ private:
 public:
   
   // Constructor from initial data
-  qVSStls(const QVSStlsInput &in_) : VSBase(in_) { ; }
+  QVSStls(const QVSStlsInput &in_) : VSBase(in_) { ; }
   // Constructor for recursive calculations
-  qVSStls(const QVSStlsInput &in_,
-	  const qThermoProp& thermoProp_) : VSBase(in_, thermoProp_) { ; }
+  QVSStls(const QVSStlsInput &in_,
+	  const QThermoProp& thermoProp_) : VSBase(in_, thermoProp_) { ; }
   
   
 };

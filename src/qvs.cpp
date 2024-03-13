@@ -10,9 +10,9 @@ using namespace vecUtil;
 // qVSStls class
 // -----------------------------------------------------------------
 
-double qVSStls::computeAlpha() {
+double QVSStls::computeAlpha() {
   //  Compute the free energy integrand
-  thermoProp.compute<qVSStls>(in);
+  thermoProp.compute<QVSStls>(in);
   // Free energy
   const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
   const double& fxcr = freeEnergyData[1];
@@ -37,9 +37,9 @@ double qVSStls::computeAlpha() {
   return numer/denom;
 }
 
-void qVSStls::updateSolution() {
+void QVSStls::updateSolution() {
   // Update the structural properties used for output
-  const auto& qstls = thermoProp.getStructProp<qStlsCSR>();
+  const auto& qstls = thermoProp.getStructProp<QStlsCSR>();
   adr = qstls.getAdr();
   ssf = qstls.getSsf();
 }
@@ -48,7 +48,7 @@ void qVSStls::updateSolution() {
 // qThermoProp class
 // -----------------------------------------------------------------
 
-vector<double> qThermoProp::getQData() const {
+vector<double> QThermoProp::getQData() const {
   // QAdder
   const std::vector<double> qVec = structProp.getQ();
   const std::vector<double> rs = structProp.getCouplingParameters();
@@ -78,7 +78,7 @@ vector<double> qThermoProp::getQData() const {
 // -----------------------------------------------------------------
 
 // Compute structural properties
-int qStructProp::compute() {
+int QStructProp::compute() {
   try {
     if (!csrIsInitialized) {
     for (size_t i = 0; i < csr.size(); ++i) {
@@ -103,7 +103,7 @@ int qStructProp::compute() {
   }
 }
   
-void qStructProp::doIterations() {
+void QStructProp::doIterations() {
   const auto& in = csr[0].in;
   const int maxIter = in.getNIter();
   const double minErr = in.getErrMin();
@@ -127,8 +127,8 @@ void qStructProp::doIterations() {
 	 "(structural properties) = %.5e\n", csr[RS_THETA].alpha, err);
 }
 
-vector<double> qStructProp::getQ() const  {
-  return getBase([&](const qStlsCSR& q) -> double {
+vector<double> QStructProp::getQ() const  {
+  return getBase([&](const QStlsCSR& q) -> double {
     return q.getQAdder();
   });
 }
@@ -137,12 +137,12 @@ vector<double> qStructProp::getQ() const  {
 // qStlsCSR class
 // -----------------------------------------------------------------
 
-void qStlsCSR::computeAdrStls() {
+void QStlsCSR::computeAdrStls() {
   Qstls::computeAdr();
   lfc = adr;
 }
 
-double qStlsCSR::getDerivative(const Vector2D& f,
+double QStlsCSR::getDerivative(const Vector2D& f,
 			       const int &l,
 			       const size_t& idx,
 			       const Derivative& type) {
@@ -166,7 +166,7 @@ double qStlsCSR::getDerivative(const Vector2D& f,
   }
 }
 
-void qStlsCSR::computeAdr() {
+void QStlsCSR::computeAdr() {
   // Check that alpha has been set to a value that is not the default
   assert(alpha != DEFAULT_ALPHA);
   // Derivative contributions
@@ -211,7 +211,7 @@ void qStlsCSR::computeAdr() {
   }
 }
 
-double qStlsCSR::getQAdder() const {
+double QStlsCSR::getQAdder() const {
   Integrator1D itg1(in.getIntError());
   Integrator2D itg2(in.getIntError());
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
