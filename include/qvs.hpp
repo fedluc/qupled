@@ -107,8 +107,11 @@ private:
   // Perform iterations to compute structural properties
   void doIterations();
   
+  
 public:
 
+  // Compute structural properties
+  int compute();
   // Constructor
   qStructProp(const QVSStlsInput &in_) : StructPropBase(in_) { ; }
   // Get Q term

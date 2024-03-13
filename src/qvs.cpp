@@ -77,6 +77,32 @@ vector<double> qThermoProp::getQData() const {
 // qStructProp class
 // -----------------------------------------------------------------
 
+// Compute structural properties
+int qStructProp::compute() {
+  try {
+    if (!csrIsInitialized) {
+    for (size_t i = 0; i < csr.size(); ++i) {
+      // Initialize the csr objects with theta-dtheta, theta, theta+dtheta
+      if (i % 3 == 0) {
+        csr[i].init();
+      // Read AdrFixed from the corresponding saved binary file
+      } else if (i % 3 == 1 || i % 3 == 2) { 
+          const auto& in = csr[i - i % 3].in;  
+          csr[i].readAdrFixedFile(csr[i].adrFixed, in.getFixed(), false);
+      }
+    }
+	  csrIsInitialized = true;
+    }
+    doIterations();
+    computed = true;
+    return 0;
+  }
+  catch (const std::runtime_error& err) {
+    std::cerr << err.what() << std::endl;
+    return 1;
+  }
+}
+  
 void qStructProp::doIterations() {
   const auto& in = csr[0].in;
   const int maxIter = in.getNIter();

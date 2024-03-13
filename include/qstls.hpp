@@ -28,7 +28,7 @@ protected:
   // Auxiliary density response
   vecUtil::Vector2D adr;
   vecUtil::Vector2D adrOld;
-  vecUtil::Vector3D adrFixed;
+  
   std::map<int,std::pair<std::string,bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
   std::vector<double> ssfOld;
@@ -39,9 +39,7 @@ protected:
   void computeAdrFixed();
   void writeAdrFixedFile(const vecUtil::Vector3D &res,
 			 const std::string &fileName) const;
-  void readAdrFixedFile(vecUtil::Vector3D &res,
-			const std::string &fileName,
-			const bool iet) const;
+  
   int  checkAdrFixed(const std::vector<double> &wvg_,
 		     const double Theta_,
 		     const int nl_) const;
@@ -77,6 +75,10 @@ protected:
 
 public:
 
+  void readAdrFixedFile(vecUtil::Vector3D &res,
+			const std::string &fileName,
+			const bool iet) const;
+      vecUtil::Vector3D adrFixed;
   // Constructor
   Qstls(const QstlsInput &in_);
   // Compute qstls scheme
