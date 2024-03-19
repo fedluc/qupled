@@ -168,6 +168,11 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &QstlsInput::print)
     .def("isEqual", &QstlsInput::isEqual);
 
+// Class for the input of the QVSStls scheme
+  bp::class_<QVSStlsInput, bp::bases<QstlsInput>>("QVSStlsInput")
+     .def("print", &QVSStlsInput::print)
+     .def("isEqual", &QVSStlsInput::isEqual);
+
   // Class to solve the classical RPA scheme
   bp::class_<Rpa>("Rpa",
 		  bp::init<const RpaInput>())
@@ -193,12 +198,17 @@ BOOST_PYTHON_MODULE(qupled)
     .def("compute", &PyStls::compute)
     .add_property("bf", &PyStls::getBf);
 
-  // Class to solve the classical vs scheme
+  // Class to solve the classical VS scheme
   bp::class_<VSStls, bp::bases<Rpa>>("VSStls",
 				     bp::init<const VSStlsInput>())
     .def("compute", &PyVSStls::compute)
     .add_property("freeEnergyIntegrand", &PyVSStls::getFreeEnergyIntegrand)
     .add_property("freeEnergyGrid", &PyVSStls::getFreeEnergyGrid);
+
+  // Class to solve the quantum VS scheme
+  bp::class_<QVSStls, bp::bases<Rpa>>("QVSStls",
+             bp::init<const QVSStlsInput>())
+     .def("compute", &PyQVSStls::compute);
       
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",

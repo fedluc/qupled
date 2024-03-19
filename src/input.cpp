@@ -27,7 +27,7 @@ void Input::setTheory(const string &theory_){
 				    "STLS-HNC", "STLS-IOI",
 				    "STLS-LCT", "VSSTLS"};
   const vector<string> qTheories = {"QSTLS", "QSTLS-HNC",
-				    "QSTLS-IOI", "QSTLS-LCT"};
+				    "QSTLS-IOI", "QSTLS-LCT", "QVSSTLS"};
   isClassicTheory = count(cTheories.begin(), cTheories.end(), theory_) != 0;
   isQuantumTheory = count(qTheories.begin(), qTheories.end(), theory_) != 0;
   if (!isClassicTheory && !isQuantumTheory) {

@@ -6,6 +6,7 @@
 #include "stls.hpp"
 #include "vsstls.hpp"
 #include "qstls.hpp"
+#include "qvs.hpp"
 
 // Forward declarations
 namespace boost {
@@ -126,6 +127,15 @@ public:
   static int compute(VSStls& vsstls);
   static bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls);
   static bn::ndarray getFreeEnergyGrid(const VSStls &vsstls);
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the QVSStls class to Python
+// -----------------------------------------------------------------
+
+class PyQVSStls {
+public:
+  static int compute(QVSStls& qvsstls);
 };
 
 // -----------------------------------------------------------------

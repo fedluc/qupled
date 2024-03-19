@@ -100,7 +100,7 @@ class Qstls(qc.Stls):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
+        """ Solves the scheme and saves the results to an hdf file. Extends the output produced by 
         :func:`qupled.classic.Stls.compute` by adding the option to save the auxiliary density response
         as a new dataframe in the hdf file. The auxiliary density response dataframe can be accessed as `adr`.
         """
@@ -206,7 +206,7 @@ class QstlsIet(Qstls):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
+        """ Solves the scheme and saves the results to an hdf file. Extends the output produced by 
         :func:`qupled.classic.Qstls.compute` by adding  by adding two functionalities: (1) save the
         bridge function adder as a new dataframe in the hdf file. The bridge function adder dataframe
         can be accessed as `bf` (2) create a zip file to group all the files produced at run-time
@@ -280,3 +280,122 @@ class QstlsIet(Qstls):
         guess.matsubara = hdfData["matsubara"]
         self.inputs.guess = guess
         
+class QVSStls(qc.VSStls, Qstls):
+
+    """
+    Class used to setup and solve the quantum VS-STLS scheme as described by
+    `Hayashi and Shimizu for ground state calculations <https://journals.jps.jp/doi/pdf/10.1143/JPSJ.48.16>`_ 
+    and by ---Placeholder for the finite temperature qVS paper---.
+    This class inherits most of its methods and attributes from :obj:`qupled.quantum.Qstls`.
+
+    Args:
+        coupling: Coupling parameter.
+        degeneracy: Degeneracy parameter.  
+        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
+        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
+        error: Minimum error for covergence, defaults to 1.0e-5.
+        fixed: The name of the file storing the fixed component of the auxiliary density response.
+               if no name is given the fixed component if computed from scratch
+        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
+        guess:  Initial guess for the iterative solution, defaults to None, i.e. ssf from stls solution.
+        iterations: Maximum number of iterations, defaults to 1000.
+        matsubara: Number of matsubara frequencies, defaults to 128.
+        outputFrequency: Frequency used to print the recovery files, defaults to 10.
+        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
+        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`qupled.qupled.Input.int2DScheme`
+        alpha: Initial guess for the free parameter, defaults to [0.5, 1.0]
+        couplingResolution: Resolution of the coupling parameter grid, defaults to 0.01
+        degeneracyResolution: Resolution of the degeneracy parameter grid, defaults to 0.01
+        errorAlpha: Minimum error for convergence in the free parameter iterations, defaults to 1.0e-3
+        iterationsAlpha: Maximum number of iterations for the free parameter, defaults to 50
+        errorIntegrals: Accuracy (as a relative error) for the integral computations, defaults to 1.0-5
+        threads: OMP threads for parallel calculations
+    """
+
+     # Constructor
+    def __init__(self,
+                 coupling : float, 
+                 degeneracy : float,
+                 chemicalPotential : list[float] = [-10.0,10.0],
+                 cutoff : float = 10.0,
+                 error : float = 1.0e-5,
+                 fixed : str = None,
+                 mixing : float = 1.0,
+                 guess : qp.QstlsGuess = None,
+                 iterations : int = 1000,
+                 matsubara : int = 128,
+                 outputFrequency : int = 10,
+                 recoveryFile : str = None,
+                 resolution : float = 0.1,
+                 scheme2DIntegrals : str = "full",
+                 alpha : list[float] = [0.5,1.0],
+                 couplingResolution : float = 0.1,
+                 degeneracyResolution : float = 0.1,
+                 errorAlpha : float = 1.0e-3,
+                 iterationsAlpha : int = 50,
+                 errorIntegrals : float = 1.0e-5,
+                 threads : int = 1):
+        # Allowed theories
+        self.allowedTheories = ["QVSSTLS"]
+        # Set theory
+        self.inputs : qupled.qupled.QVSStlsInput = qp.QVSStlsInput() #: Inputs to solve the scheme.
+        self._setInputs(coupling, degeneracy, "QVSSTLS", chemicalPotential, cutoff,
+                        error, fixed, mixing, guess, iterations, matsubara,
+                        outputFrequency, recoveryFile, resolution, scheme2DIntegrals,
+                        alpha, couplingResolution, degeneracyResolution, errorAlpha,
+                        iterationsAlpha, errorIntegrals, threads)
+        # Scheme to solve
+        self.scheme : qp.QVSStls = None
+        # File to store output on disk
+        self.hdfFileName = None
+
+        # Setup inputs object
+    def _setInputs(self,
+                   coupling : float,
+                   degeneracy : float,
+                   theory : str,
+                   chemicalPotential : list[float],
+                   cutoff : float,
+                   error : float,
+                   fixed : str,
+                   mixing : float,
+                   guess : qp.QstlsGuess,
+                   iterations : int,
+                   matsubara : int,
+                   outputFrequency : int,
+                   recoveryFile : str,
+                   resolution : float,
+                   scheme2DIntegrals : str,
+                   alpha : list[float],
+                   couplingResolution : float,
+                   degeneracyResolution : float,
+                   errorAlpha : float,
+                   iterationsAlpha : int,
+                   errorIntegrals : float,
+                   threads : int) -> None:
+        super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
+                   cutoff, error, fixed, mixing, guess, iterations, matsubara,
+                   outputFrequency, recoveryFile, resolution, scheme2DIntegrals, threads)
+        self.inputs.alpha = alpha
+        self.inputs.couplingResolution = couplingResolution
+        self.inputs.degeneracyResolution = degeneracyResolution
+        self.inputs.errorAlpha = errorAlpha
+        self.inputs.iterationsAlpha = iterationsAlpha
+        self.inputs.intError = errorIntegrals
+
+    # Compute
+    #@qu.MPI.recordTime
+    #@qu.MPI.synchronizeRanks
+    def compute(self) -> None:
+        """ Solves the scheme and saves the results to an hdf file. Exactly as it is done by 
+        :func:`qupled.classic.QStls.compute` .The auxiliary density response dataframe can be accessed as `adr`.
+        """
+        self._checkInputs()
+        self.scheme = qp.QVSStls(self.inputs)
+        status = self.scheme.compute()
+        self._checkStatusAndClean(status)
+        self._setHdfFile()
+        self._save()
+
+   

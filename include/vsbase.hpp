@@ -75,6 +75,7 @@ public:
   
   // Compute vs-stls scheme
   int compute() {
+    std::cerr <<"Poutsa...\n" << std::endl;
     try {
       Scheme::init();
       if (verbose) std::cout << "Free parameter calculation ..." << std::endl;
