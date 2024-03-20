@@ -185,7 +185,16 @@ void BrentRootSolver::solve(const function<double(double)>& func,
     status = gsl_root_test_interval(solLo, solHi, 0, relErr);
     iter++;
   } while (status == GSL_CONTINUE && iter < maxIter);
+  // Check if the solver managed to find a solution
+  if (status != GSL_SUCCESS) {
+    MPI::throwError("The brent root solver "
+		    "did not converge to the desired accuracy.");
+  }
 }
+
+// -----------------------------------------------------------------
+// SecantSolver class
+// -----------------------------------------------------------------
 
 void SecantSolver::solve(const function<double(double)>& func,
 			 const vector<double>& guess){
@@ -194,7 +203,6 @@ void SecantSolver::solve(const function<double(double)>& func,
   double x1 = guess.at(1);
   double fx0;
   double fx1 = func(x0);
-  status = GSL_CONTINUE;
   // Call solver
   do{
     fx0 = fx1;
@@ -205,6 +213,11 @@ void SecantSolver::solve(const function<double(double)>& func,
     x1 = sol;
     iter++;
   } while (status == GSL_CONTINUE && iter < maxIter);
+  // Check if the solver managed to find a solution
+  if (status != GSL_SUCCESS) {
+    MPI::throwError("The secant root solver "
+		    "did not converge to the desired accuracy.");
+  }
 }
 
 

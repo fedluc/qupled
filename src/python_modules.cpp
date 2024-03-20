@@ -1,4 +1,3 @@
-#include <mpi.h>
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
 #include "util.hpp"
@@ -13,9 +12,7 @@ namespace vp = vecUtil::python;
 // Initialization code for the qupled module
 void qupledInitialization() {
   // Check that the MPI library was initialized
-  int isMPIInit;
-  MPI_Initialized(&isMPIInit);
-  if (isMPIInit == 0) {
+  if (!parallelUtil::MPI::isInitialized()) {
     parallelUtil::MPI::throwError("MPI has not been initialized correctly");
   }
   // Deactivate default GSL error handler

@@ -11,10 +11,6 @@ void ChemicalPotential::compute(const vector<double> &guess){
   auto func = [&](const double& mu)->double{return normalizationCondition(mu);};
   BrentRootSolver rsol;
   rsol.solve(func, guess);
-  if (!rsol.success()) {
-    MPI::throwError("Chemical potential: the root solver "
-		    "did not converge to the desired accuracy.");
-  }
   mu = rsol.getSolution();
 }
 

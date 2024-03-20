@@ -72,9 +72,9 @@ class Hdf():
             elif ( self.entries[name].entryType == "numpy2D" ) :
                 output[name] = pd.read_hdf(hdf, name).to_numpy()
             elif ( self.entries[name].entryType == "number") :
-                output[name] = pd.read_hdf(hdf, "inputs")[name][0].tolist()
+                output[name] = pd.read_hdf(hdf, "inputs")[name].iloc[0].tolist()
             elif ( self.entries[name].entryType == "string") :
-                output[name] = pd.read_hdf(hdf, "inputs")[name][0]
+                output[name] = pd.read_hdf(hdf, "inputs")[name].iloc[0]
             else:
                 sys.exit("Unknown entry type")
         return output
@@ -267,11 +267,11 @@ class MPI():
             hours = dt // 3600
             minutes = (dt % 3600) // 60
             seconds = dt % 60
-            if (hours > 0) :
-                print("Elapsed time: %d h, %d m, %d s." % (hours, minutes, seconds) )
-            elif (minutes > 0) :
-                print("Elapsed time: %d m, %d s." % (minutes, seconds) )
-            else:
-                print("Elapsed time: %.1f s." % seconds)
-
+            if MPI().isRoot():
+                if (hours > 0) :
+                    print("Elapsed time: %d h, %d m, %d s." % (hours, minutes, seconds) )
+                elif (minutes > 0) :
+                    print("Elapsed time: %d m, %d s." % (minutes, seconds) )
+                else:
+                    print("Elapsed time: %.1f s." % seconds)
         return wrapper

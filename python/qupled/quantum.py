@@ -385,8 +385,8 @@ class QVSStls(qc.VSStls, Qstls):
         self.inputs.intError = errorIntegrals
 
     # Compute
-    #@qu.MPI.recordTime
-    #@qu.MPI.synchronizeRanks
+    @qu.MPI.recordTime
+    @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to an hdf file. Exactly as it is done by 
         :func:`qupled.classic.QStls.compute` .The auxiliary density response dataframe can be accessed as `adr`.
