@@ -267,11 +267,11 @@ class MPI():
             hours = dt // 3600
             minutes = (dt % 3600) // 60
             seconds = dt % 60
-            if (hours > 0) :
-                print("Elapsed time: %d h, %d m, %d s." % (hours, minutes, seconds) )
-            elif (minutes > 0) :
-                print("Elapsed time: %d m, %d s." % (minutes, seconds) )
-            else:
-                print("Elapsed time: %.1f s." % seconds)
-
+            if MPI().isRoot():
+                if (hours > 0) :
+                    print("Elapsed time: %d h, %d m, %d s." % (hours, minutes, seconds) )
+                elif (minutes > 0) :
+                    print("Elapsed time: %d m, %d s." % (minutes, seconds) )
+                else:
+                    print("Elapsed time: %.1f s." % seconds)
         return wrapper
