@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <numeric>
+#include <fmt/core.h>
 #include "util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
@@ -7,7 +8,6 @@
 
 using namespace std;
 using namespace vecUtil;
-using namespace stringUtil;
 using namespace binUtil;
 using namespace parallelUtil;
 
@@ -267,9 +267,16 @@ void Qstls::computeAdrFixed() {
   MPI::gatherLoopData(adrFixed.data(), loopData, nxnl);
   // Write result to output file
   if (MPI::isRoot()) {
-    const string fileName = format<double,double>("adr_fixed_rs%.3f_theta%.3f_QSTLS.bin",
-						  in.getCoupling(), in.getDegeneracy());
-    writeAdrFixedFile(adrFixed, fileName);
+    try {
+      const string fileName = fmt::format("adr_fixed_rs{:.3f}_theta{:.3f}_QSTLS.bin",
+					  in.getCoupling(),
+					  in.getDegeneracy());
+      writeAdrFixedFile(adrFixed, fileName);
+    }
+    catch (...) {
+      MPI::throwError("Error in the output file for the fixed component"
+		      " of the auxiliary density response.");
+    }
   }
 }
 
@@ -412,20 +419,27 @@ void Qstls::computeAdrFixedIet() {
 
 void Qstls::getAdrFixedIetFileInfo() {
   const int nx = wvg.size();
-  const double Theta = in.getDegeneracy();
   adrFixedIetFileInfo.clear();
   for (int i=0; i<nx; ++i) {
-    string name = format<double,double>("adr_fixed_rs%.3f_theta%.3f_"
-					+ in.getTheory() + "_wv%.5f.bin",
-					in.getCoupling(), Theta, wvg[i]);
-    if (!in.getFixedIet().empty()) {
-      std::filesystem::path fullPath = in.getFixedIet();
-      fullPath /= name;
-      name = fullPath.string();
+    try {
+      string name = fmt::format("adr_fixed_rs{:.3f}_theta{:.3f}_{}_wv{:.5f}.bin",
+				in.getCoupling(),
+				in.getDegeneracy(),
+				in.getTheory(),
+				wvg[i]);
+      if (!in.getFixedIet().empty()) {
+	std::filesystem::path fullPath = in.getFixedIet();
+	fullPath /= name;
+	name = fullPath.string();
+      }
+      const bool found = std::filesystem::exists(name);
+      const pair<string,bool> filePair = pair<string,bool>(name,found);
+      adrFixedIetFileInfo.insert(pair<int,decltype(filePair)>(i,filePair));
     }
-    const bool found = std::filesystem::exists(name);
-    const pair<string,bool> filePair = pair<string,bool>(name,found);
-    adrFixedIetFileInfo.insert(pair<int,decltype(filePair)>(i,filePair));
+    catch (...) {
+      MPI::throwError("Error in the output file for the fixed component"
+		      " of the auxiliary density response.");
+    }
   }
 }
 

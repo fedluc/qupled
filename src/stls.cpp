@@ -1,3 +1,4 @@
+#include <fmt/core.h>
 #include "util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
@@ -5,7 +6,6 @@
 
 using namespace std;
 using namespace vecUtil;
-using namespace stringUtil;
 using namespace binUtil;
 using namespace parallelUtil;
 
@@ -23,10 +23,15 @@ Stls::Stls(const StlsInput& in_,
     || in.getTheory() == "STLS-IOI"
     || in.getTheory() == "STLS-LCT";
   // Set name of recovery files
-  recoveryFileName = format<double,double>("recovery_rs%.3f_theta%.3f_"
-					   + in.getTheory() + ".bin",
-					   in.getCoupling(),
-					   in.getDegeneracy());
+  try {
+    recoveryFileName = fmt::format("recovery_rs{:.3f}_theta{:.3f}_{}.bin",
+				   in.getCoupling(),
+				   in.getDegeneracy(),
+				   in.getTheory());
+  }
+  catch (...) {
+    MPI::throwError("Recovery file name could not be set");
+  }
   // Allocate arrays
   const size_t nx = wvg.size();
   slfcNew.resize(nx);
@@ -331,11 +336,10 @@ double BridgeFunction::ioi() const {
   const double b0 = 0.258 - 0.0612*lnG + 0.0123*lnG2 - 1.0/Gamma;
   const double b1 = 0.0269 + 0.0318*lnG + 0.00814*lnG2;
   if (b0/b1 <= 0.0 || Gamma < 5.25 || Gamma > 171.8){
-    const string msg = format<double>("Error: The IET schemes cannot be applied "
-				      "to this state point because Gamma = %.8f "
-				      "falls outside the range of validty of the "
-				      "bridge function parameterization\n",
-				      Gamma);
+    const string msg = fmt::format("The IET schemes cannot be applied "
+				   "to this state point because Gamma = {:.8f} "
+				   "falls outside the range of validty of the "
+				   "bridge function parameterization\n", Gamma);
     MPI::throwError(msg); 
   }
   const double c1 = 0.498 - 0.280*lnG + 0.0294*lnG2;
@@ -392,11 +396,10 @@ double BridgeFunction::lct() const {
 double BridgeFunction::lctIntegrand(const double& r,
 				    const double& Gamma) const {
   if (Gamma < 5.0) {
-    const string msg = format<double>("Error: The IET schemes cannot be applied "
-				     "to this state point because Gamma = %.8f "
-				     "falls outside the range of validty of the "
-				     "bridge function parameterization\n",
-				     Gamma);
+    const string msg = fmt::format("The IET schemes cannot be applied "
+				   "to this state point because Gamma = {:.8f} "
+				   "falls outside the range of validty of the "
+				   "bridge function parameterization\n", Gamma);
     MPI::throwError(msg);
   }
   const double Gamma1_6 = pow(Gamma, 1./6.);
