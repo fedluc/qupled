@@ -154,12 +154,12 @@ protected:
   RootSolverBase(const double& relErr_,
 		 const int maxIter_) : relErr(relErr_),
 				       maxIter(maxIter_),
-				       iter(0) { ; };
+				       iter(0),
+				       status(GSL_CONTINUE) { ; };
   RootSolverBase() :  RootSolverBase(1.0e-10, 1000) { ; };
   
 public:
 
-  bool success() const { return status == GSL_SUCCESS; };
   double getSolution() const { return sol; };
   
 };

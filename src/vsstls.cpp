@@ -32,9 +32,6 @@ void VSStls::doIterations() {
   auto func = [&](const double& alphaTmp)->double{return alphaDifference(alphaTmp);};
   SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
   rsol.solve(func, in.getAlphaGuess());
-  if (!rsol.success()) {
-    MPI::throwError("VSStls: the root solver did not converge to the desired accuracy.");
-  }
   alpha = rsol.getSolution();
   if (verbose) { cout << "Free parameter = " << alpha << endl; }
   updateSolution();

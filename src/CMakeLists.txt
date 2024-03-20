@@ -5,6 +5,7 @@ find_package(Boost
 	     COMPONENTS numpy3 REQUIRED)
 
 # External libraries
+set(MPI_CXX_SKIP_MPICXX TRUE)
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(GSL REQUIRED)

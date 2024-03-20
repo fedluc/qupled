@@ -1,3 +1,5 @@
+#define OMPI_SKIP_MPICXX 1 // Disable MPI-C++ bindings
+
 #include <numeric>
 #include <omp.h>
 #include <mpi.h>
@@ -556,7 +558,13 @@ namespace parallelUtil {
   namespace MPI {
 
     const MPI_Comm MPICommunicator = MPI_COMM_WORLD;
-  
+
+    bool isInitialized() {
+      int isMPIInit;
+      MPI_Initialized(&isMPIInit);
+      return isMPIInit == 1;
+    }
+    
     int rank() {
       int rank;
       MPI_Comm_rank(MPICommunicator, &rank);

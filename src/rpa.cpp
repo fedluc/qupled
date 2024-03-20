@@ -457,10 +457,6 @@ double SsfGround::plasmon() const {
   const double guess[] = {wLo, wHi};
   BrentRootSolver rsol;
   rsol.solve(func, vector<double>(begin(guess),end(guess)));
-  if (!rsol.success()) {
-    MPI::throwError("Plasmon solver: the root solver "
-		    "did not converge to the desired accuracy.");
-  }
   // Output
   const double fact = (4.0 *lambda *rs)/(M_PI * x * x);
   return 1.5 / (fact * abs(drfDer(rsol.getSolution())));

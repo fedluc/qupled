@@ -387,7 +387,10 @@ namespace parallelUtil {
 
   // --- MPI for distributed memory parallelism ---
   namespace MPI {
-  
+
+    // Check if MPI initialized
+    bool isInitialized();
+    
     // Get rank of MPI process
     int rank();
 
@@ -396,7 +399,7 @@ namespace parallelUtil {
 
     // Set an MPI Barrier
     void barrier();
-  
+    
     // Check if the process is the root process
     bool isRoot();
 
