@@ -1,6 +1,6 @@
-# Qupled: quantum plasmas's dielectric schemes
+# Qupled: quantum plasmas and dielectric formalism
 
-Qupled is a python package that can be used to compute the properties of quantum plasmas via the dielectric formalism. The properties can be computed to arbitrary precision by leveraging on a simple python interface combined with the computational speed of C++
+Qupled is a python package that can be used to compute the properties of quantum plasmas via the dielectric formalism. The plasma properties can be computed to arbitrary precision by leveraging on a simple Python interface combined with the speed of C++
 
 <p align="center">
 <img src="examples/readme/qupled_animation.gif" width="800" height="533">
@@ -35,11 +35,11 @@ stls.compute()
 
 ## Documentation
 
-More detailed information on the package content and on the dependencies together with a list of examples is available in the [documentation](http://qupled.readthedocs.io/)
+More detailed information on the package together with a list of examples is available in the [documentation](http://qupled.readthedocs.io/)
 
 ## Publications
 
-Qupled has been used in the followin publications:
+Qupled has been used in the following publications:
 
 ``` bibtex
 @article{tolias2021integral,
