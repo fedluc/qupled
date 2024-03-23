@@ -10,7 +10,7 @@ This example sets up all the necessary objects to solve the RPA and ESA schemes 
 shows how to access the information stored in the output files produced at the
 end of the calculations
 
-.. literalinclude:: ../examples/solveRpaAndESA.py
+.. literalinclude:: ../examples/docs/solveRpaAndESA.py
    :language: python
 
 A simple STLS solution
@@ -23,7 +23,7 @@ or from the output file created at the end of the run. The example illustrates h
 the static structure factor can be accessed with both these methods. Other quantities
 can be accessed in the same way.
 
-.. literalinclude:: ../examples/solveStls.py
+.. literalinclude:: ../examples/docs/solveStls.py
    :language: python
 
 Solving the  classical IET schemes
@@ -33,7 +33,7 @@ This example shows how to solve two classical STLS-IET schemes: the STLS-HNC and
 the STLS-LCT schemes. The schemes are solved one after the other by simply
 updating the properties of the solution object.
 
-.. literalinclude:: ../examples/solveStlsIet.py
+.. literalinclude:: ../examples/docs/solveStlsIet.py
    :language: python
 
 Solving the classical VS-STLS scheme
@@ -46,7 +46,7 @@ part of the calculation, the pre-computed value of the free energy integrand
 available from the VS-STLS solution at rs = 5.0 is used in order to speed
 up the calculation.
 
-.. literalinclude:: ../examples/solveVSStls.py
+.. literalinclude:: ../examples/docs/solveVSStls.py
    :language: python
 
 .. _solvingQuantumSchemes:
@@ -60,7 +60,7 @@ we limit the number of matsubara frequencies to 16, we use 16 OMP threads to
 speed up the calculation and we employ a segregated approach to solve the two-dimensional 
 integrals that appear in the schemes. 
 
-.. literalinclude:: ../examples/solveQuantumSchemes.py
+.. literalinclude:: ../examples/docs/solveQuantumSchemes.py
    :language: python
 	      	      
 Define an initial guess
@@ -72,21 +72,21 @@ an initial guess is not specified the code will use the default, namely zero sta
 local field correction for the classical schemes and STLS static structure factor 
 for the quantum schemes.
 
-.. literalinclude:: ../examples/initialGuessStls.py
+.. literalinclude:: ../examples/docs/initialGuessStls.py
    :language: python
 
 In the following example we solve the QSTLS scheme twice and the second time we
 specify the initial guess as the solution obtained from the first solution. Having
 provided a nearly exact initial guess the scheme converges in a single iteration.
 	      
-.. literalinclude:: ../examples/initialGuessQstls.py
+.. literalinclude:: ../examples/docs/initialGuessQstls.py
    :language: python
 
 The QSTLS-IET scheme  requires to specify an initial guess for the auxiliary density
 response and the number of matsubara frequencies corresponding to such initial guess.
 These specifications can be skipped in all other schemes.
 
-.. literalinclude:: ../examples/initialGuessQstlsIet.py
+.. literalinclude:: ../examples/docs/initialGuessQstlsIet.py
    :language: python
 
 	      
@@ -113,7 +113,7 @@ that can be employed to speed up the calculations:
   The following two examples illustrate how this can be done for both the QSTLS and
   the QSTLS-IET schemes.
 
-.. literalinclude:: ../examples/fixedAdrQstls.py
+.. literalinclude:: ../examples/docs/fixedAdrQstls.py
    :language: python
 
 For the QSTLS scheme it is sufficient to pass a binary file containing the fixed component. 
@@ -123,7 +123,7 @@ different coupling parameters provided that the degeneracy parameter stays the s
 other hand, when changing the degeneracy parameter the fixed component of must also be upated 
 otherwise the calculation fails as shown at the end of the example.
 
-.. literalinclude:: ../examples/fixedAdrQstlsIet.py
+.. literalinclude:: ../examples/docs/fixedAdrQstlsIet.py
    :language: python
 
 For the QSTLS-IET schemes we must pass the name of two files: the binary file with the 
