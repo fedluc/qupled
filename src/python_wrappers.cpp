@@ -175,6 +175,10 @@ int PyStls::compute(Stls& stls) {
   return stls.compute();
 }
 
+double PyStls::getError(const Stls& stls) {
+  return stls.getError();
+}
+
 bn::ndarray PyStls::getBf(const Stls& stls) {
   return vp::toNdArray(stls.getBf());
 }
@@ -186,6 +190,13 @@ bn::ndarray PyStls::getBf(const Stls& stls) {
 int PyVSStls::compute(VSStls& vsstls) {
   return vsstls.compute();
 }
+
+double PyVSStls::getError(const VSStls &vsstls){
+  // NOTE: This is just a place-holder, getError is not yet implemented in VSStls
+  if (vsstls.getFreeEnergyIntegrand().empty()) { return -1; }
+  return -1;
+}
+
 
 bn::ndarray PyVSStls::getFreeEnergyIntegrand(const VSStls &vsstls){
   return vp::toNdArray2D(vsstls.getFreeEnergyIntegrand());
@@ -201,6 +212,10 @@ bn::ndarray PyVSStls::getFreeEnergyGrid(const VSStls &vsstls){
 
 int PyQstls::compute(Qstls& qstls) {
   return qstls.compute();
+}
+
+double PyQstls::getError(const Qstls& qstls) {
+  return qstls.getError();
 }
 
 bn::ndarray PyQstls::getAdr(const Qstls& qstls) {

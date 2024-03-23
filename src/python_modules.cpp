@@ -188,12 +188,14 @@ BOOST_PYTHON_MODULE(qupled)
   bp::class_<Stls, bp::bases<Rpa>>("Stls",
 				   bp::init<const StlsInput>())
     .def("compute", &PyStls::compute)
+    .add_property("error", &PyStls::getError)
     .add_property("bf", &PyStls::getBf);
 
   // Class to solve the classical vs scheme
   bp::class_<VSStls, bp::bases<Rpa>>("VSStls",
 				     bp::init<const VSStlsInput>())
     .def("compute", &PyVSStls::compute)
+    .add_property("error", &PyVSStls::getError)
     .add_property("freeEnergyIntegrand", &PyVSStls::getFreeEnergyIntegrand)
     .add_property("freeEnergyGrid", &PyVSStls::getFreeEnergyGrid);
       
@@ -201,6 +203,7 @@ BOOST_PYTHON_MODULE(qupled)
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",
 				     bp::init<const QstlsInput>())
     .def("compute", &PyQstls::compute)
+    .add_property("error", &PyQstls::getError)
     .add_property("adr", &PyQstls::getAdr);
 
   // Post-process methods

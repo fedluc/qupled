@@ -24,7 +24,7 @@ class Hdf():
             "coupling"   : self.Entries("Coupling parameter", "number"),
             "cutoff"     : self.Entries("Cutoff for the wave-vector grid", "number"),
             "degeneracy" : self.Entries("Degeneracy parameter", "number"),
-            "error"      : self.Entries("Minimum error for convergence", "number"),
+            "error"      : self.Entries("Residual error in the solution", "number"),
             "fxcGrid"    : self.Entries("Coupling parameter", "numpy"),
             "fxci"       : self.Entries("Free Energy integrand", "numpy2D"),
             "matsubara"  : self.Entries("Number of matsubara frequencies", "number"),
@@ -72,9 +72,9 @@ class Hdf():
             elif ( self.entries[name].entryType == "numpy2D" ) :
                 output[name] = pd.read_hdf(hdf, name).to_numpy()
             elif ( self.entries[name].entryType == "number") :
-                output[name] = pd.read_hdf(hdf, "inputs")[name].iloc[0].tolist()
+                output[name] = pd.read_hdf(hdf, "info")[name].iloc[0].tolist()
             elif ( self.entries[name].entryType == "string") :
-                output[name] = pd.read_hdf(hdf, "inputs")[name].iloc[0]
+                output[name] = pd.read_hdf(hdf, "info")[name].iloc[0]
             else:
                 sys.exit("Unknown entry type")
         return output
@@ -93,9 +93,9 @@ class Hdf():
         """
         with pd.HDFStore(hdf, mode='r') as store:
             datasetNames =  [name[1:] if name.startswith('/') else name for name in store.keys()]
-            if "inputs" in datasetNames:
-                datasetNames.remove("inputs")
-                for name in store["inputs"].keys() : datasetNames.append(name)
+            if "info" in datasetNames:
+                datasetNames.remove("info")
+                for name in store["info"].keys() : datasetNames.append(name)
         output = dict.fromkeys(datasetNames)
         for key in output.keys():
             output[key] = self.entries[key].description;

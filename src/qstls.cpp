@@ -227,7 +227,7 @@ void Qstls::computeSsfFinite(){
 }
 
 // Compute residual error for the qstls iterations
-double Qstls::computeError(){
+double Qstls::computeError() const {
   return rms(ssf, ssfOld, false);
 }
 

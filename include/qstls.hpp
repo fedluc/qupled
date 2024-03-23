@@ -58,7 +58,7 @@ private:
 		       const std::vector<double> &adr_);
   void initialGuessAdr(const std::vector<double> &wvg_,
 		       const vecUtil::Vector2D &adr_);
-  double computeError();
+  double computeError() const;
   void updateSolution();
   // Recovery files
   void writeRecovery();
@@ -81,6 +81,7 @@ public:
   // Compute qstls scheme
   int compute();
   // Getters
+  double getError() const { return computeError(); }
   vecUtil::Vector2D getAdr() const { return adr; }
   vecUtil::Vector3D getAdrFixed() const { return adrFixed; }
 

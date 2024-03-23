@@ -80,7 +80,7 @@ class Rpa():
 
         The results are stored as pandas dataframes in an hdf file with the following keywords:
         
-        - inputs: A dataframe containing information on the input parameters, it includes:
+        - info: A dataframe containing information on the input parameters, it includes:
         
           - coupling: the coupling parameter,
           - degeneracy: the degeneracy parameter,
@@ -144,7 +144,7 @@ class Rpa():
             "resolution" : self.inputs.resolution,
             "cutoff" : self.inputs.cutoff,
             "matsubara" : self.inputs.matsubara
-        }, index=["inputs"]).to_hdf(self.hdfFileName, key="inputs", mode="w")
+        }, index=["info"]).to_hdf(self.hdfFileName, key="info", mode="w")
         pd.DataFrame(self.scheme.idr).to_hdf(self.hdfFileName, key="idr")
         pd.DataFrame(self.scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
         pd.DataFrame(self.scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
@@ -348,8 +348,9 @@ class Stls(Rpa):
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
-        :func:`qupled.classic.Rpa.compute` by adding the option to save the minimum error for convergence. The
-        information concerning the error can be accessed `error` in the `inputs` dataframe.
+        :func:`qupled.classic.Rpa.compute` by adding the option to save the residual error in the
+        scheme solution. The information concerning the error can be accessed via the `error` key in
+        the `info` dataframe.
         """
         self._checkInputs()
         self.scheme = qp.Stls(self.inputs)
@@ -367,12 +368,12 @@ class Stls(Rpa):
         pd.DataFrame({
             "coupling" : self.inputs.coupling,
             "degeneracy" : self.inputs.degeneracy,
+            "error" : self.scheme.error,
             "theory" : self.inputs.theory,
-            "error" : self.inputs.error,
             "resolution" : self.inputs.resolution,
             "cutoff" : self.inputs.cutoff,
             "matsubara" : self.inputs.matsubara
-            }, index=["inputs"]).to_hdf(self.hdfFileName, key="inputs")
+            }, index=["info"]).to_hdf(self.hdfFileName, key="info")
         
     # Set the initial guess from a dataframe produced in output
     def setGuess(self, fileName : str) -> None:

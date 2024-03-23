@@ -39,7 +39,7 @@ protected:
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
-  double computeError();
+  double computeError() const;
   void updateSolution();
   // Write recovery files
   void writeRecovery();
@@ -56,6 +56,7 @@ public:
   // Compute stls scheme
   int compute();
   // Getters
+  double getError() const { return computeError(); }
   std::vector<double> getBf() const { return bf; }
   
 };
