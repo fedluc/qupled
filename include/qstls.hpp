@@ -31,6 +31,7 @@ private:
   vecUtil::Vector3D adrFixed;
   std::map<int,std::pair<std::string,bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
+  std::vector<double> ssfNew;
   std::vector<double> ssfOld;
   // Initialize basic properties
   void init();

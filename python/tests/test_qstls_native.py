@@ -37,7 +37,7 @@ def test_qstls_compute():
         assert scheme.recovery == "recovery_rs1.000_theta1.000_QSTLS.bin"
         assert os.path.isfile(scheme.recovery)
         assert scheme.rdf(scheme.wvg).size == nx
-        assert math.isclose(scheme.uInt, -0.4873131719, rel_tol=tolerance())
+        assert math.isclose(scheme.uInt, -0.4873133166, rel_tol=tolerance())
     finally:
         fixedFile = "adr_fixed_rs1.000_theta1.000_QSTLS.bin"
         if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
@@ -50,9 +50,9 @@ def test_qstls_iet_properties():
     assert hasattr(scheme, "bf")
 
 def test_qstls_iet_compute():
-    ietSchemes = {"QSTLS-HNC" : -0.07120637694,
-                  "QSTLS-IOI" : -0.07120642613,
-                  "QSTLS-LCT" : -0.07154361947}
+    ietSchemes = {"QSTLS-HNC" : -0.07120643022,
+                  "QSTLS-IOI" : -0.07120647942,
+                  "QSTLS-LCT" : -0.07154367861}
     for schemeName, uInt in ietSchemes.items():
         inputs = qpq.QstlsIet(10.0, 1.0, schemeName,
                               matsubara=16,
