@@ -25,13 +25,11 @@ After installation Qupled can be used as a regular Python package
 
 ```python
 import qupled.classic as qpc
-
-# Solve the stls dielectric scheme
-stls = qpc.Stls(10.0, # Coupling parameter
-                1.0,  # Degeneracy parameter
-                mixing = 0.5,
-                cutoff = 10)
-stls.compute()
+import qupled.quantum as qpq
+# Solve the stls dielectric scheme for coupling = 10 and degeneracy 1.0
+qpc.Stls(10.0, 1.0).compute()
+# Solve the qstls dielectric scheme for coupling = 5 and degeneracy 2.0
+qpq.Qstls(5.0, 2.0).compute()
 ```
 
 ## Documentation
