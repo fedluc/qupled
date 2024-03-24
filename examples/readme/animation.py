@@ -35,7 +35,7 @@ def plot_ssf(plt, wvg, ssf):
     plt.subplot(2, 2, 4)
     plt.plot(wvg, ssf, color=color, linewidth=width)
     plt.xlim(0, 6)
-    plt.ylim(0, 1.4)
+    # plt.ylim(0, 1.4)
     plt.xlabel("Wave-vector", fontsize=labelsz)
     plt.title("Static structure factor", fontsize=labelsz, fontweight="bold")
     plt.xticks(fontsize=ticksz)
@@ -53,10 +53,10 @@ def plot_density_response(plt, wvg, adr, idr):
             label = r"$\omega = 0$"
         else:
             label = r"$\omega = {}\pi/\beta\hbar$".format(parameters[i]*2)
-        color = cmap(1.0*i/numParameters)
+        color = cmap(1.0 - 1.0*i/numParameters)
         plt.plot(wvg, dr[:,parameters[i]], color=color, linewidth=width, label=label)
     plt.xlim(0, 6)
-    plt.ylim(0, 1.4)
+    # plt.ylim(0, 1.4)
     plt.xlabel("Wave-vector", fontsize=labelsz)
     plt.title("Density response", fontsize=labelsz, fontweight="bold")
     plt.legend(fontsize=ticksz, loc="lower right")
@@ -82,11 +82,11 @@ def plot_error(plt, iteration, errorList, error):
 def create_plot(i, errorList):
     [wvg, adr, idr, ssf, error] = solve_qstls(i)
     plt.figure(figsize=(12, 8))
+    plt.style.use("dark_background")
     plot_density_response(plt, wvg, adr, idr)
     plot_ssf(plt, wvg, ssf)
     plot_error(plt, i, errorList, error)
     plt.tight_layout()
-    plt.style.use("dark_background")
     plotName = "plot" + str(i) + ".png"
     plt.savefig(plotName, dpi=300)
     plt.close()
