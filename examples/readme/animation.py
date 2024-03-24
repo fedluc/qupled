@@ -13,7 +13,7 @@ if darkmode:
     colormap = cm["plasma"]
     animationFile = "qupled_animation_dark.gif"
 else :
-    theme = "Solarize_Light2"
+    theme = "ggplot"
     colormap = cm["viridis"].reversed()
     animationFile = "qupled_animation_light.gif"
 nIterations = 33
