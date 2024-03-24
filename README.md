@@ -61,11 +61,20 @@ Qupled has been used in the following publications:
   publisher={AIP Publishing}
 }
 
-@article{tolias2024revisiting,
-  title={Revisiting the Vashishta-Singwi dielectric scheme for the warm dense uniform electron fluid},
-  author={Tolias, Panagiotis and Castello, Federico Lucco and Kalkavouras, Fotios and Dornheim, Tobias},
-  journal={arXiv preprint arXiv:2401.08502},
-  year={2024}
+@article{PhysRevB.109.125134,
+  title = {Revisiting the Vashishta-Singwi dielectric scheme for the warm dense uniform electron fluid},
+  author = {Tolias, Panagiotis and Lucco Castello, Federico and Kalkavouras, Fotios and Dornheim, Tobias},
+  journal = {Phys. Rev. B},
+  volume = {109},
+  issue = {12},
+  pages = {125134},
+  numpages = {22},
+  year = {2024},
+  month = {Mar},
+  publisher = {American Physical Society},
+  doi = {10.1103/PhysRevB.109.125134},
+  url = {https://link.aps.org/doi/10.1103/PhysRevB.109.125134}
 }
+
 
 ```
