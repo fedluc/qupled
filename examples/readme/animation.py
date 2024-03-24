@@ -7,6 +7,8 @@ import qupled.classic as qpc
 import qupled.quantum as qpq
 
 nIterations = 33
+colormap = "plasma"
+color = cm[colormap](1.0)
 labelsz = 16
 ticksz = 14
 width = 2.0
@@ -21,7 +23,7 @@ def solve_qstls(i):
                       iterations = 0)
     if (i > 0):
         qstls.setGuess("rs15.000_theta1.000_QSTLS.h5")
-    qstls.inputs.fixed = "adr_fixed_rs15.000_theta1.000_QSTLS.bin"
+        qstls.inputs.fixed = "adr_fixed_rs15.000_theta1.000_QSTLS.bin"
     qstls.compute()
     return [qstls.scheme.wvg,
             qstls.scheme.adr,
@@ -31,7 +33,7 @@ def solve_qstls(i):
 
 def plot_ssf(plt, wvg, ssf):
     plt.subplot(2, 2, 4)
-    plt.plot(wvg, ssf, color="blue", linewidth=width)
+    plt.plot(wvg, ssf, color=color, linewidth=width)
     plt.xlim(0, 6)
     plt.ylim(0, 1.4)
     plt.xlabel("Wave-vector", fontsize=labelsz)
@@ -44,7 +46,7 @@ def plot_density_response(plt, wvg, adr, idr):
     dr = np.divide(adr, idr)
     plt.subplot(2, 2, 3)
     parameters = np.array([0, 1, 2, 3, 4])
-    cmap = cm["viridis"]
+    cmap = cm[colormap]
     numParameters = parameters.size
     for i in np.arange(numParameters):
         if (i == 0) :
@@ -64,9 +66,9 @@ def plot_density_response(plt, wvg, adr, idr):
 def plot_error(plt, iteration, errorList, error):
     errorList.append(error)
     plt.subplot(2, 1, 1)
-    plt.plot(range(iteration+1), errorList, color="blue", linewidth=width)
+    plt.plot(range(iteration+1), errorList, color=color, linewidth=width)
     plt.scatter(iteration, error, color="red", s=150, alpha=1)
-    plt.axhline(y=1.0e-5, color="black", linestyle="--")
+    plt.axhline(y=1.0e-5, color="white", linestyle="--")
     plt.text(3, 1.5e-5, "Convergence", horizontalalignment="center",
              fontsize=ticksz)
     plt.xlim(0, nIterations)
@@ -84,6 +86,7 @@ def create_plot(i, errorList):
     plot_ssf(plt, wvg, ssf)
     plot_error(plt, i, errorList, error)
     plt.tight_layout()
+    plt.style.use("dark_background")
     plotName = "plot" + str(i) + ".png"
     plt.savefig(plotName, dpi=300)
     plt.close()
@@ -96,5 +99,4 @@ for i in range(nIterations):
     plotName = create_plot(i, error)
     images.append(imageio.v2.imread(plotName)) 
     os.remove(plotName)
-    
 imageio.mimsave('qupled_animation.gif', images, fps=4)
