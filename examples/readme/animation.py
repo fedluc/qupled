@@ -1,14 +1,23 @@
 import os
 import numpy as np
+import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import colormaps as cm
 import imageio
 import qupled.classic as qpc
 import qupled.quantum as qpq
 
+darkmode = False
+if darkmode:
+    theme = "dark_background"
+    colormap = cm["plasma"]
+    animationFile = "qupled_animation_dark.gif"
+else :
+    theme = "Solarize_Light2"
+    colormap = cm["viridis"].reversed()
+    animationFile = "qupled_animation_light.gif"
 nIterations = 33
-colormap = "plasma"
-color = cm[colormap](1.0)
+color = colormap(1.0)    
 labelsz = 16
 ticksz = 14
 width = 2.0
@@ -23,7 +32,7 @@ def solve_qstls(i):
                       iterations = 0)
     if (i > 0):
         qstls.setGuess("rs15.000_theta1.000_QSTLS.h5")
-        qstls.inputs.fixed = "adr_fixed_rs15.000_theta1.000_QSTLS.bin"
+    qstls.inputs.fixed = "adr_fixed_rs15.000_theta1.000_QSTLS.bin"
     qstls.compute()
     return [qstls.scheme.wvg,
             qstls.scheme.adr,
@@ -46,14 +55,13 @@ def plot_density_response(plt, wvg, adr, idr):
     dr = np.divide(adr, idr)
     plt.subplot(2, 2, 3)
     parameters = np.array([0, 1, 2, 3, 4])
-    cmap = cm[colormap]
     numParameters = parameters.size
     for i in np.arange(numParameters):
         if (i == 0) :
             label = r"$\omega = 0$"
         else:
             label = r"$\omega = {}\pi/\beta\hbar$".format(parameters[i]*2)
-        color = cmap(1.0 - 1.0*i/numParameters)
+        color = colormap(1.0 - 1.0*i/numParameters)
         plt.plot(wvg, dr[:,parameters[i]], color=color, linewidth=width, label=label)
     plt.xlim(0, 6)
     # plt.ylim(0, 1.4)
@@ -65,10 +73,11 @@ def plot_density_response(plt, wvg, adr, idr):
 
 def plot_error(plt, iteration, errorList, error):
     errorList.append(error)
+    horizontalLineColor = mpl.rcParams["text.color"]
     plt.subplot(2, 1, 1)
     plt.plot(range(iteration+1), errorList, color=color, linewidth=width)
     plt.scatter(iteration, error, color="red", s=150, alpha=1)
-    plt.axhline(y=1.0e-5, color="white", linestyle="--")
+    plt.axhline(y=1.0e-5, color=horizontalLineColor, linestyle="--")
     plt.text(3, 1.5e-5, "Convergence", horizontalalignment="center",
              fontsize=ticksz)
     plt.xlim(0, nIterations)
@@ -82,7 +91,7 @@ def plot_error(plt, iteration, errorList, error):
 def create_plot(i, errorList):
     [wvg, adr, idr, ssf, error] = solve_qstls(i)
     plt.figure(figsize=(12, 8))
-    plt.style.use("dark_background")
+    plt.style.use(theme)
     plot_density_response(plt, wvg, adr, idr)
     plot_ssf(plt, wvg, ssf)
     plot_error(plt, i, errorList, error)
@@ -99,4 +108,4 @@ for i in range(nIterations):
     plotName = create_plot(i, error)
     images.append(imageio.v2.imread(plotName)) 
     os.remove(plotName)
-imageio.mimsave('qupled_animation.gif', images, fps=4)
+imageio.mimsave(animationFile, images, fps=4)
