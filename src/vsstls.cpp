@@ -377,14 +377,14 @@ void StructProp::doIterations() {
 	s.computeSlfcStls();
       }
       #pragma omp for
-      for (auto& s : stls) {
+      for (size_t i = 0; i < stls.size(); ++i) {
+	auto& s = stls[i];
 	s.computeSlfc();
+	if (i == RS_THETA) { err = s.computeError(); }
 	s.updateSolution();
       }
     }
     counter++;
-    // Compute the error only for the central state point (rs, theta)
-    err = stls[RS_THETA].computeError();
   }
   printf("Alpha = %.5e, Residual error "
 	 "(structural properties) = %.5e\n", stls[RS_THETA].alpha, err);
