@@ -56,7 +56,21 @@ void PyVSStlsInput::setAlphaGuess(VSStlsInput &in,
 				  const bp::list &alphaGuess){
   in.setAlphaGuess(vp::toVector(alphaGuess));
 }
+
+// -----------------------------------------------------------------
+// PyQVSStlsInput
+// -----------------------------------------------------------------
+
+bn::ndarray PyQVSStlsInput::getAlphaGuess(QVSStlsInput &in){
+  return vp::toNdArray(in.getAlphaGuess());
+}
   
+void PyQVSStlsInput::setAlphaGuess(QVSStlsInput &in,
+				   const bp::list &alphaGuess){
+  in.setAlphaGuess(vp::toVector(alphaGuess));
+}
+
+
 // -----------------------------------------------------------------
 // PyFreeEnergyIntegrand
 // -----------------------------------------------------------------

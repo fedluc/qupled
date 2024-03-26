@@ -167,8 +167,26 @@ BOOST_PYTHON_MODULE(qupled)
 
 // Class for the input of the QVSStls scheme
   bp::class_<QVSStlsInput, bp::bases<QstlsInput>>("QVSStlsInput")
-     .def("print", &QVSStlsInput::print)
-     .def("isEqual", &QVSStlsInput::isEqual);
+    .add_property("errorAlpha",
+		  &QVSStlsInput::getErrMinAlpha,
+		  &QVSStlsInput::setErrMinAlpha)
+    .add_property("iterationsAlpha",
+		  &QVSStlsInput::getNIterAlpha,
+		  &QVSStlsInput::setNIterAlpha)
+    .add_property("alpha",
+		  &PyQVSStlsInput::getAlphaGuess,
+		  &PyQVSStlsInput::setAlphaGuess)
+    .add_property("couplingResolution",
+		  &QVSStlsInput::getCouplingResolution,
+		  &QVSStlsInput::setCouplingResolution)
+    .add_property("degeneracyResolution",
+		  &QVSStlsInput::getDegeneracyResolution,
+		  &QVSStlsInput::setDegeneracyResolution)
+    .add_property("freeEnergyIntegrand",
+		  &QVSStlsInput::getFreeEnergyIntegrand,
+		  &QVSStlsInput::setFreeEnergyIntegrand)
+    .def("print", &QVSStlsInput::print)
+    .def("isEqual", &QVSStlsInput::isEqual);
 
   // Class to solve the classical RPA scheme
   bp::class_<Rpa>("Rpa",
@@ -220,3 +238,4 @@ BOOST_PYTHON_MODULE(qupled)
 
   
 }
+

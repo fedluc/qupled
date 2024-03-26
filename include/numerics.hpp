@@ -160,7 +160,7 @@ protected:
   
 public:
 
-  bool success() const { return status == GSL_SUCCESS; };
+  // bool success() const { return status == GSL_SUCCESS; };
   double getSolution() const { return sol; };
   
 };

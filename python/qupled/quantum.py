@@ -284,7 +284,7 @@ class QVSStls(qc.VSStls, Qstls):
 
     """
     Class used to setup and solve the quantum VS-STLS scheme as described by
-    `Hayashi and Shimizu for ground state calculations <https://journals.jps.jp/doi/pdf/10.1143/JPSJ.48.16>`_ 
+    `Hayashi and Shimizu <https://journals.jps.jp/doi/pdf/10.1143/JPSJ.48.16>`_ for ground state calculations
     and by ---Placeholder for the finite temperature qVS paper---.
     This class inherits most of its methods and attributes from :obj:`qupled.quantum.Qstls`.
 
@@ -391,6 +391,7 @@ class QVSStls(qc.VSStls, Qstls):
         """ Solves the scheme and saves the results to an hdf file. Exactly as it is done by 
         :func:`qupled.classic.QStls.compute` .The auxiliary density response dataframe can be accessed as `adr`.
         """
+        
         self._checkInputs()
         self.scheme = qp.QVSStls(self.inputs)
         status = self.scheme.compute()

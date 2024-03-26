@@ -56,6 +56,18 @@ public:
 };
 
 // -----------------------------------------------------------------
+// Wrapper for exposing the QVSStlsInput class to Python
+// -----------------------------------------------------------------
+
+class PyQVSStlsInput {
+public:
+  static bn::ndarray getAlphaGuess(QVSStlsInput &in);
+  static void setAlphaGuess(QVSStlsInput &in,
+			    const bp::list &alphaGuess);
+};
+
+
+// -----------------------------------------------------------------
 // Wrapper for exposing the FreeEnergyIntegrand class to Python
 // -----------------------------------------------------------------
 
