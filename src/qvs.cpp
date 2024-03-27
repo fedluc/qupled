@@ -244,7 +244,7 @@ void QStlsCSR::computeAdr() {
 
 double QStlsCSR::getQAdder() const {
   Integrator1D itg1(in.getIntError());
-  Integrator2D itg2(in.getIntError());
+  Integrator2DSingular itg2(in.getIntError());
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const Interpolator1D ssfItp(wvg, ssf);
@@ -271,12 +271,12 @@ double QAdder::integrandDenominator(const double y) const {
 // Numerator integrand1
 double QAdder::integrandNumerator1(const double q) const {
   const double w = itg2.getX();
-  if (w == 0 || q == 0) { return 0; };
+  if (w == 0.0 || q == 0.0) { return 0.0; };
   double w2 = w*w;
   double w3 = w2*w;
   double logarg = (w + 2*q)/(w - 2*q);
   logarg = (logarg < 0.0) ? -logarg : logarg;
-  return q/(exp(q*q/Theta - mu) + 1.0) * q/w3 * (q/w - 1.0);
+  return q/(exp(q*q/Theta - mu) + 1.0) * q/w3 * (q/w * log(logarg) - 1.0);
 }
 
 // Numerator integrand2
@@ -296,9 +296,10 @@ void QAdder::getIntDenominator(double &res) const {
 double QAdder::get() const {
   double Denominator;
   getIntDenominator(Denominator);
-  auto func1 = [&](const double& q)->double{return integrandNumerator1(q);};
-  auto func2 = [&](const double& w)->double{return integrandNumerator2(w);};
-  itg2.compute(func1, func2, limits.first, limits.second, limits.first, limits.second, itgGrid);
+  vector<double> singularPoints = vector<double>{limits.first, limits.second};
+  auto func2 = [&](const double& q)->double{return integrandNumerator1(q);};
+  auto func1 = [&](const double& w)->double{return integrandNumerator2(w);};
+  itg2.compute(func1, func2, limits.first, limits.second, limits.first, limits.second, itgGrid, singularPoints);
   cout << "Numerator: " << itg2.getSolution() << endl;
   cout << "Denominator: " << Denominator << endl;
   return 12.0 / (M_PI * lambda) * itg2.getSolution()/Denominator;
