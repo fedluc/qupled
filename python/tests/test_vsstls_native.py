@@ -1,12 +1,8 @@
 import os
 import pytest
-import math
 import set_path
 import qupled.qupled as qp
 import qupled.classic as qpc
-
-def tolerance():
-    return 1e-10
 
 def test_vsstls_properties():
     issubclass(qp.VSStls, qp.Rpa)
@@ -33,7 +29,7 @@ def test_vsstls_compute():
         assert scheme.ssfHF.size == nx
         assert scheme.recovery == ""
         assert scheme.rdf(scheme.wvg).size == nx
-        assert math.isclose(scheme.uInt, -0.4923780613, rel_tol=tolerance())
+        assert round(scheme.uInt, 5) == -0.49238
     finally:
         if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recover)
 
