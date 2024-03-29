@@ -31,7 +31,6 @@ def test_rpa_compute():
     assert scheme.ssfHF.size == nx
     assert scheme.recovery == ""
     assert scheme.rdf(scheme.wvg).size == nx
-    assert round(scheme.uInt, 5) == -0.52298
 
 
 

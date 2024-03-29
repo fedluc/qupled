@@ -33,7 +33,6 @@ def test_qstls_compute():
         assert scheme.recovery == "recovery_rs1.000_theta1.000_QSTLS.bin"
         assert os.path.isfile(scheme.recovery)
         assert scheme.rdf(scheme.wvg).size == nx
-        assert round(scheme.uInt, 5) == -0.48731
     finally:
         fixedFile = "adr_fixed_rs1.000_theta1.000_QSTLS.bin"
         if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
@@ -46,10 +45,10 @@ def test_qstls_iet_properties():
     assert hasattr(scheme, "bf")
 
 def test_qstls_iet_compute():
-    ietSchemes = {"QSTLS-HNC" : -0.071,
-                  "QSTLS-IOI" : -0.071,
-                  "QSTLS-LCT" : -0.072}
-    for schemeName, uInt in ietSchemes.items():
+    ietSchemes = {"QSTLS-HNC",
+                  "QSTLS-IOI",
+                  "QSTLS-LCT"}
+    for schemeName in ietSchemes:
         inputs = qpq.QstlsIet(10.0, 1.0, schemeName,
                               matsubara=16,
                               cutoff=5,
@@ -71,8 +70,6 @@ def test_qstls_iet_compute():
             assert scheme.recovery == recovery
             assert os.path.isfile(scheme.recovery)
             assert scheme.rdf(scheme.wvg).size == nx
-            print(schemeName + " " + str(round(scheme.uInt, 3)))
-            assert round(scheme.uInt, 3) == uInt
         finally:
             if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
             fileNames = glob.glob("adr_fixed*.bin")

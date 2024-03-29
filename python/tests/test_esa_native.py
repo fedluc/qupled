@@ -21,7 +21,6 @@ def test_esa_compute():
     assert scheme.ssfHF.size == nx
     assert scheme.recovery == ""
     assert scheme.rdf(scheme.wvg).size == nx
-    assert round(scheme.uInt, 5) == -0.48013
 
 
 

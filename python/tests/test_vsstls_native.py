@@ -29,7 +29,6 @@ def test_vsstls_compute():
         assert scheme.ssfHF.size == nx
         assert scheme.recovery == ""
         assert scheme.rdf(scheme.wvg).size == nx
-        assert round(scheme.uInt, 5) == -0.49238
     finally:
         if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recover)
 

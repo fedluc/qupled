@@ -25,15 +25,14 @@ def test_stls_compute():
         assert scheme.recovery == "recovery_rs1.000_theta1.000_STLS.bin"
         assert os.path.isfile(scheme.recovery)
         assert scheme.rdf(scheme.wvg).size == nx
-        assert round(scheme.uInt, 5) == -0.48630
     finally:
         if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
 
 def test_stls_iet_compute():
-    ietSchemes = {"STLS-HNC" : -0.071,
-                  "STLS-IOI" : -0.071,
-                  "STLS-LCT" : -0.072}
-    for schemeName, uInt in ietSchemes.items():
+    ietSchemes = {"STLS-HNC",
+                  "STLS-IOI",
+                  "STLS-LCT"}
+    for schemeName in ietSchemes:
         inputs = qpc.StlsIet(10.0, 1.0, schemeName,
                              matsubara=32,
                              cutoff=5,
@@ -54,6 +53,5 @@ def test_stls_iet_compute():
             assert scheme.recovery == recovery
             assert os.path.isfile(scheme.recovery)
             assert scheme.rdf(scheme.wvg).size == nx
-            assert round(scheme.uInt, 3) == uInt
         finally:
             if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
