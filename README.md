@@ -1,6 +1,10 @@
 # Qupled: quantum plasmas and dielectric formalism
 
-[![Build and Test](https://github.com/fedluc/qupled/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test.yml)
+Platform | CI Status
+---------|:---------
+Linux      | [![OSX Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml)
+OSX      | [![OSX Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml)
+
 
 Qupled is a python package that can be used to compute the properties of quantum plasmas via the dielectric formalism. The plasma properties can be computed to arbitrary precision by leveraging on a simple Python interface combined with the speed of C++
 
