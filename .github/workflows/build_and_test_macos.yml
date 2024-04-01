@@ -1,4 +1,4 @@
-name: Build
+name: Build and Test (macOS)
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
       - master
 
 jobs:
+
   build_and_test:
   
     runs-on: macos-13
