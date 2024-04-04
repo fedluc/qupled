@@ -21,7 +21,7 @@ def mockOutput(hdfFileName):
         "resolution" : 0.0,
         "cutoff" : 0,
         "matsubara" : 0
-    }, index=["inputs"]).to_hdf(hdfFileName, key="inputs", mode="w")
+    }, index=["info"]).to_hdf(hdfFileName, key="info", mode="w")
     pd.DataFrame(data2D).to_hdf(hdfFileName, key="adr")
     pd.DataFrame(data1D).to_hdf(hdfFileName, key="bf")
     pd.DataFrame(data1D).to_hdf(hdfFileName, key="fxcGrid")
@@ -47,7 +47,7 @@ def mockRdfOutput(hdfFileName):
         "resolution" : 0.0,
         "cutoff" : 0,
         "matsubara" : 0
-    }, index=["inputs"]).to_hdf(hdfFileName, key="inputs", mode="w")
+    }, index=["info"]).to_hdf(hdfFileName, key="info", mode="w")
     pd.DataFrame(ssfData).to_hdf(hdfFileName, key="ssf")
     pd.DataFrame(wvgData).to_hdf(hdfFileName, key="wvg")
 

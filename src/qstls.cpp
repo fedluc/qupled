@@ -30,6 +30,7 @@ Qstls::Qstls(const QstlsInput& in_) : Stls(in_),
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
   adr.resize(nx, nl);
+  ssfNew.resize(nx);
   ssfOld.resize(nx);
   adrFixed.resize(nx, nl, nx);
   if (useIet) {
@@ -100,11 +101,13 @@ void Qstls::doIterations() {
        fflush(stdout);
     }
   }
+  // Set static structure factor for output
+  ssf = ssfOld;
 }
 
 // Initial guess for qstls iterations
 void Qstls::initialGuess() {
-  assert(!ssf.empty());
+  assert(!ssfNew.empty());
   assert(!ssfOld.empty());
   assert(!adr.empty());
   assert(!useIet || !adrOld.empty());
@@ -133,12 +136,12 @@ void Qstls::initialGuess() {
     return;
   }  
   // Default
-  Stls stls(in, false, false);
-  int status = stls.compute();
+  Rpa rpa(in, false);
+  int status = rpa.compute();
   if (status != 0) {
     MPI::throwError("Failed to compute the default initial guess");
   }
-  ssfOld = stls.getSsf();
+  ssfOld = rpa.getSsf();
   if (useIet) { adrOld.fill(0.0); }
 }
 
@@ -210,7 +213,7 @@ void Qstls::computeSsf(){
 // Compute static structure factor at finite temperature
 void Qstls::computeSsfFinite(){
   if (in.getCoupling() > 0.0) {
-    assert(ssf.size() > 0);
+    assert(ssfNew.size() > 0);
     assert(adr.size() > 0);
     assert(idr.size() > 0);
     if (useIet) assert(bf.size() > 0);
@@ -222,19 +225,19 @@ void Qstls::computeSsfFinite(){
   for (int i=0; i<nx; ++i){
     const double bfi = (useIet) ? bf[i] : 0;
     Qssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i), bfi);
-    ssf[i] = ssfTmp.get();
+    ssfNew[i] = ssfTmp.get();
   }
 }
 
 // Compute residual error for the qstls iterations
-double Qstls::computeError(){
-  return rms(ssf, ssfOld, false);
+double Qstls::computeError() const {
+  return rms(ssfNew, ssfOld, false);
 }
 
 // Update solution during qstls iterations
 void Qstls::updateSolution(){
   const double aMix = in.getMixingParameter();
-  ssfOld = sum(mult(ssf, aMix), mult(ssfOld, 1 - aMix));
+  ssfOld = sum(mult(ssfNew, aMix), mult(ssfOld, 1 - aMix));
   if (useIet) {
     Vector2D tmp = adr;
     adrOld.mult(1 - aMix);
@@ -469,10 +472,10 @@ void Qstls::writeRecovery() {
 }
 
 void Qstls::readRecovery(const string &fileName,
-			vector<double> &wvg_,
-			Vector3D &adrFixed_,
-			double &Theta,
-			int &nl) const {
+			 vector<double> &wvg_,
+			 Vector3D &adrFixed_,
+			 double &Theta,
+			 int &nl) const {
   vector<double> tmp1;
   Vector2D tmp2;
   readRecovery(fileName, wvg_, tmp1, tmp2, adrFixed_, Theta, nl);

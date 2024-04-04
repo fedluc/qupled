@@ -41,12 +41,12 @@ target_include_directories(qupled PUBLIC
 # Link external libraries
 target_link_libraries(qupled PUBLIC
 		      OpenMP::OpenMP_CXX
-		      ${Python3_LIBRARIES}
+		      # ${Python3_LIBRARIES}
 		      ${Boost_LIBRARIES}
 		      ${MPI_CXX_LIBRARIES}
 		      GSL::gsl
 		      GSL::gslcblas
-		      fmt)		   
+		      fmt::fmt)		   
 
 # Create python package							
 set_target_properties(qupled PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${QUPLED_OUTPUT_DIR})

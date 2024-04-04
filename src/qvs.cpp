@@ -167,6 +167,8 @@ void QStructProp::doIterations() {
   }
   printf("Alpha = %.5e, Residual error "
 	 "(structural properties) = %.5e\n", csr[RS_THETA].alpha, err);
+  // Set static structure factor for output
+  for (auto& c : csr) { c.ssf = c.ssfOld; }
 }
 
 vector<double> QStructProp::getQ() const  {
@@ -250,8 +252,7 @@ void QStlsCSR::computeAdr() {
     for (size_t i = 0; i < nx; ++i) {
       adr(i,l) += alpha/3.0 * lfc(i,l);
     }
-  }
-  
+  }  
 }
 
 double QStlsCSR::getQAdder() const {

@@ -174,7 +174,7 @@ void Stls::initialGuess() {
 }
 
 // Compute residual error for the stls iterations
-double Stls::computeError(){
+double Stls::computeError() const {
   return rms(slfc, slfcNew, false);
 }
 
