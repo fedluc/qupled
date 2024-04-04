@@ -62,7 +62,7 @@ private:
   // Integrator1D 
   Integrator1D &itg1;
   // Integrator2D 
-  Integrator2D &itg2;
+   Integrator2DSingular &itg2;
   // Interpolator 1D class instance
   const Interpolator1D &interp;
   
@@ -85,7 +85,7 @@ public:
 	 double limitMin, double limitMax,
 	 const std::vector<double>& itgGrid_,
 	 Integrator1D &itg1_,
-	 Integrator2D &itg2_,
+	 Integrator2DSingular &itg2_,
 	 const Interpolator1D &interp_) :  rs(rs_), Theta(Theta_), mu(mu_), 
              limits(limitMin, limitMax), itgGrid(itgGrid_), itg1(itg1_), 
              itg2(itg2_), interp(interp_) { ; }

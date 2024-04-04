@@ -315,4 +315,82 @@ public:
   
 };
 
+// --- Integrator for 1D integrals with known singularities --- 
+class Integrator1DSingular {
+
+private:
+
+  // Function to integrate
+  gsl_function *F;
+  // Integration workspace limit
+  const size_t limit;
+  // Integration workspace
+  gsl_integration_workspace *wsp;
+  // Spatial position
+  double r;
+  const double relErr;
+  // Residual error
+  double err;
+  // Solution
+  double sol;
+
+public:
+
+  // Constructors
+  Integrator1DSingular(const double& relErr_);
+  Integrator1DSingular() : Integrator1DSingular(1.0e-5) { ; }
+  // Destructor
+  ~Integrator1DSingular();
+  // Compute integral
+  void compute(const std::function<double(double)>& func,
+	       std::vector<double>& singularPoints,
+	       const double& xMin,
+	       const double& xMax);
+  // Getters
+  double getSolution() const { return sol; };
+
+};
+
+// --- Integrator for 2D integrals with known singularities ---
+class Integrator2DSingular {
+
+private:
+
+  // Level 1 integrator (outermost integral)
+  Integrator1DSingular itg1;
+  // Level 2 integrator
+  Integrator1D itg2;
+  // Temporary variable for level 2 integration
+  double x;
+  // Solution
+  double sol;
+
+public:
+
+  // Constructors
+  Integrator2DSingular(const double &relErr) : itg1(relErr), itg2(relErr) { ; }
+  Integrator2DSingular() : Integrator2DSingular(1.0e-5) { ; };
+  // Compute integral
+  void compute(const std::function<double(double)>& func1,
+	       const std::function<double(double)>& func2,
+	       const double& xMin,
+	       const double& xMax,
+	       const std::function<double(double)>& yMin,
+	       const std::function<double(double)>& yMax,
+	       const std::vector<double>& xGrid,
+	       std::vector<double>& singularPoints);
+  void compute(const std::function<double(double)>& func1,
+	       const std::function<double(double)>& func2,
+	       const double& xMin,
+	       const double& xMax,
+	       const double& yMin,
+	       const double& yMax,
+	       const std::vector<double>& xGrid,
+	       std::vector<double>& singularPoints);
+  // Getters
+  double getX() const { return x; };
+  double getSolution() const { return sol; };
+};
+
+
 #endif

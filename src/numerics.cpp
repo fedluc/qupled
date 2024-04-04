@@ -286,6 +286,39 @@ void Integrator1DFourier::compute(const function<double(double)>& func){
 		  qtab, &sol, &err);
 }
 
+
+// -----------------------------------------------------------------
+// Integrator1DSingular class
+// -----------------------------------------------------------------
+
+// Constructor
+Integrator1DSingular::Integrator1DSingular(const double &relErr_) : limit(1000),
+								    relErr(relErr_) {
+
+  callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
+}
+
+// Destructor
+Integrator1DSingular::~Integrator1DSingular(){
+  gsl_integration_workspace_free(wsp);
+}
+
+// Compute integral
+void Integrator1DSingular::compute(const function<double(double)>& func,
+				   std::vector<double>& singularPoints,
+				   const double& xMin,
+				   const double& xMax){
+  // Set up function
+  GslFunctionWrap<decltype(func)> Fp(func);
+  F = static_cast<gsl_function*>(&Fp);
+  // Integrate
+  callGSLFunction(gsl_integration_qagp,
+		  F, &singularPoints[0],
+		  singularPoints.size(),
+		  0.0, relErr, limit, wsp,
+		  &sol, &err);
+}
+
 // -----------------------------------------------------------------
 // Integrator2D class
 // -----------------------------------------------------------------
@@ -339,4 +372,62 @@ void Integrator2D::compute(const function<double(double)>& func1,
   auto yMinTmp = [&](const double& x){(void)(x); return yMin; };
   auto yMaxTmp = [&](const double& x){(void)(x); return yMax; };
   compute(func1, func2, xMin, xMax, yMinTmp, yMaxTmp, xGrid);
+}
+
+
+// -----------------------------------------------------------------
+// Integrator2DSingular class
+// -----------------------------------------------------------------
+
+// Compute integral
+void Integrator2DSingular::compute(const function<double(double)>& func1,
+				   const function<double(double)>& func2,
+				   const double& xMin,
+				   const double& xMax,
+				   const function<double(double)>& yMin,
+				   const function<double(double)>& yMax,
+				   const vector<double>& xGrid,
+				   vector<double>& singularPoints){
+  const int nx = xGrid.size();
+  function<double(double)> func;
+  Interpolator1D itp;
+  if (nx > 0) {
+    // Level 2 integration (only evaluated at the points in xGrid)
+    vector<double> sol2(nx);
+    for (int i = 0; i < nx; ++i) {
+      x = xGrid[i];
+      itg2.compute(func2, yMin(x), yMax(x));
+      sol2[i] = itg2.getSolution();
+    }
+    itp.reset(xGrid[0], sol2[0], nx);
+    func = [&](const double& x_)->double {
+      return func1(x_) * itp.eval(x_);
+    };
+  }
+  else {
+    // Level 2 integration (evaluated at arbitrary points) 
+    func = [&](const double& x_)->double {
+      x = x_;
+      itg2.compute(func2, yMin(x_), yMax(x_));
+      return func1(x_) * itg2.getSolution();
+    };
+  }
+  // Level 1 integration
+  itg1.compute(func, singularPoints, xMin, xMax);
+  sol = itg1.getSolution();
+}
+
+
+void Integrator2DSingular::compute(const function<double(double)>& func1,
+				   const function<double(double)>& func2,
+				   const double& xMin,
+				   const double& xMax,
+				   const double& yMin,
+				   const double& yMax,
+				   const vector<double>& xGrid,
+				   vector<double>& singularPoints){
+  // Wrappers around yMin and yMax to avoid compiler warnings
+  auto yMinTmp = [&](const double& x){(void)(x); return yMin; };
+  auto yMaxTmp = [&](const double& x){(void)(x); return yMax; };
+  compute(func1, func2, xMin, xMax, yMinTmp, yMaxTmp, xGrid, singularPoints);
 }
