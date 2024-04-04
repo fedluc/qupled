@@ -148,6 +148,9 @@ public:
 class PyQVSStls {
 public:
   static int compute(QVSStls& qvsstls);
+  static bn::ndarray getAdr(const QVSStls& qvsstls);
+  static bn::ndarray getFreeEnergyIntegrand(const QVSStls &qvsstls);
+  static bn::ndarray getFreeEnergyGrid(const QVSStls &qvsstls);
 };
 
 // -----------------------------------------------------------------

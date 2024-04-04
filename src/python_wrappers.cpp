@@ -217,6 +217,18 @@ int PyQVSStls::compute(QVSStls& qvsstls) {
   return qvsstls.compute();
 }
 
+bn::ndarray PyQVSStls::getAdr(const QVSStls& qvsstls) {
+  return vp::toNdArray2D(qvsstls.getAdr());
+}
+
+bn::ndarray PyQVSStls::getFreeEnergyIntegrand(const QVSStls &qvsstls){
+  return vp::toNdArray2D(qvsstls.getFreeEnergyIntegrand());
+}
+
+bn::ndarray PyQVSStls::getFreeEnergyGrid(const QVSStls &qvsstls){
+  return vp::toNdArray(qvsstls.getFreeEnergyGrid());
+}
+
 // -----------------------------------------------------------------
 // PyQstls
 // -----------------------------------------------------------------

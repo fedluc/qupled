@@ -399,4 +399,10 @@ class QVSStls(qc.VSStls, Qstls):
         self._setHdfFile()
         self._save()
 
+    @qu.MPI.runOnlyOnRoot
+    def _save(self) -> None:
+        """ Stores the results obtained by solving the scheme. 
+        """
+        super()._save()
+        pd.DataFrame(self.scheme.adr).to_hdf(self.hdfFileName, key="adr")
    

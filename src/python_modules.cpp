@@ -223,7 +223,10 @@ BOOST_PYTHON_MODULE(qupled)
   // Class to solve the quantum VS scheme
   bp::class_<QVSStls, bp::bases<Rpa>>("QVSStls",
              bp::init<const QVSStlsInput>())
-     .def("compute", &PyQVSStls::compute);
+     .def("compute", &PyQVSStls::compute)
+     .add_property("freeEnergyIntegrand", &PyQVSStls::getFreeEnergyIntegrand)
+     .add_property("freeEnergyGrid", &PyQVSStls::getFreeEnergyGrid)
+     .add_property("adr", &PyQVSStls::getAdr);
       
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls",

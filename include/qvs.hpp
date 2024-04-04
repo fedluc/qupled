@@ -166,7 +166,8 @@ public:
   QVSStls(const QVSStlsInput &in_,
 	  const QThermoProp& thermoProp_) : VSBase(in_, thermoProp_) { ; }
 
-  //QVSStls(const int &dummy) : VSBase(QVSStlsInput()) { ; }
+  // Getters
+  vecUtil::Vector2D getAdr() const { return adr; }
   
 };
 
