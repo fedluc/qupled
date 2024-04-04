@@ -27,9 +27,6 @@ double QVSStls::computeAlpha() {
   const double& Q = QData[0];
   const double& Qr = QData[1];
   const double& Qt = QData[2];
-  // cout << "Q = " << Q << endl;
-  // cout << "Qr = " << Qr << endl;
-  // cout << "Qt = " << Qt << endl;
   // Alpha
   double numer = Q - (1.0/6.0) * fxcrr + (1.0/3.0) * fxcr;
   double denom =  Q + (1.0/3.0) * Qr;
@@ -92,29 +89,38 @@ int QStructProp::compute() {
       auto& c = csr[i];
       // If there was no fixed file specified in input
       if (in.getFixed().empty() && i % 3 == 0){
-      // Initialize the csr objects with theta-dtheta, theta, theta+dtheta
+      // Initialize the csr objects with theta-dtheta, theta, theta+dtheta in order 
+      // to compute adrFixed if no file was specified in input.
         c.init();
         switch (counter % 3) { 
         case 0:
-            cout << "theta - dtheta fixed component computed " << endl;
+            cout << "theta - dtheta auxiliary density response"
+            << " fixed component stored in file" << endl;
             break;
         case 1:
-            cout << "theta fixed component computed " << endl;
+            cout << "theta fixed auxiliary density response" 
+            << " component stored in file"<< endl;
             break;
         case 2:
-            cout << "theta + dtheta fixed component computed " << endl;
+            cout << "theta + dtheta auxiliary density response" 
+            << " fixed component stored in file" << endl;
             break;
     }
         counter++;
+        // If file was specified read corresponding adrFixed from file 
       } else { 
           const double theta = in.getDegeneracy();
-          std::stringstream ss; // Create a stringstream to help with formatting
-    ss << std::fixed << std::setprecision(3); // Set fixed-point notation and precision
-    
-    // Append 'rs' and 'theta' to the stream
-    ss << "adr_fixed_rs0.000_theta" << theta << "_QSTLS.bin";
-    c.Stls::init();
-    std::string filename = ss.str(); // Convert the stringstream to a string for the filename
+          // Create a stringstream to help with formatting
+          std::stringstream ss; 
+          // Set precision to 3rd decimal
+          ss << std::fixed << std::setprecision(3); 
+          ss << "adr_fixed_theta" << theta << "_matsubara" << in.getNMatsubara() << ".bin";
+          std::string filename = ss.str();
+          // Compute ssfHF 
+          c.Rpa::computeChemicalPotential();
+          c.Rpa::computeIdr();
+          c.Rpa::computeSsfHF();
+          // Read adrFixed from file
           c.readAdrFixedFile(c.adrFixed, filename, false);
       }
     }
