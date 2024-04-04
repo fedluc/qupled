@@ -321,7 +321,7 @@ class QVSStls(qc.VSStls, Qstls):
                  cutoff : float = 10.0,
                  error : float = 1.0e-5,
                  fixed : str = None,
-                 mixing : float = 1.0,
+                 mixing : float = 0.5,
                  guess : qp.QstlsGuess = None,
                  iterations : int = 1000,
                  matsubara : int = 128,

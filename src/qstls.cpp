@@ -268,9 +268,9 @@ void Qstls::computeAdrFixed() {
   // Write result to output file
   if (MPI::isRoot()) {
     try {
-      const string fileName = fmt::format("adr_fixed_rs{:.3f}_theta{:.3f}_QSTLS.bin",
-					  in.getCoupling(),
-					  in.getDegeneracy());
+      const string fileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
+					  in.getDegeneracy(),
+					  in.getNMatsubara());
       writeAdrFixedFile(adrFixed, fileName);
     }
     catch (...) {
