@@ -139,24 +139,31 @@ int QStructProp::compute() {
 void QStructProp::doIterations() {
   const auto& in = csr[0].in;
   const int maxIter = in.getNIter();
+  const int ompThreads = in.getNThreads();
   const double minErr = in.getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess
   for (auto& c : csr) { c.initialGuess(); }
   // Iteration to solve for the structural properties
+  const bool useOMP = ompThreads > 1;
   while (counter < maxIter+1 && err > minErr ) {
-    for (auto& c : csr) {
-      c.computeAdrStls();
-    }
-    for (size_t i = 0; i < csr.size(); ++i) {
-      auto& c = csr[i];
-      c.computeAdr();
-      c.computeSsf();
-      if (i == RS_THETA) {err = c.computeError(); }
-      c.updateSolution(); 
-    }
+    #pragma omp parallel num_threads(ompThreads) if (useOMP)
+    {
+      #pragma omp for
+      for (auto& c : csr) {
+        c.computeAdrStls();
+      }
+      #pragma omp for
+      for (size_t i = 0; i < csr.size(); ++i) {
+        auto& c = csr[i];
+        c.computeAdr();
+        c.computeSsf();
+        if (i == RS_THETA) {err = c.computeError(); }
+        c.updateSolution(); 
+      }
     counter++;
+    }
   }
   printf("Alpha = %.5e, Residual error "
 	 "(structural properties) = %.5e\n", csr[RS_THETA].alpha, err);
@@ -276,7 +283,7 @@ double QAdder::integrandDenominator(const double y) const {
 // Numerator integrand1
 double QAdder::integrandNumerator1(const double q) const {
   const double w = itg2.getX();
-  if (w == 0 || q == 0) { return 0; };
+  if (q == 0.0) { return 0.0; };
   double w2 = w*w;
   double w3 = w2*w;
   double logarg = (w + 2*q)/(w - 2*q);
@@ -286,7 +293,6 @@ double QAdder::integrandNumerator1(const double q) const {
 
 // Numerator integrand2
 double QAdder::integrandNumerator2(const double w) const {
-  if (w == 0.0) return 0.0;
   return w * (ssf(w) - 1.0);
 }
 
@@ -305,7 +311,5 @@ double QAdder::get() const {
   auto func2 = [&](const double& q)->double{return integrandNumerator1(q);};
   auto func1 = [&](const double& w)->double{return integrandNumerator2(w);};
   itg2.compute(func1, func2, limits.first, limits.second, limits.first, limits.second, itgGrid, singularPoints);
-  cout << "Numerator: " << itg2.getSolution() << endl;
-  cout << "Denominator: " << Denominator << endl;
   return 12.0 / (M_PI * lambda) * itg2.getSolution()/Denominator;
 }
