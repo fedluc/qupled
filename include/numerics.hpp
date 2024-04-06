@@ -292,6 +292,7 @@ private:
   gsl_integration_qawo_table *qtab;
   // Spatial position
   double r;
+  // Accuracy
   const double relErr;
   // Residual error
   double err;
@@ -326,8 +327,7 @@ private:
   const size_t limit;
   // Integration workspace
   gsl_integration_workspace *wsp;
-  // Spatial position
-  double r;
+  // Accuracy
   const double relErr;
   // Residual error
   double err;
@@ -343,7 +343,7 @@ public:
   ~Integrator1DSingular();
   // Compute integral
   void compute(const std::function<double(double)>& func,
-	       std::vector<double>& singularPoints,
+	       const std::vector<double>& singularities,
 	       const double& xMin,
 	       const double& xMax);
   // Getters
@@ -378,7 +378,8 @@ public:
 	       const std::function<double(double)>& yMin,
 	       const std::function<double(double)>& yMax,
 	       const std::vector<double>& xGrid,
-	       std::vector<double>& singularPoints);
+	       const std::vector<double>& singularities1,
+	       const std::vector<double>& singularities2);
   void compute(const std::function<double(double)>& func1,
 	       const std::function<double(double)>& func2,
 	       const double& xMin,
@@ -386,7 +387,8 @@ public:
 	       const double& yMin,
 	       const double& yMax,
 	       const std::vector<double>& xGrid,
-	       std::vector<double>& singularPoints);
+	       const std::vector<double>& singularities1,
+	       const std::vector<double>& singularities2);
   // Getters
   double getX() const { return x; };
   double getSolution() const { return sol; };

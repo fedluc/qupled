@@ -305,16 +305,23 @@ Integrator1DSingular::~Integrator1DSingular(){
 
 // Compute integral
 void Integrator1DSingular::compute(const function<double(double)>& func,
-				   std::vector<double>& singularPoints,
+				   const std::vector<double>& singularities,
 				   const double& xMin,
 				   const double& xMax){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
+  // Create array containing the integration limits and the singularities
+  vector<double> points(singularities);
+  points.push_back(xMin);
+  points.push_back(xMax);
+  std::sort(points.begin(), points.end());
+  points.erase(std::unique(points.begin(), points.end()), points.end());
+  if (points.size() == 1) { points.push_back(xMax); }
   // Integrate
   callGSLFunction(gsl_integration_qagp,
-		  F, &singularPoints[0],
-		  singularPoints.size(),
+		  F, &points.front(),
+		  points.size(),
 		  0.0, relErr, limit, wsp,
 		  &sol, &err);
 }
@@ -387,7 +394,8 @@ void Integrator2DSingular::compute(const function<double(double)>& func1,
 				   const function<double(double)>& yMin,
 				   const function<double(double)>& yMax,
 				   const vector<double>& xGrid,
-				   vector<double>& singularPoints){
+				   const vector<double>& singularities1,
+				   const vector<double>& singularities2){
   const int nx = xGrid.size();
   function<double(double)> func;
   Interpolator1D itp;
@@ -413,7 +421,7 @@ void Integrator2DSingular::compute(const function<double(double)>& func1,
     };
   }
   // Level 1 integration
-  itg1.compute(func, singularPoints, xMin, xMax);
+  itg1.compute(func, singularities1, xMin, xMax);
   sol = itg1.getSolution();
 }
 
@@ -425,9 +433,11 @@ void Integrator2DSingular::compute(const function<double(double)>& func1,
 				   const double& yMin,
 				   const double& yMax,
 				   const vector<double>& xGrid,
-				   vector<double>& singularPoints){
+				   const vector<double>& singularities1,
+				   const vector<double>& singularities2){
   // Wrappers around yMin and yMax to avoid compiler warnings
   auto yMinTmp = [&](const double& x){(void)(x); return yMin; };
   auto yMaxTmp = [&](const double& x){(void)(x); return yMax; };
-  compute(func1, func2, xMin, xMax, yMinTmp, yMaxTmp, xGrid, singularPoints);
+  compute(func1, func2, xMin, xMax, yMinTmp, yMaxTmp, xGrid,
+	  singularities1, singularities2);
 }

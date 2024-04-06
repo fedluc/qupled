@@ -307,9 +307,11 @@ void QAdder::getIntDenominator(double &res) const {
 double QAdder::get() const {
   double Denominator;
   getIntDenominator(Denominator);
-  vector<double> singularPoints = vector<double>{limits.first, limits.second};
+  vector<double> singularities{limits.first};
   auto func2 = [&](const double& q)->double{return integrandNumerator1(q);};
   auto func1 = [&](const double& w)->double{return integrandNumerator2(w);};
-  itg2.compute(func1, func2, limits.first, limits.second, limits.first, limits.second, itgGrid, singularPoints);
+  itg2.compute(func1, func2, limits.first, limits.second,
+	       limits.first, limits.second,
+	       itgGrid, singularities, vector<double>());
   return 12.0 / (M_PI * lambda) * itg2.getSolution()/Denominator;
 }
