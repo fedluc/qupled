@@ -221,13 +221,67 @@ void SecantSolver::solve(const function<double(double)>& func,
 }
 
 
+// -----------------------------------------------------------------
+// Integrator1DSuper class
+// -----------------------------------------------------------------
+
+// Constructor
+Integrator1DSuper::Integrator1DSuper(const IntegratorType& type_,
+				     const double& relErr) : type(type_) {
+  switch (type) {
+  case CQUAD:
+    cquad = make_unique<Integrator1D>(relErr); break;
+  case FOURIER:
+    fourier = make_unique<Integrator1DFourier>(relErr); break;
+  case SINGULAR:
+    singular = make_unique<Integrator1DSingular>(relErr); break;
+  default:
+    MPI::throwError("Invalid integrator type");
+  }
+}
+
+Integrator1DSuper::Integrator1DSuper(const Integrator1DSuper& other) : type(other.type) {
+  switch (type) {
+  case CQUAD:
+    cquad = make_unique<Integrator1D>(*other.cquad.get()); break;
+  case FOURIER:
+    fourier = make_unique<Integrator1DFourier>(*other.fourier.get()); break;   
+  case SINGULAR:
+    singular = make_unique<Integrator1DSingular>(*other.singular.get()); break; 
+  }
+}
+
+// Compute integral
+void Integrator1DSuper::compute(const std::function<double(double)>& func,
+				const IntegratorParam& param) const {
+  switch (type) {
+  case CQUAD:
+    cquad->compute(func, param.xMin, param.xMax); break;
+  case FOURIER:
+    fourier->compute(func, param.fourierR); break;
+  case SINGULAR:
+    singular->compute(func, param.singularities, param.xMin, param.xMax); break;
+  }
+}
+
+// Getters
+double Integrator1DSuper::getSolution() const {
+  switch (type) {
+  case CQUAD:
+    return cquad->getSolution();
+  case FOURIER:
+    return fourier->getSolution();
+  case SINGULAR:
+    return singular->getSolution();
+  }
+}
 
 // -----------------------------------------------------------------
 // Integrator1D class
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1D::Integrator1D(const double &relErr_) : limit(100), relErr(relErr_) {
+Integrator1D::Integrator1D(const double &relErr_) : Integrator1DBase(100, relErr_){
   callGSLAlloc(wsp, gsl_integration_cquad_workspace_alloc, limit);
 }
 
@@ -256,9 +310,7 @@ void Integrator1D::compute(const function<double(double)>& func,
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1DFourier::Integrator1DFourier(const double& r_,
-					 const double& relErr_) : limit(1000), r(r_),
-								  relErr(relErr_) {
+Integrator1DFourier::Integrator1DFourier(const double& relErr_) : Integrator1DBase(1000, relErr_){
   callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
   callGSLAlloc(wspc, gsl_integration_workspace_alloc, limit);
   callGSLAlloc(qtab, gsl_integration_qawo_table_alloc, 0.0, 1.0, GSL_INTEG_SINE, limit);
@@ -272,7 +324,8 @@ Integrator1DFourier:: ~Integrator1DFourier(){
 }
 
 // Compute integral
-void Integrator1DFourier::compute(const function<double(double)>& func){
+ void Integrator1DFourier::compute(const function<double(double)>& func,
+				   const double& r){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
@@ -292,9 +345,7 @@ void Integrator1DFourier::compute(const function<double(double)>& func){
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1DSingular::Integrator1DSingular(const double &relErr_) : limit(1000),
-								    relErr(relErr_) {
-
+Integrator1DSingular::Integrator1DSingular(const double &relErr_) : Integrator1DBase(1000, relErr_) {
   callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
 }
 
@@ -421,7 +472,8 @@ void Integrator2DSingular::compute(const function<double(double)>& func1,
     };
   }
   // Level 1 integration
-  itg1.compute(func, singularities1, xMin, xMax);
+  const IntegratorParam param{xMin, xMax, 0.0, singularities1};
+  itg1.compute(func, param);
   sol = itg1.getSolution();
 }
 

@@ -200,42 +200,147 @@ public:
 // Classes to compute integrals
 // -----------------------------------------------------------------
 
-// --- Integrator for 1D integrals ---
-class Integrator1D {
+// --- Base class for 1D integrals ---
+class Integrator1DBase {
 
-private:
+protected:
 
   // Function to integrate
   gsl_function *F;
   // Integration workspace limit
   const size_t limit;
-  // Integration workspace
-  gsl_integration_cquad_workspace *wsp;
   // Accuracy
   const double relErr;
   // Residual error
   double err;
-  // Number of evaluations
-  size_t nEvals;
   // Solution
   double sol;
   
 public:
 
   // Constructors
+  Integrator1DBase(const size_t& limit_, const double &relErr_) : limit(limit_),
+								  relErr(relErr_) { ; }
+  // Getters
+  double getSolution() const { return sol; };
+  
+};
+
+// --- Integrator for 1D integrals ---
+class Integrator1D : public Integrator1DBase {
+
+private:
+
+  // Integration workspace
+  gsl_integration_cquad_workspace *wsp;
+  // Number of evaluations
+  size_t nEvals;
+  
+public:
+
+  // Constructors
   Integrator1D(const double &relErr_);
-  Integrator1D(const Integrator1D& other) : Integrator1D(other.relErr) { ; }
   Integrator1D() : Integrator1D(1.0e-5) { ; }
+  Integrator1D(const Integrator1D& other) : Integrator1D(other.relErr) { ; }
   // Destructor
   ~Integrator1D();
   // Compute integral
   void compute(const std::function<double(double)>& func,
 	       const double& xMin,
 	       const double& xMax);
-  // Getters
-  double getSolution() const { return sol; };
   
 };
+
+
+
+// --- Integrator for 1D integrals of Fourier type --- 
+class Integrator1DFourier : public Integrator1DBase {
+
+private:
+
+  // Integration workspace
+  gsl_integration_workspace *wsp;
+  gsl_integration_workspace *wspc;
+  gsl_integration_qawo_table *qtab;
+  
+public:
+
+  // Constructors
+  Integrator1DFourier(const double& relErr_);
+  Integrator1DFourier() : Integrator1DFourier(1.0e-6) { ; }
+  Integrator1DFourier(const Integrator1DFourier& other) : Integrator1DFourier(other.relErr) { ; }
+  // Destructor
+  ~Integrator1DFourier();
+  // Compute integral
+  void compute(const std::function<double(double)>& func,
+	       const double& r);
+
+};
+
+// --- Integrator for 1D integrals with known singularities --- 
+class Integrator1DSingular : public Integrator1DBase {
+
+private:
+
+  // Integration workspace
+  gsl_integration_workspace *wsp;
+
+public:
+
+  // Constructors
+  Integrator1DSingular(const double& relErr_);
+  Integrator1DSingular() : Integrator1DSingular(1.0e-5) { ; }
+  Integrator1DSingular(const Integrator1DSingular& other) : Integrator1DSingular(other.relErr) { ; }
+  // Destructor
+  ~Integrator1DSingular();
+  // Compute integral
+  void compute(const std::function<double(double)>& func,
+	       const std::vector<double>& singularities,
+	       const double& xMin,
+	       const double& xMax);
+
+};
+
+
+// --- General integrator interface ---
+
+enum IntegratorType {
+  CQUAD,
+  FOURIER,
+  SINGULAR
+};
+
+struct IntegratorParam {
+  double xMin = 0.0;
+  double xMax = 0.0;
+  double fourierR = 0.0;
+  std::vector<double> singularities = std::vector<double>();
+};
+  
+class Integrator1DSuper {
+
+private:
+
+  const IntegratorType type;
+  std::unique_ptr<Integrator1D> cquad;
+  std::unique_ptr<Integrator1DFourier> fourier;
+  std::unique_ptr<Integrator1DSingular> singular;
+
+public:
+
+  // Constructors
+  Integrator1DSuper(const IntegratorType& type_,
+		    const double& relErr);
+  Integrator1DSuper() : Integrator1DSuper(IntegratorType::CQUAD, 1.0e-5) { ; }
+  Integrator1DSuper(const Integrator1DSuper& other);
+  // Compute integral
+  void compute(const std::function<double(double)>& func,
+	       const IntegratorParam& param) const;
+  // Getters
+  double getSolution() const;
+  
+};
+
 
 // --- Integrator for 2D integrals ---
 class Integrator2D {
@@ -276,88 +381,13 @@ public:
   double getSolution() const { return sol; };
 };
 
-
-// --- Integrator for 1D integrals of Fourier type --- 
-class Integrator1DFourier {
-
-private:
-
-  // Function to integrate
-  gsl_function *F;
-  // Integration workspace limit
-  const size_t limit;
-  // Integration workspace
-  gsl_integration_workspace *wsp;
-  gsl_integration_workspace *wspc;
-  gsl_integration_qawo_table *qtab;
-  // Spatial position
-  double r;
-  // Accuracy
-  const double relErr;
-  // Residual error
-  double err;
-  // Solution
-  double sol;
-  
-public:
-
-  // Constructors
-  Integrator1DFourier(const double& r_,
-		      const double& relErr_);
-  Integrator1DFourier(const double& r_) : Integrator1DFourier(r_, 1.0e-6) { ; }
-  // Set spatial position (to re-use the integrator for different r)
-  void setR(const double r_) {r = r_;};
-  // Destructor
-  ~Integrator1DFourier();
-  // Compute integral
-  void compute(const std::function<double(double)>& func);
-  // Getters
-  double getSolution() const { return sol; };
-  
-};
-
-// --- Integrator for 1D integrals with known singularities --- 
-class Integrator1DSingular {
-
-private:
-
-  // Function to integrate
-  gsl_function *F;
-  // Integration workspace limit
-  const size_t limit;
-  // Integration workspace
-  gsl_integration_workspace *wsp;
-  // Accuracy
-  const double relErr;
-  // Residual error
-  double err;
-  // Solution
-  double sol;
-
-public:
-
-  // Constructors
-  Integrator1DSingular(const double& relErr_);
-  Integrator1DSingular() : Integrator1DSingular(1.0e-5) { ; }
-  // Destructor
-  ~Integrator1DSingular();
-  // Compute integral
-  void compute(const std::function<double(double)>& func,
-	       const std::vector<double>& singularities,
-	       const double& xMin,
-	       const double& xMax);
-  // Getters
-  double getSolution() const { return sol; };
-
-};
-
 // --- Integrator for 2D integrals with known singularities ---
 class Integrator2DSingular {
 
 private:
 
   // Level 1 integrator (outermost integral)
-  Integrator1DSingular itg1;
+  Integrator1DSuper itg1;
   // Level 2 integrator
   Integrator1D itg2;
   // Temporary variable for level 2 integration
@@ -366,9 +396,9 @@ private:
   double sol;
 
 public:
-
+  
   // Constructors
-  Integrator2DSingular(const double &relErr) : itg1(relErr), itg2(relErr) { ; }
+  Integrator2DSingular(const double &relErr) : itg1(IntegratorType::CQUAD, relErr), itg2(relErr) { ; }
   Integrator2DSingular() : Integrator2DSingular(1.0e-5) { ; };
   // Compute integral
   void compute(const std::function<double(double)>& func1,
@@ -392,6 +422,7 @@ public:
   // Getters
   double getX() const { return x; };
   double getSolution() const { return sol; };
+  
 };
 
 

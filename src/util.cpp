@@ -481,7 +481,7 @@ namespace thermoUtil {
     const Interpolator1D itp(wvg, ssf);
     const int nr = r.size();
     vector<double> rdf(nr);
-    Integrator1DFourier itgf(0.0);
+    Integrator1DFourier itgf;
     Integrator1D itg(1.0e-6);
     for (int i=0; i<nr; ++i){
       const Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf);
@@ -540,8 +540,7 @@ namespace thermoUtil {
       return 1 + 1.5 * itg.getSolution();
     }
     else {
-      itgf.setR(r);
-      itgf.compute(func);
+      itgf.compute(func, r);
       return 1 + 1.5 * itgf.getSolution()/r;
     }
   }

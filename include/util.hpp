@@ -227,8 +227,8 @@ namespace thermoUtil {
 			   const bool normalize);
   
   std::vector<double> computeRdf(const std::vector<double> &r,
-			    const std::vector<double> &wvg,
-			    const std::vector<double> &ssf);
+				 const std::vector<double> &wvg,
+				 const std::vector<double> &ssf);
   
   // --- Class for internal energy calculation --- 
   class InternalEnergy {
@@ -305,11 +305,11 @@ namespace thermoUtil {
     // Cutoff in the wave-vector grid
     const double cutoff;
     // Fourier Integrator object
-    Integrator1DFourier &itgf;
+    Integrator1DFourier& itgf;
     // Integrator object
-    Integrator1D &itg;
+    Integrator1D& itg;
     // Static structure factor interpolator
-    const Interpolator1D &ssfi;
+    const Interpolator1D& ssfi;
     // Integrand
     double integrand(const double& y) const;
     // Compute static structure factor
@@ -320,9 +320,9 @@ namespace thermoUtil {
     // Constructor
     Rdf(const double& r_,
 	const double& cutoff_,
-	const Interpolator1D &ssfi_,
-        Integrator1D &itg_,
-	Integrator1DFourier &itgf_) : r(r_), cutoff(cutoff_),
+	const Interpolator1D& ssfi_,
+        Integrator1D& itg_,
+	Integrator1DFourier& itgf_) : r(r_), cutoff(cutoff_),
 				      itgf(itgf_), itg(itg_), ssfi(ssfi_) {;};
     // Get result of integration 
     double get() const;
