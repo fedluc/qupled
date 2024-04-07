@@ -256,7 +256,7 @@ void QStlsCSR::computeAdr() {
 
 double QStlsCSR::getQAdder() const {
   IntegratorCQUAD itg1(in.getIntError());
-  Integrator2DSingular itg2(in.getIntError());
+  Integrator2DQAGS itg2(in.getIntError());
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const Interpolator1D ssfItp(wvg, ssf);
@@ -265,9 +265,9 @@ double QStlsCSR::getQAdder() const {
   return QTmp.get();
 }
 
-// // -----------------------------------------------------------------
-// // QAdder class
-// // -----------------------------------------------------------------
+// -----------------------------------------------------------------
+// QAdder class
+// -----------------------------------------------------------------
 
 // SSF interpolation
 double QAdder::ssf(const double& y) const {
@@ -307,11 +307,9 @@ void QAdder::getIntDenominator(double &res) const {
 double QAdder::get() const {
   double Denominator;
   getIntDenominator(Denominator);
-  vector<double> singularities;
   auto func1 = [&](const double& w)->double{return integrandNumerator2(w);};
   auto func2 = [&](const double& q)->double{return integrandNumerator1(q);};
   itg2.compute(func1, func2, limits.first, limits.second,
-	       limits.first, limits.second,
-	       itgGrid, singularities, singularities);
+	       limits.first, limits.second, itgGrid);
   return 12.0 / (M_PI * lambda) * itg2.getSolution()/Denominator;
 }

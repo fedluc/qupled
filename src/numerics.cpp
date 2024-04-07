@@ -232,9 +232,9 @@ Integrator1DSuper::Integrator1DSuper(const IntegratorType& type_,
   case CQUAD:
     cquad = make_unique<IntegratorCQUAD>(relErr); break;
   case FOURIER:
-    fourier = make_unique<Integrator1DFourier>(relErr); break;
+    fourier = make_unique<IntegratorQAWO>(relErr); break;
   case SINGULAR:
-    singular = make_unique<Integrator1DSingular>(relErr); break;
+    singular = make_unique<IntegratorQAGS>(relErr); break;
   default:
     MPI::throwError("Invalid integrator type");
   }
@@ -245,9 +245,9 @@ Integrator1DSuper::Integrator1DSuper(const Integrator1DSuper& other) : type(othe
   case CQUAD:
     cquad = make_unique<IntegratorCQUAD>(*other.cquad.get()); break;
   case FOURIER:
-    fourier = make_unique<Integrator1DFourier>(*other.fourier.get()); break;   
+    fourier = make_unique<IntegratorQAWO>(*other.fourier.get()); break;   
   case SINGULAR:
-    singular = make_unique<Integrator1DSingular>(*other.singular.get()); break; 
+    singular = make_unique<IntegratorQAGS>(*other.singular.get()); break; 
   }
 }
 
@@ -260,7 +260,7 @@ void Integrator1DSuper::compute(const std::function<double(double)>& func,
   case FOURIER:
     fourier->compute(func, param.fourierR); break;
   case SINGULAR:
-    singular->compute(func, param.singularities, param.xMin, param.xMax); break;
+    singular->compute(func, param.xMin, param.xMax); break;
   }
 }
 
@@ -277,7 +277,7 @@ double Integrator1DSuper::getSolution() const {
 }
 
 // -----------------------------------------------------------------
-// Integrator1D class
+// IntegratorCQUAD class
 // -----------------------------------------------------------------
 
 // Constructor
@@ -306,25 +306,25 @@ void IntegratorCQUAD::compute(const function<double(double)>& func,
 }
 
 // -----------------------------------------------------------------
-// Integrator1DFourier class
+// IntegratorQAWO class
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1DFourier::Integrator1DFourier(const double& relErr_) : IntegratorBase(1000, relErr_){
+IntegratorQAWO::IntegratorQAWO(const double& relErr_) : IntegratorBase(1000, relErr_){
   callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
   callGSLAlloc(wspc, gsl_integration_workspace_alloc, limit);
   callGSLAlloc(qtab, gsl_integration_qawo_table_alloc, 0.0, 1.0, GSL_INTEG_SINE, limit);
 }
 
 // Destructor
-Integrator1DFourier:: ~Integrator1DFourier(){
+IntegratorQAWO:: ~IntegratorQAWO(){
   gsl_integration_workspace_free(wsp);
   gsl_integration_workspace_free(wspc); 
   gsl_integration_qawo_table_free(qtab);
 }
 
 // Compute integral
- void Integrator1DFourier::compute(const function<double(double)>& func,
+void IntegratorQAWO::compute(const function<double(double)>& func,
 				   const double& r){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
@@ -341,38 +341,29 @@ Integrator1DFourier:: ~Integrator1DFourier(){
 
 
 // -----------------------------------------------------------------
-// Integrator1DSingular class
+// IntegratorQAGS class
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1DSingular::Integrator1DSingular(const double &relErr_) : IntegratorBase(1000, relErr_) {
+IntegratorQAGS::IntegratorQAGS(const double &relErr_) : IntegratorBase(1000, relErr_) {
   callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
 }
 
 // Destructor
-Integrator1DSingular::~Integrator1DSingular(){
+IntegratorQAGS::~IntegratorQAGS(){
   gsl_integration_workspace_free(wsp);
 }
 
 // Compute integral
-void Integrator1DSingular::compute(const function<double(double)>& func,
-				   const std::vector<double>& singularities,
-				   const double& xMin,
-				   const double& xMax){
+void IntegratorQAGS::compute(const function<double(double)>& func,
+			     const double& xMin,
+			     const double& xMax){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
-  // Create array containing the integration limits and the singularities
-  vector<double> points(singularities);
-  points.push_back(xMin);
-  points.push_back(xMax);
-  std::sort(points.begin(), points.end());
-  points.erase(std::unique(points.begin(), points.end()), points.end());
-  if (points.size() == 1) { points.push_back(xMax); }
   // Integrate
-  callGSLFunction(gsl_integration_qagp,
-		  F, &points.front(),
-		  points.size(),
+  callGSLFunction(gsl_integration_qags,
+		  F, xMin, xMax,
 		  0.0, relErr, limit, wsp,
 		  &sol, &err);
 }
@@ -434,19 +425,17 @@ void Integrator2D::compute(const function<double(double)>& func1,
 
 
 // -----------------------------------------------------------------
-// Integrator2DSingular class
+// Integrator2DQAGS class
 // -----------------------------------------------------------------
 
 // Compute integral
-void Integrator2DSingular::compute(const function<double(double)>& func1,
-				   const function<double(double)>& func2,
-				   const double& xMin,
-				   const double& xMax,
-				   const function<double(double)>& yMin,
-				   const function<double(double)>& yMax,
-				   const vector<double>& xGrid,
-				   const vector<double>& singularities1,
-				   const vector<double>& singularities2){
+void Integrator2DQAGS::compute(const function<double(double)>& func1,
+			       const function<double(double)>& func2,
+			       const double& xMin,
+			       const double& xMax,
+			       const function<double(double)>& yMin,
+			       const function<double(double)>& yMax,
+			       const vector<double>& xGrid){
   const int nx = xGrid.size();
   function<double(double)> func;
   Interpolator1D itp;
@@ -472,24 +461,20 @@ void Integrator2DSingular::compute(const function<double(double)>& func1,
     };
   }
   // Level 1 integration
-  const IntegratorParam param{xMin, xMax, 0.0, singularities1};
-  itg1.compute(func, param);
+  itg1.compute(func, xMin, xMax);
   sol = itg1.getSolution();
 }
 
 
-void Integrator2DSingular::compute(const function<double(double)>& func1,
-				   const function<double(double)>& func2,
-				   const double& xMin,
-				   const double& xMax,
-				   const double& yMin,
-				   const double& yMax,
-				   const vector<double>& xGrid,
-				   const vector<double>& singularities1,
-				   const vector<double>& singularities2){
+void Integrator2DQAGS::compute(const function<double(double)>& func1,
+			       const function<double(double)>& func2,
+			       const double& xMin,
+			       const double& xMax,
+			       const double& yMin,
+			       const double& yMax,
+			       const vector<double>& xGrid){
   // Wrappers around yMin and yMax to avoid compiler warnings
   auto yMinTmp = [&](const double& x){(void)(x); return yMin; };
   auto yMaxTmp = [&](const double& x){(void)(x); return yMax; };
-  compute(func1, func2, xMin, xMax, yMinTmp, yMaxTmp, xGrid,
-	  singularities1, singularities2);
+  compute(func1, func2, xMin, xMax, yMinTmp, yMaxTmp, xGrid);
 }

@@ -254,7 +254,7 @@ public:
 
 
 // --- Integrator for 1D integrals of Fourier type --- 
-class Integrator1DFourier : public IntegratorBase {
+class IntegratorQAWO : public IntegratorBase {
 
 private:
 
@@ -266,11 +266,11 @@ private:
 public:
 
   // Constructors
-  Integrator1DFourier(const double& relErr_);
-  Integrator1DFourier() : Integrator1DFourier(1.0e-6) { ; }
-  Integrator1DFourier(const Integrator1DFourier& other) : Integrator1DFourier(other.relErr) { ; }
+  IntegratorQAWO(const double& relErr_);
+  IntegratorQAWO() : IntegratorQAWO(1.0e-6) { ; }
+  IntegratorQAWO(const IntegratorQAWO& other) : IntegratorQAWO(other.relErr) { ; }
   // Destructor
-  ~Integrator1DFourier();
+  ~IntegratorQAWO();
   // Compute integral
   void compute(const std::function<double(double)>& func,
 	       const double& r);
@@ -278,7 +278,7 @@ public:
 };
 
 // --- Integrator for 1D integrals with known singularities --- 
-class Integrator1DSingular : public IntegratorBase {
+class IntegratorQAGS : public IntegratorBase {
 
 private:
 
@@ -288,14 +288,13 @@ private:
 public:
 
   // Constructors
-  Integrator1DSingular(const double& relErr_);
-  Integrator1DSingular() : Integrator1DSingular(1.0e-5) { ; }
-  Integrator1DSingular(const Integrator1DSingular& other) : Integrator1DSingular(other.relErr) { ; }
+  IntegratorQAGS(const double& relErr_);
+  IntegratorQAGS() : IntegratorQAGS(1.0e-5) { ; }
+  IntegratorQAGS(const IntegratorQAGS& other) : IntegratorQAGS(other.relErr) { ; }
   // Destructor
-  ~Integrator1DSingular();
+  ~IntegratorQAGS();
   // Compute integral
   void compute(const std::function<double(double)>& func,
-	       const std::vector<double>& singularities,
 	       const double& xMin,
 	       const double& xMax);
 
@@ -323,8 +322,8 @@ private:
 
   const IntegratorType type;
   std::unique_ptr<IntegratorCQUAD> cquad;
-  std::unique_ptr<Integrator1DFourier> fourier;
-  std::unique_ptr<Integrator1DSingular> singular;
+  std::unique_ptr<IntegratorQAWO> fourier;
+  std::unique_ptr<IntegratorQAGS> singular;
 
 public:
 
@@ -382,12 +381,12 @@ public:
 };
 
 // --- Integrator for 2D integrals with known singularities ---
-class Integrator2DSingular {
+class Integrator2DQAGS {
 
 private:
 
   // Level 1 integrator (outermost integral)
-  Integrator1DSuper itg1;
+  IntegratorQAGS itg1;
   // Level 2 integrator
   IntegratorCQUAD itg2;
   // Temporary variable for level 2 integration
@@ -398,8 +397,8 @@ private:
 public:
   
   // Constructors
-  Integrator2DSingular(const double &relErr) : itg1(IntegratorType::CQUAD, relErr), itg2(relErr) { ; }
-  Integrator2DSingular() : Integrator2DSingular(1.0e-5) { ; };
+  Integrator2DQAGS(const double &relErr) : itg1(relErr), itg2(relErr) { ; }
+  Integrator2DQAGS() : Integrator2DQAGS(1.0e-5) { ; };
   // Compute integral
   void compute(const std::function<double(double)>& func1,
 	       const std::function<double(double)>& func2,
@@ -407,18 +406,14 @@ public:
 	       const double& xMax,
 	       const std::function<double(double)>& yMin,
 	       const std::function<double(double)>& yMax,
-	       const std::vector<double>& xGrid,
-	       const std::vector<double>& singularities1,
-	       const std::vector<double>& singularities2);
+	       const std::vector<double>& xGrid);
   void compute(const std::function<double(double)>& func1,
 	       const std::function<double(double)>& func2,
 	       const double& xMin,
 	       const double& xMax,
 	       const double& yMin,
 	       const double& yMax,
-	       const std::vector<double>& xGrid,
-	       const std::vector<double>& singularities1,
-	       const std::vector<double>& singularities2);
+	       const std::vector<double>& xGrid);
   // Getters
   double getX() const { return x; };
   double getSolution() const { return sol; };

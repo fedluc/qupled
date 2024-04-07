@@ -60,7 +60,7 @@ private:
   const std::vector<double> &itgGrid;
   // Integrator objects
   IntegratorCQUAD &itg1;
-   Integrator2DSingular &itg2;
+  Integrator2DQAGS &itg2;
   // Interpolator 1D class instance
   const Interpolator1D &interp;
   
@@ -83,10 +83,11 @@ public:
 	 double limitMin, double limitMax,
 	 const std::vector<double>& itgGrid_,
 	 IntegratorCQUAD &itg1_,
-	 Integrator2DSingular &itg2_,
+	 Integrator2DQAGS &itg2_,
 	 const Interpolator1D &interp_) :  rs(rs_), Theta(Theta_), mu(mu_), 
-             limits(limitMin, limitMax), itgGrid(itgGrid_), itg1(itg1_), 
-             itg2(itg2_), interp(interp_) { ; }
+					   limits(limitMin, limitMax),
+					   itgGrid(itgGrid_), itg1(itg1_), 
+					   itg2(itg2_), interp(interp_) { ; }
   
   // Get Q-adder
   double get() const;

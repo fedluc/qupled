@@ -163,7 +163,7 @@ private:
   // Wave vector
   const double x;
   // Integrator object
-  Integrator1DFourier &itg;
+  IntegratorQAWO &itg;
   // Constant for unit conversion
   const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
   // Hypernetted-chain bridge function
@@ -185,10 +185,10 @@ public:
 		 const double& rs_,
 		 const double& Theta_,
 		 const double& x_,
-		 Integrator1DFourier &itg_) : theory(theory_),
-					      mapping(mapping_),
-					      rs(rs_), Theta(Theta_),
-					      x(x_), itg(itg_) {;};
+		 IntegratorQAWO &itg_) : theory(theory_),
+					 mapping(mapping_),
+					 rs(rs_), Theta(Theta_),
+					 x(x_), itg(itg_) {;};
   // Get result of the integration
   double get() const;
   

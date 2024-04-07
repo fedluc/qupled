@@ -22,7 +22,7 @@ namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 class Interpolator1D;
 class IntegratorCQUAD;
-class Integrator1DFourier;
+class IntegratorQAWO;
 
 // -----------------------------------------------------------------
 // Utility functions to handle special cases for double numbers
@@ -305,7 +305,7 @@ namespace thermoUtil {
     // Cutoff in the wave-vector grid
     const double cutoff;
     // Fourier Integrator object
-    Integrator1DFourier& itgf;
+    IntegratorQAWO& itgf;
     // Integrator object
     IntegratorCQUAD& itg;
     // Static structure factor interpolator
@@ -322,8 +322,8 @@ namespace thermoUtil {
 	const double& cutoff_,
 	const Interpolator1D& ssfi_,
         IntegratorCQUAD& itg_,
-	Integrator1DFourier& itgf_) : r(r_), cutoff(cutoff_),
-				      itgf(itgf_), itg(itg_), ssfi(ssfi_) {;};
+	IntegratorQAWO& itgf_) : r(r_), cutoff(cutoff_),
+				 itgf(itgf_), itg(itg_), ssfi(ssfi_) {;};
     // Get result of integration 
     double get() const;
   
