@@ -405,7 +405,7 @@ void Qstls::computeAdrFixedIet() {
   MPI::barrier();  
   // Write necessary files
   auto loopFunc = [&](int i)->void{
-    IntegratorCQUAD itgPrivate;
+    Integrator1D itgPrivate;
     Vector3D res(nl, nx, nx);
     AdrFixedIet adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
 		       wvg[idx[i]], mu, itgPrivate);
@@ -566,10 +566,11 @@ void Adr::get(const vector<double> &wvg,
     res.fill(ix, 0.0);
     return;
   }
+  const auto itgParam = IntegratorParam{yMin, yMax};
   for (int l = 0; l < nl; ++l){
     fixi.reset(wvg[0], fixed(ix,l), nx);
     auto func = [&](const double& y)->double{return integrand(y);};
-    itg.compute(func, yMin, yMax);
+    itg.compute(func, itgParam);
     res(ix, l) = itg.getSolution();
     res(ix, l) *= (l==0) ? isc0 : isc;
   }
@@ -708,6 +709,7 @@ void AdrFixedIet::get(vector<double> &wvg,
   }
   const int nx = wvg.size();
   const int nl = res.size(0);
+  const auto itgParam = IntegratorParam{tMin, tMax};
   for (int l = 0; l < nl; ++l){
     for (int i = 0; i < nx; ++i) {
       if (wvg[i] == 0.0) {
@@ -718,7 +720,7 @@ void AdrFixedIet::get(vector<double> &wvg,
 	auto func = [&](const double& t)->double{
 	  return integrand(t, wvg[j], wvg[i], l);
 	};
-	itg.compute(func, tMin, tMax);
+	itg.compute(func, itgParam);
 	res(l,i,j) = itg.getSolution();
       }  
     }

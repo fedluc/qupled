@@ -237,7 +237,7 @@ double SlfcBase::ssf(const double& y) const {
 // Get result of integration
 double Slfc::get() const {
   auto func = [&](const double& y)->double{return integrand(y);};
-  itg.compute(func, yMin, yMax);
+  itg.compute(func, IntegratorParam{yMin, yMax});
   return itg.getSolution();
 }
 

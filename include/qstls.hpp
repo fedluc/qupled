@@ -12,7 +12,7 @@ namespace vecUtil {
 class QsltsInput;
 class Interpolator1D;
 class Interpolator2D;
-class IntegratorCQUAD;
+class Integrator1D;
 class Integrator2D;
 
 // -----------------------------------------------------------------
@@ -191,7 +191,7 @@ private:
   // Interpolator for the fixed component
   Interpolator1D fixi;
   // Integrator object
-  IntegratorCQUAD &itg;
+  Integrator1D &itg;
   
 public:
 
@@ -201,7 +201,7 @@ public:
       const double& yMax_,
       const double& x_,
       const Interpolator1D &ssfi_,
-      IntegratorCQUAD &itg_)
+      Integrator1D &itg_)
     : AdrBase(Theta_, yMin_, yMax_, x_, ssfi_), itg(itg_) {;};
   
   // Get result of integration
@@ -311,7 +311,7 @@ private:
 		   const double& q,
 		   const double& l) const;
   // Integrator object
-  IntegratorCQUAD &itg;
+  Integrator1D &itg;
   
 public:
 
@@ -321,7 +321,7 @@ public:
 	      const double& qMax_,
 	      const double& x_,
 	      const double& mu_,
-	      IntegratorCQUAD &itg_)
+	      Integrator1D &itg_)
     : AdrFixedBase(Theta_, qMin_, qMax_, x_, mu_),
       itg(itg_) {;};
   

@@ -448,7 +448,7 @@ namespace thermoUtil {
 			       const vector<double> &ssf,
 			       const double &coupling) {
     const Interpolator1D itp(wvg, ssf);
-    IntegratorCQUAD itg;
+    Integrator1D itg;
     const InternalEnergy uInt(coupling, wvg.front(), wvg.back(), itp, itg);
     return uInt.get();
   }
@@ -469,7 +469,7 @@ namespace thermoUtil {
 			  " for the current grid, the free energy cannot be computed");
     }
     const Interpolator1D itp(grid, rsu);
-    IntegratorCQUAD itg;
+    Integrator1D itg;
     const FreeEnergy freeEnergy(coupling, itp, itg, normalize);
     return freeEnergy.get();
   }
@@ -482,7 +482,7 @@ namespace thermoUtil {
     const int nr = r.size();
     vector<double> rdf(nr);
     IntegratorQAWO itgf;
-    IntegratorCQUAD itg(1.0e-6);
+    Integrator1D itg(IntegratorType::CQUAD, 1.0e-6);
     for (int i=0; i<nr; ++i){
       const Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf);
       rdf[i] = rdfTmp.get();
@@ -504,7 +504,7 @@ namespace thermoUtil {
 
   double InternalEnergy::get() const  {
     auto func = [&](const double& y)->double{return integrand(y);};
-    itg.compute(func, yMin, yMax);
+    itg.compute(func, IntegratorParam{yMin, yMax});
     return itg.getSolution()/(M_PI * rs * lambda);
   }
 
@@ -514,7 +514,7 @@ namespace thermoUtil {
   
   double FreeEnergy::get() const  {
     auto func = [&](const double& y)->double{return rsui.eval(y);};
-    itg.compute(func, 0.0, rs);
+    itg.compute(func, IntegratorParam{0.0, rs});
     if (normalize) { return (rs == 0.0) ? -numUtil::Inf : itg.getSolution()/rs/rs; };
     return itg.getSolution();
   }
@@ -536,7 +536,7 @@ namespace thermoUtil {
   double Rdf::get() const {
     auto func = [&](const double& y)->double{return integrand(y);};
     if (r == 0) {
-      itg.compute(func, 0.0, cutoff);
+      itg.compute(func, IntegratorParam{0.0, cutoff});
       return 1 + 1.5 * itg.getSolution();
     }
     else {

@@ -59,10 +59,10 @@ private:
   // Grid for 2D integration
   const std::vector<double> &itgGrid;
   // Integrator objects
-  IntegratorCQUAD &itg1;
-  Integrator2DQAGS &itg2;
+  Integrator1D& itg1;
+  Integrator2DQAGS& itg2;
   // Interpolator 1D class instance
-  const Interpolator1D &interp;
+  const Interpolator1D& interp;
   
   // SSF interpolation
   double ssf(const double& y) const;
@@ -82,7 +82,7 @@ public:
 	 const double& mu_,
 	 double limitMin, double limitMax,
 	 const std::vector<double>& itgGrid_,
-	 IntegratorCQUAD &itg1_,
+	 Integrator1D &itg1_,
 	 Integrator2DQAGS &itg2_,
 	 const Interpolator1D &interp_) :  rs(rs_), Theta(Theta_), mu(mu_), 
 					   limits(limitMin, limitMax),

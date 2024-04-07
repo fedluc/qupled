@@ -21,7 +21,7 @@ namespace boost {
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 class Interpolator1D;
-class IntegratorCQUAD;
+class Integrator1D;
 class IntegratorQAWO;
 
 // -----------------------------------------------------------------
@@ -241,7 +241,7 @@ namespace thermoUtil {
     const double yMin;
     const double yMax;
     // Integrator object
-    IntegratorCQUAD &itg;
+    Integrator1D &itg;
     // Static structure factor interpolator
     const Interpolator1D &ssfi;
     // Integrand
@@ -258,8 +258,8 @@ namespace thermoUtil {
 		   const double& yMin_,
 		   const double& yMax_,
 		   const Interpolator1D &ssfi_,
-		   IntegratorCQUAD &itg_) : rs(rs_), yMin(yMin_), yMax(yMax_),
-					    itg(itg_), ssfi(ssfi_) {;};
+		   Integrator1D &itg_) : rs(rs_), yMin(yMin_), yMax(yMax_),
+					 itg(itg_), ssfi(ssfi_) {;};
     // Get result of integration 
     double get() const;
   
@@ -273,7 +273,7 @@ namespace thermoUtil {
     // Coupling parameter
     const double rs;
     // Integrator object
-    IntegratorCQUAD &itg;
+    Integrator1D &itg;
     // Integrand interpolator (the integrand is given by rs * u)
     const Interpolator1D &rsui;
     // Integrand
@@ -286,7 +286,7 @@ namespace thermoUtil {
     // Constructor
     FreeEnergy(const double& rs_,
 	       const Interpolator1D &rsui_,
-	       IntegratorCQUAD &itg_,
+	       Integrator1D &itg_,
 	       const bool normalize_) : rs(rs_), itg(itg_),
 					rsui(rsui_), normalize(normalize_){;};
     // Get result of integration 
@@ -307,7 +307,7 @@ namespace thermoUtil {
     // Fourier Integrator object
     IntegratorQAWO& itgf;
     // Integrator object
-    IntegratorCQUAD& itg;
+    Integrator1D& itg;
     // Static structure factor interpolator
     const Interpolator1D& ssfi;
     // Integrand
@@ -321,7 +321,7 @@ namespace thermoUtil {
     Rdf(const double& r_,
 	const double& cutoff_,
 	const Interpolator1D& ssfi_,
-        IntegratorCQUAD& itg_,
+        Integrator1D& itg_,
 	IntegratorQAWO& itgf_) : r(r_), cutoff(cutoff_),
 				 itgf(itgf_), itg(itg_), ssfi(ssfi_) {;};
     // Get result of integration 

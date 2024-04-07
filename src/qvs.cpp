@@ -255,7 +255,7 @@ void QStlsCSR::computeAdr() {
 }
 
 double QStlsCSR::getQAdder() const {
-  IntegratorCQUAD itg1(in.getIntError());
+  Integrator1D itg1(IntegratorType::CQUAD, in.getIntError());
   Integrator2DQAGS itg2(in.getIntError());
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
@@ -299,7 +299,7 @@ double QAdder::integrandNumerator2(const double w) const {
 // Denominator integral
 void QAdder::getIntDenominator(double &res) const {
   auto func = [&](double y)->double{return integrandDenominator(y);};
-  itg1.compute(func, limits.first, limits.second);
+  itg1.compute(func, IntegratorParam{limits.first, limits.second});
   res = itg1.getSolution();
 }
 

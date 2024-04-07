@@ -12,7 +12,7 @@ using namespace parallelUtil;
 Rpa::Rpa(const RpaInput &in_,
 	 const bool verbose_) : in(in_),
 				verbose(verbose_ && MPI::isRoot()),
-				itg(in_.getIntError()) {
+				itg(IntegratorType::CQUAD, in_.getIntError()) {
   // Assemble the wave-vector grid
   buildWvGrid();
   // Allocate arrays to the correct size
@@ -244,15 +244,12 @@ double Idr::integrand(const double& y) const {
 vector<double> Idr::get() const {
   assert(Theta > 0.0);
   vector<double> res(nl);
+  const auto itgParam = IntegratorParam{yMin, yMax};
   for (int l=0; l<nl; ++l){
-    if (l == 0) {
-      auto func = [&](const double& y)->double{return integrand(y);};
-      itg.compute(func, yMin, yMax);
-    }
-    else {
-      auto func = [&](const double& y)->double{return integrand(y,l);};;
-      itg.compute(func, yMin, yMax);
-    }
+    auto func = [&](const double& y)->double{
+      return (l == 0) ? integrand(y) : integrand(y,l);
+    };
+    itg.compute(func, itgParam);
     res[l] = itg.getSolution();
   }
   return res;
@@ -356,7 +353,7 @@ double SsfHF::integrand(const double& y) const {
 double SsfHF::get() const {
   assert(Theta > 0.0);
   auto func = [&](const double& y)->double{return integrand(y);};
-  itg.compute(func, yMin, yMax);
+  itg.compute(func, IntegratorParam{yMin, yMax});
   return 1.0 + itg.getSolution();
 }
 
@@ -405,7 +402,7 @@ double SsfGround::get() const {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double& y)->double{return integrand(y);};
-  itg.compute(func, yMin, yMax);
+  itg.compute(func, IntegratorParam{yMin, yMax});
   double ssfP;
   ssfP = plasmon();
   return ssfHF + itg.getSolution() + ssfP;
@@ -474,7 +471,7 @@ double SsfGround::drf(const double& Omega) const {
 // Frequency derivative of the dielectric response function  
 double SsfGround::drfDer(const double& Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
-  IntegratorCQUAD itgTmp = itg;
+  Integrator1D itgTmp = itg;
   const IdrGround idrTmp(Omega, x);
   const double idrRe = idrTmp.re0();
   const double idrReDer = idrTmp.re0Der();

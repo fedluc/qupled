@@ -8,7 +8,7 @@ namespace vecUtil {
   class Vector2D;
 }
 class RpaInput;
-class IntegratorCQUAD;
+class Integrator1D;
 
 // -----------------------------------------------------------------
 // Solver for the Random-Phase approximation scheme
@@ -27,7 +27,7 @@ protected:
   // Name of the recovery files
   std::string recoveryFileName;
   // Integrator
-  IntegratorCQUAD itg;
+  Integrator1D itg;
   // Wave vector grid
   std::vector<double> wvg;
   // Ideal density response
@@ -105,7 +105,7 @@ private:
   // Idr integrand for frequency = 0 and wave-vector x
   double integrand(const double& y) const;  
   // Integrator object
-  IntegratorCQUAD &itg;
+  Integrator1D &itg;
   
 public:
 
@@ -116,9 +116,9 @@ public:
       const double& mu_,
       const double& yMin_,
       const double& yMax_,
-      IntegratorCQUAD &itg_) : nl(nl_), x(x_), Theta(Theta_),
-			       mu(mu_), yMin(yMin_), yMax(yMax_),
-			       itg(itg_) {;};
+      Integrator1D &itg_) : nl(nl_), x(x_), Theta(Theta_),
+			    mu(mu_), yMin(yMin_), yMax(yMax_),
+			    itg(itg_) {;};
   // Get result of integration
   std::vector<double> get() const;
   
@@ -165,7 +165,7 @@ private:
   const double yMin;
   const double yMax;
   // Integrator object
-  IntegratorCQUAD &itg;
+  Integrator1D &itg;
   // Get integrand
   double integrand(const double& y) const;
   // Get at zero temperature
@@ -179,9 +179,9 @@ public:
 	const double& mu_,
 	const double& yMin_,
 	const double& yMax_,
-	IntegratorCQUAD &itg_) : x(x_), Theta(Theta_), mu(mu_),
-				 yMin(yMin_), yMax(yMax_),
-				 itg(itg_) {;};
+	Integrator1D &itg_) : x(x_), Theta(Theta_), mu(mu_),
+			      yMin(yMin_), yMax(yMax_),
+			      itg(itg_) {;};
   // Get at any temperature
   double get() const;
   
@@ -268,7 +268,7 @@ private:
   const double yMin;
   const double yMax;
   // Integrator object
-  IntegratorCQUAD &itg;
+  Integrator1D &itg;
   // Integrand for zero temperature calculations
   double integrand(const double& Omega) const ;
   // Plasmon contribution
@@ -287,8 +287,8 @@ public:
 	    const double& slfc_,
 	    const double& yMin_,
 	    const double& yMax_,
-	    IntegratorCQUAD &itg_) : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
-				     yMin(yMin_), yMax(yMax_), itg(itg_) {;};
+	    Integrator1D &itg_) : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
+				  yMin(yMin_), yMax(yMax_), itg(itg_) {;};
   // Get result of integration
   double get() const;
  
