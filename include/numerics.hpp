@@ -201,7 +201,7 @@ public:
 // -----------------------------------------------------------------
 
 // --- Base class for 1D integrals ---
-class Integrator1DBase {
+class IntegratorBase {
 
 protected:
 
@@ -219,7 +219,7 @@ protected:
 public:
 
   // Constructors
-  Integrator1DBase(const size_t& limit_, const double &relErr_) : limit(limit_),
+  IntegratorBase(const size_t& limit_, const double &relErr_) : limit(limit_),
 								  relErr(relErr_) { ; }
   // Getters
   double getSolution() const { return sol; };
@@ -227,7 +227,7 @@ public:
 };
 
 // --- Integrator for 1D integrals ---
-class Integrator1D : public Integrator1DBase {
+class IntegratorCQUAD : public IntegratorBase {
 
 private:
 
@@ -239,11 +239,11 @@ private:
 public:
 
   // Constructors
-  Integrator1D(const double &relErr_);
-  Integrator1D() : Integrator1D(1.0e-5) { ; }
-  Integrator1D(const Integrator1D& other) : Integrator1D(other.relErr) { ; }
+  IntegratorCQUAD(const double &relErr_);
+  IntegratorCQUAD() : IntegratorCQUAD(1.0e-5) { ; }
+  IntegratorCQUAD(const IntegratorCQUAD& other) : IntegratorCQUAD(other.relErr) { ; }
   // Destructor
-  ~Integrator1D();
+  ~IntegratorCQUAD();
   // Compute integral
   void compute(const std::function<double(double)>& func,
 	       const double& xMin,
@@ -254,7 +254,7 @@ public:
 
 
 // --- Integrator for 1D integrals of Fourier type --- 
-class Integrator1DFourier : public Integrator1DBase {
+class Integrator1DFourier : public IntegratorBase {
 
 private:
 
@@ -278,7 +278,7 @@ public:
 };
 
 // --- Integrator for 1D integrals with known singularities --- 
-class Integrator1DSingular : public Integrator1DBase {
+class Integrator1DSingular : public IntegratorBase {
 
 private:
 
@@ -322,7 +322,7 @@ class Integrator1DSuper {
 private:
 
   const IntegratorType type;
-  std::unique_ptr<Integrator1D> cquad;
+  std::unique_ptr<IntegratorCQUAD> cquad;
   std::unique_ptr<Integrator1DFourier> fourier;
   std::unique_ptr<Integrator1DSingular> singular;
 
@@ -348,9 +348,9 @@ class Integrator2D {
 private:
 
   // Level 1 integrator (outermost integral)
-  Integrator1D itg1;
+  IntegratorCQUAD itg1;
   // Level 2 integrator
-  Integrator1D itg2;
+  IntegratorCQUAD itg2;
   // Temporary variable for level 2 integration
   double x;
   // Solution
@@ -389,7 +389,7 @@ private:
   // Level 1 integrator (outermost integral)
   Integrator1DSuper itg1;
   // Level 2 integrator
-  Integrator1D itg2;
+  IntegratorCQUAD itg2;
   // Temporary variable for level 2 integration
   double x;
   // Solution

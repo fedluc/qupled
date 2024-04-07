@@ -474,7 +474,7 @@ double SsfGround::drf(const double& Omega) const {
 // Frequency derivative of the dielectric response function  
 double SsfGround::drfDer(const double& Omega) const {
   const double fact = (4.0 * lambda * rs)/(M_PI * x * x);
-  Integrator1D itgTmp = itg;
+  IntegratorCQUAD itgTmp = itg;
   const IdrGround idrTmp(Omega, x);
   const double idrRe = idrTmp.re0();
   const double idrReDer = idrTmp.re0Der();

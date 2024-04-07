@@ -58,10 +58,8 @@ private:
   const std::pair<double, double> limits;
   // Grid for 2D integration
   const std::vector<double> &itgGrid;
-  
-  // Integrator1D 
-  Integrator1D &itg1;
-  // Integrator2D 
+  // Integrator objects
+  IntegratorCQUAD &itg1;
    Integrator2DSingular &itg2;
   // Interpolator 1D class instance
   const Interpolator1D &interp;
@@ -84,7 +82,7 @@ public:
 	 const double& mu_,
 	 double limitMin, double limitMax,
 	 const std::vector<double>& itgGrid_,
-	 Integrator1D &itg1_,
+	 IntegratorCQUAD &itg1_,
 	 Integrator2DSingular &itg2_,
 	 const Interpolator1D &interp_) :  rs(rs_), Theta(Theta_), mu(mu_), 
              limits(limitMin, limitMax), itgGrid(itgGrid_), itg1(itg1_), 

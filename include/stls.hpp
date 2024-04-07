@@ -7,7 +7,7 @@
 // Forward declarations
 class StlsInput;
 class Interpolator1D;
-class Integrator1D;
+class IntegratorCQUAD;
 class Integrator2D;
 
 // -----------------------------------------------------------------
@@ -91,7 +91,7 @@ class Slfc : public SlfcBase {
 private:
   
   // Integrator object
-  Integrator1D &itg;
+  IntegratorCQUAD &itg;
   // Integrand
   double integrand(const double& y) const;
   
@@ -102,8 +102,8 @@ public:
        const double& yMin_,
        const double& yMax_,
        const Interpolator1D &ssfi_,
-       Integrator1D &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_),
-			     itg(itg_) { ; };
+       IntegratorCQUAD &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_),
+				itg(itg_) { ; };
   // Get result of integration 
   double get() const;
   
@@ -140,9 +140,8 @@ public:
 	  const Interpolator1D &slfci_,
 	  const Interpolator1D &bfi_,
 	  const std::vector<double> &itgGrid_,
-	  Integrator2D &itg_)
-    : SlfcBase(x_, yMin_, yMax_, ssfi_), itg(itg_),
-      itgGrid(itgGrid_), slfci(slfci_), bfi(bfi_) {;};
+	  Integrator2D &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_), itg(itg_),
+				itgGrid(itgGrid_), slfci(slfci_), bfi(bfi_) {;};
   // Get result of integration 
   double get() const;
 

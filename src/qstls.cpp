@@ -405,7 +405,7 @@ void Qstls::computeAdrFixedIet() {
   MPI::barrier();  
   // Write necessary files
   auto loopFunc = [&](int i)->void{
-    Integrator1D itgPrivate;
+    IntegratorCQUAD itgPrivate;
     Vector3D res(nl, nx, nx);
     AdrFixedIet adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
 		       wvg[idx[i]], mu, itgPrivate);

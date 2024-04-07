@@ -230,7 +230,7 @@ Integrator1DSuper::Integrator1DSuper(const IntegratorType& type_,
 				     const double& relErr) : type(type_) {
   switch (type) {
   case CQUAD:
-    cquad = make_unique<Integrator1D>(relErr); break;
+    cquad = make_unique<IntegratorCQUAD>(relErr); break;
   case FOURIER:
     fourier = make_unique<Integrator1DFourier>(relErr); break;
   case SINGULAR:
@@ -243,7 +243,7 @@ Integrator1DSuper::Integrator1DSuper(const IntegratorType& type_,
 Integrator1DSuper::Integrator1DSuper(const Integrator1DSuper& other) : type(other.type) {
   switch (type) {
   case CQUAD:
-    cquad = make_unique<Integrator1D>(*other.cquad.get()); break;
+    cquad = make_unique<IntegratorCQUAD>(*other.cquad.get()); break;
   case FOURIER:
     fourier = make_unique<Integrator1DFourier>(*other.fourier.get()); break;   
   case SINGULAR:
@@ -281,19 +281,19 @@ double Integrator1DSuper::getSolution() const {
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1D::Integrator1D(const double &relErr_) : Integrator1DBase(100, relErr_){
+IntegratorCQUAD::IntegratorCQUAD(const double &relErr_) : IntegratorBase(100, relErr_){
   callGSLAlloc(wsp, gsl_integration_cquad_workspace_alloc, limit);
 }
 
 // Destructor
-Integrator1D::~Integrator1D(){
+IntegratorCQUAD::~IntegratorCQUAD(){
   gsl_integration_cquad_workspace_free(wsp);
 }
 
 // Compute integral
-void Integrator1D::compute(const function<double(double)>& func,
-			   const double& xMin,
-			   const double& xMax){
+void IntegratorCQUAD::compute(const function<double(double)>& func,
+			      const double& xMin,
+			      const double& xMax){
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
@@ -310,7 +310,7 @@ void Integrator1D::compute(const function<double(double)>& func,
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1DFourier::Integrator1DFourier(const double& relErr_) : Integrator1DBase(1000, relErr_){
+Integrator1DFourier::Integrator1DFourier(const double& relErr_) : IntegratorBase(1000, relErr_){
   callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
   callGSLAlloc(wspc, gsl_integration_workspace_alloc, limit);
   callGSLAlloc(qtab, gsl_integration_qawo_table_alloc, 0.0, 1.0, GSL_INTEG_SINE, limit);
@@ -345,7 +345,7 @@ Integrator1DFourier:: ~Integrator1DFourier(){
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1DSingular::Integrator1DSingular(const double &relErr_) : Integrator1DBase(1000, relErr_) {
+Integrator1DSingular::Integrator1DSingular(const double &relErr_) : IntegratorBase(1000, relErr_) {
   callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
 }
 
