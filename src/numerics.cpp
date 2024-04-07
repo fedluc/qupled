@@ -222,12 +222,12 @@ void SecantSolver::solve(const function<double(double)>& func,
 
 
 // -----------------------------------------------------------------
-// Integrator1DSuper class
+// Integrator1D class
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1DSuper::Integrator1DSuper(const IntegratorType& type_,
-				     const double& relErr) : type(type_) {
+Integrator1D::Integrator1D(const IntegratorType& type_,
+			   const double& relErr) : type(type_) {
   switch (type) {
   case CQUAD:
     cquad = make_unique<IntegratorCQUAD>(relErr); break;
@@ -240,7 +240,7 @@ Integrator1DSuper::Integrator1DSuper(const IntegratorType& type_,
   }
 }
 
-Integrator1DSuper::Integrator1DSuper(const Integrator1DSuper& other) : type(other.type) {
+Integrator1D::Integrator1D(const Integrator1D& other) : type(other.type) {
   switch (type) {
   case CQUAD:
     cquad = make_unique<IntegratorCQUAD>(*other.cquad.get()); break;
@@ -252,8 +252,8 @@ Integrator1DSuper::Integrator1DSuper(const Integrator1DSuper& other) : type(othe
 }
 
 // Compute integral
-void Integrator1DSuper::compute(const std::function<double(double)>& func,
-				const IntegratorParam& param) const {
+void Integrator1D::compute(const std::function<double(double)>& func,
+			   const IntegratorParam& param) const {
   switch (type) {
   case CQUAD:
     cquad->compute(func, param.xMin, param.xMax); break;
@@ -265,7 +265,7 @@ void Integrator1DSuper::compute(const std::function<double(double)>& func,
 }
 
 // Getters
-double Integrator1DSuper::getSolution() const {
+double Integrator1D::getSolution() const {
   switch (type) {
   case CQUAD:
     return cquad->getSolution();
@@ -388,7 +388,7 @@ void Integrator2D::compute(const function<double(double)>& func1,
     vector<double> sol2(nx);
     for (int i = 0; i < nx; ++i) {
       x = xGrid[i];
-      itg2.compute(func2, yMin(x), yMax(x));
+      itg2.compute(func2, IntegratorParam{yMin(x), yMax(x)});
       sol2[i] = itg2.getSolution();
     }
     itp.reset(xGrid[0], sol2[0], nx);
@@ -400,12 +400,12 @@ void Integrator2D::compute(const function<double(double)>& func1,
     // Level 2 integration (evaluated at arbitrary points) 
     func = [&](const double& x_)->double {
       x = x_;
-      itg2.compute(func2, yMin(x_), yMax(x_));
+      itg2.compute(func2, IntegratorParam{yMin(x_), yMax(x_)});
       return func1(x_) * itg2.getSolution();
     };
   }
   // Level 1 integration
-  itg1.compute(func, xMin, xMax);
+  itg1.compute(func, IntegratorParam{xMin, xMax});
   sol = itg1.getSolution();
 }
 
@@ -444,7 +444,7 @@ void Integrator2DQAGS::compute(const function<double(double)>& func1,
     vector<double> sol2(nx);
     for (int i = 0; i < nx; ++i) {
       x = xGrid[i];
-      itg2.compute(func2, yMin(x), yMax(x));
+      itg2.compute(func2, IntegratorParam{yMin(x), yMax(x)});
       sol2[i] = itg2.getSolution();
     }
     itp.reset(xGrid[0], sol2[0], nx);
@@ -456,12 +456,12 @@ void Integrator2DQAGS::compute(const function<double(double)>& func1,
     // Level 2 integration (evaluated at arbitrary points) 
     func = [&](const double& x_)->double {
       x = x_;
-      itg2.compute(func2, yMin(x_), yMax(x_));
+      itg2.compute(func2, IntegratorParam{yMin(x), yMax(x)});
       return func1(x_) * itg2.getSolution();
     };
   }
   // Level 1 integration
-  itg1.compute(func, xMin, xMax);
+  itg1.compute(func, IntegratorParam{xMin, xMax});
   sol = itg1.getSolution();
 }
 

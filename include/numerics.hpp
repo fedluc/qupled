@@ -313,10 +313,9 @@ struct IntegratorParam {
   double xMin = 0.0;
   double xMax = 0.0;
   double fourierR = 0.0;
-  std::vector<double> singularities = std::vector<double>();
 };
   
-class Integrator1DSuper {
+class Integrator1D {
 
 private:
 
@@ -328,10 +327,10 @@ private:
 public:
 
   // Constructors
-  Integrator1DSuper(const IntegratorType& type_,
-		    const double& relErr);
-  Integrator1DSuper() : Integrator1DSuper(IntegratorType::CQUAD, 1.0e-5) { ; }
-  Integrator1DSuper(const Integrator1DSuper& other);
+  Integrator1D(const IntegratorType& type_,
+	       const double& relErr);
+  Integrator1D() : Integrator1D(IntegratorType::CQUAD, 1.0e-5) { ; }
+  Integrator1D(const Integrator1D& other);
   // Compute integral
   void compute(const std::function<double(double)>& func,
 	       const IntegratorParam& param) const;
@@ -347,9 +346,9 @@ class Integrator2D {
 private:
 
   // Level 1 integrator (outermost integral)
-  IntegratorCQUAD itg1;
+  Integrator1D itg1;
   // Level 2 integrator
-  IntegratorCQUAD itg2;
+  Integrator1D itg2;
   // Temporary variable for level 2 integration
   double x;
   // Solution
@@ -358,7 +357,8 @@ private:
 public:
 
   // Constructors
-  Integrator2D(const double &relErr) : itg1(relErr), itg2(relErr) { ; }
+  Integrator2D(const double &relErr) : itg1(IntegratorType::CQUAD, relErr),
+				       itg2(IntegratorType::CQUAD, relErr) { ; }
   Integrator2D() : Integrator2D(1.0e-5) { ; };
   // Compute integral
   void compute(const std::function<double(double)>& func1,
@@ -386,9 +386,9 @@ class Integrator2DQAGS {
 private:
 
   // Level 1 integrator (outermost integral)
-  IntegratorQAGS itg1;
+  Integrator1D itg1;
   // Level 2 integrator
-  IntegratorCQUAD itg2;
+  Integrator1D itg2;
   // Temporary variable for level 2 integration
   double x;
   // Solution
@@ -397,7 +397,8 @@ private:
 public:
   
   // Constructors
-  Integrator2DQAGS(const double &relErr) : itg1(relErr), itg2(relErr) { ; }
+  Integrator2DQAGS(const double &relErr) : itg1(IntegratorType::SINGULAR, relErr),
+					   itg2(IntegratorType::CQUAD, relErr) { ; }
   Integrator2DQAGS() : Integrator2DQAGS(1.0e-5) { ; };
   // Compute integral
   void compute(const std::function<double(double)>& func1,
