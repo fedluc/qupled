@@ -8,6 +8,8 @@ using namespace std;
 using namespace vecUtil;
 using namespace binUtil;
 using namespace parallelUtil;
+using ItgLimits = Integrator1D::Param::Limits;
+using ItgType = Integrator1D::Type;
 
 // -----------------------------------------------------------------
 // STLS class
@@ -97,7 +99,7 @@ void Stls::computeSlfcIet() {
 // Compute bridge function
 void Stls::computeBf() {
   const size_t nx = wvg.size();
-  Integrator1D itgF(IntegratorType::FOURIER, 1e-10);
+  Integrator1D itgF(ItgType::FOURIER, 1e-10);
   assert(bf.size() == nx);
   for (size_t i=0; i<nx; ++i){ 
     BridgeFunction bfTmp(in.getTheory(), in.getIETMapping(),
@@ -237,7 +239,7 @@ double SlfcBase::ssf(const double& y) const {
 // Get result of integration
 double Slfc::get() const {
   auto func = [&](const double& y)->double{return integrand(y);};
-  itg.compute(func, IntegratorParam{yMin, yMax});
+  itg.compute(func, ItgLimits{yMin, yMax});
   return itg.getSolution();
 }
 
@@ -387,7 +389,7 @@ double BridgeFunction::ioi() const {
 double BridgeFunction::lct() const {
   const double Gamma = couplingParameter();
   auto func = [&](const double& r)->double{return lctIntegrand(r,Gamma);};
-  itg.compute(func, IntegratorParam{0.0, 0.0, x/lambda});
+  itg.compute(func, x/lambda);
   return itg.getSolution() * (x/lambda) / Gamma;
   return 0.0;
 }

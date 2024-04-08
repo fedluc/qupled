@@ -8,6 +8,8 @@
 
 using namespace std;
 using namespace vecUtil;
+using ItgLimits = Integrator1D::Param::Limits;
+using ItgType = Integrator1D::Type;
 
 // -----------------------------------------------------------------
 // qVSStls class
@@ -257,9 +259,9 @@ void QStlsCSR::computeAdr() {
 }
 
 double QStlsCSR::getQAdder() const {
-  Integrator1D itg1(IntegratorType::DEFAULT, in.getIntError());
-  Integrator2D itg2(IntegratorType::SINGULAR,
-		    IntegratorType::DEFAULT,
+  Integrator1D itg1(ItgType::DEFAULT, in.getIntError());
+  Integrator2D itg2(ItgType::SINGULAR,
+		    ItgType::DEFAULT,
 		    in.getIntError());
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
@@ -303,7 +305,7 @@ double QAdder::integrandNumerator2(const double w) const {
 // Denominator integral
 void QAdder::getIntDenominator(double &res) const {
   auto func = [&](double y)->double{return integrandDenominator(y);};
-  itg1.compute(func, IntegratorParam{limits.first, limits.second});
+  itg1.compute(func, limits);
   res = itg1.getSolution();
 }
 

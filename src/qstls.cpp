@@ -10,6 +10,7 @@ using namespace std;
 using namespace vecUtil;
 using namespace binUtil;
 using namespace parallelUtil;
+using ItgLimits = Integrator1D::Param::Limits;
 
 // -----------------------------------------------------------------
 // QSTLS class
@@ -564,11 +565,11 @@ void Adr::get(const vector<double> &wvg,
     res.fill(ix, 0.0);
     return;
   }
-  const auto itgParam = IntegratorParam{yMin, yMax};
+  const auto itgLimits = ItgLimits{yMin, yMax};
   for (int l = 0; l < nl; ++l){
     fixi.reset(wvg[0], fixed(ix,l), nx);
     auto func = [&](const double& y)->double{return integrand(y);};
-    itg.compute(func, itgParam);
+    itg.compute(func, itgLimits);
     res(ix, l) = itg.getSolution();
     res(ix, l) *= (l==0) ? isc0 : isc;
   }
@@ -707,7 +708,7 @@ void AdrFixedIet::get(vector<double> &wvg,
   }
   const int nx = wvg.size();
   const int nl = res.size(0);
-  const auto itgParam = IntegratorParam{tMin, tMax};
+  const auto itgLimits = ItgLimits{tMin, tMax};
   for (int l = 0; l < nl; ++l){
     for (int i = 0; i < nx; ++i) {
       if (wvg[i] == 0.0) {
@@ -718,7 +719,7 @@ void AdrFixedIet::get(vector<double> &wvg,
 	auto func = [&](const double& t)->double{
 	  return integrand(t, wvg[j], wvg[i], l);
 	};
-	itg.compute(func, itgParam);
+	itg.compute(func, itgLimits);
 	res(l,i,j) = itg.getSolution();
       }  
     }

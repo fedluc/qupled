@@ -7,12 +7,14 @@
 using namespace std;
 using namespace thermoUtil;
 using namespace parallelUtil;
+using ItgLimits = Integrator1D::Param::Limits;
+using ItgType = Integrator1D::Type;
 
 // Constructor
 Rpa::Rpa(const RpaInput &in_,
 	 const bool verbose_) : in(in_),
 				verbose(verbose_ && MPI::isRoot()),
-				itg(IntegratorType::DEFAULT, in_.getIntError()) {
+				itg(ItgType::DEFAULT, in_.getIntError()) {
   // Assemble the wave-vector grid
   buildWvGrid();
   // Allocate arrays to the correct size
@@ -244,12 +246,12 @@ double Idr::integrand(const double& y) const {
 vector<double> Idr::get() const {
   assert(Theta > 0.0);
   vector<double> res(nl);
-  const auto itgParam = IntegratorParam{yMin, yMax};
+  const auto itgLimits = ItgLimits{yMin, yMax};
   for (int l=0; l<nl; ++l){
     auto func = [&](const double& y)->double{
       return (l == 0) ? integrand(y) : integrand(y,l);
     };
-    itg.compute(func, itgParam);
+    itg.compute(func, itgLimits);
     res[l] = itg.getSolution();
   }
   return res;
@@ -353,7 +355,7 @@ double SsfHF::integrand(const double& y) const {
 double SsfHF::get() const {
   assert(Theta > 0.0);
   auto func = [&](const double& y)->double{return integrand(y);};
-  itg.compute(func, IntegratorParam{yMin, yMax});
+  itg.compute(func, ItgLimits{yMin, yMax});
   return 1.0 + itg.getSolution();
 }
 
@@ -402,7 +404,7 @@ double SsfGround::get() const {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double& y)->double{return integrand(y);};
-  itg.compute(func, IntegratorParam{yMin, yMax});
+  itg.compute(func, ItgLimits{yMin, yMax});
   double ssfP;
   ssfP = plasmon();
   return ssfHF + itg.getSolution() + ssfP;

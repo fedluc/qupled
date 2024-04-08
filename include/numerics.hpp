@@ -198,21 +198,26 @@ public:
 // -----------------------------------------------------------------
 // Class to compute 1D integrals
 // -----------------------------------------------------------------
-
-enum IntegratorType {
-  DEFAULT,
-  FOURIER,
-  SINGULAR
-};
-
-struct IntegratorParam {
-  double xMin = numUtil::NaN;
-  double xMax = numUtil::NaN;
-  double fourierR = numUtil::NaN;
-};
   
 class Integrator1D {
 
+public:
+
+  enum Type {
+    DEFAULT,
+    FOURIER,
+    SINGULAR
+  };
+  
+  class Param {
+  public:
+    using Limits = std::pair<double, double>;
+    const Limits limits = Limits(numUtil::NaN, numUtil::NaN);
+    const double fourierR = numUtil::NaN;
+    Param(const Limits& limits_) : limits(limits_) { ; }
+    Param(const double fourierR_) : fourierR(fourierR_) { ; }
+  };
+  
 private:
 
   // Base class for all integrators derived from GSL
@@ -221,7 +226,7 @@ private:
     // Function to integrate
     gsl_function *F;
     // Integrator type
-    const IntegratorType type;
+    const Type type;
     // Integration workspace limit
     const size_t limit;
     // Accuracy
@@ -232,7 +237,7 @@ private:
     double sol;
   public:
     // Constructors
-    Base(const IntegratorType& type_,
+    Base(const Type& type_,
 	 const size_t &limit_,
 	 const double &relErr_) : type(type_),
 				  limit(limit_),
@@ -242,10 +247,10 @@ private:
     // Getters
     double getSolution() const { return sol; }
     double getAccuracy() const { return relErr; }
-    IntegratorType getType() const { return type; }
+    Type getType() const { return type; }
     // Compute integral
     virtual void compute(const std::function<double(double)>& func,
-			 const IntegratorParam& param) = 0;
+			 const Param& param) = 0;
   
   };
 
@@ -264,7 +269,7 @@ private:
     ~CQUAD();
     // Compute integral
     void compute(const std::function<double(double)>& func,
-		 const IntegratorParam& param) override;
+		 const Param& param) override;
     
   };
 
@@ -283,7 +288,7 @@ private:
     ~QAWO();
     // Compute integral
     void compute(const std::function<double(double)>& func,
-		 const IntegratorParam& param) override;
+		 const Param& param) override;
 
   };
 
@@ -300,7 +305,7 @@ private:
     ~QAGS();
     // Compute integral
     void compute(const std::function<double(double)>& func,
-		 const IntegratorParam& param) override;
+		 const Param& param) override;
   };
 
   // Pointers to GSL integrals
@@ -309,18 +314,18 @@ private:
 public:
 
   // Constructors
-  Integrator1D(const IntegratorType& type,
+  Integrator1D(const Type& type,
 	       const double& relErr);
-  Integrator1D(const double& relErr) : Integrator1D(IntegratorType::DEFAULT, relErr) { ; }
+  Integrator1D(const double& relErr) : Integrator1D(Type::DEFAULT, relErr) { ; }
   Integrator1D(const Integrator1D& other) : Integrator1D(other.getType(),
 							 other.getAccuracy()) { ; }
   // Compute integral
   void compute(const std::function<double(double)>& func,
-	       const IntegratorParam& param) const;
+	       const Param& param) const;
   // Getters
   double getSolution() const;
   double getAccuracy() const { return gslIntegrator->getAccuracy(); }
-  IntegratorType getType() const { return gslIntegrator->getType(); }
+  Type getType() const { return gslIntegrator->getType(); }
   
 };
 
@@ -332,6 +337,10 @@ class Integrator2D {
 
 private:
 
+  // Typedef
+  using Type = Integrator1D::Type;
+  using Param = Integrator1D::Param;
+  using Limits = Param::Limits;
   // Level 1 integrator (outermost integral)
   Integrator1D itg1;
   // Level 2 integrator
@@ -344,13 +353,13 @@ private:
 public:
 
   // Constructors
-  Integrator2D(const IntegratorType& type1,
-	       const IntegratorType& type2,
+  Integrator2D(const Type& type1,
+	       const Type& type2,
 	       const double& relErr) : itg1(type1, relErr),
 				       itg2(type2, relErr) { ; }
-  Integrator2D(const IntegratorType& type,
+  Integrator2D(const Type& type,
 	       const double& relErr) : Integrator2D(type, type, relErr) { ; }
-  Integrator2D(const double& relErr) : Integrator2D(IntegratorType::DEFAULT, relErr) { ; }
+  Integrator2D(const double& relErr) : Integrator2D(Type::DEFAULT, relErr) { ; }
   // Compute integral
   void compute(const std::function<double(double)>& func1,
 	       const std::function<double(double)>& func2,
