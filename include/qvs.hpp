@@ -1,9 +1,6 @@
 #ifndef QVS_HPP
 #define QVS_HPP
 
-//#include <limits>
-//#include <map>
-//#include <functional>
 #include "numerics.hpp"
 #include "vsbase.hpp"
 #include "qstls.hpp"
@@ -106,8 +103,6 @@ private:
   using StructPropBase = StructPropBase<QStlsCSR, QVSStlsInput>;
   // Perform iterations to compute structural properties
   void doIterations();
-  void computeBody(int i, int counter);
-  
   
 public:
 

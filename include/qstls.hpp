@@ -84,8 +84,8 @@ public:
   int compute();
   // Getters
   double getError() const { return computeError(); }
-  vecUtil::Vector2D getAdr() const { return adr; }
-  const vecUtil::Vector3D getAdrFixed() const { return adrFixed; }
+  const vecUtil::Vector2D& getAdr() const { return adr; }
+  const vecUtil::Vector3D& getAdrFixed() const { return adrFixed; }
 
 };
 
