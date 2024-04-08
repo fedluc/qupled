@@ -283,9 +283,7 @@ class QstlsIet(Qstls):
 class QVSStls(qc.VSStls, Qstls):
 
     """
-    Class used to setup and solve the quantum VS-STLS scheme as described by
-    `Hayashi and Shimizu <https://journals.jps.jp/doi/pdf/10.1143/JPSJ.48.16>`_ for ground state calculations
-    and by ---Placeholder for the finite temperature qVS paper---.
+    Class used to setup and solve the quantum VS-STLS scheme.
     This class inherits most of its methods and attributes from :obj:`qupled.quantum.Qstls`.
 
     Args:
