@@ -135,7 +135,6 @@ void StlsCSR::computeSlfc() {
 double StlsCSR::getDerivative(const vector<double>& f,
 			      const size_t& idx,
 			      const Derivative& type) {
-  // NOTE: If T does not have an operator[] this method would not compile
   switch(type) {
   case BACKWARD:
     assert(idx >= 2);

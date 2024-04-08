@@ -375,8 +375,8 @@ class QVSStls(qc.VSStls, Qstls):
                    errorIntegrals : float,
                    threads : int) -> None:
         super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
-                   cutoff, error, fixed, mixing, guess, iterations, matsubara,
-                   outputFrequency, recoveryFile, resolution, scheme2DIntegrals, threads)
+                           cutoff, error, fixed, mixing, guess, iterations, matsubara,
+                           outputFrequency, recoveryFile, resolution, scheme2DIntegrals, threads)
         self.inputs.alpha = alpha
         self.inputs.couplingResolution = couplingResolution
         self.inputs.degeneracyResolution = degeneracyResolution

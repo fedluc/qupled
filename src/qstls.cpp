@@ -190,11 +190,6 @@ void Qstls::initialGuessAdr(const vector<double> &wvg_,
 // Compute auxiliary density response
 void Qstls::computeAdr() {
   const int nx = wvg.size();
-  // if (in.getCoupling() == 0) {
-  //   fill(slfc, 0.0);
-  //   adr.fill(0.0);
-  //   return;
-  // }
   const Interpolator1D ssfi(wvg, ssfOld);
   for (int i=0; i<nx; ++i) {
     Adr adrTmp(in.getDegeneracy(), wvg.front(),

@@ -1,9 +1,9 @@
 #ifndef QVS_HPP
 #define QVS_HPP
 
-#include <limits>
-#include <map>
-#include <functional>
+//#include <limits>
+//#include <map>
+//#include <functional>
 #include "numerics.hpp"
 #include "vsbase.hpp"
 #include "qstls.hpp"
@@ -47,7 +47,6 @@ class QAdder {
 private:
   
   const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  // --Constructor variables--
   // Coupling parameter
   const double rs;
   // Degeneracy parameter
@@ -86,9 +85,10 @@ public:
 	 const std::vector<double>& itgGrid_,
 	 Integrator1D &itg1_,
 	 Integrator2DSingular &itg2_,
-	 const Interpolator1D &interp_) :  rs(rs_), Theta(Theta_), mu(mu_), 
-             limits(limitMin, limitMax), itgGrid(itgGrid_), itg1(itg1_), 
-             itg2(itg2_), interp(interp_) { ; }
+	 const Interpolator1D &interp_) 
+    : rs(rs_), Theta(Theta_), mu(mu_), 
+      limits(limitMin, limitMax), itgGrid(itgGrid_), 
+      itg1(itg1_), itg2(itg2_), interp(interp_) { ; }
   
   // Get Q-adder
   double get() const;
@@ -106,6 +106,7 @@ private:
   using StructPropBase = StructPropBase<QStlsCSR, QVSStlsInput>;
   // Perform iterations to compute structural properties
   void doIterations();
+  void computeBody(int i, int counter);
   
   
 public:

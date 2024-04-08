@@ -35,10 +35,6 @@ protected:
     auto func = [this](const double& alphaTmp)->double{return alphaDifference(alphaTmp);};
     SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
     rsol.solve(func, in.getAlphaGuess());
-    // if (!rsol.success()) {
-    //   parallelUtil::MPI::throwError("VSStls: the root solver did not converge "
-		// 		    "to the desired accuracy.");
-    // }
     alpha = rsol.getSolution();
     if (verbose) { std::cout << "Free parameter = " << alpha << std::endl; }
     updateSolution();
