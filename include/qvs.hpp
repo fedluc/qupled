@@ -1,9 +1,9 @@
 #ifndef QVS_HPP
 #define QVS_HPP
 
-#include <limits>
-#include <map>
-#include <functional>
+//#include <limits>
+//#include <map>
+//#include <functional>
 #include "numerics.hpp"
 #include "vsbase.hpp"
 #include "qstls.hpp"
@@ -47,7 +47,6 @@ class QAdder {
 private:
   
   const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
-  // --Constructor variables--
   // Coupling parameter
   const double rs;
   // Degeneracy parameter
@@ -105,6 +104,7 @@ private:
   using StructPropBase = StructPropBase<QStlsCSR, QVSStlsInput>;
   // Perform iterations to compute structural properties
   void doIterations();
+  void computeBody(int i, int counter);
   
   
 public:

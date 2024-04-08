@@ -1,7 +1,6 @@
 #ifndef NUMERICS_HPP
 #define NUMERICS_HPP
 
-#include <stdexcept>
 #include <functional>
 #include <vector>
 #include <string>
@@ -161,7 +160,6 @@ protected:
   
 public:
 
-  // bool success() const { return status == GSL_SUCCESS; };
   double getSolution() const { return sol; };
   
 };

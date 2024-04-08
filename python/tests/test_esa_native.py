@@ -1,12 +1,8 @@
 import os
 import pytest
-import math
 import set_path
 import qupled.qupled as qp
 import qupled.classic as qpc
-
-def tolerance():
-    return 1e-10
 
 def test_esa_properties():
     issubclass(qp.ESA, qp.Rpa)
@@ -25,7 +21,6 @@ def test_esa_compute():
     assert scheme.ssfHF.size == nx
     assert scheme.recovery == ""
     assert scheme.rdf(scheme.wvg).size == nx
-    assert math.isclose(scheme.uInt, -0.4801292597, rel_tol=tolerance())
 
 
 

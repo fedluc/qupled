@@ -2,6 +2,7 @@
 #include "numerics.hpp"
 #include "input.hpp"
 #include "qvs.hpp"
+#include <fmt/core.h>
 #include <sstream> // Include for std::stringstream
 #include <iomanip> // Include for std::setprecision and std::fixed
 
@@ -22,7 +23,7 @@ double QVSStls::computeAlpha() {
   const double& fxct = freeEnergyData[3];
   const double& fxctt = freeEnergyData[4];
   const double& fxcrt = freeEnergyData[5];
-  // Q
+  // QAdder
   const vector<double> QData = thermoProp.getQData();
   const double& Q = QData[0];
   const double& Qr = QData[1];
@@ -85,44 +86,7 @@ int QStructProp::compute() {
     if (!csrIsInitialized) {
       int counter = 0;
     for (size_t i = 0; i < csr.size(); ++i) {
-      const auto& in = csr[i].in;
-      auto& c = csr[i];
-      // If there was no fixed file specified in input
-      if (in.getFixed().empty() && i % 3 == 0){
-      // Initialize the csr objects with theta-dtheta, theta, theta+dtheta in order 
-      // to compute adrFixed if no file was specified in input.
-        c.init();
-        switch (counter % 3) { 
-        case 0:
-            cout << "theta - dtheta auxiliary density response"
-            << " fixed component stored in file" << endl;
-            break;
-        case 1:
-            cout << "theta fixed auxiliary density response" 
-            << " component stored in file"<< endl;
-            break;
-        case 2:
-            cout << "theta + dtheta auxiliary density response" 
-            << " fixed component stored in file" << endl;
-            break;
-    }
-        counter++;
-        // If file was specified read corresponding adrFixed from file 
-      } else { 
-          const double theta = in.getDegeneracy();
-          // Create a stringstream to help with formatting
-          std::stringstream ss; 
-          // Set precision to 3rd decimal
-          ss << std::fixed << std::setprecision(3); 
-          ss << "adr_fixed_theta" << theta << "_matsubara" << in.getNMatsubara() << ".bin";
-          std::string filename = ss.str();
-          // Compute ssfHF 
-          c.Rpa::computeChemicalPotential();
-          c.Rpa::computeIdr();
-          c.Rpa::computeSsfHF();
-          // Read adrFixed from file
-          c.readAdrFixedFile(c.adrFixed, filename, false);
-      }
+      computeBody(i, counter);
     }
 	  csrIsInitialized = true;
     }
@@ -134,6 +98,43 @@ int QStructProp::compute() {
     std::cerr << err.what() << std::endl;
     return 1;
   }
+}
+
+void QStructProp::computeBody(int i, int counter) {
+  const auto& in = csr[i].in;
+  auto& c = csr[i];
+  // If there was no fixed file specified in input
+  if (in.getFixed().empty() && i % 3 == 0){
+    // Initialize the csr objects with theta-dtheta, theta, theta+dtheta in order 
+    // to compute adrFixed if no file was specified in input.
+    c.init();
+    switch (counter % 3) { 
+      case 0:
+        cout << "theta - dtheta auxiliary density response"
+             << " fixed component stored in file" << endl;
+        break;
+      case 1:
+        cout << "theta fixed auxiliary density response" 
+             << " component stored in file"<< endl;
+        break;
+      case 2:
+        cout << "theta + dtheta auxiliary density response" 
+             << " fixed component stored in file" << endl;
+        break;
+    }
+    counter++;
+    // If file was specified read corresponding adrFixed from file 
+    } else { 
+        const string fileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
+					  in.getDegeneracy(),
+					  in.getNMatsubara());
+        // Compute ssfHF 
+        c.Rpa::computeChemicalPotential();
+        c.Rpa::computeIdr();
+        c.Rpa::computeSsfHF();
+        // Read adrFixed from file
+        c.readAdrFixedFile(c.adrFixed, fileName, false);
+      }
 }
   
 void QStructProp::doIterations() {
@@ -167,6 +168,8 @@ void QStructProp::doIterations() {
   }
   printf("Alpha = %.5e, Residual error "
 	 "(structural properties) = %.5e\n", csr[RS_THETA].alpha, err);
+  // Set static structure factor for output
+  for (auto& c : csr) { c.ssf = c.ssfOld; }
 }
 
 vector<double> QStructProp::getQ() const  {
@@ -250,8 +253,7 @@ void QStlsCSR::computeAdr() {
     for (size_t i = 0; i < nx; ++i) {
       adr(i,l) += alpha/3.0 * lfc(i,l);
     }
-  }
-  
+  }  
 }
 
 double QStlsCSR::getQAdder() const {

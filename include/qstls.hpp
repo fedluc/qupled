@@ -28,8 +28,10 @@ protected:
   // Auxiliary density response
   vecUtil::Vector2D adr;
   vecUtil::Vector2D adrOld;
+  vecUtil::Vector3D adrFixed;
   std::map<int,std::pair<std::string,bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
+  std::vector<double> ssfNew;
   std::vector<double> ssfOld;
   // Initialize basic properties
   void init();
@@ -54,7 +56,7 @@ protected:
 		       const std::vector<double> &adr_);
   void initialGuessAdr(const std::vector<double> &wvg_,
 		       const vecUtil::Vector2D &adr_);
-  double computeError();
+  double computeError() const;
   void updateSolution();
   // Recovery files
   void writeRecovery();
@@ -73,7 +75,6 @@ protected:
 
 public:
 
-  vecUtil::Vector3D adrFixed;
   void readAdrFixedFile(vecUtil::Vector3D &res,
 			const std::string &fileName,
 			const bool iet) const;
@@ -82,8 +83,9 @@ public:
   // Compute qstls scheme
   int compute();
   // Getters
+  double getError() const { return computeError(); }
   vecUtil::Vector2D getAdr() const { return adr; }
-  vecUtil::Vector3D getAdrFixed() const { return adrFixed; }
+  const vecUtil::Vector3D getAdrFixed() const { return adrFixed; }
 
 };
 

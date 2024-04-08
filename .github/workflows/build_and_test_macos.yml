@@ -1,0 +1,40 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+
+  build_and_test:
+  
+    runs-on: macos-13
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+          brew update
+          brew install cmake gsl libomp openmpi fmt python3 boost-python3   
+          pip3 install --upgrade pip
+          pip3 install matplotlib mpi4py numpy pandas tables pytest pytest-mock
+        
+    - name: Configure CMake
+      run: |
+        export OpenMP_ROOT=$(brew --prefix)/opt/libomp
+        cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=Release
+        
+    - name: Build
+      run: |
+        cmake --build build --config Release
+        
+    - name: Tests
+      run: |
+        cd build
+        pytest -k "not test_examples" tests

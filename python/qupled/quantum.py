@@ -283,9 +283,7 @@ class QstlsIet(Qstls):
 class QVSStls(qc.VSStls, Qstls):
 
     """
-    Class used to setup and solve the quantum VS-STLS scheme as described by
-    `Hayashi and Shimizu <https://journals.jps.jp/doi/pdf/10.1143/JPSJ.48.16>`_ for ground state calculations
-    and by ---Placeholder for the finite temperature qVS paper---.
+    Class used to setup and solve the quantum VS-STLS scheme.
     This class inherits most of its methods and attributes from :obj:`qupled.quantum.Qstls`.
 
     Args:
@@ -375,8 +373,8 @@ class QVSStls(qc.VSStls, Qstls):
                    errorIntegrals : float,
                    threads : int) -> None:
         super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
-                   cutoff, error, fixed, mixing, guess, iterations, matsubara,
-                   outputFrequency, recoveryFile, resolution, scheme2DIntegrals, threads)
+                           cutoff, error, fixed, mixing, guess, iterations, matsubara,
+                           outputFrequency, recoveryFile, resolution, scheme2DIntegrals, threads)
         self.inputs.alpha = alpha
         self.inputs.couplingResolution = couplingResolution
         self.inputs.degeneracyResolution = degeneracyResolution
