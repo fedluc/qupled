@@ -11,6 +11,7 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp2d.h>
 #include <gsl/gsl_spline2d.h>
+#include "util.hpp"
 
 // -----------------------------------------------------------------
 // C++ wrappers to GSL objects
@@ -197,151 +198,138 @@ public:
 };
 
 // -----------------------------------------------------------------
-// Classes to compute integrals
+// Class to compute 1D integrals
 // -----------------------------------------------------------------
 
-// --- Base class for 1D integrals ---
-class IntegratorBase {
-
-protected:
-
-  // Function to integrate
-  gsl_function *F;
-  // Integration workspace limit
-  const size_t limit;
-  // Accuracy
-  const double relErr;
-  // Residual error
-  double err;
-  // Solution
-  double sol;
-  
-public:
-
-  // Constructors
-  IntegratorBase(const size_t& limit_, const double &relErr_) : limit(limit_),
-								  relErr(relErr_) { ; }
-  // Getters
-  double getSolution() const { return sol; };
-  
-};
-
-// --- Integrator for 1D integrals ---
-class IntegratorCQUAD : public IntegratorBase {
-
-private:
-
-  // Integration workspace
-  gsl_integration_cquad_workspace *wsp;
-  // Number of evaluations
-  size_t nEvals;
-  
-public:
-
-  // Constructors
-  IntegratorCQUAD(const double &relErr_);
-  IntegratorCQUAD() : IntegratorCQUAD(1.0e-5) { ; }
-  IntegratorCQUAD(const IntegratorCQUAD& other) : IntegratorCQUAD(other.relErr) { ; }
-  // Destructor
-  ~IntegratorCQUAD();
-  // Compute integral
-  void compute(const std::function<double(double)>& func,
-	       const double& xMin,
-	       const double& xMax);
-  
-};
-
-
-
-// --- Integrator for 1D integrals of Fourier type --- 
-class IntegratorQAWO : public IntegratorBase {
-
-private:
-
-  // Integration workspace
-  gsl_integration_workspace *wsp;
-  gsl_integration_workspace *wspc;
-  gsl_integration_qawo_table *qtab;
-  
-public:
-
-  // Constructors
-  IntegratorQAWO(const double& relErr_);
-  IntegratorQAWO() : IntegratorQAWO(1.0e-6) { ; }
-  IntegratorQAWO(const IntegratorQAWO& other) : IntegratorQAWO(other.relErr) { ; }
-  // Destructor
-  ~IntegratorQAWO();
-  // Compute integral
-  void compute(const std::function<double(double)>& func,
-	       const double& r);
-
-};
-
-// --- Integrator for 1D integrals with known singularities --- 
-class IntegratorQAGS : public IntegratorBase {
-
-private:
-
-  // Integration workspace
-  gsl_integration_workspace *wsp;
-
-public:
-
-  // Constructors
-  IntegratorQAGS(const double& relErr_);
-  IntegratorQAGS() : IntegratorQAGS(1.0e-5) { ; }
-  IntegratorQAGS(const IntegratorQAGS& other) : IntegratorQAGS(other.relErr) { ; }
-  // Destructor
-  ~IntegratorQAGS();
-  // Compute integral
-  void compute(const std::function<double(double)>& func,
-	       const double& xMin,
-	       const double& xMax);
-
-};
-
-
-// --- General integrator interface ---
-
 enum IntegratorType {
-  CQUAD,
+  DEFAULT,
   FOURIER,
   SINGULAR
 };
 
 struct IntegratorParam {
-  double xMin = 0.0;
-  double xMax = 0.0;
-  double fourierR = 0.0;
+  double xMin = numUtil::NaN;
+  double xMax = numUtil::NaN;
+  double fourierR = numUtil::NaN;
 };
   
 class Integrator1D {
 
 private:
 
-  const IntegratorType type;
-  std::unique_ptr<IntegratorCQUAD> cquad;
-  std::unique_ptr<IntegratorQAWO> fourier;
-  std::unique_ptr<IntegratorQAGS> singular;
+  // Base class for all integrators derived from GSL
+  class Base {
+  protected:
+    // Function to integrate
+    gsl_function *F;
+    // Integrator type
+    const IntegratorType type;
+    // Integration workspace limit
+    const size_t limit;
+    // Accuracy
+    const double relErr;
+    // Residual error
+    double err;
+    // Solution
+    double sol;
+  public:
+    // Constructors
+    Base(const IntegratorType& type_,
+	 const size_t &limit_,
+	 const double &relErr_) : type(type_),
+				  limit(limit_),
+				  relErr(relErr_) { ; }
+    // Destructor
+    virtual ~Base() = default;
+    // Getters
+    double getSolution() const { return sol; }
+    double getAccuracy() const { return relErr; }
+    IntegratorType getType() const { return type; }
+    // Compute integral
+    virtual void compute(const std::function<double(double)>& func,
+			 const IntegratorParam& param) = 0;
+  
+  };
+
+  // CQUAD integrator from GSL
+  class CQUAD : public Base {
+  private:
+    // Integration workspace
+    gsl_integration_cquad_workspace *wsp;
+    // Number of evaluations
+    size_t nEvals;
+  public:
+    // Constructors
+    CQUAD(const double &relErr_);
+    CQUAD(const CQUAD& other) : Integrator1D::CQUAD(other.relErr) { ; }
+    // Destructor
+    ~CQUAD();
+    // Compute integral
+    void compute(const std::function<double(double)>& func,
+		 const IntegratorParam& param) override;
+    
+  };
+
+  // QAWO integrator from GSL 
+  class QAWO : public Base {
+  private:
+    // Integration workspace
+    gsl_integration_workspace *wsp;
+    gsl_integration_workspace *wspc;
+    gsl_integration_qawo_table *qtab;
+  public:
+    // Constructors
+    QAWO(const double& relErr_);
+    QAWO(const QAWO& other) : Integrator1D::QAWO(other.relErr) { ; }
+    // Destructor
+    ~QAWO();
+    // Compute integral
+    void compute(const std::function<double(double)>& func,
+		 const IntegratorParam& param) override;
+
+  };
+
+  // QAGS integrator from GSL 
+  class QAGS : public Base {
+  private:
+    // Integration workspace
+    gsl_integration_workspace *wsp;
+  public:
+    // Constructors
+    QAGS(const double& relErr_);
+    QAGS(const QAGS& other) : Integrator1D::QAGS(other.relErr) { ; }
+    // Destructor
+    ~QAGS();
+    // Compute integral
+    void compute(const std::function<double(double)>& func,
+		 const IntegratorParam& param) override;
+  };
+
+  // Pointers to GSL integrals
+  std::unique_ptr<Base> gslIntegrator;
 
 public:
 
   // Constructors
-  Integrator1D(const IntegratorType& type_,
+  Integrator1D(const IntegratorType& type,
 	       const double& relErr);
-  Integrator1D(const double& relErr) : Integrator1D(IntegratorType::CQUAD, relErr) { ; }
-  // Integrator1D() : Integrator1D(1.0e-5) { ; }
-  Integrator1D(const Integrator1D& other);
+  Integrator1D(const double& relErr) : Integrator1D(IntegratorType::DEFAULT, relErr) { ; }
+  Integrator1D(const Integrator1D& other) : Integrator1D(other.getType(),
+							 other.getAccuracy()) { ; }
   // Compute integral
   void compute(const std::function<double(double)>& func,
 	       const IntegratorParam& param) const;
   // Getters
   double getSolution() const;
+  double getAccuracy() const { return gslIntegrator->getAccuracy(); }
+  IntegratorType getType() const { return gslIntegrator->getType(); }
   
 };
 
+// -----------------------------------------------------------------
+// Class to compute 2D integrals
+// -----------------------------------------------------------------
 
-// --- Integrator for 2D integrals ---
 class Integrator2D {
 
 private:
@@ -364,7 +352,7 @@ public:
 				       itg2(type2, relErr) { ; }
   Integrator2D(const IntegratorType& type,
 	       const double& relErr) : Integrator2D(type, type, relErr) { ; }
-  Integrator2D(const double& relErr) : Integrator2D(IntegratorType::CQUAD, relErr) { ; }
+  Integrator2D(const double& relErr) : Integrator2D(IntegratorType::DEFAULT, relErr) { ; }
   // Compute integral
   void compute(const std::function<double(double)>& func1,
 	       const std::function<double(double)>& func2,

@@ -29,7 +29,8 @@ class Integrator1D;
 
 namespace numUtil {
 
-  constexpr double Inf = std::numeric_limits<double>::infinity();  
+  constexpr double Inf = std::numeric_limits<double>::infinity();
+  constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
   constexpr double dtol = 1e-10;
 
   // Compare two doubles within the tolerance in dTol

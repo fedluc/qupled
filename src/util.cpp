@@ -481,7 +481,7 @@ namespace thermoUtil {
     const Interpolator1D itp(wvg, ssf);
     const int nr = r.size();
     vector<double> rdf(nr);
-    Integrator1D itg(IntegratorType::CQUAD, 1.0e-6);
+    Integrator1D itg(IntegratorType::DEFAULT, 1.0e-6);
     Integrator1D itgf(IntegratorType::FOURIER, 1.0e-6);
     for (int i=0; i<nr; ++i){
       const Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf);

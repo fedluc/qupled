@@ -226,112 +226,96 @@ void SecantSolver::solve(const function<double(double)>& func,
 // -----------------------------------------------------------------
 
 // Constructor
-Integrator1D::Integrator1D(const IntegratorType& type_,
-			   const double& relErr) : type(type_) {
+Integrator1D::Integrator1D(const IntegratorType& type,
+			   const double& relErr) {
   switch (type) {
-  case CQUAD:
-    cquad = make_unique<IntegratorCQUAD>(relErr); break;
-  case FOURIER:
-    fourier = make_unique<IntegratorQAWO>(relErr); break;
-  case SINGULAR:
-    singular = make_unique<IntegratorQAGS>(relErr); break;
+  case IntegratorType::DEFAULT:
+    gslIntegrator = make_unique<CQUAD>(relErr); break;
+  case IntegratorType::FOURIER:
+    gslIntegrator = make_unique<QAWO>(relErr); break;
+  case IntegratorType::SINGULAR:
+    gslIntegrator = make_unique<QAGS>(relErr); break;
   default:
     MPI::throwError("Invalid integrator type");
-  }
-}
-
-Integrator1D::Integrator1D(const Integrator1D& other) : type(other.type) {
-  switch (type) {
-  case CQUAD:
-    cquad = make_unique<IntegratorCQUAD>(*other.cquad.get()); break;
-  case FOURIER:
-    fourier = make_unique<IntegratorQAWO>(*other.fourier.get()); break;   
-  case SINGULAR:
-    singular = make_unique<IntegratorQAGS>(*other.singular.get()); break; 
   }
 }
 
 // Compute integral
 void Integrator1D::compute(const std::function<double(double)>& func,
 			   const IntegratorParam& param) const {
-  switch (type) {
-  case CQUAD:
-    cquad->compute(func, param.xMin, param.xMax); break;
-  case FOURIER:
-    fourier->compute(func, param.fourierR); break;
-  case SINGULAR:
-    singular->compute(func, param.xMin, param.xMax); break;
-  }
+  gslIntegrator->compute(func, param);
 }
 
 // Getters
 double Integrator1D::getSolution() const {
-  switch (type) {
-  case CQUAD:
-    return cquad->getSolution();
-  case FOURIER:
-    return fourier->getSolution();
-  case SINGULAR:
-    return singular->getSolution();
-  }
+  return gslIntegrator->getSolution();
 }
 
 // -----------------------------------------------------------------
-// IntegratorCQUAD class
+// Integrator1D::CQUAD class
 // -----------------------------------------------------------------
 
 // Constructor
-IntegratorCQUAD::IntegratorCQUAD(const double &relErr_) : IntegratorBase(100, relErr_){
+Integrator1D::CQUAD::CQUAD(const double &relErr_) : Integrator1D::Base(IntegratorType::DEFAULT,
+								       100, relErr_){
   callGSLAlloc(wsp, gsl_integration_cquad_workspace_alloc, limit);
 }
 
 // Destructor
-IntegratorCQUAD::~IntegratorCQUAD(){
+Integrator1D::CQUAD::~CQUAD(){
   gsl_integration_cquad_workspace_free(wsp);
 }
 
 // Compute integral
-void IntegratorCQUAD::compute(const function<double(double)>& func,
-			      const double& xMin,
-			      const double& xMax){
+void Integrator1D::CQUAD::compute(const function<double(double)>& func,
+				  const IntegratorParam& param){
+  // Check parameter validity
+  if (isnan(param.xMin) || isnan(param.xMax)) {
+    MPI::throwError("Integration limits were not set correctly");
+  }
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
   // Integrate
   callGSLFunction(gsl_integration_cquad,
-		  F, xMin, xMax, 
+		  F, param.xMin, param.xMax, 
 		  0.0, relErr, 
 		  wsp, &sol,
 		  &err, &nEvals);
 }
 
 // -----------------------------------------------------------------
-// IntegratorQAWO class
+// Integrator1D::QAWO class
 // -----------------------------------------------------------------
 
 // Constructor
-IntegratorQAWO::IntegratorQAWO(const double& relErr_) : IntegratorBase(1000, relErr_){
+Integrator1D::QAWO::QAWO(const double& relErr_) : Integrator1D::Base(IntegratorType::FOURIER,
+								     1000, relErr_){
   callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
   callGSLAlloc(wspc, gsl_integration_workspace_alloc, limit);
   callGSLAlloc(qtab, gsl_integration_qawo_table_alloc, 0.0, 1.0, GSL_INTEG_SINE, limit);
 }
 
 // Destructor
-IntegratorQAWO:: ~IntegratorQAWO(){
+Integrator1D::QAWO:: ~QAWO(){
   gsl_integration_workspace_free(wsp);
   gsl_integration_workspace_free(wspc); 
   gsl_integration_qawo_table_free(qtab);
 }
 
 // Compute integral
-void IntegratorQAWO::compute(const function<double(double)>& func,
-				   const double& r){
+void Integrator1D::QAWO::compute(const function<double(double)>& func,
+				 const IntegratorParam& param){
+  // Check parameter validity
+  if (isnan(param.fourierR)) {
+    MPI::throwError("Integration parameters were not set correctly");
+  }
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
   // Set wave-vector
   callGSLFunction(gsl_integration_qawo_table_set,
-		  qtab, r, 1.0, GSL_INTEG_SINE);
+		  qtab, param.fourierR, 1.0, GSL_INTEG_SINE);
   // Integrate
   callGSLFunction(gsl_integration_qawf,
 		  F, 0.0, relErr, 
@@ -341,29 +325,33 @@ void IntegratorQAWO::compute(const function<double(double)>& func,
 
 
 // -----------------------------------------------------------------
-// IntegratorQAGS class
+// Integrator1D::QAGS class
 // -----------------------------------------------------------------
 
 // Constructor
-IntegratorQAGS::IntegratorQAGS(const double &relErr_) : IntegratorBase(1000, relErr_) {
+Integrator1D::QAGS::QAGS(const double &relErr_) : Integrator1D::Base(IntegratorType::SINGULAR,
+								     1000, relErr_) {
   callGSLAlloc(wsp, gsl_integration_workspace_alloc, limit);
 }
 
 // Destructor
-IntegratorQAGS::~IntegratorQAGS(){
+Integrator1D::QAGS::~QAGS(){
   gsl_integration_workspace_free(wsp);
 }
 
 // Compute integral
-void IntegratorQAGS::compute(const function<double(double)>& func,
-			     const double& xMin,
-			     const double& xMax){
+void Integrator1D::QAGS::compute(const function<double(double)>& func,
+				 const IntegratorParam& param){
+   // Check parameter validity
+  if (isnan(param.xMin) || isnan(param.xMax)) {
+    MPI::throwError("Integration limits were not set correctly");
+  }
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function*>(&Fp);
   // Integrate
   callGSLFunction(gsl_integration_qags,
-		  F, xMin, xMax,
+		  F, param.xMin, param.xMax,
 		  0.0, relErr, limit, wsp,
 		  &sol, &err);
 }

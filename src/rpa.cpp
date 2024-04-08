@@ -12,7 +12,7 @@ using namespace parallelUtil;
 Rpa::Rpa(const RpaInput &in_,
 	 const bool verbose_) : in(in_),
 				verbose(verbose_ && MPI::isRoot()),
-				itg(IntegratorType::CQUAD, in_.getIntError()) {
+				itg(IntegratorType::DEFAULT, in_.getIntError()) {
   // Assemble the wave-vector grid
   buildWvGrid();
   // Allocate arrays to the correct size
