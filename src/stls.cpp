@@ -97,7 +97,7 @@ void Stls::computeSlfcIet() {
 // Compute bridge function
 void Stls::computeBf() {
   const size_t nx = wvg.size();
-  IntegratorQAWO itgF(1e-10);
+  Integrator1D itgF(IntegratorType::FOURIER, 1e-10);
   assert(bf.size() == nx);
   for (size_t i=0; i<nx; ++i){ 
     BridgeFunction bfTmp(in.getTheory(), in.getIETMapping(),
@@ -387,7 +387,7 @@ double BridgeFunction::ioi() const {
 double BridgeFunction::lct() const {
   const double Gamma = couplingParameter();
   auto func = [&](const double& r)->double{return lctIntegrand(r,Gamma);};
-  itg.compute(func, x/lambda);
+  itg.compute(func, IntegratorParam{0.0, 0.0, x/lambda});
   return itg.getSolution() * (x/lambda) / Gamma;
   return 0.0;
 }
