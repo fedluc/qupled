@@ -32,7 +32,7 @@ qvsstls = qpq.QVSStls(rs = 1.0,
                       threads = 8,
                       fixed="adr_fixed_theta1.000_matsubara32.bin")
 
-# Solve the QSTLS scheme
+# Solve the QVSSTLS scheme
 qvsstls.compute()
 
 # Setup a new QVSStls simulation for rs=2.0 and theta=1.0
