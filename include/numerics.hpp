@@ -329,7 +329,8 @@ public:
   // Constructors
   Integrator1D(const IntegratorType& type_,
 	       const double& relErr);
-  Integrator1D() : Integrator1D(IntegratorType::CQUAD, 1.0e-5) { ; }
+  Integrator1D(const double& relErr) : Integrator1D(IntegratorType::CQUAD, relErr) { ; }
+  // Integrator1D() : Integrator1D(1.0e-5) { ; }
   Integrator1D(const Integrator1D& other);
   // Compute integral
   void compute(const std::function<double(double)>& func,
@@ -357,9 +358,13 @@ private:
 public:
 
   // Constructors
-  Integrator2D(const double &relErr) : itg1(IntegratorType::CQUAD, relErr),
-				       itg2(IntegratorType::CQUAD, relErr) { ; }
-  Integrator2D() : Integrator2D(1.0e-5) { ; };
+  Integrator2D(const IntegratorType& type1,
+	       const IntegratorType& type2,
+	       const double& relErr) : itg1(type1, relErr),
+				       itg2(type2, relErr) { ; }
+  Integrator2D(const IntegratorType& type,
+	       const double& relErr) : Integrator2D(type, type, relErr) { ; }
+  Integrator2D(const double& relErr) : Integrator2D(IntegratorType::CQUAD, relErr) { ; }
   // Compute integral
   void compute(const std::function<double(double)>& func1,
 	       const std::function<double(double)>& func2,
@@ -378,47 +383,6 @@ public:
   // Getters
   double getX() const { return x; };
   double getSolution() const { return sol; };
-};
-
-// --- Integrator for 2D integrals with known singularities ---
-class Integrator2DQAGS {
-
-private:
-
-  // Level 1 integrator (outermost integral)
-  Integrator1D itg1;
-  // Level 2 integrator
-  Integrator1D itg2;
-  // Temporary variable for level 2 integration
-  double x;
-  // Solution
-  double sol;
-
-public:
-  
-  // Constructors
-  Integrator2DQAGS(const double &relErr) : itg1(IntegratorType::SINGULAR, relErr),
-					   itg2(IntegratorType::CQUAD, relErr) { ; }
-  Integrator2DQAGS() : Integrator2DQAGS(1.0e-5) { ; };
-  // Compute integral
-  void compute(const std::function<double(double)>& func1,
-	       const std::function<double(double)>& func2,
-	       const double& xMin,
-	       const double& xMax,
-	       const std::function<double(double)>& yMin,
-	       const std::function<double(double)>& yMax,
-	       const std::vector<double>& xGrid);
-  void compute(const std::function<double(double)>& func1,
-	       const std::function<double(double)>& func2,
-	       const double& xMin,
-	       const double& xMax,
-	       const double& yMin,
-	       const double& yMax,
-	       const std::vector<double>& xGrid);
-  // Getters
-  double getX() const { return x; };
-  double getSolution() const { return sol; };
-  
 };
 
 

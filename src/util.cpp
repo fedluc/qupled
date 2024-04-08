@@ -448,7 +448,7 @@ namespace thermoUtil {
 			       const vector<double> &ssf,
 			       const double &coupling) {
     const Interpolator1D itp(wvg, ssf);
-    Integrator1D itg;
+    Integrator1D itg(1.0e-6);
     const InternalEnergy uInt(coupling, wvg.front(), wvg.back(), itp, itg);
     return uInt.get();
   }
@@ -469,7 +469,7 @@ namespace thermoUtil {
 			  " for the current grid, the free energy cannot be computed");
     }
     const Interpolator1D itp(grid, rsu);
-    Integrator1D itg;
+    Integrator1D itg(1.0e-6);
     const FreeEnergy freeEnergy(coupling, itp, itg, normalize);
     return freeEnergy.get();
   }

@@ -258,7 +258,7 @@ void Qstls::computeAdrFixed() {
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   // Parallel for loop (Hybrid MPI and OpenMP)
   auto loopFunc = [&](int i)->void{
-    Integrator2D itg2;
+    Integrator2D itg2(in.getIntError());
     AdrFixed adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
 		    wvg[i], mu, itgGrid, itg2);
     adrTmp.get(wvg, adrFixed);
@@ -372,7 +372,7 @@ void Qstls::computeAdrIet() {
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   Vector2D adrIet(nx, nl);
   auto loopFunc = [&](int i)->void{
-    Integrator2D itgPrivate;
+    Integrator2D itgPrivate(in.getIntError());
     Vector3D adrFixedPrivate;
     readAdrFixedFile(adrFixedPrivate, adrFixedIetFileInfo.at(i).first, true);
     AdrIet adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
@@ -405,7 +405,7 @@ void Qstls::computeAdrFixedIet() {
   MPI::barrier();  
   // Write necessary files
   auto loopFunc = [&](int i)->void{
-    Integrator1D itgPrivate;
+    Integrator1D itgPrivate(in.getIntError());
     Vector3D res(nl, nx, nx);
     AdrFixedIet adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(),
 		       wvg[idx[i]], mu, itgPrivate);
