@@ -241,7 +241,7 @@ double QStlsCSR::getQAdder() const {
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const Interpolator1D ssfItp(wvg, ssf);
-  QAdder QTmp(in.getCoupling(), in.getDegeneracy(), mu, wvg.front(), wvg.back(), 
+  QAdder QTmp(in.getDegeneracy(), mu, wvg.front(), wvg.back(), 
               itgGrid, itg1, itg2, ssfItp); 
   return QTmp.get();
 }
