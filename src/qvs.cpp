@@ -87,23 +87,24 @@ int QStructProp::compute() {
       auto& c = csr[i];
       // If there was no fixed file specified in input
       if (in.getFixed().empty() && i % 3 == 0){
-      // Initialize the csr objects with theta-dtheta, theta, theta+dtheta in order 
-      // to compute adrFixed if no file was specified in input.
-      c.init();
-      // If file was specified read corresponding adrFixed from file 
-      } else { 
+        // Initialize the csr objects with theta-dtheta, theta, theta+dtheta in order 
+        // to compute adrFixed if no file was specified in input.
+        c.init();
+        // If file was specified read corresponding adrFixed from file 
+      } 
+      else { 
         const string fileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
-				    in.getDegeneracy(),
-					  in.getNMatsubara());
+                                            in.getDegeneracy(),
+                                            in.getNMatsubara());
         // Compute ssfHF 
         c.Rpa::computeChemicalPotential();
         c.Rpa::computeIdr();
         c.Rpa::computeSsfHF();
         // Read adrFixed from file
         c.readAdrFixedFile(c.adrFixed, fileName, false);
-        }
       }
-	  csrIsInitialized = true;
+    }
+    csrIsInitialized = true;
     }
     doIterations();
     computed = true;
