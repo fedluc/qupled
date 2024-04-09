@@ -9,7 +9,7 @@
 #include "util.hpp"
 
 using namespace std;
-using ItgLimits = Integrator1D::Param::Limits;
+using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
 
 namespace numUtil {
@@ -506,7 +506,7 @@ namespace thermoUtil {
 
   double InternalEnergy::get() const  {
     auto func = [&](const double& y)->double{return integrand(y);};
-    itg.compute(func, ItgLimits{yMin, yMax});
+    itg.compute(func, ItgParam(yMin, yMax));
     return itg.getSolution()/(M_PI * rs * lambda);
   }
 
@@ -516,7 +516,7 @@ namespace thermoUtil {
   
   double FreeEnergy::get() const  {
     auto func = [&](const double& y)->double{return rsui.eval(y);};
-    itg.compute(func, ItgLimits{0.0, rs});
+    itg.compute(func, ItgParam(0.0, rs));
     if (normalize) { return (rs == 0.0) ? -numUtil::Inf : itg.getSolution()/rs/rs; };
     return itg.getSolution();
   }
@@ -538,11 +538,11 @@ namespace thermoUtil {
   double Rdf::get() const {
     auto func = [&](const double& y)->double{return integrand(y);};
     if (r == 0) {
-      itg.compute(func, ItgLimits{0.0, cutoff});
+      itg.compute(func, ItgParam(0.0, cutoff));
       return 1 + 1.5 * itg.getSolution();
     }
     else {
-      itgf.compute(func, r);
+      itgf.compute(func, ItgParam(r));
       return 1 + 1.5 * itgf.getSolution()/r;
     }
   }

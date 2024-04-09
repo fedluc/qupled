@@ -270,7 +270,7 @@ Integrator1D::CQUAD::~CQUAD(){
 void Integrator1D::CQUAD::compute(const function<double(double)>& func,
 				  const Param& param){
   // Check parameter validity
-  if (isnan(param.limits.first) || isnan(param.limits.second)) {
+  if (isnan(param.xMin) || isnan(param.xMax)) {
     MPI::throwError("Integration limits were not set correctly");
   }
   // Set up function
@@ -278,10 +278,8 @@ void Integrator1D::CQUAD::compute(const function<double(double)>& func,
   F = static_cast<gsl_function*>(&Fp);
   // Integrate
   callGSLFunction(gsl_integration_cquad,
-		  F, param.limits.first,
-		  param.limits.second, 
-		  0.0, relErr, 
-		  wsp, &sol,
+		  F, param.xMin, param.xMax, 
+		  0.0, relErr, wsp, &sol,
 		  &err, &nEvals);
 }
 
@@ -344,7 +342,7 @@ Integrator1D::QAGS::~QAGS(){
 void Integrator1D::QAGS::compute(const function<double(double)>& func,
 				 const Param& param){
    // Check parameter validity
-  if (isnan(param.limits.first) || isnan(param.limits.second)) {
+  if (isnan(param.xMin) || isnan(param.xMax)) {
     MPI::throwError("Integration limits were not set correctly");
   }
   // Set up function
@@ -352,8 +350,7 @@ void Integrator1D::QAGS::compute(const function<double(double)>& func,
   F = static_cast<gsl_function*>(&Fp);
   // Integrate
   callGSLFunction(gsl_integration_qags,
-		  F, param.limits.first,
-		  param.limits.second,
+		  F, param.xMin, param.xMax,
 		  0.0, relErr, limit, wsp,
 		  &sol, &err);
 }
@@ -365,10 +362,7 @@ void Integrator1D::QAGS::compute(const function<double(double)>& func,
 // Compute integral
 void Integrator2D::compute(const function<double(double)>& func1,
 			   const function<double(double)>& func2,
-			   const double& xMin,
-			   const double& xMax,
-			   const function<double(double)>& yMin,
-			   const function<double(double)>& yMax,
+			   const Param& param,
 			   const vector<double>& xGrid){
   const int nx = xGrid.size();
   function<double(double)> func;
@@ -378,7 +372,7 @@ void Integrator2D::compute(const function<double(double)>& func1,
     vector<double> sol2(nx);
     for (int i = 0; i < nx; ++i) {
       x = xGrid[i];
-      itg2.compute(func2, Limits{yMin(x), yMax(x)});
+      itg2.compute(func2, Param1D(param.yMin(x), param.yMax(x)));
       sol2[i] = itg2.getSolution();
     }
     itp.reset(xGrid[0], sol2[0], nx);
@@ -390,25 +384,11 @@ void Integrator2D::compute(const function<double(double)>& func1,
     // Level 2 integration (evaluated at arbitrary points) 
     func = [&](const double& x_)->double {
       x = x_;
-      itg2.compute(func2, Limits{yMin(x_), yMax(x_)});
+      itg2.compute(func2, Param1D(param.yMin(x_), param.yMax(x_)));
       return func1(x_) * itg2.getSolution();
     };
   }
   // Level 1 integration
-  itg1.compute(func, Limits{xMin, xMax});
+  itg1.compute(func, Param1D(param.xMin, param.xMax));
   sol = itg1.getSolution();
-}
-
-
-void Integrator2D::compute(const function<double(double)>& func1,
-			   const function<double(double)>& func2,
-			   const double& xMin,
-			   const double& xMax,
-			   const double& yMin,
-			   const double& yMax,
-			   const vector<double>& xGrid){
-  // Wrappers around yMin and yMax to avoid compiler warnings
-  auto yMinTmp = [&](const double& x){(void)(x); return yMin; };
-  auto yMaxTmp = [&](const double& x){(void)(x); return yMax; };
-  compute(func1, func2, xMin, xMax, yMinTmp, yMaxTmp, xGrid);
 }

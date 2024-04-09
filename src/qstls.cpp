@@ -10,7 +10,8 @@ using namespace std;
 using namespace vecUtil;
 using namespace binUtil;
 using namespace parallelUtil;
-using ItgLimits = Integrator1D::Param::Limits;
+using ItgParam = Integrator1D::Param;
+using Itg2DParam = Integrator2D::Param;
 
 // -----------------------------------------------------------------
 // QSTLS class
@@ -565,11 +566,11 @@ void Adr::get(const vector<double> &wvg,
     res.fill(ix, 0.0);
     return;
   }
-  const auto itgLimits = ItgLimits{yMin, yMax};
+  const auto itgParam = ItgParam(yMin, yMax);
   for (int l = 0; l < nl; ++l){
     fixi.reset(wvg[0], fixed(ix,l), nx);
     auto func = [&](const double& y)->double{return integrand(y);};
-    itg.compute(func, itgLimits);
+    itg.compute(func, itgParam);
     res(ix, l) = itg.getSolution();
     res(ix, l) *= (l==0) ? isc0 : isc;
   }
@@ -596,7 +597,7 @@ void AdrFixed::get(vector<double> &wvg,
       auto tMax = x2 + xq;
       auto func1 = [&](const double& q)->double{return integrand1(q, l);};
       auto func2 = [&](const double& t)->double{return integrand2(t, wvg[i], l);};
-      itg.compute(func1, func2, qMin, qMax, tMin, tMax, itgGrid);
+      itg.compute(func1, func2, Itg2DParam(qMin, qMax, tMin, tMax), itgGrid);
       res(ix, l, i) = itg.getSolution();
     }
   }
@@ -689,7 +690,7 @@ void AdrIet::get(const vector<double> &wvg,
     auto yMax = [&](const double& q)->double{return min(qMax, q + x);};
     auto func1 = [&](const double& q)->double{return integrand1(q, l);};
     auto func2 = [&](const double& y)->double{return integrand2(y);};
-    itg.compute(func1, func2, qMin, qMax, yMin, yMax, itgGrid);
+    itg.compute(func1, func2, Itg2DParam(qMin, qMax, yMin, yMax), itgGrid);
     res(ix, l) = itg.getSolution();
     res(ix, l) *= (l == 0) ? isc0 : isc;
   }
@@ -708,7 +709,7 @@ void AdrFixedIet::get(vector<double> &wvg,
   }
   const int nx = wvg.size();
   const int nl = res.size(0);
-  const auto itgLimits = ItgLimits{tMin, tMax};
+  const auto itgParam = ItgParam(tMin, tMax);
   for (int l = 0; l < nl; ++l){
     for (int i = 0; i < nx; ++i) {
       if (wvg[i] == 0.0) {
@@ -719,7 +720,7 @@ void AdrFixedIet::get(vector<double> &wvg,
 	auto func = [&](const double& t)->double{
 	  return integrand(t, wvg[j], wvg[i], l);
 	};
-	itg.compute(func, itgLimits);
+	itg.compute(func, itgParam);
 	res(l,i,j) = itg.getSolution();
       }  
     }

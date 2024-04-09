@@ -7,7 +7,7 @@
 using namespace std;
 using namespace thermoUtil;
 using namespace parallelUtil;
-using ItgLimits = Integrator1D::Param::Limits;
+using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
 
 // Constructor
@@ -246,12 +246,12 @@ double Idr::integrand(const double& y) const {
 vector<double> Idr::get() const {
   assert(Theta > 0.0);
   vector<double> res(nl);
-  const auto itgLimits = ItgLimits{yMin, yMax};
+  const auto itgParam = ItgParam(yMin, yMax);
   for (int l=0; l<nl; ++l){
     auto func = [&](const double& y)->double{
       return (l == 0) ? integrand(y) : integrand(y,l);
     };
-    itg.compute(func, itgLimits);
+    itg.compute(func, itgParam);
     res[l] = itg.getSolution();
   }
   return res;
@@ -355,7 +355,7 @@ double SsfHF::integrand(const double& y) const {
 double SsfHF::get() const {
   assert(Theta > 0.0);
   auto func = [&](const double& y)->double{return integrand(y);};
-  itg.compute(func, ItgLimits{yMin, yMax});
+  itg.compute(func, ItgParam(yMin, yMax));
   return 1.0 + itg.getSolution();
 }
 
@@ -404,7 +404,7 @@ double SsfGround::get() const {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double& y)->double{return integrand(y);};
-  itg.compute(func, ItgLimits{yMin, yMax});
+  itg.compute(func, ItgParam(yMin, yMax));
   double ssfP;
   ssfP = plasmon();
   return ssfHF + itg.getSolution() + ssfP;

@@ -8,7 +8,8 @@
 
 using namespace std;
 using namespace vecUtil;
-using ItgLimits = Integrator1D::Param::Limits;
+using ItgParam = Integrator1D::Param;
+using Itg2DParam = Integrator2D::Param;
 using ItgType = Integrator1D::Type;
 
 // -----------------------------------------------------------------
@@ -305,7 +306,7 @@ double QAdder::integrandNumerator2(const double w) const {
 // Denominator integral
 void QAdder::getIntDenominator(double &res) const {
   auto func = [&](double y)->double{return integrandDenominator(y);};
-  itg1.compute(func, limits);
+  itg1.compute(func, ItgParam(limits.first, limits.second));
   res = itg1.getSolution();
 }
 
@@ -315,7 +316,7 @@ double QAdder::get() const {
   getIntDenominator(Denominator);
   auto func1 = [&](const double& w)->double{return integrandNumerator2(w);};
   auto func2 = [&](const double& q)->double{return integrandNumerator1(q);};
-  itg2.compute(func1, func2, limits.first, limits.second,
-	       limits.first, limits.second, itgGrid);
+  itg2.compute(func1, func2, Itg2DParam(limits.first, limits.second,
+					limits.first, limits.second), itgGrid);
   return 12.0 / (M_PI * lambda) * itg2.getSolution()/Denominator;
 }

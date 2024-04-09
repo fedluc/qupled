@@ -211,11 +211,12 @@ public:
   
   class Param {
   public:
-    using Limits = std::pair<double, double>;
-    const Limits limits = Limits(numUtil::NaN, numUtil::NaN);
+    const double xMin = numUtil::NaN;
+    const double xMax = numUtil::NaN;
     const double fourierR = numUtil::NaN;
-    Param(const Limits& limits_) : limits(limits_) { ; }
-    Param(const double fourierR_) : fourierR(fourierR_) { ; }
+    Param(const double& xMin_,
+	  const double& xMax_) : xMin(xMin_), xMax(xMax_) { ; }
+    Param(const double& fourierR_) : fourierR(fourierR_) { ; }
   };
   
 private:
@@ -339,8 +340,7 @@ private:
 
   // Typedef
   using Type = Integrator1D::Type;
-  using Param = Integrator1D::Param;
-  using Limits = Param::Limits;
+  using Param1D = Integrator1D::Param;
   // Level 1 integrator (outermost integral)
   Integrator1D itg1;
   // Level 2 integrator
@@ -352,6 +352,31 @@ private:
   
 public:
 
+  // Typedef
+  class Param : public Param1D {
+  private:
+    const double yMinNum = numUtil::NaN;
+    const double yMaxNum = numUtil::NaN;
+  public:
+    using Func = std::function<double(double)>;
+    const Func yMin = [&](const double& x){(void)(x); return yMinNum; };
+    const Func yMax = [&](const double& x){(void)(x); return yMaxNum; };
+    const std::vector<double> xGrid;
+    Param(const double& xMin_,
+	  const double& xMax_,
+	  const Func& yMin_,
+	  const Func& yMax_)
+      : Integrator1D::Param(xMin_, xMax_),
+	yMin(yMin_), yMax(yMax_) { ; }
+    Param(const double& xMin_,
+	  const double& xMax_,
+	  const double& yMin_,
+	  const double& yMax_)
+      : Integrator1D::Param(xMin_, xMax_),
+	yMinNum(yMin_), yMaxNum(yMax_) { ; }
+    Param(const double& fourierR_) : Integrator1D::Param(fourierR_) { ; }
+  };
+  
   // Constructors
   Integrator2D(const Type& type1,
 	       const Type& type2,
@@ -363,21 +388,12 @@ public:
   // Compute integral
   void compute(const std::function<double(double)>& func1,
 	       const std::function<double(double)>& func2,
-	       const double& xMin,
-	       const double& xMax,
-	       const std::function<double(double)>& yMin,
-	       const std::function<double(double)>& yMax,
-	       const std::vector<double>& xGrid);
-  void compute(const std::function<double(double)>& func1,
-	       const std::function<double(double)>& func2,
-	       const double& xMin,
-	       const double& xMax,
-	       const double& yMin,
-	       const double& yMax,
+	       const Param& param,
 	       const std::vector<double>& xGrid);
   // Getters
   double getX() const { return x; };
   double getSolution() const { return sol; };
+  
 };
 
 

@@ -8,7 +8,8 @@ using namespace std;
 using namespace vecUtil;
 using namespace binUtil;
 using namespace parallelUtil;
-using ItgLimits = Integrator1D::Param::Limits;
+using ItgParam = Integrator1D::Param;
+using Itg2DParam = Integrator2D::Param;
 using ItgType = Integrator1D::Type;
 
 // -----------------------------------------------------------------
@@ -239,7 +240,7 @@ double SlfcBase::ssf(const double& y) const {
 // Get result of integration
 double Slfc::get() const {
   auto func = [&](const double& y)->double{return integrand(y);};
-  itg.compute(func, ItgLimits{yMin, yMax});
+  itg.compute(func, ItgParam(yMin, yMax));
   return itg.getSolution();
 }
 
@@ -278,7 +279,7 @@ double SlfcIet::get() const {
   auto wMax = [&](const double& y)->double{return min(yMax, x + y);};
   auto func1 = [&](const double& y)->double{return integrand1(y);};
   auto func2 = [&](const double& w)->double{return integrand2(w);};
-  itg.compute(func1, func2, yMin, yMax, wMin, wMax, itgGrid);
+  itg.compute(func1, func2, Itg2DParam(yMin, yMax, wMin, wMax), itgGrid);
   return 3.0/(8.0*x) * itg.getSolution() + bf(x);
 }
 
