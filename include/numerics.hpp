@@ -353,7 +353,7 @@ private:
 public:
 
   // Typedef
-  class Param : public Param1D {
+  class Param : public Integrator1D::Param {
   private:
     const double yMinNum = numUtil::NaN;
     const double yMaxNum = numUtil::NaN;

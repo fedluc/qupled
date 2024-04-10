@@ -367,12 +367,17 @@ void Integrator2D::compute(const function<double(double)>& func1,
   const int nx = xGrid.size();
   function<double(double)> func;
   Interpolator1D itp;
+  auto getParam1D = [&](const double& x) {
+    const bool isFourier = !isnan(param.fourierR);
+    if (isFourier) { return Param1D(param.fourierR); }
+    return Param1D(param.yMin(x), param.yMax(x));
+  };
   if (nx > 0) {
     // Level 2 integration (only evaluated at the points in xGrid)
     vector<double> sol2(nx);
     for (int i = 0; i < nx; ++i) {
       x = xGrid[i];
-      itg2.compute(func2, Param1D(param.yMin(x), param.yMax(x)));
+      itg2.compute(func2, getParam1D(x));
       sol2[i] = itg2.getSolution();
     }
     itp.reset(xGrid[0], sol2[0], nx);
@@ -384,11 +389,11 @@ void Integrator2D::compute(const function<double(double)>& func1,
     // Level 2 integration (evaluated at arbitrary points) 
     func = [&](const double& x_)->double {
       x = x_;
-      itg2.compute(func2, Param1D(param.yMin(x_), param.yMax(x_)));
+      itg2.compute(func2, getParam1D(x));
       return func1(x_) * itg2.getSolution();
     };
   }
   // Level 1 integration
-  itg1.compute(func, Param1D(param.xMin, param.xMax));
+  itg1.compute(func, param);
   sol = itg1.getSolution();
 }
