@@ -15,7 +15,7 @@ def qstls_iet_instance():
 
 
 def test_default(qstls_iet_instance):
-    issubclass(QstlsIet, Qstls)
+    assert issubclass(QstlsIet, Qstls)
     assert all(x == y for x, y in zip(qstls_iet_instance.allowedTheories, ["QSTLS-HNC",
                                                                            "QSTLS-IOI",
                                                                            "QSTLS-LCT"]))
@@ -145,9 +145,8 @@ def test_save(qstls_iet_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     qstls_iet_instance.scheme = qp.Qstls(qstls_iet_instance.inputs)
     qstls_iet_instance._setHdfFile()
-    adrFileName = "adr_fixed_rs%5.3f_theta%5.3f_%s.zip" % (qstls_iet_instance.inputs.coupling,
-                                                           qstls_iet_instance.inputs.degeneracy,
-                                                           qstls_iet_instance.inputs.theory)
+    adrFileName = "adr_fixed_theta%5.3f_matsubara%d.zip" % (qstls_iet_instance.inputs.degeneracy,
+                                                               qstls_iet_instance.inputs.matsubara)
     try:
         qstls_iet_instance._save()
         assert mockMPIIsRoot.call_count == 4

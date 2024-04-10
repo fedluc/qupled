@@ -6,7 +6,7 @@ import qupled.qupled as qp
 import qupled.quantum as qpq
 
 def test_qstls_properties():
-    issubclass(qp.Qstls, qp.Stls)
+    assert issubclass(qp.Qstls, qp.Stls)
     inputs = qpq.Qstls(1.0, 1.0).inputs
     scheme = qp.Qstls(inputs)
     assert hasattr(scheme, "adr")
@@ -34,7 +34,7 @@ def test_qstls_compute():
         assert os.path.isfile(scheme.recovery)
         assert scheme.rdf(scheme.wvg).size == nx
     finally:
-        fixedFile = "adr_fixed_rs1.000_theta1.000_QSTLS.bin"
+        fixedFile = "adr_fixed_theta1.000_matsubara32.bin"
         if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
         if (os.path.isfile(fixedFile)) : os.remove(fixedFile)
 

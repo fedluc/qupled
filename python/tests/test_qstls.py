@@ -13,7 +13,7 @@ def qstls_instance():
 
 
 def test_default(qstls_instance):
-    issubclass(Qstls, Stls)
+    assert issubclass(Qstls, Stls)
     assert all(x == y for x, y in zip(qstls_instance.allowedTheories, ["QSTLS"]))
     assert qstls_instance.inputs.coupling == 1.0
     assert qstls_instance.inputs.degeneracy == 1.0

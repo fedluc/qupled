@@ -420,11 +420,11 @@ void Qstls::getAdrFixedIetFileInfo() {
   adrFixedIetFileInfo.clear();
   for (int i=0; i<nx; ++i) {
     try {
-      string name = fmt::format("adr_fixed_rs{:.3f}_theta{:.3f}_{}_wv{:.5f}.bin",
-				in.getCoupling(),
-				in.getDegeneracy(),
-				in.getTheory(),
-				wvg[i]);
+      string name = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}_{}_wv{:.5f}.bin",
+				                        in.getDegeneracy(),
+				                        in.getNMatsubara(),
+				                        in.getTheory(),
+				                        wvg[i]);
       if (!in.getFixedIet().empty()) {
 	std::filesystem::path fullPath = in.getFixedIet();
 	fullPath /= name;

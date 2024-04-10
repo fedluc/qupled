@@ -7,8 +7,8 @@ qvsstls = qpq.QVSStls(0.1,
                       mixing = 0.5,
                       resolution = 0.1,
                       cutoff = 10,
-                      matsubara = 32,
-                      threads = 8)
+                      matsubara = 16,
+                      threads = 16)
 
 # Solves the QVSSTLS scheme for rs=0.1, theta=1.0 
 # If a fixed file isn't specified this will produce
@@ -17,20 +17,20 @@ qvsstls = qpq.QVSStls(0.1,
 qvsstls.compute()
 
 # Start a QVSStls simulation for rs=1.0 and theta=1.0
-qvsstls = qpq.QVSStls(rs = 1.0, 
-                      theta = 1.0,
+qvsstls = qpq.QVSStls(1.0, 
+                      1.0,
                       mixing = 0.5,
                       resolution = 0.1,
                       cutoff = 10,
-                      matsubara = 32,
+                      matsubara = 16,
                       couplingResolution = 0.1,
                       degeneracyResolution = 0.1,
                       alpha = [-0.2, 0.4],
                       errorIntegrals = 1e-5,
                       iterations = 100,
                       errorAlpha = 1e-3,
-                      threads = 8,
-                      fixed="adr_fixed_theta1.000_matsubara32.bin")
+                      threads = 16,
+                      fixed="adr_fixed_theta1.000_matsubara16.bin")
 
 # Solve the QVSSTLS scheme
 qvsstls.compute()
