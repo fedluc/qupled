@@ -262,9 +262,9 @@ class QstlsIet(Qstls):
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
         # Zip all files for the fixed component of the auxiliary density response
         if (self.inputs.fixediet == ""):
-            adrFileName = "adr_fixed_rs%5.3f_theta%5.3f_%s" % (self.inputs.coupling,
-                                                               self.inputs.degeneracy,
-                                                               self.inputs.theory)
+            adrFileName = "adr_fixed_theta%5.3f_matsubara%d_%s" % (self.inputs.degeneracy,
+                                                                   self.inputs.matsubara,
+                                                                   self.inputs.theory)
             with zf.ZipFile(adrFileName + ".zip", "w") as zipFile:
                 for adrFile in glob(adrFileName + "_wv*.bin"):
                     zipFile.write(adrFile)

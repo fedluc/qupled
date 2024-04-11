@@ -124,9 +124,9 @@ def test_print(stls_input_instance, capfd):
     assert "Number of Matsubara frequencies = 0" in captured
     assert "Wave-vector resolution = 0" in captured
     assert "Wave-vector cutoff = 0" in captured
-    assert "Iet mapping scheme = " in captured;
-    assert "Maximum number of iterations = 0" in captured;
-    assert "Minimum error for convergence = 0" in captured;
-    assert "Mixing parameter = 0" in captured;
-    assert "Output frequency = 0" in captured;
-    assert "File with recovery data = " in captured;
+    assert "Iet mapping scheme = " in captured
+    assert "Maximum number of iterations = 0" in captured
+    assert "Minimum error for convergence = 0" in captured
+    assert "Mixing parameter = 0" in captured
+    assert "Output frequency = 0" in captured
+    assert "File with recovery data = " in captured

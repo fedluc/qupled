@@ -5,7 +5,7 @@ import qupled.qupled as qp
 import qupled.classic as qpc
 
 def test_vsstls_properties():
-    issubclass(qp.VSStls, qp.Rpa)
+    assert issubclass(qp.VSStls, qp.Rpa)
     inputs = qpc.VSStls(1.0, 1.0).inputs
     scheme = qp.VSStls(inputs)
     assert hasattr(scheme, "freeEnergyIntegrand")

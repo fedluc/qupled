@@ -5,7 +5,7 @@ import qupled.qupled as qp
 import qupled.classic as qpc
                     
 def test_stls_properties():
-    issubclass(qp.Stls, qp.Rpa)
+    assert issubclass(qp.Stls, qp.Rpa)
     scheme = qp.Stls(qp.StlsInput())
     assert hasattr(scheme, "bf")
 

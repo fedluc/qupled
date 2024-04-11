@@ -45,6 +45,9 @@ def test_initialGuessStls(mocker):
     
 def test_solveQuantumSchemes(mocker):
     runExample("solveQuantumSchemes", mocker)
+
+def test_solveQVSStls(mocker):
+    runExample("solveQVSStls", mocker)
     
 def test_solveRpaAndESA(mocker):
     runExample("solveRpaAndESA", mocker)

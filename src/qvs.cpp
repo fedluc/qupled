@@ -3,8 +3,6 @@
 #include "input.hpp"
 #include "qvs.hpp"
 #include <fmt/core.h>
-#include <sstream> // Include for std::stringstream
-#include <iomanip> // Include for std::setprecision and std::fixed
 
 using namespace std;
 using namespace vecUtil;
@@ -87,11 +85,29 @@ vector<double> QThermoProp::getQData() const {
 int QStructProp::compute() {
   try {
     if (!csrIsInitialized) {
-      int counter = 0;
     for (size_t i = 0; i < csr.size(); ++i) {
-      computeBody(i, counter);
+      const auto& in = csr[i].in;
+      auto& c = csr[i];
+      // If there was no fixed file specified in input
+      if (in.getFixed().empty() && i % 3 == 0){
+        // Initialize the csr objects with theta-dtheta, theta, theta+dtheta in order 
+        // to compute adrFixed if no file was specified in input.
+        c.init();
+        // If file was specified read corresponding adrFixed from file 
+      } 
+      else { 
+        const string fileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
+                                            in.getDegeneracy(),
+                                            in.getNMatsubara());
+        // Compute ssfHF 
+        c.Rpa::computeChemicalPotential();
+        c.Rpa::computeIdr();
+        c.Rpa::computeSsfHF();
+        // Read adrFixed from file
+        c.readAdrFixedFile(c.adrFixed, fileName, false);
+      }
     }
-	  csrIsInitialized = true;
+    csrIsInitialized = true;
     }
     doIterations();
     computed = true;
@@ -103,43 +119,6 @@ int QStructProp::compute() {
   }
 }
 
-void QStructProp::computeBody(int i, int counter) {
-  const auto& in = csr[i].in;
-  auto& c = csr[i];
-  // If there was no fixed file specified in input
-  if (in.getFixed().empty() && i % 3 == 0){
-    // Initialize the csr objects with theta-dtheta, theta, theta+dtheta in order 
-    // to compute adrFixed if no file was specified in input.
-    c.init();
-    switch (counter % 3) { 
-      case 0:
-        cout << "theta - dtheta auxiliary density response"
-             << " fixed component stored in file" << endl;
-        break;
-      case 1:
-        cout << "theta fixed auxiliary density response" 
-             << " component stored in file"<< endl;
-        break;
-      case 2:
-        cout << "theta + dtheta auxiliary density response" 
-             << " fixed component stored in file" << endl;
-        break;
-    }
-    counter++;
-    // If file was specified read corresponding adrFixed from file 
-    } else { 
-        const string fileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
-					  in.getDegeneracy(),
-					  in.getNMatsubara());
-        // Compute ssfHF 
-        c.Rpa::computeChemicalPotential();
-        c.Rpa::computeIdr();
-        c.Rpa::computeSsfHF();
-        // Read adrFixed from file
-        c.readAdrFixedFile(c.adrFixed, fileName, false);
-      }
-}
-  
 void QStructProp::doIterations() {
   const auto& in = csr[0].in;
   const int maxIter = in.getNIter();
@@ -267,7 +246,7 @@ double QStlsCSR::getQAdder() const {
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const Interpolator1D ssfItp(wvg, ssf);
-  QAdder QTmp(in.getCoupling(), in.getDegeneracy(), mu, wvg.front(), wvg.back(), 
+  QAdder QTmp(in.getDegeneracy(), mu, wvg.front(), wvg.back(), 
               itgGrid, itg1, itg2, ssfItp); 
   return QTmp.get();
 }
