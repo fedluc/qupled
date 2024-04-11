@@ -17,7 +17,7 @@ using namespace parallelUtil;
 
 Qstls::Qstls(const QstlsInput& in_) : Stls(in_),
 				      in(in_) {
-    // Throw error message for ground state calculations
+  // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
     MPI::throwError("Ground state calculations are not available "
 		    "for the quantum schemes");
@@ -190,11 +190,6 @@ void Qstls::initialGuessAdr(const vector<double> &wvg_,
 // Compute auxiliary density response
 void Qstls::computeAdr() {
   const int nx = wvg.size();
-  if (in.getCoupling() == 0) {
-    fill(slfc, 0.0);
-    adr.fill(0.0);
-    return;
-  }
   const Interpolator1D ssfi(wvg, ssfOld);
   for (int i=0; i<nx; ++i) {
     Adr adrTmp(in.getDegeneracy(), wvg.front(),
@@ -271,9 +266,9 @@ void Qstls::computeAdrFixed() {
   // Write result to output file
   if (MPI::isRoot()) {
     try {
-      const string fileName = fmt::format("adr_fixed_rs{:.3f}_theta{:.3f}_QSTLS.bin",
-					  in.getCoupling(),
-					  in.getDegeneracy());
+      const string fileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
+					  in.getDegeneracy(),
+					  in.getNMatsubara());
       writeAdrFixedFile(adrFixed, fileName);
     }
     catch (...) {
@@ -425,11 +420,11 @@ void Qstls::getAdrFixedIetFileInfo() {
   adrFixedIetFileInfo.clear();
   for (int i=0; i<nx; ++i) {
     try {
-      string name = fmt::format("adr_fixed_rs{:.3f}_theta{:.3f}_{}_wv{:.5f}.bin",
-				in.getCoupling(),
-				in.getDegeneracy(),
-				in.getTheory(),
-				wvg[i]);
+      string name = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}_{}_wv{:.5f}.bin",
+				                        in.getDegeneracy(),
+				                        in.getNMatsubara(),
+				                        in.getTheory(),
+				                        wvg[i]);
       if (!in.getFixedIet().empty()) {
 	std::filesystem::path fullPath = in.getFixedIet();
 	fullPath /= name;

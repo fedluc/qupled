@@ -14,8 +14,8 @@ qstls.compute()
 uInt1 = qstls.computeInternalEnergy()
 
 # Pass in input the fixed component of the auxiliary density response
-qstls.inputs.fixed = "adr_fixed_rs30.000_theta1.000_QSTLS.bin"
-qstls.inputs.fixediet = "adr_fixed_rs30.000_theta1.000_QSTLS-HNC.zip"
+qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
+qstls.inputs.fixediet = "adr_fixed_theta1.000_matsubara16_QSTLS-HNC.zip"
 
 # Repeat the calculation and recompute the internal energy (v2 calculation)
 qstls.compute()

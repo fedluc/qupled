@@ -165,6 +165,29 @@ BOOST_PYTHON_MODULE(qupled)
     .def("print", &QstlsInput::print)
     .def("isEqual", &QstlsInput::isEqual);
 
+// Class for the input of the QVSStls scheme
+  bp::class_<QVSStlsInput, bp::bases<QstlsInput>>("QVSStlsInput")
+    .add_property("errorAlpha",
+		  &QVSStlsInput::getErrMinAlpha,
+		  &QVSStlsInput::setErrMinAlpha)
+    .add_property("iterationsAlpha",
+		  &QVSStlsInput::getNIterAlpha,
+		  &QVSStlsInput::setNIterAlpha)
+    .add_property("alpha",
+		  &PyQVSStlsInput::getAlphaGuess,
+		  &PyQVSStlsInput::setAlphaGuess)
+    .add_property("couplingResolution",
+		  &QVSStlsInput::getCouplingResolution,
+		  &QVSStlsInput::setCouplingResolution)
+    .add_property("degeneracyResolution",
+		  &QVSStlsInput::getDegeneracyResolution,
+		  &QVSStlsInput::setDegeneracyResolution)
+    .add_property("freeEnergyIntegrand",
+		  &QVSStlsInput::getFreeEnergyIntegrand,
+		  &QVSStlsInput::setFreeEnergyIntegrand)
+    .def("print", &QVSStlsInput::print)
+    .def("isEqual", &QVSStlsInput::isEqual);
+
   // Class to solve the classical RPA scheme
   bp::class_<Rpa>("Rpa",
 		  bp::init<const RpaInput>())
@@ -191,7 +214,7 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("error", &PyStls::getError)
     .add_property("bf", &PyStls::getBf);
 
-  // Class to solve the classical vs scheme
+  // Class to solve the classical VS scheme
   bp::class_<VSStls, bp::bases<Rpa>>("VSStls",
 				     bp::init<const VSStlsInput>())
     .def("compute", &PyVSStls::compute)
@@ -206,6 +229,15 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("error", &PyQstls::getError)
     .add_property("adr", &PyQstls::getAdr);
 
+  // Class to solve the quantum VS scheme
+  bp::class_<QVSStls, bp::bases<Rpa>>("QVSStls",
+             bp::init<const QVSStlsInput>())
+    .def("compute", &PyQVSStls::compute)
+    .add_property("error", &PyQVSStls::getError)
+    .add_property("freeEnergyIntegrand", &PyQVSStls::getFreeEnergyIntegrand)
+    .add_property("freeEnergyGrid", &PyQVSStls::getFreeEnergyGrid)
+    .add_property("adr", &PyQVSStls::getAdr);
+
   // Post-process methods
   bp::def("computeRdf", &PyThermo::computeRdf);
   bp::def("computeInternalEnergy", &PyThermo::computeInternalEnergy);
@@ -213,3 +245,4 @@ BOOST_PYTHON_MODULE(qupled)
 
   
 }
+

@@ -1,12 +1,12 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 
+#include <limits>
 #include <memory>
 #include <functional>
 #include <fstream>
 #include <vector>
 #include <iostream>
-#include <limits>
 #include <cmath>
 
 // Forward declarations
@@ -220,7 +220,7 @@ namespace thermoUtil {
   double computeFreeEnergy(const std::vector<double> &grid,
 			   const std::vector<double> &rsu,
 			   const double &coupling);
-
+  
   double computeFreeEnergy(const std::vector<double> &grid,
 			   const std::vector<double> &rsu,
 			   const double &coupling,

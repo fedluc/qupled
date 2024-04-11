@@ -109,6 +109,10 @@ class QstlsInput(StlsInput):
         """ name of the zip file storing the fixed components of the auxiliary density
 	response in the QSTLS-IET schemes. Note: Whenever possible, it
 	is a good idea to set this property when solving the QSTLS-IET schemes """
+        
+class QVSStlsInput(VSStlsInput, QstlsInput):
+    """Class to handle the inputs related to the quantum VS-STLS scheme."""
+    pass
 
 
 class SlfcGuess():

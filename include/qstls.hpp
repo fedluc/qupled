@@ -21,7 +21,7 @@ class Integrator2D;
 
 class Qstls : public Stls {
   
-private: 
+protected: 
 
   // Input data
   const QstlsInput in;
@@ -40,9 +40,6 @@ private:
   void computeAdrFixed();
   void writeAdrFixedFile(const vecUtil::Vector3D &res,
 			 const std::string &fileName) const;
-  void readAdrFixedFile(vecUtil::Vector3D &res,
-			const std::string &fileName,
-			const bool iet) const;
   int  checkAdrFixed(const std::vector<double> &wvg_,
 		     const double Theta_,
 		     const int nl_) const;
@@ -75,16 +72,20 @@ private:
 		    vecUtil::Vector3D &adrFixed_,
 		    double &Theta,
 		    int &nl) const;
+
 public:
 
+  void readAdrFixedFile(vecUtil::Vector3D &res,
+			const std::string &fileName,
+			const bool iet) const;
   // Constructor
   Qstls(const QstlsInput &in_);
   // Compute qstls scheme
   int compute();
   // Getters
   double getError() const { return computeError(); }
-  vecUtil::Vector2D getAdr() const { return adr; }
-  vecUtil::Vector3D getAdrFixed() const { return adrFixed; }
+  const vecUtil::Vector2D& getAdr() const { return adr; }
+  const vecUtil::Vector3D& getAdrFixed() const { return adrFixed; }
 
 };
 

@@ -6,6 +6,7 @@
 #include "stls.hpp"
 #include "vsstls.hpp"
 #include "qstls.hpp"
+#include "qvs.hpp"
 
 // Forward declarations
 namespace boost {
@@ -53,6 +54,18 @@ public:
   static void setAlphaGuess(VSStlsInput &in,
 			    const bp::list &alphaGuess);
 };
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the QVSStlsInput class to Python
+// -----------------------------------------------------------------
+
+class PyQVSStlsInput {
+public:
+  static bn::ndarray getAlphaGuess(QVSStlsInput &in);
+  static void setAlphaGuess(QVSStlsInput &in,
+			    const bp::list &alphaGuess);
+};
+
 
 // -----------------------------------------------------------------
 // Wrapper for exposing the FreeEnergyIntegrand class to Python
@@ -128,6 +141,19 @@ public:
   static double getError(const VSStls &vsstls);
   static bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls);
   static bn::ndarray getFreeEnergyGrid(const VSStls &vsstls);
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the QVSStls class to Python
+// -----------------------------------------------------------------
+
+class PyQVSStls {
+public:
+  static int compute(QVSStls& qvsstls);
+  static double getError(const QVSStls &qvsstls);
+  static bn::ndarray getAdr(const QVSStls& qvsstls);
+  static bn::ndarray getFreeEnergyIntegrand(const QVSStls &qvsstls);
+  static bn::ndarray getFreeEnergyGrid(const QVSStls &qvsstls);
 };
 
 // -----------------------------------------------------------------

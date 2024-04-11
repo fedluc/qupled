@@ -56,7 +56,21 @@ void PyVSStlsInput::setAlphaGuess(VSStlsInput &in,
 				  const bp::list &alphaGuess){
   in.setAlphaGuess(vp::toVector(alphaGuess));
 }
+
+// -----------------------------------------------------------------
+// PyQVSStlsInput
+// -----------------------------------------------------------------
+
+bn::ndarray PyQVSStlsInput::getAlphaGuess(QVSStlsInput &in){
+  return vp::toNdArray(in.getAlphaGuess());
+}
   
+void PyQVSStlsInput::setAlphaGuess(QVSStlsInput &in,
+				   const bp::list &alphaGuess){
+  in.setAlphaGuess(vp::toVector(alphaGuess));
+}
+
+
 // -----------------------------------------------------------------
 // PyFreeEnergyIntegrand
 // -----------------------------------------------------------------
@@ -197,13 +211,38 @@ double PyVSStls::getError(const VSStls &vsstls){
   return -1;
 }
 
-
 bn::ndarray PyVSStls::getFreeEnergyIntegrand(const VSStls &vsstls){
   return vp::toNdArray2D(vsstls.getFreeEnergyIntegrand());
 }
 
 bn::ndarray PyVSStls::getFreeEnergyGrid(const VSStls &vsstls){
   return vp::toNdArray(vsstls.getFreeEnergyGrid());
+}
+
+// -----------------------------------------------------------------
+// PyQVSStls
+// -----------------------------------------------------------------
+
+int PyQVSStls::compute(QVSStls& qvsstls) {
+  return qvsstls.compute();
+}
+
+double PyQVSStls::getError(const QVSStls &qvsstls){
+  // NOTE: This is just a place-holder, getError is not yet implemented in QVSStls
+  if (qvsstls.getFreeEnergyIntegrand().empty()) { return -1; }
+  return -1;
+}
+
+bn::ndarray PyQVSStls::getAdr(const QVSStls& qvsstls) {
+  return vp::toNdArray2D(qvsstls.getAdr());
+}
+
+bn::ndarray PyQVSStls::getFreeEnergyIntegrand(const QVSStls &qvsstls){
+  return vp::toNdArray2D(qvsstls.getFreeEnergyIntegrand());
+}
+
+bn::ndarray PyQVSStls::getFreeEnergyGrid(const QVSStls &qvsstls){
+  return vp::toNdArray(qvsstls.getFreeEnergyGrid());
 }
 
 // -----------------------------------------------------------------

@@ -27,7 +27,7 @@ void Input::setTheory(const string &theory_){
 				    "STLS-HNC", "STLS-IOI",
 				    "STLS-LCT", "VSSTLS"};
   const vector<string> qTheories = {"QSTLS", "QSTLS-HNC",
-				    "QSTLS-IOI", "QSTLS-LCT"};
+				    "QSTLS-IOI", "QSTLS-LCT", "QVSSTLS"};
   isClassicTheory = count(cTheories.begin(), cTheories.end(), theory_) != 0;
   isQuantumTheory = count(qTheories.begin(), qTheories.end(), theory_) != 0;
   if (!isClassicTheory && !isQuantumTheory) {
@@ -256,24 +256,24 @@ bool QstlsInput::isEqual(const QstlsInput &in) const {
 }
 
 // -----------------------------------------------------------------
-// VSSTLS class
+// VSInput class
 // -----------------------------------------------------------------
 
-void VSStlsInput::setCouplingResolution(const double &drs) {
+void VSInput::setCouplingResolution(const double &drs) {
   if (drs <= 0) {
     MPI::throwError("The coupling parameter resolution must be larger than zero");
   }
   this->drs = drs;
 }
 
-void VSStlsInput::setDegeneracyResolution(const double &dTheta) {
+void VSInput::setDegeneracyResolution(const double &dTheta) {
   if (dTheta <= 0) {
     MPI::throwError("The degeneracy parameter resolution must be larger than zero");
   }
   this->dTheta = dTheta;
 }
 
-void VSStlsInput::setAlphaGuess(const vector<double>  &alphaGuess) {
+void VSInput::setAlphaGuess(const vector<double>  &alphaGuess) {
   if (alphaGuess.size() != 2 || alphaGuess[0] >= alphaGuess[1]) {
     MPI::throwError("Invalid guess for free parameter calculation");
   }
@@ -281,21 +281,21 @@ void VSStlsInput::setAlphaGuess(const vector<double>  &alphaGuess) {
 }
 
 
-void VSStlsInput::setErrMinAlpha(const double &errMinAlpha){
+void VSInput::setErrMinAlpha(const double &errMinAlpha){
    if (errMinAlpha <= 0.0) {
     MPI::throwError("The minimum error for convergence must be larger than zero");
   }
   this->errMinAlpha = errMinAlpha;
 }
 
-void VSStlsInput::setNIterAlpha(const int &nIterAlpha){
+void VSInput::setNIterAlpha(const int &nIterAlpha){
   if (nIterAlpha < 0) {
     MPI::throwError("The maximum number of iterations can't be negative");
   }
   this->nIterAlpha = nIterAlpha; 
 }
 
-void VSStlsInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand& fxcIntegrand) {
+void VSInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand& fxcIntegrand) {
   if (fxcIntegrand.integrand.size() < 3) {
     MPI::throwError("The free energy integrand does not contain enough temperature points");
   }
@@ -313,11 +313,10 @@ void VSStlsInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand& fxcIntegrand
   this->fxcIntegrand = fxcIntegrand;
 }
 
-void VSStlsInput::print() const {
+void VSInput::print() const {
   if (!MPI::isRoot()) {
     return;
   }
-  StlsInput::print();
   cout << "Guess for the free parameter = " << alphaGuess.at(0) << "," << alphaGuess.at(1) << endl;
   cout << "Resolution for the coupling parameter grid = " << drs << endl;
   cout << "Resolution for the degeneracy parameter grid = " << dTheta << endl;
@@ -325,12 +324,43 @@ void VSStlsInput::print() const {
   cout << "Maximum number of iterations (alpha) = " << nIterAlpha << endl;
 }
 
-bool VSStlsInput::isEqual(const VSStlsInput &in) const {
-  return ( StlsInput::isEqual(in) && 
-	   alphaGuess == in.alphaGuess &&
+bool VSInput::isEqual(const VSInput &in) const {
+  return ( alphaGuess == in.alphaGuess &&
 	   drs == in.drs &&
 	   dTheta == in.dTheta &&
 	   errMinAlpha == in.errMinAlpha &&
 	   nIterAlpha == in.nIterAlpha &&
 	   fxcIntegrand == in.fxcIntegrand);
+}
+
+// -----------------------------------------------------------------
+// VSStlsInput class
+// -----------------------------------------------------------------
+
+void VSStlsInput::print() const {
+  if (!MPI::isRoot()) {
+    return;
+  }
+  StlsInput::print();
+  VSInput::print();
+}
+
+bool VSStlsInput::isEqual(const VSStlsInput &in) const {
+  return StlsInput::isEqual(in) && VSInput::isEqual(in);
+}
+
+// -----------------------------------------------------------------
+// QVSStlsInput class
+// -----------------------------------------------------------------
+
+void QVSStlsInput::print() const {
+  if (!MPI::isRoot()) {
+    return;
+  }
+  QstlsInput::print();
+  VSInput::print();
+}
+
+bool QVSStlsInput::isEqual(const QVSStlsInput &in) const {
+  return QstlsInput::isEqual(in) && VSInput::isEqual(in);
 }
