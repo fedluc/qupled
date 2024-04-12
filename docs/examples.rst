@@ -36,10 +36,10 @@ updating the properties of the solution object.
 .. literalinclude:: ../examples/docs/solveStlsIet.py
    :language: python
 
-Solving the classical VS-STLS scheme
+Solving the VS-STLS schemes
 ------------------------------------
 
-This example shows how to solve the VS-STLS scheme at finite temperature.
+This example shows how to solve the classical VS-STLS scheme at finite temperature.
 First the scheme is solved up to rs = 5.0, then the results are
 plotted and then the calculation is resumed up to rs = 10. In the second
 part of the calculation, the pre-computed value of the free energy integrand
@@ -47,6 +47,19 @@ available from the VS-STLS solution at rs = 5.0 is used in order to speed
 up the calculation.
 
 .. literalinclude:: ../examples/docs/solveVSStls.py
+   :language: python
+
+This example shows how to solve the quantum VS-STLS scheme at finite temperature.
+First, the scheme is solved for theta = 1.0 and up to rs = 0.1 without specifying a 
+"fixed" .bin file. Since no file was specified 3 files corresponding to theta-dtheta,
+theta and theta+dtheta will be created containing the Auxiliary Density Response (Adr) 
+fixed component. In the second part, a computation is setup for theta = 1.0 up 
+rs = 1.0 by also specifying the fixed .bin file . Lastly, the computation is restarted 
+for theta = 1.0 and up to rs = 2.0 and the pre-computed value of the free energy integrand
+available from the QVS-STLS solution at rs = 1.0 is used in order to speed up the calculation. 
+At the end the results are plotted.
+
+.. literalinclude:: ../examples/docs/solveQVSStls.py
    :language: python
 
 .. _solvingQuantumSchemes:
@@ -120,7 +133,7 @@ For the QSTLS scheme it is sufficient to pass a binary file containing the fixed
 This allows to obtain identical results (compare the internal energies printed at the end of 
 the example) in a fraction of the time. We can also recycle the same fixed component for 
 different coupling parameters provided that the degeneracy parameter stays the same. On the 
-other hand, when changing the degeneracy parameter the fixed component of must also be upated 
+other hand, when changing the degeneracy parameter the fixed component must also be upated 
 otherwise the calculation fails as shown at the end of the example.
 
 .. literalinclude:: ../examples/docs/fixedAdrQstlsIet.py
@@ -131,3 +144,12 @@ fixed auxiliary density response from the QSTLS scheme and a zip file containing
 of binary files representing the fixed component for the QSTLS-IET scheme. Here the fixed 
 component depends only on the degeneracy parameter but not on the coupling 
 parameter and not on the theory used for the bridge function.
+
+.. literalinclude:: ../examples/docs/solveQVSStls.py
+   :language: python
+
+For the QVS-STLS scheme three .bin files are needed containing the fixed component of the 
+auxiliary density response. However, it is enough to just specify the file that contains the 
+value for theta that was used to start the computation as can be seen from the example. On 
+the other hand, when changing the degeneracy parameter the fixed component must also be upated 
+otherwise the calculation fails.

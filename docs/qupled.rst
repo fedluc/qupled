@@ -47,6 +47,10 @@ Quantum schemes
 .. autoclass:: qupled.quantum.QstlsIet
     :members:
     :show-inheritance:
+
+.. autoclass:: qupled.quantum.QVSStls
+    :members:
+    :show-inheritance:
 				
 Input
 -----
@@ -70,6 +74,11 @@ Input
     :undoc-members:
 
 .. autoclass:: qupled.qupled.QstlsInput
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: qupled.qupled.QVSStlsInput
     :members:
     :undoc-members:
     :show-inheritance:
