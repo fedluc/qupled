@@ -13,6 +13,7 @@ approaches which can be solved with qupled include:
   * The hybrid ESA scheme (`Dornheim and collaborators <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`_)
   * The quantum STLS (QSTLS) scheme (`Schweng and Böhm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_)
   * The quantum QSTLS-IET scheme (`Tolias and others <https://pubs.aip.org/aip/jcp/article/158/14/141102/2877795/Quantum-version-of-the-integral-equation-theory>`_)
+  * The quantum VS-STLS (QVS) scheme
 
 Qupled supports both MPI and OpenMP parallelizations to handle the most computationally-intensive
 calculations in the quantum and in the classical VS-STLS scheme.
@@ -20,7 +21,7 @@ calculations in the quantum and in the classical VS-STLS scheme.
 Limitations
 -----------
 
-Ground state (zero temperature) calculations are not available for the quantum schemes (QSTLS and QSTLS-IET).
+Ground state (zero temperature) calculations are not available for the quantum schemes (QSTLS, QSTLS-IET and QVS).
 
 Units
 -----
@@ -56,10 +57,14 @@ Dependencies
 
 To build the code, the following dependencies must be satisfied:
 
-  - `Boost (v1.81) <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
+
+  - `Python (v3.12) <https://www.python.org/downloads/>`_
+  - `CMake (v3.26) <https://cmake.org/download/>`_
+  - `Boost (v1.84) <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
   - `GNU Scientific Library (v2.7) <https://www.gnu.org/software/gsl/>`_
   - `OpenMP (v5.0) <https://en.wikipedia.org/wiki/OpenMP>`_
-  - `MPICH (v4.0) <https://www.mpich.org>`_
+  - `Open-MPI (v5.0) <https://www.open-mpi.org/software/ompi/v5.0/>`_
+  - `FMT (v10.2) <https://github.com/fmtlib/fmt/>`_
 
 To test and run the code, the following python packages must be installed
 
@@ -68,3 +73,4 @@ To test and run the code, the following python packages must be installed
   - `numpy (v>=1.24)  <https://numpy.org>`_
   - `pandas (v>=2.0) <https://pandas.pydata.org>`_
   - `pytest (v>=8.0) <https://docs.pytest.org/en/8.0.x/>`_
+  - `pytest-mock (v>=3.12) <https://pypi.org/project/pytest-mock/>`_
