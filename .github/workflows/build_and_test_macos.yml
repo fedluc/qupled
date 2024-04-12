@@ -20,7 +20,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-          brew update
           brew install cmake gsl libomp openmpi fmt python3 boost-python3   
           pip3 install --upgrade pip
           pip3 install matplotlib mpi4py numpy pandas tables pytest pytest-mock
