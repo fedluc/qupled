@@ -377,43 +377,29 @@ protected:
   // Vector used as output parameter in the getters functions
   mutable std::vector<double> outVector;
 
-  // Perform iterations to compute structural properties
-  virtual void doIterations() = 0;
-
-  // Generic getter function to return vector data
-  const std::vector<double>& getBase(std::function<double(const CSR&)> f) const {
-    for (size_t i = 0; i < NPOINTS; ++i) {
-      outVector[i] = f(csr[i]);
-    }
-    return outVector; 
-  }
-
-  
-public:
-
-  // Constructor
-  StructPropBase(const Input &in_) : csrIsInitialized(false),
-				     computed(false),
-				     outVector(NPOINTS) {
-    Input inTmp = in_;
-    const double& drs = inTmp.getCouplingResolution();
-    const double& dTheta = inTmp.getDegeneracyResolution();
+  // Setup input for the CSR objects
+  std::vector<Input> setupCSRInput(const Input& in) {
+    const double& drs = in.getCouplingResolution();
+    const double& dTheta = in.getDegeneracyResolution();
     // If there is a risk of having negative state parameters, shift the
     // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-    if (inTmp.getCoupling() < drs) { inTmp.setCoupling(drs); }
-    if (inTmp.getDegeneracy() < dTheta) { inTmp.setDegeneracy(dTheta); }
-    double rs = inTmp.getCoupling();
-    double theta = inTmp.getDegeneracy();
+    const double rs = std::max(in.getCoupling(), drs);
+    const double theta = std::max(in.getDegeneracy(), dTheta);
     // Setup objects
+    std::vector<Input> out;
     for (const double& thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
       for (const double& rsTmp : {rs - drs, rs, rs + drs}){
+	Input inTmp = in;
 	inTmp.setDegeneracy(thetaTmp);
 	inTmp.setCoupling(rsTmp);
-	csr.push_back(CSR(inTmp));
+	out.push_back(inTmp);
       }
     }
-    assert(csr.size() == NPOINTS);
-    // Setup derivative dependency in the CSR objects  
+    return out;
+  }
+
+  // Setup derivative dependencies for CSR objects
+  void setupCSRDerivatives() {
     for (size_t i = 0; i < csr.size(); ++i) {
       switch (i) {
       case RS_DOWN_THETA_DOWN: case RS_DOWN_THETA: case RS_DOWN_THETA_UP:
@@ -440,6 +426,36 @@ public:
 			     CSR::Derivative::BACKWARD); break;
       }
     }
+  }
+  
+  // Setup CSR objects
+  void setupCSR(const std::vector<Input>& in) {
+    for (const auto& inTmp : in) {
+      csr.push_back(CSR(inTmp));
+    }
+    assert(csr.size() == NPOINTS);
+  }
+  
+  // Perform iterations to compute structural properties
+  virtual void doIterations() = 0;
+
+  // Generic getter function to return vector data
+  const std::vector<double>& getBase(std::function<double(const CSR&)> f) const {
+    for (size_t i = 0; i < NPOINTS; ++i) {
+      outVector[i] = f(csr[i]);
+    }
+    return outVector; 
+  }
+
+  
+public:
+
+  // Constructor
+  StructPropBase(const Input &in) : csrIsInitialized(false),
+				    computed(false),
+				    outVector(NPOINTS) {
+    setupCSR(setupCSRInput(in));
+    setupCSRDerivatives();
   }
   
   // Compute structural properties
