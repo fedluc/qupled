@@ -24,7 +24,7 @@ private:
   void computeSlfcStls();
   void computeSlfc();
   // Helper methods to compute the derivatives
-  double getDerivative(const std::vector<double>& f,
+  double getDerivative(const std::shared_ptr<std::vector<double>>& f,
 		       const size_t& idx,
 		       const Derivative& type);
 public:

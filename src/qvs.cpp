@@ -166,31 +166,7 @@ vector<double> QStructProp::getQ() const  {
 
 void QStlsCSR::computeAdrStls() {
   Qstls::computeAdr();
-  lfc = adr;
-}
-
-double QStlsCSR::getDerivative(const Vector2D& f,
-			       const int &l,
-			       const size_t& idx,
-			       const Derivative& type) {
-  switch(type) {
-  case BACKWARD:
-    assert(idx >= 2);
-    return CSR::getDerivative(f(idx,l), f(idx - 1,l), f(idx - 2,l), type);
-    break;
-  case CENTERED:
-    assert(idx >= 1 && idx < f.size() - 1);
-    return CSR::getDerivative(f(idx,l), f(idx + 1,l), f(idx - 1,l), type);
-    break;
-  case FORWARD:
-    assert(idx < f.size() - 2);
-    return CSR::getDerivative(f(idx,l), f(idx + 1,l), f(idx + 2,l), type);
-    break;
-  default:
-    assert(false);
-    return -1;
-    break;
-  }
+  *lfc = adr;
 }
 
 void QStlsCSR::computeAdr() {
@@ -203,10 +179,11 @@ void QStlsCSR::computeAdr() {
   const double& dx = in.getWaveVectorGridRes();
   const double& drs = in.getCouplingResolution();
   const double& dTheta = in.getDegeneracyResolution();
-  const Vector2D& rsUp = *lfcRsUp;
-  const Vector2D& rsDown = *lfcRsDown;
-  const Vector2D& thetaUp = *lfcThetaUp;
-  const Vector2D& thetaDown = *lfcThetaDown;
+  const Vector2D& lfcData = *lfc;
+  const Vector2D& rsUp = *lfcRs.up;
+  const Vector2D& rsDown = *lfcRs.down;
+  const Vector2D& thetaUp = *lfcTheta.up;
+  const Vector2D& thetaDown = *lfcTheta.down;
   const double a_drs = alpha * rs / (6.0 * drs);
   const double a_dx = alpha/(6.0 * dx);
   const double a_dt = alpha * theta / (3.0 * dTheta);
@@ -222,18 +199,20 @@ void QStlsCSR::computeAdr() {
     // Coupling parameter contribution
     if (rs > 0.0) {
       for (size_t i = 0; i < nx; ++i) {
-        adr(i,l) -= a_drs * CSR::getDerivative(lfc(i,l), rsUp(i,l), rsDown(i,l), dTypeRs);
+        adr(i,l) -= a_drs * CSR::getDerivative(lfcData(i,l), rsUp(i,l),
+					       rsDown(i,l), lfcRs.type);
       }
     }
     // Degeneracy parameter contribution
     if (theta > 0.0) {
       for (size_t i = 0; i < nx; ++i) {
-        adr(i,l) -= a_dt * CSR::getDerivative(lfc(i,l), thetaUp(i,l), thetaDown(i,l), dTypeTheta);
+        adr(i,l) -= a_dt * CSR::getDerivative(lfcData(i,l), thetaUp(i,l),
+					      thetaDown(i,l), lfcTheta.type);
       }
     }
     // Extra 1/3 term present in the adr for qVS
     for (size_t i = 0; i < nx; ++i) {
-      adr(i,l) += alpha/3.0 * lfc(i,l);
+      adr(i,l) += alpha/3.0 * lfcData(i,l);
     }
   }  
 }
@@ -249,6 +228,31 @@ double QStlsCSR::getQAdder() const {
   QAdder QTmp(in.getDegeneracy(), mu, wvg.front(), wvg.back(), 
               itgGrid, itg1, itg2, ssfItp); 
   return QTmp.get();
+}
+
+double QStlsCSR::getDerivative(const shared_ptr<Vector2D>& f,
+			       const int &l,
+			       const size_t& idx,
+			       const Derivative& type) {
+  const Vector2D& fData = *f;
+  switch(type) {
+  case BACKWARD:
+    assert(idx >= 2);
+    return CSR::getDerivative(fData(idx,l), fData(idx - 1,l), fData(idx - 2,l), type);
+    break;
+  case CENTERED:
+    assert(idx >= 1 && idx < fData.size() - 1);
+    return CSR::getDerivative(fData(idx,l), fData(idx + 1,l), fData(idx - 1,l), type);
+    break;
+  case FORWARD:
+    assert(idx < fData.size() - 2);
+    return CSR::getDerivative(fData(idx,l), fData(idx + 1,l), fData(idx + 2,l), type);
+    break;
+  default:
+    assert(false);
+    return -1;
+    break;
+  }
 }
 
 // -----------------------------------------------------------------

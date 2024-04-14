@@ -520,6 +520,13 @@ public:
   enum Derivative { CENTERED,
 		    FORWARD,
 		    BACKWARD };
+
+  // Data for the local field correction with modified state point
+  struct DerivativeData {
+    Derivative type;
+    std::shared_ptr<T> up;
+    std::shared_ptr<T> down;
+  };
   
 protected:
   
@@ -528,21 +535,13 @@ protected:
   // Input data
   const Input in;
   // local field correction (static or dynamic)
-  T lfc;
+  std::shared_ptr<T> lfc;
   // Free parameter
   double alpha;
-  // Pointer to the local field correction with rs = rs + drs
-  T* lfcRsUp;
-  // Pointer to the local field correction with rs = rs - drs
-  T* lfcRsDown;
-  // Pointer to the local field correction with theta = theta + dtheta
-  T* lfcThetaUp;
-  // Pointer to the local field correction with theta = theta - dtheta
-  T* lfcThetaDown;
-  // Numerical scheme used to compute the coupling parameter derivative
-  Derivative dTypeRs;
-  // Numerical scheme used to compute the degeneracy parametere derivative
-  Derivative dTypeTheta;
+  // Data for the local field correction with modified coupling paramter
+  DerivativeData lfcRs;
+  // Data for the local field correction with modified degeneracy parameter
+  DerivativeData lfcTheta;
     
   // Helper methods to compute the derivatives
   double getDerivative(const double& f0,
@@ -569,30 +568,25 @@ public:
   CSR(const Input& in_,
       const Scheme& scheme) : Scheme(scheme),
 			      in(in_),
-			      alpha(DEFAULT_ALPHA),
-			      lfcRsUp(nullptr),
-			      lfcRsDown(nullptr),
-			      lfcThetaUp(nullptr),
-			      lfcThetaDown(nullptr),
-			      dTypeRs(CENTERED),
-			      dTypeTheta(CENTERED) { ; }
+			      lfc(std::make_shared<T>()),
+			      alpha(DEFAULT_ALPHA) { ; }
 
   // Set the data to compute the coupling parameter derivative
   void setDrsData(CSR<T, Scheme, Input> &csrRsUp,
 		  CSR<T, Scheme, Input> &csrRsDown,
 		  const Derivative &dTypeRs) {
-    this->lfcRsUp = &csrRsUp.lfc;
-    this->lfcRsDown = &csrRsDown.lfc;
-    this->dTypeRs = dTypeRs;
+    this->lfcRs.up = csrRsUp.lfc;
+    this->lfcRs.down = csrRsDown.lfc;
+    this->lfcRs.type = dTypeRs;
   }
   
   // Set the data to compute the degeneracy parameter derivative
   void setDThetaData(CSR<T, Scheme, Input> &csrThetaUp,
 		     CSR<T, Scheme, Input> &csrThetaDown,
 		     const Derivative &dTypeTheta) {
-    this->lfcThetaUp = &csrThetaUp.lfc;
-    this->lfcThetaDown = &csrThetaDown.lfc;
-    this->dTypeTheta = dTypeTheta;
+    this->lfcTheta.up = csrThetaUp.lfc;
+    this->lfcTheta.down = csrThetaDown.lfc;
+    this->lfcTheta.type = dTypeTheta;
   }
 
   // Initialize the scheme

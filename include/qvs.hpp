@@ -22,7 +22,7 @@ private:
   void computeAdrStls();
   void computeAdr();
   // Helper methods to compute the derivatives
-  double getDerivative(const vecUtil::Vector2D& f,
+  double getDerivative(const std::shared_ptr<vecUtil::Vector2D>& f,
 		       const int &l,
 		       const size_t& idx,
 		       const Derivative& type);
