@@ -575,18 +575,14 @@ public:
   void setDrsData(CSR<T, Scheme, Input> &csrRsUp,
 		  CSR<T, Scheme, Input> &csrRsDown,
 		  const Derivative &dTypeRs) {
-    this->lfcRs.up = csrRsUp.lfc;
-    this->lfcRs.down = csrRsDown.lfc;
-    this->lfcRs.type = dTypeRs;
+    lfcRs = DerivativeData{dTypeRs, csrRsUp.lfc, csrRsDown.lfc};
   }
   
   // Set the data to compute the degeneracy parameter derivative
   void setDThetaData(CSR<T, Scheme, Input> &csrThetaUp,
 		     CSR<T, Scheme, Input> &csrThetaDown,
 		     const Derivative &dTypeTheta) {
-    this->lfcTheta.up = csrThetaUp.lfc;
-    this->lfcTheta.down = csrThetaDown.lfc;
-    this->lfcTheta.type = dTypeTheta;
+    lfcTheta = DerivativeData{dTypeTheta, csrThetaUp.lfc, csrThetaDown.lfc};
   }
 
   // Initialize the scheme
