@@ -398,8 +398,8 @@ protected:
     return out;
   }
 
-  // Setup derivative dependencies for CSR objects
-  void setupCSRDerivatives() {
+  // Setup dependencies for CSR objects
+  void setupCSRDependencies() {
     for (size_t i = 0; i < csr.size(); ++i) {
       switch (i) {
       case RS_DOWN_THETA_DOWN: case RS_DOWN_THETA: case RS_DOWN_THETA_UP:
@@ -451,11 +451,12 @@ protected:
 public:
 
   // Constructor
-  StructPropBase(const Input &in) : csrIsInitialized(false),
-				    computed(false),
-				    outVector(NPOINTS) {
+  StructPropBase() : csrIsInitialized(false),
+		     computed(false),
+		     outVector(NPOINTS) { ; }
+  StructPropBase(const Input &in) : StructPropBase() {
     setupCSR(setupCSRInput(in));
-    setupCSRDerivatives();
+    setupCSRDependencies();
   }
   
   // Compute structural properties

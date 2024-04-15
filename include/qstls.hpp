@@ -79,7 +79,10 @@ public:
 			const std::string &fileName,
 			const bool iet) const;
   // Constructor
-  Qstls(const QstlsInput &in_);
+  Qstls(const QstlsInput &in_,
+	const bool verbose_,
+	const bool writeFiles_);
+  Qstls(const QstlsInput &in_) : Qstls(in_, true, true) { ; }
   // Compute qstls scheme
   int compute();
   // Getters

@@ -81,43 +81,37 @@ vector<double> QThermoProp::getQData() const {
 // qStructProp class
 // -----------------------------------------------------------------
 
-// Compute structural properties
-int QStructProp::compute() {
-  try {
-    if (!csrIsInitialized) {
-    for (size_t i = 0; i < csr.size(); ++i) {
-      const auto& in = csr[i].in;
-      auto& c = csr[i];
-      // If there was no fixed file specified in input
-      if (in.getFixed().empty() && i % 3 == 0){
-        // Initialize the csr objects with theta-dtheta, theta, theta+dtheta in order 
-        // to compute adrFixed if no file was specified in input.
-        c.init();
-        // If file was specified read corresponding adrFixed from file 
-      } 
-      else { 
-        const string fileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
-                                            in.getDegeneracy(),
-                                            in.getNMatsubara());
-        // Compute ssfHF 
-        c.Rpa::computeChemicalPotential();
-        c.Rpa::computeIdr();
-        c.Rpa::computeSsfHF();
-        // Read adrFixed from file
-        c.readAdrFixedFile(c.adrFixed, fileName, false);
-      }
+QStructProp::QStructProp(const QVSStlsInput &in) : StructPropBase() {
+  setupCSR(setupCSRInput(in));
+  setupCSRDependencies();
+}
+
+vector<QVSStlsInput>  QStructProp::setupCSRInput(const QVSStlsInput& in) {
+  auto inVector = StructPropBase::setupCSRInput(in);
+  if (!in.getFixed().empty()) { 
+    for (auto& inTmp : inVector) {
+      inTmp.setFixed(fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
+				 inTmp.getDegeneracy(),
+				 inTmp.getNMatsubara()));
     }
-    csrIsInitialized = true;
-    }
-    doIterations();
-    computed = true;
-    return 0;
   }
-  catch (const std::runtime_error& err) {
-    std::cerr << err.what() << std::endl;
-    return 1;
+  return inVector;
+}
+
+void QStructProp::setupCSRDependencies() {
+  StructPropBase::setupCSRDependencies();
+  for (size_t i = 0; i < csr.size(); ++i) {
+    switch(i) {
+    case RS_THETA_DOWN: case RS_UP_THETA_DOWN:
+	csr[i].setAdrFixedSource(csr[RS_DOWN_THETA_DOWN]); break;
+    case RS_THETA: case RS_UP_THETA:
+      csr[i].setAdrFixedSource(csr[RS_DOWN_THETA]); break;
+    case RS_THETA_UP: case RS_UP_THETA_UP:
+      csr[i].setAdrFixedSource(csr[RS_DOWN_THETA_UP]); break;
+    }
   }
 }
+
 
 void QStructProp::doIterations() {
   const auto& in = csr[0].in;
@@ -163,6 +157,15 @@ vector<double> QStructProp::getQ() const  {
 // -----------------------------------------------------------------
 // qStlsCSR class
 // -----------------------------------------------------------------
+
+void QStlsCSR::init() {
+  if (adrFixedSource) {
+    Stls::init();
+    adrFixed = *adrFixedSource;
+    return;
+  }
+  Qstls::init();
+}
 
 void QStlsCSR::computeAdrStls() {
   Qstls::computeAdr();

@@ -17,8 +17,10 @@ using Itg2DParam = Integrator2D::Param;
 // QSTLS class
 // -----------------------------------------------------------------
 
-Qstls::Qstls(const QstlsInput& in_) : Stls(in_),
-				      in(in_) {
+Qstls::Qstls(const QstlsInput& in_,
+	     const bool verbose_,
+	     const bool writeFiles_) : Stls(in_, verbose_, writeFiles_),
+				       in(in_) {
   // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
     MPI::throwError("Ground state calculations are not available "
@@ -92,7 +94,7 @@ void Qstls::doIterations() {
     // Update solution
     updateSolution();
     // Write output
-    if (counter % outIter == 0) { writeRecovery(); };
+    if (counter % outIter == 0 && writeFiles) { writeRecovery(); };
     // End timing
     double toc = MPI::timer();
     // Print diagnostic

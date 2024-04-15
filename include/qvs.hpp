@@ -15,8 +15,13 @@ class QVSStlsInput;
 class QStlsCSR : public CSR<vecUtil::Vector2D, Qstls, QVSStlsInput> {
 
   friend class QStructProp;
-private:
   
+private:
+
+  // Pointer to a location that can be used to copy the fixed component
+  // of the auxiliary density response (if set to nullptr adrFixed is
+  // computed from scratch)
+  vecUtil::Vector3D* adrFixedSource;
   // Compute auxiliary density response
   void computeAdrStls();
   void computeAdr();
@@ -39,11 +44,18 @@ public:
   };
   
   // Constructor
-  QStlsCSR(const QVSStlsInput& in_) : CSR(in_, Qstls(in_)) { ; }
+  QStlsCSR(const QVSStlsInput& in_) : CSR(in_, Qstls(in_, false, false)),
+				      adrFixedSource(nullptr) { ; }
   // Perform one iteration action
   void doAction(const IterationAction& action,
 		double& returnValue);
   void doAction(const IterationAction& action);
+  // Set the source for the auxiliary density response
+  void setAdrFixedSource(QStlsCSR& other) {
+    adrFixedSource = &(other.adrFixed);
+  }
+  // Initialize the scheme
+  void init();
   // Compute Q
   double getQAdder() const;
 
@@ -109,15 +121,17 @@ class QStructProp : public StructPropBase<QStlsCSR, QVSStlsInput> {
 private:
 
   using StructPropBase = StructPropBase<QStlsCSR, QVSStlsInput>;
+  // Setup input for the CSR objects
+  std::vector<QVSStlsInput> setupCSRInput(const QVSStlsInput& in);
+  // Setup dependencies in the CSR objects
+  void setupCSRDependencies();
   // Perform iterations to compute structural properties
   void doIterations();
   
 public:
 
-  // Compute structural properties
-  int compute();
   // Constructor
-  QStructProp(const QVSStlsInput &in_) : StructPropBase(in_) { ; }
+  QStructProp(const QVSStlsInput &in);
   // Get Q term
   std::vector<double> getQ() const;  
   
