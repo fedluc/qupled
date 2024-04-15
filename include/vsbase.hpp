@@ -586,10 +586,12 @@ public:
     lfcTheta = DerivativeData{dTypeTheta, csrThetaUp.lfc, csrThetaDown.lfc};
   }
 
-  // Initialize the scheme
-  void init() {
-    Scheme::init();
-  }
+  // Publicly esposed private scheme methods
+  void init() { Scheme::init(); }
+  void initialGuess() { Scheme::initialGuess(); }
+  void computeSsf() { Scheme::computeSsf(); }
+  double computeError() { return Scheme::computeError(); }
+  void updateSolution() { Scheme::updateSolution(); }
   
   // Set the free parameter
   void setAlpha(const double& alpha) {

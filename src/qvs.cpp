@@ -114,7 +114,7 @@ void QStructProp::setupCSRDependencies() {
 
 
 void QStructProp::doIterations() {
-  const auto& in = csr[0].in;
+  const auto& in = csr[0].getInput();
   const int maxIter = in.getNIter();
   const int ompThreads = in.getNThreads();
   const double minErr = in.getErrMin();
@@ -139,13 +139,13 @@ void QStructProp::doIterations() {
         if (i == RS_THETA) {err = c.computeError(); }
         c.updateSolution(); 
       }
-    counter++;
+      counter++;
     }
   }
   printf("Alpha = %.5e, Residual error "
-	 "(structural properties) = %.5e\n", csr[RS_THETA].alpha, err);
+	 "(structural properties) = %.5e\n", csr[RS_THETA].getAlpha(), err);
   // Set static structure factor for output
-  for (auto& c : csr) { c.ssf = c.ssfOld; }
+  for (auto& c : csr) { c.updateSsf(); }
 }
 
 vector<double> QStructProp::getQ() const  {

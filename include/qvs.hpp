@@ -13,8 +13,6 @@ class QVSStlsInput;
 // -----------------------------------------------------------------
 
 class QStlsCSR : public CSR<vecUtil::Vector2D, Qstls, QVSStlsInput> {
-
-  friend class QStructProp;
   
 private:
 
@@ -22,9 +20,6 @@ private:
   // of the auxiliary density response (if set to nullptr adrFixed is
   // computed from scratch)
   vecUtil::Vector3D* adrFixedSource;
-  // Compute auxiliary density response
-  void computeAdrStls();
-  void computeAdr();
   // Helper methods to compute the derivatives
   double getDerivative(const std::shared_ptr<vecUtil::Vector2D>& f,
 		       const int &l,
@@ -32,28 +27,19 @@ private:
 		       const Derivative& type);
 
 public:
-
-  // List of actions that can be performed in one iteration
-  enum IterationAction {
-    GUESS,
-    SSF,
-    SLFC_STLS,
-    SLFC,
-    ERROR,
-    UPDATE
-  };
   
   // Constructor
   QStlsCSR(const QVSStlsInput& in_) : CSR(in_, Qstls(in_, false, false)),
 				      adrFixedSource(nullptr) { ; }
-  // Perform one iteration action
-  void doAction(const IterationAction& action,
-		double& returnValue);
-  void doAction(const IterationAction& action);
   // Set the source for the auxiliary density response
   void setAdrFixedSource(QStlsCSR& other) {
     adrFixedSource = &(other.adrFixed);
   }
+  // Compute auxiliary density response
+  void computeAdrStls();
+  void computeAdr();
+  // Update the static structure factor
+  void updateSsf() { ssf = ssfOld; };
   // Initialize the scheme
   void init();
   // Compute Q

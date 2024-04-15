@@ -18,31 +18,17 @@ class StlsCSR : public CSR<std::vector<double>, Stls, VSStlsInput> {
 private:
 
   using CSR = CSR<std::vector<double>, Stls, VSStlsInput>;
-  // Compute static local field correction
-  void computeSlfcStls();
-  void computeSlfc();
   // Helper methods to compute the derivatives
   double getDerivative(const std::shared_ptr<std::vector<double>>& f,
 		       const size_t& idx,
 		       const Derivative& type);
 public:
-
-  // List of actions that can be performed in one iteration
-  enum IterationAction {
-    GUESS,
-    SSF,
-    SLFC_STLS,
-    SLFC,
-    ERROR,
-    UPDATE
-  };
   
   // Constructor
   StlsCSR(const VSStlsInput& in_) : CSR(in_, Stls(in_, false, false)) { ; }
-  // Perform one iteration action
-  void doAction(const IterationAction& action,
-		double& returnValue);
-  void doAction(const IterationAction& action);
+  // Compute static local field correction
+  void computeSlfcStls();
+  void computeSlfc();
   
 };
 
@@ -51,7 +37,6 @@ class StructProp : public StructPropBase<StlsCSR, VSStlsInput> {
 protected:
 
   using StructPropBase = StructPropBase<StlsCSR, VSStlsInput>;
-  using IterationAction = StlsCSR::IterationAction;
   // Perform iterations to compute structural properties
   void doIterations();
   
