@@ -14,8 +14,6 @@ class VSStlsInput;
 // -----------------------------------------------------------------
 
 class StlsCSR : public CSR<std::vector<double>, Stls, VSStlsInput> {
-  
-  friend class StructProp;
     
 private:
 
@@ -29,9 +27,23 @@ private:
 		       const Derivative& type);
 public:
 
+  // List of actions that can be performed in one iteration
+  enum IterationAction {
+    GUESS,
+    SSF,
+    SLFC_STLS,
+    SLFC,
+    ERROR,
+    UPDATE
+  };
+  
   // Constructor
   StlsCSR(const VSStlsInput& in_) : CSR(in_, Stls(in_, false, false)) { ; }
-
+  // Perform one iteration action
+  void doAction(const IterationAction& action,
+		double& returnValue);
+  void doAction(const IterationAction& action);
+  
 };
 
 class StructProp : public StructPropBase<StlsCSR, VSStlsInput> {
@@ -39,6 +51,7 @@ class StructProp : public StructPropBase<StlsCSR, VSStlsInput> {
 protected:
 
   using StructPropBase = StructPropBase<StlsCSR, VSStlsInput>;
+  using IterationAction = StlsCSR::IterationAction;
   // Perform iterations to compute structural properties
   void doIterations();
   

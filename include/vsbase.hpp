@@ -482,11 +482,11 @@ public:
   
   // Get coupling parameters for all the state points
   std::vector<double> getCouplingParameters() const {
-    return getBase([&](const CSR& c){ return c.getCoupling();});
+    return getBase([&](const CSR& c){ return c.getInput().getCoupling();});
   }
   // Get degeneracy parameters for all the state points
   std::vector<double> getDegeneracyParameters() const {
-    return getBase([&](const CSR& c){return c.getDegeneracy();});
+    return getBase([&](const CSR& c){return c.getInput().getDegeneracy();});
   }
   
   // Get internal energy for all the state points
@@ -595,14 +595,14 @@ public:
     this->alpha = alpha;
   }
 
-  // Get the coupling parameter
-  double getCoupling() const {
-    return in.getCoupling();
+  // Get the free parameter
+  double getAlpha() const {
+    return alpha;
   }
-
-  // Get the degenarcy parameter
-  double getDegeneracy() const {
-    return in.getDegeneracy();
+  
+  // Get input parameters
+  const Input& getInput() const {
+    return in;
   }
   
   // Compute the internal energy

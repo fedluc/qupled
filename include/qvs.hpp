@@ -15,7 +15,6 @@ class QVSStlsInput;
 class QStlsCSR : public CSR<vecUtil::Vector2D, Qstls, QVSStlsInput> {
 
   friend class QStructProp;
-
 private:
   
   // Compute auxiliary density response
@@ -28,11 +27,26 @@ private:
 		       const Derivative& type);
 
 public:
+
+  // List of actions that can be performed in one iteration
+  enum IterationAction {
+    GUESS,
+    SSF,
+    SLFC_STLS,
+    SLFC,
+    ERROR,
+    UPDATE
+  };
   
   // Constructor
   QStlsCSR(const QVSStlsInput& in_) : CSR(in_, Qstls(in_)) { ; }
+  // Perform one iteration action
+  void doAction(const IterationAction& action,
+		double& returnValue);
+  void doAction(const IterationAction& action);
   // Compute Q
   double getQAdder() const;
+
 };
 
 // -----------------------------------------------------------------
