@@ -182,7 +182,17 @@ public:
   static double computeFreeEnergy(const bn::ndarray &gridIn,
 				  const bn::ndarray &rsuIn,
 				  const double &coupling);
-  
+};
+// -----------------------------------------------------------------
+// Wrapper for exposing MPI methods to Python
+// -----------------------------------------------------------------
+
+class PyMPI {
+public:
+  static int rank() { return parallelUtil::MPI::rank(); }
+  static bool isRoot() { return parallelUtil::MPI::isRoot(); }
+  static void barrier() { return parallelUtil::MPI::barrier(); }
+  static double timer() { return parallelUtil::MPI::timer(); }
 };
 
 #endif

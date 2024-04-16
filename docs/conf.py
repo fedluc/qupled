@@ -21,7 +21,6 @@ sys.path.insert(0, os.path.abspath('../python'))
 extensions = ['sphinx.ext.napoleon', 'sphinx.ext.autodoc']
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-autodoc_mock_imports = ['mpi4py']
 autodoc_member_order = 'bysource'
 
 # -- Options for HTML output -------------------------------------------------

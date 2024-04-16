@@ -388,6 +388,12 @@ namespace parallelUtil {
   // --- MPI for distributed memory parallelism ---
   namespace MPI {
 
+    // Initialize MPI
+    void init();
+
+    // Finalize MPI
+    void finalize();
+    
     // Check if MPI initialized
     bool isInitialized();
     

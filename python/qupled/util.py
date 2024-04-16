@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import colormaps as cm
-from mpi4py import MPI as MPINative # This import initializes MPI
 import qupled.qupled as qp
 
 # -----------------------------------------------------------------------
@@ -220,23 +219,23 @@ class MPI():
     """ Class to handle the calls to the MPI API """
     
     def __init__(self):
-        self.communicator = MPINative.COMM_WORLD
-
+        self.qpMPI = qp.MPI
+    
     def getRank(self):
         """ Get rank of the process """
-        return self.communicator.Get_rank()
+        return self.qpMPI.rank()
 
     def isRoot(self):
         """ Check if the current process is root (rank 0) """
-        return self.getRank() == 0
+        return self.qpMPI.isRoot()
 
     def barrier(self):
         """ Setup and MPI barrier """
-        self.communicator.Barrier()
+        self.qpMPI.barrier()
 
     def timer(self):
         """ Get wall time """
-        return MPINative.Wtime()
+        return self.qpMPI.timer()
         
     @staticmethod
     def runOnlyOnRoot(func):

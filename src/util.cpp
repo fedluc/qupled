@@ -560,6 +560,14 @@ namespace parallelUtil {
 
     const MPI_Comm MPICommunicator = MPI_COMM_WORLD;
 
+    void init() {
+      MPI_Init(nullptr, nullptr);
+    }
+
+    void finalize() {
+      MPI_Finalize();
+    }
+    
     bool isInitialized() {
       int isMPIInit;
       MPI_Initialized(&isMPIInit);

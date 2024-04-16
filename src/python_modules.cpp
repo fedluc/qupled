@@ -11,12 +11,17 @@ namespace vp = vecUtil::python;
 
 // Initialization code for the qupled module
 void qupledInitialization() {
-  // Check that the MPI library was initialized
+  // Initialize MPI if necessary
   if (!parallelUtil::MPI::isInitialized()) {
-    parallelUtil::MPI::throwError("MPI has not been initialized correctly");
+    parallelUtil::MPI::init();
   }
   // Deactivate default GSL error handler
   gsl_set_error_handler_off();
+}
+
+// Clean up code to call when the python interpreter exists
+void qupledCleanUp() {
+  parallelUtil::MPI::finalize();
 }
 
 // Classes exposed to Python
@@ -33,7 +38,10 @@ BOOST_PYTHON_MODULE(qupled)
 
   // Module initialization
   qupledInitialization();
-  
+
+  // Register cleanup function
+  std::atexit(qupledCleanUp);
+    
   // Class for the input of the Rpa scheme
   bp::class_<RpaInput>("RpaInput")
     .add_property("coupling",
@@ -231,13 +239,21 @@ BOOST_PYTHON_MODULE(qupled)
 
   // Class to solve the quantum VS scheme
   bp::class_<QVSStls, bp::bases<Rpa>>("QVSStls",
-             bp::init<const QVSStlsInput>())
+				      bp::init<const QVSStlsInput>())
     .def("compute", &PyQVSStls::compute)
     .add_property("error", &PyQVSStls::getError)
     .add_property("freeEnergyIntegrand", &PyQVSStls::getFreeEnergyIntegrand)
     .add_property("freeEnergyGrid", &PyQVSStls::getFreeEnergyGrid)
     .add_property("adr", &PyQVSStls::getAdr);
 
+  // MPI class
+  bp::class_<PyMPI>("MPI")
+    .def("rank", &PyMPI::rank)
+    .def("isRoot", &PyMPI::isRoot)
+    .def("barrier", &PyMPI::barrier)
+    .def("timer", &PyMPI::timer);
+  
+  
   // Post-process methods
   bp::def("computeRdf", &PyThermo::computeRdf);
   bp::def("computeInternalEnergy", &PyThermo::computeInternalEnergy);

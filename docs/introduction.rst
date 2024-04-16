@@ -69,7 +69,6 @@ To build the code, the following dependencies must be satisfied:
 To test and run the code, the following python packages must be installed
 
   - `matplotlib (v>=3.7) <https://matplotlib.org>`_
-  - `mpi4py (v>=3.1) <https://mpi4py.readthedocs.io/en/stable/>`_
   - `numpy (v>=1.24)  <https://numpy.org>`_
   - `pandas (v>=2.0) <https://pandas.pydata.org>`_
   - `pytest (v>=8.0) <https://docs.pytest.org/en/8.0.x/>`_
