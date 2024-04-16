@@ -23,7 +23,7 @@ jobs:
           brew update
           brew install cmake gsl libomp openmpi fmt boost-python3
           pip3 install --upgrade pip
-          pip3 install matplotlib mpi4py numpy pandas tables pytest pytest-mock
+          pip3 install matplotlib numpy pandas tables pytest pytest-mock
         
     - name: Configure CMake
       run: |
