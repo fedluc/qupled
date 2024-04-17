@@ -270,10 +270,7 @@ void Qstls::computeAdrFixed() {
   // Write result to output file
   if (MPI::isRoot()) {
     try {
-      const string fileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
-					  in.getDegeneracy(),
-					  in.getNMatsubara());
-      writeAdrFixedFile(adrFixed, fileName);
+      writeAdrFixedFile(adrFixed, adrFixedFileName);
     }
     catch (...) {
       MPI::throwError("Error in the output file for the fixed component"

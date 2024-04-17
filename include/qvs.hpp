@@ -16,10 +16,6 @@ class QStlsCSR : public CSR<vecUtil::Vector2D, Qstls, QVSStlsInput> {
   
 private:
 
-  // Pointer to a location that can be used to copy the fixed component
-  // of the auxiliary density response (if set to nullptr adrFixed is
-  // computed from scratch)
-  vecUtil::Vector3D* adrFixedSource;
   // Helper methods to compute the derivatives
   double getDerivative(const std::shared_ptr<vecUtil::Vector2D>& f,
 		       const int &l,
@@ -29,12 +25,7 @@ private:
 public:
   
   // Constructor
-  QStlsCSR(const QVSStlsInput& in_) : CSR(in_, Qstls(in_, false, false)),
-				      adrFixedSource(nullptr) { ; }
-  // Set the source for the auxiliary density response
-  void setAdrFixedSource(QStlsCSR& other) {
-    adrFixedSource = &(other.adrFixed);
-  }
+  QStlsCSR(const QVSStlsInput& in_) : CSR(in_, Qstls(in_, false, false)) { ; }
   // Compute auxiliary density response
   void computeAdrStls();
   void computeAdr();
@@ -117,7 +108,7 @@ private:
 public:
 
   // Constructor
-  QStructProp(const QVSStlsInput &in);
+  QStructProp(const QVSStlsInput &in) : StructPropBase(in) { ; }
   // Get Q term
   std::vector<double> getQ() const;  
   
