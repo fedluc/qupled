@@ -58,7 +58,7 @@ public:
   VSBase(const Input &in_) : Scheme(in_),
 			     in(in_),
 			     thermoProp(in_),
-			     verbose(true) { ; }
+			     verbose(true && parallelUtil::MPI::isRoot()) { ; }
   // Constructor for recursive calculations
   VSBase(const Input &in_,
 	 const ThermoProp& thermoProp_) : Scheme(in_),
@@ -116,6 +116,8 @@ protected:
   };
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
+  // Output verbosity
+  const bool verbose;
   // Structural properties
   StructProp structProp;
   // Grid for thermodyamic integration
@@ -148,7 +150,8 @@ protected:
 public:
 
   // Constructors
-  ThermoPropBase(const Input &in) : structProp(in) {
+  ThermoPropBase(const Input &in) : verbose(parallelUtil::MPI::isRoot()),
+				    structProp(in) {
     const double& rs = in.getCoupling();
     const double& drs = in.getCouplingResolution();
     // Check if we are solving for particular state points
@@ -219,13 +222,20 @@ public:
       }
       else if (rs < in.getCoupling()) {
 	if (rs == 0.0 || fxcIntegrand[THETA][i] != numUtil::Inf) { continue; }
-	printf("Free energy integrand calculation, solving VS scheme for rs = %.5f:\n", rs);
+	if (verbose) {
+	  printf("Free energy integrand calculation, "
+		 "solving VS scheme for rs = %.5f:\n", rs);
+	}
 	inTmp.setCoupling(rs);
 	Scheme schemeTmp(inTmp, *this);
 	schemeTmp.compute();
 	fxciTmp = schemeTmp.getThermoProp().structProp.getFreeEnergyIntegrand();
-	printf("Done\n");
-	printf("---------------------------------------------------------------------------\n");
+	if (verbose) {
+	  printf("Done\n");
+	  printf("---------------------------------"
+		 "---------------------------------"
+		 "---------\n");
+	}
       }
       else {
 	break;
@@ -368,6 +378,8 @@ public:
   
 protected:
 
+  // Output verbosity
+  const bool verbose;
   // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<CSR> csr;
   // Flag marking whether the initialization for the stls data is done
@@ -451,7 +463,8 @@ protected:
 public:
 
   // Constructor
-  StructPropBase() : csrIsInitialized(false),
+  StructPropBase() : verbose(parallelUtil::MPI::isRoot()),
+		     csrIsInitialized(false),
 		     computed(false),
 		     outVector(NPOINTS) { ; }
   StructPropBase(const Input &in) : StructPropBase() {
