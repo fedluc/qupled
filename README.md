@@ -12,6 +12,10 @@ Qupled is a python package that can be used to compute the properties of quantum
  <img src="examples/readme/qupled_animation_light.gif#gh-light-mode-only" width="800" height="533">
  <img src="examples/readme/qupled_animation_dark.gif#gh-dark-mode-only" width="800" height="533">
 <p>
+
+## Dependencies
+
+Before trying to build, test or run the code one should make sure that [these dependencies](https://qupled.readthedocs.io/en/latest/introduction.html#dependencies) are satisfied.
  
 ## Building & running
 
