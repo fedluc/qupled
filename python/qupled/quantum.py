@@ -194,7 +194,6 @@ class QstlsIet(Qstls):
         self.inputs.iet = mapping
         self._checkInputs()
         # Temporary folder to store the unpacked files with the auxiliary density response
-        self.fixediet = None
         self.tmpRunDir = None
         # Scheme to solve
         self.scheme : qp.QstlsIet = None
@@ -245,11 +244,7 @@ class QstlsIet(Qstls):
         if (self.tmpRunDir is not None and os.path.isdir(self.tmpRunDir)) :
             rmtree(self.tmpRunDir)
         # Check that the scheme was solved correctly
-        if (status == 0):
-            if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
-            print("Dielectric theory solved successfully!")
-        else:
-            sys.exit("Error while solving the dielectric theory")
+        super()._checkStatusAndClean(status)
 
             
     # Save results to disk
@@ -343,6 +338,8 @@ class QVSStls(qc.VSStls, Qstls):
                         outputFrequency, recoveryFile, resolution, scheme2DIntegrals,
                         alpha, couplingResolution, degeneracyResolution, errorAlpha,
                         iterationsAlpha, errorIntegrals, threads)
+        # Temporary folder to store the unpacked files with the auxiliary density response
+        self.tmpRunDir = None
         # Scheme to solve
         self.scheme : qp.QVSStls = None
         # File to store output on disk
@@ -386,21 +383,57 @@ class QVSStls(qc.VSStls, Qstls):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to an hdf file. Exactly as it is done by 
-        :func:`qupled.classic.QStls.compute` .The auxiliary density response dataframe can be accessed as `adr`.
+        """ Solves the scheme and saves the results to an hdf in the same way as
+        :func:`qupled.classic.QStls.compute` .
         """
         
         self._checkInputs()
+        self._setFixedAdrFileName()
         self.scheme = qp.QVSStls(self.inputs)
         status = self.scheme.compute()
         self._checkStatusAndClean(status)
         self._setHdfFile()
         self._save()
 
+    # Set name of the file with the fixed component of the auxiliary density response
+    @qu.MPI.synchronizeRanks
+    def _setFixedAdrFileName(self) -> None:
+        """ Sets the file name for the file storing the fixed component of the auxiliary density response """
+        if (self.inputs.fixed != ""):
+            self.tmpRunDir = "qupled_tmp_run_directory"
+            self._unpackFixedAdrFiles()
+            self.inputs.fixed = self.tmpRunDir
+            
+    # Unpack zip folder with fixed component of the auxiliary density response
+    @qu.MPI.runOnlyOnRoot
+    def _unpackFixedAdrFiles(self) -> None:
+        """ Unpacks the zip file storing the fixed component of the auxiliary density response """
+        assert(self.inputs.fixed != "")
+        assert(self.tmpRunDir is not None)
+        with zf.ZipFile(self.inputs.fixed, "r") as zipFile:
+            zipFile.extractall(self.tmpRunDir)
+
+    # Check that the dielectric scheme was solved without errors
+    @qu.MPI.runOnlyOnRoot
+    def _checkStatusAndClean(self, status) -> None:
+        # Remove the temporary run directory
+        if (self.tmpRunDir is not None and os.path.isdir(self.tmpRunDir)) :
+            rmtree(self.tmpRunDir)
+        # Check that the scheme was solved correctly
+        super()._checkStatusAndClean(status)
+        
+    # Save results to disk
     @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
         """ Stores the results obtained by solving the scheme. 
         """
         super()._save()
         pd.DataFrame(self.scheme.adr).to_hdf(self.hdfFileName, key="adr")
-   
+        # Zip all files for the fixed component of the auxiliary density response
+        if (self.inputs.fixed == ""):
+            adrFileName = "adr_fixed_theta%5.3f_matsubara%d.zip" % (self.inputs.degeneracy,
+                                                                    self.inputs.matsubara)
+            with zf.ZipFile(adrFileName, "w") as zipFile:
+                for adrFile in glob("THETA*.bin"):
+                    zipFile.write(adrFile)
+                    os.remove(adrFile)

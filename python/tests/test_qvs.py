@@ -38,6 +38,7 @@ def test_default(qvsstls_instance):
     assert qvsstls_instance.inputs.iterationsAlpha == 50
     assert qvsstls_instance.inputs.intError == 1.0e-5
     assert qvsstls_instance.inputs.threads == 1
+    assert qvsstls_instance.tmpRunDir is None
     assert qvsstls_instance.scheme is None
     assert qvsstls_instance.hdfFileName is None
 
@@ -80,7 +81,7 @@ def test_compute(qvsstls_instance, mocker):
     mockSave = mocker.patch("qupled.quantum.QVSStls._save")
     qvsstls_instance.compute()
     assert mockMPITime.call_count == 2
-    assert mockMPIBarrier.call_count == 1
+    assert mockMPIBarrier.call_count == 2
     assert mockCheckInputs.call_count == 1
     assert mockCompute.call_count == 1
     assert mockCheckStatusAndClean.call_count == 1
@@ -92,6 +93,8 @@ def test_save(qvsstls_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     qvsstls_instance.scheme = qp.QVSStls(qvsstls_instance.inputs)
     qvsstls_instance._setHdfFile()
+    adrFileName = "adr_fixed_theta%5.3f_matsubara%d.zip" % (qvsstls_instance.inputs.degeneracy,
+                                                            qvsstls_instance.inputs.matsubara)
     try:
         qvsstls_instance._save()
         assert mockMPIIsRoot.call_count == 5
@@ -103,8 +106,10 @@ def test_save(qvsstls_instance, mocker):
                            "wvg", "fxcGrid", "fxci", "adr"]
         for entry in expectedEntries:
             assert entry in inspectData
+        assert os.path.isfile(adrFileName)
     finally:
         os.remove(qvsstls_instance.hdfFileName)
+        os.remove(adrFileName)
 
 
 def test_setFreeEnergyIntegrand(qvsstls_instance, mocker):

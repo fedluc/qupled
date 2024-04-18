@@ -61,7 +61,7 @@ public:
 			     verbose(true && parallelUtil::MPI::isRoot()) { ; }
   // Constructor for recursive calculations
   VSBase(const Input &in_,
-	 const ThermoProp& thermoProp_) : Scheme(in_),
+	 const ThermoProp& thermoProp_) : Scheme(in_, false),
 					  in(in_),
 					  thermoProp(in_, thermoProp_),
 					  verbose(false) { ; }
