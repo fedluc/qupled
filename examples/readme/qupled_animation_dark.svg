@@ -1,0 +1,172 @@
+
+    <svg width="1600" height="900"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">
+     
+    <image xlink:href="dark_mode/plot000.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="0.0s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="0.18s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot001.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="0.18s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="0.36s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot002.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="0.36s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="0.54s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot003.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="0.54s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="0.72s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot004.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="0.72s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="0.8999999999999999s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot005.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="0.8999999999999999s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="1.0799999999999998s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot006.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="1.08s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="1.26s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot007.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="1.26s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="1.44s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot008.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="1.44s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="1.6199999999999999s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot009.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="1.6199999999999999s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="1.7999999999999998s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot010.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="1.7999999999999998s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="1.9799999999999998s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot011.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="1.98s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="2.16s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot012.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="2.16s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="2.3400000000000003s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot013.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="2.34s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="2.52s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot014.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="2.52s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="2.7s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot015.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="2.6999999999999997s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="2.88s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot016.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="2.88s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="3.06s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot017.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="3.06s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="3.24s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot018.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="3.2399999999999998s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="3.42s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot019.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="3.42s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="3.6s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot020.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="3.5999999999999996s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="3.78s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot021.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="3.78s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="3.96s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot022.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="3.96s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="4.14s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot023.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="4.14s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="4.319999999999999s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot024.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="4.32s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="4.5s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot025.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="4.5s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="4.68s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot026.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="4.68s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="4.859999999999999s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot027.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="4.859999999999999s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="5.039999999999999s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot028.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="5.04s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="5.22s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot029.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="5.22s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="5.3999999999999995s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot030.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="5.3999999999999995s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="5.579999999999999s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot031.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="5.58s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="5.76s"/>
+    </image>
+    
+    <image xlink:href="dark_mode/plot032.svg" width="100%" height="100%" visibility="hidden">
+      <animate attributeName="visibility" values="hidden;visible" begin="5.76s"/>
+      <animate attributeName="visibility" values="visible;hidden" begin="5.9399999999999995s"/>
+    </image>
+    
+    </svg>
+    
