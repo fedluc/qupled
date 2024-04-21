@@ -3,17 +3,17 @@ import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import colormaps as cm
-import imageio
+from scour.scour import start, getInOut, parse_args
 import qupled.classic as qpc
 import qupled.quantum as qpq
 
 def main():
-    darkmode = False
-    nIterations = 33
-    svg_files = create_all_svg_files(nIterations, darkmode)
-    combine_svg_files(svg_files, darkmode)
+    for darkmode in [True, False]:
+        nIterations = 33
+        svg_files = create_all_svg_files(nIterations, darkmode)
+        combine_svg_files(svg_files, darkmode)
 
-
+    
 def create_all_svg_files(nFiles, darkmode):
     fig, ax = plt.subplots()
     images = []
@@ -52,6 +52,7 @@ def combine_svg_files(svg_files, darkmode):
         os.remove(svg_file)
     with open(animation_file, "w") as fw:
          fw.write(svg_template.format(svg_image))
+    optimise_svg(animation_file)
 
 
 def add_animation(svg_content, begin, end):
@@ -83,6 +84,8 @@ def create_one_svg_file(i, errorList, darkmode):
     file_name = f"plot{i:03}.svg"
     plt.savefig(file_name)
     plt.close()
+    # Optimise svg file
+    optimise_svg(file_name)
     return file_name
 
 
@@ -96,7 +99,7 @@ def solve_qstls(i):
                       iterations = 0)
     if (i > 0):
         qstls.setGuess("rs15.000_theta1.000_QSTLS.h5")
-    qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
+        qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
     qstls.compute()
     return QStlsData(qstls.scheme.wvg,
                      qstls.scheme.adr,
@@ -167,6 +170,26 @@ def plot_error(plt, iteration, errorList, error, settings):
               fontweight="bold")
     plt.xticks(fontsize=settings.ticksz)
     plt.yticks(fontsize=settings.ticksz)
+
+
+def optimise_svg(file_name):
+    tmp_file_name = "tmp.svg"
+    options = parse_args()
+    options.enable_viewboxing = True
+    options.strip_ids = True
+    options.remove_titles = True
+    options.remove_descriptions = True
+    options.remove_metadata = True
+    options.remove_descriptive_elements = True
+    options.indent_type = None
+    options.strip_comments = True
+    options.strip_xml_space_attribute = True
+    options.strip_xml_prolog = True
+    options.infilename = file_name
+    options.outfilename = tmp_file_name
+    (infile, outfile) = getInOut(options)
+    start(options, infile, outfile)
+    os.rename(tmp_file_name, file_name)
 
 
 class QStlsData():
