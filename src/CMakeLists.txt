@@ -41,7 +41,6 @@ target_include_directories(qupled PUBLIC
 # Link external libraries
 target_link_libraries(qupled PUBLIC
 		      OpenMP::OpenMP_CXX
-		      # ${Python3_LIBRARIES}
 		      ${Boost_LIBRARIES}
 		      ${MPI_CXX_LIBRARIES}
 		      GSL::gsl

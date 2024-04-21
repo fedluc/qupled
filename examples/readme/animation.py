@@ -23,6 +23,7 @@ def create_all_svg_files(nFiles, darkmode):
         file_names.append(create_one_svg_file(i, error, darkmode))
     return file_names
 
+
 def combine_svg_files(svg_files, darkmode):
     svg_template = """
     <svg width="{}" height="{}"
@@ -85,7 +86,7 @@ def solve_qstls(i):
                       iterations = 0)
     if (i > 0):
         qstls.setGuess("rs15.000_theta1.000_QSTLS.h5")
-    qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
+        qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
     qstls.compute()
     return [qstls.scheme.wvg,
             qstls.scheme.adr,

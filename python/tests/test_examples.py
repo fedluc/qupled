@@ -34,6 +34,9 @@ def test_fixedAdrQstls(mocker):
 def test_fixedAdrQstlsIet(mocker):
     runExample("fixedAdrQstlsIet", mocker)
 
+def test_fixedAdrQVSStls(mocker):
+    runExample("fixedAdrQVSStls", mocker)
+    
 def test_initialGuessQstls(mocker):
     runExample("initialGuessQstls", mocker)
 

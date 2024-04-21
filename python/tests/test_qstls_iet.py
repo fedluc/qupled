@@ -120,7 +120,6 @@ def test_unpackFixedAdrFiles(qstls_iet_instance, mocker):
 
 def test_checkStatusAndClean(qstls_iet_instance, mocker, capsys):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    mockCheckInputs = mocker.patch("os.remove")
     qstls_iet_instance.scheme = qp.Qstls(qstls_iet_instance.inputs)
     qstls_iet_instance._checkStatusAndClean(0)
     captured = capsys.readouterr()
