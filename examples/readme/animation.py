@@ -99,7 +99,7 @@ def solve_qstls(i):
                       iterations = 0)
     if (i > 0):
         qstls.setGuess("rs15.000_theta1.000_QSTLS.h5")
-    qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
+        qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
     qstls.compute()
     return QStlsData(qstls.scheme.wvg,
                      qstls.scheme.adr,
