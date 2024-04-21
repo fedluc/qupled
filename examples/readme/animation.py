@@ -8,7 +8,7 @@ import qupled.classic as qpc
 import qupled.quantum as qpq
 
 def main():
-    darkmode = False
+    darkmode = True
     nIterations = 33
     svg_files = create_all_svg_files(nIterations, darkmode)
     combine_svg_files(svg_files, darkmode)
@@ -33,10 +33,9 @@ def combine_svg_files(svg_files, darkmode):
     </svg>
     """
     image_template = """
-    <image xlink:href="{}" width="100%" height="100%" visibility="hidden">
-      <animate attributeName="visibility" values="hidden;visible" begin="{}s"/>
-      <animate attributeName="visibility" values="visible;hidden" begin="{}s"/>
-    </image>
+    <g width="100%" height="100%" visibility="hidden">
+     {}
+    </g>
     """
     image_width = 1600 # in pixels
     image_height = 900 # in pixels
@@ -46,31 +45,46 @@ def combine_svg_files(svg_files, darkmode):
     if (darkmode):
         animation_file = "qupled_animation_dark.svg"
     for i in range(len(svg_files)):
+        svg_file = svg_files[i]
         begin_visible = i * image_duration
         begin_hidden = begin_visible + image_duration
-        svg_image += image_template.format(svg_files[i], begin_visible, begin_hidden)
-    with open(animation_file, "w") as f:
-        f.write(svg_template.format(image_width, image_height, svg_image))
+        with open(svg_file, "r") as f:
+            svg_content = f.read()
+            svg_content = svg_content[svg_content.index("<svg"):]
+            svg_content = add_animation(svg_content, begin_visible, begin_hidden)
+            svg_image += image_template.format(svg_content)
+        os.remove(svg_file)
+    with open(animation_file, "w") as fw:
+         fw.write(svg_template.format(image_width, image_height, svg_image))
 
 
+def add_animation(svg_content, begin, end):
+    animation_xml = f"""
+     <animate attributeName="visibility" values="hidden;visible" begin="{begin}s"/>
+     <animate attributeName="visibility" values="visible;hidden" begin="{end}s"/>
+    """
+    index = svg_content.index("</svg>")
+    modified_svg_content = svg_content[:index] + animation_xml + svg_content[index:]
+    return modified_svg_content
+
+         
 def create_one_svg_file(i, errorList, darkmode):
     # Solve scheme
-    [wvg, adr, idr, ssf, error] = solve_qstls(i)
+    plot_data = solve_qstls(i)
     # Get plot settings
     settings = PlotSettings(darkmode)
     plt.figure(figsize=settings.figure_size)
     plt.style.use(settings.theme)
+    # Clip plot data
+    plot_data.clip(settings)
     # Plot quantities of interest
-    plot_density_response(plt, wvg, adr, idr, settings)
-    plot_ssf(plt, wvg, ssf, settings)
-    plot_error(plt, i, errorList, error, settings)
+    plot_density_response(plt, plot_data, settings)
+    plot_ssf(plt, plot_data, settings)
+    plot_error(plt, i, errorList, plot_data.error, settings)
     # Combine plots
     plt.tight_layout()
     # Save figure
-    od = settings.output_directory
-    if not os.path.exists(od):
-        os.makedirs(od)
-    file_name = os.path.join(od, f"plot{i:03}.svg")
+    file_name = f"plot{i:03}.svg"
     plt.savefig(file_name)
     plt.close()
     return file_name
@@ -88,16 +102,24 @@ def solve_qstls(i):
         qstls.setGuess("rs15.000_theta1.000_QSTLS.h5")
         qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
     qstls.compute()
-    return [qstls.scheme.wvg,
-            qstls.scheme.adr,
-            qstls.scheme.idr,
-            qstls.scheme.ssf,
-            qstls.scheme.error]
-    
+    return QStlsData(qstls.scheme.wvg,
+                     qstls.scheme.adr,
+                     qstls.scheme.idr,
+                     qstls.scheme.ssf,
+                     qstls.scheme.error)
 
-def plot_density_response(plt, wvg, adr, idr, settings):
-    idr[idr == 0.0] = 1.0
-    dr = np.divide(adr, idr)
+
+def clip_data(wvg, adr, idr, ssf, error, settings):
+    mask = np.less_equal(wvg, settings.xlim)
+    wvg = wvg[mask]
+    adr = adr[mask]
+    idr = idr[mask]
+    ssf = ssf[mask]
+
+    
+def plot_density_response(plt, plot_data, settings):
+    plot_data.idr[plot_data.idr == 0.0] = 1.0
+    dr = np.divide(plot_data.adr, plot_data.idr)
     plt.subplot(2, 2, 3)
     parameters = np.array([0, 1, 2, 3, 4])
     numParameters = parameters.size
@@ -107,9 +129,9 @@ def plot_density_response(plt, wvg, adr, idr, settings):
         else:
             label = r"$\omega = {}\pi/\beta\hbar$".format(parameters[i]*2)
         color = settings.colormap(1.0 - 1.0*i/numParameters)
-        plt.plot(wvg, dr[:,parameters[i]], color=color,
+        plt.plot(plot_data.wvg, dr[:,parameters[i]], color=color,
                  linewidth=settings.width, label=label)
-    plt.xlim(0, 6)
+    plt.xlim(0, settings.xlim)
     plt.xlabel("Wave-vector", fontsize=settings.labelsz)
     plt.title("Density response", fontsize=settings.labelsz,
               fontweight="bold")
@@ -118,11 +140,11 @@ def plot_density_response(plt, wvg, adr, idr, settings):
     plt.yticks(fontsize=settings.ticksz)
 
 
-
-def plot_ssf(plt, wvg, ssf, settings):
+def plot_ssf(plt, plot_data, settings):
     plt.subplot(2, 2, 4)
-    plt.plot(wvg, ssf, color=settings.color, linewidth=settings.width)
-    plt.xlim(0, 6)
+    plt.plot(plot_data.wvg, plot_data.ssf, color=settings.color,
+             linewidth=settings.width)
+    plt.xlim(0, settings.xlim)
     plt.xlabel("Wave-vector", fontsize=settings.labelsz)
     plt.title("Static structure factor", fontsize=settings.labelsz,
               fontweight="bold")
@@ -151,20 +173,35 @@ def plot_error(plt, iteration, errorList, error, settings):
     plt.yticks(fontsize=settings.ticksz)
 
 
+class QStlsData():
+
+    def __init__(self, wvg, adr, idr,
+                 ssf, error):
+        self.wvg = wvg
+        self.adr = adr
+        self.idr = idr
+        self.ssf = ssf
+        self.error = error
+
+    def clip(self, settings):
+        mask = np.less_equal(self.wvg, settings.xlim)
+        self.wvg = self.wvg[mask]
+        self.adr = self.adr[mask]
+        self.idr = self.idr[mask]
+        self.ssf = self.ssf[mask]
+    
 class PlotSettings():
 
-    def __init__(self,
-                 darkmode):
+    def __init__(self, darkmode):
         self.labelsz = 16
         self.ticksz = 14
         self.width = 2.0
         self.theme = "ggplot"
         self.colormap = cm["viridis"].reversed()
-        self.output_directory = "ligth_mode"
+        self.xlim = 6
         if darkmode:
             self.theme = "dark_background"
             self.colormap = cm["plasma"]
-            self.output_directory = "dark_mode"
         self.color = self.colormap(1.0)
         self.figure_size = (12,8)
 
