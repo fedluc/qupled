@@ -8,7 +8,7 @@ import qupled.classic as qpc
 import qupled.quantum as qpq
 
 def main():
-    darkmode = True
+    darkmode = False
     nIterations = 33
     svg_files = create_all_svg_files(nIterations, darkmode)
     combine_svg_files(svg_files, darkmode)
@@ -26,19 +26,15 @@ def create_all_svg_files(nFiles, darkmode):
 
 def combine_svg_files(svg_files, darkmode):
     svg_template = """
-    <svg width="{}" height="{}"
-     xmlns="http://www.w3.org/2000/svg"
-     xmlns:xlink="http://www.w3.org/1999/xlink">
+    <svg width="864pt" height="576pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
      {}
     </svg>
     """
     image_template = """
-    <g width="100%" height="100%" visibility="hidden">
+    <g visibility="hidden">
      {}
     </g>
     """
-    image_width = 1600 # in pixels
-    image_height = 900 # in pixels
     image_duration = 0.18 # in seconds
     svg_image = ""
     animation_file = "qupled_animation_light.svg"
@@ -55,7 +51,7 @@ def combine_svg_files(svg_files, darkmode):
             svg_image += image_template.format(svg_content)
         os.remove(svg_file)
     with open(animation_file, "w") as fw:
-         fw.write(svg_template.format(image_width, image_height, svg_image))
+         fw.write(svg_template.format(svg_image))
 
 
 def add_animation(svg_content, begin, end):
@@ -100,7 +96,7 @@ def solve_qstls(i):
                       iterations = 0)
     if (i > 0):
         qstls.setGuess("rs15.000_theta1.000_QSTLS.h5")
-        qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
+    qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
     qstls.compute()
     return QStlsData(qstls.scheme.wvg,
                      qstls.scheme.adr,
