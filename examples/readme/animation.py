@@ -8,10 +8,10 @@ import qupled.classic as qpc
 import qupled.quantum as qpq
 
 def main():
-    for darkmode in [True, False]:
-        nIterations = 33
-        svg_files = create_all_svg_files(nIterations, darkmode)
-        combine_svg_files(svg_files, darkmode)
+    darkmode = True
+    nIterations = 33
+    svg_files = create_all_svg_files(nIterations, darkmode)
+    combine_svg_files(svg_files, darkmode)
 
     
 def create_all_svg_files(nFiles, darkmode):
