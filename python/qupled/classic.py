@@ -548,6 +548,7 @@ class VSStls(Stls):
         self.scheme : qp.VSStls = None
         # File to store output on disk
         self.hdfFileName = None
+        self.old_alpha = None
 
         
     # Compute
@@ -563,7 +564,7 @@ class VSStls(Stls):
         self._checkInputs()
         self.scheme = qp.VSStls(self.inputs)
         status = self.scheme.compute()
-        self._checkStatusAndClean(status)        
+        self._checkStatusAndClean(status)       
         self._setHdfFile()
         self._save()
 
@@ -575,8 +576,8 @@ class VSStls(Stls):
         super()._save()
         pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
         pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
-        pd.DataFrame(self.scheme.Alpha).to_hdf(self.hdfFileName, key="Alpha")
-        print(self.scheme.Alpha)
+        AlphaVals = self._combineAlpha()
+        pd.DataFrame(AlphaVals).to_hdf(self.hdfFileName, key="Alpha")
 
     # Set the free energy integrand from a dataframe produced in output
     def setFreeEnergyIntegrand(self, fileName : str) -> None:
@@ -590,3 +591,21 @@ class VSStls(Stls):
         fxci.grid = hdfData["fxcGrid"]
         fxci.integrand = np.ascontiguousarray(hdfData["fxci"])
         self.inputs.freeEnergyIntegrand = fxci
+
+    def _combineAlpha(self) -> None:
+        """ Combine old Alpha values with new Alpha values if they exist. """
+        if self.old_alpha is not None:
+            return np.concatenate((self.old_alpha, self.scheme.Alpha))
+        else:
+            return self.scheme.Alpha
+
+    # Set the free energy integrand from a dataframe produced in output
+    def setFreeParameter(self, fileName : str) -> None:
+        """ Sets the Free parameter from a previous output file.
+
+        Args:
+            fileName : name of the file used to extract the information for the free parameter.
+        """
+        hdfData = qu.Hdf().read(fileName, ["Alpha"])
+        Alpha = np.ascontiguousarray(hdfData["Alpha"])
+        self.old_alpha = Alpha

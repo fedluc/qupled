@@ -130,6 +130,9 @@ class Hdf():
             elif ( name in ["bf", "sdr", "slfc", "ssf", "ssfHF"] ) :
                 x = self.read(hdf, [name, "wvg"])
                 Plot.plot1D(x["wvg"], x[name], self.entries["wvg"].description, self.entries[name].description)
+            elif ( name == "Alpha" ) :
+                x = self.read(hdf, [name, "fxcGrid"])
+                Plot.plot1D(x["fxcGrid"][::2], x[name], self.entries["fxcGrid"].description, self.entries[name].description)
             else:
                 sys.exit("Unknown quantity to plot")
 

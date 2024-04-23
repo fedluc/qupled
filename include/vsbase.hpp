@@ -24,10 +24,10 @@ protected:
   ThermoProp thermoProp;
   // Free parameter
   double alpha;
-  // Free parameter values
-  std::vector <double> alphaValues;
   // Output verbosity
   const bool verbose;
+  // Vector to store alpha values
+  std::vector<double> alphaVals;
   
   // Compute free parameter
   virtual double computeAlpha() = 0;
@@ -38,6 +38,11 @@ protected:
     SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
     rsol.solve(func, in.getAlphaGuess());
     alpha = rsol.getSolution();
+
+    // Append the last alpha value
+    alphaVals = getAlphaValuesThermo();
+    alphaVals.push_back(alpha);
+
     if (verbose) { std::cout << "Free parameter = " << alpha << std::endl; }
     updateSolution();
   }
@@ -77,12 +82,6 @@ public:
       Scheme::init();
       if (verbose) std::cout << "Free parameter calculation ..." << std::endl;
       doIterations();
-      std::cout << "AlphaC = " << std::endl;
-    //   alphaValues.push_back(alpha);
-    //   int s = alphaValues.size();
-    // for (int i = 0; i < s; i++){
-    //    std::cout << "AlphaC = " << alphaValues[i] << std::endl;
-    // }
       if (verbose) std::cout << "Done" << std::endl;
       return 0;
     }
@@ -105,8 +104,19 @@ public:
     return thermoProp.getFreeEnergyGrid();
   }
 
-  std::vector<double> getalpha() const {
-    return alphaValues;
+  // Getter used by ThermoPropBase
+  double getalphaScheme() const {
+    return alpha;
+  }
+
+  // Getter for alpha values from ThermoPropBase
+  std::vector<double> getAlphaValuesThermo() const {
+    return thermoProp.getalpha();
+  }
+
+  // Getter to expose all alpha values to Python
+  std::vector<double> getAlphaValues() const {
+    return alphaVals;
   }
   
 };
@@ -134,6 +144,10 @@ protected:
   StructProp structProp;
   // Grid for thermodyamic integration
   std::vector<double> rsGrid;
+  // Free parameter temporary storage
+  double alphaTmp;
+  // Free parameter values
+  std::vector<double> alphaValues;
   // Free energy integrand for NPOINTS state points
   std::vector<std::vector<double>> fxcIntegrand;
   // Flags marking particular state points
@@ -242,6 +256,8 @@ public:
 	Scheme schemeTmp(inTmp, *this);
 	schemeTmp.compute();
 	fxciTmp = schemeTmp.getThermoProp().structProp.getFreeEnergyIntegrand();
+  alphaTmp = schemeTmp.getalphaScheme();
+  alphaValues.push_back(alphaTmp);
 	if (verbose) {
 	  printf("Done\n");
 	  printf("---------------------------------"
@@ -360,6 +376,11 @@ public:
   // Get free energy grid
   const std::vector<double>& getFreeEnergyGrid() const  {
     return rsGrid;
+  }
+
+  // Get free parameter values except the last one
+  std::vector<double> getalpha() const {
+    return alphaValues;
   }
   
 };

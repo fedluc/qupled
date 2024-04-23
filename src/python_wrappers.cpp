@@ -212,7 +212,7 @@ double PyVSStls::getError(const VSStls &vsstls){
 }
 
 bn::ndarray PyVSStls::getAlpha(const VSStls& vsstls) {
-  return vp::toNdArray(vsstls.getalpha());
+  return vp::toNdArray(vsstls.getAlphaValues());
 }
 
 bn::ndarray PyVSStls::getFreeEnergyIntegrand(const VSStls &vsstls){
@@ -238,7 +238,7 @@ double PyQVSStls::getError(const QVSStls &qvsstls){
 }
 
 bn::ndarray PyQVSStls::getAlpha(const QVSStls& qvsstls) {
-  return vp::toNdArray(qvsstls.getalpha());
+  return vp::toNdArray(qvsstls.getAlphaValues());
 }
 
 bn::ndarray PyQVSStls::getAdr(const QVSStls& qvsstls) {
