@@ -37,7 +37,6 @@ def test_default(qstls_iet_instance):
     assert qstls_iet_instance.inputs.int2DScheme == "full"
     assert qstls_iet_instance.inputs.threads == 1
     assert qstls_iet_instance.inputs.intError == 1.0e-5
-    assert qstls_iet_instance.fixediet is None
     assert qstls_iet_instance.tmpRunDir is None
     assert qstls_iet_instance.scheme is None
     assert qstls_iet_instance.hdfFileName is None
@@ -121,11 +120,10 @@ def test_unpackFixedAdrFiles(qstls_iet_instance, mocker):
 
 def test_checkStatusAndClean(qstls_iet_instance, mocker, capsys):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    mockCheckInputs = mocker.patch("os.remove")
     qstls_iet_instance.scheme = qp.Qstls(qstls_iet_instance.inputs)
     qstls_iet_instance._checkStatusAndClean(0)
     captured = capsys.readouterr()
-    assert mockMPIIsRoot.call_count == 1
+    assert mockMPIIsRoot.call_count == 2
     assert "Dielectric theory solved successfully!\n" in captured
     with pytest.raises(SystemExit) as excinfo:
         qstls_iet_instance._checkStatusAndClean(1)

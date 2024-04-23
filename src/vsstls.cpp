@@ -79,8 +79,11 @@ void StructProp::doIterations() {
     }
     counter++;
   }
-  printf("Alpha = %.5e, Residual error "
-	 "(structural properties) = %.5e\n", csr[RS_THETA].getAlpha(), err);
+  if (verbose) {
+    printf("Alpha = %.5e, Residual error "
+	   "(structural properties) = %.5e\n",
+	   csr[RS_THETA].getAlpha(), err);
+  }
 }
 
 // -----------------------------------------------------------------

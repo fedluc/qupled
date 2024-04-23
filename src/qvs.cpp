@@ -1,8 +1,8 @@
+#include <filesystem>
 #include "util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
 #include "qvs.hpp"
-#include <fmt/core.h>
 
 using namespace std;
 using namespace vecUtil;
@@ -81,38 +81,6 @@ vector<double> QThermoProp::getQData() const {
 // qStructProp class
 // -----------------------------------------------------------------
 
-QStructProp::QStructProp(const QVSStlsInput &in) : StructPropBase() {
-  setupCSR(setupCSRInput(in));
-  setupCSRDependencies();
-}
-
-vector<QVSStlsInput>  QStructProp::setupCSRInput(const QVSStlsInput& in) {
-  auto inVector = StructPropBase::setupCSRInput(in);
-  if (!in.getFixed().empty()) { 
-    for (auto& inTmp : inVector) {
-      inTmp.setFixed(fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
-				 inTmp.getDegeneracy(),
-				 inTmp.getNMatsubara()));
-    }
-  }
-  return inVector;
-}
-
-void QStructProp::setupCSRDependencies() {
-  StructPropBase::setupCSRDependencies();
-  for (size_t i = 0; i < csr.size(); ++i) {
-    switch(i) {
-    case RS_THETA_DOWN: case RS_UP_THETA_DOWN:
-	csr[i].setAdrFixedSource(csr[RS_DOWN_THETA_DOWN]); break;
-    case RS_THETA: case RS_UP_THETA:
-      csr[i].setAdrFixedSource(csr[RS_DOWN_THETA]); break;
-    case RS_THETA_UP: case RS_UP_THETA_UP:
-      csr[i].setAdrFixedSource(csr[RS_DOWN_THETA_UP]); break;
-    }
-  }
-}
-
-
 void QStructProp::doIterations() {
   const auto& in = csr[0].getInput();
   const int maxIter = in.getNIter();
@@ -142,8 +110,11 @@ void QStructProp::doIterations() {
       counter++;
     }
   }
-  printf("Alpha = %.5e, Residual error "
-	 "(structural properties) = %.5e\n", csr[RS_THETA].getAlpha(), err);
+  if (verbose) {
+    printf("Alpha = %.5e, Residual error "
+	   "(structural properties) = %.5e\n",
+	   csr[RS_THETA].getAlpha(), err);
+  }
   // Set static structure factor for output
   for (auto& c : csr) { c.updateSsf(); }
 }
@@ -159,9 +130,19 @@ vector<double> QStructProp::getQ() const  {
 // -----------------------------------------------------------------
 
 void QStlsCSR::init() {
-  if (adrFixedSource) {
+  switch(lfcTheta.type) {
+  case CENTERED: adrFixedFileName = "THETA.bin"; break;
+  case FORWARD: adrFixedFileName = "THETA_DOWN.bin"; break;
+  case BACKWARD: adrFixedFileName = "THETA_UP.bin"; break;
+  }
+  if (!in.getFixed().empty()) {
+    std::filesystem::path fullPath = in.getFixed();
+    fullPath /= adrFixedFileName;
+    adrFixedFileName = fullPath.string();
+  }
+  if (std::filesystem::exists(adrFixedFileName)) {
     Stls::init();
-    adrFixed = *adrFixedSource;
+    readAdrFixedFile(adrFixed, adrFixedFileName, false);
     return;
   }
   Qstls::init();
