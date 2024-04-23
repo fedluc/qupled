@@ -46,6 +46,7 @@ void QVSStls::updateSolution() {
   const auto& qstls = thermoProp.getStructProp<QStlsCSR>();
   adr = qstls.getAdr();
   ssf = qstls.getSsf();
+  slfc = qstls.getSlfc();
 }
 
 // -----------------------------------------------------------------
