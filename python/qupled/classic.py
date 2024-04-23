@@ -575,6 +575,8 @@ class VSStls(Stls):
         super()._save()
         pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
         pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
+        pd.DataFrame(self.scheme.Alpha).to_hdf(self.hdfFileName, key="Alpha")
+        print(self.scheme.Alpha)
 
     # Set the free energy integrand from a dataframe produced in output
     def setFreeEnergyIntegrand(self, fileName : str) -> None:

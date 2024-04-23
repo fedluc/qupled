@@ -211,6 +211,10 @@ double PyVSStls::getError(const VSStls &vsstls){
   return -1;
 }
 
+bn::ndarray PyVSStls::getAlpha(const VSStls& vsstls) {
+  return vp::toNdArray(vsstls.getalpha());
+}
+
 bn::ndarray PyVSStls::getFreeEnergyIntegrand(const VSStls &vsstls){
   return vp::toNdArray2D(vsstls.getFreeEnergyIntegrand());
 }
@@ -231,6 +235,10 @@ double PyQVSStls::getError(const QVSStls &qvsstls){
   // NOTE: This is just a place-holder, getError is not yet implemented in QVSStls
   if (qvsstls.getFreeEnergyIntegrand().empty()) { return -1; }
   return -1;
+}
+
+bn::ndarray PyQVSStls::getAlpha(const QVSStls& qvsstls) {
+  return vp::toNdArray(qvsstls.getalpha());
 }
 
 bn::ndarray PyQVSStls::getAdr(const QVSStls& qvsstls) {

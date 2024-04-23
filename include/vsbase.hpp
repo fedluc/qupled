@@ -24,6 +24,8 @@ protected:
   ThermoProp thermoProp;
   // Free parameter
   double alpha;
+  // Free parameter values
+  std::vector <double> alphaValues;
   // Output verbosity
   const bool verbose;
   
@@ -75,6 +77,12 @@ public:
       Scheme::init();
       if (verbose) std::cout << "Free parameter calculation ..." << std::endl;
       doIterations();
+      std::cout << "AlphaC = " << std::endl;
+    //   alphaValues.push_back(alpha);
+    //   int s = alphaValues.size();
+    // for (int i = 0; i < s; i++){
+    //    std::cout << "AlphaC = " << alphaValues[i] << std::endl;
+    // }
       if (verbose) std::cout << "Done" << std::endl;
       return 0;
     }
@@ -95,6 +103,10 @@ public:
   
   std::vector<double> getFreeEnergyGrid() const {
     return thermoProp.getFreeEnergyGrid();
+  }
+
+  std::vector<double> getalpha() const {
+    return alphaValues;
   }
   
 };

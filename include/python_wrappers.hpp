@@ -139,6 +139,7 @@ class PyVSStls {
 public:
   static int compute(VSStls& vsstls);
   static double getError(const VSStls &vsstls);
+  static bn::ndarray getAlpha(const VSStls& vsstls);
   static bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls);
   static bn::ndarray getFreeEnergyGrid(const VSStls &vsstls);
 };
@@ -151,6 +152,7 @@ class PyQVSStls {
 public:
   static int compute(QVSStls& qvsstls);
   static double getError(const QVSStls &qvsstls);
+  static bn::ndarray getAlpha(const QVSStls& qvsstls);
   static bn::ndarray getAdr(const QVSStls& qvsstls);
   static bn::ndarray getFreeEnergyIntegrand(const QVSStls &qvsstls);
   static bn::ndarray getFreeEnergyGrid(const QVSStls &qvsstls);

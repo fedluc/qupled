@@ -36,7 +36,8 @@ class Hdf():
             "ssf"        : self.Entries("Static structure factor", "numpy"),
             "ssfHF"      : self.Entries("Hartree-Fock static structure factor", "numpy"),
             "theory"     : self.Entries("Theory that is being solved", "string"),
-            "wvg"        : self.Entries("Wave-vector", "numpy")
+            "wvg"        : self.Entries("Wave-vector", "numpy"),
+            "Alpha"      : self.Entries("Free Parameter for VS schemes", "numpy")
         }
 
     # Structure used to cathegorize the entries stored in the hdf file
@@ -139,7 +140,7 @@ class Hdf():
         Args:  
             hdf: Name of the hdf file to load the structural properties from
             rdfGrid: A numpy array specifing the grid used to compute the radial distribution function
-                (default = None, i.e. rdfGrid = np.arange(0.01, 10.0, 0.01))
+                (default = None, i.e. rdfGrid = np.arange(0.0, 10.0, 0.01))
             saveRdf: Flag marking whether the rdf data should be added to the hdf file (default = True)
 
         Returns:
@@ -147,7 +148,7 @@ class Hdf():
         
         """
         hdfData = self.read(hdf, ["wvg", "ssf"])
-        if (rdfGrid is None) : rdfGrid = np.arange(0.01, 10.0, 0.01)
+        if (rdfGrid is None) : rdfGrid = np.arange(0.0, 10.0, 0.01)
         rdf = qp.computeRdf(rdfGrid, hdfData["wvg"], hdfData["ssf"])
         if (saveRdf):
             pd.DataFrame(rdfGrid).to_hdf(hdf, key="rdfGrid", mode="r+")
