@@ -150,7 +150,6 @@ protected:
   int status;
   // Solution
   double sol;
-  std::vector <double> solValues;
   // Protected constructor
   RootSolverBase(const double& relErr_,
 		 const int maxIter_) : relErr(relErr_),
@@ -162,7 +161,6 @@ protected:
 public:
 
   double getSolution() const { return sol; };
-  std::vector <double> getSolutionValues() const { return solValues; };
   
 };
 
