@@ -378,6 +378,7 @@ class QVSStls(qc.VSStls, Qstls):
         self.inputs.errorAlpha = errorAlpha
         self.inputs.iterationsAlpha = iterationsAlpha
         self.inputs.intError = errorIntegrals
+        self.old_alpha = None
 
     # Compute
     @qu.MPI.recordTime
