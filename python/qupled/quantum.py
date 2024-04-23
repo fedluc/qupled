@@ -274,6 +274,10 @@ class QstlsIet(Qstls):
         guess.adr = np.ascontiguousarray(hdfData["adr"])
         guess.matsubara = hdfData["matsubara"]
         self.inputs.guess = guess
+
+# -----------------------------------------------------------------------
+# QstlsIet class
+# -----------------------------------------------------------------------
         
 class QVSStls(qc.VSStls, Qstls):
 

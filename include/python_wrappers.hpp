@@ -144,6 +144,17 @@ public:
 };
 
 // -----------------------------------------------------------------
+// Wrapper for exposing the Qstls class to Python
+// -----------------------------------------------------------------
+
+class PyQstls {
+public:
+  static int compute(Qstls& qstls);
+  static double getError(const Qstls& qstls);
+  static bn::ndarray getAdr(const Qstls& qstls);
+};
+
+// -----------------------------------------------------------------
 // Wrapper for exposing the QVSStls class to Python
 // -----------------------------------------------------------------
 
@@ -154,17 +165,6 @@ public:
   static bn::ndarray getAdr(const QVSStls& qvsstls);
   static bn::ndarray getFreeEnergyIntegrand(const QVSStls &qvsstls);
   static bn::ndarray getFreeEnergyGrid(const QVSStls &qvsstls);
-};
-
-// -----------------------------------------------------------------
-// Wrapper for exposing the Qstls class to Python
-// -----------------------------------------------------------------
-
-class PyQstls {
-public:
-  static int compute(Qstls& qstls);
-  static double getError(const Qstls& qstls);
-  static bn::ndarray getAdr(const Qstls& qstls);
 };
 
 // -----------------------------------------------------------------
