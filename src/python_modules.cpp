@@ -227,7 +227,7 @@ BOOST_PYTHON_MODULE(qupled)
 				     bp::init<const VSStlsInput>())
     .def("compute", &PyVSStls::compute)
     .add_property("error", &PyVSStls::getError)
-    .add_property("Alpha", &PyVSStls::getAlpha)
+    .add_property("alpha", &PyVSStls::getAlpha)
     .add_property("freeEnergyIntegrand", &PyVSStls::getFreeEnergyIntegrand)
     .add_property("freeEnergyGrid", &PyVSStls::getFreeEnergyGrid);
       
@@ -246,7 +246,7 @@ BOOST_PYTHON_MODULE(qupled)
     .add_property("freeEnergyIntegrand", &PyQVSStls::getFreeEnergyIntegrand)
     .add_property("freeEnergyGrid", &PyQVSStls::getFreeEnergyGrid)
     .add_property("adr", &PyQVSStls::getAdr)
-    .add_property("Alpha", &PyQVSStls::getAlpha);
+    .add_property("alpha", &PyQVSStls::getAlpha);
 
   // MPI class
   bp::class_<PyMPI>("MPI")
