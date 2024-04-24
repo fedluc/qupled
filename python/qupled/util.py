@@ -117,22 +117,20 @@ class Hdf():
         
         """
         for name in toPlot :
+            description = self.entries[name].description if name in self.entries.keys() else ""
             if ( name == "rdf" ) :
                 x = self.read(hdf, [name, "rdfGrid"])
-                Plot.plot1D(x["rdfGrid"], x[name], self.entries["rdfGrid"].description, self.entries[name].description)
+                Plot.plot1D(x["rdfGrid"], x[name], self.entries["rdfGrid"].description, description)
             elif ( name in ["adr", "idr"] ) :
                 x = self.read(hdf, [name, "wvg", "matsubara"])
                 if (matsubara is None) : matsubara = np.arange(x["matsubara"])
-                Plot.plot1DParametric(x["wvg"], x[name], self.entries["wvg"].description, self.entries[name].description, matsubara)
+                Plot.plot1DParametric(x["wvg"], x[name], self.entries["wvg"].description, description, matsubara)
             elif ( name == "fxci" ) :
                 x = self.read(hdf, [name, "fxcGrid"])
-                Plot.plot1D(x["fxcGrid"], x[name][1,:], self.entries["fxcGrid"].description, self.entries[name].description)
+                Plot.plot1D(x["fxcGrid"], x[name][1,:], self.entries["fxcGrid"].description, description)
             elif ( name in ["bf", "sdr", "slfc", "ssf", "ssfHF"] ) :
                 x = self.read(hdf, [name, "wvg"])
-                Plot.plot1D(x["wvg"], x[name], self.entries["wvg"].description, self.entries[name].description)
-            elif ( name == "Alpha" ) :
-                x = self.read(hdf, [name, "fxcGrid"])
-                Plot.plot1D(x["fxcGrid"][::2], x[name], self.entries["fxcGrid"].description, self.entries[name].description)
+                Plot.plot1D(x["wvg"], x[name], self.entries["wvg"].description, description)
             else:
                 sys.exit("Unknown quantity to plot")
 

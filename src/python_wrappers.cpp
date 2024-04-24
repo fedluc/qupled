@@ -224,6 +224,22 @@ bn::ndarray PyVSStls::getFreeEnergyGrid(const VSStls &vsstls){
 }
 
 // -----------------------------------------------------------------
+// PyQstls
+// -----------------------------------------------------------------
+
+int PyQstls::compute(Qstls& qstls) {
+  return qstls.compute();
+}
+
+double PyQstls::getError(const Qstls& qstls) {
+  return qstls.getError();
+}
+
+bn::ndarray PyQstls::getAdr(const Qstls& qstls) {
+  return vp::toNdArray2D(qstls.getAdr());
+}
+
+// -----------------------------------------------------------------
 // PyQVSStls
 // -----------------------------------------------------------------
 
@@ -251,22 +267,6 @@ bn::ndarray PyQVSStls::getFreeEnergyIntegrand(const QVSStls &qvsstls){
 
 bn::ndarray PyQVSStls::getFreeEnergyGrid(const QVSStls &qvsstls){
   return vp::toNdArray(qvsstls.getFreeEnergyGrid());
-}
-
-// -----------------------------------------------------------------
-// PyQstls
-// -----------------------------------------------------------------
-
-int PyQstls::compute(Qstls& qstls) {
-  return qstls.compute();
-}
-
-double PyQstls::getError(const Qstls& qstls) {
-  return qstls.getError();
-}
-
-bn::ndarray PyQstls::getAdr(const Qstls& qstls) {
-  return vp::toNdArray2D(qstls.getAdr());
 }
 
 // -----------------------------------------------------------------
