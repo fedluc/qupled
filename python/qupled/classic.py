@@ -548,7 +548,6 @@ class VSStls(Stls):
         self.scheme : qp.VSStls = None
         # File to store output on disk
         self.hdfFileName = None
-
         
     # Compute
     @qu.MPI.recordTime
@@ -563,7 +562,7 @@ class VSStls(Stls):
         self._checkInputs()
         self.scheme = qp.VSStls(self.inputs)
         status = self.scheme.compute()
-        self._checkStatusAndClean(status)        
+        self._checkStatusAndClean(status)       
         self._setHdfFile()
         self._save()
 
@@ -575,6 +574,7 @@ class VSStls(Stls):
         super()._save()
         pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
         pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
+        pd.DataFrame(self.scheme.alpha).to_hdf(self.hdfFileName, key="alpha")
 
     # Set the free energy integrand from a dataframe produced in output
     def setFreeEnergyIntegrand(self, fileName : str) -> None:
@@ -584,7 +584,9 @@ class VSStls(Stls):
             fileName : name of the file used to extract the information for the free energy integrand.
         """
         fxci = qp.FreeEnergyIntegrand()
-        hdfData = qu.Hdf().read(fileName, ["fxcGrid", "fxci"])
+        hdfData = qu.Hdf().read(fileName, ["fxcGrid", "fxci","alpha"])
         fxci.grid = hdfData["fxcGrid"]
         fxci.integrand = np.ascontiguousarray(hdfData["fxci"])
+        fxci.alpha = hdfData["alpha"]
         self.inputs.freeEnergyIntegrand = fxci
+        

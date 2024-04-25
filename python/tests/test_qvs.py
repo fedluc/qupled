@@ -160,7 +160,7 @@ def test_save(qvsstls_instance, mocker):
         expectedEntries = ["coupling", "degeneracy", "theory", "error",
                            "resolution", "cutoff", "matsubara",
                            "idr", "sdr", "slfc",  "ssf", "ssfHF",
-                           "wvg", "fxcGrid", "fxci", "adr"]
+                           "wvg", "fxcGrid", "fxci", "adr", "alpha"]
         for entry in expectedEntries:
             assert entry in inspectData
         assert os.path.isfile(adrFileName)
@@ -172,7 +172,8 @@ def test_save(qvsstls_instance, mocker):
 def test_setFreeEnergyIntegrand(qvsstls_instance, mocker):
     arr1D = np.ones(10)
     arr2D = np.ones((3, 10))
-    mockHdfRead = mocker.patch("qupled.util.Hdf.read", return_value={"fxcGrid" : arr1D, "fxci" : arr2D})
+    mockHdfRead = mocker.patch("qupled.util.Hdf.read", return_value={"fxcGrid" : arr1D, "fxci" : arr2D, "alpha" : arr1D})
     qvsstls_instance.setFreeEnergyIntegrand("dummyFileName")
     assert np.array_equal(qvsstls_instance.inputs.freeEnergyIntegrand.grid, arr1D)
+    assert np.array_equal(qvsstls_instance.inputs.freeEnergyIntegrand.alpha, arr1D)
     assert np.array_equal(qvsstls_instance.inputs.freeEnergyIntegrand.integrand, arr2D)

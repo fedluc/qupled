@@ -22,6 +22,7 @@ def mockOutput(hdfFileName):
         "cutoff" : 0,
         "matsubara" : 0
     }, index=["info"]).to_hdf(hdfFileName, key="info", mode="w")
+    pd.DataFrame(data1D).to_hdf(hdfFileName, key="alpha")
     pd.DataFrame(data2D).to_hdf(hdfFileName, key="adr")
     pd.DataFrame(data1D).to_hdf(hdfFileName, key="bf")
     pd.DataFrame(data1D).to_hdf(hdfFileName, key="fxcGrid")
@@ -80,7 +81,8 @@ def test_read(hdf_instance):
                           "cutoff", "matsubara"]):
                 assert readData[entry] == 0.0
             elif (entry in ["bf", "fxcGrid", "rdf", "rdfGrid",
-                            "sdr", "slfc", "ssf", "ssfHF", "wvg"]):
+                            "sdr", "slfc", "ssf", "ssfHF", "wvg", 
+                            "alpha"]):
                 assert np.array_equal(readData[entry], np.zeros(2))
             elif (entry in ["adr", "fxci", "idr"]):
                 assert np.array_equal(readData[entry], np.zeros((2, 2)))
@@ -112,7 +114,7 @@ def test_plot(hdf_instance, mocker):
     hdfFileName="testOutput.h5"
     mockPlotShow = mocker.patch("matplotlib.pyplot.show")
     mockOutput(hdfFileName)
-    toPlot = ["rdf", "adr", "idr", "fxci", "bf" , "sdr", "slfc", "ssf", "ssfHF"]
+    toPlot = ["rdf", "adr", "idr", "fxci", "bf" , "sdr", "slfc", "ssf", "ssfHF", "alpha"]
     try:
         hdf_instance.plot(hdfFileName, toPlot)
         assert mockPlotShow.call_count == len(toPlot)

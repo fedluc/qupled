@@ -18,6 +18,7 @@ class Hdf():
     def __init__(self):
         # The first entry is a descriptive name of the 
         self.entries = {
+            "alpha"      : self.Entries("Free Parameter for VS schemes", "numpy"),
             "adr"        : self.Entries("Auxiliary density response", "numpy2D"),
             "bf"         : self.Entries("Bridge function adder", "numpy"),
             "coupling"   : self.Entries("Coupling parameter", "number"),
@@ -129,7 +130,10 @@ class Hdf():
                 Plot.plot1D(x["fxcGrid"], x[name][1,:], self.entries["fxcGrid"].description, description)
             elif ( name in ["bf", "sdr", "slfc", "ssf", "ssfHF"] ) :
                 x = self.read(hdf, [name, "wvg"])
-                Plot.plot1D(x["wvg"], x[name], self.entries["wvg"].description, description)
+                Plot.plot1D(x["wvg"], x[name], self.entries["wvg"].description, self.entries[name].description)
+            elif ( name == "alpha" ) :
+                x = self.read(hdf, [name, "fxcGrid"])
+                Plot.plot1D(x["fxcGrid"][::2], x[name][::2], self.entries["fxcGrid"].description, self.entries[name].description)
             else:
                 sys.exit("Unknown quantity to plot")
 
@@ -140,7 +144,7 @@ class Hdf():
         Args:  
             hdf: Name of the hdf file to load the structural properties from
             rdfGrid: A numpy array specifing the grid used to compute the radial distribution function
-                (default = None, i.e. rdfGrid = np.arange(0.01, 10.0, 0.01))
+                (default = None, i.e. rdfGrid = np.arange(0.0, 10.0, 0.01))
             saveRdf: Flag marking whether the rdf data should be added to the hdf file (default = True)
 
         Returns:
@@ -148,7 +152,7 @@ class Hdf():
         
         """
         hdfData = self.read(hdf, ["wvg", "ssf"])
-        if (rdfGrid is None) : rdfGrid = np.arange(0.01, 10.0, 0.01)
+        if (rdfGrid is None) : rdfGrid = np.arange(0.0, 10.0, 0.01)
         rdf = qp.computeRdf(rdfGrid, hdfData["wvg"], hdfData["ssf"])
         if (saveRdf):
             pd.DataFrame(rdfGrid).to_hdf(hdf, key="rdfGrid", mode="r+")

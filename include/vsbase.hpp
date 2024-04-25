@@ -96,6 +96,10 @@ public:
   std::vector<double> getFreeEnergyGrid() const {
     return thermoProp.getFreeEnergyGrid();
   }
+
+  std::vector<double> getAlpha() const {
+    return thermoProp.getAlpha();
+  }
   
 };
 
@@ -122,6 +126,8 @@ protected:
   StructProp structProp;
   // Grid for thermodyamic integration
   std::vector<double> rsGrid;
+  // Free parameter values for all the coupling parameters stored in rsGrid
+  std::vector<double> alpha;
   // Free energy integrand for NPOINTS state points
   std::vector<std::vector<double>> fxcIntegrand;
   // Flags marking particular state points
@@ -161,25 +167,30 @@ public:
     rsGrid.push_back(0.0);
     const double rsMax = rs + drs;
     while(!numUtil::equalTol(rsGrid.back(), rsMax)){
-      rsGrid. push_back(rsGrid.back() + drs);
+      rsGrid.push_back(rsGrid.back() + drs);
     }
+    // Resize the free parameter vector
+    const size_t nrs = rsGrid.size();
+    alpha.resize(nrs);
     // Initialize the free energy integrand
     fxcIntegrand.resize(NPOINTS);
-    const size_t nrs = rsGrid.size();
     for (auto& f : fxcIntegrand) {
       f.resize(nrs);
       vecUtil::fill(f, numUtil::Inf);
     }
-    // Fill the free energy integrand if passed in input
+    // Fill the free energy integrand and the free parameter if passed in input
     const auto& fxciData = in.getFreeEnergyIntegrand();
     if (!fxciData.grid.empty()) {
       for (const auto& theta : {Idx::THETA_DOWN, Idx::THETA, Idx::THETA_UP}) {
-	const Interpolator1D itp(fxciData.grid, fxciData.integrand[theta]);
-	const double rsMaxi = fxciData.grid.back();
-	for (size_t i = 0; i < nrs; ++i) {
-	  const double& rs = rsGrid[i];
-	  if (rs <= rsMaxi) { fxcIntegrand[theta][i] = itp.eval(rs); }
-	}
+        const double rsMaxi = fxciData.grid.back();
+        const Interpolator1D itp(fxciData.grid, fxciData.integrand[theta]);
+        for (size_t i = 0; i < nrs; ++i) {
+          const double& rs = rsGrid[i];
+          if (rs <= rsMaxi) { 
+            fxcIntegrand[theta][i] = itp.eval(rs);
+            if (theta == Idx::THETA) { alpha[i] = fxciData.alpha[i]; }
+          }   
+        }
       }
     }
   }
@@ -214,11 +225,13 @@ public:
     const double nrs = rsGrid.size();
     Input inTmp = in;
     std::vector<double> fxciTmp(StructProp::NPOINTS);
+    double alphaTmp;
     for (size_t i = 0; i < nrs; ++i) {
       const double& rs = rsGrid[i];
       if (numUtil::equalTol(rs, in.getCoupling())) {
 	structProp.compute();
 	fxciTmp = structProp.getFreeEnergyIntegrand();
+	alphaTmp = structProp.getAlpha();
       }
       else if (rs < in.getCoupling()) {
 	if (rs == 0.0 || fxcIntegrand[THETA][i] != numUtil::Inf) { continue; }
@@ -229,7 +242,9 @@ public:
 	inTmp.setCoupling(rs);
 	Scheme schemeTmp(inTmp, *this);
 	schemeTmp.compute();
-	fxciTmp = schemeTmp.getThermoProp().structProp.getFreeEnergyIntegrand();
+	const auto& thermoPropTmp = schemeTmp.getThermoProp();
+	fxciTmp = thermoPropTmp.structProp.getFreeEnergyIntegrand();
+	alphaTmp = thermoPropTmp.structProp.getAlpha();
 	if (verbose) {
 	  printf("Done\n");
 	  printf("---------------------------------"
@@ -249,6 +264,9 @@ public:
       fxcIntegrand[THETA_UP][i-1]   = fxciTmp[SIdx::RS_DOWN_THETA_UP];
       fxcIntegrand[THETA_UP][i]     = fxciTmp[SIdx::RS_THETA_UP];
       fxcIntegrand[THETA_UP][i+1]   = fxciTmp[SIdx::RS_UP_THETA_UP];
+      alpha[i-1] = alphaTmp;
+      alpha[i] = alphaTmp;
+      alpha[i+1] = alphaTmp;
     }
   }
 
@@ -348,6 +366,11 @@ public:
   // Get free energy grid
   const std::vector<double>& getFreeEnergyGrid() const  {
     return rsGrid;
+  }
+
+  // Get free parameter values except the last one
+  std::vector<double> getAlpha() const {
+    return alpha;
   }
   
 };
@@ -509,8 +532,13 @@ public:
   }
   
   // Get free energy integrand for all the state points
-  std::vector<double> getFreeEnergyIntegrand() const{
+  std::vector<double> getFreeEnergyIntegrand() const {
     return getBase([&](const CSR& c){return c.getFreeEnergyIntegrand();});
+  }
+
+  // Get the free parameter
+  double getAlpha() const {
+    return csr[0].getAlpha();
   }
   
   // Get structural properties for output

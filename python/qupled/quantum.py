@@ -275,10 +275,11 @@ class QstlsIet(Qstls):
         guess.matsubara = hdfData["matsubara"]
         self.inputs.guess = guess
 
+
 # -----------------------------------------------------------------------
-# QstlsIet class
+# QVSStls class
 # -----------------------------------------------------------------------
-        
+
 class QVSStls(qc.VSStls, Qstls):
 
     """
@@ -349,7 +350,7 @@ class QVSStls(qc.VSStls, Qstls):
         # File to store output on disk
         self.hdfFileName = None
 
-        # Setup inputs object
+    # Setup inputs object
     def _setInputs(self,
                    coupling : float,
                    degeneracy : float,
@@ -382,7 +383,7 @@ class QVSStls(qc.VSStls, Qstls):
         self.inputs.errorAlpha = errorAlpha
         self.inputs.iterationsAlpha = iterationsAlpha
         self.inputs.intError = errorIntegrals
-
+        
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
