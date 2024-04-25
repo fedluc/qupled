@@ -390,7 +390,7 @@ double BridgeFunction::ioi() const {
 double BridgeFunction::lct() const {
   const double Gamma = couplingParameter();
   auto func = [&](const double& r)->double{return lctIntegrand(r,Gamma);};
-  itg.compute(func, x/lambda);
+  itg.compute(func, ItgParam(x/lambda));
   return itg.getSolution() * (x/lambda) / Gamma;
   return 0.0;
 }

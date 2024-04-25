@@ -22,7 +22,7 @@ protected:
 public:
 
   // ESA constructor
-  ESA(const RpaInput& in_) : Rpa(in_) { ; }
+  explicit ESA(const RpaInput& in_) : Rpa(in_) { ; }
   // Compute the scheme
   int compute();
   

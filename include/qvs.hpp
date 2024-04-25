@@ -25,7 +25,8 @@ private:
 public:
   
   // Constructor
-  QStlsCSR(const QVSStlsInput& in_) : CSR(in_, Qstls(in_, false, false)) { ; }
+  explicit QStlsCSR(const QVSStlsInput& in_)
+    : CSR(in_, Qstls(in_, false, false)) { ; }
   // Compute auxiliary density response
   void computeAdrStls();
   void computeAdr();
@@ -76,7 +77,8 @@ public:
   // Constructor
   QAdder(const double& Theta_,
 	 const double& mu_,
-	 double limitMin, double limitMax,
+	 const double& limitMin,
+	 const double& limitMax,
 	 const std::vector<double>& itgGrid_,
 	 Integrator1D& itg1_,
 	 Integrator2D& itg2_,
@@ -108,7 +110,7 @@ private:
 public:
 
   // Constructor
-  QStructProp(const QVSStlsInput &in) : StructPropBase(in) { ; }
+  explicit QStructProp(const QVSStlsInput &in) : StructPropBase(in) { ; }
   // Get Q term
   std::vector<double> getQ() const;  
   
@@ -128,10 +130,11 @@ private:
 public:
 
   // Constructors
-  QThermoProp(const QVSStlsInput& in) : ThermoPropBase(in) { ; } 
+  explicit QThermoProp(const QVSStlsInput& in) : ThermoPropBase(in) { ; } 
   QThermoProp(const QVSStlsInput& in,
 	      const QThermoProp& other) : ThermoPropBase(in, other) { ; }
-  QThermoProp(const ThermoPropBase& other) : ThermoPropBase(other) { ; }
+  QThermoProp(const ThermoPropBase& other)
+    : ThermoPropBase(other) { ; }
   // Get internal energy and internal energy derivatives
   std::vector<double> getQData() const;
   
@@ -156,7 +159,7 @@ private:
 public:
   
   // Constructor from initial data
-  QVSStls(const QVSStlsInput &in_) : VSBase(in_) { ; }
+  explicit QVSStls(const QVSStlsInput &in_) : VSBase(in_) { ; }
   // Constructor for recursive calculations
   QVSStls(const QVSStlsInput &in_,
 	  const QThermoProp& thermoProp_) : VSBase(in_, thermoProp_) { ; }

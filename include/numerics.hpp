@@ -31,7 +31,7 @@ namespace GslWrappers {
   
   public:
   
-    GslFunctionWrap(const T& func_) : func(func_) {
+    explicit GslFunctionWrap(const T& func_) : func(func_) {
       function = &GslFunctionWrap::invoke;
       params = this;
     }
@@ -79,7 +79,7 @@ public:
   Interpolator1D(const double &x,
 		 const double &y,
 		 const size_t n_);
-  Interpolator1D();
+  explicit Interpolator1D();
   // Destructor
   ~Interpolator1D();
   // Reset
@@ -118,8 +118,8 @@ public:
 		 const double &z,
 		 const int nx_,
 		 const int ny_);
-  Interpolator2D(const Interpolator2D &it);
-  Interpolator2D();
+  explicit Interpolator2D(const Interpolator2D &it);
+  explicit Interpolator2D();
   // Destructor
   ~Interpolator2D();
   // Reset
@@ -156,7 +156,7 @@ protected:
 				       maxIter(maxIter_),
 				       iter(0),
 				       status(GSL_CONTINUE) { ; };
-  RootSolverBase() :  RootSolverBase(1.0e-10, 1000) { ; };
+  explicit RootSolverBase() :  RootSolverBase(1.0e-10, 1000) { ; };
   
 public:
 
@@ -177,7 +177,7 @@ private:
   
 public:
 
-  BrentRootSolver();
+  explicit BrentRootSolver();
   ~BrentRootSolver();
   void solve(const std::function<double(double)>& func,
 	     const std::vector<double>& guess);
@@ -189,7 +189,7 @@ public:
 
   SecantSolver(const double relErr_,
 	       const int maxIter_) : RootSolverBase(relErr_, maxIter_) { ; };
-  SecantSolver() { ; };
+  explicit SecantSolver() { ; };
   void solve(const std::function<double(double)>& func,
 	     const std::vector<double>& guess);
   
@@ -216,7 +216,7 @@ public:
     const double fourierR = numUtil::NaN;
     Param(const double& xMin_,
 	  const double& xMax_) : xMin(xMin_), xMax(xMax_) { ; }
-    Param(const double& fourierR_) : fourierR(fourierR_) { ; }
+    explicit Param(const double& fourierR_) : fourierR(fourierR_) { ; }
   };
   
 private:
@@ -264,7 +264,7 @@ private:
     size_t nEvals;
   public:
     // Constructors
-    CQUAD(const double &relErr_);
+    explicit CQUAD(const double &relErr_);
     CQUAD(const CQUAD& other) : Integrator1D::CQUAD(other.relErr) { ; }
     // Destructor
     ~CQUAD();
@@ -283,7 +283,7 @@ private:
     gsl_integration_qawo_table *qtab;
   public:
     // Constructors
-    QAWO(const double& relErr_);
+    explicit QAWO(const double& relErr_);
     QAWO(const QAWO& other) : Integrator1D::QAWO(other.relErr) { ; }
     // Destructor
     ~QAWO();
@@ -300,7 +300,7 @@ private:
     gsl_integration_workspace *wsp;
   public:
     // Constructors
-    QAGS(const double& relErr_);
+    explicit QAGS(const double& relErr_);
     QAGS(const QAGS& other) : Integrator1D::QAGS(other.relErr) { ; }
     // Destructor
     ~QAGS();
@@ -317,9 +317,10 @@ public:
   // Constructors
   Integrator1D(const Type& type,
 	       const double& relErr);
-  Integrator1D(const double& relErr) : Integrator1D(Type::DEFAULT, relErr) { ; }
-  Integrator1D(const Integrator1D& other) : Integrator1D(other.getType(),
-							 other.getAccuracy()) { ; }
+  explicit Integrator1D(const double& relErr)
+    : Integrator1D(Type::DEFAULT, relErr) { ; }
+  Integrator1D(const Integrator1D& other)
+    : Integrator1D(other.getType(), other.getAccuracy()) { ; }
   // Compute integral
   void compute(const std::function<double(double)>& func,
 	       const Param& param) const;

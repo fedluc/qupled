@@ -86,9 +86,9 @@ namespace vecUtil {
     Vector2D(const size_t s1_,
 	     const size_t s2_)
       : v(s1_*s2_,0.0), s1(s1_), s2(s2_) {;};
-    Vector2D()
+    explicit Vector2D()
       : Vector2D(0, 0) {;};
-    Vector2D(const std::vector<std::vector<double>>& v_);
+    explicit Vector2D(const std::vector<std::vector<double>>& v_);
     size_t size() const;
     size_t size(const size_t i) const;
     bool empty() const;
@@ -130,7 +130,7 @@ namespace vecUtil {
 	     const size_t s2_,
 	     const size_t s3_)
       : v(s1_*s2_*s3_,0.0), s1(s1_), s2(s2_), s3(s3_) {;};
-    Vector3D()
+    explicit Vector3D()
       : Vector3D(0, 0, 0) {;};
     size_t size() const;
     size_t size(const size_t i) const;

@@ -25,7 +25,8 @@ private:
 public:
   
   // Constructor
-  StlsCSR(const VSStlsInput& in_) : CSR(in_, Stls(in_, false, false)) { ; }
+  explicit StlsCSR(const VSStlsInput& in_)
+    : CSR(in_, Stls(in_, false, false)) { ; }
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();
@@ -43,7 +44,7 @@ protected:
 public:
 
   // Constructor
-  StructProp(const VSStlsInput &in_) : StructPropBase(in_) { ; }
+  explicit StructProp(const VSStlsInput &in_) : StructPropBase(in_) { ; }
   
 };
 
@@ -63,7 +64,7 @@ private:
 public:
 
   // Constructor from initial data
-  VSStls(const VSStlsInput &in_) : VSBase(in_) { ; }
+  explicit VSStls(const VSStlsInput &in_) : VSBase(in_) { ; }
   // Constructor for recursive calculations
   VSStls(const VSStlsInput &in_,
 	 const ThermoProp& thermoProp_) : VSBase(in_, thermoProp_) { ; }

@@ -37,9 +37,9 @@ protected:
 public:
 
   // Constructor
-  Input() : intError(0), rs(0), Theta(0), nThreads(0),
-	    isClassicTheory(false), isQuantumTheory(false),
-	    int2DScheme(""), theory("") { ; }
+  explicit Input() : intError(0), rs(0), Theta(0), nThreads(0),
+		     isClassicTheory(false), isQuantumTheory(false),
+		     int2DScheme(""), theory("") { ; }
   // Setters
   void setCoupling(const double &rs);
   void setDegeneracy(const double &Theta);
@@ -82,8 +82,8 @@ protected:
 public:
 
   // Constructor
-  RpaInput() : dx(0), xmax(0), nl(0),
-	       muGuess(std::vector<double>(2, 0)) { ; }
+  explicit RpaInput() : dx(0), xmax(0), nl(0),
+			muGuess(std::vector<double>(2, 0)) { ; }
   // Setters
   void setChemicalPotentialGuess(const std::vector<double> &muGuess);
   void setNMatsubara(const int &nMatsubara);
@@ -137,9 +137,9 @@ protected:
 public:
 
   // Contructor
-  StlsInput() : aMix(0), errMin(0), nIter(0),
-		outIter(0), IETMapping(""),
-		recoveryFileName("") { ; }
+  explicit StlsInput() : aMix(0), errMin(0), nIter(0),
+			 outIter(0), IETMapping(""),
+			 recoveryFileName("") { ; }
   // Setters
   void setErrMin(const double &errMin);
   void setMixingParameter(const double  &aMix);
@@ -195,7 +195,7 @@ private:
 public:
 
   // Contructors
-  QstlsInput() : fixed(""), fixedIet("") { ; }
+  explicit QstlsInput() : fixed(""), fixedIet("") { ; }
   // Setters
   void setFixed(const std::string &fixed);
   void setFixedIet(const std::string &fixedIet);
@@ -247,9 +247,9 @@ private:
 public:
 
   // Contructor
-  VSInput() : alphaGuess(std::vector<double>(2, 0)),
-	      drs(0), dTheta(0), errMinAlpha(0),
-	      nIterAlpha(0) { ; }
+  explicit VSInput() : alphaGuess(std::vector<double>(2, 0)),
+		       drs(0), dTheta(0), errMinAlpha(0),
+		       nIterAlpha(0) { ; }
   // Setters
   void setAlphaGuess(const std::vector<double>  &alphaGuess);
   void setCouplingResolution(const double &drs);

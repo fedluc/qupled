@@ -64,7 +64,7 @@ public:
   // Constructor
   Rpa(const RpaInput &in_,
       const bool verbose_);
-  Rpa(const RpaInput& in_) : Rpa(in_, true) { ; }
+  explicit Rpa(const RpaInput& in_) : Rpa(in_, true) { ; }
   // Compute the scheme
   int compute();
   // Getters
@@ -197,7 +197,7 @@ private:
 public:
 
   // Constructor for zero temperature calculations
-  SsfHFGround(const double& x_) : x(x_) {;};
+  explicit SsfHFGround(const double& x_) : x(x_) {;};
   // Get result
   double get() const;
   

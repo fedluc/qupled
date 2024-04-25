@@ -55,10 +55,10 @@ protected:
 public:
 
   // Constructor from initial data
-  VSBase(const Input &in_) : Scheme(in_),
-			     in(in_),
-			     thermoProp(in_),
-			     verbose(true && parallelUtil::MPI::isRoot()) { ; }
+  explicit VSBase(const Input &in_) : Scheme(in_),
+				      in(in_),
+				      thermoProp(in_),
+				      verbose(true && parallelUtil::MPI::isRoot()) { ; }
   // Constructor for recursive calculations
   VSBase(const Input &in_,
 	 const ThermoProp& thermoProp_) : Scheme(in_, false),
@@ -156,8 +156,8 @@ protected:
 public:
 
   // Constructors
-  ThermoPropBase(const Input &in) : verbose(parallelUtil::MPI::isRoot()),
-				    structProp(in) {
+  explicit ThermoPropBase(const Input &in) : verbose(parallelUtil::MPI::isRoot()),
+					     structProp(in) {
     const double& rs = in.getCoupling();
     const double& drs = in.getCouplingResolution();
     // Check if we are solving for particular state points
@@ -485,12 +485,12 @@ protected:
   
 public:
 
-  // Constructor
-  StructPropBase() : verbose(parallelUtil::MPI::isRoot()),
-		     csrIsInitialized(false),
-		     computed(false),
-		     outVector(NPOINTS) { ; }
-  StructPropBase(const Input &in) : StructPropBase() {
+  // Constructors
+  explicit StructPropBase() : verbose(parallelUtil::MPI::isRoot()),
+			      csrIsInitialized(false),
+			      computed(false),
+			      outVector(NPOINTS) { ; }
+  explicit StructPropBase(const Input &in) : StructPropBase() {
     setupCSR(setupCSRInput(in));
     setupCSRDependencies();
   }

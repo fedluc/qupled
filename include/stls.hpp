@@ -52,7 +52,7 @@ public:
   Stls(const StlsInput &in_,
        const bool verbose_,
        const bool writeFiles_);
-  Stls(const StlsInput &in_) : Stls(in_, true, true) { ; };
+  explicit Stls(const StlsInput &in_) : Stls(in_, true, true) { ; };
   // Compute stls scheme
   int compute();
   // Getters

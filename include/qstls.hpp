@@ -86,7 +86,7 @@ public:
   Qstls(const QstlsInput &in_,
 	const bool verbose_,
 	const bool writeFiles_);
-  Qstls(const QstlsInput &in_) : Qstls(in_, true, true) { ; }
+  explicit Qstls(const QstlsInput &in_) : Qstls(in_, true, true) { ; }
   // Compute qstls scheme
   int compute();
   // Getters
