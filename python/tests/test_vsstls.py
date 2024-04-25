@@ -107,5 +107,5 @@ def test_setFreeEnergyIntegrand(vsstls_instance, mocker):
     mockHdfRead = mocker.patch("qupled.util.Hdf.read", return_value={"fxcGrid" : arr1D, "fxci" : arr2D, "alpha" : arr1D})
     vsstls_instance.setFreeEnergyIntegrand("dummyFileName")
     assert np.array_equal(vsstls_instance.inputs.freeEnergyIntegrand.grid, arr1D)
-    assert np.array_equal(vsstls_instance.inputs.freeEnergyIntegrand.alphaData, arr1D)
+    assert np.array_equal(vsstls_instance.inputs.freeEnergyIntegrand.alpha, arr1D)
     assert np.array_equal(vsstls_instance.inputs.freeEnergyIntegrand.integrand, arr2D)
