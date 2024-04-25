@@ -587,6 +587,6 @@ class VSStls(Stls):
         hdfData = qu.Hdf().read(fileName, ["fxcGrid", "fxci","alpha"])
         fxci.grid = hdfData["fxcGrid"]
         fxci.integrand = np.ascontiguousarray(hdfData["fxci"])
-        fxci.alphaData = hdfData["alpha"]
+        fxci.alpha = hdfData["alpha"]
         self.inputs.freeEnergyIntegrand = fxci
         

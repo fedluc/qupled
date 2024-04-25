@@ -222,10 +222,10 @@ public:
 
   struct FreeEnergyIntegrand {
     std::vector<double> grid;
+    std::vector<double> alpha;
     std::vector<std::vector<double>> integrand;
-    std::vector<double> alphaData;
     bool operator==(const FreeEnergyIntegrand &other) const {
-      return grid == other.grid && integrand == other.integrand && alphaData == other.alphaData;
+      return grid == other.grid && integrand == other.integrand && alpha == other.alpha;
     }
   };
   

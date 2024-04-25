@@ -186,10 +186,10 @@ public:
         const Interpolator1D itp(fxciData.grid, fxciData.integrand[theta]);
         for (size_t i = 0; i < nrs; ++i) {
           const double& rs = rsGrid[i];
-          if (rs <= rsMaxi) { fxcIntegrand[theta][i] = itp.eval(rs); }
-          if (theta == Idx::THETA && rs <= rsMaxi) {
-            alpha[i] = fxciData.alphaData[i];
-          }
+          if (rs <= rsMaxi) { 
+            fxcIntegrand[theta][i] = itp.eval(rs);
+            if (theta == Idx::THETA) { alpha[i] = fxciData.alpha[i]; }
+          }   
         }
       }
     }

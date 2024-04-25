@@ -75,13 +75,13 @@ class PyFreeEnergyIntegrand {
 public:
   static bn::ndarray getGrid(const VSStlsInput::FreeEnergyIntegrand& fxc);
   static bn::ndarray getIntegrand(const VSStlsInput::FreeEnergyIntegrand& fxc);
-  static bn::ndarray getAlphaData(const VSStlsInput::FreeEnergyIntegrand& fxc);
+  static bn::ndarray getAlpha(const VSStlsInput::FreeEnergyIntegrand& fxc);
   static void setGrid(VSStlsInput::FreeEnergyIntegrand& fxc,
 		      const bn::ndarray& grid);
   static void setIntegrand(VSStlsInput::FreeEnergyIntegrand &fxc,
 			   const bn::ndarray& integrand);
-  static void setAlphaData(VSStlsInput::FreeEnergyIntegrand& fxc,
-		      const bn::ndarray& alphaData);
+  static void setAlpha(VSStlsInput::FreeEnergyIntegrand& fxc,
+		      const bn::ndarray& alpha);
 };
 
 // -----------------------------------------------------------------

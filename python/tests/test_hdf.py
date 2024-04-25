@@ -81,7 +81,8 @@ def test_read(hdf_instance):
                           "cutoff", "matsubara"]):
                 assert readData[entry] == 0.0
             elif (entry in ["bf", "fxcGrid", "rdf", "rdfGrid",
-                            "sdr", "slfc", "ssf", "ssfHF", "wvg", "alpha"]):
+                            "sdr", "slfc", "ssf", "ssfHF", "wvg", 
+                            "alpha"]):
                 assert np.array_equal(readData[entry], np.zeros(2))
             elif (entry in ["adr", "fxci", "idr"]):
                 assert np.array_equal(readData[entry], np.zeros((2, 2)))

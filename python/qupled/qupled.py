@@ -142,4 +142,4 @@ class FreeEnergyIntegrand():
         """ The coupling parameter grid used to compute the free energy """
         self.integrand : np.ndarray = None
         """ The free energy integrand for various coupling parameter values """
-        self.alphaData : np.ndarray = None
+        self.alpha : np.ndarray = None
