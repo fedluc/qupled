@@ -83,6 +83,10 @@ bn::ndarray PyFreeEnergyIntegrand::getIntegrand(const VSStlsInput::FreeEnergyInt
   return vp::toNdArray2D(fxc.integrand);
 }
 
+bn::ndarray PyFreeEnergyIntegrand::getAlphaData(const VSStlsInput::FreeEnergyIntegrand &fxc){
+  return vp::toNdArray(fxc.alphaData);
+}
+
 void PyFreeEnergyIntegrand::setGrid(VSStlsInput::FreeEnergyIntegrand &fxc,
 				    const bn::ndarray& grid) {
   fxc.grid = vp::toVector(grid);
@@ -91,6 +95,11 @@ void PyFreeEnergyIntegrand::setGrid(VSStlsInput::FreeEnergyIntegrand &fxc,
 void PyFreeEnergyIntegrand::setIntegrand(VSStlsInput::FreeEnergyIntegrand &fxc,
 					 const bn::ndarray& integrand) {
   fxc.integrand = vp::toDoubleVector(integrand);
+}
+
+void PyFreeEnergyIntegrand::setAlphaData(VSStlsInput::FreeEnergyIntegrand &fxc,
+				    const bn::ndarray& alphaData) {
+  fxc.alphaData = vp::toVector(alphaData);
 }
 
 // -----------------------------------------------------------------
@@ -212,7 +221,7 @@ double PyVSStls::getError(const VSStls &vsstls){
 }
 
 bn::ndarray PyVSStls::getAlpha(const VSStls& vsstls) {
-  return vp::toNdArray(vsstls.getAlphaValues());
+  return vp::toNdArray(vsstls.getAlpha());
 }
 
 bn::ndarray PyVSStls::getFreeEnergyIntegrand(const VSStls &vsstls){
@@ -254,7 +263,7 @@ double PyQVSStls::getError(const QVSStls &qvsstls){
 }
 
 bn::ndarray PyQVSStls::getAlpha(const QVSStls& qvsstls) {
-  return vp::toNdArray(qvsstls.getAlphaValues());
+  return vp::toNdArray(qvsstls.getAlpha());
 }
 
 bn::ndarray PyQVSStls::getAdr(const QVSStls& qvsstls) {

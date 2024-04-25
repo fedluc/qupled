@@ -18,6 +18,7 @@ class Hdf():
     def __init__(self):
         # The first entry is a descriptive name of the 
         self.entries = {
+            "alpha"      : self.Entries("Free Parameter for VS schemes", "numpy"),
             "adr"        : self.Entries("Auxiliary density response", "numpy2D"),
             "bf"         : self.Entries("Bridge function adder", "numpy"),
             "coupling"   : self.Entries("Coupling parameter", "number"),
@@ -36,8 +37,7 @@ class Hdf():
             "ssf"        : self.Entries("Static structure factor", "numpy"),
             "ssfHF"      : self.Entries("Hartree-Fock static structure factor", "numpy"),
             "theory"     : self.Entries("Theory that is being solved", "string"),
-            "wvg"        : self.Entries("Wave-vector", "numpy"),
-            "Alpha"      : self.Entries("Free Parameter for VS schemes", "numpy")
+            "wvg"        : self.Entries("Wave-vector", "numpy")
         }
 
     # Structure used to cathegorize the entries stored in the hdf file
@@ -130,7 +130,10 @@ class Hdf():
                 Plot.plot1D(x["fxcGrid"], x[name][1,:], self.entries["fxcGrid"].description, description)
             elif ( name in ["bf", "sdr", "slfc", "ssf", "ssfHF"] ) :
                 x = self.read(hdf, [name, "wvg"])
-                Plot.plot1D(x["wvg"], x[name], self.entries["wvg"].description, description)
+                Plot.plot1D(x["wvg"], x[name], self.entries["wvg"].description, self.entries[name].description)
+            elif ( name == "alpha" ) :
+                x = self.read(hdf, [name, "fxcGrid"])
+                Plot.plot1D(x["fxcGrid"][::2], x[name][::2], self.entries["fxcGrid"].description, self.entries[name].description)
             else:
                 sys.exit("Unknown quantity to plot")
 
