@@ -122,7 +122,7 @@ BOOST_PYTHON_MODULE(qupled)
 		  &PyFreeEnergyIntegrand::setIntegrand)
     .add_property("alpha",
       &PyFreeEnergyIntegrand::getAlpha,
-		  &PyFreeEnergyIntegrand::setAlpha);
+      &PyFreeEnergyIntegrand::setAlpha);
 
   // Class for the input of the VSStls scheme
   bp::class_<VSStlsInput, bp::bases<StlsInput>>("VSStlsInput")
