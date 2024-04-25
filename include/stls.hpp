@@ -1,8 +1,8 @@
 #ifndef STLS_HPP
 #define STLS_HPP
 
-#include <vector>
 #include "rpa.hpp"
+#include <vector>
 
 // Forward declarations
 class StlsInput;
@@ -16,7 +16,7 @@ class Integrator2D;
 
 class Stls : public Rpa {
 
-protected: 
+protected:
 
   // Input parameters
   StlsInput in;
@@ -44,21 +44,19 @@ protected:
   // Write recovery files
   void writeRecovery();
   void readRecovery(std::vector<double> &wvgFile,
-		    std::vector<double> &slfcFile) const;
-  
+                    std::vector<double> &slfcFile) const;
+
 public:
 
   // Constructors
-  Stls(const StlsInput &in_,
-       const bool verbose_,
-       const bool writeFiles_);
-  explicit Stls(const StlsInput &in_) : Stls(in_, true, true) { ; };
+  Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_);
+  explicit Stls(const StlsInput &in_)
+      : Stls(in_, true, true) {};
   // Compute stls scheme
   int compute();
   // Getters
   double getError() const { return computeError(); }
   std::vector<double> getBf() const { return bf; }
-  
 };
 
 // -----------------------------------------------------------------
@@ -68,7 +66,7 @@ public:
 class SlfcBase {
 
 protected:
-  
+
   // Wave-vector
   const double x;
   // Integration limits
@@ -77,39 +75,42 @@ protected:
   // Static structure factor interpolator
   const Interpolator1D &ssfi;
   // Compute static structure factor
-  double ssf(const double& y) const;
+  double ssf(const double &y) const;
   // Constructor
-  SlfcBase(const double& x_,
-	   const double& yMin_,
-	   const double& yMax_,
-	   const Interpolator1D &ssfi_) : x(x_), yMin(yMin_),
-					  yMax(yMax_), ssfi(ssfi_) {;};
-  
+  SlfcBase(const double &x_,
+           const double &yMin_,
+           const double &yMax_,
+           const Interpolator1D &ssfi_)
+      : x(x_),
+        yMin(yMin_),
+        yMax(yMax_),
+        ssfi(ssfi_) {
+    ;
+  };
 };
 
 class Slfc : public SlfcBase {
 
 private:
-  
+
   // Integrator object
   Integrator1D &itg;
   // Integrand
-  double integrand(const double& y) const;
-  
+  double integrand(const double &y) const;
+
 public:
 
   // Constructor
-  Slfc(const double& x_,
-       const double& yMin_,
-       const double& yMax_,
+  Slfc(const double &x_,
+       const double &yMin_,
+       const double &yMax_,
        const Interpolator1D &ssfi_,
-       Integrator1D &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_),
-			     itg(itg_) { ; };
-  // Get result of integration 
+       Integrator1D &itg_)
+      : SlfcBase(x_, yMin_, yMax_, ssfi_),
+        itg(itg_) {};
+  // Get result of integration
   double get() const;
-  
 };
-
 
 class SlfcIet : public SlfcBase {
 
@@ -120,34 +121,38 @@ private:
   // Grid for 2D integration
   const std::vector<double> &itgGrid;
   // Integrands
-  double integrand1(const double& y) const;
-  double integrand2(const double& w) const;
+  double integrand1(const double &y) const;
+  double integrand2(const double &w) const;
   // Static local field correction interpolator
   const Interpolator1D &slfci;
   // Bridge function interpolator
   const Interpolator1D &bfi;
   // Compute static local field correction
-  double slfc(const double& x) const;
+  double slfc(const double &x) const;
   // Compute bridge function
-  double bf(const double& x_) const;
-  
+  double bf(const double &x_) const;
+
 public:
 
   // Constructor
-  SlfcIet(const double& x_,
-	  const double& yMin_,
-	  const double& yMax_,
-	  const Interpolator1D &ssfi_,
-	  const Interpolator1D &slfci_,
-	  const Interpolator1D &bfi_,
-	  const std::vector<double> &itgGrid_,
-	  Integrator2D &itg_) : SlfcBase(x_, yMin_, yMax_, ssfi_), itg(itg_),
-				itgGrid(itgGrid_), slfci(slfci_), bfi(bfi_) {;};
-  // Get result of integration 
+  SlfcIet(const double &x_,
+          const double &yMin_,
+          const double &yMax_,
+          const Interpolator1D &ssfi_,
+          const Interpolator1D &slfci_,
+          const Interpolator1D &bfi_,
+          const std::vector<double> &itgGrid_,
+          Integrator2D &itg_)
+      : SlfcBase(x_, yMin_, yMax_, ssfi_),
+        itg(itg_),
+        itgGrid(itgGrid_),
+        slfci(slfci_),
+        bfi(bfi_) {
+    ;
+  };
+  // Get result of integration
   double get() const;
-
 };
-
 
 class BridgeFunction {
 
@@ -164,35 +169,38 @@ private:
   // Wave vector
   const double x;
   // Integrator object
-  Integrator1D& itg;
+  Integrator1D &itg;
   // Constant for unit conversion
-  const double lambda = pow(4.0/(9.0*M_PI), 1.0/3.0);
+  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
   // Hypernetted-chain bridge function
-  double hnc() const ;
+  double hnc() const;
   // Ichimaru bridge function
   double ioi() const;
   // Lucco Castello and Tolias bridge function
   double lct() const;
-  double lctIntegrand(const double& r,
-		      const double& Gamma) const;
+  double lctIntegrand(const double &r, const double &Gamma) const;
   // Coupling parameter to compute the bridge function
   double couplingParameter() const;
 
 public:
 
   // Constructor
-  BridgeFunction(const std::string& theory_,
-		 const std::string& mapping_,
-		 const double& rs_,
-		 const double& Theta_,
-		 const double& x_,
-		 Integrator1D &itg_) : theory(theory_),
-				       mapping(mapping_),
-				       rs(rs_), Theta(Theta_),
-				       x(x_), itg(itg_) {;};
+  BridgeFunction(const std::string &theory_,
+                 const std::string &mapping_,
+                 const double &rs_,
+                 const double &Theta_,
+                 const double &x_,
+                 Integrator1D &itg_)
+      : theory(theory_),
+        mapping(mapping_),
+        rs(rs_),
+        Theta(Theta_),
+        x(x_),
+        itg(itg_) {
+    ;
+  };
   // Get result of the integration
   double get() const;
-  
 };
 
 #endif

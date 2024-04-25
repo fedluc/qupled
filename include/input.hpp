@@ -2,8 +2,8 @@
 #define INPUT_HPP
 
 #include <cassert>
-#include <vector>
 #include <iostream>
+#include <vector>
 
 // Forward declarations
 namespace vecUtil {
@@ -15,7 +15,7 @@ namespace vecUtil {
 // -----------------------------------------------------------------
 
 class Input {
-    
+
 protected:
 
   // Accuracy for the integrals
@@ -37,9 +37,15 @@ protected:
 public:
 
   // Constructor
-  explicit Input() : intError(0), rs(0), Theta(0), nThreads(0),
-		     isClassicTheory(false), isQuantumTheory(false),
-		     int2DScheme(""), theory("") { ; }
+  explicit Input()
+      : intError(0),
+        rs(0),
+        Theta(0),
+        nThreads(0),
+        isClassicTheory(false),
+        isQuantumTheory(false),
+        int2DScheme(""),
+        theory("") {}
   // Setters
   void setCoupling(const double &rs);
   void setDegeneracy(const double &Theta);
@@ -49,7 +55,7 @@ public:
   void setTheory(const std::string &theory);
   // Getters
   double getCoupling() const { return rs; }
-  double getDegeneracy() const {return Theta; }
+  double getDegeneracy() const { return Theta; }
   std::string getInt2DScheme() const { return int2DScheme; }
   double getIntError() const { return intError; }
   int getNThreads() const { return nThreads; }
@@ -59,7 +65,6 @@ public:
   void print() const;
   // Compare two Input objects
   bool isEqual(const Input &in) const;
-  
 };
 
 // -----------------------------------------------------------------
@@ -67,7 +72,7 @@ public:
 // -----------------------------------------------------------------
 
 class RpaInput : public Input {
-  
+
 protected:
 
   // Wave-vector grid resolution
@@ -78,17 +83,20 @@ protected:
   int nl;
   // Initial guess for the chemical potential calculation
   std::vector<double> muGuess;
-  
+
 public:
 
   // Constructor
-  explicit RpaInput() : dx(0), xmax(0), nl(0),
-			muGuess(std::vector<double>(2, 0)) { ; }
+  explicit RpaInput()
+      : dx(0),
+        xmax(0),
+        nl(0),
+        muGuess(std::vector<double>(2, 0)) {}
   // Setters
   void setChemicalPotentialGuess(const std::vector<double> &muGuess);
   void setNMatsubara(const int &nMatsubara);
   void setWaveVectorGridRes(const double &waveVectorGridRes);
-  void setWaveVectorGridCutoff(const double  &waveVectorGridCutoff);
+  void setWaveVectorGridCutoff(const double &waveVectorGridCutoff);
   // Getters
   std::vector<double> getChemicalPotentialGuess() const { return muGuess; }
   int getNMatsubara() const { return nl; }
@@ -98,7 +106,6 @@ public:
   void print() const;
   // Compare two StlsInput objects
   bool isEqual(const RpaInput &in) const;
-  
 };
 
 // -----------------------------------------------------------------
@@ -116,7 +123,7 @@ public:
       return wvg == other.wvg && slfc == other.slfc;
     }
   };
-  
+
 protected:
 
   // Mixing parameter for the iterative procedure
@@ -127,22 +134,27 @@ protected:
   int nIter;
   // Output frequency
   int outIter;
-  // Mapping between the quantum and classical state points for the IET-based schemes
+  // Mapping between the quantum and classical state points for the IET-based
+  // schemes
   std::string IETMapping;
   // Name of the file used to store the recovery data
   std::string recoveryFileName;
   // Initial guess
   SlfcGuess guess;
-  
+
 public:
 
   // Contructor
-  explicit StlsInput() : aMix(0), errMin(0), nIter(0),
-			 outIter(0), IETMapping(""),
-			 recoveryFileName("") { ; }
+  explicit StlsInput()
+      : aMix(0),
+        errMin(0),
+        nIter(0),
+        outIter(0),
+        IETMapping(""),
+        recoveryFileName("") {}
   // Setters
   void setErrMin(const double &errMin);
-  void setMixingParameter(const double  &aMix);
+  void setMixingParameter(const double &aMix);
   void setIETMapping(const std::string &IETMapping);
   void setNIter(const int &nIter);
   void setOutIter(const int &outIter);
@@ -160,9 +172,7 @@ public:
   void print() const;
   // Compare two StlsInput objects
   bool isEqual(const StlsInput &in) const;
-  
 };
-
 
 // -----------------------------------------------------------------
 // Class to handle input for the QSTLS and QSTLS-IET schemes
@@ -171,21 +181,22 @@ public:
 class QstlsInput : public StlsInput {
 
 public:
-  
+
   struct QstlsGuess {
     std::vector<double> wvg;
     std::vector<double> ssf;
     vecUtil::Vector2D adr;
     int matsubara = 0;
     bool operator==(const QstlsGuess &other) const {
-      return wvg == other.wvg && ssf == other.ssf
-	&& adr == other.adr && matsubara == other.matsubara;
+      return wvg == other.wvg && ssf == other.ssf && adr == other.adr &&
+             matsubara == other.matsubara;
     }
   };
 
 private:
 
-  // Name of the file with the fixed component of the auxiliary density response (adr)
+  // Name of the file with the fixed component of the auxiliary density response
+  // (adr)
   std::string fixed;
   // Name of the file with the fixed component of the adr for iet schemes
   std::string fixedIet;
@@ -195,22 +206,22 @@ private:
 public:
 
   // Contructors
-  explicit QstlsInput() : fixed(""), fixedIet("") { ; }
+  explicit QstlsInput()
+      : fixed(""),
+        fixedIet("") {}
   // Setters
   void setFixed(const std::string &fixed);
   void setFixedIet(const std::string &fixedIet);
   void setGuess(const QstlsGuess &guess);
   // Getters
-  std::string getFixed() const {return fixed; }
+  std::string getFixed() const { return fixed; }
   std::string getFixedIet() const { return fixedIet; }
   QstlsGuess getGuess() const { return guess; }
   // Print content of the data structure
-  void print() const ;
+  void print() const;
   // Compare two QstlsInput objects
   bool isEqual(const QstlsInput &in) const;
-  
 };
-
 
 // -----------------------------------------------------------------
 // Class to handle input for the VS schemes
@@ -225,10 +236,11 @@ public:
     std::vector<double> alpha;
     std::vector<std::vector<double>> integrand;
     bool operator==(const FreeEnergyIntegrand &other) const {
-      return grid == other.grid && integrand == other.integrand && alpha == other.alpha;
+      return grid == other.grid && integrand == other.integrand &&
+             alpha == other.alpha;
     }
   };
-  
+
 private:
 
   // Initial guess for the free parameter
@@ -243,21 +255,24 @@ private:
   int nIterAlpha;
   // Pre-computed free energy integrand
   FreeEnergyIntegrand fxcIntegrand;
-  
+
 public:
 
   // Contructor
-  explicit VSInput() : alphaGuess(std::vector<double>(2, 0)),
-		       drs(0), dTheta(0), errMinAlpha(0),
-		       nIterAlpha(0) { ; }
+  explicit VSInput()
+      : alphaGuess(std::vector<double>(2, 0)),
+        drs(0),
+        dTheta(0),
+        errMinAlpha(0),
+        nIterAlpha(0) {}
   // Setters
-  void setAlphaGuess(const std::vector<double>  &alphaGuess);
+  void setAlphaGuess(const std::vector<double> &alphaGuess);
   void setCouplingResolution(const double &drs);
   void setDegeneracyResolution(const double &dTheta);
   void setErrMinAlpha(const double &errMinAlpha);
-  void setNIterAlpha(const int& nIterAlpha);
+  void setNIterAlpha(const int &nIterAlpha);
   void setFreeEnergyIntegrand(const FreeEnergyIntegrand &freeEnergyIntegrand);
-  // Getters 
+  // Getters
   std::vector<double> getAlphaGuess() const { return alphaGuess; }
   double getCouplingResolution() const { return drs; }
   double getDegeneracyResolution() const { return dTheta; }
@@ -267,8 +282,7 @@ public:
   // Print content of the data structure
   void print() const;
   // Compare two VSStls objects
-  bool isEqual( const VSInput &in ) const;
-  
+  bool isEqual(const VSInput &in) const;
 };
 
 // -----------------------------------------------------------------
@@ -276,30 +290,27 @@ public:
 // -----------------------------------------------------------------
 
 class VSStlsInput : public StlsInput, public VSInput {
-  
+
 public:
 
   // Print content of the data structure
   void print() const;
   // Compare two VSStls objects
-  bool isEqual( const VSStlsInput &in ) const;
-  
+  bool isEqual(const VSStlsInput &in) const;
 };
-
 
 // -----------------------------------------------------------------
 // Class to handle input for the QVSStls scheme
 // -----------------------------------------------------------------
 
 class QVSStlsInput : public QstlsInput, public VSInput {
-  
+
 public:
 
   // Print content of the data structure
   void print() const;
   // Compare two VSStls objects
-  bool isEqual( const QVSStlsInput &in ) const;
-  
+  bool isEqual(const QVSStlsInput &in) const;
 };
 
 #endif

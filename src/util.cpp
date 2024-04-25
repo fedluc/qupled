@@ -1,12 +1,12 @@
 #define OMPI_SKIP_MPICXX 1 // Disable MPI-C++ bindings
 
-#include <numeric>
-#include <omp.h>
-#include <mpi.h>
+#include "util.hpp"
+#include "numerics.hpp"
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
-#include "numerics.hpp"
-#include "util.hpp"
+#include <mpi.h>
+#include <numeric>
+#include <omp.h>
 
 using namespace std;
 using ItgParam = Integrator1D::Param;
@@ -17,181 +17,151 @@ namespace numUtil {
   // -----------------------------------------------------------------
   // Stand-alone methods
   // -----------------------------------------------------------------
-  
-  bool equalTol(const double& x, const double &y) {
+
+  bool equalTol(const double &x, const double &y) {
     return abs(x - y) < x * dtol;
   }
 
-  bool largerThan(const double& x, const double &y) {
-    return x - y > x * dtol;
-  }
-  
-}
+  bool largerThan(const double &x, const double &y) { return x - y > x * dtol; }
+
+} // namespace numUtil
 
 namespace vecUtil {
 
   // -----------------------------------------------------------------
   // Stand-alone methods
   // -----------------------------------------------------------------
-  
+
   // Element-wise sum between two vectors
-  vector<double> sum(const vector<double> &v1,
-		     const vector<double> &v2) {
+  vector<double> sum(const vector<double> &v1, const vector<double> &v2) {
     assert(v1.size() == v2.size());
     vector<double> res(v1.size());
-    transform(v1.begin(), v1.end(),
-	      v2.begin(), res.begin(),
-	      plus<double>());
+    transform(v1.begin(), v1.end(), v2.begin(), res.begin(), plus<double>());
     return res;
   }
 
   // Element-wise difference between two vectors
-  vector<double> diff(const vector<double> &v1,
-		      const vector<double> &v2) {
+  vector<double> diff(const vector<double> &v1, const vector<double> &v2) {
     assert(v1.size() == v2.size());
     vector<double> res(v1.size());
-    transform(v1.begin(), v1.end(),
-	      v2.begin(), res.begin(),
-	      minus<double>());
+    transform(v1.begin(), v1.end(), v2.begin(), res.begin(), minus<double>());
     return res;
   }
 
   // Element-wise multiplication between two vectors
-  vector<double> mult(const vector<double> &v1,
-		      const vector<double> &v2) {
+  vector<double> mult(const vector<double> &v1, const vector<double> &v2) {
     assert(v1.size() == v2.size());
     vector<double> res(v1.size());
-    transform(v1.begin(), v1.end(),
-	      v2.begin(), res.begin(),
-	      multiplies<double>());
+    transform(
+        v1.begin(), v1.end(), v2.begin(), res.begin(), multiplies<double>());
     return res;
   }
 
   // Element-wise multiplication between two vectors
-  vector<double> div(const vector<double> &v1,
-		     const vector<double> &v2) {
+  vector<double> div(const vector<double> &v1, const vector<double> &v2) {
     assert(v1.size() == v2.size());
     vector<double> res(v1.size());
-    transform(v1.begin(), v1.end(),
-	      v2.begin(), res.begin(),
-	      divides<double>());
+    transform(v1.begin(), v1.end(), v2.begin(), res.begin(), divides<double>());
     return res;
   }
-  
+
   // Element-wise multiplication of a vector and a scalar
-  vector<double> mult(const vector<double> &v,
-		      const double a) {
+  vector<double> mult(const vector<double> &v, const double a) {
     vector<double> res = v;
-    transform(res.begin(), res.end(), res.begin(), [&a](double c){return c*a;});
+    transform(
+        res.begin(), res.end(), res.begin(), [&a](double c) { return c * a; });
     return res;
   }
-  
+
   // Root square difference between two vectors
   double rms(const vector<double> &v1,
-	     const vector<double> &v2,
-	     const bool normalize) {
-    const vector<double> tmp = diff(v1,v2);
+             const vector<double> &v2,
+             const bool normalize) {
+    const vector<double> tmp = diff(v1, v2);
     double rms = inner_product(tmp.begin(), tmp.end(), tmp.begin(), 0.0);
     if (normalize) rms /= tmp.size();
     return sqrt(rms);
   }
 
   // Fill vector with constant value
-  void fill(vector<double> &v,
-	    const double& num) {
-   std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;}); 
+  void fill(vector<double> &v, const double &num) {
+    std::for_each(v.begin(), v.end(), [&](double &vi) { vi = num; });
   }
-  
+
   // -----------------------------------------------------------------
   // Vector2D class
   // -----------------------------------------------------------------
-  
-  Vector2D::Vector2D(const vector<vector<double>>& v_)  {
+
+  Vector2D::Vector2D(const vector<vector<double>> &v_) {
     s1 = v_.size();
     s2 = (s1 > 0) ? v_[0].size() : 0;
     v = vector<double>(s1 * s2, 0.0);
     size_t cnt = 0;
-    for (const auto& vi : v_) {
+    for (const auto &vi : v_) {
       assert(vi.size() == s2);
       std::copy(vi.begin(), vi.end(), v.begin() + cnt);
       cnt += s2;
     }
   }
-  
-  size_t Vector2D::size() const {
-    return s1*s2;
-  }
-  
+
+  size_t Vector2D::size() const { return s1 * s2; }
+
   size_t Vector2D::size(const size_t i) const {
     assert(i == 0 || i == 1);
     return (i == 0) ? s1 : s2;
   }
 
-  bool Vector2D::empty() const {
-    return v.empty();
-  }
-  
+  bool Vector2D::empty() const { return v.empty(); }
+
   void Vector2D::resize(const size_t s1_, const size_t s2_) {
     v.clear();
     s1 = s1_;
     s2 = s2_;
-    v.resize(s1_*s2_, 0.0);
+    v.resize(s1_ * s2_, 0.0);
   }
 
-  double& Vector2D::operator()(const size_t i, const size_t j) {
-    return v[j + i*s2];
-  }
-  
-  const double& Vector2D::operator()(const size_t i, const size_t j) const {
-    return v[j + i*s2];
+  double &Vector2D::operator()(const size_t i, const size_t j) {
+    return v[j + i * s2];
   }
 
-  const double& Vector2D::operator()(const size_t i) const {
-    return operator()(i,0);
+  const double &Vector2D::operator()(const size_t i, const size_t j) const {
+    return v[j + i * s2];
   }
 
-  bool Vector2D::operator==(const Vector2D& other) const {
+  const double &Vector2D::operator()(const size_t i) const {
+    return operator()(i, 0);
+  }
+
+  bool Vector2D::operator==(const Vector2D &other) const {
     return v == other.v && s1 == other.s1 && s2 == other.s2;
   }
-  
-  vector<double>::iterator Vector2D::begin() {
-    return v.begin();
-  }
 
-  vector<double>::iterator Vector2D::end() {
-    return v.end();
-  }
+  vector<double>::iterator Vector2D::begin() { return v.begin(); }
 
-  vector<double>::const_iterator Vector2D::begin() const {
-    return v.begin();
-  }
+  vector<double>::iterator Vector2D::end() { return v.end(); }
 
-  vector<double>::const_iterator Vector2D::end() const {
-    return v.end();
-  }
-  
-  double* Vector2D::data() {
-    return v.data();
-  }
+  vector<double>::const_iterator Vector2D::begin() const { return v.begin(); }
 
-  const double* Vector2D::data() const {
-    return v.data();
-  }
-    
+  vector<double>::const_iterator Vector2D::end() const { return v.end(); }
+
+  double *Vector2D::data() { return v.data(); }
+
+  const double *Vector2D::data() const { return v.data(); }
+
   void Vector2D::fill(const double &num) {
-    std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;});
+    std::for_each(v.begin(), v.end(), [&](double &vi) { vi = num; });
   }
 
   void Vector2D::fill(const size_t i, const double &num) {
-    const auto &dest = v.begin() + i*s2;
-    std::for_each(dest, dest + s2, [&](double &vi){ vi = num;});
+    const auto &dest = v.begin() + i * s2;
+    std::for_each(dest, dest + s2, [&](double &vi) { vi = num; });
   }
-  
+
   void Vector2D::fill(const size_t i, const vector<double> &num) {
     assert(num.size() == s2);
-    std::copy(num.begin(), num.end(), v.begin() + i*s2);
+    std::copy(num.begin(), num.end(), v.begin() + i * s2);
   }
-  
+
   void Vector2D::sum(const Vector2D &v_) {
     assert(v_.size() == v.size());
     v = vecUtil::sum(v, v_.v);
@@ -208,7 +178,7 @@ namespace vecUtil {
   }
 
   void Vector2D::mult(const double &num) {
-    std::for_each(v.begin(), v.end(), [&](double &vi){ vi *= num;});
+    std::for_each(v.begin(), v.end(), [&](double &vi) { vi *= num; });
   }
 
   void Vector2D::div(const Vector2D &v_) {
@@ -219,11 +189,9 @@ namespace vecUtil {
   // -----------------------------------------------------------------
   // Vector3D class
   // -----------------------------------------------------------------
-  
-  size_t Vector3D::size() const {
-    return s1*s2*s3;
-  } 
-  
+
+  size_t Vector3D::size() const { return s1 * s2 * s3; }
+
   size_t Vector3D::size(const size_t i) const {
     assert(i == 0 || i == 1 || i == 2);
     if (i == 0) return s1;
@@ -231,88 +199,63 @@ namespace vecUtil {
     return s3;
   }
 
-  bool Vector3D::empty() const {
-    return v.empty();
-  }
+  bool Vector3D::empty() const { return v.empty(); }
 
-  void Vector3D::resize(const size_t s1_,
-			const size_t s2_,
-			const size_t s3_) {
+  void Vector3D::resize(const size_t s1_, const size_t s2_, const size_t s3_) {
     v.clear();
     s1 = s1_;
     s2 = s2_;
     s3 = s3_;
-    v.resize(s1_*s2_*s3_, 0.0);
+    v.resize(s1_ * s2_ * s3_, 0.0);
   }
 
-  double& Vector3D::operator()(const size_t i,
-			       const size_t j,
-			       const size_t k) {
-    return v[k + j*s3 + i*s2*s3];
-  }
-  
-  const double& Vector3D::operator()(const size_t i,
-				     const size_t j,
-				     const size_t k) const {
-    return v[k + j*s3 + i*s2*s3];
+  double &Vector3D::operator()(const size_t i, const size_t j, const size_t k) {
+    return v[k + j * s3 + i * s2 * s3];
   }
 
-  const double& Vector3D::operator()(const size_t i,
-				     const size_t j) const {
+  const double &
+  Vector3D::operator()(const size_t i, const size_t j, const size_t k) const {
+    return v[k + j * s3 + i * s2 * s3];
+  }
+
+  const double &Vector3D::operator()(const size_t i, const size_t j) const {
     return operator()(i, j, 0);
   }
 
-  const double& Vector3D::operator()(const size_t i) const {
+  const double &Vector3D::operator()(const size_t i) const {
     return operator()(i, 0);
   }
 
-  bool Vector3D::operator==(const Vector3D& other) const {
-    return v == other.v && s1 == other.s1
-      && s2 == other.s2 && s3 == other.s3;
-  }
-  
-  vector<double>::iterator Vector3D::begin() {
-    return v.begin();
+  bool Vector3D::operator==(const Vector3D &other) const {
+    return v == other.v && s1 == other.s1 && s2 == other.s2 && s3 == other.s3;
   }
 
-  vector<double>::iterator Vector3D::end() {
-    return v.end();
-  }
+  vector<double>::iterator Vector3D::begin() { return v.begin(); }
 
-  vector<double>::const_iterator Vector3D::begin() const {
-    return v.begin();
-  }
+  vector<double>::iterator Vector3D::end() { return v.end(); }
 
-  vector<double>::const_iterator Vector3D::end() const {
-    return v.end();
-  }
+  vector<double>::const_iterator Vector3D::begin() const { return v.begin(); }
 
-  double* Vector3D::data() {
-    return v.data();
-  }
+  vector<double>::const_iterator Vector3D::end() const { return v.end(); }
 
-  const double* Vector3D::data() const {
-    return v.data();
-  }
-  
-  
+  double *Vector3D::data() { return v.data(); }
+
+  const double *Vector3D::data() const { return v.data(); }
+
   void Vector3D::fill(const double &num) {
-    std::for_each(v.begin(), v.end(), [&](double &vi){ vi = num;});
+    std::for_each(v.begin(), v.end(), [&](double &vi) { vi = num; });
   }
 
-  void Vector3D::fill(const size_t i,
-		      const size_t j,
-		      const double &num) {
-    const auto &dest = v.begin() + j*s3 + i*s2*s3;
-    std::for_each(dest, dest + s3, [&](double &vi){ vi = num;});
+  void Vector3D::fill(const size_t i, const size_t j, const double &num) {
+    const auto &dest = v.begin() + j * s3 + i * s2 * s3;
+    std::for_each(dest, dest + s3, [&](double &vi) { vi = num; });
   }
-  
-  void Vector3D::fill(const size_t i,
-		      const size_t j,
-		      const vector<double> &num) {
+
+  void
+  Vector3D::fill(const size_t i, const size_t j, const vector<double> &num) {
     assert(num.size() == s3);
-    std::copy(num.begin(), num.end(), v.begin() + j*s3 + i*s2*s3);
-  }  
+    std::copy(num.begin(), num.end(), v.begin() + j * s3 + i * s2 * s3);
+  }
 
   void Vector3D::sum(const Vector3D &v_) {
     assert(v_.size() == v.size());
@@ -330,7 +273,7 @@ namespace vecUtil {
   }
 
   void Vector3D::mult(const double &num) {
-    std::for_each(v.begin(), v.end(), [&](double &vi){ vi *= num;});
+    std::for_each(v.begin(), v.end(), [&](double &vi) { vi *= num; });
   }
 
   void Vector3D::div(const Vector3D &v_) {
@@ -341,104 +284,111 @@ namespace vecUtil {
   // -----------------------------------------------------------------
   // Stand-alone methods to convert between Python and C++ arrays
   // -----------------------------------------------------------------
-  
+
   void python::CheckRowMajor(const bn::ndarray &nda) {
     const bn::ndarray::bitflag flags = nda.get_flags();
     const bool isRowMajor = flags & bn::ndarray::C_CONTIGUOUS;
     if (!isRowMajor) {
-      parallelUtil::MPI::throwError("The numpy array is not stored in row major order (c-contiguous)");
+      parallelUtil::MPI::throwError(
+          "The numpy array is not stored in row major order (c-contiguous)");
     }
   }
-  
-  vector<double> python::toVector(const bn::ndarray &nda){
+
+  vector<double> python::toVector(const bn::ndarray &nda) {
     if (nda.get_nd() != 1) {
       parallelUtil::MPI::throwError("Incorrect numpy array dimensions");
     }
-    const Py_intptr_t* shape = nda.get_shape();
+    const Py_intptr_t *shape = nda.get_shape();
     const int dim = nda.get_nd();
     // the numpy array is flattened to a one dimensional std::vector
     Py_intptr_t n = 1;
-    for (int i = 0; i < dim; ++i){ n *= shape[i]; }
-    double* ptr = reinterpret_cast<double*>(nda.get_data());
+    for (int i = 0; i < dim; ++i) {
+      n *= shape[i];
+    }
+    double *ptr = reinterpret_cast<double *>(nda.get_data());
     std::vector<double> v(n);
-    for (int i = 0; i < n; ++i) { v[i] = *(ptr + i); }
+    for (int i = 0; i < n; ++i) {
+      v[i] = *(ptr + i);
+    }
     return v;
   }
 
-  vector<double> python::toVector(const bp::list &list){
+  vector<double> python::toVector(const bp::list &list) {
     int n = len(list);
     std::vector<double> v(n);
-    for (int i = 0; i < n; ++i){ v[i] = bp::extract<double>(list[i]); }
+    for (int i = 0; i < n; ++i) {
+      v[i] = bp::extract<double>(list[i]);
+    }
     return v;
   }
 
-  Vector2D python::toVector2D(const bn::ndarray &nda){
+  Vector2D python::toVector2D(const bn::ndarray &nda) {
     if (nda.get_nd() != 2) {
       parallelUtil::MPI::throwError("Incorrect numpy array dimensions");
     }
     CheckRowMajor(nda);
-    const Py_intptr_t* shape = nda.get_shape();
+    const Py_intptr_t *shape = nda.get_shape();
     const int sz1 = shape[0];
     const int sz2 = shape[1];
     Vector2D v(sz1, sz2);
-    double* ptr = reinterpret_cast<double*>(nda.get_data());
-    for (int i = 0; i < sz1; ++i){
+    double *ptr = reinterpret_cast<double *>(nda.get_data());
+    for (int i = 0; i < sz1; ++i) {
       for (int j = 0; j < sz2; ++j) {
-	v(i,j) = *(ptr + j + i*sz2);
+        v(i, j) = *(ptr + j + i * sz2);
       }
     }
     return v;
   }
 
-  vector<vector<double>> python::toDoubleVector(const bn::ndarray &nda){
+  vector<vector<double>> python::toDoubleVector(const bn::ndarray &nda) {
     if (nda.get_nd() != 2) {
       parallelUtil::MPI::throwError("Incorrect numpy array dimensions");
     }
     CheckRowMajor(nda);
-    const Py_intptr_t* shape = nda.get_shape();
+    const Py_intptr_t *shape = nda.get_shape();
     const int sz1 = shape[0];
     const int sz2 = shape[1];
     vector<vector<double>> v(sz1);
-    double* ptr = reinterpret_cast<double*>(nda.get_data());
-    for (int i = 0; i < sz1; ++i){
+    double *ptr = reinterpret_cast<double *>(nda.get_data());
+    for (int i = 0; i < sz1; ++i) {
       v[i].resize(sz2);
       for (int j = 0; j < sz2; ++j) {
-	v[i][j] = *(ptr + j + i*sz2);
+        v[i][j] = *(ptr + j + i * sz2);
       }
     }
     return v;
   }
-  
-  template<typename T>
-  bn::ndarray python::toNdArrayT(const T &v){
+
+  template <typename T> bn::ndarray python::toNdArrayT(const T &v) {
     Py_intptr_t shape[1];
     shape[0] = v.size();
     bn::ndarray result = bn::zeros(1, shape, bn::dtype::get_builtin<double>());
-    std::copy(v.begin(), v.end(), reinterpret_cast<double*>(result.get_data()));
+    std::copy(
+        v.begin(), v.end(), reinterpret_cast<double *>(result.get_data()));
     return result;
   }
 
-  bn::ndarray python::toNdArray(const vector<double> &v){
+  bn::ndarray python::toNdArray(const vector<double> &v) {
     return toNdArrayT(v);
   }
-  
-  bn::ndarray python::toNdArray2D(const Vector2D &v){
+
+  bn::ndarray python::toNdArray2D(const Vector2D &v) {
     bn::ndarray result = toNdArrayT(v);
     result = result.reshape(bp::make_tuple(v.size(0), v.size(1)));
     return result;
   }
 
-  bn::ndarray python::toNdArray2D(const vector<vector<double>> &v){
+  bn::ndarray python::toNdArray2D(const vector<vector<double>> &v) {
     return toNdArray2D(Vector2D(v));
   }
-  
-  bn::ndarray python::toNdArray3D(const Vector3D &v){
+
+  bn::ndarray python::toNdArray3D(const Vector3D &v) {
     bn::ndarray result = toNdArrayT(v);
     result = result.reshape(bp::make_tuple(v.size(0), v.size(1), v.size(2)));
     return result;
   }
-  
-}
+
+} // namespace vecUtil
 
 namespace thermoUtil {
 
@@ -447,184 +397,167 @@ namespace thermoUtil {
   // -----------------------------------------------------------------
 
   double computeInternalEnergy(const vector<double> &wvg,
-			       const vector<double> &ssf,
-			       const double &coupling) {
+                               const vector<double> &ssf,
+                               const double &coupling) {
     const Interpolator1D itp(wvg, ssf);
     Integrator1D itg(1.0e-6);
     const InternalEnergy uInt(coupling, wvg.front(), wvg.back(), itp, itg);
     return uInt.get();
   }
 
-    
   double computeFreeEnergy(const vector<double> &grid,
-			   const vector<double> &rsu,
-			   const double &coupling) {
+                           const vector<double> &rsu,
+                           const double &coupling) {
     return computeFreeEnergy(grid, rsu, coupling, true);
   }
-  
+
   double computeFreeEnergy(const vector<double> &grid,
-			   const vector<double> &rsu,
-			   const double &coupling,
-			   const bool normalize) {
+                           const vector<double> &rsu,
+                           const double &coupling,
+                           const bool normalize) {
     if (numUtil::largerThan(coupling, grid.back())) {
-      parallelUtil::MPI::throwError("The coupling parameter is out of range"
-			  " for the current grid, the free energy cannot be computed");
+      parallelUtil::MPI::throwError(
+          "The coupling parameter is out of range"
+          " for the current grid, the free energy cannot be computed");
     }
     const Interpolator1D itp(grid, rsu);
     Integrator1D itg(1.0e-6);
     const FreeEnergy freeEnergy(coupling, itp, itg, normalize);
     return freeEnergy.get();
   }
-  
+
   vector<double> computeRdf(const vector<double> &r,
-			    const vector<double> &wvg,
-			    const vector<double> &ssf) {
+                            const vector<double> &wvg,
+                            const vector<double> &ssf) {
     assert(ssf.size() > 0 && wvg.size() > 0);
     const Interpolator1D itp(wvg, ssf);
     const int nr = r.size();
     vector<double> rdf(nr);
     Integrator1D itg(ItgType::DEFAULT, 1.0e-6);
     Integrator1D itgf(ItgType::FOURIER, 1.0e-6);
-    for (int i=0; i<nr; ++i){
+    for (int i = 0; i < nr; ++i) {
       const Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf);
       rdf[i] = rdfTmp.get();
     }
     return rdf;
   }
-  
+
   // -----------------------------------------------------------------
   // InternalEnergy class
   // -----------------------------------------------------------------
-  
-  double InternalEnergy::ssf(const double& y) const {
-    return ssfi.eval(y);
-  }
-  
-  double InternalEnergy::integrand(const double& y) const {
-    return ssf(y) - 1;
-  }
 
-  double InternalEnergy::get() const  {
-    auto func = [&](const double& y)->double{return integrand(y);};
+  double InternalEnergy::ssf(const double &y) const { return ssfi.eval(y); }
+
+  double InternalEnergy::integrand(const double &y) const { return ssf(y) - 1; }
+
+  double InternalEnergy::get() const {
+    auto func = [&](const double &y) -> double { return integrand(y); };
     itg.compute(func, ItgParam(yMin, yMax));
-    return itg.getSolution()/(M_PI * rs * lambda);
+    return itg.getSolution() / (M_PI * rs * lambda);
   }
 
   // -----------------------------------------------------------------
   // FreeEnergy class
   // -----------------------------------------------------------------
-  
-  double FreeEnergy::get() const  {
-    auto func = [&](const double& y)->double{return rsui.eval(y);};
+
+  double FreeEnergy::get() const {
+    auto func = [&](const double &y) -> double { return rsui.eval(y); };
     itg.compute(func, ItgParam(0.0, rs));
-    if (normalize) { return (rs == 0.0) ? -numUtil::Inf : itg.getSolution()/rs/rs; };
+    if (normalize) {
+      return (rs == 0.0) ? -numUtil::Inf : itg.getSolution() / rs / rs;
+    };
     return itg.getSolution();
   }
-  
+
   // -----------------------------------------------------------------
   // Rdf class
   // -----------------------------------------------------------------
-  
-  double Rdf::ssf(const double& y) const {
-    return ssfi.eval(y);
-  }
 
-  double Rdf::integrand(const double& y) const {
+  double Rdf::ssf(const double &y) const { return ssfi.eval(y); }
+
+  double Rdf::integrand(const double &y) const {
     if (y > cutoff) return 0;
     const double yssf = y * (ssf(y) - 1);
     return (r == 0.0) ? y * yssf : yssf;
   }
 
   double Rdf::get() const {
-    auto func = [&](const double& y)->double{return integrand(y);};
+    auto func = [&](const double &y) -> double { return integrand(y); };
     if (r == 0) {
       itg.compute(func, ItgParam(0.0, cutoff));
       return 1 + 1.5 * itg.getSolution();
-    }
-    else {
+    } else {
       itgf.compute(func, ItgParam(r));
-      return 1 + 1.5 * itgf.getSolution()/r;
+      return 1 + 1.5 * itgf.getSolution() / r;
     }
   }
-  
-}
 
+} // namespace thermoUtil
 
 namespace parallelUtil {
 
   // -----------------------------------------------------------------
   // Stand-alone methods for MPI distributed memory parallelism
   // -----------------------------------------------------------------
-  
+
   namespace MPI {
 
     const MPI_Comm MPICommunicator = MPI_COMM_WORLD;
 
-    void init() {
-      MPI_Init(nullptr, nullptr);
-    }
+    void init() { MPI_Init(nullptr, nullptr); }
 
-    void finalize() {
-      MPI_Finalize();
-    }
-    
+    void finalize() { MPI_Finalize(); }
+
     bool isInitialized() {
       int isMPIInit;
       MPI_Initialized(&isMPIInit);
       return isMPIInit == 1;
     }
-    
+
     int rank() {
       int rank;
       MPI_Comm_rank(MPICommunicator, &rank);
       return rank;
     }
-  
+
     int numberOfRanks() {
       int numRanks;
       MPI_Comm_size(MPICommunicator, &numRanks);
       return numRanks;
     }
 
-    void barrier() {
-      MPI_Barrier(MPICommunicator);
-    }
-  
-    bool isRoot() {
-      return rank() == 0;
-    }
-  
-    bool isSingleProcess() {
-      return numberOfRanks() == 1;
-    }
+    void barrier() { MPI_Barrier(MPICommunicator); }
 
-    void throwError(const string& errMsg) {
+    bool isRoot() { return rank() == 0; }
+
+    bool isSingleProcess() { return numberOfRanks() == 1; }
+
+    void throwError(const string &errMsg) {
       if (isSingleProcess()) {
-	// Throw a catchable error if only one process is used
-	throw runtime_error(errMsg);
+        // Throw a catchable error if only one process is used
+        throw runtime_error(errMsg);
       }
       // Abort MPI if more than one process is running
       cerr << errMsg << endl;
       abort();
     }
-  
-    void abort() {
-      MPI_Abort(MPICommunicator, 1);
-    }
 
-    double timer() {
-      return MPI_Wtime();
-    }
+    void abort() { MPI_Abort(MPICommunicator, 1); }
 
-    bool isEqualOnAllRanks(const int& myNumber) {
+    double timer() { return MPI_Wtime(); }
+
+    bool isEqualOnAllRanks(const int &myNumber) {
       int globalMininumNumber;
-      MPI_Allreduce(&myNumber, &globalMininumNumber, 1,
-		    MPI_INT, MPI_MIN, MPICommunicator);
+      MPI_Allreduce(&myNumber,
+                    &globalMininumNumber,
+                    1,
+                    MPI_INT,
+                    MPI_MIN,
+                    MPICommunicator);
       return myNumber == globalMininumNumber;
     }
-  
-    pair<int, int> getLoopIndexes(const int loopSize,
-				  const int thisRank) {
+
+    pair<int, int> getLoopIndexes(const int loopSize, const int thisRank) {
       pair<int, int> idx = {0, loopSize};
       const int nRanks = numberOfRanks();
       if (nRanks == 1) { return idx; }
@@ -639,44 +572,47 @@ namespace parallelUtil {
     MPIParallelForData getAllLoopIndexes(const int loopSize) {
       std::vector<pair<int, int>> out;
       for (int i = 0; i < numberOfRanks(); ++i) {
-	out.push_back(getLoopIndexes(loopSize, i));
+        out.push_back(getLoopIndexes(loopSize, i));
       }
       return out;
     }
 
-    MPIParallelForData parallelFor(const function<void(int)>& loopFunc,
-				   const int loopSize,
-				   const int ompThreads) {
+    MPIParallelForData parallelFor(const function<void(int)> &loopFunc,
+                                   const int loopSize,
+                                   const int ompThreads) {
       MPIParallelForData allIdx = getAllLoopIndexes(loopSize);
-      const auto& thisIdx = allIdx[rank()];
+      const auto &thisIdx = allIdx[rank()];
       const bool useOMP = ompThreads > 1;
-      #pragma omp parallel for num_threads(ompThreads) if (useOMP)
-      for (int i=thisIdx.first; i<thisIdx.second; ++i) {
-	loopFunc(i);
+#pragma omp parallel for num_threads(ompThreads) if (useOMP)
+      for (int i = thisIdx.first; i < thisIdx.second; ++i) {
+        loopFunc(i);
       }
       return allIdx;
     }
-  
-    void gatherLoopData(double* dataToGather,
-			const MPIParallelForData& loopData,
-			const int countsPerLoop) {
+
+    void gatherLoopData(double *dataToGather,
+                        const MPIParallelForData &loopData,
+                        const int countsPerLoop) {
       std::vector<int> recieverCounts;
-      for (const auto& i : loopData) {
-	const int loopSpan = i.second - i.first;
-	recieverCounts.push_back(loopSpan * countsPerLoop);
+      for (const auto &i : loopData) {
+        const int loopSpan = i.second - i.first;
+        recieverCounts.push_back(loopSpan * countsPerLoop);
       }
       std::vector<int> displacements(recieverCounts.size(), 0);
       std::partial_sum(recieverCounts.begin(),
-		       recieverCounts.end()-1,
-		       displacements.begin()+1,
-		       plus<double>());
-      MPI_Allgatherv(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
-		     dataToGather,
-		     recieverCounts.data(),
-		     displacements.data(),
-		     MPI_DOUBLE, MPI_COMM_WORLD);
+                       recieverCounts.end() - 1,
+                       displacements.begin() + 1,
+                       plus<double>());
+      MPI_Allgatherv(MPI_IN_PLACE,
+                     0,
+                     MPI_DATATYPE_NULL,
+                     dataToGather,
+                     recieverCounts.data(),
+                     displacements.data(),
+                     MPI_DOUBLE,
+                     MPI_COMM_WORLD);
     }
-  
-}
-  
-}
+
+  } // namespace MPI
+
+} // namespace parallelUtil
