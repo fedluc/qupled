@@ -144,9 +144,12 @@ void QStlsCSR::init() {
   if (std::filesystem::exists(adrFixedFileName)) {
     Stls::init();
     readAdrFixedFile(adrFixed, adrFixedFileName, false);
-    return;
   }
-  Qstls::init();
+  else {
+    Qstls::init();
+  }
+  // MPI barrier to make sure that all processes see the same files
+  parallelUtil::MPI::barrier();
 }
 
 void QStlsCSR::computeAdrStls() {
