@@ -16,7 +16,9 @@ def test_default(rpa_instance):
     assert rpa_instance.inputs.coupling == 1.0
     assert rpa_instance.inputs.degeneracy == 1.0
     assert rpa_instance.inputs.theory == "RPA"
-    assert all(x == y for x, y in zip(rpa_instance.inputs.chemicalPotential, [-10.0, 10.0]))
+    assert all(
+        x == y for x, y in zip(rpa_instance.inputs.chemicalPotential, [-10.0, 10.0])
+    )
     assert rpa_instance.inputs.cutoff == 10.0
     assert rpa_instance.inputs.matsubara == 128
     assert rpa_instance.inputs.resolution == 0.1
@@ -25,7 +27,7 @@ def test_default(rpa_instance):
     assert rpa_instance.scheme is None
     assert rpa_instance.hdfFileName is None
 
-                                      
+
 def test_set_input():
     rpa = Rpa(2.0, 0.5, [-5, 5], 20, 32, 0.01)
     assert rpa.inputs.coupling == 2.0
@@ -43,8 +45,8 @@ def test_checkInputs(rpa_instance):
     with pytest.raises(SystemExit) as excinfo:
         rpa_instance._checkInputs()
     assert excinfo.value.code == "Invalid dielectric theory"
-    
-    
+
+
 def test_compute(rpa_instance, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
@@ -62,7 +64,7 @@ def test_compute(rpa_instance, mocker):
     assert mockSetHdfFile.call_count == 1
     assert mockSave.call_count == 1
 
-    
+
 def test_checkStatusAndClean(rpa_instance, mocker, capsys):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     mockCheckInputs = mocker.patch("os.remove")
@@ -74,13 +76,13 @@ def test_checkStatusAndClean(rpa_instance, mocker, capsys):
     with pytest.raises(SystemExit) as excinfo:
         rpa_instance._checkStatusAndClean(1)
     assert excinfo.value.code == "Error while solving the dielectric theory"
-    
-    
+
+
 def test_setHdfFile(rpa_instance):
     rpa_instance._setHdfFile()
     assert rpa_instance.hdfFileName == "rs1.000_theta1.000_RPA.h5"
 
-    
+
 def test_save(rpa_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     rpa_instance.scheme = qp.Rpa(rpa_instance.inputs)
@@ -90,15 +92,26 @@ def test_save(rpa_instance, mocker):
         assert mockMPIIsRoot.call_count == 1
         assert os.path.isfile(rpa_instance.hdfFileName)
         inspectData = Hdf().inspect(rpa_instance.hdfFileName)
-        expectedEntries = ["coupling", "degeneracy", "theory", "resolution",
-                           "cutoff", "matsubara", "idr", "sdr", "slfc",
-                           "ssf", "ssfHF", "wvg"]
+        expectedEntries = [
+            "coupling",
+            "degeneracy",
+            "theory",
+            "resolution",
+            "cutoff",
+            "matsubara",
+            "idr",
+            "sdr",
+            "slfc",
+            "ssf",
+            "ssfHF",
+            "wvg",
+        ]
         for entry in expectedEntries:
             assert entry in inspectData
     finally:
         os.remove(rpa_instance.hdfFileName)
 
-        
+
 def test_computeRdf(rpa_instance, mocker):
     mockCheckSolution = mocker.patch("qupled.classic.Rpa._checkSolution")
     mockMPIGetRank = mocker.patch("qupled.util.MPI.getRank", return_value=0)
@@ -117,6 +130,7 @@ def test_computeInternalEnergy(rpa_instance, mocker):
     assert mockCheckSolution.call_count == 1
     assert mockComputeInternalEnergy.call_count == 1
 
+
 def test_plot(rpa_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     mockCheckSolution = mocker.patch("qupled.classic.Rpa._checkSolution")
@@ -132,6 +146,7 @@ def test_plot(rpa_instance, mocker):
     assert mockCheckSolution.call_count == 2
     assert mockComputeRdf.call_count == 1
     assert mockPlot.call_count == 2
+
 
 def test_checkSolution(rpa_instance):
     with pytest.raises(SystemExit) as excinfo:

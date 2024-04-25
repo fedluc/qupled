@@ -7,6 +7,7 @@ from qupled.util import Hdf
 from qupled.classic import VSStls
 from qupled.classic import Stls
 
+
 @pytest.fixture
 def vsstls_instance():
     return VSStls(1.0, 1.0)
@@ -18,7 +19,10 @@ def test_default(vsstls_instance):
     assert vsstls_instance.inputs.coupling == 1.0
     assert vsstls_instance.inputs.degeneracy == 1.0
     assert vsstls_instance.inputs.theory == "VSSTLS"
-    assert all(x == y for x, y in zip(vsstls_instance.inputs.chemicalPotential, [-100.0, 100.0]))
+    assert all(
+        x == y
+        for x, y in zip(vsstls_instance.inputs.chemicalPotential, [-100.0, 100.0])
+    )
     assert vsstls_instance.inputs.cutoff == 10.0
     assert vsstls_instance.inputs.error == 1.0e-5
     assert vsstls_instance.inputs.mixing == 1.0
@@ -37,11 +41,29 @@ def test_default(vsstls_instance):
     assert vsstls_instance.scheme is None
     assert vsstls_instance.hdfFileName is None
 
-                                      
+
 def test_set_input():
-    vsstls = VSStls(2.0, 0.5, [-5, 5], 20, 1.0e-8, 0.5, None, 100,
-                    32, 100, "recoveryFile", 0.01, [0.8, 1.2],
-                    0.1, 0.2, 1.0e-5, 100, 1.0e-8, 9)
+    vsstls = VSStls(
+        2.0,
+        0.5,
+        [-5, 5],
+        20,
+        1.0e-8,
+        0.5,
+        None,
+        100,
+        32,
+        100,
+        "recoveryFile",
+        0.01,
+        [0.8, 1.2],
+        0.1,
+        0.2,
+        1.0e-5,
+        100,
+        1.0e-8,
+        9,
+    )
     assert vsstls.inputs.coupling == 2.0
     assert vsstls.inputs.degeneracy == 0.5
     assert vsstls.inputs.theory == "VSSTLS"
@@ -63,7 +85,8 @@ def test_set_input():
     assert vsstls.inputs.threads == 9
     assert vsstls.scheme is None
     assert vsstls.hdfFileName is None
-    
+
+
 def test_compute(vsstls_instance, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
@@ -81,7 +104,7 @@ def test_compute(vsstls_instance, mocker):
     assert mockSetHdfFile.call_count == 1
     assert mockSave.call_count == 1
 
-    
+
 def test_save(vsstls_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     vsstls_instance.scheme = qp.VSStls(vsstls_instance.inputs)
@@ -91,10 +114,24 @@ def test_save(vsstls_instance, mocker):
         assert mockMPIIsRoot.call_count == 3
         assert os.path.isfile(vsstls_instance.hdfFileName)
         inspectData = Hdf().inspect(vsstls_instance.hdfFileName)
-        expectedEntries = ["coupling", "degeneracy", "theory", "error",
-                           "resolution", "cutoff", "matsubara",
-                           "idr", "sdr", "slfc",  "ssf", "ssfHF",
-                           "wvg", "fxcGrid", "fxci", "alpha"]
+        expectedEntries = [
+            "coupling",
+            "degeneracy",
+            "theory",
+            "error",
+            "resolution",
+            "cutoff",
+            "matsubara",
+            "idr",
+            "sdr",
+            "slfc",
+            "ssf",
+            "ssfHF",
+            "wvg",
+            "fxcGrid",
+            "fxci",
+            "alpha",
+        ]
         for entry in expectedEntries:
             assert entry in inspectData
     finally:
@@ -104,7 +141,10 @@ def test_save(vsstls_instance, mocker):
 def test_setFreeEnergyIntegrand(vsstls_instance, mocker):
     arr1D = np.ones(10)
     arr2D = np.ones((3, 10))
-    mockHdfRead = mocker.patch("qupled.util.Hdf.read", return_value={"fxcGrid" : arr1D, "fxci" : arr2D, "alpha" : arr1D})
+    mockHdfRead = mocker.patch(
+        "qupled.util.Hdf.read",
+        return_value={"fxcGrid": arr1D, "fxci": arr2D, "alpha": arr1D},
+    )
     vsstls_instance.setFreeEnergyIntegrand("dummyFileName")
     assert np.array_equal(vsstls_instance.inputs.freeEnergyIntegrand.grid, arr1D)
     assert np.array_equal(vsstls_instance.inputs.freeEnergyIntegrand.alpha, arr1D)

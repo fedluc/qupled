@@ -9,8 +9,8 @@ import qupled.qupled as qp
 # RPA class
 # -----------------------------------------------------------------------
 
-class Rpa():
 
+class Rpa:
     """
     Class used to setup and solve the classical Randon-Phase approximaton scheme as described by
     `Bohm and Pines <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
@@ -20,41 +20,54 @@ class Rpa():
 
     Args:
         coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.  
+        degeneracy: Degeneracy parameter.
         chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
         matsubara: Number of matsubara frequencies, defaults to 128.
         resolution: Resolution of the wave-vector grid, defaults to 0.1.
     """
-    
+
     # Constructor
-    def __init__(self,
-                 coupling : float,
-                 degeneracy : float,
-                 chemicalPotential : list[float] = [-10.0,10.0],
-                 cutoff : float = 10.0,
-                 matsubara : int = 128,
-                 resolution : float = 0.1 ):
+    def __init__(
+        self,
+        coupling: float,
+        degeneracy: float,
+        chemicalPotential: list[float] = [-10.0, 10.0],
+        cutoff: float = 10.0,
+        matsubara: int = 128,
+        resolution: float = 0.1,
+    ):
         # Allowed theories
         self.allowedTheories = ["RPA"]
         # Input object
-        self.inputs : qupled.qupled.RpaInput = qp.RpaInput() #: Inputs to solve the scheme.
-        self._setInputs(coupling, degeneracy, "RPA", chemicalPotential,
-                        cutoff, matsubara, resolution)
+        self.inputs: qupled.qupled.RpaInput = (
+            qp.RpaInput()
+        )  #: Inputs to solve the scheme.
+        self._setInputs(
+            coupling,
+            degeneracy,
+            "RPA",
+            chemicalPotential,
+            cutoff,
+            matsubara,
+            resolution,
+        )
         # Scheme to solve
-        self.scheme : qp.Rpa = None
+        self.scheme: qp.Rpa = None
         # File to store output on disk
-        self.hdfFileName : str = None #: Name of the output file
+        self.hdfFileName: str = None  #: Name of the output file
 
     # Setup inputs object
-    def _setInputs(self,
-                   coupling : float,
-                   degeneracy : float,
-                   theory : str,
-                   chemicalPotential : list[float],
-                   cutoff : float,
-                   matsubara : int,
-                   resolution : float) -> None:
+    def _setInputs(
+        self,
+        coupling: float,
+        degeneracy: float,
+        theory: str,
+        chemicalPotential: list[float],
+        cutoff: float,
+        matsubara: int,
+        resolution: float,
+    ) -> None:
         # """ Sets up the content of :obj:`inputs` """
         self.inputs.coupling = coupling
         self.inputs.degeneracy = degeneracy
@@ -65,41 +78,41 @@ class Rpa():
         self.inputs.resolution = resolution
         self.inputs.intError = 1.0e-5
         self.inputs.threads = 1
-        
+
     # Check input before computing
     def _checkInputs(self) -> None:
-        """ Checks that the content of :obj:`inputs` is correct """
-        if (self.inputs.theory not in self.allowedTheories):
+        """Checks that the content of :obj:`inputs` is correct"""
+        if self.inputs.theory not in self.allowedTheories:
             sys.exit("Invalid dielectric theory")
 
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """ Solves the scheme and saves the results.
+        """Solves the scheme and saves the results.
 
         The results are stored as pandas dataframes in an hdf file with the following keywords:
-        
+
         - info: A dataframe containing information on the input parameters, it includes:
-        
+
           - coupling: the coupling parameter,
           - degeneracy: the degeneracy parameter,
-          - theory: the theory that is being solved,  
-          - resolution: the resolution in the wave-vector grid, 
-          - cutoff: the cutoff in the wave-vector grid, 
+          - theory: the theory that is being solved,
+          - resolution: the resolution in the wave-vector grid,
+          - cutoff: the cutoff in the wave-vector grid,
           - matsubara: the number of matsubara frequencies
-        
-        - idr (*ndarray*, 2D): the ideal density response  
-        - sdr (*ndarray*):  the static density response   
-        - slfc (*ndarray*):  the static local field correction   
-        - ssf (*ndarray*):  the static structure factor   
-        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor 
-        - wvg (*ndarray*):  the wave-vector grid 
-        
+
+        - idr (*ndarray*, 2D): the ideal density response
+        - sdr (*ndarray*):  the static density response
+        - slfc (*ndarray*):  the static local field correction
+        - ssf (*ndarray*):  the static structure factor
+        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
+        - wvg (*ndarray*):  the wave-vector grid
+
         If the radial distribution function was computed (see computeRdf), then the hdf file contains
         two additional keywords:
-        
-        - rdf (*ndarray*):  the radial distribution function   
+
+        - rdf (*ndarray*):  the radial distribution function
         - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
 
         The name of the hdf file is stored in :obj:`hdfFileName`.
@@ -110,52 +123,59 @@ class Rpa():
         self._checkStatusAndClean(status)
         self._setHdfFile()
         self._save()
-        
+
     # Check that the dielectric scheme was solved without errors
     @qu.MPI.runOnlyOnRoot
-    def _checkStatusAndClean(self, status : bool) -> None:
-        """ Checks that the scheme was solved correctly and removes temporarary files generated at run-time
-        
-           Args:
-               status: status obtained from the native code. If status == 0 the scheme was solved correctly.
+    def _checkStatusAndClean(self, status: bool) -> None:
+        """Checks that the scheme was solved correctly and removes temporarary files generated at run-time
+
+        Args:
+            status: status obtained from the native code. If status == 0 the scheme was solved correctly.
         """
-        if (status == 0):
-            if os.path.isfile(self.scheme.recovery) : os.remove(self.scheme.recovery)
+        if status == 0:
+            if os.path.isfile(self.scheme.recovery):
+                os.remove(self.scheme.recovery)
             print("Dielectric theory solved successfully!")
         else:
             sys.exit("Error while solving the dielectric theory")
-    
+
     # Save results to disk
     def _setHdfFile(self) -> None:
-        """ Sets the name of the hdf file used to store the output """
-        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (self.inputs.coupling,
-                                                         self.inputs.degeneracy,
-                                                         self.inputs.theory)
+        """Sets the name of the hdf file used to store the output"""
+        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (
+            self.inputs.coupling,
+            self.inputs.degeneracy,
+            self.inputs.theory,
+        )
+
     @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
-        """ Stores the results obtained by solving the scheme.
-        
-        """
-        assert(self.scheme is not None)
-        pd.DataFrame({
-            "coupling" : self.inputs.coupling,
-            "degeneracy" : self.inputs.degeneracy,
-            "theory" : self.inputs.theory,
-            "resolution" : self.inputs.resolution,
-            "cutoff" : self.inputs.cutoff,
-            "matsubara" : self.inputs.matsubara
-        }, index=["info"]).to_hdf(self.hdfFileName, key="info", mode="w")
+        """Stores the results obtained by solving the scheme."""
+        assert self.scheme is not None
+        pd.DataFrame(
+            {
+                "coupling": self.inputs.coupling,
+                "degeneracy": self.inputs.degeneracy,
+                "theory": self.inputs.theory,
+                "resolution": self.inputs.resolution,
+                "cutoff": self.inputs.cutoff,
+                "matsubara": self.inputs.matsubara,
+            },
+            index=["info"],
+        ).to_hdf(self.hdfFileName, key="info", mode="w")
         pd.DataFrame(self.scheme.idr).to_hdf(self.hdfFileName, key="idr")
         pd.DataFrame(self.scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
         pd.DataFrame(self.scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
         pd.DataFrame(self.scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
         pd.DataFrame(self.scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
         pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
-    
+
     # Compute radial distribution function
-    def computeRdf(self, rdfGrid : np.ndarray = None, writeToHdf : bool = True) -> np.array:
-        """ Computes the radial distribution function from the data stored in the output file.
-        
+    def computeRdf(
+        self, rdfGrid: np.ndarray = None, writeToHdf: bool = True
+    ) -> np.array:
+        """Computes the radial distribution function from the data stored in the output file.
+
         Args:
             rdfGrid: The grid used to compute the radial distribution function.
                 (Defaults to None, see :func:`qupled.util.Hdf.computeRdf`)
@@ -163,69 +183,77 @@ class Rpa():
 
         Returns:
             The radial distribution function
-        
+
         """
         self._checkSolution("compute the radial distribution function")
-        if (qu.MPI().getRank() > 0) : writeToHdf = False;
+        if qu.MPI().getRank() > 0:
+            writeToHdf = False
         return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
 
     # Compute the internal energy
     def computeInternalEnergy(self) -> float:
-        """ Computes the internal energy from the data stored in the output file.
+        """Computes the internal energy from the data stored in the output file.
 
         Returns:
             The internal energy
-        
+
         """
         self._checkSolution("compute the internal energy")
-        return qp.computeInternalEnergy(self.scheme.wvg, self.scheme.ssf, self.inputs.coupling)
-        
+        return qp.computeInternalEnergy(
+            self.scheme.wvg, self.scheme.ssf, self.inputs.coupling
+        )
+
     # Plot results
     @qu.MPI.runOnlyOnRoot
-    def plot(self, toPlot : list[str], matsubara : np.ndarray = None, rdfGrid : np.ndarray = None) -> None:
-        """ Plots the results stored in the output file`.
+    def plot(
+        self,
+        toPlot: list[str],
+        matsubara: np.ndarray = None,
+        rdfGrid: np.ndarray = None,
+    ) -> None:
+        """Plots the results stored in the output file`.
 
-        Args:  
+        Args:
             toPlot: A list of quantities to plot. This list can include all the values written to the
                  output hdf file. The radial distribution funciton is computed and added to the output
                  file if necessary
             matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
-                (Default = None, all matsubara frequencies are plotted)  
+                (Default = None, all matsubara frequencies are plotted)
             rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
                 distribution function is plotted (Default = None, see :func:`qupled.classic.Stls.computeRdf`)
-        
+
         """
         self._checkSolution("plot results")
-        if ("rdf" in toPlot) : self.computeRdf(rdfGrid)
+        if "rdf" in toPlot:
+            self.computeRdf(rdfGrid)
         qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
 
-
     # Check if a solution is available to perform a given action
-    def _checkSolution(self, action : str) -> None:
-        """ Check if a solution is available to be used
-        
-        Args:  
+    def _checkSolution(self, action: str) -> None:
+        """Check if a solution is available to be used
+
+        Args:
             action: Name of the action to be performed. Only used to print an error message if no solution is found
-          
+
         """
-        if (self.scheme is None):
+        if self.scheme is None:
             sys.exit("No solution to " + action)
 
 
 # -----------------------------------------------------------------------
 # ESA class
 # -----------------------------------------------------------------------
-            
+
+
 class ESA(Rpa):
-    
-    """ 
+    """
     Class used to setup and solve the hybrid Effective Static Approximation scheme as described by
     `Dornheim and collaborators <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`_.
     This class inherits most of its methods and attributes from :obj:`qupled.classic.Rpa`.
 
     Args:
         coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.  
+        degeneracy: Degeneracy parameter.
         chemicalPotential: Initial guess for the chemical potential, defaults to [-100.0, 100.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
         matsubara: Number of matsubara frequencies, defaults to 128.
@@ -233,45 +261,56 @@ class ESA(Rpa):
     """
 
     # Constructor
-    def __init__(self,
-                 coupling: float,
-                 degeneracy: float,
-                 chemicalPotential: list[float] = [-10.0, 10.0],
-                 cutoff: float = 10.0,
-                 matsubara: int = 128,
-                 resolution: float = 0.1):
+    def __init__(
+        self,
+        coupling: float,
+        degeneracy: float,
+        chemicalPotential: list[float] = [-10.0, 10.0],
+        cutoff: float = 10.0,
+        matsubara: int = 128,
+        resolution: float = 0.1,
+    ):
         # Allowed theories
-        self.allowedTheories : list[str] = ["ESA"]
+        self.allowedTheories: list[str] = ["ESA"]
         # Input object
-        self.inputs : qupled.qupled.RpaInput = qp.RpaInput()  #: Inputs to solve the scheme.
-        super()._setInputs(coupling, degeneracy, "ESA", chemicalPotential,
-                           cutoff, matsubara, resolution)
+        self.inputs: qupled.qupled.RpaInput = (
+            qp.RpaInput()
+        )  #: Inputs to solve the scheme.
+        super()._setInputs(
+            coupling,
+            degeneracy,
+            "ESA",
+            chemicalPotential,
+            cutoff,
+            matsubara,
+            resolution,
+        )
         # Scheme to solve
-        self.scheme : qp.ESA = None
+        self.scheme: qp.ESA = None
         # File to store output on disk
         self.hdfFileName = None
 
-        
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. See the method :func:`qupled.classic.Rpa.compute`
+        """Solves the scheme and saves the results to and hdf file. See the method :func:`qupled.classic.Rpa.compute`
         to see which results are saved.
         """
         self._checkInputs()
         self.scheme = qp.ESA(self.inputs)
         status = self.scheme.compute()
         self._checkStatusAndClean(status)
-        self._setHdfFile()    
+        self._setHdfFile()
         self._save()
-            
+
+
 # -----------------------------------------------------------------------
 # Stls class
 # -----------------------------------------------------------------------
 
-class Stls(Rpa):
 
+class Stls(Rpa):
     """
     Class used to setup and solve the classical STLS scheme as described by
     `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
@@ -279,11 +318,11 @@ class Stls(Rpa):
 
     Args:
         coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.  
+        degeneracy: Degeneracy parameter.
         chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
         error: Minimum error for convergence, defaults to 1.0e-5.
-        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
+        mixing: Mixing parameter for iterative solution, defaults to 1.0.
         guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
         iterations: Maximum number of iterations, defaults to 1000.
         matsubara: Number of matsubara frequencies, defaults to 128.
@@ -291,63 +330,90 @@ class Stls(Rpa):
         recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
         resolution: Resolution of the wave-vector grid, defaults to 0.1.
     """
-    
+
     # Constructor
-    def __init__(self,
-                 coupling : float,
-                 degeneracy : float,
-                 chemicalPotential : list[float] = [-10.0,10.0],
-                 cutoff : float = 10.0,
-                 error : float = 1.0e-5,
-                 mixing : float = 1.0,
-                 guess : qp.SlfcGuess = None,
-                 iterations : int = 1000,
-                 matsubara : int = 128,
-                 outputFrequency : int = 10,
-                 recoveryFile : str = None,
-                 resolution : float = 0.1 ):
+    def __init__(
+        self,
+        coupling: float,
+        degeneracy: float,
+        chemicalPotential: list[float] = [-10.0, 10.0],
+        cutoff: float = 10.0,
+        error: float = 1.0e-5,
+        mixing: float = 1.0,
+        guess: qp.SlfcGuess = None,
+        iterations: int = 1000,
+        matsubara: int = 128,
+        outputFrequency: int = 10,
+        recoveryFile: str = None,
+        resolution: float = 0.1,
+    ):
         # Allowed theories
         self.allowedTheories = ["STLS"]
         # Input object
-        self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
-        self._setInputs(coupling, degeneracy, "STLS", chemicalPotential,
-                        cutoff, error, mixing, guess, iterations, matsubara,
-                        outputFrequency, recoveryFile, resolution)
+        self.inputs: qupled.qupled.StlsInput = (
+            qp.StlsInput()
+        )  #: Inputs to solve the scheme.
+        self._setInputs(
+            coupling,
+            degeneracy,
+            "STLS",
+            chemicalPotential,
+            cutoff,
+            error,
+            mixing,
+            guess,
+            iterations,
+            matsubara,
+            outputFrequency,
+            recoveryFile,
+            resolution,
+        )
         # Scheme to solve
-        self.scheme : qp.Stls = None
+        self.scheme: qp.Stls = None
         # File to store output on disk
-        self.hdfFileName : str = None
+        self.hdfFileName: str = None
 
     # Setup inputs object
-    def _setInputs(self,
-                   coupling : float,
-                   degeneracy : float,
-                   theory : str,
-                   chemicalPotential : list[float],
-                   cutoff : float,
-                   error : float,
-                   mixing : float,
-                   guess : qp.SlfcGuess,
-                   iterations : int,
-                   matsubara : int,
-                   outputFrequency : int,
-                   recoveryFile : str,
-                   resolution : float) -> None:
-        """ Sets up the content of :obj:`inputs` """
-        super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
-                           cutoff, matsubara, resolution)
+    def _setInputs(
+        self,
+        coupling: float,
+        degeneracy: float,
+        theory: str,
+        chemicalPotential: list[float],
+        cutoff: float,
+        error: float,
+        mixing: float,
+        guess: qp.SlfcGuess,
+        iterations: int,
+        matsubara: int,
+        outputFrequency: int,
+        recoveryFile: str,
+        resolution: float,
+    ) -> None:
+        """Sets up the content of :obj:`inputs`"""
+        super()._setInputs(
+            coupling,
+            degeneracy,
+            theory,
+            chemicalPotential,
+            cutoff,
+            matsubara,
+            resolution,
+        )
         self.inputs.error = error
         self.inputs.mixing = mixing
-        if (guess is not None): self.inputs.guess = guess
+        if guess is not None:
+            self.inputs.guess = guess
         self.inputs.iterations = iterations
         self.inputs.outputFrequency = outputFrequency
-        if (recoveryFile is not None): self.inputs.recoveryFile = recoveryFile
+        if recoveryFile is not None:
+            self.inputs.recoveryFile = recoveryFile
 
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
+        """Solves the scheme and saves the results to and hdf file. Extends the output produced by
         :func:`qupled.classic.Rpa.compute` by adding the option to save the residual error in the
         scheme solution. The information concerning the error can be accessed via the `error` key in
         the `info` dataframe.
@@ -355,29 +421,31 @@ class Stls(Rpa):
         self._checkInputs()
         self.scheme = qp.Stls(self.inputs)
         status = self.scheme.compute()
-        self._checkStatusAndClean(status)        
+        self._checkStatusAndClean(status)
         self._setHdfFile()
         self._save()
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
-        """ Stores the results obtained by solving the scheme. 
-        """
+        """Stores the results obtained by solving the scheme."""
         super()._save()
-        pd.DataFrame({
-            "coupling" : self.inputs.coupling,
-            "degeneracy" : self.inputs.degeneracy,
-            "error" : self.scheme.error,
-            "theory" : self.inputs.theory,
-            "resolution" : self.inputs.resolution,
-            "cutoff" : self.inputs.cutoff,
-            "matsubara" : self.inputs.matsubara
-            }, index=["info"]).to_hdf(self.hdfFileName, key="info")
-        
+        pd.DataFrame(
+            {
+                "coupling": self.inputs.coupling,
+                "degeneracy": self.inputs.degeneracy,
+                "error": self.scheme.error,
+                "theory": self.inputs.theory,
+                "resolution": self.inputs.resolution,
+                "cutoff": self.inputs.cutoff,
+                "matsubara": self.inputs.matsubara,
+            },
+            index=["info"],
+        ).to_hdf(self.hdfFileName, key="info")
+
     # Set the initial guess from a dataframe produced in output
-    def setGuess(self, fileName : str) -> None:
-        """ Constructs an initial guess object by extracting the information from an output file.
+    def setGuess(self, fileName: str) -> None:
+        """Constructs an initial guess object by extracting the information from an output file.
 
         Args:
             fileName : name of the file used to extract the information for the initial guess.
@@ -393,8 +461,8 @@ class Stls(Rpa):
 # StlsIet class
 # -----------------------------------------------------------------------
 
-class StlsIet(Stls):
 
+class StlsIet(Stls):
     """
 
     Class used to setup and solve the classical STLS-IET scheme as described by
@@ -404,12 +472,12 @@ class StlsIet(Stls):
 
     Args:
         coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.  
+        degeneracy: Degeneracy parameter.
         chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
         error: Minimum error for convergence, defaults to 1.0e-5.
         mapping: Classical to quantum mapping. See :func:`qupled.qupled.StlsInput.iet`
-        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
+        mixing: Mixing parameter for iterative solution, defaults to 1.0.
         guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
         iterations: Maximum number of iterations, defaults to 1000.
         matsubara: Number of matsubara frequencies, defaults to 128.
@@ -418,60 +486,74 @@ class StlsIet(Stls):
         resolution: Resolution of the wave-vector grid, defaults to 0.1.
         scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`qupled.qupled.Input.int2DScheme`
     """
-    
+
     # Constructor
-    def __init__(self,
-                 coupling : float,
-                 degeneracy : float,
-                 theory : str,
-                 chemicalPotential : list[float] = [-10.0,10.0],
-                 cutoff : float = 10.0,
-                 error : float = 1.0e-5,
-                 mapping : str = "standard",
-                 mixing : float = 1.0,
-                 guess : qp.SlfcGuess = None,
-                 iterations : int = 1000,
-                 matsubara : int = 128,
-                 outputFrequency : int = 10,
-                 recoveryFile : str = None,
-                 resolution : float = 0.1,
-                 scheme2DIntegrals : str = "full"):
+    def __init__(
+        self,
+        coupling: float,
+        degeneracy: float,
+        theory: str,
+        chemicalPotential: list[float] = [-10.0, 10.0],
+        cutoff: float = 10.0,
+        error: float = 1.0e-5,
+        mapping: str = "standard",
+        mixing: float = 1.0,
+        guess: qp.SlfcGuess = None,
+        iterations: int = 1000,
+        matsubara: int = 128,
+        outputFrequency: int = 10,
+        recoveryFile: str = None,
+        resolution: float = 0.1,
+        scheme2DIntegrals: str = "full",
+    ):
         # Allowed theories
         self.allowedTheories = ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
         # Input object
-        self.inputs : qupled.qupled.StlsInput = qp.StlsInput() #: Inputs to solve the scheme.
-        super()._setInputs(coupling, degeneracy, theory, chemicalPotential,
-                           cutoff, error, mixing, guess, iterations, matsubara,
-                           outputFrequency, recoveryFile, resolution)
+        self.inputs: qupled.qupled.StlsInput = (
+            qp.StlsInput()
+        )  #: Inputs to solve the scheme.
+        super()._setInputs(
+            coupling,
+            degeneracy,
+            theory,
+            chemicalPotential,
+            cutoff,
+            error,
+            mixing,
+            guess,
+            iterations,
+            matsubara,
+            outputFrequency,
+            recoveryFile,
+            resolution,
+        )
         self.inputs.iet = mapping
         self.inputs.int2DScheme = scheme2DIntegrals
         self._checkInputs()
         # Scheme to solve
-        self.scheme : qp.Stls = None
+        self.scheme: qp.Stls = None
         # File to store output on disk
         self.hdfFileName = None
-
 
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
+        """Solves the scheme and saves the results to and hdf file. Extends the output produced by
         :func:`qupled.classic.Stls.compute` by adding the option to save the bridge function adder
         as a new dataframe in the hdf file. The bridge function adder dataframe can be accessed as `bf`.
         """
         self._checkInputs()
         self.scheme = qp.Stls(self.inputs)
         status = self.scheme.compute()
-        self._checkStatusAndClean(status)        
+        self._checkStatusAndClean(status)
         self._setHdfFile()
         self._save()
-        
+
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
-        """ Stores the results obtained by solving the scheme. 
-        """
+        """Stores the results obtained by solving the scheme."""
         super()._save()
         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
 
@@ -480,8 +562,8 @@ class StlsIet(Stls):
 # VSStls class
 # -----------------------------------------------------------------------
 
-class VSStls(Stls):
 
+class VSStls(Stls):
     """
     Class used to setup and solve the classical VS-STLS scheme as described by
     `Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_ and by
@@ -490,11 +572,11 @@ class VSStls(Stls):
 
     Args:
         coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.  
+        degeneracy: Degeneracy parameter.
         chemicalPotential: Initial guess for the chemical potential, defaults to [-100.0, 100.0].
         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
         error: Minimum error for convergence, defaults to 1.0e-5.
-        mixing: Mixing parameter for iterative solution, defaults to 1.0.  
+        mixing: Mixing parameter for iterative solution, defaults to 1.0.
         iterations: Maximum number of iterations, defaults to 1000.
         matsubara: Number of matsubara frequencies, defaults to 128.
         outputFrequency: Frequency used to print the recovery files, defaults to 10.
@@ -508,35 +590,51 @@ class VSStls(Stls):
         errorIntegrals: Accuracy (as a relative error) for the integral computations, defaults to 1.0-5
         threads: number of OMP threads for parallel calculations, defualts to 1
     """
-    
+
     # Constructor
-    def __init__(self,
-                 coupling : float,
-                 degeneracy : float,
-                 chemicalPotential : list[float] = [-100.0,100.0],
-                 cutoff : float = 10.0,
-                 error : float = 1.0e-5,
-                 mixing : float = 1.0,
-                 guess : qp.SlfcGuess = None,
-                 iterations : int = 1000,
-                 matsubara : int = 128,
-                 outputFrequency : int = 10,
-                 recoveryFile : str = None,
-                 resolution : float = 0.1,
-                 alpha : list[float] = [0.5, 1.0],
-                 couplingResolution : float = 0.01,
-                 degeneracyResolution : float = 0.01,
-                 errorAlpha : float = 1.0e-3,
-                 iterationsAlpha : int = 50,
-                 errorIntegrals : float = 1.0e-5,
-                 threads : int = 1):
+    def __init__(
+        self,
+        coupling: float,
+        degeneracy: float,
+        chemicalPotential: list[float] = [-100.0, 100.0],
+        cutoff: float = 10.0,
+        error: float = 1.0e-5,
+        mixing: float = 1.0,
+        guess: qp.SlfcGuess = None,
+        iterations: int = 1000,
+        matsubara: int = 128,
+        outputFrequency: int = 10,
+        recoveryFile: str = None,
+        resolution: float = 0.1,
+        alpha: list[float] = [0.5, 1.0],
+        couplingResolution: float = 0.01,
+        degeneracyResolution: float = 0.01,
+        errorAlpha: float = 1.0e-3,
+        iterationsAlpha: int = 50,
+        errorIntegrals: float = 1.0e-5,
+        threads: int = 1,
+    ):
         # Allowed theories
-        self.allowedTheories : list[str] = ["VSSTLS"]
+        self.allowedTheories: list[str] = ["VSSTLS"]
         # Input object
-        self.inputs : qupled.qupled.VSStlsInput = qp.VSStlsInput()  #: Inputs to solve the scheme.
-        super()._setInputs(coupling, degeneracy, "VSSTLS", chemicalPotential,
-                           cutoff, error, mixing, guess, iterations, matsubara,
-                           outputFrequency, recoveryFile, resolution)
+        self.inputs: qupled.qupled.VSStlsInput = (
+            qp.VSStlsInput()
+        )  #: Inputs to solve the scheme.
+        super()._setInputs(
+            coupling,
+            degeneracy,
+            "VSSTLS",
+            chemicalPotential,
+            cutoff,
+            error,
+            mixing,
+            guess,
+            iterations,
+            matsubara,
+            outputFrequency,
+            recoveryFile,
+            resolution,
+        )
         self.inputs.alpha = alpha
         self.inputs.couplingResolution = couplingResolution
         self.inputs.degeneracyResolution = degeneracyResolution
@@ -545,15 +643,15 @@ class VSStls(Stls):
         self.inputs.threads = threads
         self.inputs.intError = errorIntegrals
         # Scheme to solve
-        self.scheme : qp.VSStls = None
+        self.scheme: qp.VSStls = None
         # File to store output on disk
         self.hdfFileName = None
-        
+
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """ Solves the scheme and saves the results to and hdf file. Extends the output produced by 
+        """Solves the scheme and saves the results to and hdf file. Extends the output produced by
         :func:`qupled.classic.Stls.compute` by adding the option to save the free energy integrand
         and the corresponding coupling parameter grid as a new dataframe in the hdf file. The free
         energy integrand dataframe can be accessed as `fxci` and the corresponding coupling parameter
@@ -562,31 +660,31 @@ class VSStls(Stls):
         self._checkInputs()
         self.scheme = qp.VSStls(self.inputs)
         status = self.scheme.compute()
-        self._checkStatusAndClean(status)       
+        self._checkStatusAndClean(status)
         self._setHdfFile()
         self._save()
 
     # Save results
     @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
-        """ Stores the results obtained by solving the scheme. 
-        """
+        """Stores the results obtained by solving the scheme."""
         super()._save()
         pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
-        pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
+        pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(
+            self.hdfFileName, key="fxci"
+        )
         pd.DataFrame(self.scheme.alpha).to_hdf(self.hdfFileName, key="alpha")
 
     # Set the free energy integrand from a dataframe produced in output
-    def setFreeEnergyIntegrand(self, fileName : str) -> None:
-        """ Constructs the free energy integrand by extracting the information from an output file.
+    def setFreeEnergyIntegrand(self, fileName: str) -> None:
+        """Constructs the free energy integrand by extracting the information from an output file.
 
         Args:
             fileName : name of the file used to extract the information for the free energy integrand.
         """
         fxci = qp.FreeEnergyIntegrand()
-        hdfData = qu.Hdf().read(fileName, ["fxcGrid", "fxci","alpha"])
+        hdfData = qu.Hdf().read(fileName, ["fxcGrid", "fxci", "alpha"])
         fxci.grid = hdfData["fxcGrid"]
         fxci.integrand = np.ascontiguousarray(hdfData["fxci"])
         fxci.alpha = hdfData["alpha"]
         self.inputs.freeEnergyIntegrand = fxci
-        

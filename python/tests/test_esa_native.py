@@ -4,8 +4,10 @@ import set_path
 import qupled.qupled as qp
 import qupled.classic as qpc
 
+
 def test_esa_properties():
     issubclass(qp.ESA, qp.Rpa)
+
 
 def test_esa_compute():
     inputs = qpc.ESA(1.0, 1.0).inputs
@@ -21,6 +23,3 @@ def test_esa_compute():
     assert scheme.ssfHF.size == nx
     assert scheme.recovery == ""
     assert scheme.rdf(scheme.wvg).size == nx
-
-
-

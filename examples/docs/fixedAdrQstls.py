@@ -1,12 +1,9 @@
 import qupled.quantum as qpq
 
 # Define a Qstls object to solve the QSTLS scheme
-qstls = qpq.Qstls(10.0, 1.0,
-                  mixing = 0.5,
-                  resolution = 0.1,
-                  cutoff = 10,
-                  matsubara = 16,
-                  threads = 16)
+qstls = qpq.Qstls(
+    10.0, 1.0, mixing=0.5, resolution=0.1, cutoff=10, matsubara=16, threads=16
+)
 
 # Solve the QSTLS scheme and store the internal energy (v1 calculation)
 qstls.compute()
@@ -33,4 +30,4 @@ qstls.compute()
 qstls.inputs.degeneracy = 2.0
 
 # Compute with the update degeneracy parameter (this throws an error)
-qstls.compute() 
+qstls.compute()

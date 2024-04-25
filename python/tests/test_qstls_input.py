@@ -4,6 +4,7 @@ import numpy as np
 import set_path
 import qupled.qupled as qp
 
+
 @pytest.fixture
 def qstls_input_instance():
     return qp.QstlsInput()
@@ -18,25 +19,29 @@ def test_init(qstls_input_instance):
     assert hasattr(qstls_input_instance.guess, "matsubara")
     assert hasattr(qstls_input_instance, "fixed")
     assert hasattr(qstls_input_instance, "fixediet")
-    
+
+
 def test_defaults(qstls_input_instance):
     assert qstls_input_instance.guess.wvg.size == 0
     assert qstls_input_instance.guess.ssf.size == 0
     assert qstls_input_instance.guess.adr.size == 0
-    assert qstls_input_instance.guess.matsubara  == 0
+    assert qstls_input_instance.guess.matsubara == 0
     assert qstls_input_instance.fixed == ""
     assert qstls_input_instance.fixediet == ""
-    
+
+
 def test_fixed(qstls_input_instance):
     qstls_input_instance.fixed = "fixedFile"
     fixed = qstls_input_instance.fixed
     assert fixed == "fixedFile"
 
+
 def test_fixed(qstls_input_instance):
     qstls_input_instance.fixediet = "fixedFile"
     fixed = qstls_input_instance.fixediet
     assert fixed == "fixedFile"
-    
+
+
 def test_guess(qstls_input_instance):
     arr = np.zeros(10)
     guess = qp.QstlsGuess()
@@ -61,6 +66,7 @@ def test_guess(qstls_input_instance):
         qstls_input_instance.guess = guess
     assert excinfo.value.args[0] == "The initial guess is inconsistent"
 
+
 def test_guessIet(qstls_input_instance):
     arr1 = np.zeros(10)
     arr2 = np.zeros((10, 4))
@@ -80,14 +86,16 @@ def test_guessIet(qstls_input_instance):
             guess.adr = arr2
             qstls_input_instance.guess = guess
         assert excinfo.value.args[0] == "The initial guess is inconsistent"
-    
+
+
 def test_isEqual(qstls_input_instance):
     thisQstls = qp.QstlsInput()
     assert qstls_input_instance.isEqual(thisQstls)
     thisQstls.coupling = 2.0
     thisQstls.theory = "STLS"
     assert not qstls_input_instance.isEqual(thisQstls)
-    
+
+
 def test_print(qstls_input_instance, capfd):
     qstls_input_instance.print()
     captured = capfd.readouterr().out
