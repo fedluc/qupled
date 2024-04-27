@@ -180,7 +180,7 @@ public:
 
   SecantSolver(const double relErr_, const int maxIter_)
       : RootSolverBase(relErr_, maxIter_) {}
-  explicit SecantSolver() {};
+  explicit SecantSolver() {}
   void solve(const std::function<double(double)> &func,
              const std::vector<double> &guess);
 };
