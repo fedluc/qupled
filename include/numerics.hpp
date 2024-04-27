@@ -146,9 +146,9 @@ protected:
       : relErr(relErr_),
         maxIter(maxIter_),
         iter(0),
-        status(GSL_CONTINUE) {};
+        status(GSL_CONTINUE) {}
   explicit RootSolverBase()
-      : RootSolverBase(1.0e-10, 1000) {};
+      : RootSolverBase(1.0e-10, 1000) {}
 
 public:
 
@@ -179,7 +179,7 @@ class SecantSolver : public RootSolverBase {
 public:
 
   SecantSolver(const double relErr_, const int maxIter_)
-      : RootSolverBase(relErr_, maxIter_) {};
+      : RootSolverBase(relErr_, maxIter_) {}
   explicit SecantSolver() {};
   void solve(const std::function<double(double)> &func,
              const std::vector<double> &guess);

@@ -51,7 +51,7 @@ public:
   // Constructors
   Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_);
   explicit Stls(const StlsInput &in_)
-      : Stls(in_, true, true) {};
+      : Stls(in_, true, true) {}
   // Compute stls scheme
   int compute();
   // Getters
@@ -107,7 +107,7 @@ public:
        const Interpolator1D &ssfi_,
        Integrator1D &itg_)
       : SlfcBase(x_, yMin_, yMax_, ssfi_),
-        itg(itg_) {};
+        itg(itg_) {}
   // Get result of integration
   double get() const;
 };
