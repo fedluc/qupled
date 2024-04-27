@@ -38,9 +38,7 @@ protected:
     SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
     rsol.solve(func, in.getAlphaGuess());
     alpha = rsol.getSolution();
-    if (verbose) {
-      std::cout << "Free parameter = " << alpha << std::endl;
-    }
+    if (verbose) { std::cout << "Free parameter = " << alpha << std::endl; }
     updateSolution();
   }
 
@@ -77,11 +75,9 @@ public:
   int compute() {
     try {
       Scheme::init();
-      if (verbose)
-        std::cout << "Free parameter calculation ..." << std::endl;
+      if (verbose) std::cout << "Free parameter calculation ..." << std::endl;
       doIterations();
-      if (verbose)
-        std::cout << "Done" << std::endl;
+      if (verbose) std::cout << "Done" << std::endl;
       return 0;
     } catch (const std::runtime_error &err) {
       std::cerr << err.what() << std::endl;
@@ -187,9 +183,7 @@ public:
           const double &rs = rsGrid[i];
           if (rs <= rsMaxi) {
             fxcIntegrand[theta][i] = itp.eval(rs);
-            if (theta == Idx::THETA) {
-              alpha[i] = fxciData.alpha[i];
-            }
+            if (theta == Idx::THETA) { alpha[i] = fxciData.alpha[i]; }
           }
         }
       }
@@ -231,9 +225,7 @@ public:
         fxciTmp = structProp.getFreeEnergyIntegrand();
         alphaTmp = structProp.getAlpha();
       } else if (rs < in.getCoupling()) {
-        if (rs == 0.0 || fxcIntegrand[THETA][i] != numUtil::Inf) {
-          continue;
-        }
+        if (rs == 0.0 || fxcIntegrand[THETA][i] != numUtil::Inf) { continue; }
         if (verbose) {
           printf("Free energy integrand calculation, "
                  "solving VS scheme for rs = %.5f:\n",
@@ -271,9 +263,7 @@ public:
 
   // Get structural properties
   template <typename CSR> const CSR &getStructProp() {
-    if (!structProp.isComputed()) {
-      structProp.compute();
-    }
+    if (!structProp.isComputed()) { structProp.compute(); }
     if (isZeroCoupling && isZeroDegeneracy) {
       return structProp.getCsr(SIdx::RS_DOWN_THETA_DOWN);
     }
