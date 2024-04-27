@@ -3,7 +3,6 @@
 #include "input.hpp"
 #include "vsstls.hpp"
 
-
 using namespace std;
 
 // -----------------------------------------------------------------
