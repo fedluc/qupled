@@ -1,8 +1,8 @@
-#include "qvs.hpp"
-#include "input.hpp"
-#include "numerics.hpp"
-#include "util.hpp"
 #include <filesystem>
+#include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
+#include "qvs.hpp"
 
 using namespace std;
 using namespace vecUtil;

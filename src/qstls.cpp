@@ -1,10 +1,10 @@
-#include "qstls.hpp"
-#include "input.hpp"
-#include "numerics.hpp"
-#include "util.hpp"
 #include <filesystem>
-#include <fmt/core.h>
 #include <numeric>
+#include <fmt/core.h>
+#include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
+#include "qstls.hpp"
 
 using namespace std;
 using namespace vecUtil;

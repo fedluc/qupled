@@ -1,8 +1,8 @@
 #ifndef STLS_HPP
 #define STLS_HPP
 
-#include "rpa.hpp"
 #include <vector>
+#include "rpa.hpp"
 
 // Forward declarations
 class StlsInput;

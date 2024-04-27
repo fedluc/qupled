@@ -1,8 +1,8 @@
-#include "stls.hpp"
-#include "input.hpp"
-#include "numerics.hpp"
-#include "util.hpp"
 #include <fmt/core.h>
+#include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
+#include "stls.hpp"
 
 using namespace std;
 using namespace vecUtil;

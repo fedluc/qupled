@@ -1,7 +1,7 @@
-#include "numerics.hpp"
-#include "util.hpp"
-#include <cassert>
 #include <iostream>
+#include <cassert>
+#include "util.hpp"
+#include "numerics.hpp"
 
 using namespace std;
 using namespace GslWrappers;

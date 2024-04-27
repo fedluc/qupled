@@ -1,8 +1,8 @@
+#include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
 #include "rpa.hpp"
 #include "chemical_potential.hpp"
-#include "input.hpp"
-#include "numerics.hpp"
-#include "util.hpp"
 
 using namespace std;
 using namespace thermoUtil;

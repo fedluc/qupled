@@ -1,9 +1,9 @@
 #ifndef QSTLS_HPP
 #define QSTLS_HPP
 
-#include "stls.hpp"
-#include <fmt/core.h>
 #include <map>
+#include <fmt/core.h>
+#include "stls.hpp"
 
 // Forward declarations
 namespace vecUtil {

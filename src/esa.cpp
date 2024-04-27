@@ -1,7 +1,7 @@
-#include "esa.hpp"
-#include "input.hpp"
-#include "numerics.hpp"
 #include "util.hpp"
+#include "numerics.hpp"
+#include "input.hpp"
+#include "esa.hpp"
 
 using namespace std;
 

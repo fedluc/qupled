@@ -1,9 +1,9 @@
+#include <boost/python.hpp>
+#include <boost/python/numpy.hpp>
+#include "util.hpp"
 #include "input.hpp"
 #include "numerics.hpp"
 #include "python_wrappers.hpp"
-#include "util.hpp"
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
 
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;

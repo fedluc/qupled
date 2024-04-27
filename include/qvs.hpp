@@ -2,8 +2,8 @@
 #define QVS_HPP
 
 #include "numerics.hpp"
-#include "qstls.hpp"
 #include "vsbase.hpp"
+#include "qstls.hpp"
 
 // Forward declarations
 class QVSStlsInput;

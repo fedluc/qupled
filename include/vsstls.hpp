@@ -1,10 +1,10 @@
 #ifndef VSSTLS_HPP
 #define VSSTLS_HPP
 
-#include "stls.hpp"
-#include "vsbase.hpp"
 #include <limits>
 #include <map>
+#include "vsbase.hpp"
+#include "stls.hpp"
 
 // Forward declarations
 class VSStlsInput;

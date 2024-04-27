@@ -1,16 +1,17 @@
 #ifndef NUMERICS_HPP
 #define NUMERICS_HPP
 
-#include "util.hpp"
 #include <functional>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_integration.h>
-#include <gsl/gsl_interp2d.h>
-#include <gsl/gsl_roots.h>
-#include <gsl/gsl_spline.h>
-#include <gsl/gsl_spline2d.h>
-#include <string>
 #include <vector>
+#include <string>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_roots.h>
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_spline.h>
+#include <gsl/gsl_interp2d.h>
+#include <gsl/gsl_spline2d.h>
+#include "util.hpp"
+
 
 // -----------------------------------------------------------------
 // C++ wrappers to GSL objects

@@ -1,5 +1,5 @@
-#include "input.hpp"
 #include "util.hpp"
+#include "input.hpp"
 
 using namespace std;
 using namespace parallelUtil;

@@ -1,12 +1,12 @@
 #define OMPI_SKIP_MPICXX 1 // Disable MPI-C++ bindings
 
-#include "util.hpp"
-#include "numerics.hpp"
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
-#include <mpi.h>
 #include <numeric>
 #include <omp.h>
+#include <mpi.h>
+#include <boost/python.hpp>
+#include <boost/python/numpy.hpp>
+#include "numerics.hpp"
+#include "util.hpp"
 
 using namespace std;
 using ItgParam = Integrator1D::Param;
