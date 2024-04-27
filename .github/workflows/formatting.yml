@@ -28,4 +28,4 @@ jobs:
         run: black --check .
           
       - name: Check C++ formatting
-        run: clang-format --style=file include/*.hpp src/*.cpp
+        run: clang-format --style=file --dry-run -Werror include/*.hpp src/*.cpp
