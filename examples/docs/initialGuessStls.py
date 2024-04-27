@@ -3,10 +3,7 @@ import pandas as pd
 import qupled.classic as qpc
 
 # Define an Stls object to solve the STLS scheme
-stls = qpc.Stls(10.0,
-                1.0,
-                mixing = 0.2,
-                cutoff = 10)
+stls = qpc.Stls(10.0, 1.0, mixing=0.2, cutoff=10)
 
 # Solve scheme
 stls.compute()

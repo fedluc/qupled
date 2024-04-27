@@ -7,13 +7,14 @@ from scour.scour import start, getInOut, parse_args
 import qupled.classic as qpc
 import qupled.quantum as qpq
 
+
 def main():
     darkmode = True
     nIterations = 33
     svg_files = create_all_svg_files(nIterations, darkmode)
     combine_svg_files(svg_files, darkmode)
 
-    
+
 def create_all_svg_files(nFiles, darkmode):
     fig, ax = plt.subplots()
     images = []
@@ -35,10 +36,10 @@ def combine_svg_files(svg_files, darkmode):
      {}
     </g>
     """
-    image_duration = 0.18 # in seconds
+    image_duration = 0.18  # in seconds
     svg_image = ""
     animation_file = "qupled_animation_light.svg"
-    if (darkmode):
+    if darkmode:
         animation_file = "qupled_animation_dark.svg"
     for i in range(len(svg_files)):
         svg_file = svg_files[i]
@@ -46,12 +47,12 @@ def combine_svg_files(svg_files, darkmode):
         begin_hidden = begin_visible + image_duration
         with open(svg_file, "r") as f:
             svg_content = f.read()
-            svg_content = svg_content[svg_content.index("<svg"):]
+            svg_content = svg_content[svg_content.index("<svg") :]
             svg_content = add_animation(svg_content, begin_visible, begin_hidden)
             svg_image += image_template.format(svg_content)
         os.remove(svg_file)
     with open(animation_file, "w") as fw:
-         fw.write(svg_template.format(svg_image))
+        fw.write(svg_template.format(svg_image))
     optimise_svg(animation_file)
 
 
@@ -64,7 +65,7 @@ def add_animation(svg_content, begin, end):
     modified_svg_content = svg_content[:index] + animation_xml + svg_content[index:]
     return modified_svg_content
 
-         
+
 def create_one_svg_file(i, errorList, darkmode):
     # Solve scheme
     plot_data = solve_qstls(i)
@@ -90,22 +91,27 @@ def create_one_svg_file(i, errorList, darkmode):
 
 
 def solve_qstls(i):
-    qstls = qpq.Qstls(15.0, 1.0,
-                      mixing = 0.3,
-                      resolution = 0.1,
-                      cutoff = 10,
-                      matsubara = 16,
-                      threads = 16,
-                      iterations = 0)
-    if (i > 0):
+    qstls = qpq.Qstls(
+        15.0,
+        1.0,
+        mixing=0.3,
+        resolution=0.1,
+        cutoff=10,
+        matsubara=16,
+        threads=16,
+        iterations=0,
+    )
+    if i > 0:
         qstls.setGuess("rs15.000_theta1.000_QSTLS.h5")
         qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
     qstls.compute()
-    return QStlsData(qstls.scheme.wvg,
-                     qstls.scheme.adr,
-                     qstls.scheme.idr,
-                     qstls.scheme.ssf,
-                     qstls.scheme.error)
+    return QStlsData(
+        qstls.scheme.wvg,
+        qstls.scheme.adr,
+        qstls.scheme.idr,
+        qstls.scheme.ssf,
+        qstls.scheme.error,
+    )
 
 
 def clip_data(wvg, adr, idr, ssf, error, settings):
@@ -115,7 +121,7 @@ def clip_data(wvg, adr, idr, ssf, error, settings):
     idr = idr[mask]
     ssf = ssf[mask]
 
-    
+
 def plot_density_response(plt, plot_data, settings):
     plot_data.idr[plot_data.idr == 0.0] = 1.0
     dr = np.divide(plot_data.adr, plot_data.idr)
@@ -123,17 +129,21 @@ def plot_density_response(plt, plot_data, settings):
     parameters = np.array([0, 1, 2, 3, 4])
     numParameters = parameters.size
     for i in np.arange(numParameters):
-        if (i == 0) :
+        if i == 0:
             label = r"$\omega = 0$"
         else:
-            label = r"$\omega = {}\pi/\beta\hbar$".format(parameters[i]*2)
-        color = settings.colormap(1.0 - 1.0*i/numParameters)
-        plt.plot(plot_data.wvg, dr[:,parameters[i]], color=color,
-                 linewidth=settings.width, label=label)
+            label = r"$\omega = {}\pi/\beta\hbar$".format(parameters[i] * 2)
+        color = settings.colormap(1.0 - 1.0 * i / numParameters)
+        plt.plot(
+            plot_data.wvg,
+            dr[:, parameters[i]],
+            color=color,
+            linewidth=settings.width,
+            label=label,
+        )
     plt.xlim(0, settings.xlim)
     plt.xlabel("Wave-vector", fontsize=settings.labelsz)
-    plt.title("Density response", fontsize=settings.labelsz,
-              fontweight="bold")
+    plt.title("Density response", fontsize=settings.labelsz, fontweight="bold")
     plt.legend(fontsize=settings.ticksz, loc="lower right")
     plt.xticks(fontsize=settings.ticksz)
     plt.yticks(fontsize=settings.ticksz)
@@ -141,33 +151,33 @@ def plot_density_response(plt, plot_data, settings):
 
 def plot_ssf(plt, plot_data, settings):
     plt.subplot(2, 2, 4)
-    plt.plot(plot_data.wvg, plot_data.ssf, color=settings.color,
-             linewidth=settings.width)
+    plt.plot(
+        plot_data.wvg, plot_data.ssf, color=settings.color, linewidth=settings.width
+    )
     plt.xlim(0, settings.xlim)
     plt.xlabel("Wave-vector", fontsize=settings.labelsz)
-    plt.title("Static structure factor", fontsize=settings.labelsz,
-              fontweight="bold")
+    plt.title("Static structure factor", fontsize=settings.labelsz, fontweight="bold")
     plt.xticks(fontsize=settings.ticksz)
     plt.yticks(fontsize=settings.ticksz)
-
 
 
 def plot_error(plt, iteration, errorList, error, settings):
     errorList.append(error)
     horizontalLineColor = mpl.rcParams["text.color"]
     plt.subplot(2, 1, 1)
-    plt.plot(range(iteration+1), errorList,
-             color=settings.color, linewidth=settings.width)
+    plt.plot(
+        range(iteration + 1), errorList, color=settings.color, linewidth=settings.width
+    )
     plt.scatter(iteration, error, color="red", s=150, alpha=1)
     plt.axhline(y=1.0e-5, color=horizontalLineColor, linestyle="--")
-    plt.text(3, 1.5e-5, "Convergence", horizontalalignment="center",
-             fontsize=settings.ticksz)
+    plt.text(
+        3, 1.5e-5, "Convergence", horizontalalignment="center", fontsize=settings.ticksz
+    )
     plt.xlim(0, 33)
     plt.ylim(1.0e-6, 1.1e1)
     plt.yscale("log")
     plt.xlabel("Iteration", fontsize=settings.labelsz)
-    plt.title("Residual error", fontsize=settings.labelsz,
-              fontweight="bold")
+    plt.title("Residual error", fontsize=settings.labelsz, fontweight="bold")
     plt.xticks(fontsize=settings.ticksz)
     plt.yticks(fontsize=settings.ticksz)
 
@@ -192,10 +202,9 @@ def optimise_svg(file_name):
     os.rename(tmp_file_name, file_name)
 
 
-class QStlsData():
+class QStlsData:
 
-    def __init__(self, wvg, adr, idr,
-                 ssf, error):
+    def __init__(self, wvg, adr, idr, ssf, error):
         self.wvg = wvg
         self.adr = adr
         self.idr = idr
@@ -208,8 +217,9 @@ class QStlsData():
         self.adr = self.adr[mask]
         self.idr = self.idr[mask]
         self.ssf = self.ssf[mask]
-    
-class PlotSettings():
+
+
+class PlotSettings:
 
     def __init__(self, darkmode):
         self.labelsz = 16
@@ -222,7 +232,7 @@ class PlotSettings():
             self.theme = "dark_background"
             self.colormap = cm["plasma"]
         self.color = self.colormap(1.0)
-        self.figure_size = (12,8)
+        self.figure_size = (12, 8)
 
 
 if __name__ == "__main__":

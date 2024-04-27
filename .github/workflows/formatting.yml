@@ -1,0 +1,33 @@
+name: Code Formatting
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip3 install --upgrade pip
+          pip3 install black # Install Black for Python formatting
+          sudo apt update
+          sudo apt-get install clang-format
+
+      - name: Check Python formatting
+        run: black --check .
+          
+      - name: Check C++ formatting
+        run: | 
+          find . -name "*.cpp" | xargs clang-format --style=file --dry-run -Werror
+          find . -name "*.hpp" | xargs clang-format --style=file --dry-run -Werror

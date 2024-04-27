@@ -3,12 +3,9 @@ import pandas as pd
 import qupled.quantum as qpq
 
 # Define a Qstls object to solve the QSTLS scheme
-qstls = qpq.Qstls(10.0, 1.0,
-                  mixing = 0.4,
-                  resolution = 0.1,
-                  cutoff = 10,
-                  matsubara = 16,
-                  threads = 16)
+qstls = qpq.Qstls(
+    10.0, 1.0, mixing=0.4, resolution=0.1, cutoff=10, matsubara=16, threads=16
+)
 
 # Solve the QSTLS scheme
 qstls.compute()

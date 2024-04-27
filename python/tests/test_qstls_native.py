@@ -5,18 +5,18 @@ import set_path
 import qupled.qupled as qp
 import qupled.quantum as qpq
 
+
 def test_qstls_properties():
     assert issubclass(qp.Qstls, qp.Stls)
     inputs = qpq.Qstls(1.0, 1.0).inputs
     scheme = qp.Qstls(inputs)
     assert hasattr(scheme, "adr")
 
+
 def test_qstls_compute():
-    inputs = qpq.Qstls(1.0, 1.0,
-                       matsubara=32,
-                       cutoff=5,
-                       outputFrequency=2,
-                       threads=16).inputs
+    inputs = qpq.Qstls(
+        1.0, 1.0, matsubara=32, cutoff=5, outputFrequency=2, threads=16
+    ).inputs
     scheme = qp.Qstls(inputs)
     scheme.compute()
     try:
@@ -35,8 +35,10 @@ def test_qstls_compute():
         assert scheme.rdf(scheme.wvg).size == nx
     finally:
         fixedFile = "adr_fixed_theta1.000_matsubara32.bin"
-        if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
-        if (os.path.isfile(fixedFile)) : os.remove(fixedFile)
+        if os.path.isfile(scheme.recovery):
+            os.remove(scheme.recovery)
+        if os.path.isfile(fixedFile):
+            os.remove(fixedFile)
 
 
 def test_qstls_iet_properties():
@@ -44,17 +46,20 @@ def test_qstls_iet_properties():
     scheme = qp.Qstls(inputs)
     assert hasattr(scheme, "bf")
 
+
 def test_qstls_iet_compute():
-    ietSchemes = {"QSTLS-HNC",
-                  "QSTLS-IOI",
-                  "QSTLS-LCT"}
+    ietSchemes = {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}
     for schemeName in ietSchemes:
-        inputs = qpq.QstlsIet(10.0, 1.0, schemeName,
-                              matsubara=16,
-                              cutoff=5,
-                              outputFrequency=2,
-                              mixing=0.5,
-                              threads=16).inputs
+        inputs = qpq.QstlsIet(
+            10.0,
+            1.0,
+            schemeName,
+            matsubara=16,
+            cutoff=5,
+            outputFrequency=2,
+            mixing=0.5,
+            threads=16,
+        ).inputs
         scheme = qp.Qstls(inputs)
         scheme.compute()
         try:
@@ -71,7 +76,8 @@ def test_qstls_iet_compute():
             assert os.path.isfile(scheme.recovery)
             assert scheme.rdf(scheme.wvg).size == nx
         finally:
-            if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recovery)
+            if os.path.isfile(scheme.recovery):
+                os.remove(scheme.recovery)
             fileNames = glob.glob("adr_fixed*.bin")
-            for fileName in fileNames :
+            for fileName in fileNames:
                 os.remove(fileName)

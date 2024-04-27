@@ -3,17 +3,19 @@ import numpy as np
 import qupled.classic as qpc
 
 # Define a VSStls object to solve the VS-STLS scheme
-stls = qpc.VSStls(5.0, 
-                  1.0,
-                  mixing = 0.5,
-                  resolution = 0.1,
-                  cutoff = 10,
-                  couplingResolution = 0.1,
-                  degeneracyResolution = 0.01,
-                  alpha = [-0.2, 0.2],
-                  errorIntegrals = 1e-5,
-                  iterations = 100,
-                  threads = 9)
+stls = qpc.VSStls(
+    5.0,
+    1.0,
+    mixing=0.5,
+    resolution=0.1,
+    cutoff=10,
+    couplingResolution=0.1,
+    degeneracyResolution=0.01,
+    alpha=[-0.2, 0.2],
+    errorIntegrals=1e-5,
+    iterations=100,
+    threads=9,
+)
 
 
 # Compute

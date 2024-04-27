@@ -10,6 +10,7 @@ from qupled.classic import VSStls
 from qupled.quantum import Qstls
 from qupled.quantum import QVSStls
 
+
 @pytest.fixture
 def qvsstls_instance():
     return QVSStls(1.0, 1.0)
@@ -22,7 +23,9 @@ def test_default(qvsstls_instance):
     assert qvsstls_instance.inputs.coupling == 1.0
     assert qvsstls_instance.inputs.degeneracy == 1.0
     assert qvsstls_instance.inputs.theory == "QVSSTLS"
-    assert all(x == y for x, y in zip(qvsstls_instance.inputs.chemicalPotential, [-10.0, 10.0]))
+    assert all(
+        x == y for x, y in zip(qvsstls_instance.inputs.chemicalPotential, [-10.0, 10.0])
+    )
     assert qvsstls_instance.inputs.cutoff == 10.0
     assert qvsstls_instance.inputs.error == 1.0e-5
     assert qvsstls_instance.inputs.fixed == ""
@@ -44,11 +47,31 @@ def test_default(qvsstls_instance):
     assert qvsstls_instance.scheme is None
     assert qvsstls_instance.hdfFileName is None
 
-                                      
+
 def test_set_input():
-    qvsstls = QVSStls(2.0, 0.5, [-5, 5], 20, 1.0e-8, "fixedAdrFile", 0.5, None, 100,
-                    32, 100, "recoveryFile", 0.01, "segregated", [0.8, 1.2],
-                    0.1, 0.2, 1.0e-5, 100, 1.0e-8, 9)
+    qvsstls = QVSStls(
+        2.0,
+        0.5,
+        [-5, 5],
+        20,
+        1.0e-8,
+        "fixedAdrFile",
+        0.5,
+        None,
+        100,
+        32,
+        100,
+        "recoveryFile",
+        0.01,
+        "segregated",
+        [0.8, 1.2],
+        0.1,
+        0.2,
+        1.0e-5,
+        100,
+        1.0e-8,
+        9,
+    )
     assert qvsstls.inputs.coupling == 2.0
     assert qvsstls.inputs.degeneracy == 0.5
     assert qvsstls.inputs.theory == "QVSSTLS"
@@ -72,14 +95,19 @@ def test_set_input():
     assert qvsstls.inputs.threads == 9
     assert qvsstls.scheme is None
     assert qvsstls.hdfFileName is None
-    
+
+
 def test_compute(qvsstls_instance, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
     mockCheckInputs = mocker.patch("qupled.quantum.QVSStls._checkInputs")
-    mockSetFixedAdrFileName = mocker.patch("qupled.quantum.QVSStls._setFixedAdrFileName")
+    mockSetFixedAdrFileName = mocker.patch(
+        "qupled.quantum.QVSStls._setFixedAdrFileName"
+    )
     mockCompute = mocker.patch("qupled.qupled.QVSStls.compute")
-    mockCheckStatusAndClean = mocker.patch("qupled.quantum.QVSStls._checkStatusAndClean")
+    mockCheckStatusAndClean = mocker.patch(
+        "qupled.quantum.QVSStls._checkStatusAndClean"
+    )
     mockSetHdfFile = mocker.patch("qupled.quantum.QVSStls._setHdfFile")
     mockSave = mocker.patch("qupled.quantum.QVSStls._save")
     qvsstls_instance.compute()
@@ -92,8 +120,11 @@ def test_compute(qvsstls_instance, mocker):
     assert mockSetHdfFile.call_count == 1
     assert mockSave.call_count == 1
 
+
 def test_setFixedAdrFileName(qvsstls_instance, mocker):
-    mockUnpackFixedAdrFiles = mocker.patch("qupled.quantum.QVSStls._unpackFixedAdrFiles")
+    mockUnpackFixedAdrFiles = mocker.patch(
+        "qupled.quantum.QVSStls._unpackFixedAdrFiles"
+    )
     qvsstls_instance._setFixedAdrFileName()
     assert qvsstls_instance.tmpRunDir is None
     assert qvsstls_instance.inputs.fixed == ""
@@ -104,6 +135,7 @@ def test_setFixedAdrFileName(qvsstls_instance, mocker):
     assert qvsstls_instance.inputs.fixed == qvsstls_instance.tmpRunDir
     assert mockUnpackFixedAdrFiles.call_count == 1
 
+
 def test_unpackFixedAdrFiles(qvsstls_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     qvsstls_instance.inputs.fixed = "testFile.zip"
@@ -111,8 +143,8 @@ def test_unpackFixedAdrFiles(qvsstls_instance, mocker):
     try:
         filenames = ["testFile1.txt", "testFile2.txt", "testFile3.txt"]
         for filename in filenames:
-            with open(filename, 'w') as file:
-                file.write('this is a test file\n')
+            with open(filename, "w") as file:
+                file.write("this is a test file\n")
         with zf.ZipFile(qvsstls_instance.inputs.fixed, "w") as zipFile:
             for filename in filenames:
                 zipFile.write(filename)
@@ -121,9 +153,13 @@ def test_unpackFixedAdrFiles(qvsstls_instance, mocker):
         assert mockMPIIsRoot.call_count == 1
     finally:
         for filename in filenames:
-            if os.path.isfile(filename) : os.remove(filename)
-            if os.path.isfile("testFile.zip") : os.remove("testFile.zip")
-            if os.path.isdir(qvsstls_instance.tmpRunDir) : rmtree(qvsstls_instance.tmpRunDir)
+            if os.path.isfile(filename):
+                os.remove(filename)
+            if os.path.isfile("testFile.zip"):
+                os.remove("testFile.zip")
+            if os.path.isdir(qvsstls_instance.tmpRunDir):
+                rmtree(qvsstls_instance.tmpRunDir)
+
 
 def test_checkStatusAndClean(qvsstls_instance, mocker, capsys):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
@@ -145,22 +181,40 @@ def test_checkStatusAndClean(qvsstls_instance, mocker, capsys):
     with pytest.raises(SystemExit) as excinfo:
         qvsstls_instance._checkStatusAndClean(1)
     assert not os.path.isdir(qvsstls_instance.tmpRunDir)
-    
+
+
 def test_save(qvsstls_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     qvsstls_instance.scheme = qp.QVSStls(qvsstls_instance.inputs)
     qvsstls_instance._setHdfFile()
-    adrFileName = "adr_fixed_theta%5.3f_matsubara%d.zip" % (qvsstls_instance.inputs.degeneracy,
-                                                            qvsstls_instance.inputs.matsubara)
+    adrFileName = "adr_fixed_theta%5.3f_matsubara%d.zip" % (
+        qvsstls_instance.inputs.degeneracy,
+        qvsstls_instance.inputs.matsubara,
+    )
     try:
         qvsstls_instance._save()
         assert mockMPIIsRoot.call_count == 5
         assert os.path.isfile(qvsstls_instance.hdfFileName)
         inspectData = Hdf().inspect(qvsstls_instance.hdfFileName)
-        expectedEntries = ["coupling", "degeneracy", "theory", "error",
-                           "resolution", "cutoff", "matsubara",
-                           "idr", "sdr", "slfc",  "ssf", "ssfHF",
-                           "wvg", "fxcGrid", "fxci", "adr", "alpha"]
+        expectedEntries = [
+            "coupling",
+            "degeneracy",
+            "theory",
+            "error",
+            "resolution",
+            "cutoff",
+            "matsubara",
+            "idr",
+            "sdr",
+            "slfc",
+            "ssf",
+            "ssfHF",
+            "wvg",
+            "fxcGrid",
+            "fxci",
+            "adr",
+            "alpha",
+        ]
         for entry in expectedEntries:
             assert entry in inspectData
         assert os.path.isfile(adrFileName)
@@ -172,7 +226,10 @@ def test_save(qvsstls_instance, mocker):
 def test_setFreeEnergyIntegrand(qvsstls_instance, mocker):
     arr1D = np.ones(10)
     arr2D = np.ones((3, 10))
-    mockHdfRead = mocker.patch("qupled.util.Hdf.read", return_value={"fxcGrid" : arr1D, "fxci" : arr2D, "alpha" : arr1D})
+    mockHdfRead = mocker.patch(
+        "qupled.util.Hdf.read",
+        return_value={"fxcGrid": arr1D, "fxci": arr2D, "alpha": arr1D},
+    )
     qvsstls_instance.setFreeEnergyIntegrand("dummyFileName")
     assert np.array_equal(qvsstls_instance.inputs.freeEnergyIntegrand.grid, arr1D)
     assert np.array_equal(qvsstls_instance.inputs.freeEnergyIntegrand.alpha, arr1D)

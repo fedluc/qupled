@@ -4,6 +4,7 @@ import set_path
 import qupled.qupled as qp
 import qupled.quantum as qpq
 
+
 def test_qvsstls_properties():
     assert issubclass(qp.QVSStls, qp.Rpa)
     inputs = qpq.QVSStls(1.0, 1.0).inputs
@@ -11,14 +12,18 @@ def test_qvsstls_properties():
     assert hasattr(scheme, "freeEnergyIntegrand")
     assert hasattr(scheme, "freeEnergyGrid")
     assert hasattr(scheme, "adr")
-    
+
+
 def test_qvsstls_compute():
-    inputs = qpq.QVSStls(1.0, 1.0,
-                         matsubara=32,
-                         couplingResolution=0.1,
-                         degeneracyResolution=0.1,
-                         cutoff=5,
-                         threads=16).inputs
+    inputs = qpq.QVSStls(
+        1.0,
+        1.0,
+        matsubara=32,
+        couplingResolution=0.1,
+        degeneracyResolution=0.1,
+        cutoff=5,
+        threads=16,
+    ).inputs
     scheme = qp.QVSStls(inputs)
     scheme.compute()
     try:
@@ -38,8 +43,11 @@ def test_qvsstls_compute():
         fixedFilem = "adr_fixed_theta0.900_matsubara32.bin"
         fixedFile = "adr_fixed_theta1.000_matsubara32.bin"
         fixedFilep = "adr_fixed_theta1.100_matsubara32.bin"
-        if (os.path.isfile(scheme.recovery)) : os.remove(scheme.recover)
-        if (os.path.isfile(fixedFilem)) : os.remove(fixedFilem)
-        if (os.path.isfile(fixedFile)) : os.remove(fixedFile)
-        if (os.path.isfile(fixedFilep)) : os.remove(fixedFilep)
-
+        if os.path.isfile(scheme.recovery):
+            os.remove(scheme.recover)
+        if os.path.isfile(fixedFilem):
+            os.remove(fixedFilem)
+        if os.path.isfile(fixedFile):
+            os.remove(fixedFile)
+        if os.path.isfile(fixedFilep):
+            os.remove(fixedFilep)

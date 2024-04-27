@@ -4,9 +4,11 @@ import set_path
 from qupled.classic import ESA
 from qupled.classic import Rpa
 
+
 @pytest.fixture
 def esa_instance():
     return ESA(1.0, 1.0)
+
 
 def test_default(esa_instance):
     assert issubclass(ESA, Rpa)
@@ -14,7 +16,9 @@ def test_default(esa_instance):
     assert esa_instance.inputs.coupling == 1.0
     assert esa_instance.inputs.degeneracy == 1.0
     assert esa_instance.inputs.theory == "ESA"
-    assert all(x == y for x, y in zip(esa_instance.inputs.chemicalPotential, [-10.0, 10.0]))
+    assert all(
+        x == y for x, y in zip(esa_instance.inputs.chemicalPotential, [-10.0, 10.0])
+    )
     assert esa_instance.inputs.cutoff == 10.0
     assert esa_instance.inputs.matsubara == 128
     assert esa_instance.inputs.resolution == 0.1
@@ -23,7 +27,7 @@ def test_default(esa_instance):
     assert esa_instance.scheme is None
     assert esa_instance.hdfFileName is None
 
-                                      
+
 def test_set_input():
     esa = ESA(2.0, 0.5, [-5, 5], 20, 32, 0.01)
     assert esa.inputs.coupling == 2.0

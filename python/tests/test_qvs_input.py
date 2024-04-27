@@ -4,6 +4,7 @@ import numpy as np
 import set_path
 import qupled.qupled as qp
 
+
 @pytest.fixture
 def qvsstls_input_instance():
     return qp.QVSStlsInput()
@@ -25,7 +26,8 @@ def test_init(qvsstls_input_instance):
     assert hasattr(qvsstls_input_instance, "fixed")
     assert hasattr(qvsstls_input_instance.freeEnergyIntegrand, "grid")
     assert hasattr(qvsstls_input_instance.freeEnergyIntegrand, "integrand")
-        
+
+
 def test_defaults(qvsstls_input_instance):
     assert qvsstls_input_instance.errorAlpha == 0
     assert qvsstls_input_instance.iterationsAlpha == 0
@@ -37,13 +39,15 @@ def test_defaults(qvsstls_input_instance):
     assert qvsstls_input_instance.guess.wvg.size == 0
     assert qvsstls_input_instance.guess.ssf.size == 0
     assert qvsstls_input_instance.guess.adr.size == 0
-    assert qvsstls_input_instance.guess.matsubara  == 0
+    assert qvsstls_input_instance.guess.matsubara == 0
     assert qvsstls_input_instance.fixed == ""
-    
+
+
 def test_fixed(qvsstls_input_instance):
     qvsstls_input_instance.fixed = "fixedFile"
     fixed = qvsstls_input_instance.fixed
     assert fixed == "fixedFile"
+
 
 def test_errorAlpha(qvsstls_input_instance):
     qvsstls_input_instance.errorAlpha = 0.001
@@ -51,7 +55,11 @@ def test_errorAlpha(qvsstls_input_instance):
     assert errorAlpha == 0.001
     with pytest.raises(RuntimeError) as excinfo:
         qvsstls_input_instance.errorAlpha = -0.1
-    assert excinfo.value.args[0] == "The minimum error for convergence must be larger than zero"    
+    assert (
+        excinfo.value.args[0]
+        == "The minimum error for convergence must be larger than zero"
+    )
+
 
 def test_iterationsAlpha(qvsstls_input_instance):
     qvsstls_input_instance.iterationsAlpha = 1
@@ -59,7 +67,8 @@ def test_iterationsAlpha(qvsstls_input_instance):
     assert iterationsAlpha == 1
     with pytest.raises(RuntimeError) as excinfo:
         qvsstls_input_instance.iterationsAlpha = -2
-    assert excinfo.value.args[0] == "The maximum number of iterations can't be negative"    
+    assert excinfo.value.args[0] == "The maximum number of iterations can't be negative"
+
 
 def test_alpha(qvsstls_input_instance):
     qvsstls_input_instance.alpha = [-10, 10]
@@ -70,13 +79,18 @@ def test_alpha(qvsstls_input_instance):
             qvsstls_input_instance.alpha = a
         assert excinfo.value.args[0] == "Invalid guess for free parameter calculation"
 
+
 def test_couplingResolution(qvsstls_input_instance):
     qvsstls_input_instance.couplingResolution = 0.01
     couplingResolution = qvsstls_input_instance.couplingResolution
     assert couplingResolution == 0.01
     with pytest.raises(RuntimeError) as excinfo:
         qvsstls_input_instance.couplingResolution = -0.1
-    assert excinfo.value.args[0] == "The coupling parameter resolution must be larger than zero"  
+    assert (
+        excinfo.value.args[0]
+        == "The coupling parameter resolution must be larger than zero"
+    )
+
 
 def test_degeneracyResolution(qvsstls_input_instance):
     qvsstls_input_instance.degeneracyResolution = 0.01
@@ -84,15 +98,19 @@ def test_degeneracyResolution(qvsstls_input_instance):
     assert degeneracyResolution == 0.01
     with pytest.raises(RuntimeError) as excinfo:
         qvsstls_input_instance.degeneracyResolution = -0.1
-    assert excinfo.value.args[0] == "The degeneracy parameter resolution must be larger than zero"  
-    
+    assert (
+        excinfo.value.args[0]
+        == "The degeneracy parameter resolution must be larger than zero"
+    )
+
+
 def test_freeEnergyIntegrand(qvsstls_input_instance):
     arr1 = np.zeros(10)
     arr2 = np.zeros((3, 10))
     fxc = qp.FreeEnergyIntegrand()
     fxc.grid = arr1
     fxc.integrand = arr2
-    qvsstls_input_instance.freeEnergyIntegrand =  fxc
+    qvsstls_input_instance.freeEnergyIntegrand = fxc
     assert np.array_equal(arr1, qvsstls_input_instance.freeEnergyIntegrand.grid)
     assert np.array_equal(arr2, qvsstls_input_instance.freeEnergyIntegrand.integrand)
     with pytest.raises(RuntimeError) as excinfo:
@@ -101,15 +119,18 @@ def test_freeEnergyIntegrand(qvsstls_input_instance):
         fxc = qp.FreeEnergyIntegrand()
         fxc.grid = arr1
         fxc.integrand = arr2
-        qvsstls_input_instance.freeEnergyIntegrand =  fxc
-    assert excinfo.value.args[0] == "The free energy integrand does not contain enough temperature points"
+        qvsstls_input_instance.freeEnergyIntegrand = fxc
+    assert (
+        excinfo.value.args[0]
+        == "The free energy integrand does not contain enough temperature points"
+    )
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros((3, 11))
         fxc = qp.FreeEnergyIntegrand()
         fxc.grid = arr1
         fxc.integrand = arr2
-        qvsstls_input_instance.freeEnergyIntegrand =  fxc
+        qvsstls_input_instance.freeEnergyIntegrand = fxc
     assert excinfo.value.args[0] == "The free energy integrand is inconsistent"
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(2)
@@ -117,8 +138,12 @@ def test_freeEnergyIntegrand(qvsstls_input_instance):
         fxc = qp.FreeEnergyIntegrand()
         fxc.grid = arr1
         fxc.integrand = arr2
-        qvsstls_input_instance.freeEnergyIntegrand =  fxc
-    assert excinfo.value.args[0] == "The free energy integrand does not contain enough points"
+        qvsstls_input_instance.freeEnergyIntegrand = fxc
+    assert (
+        excinfo.value.args[0]
+        == "The free energy integrand does not contain enough points"
+    )
+
 
 def test_isEqual(qvsstls_input_instance):
     thisQVSStls = qp.QVSStlsInput()
@@ -126,7 +151,8 @@ def test_isEqual(qvsstls_input_instance):
     thisQVSStls.coupling = 2.0
     thisQVSStls.theory = "QSTLS"
     assert not qvsstls_input_instance.isEqual(thisQVSStls)
-    
+
+
 def test_print(qvsstls_input_instance, capfd):
     qvsstls_input_instance.print()
     captured = capfd.readouterr().out

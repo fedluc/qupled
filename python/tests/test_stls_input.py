@@ -4,6 +4,7 @@ import numpy as np
 import set_path
 import qupled.qupled as qp
 
+
 @pytest.fixture
 def stls_input_instance():
     return qp.StlsInput()
@@ -20,7 +21,8 @@ def test_init(stls_input_instance):
     assert hasattr(stls_input_instance, "guess")
     assert hasattr(stls_input_instance.guess, "wvg")
     assert hasattr(stls_input_instance.guess, "slfc")
-        
+
+
 def test_defaults(stls_input_instance):
     assert stls_input_instance.error == 0
     assert stls_input_instance.mixing == 0
@@ -30,14 +32,19 @@ def test_defaults(stls_input_instance):
     assert stls_input_instance.recoveryFile == ""
     assert stls_input_instance.guess.wvg.size == 0
     assert stls_input_instance.guess.slfc.size == 0
-    
+
+
 def test_error(stls_input_instance):
     stls_input_instance.error = 0.001
     error = stls_input_instance.error
     assert error == 0.001
     with pytest.raises(RuntimeError) as excinfo:
         stls_input_instance.error = -0.1
-    assert excinfo.value.args[0] == "The minimum error for convergence must be larger than zero"    
+    assert (
+        excinfo.value.args[0]
+        == "The minimum error for convergence must be larger than zero"
+    )
+
 
 def test_mixing(stls_input_instance):
     stls_input_instance.mixing = 0.5
@@ -46,7 +53,11 @@ def test_mixing(stls_input_instance):
     for mixing in [-1, 2]:
         with pytest.raises(RuntimeError) as excinfo:
             stls_input_instance.mixing = -1.0
-        assert excinfo.value.args[0] == "The mixing parameter must be a number between zero and one"    
+        assert (
+            excinfo.value.args[0]
+            == "The mixing parameter must be a number between zero and one"
+        )
+
 
 def test_iet(stls_input_instance):
     allowedIet = ["standard", "sqrt", "linear"]
@@ -56,7 +67,8 @@ def test_iet(stls_input_instance):
         assert thisIet == iet
     with pytest.raises(RuntimeError) as excinfo:
         stls_input_instance.iet = "dummyIET"
-    assert excinfo.value.args[0] == "Unknown IET mapping: dummyIET"    
+    assert excinfo.value.args[0] == "Unknown IET mapping: dummyIET"
+
 
 def test_iterations(stls_input_instance):
     stls_input_instance.iterations = 1
@@ -64,7 +76,8 @@ def test_iterations(stls_input_instance):
     assert iterations == 1
     with pytest.raises(RuntimeError) as excinfo:
         stls_input_instance.iterations = -2
-    assert excinfo.value.args[0] == "The maximum number of iterations can't be negative"    
+    assert excinfo.value.args[0] == "The maximum number of iterations can't be negative"
+
 
 def test_outputFrequency(stls_input_instance):
     stls_input_instance.outputFrequency = 1
@@ -72,12 +85,14 @@ def test_outputFrequency(stls_input_instance):
     assert outputFrequency == 1
     with pytest.raises(RuntimeError) as excinfo:
         stls_input_instance.outputFrequency = -3
-    assert excinfo.value.args[0] == "The output frequency can't be negative"    
+    assert excinfo.value.args[0] == "The output frequency can't be negative"
+
 
 def test_recoveryFile(stls_input_instance):
     stls_input_instance.recoveryFile = "dummyFile"
     recoveryFile = stls_input_instance.recoveryFile
     assert recoveryFile == "dummyFile"
+
 
 def test_guess(stls_input_instance):
     arr = np.zeros(10)
@@ -103,13 +118,15 @@ def test_guess(stls_input_instance):
         stls_input_instance.guess = guess
     assert excinfo.value.args[0] == "The initial guess is inconsistent"
 
+
 def test_isEqual(stls_input_instance):
     thisStls = qp.StlsInput()
     assert stls_input_instance.isEqual(thisStls)
     thisStls.coupling = 2.0
     thisStls.theory = "QSTLS"
     assert not stls_input_instance.isEqual(thisStls)
-    
+
+
 def test_print(stls_input_instance, capfd):
     stls_input_instance.print()
     captured = capfd.readouterr().out

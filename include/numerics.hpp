@@ -19,34 +19,33 @@
 namespace GslWrappers {
 
   // Wrapper to gsl_function
-  template< typename T >
-  class GslFunctionWrap : public gsl_function {
+  template <typename T> class GslFunctionWrap : public gsl_function {
 
   private:
 
-    const T& func;
+    const T &func;
     static double invoke(double x, void *params) {
-      return static_cast<GslFunctionWrap*>(params)->func(x);
+      return static_cast<GslFunctionWrap *>(params)->func(x);
     }
-  
+
   public:
-  
-    explicit GslFunctionWrap(const T& func_) : func(func_) {
+
+    explicit GslFunctionWrap(const T &func_)
+        : func(func_) {
       function = &GslFunctionWrap::invoke;
       params = this;
     }
-  
   };
 
   // Wrapper to handle errors in GSL functions
-  template<typename Func, typename... Args>
-  void callGSLFunction(Func&& gslFunction, Args&&... args);
+  template <typename Func, typename... Args>
+  void callGSLFunction(Func &&gslFunction, Args &&...args);
 
   // Wrapper to handle allocation errors in GSL functions
-  template<typename Ptr, typename Func, typename... Args>
-  void callGSLAlloc(Ptr& ptr, Func&& gslFunction, Args&&... args);
+  template <typename Ptr, typename Func, typename... Args>
+  void callGSLAlloc(Ptr &ptr, Func &&gslFunction, Args &&...args);
 
-}
+} // namespace GslWrappers
 
 // -----------------------------------------------------------------
 // Classes to interpolate data
@@ -65,30 +64,22 @@ private:
   double cutoff;
   // Size
   size_t n;
-  // 
+  //
   // Setup interpolator
-  void setup(const double &x,
-	     const double &y,
-	     const size_t n_);
-  
+  void setup(const double &x, const double &y, const size_t n_);
+
 public:
 
   // Constructor
-  Interpolator1D(const std::vector<double> &x,
-		 const std::vector<double> &y);
-  Interpolator1D(const double &x,
-		 const double &y,
-		 const size_t n_);
+  Interpolator1D(const std::vector<double> &x, const std::vector<double> &y);
+  Interpolator1D(const double &x, const double &y, const size_t n_);
   explicit Interpolator1D();
   // Destructor
   ~Interpolator1D();
   // Reset
-  void reset(const double &x,
-	     const double &y,
-	     const size_t n_);
+  void reset(const double &x, const double &y, const size_t n_);
   // Evaluate
-  double eval(const double& x) const;
-  
+  double eval(const double &x) const;
 };
 
 // Interpolator for 2D data
@@ -106,31 +97,31 @@ private:
   size_t ny;
   // Setup interpolator
   void setup(const double &x,
-	     const double &y,
-	     const double &z,
-	     const int nx_,
-	     const int ny_);
+             const double &y,
+             const double &z,
+             const int nx_,
+             const int ny_);
+
 public:
 
   // Constructor
   Interpolator2D(const double &x,
-		 const double &y,
-		 const double &z,
-		 const int nx_,
-		 const int ny_);
+                 const double &y,
+                 const double &z,
+                 const int nx_,
+                 const int ny_);
   explicit Interpolator2D(const Interpolator2D &it);
   explicit Interpolator2D();
   // Destructor
   ~Interpolator2D();
   // Reset
   void reset(const double &x,
-	     const double &y,
-	     const double &z,
-	     const int szx_,
-	     const int szy_);
+             const double &y,
+             const double &z,
+             const int szx_,
+             const int szy_);
   // Evaluate
-  double eval(const double& x,
-	      const double& y) const;
+  double eval(const double &x, const double &y) const;
 };
 
 // -----------------------------------------------------------------
@@ -151,17 +142,17 @@ protected:
   // Solution
   double sol;
   // Protected constructor
-  RootSolverBase(const double& relErr_,
-		 const int maxIter_) : relErr(relErr_),
-				       maxIter(maxIter_),
-				       iter(0),
-				       status(GSL_CONTINUE) { ; };
-  explicit RootSolverBase() :  RootSolverBase(1.0e-10, 1000) { ; };
-  
+  RootSolverBase(const double &relErr_, const int maxIter_)
+      : relErr(relErr_),
+        maxIter(maxIter_),
+        iter(0),
+        status(GSL_CONTINUE) {}
+  explicit RootSolverBase()
+      : RootSolverBase(1.0e-10, 1000) {}
+
 public:
 
   double getSolution() const { return sol; };
-  
 };
 
 class BrentRootSolver : public RootSolverBase {
@@ -174,56 +165,55 @@ private:
   const gsl_root_fsolver_type *rst;
   // Solver
   gsl_root_fsolver *rs;
-  
+
 public:
 
   explicit BrentRootSolver();
   ~BrentRootSolver();
-  void solve(const std::function<double(double)>& func,
-	     const std::vector<double>& guess);
+  void solve(const std::function<double(double)> &func,
+             const std::vector<double> &guess);
 };
 
 class SecantSolver : public RootSolverBase {
-  
+
 public:
 
-  SecantSolver(const double relErr_,
-	       const int maxIter_) : RootSolverBase(relErr_, maxIter_) { ; };
-  explicit SecantSolver() { ; };
-  void solve(const std::function<double(double)>& func,
-	     const std::vector<double>& guess);
-  
+  SecantSolver(const double relErr_, const int maxIter_)
+      : RootSolverBase(relErr_, maxIter_) {}
+  explicit SecantSolver() {}
+  void solve(const std::function<double(double)> &func,
+             const std::vector<double> &guess);
 };
 
 // -----------------------------------------------------------------
 // Class to compute 1D integrals
 // -----------------------------------------------------------------
-  
+
 class Integrator1D {
 
 public:
 
-  enum Type {
-    DEFAULT,
-    FOURIER,
-    SINGULAR
-  };
-  
+  enum Type { DEFAULT, FOURIER, SINGULAR };
+
   class Param {
   public:
+
     const double xMin = numUtil::NaN;
     const double xMax = numUtil::NaN;
     const double fourierR = numUtil::NaN;
-    Param(const double& xMin_,
-	  const double& xMax_) : xMin(xMin_), xMax(xMax_) { ; }
-    explicit Param(const double& fourierR_) : fourierR(fourierR_) { ; }
+    Param(const double &xMin_, const double &xMax_)
+        : xMin(xMin_),
+          xMax(xMax_) {}
+    explicit Param(const double &fourierR_)
+        : fourierR(fourierR_) {}
   };
-  
+
 private:
 
   // Base class for all integrators derived from GSL
   class Base {
   protected:
+
     // Function to integrate
     gsl_function *F;
     // Integrator type
@@ -236,13 +226,14 @@ private:
     double err;
     // Solution
     double sol;
+
   public:
+
     // Constructors
-    Base(const Type& type_,
-	 const size_t &limit_,
-	 const double &relErr_) : type(type_),
-				  limit(limit_),
-				  relErr(relErr_) { ; }
+    Base(const Type &type_, const size_t &limit_, const double &relErr_)
+        : type(type_),
+          limit(limit_),
+          relErr(relErr_) {}
     // Destructor
     virtual ~Base() = default;
     // Getters
@@ -250,63 +241,72 @@ private:
     double getAccuracy() const { return relErr; }
     Type getType() const { return type; }
     // Compute integral
-    virtual void compute(const std::function<double(double)>& func,
-			 const Param& param) = 0;
-  
+    virtual void compute(const std::function<double(double)> &func,
+                         const Param &param) = 0;
   };
 
   // CQUAD integrator from GSL
   class CQUAD : public Base {
   private:
+
     // Integration workspace
     gsl_integration_cquad_workspace *wsp;
     // Number of evaluations
     size_t nEvals;
+
   public:
+
     // Constructors
     explicit CQUAD(const double &relErr_);
-    CQUAD(const CQUAD& other) : Integrator1D::CQUAD(other.relErr) { ; }
+    CQUAD(const CQUAD &other)
+        : Integrator1D::CQUAD(other.relErr) {}
     // Destructor
     ~CQUAD();
     // Compute integral
-    void compute(const std::function<double(double)>& func,
-		 const Param& param) override;
-    
+    void compute(const std::function<double(double)> &func,
+                 const Param &param) override;
   };
 
-  // QAWO integrator from GSL 
+  // QAWO integrator from GSL
   class QAWO : public Base {
   private:
+
     // Integration workspace
     gsl_integration_workspace *wsp;
     gsl_integration_workspace *wspc;
     gsl_integration_qawo_table *qtab;
+
   public:
+
     // Constructors
-    explicit QAWO(const double& relErr_);
-    QAWO(const QAWO& other) : Integrator1D::QAWO(other.relErr) { ; }
+    explicit QAWO(const double &relErr_);
+    QAWO(const QAWO &other)
+        : Integrator1D::QAWO(other.relErr) {}
     // Destructor
     ~QAWO();
     // Compute integral
-    void compute(const std::function<double(double)>& func,
-		 const Param& param) override;
-
+    void compute(const std::function<double(double)> &func,
+                 const Param &param) override;
   };
 
-  // QAGS integrator from GSL 
+  // QAGS integrator from GSL
   class QAGS : public Base {
   private:
+
     // Integration workspace
     gsl_integration_workspace *wsp;
+
   public:
+
     // Constructors
-    explicit QAGS(const double& relErr_);
-    QAGS(const QAGS& other) : Integrator1D::QAGS(other.relErr) { ; }
+    explicit QAGS(const double &relErr_);
+    QAGS(const QAGS &other)
+        : Integrator1D::QAGS(other.relErr) {}
     // Destructor
     ~QAGS();
     // Compute integral
-    void compute(const std::function<double(double)>& func,
-		 const Param& param) override;
+    void compute(const std::function<double(double)> &func,
+                 const Param &param) override;
   };
 
   // Pointers to GSL integrals
@@ -315,20 +315,18 @@ private:
 public:
 
   // Constructors
-  Integrator1D(const Type& type,
-	       const double& relErr);
-  explicit Integrator1D(const double& relErr)
-    : Integrator1D(Type::DEFAULT, relErr) { ; }
-  Integrator1D(const Integrator1D& other)
-    : Integrator1D(other.getType(), other.getAccuracy()) { ; }
+  Integrator1D(const Type &type, const double &relErr);
+  explicit Integrator1D(const double &relErr)
+      : Integrator1D(Type::DEFAULT, relErr) {}
+  Integrator1D(const Integrator1D &other)
+      : Integrator1D(other.getType(), other.getAccuracy()) {}
   // Compute integral
-  void compute(const std::function<double(double)>& func,
-	       const Param& param) const;
+  void compute(const std::function<double(double)> &func,
+               const Param &param) const;
   // Getters
   double getSolution() const;
   double getAccuracy() const { return gslIntegrator->getAccuracy(); }
   Type getType() const { return gslIntegrator->getType(); }
-  
 };
 
 // -----------------------------------------------------------------
@@ -350,52 +348,62 @@ private:
   double x;
   // Solution
   double sol;
-  
+
 public:
 
   // Typedef
   class Param : public Integrator1D::Param {
   private:
+
     const double yMinNum = numUtil::NaN;
     const double yMaxNum = numUtil::NaN;
+
   public:
+
     using Func = std::function<double(double)>;
-    const Func yMin = [&](const double& x){(void)(x); return yMinNum; };
-    const Func yMax = [&](const double& x){(void)(x); return yMaxNum; };
+    const Func yMin = [&](const double &x) {
+      (void)(x);
+      return yMinNum;
+    };
+    const Func yMax = [&](const double &x) {
+      (void)(x);
+      return yMaxNum;
+    };
     const std::vector<double> xGrid;
-    Param(const double& xMin_,
-	  const double& xMax_,
-	  const Func& yMin_,
-	  const Func& yMax_)
-      : Integrator1D::Param(xMin_, xMax_),
-	yMin(yMin_), yMax(yMax_) { ; }
-    Param(const double& xMin_,
-	  const double& xMax_,
-	  const double& yMin_,
-	  const double& yMax_)
-      : Integrator1D::Param(xMin_, xMax_),
-	yMinNum(yMin_), yMaxNum(yMax_) { ; }
-    Param(const double& fourierR_) : Integrator1D::Param(fourierR_) { ; }
+    Param(const double &xMin_,
+          const double &xMax_,
+          const Func &yMin_,
+          const Func &yMax_)
+        : Integrator1D::Param(xMin_, xMax_),
+          yMin(yMin_),
+          yMax(yMax_) {}
+    Param(const double &xMin_,
+          const double &xMax_,
+          const double &yMin_,
+          const double &yMax_)
+        : Integrator1D::Param(xMin_, xMax_),
+          yMinNum(yMin_),
+          yMaxNum(yMax_) {}
+    Param(const double &fourierR_)
+        : Integrator1D::Param(fourierR_) {}
   };
-  
+
   // Constructors
-  Integrator2D(const Type& type1,
-	       const Type& type2,
-	       const double& relErr) : itg1(type1, relErr),
-				       itg2(type2, relErr) { ; }
-  Integrator2D(const Type& type,
-	       const double& relErr) : Integrator2D(type, type, relErr) { ; }
-  Integrator2D(const double& relErr) : Integrator2D(Type::DEFAULT, relErr) { ; }
+  Integrator2D(const Type &type1, const Type &type2, const double &relErr)
+      : itg1(type1, relErr),
+        itg2(type2, relErr) {}
+  Integrator2D(const Type &type, const double &relErr)
+      : Integrator2D(type, type, relErr) {}
+  Integrator2D(const double &relErr)
+      : Integrator2D(Type::DEFAULT, relErr) {}
   // Compute integral
-  void compute(const std::function<double(double)>& func1,
-	       const std::function<double(double)>& func2,
-	       const Param& param,
-	       const std::vector<double>& xGrid);
+  void compute(const std::function<double(double)> &func1,
+               const std::function<double(double)> &func2,
+               const Param &param,
+               const std::vector<double> &xGrid);
   // Getters
   double getX() const { return x; };
   double getSolution() const { return sol; };
-  
 };
-
 
 #endif
