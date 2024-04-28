@@ -117,7 +117,7 @@ namespace vecUtil {
     void mult(const Vector2D &v_);
     void mult(const double &num);
     void div(const Vector2D &v_);
-  }
+  };
 
   // --- Class to represent 3D vectors ---
   class Vector3D {
@@ -165,7 +165,7 @@ namespace vecUtil {
     void mult(const Vector3D &v_);
     void mult(const double &num);
     void div(const Vector3D &v_);
-  }
+  };
 
   //  --- ethods to convert between Python and C++ arrays ---
 
@@ -266,7 +266,7 @@ namespace thermoUtil {
     }
     // Get result of integration
     double get() const;
-  }
+  };
 
   // --- Class for free energy calculation ---
   class FreeEnergy {
@@ -299,7 +299,7 @@ namespace thermoUtil {
     }
     // Get result of integration
     double get() const;
-  }
+  };
 
   // --- Class for radial distribution function calculation ---
   class Rdf {
@@ -338,7 +338,7 @@ namespace thermoUtil {
     }
     // Get result of integration
     double get() const;
-  }
+  };
 
 } // namespace thermoUtil
 
