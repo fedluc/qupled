@@ -89,11 +89,11 @@ namespace vecUtil {
           s1(s1_),
           s2(s2_) {
       ;
-    };
+    }
     explicit Vector2D()
         : Vector2D(0, 0) {
       ;
-    };
+    }
     explicit Vector2D(const std::vector<std::vector<double>> &v_);
     size_t size() const;
     size_t size(const size_t i) const;
@@ -117,7 +117,7 @@ namespace vecUtil {
     void mult(const Vector2D &v_);
     void mult(const double &num);
     void div(const Vector2D &v_);
-  };
+  }
 
   // --- Class to represent 3D vectors ---
   class Vector3D {
@@ -136,11 +136,11 @@ namespace vecUtil {
           s2(s2_),
           s3(s3_) {
       ;
-    };
+    }
     explicit Vector3D()
         : Vector3D(0, 0, 0) {
       ;
-    };
+    }
     size_t size() const;
     size_t size(const size_t i) const;
     bool empty() const;
@@ -165,7 +165,7 @@ namespace vecUtil {
     void mult(const Vector3D &v_);
     void mult(const double &num);
     void div(const Vector3D &v_);
-  };
+  }
 
   //  --- ethods to convert between Python and C++ arrays ---
 
@@ -263,10 +263,10 @@ namespace thermoUtil {
           itg(itg_),
           ssfi(ssfi_) {
       ;
-    };
+    }
     // Get result of integration
     double get() const;
-  };
+  }
 
   // --- Class for free energy calculation ---
   class FreeEnergy {
@@ -296,10 +296,10 @@ namespace thermoUtil {
           rsui(rsui_),
           normalize(normalize_) {
       ;
-    };
+    }
     // Get result of integration
     double get() const;
-  };
+  }
 
   // --- Class for radial distribution function calculation ---
   class Rdf {
@@ -335,10 +335,10 @@ namespace thermoUtil {
           itg(itg_),
           ssfi(ssfi_) {
       ;
-    };
+    }
     // Get result of integration
     double get() const;
-  };
+  }
 
 } // namespace thermoUtil
 
@@ -350,44 +350,44 @@ namespace binUtil {
 
   template <typename T> void writeNum(std::ofstream &file, const T &num) {
     file.write(reinterpret_cast<const char *>(&num), sizeof(num));
-  };
+  }
 
   template <typename T>
   void writeDataToBinary(std::ofstream &file, const double &data) {
     writeNum<double>(file, data);
-  };
+  }
 
   template <typename T>
   void writeDataToBinary(std::ofstream &file, const int &data) {
     writeNum<int>(file, data);
-  };
+  }
 
   template <class T>
   void writeDataToBinary(std::ofstream &file, const T &data) {
     for (auto &el : data) {
       writeDataToBinary<decltype(el)>(file, el);
     }
-  };
+  }
 
   template <typename T> void readNum(std::ifstream &file, T &num) {
     file.read((char *)&num, sizeof(T));
-  };
+  }
 
   template <typename T>
   void readDataFromBinary(std::ifstream &file, double &data) {
     readNum<double>(file, data);
-  };
+  }
 
   template <typename T>
   void readDataFromBinary(std::ifstream &file, int &data) {
     readNum<int>(file, data);
-  };
+  }
 
   template <class T> void readDataFromBinary(std::ifstream &file, T &data) {
     for (auto &el : data) {
       readDataFromBinary<decltype(el)>(file, el);
     }
-  };
+  }
 
 } // namespace binUtil
 
