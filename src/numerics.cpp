@@ -146,7 +146,7 @@ double Interpolator2D::eval(const double &x, const double &y) const {
   double out;
   callGSLFunction(gsl_spline2d_eval_e, spline, x, y, xacc, yacc, &out);
   return out;
-};
+}
 
 // -----------------------------------------------------------------
 // BrentRootSolver class

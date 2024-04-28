@@ -198,7 +198,7 @@ double Rpa::getUInt() const {
     return numUtil::Inf;
   }
   return computeInternalEnergy(wvg, ssf, in.getCoupling());
-};
+}
 
 // -----------------------------------------------------------------
 // Idr class
