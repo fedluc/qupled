@@ -1,18 +1,22 @@
 # Qupled: quantum plasmas and dielectric formalism
 
-Platform | Build Status
----------|:---------
-Linux      | [![OSX Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml)
-OSX      | [![OSX Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml)
-
-[![Code Formatting](https://github.com/fedluc/qupled/actions/workflows/formatting.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/formatting.yml)
-
 Qupled is a python package that can be used to compute the properties of quantum plasmas via the dielectric formalism. The plasma properties can be computed to arbitrary precision by leveraging on a simple Python interface combined with the speed of C++
 
 <p align="center">
   <img src="examples/readme/qupled_animation_light.svg#gh-light-mode-only" width="100%">
   <img src="examples/readme/qupled_animation_dark.svg#gh-dark-mode-only" width="100%">
 <p>
+
+## Status
+
+Platform | Build Status
+---------|:---------
+Linux      | [![Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml)
+OSX      | [![Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml)
+Linux (no MPI)     | [![Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_ubuntu.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_ubuntu.yml)
+OSX (no MPI)     | [![Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_macos.yml)
+
+[![Code Formatting](https://github.com/fedluc/qupled/actions/workflows/formatting.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/formatting.yml)
 
 ## Dependencies
 
