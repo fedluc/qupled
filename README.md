@@ -23,7 +23,7 @@ Before trying to build, test or run the code one should make sure that [these de
 Qupled can be compiled with `cmake`, tested with `pytest` and installed with the following procedure
 
 ```bash
-git clone git@github.com:fedluc/qupled.git
+git clone https://github.com/fedluc/qupled.git
 cd qupled
 mkdir build
 cd build
