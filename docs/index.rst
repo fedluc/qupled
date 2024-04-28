@@ -8,6 +8,7 @@ Welcome to qupled's documentation!
    introduction
    qupled
    examples
+   contribute
    
 Indices and tables
 ==================
