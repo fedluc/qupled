@@ -1,0 +1,37 @@
+name: Build and Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+
+  build_and_test:
+  
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake libboost-all-dev libopenmpi-dev libgsl-dev libomp-dev libfmt-dev python3-dev python3-numpy
+        pip3 install --upgrade pip
+        pip3 install matplotlib numpy pandas tables pytest pytest-mock
+      
+    - name: Configure CMake
+      run: cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=OFF
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Tests
+      run: |
+        cd build
+        pytest -k "not test_examples" tests

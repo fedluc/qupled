@@ -48,9 +48,10 @@ summarized as follows:
    cmake --install .
 		
 This will create the python package that can be used to solve the dielectric schemes, test it and install it
-in a folder accessible at runtime.  The build directory can be cleaned by running ``make true-clean``.
-For debugging purposes it is also possible to build a debug configuration by typing ``cmake -DCMAKE_BUILD_TYPE=Debug ..``
-followed by the build command.
+in a folder accessible at runtime.  The build directory can be cleaned by running ``make true-clean``. For debugging
+purposes it is also possible to build a debug configuration by typing ``cmake -DCMAKE_BUILD_TYPE=Debug ..``
+followed by the build command. By default qupled is built with support for MPI, but it is also possible to compile the
+code without MPI by typing ``cmake -DUSE_MPI=OFF ..`` followed by the build command.
 
 Dependencies
 ------------

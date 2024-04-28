@@ -4,17 +4,27 @@ find_package(Boost
 	     COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
 	     COMPONENTS numpy3 REQUIRED)
 
-# External libraries
-set(MPI_CXX_SKIP_MPICXX TRUE)
-find_package(MPI REQUIRED)
+
+# Setup MPI environment
+option(USE_MPI "Compile with MPI support" ON)
+if(USE_MPI)
+    set(MPI_CXX_SKIP_MPICXX TRUE)
+    find_package(MPI REQUIRED)
+    add_compile_definitions(USE_MPI)
+    set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})	
+endif()
+
+
+# Additional external libraries
 find_package(OpenMP REQUIRED)
 find_package(GSL REQUIRED)
 find_package(fmt REQUIRED)
 
+
 # Set compiler flags
-set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-Wall -Wextra -Wpedantic -O3)
+
 
 # Source code
 Python3_add_library(qupled MODULE
@@ -31,24 +41,28 @@ Python3_add_library(qupled MODULE
 		    python_wrappers.cpp
 		    python_modules.cpp)
 
+
 # Include directories
 target_include_directories(qupled PUBLIC
-			   ${Boost_INCLUDE_DIRS}
-			   ${Python3_INCLUDE_DIRS}
-			   ${MPI_CXX_INLUDE_PATH}
 			   ../include)
 
+
 # Link external libraries
+if(USE_MPI)
+    target_link_libraries(qupled PUBLIC
+			  MPI::MPI_CXX)
+endif()
 target_link_libraries(qupled PUBLIC
 		      OpenMP::OpenMP_CXX
-		      ${Boost_LIBRARIES}
-		      ${MPI_CXX_LIBRARIES}
+		      Boost::python
+		      Boost::numpy3
 		      GSL::gsl
 		      GSL::gslcblas
-		      fmt::fmt)		   
+		      fmt::fmt)
 
 # Create python package							
 set_target_properties(qupled PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${QUPLED_OUTPUT_DIR})
+
 
 # Define installation directory
 set(QUPLED_INSTALL_DIR ${Python3_SITELIB}  CACHE INTERNAL "")

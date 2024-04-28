@@ -1,8 +1,10 @@
+#ifdef USE_MPI
+#include <mpi.h>
 #define OMPI_SKIP_MPICXX 1 // Disable MPI-C++ bindings
+#endif
 
 #include <numeric>
 #include <omp.h>
-#include <mpi.h>
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
 #include "numerics.hpp"
@@ -502,51 +504,96 @@ namespace parallelUtil {
 
   namespace MPI {
 
+#ifdef USE_MPI
     const MPI_Comm MPICommunicator = MPI_COMM_WORLD;
+#endif
 
-    void init() { MPI_Init(nullptr, nullptr); }
+    void init() {
+#ifdef USE_MPI
+      MPI_Init(nullptr, nullptr);
+#endif
+    }
 
-    void finalize() { MPI_Finalize(); }
+    void finalize() {
+#ifdef USE_MPI
+      MPI_Finalize();
+#endif
+    }
 
     bool isInitialized() {
+#ifdef USE_MPI
       int isMPIInit;
       MPI_Initialized(&isMPIInit);
       return isMPIInit == 1;
+#endif
+      return true;
     }
 
     int rank() {
+#ifdef USE_MPI
       int rank;
       MPI_Comm_rank(MPICommunicator, &rank);
       return rank;
+#endif
+      return 0;
     }
 
     int numberOfRanks() {
+#ifdef USE_MPI
       int numRanks;
       MPI_Comm_size(MPICommunicator, &numRanks);
       return numRanks;
+#endif
+      return 1;
     }
 
-    void barrier() { MPI_Barrier(MPICommunicator); }
+    void barrier() {
+#ifdef USE_MPI
+      MPI_Barrier(MPICommunicator);
+#endif
+    }
 
-    bool isRoot() { return rank() == 0; }
+    bool isRoot() {
+#ifdef USE_MPI
+      return rank() == 0;
+#endif
+      return true;
+    }
 
-    bool isSingleProcess() { return numberOfRanks() == 1; }
+    bool isSingleProcess() {
+#ifdef USE_MPI
+      return numberOfRanks() == 1;
+#endif
+      return true;
+    }
 
     void throwError(const string &errMsg) {
       if (isSingleProcess()) {
         // Throw a catchable error if only one process is used
         throw runtime_error(errMsg);
       }
+#ifdef USE_MPI
       // Abort MPI if more than one process is running
       cerr << errMsg << endl;
       abort();
+#endif
     }
 
-    void abort() { MPI_Abort(MPICommunicator, 1); }
+    void abort() {
+#ifdef USE_MPI
+      MPI_Abort(MPICommunicator, 1);
+#endif
+    }
 
-    double timer() { return MPI_Wtime(); }
+    double timer() {
+#ifdef USE_MPI
+      return MPI_Wtime();
+#endif
+      return omp_get_wtime();
+    }
 
     bool isEqualOnAllRanks(const int &myNumber) {
+#ifdef USE_MPI
       int globalMininumNumber;
       MPI_Allreduce(&myNumber,
                     &globalMininumNumber,
@@ -555,6 +602,9 @@ namespace parallelUtil {
                     MPI_MIN,
                     MPICommunicator);
       return myNumber == globalMininumNumber;
+#endif
+      (void)myNumber;
+      return true;
     }
 
     pair<int, int> getLoopIndexes(const int loopSize, const int thisRank) {
@@ -593,6 +643,7 @@ namespace parallelUtil {
     void gatherLoopData(double *dataToGather,
                         const MPIParallelForData &loopData,
                         const int countsPerLoop) {
+#ifdef USE_MPI
       std::vector<int> recieverCounts;
       for (const auto &i : loopData) {
         const int loopSpan = i.second - i.first;
@@ -611,6 +662,10 @@ namespace parallelUtil {
                      displacements.data(),
                      MPI_DOUBLE,
                      MPI_COMM_WORLD);
+#endif
+      if (!dataToGather) { throwError(""); }
+      (void)loopData;
+      (void)countsPerLoop;
     }
 
   } // namespace MPI
