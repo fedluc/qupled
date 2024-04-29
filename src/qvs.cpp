@@ -108,8 +108,8 @@ void QStructProp::doIterations() {
         if (i == RS_THETA) { err = c.computeError(); }
         c.updateSolution();
       }
-      counter++;
     }
+    counter++;
   }
   if (verbose) {
     printf("Alpha = %.5e, Residual error "
