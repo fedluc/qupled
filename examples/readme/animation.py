@@ -203,7 +203,6 @@ def optimise_svg(file_name):
 
 
 class QStlsData:
-
     def __init__(self, wvg, adr, idr, ssf, error):
         self.wvg = wvg
         self.adr = adr
@@ -220,7 +219,6 @@ class QStlsData:
 
 
 class PlotSettings:
-
     def __init__(self, darkmode):
         self.labelsz = 16
         self.ticksz = 14
