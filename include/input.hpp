@@ -16,24 +16,6 @@ namespace vecUtil {
 
 class Input {
 
-protected:
-
-  // Accuracy for the integrals
-  double intError;
-  // quantum coupling parameter
-  double rs;
-  // degeneracy parameter
-  double Theta;
-  // number of threads for parallel calculations
-  int nThreads;
-  // type of theory
-  bool isClassicTheory;
-  bool isQuantumTheory;
-  // scheme for 2D integrals
-  std::string int2DScheme;
-  // theory to be solved
-  std::string theory;
-
 public:
 
   // Constructor
@@ -65,6 +47,24 @@ public:
   void print() const;
   // Compare two Input objects
   bool isEqual(const Input &in) const;
+
+protected:
+
+  // Accuracy for the integrals
+  double intError;
+  // quantum coupling parameter
+  double rs;
+  // degeneracy parameter
+  double Theta;
+  // number of threads for parallel calculations
+  int nThreads;
+  // type of theory
+  bool isClassicTheory;
+  bool isQuantumTheory;
+  // scheme for 2D integrals
+  std::string int2DScheme;
+  // theory to be solved
+  std::string theory;
 };
 
 // -----------------------------------------------------------------
@@ -72,17 +72,6 @@ public:
 // -----------------------------------------------------------------
 
 class RpaInput : public Input {
-
-protected:
-
-  // Wave-vector grid resolution
-  double dx;
-  // cutoff for the wave-vector grid
-  double xmax;
-  // Number of matsubara frequencies
-  int nl;
-  // Initial guess for the chemical potential calculation
-  std::vector<double> muGuess;
 
 public:
 
@@ -106,6 +95,17 @@ public:
   void print() const;
   // Compare two StlsInput objects
   bool isEqual(const RpaInput &in) const;
+
+protected:
+
+  // Wave-vector grid resolution
+  double dx;
+  // cutoff for the wave-vector grid
+  double xmax;
+  // Number of matsubara frequencies
+  int nl;
+  // Initial guess for the chemical potential calculation
+  std::vector<double> muGuess;
 };
 
 // -----------------------------------------------------------------
@@ -116,6 +116,7 @@ class StlsInput : public RpaInput {
 
 public:
 
+  // Typedef
   struct SlfcGuess {
     std::vector<double> wvg;
     std::vector<double> slfc;
@@ -123,27 +124,6 @@ public:
       return wvg == other.wvg && slfc == other.slfc;
     }
   };
-
-protected:
-
-  // Mixing parameter for the iterative procedure
-  double aMix;
-  // Minimum error for convergence in the iterative procedure
-  double errMin;
-  // Maximum number of iterations
-  int nIter;
-  // Output frequency
-  int outIter;
-  // Mapping between the quantum and classical state points for the IET-based
-  // schemes
-  std::string IETMapping;
-  // Name of the file used to store the recovery data
-  std::string recoveryFileName;
-  // Initial guess
-  SlfcGuess guess;
-
-public:
-
   // Contructor
   explicit StlsInput()
       : aMix(0),
@@ -172,6 +152,24 @@ public:
   void print() const;
   // Compare two StlsInput objects
   bool isEqual(const StlsInput &in) const;
+
+protected:
+
+  // Mixing parameter for the iterative procedure
+  double aMix;
+  // Minimum error for convergence in the iterative procedure
+  double errMin;
+  // Maximum number of iterations
+  int nIter;
+  // Output frequency
+  int outIter;
+  // Mapping between the quantum and classical state points for the IET-based
+  // schemes
+  std::string IETMapping;
+  // Name of the file used to store the recovery data
+  std::string recoveryFileName;
+  // Initial guess
+  SlfcGuess guess;
 };
 
 // -----------------------------------------------------------------
@@ -182,6 +180,7 @@ class QstlsInput : public StlsInput {
 
 public:
 
+  // Typdef
   struct QstlsGuess {
     std::vector<double> wvg;
     std::vector<double> ssf;
@@ -192,19 +191,6 @@ public:
              matsubara == other.matsubara;
     }
   };
-
-private:
-
-  // Name of the file with the fixed component of the auxiliary density response
-  // (adr)
-  std::string fixed;
-  // Name of the file with the fixed component of the adr for iet schemes
-  std::string fixedIet;
-  // Initial guess
-  QstlsGuess guess;
-
-public:
-
   // Contructors
   explicit QstlsInput()
       : fixed(""),
@@ -221,6 +207,16 @@ public:
   void print() const;
   // Compare two QstlsInput objects
   bool isEqual(const QstlsInput &in) const;
+
+private:
+
+  // Name of the file with the fixed component of the auxiliary density response
+  // (adr)
+  std::string fixed;
+  // Name of the file with the fixed component of the adr for iet schemes
+  std::string fixedIet;
+  // Initial guess
+  QstlsGuess guess;
 };
 
 // -----------------------------------------------------------------
@@ -231,6 +227,7 @@ class VSInput {
 
 public:
 
+  // Typdef
   struct FreeEnergyIntegrand {
     std::vector<double> grid;
     std::vector<double> alpha;
@@ -240,24 +237,6 @@ public:
              alpha == other.alpha;
     }
   };
-
-private:
-
-  // Initial guess for the free parameter
-  std::vector<double> alphaGuess;
-  // Resolution of the coupling parameter grid
-  double drs;
-  // Resolution of the degeneracy parameter grid
-  double dTheta;
-  // Minimum error for the iterations used to define the free parameter
-  double errMinAlpha;
-  // Maximum number of iterations used to define the free parameter
-  int nIterAlpha;
-  // Pre-computed free energy integrand
-  FreeEnergyIntegrand fxcIntegrand;
-
-public:
-
   // Contructor
   explicit VSInput()
       : alphaGuess(std::vector<double>(2, 0)),
@@ -283,6 +262,21 @@ public:
   void print() const;
   // Compare two VSStls objects
   bool isEqual(const VSInput &in) const;
+
+private:
+
+  // Initial guess for the free parameter
+  std::vector<double> alphaGuess;
+  // Resolution of the coupling parameter grid
+  double drs;
+  // Resolution of the degeneracy parameter grid
+  double dTheta;
+  // Minimum error for the iterations used to define the free parameter
+  double errMinAlpha;
+  // Maximum number of iterations used to define the free parameter
+  int nIterAlpha;
+  // Pre-computed free energy integrand
+  FreeEnergyIntegrand fxcIntegrand;
 };
 
 // -----------------------------------------------------------------
