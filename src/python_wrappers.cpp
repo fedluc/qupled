@@ -4,22 +4,21 @@
 #include "input.hpp"
 #include "numerics.hpp"
 #include "python_wrappers.hpp"
+#include "python_util.hpp"
 
-namespace vp = vecUtil::python;
 using namespace std;
-using namespace thermoUtil;
 
 // -----------------------------------------------------------------
 // PyRpaInput
 // -----------------------------------------------------------------
 
 bn::ndarray PyRpaInput::getChemicalPotentialGuess(RpaInput &in) {
-  return vp::toNdArray(in.getChemicalPotentialGuess());
+  return pythonUtil::toNdArray(in.getChemicalPotentialGuess());
 }
 
 void PyRpaInput::setChemicalPotentialGuess(RpaInput &in,
                                            const bp::list &muGuess) {
-  in.setChemicalPotentialGuess(vp::toVector(muGuess));
+  in.setChemicalPotentialGuess(pythonUtil::toVector(muGuess));
 }
 
 // -----------------------------------------------------------------
@@ -27,20 +26,20 @@ void PyRpaInput::setChemicalPotentialGuess(RpaInput &in,
 // -----------------------------------------------------------------
 
 bn::ndarray PySlfcGuess::getWvg(const StlsInput::SlfcGuess &guess) {
-  return vp::toNdArray(guess.wvg);
+  return pythonUtil::toNdArray(guess.wvg);
 }
 
 bn::ndarray PySlfcGuess::getSlfc(const StlsInput::SlfcGuess &guess) {
-  return vp::toNdArray(guess.slfc);
+  return pythonUtil::toNdArray(guess.slfc);
 }
 
 void PySlfcGuess::setWvg(StlsInput::SlfcGuess &guess, const bn::ndarray &wvg) {
-  guess.wvg = vp::toVector(wvg);
+  guess.wvg = pythonUtil::toVector(wvg);
 }
 
 void PySlfcGuess::setSlfc(StlsInput::SlfcGuess &guess,
                           const bn::ndarray &slfc) {
-  guess.slfc = vp::toVector(slfc);
+  guess.slfc = pythonUtil::toVector(slfc);
 }
 
 // -----------------------------------------------------------------
@@ -48,11 +47,11 @@ void PySlfcGuess::setSlfc(StlsInput::SlfcGuess &guess,
 // -----------------------------------------------------------------
 
 bn::ndarray PyVSStlsInput::getAlphaGuess(VSStlsInput &in) {
-  return vp::toNdArray(in.getAlphaGuess());
+  return pythonUtil::toNdArray(in.getAlphaGuess());
 }
 
 void PyVSStlsInput::setAlphaGuess(VSStlsInput &in, const bp::list &alphaGuess) {
-  in.setAlphaGuess(vp::toVector(alphaGuess));
+  in.setAlphaGuess(pythonUtil::toVector(alphaGuess));
 }
 
 // -----------------------------------------------------------------
@@ -60,12 +59,12 @@ void PyVSStlsInput::setAlphaGuess(VSStlsInput &in, const bp::list &alphaGuess) {
 // -----------------------------------------------------------------
 
 bn::ndarray PyQVSStlsInput::getAlphaGuess(QVSStlsInput &in) {
-  return vp::toNdArray(in.getAlphaGuess());
+  return pythonUtil::toNdArray(in.getAlphaGuess());
 }
 
 void PyQVSStlsInput::setAlphaGuess(QVSStlsInput &in,
                                    const bp::list &alphaGuess) {
-  in.setAlphaGuess(vp::toVector(alphaGuess));
+  in.setAlphaGuess(pythonUtil::toVector(alphaGuess));
 }
 
 // -----------------------------------------------------------------
@@ -74,32 +73,32 @@ void PyQVSStlsInput::setAlphaGuess(QVSStlsInput &in,
 
 bn::ndarray
 PyFreeEnergyIntegrand::getGrid(const VSStlsInput::FreeEnergyIntegrand &fxc) {
-  return vp::toNdArray(fxc.grid);
+  return pythonUtil::toNdArray(fxc.grid);
 }
 
 bn::ndarray PyFreeEnergyIntegrand::getIntegrand(
     const VSStlsInput::FreeEnergyIntegrand &fxc) {
-  return vp::toNdArray2D(fxc.integrand);
+  return pythonUtil::toNdArray2D(fxc.integrand);
 }
 
 bn::ndarray
 PyFreeEnergyIntegrand::getAlpha(const VSStlsInput::FreeEnergyIntegrand &fxc) {
-  return vp::toNdArray(fxc.alpha);
+  return pythonUtil::toNdArray(fxc.alpha);
 }
 
 void PyFreeEnergyIntegrand::setGrid(VSStlsInput::FreeEnergyIntegrand &fxc,
                                     const bn::ndarray &grid) {
-  fxc.grid = vp::toVector(grid);
+  fxc.grid = pythonUtil::toVector(grid);
 }
 
 void PyFreeEnergyIntegrand::setIntegrand(VSStlsInput::FreeEnergyIntegrand &fxc,
                                          const bn::ndarray &integrand) {
-  fxc.integrand = vp::toDoubleVector(integrand);
+  fxc.integrand = pythonUtil::toDoubleVector(integrand);
 }
 
 void PyFreeEnergyIntegrand::setAlpha(VSStlsInput::FreeEnergyIntegrand &fxc,
                                      const bn::ndarray &alpha) {
-  fxc.alpha = vp::toVector(alpha);
+  fxc.alpha = pythonUtil::toVector(alpha);
 }
 
 // -----------------------------------------------------------------
@@ -107,15 +106,15 @@ void PyFreeEnergyIntegrand::setAlpha(VSStlsInput::FreeEnergyIntegrand &fxc,
 // -----------------------------------------------------------------
 
 bn::ndarray PyQstlsGuess::getWvg(const QstlsInput::QstlsGuess &guess) {
-  return vp::toNdArray(guess.wvg);
+  return pythonUtil::toNdArray(guess.wvg);
 }
 
 bn::ndarray PyQstlsGuess::getSsf(const QstlsInput::QstlsGuess &guess) {
-  return vp::toNdArray(guess.ssf);
+  return pythonUtil::toNdArray(guess.ssf);
 }
 
 bn::ndarray PyQstlsGuess::getAdr(const QstlsInput::QstlsGuess &guess) {
-  return vp::toNdArray2D(guess.adr);
+  return pythonUtil::toNdArray2D(guess.adr);
 }
 
 int PyQstlsGuess::getMatsubara(const QstlsInput::QstlsGuess &guess) {
@@ -124,18 +123,18 @@ int PyQstlsGuess::getMatsubara(const QstlsInput::QstlsGuess &guess) {
 
 void PyQstlsGuess::setWvg(QstlsInput::QstlsGuess &guess,
                           const bn::ndarray &wvg) {
-  guess.wvg = vp::toVector(wvg);
+  guess.wvg = pythonUtil::toVector(wvg);
 }
 
 void PyQstlsGuess::setSsf(QstlsInput::QstlsGuess &guess,
                           const bn::ndarray &ssf) {
-  guess.ssf = vp::toVector(ssf);
+  guess.ssf = pythonUtil::toVector(ssf);
 }
 
 void PyQstlsGuess::setAdr(QstlsInput::QstlsGuess &guess,
                           const bn::ndarray &adr) {
   if (adr.shape(0) == 0) { return; }
-  guess.adr = vp::toVector2D(adr);
+  guess.adr = pythonUtil::toVector2D(adr);
 }
 
 void PyQstlsGuess::setMatsubara(QstlsInput::QstlsGuess &guess,
@@ -150,31 +149,31 @@ void PyQstlsGuess::setMatsubara(QstlsInput::QstlsGuess &guess,
 int PyRpa::compute(Rpa &rpa) { return rpa.compute(); }
 
 bn::ndarray PyRpa::getIdr(const Rpa &rpa) {
-  return vp::toNdArray2D(rpa.getIdr());
+  return pythonUtil::toNdArray2D(rpa.getIdr());
 }
 
 bn::ndarray PyRpa::getRdf(const Rpa &rpa, const bn::ndarray &r) {
-  return vp::toNdArray(rpa.getRdf(vp::toVector(r)));
+  return pythonUtil::toNdArray(rpa.getRdf(pythonUtil::toVector(r)));
 }
 
 bn::ndarray PyRpa::getSdr(const Rpa &rpa) {
-  return vp::toNdArray(rpa.getSdr());
+  return pythonUtil::toNdArray(rpa.getSdr());
 }
 
 bn::ndarray PyRpa::getSlfc(const Rpa &rpa) {
-  return vp::toNdArray(rpa.getSlfc());
+  return pythonUtil::toNdArray(rpa.getSlfc());
 }
 
 bn::ndarray PyRpa::getSsf(const Rpa &rpa) {
-  return vp::toNdArray(rpa.getSsf());
+  return pythonUtil::toNdArray(rpa.getSsf());
 }
 
 bn::ndarray PyRpa::getSsfHF(const Rpa &rpa) {
-  return vp::toNdArray(rpa.getSsfHF());
+  return pythonUtil::toNdArray(rpa.getSsfHF());
 }
 
 bn::ndarray PyRpa::getWvg(const Rpa &rpa) {
-  return vp::toNdArray(rpa.getWvg());
+  return pythonUtil::toNdArray(rpa.getWvg());
 }
 
 double PyRpa::getUInt(const Rpa &rpa) { return rpa.getUInt(); }
@@ -192,7 +191,7 @@ int PyStls::compute(Stls &stls) { return stls.compute(); }
 double PyStls::getError(const Stls &stls) { return stls.getError(); }
 
 bn::ndarray PyStls::getBf(const Stls &stls) {
-  return vp::toNdArray(stls.getBf());
+  return pythonUtil::toNdArray(stls.getBf());
 }
 
 // -----------------------------------------------------------------
@@ -209,15 +208,15 @@ double PyVSStls::getError(const VSStls &vsstls) {
 }
 
 bn::ndarray PyVSStls::getAlpha(const VSStls &vsstls) {
-  return vp::toNdArray(vsstls.getAlpha());
+  return pythonUtil::toNdArray(vsstls.getAlpha());
 }
 
 bn::ndarray PyVSStls::getFreeEnergyIntegrand(const VSStls &vsstls) {
-  return vp::toNdArray2D(vsstls.getFreeEnergyIntegrand());
+  return pythonUtil::toNdArray2D(vsstls.getFreeEnergyIntegrand());
 }
 
 bn::ndarray PyVSStls::getFreeEnergyGrid(const VSStls &vsstls) {
-  return vp::toNdArray(vsstls.getFreeEnergyGrid());
+  return pythonUtil::toNdArray(vsstls.getFreeEnergyGrid());
 }
 
 // -----------------------------------------------------------------
@@ -229,7 +228,7 @@ int PyQstls::compute(Qstls &qstls) { return qstls.compute(); }
 double PyQstls::getError(const Qstls &qstls) { return qstls.getError(); }
 
 bn::ndarray PyQstls::getAdr(const Qstls &qstls) {
-  return vp::toNdArray2D(qstls.getAdr());
+  return pythonUtil::toNdArray2D(qstls.getAdr());
 }
 
 // -----------------------------------------------------------------
@@ -246,19 +245,19 @@ double PyQVSStls::getError(const QVSStls &qvsstls) {
 }
 
 bn::ndarray PyQVSStls::getAlpha(const QVSStls &qvsstls) {
-  return vp::toNdArray(qvsstls.getAlpha());
+  return pythonUtil::toNdArray(qvsstls.getAlpha());
 }
 
 bn::ndarray PyQVSStls::getAdr(const QVSStls &qvsstls) {
-  return vp::toNdArray2D(qvsstls.getAdr());
+  return pythonUtil::toNdArray2D(qvsstls.getAdr());
 }
 
 bn::ndarray PyQVSStls::getFreeEnergyIntegrand(const QVSStls &qvsstls) {
-  return vp::toNdArray2D(qvsstls.getFreeEnergyIntegrand());
+  return pythonUtil::toNdArray2D(qvsstls.getFreeEnergyIntegrand());
 }
 
 bn::ndarray PyQVSStls::getFreeEnergyGrid(const QVSStls &qvsstls) {
-  return vp::toNdArray(qvsstls.getFreeEnergyGrid());
+  return pythonUtil::toNdArray(qvsstls.getFreeEnergyGrid());
 }
 
 // -----------------------------------------------------------------
@@ -268,24 +267,24 @@ bn::ndarray PyQVSStls::getFreeEnergyGrid(const QVSStls &qvsstls) {
 bn::ndarray PyThermo::computeRdf(const bn::ndarray &rIn,
                                  const bn::ndarray &wvgIn,
                                  const bn::ndarray &ssfIn) {
-  const vector<double> &r = vp::toVector(rIn);
-  const vector<double> &wvg = vp::toVector(wvgIn);
-  const vector<double> &ssf = vp::toVector(ssfIn);
-  return vp::toNdArray(thermoUtil::computeRdf(r, wvg, ssf));
+  const vector<double> &r = pythonUtil::toVector(rIn);
+  const vector<double> &wvg = pythonUtil::toVector(wvgIn);
+  const vector<double> &ssf = pythonUtil::toVector(ssfIn);
+  return pythonUtil::toNdArray(thermoUtil::computeRdf(r, wvg, ssf));
 }
 
 double PyThermo::computeInternalEnergy(const bn::ndarray &wvgIn,
                                        const bn::ndarray &ssfIn,
                                        const double &coupling) {
-  const vector<double> &wvg = vp::toVector(wvgIn);
-  const vector<double> &ssf = vp::toVector(ssfIn);
+  const vector<double> &wvg = pythonUtil::toVector(wvgIn);
+  const vector<double> &ssf = pythonUtil::toVector(ssfIn);
   return thermoUtil::computeInternalEnergy(wvg, ssf, coupling);
 }
 
 double PyThermo::computeFreeEnergy(const bn::ndarray &gridIn,
                                    const bn::ndarray &rsuIn,
                                    const double &coupling) {
-  const vector<double> &grid = vp::toVector(gridIn);
-  const vector<double> &rsu = vp::toVector(rsuIn);
+  const vector<double> &grid = pythonUtil::toVector(gridIn);
+  const vector<double> &rsu = pythonUtil::toVector(rsuIn);
   return thermoUtil::computeFreeEnergy(grid, rsu, coupling);
 }

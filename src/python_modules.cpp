@@ -7,7 +7,6 @@
 
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
-namespace vp = vecUtil::python;
 
 // Initialization code for the qupled module
 void qupledInitialization() {
