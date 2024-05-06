@@ -1,7 +1,7 @@
 #include "python_util.hpp"
+#include "util.hpp"
 
 using namespace std;
-using namespace vecUtil;
 
 namespace pythonUtil {
 

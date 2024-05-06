@@ -1,4 +1,5 @@
 #include "util.hpp"
+#include "vector_util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
 #include "vsstls.hpp"

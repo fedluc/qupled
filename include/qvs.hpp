@@ -1,6 +1,7 @@
 #ifndef QVS_HPP
 #define QVS_HPP
 
+#include "vector2D.hpp"
 #include "numerics.hpp"
 #include "vsbase.hpp"
 #include "qstls.hpp"
@@ -12,7 +13,7 @@ class QVSStlsInput;
 // Class to handle simultaneous state point calculations
 // -----------------------------------------------------------------
 
-class QStlsCSR : public CSR<vecUtil::Vector2D, Qstls, QVSStlsInput> {
+class QStlsCSR : public CSR<Vector2D, Qstls, QVSStlsInput> {
 
 public:
 
@@ -32,7 +33,7 @@ public:
 private:
 
   // Helper methods to compute the derivatives
-  double getDerivative(const std::shared_ptr<vecUtil::Vector2D> &f,
+  double getDerivative(const std::shared_ptr<Vector2D> &f,
                        const int &l,
                        const size_t &idx,
                        const Derivative &type);
@@ -155,7 +156,7 @@ public:
   QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_)
       : VSBase(in_, thermoProp_) {}
   // Getters
-  vecUtil::Vector2D getAdr() const { return adr; }
+  Vector2D getAdr() const { return adr; }
 
 private:
 
@@ -164,7 +165,7 @@ private:
   // Iterations to solve the qvsstls-scheme
   void updateSolution();
   // Auxiliary density response
-  vecUtil::Vector2D adr;
+  Vector2D adr;
 };
 
 #endif

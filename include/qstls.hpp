@@ -1,15 +1,13 @@
 #ifndef QSTLS_HPP
 #define QSTLS_HPP
 
+#include "vector2D.hpp"
+#include "vector3D.hpp"
 #include <map>
 #include <fmt/core.h>
 #include "stls.hpp"
 
 // Forward declarations
-namespace vecUtil {
-  class Vector2D;
-  class Vector3D;
-} // namespace vecUtil
 class QsltsInput;
 class Interpolator1D;
 class Interpolator2D;
@@ -32,17 +30,17 @@ public:
   int compute();
   // Getters
   double getError() const { return computeError(); }
-  const vecUtil::Vector2D &getAdr() const { return adr; }
-  const vecUtil::Vector3D &getAdrFixed() const { return adrFixed; }
+  const Vector2D &getAdr() const { return adr; }
+  const Vector3D &getAdrFixed() const { return adrFixed; }
 
 protected:
 
   // Input data
   const QstlsInput in;
   // Auxiliary density response
-  vecUtil::Vector2D adr;
-  vecUtil::Vector2D adrOld;
-  vecUtil::Vector3D adrFixed;
+  Vector2D adr;
+  Vector2D adrOld;
+  Vector3D adrFixed;
   std::string adrFixedFileName =
       fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
                   in.getDegeneracy(),
@@ -56,9 +54,9 @@ protected:
   // Compute auxiliary density response
   void computeAdr();
   void computeAdrFixed();
-  void writeAdrFixedFile(const vecUtil::Vector3D &res,
+  void writeAdrFixedFile(const Vector3D &res,
                          const std::string &fileName) const;
-  void readAdrFixedFile(vecUtil::Vector3D &res,
+  void readAdrFixedFile(Vector3D &res,
                         const std::string &fileName,
                         const bool iet) const;
   int checkAdrFixed(const std::vector<double> &wvg_,
@@ -76,21 +74,21 @@ protected:
   void initialGuessSsf(const std::vector<double> &wvg_,
                        const std::vector<double> &adr_);
   void initialGuessAdr(const std::vector<double> &wvg_,
-                       const vecUtil::Vector2D &adr_);
+                       const Vector2D &adr_);
   double computeError() const;
   void updateSolution();
   // Recovery files
   void writeRecovery();
   void readRecovery(const std::string &fileName,
                     std::vector<double> &wvg_,
-                    vecUtil::Vector3D &adrFixed_,
+                    Vector3D &adrFixed_,
                     double &Theta,
                     int &nl) const;
   void readRecovery(const std::string &fileName,
                     std::vector<double> &wvg_,
                     std::vector<double> &ssf_,
-                    vecUtil::Vector2D &adr_,
-                    vecUtil::Vector3D &adrFixed_,
+                    Vector2D &adr_,
+                    Vector3D &adrFixed_,
                     double &Theta,
                     int &nl) const;
 };
@@ -210,8 +208,8 @@ public:
 
   // Get result of integration
   void get(const std::vector<double> &wvg,
-           const vecUtil::Vector3D &fixed,
-           vecUtil::Vector2D &res);
+           const Vector3D &fixed,
+           Vector2D &res);
 
 private:
 
@@ -242,7 +240,7 @@ public:
         itgGrid(itgGrid_) {}
 
   // Get integration result
-  void get(std::vector<double> &wvg, vecUtil::Vector3D &res) const;
+  void get(std::vector<double> &wvg, Vector3D &res) const;
 
 private:
 
@@ -278,8 +276,8 @@ public:
 
   // Get integration result
   void get(const std::vector<double> &wvg,
-           const vecUtil::Vector3D &fixed,
-           vecUtil::Vector2D &res);
+           const Vector3D &fixed,
+           Vector2D &res);
 
 private:
 
@@ -322,7 +320,7 @@ public:
         itg(itg_) {}
 
   // Get integration result
-  void get(std::vector<double> &wvg, vecUtil::Vector3D &res) const;
+  void get(std::vector<double> &wvg, Vector3D &res) const;
 
 private:
 

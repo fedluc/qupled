@@ -2,6 +2,7 @@
 #include <numeric>
 #include <fmt/core.h>
 #include "util.hpp"
+#include "vector_util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
 #include "qstls.hpp"

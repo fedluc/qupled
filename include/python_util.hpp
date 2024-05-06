@@ -1,7 +1,8 @@
 #ifndef PYTHON_UTIL_HPP
 #define PYTHON_UTIL_HPP
 
-#include "util.hpp"
+#include "vector2D.hpp"
+#include "vector3D.hpp"
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
 #include <vector>
@@ -25,7 +26,7 @@ namespace pythonUtil {
   std::vector<double> toVector(const bp::list &list);
 
   // Convert a numpy array to Vector2D
-  vecUtil::Vector2D toVector2D(const bn::ndarray &nda);
+  Vector2D toVector2D(const bn::ndarray &nda);
 
   // Convery a numpy array to std::vector<std::vector<double>>
   std::vector<std::vector<double>> toDoubleVector(const bn::ndarray &nda);
@@ -37,13 +38,13 @@ namespace pythonUtil {
   bn::ndarray toNdArray(const std::vector<double> &v);
 
   // Convert Vector2D to numpy array
-  bn::ndarray toNdArray2D(const vecUtil::Vector2D &v);
+  bn::ndarray toNdArray2D(const Vector2D &v);
 
   // Convert std::vector<std::vector<double>> to numpy array
   bn::ndarray toNdArray2D(const std::vector<std::vector<double>> &v);
 
   // Convert Vector3D to numpy array
-  bn::ndarray toNdArray3D(const vecUtil::Vector3D &v);
+  bn::ndarray toNdArray3D(const Vector3D &v);
 
 } // namespace pythonUtil
 

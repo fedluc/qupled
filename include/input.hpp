@@ -1,14 +1,10 @@
 #ifndef INPUT_HPP
 #define INPUT_HPP
 
+#include "vector2D.hpp"
 #include <cassert>
 #include <iostream>
 #include <vector>
-
-// Forward declarations
-namespace vecUtil {
-  class Vector2D;
-}
 
 // -----------------------------------------------------------------
 // Base class to handle input for the dielectric schemes
@@ -184,7 +180,7 @@ public:
   struct QstlsGuess {
     std::vector<double> wvg;
     std::vector<double> ssf;
-    vecUtil::Vector2D adr;
+    Vector2D adr;
     int matsubara = 0;
     bool operator==(const QstlsGuess &other) const {
       return wvg == other.wvg && ssf == other.ssf && adr == other.adr &&

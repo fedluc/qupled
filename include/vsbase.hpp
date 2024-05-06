@@ -1,6 +1,7 @@
 #ifndef VSBASE_HPP
 #define VSBASE_HPP
 
+#include "vector_util.hpp"
 #include <limits>
 #include <map>
 

@@ -1,5 +1,6 @@
 #include <filesystem>
 #include "util.hpp"
+#include "vector_util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
 #include "qvs.hpp"

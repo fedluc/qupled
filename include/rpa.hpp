@@ -1,12 +1,10 @@
 #ifndef RPA_HPP
 #define RPA_HPP
 
+#include "vector2D.hpp"
 #include <vector>
 
 // Forward declarations
-namespace vecUtil {
-  class Vector2D;
-}
 class RpaInput;
 class Integrator1D;
 
@@ -25,7 +23,7 @@ public:
   // Compute the scheme
   int compute();
   // Getters
-  vecUtil::Vector2D getIdr() const { return idr; }
+  Vector2D getIdr() const { return idr; }
   std::vector<double> getSlfc() const { return slfc; }
   std::vector<double> getSsf() const { return ssf; }
   std::vector<double> getSsfHF() const { return ssfHF; }
@@ -50,7 +48,7 @@ protected:
   // Wave vector grid
   std::vector<double> wvg;
   // Ideal density response
-  vecUtil::Vector2D idr;
+  Vector2D idr;
   // Static local field correction
   std::vector<double> slfc;
   // Static structure factor

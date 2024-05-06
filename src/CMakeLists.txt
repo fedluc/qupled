@@ -28,7 +28,11 @@ add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 # Source code
 Python3_add_library(qupled MODULE
-		    util.cpp
+		    num_util.cpp
+		    vector_util.cpp
+		    vector2D.cpp
+		    vector3D.cpp
+		    util.cpp	
 		    input.cpp
 		    numerics.cpp
 		    chemical_potential.cpp
