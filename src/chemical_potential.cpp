@@ -1,7 +1,7 @@
-#include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_sf_fermi_dirac.h>
-#include "numerics.hpp"
 #include "chemical_potential.hpp"
+#include "numerics.hpp"
+#include <gsl/gsl_sf_fermi_dirac.h>
+#include <gsl/gsl_sf_gamma.h>
 
 using namespace std;
 

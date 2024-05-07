@@ -1,10 +1,10 @@
-#include <fmt/core.h>
-#include "vector_util.hpp"
+#include "stls.hpp"
 #include "bin_util.hpp"
+#include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
-#include "input.hpp"
-#include "stls.hpp"
+#include "vector_util.hpp"
+#include <fmt/core.h>
 
 using namespace std;
 using namespace vecUtil;
@@ -194,8 +194,7 @@ void Stls::writeRecovery() {
   ofstream file;
   file.open(recoveryFileName, ios::binary);
   if (!file.is_open()) {
-    throwError("Recovery file " + recoveryFileName +
-	       " could not be created.");
+    throwError("Recovery file " + recoveryFileName + " could not be created.");
   }
   int nx = wvg.size();
   writeDataToBinary<int>(file, nx);
@@ -313,7 +312,7 @@ double BridgeFunction::couplingParameter() const {
   if (mapping == "linear") { return fact / (1 + Theta); }
   if (Theta != 0.0) { return fact / Theta; }
   throwError("The standard iet mapping cannot be used in the "
-                  "ground state");
+             "ground state");
   return numUtil::Inf;
 }
 

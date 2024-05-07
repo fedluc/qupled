@@ -1,5 +1,5 @@
-#include "numerics.hpp"
 #include "internal_energy.hpp"
+#include "numerics.hpp"
 
 double InternalEnergy::ssf(const double &y) const { return ssfi.eval(y); }
 

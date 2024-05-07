@@ -1,10 +1,10 @@
 #ifndef RPA_HPP
 #define RPA_HPP
 
-#include "vector2D.hpp"
-#include <vector>
 #include "input.hpp"
 #include "numerics.hpp"
+#include "vector2D.hpp"
+#include <vector>
 
 // -----------------------------------------------------------------
 // Solver for the Random-Phase approximation scheme

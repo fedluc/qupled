@@ -1,10 +1,10 @@
 #ifndef QVS_HPP
 #define QVS_HPP
 
-#include "vector2D.hpp"
 #include "numerics.hpp"
-#include "vsbase.hpp"
 #include "qstls.hpp"
+#include "vector2D.hpp"
+#include "vsbase.hpp"
 
 // Forward declarations
 class QVSStlsInput;

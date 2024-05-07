@@ -3,14 +3,14 @@
 #include <mpi.h>
 #define OMPI_SKIP_MPICXX 1 // Disable MPI-C++ bindings
 #endif
+#include <iostream>
 #include <numeric>
 #include <omp.h>
-#include <iostream>
 
 using namespace std;
 
 namespace MPIUtil {
-  
+
 #ifdef USE_MPI
   const MPI_Comm MPICommunicator = MPI_COMM_WORLD;
 #endif
@@ -102,12 +102,8 @@ namespace MPIUtil {
   bool isEqualOnAllRanks(const int &myNumber) {
 #ifdef USE_MPI
     int globalMininumNumber;
-    MPI_Allreduce(&myNumber,
-		  &globalMininumNumber,
-		  1,
-		  MPI_INT,
-		  MPI_MIN,
-		  MPICommunicator);
+    MPI_Allreduce(
+        &myNumber, &globalMininumNumber, 1, MPI_INT, MPI_MIN, MPICommunicator);
     return myNumber == globalMininumNumber;
 #endif
     (void)myNumber;
@@ -135,8 +131,8 @@ namespace MPIUtil {
   }
 
   MPIParallelForData parallelFor(const function<void(int)> &loopFunc,
-				 const int loopSize,
-				 const int ompThreads) {
+                                 const int loopSize,
+                                 const int ompThreads) {
     MPIParallelForData allIdx = getAllLoopIndexes(loopSize);
     const auto &thisIdx = allIdx[rank()];
     const bool useOMP = ompThreads > 1;
@@ -148,8 +144,8 @@ namespace MPIUtil {
   }
 
   void gatherLoopData(double *dataToGather,
-		      const MPIParallelForData &loopData,
-		      const int countsPerLoop) {
+                      const MPIParallelForData &loopData,
+                      const int countsPerLoop) {
 #ifdef USE_MPI
     std::vector<int> recieverCounts;
     for (const auto &i : loopData) {
@@ -158,17 +154,17 @@ namespace MPIUtil {
     }
     std::vector<int> displacements(recieverCounts.size(), 0);
     std::partial_sum(recieverCounts.begin(),
-		     recieverCounts.end() - 1,
-		     displacements.begin() + 1,
-		     plus<double>());
+                     recieverCounts.end() - 1,
+                     displacements.begin() + 1,
+                     plus<double>());
     MPI_Allgatherv(MPI_IN_PLACE,
-		   0,
-		   MPI_DATATYPE_NULL,
-		   dataToGather,
-		   recieverCounts.data(),
-		   displacements.data(),
-		   MPI_DOUBLE,
-		   MPI_COMM_WORLD);
+                   0,
+                   MPI_DATATYPE_NULL,
+                   dataToGather,
+                   recieverCounts.data(),
+                   displacements.data(),
+                   MPI_DOUBLE,
+                   MPI_COMM_WORLD);
 #endif
     if (!dataToGather) { throwError(""); }
     (void)loopData;

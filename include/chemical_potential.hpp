@@ -1,6 +1,8 @@
 #ifndef CHEMICALPOTENTIAL_HPP
 #define CHEMICALPOTENTIAL_HPP
 
+#include <vector>
+
 class ChemicalPotential {
 
 public:

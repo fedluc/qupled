@@ -1,10 +1,10 @@
-#include <cassert>
-#include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "free_energy.hpp"
 #include "internal_energy.hpp"
-#include "rdf.hpp"
 #include "mpi_util.hpp"
+#include "numerics.hpp"
+#include "rdf.hpp"
+#include <cassert>
 
 using namespace std;
 

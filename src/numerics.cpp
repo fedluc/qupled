@@ -1,5 +1,5 @@
-#include "mpi_util.hpp"
 #include "numerics.hpp"
+#include "mpi_util.hpp"
 
 using namespace std;
 using namespace GslWrappers;
@@ -14,7 +14,7 @@ void GslWrappers::callGSLFunction(Func &&gslFunction, Args &&...args) {
   int status = gslFunction(std::forward<Args>(args)...);
   if (status) {
     throwError("GSL error: " + std::to_string(status) + ", " +
-	       std::string(gsl_strerror(status)));
+               std::string(gsl_strerror(status)));
   }
 }
 
@@ -179,7 +179,7 @@ void BrentRootSolver::solve(const function<double(double)> &func,
   // Check if the solver managed to find a solution
   if (status != GSL_SUCCESS) {
     throwError("The brent root solver "
-	       "did not converge to the desired accuracy.");
+               "did not converge to the desired accuracy.");
   }
 }
 
@@ -207,7 +207,7 @@ void SecantSolver::solve(const function<double(double)> &func,
   // Check if the solver managed to find a solution
   if (status != GSL_SUCCESS) {
     throwError("The secant root solver "
-	       "did not converge to the desired accuracy.");
+               "did not converge to the desired accuracy.");
   }
 }
 

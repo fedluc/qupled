@@ -1,15 +1,15 @@
 #ifndef NUMERICS_HPP
 #define NUMERICS_HPP
 
-#include <functional>
-#include <vector>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_roots.h>
-#include <gsl/gsl_integration.h>
-#include <gsl/gsl_spline.h>
-#include <gsl/gsl_interp2d.h>
-#include <gsl/gsl_spline2d.h>
 #include "num_util.hpp"
+#include <functional>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_interp2d.h>
+#include <gsl/gsl_roots.h>
+#include <gsl/gsl_spline.h>
+#include <gsl/gsl_spline2d.h>
+#include <vector>
 
 // -----------------------------------------------------------------
 // C++ wrappers to GSL objects
@@ -18,7 +18,8 @@
 namespace GslWrappers {
 
   // Wrapper to gsl_function
-  template <typename T> class GslFunctionWrap : public gsl_function {
+  template <typename T>
+  class GslFunctionWrap : public gsl_function {
 
   private:
 

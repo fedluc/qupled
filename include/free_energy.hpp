@@ -13,19 +13,19 @@ public:
 
   // Constructor
   FreeEnergy(const double &rs_,
-	     const Interpolator1D &rsui_,
-	     Integrator1D &itg_,
-	     const bool normalize_)
-    : rs(rs_),
-      itg(itg_),
-      rsui(rsui_),
-      normalize(normalize_) {}
-  
+             const Interpolator1D &rsui_,
+             Integrator1D &itg_,
+             const bool normalize_)
+      : rs(rs_),
+        itg(itg_),
+        rsui(rsui_),
+        normalize(normalize_) {}
+
   // Get result of integration
   double get() const;
-  
+
 private:
-  
+
   // Coupling parameter
   const double rs;
 
@@ -41,6 +41,5 @@ private:
   // Flag marking whether the free energy should be normalized with rs^2
   const bool normalize;
 };
-
 
 #endif

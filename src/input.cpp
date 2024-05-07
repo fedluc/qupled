@@ -1,5 +1,5 @@
-#include "mpi_util.hpp"
 #include "input.hpp"
+#include "mpi_util.hpp"
 
 using namespace std;
 using namespace MPIUtil;
@@ -148,9 +148,7 @@ void StlsInput::setNIter(const int &nIter) {
 }
 
 void StlsInput::setOutIter(const int &outIter) {
-  if (outIter < 0) {
-    throwError("The output frequency can't be negative");
-  }
+  if (outIter < 0) { throwError("The output frequency can't be negative"); }
   this->outIter = outIter;
 }
 
@@ -215,9 +213,7 @@ void QstlsInput::setGuess(const QstlsGuess &guess) {
                       guess.adr.size(0) == guess.wvg.size() &&
                       guess.adr.size(1) == nl;
   }
-  if (!consistentGuess) {
-    throwError("The initial guess is inconsistent");
-  }
+  if (!consistentGuess) { throwError("The initial guess is inconsistent"); }
   this->guess = guess;
 }
 

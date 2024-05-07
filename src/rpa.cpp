@@ -1,9 +1,9 @@
-#include "numerics.hpp"
-#include "input.hpp"
-#include "mpi_util.hpp"
-#include "thermo_util.hpp"
 #include "rpa.hpp"
 #include "chemical_potential.hpp"
+#include "input.hpp"
+#include "mpi_util.hpp"
+#include "numerics.hpp"
+#include "thermo_util.hpp"
 
 using namespace std;
 using namespace thermoUtil;
@@ -65,7 +65,8 @@ void Rpa::buildWvGrid() {
   const double dx = in.getWaveVectorGridRes();
   const double xmax = in.getWaveVectorGridCutoff();
   if (xmax < dx) {
-    throwError("The wave-vector grid cutoff must be larger than the resolution");
+    throwError(
+        "The wave-vector grid cutoff must be larger than the resolution");
   }
   while (wvg.back() < xmax) {
     wvg.push_back(wvg.back() + dx);

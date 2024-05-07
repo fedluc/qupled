@@ -9,7 +9,8 @@
 
 namespace binUtil {
 
-  template <typename T> void writeNum(std::ofstream &file, const T &num) {
+  template <typename T>
+  void writeNum(std::ofstream &file, const T &num) {
     file.write(reinterpret_cast<const char *>(&num), sizeof(num));
   }
 
@@ -30,7 +31,8 @@ namespace binUtil {
     }
   }
 
-  template <typename T> void readNum(std::ifstream &file, T &num) {
+  template <typename T>
+  void readNum(std::ifstream &file, T &num) {
     file.read((char *)&num, sizeof(T));
   }
 
@@ -44,7 +46,8 @@ namespace binUtil {
     readNum<int>(file, data);
   }
 
-  template <typename T> void readDataFromBinary(std::ifstream &file, T &data) {
+  template <typename T>
+  void readDataFromBinary(std::ifstream &file, T &data) {
     for (auto &el : data) {
       readDataFromBinary<decltype(el)>(file, el);
     }

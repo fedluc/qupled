@@ -1,13 +1,12 @@
-#include <filesystem>
-#include <numeric>
-#include <fmt/core.h>
-#include "vector_util.hpp"
-#include "mpi_util.hpp"
+#include "qstls.hpp"
 #include "bin_util.hpp"
-#include "numerics.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
-#include "qstls.hpp"
+#include "numerics.hpp"
+#include "vector_util.hpp"
+#include <filesystem>
+#include <fmt/core.h>
+#include <numeric>
 
 using namespace std;
 using namespace vecUtil;
@@ -26,7 +25,7 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_, const bool writeFiles_)
   // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
     throwError("Ground state calculations are not available "
-	       "for the quantum schemes");
+               "for the quantum schemes");
   }
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "QSTLS-HNC" || in.getTheory() == "QSTLS-IOI" ||
@@ -269,7 +268,7 @@ void Qstls::computeAdrFixed() {
       writeAdrFixedFile(adrFixed, adrFixedFileName);
     } catch (...) {
       throwError("Error in the output file for the fixed component"
-		 " of the auxiliary density response.");
+                 " of the auxiliary density response.");
     }
   }
 }
@@ -323,7 +322,7 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   if (!file) { throwError("Error in reading from file " + fileName); }
   if (checkAdrFixed(wvg_, Theta_, nl_) != 0) {
     throwError("Fixed component of the auxiliary density response"
-	       " loaded from file is incompatible with input");
+               " loaded from file is incompatible with input");
   }
 }
 
@@ -394,7 +393,7 @@ void Qstls::computeAdrFixedIet() {
   int nFilesToWrite = idx.size();
   if (!isEqualOnAllRanks(idx.size())) {
     throwError("Not all ranks can access the files with the fixed "
-                    " component of the auxiliary density response");
+               " component of the auxiliary density response");
   }
   if (nFilesToWrite == 0) { return; }
   // Barrier to ensure that all ranks have identified all the files that have to
@@ -439,7 +438,7 @@ void Qstls::getAdrFixedIetFileInfo() {
       adrFixedIetFileInfo.insert(pair<int, decltype(filePair)>(i, filePair));
     } catch (...) {
       throwError("Error in the output file for the fixed component"
-		 " of the auxiliary density response.");
+                 " of the auxiliary density response.");
     }
   }
 }
@@ -450,8 +449,7 @@ void Qstls::writeRecovery() {
   ofstream file;
   file.open(recoveryFileName, ios::binary);
   if (!file.is_open()) {
-    throwError("Recovery file " + recoveryFileName +
-	       " could not be created.");
+    throwError("Recovery file " + recoveryFileName + " could not be created.");
   }
   int nx = wvg.size();
   int nl = in.getNMatsubara();

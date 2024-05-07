@@ -1,9 +1,9 @@
 #ifndef VSBASE_HPP
 #define VSBASE_HPP
 
-#include "vector_util.hpp"
-#include "thermo_util.hpp"
 #include "mpi_util.hpp"
+#include "thermo_util.hpp"
+#include "vector_util.hpp"
 #include <limits>
 #include <map>
 
@@ -106,7 +106,8 @@ protected:
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-template <typename StructProp, typename Input> class ThermoPropBase {
+template <typename StructProp, typename Input>
+class ThermoPropBase {
 
 public:
 
@@ -172,7 +173,8 @@ public:
   void setAlpha(const double &alpha) { structProp.setAlpha(alpha); }
 
   // Compute the thermodynamic properties
-  template <typename Scheme> void compute(const Input &in) {
+  template <typename Scheme>
+  void compute(const Input &in) {
     // Recursive calls to solve the VS-STLS scheme for all state points
     // with coupling parameter smaller than rs
     const double nrs = rsGrid.size();
@@ -223,7 +225,8 @@ public:
   }
 
   // Get structural properties
-  template <typename CSR> const CSR &getStructProp() {
+  template <typename CSR>
+  const CSR &getStructProp() {
     if (!structProp.isComputed()) { structProp.compute(); }
     if (isZeroCoupling && isZeroDegeneracy) {
       return structProp.getCsr(SIdx::RS_DOWN_THETA_DOWN);
@@ -367,7 +370,8 @@ protected:
 // StructPropBase class
 // -----------------------------------------------------------------
 
-template <typename CSR, typename Input> class StructPropBase {
+template <typename CSR, typename Input>
+class StructPropBase {
 
 public:
 

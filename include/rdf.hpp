@@ -10,24 +10,24 @@
 class Rdf {
 
 public:
-  
+
   // Constructor
   Rdf(const double &r_,
       const double &cutoff_,
       const Interpolator1D &ssfi_,
       Integrator1D &itg_,
       Integrator1D &itgf_)
-    : r(r_),
-      cutoff(cutoff_),
-      itgf(itgf_),
-      itg(itg_),
-      ssfi(ssfi_) {}
-  
+      : r(r_),
+        cutoff(cutoff_),
+        itgf(itgf_),
+        itg(itg_),
+        ssfi(ssfi_) {}
+
   // Get result of integration
   double get() const;
-  
+
 private:
-  
+
   // Spatial position
   const double r;
 

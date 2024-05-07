@@ -4,6 +4,7 @@
 #include "vector2D.hpp"
 #include <cassert>
 #include <iostream>
+#include <string>
 #include <vector>
 
 // -----------------------------------------------------------------

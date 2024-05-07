@@ -1,11 +1,11 @@
 #ifndef QSTLS_HPP
 #define QSTLS_HPP
 
+#include "stls.hpp"
 #include "vector2D.hpp"
 #include "vector3D.hpp"
-#include <map>
 #include <fmt/core.h>
-#include "stls.hpp"
+#include <map>
 
 // Forward declarations
 class QsltsInput;

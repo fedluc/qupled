@@ -32,7 +32,8 @@ namespace pythonUtil {
   std::vector<std::vector<double>> toDoubleVector(const bn::ndarray &nda);
 
   // Generic converter from vector type to numpy array
-  template <typename T> bn::ndarray toNdArrayT(const T &v);
+  template <typename T>
+  bn::ndarray toNdArrayT(const T &v);
 
   // Convert std::vector<double> to numpy array
   bn::ndarray toNdArray(const std::vector<double> &v);

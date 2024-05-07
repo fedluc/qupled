@@ -16,9 +16,7 @@ namespace pythonUtil {
   }
 
   vector<double> toVector(const bn::ndarray &nda) {
-    if (nda.get_nd() != 1) {
-      throwError("Incorrect numpy array dimensions");
-    }
+    if (nda.get_nd() != 1) { throwError("Incorrect numpy array dimensions"); }
     const Py_intptr_t *shape = nda.get_shape();
     const int dim = nda.get_nd();
     // the numpy array is flattened to a one dimensional std::vector
@@ -44,9 +42,7 @@ namespace pythonUtil {
   }
 
   Vector2D toVector2D(const bn::ndarray &nda) {
-    if (nda.get_nd() != 2) {
-      throwError("Incorrect numpy array dimensions");
-    }
+    if (nda.get_nd() != 2) { throwError("Incorrect numpy array dimensions"); }
     CheckRowMajor(nda);
     const Py_intptr_t *shape = nda.get_shape();
     const int sz1 = shape[0];
@@ -62,9 +58,7 @@ namespace pythonUtil {
   }
 
   vector<vector<double>> toDoubleVector(const bn::ndarray &nda) {
-    if (nda.get_nd() != 2) {
-      throwError("Incorrect numpy array dimensions");
-    }
+    if (nda.get_nd() != 2) { throwError("Incorrect numpy array dimensions"); }
     CheckRowMajor(nda);
     const Py_intptr_t *shape = nda.get_shape();
     const int sz1 = shape[0];
@@ -80,7 +74,8 @@ namespace pythonUtil {
     return v;
   }
 
-  template <typename T> bn::ndarray toNdArrayT(const T &v) {
+  template <typename T>
+  bn::ndarray toNdArrayT(const T &v) {
     Py_intptr_t shape[1];
     shape[0] = v.size();
     bn::ndarray result = bn::zeros(1, shape, bn::dtype::get_builtin<double>());

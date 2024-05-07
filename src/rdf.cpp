@@ -4,7 +4,6 @@ using namespace std;
 using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
 
-
 double Rdf::ssf(const double &y) const { return ssfi.eval(y); }
 
 double Rdf::integrand(const double &y) const {

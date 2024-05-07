@@ -3,11 +3,11 @@
 #define OMPI_SKIP_MPICXX 1 // Disable MPI-C++ bindings
 #endif
 
+#include "num_util.hpp"
+#include "numerics.hpp"
 #include <cassert>
 #include <numeric>
 #include <omp.h>
-#include "numerics.hpp"
-#include "num_util.hpp"
 
 namespace numUtil {
 
