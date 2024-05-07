@@ -73,8 +73,7 @@ protected:
   void initialGuess();
   void initialGuessSsf(const std::vector<double> &wvg_,
                        const std::vector<double> &adr_);
-  void initialGuessAdr(const std::vector<double> &wvg_,
-                       const Vector2D &adr_);
+  void initialGuessAdr(const std::vector<double> &wvg_, const Vector2D &adr_);
   double computeError() const;
   void updateSolution();
   // Recovery files
@@ -207,9 +206,8 @@ public:
         itg(itg_) {}
 
   // Get result of integration
-  void get(const std::vector<double> &wvg,
-           const Vector3D &fixed,
-           Vector2D &res);
+  void
+  get(const std::vector<double> &wvg, const Vector3D &fixed, Vector2D &res);
 
 private:
 
@@ -275,9 +273,8 @@ public:
         bfi(bfi_) {}
 
   // Get integration result
-  void get(const std::vector<double> &wvg,
-           const Vector3D &fixed,
-           Vector2D &res);
+  void
+  get(const std::vector<double> &wvg, const Vector3D &fixed, Vector2D &res);
 
 private:
 

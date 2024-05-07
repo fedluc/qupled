@@ -24,7 +24,7 @@ void Vector3D::resize(const size_t s1_, const size_t s2_, const size_t s3_) {
 }
 
 double &Vector3D::operator()(const size_t i, const size_t j, const size_t k) {
-    return v[k + j * s3 + i * s2 * s3];
+  return v[k + j * s3 + i * s2 * s3];
 }
 
 const double &
@@ -40,9 +40,9 @@ const double &Vector3D::operator()(const size_t i) const {
   return operator()(i, 0);
 }
 
-  bool Vector3D::operator==(const Vector3D &other) const {
-    return v == other.v && s1 == other.s1 && s2 == other.s2 && s3 == other.s3;
-  }
+bool Vector3D::operator==(const Vector3D &other) const {
+  return v == other.v && s1 == other.s1 && s2 == other.s2 && s3 == other.s3;
+}
 
 vector<double>::iterator Vector3D::begin() { return v.begin(); }
 
@@ -65,8 +65,7 @@ void Vector3D::fill(const size_t i, const size_t j, const double &num) {
   std::for_each(dest, dest + s3, [&](double &vi) { vi = num; });
 }
 
-void
-Vector3D::fill(const size_t i, const size_t j, const vector<double> &num) {
+void Vector3D::fill(const size_t i, const size_t j, const vector<double> &num) {
   assert(num.size() == s3);
   std::copy(num.begin(), num.end(), v.begin() + j * s3 + i * s2 * s3);
 }
@@ -94,4 +93,3 @@ void Vector3D::div(const Vector3D &v_) {
   assert(v_.size() == v.size());
   v = vecUtil::div(v, v_.v);
 }
-

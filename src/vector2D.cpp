@@ -4,7 +4,6 @@
 
 using namespace std;
 
-
 Vector2D::Vector2D(const vector<vector<double>> &v_) {
   s1 = v_.size();
   s2 = (s1 > 0) ? v_[0].size() : 0;

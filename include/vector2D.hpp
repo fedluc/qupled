@@ -8,18 +8,18 @@
 // -----------------------------------------------------------------
 
 class Vector2D {
-  
+
 public:
 
   // Constructors
   Vector2D(const size_t s1_, const size_t s2_)
-    : v(s1_ * s2_, 0.0),
-      s1(s1_),
-      s2(s2_) {}
+      : v(s1_ * s2_, 0.0),
+        s1(s1_),
+        s2(s2_) {}
   explicit Vector2D()
-    : Vector2D(0, 0) {}
+      : Vector2D(0, 0) {}
   explicit Vector2D(const std::vector<std::vector<double>> &v_);
-  
+
   // Return overall size of the array
   size_t size() const;
 
@@ -32,7 +32,7 @@ public:
   // Resize the array to new sizes s1_ and s2_
   void resize(const size_t s1_, const size_t s2_);
 
-  // Assignment operator
+  // Access operator
   double &operator()(const size_t i, const size_t j);
   const double &operator()(const size_t i, const size_t j) const;
   const double &operator()(const size_t i) const;
@@ -49,46 +49,45 @@ public:
   std::vector<double>::const_iterator end() const;
 
   // Pointer to the underlying vector
-  double* data();
+  double *data();
 
   // Pointer to the underlying vector with constant access
-  const double* data() const;
-  
+  const double *data() const;
+
   // Set all values in the vector to num
-  void fill(const double& num);
+  void fill(const double &num);
 
   // Set all entries of row i to num
-  void fill(const size_t i, const double&num);
+  void fill(const size_t i, const double &num);
 
   // Set all entries of row i to be a copy of vector num
-  void fill(const size_t i, const std::vector<double>& num);
+  void fill(const size_t i, const std::vector<double> &num);
 
   // Sum this vector and v_
-  void sum(const Vector2D& v_);
+  void sum(const Vector2D &v_);
 
   // Subtract this vector and v_
-  void diff(const Vector2D& v_);
+  void diff(const Vector2D &v_);
 
   // Element-wise multiplication between this vector and v_
-  void mult(const Vector2D& v_);
+  void mult(const Vector2D &v_);
 
   // Multiply each entry in the vector times num
-  void mult(const double& num);
+  void mult(const double &num);
 
   // Element-wise division between this vector and v_
-  void div(const Vector2D&v_);
-  
+  void div(const Vector2D &v_);
+
 private:
 
   // Underlying vector structure with s1*s2 entries
   std::vector<double> v;
-  
+
   // First dimension (rows)
   size_t s1;
 
   // Second dimension (columns)
   size_t s2;
-  
 };
 
 #endif

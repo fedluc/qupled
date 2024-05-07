@@ -62,5 +62,4 @@ namespace vecUtil {
     std::for_each(v.begin(), v.end(), [&](double &vi) { vi = num; });
   }
 
-
 } // namespace vecUtil

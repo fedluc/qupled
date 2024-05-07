@@ -21,6 +21,4 @@ namespace numUtil {
 
 } // namespace numUtil
 
-
-
 #endif

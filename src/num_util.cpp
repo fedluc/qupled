@@ -18,4 +18,3 @@ namespace numUtil {
   bool largerThan(const double &x, const double &y) { return x - y > x * dtol; }
 
 } // namespace numUtil
-
