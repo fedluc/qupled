@@ -1,6 +1,7 @@
 #include <filesystem>
-#include "util.hpp"
+#include "mpi_util.hpp"
 #include "vector_util.hpp"
+#include "thermo_util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
 #include "qvs.hpp"
@@ -150,7 +151,7 @@ void QStlsCSR::init() {
     Qstls::init();
   }
   // MPI barrier to make sure that all processes see the same files
-  parallelUtil::MPI::barrier();
+  MPIUtil::barrier();
 }
 
 void QStlsCSR::computeAdrStls() {

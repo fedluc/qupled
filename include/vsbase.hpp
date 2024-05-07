@@ -2,6 +2,8 @@
 #define VSBASE_HPP
 
 #include "vector_util.hpp"
+#include "thermo_util.hpp"
+#include "mpi_util.hpp"
 #include <limits>
 #include <map>
 
@@ -24,7 +26,7 @@ public:
       : Scheme(in_),
         in(in_),
         thermoProp(in_),
-        verbose(true && parallelUtil::MPI::isRoot()) {}
+        verbose(true && MPIUtil::isRoot()) {}
   // Constructor for recursive calculations
   VSBase(const Input &in_, const ThermoProp &thermoProp_)
       : Scheme(in_, false),
@@ -110,7 +112,7 @@ public:
 
   // Constructors
   explicit ThermoPropBase(const Input &in)
-      : verbose(parallelUtil::MPI::isRoot()),
+      : verbose(MPIUtil::isRoot()),
         structProp(in) {
     const double &rs = in.getCoupling();
     const double &drs = in.getCouplingResolution();
@@ -387,7 +389,7 @@ public:
 
   // Constructors
   explicit StructPropBase()
-      : verbose(parallelUtil::MPI::isRoot()),
+      : verbose(MPIUtil::isRoot()),
         csrIsInitialized(false),
         computed(false),
         outVector(NPOINTS) {}

@@ -1,7 +1,8 @@
 #include "python_util.hpp"
-#include "util.hpp"
+#include "mpi_util.hpp"
 
 using namespace std;
+using namespace MPIUtil;
 
 namespace pythonUtil {
 
@@ -9,14 +10,14 @@ namespace pythonUtil {
     const bn::ndarray::bitflag flags = nda.get_flags();
     const bool isRowMajor = flags & bn::ndarray::C_CONTIGUOUS;
     if (!isRowMajor) {
-      parallelUtil::MPI::throwError(
+      throwError(
           "The numpy array is not stored in row major order (c-contiguous)");
     }
   }
 
   vector<double> toVector(const bn::ndarray &nda) {
     if (nda.get_nd() != 1) {
-      parallelUtil::MPI::throwError("Incorrect numpy array dimensions");
+      throwError("Incorrect numpy array dimensions");
     }
     const Py_intptr_t *shape = nda.get_shape();
     const int dim = nda.get_nd();
@@ -44,7 +45,7 @@ namespace pythonUtil {
 
   Vector2D toVector2D(const bn::ndarray &nda) {
     if (nda.get_nd() != 2) {
-      parallelUtil::MPI::throwError("Incorrect numpy array dimensions");
+      throwError("Incorrect numpy array dimensions");
     }
     CheckRowMajor(nda);
     const Py_intptr_t *shape = nda.get_shape();
@@ -62,7 +63,7 @@ namespace pythonUtil {
 
   vector<vector<double>> toDoubleVector(const bn::ndarray &nda) {
     if (nda.get_nd() != 2) {
-      parallelUtil::MPI::throwError("Incorrect numpy array dimensions");
+      throwError("Incorrect numpy array dimensions");
     }
     CheckRowMajor(nda);
     const Py_intptr_t *shape = nda.get_shape();

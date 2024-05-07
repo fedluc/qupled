@@ -3,7 +3,6 @@
 
 #include <functional>
 #include <vector>
-#include <string>
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_integration.h>
@@ -11,7 +10,6 @@
 #include <gsl/gsl_interp2d.h>
 #include <gsl/gsl_spline2d.h>
 #include "num_util.hpp"
-#include "util.hpp"
 
 // -----------------------------------------------------------------
 // C++ wrappers to GSL objects

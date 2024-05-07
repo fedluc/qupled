@@ -1,8 +1,4 @@
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
-#include "util.hpp"
-#include "input.hpp"
-#include "numerics.hpp"
+#include "mpi_util.hpp"
 #include "python_wrappers.hpp"
 
 namespace bp = boost::python;
@@ -11,13 +7,13 @@ namespace bn = boost::python::numpy;
 // Initialization code for the qupled module
 void qupledInitialization() {
   // Initialize MPI if necessary
-  if (!parallelUtil::MPI::isInitialized()) { parallelUtil::MPI::init(); }
+  if (!MPIUtil::isInitialized()) { MPIUtil::init(); }
   // Deactivate default GSL error handler
   gsl_set_error_handler_off();
 }
 
 // Clean up code to call when the python interpreter exists
-void qupledCleanUp() { parallelUtil::MPI::finalize(); }
+void qupledCleanUp() { MPIUtil::finalize(); }
 
 // Classes exposed to Python
 BOOST_PYTHON_MODULE(qupled) {

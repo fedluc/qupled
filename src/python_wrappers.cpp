@@ -1,8 +1,3 @@
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
-#include "util.hpp"
-#include "input.hpp"
-#include "numerics.hpp"
 #include "python_wrappers.hpp"
 #include "python_util.hpp"
 

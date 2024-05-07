@@ -1,6 +1,7 @@
 #include <fmt/core.h>
-#include "util.hpp"
 #include "vector_util.hpp"
+#include "bin_util.hpp"
+#include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "input.hpp"
 #include "stls.hpp"
@@ -8,7 +9,7 @@
 using namespace std;
 using namespace vecUtil;
 using namespace binUtil;
-using namespace parallelUtil;
+using namespace MPIUtil;
 using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
 using ItgType = Integrator1D::Type;
@@ -20,7 +21,7 @@ using ItgType = Integrator1D::Type;
 Stls::Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_)
     : Rpa(in_, verbose_),
       in(in_),
-      writeFiles(writeFiles_ && MPI::isRoot()) {
+      writeFiles(writeFiles_ && isRoot()) {
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "STLS-HNC" || in.getTheory() == "STLS-IOI" ||
            in.getTheory() == "STLS-LCT";
@@ -30,7 +31,7 @@ Stls::Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_)
                                    in.getCoupling(),
                                    in.getDegeneracy(),
                                    in.getTheory());
-  } catch (...) { MPI::throwError("Recovery file name could not be set"); }
+  } catch (...) { throwError("Recovery file name could not be set"); }
   // Allocate arrays
   const size_t nx = wvg.size();
   slfcNew.resize(nx);
@@ -118,7 +119,7 @@ void Stls::doIterations() {
   initialGuess();
   while (counter < maxIter + 1 && err > minErr) {
     // Start timing
-    double tic = MPI::timer();
+    double tic = timer();
     // Update static structure factor
     computeSsf();
     // Update static local field correction
@@ -131,7 +132,7 @@ void Stls::doIterations() {
     // Write output
     if (counter % outIter == 0 && writeFiles) { writeRecovery(); }
     // End timing
-    double toc = MPI::timer();
+    double toc = timer();
     // Print diagnostic
     if (verbose) {
       printf("--- iteration %d ---\n", counter);
@@ -193,8 +194,8 @@ void Stls::writeRecovery() {
   ofstream file;
   file.open(recoveryFileName, ios::binary);
   if (!file.is_open()) {
-    MPI::throwError("Recovery file " + recoveryFileName +
-                    " could not be created.");
+    throwError("Recovery file " + recoveryFileName +
+	       " could not be created.");
   }
   int nx = wvg.size();
   writeDataToBinary<int>(file, nx);
@@ -202,7 +203,7 @@ void Stls::writeRecovery() {
   writeDataToBinary<decltype(slfc)>(file, slfc);
   file.close();
   if (!file) {
-    MPI::throwError("Error in writing the recovery file " + recoveryFileName);
+    throwError("Error in writing the recovery file " + recoveryFileName);
   }
 }
 
@@ -212,7 +213,7 @@ void Stls::readRecovery(vector<double> &wvgFile,
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    MPI::throwError("Output file " + fileName + " could not be opened.");
+    throwError("Output file " + fileName + " could not be opened.");
   }
   int nx;
   readDataFromBinary<int>(file, nx);
@@ -221,7 +222,7 @@ void Stls::readRecovery(vector<double> &wvgFile,
   readDataFromBinary<decltype(wvgFile)>(file, wvgFile);
   readDataFromBinary<decltype(slfcFile)>(file, slfcFile);
   file.close();
-  if (!file) { MPI::throwError("Error in reading from file " + fileName); }
+  if (!file) { throwError("Error in reading from file " + fileName); }
 }
 
 // -----------------------------------------------------------------
@@ -302,7 +303,7 @@ double BridgeFunction::get() const {
   if (theory == "STLS-HNC" || theory == "QSTLS-HNC") { return hnc(); }
   if (theory == "STLS-IOI" || theory == "QSTLS-IOI") { return ioi(); }
   if (theory == "STLS-LCT" || theory == "QSTLS-LCT") { return lct(); }
-  MPI::throwError("Unknown theory to compute the bridge function term");
+  throwError("Unknown theory to compute the bridge function term");
   return numUtil::Inf;
 }
 
@@ -311,7 +312,7 @@ double BridgeFunction::couplingParameter() const {
   if (mapping == "sqrt") { return fact / sqrt(1 + Theta * Theta); }
   if (mapping == "linear") { return fact / (1 + Theta); }
   if (Theta != 0.0) { return fact / Theta; }
-  MPI::throwError("The standard iet mapping cannot be used in the "
+  throwError("The standard iet mapping cannot be used in the "
                   "ground state");
   return numUtil::Inf;
 }
@@ -337,7 +338,7 @@ double BridgeFunction::ioi() const {
                                    "falls outside the range of validty of the "
                                    "bridge function parameterization\n",
                                    Gamma);
-    MPI::throwError(msg);
+    throwError(msg);
   }
   const double c1 = 0.498 - 0.280 * lnG + 0.0294 * lnG2;
   const double c2 = -0.412 + 0.219 * lnG - 0.0251 * lnG2;
@@ -401,7 +402,7 @@ double BridgeFunction::lctIntegrand(const double &r,
                                    "falls outside the range of validty of the "
                                    "bridge function parameterization\n",
                                    Gamma);
-    MPI::throwError(msg);
+    throwError(msg);
   }
   const double Gamma1_6 = pow(Gamma, 1. / 6.);
   const double lnG = log(Gamma);

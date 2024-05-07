@@ -3,10 +3,8 @@
 
 #include "vector2D.hpp"
 #include <vector>
-
-// Forward declarations
-class RpaInput;
-class Integrator1D;
+#include "input.hpp"
+#include "numerics.hpp"
 
 // -----------------------------------------------------------------
 // Solver for the Random-Phase approximation scheme
