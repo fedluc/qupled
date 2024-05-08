@@ -1,4 +1,5 @@
 #include "vector_util.hpp"
+#include <algorithm>
 #include <cassert>
 #include <numeric>
 
