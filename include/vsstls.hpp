@@ -1,13 +1,11 @@
 #ifndef VSSTLS_HPP
 #define VSSTLS_HPP
 
+#include "input.hpp"
 #include "stls.hpp"
 #include "vsbase.hpp"
 #include <limits>
 #include <map>
-
-// Forward declarations
-class VSStlsInput;
 
 // -----------------------------------------------------------------
 // Solver for the VS-STLS scheme

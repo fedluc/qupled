@@ -1,18 +1,13 @@
 #ifndef QSTLS_HPP
 #define QSTLS_HPP
 
+#include "input.hpp"
+#include "numerics.hpp"
 #include "stls.hpp"
 #include "vector2D.hpp"
 #include "vector3D.hpp"
 #include <fmt/core.h>
 #include <map>
-
-// Forward declarations
-class QsltsInput;
-class Interpolator1D;
-class Interpolator2D;
-class Integrator1D;
-class Integrator2D;
 
 // -----------------------------------------------------------------
 // Solver for the qSTLS-based schemes

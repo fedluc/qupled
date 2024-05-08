@@ -9,6 +9,7 @@
 #include <gsl/gsl_roots.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_spline2d.h>
+#include <memory>
 #include <vector>
 
 // -----------------------------------------------------------------

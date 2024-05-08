@@ -1,13 +1,12 @@
 #ifndef QVS_HPP
 #define QVS_HPP
 
+#include "input.hpp"
 #include "numerics.hpp"
 #include "qstls.hpp"
 #include "vector2D.hpp"
 #include "vsbase.hpp"
-
-// Forward declarations
-class QVSStlsInput;
+#include <memory>
 
 // -----------------------------------------------------------------
 // Class to handle simultaneous state point calculations

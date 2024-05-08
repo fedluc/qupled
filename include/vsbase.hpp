@@ -2,15 +2,12 @@
 #define VSBASE_HPP
 
 #include "mpi_util.hpp"
+#include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
 #include <limits>
 #include <map>
-
-// Forward declarations
-class VSStlsInput;
-class SecantSolver;
-class Interpolator1D;
+#include <memory>
 
 // -----------------------------------------------------------------
 // VSBase class

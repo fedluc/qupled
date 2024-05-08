@@ -1,14 +1,10 @@
 #ifndef STLS_HPP
 #define STLS_HPP
 
+#include "input.hpp"
+#include "numerics.hpp"
 #include "rpa.hpp"
 #include <vector>
-
-// Forward declarations
-class StlsInput;
-class Interpolator1D;
-class Integrator1D;
-class Integrator2D;
 
 // -----------------------------------------------------------------
 // Solver for the STLS scheme
