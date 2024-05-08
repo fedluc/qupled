@@ -2,6 +2,7 @@
 #define INTERNAL_ENERGY_HPP
 
 #include "numerics.hpp"
+#include <cmath>
 
 // -----------------------------------------------------------------
 // Class for internal energy calculation

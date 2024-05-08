@@ -4,6 +4,7 @@
 #include "input.hpp"
 #include "numerics.hpp"
 #include "rpa.hpp"
+#include <cmath>
 #include <vector>
 
 // -----------------------------------------------------------------

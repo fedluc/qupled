@@ -1,5 +1,6 @@
 #include "input.hpp"
 #include "mpi_util.hpp"
+#include <cmath>
 
 using namespace std;
 using namespace MPIUtil;

@@ -6,6 +6,7 @@
 #include "qstls.hpp"
 #include "vector2D.hpp"
 #include "vsbase.hpp"
+#include <cmath>
 #include <memory>
 
 // -----------------------------------------------------------------

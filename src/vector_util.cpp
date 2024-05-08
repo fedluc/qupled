@@ -1,6 +1,7 @@
 #include "vector_util.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <numeric>
 
 using namespace std;
