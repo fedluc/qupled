@@ -9,6 +9,14 @@
 
 class ESA : public Rpa {
 
+public:
+
+  // ESA constructor
+  explicit ESA(const RpaInput &in_)
+      : Rpa(in_) {}
+  // Compute the scheme
+  int compute();
+
 protected:
 
   // Funtion for the ESA static local field correction
@@ -17,14 +25,6 @@ protected:
   double fxc(const double &theta, const double &rs) const;
   // Resolution for the free energy derivatives
   const double dx = 1e-6;
-
-public:
-
-  // ESA constructor
-  explicit ESA(const RpaInput &in_)
-      : Rpa(in_) {}
-  // Compute the scheme
-  int compute();
 };
 
 #endif

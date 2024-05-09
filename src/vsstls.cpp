@@ -1,7 +1,8 @@
-#include "util.hpp"
-#include "numerics.hpp"
-#include "input.hpp"
 #include "vsstls.hpp"
+#include "input.hpp"
+#include "numerics.hpp"
+#include "thermo_util.hpp"
+#include "vector_util.hpp"
 
 using namespace std;
 

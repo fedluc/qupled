@@ -1,21 +1,17 @@
 #ifndef PYTHON_WRAPPERS_HPP
 #define PYTHON_WRAPPERS_HPP
 
-#include "rpa.hpp"
 #include "esa.hpp"
-#include "stls.hpp"
-#include "vsstls.hpp"
+#include "input.hpp"
+#include "mpi_util.hpp"
 #include "qstls.hpp"
 #include "qvs.hpp"
+#include "rpa.hpp"
+#include "stls.hpp"
+#include "vsstls.hpp"
+#include <boost/python.hpp>
+#include <boost/python/numpy.hpp>
 
-// Forward declarations
-namespace boost {
-  namespace python {
-    namespace numpy {
-      class ndarray;
-    }
-  } // namespace python
-} // namespace boost
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 
@@ -196,10 +192,10 @@ public:
 class PyMPI {
 public:
 
-  static int rank() { return parallelUtil::MPI::rank(); }
-  static bool isRoot() { return parallelUtil::MPI::isRoot(); }
-  static void barrier() { return parallelUtil::MPI::barrier(); }
-  static double timer() { return parallelUtil::MPI::timer(); }
+  static int rank() { return MPIUtil::rank(); }
+  static bool isRoot() { return MPIUtil::isRoot(); }
+  static void barrier() { return MPIUtil::barrier(); }
+  static double timer() { return MPIUtil::timer(); }
 };
 
 #endif

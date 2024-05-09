@@ -1,19 +1,21 @@
-#include "util.hpp"
-#include "numerics.hpp"
-#include "input.hpp"
 #include "rpa.hpp"
 #include "chemical_potential.hpp"
+#include "input.hpp"
+#include "mpi_util.hpp"
+#include "numerics.hpp"
+#include "thermo_util.hpp"
+#include <cmath>
 
 using namespace std;
 using namespace thermoUtil;
-using namespace parallelUtil;
+using namespace MPIUtil;
 using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
 
 // Constructor
 Rpa::Rpa(const RpaInput &in_, const bool verbose_)
     : in(in_),
-      verbose(verbose_ && MPI::isRoot()),
+      verbose(verbose_ && isRoot()),
       itg(ItgType::DEFAULT, in_.getIntError()) {
   // Assemble the wave-vector grid
   buildWvGrid();
@@ -64,7 +66,7 @@ void Rpa::buildWvGrid() {
   const double dx = in.getWaveVectorGridRes();
   const double xmax = in.getWaveVectorGridCutoff();
   if (xmax < dx) {
-    MPI::throwError(
+    throwError(
         "The wave-vector grid cutoff must be larger than the resolution");
   }
   while (wvg.back() < xmax) {
@@ -169,7 +171,7 @@ void Rpa::computeSlfc() {
 // Getters
 vector<double> Rpa::getRdf(const vector<double> &r) const {
   if (wvg.size() < 3 || ssf.size() < 3) {
-    MPI::throwError("No data to compute the radial distribution function");
+    throwError("No data to compute the radial distribution function");
     return vector<double>();
   }
   return computeRdf(r, wvg, ssf);
@@ -194,7 +196,7 @@ vector<double> Rpa::getSdr() const {
 
 double Rpa::getUInt() const {
   if (wvg.size() < 3 || ssf.size() < 3) {
-    MPI::throwError("No data to compute the internal energy");
+    throwError("No data to compute the internal energy");
     return numUtil::Inf;
   }
   return computeInternalEnergy(wvg, ssf, in.getCoupling());
