@@ -316,8 +316,8 @@ void Qstls::readAdrFixedFile(Vector3D &res,
     res.resize(nx, nl, nx);
   }
   readDataFromBinary<Vector3D>(file, res);
-  file.close();
   if (!file) { MPI::throwError("Error in reading from file " + fileName); }
+  file.close();
   if (checkAdrFixed(wvg_, Theta_, nl_) != 0) {
     MPI::throwError("Fixed component of the auxiliary density response"
                     " loaded from file is incompatible with input");
@@ -602,19 +602,21 @@ double AdrFixed::integrand1(const double &q, const double &l) const {
 double
 AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
   const double q = itg.getX();
-  if (q == 0 || t == 0 || y == 0) { return 0; };
+  //if (q == 0.0 || y == 0.0) { return 0.0; };
   const double x2 = x * x;
   const double y2 = y * y;
   const double q2 = q * q;
   const double txq = 2.0 * x * q;
   if (l == 0) {
     if (t == txq) { return 2.0 * q2 / (y2 + 2.0 * txq - x2); };
+    if (x == y && t == 0.0) { return 1.0 / (y * q); };
     const double t2 = t * t;
     double logarg = (t + txq) / (t - txq);
     logarg = (logarg < 0.0) ? -logarg : logarg;
     return 1.0 / (2.0 * t + y2 - x2) *
            ((q2 - t2 / (4.0 * x2)) * log(logarg) + q * t / x);
   }
+  if (x == y && t == 0.0) { return 0.0; };
   const double tplT = 2.0 * M_PI * l * Theta;
   const double tplT2 = tplT * tplT;
   const double txqpt = txq + t;
