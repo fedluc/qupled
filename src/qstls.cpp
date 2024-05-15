@@ -579,7 +579,7 @@ void Adr::get(const vector<double> &wvg, const Vector3D &fixed, Vector2D &res) {
 void AdrFixed::get(vector<double> &wvg, Vector3D &res) const {
   const int nx = wvg.size();
   const int nl = res.size(1);
-  if (x == 0.0) { res.fill(0.0); };
+  if (x == 0.0) { res.fill(0, 0.0); };
   const double x2 = x * x;
   auto it = find(wvg.begin(), wvg.end(), x);
   assert(it != wvg.end());
