@@ -324,16 +324,27 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   }
 }
 
-int Qstls::checkAdrFixed(const vector<double> &wvg_,
+int Qstls::checkAdrFixed(const std::vector<double> &wvg_,
                          const double Theta_,
                          const int nl_) const {
   constexpr double tol = 1e-15;
-  const vector<double> wvgDiff = diff(wvg_, wvg);
-  const double &wvgMaxDiff = abs(*max_element(wvgDiff.begin(), wvgDiff.end()));
+  const std::vector<double> wvgDiff = diff(wvg_, wvg);
+  const double &wvgMaxDiff = std::abs(*std::max_element(wvgDiff.begin(), wvgDiff.end()));
   const bool consistentMatsubara = nl_ == in.getNMatsubara();
-  const bool consistentTheta = abs(Theta_ - in.getDegeneracy()) <= tol;
+  const bool consistentTheta = std::abs(Theta_ - in.getDegeneracy()) <= tol;
   const bool consistentGrid = wvg_.size() == wvg.size() && wvgMaxDiff <= tol;
-  if (!consistentMatsubara || !consistentTheta || !consistentGrid) { return 1; }
+  if (!consistentMatsubara) {
+    std::cout << "Inconsistent Matsubara" << std::endl;
+  }
+  if (!consistentTheta) {
+    std::cout << "Inconsistent Theta" << std::endl;
+  }
+  if (!consistentGrid) {
+    std::cout << "Inconsistent grid values" << std::endl;
+  }
+  if (!consistentMatsubara || !consistentTheta || !consistentGrid) {
+    return 1;
+  }
   return 0;
 }
 
