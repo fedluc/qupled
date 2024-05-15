@@ -1,11 +1,9 @@
-#include <iostream>
-#include <cassert>
-#include "util.hpp"
 #include "numerics.hpp"
+#include "mpi_util.hpp"
 
 using namespace std;
 using namespace GslWrappers;
-using namespace parallelUtil;
+using namespace MPIUtil;
 
 // -----------------------------------------------------------------
 // C++ wrappers to GSL objects
@@ -15,15 +13,15 @@ template <typename Func, typename... Args>
 void GslWrappers::callGSLFunction(Func &&gslFunction, Args &&...args) {
   int status = gslFunction(std::forward<Args>(args)...);
   if (status) {
-    MPI::throwError("GSL error: " + std::to_string(status) + ", " +
-                    std::string(gsl_strerror(status)));
+    throwError("GSL error: " + std::to_string(status) + ", " +
+               std::string(gsl_strerror(status)));
   }
 }
 
 template <typename Ptr, typename Func, typename... Args>
 void GslWrappers::callGSLAlloc(Ptr &ptr, Func &&gslFunction, Args &&...args) {
   ptr = gslFunction(std::forward<Args>(args)...);
-  if (!ptr) { MPI::throwError("GSL error: allocation error"); }
+  if (!ptr) { throwError("GSL error: allocation error"); }
 }
 
 // -----------------------------------------------------------------
@@ -180,8 +178,8 @@ void BrentRootSolver::solve(const function<double(double)> &func,
   } while (status == GSL_CONTINUE && iter < maxIter);
   // Check if the solver managed to find a solution
   if (status != GSL_SUCCESS) {
-    MPI::throwError("The brent root solver "
-                    "did not converge to the desired accuracy.");
+    throwError("The brent root solver "
+               "did not converge to the desired accuracy.");
   }
 }
 
@@ -208,8 +206,8 @@ void SecantSolver::solve(const function<double(double)> &func,
   } while (status == GSL_CONTINUE && iter < maxIter);
   // Check if the solver managed to find a solution
   if (status != GSL_SUCCESS) {
-    MPI::throwError("The secant root solver "
-                    "did not converge to the desired accuracy.");
+    throwError("The secant root solver "
+               "did not converge to the desired accuracy.");
   }
 }
 
@@ -223,7 +221,7 @@ Integrator1D::Integrator1D(const Type &type, const double &relErr) {
   case Type::DEFAULT: gslIntegrator = make_unique<CQUAD>(relErr); break;
   case Type::FOURIER: gslIntegrator = make_unique<QAWO>(relErr); break;
   case Type::SINGULAR: gslIntegrator = make_unique<QAGS>(relErr); break;
-  default: MPI::throwError("Invalid integrator type");
+  default: throwError("Invalid integrator type");
   }
 }
 
@@ -256,7 +254,7 @@ void Integrator1D::CQUAD::compute(const function<double(double)> &func,
                                   const Param &param) {
   // Check parameter validity
   if (isnan(param.xMin) || isnan(param.xMax)) {
-    MPI::throwError("Integration limits were not set correctly");
+    throwError("Integration limits were not set correctly");
   }
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
@@ -299,7 +297,7 @@ void Integrator1D::QAWO::compute(const function<double(double)> &func,
                                  const Param &param) {
   // Check parameter validity
   if (isnan(param.fourierR)) {
-    MPI::throwError("Integration parameters were not set correctly");
+    throwError("Integration parameters were not set correctly");
   }
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);
@@ -333,7 +331,7 @@ void Integrator1D::QAGS::compute(const function<double(double)> &func,
                                  const Param &param) {
   // Check parameter validity
   if (isnan(param.xMin) || isnan(param.xMax)) {
-    MPI::throwError("Integration limits were not set correctly");
+    throwError("Integration limits were not set correctly");
   }
   // Set up function
   GslFunctionWrap<decltype(func)> Fp(func);

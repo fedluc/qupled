@@ -1,13 +1,13 @@
 #ifndef VSBASE_HPP
 #define VSBASE_HPP
 
+#include "mpi_util.hpp"
+#include "numerics.hpp"
+#include "thermo_util.hpp"
+#include "vector_util.hpp"
 #include <limits>
 #include <map>
-
-// Forward declarations
-class VSStlsInput;
-class SecantSolver;
-class Interpolator1D;
+#include <memory>
 
 // -----------------------------------------------------------------
 // VSBase class
@@ -15,6 +15,51 @@ class Interpolator1D;
 
 template <typename ThermoProp, typename Scheme, typename Input>
 class VSBase : public Scheme {
+
+public:
+
+  // Constructor from initial data
+  explicit VSBase(const Input &in_)
+      : Scheme(in_),
+        in(in_),
+        thermoProp(in_),
+        verbose(true && MPIUtil::isRoot()) {}
+  // Constructor for recursive calculations
+  VSBase(const Input &in_, const ThermoProp &thermoProp_)
+      : Scheme(in_, false),
+        in(in_),
+        thermoProp(in_, thermoProp_),
+        verbose(false) {}
+
+  // Destructor
+  virtual ~VSBase() = default;
+
+  // Compute vs-stls scheme
+  int compute() {
+    try {
+      Scheme::init();
+      if (verbose) std::cout << "Free parameter calculation ..." << std::endl;
+      doIterations();
+      if (verbose) std::cout << "Done" << std::endl;
+      return 0;
+    } catch (const std::runtime_error &err) {
+      std::cerr << err.what() << std::endl;
+      return 1;
+    }
+  }
+
+  // Getters
+  const ThermoProp &getThermoProp() const { return thermoProp; }
+
+  std::vector<std::vector<double>> getFreeEnergyIntegrand() const {
+    return thermoProp.getFreeEnergyIntegrand();
+  }
+
+  std::vector<double> getFreeEnergyGrid() const {
+    return thermoProp.getFreeEnergyGrid();
+  }
+
+  std::vector<double> getAlpha() const { return thermoProp.getAlpha(); }
 
 protected:
 
@@ -52,106 +97,20 @@ protected:
 
   // Update structural output solution
   virtual void updateSolution() = 0;
-
-public:
-
-  // Constructor from initial data
-  explicit VSBase(const Input &in_)
-      : Scheme(in_),
-        in(in_),
-        thermoProp(in_),
-        verbose(true && parallelUtil::MPI::isRoot()) {}
-  // Constructor for recursive calculations
-  VSBase(const Input &in_, const ThermoProp &thermoProp_)
-      : Scheme(in_, false),
-        in(in_),
-        thermoProp(in_, thermoProp_),
-        verbose(false) {}
-
-  // Destructor
-  virtual ~VSBase() = default;
-
-  // Compute vs-stls scheme
-  int compute() {
-    try {
-      Scheme::init();
-      if (verbose) std::cout << "Free parameter calculation ..." << std::endl;
-      doIterations();
-      if (verbose) std::cout << "Done" << std::endl;
-      return 0;
-    } catch (const std::runtime_error &err) {
-      std::cerr << err.what() << std::endl;
-      return 1;
-    }
-  }
-
-  // Getters
-  const ThermoProp &getThermoProp() const { return thermoProp; }
-
-  std::vector<std::vector<double>> getFreeEnergyIntegrand() const {
-    return thermoProp.getFreeEnergyIntegrand();
-  }
-
-  std::vector<double> getFreeEnergyGrid() const {
-    return thermoProp.getFreeEnergyGrid();
-  }
-
-  std::vector<double> getAlpha() const { return thermoProp.getAlpha(); }
 };
 
 // -----------------------------------------------------------------
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-template <typename StructProp, typename Input> class ThermoPropBase {
-
-protected:
-
-  using SIdx = typename StructProp::Idx;
-  enum Idx { THETA_DOWN, THETA, THETA_UP };
-  // Map between struct and thermo indexes
-  static constexpr int NPOINTS = 3;
-  // Output verbosity
-  const bool verbose;
-  // Structural properties
-  StructProp structProp;
-  // Grid for thermodyamic integration
-  std::vector<double> rsGrid;
-  // Free parameter values for all the coupling parameters stored in rsGrid
-  std::vector<double> alpha;
-  // Free energy integrand for NPOINTS state points
-  std::vector<std::vector<double>> fxcIntegrand;
-  // Flags marking particular state points
-  bool isZeroCoupling;
-  bool isZeroDegeneracy;
-  // Compute the free energy
-  double computeFreeEnergy(const SIdx iStruct, const bool normalize) const {
-    Idx iThermo;
-    switch (iStruct) {
-    case SIdx::RS_DOWN_THETA_DOWN:
-    case SIdx::RS_THETA_DOWN:
-    case SIdx::RS_UP_THETA_DOWN: iThermo = THETA_DOWN; break;
-    case SIdx::RS_DOWN_THETA:
-    case SIdx::RS_THETA:
-    case SIdx::RS_UP_THETA: iThermo = THETA; break;
-    case SIdx::RS_DOWN_THETA_UP:
-    case SIdx::RS_THETA_UP:
-    case SIdx::RS_UP_THETA_UP: iThermo = THETA_UP; break;
-    default:
-      assert(false);
-      iThermo = THETA;
-      break;
-    }
-    const std::vector<double> &rs = structProp.getCouplingParameters();
-    return thermoUtil::computeFreeEnergy(
-        rsGrid, fxcIntegrand[iThermo], rs[iStruct], normalize);
-  }
+template <typename StructProp, typename Input>
+class ThermoPropBase {
 
 public:
 
   // Constructors
   explicit ThermoPropBase(const Input &in)
-      : verbose(parallelUtil::MPI::isRoot()),
+      : verbose(MPIUtil::isRoot()),
         structProp(in) {
     const double &rs = in.getCoupling();
     const double &drs = in.getCouplingResolution();
@@ -211,7 +170,8 @@ public:
   void setAlpha(const double &alpha) { structProp.setAlpha(alpha); }
 
   // Compute the thermodynamic properties
-  template <typename Scheme> void compute(const Input &in) {
+  template <typename Scheme>
+  void compute(const Input &in) {
     // Recursive calls to solve the VS-STLS scheme for all state points
     // with coupling parameter smaller than rs
     const double nrs = rsGrid.size();
@@ -262,7 +222,8 @@ public:
   }
 
   // Get structural properties
-  template <typename CSR> const CSR &getStructProp() {
+  template <typename CSR>
+  const CSR &getStructProp() {
     if (!structProp.isComputed()) { structProp.compute(); }
     if (isZeroCoupling && isZeroDegeneracy) {
       return structProp.getCsr(SIdx::RS_DOWN_THETA_DOWN);
@@ -358,16 +319,60 @@ public:
 
   // Get free parameter values except the last one
   std::vector<double> getAlpha() const { return alpha; }
+
+protected:
+
+  using SIdx = typename StructProp::Idx;
+  enum Idx { THETA_DOWN, THETA, THETA_UP };
+  // Map between struct and thermo indexes
+  static constexpr int NPOINTS = 3;
+  // Output verbosity
+  const bool verbose;
+  // Structural properties
+  StructProp structProp;
+  // Grid for thermodyamic integration
+  std::vector<double> rsGrid;
+  // Free parameter values for all the coupling parameters stored in rsGrid
+  std::vector<double> alpha;
+  // Free energy integrand for NPOINTS state points
+  std::vector<std::vector<double>> fxcIntegrand;
+  // Flags marking particular state points
+  bool isZeroCoupling;
+  bool isZeroDegeneracy;
+  // Compute the free energy
+  double computeFreeEnergy(const SIdx iStruct, const bool normalize) const {
+    Idx iThermo;
+    switch (iStruct) {
+    case SIdx::RS_DOWN_THETA_DOWN:
+    case SIdx::RS_THETA_DOWN:
+    case SIdx::RS_UP_THETA_DOWN: iThermo = THETA_DOWN; break;
+    case SIdx::RS_DOWN_THETA:
+    case SIdx::RS_THETA:
+    case SIdx::RS_UP_THETA: iThermo = THETA; break;
+    case SIdx::RS_DOWN_THETA_UP:
+    case SIdx::RS_THETA_UP:
+    case SIdx::RS_UP_THETA_UP: iThermo = THETA_UP; break;
+    default:
+      assert(false);
+      iThermo = THETA;
+      break;
+    }
+    const std::vector<double> &rs = structProp.getCouplingParameters();
+    return thermoUtil::computeFreeEnergy(
+        rsGrid, fxcIntegrand[iThermo], rs[iStruct], normalize);
+  }
 };
 
 // -----------------------------------------------------------------
 // StructPropBase class
 // -----------------------------------------------------------------
 
-template <typename CSR, typename Input> class StructPropBase {
+template <typename CSR, typename Input>
+class StructPropBase {
 
 public:
 
+  // Typedef
   enum Idx {
     RS_DOWN_THETA_DOWN,
     RS_THETA_DOWN,
@@ -382,6 +387,71 @@ public:
   static constexpr int NRS = 3;
   static constexpr int NTHETA = 3;
   static constexpr int NPOINTS = NRS * NTHETA;
+
+  // Constructors
+  explicit StructPropBase()
+      : verbose(MPIUtil::isRoot()),
+        csrIsInitialized(false),
+        computed(false),
+        outVector(NPOINTS) {}
+  explicit StructPropBase(const Input &in)
+      : StructPropBase() {
+    setupCSR(setupCSRInput(in));
+    setupCSRDependencies();
+  }
+
+  // Compute structural properties
+  int compute() {
+    try {
+      if (!csrIsInitialized) {
+        for (auto &c : csr) {
+          c.init();
+        }
+        csrIsInitialized = true;
+      }
+      doIterations();
+      computed = true;
+      return 0;
+    } catch (const std::runtime_error &err) {
+      std::cerr << err.what() << std::endl;
+      return 1;
+    }
+  }
+
+  // Set free parameter
+  void setAlpha(const double &alpha) {
+    for (auto &c : csr) {
+      c.setAlpha(alpha);
+    }
+  }
+
+  // Get coupling parameters for all the state points
+  std::vector<double> getCouplingParameters() const {
+    return getBase([&](const CSR &c) { return c.getInput().getCoupling(); });
+  }
+  // Get degeneracy parameters for all the state points
+  std::vector<double> getDegeneracyParameters() const {
+    return getBase([&](const CSR &c) { return c.getInput().getDegeneracy(); });
+  }
+
+  // Get internal energy for all the state points
+  std::vector<double> getInternalEnergy() const {
+    return getBase([&](const CSR &c) { return c.getInternalEnergy(); });
+  }
+
+  // Get free energy integrand for all the state points
+  std::vector<double> getFreeEnergyIntegrand() const {
+    return getBase([&](const CSR &c) { return c.getFreeEnergyIntegrand(); });
+  }
+
+  // Get the free parameter
+  double getAlpha() const { return csr[0].getAlpha(); }
+
+  // Get structural properties for output
+  const CSR &getCsr(const Idx &idx) const { return csr[idx]; }
+
+  // Boolean marking whether the structural properties where computed or not
+  bool isComputed() const { return computed; }
 
 protected:
 
@@ -481,73 +551,6 @@ protected:
     }
     return outVector;
   }
-
-public:
-
-  // Constructors
-  explicit StructPropBase()
-      : verbose(parallelUtil::MPI::isRoot()),
-        csrIsInitialized(false),
-        computed(false),
-        outVector(NPOINTS) {}
-  explicit StructPropBase(const Input &in)
-      : StructPropBase() {
-    setupCSR(setupCSRInput(in));
-    setupCSRDependencies();
-  }
-
-  // Compute structural properties
-  int compute() {
-    try {
-      if (!csrIsInitialized) {
-        for (auto &c : csr) {
-          c.init();
-        }
-        csrIsInitialized = true;
-      }
-      doIterations();
-      computed = true;
-      return 0;
-    } catch (const std::runtime_error &err) {
-      std::cerr << err.what() << std::endl;
-      return 1;
-    }
-  }
-
-  // Set free parameter
-  void setAlpha(const double &alpha) {
-    for (auto &c : csr) {
-      c.setAlpha(alpha);
-    }
-  }
-
-  // Get coupling parameters for all the state points
-  std::vector<double> getCouplingParameters() const {
-    return getBase([&](const CSR &c) { return c.getInput().getCoupling(); });
-  }
-  // Get degeneracy parameters for all the state points
-  std::vector<double> getDegeneracyParameters() const {
-    return getBase([&](const CSR &c) { return c.getInput().getDegeneracy(); });
-  }
-
-  // Get internal energy for all the state points
-  std::vector<double> getInternalEnergy() const {
-    return getBase([&](const CSR &c) { return c.getInternalEnergy(); });
-  }
-
-  // Get free energy integrand for all the state points
-  std::vector<double> getFreeEnergyIntegrand() const {
-    return getBase([&](const CSR &c) { return c.getFreeEnergyIntegrand(); });
-  }
-
-  // Get the free parameter
-  double getAlpha() const { return csr[0].getAlpha(); }
-
-  // Get structural properties for output
-  const CSR &getCsr(const Idx &idx) const { return csr[idx]; }
-
-  // Boolean marking whether the structural properties where computed or not
-  bool isComputed() const { return computed; }
 };
 
 // -----------------------------------------------------------------
@@ -568,40 +571,6 @@ public:
     std::shared_ptr<T> up;
     std::shared_ptr<T> down;
   };
-
-protected:
-
-  // Default value of alpha
-  static constexpr double DEFAULT_ALPHA = numUtil::Inf;
-  // Input data
-  const Input in;
-  // local field correction (static or dynamic)
-  std::shared_ptr<T> lfc;
-  // Free parameter
-  double alpha;
-  // Data for the local field correction with modified coupling paramter
-  DerivativeData lfcRs;
-  // Data for the local field correction with modified degeneracy parameter
-  DerivativeData lfcTheta;
-
-  // Helper methods to compute the derivatives
-  double getDerivative(const double &f0,
-                       const double &f1,
-                       const double &f2,
-                       const Derivative &type) {
-    switch (type) {
-    case BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2; break;
-    case CENTERED: return f1 - f2; break;
-    case FORWARD: return -getDerivative(f0, f1, f2, BACKWARD); break;
-    default:
-      assert(false);
-      return -1;
-      break;
-    }
-  }
-
-public:
-
   // Constructor
   CSR(const Input &in_, const Scheme &scheme)
       : Scheme(scheme),
@@ -648,6 +617,37 @@ public:
   // Compute the free energy integrand
   double getFreeEnergyIntegrand() const {
     return thermoUtil::computeInternalEnergy(Scheme::wvg, Scheme::ssf, 1.0);
+  }
+
+protected:
+
+  // Default value of alpha
+  static constexpr double DEFAULT_ALPHA = numUtil::Inf;
+  // Input data
+  const Input in;
+  // local field correction (static or dynamic)
+  std::shared_ptr<T> lfc;
+  // Free parameter
+  double alpha;
+  // Data for the local field correction with modified coupling paramter
+  DerivativeData lfcRs;
+  // Data for the local field correction with modified degeneracy parameter
+  DerivativeData lfcTheta;
+
+  // Helper methods to compute the derivatives
+  double getDerivative(const double &f0,
+                       const double &f1,
+                       const double &f2,
+                       const Derivative &type) {
+    switch (type) {
+    case BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2; break;
+    case CENTERED: return f1 - f2; break;
+    case FORWARD: return -getDerivative(f0, f1, f2, BACKWARD); break;
+    default:
+      assert(false);
+      return -1;
+      break;
+    }
   }
 };
 

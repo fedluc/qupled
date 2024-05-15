@@ -1,26 +1,19 @@
 #ifndef QVS_HPP
 #define QVS_HPP
 
+#include "input.hpp"
 #include "numerics.hpp"
-#include "vsbase.hpp"
 #include "qstls.hpp"
-
-// Forward declarations
-class QVSStlsInput;
+#include "vector2D.hpp"
+#include "vsbase.hpp"
+#include <cmath>
+#include <memory>
 
 // -----------------------------------------------------------------
 // Class to handle simultaneous state point calculations
 // -----------------------------------------------------------------
 
-class QStlsCSR : public CSR<vecUtil::Vector2D, Qstls, QVSStlsInput> {
-
-private:
-
-  // Helper methods to compute the derivatives
-  double getDerivative(const std::shared_ptr<vecUtil::Vector2D> &f,
-                       const int &l,
-                       const size_t &idx,
-                       const Derivative &type);
+class QStlsCSR : public CSR<Vector2D, Qstls, QVSStlsInput> {
 
 public:
 
@@ -36,6 +29,14 @@ public:
   void init();
   // Compute Q
   double getQAdder() const;
+
+private:
+
+  // Helper methods to compute the derivatives
+  double getDerivative(const std::shared_ptr<Vector2D> &f,
+                       const int &l,
+                       const size_t &idx,
+                       const Derivative &type);
 };
 
 // -----------------------------------------------------------------
@@ -43,6 +44,27 @@ public:
 // -----------------------------------------------------------------
 
 class QAdder {
+
+public:
+
+  // Constructor
+  QAdder(const double &Theta_,
+         const double &mu_,
+         const double &limitMin,
+         const double &limitMax,
+         const std::vector<double> &itgGrid_,
+         Integrator1D &itg1_,
+         Integrator2D &itg2_,
+         const Interpolator1D &interp_)
+      : Theta(Theta_),
+        mu(mu_),
+        limits(limitMin, limitMax),
+        itgGrid(itgGrid_),
+        itg1(itg1_),
+        itg2(itg2_),
+        interp(interp_) {}
+  // Get Q-adder
+  double get() const;
 
 private:
 
@@ -69,27 +91,6 @@ private:
   double integrandNumerator2(const double w) const;
   // Get Integral denominator
   void getIntDenominator(double &res) const;
-
-public:
-
-  // Constructor
-  QAdder(const double &Theta_,
-         const double &mu_,
-         const double &limitMin,
-         const double &limitMax,
-         const std::vector<double> &itgGrid_,
-         Integrator1D &itg1_,
-         Integrator2D &itg2_,
-         const Interpolator1D &interp_)
-      : Theta(Theta_),
-        mu(mu_),
-        limits(limitMin, limitMax),
-        itgGrid(itgGrid_),
-        itg1(itg1_),
-        itg2(itg2_),
-        interp(interp_) {}
-  // Get Q-adder
-  double get() const;
 };
 
 // -----------------------------------------------------------------
@@ -97,6 +98,14 @@ public:
 // -----------------------------------------------------------------
 
 class QStructProp : public StructPropBase<QStlsCSR, QVSStlsInput> {
+
+public:
+
+  // Constructor
+  explicit QStructProp(const QVSStlsInput &in)
+      : StructPropBase(in) {}
+  // Get Q term
+  std::vector<double> getQ() const;
 
 private:
 
@@ -107,14 +116,6 @@ private:
   void setupCSRDependencies();
   // Perform iterations to compute structural properties
   void doIterations();
-
-public:
-
-  // Constructor
-  explicit QStructProp(const QVSStlsInput &in)
-      : StructPropBase(in) {}
-  // Get Q term
-  std::vector<double> getQ() const;
 };
 
 // -----------------------------------------------------------------
@@ -123,12 +124,10 @@ public:
 
 class QThermoProp : public ThermoPropBase<QStructProp, QVSStlsInput> {
 
-private:
-
-  using ThermoPropBase = ThermoPropBase<QStructProp, QVSStlsInput>;
-
 public:
 
+  // Typdef
+  using ThermoPropBase = ThermoPropBase<QStructProp, QVSStlsInput>;
   // Constructors
   explicit QThermoProp(const QVSStlsInput &in)
       : ThermoPropBase(in) {}
@@ -146,27 +145,27 @@ public:
 
 class QVSStls : public VSBase<QThermoProp, Rpa, QVSStlsInput> {
 
-private:
-
-  using VSBase = VSBase<QThermoProp, Rpa, QVSStlsInput>;
-  // Compute free parameter
-  double computeAlpha();
-  // Iterations to solve the qvsstls-scheme
-  void updateSolution();
-  // Auxiliary density response
-  vecUtil::Vector2D adr;
-
 public:
 
+  // Typedef
+  using VSBase = VSBase<QThermoProp, Rpa, QVSStlsInput>;
   // Constructor from initial data
   explicit QVSStls(const QVSStlsInput &in_)
       : VSBase(in_) {}
   // Constructor for recursive calculations
   QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_)
       : VSBase(in_, thermoProp_) {}
-
   // Getters
-  vecUtil::Vector2D getAdr() const { return adr; }
+  Vector2D getAdr() const { return adr; }
+
+private:
+
+  // Compute free parameter
+  double computeAlpha();
+  // Iterations to solve the qvsstls-scheme
+  void updateSolution();
+  // Auxiliary density response
+  Vector2D adr;
 };
 
 #endif

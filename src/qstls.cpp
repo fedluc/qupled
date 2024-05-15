@@ -1,15 +1,17 @@
-#include <filesystem>
-#include <numeric>
-#include <fmt/core.h>
-#include "util.hpp"
-#include "numerics.hpp"
-#include "input.hpp"
 #include "qstls.hpp"
+#include "bin_util.hpp"
+#include "input.hpp"
+#include "mpi_util.hpp"
+#include "numerics.hpp"
+#include "vector_util.hpp"
+#include <filesystem>
+#include <fmt/core.h>
+#include <numeric>
 
 using namespace std;
 using namespace vecUtil;
 using namespace binUtil;
-using namespace parallelUtil;
+using namespace MPIUtil;
 using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
 
@@ -22,8 +24,8 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_, const bool writeFiles_)
       in(in_) {
   // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
-    MPI::throwError("Ground state calculations are not available "
-                    "for the quantum schemes");
+    throwError("Ground state calculations are not available "
+               "for the quantum schemes");
   }
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "QSTLS-HNC" || in.getTheory() == "QSTLS-IOI" ||
@@ -82,7 +84,7 @@ void Qstls::doIterations() {
   initialGuess();
   while (counter < maxIter + 1 && err > minErr) {
     // Start timing
-    double tic = MPI::timer();
+    double tic = timer();
     // Update auxiliary density response
     computeAdr();
     // Update static structure factor
@@ -95,7 +97,7 @@ void Qstls::doIterations() {
     // Write output
     if (counter % outIter == 0 && writeFiles) { writeRecovery(); };
     // End timing
-    double toc = MPI::timer();
+    double toc = timer();
     // Print diagnostic
     if (verbose) {
       printf("--- iteration %d ---\n", counter);
@@ -140,7 +142,7 @@ void Qstls::initialGuess() {
   Rpa rpa(in, false);
   int status = rpa.compute();
   if (status != 0) {
-    MPI::throwError("Failed to compute the default initial guess");
+    throwError("Failed to compute the default initial guess");
   }
   ssfOld = rpa.getSsf();
   if (useIet) { adrOld.fill(0.0); }
@@ -258,15 +260,15 @@ void Qstls::computeAdrFixed() {
         in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], mu, itgGrid, itg2);
     adrTmp.get(wvg, adrFixed);
   };
-  const auto &loopData = MPI::parallelFor(loopFunc, nx, in.getNThreads());
-  MPI::gatherLoopData(adrFixed.data(), loopData, nxnl);
+  const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
+  gatherLoopData(adrFixed.data(), loopData, nxnl);
   // Write result to output file
-  if (MPI::isRoot()) {
+  if (isRoot()) {
     try {
       writeAdrFixedFile(adrFixed, adrFixedFileName);
     } catch (...) {
-      MPI::throwError("Error in the output file for the fixed component"
-                      " of the auxiliary density response.");
+      throwError("Error in the output file for the fixed component"
+                 " of the auxiliary density response.");
     }
   }
 }
@@ -279,7 +281,7 @@ void Qstls::writeAdrFixedFile(const Vector3D &res,
   ofstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    MPI::throwError("Output file " + fileName + " could not be created.");
+    throwError("Output file " + fileName + " could not be created.");
   }
   writeDataToBinary<int>(file, nx);
   writeDataToBinary<int>(file, nl);
@@ -287,7 +289,7 @@ void Qstls::writeAdrFixedFile(const Vector3D &res,
   writeDataToBinary<vector<double>>(file, wvg);
   writeDataToBinary<Vector3D>(file, res);
   file.close();
-  if (!file) { MPI::throwError("Error in writing to file " + fileName); }
+  if (!file) { throwError("Error in writing to file " + fileName); }
 }
 
 void Qstls::readAdrFixedFile(Vector3D &res,
@@ -299,7 +301,7 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    MPI::throwError("Input file " + fileName + " could not be opened.");
+    throwError("Input file " + fileName + " could not be opened.");
   }
   int nx_;
   int nl_;
@@ -316,11 +318,11 @@ void Qstls::readAdrFixedFile(Vector3D &res,
     res.resize(nx, nl, nx);
   }
   readDataFromBinary<Vector3D>(file, res);
-  if (!file) { MPI::throwError("Error in reading from file " + fileName); }
+  if (!file) { throwError("Error in reading from file " + fileName); }
   file.close();
   if (checkAdrFixed(wvg_, Theta_, nl_) != 0) {
-    MPI::throwError("Fixed component of the auxiliary density response"
-                    " loaded from file is incompatible with input");
+    throwError("Fixed component of the auxiliary density response"
+               " loaded from file is incompatible with input");
   }
 }
 
@@ -383,8 +385,8 @@ void Qstls::computeAdrIet() {
                   itgPrivate);
     adrTmp.get(wvg, adrFixedPrivate, adrIet);
   };
-  const auto &loopData = MPI::parallelFor(loopFunc, nx, in.getNThreads());
-  MPI::gatherLoopData(adrIet.data(), loopData, nl);
+  const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
+  gatherLoopData(adrIet.data(), loopData, nl);
   // Sum qstls and qstls-iet contributions to adr
   adr.sum(adrIet);
 }
@@ -400,14 +402,14 @@ void Qstls::computeAdrFixedIet() {
   }
   // Check that all ranks found the same number of files
   int nFilesToWrite = idx.size();
-  if (!MPI::isEqualOnAllRanks(idx.size())) {
-    MPI::throwError("Not all ranks can access the files with the fixed "
-                    " component of the auxiliary density response");
+  if (!isEqualOnAllRanks(idx.size())) {
+    throwError("Not all ranks can access the files with the fixed "
+               " component of the auxiliary density response");
   }
   if (nFilesToWrite == 0) { return; }
   // Barrier to ensure that all ranks have identified all the files that have to
   // be written
-  MPI::barrier();
+  barrier();
   // Write necessary files
   auto loopFunc = [&](int i) -> void {
     Integrator1D itgPrivate(in.getIntError());
@@ -421,7 +423,7 @@ void Qstls::computeAdrFixedIet() {
     adrTmp.get(wvg, res);
     writeAdrFixedFile(res, adrFixedIetFileInfo.at(idx[i]).first);
   };
-  MPI::parallelFor(loopFunc, nFilesToWrite, in.getNThreads());
+  parallelFor(loopFunc, nFilesToWrite, in.getNThreads());
   // Update content of adrFixedIetFileInfo
   getAdrFixedIetFileInfo();
 }
@@ -446,20 +448,19 @@ void Qstls::getAdrFixedIetFileInfo() {
       const pair<string, bool> filePair = pair<string, bool>(name, found);
       adrFixedIetFileInfo.insert(pair<int, decltype(filePair)>(i, filePair));
     } catch (...) {
-      MPI::throwError("Error in the output file for the fixed component"
-                      " of the auxiliary density response.");
+      throwError("Error in the output file for the fixed component"
+                 " of the auxiliary density response.");
     }
   }
 }
 
 // Recovery files
 void Qstls::writeRecovery() {
-  if (!MPI::isRoot()) { return; }
+  if (!isRoot()) { return; }
   ofstream file;
   file.open(recoveryFileName, ios::binary);
   if (!file.is_open()) {
-    MPI::throwError("Recovery file " + recoveryFileName +
-                    " could not be created.");
+    throwError("Recovery file " + recoveryFileName + " could not be created.");
   }
   int nx = wvg.size();
   int nl = in.getNMatsubara();
@@ -472,7 +473,7 @@ void Qstls::writeRecovery() {
   writeDataToBinary<Vector3D>(file, adrFixed);
   file.close();
   if (!file) {
-    MPI::throwError("Error in writing the recovery file " + recoveryFileName);
+    throwError("Error in writing the recovery file " + recoveryFileName);
   }
 }
 
@@ -496,7 +497,7 @@ void Qstls::readRecovery(const string &fileName,
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {
-    MPI::throwError("Input file " + fileName + " could not be opened.");
+    throwError("Input file " + fileName + " could not be opened.");
   }
   int nx;
   readDataFromBinary<int>(file, nx);
@@ -511,7 +512,7 @@ void Qstls::readRecovery(const string &fileName,
   readDataFromBinary<Vector2D>(file, adr_);
   readDataFromBinary<Vector3D>(file, adrFixed_);
   file.close();
-  if (!file) { MPI::throwError("Error in reading the file " + fileName); }
+  if (!file) { throwError("Error in reading the file " + fileName); }
 }
 
 // -----------------------------------------------------------------
@@ -613,7 +614,6 @@ double AdrFixed::integrand1(const double &q, const double &l) const {
 double
 AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
   const double q = itg.getX();
-  //if (q == 0.0 || y == 0.0) { return 0.0; };
   const double x2 = x * x;
   const double y2 = y * y;
   const double q2 = q * q;

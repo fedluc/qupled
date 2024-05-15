@@ -1,16 +1,16 @@
 #ifndef NUMERICS_HPP
 #define NUMERICS_HPP
 
+#include "num_util.hpp"
 #include <functional>
-#include <vector>
-#include <string>
 #include <gsl/gsl_errno.h>
-#include <gsl/gsl_roots.h>
 #include <gsl/gsl_integration.h>
-#include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp2d.h>
+#include <gsl/gsl_roots.h>
+#include <gsl/gsl_spline.h>
 #include <gsl/gsl_spline2d.h>
-#include "util.hpp"
+#include <memory>
+#include <vector>
 
 // -----------------------------------------------------------------
 // C++ wrappers to GSL objects
@@ -19,7 +19,8 @@
 namespace GslWrappers {
 
   // Wrapper to gsl_function
-  template <typename T> class GslFunctionWrap : public gsl_function {
+  template <typename T>
+  class GslFunctionWrap : public gsl_function {
 
   private:
 
@@ -54,6 +55,19 @@ namespace GslWrappers {
 // Interpolator for 1D data
 class Interpolator1D {
 
+public:
+
+  // Constructor
+  Interpolator1D(const std::vector<double> &x, const std::vector<double> &y);
+  Interpolator1D(const double &x, const double &y, const size_t n_);
+  explicit Interpolator1D();
+  // Destructor
+  ~Interpolator1D();
+  // Reset
+  void reset(const double &x, const double &y, const size_t n_);
+  // Evaluate
+  double eval(const double &x) const;
+
 private:
 
   // Spline
@@ -67,40 +81,10 @@ private:
   //
   // Setup interpolator
   void setup(const double &x, const double &y, const size_t n_);
-
-public:
-
-  // Constructor
-  Interpolator1D(const std::vector<double> &x, const std::vector<double> &y);
-  Interpolator1D(const double &x, const double &y, const size_t n_);
-  explicit Interpolator1D();
-  // Destructor
-  ~Interpolator1D();
-  // Reset
-  void reset(const double &x, const double &y, const size_t n_);
-  // Evaluate
-  double eval(const double &x) const;
 };
 
 // Interpolator for 2D data
 class Interpolator2D {
-
-private:
-
-  // Spline
-  gsl_spline2d *spline;
-  // Accelerator
-  gsl_interp_accel *xacc;
-  gsl_interp_accel *yacc;
-  // Size
-  size_t nx;
-  size_t ny;
-  // Setup interpolator
-  void setup(const double &x,
-             const double &y,
-             const double &z,
-             const int nx_,
-             const int ny_);
 
 public:
 
@@ -122,6 +106,23 @@ public:
              const int szy_);
   // Evaluate
   double eval(const double &x, const double &y) const;
+
+private:
+
+  // Spline
+  gsl_spline2d *spline;
+  // Accelerator
+  gsl_interp_accel *xacc;
+  gsl_interp_accel *yacc;
+  // Size
+  size_t nx;
+  size_t ny;
+  // Setup interpolator
+  void setup(const double &x,
+             const double &y,
+             const double &z,
+             const int nx_,
+             const int ny_);
 };
 
 // -----------------------------------------------------------------
@@ -129,6 +130,10 @@ public:
 // -----------------------------------------------------------------
 
 class RootSolverBase {
+
+public:
+
+  double getSolution() const { return sol; };
 
 protected:
 
@@ -149,13 +154,16 @@ protected:
         status(GSL_CONTINUE) {}
   explicit RootSolverBase()
       : RootSolverBase(1.0e-10, 1000) {}
-
-public:
-
-  double getSolution() const { return sol; };
 };
 
 class BrentRootSolver : public RootSolverBase {
+
+public:
+
+  explicit BrentRootSolver();
+  ~BrentRootSolver();
+  void solve(const std::function<double(double)> &func,
+             const std::vector<double> &guess);
 
 private:
 
@@ -165,13 +173,6 @@ private:
   const gsl_root_fsolver_type *rst;
   // Solver
   gsl_root_fsolver *rs;
-
-public:
-
-  explicit BrentRootSolver();
-  ~BrentRootSolver();
-  void solve(const std::function<double(double)> &func,
-             const std::vector<double> &guess);
 };
 
 class SecantSolver : public RootSolverBase {
@@ -193,9 +194,11 @@ class Integrator1D {
 
 public:
 
+  // Typdef
   enum Type { DEFAULT, FOURIER, SINGULAR };
 
   class Param {
+
   public:
 
     const double xMin = numUtil::NaN;
@@ -208,24 +211,24 @@ public:
         : fourierR(fourierR_) {}
   };
 
+  // Constructors
+  Integrator1D(const Type &type, const double &relErr);
+  explicit Integrator1D(const double &relErr)
+      : Integrator1D(Type::DEFAULT, relErr) {}
+  Integrator1D(const Integrator1D &other)
+      : Integrator1D(other.getType(), other.getAccuracy()) {}
+  // Compute integral
+  void compute(const std::function<double(double)> &func,
+               const Param &param) const;
+  // Getters
+  double getSolution() const;
+  double getAccuracy() const { return gslIntegrator->getAccuracy(); }
+  Type getType() const { return gslIntegrator->getType(); }
+
 private:
 
   // Base class for all integrators derived from GSL
   class Base {
-  protected:
-
-    // Function to integrate
-    gsl_function *F;
-    // Integrator type
-    const Type type;
-    // Integration workspace limit
-    const size_t limit;
-    // Accuracy
-    const double relErr;
-    // Residual error
-    double err;
-    // Solution
-    double sol;
 
   public:
 
@@ -243,17 +246,25 @@ private:
     // Compute integral
     virtual void compute(const std::function<double(double)> &func,
                          const Param &param) = 0;
+
+  protected:
+
+    // Function to integrate
+    gsl_function *F;
+    // Integrator type
+    const Type type;
+    // Integration workspace limit
+    const size_t limit;
+    // Accuracy
+    const double relErr;
+    // Residual error
+    double err;
+    // Solution
+    double sol;
   };
 
   // CQUAD integrator from GSL
   class CQUAD : public Base {
-  private:
-
-    // Integration workspace
-    gsl_integration_cquad_workspace *wsp;
-    // Number of evaluations
-    size_t nEvals;
-
   public:
 
     // Constructors
@@ -265,16 +276,17 @@ private:
     // Compute integral
     void compute(const std::function<double(double)> &func,
                  const Param &param) override;
+
+  private:
+
+    // Integration workspace
+    gsl_integration_cquad_workspace *wsp;
+    // Number of evaluations
+    size_t nEvals;
   };
 
   // QAWO integrator from GSL
   class QAWO : public Base {
-  private:
-
-    // Integration workspace
-    gsl_integration_workspace *wsp;
-    gsl_integration_workspace *wspc;
-    gsl_integration_qawo_table *qtab;
 
   public:
 
@@ -287,14 +299,17 @@ private:
     // Compute integral
     void compute(const std::function<double(double)> &func,
                  const Param &param) override;
-  };
 
-  // QAGS integrator from GSL
-  class QAGS : public Base {
   private:
 
     // Integration workspace
     gsl_integration_workspace *wsp;
+    gsl_integration_workspace *wspc;
+    gsl_integration_qawo_table *qtab;
+  };
+
+  // QAGS integrator from GSL
+  class QAGS : public Base {
 
   public:
 
@@ -307,26 +322,15 @@ private:
     // Compute integral
     void compute(const std::function<double(double)> &func,
                  const Param &param) override;
+
+  private:
+
+    // Integration workspace
+    gsl_integration_workspace *wsp;
   };
 
   // Pointers to GSL integrals
   std::unique_ptr<Base> gslIntegrator;
-
-public:
-
-  // Constructors
-  Integrator1D(const Type &type, const double &relErr);
-  explicit Integrator1D(const double &relErr)
-      : Integrator1D(Type::DEFAULT, relErr) {}
-  Integrator1D(const Integrator1D &other)
-      : Integrator1D(other.getType(), other.getAccuracy()) {}
-  // Compute integral
-  void compute(const std::function<double(double)> &func,
-               const Param &param) const;
-  // Getters
-  double getSolution() const;
-  double getAccuracy() const { return gslIntegrator->getAccuracy(); }
-  Type getType() const { return gslIntegrator->getType(); }
 };
 
 // -----------------------------------------------------------------
@@ -335,28 +339,13 @@ public:
 
 class Integrator2D {
 
-private:
+public:
 
   // Typedef
   using Type = Integrator1D::Type;
   using Param1D = Integrator1D::Param;
-  // Level 1 integrator (outermost integral)
-  Integrator1D itg1;
-  // Level 2 integrator
-  Integrator1D itg2;
-  // Temporary variable for level 2 integration
-  double x;
-  // Solution
-  double sol;
-
-public:
-
-  // Typedef
-  class Param : public Integrator1D::Param {
-  private:
-
-    const double yMinNum = numUtil::NaN;
-    const double yMaxNum = numUtil::NaN;
+  // Class to handle integration parameters
+  class Param : public Param1D {
 
   public:
 
@@ -386,6 +375,11 @@ public:
           yMaxNum(yMax_) {}
     Param(const double &fourierR_)
         : Integrator1D::Param(fourierR_) {}
+
+  private:
+
+    const double yMinNum = numUtil::NaN;
+    const double yMaxNum = numUtil::NaN;
   };
 
   // Constructors
@@ -404,6 +398,17 @@ public:
   // Getters
   double getX() const { return x; };
   double getSolution() const { return sol; };
+
+private:
+
+  // Level 1 integrator (outermost integral)
+  Integrator1D itg1;
+  // Level 2 integrator
+  Integrator1D itg2;
+  // Temporary variable for level 2 integration
+  double x;
+  // Solution
+  double sol;
 };
 
 #endif
