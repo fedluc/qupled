@@ -545,9 +545,7 @@ double AdrBase::ssf(const double &y) const { return ssfi.eval(y); }
 double Adr::fix(const double &y) const { return fixi.eval(y); }
 
 // Integrand
-double Adr::integrand(const double &y) const {
-  return fix(y) * (ssf(y) - 1.0);
-}
+double Adr::integrand(const double &y) const { return fix(y) * (ssf(y) - 1.0); }
 
 // Get result of integration
 void Adr::get(const vector<double> &wvg, const Vector3D &fixed, Vector2D &res) {
