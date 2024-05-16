@@ -274,16 +274,16 @@ double QAdder::integrandNumerator1(const double q) const {
   const double w = itg2.getX();
   if (q == 0.0) { return 0.0; };
   double w2 = w * w;
-  double q2 = q * q;
+  double w3 = w2 * w;
   double logarg = (w + 2 * q) / (w - 2 * q);
   logarg = (logarg < 0.0) ? -logarg : logarg;
-  if (w == 0.0) { return 1 / (12.0 * (exp(q2 / Theta - mu) + 1.0)); };
-  return q2 / (exp(q2 / Theta - mu) + 1.0) * (q / w * log(logarg) - 1.0) / w2;
+  return q / (exp(q * q / Theta - mu) + 1.0) * q / w3 *
+         (q / w * log(logarg) - 1.0);
 }
 
 // Numerator integrand2
 double QAdder::integrandNumerator2(const double w) const {
-  return (ssf(w) - 1.0);
+  return w * (ssf(w) - 1.0);
 }
 
 // Denominator integral
