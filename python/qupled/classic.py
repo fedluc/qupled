@@ -76,7 +76,7 @@ class Rpa:
         self.inputs.cutoff = cutoff
         self.inputs.matsubara = matsubara
         self.inputs.resolution = resolution
-        self.inputs.intError = 1.0e-6
+        self.inputs.intError = 1.0e-5
         self.inputs.threads = 1
 
     # Check input before computing
