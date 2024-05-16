@@ -326,15 +326,14 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   }
 }
 
-int Qstls::checkAdrFixed(const std::vector<double> &wvg_,
+int Qstls::checkAdrFixed(const vector<double> &wvg_,
                          const double Theta_,
                          const int nl_) const {
   constexpr double tol = 1e-15;
-  const std::vector<double> wvgDiff = diff(wvg_, wvg);
-  const double &wvgMaxDiff =
-      std::abs(*std::max_element(wvgDiff.begin(), wvgDiff.end()));
+  const vector<double> wvgDiff = diff(wvg_, wvg);
+  const double &wvgMaxDiff = abs(*max_element(wvgDiff.begin(), wvgDiff.end()));
   const bool consistentMatsubara = nl_ == in.getNMatsubara();
-  const bool consistentTheta = std::abs(Theta_ - in.getDegeneracy()) <= tol;
+  const bool consistentTheta = abs(Theta_ - in.getDegeneracy()) <= tol;
   const bool consistentGrid = wvg_.size() == wvg.size() && wvgMaxDiff <= tol;
   if (!consistentMatsubara) {
     std::cout << "Inconsistent Matsubara" << std::endl;
