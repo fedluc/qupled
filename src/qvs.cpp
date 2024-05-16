@@ -277,7 +277,7 @@ double QAdder::integrandNumerator1(const double q) const {
   double q2 = q * q;
   double logarg = (w + 2 * q) / (w - 2 * q);
   logarg = (logarg < 0.0) ? -logarg : logarg;
-  if (w == 0.0) { return 1 / (12.0 * (exp(q2 / Theta - mu) + 1.0)); };
+  if (w == 0.0) { return 1.0 / (12.0 * (exp(q2 / Theta - mu) + 1.0)); };
   return q2 / (exp(q2 / Theta - mu) + 1.0) * (q / w * log(logarg) - 1.0) / w2;
 }
 
