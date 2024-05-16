@@ -318,8 +318,8 @@ void Qstls::readAdrFixedFile(Vector3D &res,
     res.resize(nx, nl, nx);
   }
   readDataFromBinary<Vector3D>(file, res);
-  if (!file) { throwError("Error in reading from file " + fileName); }
   file.close();
+  if (!file) { throwError("Error in reading from file " + fileName); }
   if (checkAdrFixed(wvg_, Theta_, nl_) != 0) {
     throwError("Fixed component of the auxiliary density response"
                " loaded from file is incompatible with input");
