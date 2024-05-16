@@ -336,10 +336,10 @@ int Qstls::checkAdrFixed(const vector<double> &wvg_,
   const bool consistentTheta = abs(Theta_ - in.getDegeneracy()) <= tol;
   const bool consistentGrid = wvg_.size() == wvg.size() && wvgMaxDiff <= tol;
   if (!consistentMatsubara) {
-    std::cout << "Inconsistent Matsubara" << std::endl;
+    std::cerr << "Inconsistent Matsubara" << std::endl;
   }
-  if (!consistentTheta) { std::cout << "Inconsistent Theta" << std::endl; }
-  if (!consistentGrid) { std::cout << "Inconsistent grid values" << std::endl; }
+  if (!consistentTheta) { std::cerr << "Inconsistent Theta" << std::endl; }
+  if (!consistentGrid) { std::cerr << "Inconsistent grid values" << std::endl; }
   if (!consistentMatsubara || !consistentTheta || !consistentGrid) { return 1; }
   return 0;
 }
@@ -608,6 +608,7 @@ double AdrFixed::integrand1(const double &q, const double &l) const {
 double
 AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
   const double q = itg.getX();
+  if (q == 0 || t == 0 || y == 0) { return 0; };
   const double x2 = x * x;
   const double y2 = y * y;
   const double q2 = q * q;
