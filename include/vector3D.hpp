@@ -59,8 +59,6 @@ public:
 
   // Set all values in the vector to num
   void fill(const double &num);
-  // Set all values of row j and column k to num of a specific index i
-  void fill(const size_t i, const double &num);
   // Set all entries of row i and column j to num
   void fill(const size_t i, const size_t j, const double &num);
   // Set all entries of row i and column j to be a copy of vector num
