@@ -615,7 +615,7 @@ AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
   const double txq = 2.0 * x * q;
   if (l == 0) {
     if (t == txq) { return 2.0 * q2 / (y2 + 2.0 * txq - x2); };
-    if (x == y && t == 0.0) { return q / y ; };
+    if (x == y && t == 0.0) { return q / y; };
     const double t2 = t * t;
     double logarg = (t + txq) / (t - txq);
     logarg = (logarg < 0.0) ? -logarg : logarg;
