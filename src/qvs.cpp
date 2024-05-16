@@ -213,7 +213,7 @@ void QStlsCSR::computeAdr() {
 
 double QStlsCSR::getQAdder() const {
   Integrator1D itg1(ItgType::DEFAULT, in.getIntError());
-  Integrator2D itg2(ItgType::DEFAULT, ItgType::DEFAULT, in.getIntError());
+  Integrator2D itg2(ItgType::SINGULAR, ItgType::DEFAULT, in.getIntError());
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const Interpolator1D ssfItp(wvg, ssf);
