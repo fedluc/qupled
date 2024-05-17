@@ -606,7 +606,6 @@ double AdrFixed::integrand1(const double &q, const double &l) const {
 double
 AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
   const double q = itg.getX();
-  if (q == 0 || t == 0 || y == 0) { return 0; };
   const double x2 = x * x;
   const double y2 = y * y;
   const double q2 = q * q;
