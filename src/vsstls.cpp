@@ -12,7 +12,7 @@ using namespace std;
 
 double VSStls::computeAlpha() {
   // Compute the free energy integrand
-  thermoProp.compute<VSStls>(in);
+  thermoProp.compute();
   // Free energy
   const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
   const double &fxc = freeEnergyData[0];
@@ -44,29 +44,25 @@ void VSStls::updateSolution() {
 }
 
 void VSStls::fillFreeEnergyIntegrand() {
-  std::vector<double> missingCouplingParameters = thermoProp.inspectFreeEnergyIntegrand();
+  std::vector<double> missingCouplingParameters =
+      thermoProp.inspectFreeEnergyIntegrand();
   if (missingCouplingParameters.empty()) { return; }
   if (verbose) {
-    printf("Missing points in the free energy integrand: %zu subcalls will be performed"
-	   " to collect the necessary data\n",
-	   missingCouplingParameters.size());
+    printf("Missing points in the free energy integrand: %zu subcalls will be "
+           "performed to collect the necessary data\n",
+           missingCouplingParameters.size());
   }
   VSStlsInput inTmp = in;
-  for (const auto& rs : missingCouplingParameters) {
-    if (verbose) {
-      printf("Subcall: "
-	       "solving VS scheme for rs = %.5f:\n",
-	     rs);
-    }
+  for (const auto &rs : missingCouplingParameters) {
+    if (verbose) { printf("Subcall: solving VS scheme for rs = %.5f:\n", rs); }
     inTmp.setCoupling(rs);
     VSStls tmp(inTmp, this->thermoProp);
     tmp.compute();
     this->thermoProp = ThermoProp(in, tmp.thermoProp);
     if (verbose) {
       printf("Done\n");
-      printf("---------------------------------"
-	     "---------------------------------"
-	     "---------\n");
+      printf("-----------------------------------------------------------------"
+             "----------\n");
     }
   }
 }

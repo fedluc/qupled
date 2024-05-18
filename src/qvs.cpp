@@ -18,7 +18,7 @@ using ItgType = Integrator1D::Type;
 
 double QVSStls::computeAlpha() {
   //  Compute the free energy integrand
-  thermoProp.compute<QVSStls>(in);
+  thermoProp.compute();
   // Free energy
   const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
   const double &fxcr = freeEnergyData[1];
@@ -50,19 +50,21 @@ void QVSStls::updateSolution() {
 }
 
 void QVSStls::fillFreeEnergyIntegrand() {
-  std::vector<double> missingCouplingParameters = thermoProp.inspectFreeEnergyIntegrand();
+  std::vector<double> missingCouplingParameters =
+      thermoProp.inspectFreeEnergyIntegrand();
   if (missingCouplingParameters.empty()) { return; }
   if (verbose) {
-    printf("Missing points in the free energy integrand: %zu subcalls will be performed"
-	   " to collect the necessary data\n",
-	   missingCouplingParameters.size());
+    printf("Missing points in the free energy integrand: %zu subcalls will be "
+           "performed"
+           " to collect the necessary data\n",
+           missingCouplingParameters.size());
   }
   QVSStlsInput inTmp = in;
-  for (const auto& rs : missingCouplingParameters) {
+  for (const auto &rs : missingCouplingParameters) {
     if (verbose) {
       printf("Subcall: "
-	       "solving VS scheme for rs = %.5f:\n",
-	     rs);
+             "solving VS scheme for rs = %.5f:\n",
+             rs);
     }
     inTmp.setCoupling(rs);
     QVSStls tmp(inTmp, this->thermoProp);
@@ -71,8 +73,8 @@ void QVSStls::fillFreeEnergyIntegrand() {
     if (verbose) {
       printf("Done\n");
       printf("---------------------------------"
-	     "---------------------------------"
-	     "---------\n");
+             "---------------------------------"
+             "---------\n");
     }
   }
 }

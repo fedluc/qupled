@@ -157,7 +157,7 @@ public:
       : VSBase(in_, thermoProp_) {}
   // Getters
   Vector2D getAdr() const { return adr; }
-  
+
 private:
 
   // Compute free parameter
@@ -168,7 +168,6 @@ private:
   void fillFreeEnergyIntegrand() override;
   // Auxiliary density response
   Vector2D adr;
-  
 };
 
 #endif
