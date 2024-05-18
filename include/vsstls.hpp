@@ -49,7 +49,7 @@ protected:
 using ThermoProp = ThermoPropBase<StructProp, VSStlsInput>;
 
 class VSStls : public VSBase<ThermoProp, Rpa, VSStlsInput> {
-
+  
 public:
 
   // Constructor from initial data
@@ -58,14 +58,17 @@ public:
   // Constructor for recursive calculations
   VSStls(const VSStlsInput &in_, const ThermoProp &thermoProp_)
       : VSBase(in_, thermoProp_) {}
-
+  
 private:
 
   using VSBase = VSBase<ThermoProp, Rpa, VSStlsInput>;
   // Compute free parameter
-  double computeAlpha();
+  double computeAlpha() override;
   // Iterations to solve the vs-stls scheme
-  void updateSolution();
+  void updateSolution() override;
+  // Fill the free energy integrand
+  void fillFreeEnergyIntegrand() override;
+  
 };
 
 #endif

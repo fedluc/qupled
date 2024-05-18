@@ -49,6 +49,34 @@ void QVSStls::updateSolution() {
   slfc = qstls.getSlfc();
 }
 
+void QVSStls::fillFreeEnergyIntegrand() {
+  std::vector<double> missingCouplingParameters = thermoProp.inspectFreeEnergyIntegrand();
+  if (missingCouplingParameters.empty()) { return; }
+  if (verbose) {
+    printf("Missing points in the free energy integrand: %zu subcalls will be performed"
+	   " to collect the necessary data\n",
+	   missingCouplingParameters.size());
+  }
+  QVSStlsInput inTmp = in;
+  for (const auto& rs : missingCouplingParameters) {
+    if (verbose) {
+      printf("Subcall: "
+	       "solving VS scheme for rs = %.5f:\n",
+	     rs);
+    }
+    inTmp.setCoupling(rs);
+    QVSStls tmp(inTmp, this->thermoProp);
+    tmp.compute();
+    this->thermoProp = QThermoProp(in, tmp.thermoProp);
+    if (verbose) {
+      printf("Done\n");
+      printf("---------------------------------"
+	     "---------------------------------"
+	     "---------\n");
+    }
+  }
+}
+
 // -----------------------------------------------------------------
 // qThermoProp class
 // -----------------------------------------------------------------

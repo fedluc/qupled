@@ -33,11 +33,11 @@ public:
 
   // Destructor
   virtual ~VSBase() = default;
-
+  
   // Compute vs-stls scheme
   int compute() {
     try {
-      Scheme::init();
+      init();
       if (verbose) std::cout << "Free parameter calculation ..." << std::endl;
       doIterations();
       if (verbose) std::cout << "Done" << std::endl;
@@ -75,6 +75,14 @@ protected:
   // Compute free parameter
   virtual double computeAlpha() = 0;
 
+  // Initialize scheme
+  void init() {
+    // Initialize underlying scheme
+    Scheme::init();
+    // fill the free energy integrand in thermoProp
+    fillFreeEnergyIntegrand();
+  }
+  
   // Iterations to solve the vs scheme
   void doIterations() {
     auto func = [this](const double &alphaTmp) -> double {
@@ -97,6 +105,10 @@ protected:
 
   // Update structural output solution
   virtual void updateSolution() = 0;
+
+  // Fill the free energy integrand
+  virtual void fillFreeEnergyIntegrand() = 0;
+  
 };
 
 // -----------------------------------------------------------------
@@ -169,56 +181,43 @@ public:
   // Set the value of the free parameter in the structural properties
   void setAlpha(const double &alpha) { structProp.setAlpha(alpha); }
 
+  // Inspect the free energy integrand and return a list of coupling parameters
+  // for which it is necessary to recompute it
+  std::vector<double> inspectFreeEnergyIntegrand() {
+    std::vector<double> missingCouplingParameters;
+    for (size_t i = 0; i <= rsGrid.size() - NPOINTS; ++i) {
+      const double &rs = rsGrid[i];
+      if (rs > 0.0 && fxcIntegrand[1][i] == numUtil::Inf) {
+	missingCouplingParameters.push_back(rs);
+      }
+    }
+    return missingCouplingParameters;
+  }
+  
   // Compute the thermodynamic properties
   template <typename Scheme>
   void compute(const Input &in) {
     // Recursive calls to solve the VS-STLS scheme for all state points
     // with coupling parameter smaller than rs
-    const double nrs = rsGrid.size();
+    const double idx = rsGrid.size() - 2;
     Input inTmp = in;
     std::vector<double> fxciTmp(StructProp::NPOINTS);
     double alphaTmp;
-    for (size_t i = 0; i < nrs; ++i) {
-      const double &rs = rsGrid[i];
-      if (numUtil::equalTol(rs, in.getCoupling())) {
-        structProp.compute();
-        fxciTmp = structProp.getFreeEnergyIntegrand();
-        alphaTmp = structProp.getAlpha();
-      } else if (rs < in.getCoupling()) {
-        if (rs == 0.0 || fxcIntegrand[THETA][i] != numUtil::Inf) { continue; }
-        if (verbose) {
-          printf("Free energy integrand calculation, "
-                 "solving VS scheme for rs = %.5f:\n",
-                 rs);
-        }
-        inTmp.setCoupling(rs);
-        Scheme schemeTmp(inTmp, *this);
-        schemeTmp.compute();
-        const auto &thermoPropTmp = schemeTmp.getThermoProp();
-        fxciTmp = thermoPropTmp.structProp.getFreeEnergyIntegrand();
-        alphaTmp = thermoPropTmp.structProp.getAlpha();
-        if (verbose) {
-          printf("Done\n");
-          printf("---------------------------------"
-                 "---------------------------------"
-                 "---------\n");
-        }
-      } else {
-        break;
-      }
-      fxcIntegrand[THETA_DOWN][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
-      fxcIntegrand[THETA_DOWN][i] = fxciTmp[SIdx::RS_THETA_DOWN];
-      fxcIntegrand[THETA_DOWN][i + 1] = fxciTmp[SIdx::RS_UP_THETA_DOWN];
-      fxcIntegrand[THETA][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA];
-      fxcIntegrand[THETA][i] = fxciTmp[SIdx::RS_THETA];
-      fxcIntegrand[THETA][i + 1] = fxciTmp[SIdx::RS_UP_THETA];
-      fxcIntegrand[THETA_UP][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_UP];
-      fxcIntegrand[THETA_UP][i] = fxciTmp[SIdx::RS_THETA_UP];
-      fxcIntegrand[THETA_UP][i + 1] = fxciTmp[SIdx::RS_UP_THETA_UP];
-      alpha[i - 1] = alphaTmp;
-      alpha[i] = alphaTmp;
-      alpha[i + 1] = alphaTmp;
-    }
+    structProp.compute();
+    fxciTmp = structProp.getFreeEnergyIntegrand();
+    alphaTmp = structProp.getAlpha();    
+    fxcIntegrand[THETA_DOWN][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
+    fxcIntegrand[THETA_DOWN][idx] = fxciTmp[SIdx::RS_THETA_DOWN];
+    fxcIntegrand[THETA_DOWN][idx + 1] = fxciTmp[SIdx::RS_UP_THETA_DOWN];
+    fxcIntegrand[THETA][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA];
+    fxcIntegrand[THETA][idx] = fxciTmp[SIdx::RS_THETA];
+    fxcIntegrand[THETA][idx + 1] = fxciTmp[SIdx::RS_UP_THETA];
+    fxcIntegrand[THETA_UP][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_UP];
+    fxcIntegrand[THETA_UP][idx] = fxciTmp[SIdx::RS_THETA_UP];
+    fxcIntegrand[THETA_UP][idx + 1] = fxciTmp[SIdx::RS_UP_THETA_UP];
+    alpha[idx - 1] = alphaTmp;
+    alpha[idx] = alphaTmp;
+    alpha[idx + 1] = alphaTmp;
   }
 
   // Get structural properties
@@ -327,7 +326,7 @@ protected:
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
   // Output verbosity
-  const bool verbose;
+  bool verbose;
   // Structural properties
   StructProp structProp;
   // Grid for thermodyamic integration
@@ -456,7 +455,7 @@ public:
 protected:
 
   // Output verbosity
-  const bool verbose;
+  bool verbose;
   // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<CSR> csr;
   // Flag marking whether the initialization for the stls data is done

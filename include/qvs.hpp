@@ -157,15 +157,18 @@ public:
       : VSBase(in_, thermoProp_) {}
   // Getters
   Vector2D getAdr() const { return adr; }
-
+  
 private:
 
   // Compute free parameter
-  double computeAlpha();
+  double computeAlpha() override;
   // Iterations to solve the qvsstls-scheme
-  void updateSolution();
+  void updateSolution() override;
+  // Fill the free energy integrand
+  void fillFreeEnergyIntegrand() override;
   // Auxiliary density response
   Vector2D adr;
+  
 };
 
 #endif
