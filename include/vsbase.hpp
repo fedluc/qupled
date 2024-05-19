@@ -17,7 +17,7 @@ template <typename ThermoProp, typename Scheme, typename Input>
 class VSBase : public Scheme {
 
 public:
-
+  
   // Constructor from initial data
   explicit VSBase(const Input &in_)
       : Scheme(in_),
@@ -548,6 +548,79 @@ protected:
 // -----------------------------------------------------------------
 // CSR base class
 // -----------------------------------------------------------------
+
+class CSRNew {
+
+public:
+
+  // Enumerator to denote the numerical schemes used for the derivatives
+  enum Derivative { CENTERED, FORWARD, BACKWARD };
+
+  // Constructor
+  CSRNew() : alpha(DEFAULT_ALPHA) {}
+
+  // Destructor
+  virtual ~CSRNew() = default;
+  
+  // Set the data to compute the coupling parameter derivative
+  virtual void setDrsData(CSRNew &csrRsUp,
+			  CSRNew &csrRsDown,
+			  const Derivative &dTypeRs) = 0;
+
+  // Set the data to compute the degeneracy parameter derivative
+  virtual void setDThetaData(CSRNew &csrThetaUp,
+			     CSRNew &csrThetaDown,
+			     const Derivative &dTypeTheta) = 0;
+
+  // Publicly exposed private scheme methods
+  virtual void init() = 0;
+  virtual void initialGuess() = 0;
+  virtual void computeSsf() = 0;
+  virtual double computeError() = 0;
+  virtual void updateSolution() = 0;
+  virtual std::vector<double> getWvg() const = 0;
+  virtual std::vector<double> getSsf() const = 0;
+  virtual double getCoupling() const = 0;
+
+  // Set the free parameter
+  void setAlpha(const double &alpha) { this->alpha = alpha; }
+
+  // Get the free parameter
+  double getAlpha() const { return alpha; }
+
+  // Compute the internal energy
+  double getInternalEnergy() const {
+    return thermoUtil::computeInternalEnergy(getWvg(), getSsf(), getCoupling());
+  }
+
+  // Compute the free energy integrand
+  double getFreeEnergyIntegrand() const {
+    return thermoUtil::computeInternalEnergy(getWvg(), getSsf(), 1.0);
+  }
+
+protected:
+
+  // Default value of alpha
+  static constexpr double DEFAULT_ALPHA = numUtil::Inf;
+  // Free parameter
+  double alpha;
+
+  // Helper methods to compute the derivatives
+  double getDerivative(const double &f0,
+                       const double &f1,
+                       const double &f2,
+                       const Derivative &type) {
+    switch (type) {
+    case BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2; break;
+    case CENTERED: return f1 - f2; break;
+    case FORWARD: return -getDerivative(f0, f1, f2, BACKWARD); break;
+    default:
+      assert(false);
+      return -1;
+      break;
+    }
+  }
+};
 
 template <typename T, typename Scheme, typename Input>
 class CSR : public Scheme {
