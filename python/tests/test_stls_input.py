@@ -12,6 +12,7 @@ def stls_input_instance():
 
 def test_init(stls_input_instance):
     assert issubclass(qp.StlsInput, qp.RpaInput)
+    assert issubclass(qp.StlsInput, qp.IterationInput)
     assert hasattr(stls_input_instance, "error")
     assert hasattr(stls_input_instance, "mixing")
     assert hasattr(stls_input_instance, "iet")
@@ -96,7 +97,7 @@ def test_recoveryFile(stls_input_instance):
 
 def test_guess(stls_input_instance):
     arr = np.zeros(10)
-    guess = qp.SlfcGuess()
+    guess = qp.StlsGuess()
     guess.wvg = arr
     guess.slfc = arr
     stls_input_instance.guess = guess
@@ -104,7 +105,7 @@ def test_guess(stls_input_instance):
     assert np.array_equal(arr, stls_input_instance.guess.slfc)
     with pytest.raises(RuntimeError) as excinfo:
         arr = np.zeros(2)
-        guess = qp.SlfcGuess()
+        guess = qp.StlsGuess()
         guess.wvg = arr
         guess.slfc = arr
         stls_input_instance.guess = guess
@@ -112,7 +113,7 @@ def test_guess(stls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros(11)
-        guess = qp.SlfcGuess()
+        guess = qp.StlsGuess()
         guess.wvg = arr1
         guess.slfc = arr2
         stls_input_instance.guess = guess

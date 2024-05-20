@@ -65,90 +65,36 @@ protected:
 };
 
 // -----------------------------------------------------------------
-// Class to handle input for the random phase approximation
+// Class to handle input for the schemes that are solved iteratively
 // -----------------------------------------------------------------
 
-class RpaInput : public Input {
+class IterationInput {
 
 public:
 
-  // Constructor
-  explicit RpaInput()
-      : dx(0),
-        xmax(0),
-        nl(0),
-        muGuess(std::vector<double>(2, 0)) {}
-  // Setters
-  void setChemicalPotentialGuess(const std::vector<double> &muGuess);
-  void setNMatsubara(const int &nMatsubara);
-  void setWaveVectorGridRes(const double &waveVectorGridRes);
-  void setWaveVectorGridCutoff(const double &waveVectorGridCutoff);
-  // Getters
-  std::vector<double> getChemicalPotentialGuess() const { return muGuess; }
-  int getNMatsubara() const { return nl; }
-  double getWaveVectorGridRes() const { return dx; }
-  double getWaveVectorGridCutoff() const { return xmax; }
-  // Print content of the data structure
-  void print() const;
-  // Compare two StlsInput objects
-  bool isEqual(const RpaInput &in) const;
-
-protected:
-
-  // Wave-vector grid resolution
-  double dx;
-  // cutoff for the wave-vector grid
-  double xmax;
-  // Number of matsubara frequencies
-  int nl;
-  // Initial guess for the chemical potential calculation
-  std::vector<double> muGuess;
-};
-
-// -----------------------------------------------------------------
-// Class to handle input for the STLS and STLS-IET schemes
-// -----------------------------------------------------------------
-
-class StlsInput : public RpaInput {
-
-public:
-
-  // Typedef
-  struct SlfcGuess {
-    std::vector<double> wvg;
-    std::vector<double> slfc;
-    bool operator==(const SlfcGuess &other) const {
-      return wvg == other.wvg && slfc == other.slfc;
-    }
-  };
   // Contructor
-  explicit StlsInput()
+  explicit IterationInput()
       : aMix(0),
         errMin(0),
         nIter(0),
         outIter(0),
-        IETMapping(""),
         recoveryFileName("") {}
   // Setters
   void setErrMin(const double &errMin);
   void setMixingParameter(const double &aMix);
-  void setIETMapping(const std::string &IETMapping);
   void setNIter(const int &nIter);
   void setOutIter(const int &outIter);
   void setRecoveryFileName(const std::string &recoveryFileName);
-  void setGuess(const SlfcGuess &guess);
   // Getters
   double getErrMin() const { return errMin; }
-  std::string getIETMapping() const { return IETMapping; }
   double getMixingParameter() const { return aMix; }
   int getNIter() const { return nIter; }
   int getOutIter() const { return outIter; }
   std::string getRecoveryFileName() const { return recoveryFileName; }
-  SlfcGuess getGuess() const { return guess; }
   // Print content of the data structure
   void print() const;
   // Compare two StlsInput objects
-  bool isEqual(const StlsInput &in) const;
+  bool isEqual(const IterationInput &in) const;
 
 protected:
 
@@ -160,52 +106,89 @@ protected:
   int nIter;
   // Output frequency
   int outIter;
+  // Name of the file used to store the recovery data
+  std::string recoveryFileName;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the classical schemes
+// -----------------------------------------------------------------
+
+class ClassicInput {
+
+public:
+
+  // Typedef
+  struct Guess {
+    std::vector<double> wvg;
+    std::vector<double> slfc;
+    bool operator==(const Guess &other) const {
+      return wvg == other.wvg && slfc == other.slfc;
+    }
+  };
+  // Contructor
+  explicit ClassicInput()
+      : IETMapping("") {}
+  // Setters
+  void setGuess(const Guess &guess);
+  void setIETMapping(const std::string &IETMapping);
+  // Getters
+  Guess getGuess() const { return guess; }
+  std::string getIETMapping() const { return IETMapping; }
+  // Print content of the data structure
+  void print() const;
+  // Compare two StlsInput objects
+  bool isEqual(const ClassicInput &in) const;
+
+protected:
+
+  // Initial guess
+  Guess guess;
   // Mapping between the quantum and classical state points for the IET-based
   // schemes
   std::string IETMapping;
-  // Name of the file used to store the recovery data
-  std::string recoveryFileName;
-  // Initial guess
-  SlfcGuess guess;
 };
 
 // -----------------------------------------------------------------
 // Class to handle input for the QSTLS and QSTLS-IET schemes
 // -----------------------------------------------------------------
 
-class QstlsInput : public StlsInput {
+class QuantumInput {
 
 public:
 
   // Typdef
-  struct QstlsGuess {
+  struct Guess {
     std::vector<double> wvg;
     std::vector<double> ssf;
     Vector2D adr;
     int matsubara = 0;
-    bool operator==(const QstlsGuess &other) const {
+    bool operator==(const Guess &other) const {
       return wvg == other.wvg && ssf == other.ssf && adr == other.adr &&
              matsubara == other.matsubara;
     }
   };
   // Contructors
-  explicit QstlsInput()
+  explicit QuantumInput()
       : fixed(""),
-        fixedIet("") {}
+        fixedIet(""),
+        IETMapping("") {}
   // Setters
   void setFixed(const std::string &fixed);
   void setFixedIet(const std::string &fixedIet);
-  void setGuess(const QstlsGuess &guess);
+  void setGuess(const Guess &guess);
+  void setIETMapping(const std::string &IETMapping);
   // Getters
   std::string getFixed() const { return fixed; }
   std::string getFixedIet() const { return fixedIet; }
-  QstlsGuess getGuess() const { return guess; }
+  Guess getGuess() const { return guess; }
+  std::string getIETMapping() const { return IETMapping; }
   // Print content of the data structure
   void print() const;
   // Compare two QstlsInput objects
-  bool isEqual(const QstlsInput &in) const;
+  bool isEqual(const QuantumInput &in) const;
 
-private:
+protected:
 
   // Name of the file with the fixed component of the auxiliary density response
   // (adr)
@@ -213,7 +196,10 @@ private:
   // Name of the file with the fixed component of the adr for iet schemes
   std::string fixedIet;
   // Initial guess
-  QstlsGuess guess;
+  Guess guess;
+  // Mapping between the quantum and classical state points for the IET-based
+  // schemes
+  std::string IETMapping;
 };
 
 // -----------------------------------------------------------------
@@ -274,6 +260,83 @@ private:
   int nIterAlpha;
   // Pre-computed free energy integrand
   FreeEnergyIntegrand fxcIntegrand;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the random phase approximation
+// -----------------------------------------------------------------
+
+class RpaInput : public Input {
+
+public:
+
+  // Constructor
+  explicit RpaInput()
+      : dx(0),
+        xmax(0),
+        nl(0),
+        muGuess(std::vector<double>(2, 0)) {}
+  // Setters
+  void setChemicalPotentialGuess(const std::vector<double> &muGuess);
+  void setNMatsubara(const int &nMatsubara);
+  void setWaveVectorGridRes(const double &waveVectorGridRes);
+  void setWaveVectorGridCutoff(const double &waveVectorGridCutoff);
+  // Getters
+  std::vector<double> getChemicalPotentialGuess() const { return muGuess; }
+  int getNMatsubara() const { return nl; }
+  double getWaveVectorGridRes() const { return dx; }
+  double getWaveVectorGridCutoff() const { return xmax; }
+  // Print content of the data structure
+  void print() const;
+  // Compare two StlsInput objects
+  bool isEqual(const RpaInput &in) const;
+
+protected:
+
+  // Wave-vector grid resolution
+  double dx;
+  // cutoff for the wave-vector grid
+  double xmax;
+  // Number of matsubara frequencies
+  int nl;
+  // Initial guess for the chemical potential calculation
+  std::vector<double> muGuess;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the QSTLS and QSTLS-IET schemes
+// -----------------------------------------------------------------
+
+class QstlsInput : public RpaInput, public IterationInput, public QuantumInput {
+
+public:
+
+  // Print content of the data structure
+  void print() const;
+  // Compare two QstlsInput objects
+  bool isEqual(const QstlsInput &in) const;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the STLS and STLS-IET schemes
+// -----------------------------------------------------------------
+
+class StlsInput : public RpaInput, public IterationInput, public ClassicInput {
+
+public:
+
+  // Constructors
+  explicit StlsInput() = default;
+  explicit StlsInput(const QstlsInput &other)
+      : RpaInput(other),
+        IterationInput(other) {
+    const std::string &iet = other.getIETMapping();
+    if (!iet.empty()) { setIETMapping(iet); }
+  }
+  // Print content of the data structure
+  void print() const;
+  // Compare two QstlsInput objects
+  bool isEqual(const StlsInput &in) const;
 };
 
 // -----------------------------------------------------------------

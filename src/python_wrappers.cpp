@@ -17,23 +17,22 @@ void PyRpaInput::setChemicalPotentialGuess(RpaInput &in,
 }
 
 // -----------------------------------------------------------------
-// PySlfcGuess
+// PyStlsGuess
 // -----------------------------------------------------------------
 
-bn::ndarray PySlfcGuess::getWvg(const StlsInput::SlfcGuess &guess) {
+bn::ndarray PyStlsGuess::getWvg(const StlsInput::Guess &guess) {
   return pythonUtil::toNdArray(guess.wvg);
 }
 
-bn::ndarray PySlfcGuess::getSlfc(const StlsInput::SlfcGuess &guess) {
+bn::ndarray PyStlsGuess::getSlfc(const StlsInput::Guess &guess) {
   return pythonUtil::toNdArray(guess.slfc);
 }
 
-void PySlfcGuess::setWvg(StlsInput::SlfcGuess &guess, const bn::ndarray &wvg) {
+void PyStlsGuess::setWvg(StlsInput::Guess &guess, const bn::ndarray &wvg) {
   guess.wvg = pythonUtil::toVector(wvg);
 }
 
-void PySlfcGuess::setSlfc(StlsInput::SlfcGuess &guess,
-                          const bn::ndarray &slfc) {
+void PyStlsGuess::setSlfc(StlsInput::Guess &guess, const bn::ndarray &slfc) {
   guess.slfc = pythonUtil::toVector(slfc);
 }
 
@@ -100,40 +99,36 @@ void PyFreeEnergyIntegrand::setAlpha(VSStlsInput::FreeEnergyIntegrand &fxc,
 // PyQstlsGuess
 // -----------------------------------------------------------------
 
-bn::ndarray PyQstlsGuess::getWvg(const QstlsInput::QstlsGuess &guess) {
+bn::ndarray PyQstlsGuess::getWvg(const QstlsInput::Guess &guess) {
   return pythonUtil::toNdArray(guess.wvg);
 }
 
-bn::ndarray PyQstlsGuess::getSsf(const QstlsInput::QstlsGuess &guess) {
+bn::ndarray PyQstlsGuess::getSsf(const QstlsInput::Guess &guess) {
   return pythonUtil::toNdArray(guess.ssf);
 }
 
-bn::ndarray PyQstlsGuess::getAdr(const QstlsInput::QstlsGuess &guess) {
+bn::ndarray PyQstlsGuess::getAdr(const QstlsInput::Guess &guess) {
   return pythonUtil::toNdArray2D(guess.adr);
 }
 
-int PyQstlsGuess::getMatsubara(const QstlsInput::QstlsGuess &guess) {
+int PyQstlsGuess::getMatsubara(const QstlsInput::Guess &guess) {
   return guess.matsubara;
 }
 
-void PyQstlsGuess::setWvg(QstlsInput::QstlsGuess &guess,
-                          const bn::ndarray &wvg) {
+void PyQstlsGuess::setWvg(QstlsInput::Guess &guess, const bn::ndarray &wvg) {
   guess.wvg = pythonUtil::toVector(wvg);
 }
 
-void PyQstlsGuess::setSsf(QstlsInput::QstlsGuess &guess,
-                          const bn::ndarray &ssf) {
+void PyQstlsGuess::setSsf(QstlsInput::Guess &guess, const bn::ndarray &ssf) {
   guess.ssf = pythonUtil::toVector(ssf);
 }
 
-void PyQstlsGuess::setAdr(QstlsInput::QstlsGuess &guess,
-                          const bn::ndarray &adr) {
+void PyQstlsGuess::setAdr(QstlsInput::Guess &guess, const bn::ndarray &adr) {
   if (adr.shape(0) == 0) { return; }
   guess.adr = pythonUtil::toVector2D(adr);
 }
 
-void PyQstlsGuess::setMatsubara(QstlsInput::QstlsGuess &guess,
-                                const int matsubara) {
+void PyQstlsGuess::setMatsubara(QstlsInput::Guess &guess, const int matsubara) {
   guess.matsubara = matsubara;
 }
 

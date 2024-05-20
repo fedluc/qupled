@@ -56,24 +56,32 @@ BOOST_PYTHON_MODULE(qupled) {
       .def("print", &RpaInput::print)
       .def("isEqual", &RpaInput::isEqual);
 
+  // Class for the input of the Stls scheme
+  bp::class_<IterationInput>("IterationInput")
+      .add_property(
+          "error", &IterationInput::getErrMin, &IterationInput::setErrMin)
+      .add_property("mixing",
+                    &IterationInput::getMixingParameter,
+                    &IterationInput::setMixingParameter)
+      .add_property(
+          "iterations", &IterationInput::getNIter, &IterationInput::setNIter)
+      .add_property("outputFrequency",
+                    &IterationInput::getOutIter,
+                    &IterationInput::setOutIter)
+      .add_property("recoveryFile",
+                    &IterationInput::getRecoveryFileName,
+                    &IterationInput::setRecoveryFileName)
+      .def("print", &IterationInput::print)
+      .def("isEqual", &IterationInput::isEqual);
+
   // Class for the initial guess of the Stls scheme
-  bp::class_<StlsInput::SlfcGuess>("SlfcGuess")
-      .add_property("wvg", &PySlfcGuess::getWvg, &PySlfcGuess::setWvg)
-      .add_property("slfc", &PySlfcGuess::getSlfc, &PySlfcGuess::setSlfc);
+  bp::class_<StlsInput::Guess>("StlsGuess")
+      .add_property("wvg", &PyStlsGuess::getWvg, &PyStlsGuess::setWvg)
+      .add_property("slfc", &PyStlsGuess::getSlfc, &PyStlsGuess::setSlfc);
 
   // Class for the input of the Stls scheme
-  bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
-      .add_property("error", &StlsInput::getErrMin, &StlsInput::setErrMin)
-      .add_property("mixing",
-                    &StlsInput::getMixingParameter,
-                    &StlsInput::setMixingParameter)
+  bp::class_<StlsInput, bp::bases<RpaInput, IterationInput>>("StlsInput")
       .add_property("iet", &StlsInput::getIETMapping, &StlsInput::setIETMapping)
-      .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter)
-      .add_property(
-          "outputFrequency", &StlsInput::getOutIter, &StlsInput::setOutIter)
-      .add_property("recoveryFile",
-                    &StlsInput::getRecoveryFileName,
-                    &StlsInput::setRecoveryFileName)
       .add_property("guess", &StlsInput::getGuess, &StlsInput::setGuess)
       .def("print", &StlsInput::print)
       .def("isEqual", &StlsInput::isEqual);
@@ -113,7 +121,7 @@ BOOST_PYTHON_MODULE(qupled) {
       .def("isEqual", &VSStlsInput::isEqual);
 
   // Class for the initial guess of the Qstls scheme
-  bp::class_<QstlsInput::QstlsGuess>("QstlsGuess")
+  bp::class_<QstlsInput::Guess>("QstlsGuess")
       .add_property("wvg", &PyQstlsGuess::getWvg, &PyQstlsGuess::setWvg)
       .add_property("ssf", &PyQstlsGuess::getSsf, &PyQstlsGuess::setSsf)
       .add_property("adr", &PyQstlsGuess::getAdr, &PyQstlsGuess::setAdr)
@@ -122,7 +130,9 @@ BOOST_PYTHON_MODULE(qupled) {
                     &PyQstlsGuess::setMatsubara);
 
   // Class for the input of the Qstls scheme
-  bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
+  bp::class_<QstlsInput, bp::bases<RpaInput, IterationInput>>("QstlsInput")
+      .add_property(
+          "iet", &QstlsInput::getIETMapping, &QstlsInput::setIETMapping)
       .add_property("guess", &QstlsInput::getGuess, &QstlsInput::setGuess)
       .add_property("fixed", &QstlsInput::getFixed, &QstlsInput::setFixed)
       .add_property(

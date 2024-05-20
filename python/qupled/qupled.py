@@ -42,14 +42,26 @@ class RpaInput:
         """ cutoff for the wave-vector grid """
 
 
-class StlsInput(RpaInput):
-    """Class to handle the inputs related to the classical STLS and STLS-IET schemes."""
+class IterationInput:
+    """Class to handle the inputs related to the schemes that must be solved iteratively"""
 
     def __init__(self):
         self.error: float = None
         """ minimum error for convergence """
         self.mixing: float = None
         """ mixing paramter """
+        self.iterations: int = None
+        """ Maximum number of iterations """
+        self.outputFrequency: int = None
+        """ Output frequency to write the recovery file """
+        self.recoveryFile: str = None
+        """ Initial guess """
+
+
+class StlsInput(RpaInput, IterationInput):
+    """Class to handle the inputs related to the classical STLS and STLS-IET schemes."""
+
+    def __init__(self):
         self.iet: str = None
         """ Classical-to-quantum mapping used in the iet schemes
         allowed options include:
@@ -66,11 +78,7 @@ class StlsInput(RpaInput):
         the ground state they can differ significantly (the standard
         mapping diverges)
         """
-        self.iterations: int = None
-        """ Maximum number of iterations """
-        self.outputFrequency: int = None
-        """ Output frequency to write the recovery file """
-        self.recoveryFile: str = None
+        self.guess: qupled.StlsGuess = None
         """ Initial guess """
 
 
@@ -99,11 +107,26 @@ class VSStlsInput(StlsInput):
         """ Pre-computed free energy integrand """
 
 
-class QstlsInput(StlsInput):
+class QstlsInput(RpaInput, IterationInput):
     """Class to handle the inputs related to the quantum schemes."""
 
     def __init__(self):
-        """Initial guess"""
+        self.iet: str = None
+        """ Classical-to-quantum mapping used in the iet schemes
+        allowed options include:
+        
+          - standard: inversely proportional to the degeneracy parameter
+        
+	  - sqrt: inversely proportional to the square root of the sum
+            of the squares of one and the degeneracy parameter
+
+          - linear: inversely proportional to one plus the degeneracy
+            parameter.
+        
+        Far from the ground state all mappings lead identical results, but at
+        the ground state they can differ significantly (the standard
+        mapping diverges)
+        """
         self.fixed: float = None
         """ name of the file storing the fixed component of the auxiliary density 
 	response in the QSTLS schmeme. Note: The QSTLS auxiliary density response 
@@ -114,6 +137,8 @@ class QstlsInput(StlsInput):
         """ name of the zip file storing the fixed components of the auxiliary density
 	response in the QSTLS-IET schemes. Note: Whenever possible, it
 	is a good idea to set this property when solving the QSTLS-IET schemes """
+        self.guess: qupled.QstlsGuess = None
+        """ Initial guess """
 
 
 class QVSStlsInput(VSStlsInput, QstlsInput):
@@ -122,7 +147,7 @@ class QVSStlsInput(VSStlsInput, QstlsInput):
     pass
 
 
-class SlfcGuess:
+class StlsGuess:
     """Class used to define an initial guess for the classical schemes (STLS, STLS-IET)."""
 
     def __init__(self):

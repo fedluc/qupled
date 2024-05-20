@@ -27,16 +27,16 @@ public:
 };
 
 // -----------------------------------------------------------------
-// Wrapper for exposing the SlfcGuess class to Python
+// Wrapper for exposing the StlsGuess class to Python
 // -----------------------------------------------------------------
 
-class PySlfcGuess {
+class PyStlsGuess {
 public:
 
-  static bn::ndarray getWvg(const StlsInput::SlfcGuess &guess);
-  static bn::ndarray getSlfc(const StlsInput::SlfcGuess &guess);
-  static void setWvg(StlsInput::SlfcGuess &guess, const bn::ndarray &wvg);
-  static void setSlfc(StlsInput::SlfcGuess &guess, const bn::ndarray &slfc);
+  static bn::ndarray getWvg(const StlsInput::Guess &guess);
+  static bn::ndarray getSlfc(const StlsInput::Guess &guess);
+  static void setWvg(StlsInput::Guess &guess, const bn::ndarray &wvg);
+  static void setSlfc(StlsInput::Guess &guess, const bn::ndarray &slfc);
 };
 
 // -----------------------------------------------------------------
@@ -86,14 +86,14 @@ public:
 class PyQstlsGuess {
 public:
 
-  static bn::ndarray getWvg(const QstlsInput::QstlsGuess &guess);
-  static bn::ndarray getSsf(const QstlsInput::QstlsGuess &guess);
-  static bn::ndarray getAdr(const QstlsInput::QstlsGuess &guess);
-  static int getMatsubara(const QstlsInput::QstlsGuess &guess);
-  static void setWvg(QstlsInput::QstlsGuess &guess, const bn::ndarray &wvg);
-  static void setSsf(QstlsInput::QstlsGuess &guess, const bn::ndarray &ssf);
-  static void setAdr(QstlsInput::QstlsGuess &guess, const bn::ndarray &ssf);
-  static void setMatsubara(QstlsInput::QstlsGuess &guess, const int matsubara);
+  static bn::ndarray getWvg(const QstlsInput::Guess &guess);
+  static bn::ndarray getSsf(const QstlsInput::Guess &guess);
+  static bn::ndarray getAdr(const QstlsInput::Guess &guess);
+  static int getMatsubara(const QstlsInput::Guess &guess);
+  static void setWvg(QstlsInput::Guess &guess, const bn::ndarray &wvg);
+  static void setSsf(QstlsInput::Guess &guess, const bn::ndarray &ssf);
+  static void setAdr(QstlsInput::Guess &guess, const bn::ndarray &ssf);
+  static void setMatsubara(QstlsInput::Guess &guess, const int matsubara);
 };
 
 // -----------------------------------------------------------------

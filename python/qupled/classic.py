@@ -340,7 +340,7 @@ class Stls(Rpa):
         cutoff: float = 10.0,
         error: float = 1.0e-5,
         mixing: float = 1.0,
-        guess: qp.SlfcGuess = None,
+        guess: qp.StlsGuess = None,
         iterations: int = 1000,
         matsubara: int = 128,
         outputFrequency: int = 10,
@@ -383,7 +383,7 @@ class Stls(Rpa):
         cutoff: float,
         error: float,
         mixing: float,
-        guess: qp.SlfcGuess,
+        guess: qp.StlsGuess,
         iterations: int,
         matsubara: int,
         outputFrequency: int,
@@ -450,7 +450,7 @@ class Stls(Rpa):
         Args:
             fileName : name of the file used to extract the information for the initial guess.
         """
-        guess = qp.SlfcGuess()
+        guess = qp.StlsGuess()
         hdfData = qu.Hdf().read(fileName, ["wvg", "slfc"])
         guess.wvg = hdfData["wvg"]
         guess.slfc = hdfData["slfc"]
@@ -498,7 +498,7 @@ class StlsIet(Stls):
         error: float = 1.0e-5,
         mapping: str = "standard",
         mixing: float = 1.0,
-        guess: qp.SlfcGuess = None,
+        guess: qp.StlsGuess = None,
         iterations: int = 1000,
         matsubara: int = 128,
         outputFrequency: int = 10,
@@ -600,7 +600,7 @@ class VSStls(Stls):
         cutoff: float = 10.0,
         error: float = 1.0e-5,
         mixing: float = 1.0,
-        guess: qp.SlfcGuess = None,
+        guess: qp.StlsGuess = None,
         iterations: int = 1000,
         matsubara: int = 128,
         outputFrequency: int = 10,
