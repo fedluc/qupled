@@ -56,24 +56,32 @@ BOOST_PYTHON_MODULE(qupled) {
       .def("print", &RpaInput::print)
       .def("isEqual", &RpaInput::isEqual);
 
+  // Class for the input of the Stls scheme
+  bp::class_<IterationInput>("IterationInput")
+      .add_property(
+          "error", &IterationInput::getErrMin, &IterationInput::setErrMin)
+      .add_property("mixing",
+                    &IterationInput::getMixingParameter,
+                    &IterationInput::setMixingParameter)
+      .add_property(
+          "iterations", &IterationInput::getNIter, &IterationInput::setNIter)
+      .add_property("outputFrequency",
+                    &IterationInput::getOutIter,
+                    &IterationInput::setOutIter)
+      .add_property("recoveryFile",
+                    &IterationInput::getRecoveryFileName,
+                    &IterationInput::setRecoveryFileName)
+      .def("print", &IterationInput::print)
+      .def("isEqual", &IterationInput::isEqual);
+
   // Class for the initial guess of the Stls scheme
-  bp::class_<StlsInput::SlfcGuess>("SlfcGuess")
-      .add_property("wvg", &PySlfcGuess::getWvg, &PySlfcGuess::setWvg)
-      .add_property("slfc", &PySlfcGuess::getSlfc, &PySlfcGuess::setSlfc);
+  bp::class_<StlsInput::Guess>("StlsGuess")
+      .add_property("wvg", &PyStlsGuess::getWvg, &PyStlsGuess::setWvg)
+      .add_property("slfc", &PyStlsGuess::getSlfc, &PyStlsGuess::setSlfc);
 
   // Class for the input of the Stls scheme
-  bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
-      .add_property("error", &StlsInput::getErrMin, &StlsInput::setErrMin)
-      .add_property("mixing",
-                    &StlsInput::getMixingParameter,
-                    &StlsInput::setMixingParameter)
+  bp::class_<StlsInput, bp::bases<RpaInput, IterationInput>>("StlsInput")
       .add_property("iet", &StlsInput::getIETMapping, &StlsInput::setIETMapping)
-      .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter)
-      .add_property(
-          "outputFrequency", &StlsInput::getOutIter, &StlsInput::setOutIter)
-      .add_property("recoveryFile",
-                    &StlsInput::getRecoveryFileName,
-                    &StlsInput::setRecoveryFileName)
       .add_property("guess", &StlsInput::getGuess, &StlsInput::setGuess)
       .def("print", &StlsInput::print)
       .def("isEqual", &StlsInput::isEqual);
@@ -91,29 +99,35 @@ BOOST_PYTHON_MODULE(qupled) {
                     &PyFreeEnergyIntegrand::setAlpha);
 
   // Class for the input of the VSStls scheme
-  bp::class_<VSStlsInput, bp::bases<StlsInput>>("VSStlsInput")
-      .add_property("errorAlpha",
-                    &VSStlsInput::getErrMinAlpha,
-                    &VSStlsInput::setErrMinAlpha)
-      .add_property("iterationsAlpha",
-                    &VSStlsInput::getNIterAlpha,
-                    &VSStlsInput::setNIterAlpha)
+  bp::class_<VSInput, bp::bases<RpaInput, IterationInput>>("VSInput")
       .add_property(
-          "alpha", &PyVSStlsInput::getAlphaGuess, &PyVSStlsInput::setAlphaGuess)
+          "errorAlpha", &VSInput::getErrMinAlpha, &VSInput::setErrMinAlpha)
+      .add_property(
+          "iterationsAlpha", &VSInput::getNIterAlpha, &VSInput::setNIterAlpha)
+      .add_property(
+          "alpha", &PyVSInput::getAlphaGuess, &PyVSInput::setAlphaGuess)
       .add_property("couplingResolution",
-                    &VSStlsInput::getCouplingResolution,
-                    &VSStlsInput::setCouplingResolution)
+                    &VSInput::getCouplingResolution,
+                    &VSInput::setCouplingResolution)
       .add_property("degeneracyResolution",
-                    &VSStlsInput::getDegeneracyResolution,
-                    &VSStlsInput::setDegeneracyResolution)
+                    &VSInput::getDegeneracyResolution,
+                    &VSInput::setDegeneracyResolution)
       .add_property("freeEnergyIntegrand",
-                    &VSStlsInput::getFreeEnergyIntegrand,
-                    &VSStlsInput::setFreeEnergyIntegrand)
+                    &VSInput::getFreeEnergyIntegrand,
+                    &VSInput::setFreeEnergyIntegrand)
+      .def("print", &VSInput::print)
+      .def("isEqual", &VSInput::isEqual);
+
+  // Class for the input of the VSStls scheme
+  bp::class_<VSStlsInput, bp::bases<VSInput>>("VSStlsInput")
+      .add_property(
+          "iet", &VSStlsInput::getIETMapping, &VSStlsInput::setIETMapping)
+      .add_property("guess", &VSStlsInput::getGuess, &VSStlsInput::setGuess)
       .def("print", &VSStlsInput::print)
       .def("isEqual", &VSStlsInput::isEqual);
 
   // Class for the initial guess of the Qstls scheme
-  bp::class_<QstlsInput::QstlsGuess>("QstlsGuess")
+  bp::class_<QstlsInput::Guess>("QstlsGuess")
       .add_property("wvg", &PyQstlsGuess::getWvg, &PyQstlsGuess::setWvg)
       .add_property("ssf", &PyQstlsGuess::getSsf, &PyQstlsGuess::setSsf)
       .add_property("adr", &PyQstlsGuess::getAdr, &PyQstlsGuess::setAdr)
@@ -122,7 +136,9 @@ BOOST_PYTHON_MODULE(qupled) {
                     &PyQstlsGuess::setMatsubara);
 
   // Class for the input of the Qstls scheme
-  bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
+  bp::class_<QstlsInput, bp::bases<RpaInput, IterationInput>>("QstlsInput")
+      .add_property(
+          "iet", &QstlsInput::getIETMapping, &QstlsInput::setIETMapping)
       .add_property("guess", &QstlsInput::getGuess, &QstlsInput::setGuess)
       .add_property("fixed", &QstlsInput::getFixed, &QstlsInput::setFixed)
       .add_property(
@@ -131,25 +147,13 @@ BOOST_PYTHON_MODULE(qupled) {
       .def("isEqual", &QstlsInput::isEqual);
 
   // Class for the input of the QVSStls scheme
-  bp::class_<QVSStlsInput, bp::bases<QstlsInput>>("QVSStlsInput")
-      .add_property("errorAlpha",
-                    &QVSStlsInput::getErrMinAlpha,
-                    &QVSStlsInput::setErrMinAlpha)
-      .add_property("iterationsAlpha",
-                    &QVSStlsInput::getNIterAlpha,
-                    &QVSStlsInput::setNIterAlpha)
-      .add_property("alpha",
-                    &PyQVSStlsInput::getAlphaGuess,
-                    &PyQVSStlsInput::setAlphaGuess)
-      .add_property("couplingResolution",
-                    &QVSStlsInput::getCouplingResolution,
-                    &QVSStlsInput::setCouplingResolution)
-      .add_property("degeneracyResolution",
-                    &QVSStlsInput::getDegeneracyResolution,
-                    &QVSStlsInput::setDegeneracyResolution)
-      .add_property("freeEnergyIntegrand",
-                    &QVSStlsInput::getFreeEnergyIntegrand,
-                    &QVSStlsInput::setFreeEnergyIntegrand)
+  bp::class_<QVSStlsInput, bp::bases<VSInput>>("QVSStlsInput")
+      .add_property(
+          "iet", &QVSStlsInput::getIETMapping, &QVSStlsInput::setIETMapping)
+      .add_property("guess", &QVSStlsInput::getGuess, &QVSStlsInput::setGuess)
+      .add_property("fixed", &QVSStlsInput::getFixed, &QVSStlsInput::setFixed)
+      .add_property(
+          "fixediet", &QVSStlsInput::getFixedIet, &QVSStlsInput::setFixedIet)
       .def("print", &QVSStlsInput::print)
       .def("isEqual", &QVSStlsInput::isEqual);
 

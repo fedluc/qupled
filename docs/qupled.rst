@@ -59,11 +59,19 @@ Input
     :members:
     :undoc-members:
 
+.. autoclass:: qupled.qupled.IterationInput
+    :members:
+    :undoc-members:
+       
 .. autoclass:: qupled.qupled.StlsInput
     :members:
     :undoc-members:
     :show-inheritance:
 
+.. autoclass:: qupled.qupled.VSInput
+    :members:
+    :undoc-members:
+       
 .. autoclass:: qupled.qupled.VSStlsInput
     :members:
     :undoc-members:
@@ -86,7 +94,7 @@ Input
 Initial guess
 -------------
 
-.. autoclass:: qupled.qupled.SlfcGuess
+.. autoclass:: qupled.qupled.StlsGuess
     :members:
     :undoc-members:
     

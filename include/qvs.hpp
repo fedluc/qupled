@@ -19,7 +19,7 @@ public:
 
   // Constructor
   explicit QStlsCSR(const QVSStlsInput &in_)
-      : CSR(in_, Qstls(in_, false, false)) {}
+      : CSR(in_, Qstls(in_.toQstlsInput(), false, false)) {}
   // Compute auxiliary density response
   void computeAdrStls();
   void computeAdr();

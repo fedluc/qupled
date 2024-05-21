@@ -28,10 +28,9 @@ public:
   
   // Constructor
   explicit StlsCSR(const VSStlsInput &in_)
-    : Stls(in_, false, false),
+    : Stls(in_.toStlsInput(), false, false),
       in(in_),
       lfc(std::make_shared<Lfc>()) {}
-  
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();

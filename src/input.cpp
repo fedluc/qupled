@@ -77,6 +77,130 @@ bool Input::isEqual(const Input &in) const {
 }
 
 // -----------------------------------------------------------------
+// IterationInput class
+// -----------------------------------------------------------------
+
+void IterationInput::setErrMin(const double &errMin) {
+  if (errMin <= 0.0) {
+    throwError("The minimum error for convergence must be larger than zero");
+  }
+  this->errMin = errMin;
+}
+
+void IterationInput::setMixingParameter(const double &aMix) {
+  if (aMix < 0.0 || aMix > 1.0) {
+    throwError("The mixing parameter must be a number between zero and one");
+  }
+  this->aMix = aMix;
+}
+
+void IterationInput::setNIter(const int &nIter) {
+  if (nIter < 0) {
+    throwError("The maximum number of iterations can't be negative");
+  }
+  this->nIter = nIter;
+}
+
+void IterationInput::setOutIter(const int &outIter) {
+  if (outIter < 0) { throwError("The output frequency can't be negative"); }
+  this->outIter = outIter;
+}
+
+void IterationInput::setRecoveryFileName(const string &recoveryFileName) {
+  this->recoveryFileName = recoveryFileName;
+}
+
+void IterationInput::print() const {
+  if (!isRoot()) { return; }
+  cout << "Maximum number of iterations = " << nIter << endl;
+  cout << "Minimum error for convergence = " << errMin << endl;
+  cout << "Mixing parameter = " << aMix << endl;
+  cout << "Output frequency = " << outIter << endl;
+  cout << "File with recovery data = " << recoveryFileName << endl;
+}
+
+bool IterationInput::isEqual(const IterationInput &in) const {
+  return (aMix == in.aMix && errMin == in.errMin && nIter == in.nIter &&
+          outIter == in.outIter && recoveryFileName == in.recoveryFileName);
+}
+
+// -----------------------------------------------------------------
+// ClassicInput class
+// -----------------------------------------------------------------
+
+void ClassicInput::setIETMapping(const string &IETMapping) {
+  const vector<string> mappings = {"standard", "sqrt", "linear"};
+  if (count(mappings.begin(), mappings.end(), IETMapping) == 0) {
+    throwError("Unknown IET mapping: " + IETMapping);
+  }
+  this->IETMapping = IETMapping;
+}
+
+void ClassicInput::setGuess(const Guess &guess) {
+  if (guess.wvg.size() < 3 || guess.slfc.size() < 3) {
+    throwError("The initial guess does not contain enough points");
+  }
+  if (guess.wvg.size() != guess.slfc.size()) {
+    throwError("The initial guess is inconsistent");
+  }
+  this->guess = guess;
+}
+
+void ClassicInput::print() const {
+  if (!isRoot()) { return; }
+  cout << "Iet mapping scheme = " << IETMapping << endl;
+}
+
+bool ClassicInput::isEqual(const ClassicInput &in) const {
+  return (IETMapping == in.IETMapping && guess == in.guess);
+}
+
+// -----------------------------------------------------------------
+// QuantumInput class
+// -----------------------------------------------------------------
+
+void QuantumInput::setFixed(const string &fixed) { this->fixed = fixed; }
+
+void QuantumInput::setFixedIet(const string &fixedIet) {
+  this->fixedIet = fixedIet;
+}
+
+void QuantumInput::setGuess(const Guess &guess) {
+  if (guess.wvg.size() < 3 || guess.ssf.size() < 3) {
+    throwError("The initial guess does not contain enough points");
+  }
+  bool consistentGuess = guess.wvg.size() == guess.ssf.size();
+  const size_t nl = guess.matsubara;
+  if (guess.adr.size(0) > 0) {
+    consistentGuess = consistentGuess &&
+                      guess.adr.size(0) == guess.wvg.size() &&
+                      guess.adr.size(1) == nl;
+  }
+  if (!consistentGuess) { throwError("The initial guess is inconsistent"); }
+  this->guess = guess;
+}
+
+void QuantumInput::setIETMapping(const string &IETMapping) {
+  const vector<string> mappings = {"standard", "sqrt", "linear"};
+  if (count(mappings.begin(), mappings.end(), IETMapping) == 0) {
+    throwError("Unknown IET mapping: " + IETMapping);
+  }
+  this->IETMapping = IETMapping;
+}
+
+void QuantumInput::print() const {
+  if (!isRoot()) { return; }
+  cout << "Iet mapping scheme = " << IETMapping << endl;
+  cout << "File with fixed adr component = " << fixed << endl;
+  cout << "File with fixed adr component (iet) = " << fixedIet << endl;
+}
+
+bool QuantumInput::isEqual(const QuantumInput &in) const {
+  return (fixed == in.fixed && fixedIet == in.fixedIet && guess == in.guess &&
+          IETMapping == in.IETMapping);
+}
+
+// -----------------------------------------------------------------
 // RpaInput class
 // -----------------------------------------------------------------
 
@@ -124,110 +248,39 @@ bool RpaInput::isEqual(const RpaInput &in) const {
 }
 
 // -----------------------------------------------------------------
-// STLSInput class
+// StlsInput class
 // -----------------------------------------------------------------
-
-void StlsInput::setErrMin(const double &errMin) {
-  if (errMin <= 0.0) {
-    throwError("The minimum error for convergence must be larger than zero");
-  }
-  this->errMin = errMin;
-}
-
-void StlsInput::setMixingParameter(const double &aMix) {
-  if (aMix < 0.0 || aMix > 1.0) {
-    throwError("The mixing parameter must be a number between zero and one");
-  }
-  this->aMix = aMix;
-}
-
-void StlsInput::setNIter(const int &nIter) {
-  if (nIter < 0) {
-    throwError("The maximum number of iterations can't be negative");
-  }
-  this->nIter = nIter;
-}
-
-void StlsInput::setOutIter(const int &outIter) {
-  if (outIter < 0) { throwError("The output frequency can't be negative"); }
-  this->outIter = outIter;
-}
-
-void StlsInput::setIETMapping(const string &IETMapping) {
-  const vector<string> mappings = {"standard", "sqrt", "linear"};
-  if (count(mappings.begin(), mappings.end(), IETMapping) == 0) {
-    throwError("Unknown IET mapping: " + IETMapping);
-  }
-  this->IETMapping = IETMapping;
-}
-
-void StlsInput::setRecoveryFileName(const string &recoveryFileName) {
-  this->recoveryFileName = recoveryFileName;
-}
-
-void StlsInput::setGuess(const SlfcGuess &guess) {
-  if (guess.wvg.size() < 3 || guess.slfc.size() < 3) {
-    throwError("The initial guess does not contain enough points");
-  }
-  if (guess.wvg.size() != guess.slfc.size()) {
-    throwError("The initial guess is inconsistent");
-  }
-  this->guess = guess;
-}
 
 void StlsInput::print() const {
   if (!isRoot()) { return; }
   RpaInput::print();
-  cout << "Iet mapping scheme = " << IETMapping << endl;
-  cout << "Maximum number of iterations = " << nIter << endl;
-  cout << "Minimum error for convergence = " << errMin << endl;
-  cout << "Mixing parameter = " << aMix << endl;
-  cout << "Output frequency = " << outIter << endl;
-  cout << "File with recovery data = " << recoveryFileName << endl;
+  IterationInput::print();
+  ClassicInput::print();
 }
 
 bool StlsInput::isEqual(const StlsInput &in) const {
-  return (Input::isEqual(in) && aMix == in.aMix && errMin == in.errMin &&
-          IETMapping == in.IETMapping && nIter == in.nIter &&
-          outIter == in.outIter && recoveryFileName == in.recoveryFileName &&
-          guess == in.guess);
+  return (RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
+          ClassicInput::isEqual(in));
 }
 
 // -----------------------------------------------------------------
 // QStlsInput class
 // -----------------------------------------------------------------
 
-void QstlsInput::setFixed(const string &fixed) { this->fixed = fixed; }
-
-void QstlsInput::setFixedIet(const string &fixedIet) {
-  this->fixedIet = fixedIet;
-}
-
-void QstlsInput::setGuess(const QstlsGuess &guess) {
-  if (guess.wvg.size() < 3 || guess.ssf.size() < 3) {
-    throwError("The initial guess does not contain enough points");
-  }
-  bool consistentGuess = guess.wvg.size() == guess.ssf.size();
-  const size_t nl = guess.matsubara;
-  if (guess.adr.size(0) > 0) {
-    consistentGuess = consistentGuess &&
-                      guess.adr.size(0) == guess.wvg.size() &&
-                      guess.adr.size(1) == nl;
-  }
-  if (!consistentGuess) { throwError("The initial guess is inconsistent"); }
-  this->guess = guess;
-}
-
 void QstlsInput::print() const {
   if (!isRoot()) { return; }
-  StlsInput::print();
-  cout << "File with fixed adr component = " << fixed << endl;
-  cout << "File with fixed adr component (iet) = " << fixedIet << endl;
+  RpaInput::print();
+  IterationInput::print();
+  QuantumInput::print();
 }
 
 bool QstlsInput::isEqual(const QstlsInput &in) const {
-  return (StlsInput::isEqual(in) && fixed == in.fixed &&
-          fixedIet == in.fixedIet && guess == in.guess);
+  return (RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
+          QuantumInput::isEqual(in));
+}
+
+StlsInput QstlsInput::toStlsInput() const {
+  return StlsInput(RpaInput(*this), IterationInput(*this), IETMapping);
 }
 
 // -----------------------------------------------------------------
@@ -290,6 +343,8 @@ void VSInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand &fxcIntegrand) {
 
 void VSInput::print() const {
   if (!isRoot()) { return; }
+  RpaInput::print();
+  IterationInput::print();
   cout << "Guess for the free parameter = " << alphaGuess.at(0) << ","
        << alphaGuess.at(1) << endl;
   cout << "Resolution for the coupling parameter grid = " << drs << endl;
@@ -299,7 +354,8 @@ void VSInput::print() const {
 }
 
 bool VSInput::isEqual(const VSInput &in) const {
-  return (alphaGuess == in.alphaGuess && drs == in.drs && dTheta == in.dTheta &&
+  return (RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
+          alphaGuess == in.alphaGuess && drs == in.drs && dTheta == in.dTheta &&
           errMinAlpha == in.errMinAlpha && nIterAlpha == in.nIterAlpha &&
           fxcIntegrand == in.fxcIntegrand);
 }
@@ -310,12 +366,16 @@ bool VSInput::isEqual(const VSInput &in) const {
 
 void VSStlsInput::print() const {
   if (!isRoot()) { return; }
-  StlsInput::print();
   VSInput::print();
+  ClassicInput::print();
 }
 
 bool VSStlsInput::isEqual(const VSStlsInput &in) const {
-  return StlsInput::isEqual(in) && VSInput::isEqual(in);
+  return (VSInput::isEqual(in) && ClassicInput::isEqual(in));
+}
+
+StlsInput VSStlsInput::toStlsInput() const {
+  return StlsInput(RpaInput(*this), IterationInput(*this), IETMapping);
 }
 
 // -----------------------------------------------------------------
@@ -324,10 +384,14 @@ bool VSStlsInput::isEqual(const VSStlsInput &in) const {
 
 void QVSStlsInput::print() const {
   if (!isRoot()) { return; }
-  QstlsInput::print();
   VSInput::print();
+  QuantumInput::print();
 }
 
 bool QVSStlsInput::isEqual(const QVSStlsInput &in) const {
-  return QstlsInput::isEqual(in) && VSInput::isEqual(in);
+  return (VSInput::isEqual(in) && QuantumInput::isEqual(in));
+}
+
+QstlsInput QVSStlsInput::toQstlsInput() const {
+  return QstlsInput(RpaInput(*this), IterationInput(*this), IETMapping);
 }
