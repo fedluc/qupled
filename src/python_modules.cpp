@@ -99,24 +99,30 @@ BOOST_PYTHON_MODULE(qupled) {
                     &PyFreeEnergyIntegrand::setAlpha);
 
   // Class for the input of the VSStls scheme
-  bp::class_<VSStlsInput, bp::bases<StlsInput>>("VSStlsInput")
-      .add_property("errorAlpha",
-                    &VSStlsInput::getErrMinAlpha,
-                    &VSStlsInput::setErrMinAlpha)
-      .add_property("iterationsAlpha",
-                    &VSStlsInput::getNIterAlpha,
-                    &VSStlsInput::setNIterAlpha)
+  bp::class_<VSInput, bp::bases<RpaInput, IterationInput>>("VSInput")
       .add_property(
-          "alpha", &PyVSStlsInput::getAlphaGuess, &PyVSStlsInput::setAlphaGuess)
+          "errorAlpha", &VSInput::getErrMinAlpha, &VSInput::setErrMinAlpha)
+      .add_property(
+          "iterationsAlpha", &VSInput::getNIterAlpha, &VSInput::setNIterAlpha)
+      .add_property(
+          "alpha", &PyVSInput::getAlphaGuess, &PyVSInput::setAlphaGuess)
       .add_property("couplingResolution",
-                    &VSStlsInput::getCouplingResolution,
-                    &VSStlsInput::setCouplingResolution)
+                    &VSInput::getCouplingResolution,
+                    &VSInput::setCouplingResolution)
       .add_property("degeneracyResolution",
-                    &VSStlsInput::getDegeneracyResolution,
-                    &VSStlsInput::setDegeneracyResolution)
+                    &VSInput::getDegeneracyResolution,
+                    &VSInput::setDegeneracyResolution)
       .add_property("freeEnergyIntegrand",
-                    &VSStlsInput::getFreeEnergyIntegrand,
-                    &VSStlsInput::setFreeEnergyIntegrand)
+                    &VSInput::getFreeEnergyIntegrand,
+                    &VSInput::setFreeEnergyIntegrand)
+      .def("print", &VSInput::print)
+      .def("isEqual", &VSInput::isEqual);
+
+  // Class for the input of the VSStls scheme
+  bp::class_<VSStlsInput, bp::bases<VSInput>>("VSStlsInput")
+      .add_property(
+          "iet", &VSStlsInput::getIETMapping, &VSStlsInput::setIETMapping)
+      .add_property("guess", &VSStlsInput::getGuess, &VSStlsInput::setGuess)
       .def("print", &VSStlsInput::print)
       .def("isEqual", &VSStlsInput::isEqual);
 
@@ -141,25 +147,13 @@ BOOST_PYTHON_MODULE(qupled) {
       .def("isEqual", &QstlsInput::isEqual);
 
   // Class for the input of the QVSStls scheme
-  bp::class_<QVSStlsInput, bp::bases<QstlsInput>>("QVSStlsInput")
-      .add_property("errorAlpha",
-                    &QVSStlsInput::getErrMinAlpha,
-                    &QVSStlsInput::setErrMinAlpha)
-      .add_property("iterationsAlpha",
-                    &QVSStlsInput::getNIterAlpha,
-                    &QVSStlsInput::setNIterAlpha)
-      .add_property("alpha",
-                    &PyQVSStlsInput::getAlphaGuess,
-                    &PyQVSStlsInput::setAlphaGuess)
-      .add_property("couplingResolution",
-                    &QVSStlsInput::getCouplingResolution,
-                    &QVSStlsInput::setCouplingResolution)
-      .add_property("degeneracyResolution",
-                    &QVSStlsInput::getDegeneracyResolution,
-                    &QVSStlsInput::setDegeneracyResolution)
-      .add_property("freeEnergyIntegrand",
-                    &QVSStlsInput::getFreeEnergyIntegrand,
-                    &QVSStlsInput::setFreeEnergyIntegrand)
+  bp::class_<QVSStlsInput, bp::bases<VSInput>>("QVSStlsInput")
+      .add_property(
+          "iet", &QVSStlsInput::getIETMapping, &QVSStlsInput::setIETMapping)
+      .add_property("guess", &QVSStlsInput::getGuess, &QVSStlsInput::setGuess)
+      .add_property("fixed", &QVSStlsInput::getFixed, &QVSStlsInput::setFixed)
+      .add_property(
+          "fixediet", &QVSStlsInput::getFixedIet, &QVSStlsInput::setFixedIet)
       .def("print", &QVSStlsInput::print)
       .def("isEqual", &QVSStlsInput::isEqual);
 

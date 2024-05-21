@@ -82,15 +82,10 @@ class StlsInput(RpaInput, IterationInput):
         """ Initial guess """
 
 
-class VSStlsInput(StlsInput):
-    """Class to handle the inputs related to the classical VS-STLS scheme.
+class VSInput:
+    """Class to handle the inputs related to the classical VS schemes."""
 
-    Args:
-        coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.
-    """
-
-    def __init__(self, coupling: float, degeneracy: float):
+    def __init__(self):
         self.theory: str = None
         """ Name of the theory that is solved """
         self.alpha: list[float] = None
@@ -105,6 +100,12 @@ class VSStlsInput(StlsInput):
         """ Maximum number of iterations to determine the free parameter """
         self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = None
         """ Pre-computed free energy integrand """
+
+
+class VSStlsInput(StlsInput, VSInput):
+    """Class to handle the inputs related to the classical VS-STLS scheme."""
+
+    pass
 
 
 class QstlsInput(RpaInput, IterationInput):
@@ -141,8 +142,8 @@ class QstlsInput(RpaInput, IterationInput):
         """ Initial guess """
 
 
-class QVSStlsInput(VSStlsInput, QstlsInput):
-    """Class to handle the inputs related to the quantum VS-STLS scheme."""
+class QVSStlsInput(QstlsInput, VSInput):
+    """Class to handle the inputs related to the quantum QVS-STLS scheme."""
 
     pass
 
@@ -172,7 +173,7 @@ class QstlsGuess:
 
 
 class FreeEnergyIntegrand:
-    """Class used to store the precomputed values of the free energy integrand for the VS-STLS scheme."""
+    """Class used to store the precomputed values of the free energy integrand for the VS schemes."""
 
     def __init__(self):
         self.grid: np.ndarray = None

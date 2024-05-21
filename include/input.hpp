@@ -203,10 +203,99 @@ protected:
 };
 
 // -----------------------------------------------------------------
+// Class to handle input for the random phase approximation
+// -----------------------------------------------------------------
+
+class RpaInput : public Input {
+
+public:
+
+  // Constructor
+  explicit RpaInput()
+      : dx(0),
+        xmax(0),
+        nl(0),
+        muGuess(std::vector<double>(2, 0)) {}
+  // Setters
+  void setChemicalPotentialGuess(const std::vector<double> &muGuess);
+  void setNMatsubara(const int &nMatsubara);
+  void setWaveVectorGridRes(const double &waveVectorGridRes);
+  void setWaveVectorGridCutoff(const double &waveVectorGridCutoff);
+  // Getters
+  std::vector<double> getChemicalPotentialGuess() const { return muGuess; }
+  int getNMatsubara() const { return nl; }
+  double getWaveVectorGridRes() const { return dx; }
+  double getWaveVectorGridCutoff() const { return xmax; }
+  // Print content of the data structure
+  void print() const;
+  // Compare two StlsInput objects
+  bool isEqual(const RpaInput &in) const;
+
+protected:
+
+  // Wave-vector grid resolution
+  double dx;
+  // cutoff for the wave-vector grid
+  double xmax;
+  // Number of matsubara frequencies
+  int nl;
+  // Initial guess for the chemical potential calculation
+  std::vector<double> muGuess;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the STLS and STLS-IET schemes
+// -----------------------------------------------------------------
+
+class StlsInput : public RpaInput, public IterationInput, public ClassicInput {
+
+public:
+
+  // Constructors
+  explicit StlsInput() = default;
+  explicit StlsInput(const RpaInput &rpa,
+                     const IterationInput &iter,
+                     const std::string &iet)
+      : RpaInput(rpa),
+        IterationInput(iter) {
+    if (!iet.empty()) { setIETMapping(iet); }
+  }
+  // Print content of the data structure
+  void print() const;
+  // Compare two QstlsInput objects
+  bool isEqual(const StlsInput &in) const;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the QSTLS and QSTLS-IET schemes
+// -----------------------------------------------------------------
+
+class QstlsInput : public RpaInput, public IterationInput, public QuantumInput {
+
+public:
+
+  // Constructors
+  explicit QstlsInput() = default;
+  explicit QstlsInput(const RpaInput &rpa,
+                      const IterationInput &iter,
+                      const std::string &iet)
+      : RpaInput(rpa),
+        IterationInput(iter) {
+    if (!iet.empty()) { setIETMapping(iet); }
+  }
+  // Print content of the data structure
+  void print() const;
+  // Compare two QstlsInput objects
+  bool isEqual(const QstlsInput &in) const;
+  // Convert to StlsInput
+  StlsInput toStlsInput() const;
+};
+
+// -----------------------------------------------------------------
 // Class to handle input for the VS schemes
 // -----------------------------------------------------------------
 
-class VSInput {
+class VSInput : public RpaInput, public IterationInput {
 
 public:
 
@@ -263,87 +352,10 @@ private:
 };
 
 // -----------------------------------------------------------------
-// Class to handle input for the random phase approximation
-// -----------------------------------------------------------------
-
-class RpaInput : public Input {
-
-public:
-
-  // Constructor
-  explicit RpaInput()
-      : dx(0),
-        xmax(0),
-        nl(0),
-        muGuess(std::vector<double>(2, 0)) {}
-  // Setters
-  void setChemicalPotentialGuess(const std::vector<double> &muGuess);
-  void setNMatsubara(const int &nMatsubara);
-  void setWaveVectorGridRes(const double &waveVectorGridRes);
-  void setWaveVectorGridCutoff(const double &waveVectorGridCutoff);
-  // Getters
-  std::vector<double> getChemicalPotentialGuess() const { return muGuess; }
-  int getNMatsubara() const { return nl; }
-  double getWaveVectorGridRes() const { return dx; }
-  double getWaveVectorGridCutoff() const { return xmax; }
-  // Print content of the data structure
-  void print() const;
-  // Compare two StlsInput objects
-  bool isEqual(const RpaInput &in) const;
-
-protected:
-
-  // Wave-vector grid resolution
-  double dx;
-  // cutoff for the wave-vector grid
-  double xmax;
-  // Number of matsubara frequencies
-  int nl;
-  // Initial guess for the chemical potential calculation
-  std::vector<double> muGuess;
-};
-
-// -----------------------------------------------------------------
-// Class to handle input for the QSTLS and QSTLS-IET schemes
-// -----------------------------------------------------------------
-
-class QstlsInput : public RpaInput, public IterationInput, public QuantumInput {
-
-public:
-
-  // Print content of the data structure
-  void print() const;
-  // Compare two QstlsInput objects
-  bool isEqual(const QstlsInput &in) const;
-};
-
-// -----------------------------------------------------------------
-// Class to handle input for the STLS and STLS-IET schemes
-// -----------------------------------------------------------------
-
-class StlsInput : public RpaInput, public IterationInput, public ClassicInput {
-
-public:
-
-  // Constructors
-  explicit StlsInput() = default;
-  explicit StlsInput(const QstlsInput &other)
-      : RpaInput(other),
-        IterationInput(other) {
-    const std::string &iet = other.getIETMapping();
-    if (!iet.empty()) { setIETMapping(iet); }
-  }
-  // Print content of the data structure
-  void print() const;
-  // Compare two QstlsInput objects
-  bool isEqual(const StlsInput &in) const;
-};
-
-// -----------------------------------------------------------------
 // Class to handle input for the VSStls scheme
 // -----------------------------------------------------------------
 
-class VSStlsInput : public StlsInput, public VSInput {
+class VSStlsInput : public VSInput, public ClassicInput {
 
 public:
 
@@ -351,13 +363,15 @@ public:
   void print() const;
   // Compare two VSStls objects
   bool isEqual(const VSStlsInput &in) const;
+  // Convert to StlsInput
+  StlsInput toStlsInput() const;
 };
 
 // -----------------------------------------------------------------
 // Class to handle input for the QVSStls scheme
 // -----------------------------------------------------------------
 
-class QVSStlsInput : public QstlsInput, public VSInput {
+class QVSStlsInput : public VSInput, public QuantumInput {
 
 public:
 
@@ -365,6 +379,8 @@ public:
   void print() const;
   // Compare two VSStls objects
   bool isEqual(const QVSStlsInput &in) const;
+  // Convert to QstlsInput
+  QstlsInput toQstlsInput() const;
 };
 
 #endif

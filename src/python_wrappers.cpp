@@ -37,27 +37,14 @@ void PyStlsGuess::setSlfc(StlsInput::Guess &guess, const bn::ndarray &slfc) {
 }
 
 // -----------------------------------------------------------------
-// PyVSStlsInput
+// PyVSInput
 // -----------------------------------------------------------------
 
-bn::ndarray PyVSStlsInput::getAlphaGuess(VSStlsInput &in) {
+bn::ndarray PyVSInput::getAlphaGuess(VSInput &in) {
   return pythonUtil::toNdArray(in.getAlphaGuess());
 }
 
-void PyVSStlsInput::setAlphaGuess(VSStlsInput &in, const bp::list &alphaGuess) {
-  in.setAlphaGuess(pythonUtil::toVector(alphaGuess));
-}
-
-// -----------------------------------------------------------------
-// PyQVSStlsInput
-// -----------------------------------------------------------------
-
-bn::ndarray PyQVSStlsInput::getAlphaGuess(QVSStlsInput &in) {
-  return pythonUtil::toNdArray(in.getAlphaGuess());
-}
-
-void PyQVSStlsInput::setAlphaGuess(QVSStlsInput &in,
-                                   const bp::list &alphaGuess) {
+void PyVSInput::setAlphaGuess(VSInput &in, const bp::list &alphaGuess) {
   in.setAlphaGuess(pythonUtil::toVector(alphaGuess));
 }
 

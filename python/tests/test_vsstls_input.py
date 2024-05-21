@@ -11,7 +11,7 @@ def vsstls_input_instance():
 
 
 def test_init(vsstls_input_instance):
-    assert issubclass(qp.VSStlsInput, qp.StlsInput)
+    assert issubclass(qp.VSStlsInput, qp.VSInput)
     assert hasattr(vsstls_input_instance, "errorAlpha")
     assert hasattr(vsstls_input_instance, "iterationsAlpha")
     assert hasattr(vsstls_input_instance, "alpha")
@@ -20,6 +20,8 @@ def test_init(vsstls_input_instance):
     assert hasattr(vsstls_input_instance, "freeEnergyIntegrand")
     assert hasattr(vsstls_input_instance.freeEnergyIntegrand, "grid")
     assert hasattr(vsstls_input_instance.freeEnergyIntegrand, "integrand")
+    assert hasattr(vsstls_input_instance, "iet")
+    assert hasattr(vsstls_input_instance, "guess")
 
 
 def test_defaults(vsstls_input_instance):

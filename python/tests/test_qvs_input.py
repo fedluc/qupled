@@ -11,7 +11,7 @@ def qvsstls_input_instance():
 
 
 def test_init(qvsstls_input_instance):
-    assert issubclass(qp.QVSStlsInput, qp.QstlsInput)
+    assert issubclass(qp.QVSStlsInput, qp.VSInput)
     assert hasattr(qvsstls_input_instance, "errorAlpha")
     assert hasattr(qvsstls_input_instance, "iterationsAlpha")
     assert hasattr(qvsstls_input_instance, "alpha")

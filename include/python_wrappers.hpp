@@ -43,22 +43,11 @@ public:
 // Wrapper for exposing the VSStlsInput class to Python
 // -----------------------------------------------------------------
 
-class PyVSStlsInput {
+class PyVSInput {
 public:
 
-  static bn::ndarray getAlphaGuess(VSStlsInput &in);
-  static void setAlphaGuess(VSStlsInput &in, const bp::list &alphaGuess);
-};
-
-// -----------------------------------------------------------------
-// Wrapper for exposing the QVSStlsInput class to Python
-// -----------------------------------------------------------------
-
-class PyQVSStlsInput {
-public:
-
-  static bn::ndarray getAlphaGuess(QVSStlsInput &in);
-  static void setAlphaGuess(QVSStlsInput &in, const bp::list &alphaGuess);
+  static bn::ndarray getAlphaGuess(VSInput &in);
+  static void setAlphaGuess(VSInput &in, const bp::list &alphaGuess);
 };
 
 // -----------------------------------------------------------------

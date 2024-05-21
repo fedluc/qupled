@@ -68,6 +68,10 @@ Input
     :undoc-members:
     :show-inheritance:
 
+.. autoclass:: qupled.qupled.VSInput
+    :members:
+    :undoc-members:
+       
 .. autoclass:: qupled.qupled.VSStlsInput
     :members:
     :undoc-members:

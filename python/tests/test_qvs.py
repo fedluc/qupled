@@ -163,7 +163,7 @@ def test_unpackFixedAdrFiles(qvsstls_instance, mocker):
 
 def test_checkStatusAndClean(qvsstls_instance, mocker, capsys):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    qvsstls_instance.scheme = qp.Qstls(qvsstls_instance.inputs)
+    qvsstls_instance.scheme = qp.QVSStls(qvsstls_instance.inputs)
     qvsstls_instance._checkStatusAndClean(0)
     captured = capsys.readouterr()
     assert mockMPIIsRoot.call_count == 2

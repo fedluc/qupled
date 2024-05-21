@@ -259,8 +259,8 @@ void StlsInput::print() const {
 }
 
 bool StlsInput::isEqual(const StlsInput &in) const {
-  return RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
-         ClassicInput::isEqual(in);
+  return (RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
+          ClassicInput::isEqual(in));
 }
 
 // -----------------------------------------------------------------
@@ -275,8 +275,12 @@ void QstlsInput::print() const {
 }
 
 bool QstlsInput::isEqual(const QstlsInput &in) const {
-  return RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
-         QuantumInput::isEqual(in);
+  return (RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
+          QuantumInput::isEqual(in));
+}
+
+StlsInput QstlsInput::toStlsInput() const {
+  return StlsInput(RpaInput(*this), IterationInput(*this), IETMapping);
 }
 
 // -----------------------------------------------------------------
@@ -339,6 +343,8 @@ void VSInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand &fxcIntegrand) {
 
 void VSInput::print() const {
   if (!isRoot()) { return; }
+  RpaInput::print();
+  IterationInput::print();
   cout << "Guess for the free parameter = " << alphaGuess.at(0) << ","
        << alphaGuess.at(1) << endl;
   cout << "Resolution for the coupling parameter grid = " << drs << endl;
@@ -348,7 +354,8 @@ void VSInput::print() const {
 }
 
 bool VSInput::isEqual(const VSInput &in) const {
-  return (alphaGuess == in.alphaGuess && drs == in.drs && dTheta == in.dTheta &&
+  return (RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
+          alphaGuess == in.alphaGuess && drs == in.drs && dTheta == in.dTheta &&
           errMinAlpha == in.errMinAlpha && nIterAlpha == in.nIterAlpha &&
           fxcIntegrand == in.fxcIntegrand);
 }
@@ -359,12 +366,16 @@ bool VSInput::isEqual(const VSInput &in) const {
 
 void VSStlsInput::print() const {
   if (!isRoot()) { return; }
-  StlsInput::print();
   VSInput::print();
+  ClassicInput::print();
 }
 
 bool VSStlsInput::isEqual(const VSStlsInput &in) const {
-  return StlsInput::isEqual(in) && VSInput::isEqual(in);
+  return (VSInput::isEqual(in) && ClassicInput::isEqual(in));
+}
+
+StlsInput VSStlsInput::toStlsInput() const {
+  return StlsInput(RpaInput(*this), IterationInput(*this), IETMapping);
 }
 
 // -----------------------------------------------------------------
@@ -373,10 +384,14 @@ bool VSStlsInput::isEqual(const VSStlsInput &in) const {
 
 void QVSStlsInput::print() const {
   if (!isRoot()) { return; }
-  QstlsInput::print();
   VSInput::print();
+  QuantumInput::print();
 }
 
 bool QVSStlsInput::isEqual(const QVSStlsInput &in) const {
-  return QstlsInput::isEqual(in) && VSInput::isEqual(in);
+  return (VSInput::isEqual(in) && QuantumInput::isEqual(in));
+}
+
+QstlsInput QVSStlsInput::toQstlsInput() const {
+  return QstlsInput(RpaInput(*this), IterationInput(*this), IETMapping);
 }
