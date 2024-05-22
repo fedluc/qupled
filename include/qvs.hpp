@@ -17,14 +17,14 @@ class QStlsCSR : public Qstls, public CSR<Vector2D> {
 
   friend class QStructProp;
   friend class StructPropBase<QStlsCSR, QVSStlsInput>;
-  
+
 public:
 
   // Constructor
   explicit QStlsCSR(const QVSStlsInput &in_)
-    : Qstls(in_.toQstlsInput(), false, false),
-      CSR(in_),
-      in(in_) {}
+      : Qstls(in_.toQstlsInput(), false, false),
+        CSR(in_),
+        in(in_) {}
   // Compute auxiliary density response
   void computeAdrStls();
   void computeAdr();
@@ -42,7 +42,7 @@ private:
 
   // Input data
   QVSStlsInput in;
-  
+
   // Helper methods to compute the derivatives
   double getDerivative(const std::shared_ptr<Vector2D> &f,
                        const int &l,

@@ -15,13 +15,13 @@ class StlsCSR : public Stls, public CSR<std::vector<double>> {
 
   friend class StructProp;
   friend class StructPropBase<StlsCSR, VSStlsInput>;
-  
+
 public:
-  
+
   // Constructor
   explicit StlsCSR(const VSStlsInput &in_)
-    : Stls(in_.toStlsInput(), false, false),
-      CSR(in_) {}
+      : Stls(in_.toStlsInput(), false, false),
+        CSR(in_) {}
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();
@@ -34,7 +34,7 @@ private:
 
   // Input data
   using CSR::in;
-  
+
   // Helper methods to compute the derivatives
   double getDerivative(const std::shared_ptr<std::vector<double>> &f,
                        const size_t &idx,

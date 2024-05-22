@@ -148,14 +148,16 @@ void StlsCSR::computeSlfc() {
   // Coupling parameter contribution
   if (rs > 0.0) {
     for (size_t i = 0; i < nx; ++i) {
-      slfcNew[i] -= a_drs * CSR::getDerivative(lfcData[i], rsUp[i], rsDown[i], lfcRs.type);
+      slfcNew[i] -= a_drs * CSR::getDerivative(
+                                lfcData[i], rsUp[i], rsDown[i], lfcRs.type);
     }
   }
   // Degeneracy parameter contribution
   if (theta > 0.0) {
     for (size_t i = 0; i < nx; ++i) {
       slfcNew[i] -=
-          a_dt * CSR::getDerivative(lfcData[i], thetaUp[i], thetaDown[i], lfcTheta.type);
+          a_dt * CSR::getDerivative(
+                     lfcData[i], thetaUp[i], thetaDown[i], lfcTheta.type);
     }
   }
 }

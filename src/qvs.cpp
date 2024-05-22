@@ -216,7 +216,7 @@ void QStlsCSR::computeAdr() {
       adr(i, l) -= a_dx * wvg[i] * getDerivative(lfc, l, i, CENTERED);
     }
     adr(nx - 1, l) -=
-      a_dx * wvg[nx - 1] * getDerivative(lfc, l, nx - 1, BACKWARD);
+        a_dx * wvg[nx - 1] * getDerivative(lfc, l, nx - 1, BACKWARD);
     // Coupling parameter contribution
     if (rs > 0.0) {
       for (size_t i = 0; i < nx; ++i) {
