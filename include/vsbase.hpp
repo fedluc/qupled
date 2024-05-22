@@ -549,48 +549,60 @@ protected:
 // CSR base class
 // -----------------------------------------------------------------
 
-class CSRNew {
+template <typename T>
+class CSR {
 
 public:
 
   // Enumerator to denote the numerical schemes used for the derivatives
   enum Derivative { CENTERED, FORWARD, BACKWARD };
 
+  // Data for the local field correction with modified state point
+  struct DerivativeData {
+    Derivative type;
+    std::shared_ptr<T> up;
+    std::shared_ptr<T> down;
+  };
   // Constructor
-  CSRNew() : alpha(DEFAULT_ALPHA) {}
+  CSR(const VSInput &in_)
+    : in(in_),
+      lfc(std::make_shared<T>()),
+      alpha(DEFAULT_ALPHA) {}
 
   // Destructor
-  virtual ~CSRNew() = default;
+  virtual ~CSR() = default;
   
   // Set the data to compute the coupling parameter derivative
-  virtual void setDrsData(CSRNew &csrRsUp,
-			  CSRNew &csrRsDown,
-			  const Derivative &dTypeRs) = 0;
+  void setDrsData(CSR<T> &csrRsUp,
+                  CSR<T> &csrRsDown,
+                  const Derivative &dTypeRs) {
+    lfcRs = DerivativeData{dTypeRs, csrRsUp.lfc, csrRsDown.lfc};
+  }
 
   // Set the data to compute the degeneracy parameter derivative
-  virtual void setDThetaData(CSRNew &csrThetaUp,
-			     CSRNew &csrThetaDown,
-			     const Derivative &dTypeTheta) = 0;
+  void setDThetaData(CSR<T> &csrThetaUp,
+                     CSR<T> &csrThetaDown,
+                     const Derivative &dTypeTheta) {
+    lfcTheta = DerivativeData{dTypeTheta, csrThetaUp.lfc, csrThetaDown.lfc};
+  }
 
-  // Publicly exposed private scheme methods
-  virtual void init() = 0;
-  virtual void initialGuess() = 0;
-  virtual void computeSsf() = 0;
-  virtual double computeError() = 0;
-  virtual void updateSolution() = 0;
+  // Publicly esposed private scheme methods
   virtual std::vector<double> getWvg() const = 0;
   virtual std::vector<double> getSsf() const = 0;
-  virtual double getCoupling() const = 0;
-
+  
   // Set the free parameter
   void setAlpha(const double &alpha) { this->alpha = alpha; }
 
   // Get the free parameter
   double getAlpha() const { return alpha; }
 
+  // Get input parameters
+  const VSInput &getInput() const { return in; }
+
   // Compute the internal energy
   double getInternalEnergy() const {
-    return thermoUtil::computeInternalEnergy(getWvg(), getSsf(), getCoupling());
+    const double rs = in.getCoupling();
+    return thermoUtil::computeInternalEnergy(getWvg(), getSsf(), rs);
   }
 
   // Compute the free energy integrand
@@ -602,8 +614,16 @@ protected:
 
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
+  // Input data
+  const VSInput in;
+  // local field correction (static or dynamic)
+  std::shared_ptr<T> lfc;
   // Free parameter
   double alpha;
+  // Data for the local field correction with modified coupling paramter
+  DerivativeData lfcRs;
+  // Data for the local field correction with modified degeneracy parameter
+  DerivativeData lfcTheta;
 
   // Helper methods to compute the derivatives
   double getDerivative(const double &f0,
@@ -622,8 +642,10 @@ protected:
   }
 };
 
+
+
 template <typename T, typename Scheme, typename Input>
-class CSR : public Scheme {
+class CSROld : public Scheme {
 
 public:
 
@@ -637,28 +659,28 @@ public:
     std::shared_ptr<T> down;
   };
   // Constructor
-  CSR(const Input &in_, const Scheme &scheme)
+  CSROld(const Input &in_, const Scheme &scheme)
       : Scheme(scheme),
         in(in_),
         lfc(std::make_shared<T>()),
         alpha(DEFAULT_ALPHA) {}
 
   // Set the data to compute the coupling parameter derivative
-  void setDrsData(CSR<T, Scheme, Input> &csrRsUp,
-                  CSR<T, Scheme, Input> &csrRsDown,
+  void setDrsData(CSROld<T, Scheme, Input> &csrRsUp,
+                  CSROld<T, Scheme, Input> &csrRsDown,
                   const Derivative &dTypeRs) {
     lfcRs = DerivativeData{dTypeRs, csrRsUp.lfc, csrRsDown.lfc};
   }
 
   // Set the data to compute the degeneracy parameter derivative
-  void setDThetaData(CSR<T, Scheme, Input> &csrThetaUp,
-                     CSR<T, Scheme, Input> &csrThetaDown,
+  void setDThetaData(CSROld<T, Scheme, Input> &csrThetaUp,
+                     CSROld<T, Scheme, Input> &csrThetaDown,
                      const Derivative &dTypeTheta) {
     lfcTheta = DerivativeData{dTypeTheta, csrThetaUp.lfc, csrThetaDown.lfc};
   }
 
   // Publicly esposed private scheme methods
-  void init() { Scheme::init(); }
+  // void init() { Scheme::init(); }
   void initialGuess() { Scheme::initialGuess(); }
   void computeSsf() { Scheme::computeSsf(); }
   double computeError() { return Scheme::computeError(); }

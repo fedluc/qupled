@@ -11,52 +11,29 @@
 // Solver for the VS-STLS scheme
 // -----------------------------------------------------------------
 
-class StlsCSR : public Stls, public CSRNew {
+class StlsCSR : public Stls, public CSR<std::vector<double>> {
 
-  // Typedef
-  using Lfc = std::vector<double>;
-  using LfcPtr = std::shared_ptr<Lfc>;
+  friend class StructProp;
+  friend class StructPropBase<StlsCSR, VSStlsInput>;
   
 public:
-
-  // Data for the local field correction with modified state point
-  struct DerivativeData {
-    Derivative type;
-    LfcPtr up;
-    LfcPtr down;
-  };
   
   // Constructor
   explicit StlsCSR(const VSStlsInput &in_)
     : Stls(in_.toStlsInput(), false, false),
-      in(in_),
-      lfc(std::make_shared<Lfc>()) {}
+      CSR(in_) {}
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();
 
-  // Publicly exposed private stls methods
-  void init() { Stls::init(); }
-  void initialGuess() { Stls::initialGuess(); }
-  void computeSsf() { Stls::computeSsf(); }
-  double computeError() { return Stls::computeError(); }
-  void updateSolution() { Stls::updateSolution(); }
-  std::vector<double> getWvg() const { return Stls::getWvg(); }
-  std::vector<double> getSsf() const { return Stls::getSsf(); }
-  VSStlsInput const getInput() const { return in; }
-  double getCoupling() const { return in.getCoupling(); }
-  double getDegeneracy() const { return in.getDegeneracy(); }
+  // Getters
+  std::vector<double> getWvg() const { return Stls::getWvg(); };
+  std::vector<double> getSsf() const { return Stls::getSsf(); };
 
 private:
 
-  // Input
-  VSStlsInput in;
-  // static local field correction
-  LfcPtr lfc;
-  // Data for the local field correction with modified coupling paramter
-  DerivativeData lfcRs;
-  // Data for the local field correction with modified degeneracy parameter
-  DerivativeData lfcTheta;
+  // Input data
+  using CSR::in;
   
   // Helper methods to compute the derivatives
   double getDerivative(const std::shared_ptr<std::vector<double>> &f,

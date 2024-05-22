@@ -13,13 +13,18 @@
 // Class to handle simultaneous state point calculations
 // -----------------------------------------------------------------
 
-class QStlsCSR : public CSR<Vector2D, Qstls, QVSStlsInput> {
+class QStlsCSR : public Qstls, public CSR<Vector2D> {
 
+  friend class QStructProp;
+  friend class StructPropBase<QStlsCSR, QVSStlsInput>;
+  
 public:
 
   // Constructor
   explicit QStlsCSR(const QVSStlsInput &in_)
-      : CSR(in_, Qstls(in_.toQstlsInput(), false, false)) {}
+    : Qstls(in_.toQstlsInput(), false, false),
+      CSR(in_),
+      in(in_) {}
   // Compute auxiliary density response
   void computeAdrStls();
   void computeAdr();
@@ -29,9 +34,15 @@ public:
   void init();
   // Compute Q
   double getQAdder() const;
+  // Getters
+  std::vector<double> getWvg() const { return Qstls::wvg; }
+  std::vector<double> getSsf() const { return Qstls::ssf; }
 
 private:
 
+  // Input data
+  QVSStlsInput in;
+  
   // Helper methods to compute the derivatives
   double getDerivative(const std::shared_ptr<Vector2D> &f,
                        const int &l,
