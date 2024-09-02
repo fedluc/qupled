@@ -48,7 +48,9 @@ Python3_add_library(qupled MODULE
 		    qvs.cpp
 		    python_util.cpp
 		    python_wrappers.cpp
-		    python_modules.cpp)
+		    python_modules.cpp
+		    vsbase_new.cpp
+		    vsstls_new.cpp)
 
 
 # Include directories
