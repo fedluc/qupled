@@ -28,8 +28,11 @@ public:
   VSBase(const Input &in_, const ThermoProp &thermoProp_)
       : Scheme(in_, false),
         in(in_),
-        thermoProp(in_, thermoProp_),
-        verbose(false) {}
+        thermoProp(in_),
+        verbose(false) {
+    thermoProp.copyFreeEnergyIntegrand(thermoProp_);
+  }
+
 
   // Destructor
   virtual ~VSBase() = default;
@@ -38,6 +41,7 @@ public:
   int compute() {
     try {
       Scheme::init();
+      initFreeEnergyIntegrand();
       if (verbose) std::cout << "Free parameter calculation ..." << std::endl;
       doIterations();
       if (verbose) std::cout << "Done" << std::endl;
@@ -97,6 +101,11 @@ protected:
 
   // Update structural output solution
   virtual void updateSolution() = 0;
+
+
+  // Setup free energy integrand
+  virtual void initFreeEnergyIntegrand() = 0;
+  
 };
 
 // -----------------------------------------------------------------
@@ -149,8 +158,8 @@ public:
     }
   }
 
-  ThermoPropBase(const Input &in, const ThermoPropBase &other)
-      : ThermoPropBase(in) {
+  // Copy free energy integrand from another ThermoPropBase object
+  void copyFreeEnergyIntegrand(const ThermoPropBase &other) {
     assert(other.rsGrid[1] - other.rsGrid[0] == rsGrid[1] - rsGrid[0]);
     const size_t nrs = rsGrid.size();
     const double rsMax = other.rsGrid.back();
@@ -169,55 +178,44 @@ public:
   // Set the value of the free parameter in the structural properties
   void setAlpha(const double &alpha) { structProp.setAlpha(alpha); }
 
-  // Compute the thermodynamic properties
-  template <typename Scheme>
-  void compute(const Input &in) {
-    // Recursive calls to solve the VS-STLS scheme for all state points
-    // with coupling parameter smaller than rs
+  // Check for which state points we need to compute the free energy
+  std::vector<double> checkFreeEnergyIntegrand(const Input &in) {
     const double nrs = rsGrid.size();
-    Input inTmp = in;
-    std::vector<double> fxciTmp(StructProp::NPOINTS);
-    double alphaTmp;
+    std::vector<double> freeEnergyStatePoints;
+    for (size_t i = 0; i < nrs; ++i) {
+      const double &rs = rsGrid[i];
+      const bool isTargetStatePoint = numUtil::equalTol(rs, in.getCoupling());
+      const bool isFiniteCoupling = rs > 0.0;
+      const bool freeEnergyIsUnknown = fxcIntegrand[THETA][i] == numUtil::Inf;
+      if (rs < in.getCoupling() && !isTargetStatePoint && isFiniteCoupling && freeEnergyIsUnknown) {
+	freeEnergyStatePoints.push_back(rs);
+      }
+    }
+    return freeEnergyStatePoints;
+  }
+  
+  // Compute the thermodynamic properties
+  void compute(const Input &in) {
+    const double nrs = rsGrid.size();
     for (size_t i = 0; i < nrs; ++i) {
       const double &rs = rsGrid[i];
       if (numUtil::equalTol(rs, in.getCoupling())) {
         structProp.compute();
-        fxciTmp = structProp.getFreeEnergyIntegrand();
-        alphaTmp = structProp.getAlpha();
-      } else if (rs < in.getCoupling()) {
-        if (rs == 0.0 || fxcIntegrand[THETA][i] != numUtil::Inf) { continue; }
-        if (verbose) {
-          printf("Free energy integrand calculation, "
-                 "solving VS scheme for rs = %.5f:\n",
-                 rs);
-        }
-        inTmp.setCoupling(rs);
-        Scheme schemeTmp(inTmp, *this);
-        schemeTmp.compute();
-        const auto &thermoPropTmp = schemeTmp.getThermoProp();
-        fxciTmp = thermoPropTmp.structProp.getFreeEnergyIntegrand();
-        alphaTmp = thermoPropTmp.structProp.getAlpha();
-        if (verbose) {
-          printf("Done\n");
-          printf("---------------------------------"
-                 "---------------------------------"
-                 "---------\n");
-        }
-      } else {
-        break;
+        const std::vector<double> fxciTmp = structProp.getFreeEnergyIntegrand();
+        const double alphaTmp = structProp.getAlpha();
+	fxcIntegrand[THETA_DOWN][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
+	fxcIntegrand[THETA_DOWN][i] = fxciTmp[SIdx::RS_THETA_DOWN];
+	fxcIntegrand[THETA_DOWN][i + 1] = fxciTmp[SIdx::RS_UP_THETA_DOWN];
+	fxcIntegrand[THETA][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA];
+	fxcIntegrand[THETA][i] = fxciTmp[SIdx::RS_THETA];
+	fxcIntegrand[THETA][i + 1] = fxciTmp[SIdx::RS_UP_THETA];
+	fxcIntegrand[THETA_UP][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_UP];
+	fxcIntegrand[THETA_UP][i] = fxciTmp[SIdx::RS_THETA_UP];
+	fxcIntegrand[THETA_UP][i + 1] = fxciTmp[SIdx::RS_UP_THETA_UP];
+	alpha[i - 1] = alphaTmp;
+	alpha[i] = alphaTmp;
+	alpha[i + 1] = alphaTmp;
       }
-      fxcIntegrand[THETA_DOWN][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
-      fxcIntegrand[THETA_DOWN][i] = fxciTmp[SIdx::RS_THETA_DOWN];
-      fxcIntegrand[THETA_DOWN][i + 1] = fxciTmp[SIdx::RS_UP_THETA_DOWN];
-      fxcIntegrand[THETA][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA];
-      fxcIntegrand[THETA][i] = fxciTmp[SIdx::RS_THETA];
-      fxcIntegrand[THETA][i + 1] = fxciTmp[SIdx::RS_UP_THETA];
-      fxcIntegrand[THETA_UP][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_UP];
-      fxcIntegrand[THETA_UP][i] = fxciTmp[SIdx::RS_THETA_UP];
-      fxcIntegrand[THETA_UP][i + 1] = fxciTmp[SIdx::RS_UP_THETA_UP];
-      alpha[i - 1] = alphaTmp;
-      alpha[i] = alphaTmp;
-      alpha[i + 1] = alphaTmp;
     }
   }
 

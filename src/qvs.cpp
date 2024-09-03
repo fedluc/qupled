@@ -18,7 +18,7 @@ using ItgType = Integrator1D::Type;
 
 double QVSStls::computeAlpha() {
   //  Compute the free energy integrand
-  thermoProp.compute<QVSStls>(in);
+  thermoProp.compute(in);
   // Free energy
   const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
   const double &fxcr = freeEnergyData[1];
@@ -48,6 +48,29 @@ void QVSStls::updateSolution() {
   ssf = qstls.getSsf();
   slfc = qstls.getSlfc();
 }
+
+void QVSStls::initFreeEnergyIntegrand() {
+  const vector<double> rsGrid = thermoProp.checkFreeEnergyIntegrand(in);
+  QVSStlsInput inTmp = in;
+  for (const auto& rs : rsGrid) {
+    if (verbose) {
+      printf("Free energy integrand calculation, "
+	     "solving qVS scheme for rs = %.5f:\n",
+	     rs);
+    }
+    inTmp.setCoupling(rs);
+    QVSStls scheme(inTmp, thermoProp);
+    scheme.compute();
+    thermoProp.copyFreeEnergyIntegrand(scheme.getThermoProp());
+    if (verbose) {
+      printf("Done\n");
+      printf("---------------------------------"
+	     "---------------------------------"
+	     "---------\n");
+    }
+  }
+}
+
 
 // -----------------------------------------------------------------
 // qThermoProp class

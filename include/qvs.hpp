@@ -131,10 +131,6 @@ public:
   // Constructors
   explicit QThermoProp(const QVSStlsInput &in)
       : ThermoPropBase(in) {}
-  QThermoProp(const QVSStlsInput &in, const QThermoProp &other)
-      : ThermoPropBase(in, other) {}
-  QThermoProp(const ThermoPropBase &other)
-      : ThermoPropBase(other) {}
   // Get internal energy and internal energy derivatives
   std::vector<double> getQData() const;
 };
@@ -164,6 +160,8 @@ private:
   double computeAlpha();
   // Iterations to solve the qvsstls-scheme
   void updateSolution();
+  // Setup free energy integrand
+  void initFreeEnergyIntegrand();
   // Auxiliary density response
   Vector2D adr;
 };

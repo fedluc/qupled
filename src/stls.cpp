@@ -26,12 +26,10 @@ Stls::Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_)
   useIet = in.getTheory() == "STLS-HNC" || in.getTheory() == "STLS-IOI" ||
            in.getTheory() == "STLS-LCT";
   // Set name of recovery files
-  try {
-    recoveryFileName = fmt::format("recovery_rs{:.3f}_theta{:.3f}_{}.bin",
-                                   in.getCoupling(),
-                                   in.getDegeneracy(),
-                                   in.getTheory());
-  } catch (...) { throwError("Recovery file name could not be set"); }
+  recoveryFileName = fmt::format("recovery_rs{:.3f}_theta{:.3f}_{}.bin",
+				 in.getCoupling(),
+				 in.getDegeneracy(),
+				 in.getTheory());
   // Allocate arrays
   const size_t nx = wvg.size();
   slfcNew.resize(nx);

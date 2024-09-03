@@ -52,7 +52,7 @@ class VSStls : public VSBase<ThermoProp, Rpa, VSStlsInput> {
 
 public:
 
-  // Constructor from initial data
+   // Constructor from initial data
   explicit VSStls(const VSStlsInput &in_)
       : VSBase(in_) {}
   // Constructor for recursive calculations
@@ -66,6 +66,8 @@ private:
   double computeAlpha();
   // Iterations to solve the vs-stls scheme
   void updateSolution();
+  // Setup free energy integrand
+  void initFreeEnergyIntegrand();
 };
 
 #endif
