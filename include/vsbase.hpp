@@ -33,7 +33,6 @@ public:
     thermoProp.copyFreeEnergyIntegrand(thermoProp_);
   }
 
-
   // Destructor
   virtual ~VSBase() = default;
 
@@ -102,10 +101,8 @@ protected:
   // Update structural output solution
   virtual void updateSolution() = 0;
 
-
   // Setup free energy integrand
   virtual void initFreeEnergyIntegrand() = 0;
-  
 };
 
 // -----------------------------------------------------------------
@@ -162,13 +159,13 @@ public:
   void copyFreeEnergyIntegrand(const ThermoPropBase &other) {
     assert(other.rsGrid[1] - other.rsGrid[0] == rsGrid[1] - rsGrid[0]);
     const size_t nrs = rsGrid.size();
-    const double rsMax = other.rsGrid.back();
+    const size_t nrsOther = other.rsGrid.size();
     for (const auto &theta : {Idx::THETA_DOWN, Idx::THETA, Idx::THETA_UP}) {
       const auto &fxciBegin = fxcIntegrand[theta].begin();
       const auto &fxciEnd = fxcIntegrand[theta].end();
       const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
       size_t i = std::distance(fxciBegin, it);
-      while (i < nrs && rsGrid[i] < rsMax) {
+      while (i < nrs && i < nrsOther) {
         fxcIntegrand[theta][i] = other.fxcIntegrand[theta][i];
         ++i;
       }
@@ -179,7 +176,7 @@ public:
   void setAlpha(const double &alpha) { structProp.setAlpha(alpha); }
 
   // Check for which state points we need to compute the free energy
-  std::vector<double> checkFreeEnergyIntegrand(const Input &in) {
+  std::vector<double> inspectFreeEnergyIntegrand(const Input &in) {
     const double nrs = rsGrid.size();
     std::vector<double> freeEnergyStatePoints;
     for (size_t i = 0; i < nrs; ++i) {
@@ -187,13 +184,14 @@ public:
       const bool isTargetStatePoint = numUtil::equalTol(rs, in.getCoupling());
       const bool isFiniteCoupling = rs > 0.0;
       const bool freeEnergyIsUnknown = fxcIntegrand[THETA][i] == numUtil::Inf;
-      if (rs < in.getCoupling() && !isTargetStatePoint && isFiniteCoupling && freeEnergyIsUnknown) {
-	freeEnergyStatePoints.push_back(rs);
+      if (rs < in.getCoupling() && !isTargetStatePoint && isFiniteCoupling &&
+          freeEnergyIsUnknown) {
+        freeEnergyStatePoints.push_back(rs);
       }
     }
     return freeEnergyStatePoints;
   }
-  
+
   // Compute the thermodynamic properties
   void compute(const Input &in) {
     const double nrs = rsGrid.size();
@@ -203,18 +201,18 @@ public:
         structProp.compute();
         const std::vector<double> fxciTmp = structProp.getFreeEnergyIntegrand();
         const double alphaTmp = structProp.getAlpha();
-	fxcIntegrand[THETA_DOWN][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
-	fxcIntegrand[THETA_DOWN][i] = fxciTmp[SIdx::RS_THETA_DOWN];
-	fxcIntegrand[THETA_DOWN][i + 1] = fxciTmp[SIdx::RS_UP_THETA_DOWN];
-	fxcIntegrand[THETA][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA];
-	fxcIntegrand[THETA][i] = fxciTmp[SIdx::RS_THETA];
-	fxcIntegrand[THETA][i + 1] = fxciTmp[SIdx::RS_UP_THETA];
-	fxcIntegrand[THETA_UP][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_UP];
-	fxcIntegrand[THETA_UP][i] = fxciTmp[SIdx::RS_THETA_UP];
-	fxcIntegrand[THETA_UP][i + 1] = fxciTmp[SIdx::RS_UP_THETA_UP];
-	alpha[i - 1] = alphaTmp;
-	alpha[i] = alphaTmp;
-	alpha[i + 1] = alphaTmp;
+        fxcIntegrand[THETA_DOWN][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
+        fxcIntegrand[THETA_DOWN][i] = fxciTmp[SIdx::RS_THETA_DOWN];
+        fxcIntegrand[THETA_DOWN][i + 1] = fxciTmp[SIdx::RS_UP_THETA_DOWN];
+        fxcIntegrand[THETA][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA];
+        fxcIntegrand[THETA][i] = fxciTmp[SIdx::RS_THETA];
+        fxcIntegrand[THETA][i + 1] = fxciTmp[SIdx::RS_UP_THETA];
+        fxcIntegrand[THETA_UP][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_UP];
+        fxcIntegrand[THETA_UP][i] = fxciTmp[SIdx::RS_THETA_UP];
+        fxcIntegrand[THETA_UP][i + 1] = fxciTmp[SIdx::RS_UP_THETA_UP];
+        alpha[i - 1] = alphaTmp;
+        alpha[i] = alphaTmp;
+        alpha[i + 1] = alphaTmp;
       }
     }
   }

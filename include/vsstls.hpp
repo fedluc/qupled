@@ -52,7 +52,7 @@ class VSStls : public VSBase<ThermoProp, Rpa, VSStlsInput> {
 
 public:
 
-   // Constructor from initial data
+  // Constructor from initial data
   explicit VSStls(const VSStlsInput &in_)
       : VSBase(in_) {}
   // Constructor for recursive calculations

@@ -27,9 +27,9 @@ Stls::Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_)
            in.getTheory() == "STLS-LCT";
   // Set name of recovery files
   recoveryFileName = fmt::format("recovery_rs{:.3f}_theta{:.3f}_{}.bin",
-				 in.getCoupling(),
-				 in.getDegeneracy(),
-				 in.getTheory());
+                                 in.getCoupling(),
+                                 in.getDegeneracy(),
+                                 in.getTheory());
   // Allocate arrays
   const size_t nx = wvg.size();
   slfcNew.resize(nx);

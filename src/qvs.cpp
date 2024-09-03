@@ -50,27 +50,28 @@ void QVSStls::updateSolution() {
 }
 
 void QVSStls::initFreeEnergyIntegrand() {
-  const vector<double> rsGrid = thermoProp.checkFreeEnergyIntegrand(in);
+  vector<double> rsGrid = thermoProp.inspectFreeEnergyIntegrand(in);
+  if (rsGrid.empty()) { return; }
+  if (verbose) {
+    printf("Missing points in the free energy integrand: subcalls will be "
+           "performed to collect the necessary data\n");
+  }
   QVSStlsInput inTmp = in;
-  for (const auto& rs : rsGrid) {
-    if (verbose) {
-      printf("Free energy integrand calculation, "
-	     "solving qVS scheme for rs = %.5f:\n",
-	     rs);
-    }
+  while (!rsGrid.empty()) {
+    const double rs = rsGrid.front();
+    if (verbose) { printf("Subcall: solving qVS scheme for rs = %.5f:\n", rs); }
     inTmp.setCoupling(rs);
     QVSStls scheme(inTmp, thermoProp);
     scheme.compute();
     thermoProp.copyFreeEnergyIntegrand(scheme.getThermoProp());
+    rsGrid = thermoProp.inspectFreeEnergyIntegrand(in);
     if (verbose) {
       printf("Done\n");
-      printf("---------------------------------"
-	     "---------------------------------"
-	     "---------\n");
+      printf("-----------------------------------------------------------------"
+             "----------\n");
     }
   }
 }
-
 
 // -----------------------------------------------------------------
 // qThermoProp class
