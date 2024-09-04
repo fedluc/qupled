@@ -335,6 +335,11 @@ int Qstls::checkAdrFixed(const vector<double> &wvg_,
   const bool consistentMatsubara = nl_ == in.getNMatsubara();
   const bool consistentTheta = abs(Theta_ - in.getDegeneracy()) <= tol;
   const bool consistentGrid = wvg_.size() == wvg.size() && wvgMaxDiff <= tol;
+  if (!consistentMatsubara) {
+    std::cerr << "Inconsistent Matsubara" << std::endl;
+  }
+  if (!consistentTheta) { std::cerr << "Inconsistent Theta" << std::endl; }
+  if (!consistentGrid) { std::cerr << "Inconsistent grid values" << std::endl; }
   if (!consistentMatsubara || !consistentTheta || !consistentGrid) { return 1; }
   return 0;
 }
@@ -540,9 +545,7 @@ double AdrBase::ssf(const double &y) const { return ssfi.eval(y); }
 double Adr::fix(const double &y) const { return fixi.eval(y); }
 
 // Integrand
-double Adr::integrand(const double &y) const {
-  return y * fix(y) * (ssf(y) - 1.0);
-}
+double Adr::integrand(const double &y) const { return fix(y) * (ssf(y) - 1.0); }
 
 // Get result of integration
 void Adr::get(const vector<double> &wvg, const Vector3D &fixed, Vector2D &res) {
@@ -573,7 +576,7 @@ void Adr::get(const vector<double> &wvg, const Vector3D &fixed, Vector2D &res) {
 void AdrFixed::get(vector<double> &wvg, Vector3D &res) const {
   const int nx = wvg.size();
   const int nl = res.size(1);
-  if (x == 0.0) { res.fill(0.0); };
+  if (x == 0.0) { res.fill(0, 0.0); };
   const double x2 = x * x;
   auto it = find(wvg.begin(), wvg.end(), x);
   assert(it != wvg.end());
@@ -603,19 +606,21 @@ double AdrFixed::integrand1(const double &q, const double &l) const {
 double
 AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
   const double q = itg.getX();
-  if (q == 0 || t == 0 || y == 0) { return 0; };
+  if (y == 0) { return 0.0; };
   const double x2 = x * x;
   const double y2 = y * y;
   const double q2 = q * q;
   const double txq = 2.0 * x * q;
   if (l == 0) {
     if (t == txq) { return 2.0 * q2 / (y2 + 2.0 * txq - x2); };
+    if (x == y && t == 0.0) { return q; };
     const double t2 = t * t;
     double logarg = (t + txq) / (t - txq);
     logarg = (logarg < 0.0) ? -logarg : logarg;
-    return 1.0 / (2.0 * t + y2 - x2) *
+    return y / (2.0 * t + y2 - x2) *
            ((q2 - t2 / (4.0 * x2)) * log(logarg) + q * t / x);
   }
+  if (x == y && t == 0.0) { return 0.0; };
   const double tplT = 2.0 * M_PI * l * Theta;
   const double tplT2 = tplT * tplT;
   const double txqpt = txq + t;
@@ -623,7 +628,7 @@ AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
   const double txqpt2 = txqpt * txqpt;
   const double txqmt2 = txqmt * txqmt;
   const double logarg = (txqpt2 + tplT2) / (txqmt2 + tplT2);
-  return 1.0 / (2.0 * t + y * y - x * x) * log(logarg);
+  return y / (2.0 * t + y * y - x * x) * log(logarg);
 }
 
 // -----------------------------------------------------------------

@@ -61,6 +61,11 @@ void Vector3D::fill(const double &num) {
   std::for_each(v.begin(), v.end(), [&](double &vi) { vi = num; });
 }
 
+void Vector3D::fill(const size_t i, const double &num) {
+  const auto &dest = v.begin() + i * s2 * s3;
+  std::for_each(dest, dest + s2 * s3, [&](double &vi) { vi = num; });
+}
+
 void Vector3D::fill(const size_t i, const size_t j, const double &num) {
   const auto &dest = v.begin() + j * s3 + i * s2 * s3;
   std::for_each(dest, dest + s3, [&](double &vi) { vi = num; });
