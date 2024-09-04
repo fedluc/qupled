@@ -15,7 +15,7 @@ namespace numUtil {
 
   // Check if a double is zero within the tolerance dTol
   bool isZero(const double &x);
-  
+
   // Compare two doubles within the tolerance in dTol
   bool equalTol(const double &x, const double &y);
 

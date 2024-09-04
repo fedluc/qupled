@@ -11,10 +11,8 @@
 
 namespace numUtil {
 
-  bool isZero(const double &x) {
-    return abs(x) < dtol;
-  }
-  
+  bool isZero(const double &x) { return abs(x) < dtol; }
+
   bool equalTol(const double &x, const double &y) {
     return abs(x - y) < x * dtol;
   }

@@ -125,7 +125,9 @@ public:
     isZeroDegeneracy = (in.getDegeneracy() == 0.0);
     // Build integration grid
     if (!numUtil::isZero(std::remainder(rs, drs))) {
-      MPIUtil::throwError("Inconsistent input parameters: the coupling parameter must be a multiple of the coupling resolution");
+      MPIUtil::throwError(
+          "Inconsistent input parameters: the coupling parameter must be a "
+          "multiple of the coupling resolution");
     }
     rsGrid.push_back(0.0);
     const double rsMax = rs + drs;
@@ -158,10 +160,13 @@ public:
     }
     // Set the index of the target state point in the free energy integrand
     {
-      auto isTarget = [&](const double &rs) { return numUtil::equalTol(rs, in.getCoupling()); };
+      auto isTarget = [&](const double &rs) {
+        return numUtil::equalTol(rs, in.getCoupling());
+      };
       const auto it = std::find_if(rsGrid.begin(), rsGrid.end(), isTarget);
       if (it == rsGrid.end()) {
-	MPIUtil::throwError("Failed to find the target state point in the free energy grid");
+        MPIUtil::throwError(
+            "Failed to find the target state point in the free energy grid");
       }
       fxcIdxTargetStatePoint = std::distance(rsGrid.begin(), it);
     }
@@ -170,7 +175,7 @@ public:
       const auto &fxciBegin = fxcIntegrand[Idx::THETA].begin();
       const auto &fxciEnd = fxcIntegrand[Idx::THETA].end();
       const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
-      fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it) + 1; 
+      fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it);
     }
   }
 
@@ -189,12 +194,13 @@ public:
         ++i;
       }
     }
-    // Index of the first unsolved state point in the free energy integrand (MAKE A FUNCTION OUT OF THIS)
+    // Index of the first unsolved state point in the free energy integrand
+    // (MAKE A FUNCTION OUT OF THIS)
     {
       const auto &fxciBegin = fxcIntegrand[Idx::THETA].begin();
       const auto &fxciEnd = fxcIntegrand[Idx::THETA].end();
       const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
-      fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it) + 1; 
+      fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it);
     }
   }
 
@@ -209,12 +215,12 @@ public:
   // Get first unsolved state point in the free energy integrand
   double getFirstUnsolvedStatePoint() {
     if (isFreeEnergyIntegrandIncomplete()) {
-      return rsGrid[fxcIdxUnsolvedStatePoint];
+      return rsGrid[fxcIdxUnsolvedStatePoint + 1];
     } else {
       return numUtil::Inf;
     }
   }
-  
+
   // Compute the thermodynamic properties
   void compute() {
     structProp.compute();

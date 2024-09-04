@@ -49,6 +49,10 @@ void VSStls::initFreeEnergyIntegrand() {
     printf("Missing points in the free energy integrand: subcalls will be "
            "performed to collect the necessary data\n");
   }
+  if (verbose) {
+    printf("-----------------------------------------------------------------"
+           "----------\n");
+  }
   VSStlsInput inTmp = in;
   while (thermoProp.isFreeEnergyIntegrandIncomplete()) {
     const double rs = thermoProp.getFirstUnsolvedStatePoint();
