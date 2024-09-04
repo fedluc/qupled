@@ -66,6 +66,8 @@ private:
   double computeAlpha();
   // Iterations to solve the vs-stls scheme
   void updateSolution();
+  // Setup free energy integrand
+  void initFreeEnergyIntegrand();
 };
 
 #endif
