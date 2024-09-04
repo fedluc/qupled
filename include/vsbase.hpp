@@ -124,6 +124,9 @@ public:
     isZeroCoupling = (rs == 0.0);
     isZeroDegeneracy = (in.getDegeneracy() == 0.0);
     // Build integration grid
+    if (!numUtil::isZero(std::remainder(rs, drs))) {
+      MPIUtil::throwError("Inconsistent input parameters: the coupling parameter must be a multiple of the coupling resolution");
+    }
     rsGrid.push_back(0.0);
     const double rsMax = rs + drs;
     while (!numUtil::equalTol(rsGrid.back(), rsMax)) {
@@ -153,6 +156,22 @@ public:
         }
       }
     }
+    // Set the index of the target state point in the free energy integrand
+    {
+      auto isTarget = [&](const double &rs) { return numUtil::equalTol(rs, in.getCoupling()); };
+      const auto it = std::find_if(rsGrid.begin(), rsGrid.end(), isTarget);
+      if (it == rsGrid.end()) {
+	MPIUtil::throwError("Failed to find the target state point in the free energy grid");
+      }
+      fxcIdxTargetStatePoint = std::distance(rsGrid.begin(), it);
+    }
+    // Index of the first unsolved state point in the free energy integrand
+    {
+      const auto &fxciBegin = fxcIntegrand[Idx::THETA].begin();
+      const auto &fxciEnd = fxcIntegrand[Idx::THETA].end();
+      const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
+      fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it) + 1; 
+    }
   }
 
   // Copy free energy integrand from another ThermoPropBase object
@@ -170,51 +189,50 @@ public:
         ++i;
       }
     }
+    // Index of the first unsolved state point in the free energy integrand (MAKE A FUNCTION OUT OF THIS)
+    {
+      const auto &fxciBegin = fxcIntegrand[Idx::THETA].begin();
+      const auto &fxciEnd = fxcIntegrand[Idx::THETA].end();
+      const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
+      fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it) + 1; 
+    }
   }
 
   // Set the value of the free parameter in the structural properties
   void setAlpha(const double &alpha) { structProp.setAlpha(alpha); }
 
-  // Check for which state points we need to compute the free energy
-  std::vector<double> inspectFreeEnergyIntegrand(const Input &in) {
-    const double nrs = rsGrid.size();
-    std::vector<double> freeEnergyStatePoints;
-    for (size_t i = 0; i < nrs; ++i) {
-      const double &rs = rsGrid[i];
-      const bool isTargetStatePoint = numUtil::equalTol(rs, in.getCoupling());
-      const bool isFiniteCoupling = rs > 0.0;
-      const bool freeEnergyIsUnknown = fxcIntegrand[THETA][i] == numUtil::Inf;
-      if (rs < in.getCoupling() && !isTargetStatePoint && isFiniteCoupling &&
-          freeEnergyIsUnknown) {
-        freeEnergyStatePoints.push_back(rs);
-      }
-    }
-    return freeEnergyStatePoints;
+  // Check if there are unsolved state points in the free energy integrand
+  bool isFreeEnergyIntegrandIncomplete() {
+    return fxcIdxUnsolvedStatePoint < fxcIdxTargetStatePoint - 1;
   }
 
-  // Compute the thermodynamic properties
-  void compute(const Input &in) {
-    const double nrs = rsGrid.size();
-    for (size_t i = 0; i < nrs; ++i) {
-      const double &rs = rsGrid[i];
-      if (numUtil::equalTol(rs, in.getCoupling())) {
-        structProp.compute();
-        const std::vector<double> fxciTmp = structProp.getFreeEnergyIntegrand();
-        const double alphaTmp = structProp.getAlpha();
-        fxcIntegrand[THETA_DOWN][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
-        fxcIntegrand[THETA_DOWN][i] = fxciTmp[SIdx::RS_THETA_DOWN];
-        fxcIntegrand[THETA_DOWN][i + 1] = fxciTmp[SIdx::RS_UP_THETA_DOWN];
-        fxcIntegrand[THETA][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA];
-        fxcIntegrand[THETA][i] = fxciTmp[SIdx::RS_THETA];
-        fxcIntegrand[THETA][i + 1] = fxciTmp[SIdx::RS_UP_THETA];
-        fxcIntegrand[THETA_UP][i - 1] = fxciTmp[SIdx::RS_DOWN_THETA_UP];
-        fxcIntegrand[THETA_UP][i] = fxciTmp[SIdx::RS_THETA_UP];
-        fxcIntegrand[THETA_UP][i + 1] = fxciTmp[SIdx::RS_UP_THETA_UP];
-        alpha[i - 1] = alphaTmp;
-        alpha[i] = alphaTmp;
-        alpha[i + 1] = alphaTmp;
-      }
+  // Get first unsolved state point in the free energy integrand
+  double getFirstUnsolvedStatePoint() {
+    if (isFreeEnergyIntegrandIncomplete()) {
+      return rsGrid[fxcIdxUnsolvedStatePoint];
+    } else {
+      return numUtil::Inf;
     }
+  }
+  
+  // Compute the thermodynamic properties
+  void compute() {
+    structProp.compute();
+    const std::vector<double> fxciTmp = structProp.getFreeEnergyIntegrand();
+    const double alphaTmp = structProp.getAlpha();
+    const size_t &idx = fxcIdxTargetStatePoint;
+    fxcIntegrand[THETA_DOWN][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
+    fxcIntegrand[THETA_DOWN][idx] = fxciTmp[SIdx::RS_THETA_DOWN];
+    fxcIntegrand[THETA_DOWN][idx + 1] = fxciTmp[SIdx::RS_UP_THETA_DOWN];
+    fxcIntegrand[THETA][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA];
+    fxcIntegrand[THETA][idx] = fxciTmp[SIdx::RS_THETA];
+    fxcIntegrand[THETA][idx + 1] = fxciTmp[SIdx::RS_UP_THETA];
+    fxcIntegrand[THETA_UP][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_UP];
+    fxcIntegrand[THETA_UP][idx] = fxciTmp[SIdx::RS_THETA_UP];
+    fxcIntegrand[THETA_UP][idx + 1] = fxciTmp[SIdx::RS_UP_THETA_UP];
+    alpha[idx - 1] = alphaTmp;
+    alpha[idx] = alphaTmp;
+    alpha[idx + 1] = alphaTmp;
   }
 
   // Get structural properties
@@ -335,6 +353,10 @@ protected:
   // Flags marking particular state points
   bool isZeroCoupling;
   bool isZeroDegeneracy;
+  // Index of the target state point in the free energy integrand
+  size_t fxcIdxTargetStatePoint;
+  // Index of the first unsolved state point in the free energy integrand
+  size_t fxcIdxUnsolvedStatePoint;
   // Compute the free energy
   double computeFreeEnergy(const SIdx iStruct, const bool normalize) const {
     Idx iThermo;

@@ -12,7 +12,7 @@ using namespace std;
 
 double VSStls::computeAlpha() {
   // Compute the free energy integrand
-  thermoProp.compute(in);
+  thermoProp.compute();
   // Free energy
   const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
   const double &fxc = freeEnergyData[0];
@@ -44,21 +44,19 @@ void VSStls::updateSolution() {
 }
 
 void VSStls::initFreeEnergyIntegrand() {
-  vector<double> rsGrid = thermoProp.inspectFreeEnergyIntegrand(in);
-  if (rsGrid.empty()) { return; }
+  if (!thermoProp.isFreeEnergyIntegrandIncomplete()) { return; }
   if (verbose) {
     printf("Missing points in the free energy integrand: subcalls will be "
            "performed to collect the necessary data\n");
   }
   VSStlsInput inTmp = in;
-  while (!rsGrid.empty()) {
-    const double rs = rsGrid.front();
+  while (thermoProp.isFreeEnergyIntegrandIncomplete()) {
+    const double rs = thermoProp.getFirstUnsolvedStatePoint();
     if (verbose) { printf("Subcall: solving VS scheme for rs = %.5f:\n", rs); }
     inTmp.setCoupling(rs);
     VSStls scheme(inTmp, thermoProp);
     scheme.compute();
     thermoProp.copyFreeEnergyIntegrand(scheme.getThermoProp());
-    rsGrid = thermoProp.inspectFreeEnergyIntegrand(in);
     if (verbose) {
       printf("Done\n");
       printf("-----------------------------------------------------------------"

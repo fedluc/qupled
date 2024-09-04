@@ -13,6 +13,9 @@ namespace numUtil {
   constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
   constexpr double dtol = 1e-10;
 
+  // Check if a double is zero within the tolerance dTol
+  bool isZero(const double &x);
+  
   // Compare two doubles within the tolerance in dTol
   bool equalTol(const double &x, const double &y);
 
