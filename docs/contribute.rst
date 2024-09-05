@@ -7,13 +7,7 @@ formatting and documentation.
 Formatting
 ----------
 
-We use `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_ and `black <https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html>`_ to enforce a uniform formatting style for the C++ and Python code-base. The code formatting is checked automatically every time a pull request or a push is made. To ensure that the correct formatting is applied navigate to the root directory of the qupled project and type
-
-.. code-block:: console
-
-   black .
-   find . -name "*.cpp" | xargs clang-format --style=file -i
-   find . -name "*.hpp" | xargs clang-format --style=file -i
+We use `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_ and `black <https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html>`_ to enforce a uniform formatting style for the C++ and Python code-base. The code formatting is checked automatically every time a pull request or a push is made. To ensure that the correct formatting is applied run ``cmake --build . --target format`` from the build directory.
 
 Documentation
 -------------
