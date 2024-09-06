@@ -118,65 +118,15 @@ public:
   explicit ThermoPropBase(const Input &in)
       : verbose(MPIUtil::isRoot()),
         structProp(in) {
-    const double &rs = in.getCoupling();
-    const double &drs = in.getCouplingResolution();
     // Check if we are solving for particular state points
-    isZeroCoupling = (rs == 0.0);
+    isZeroCoupling = (in.getCoupling() == 0.0);
     isZeroDegeneracy = (in.getDegeneracy() == 0.0);
-    // Build integration grid
-    if (!numUtil::isZero(std::remainder(rs, drs))) {
-      MPIUtil::throwError(
-          "Inconsistent input parameters: the coupling parameter must be a "
-          "multiple of the coupling resolution");
-    }
-    rsGrid.push_back(0.0);
-    const double rsMax = rs + drs;
-    while (!numUtil::equalTol(rsGrid.back(), rsMax)) {
-      rsGrid.push_back(rsGrid.back() + drs);
-    }
-    // Resize the free parameter vector
-    const size_t nrs = rsGrid.size();
-    alpha.resize(nrs);
-    // Initialize the free energy integrand
-    fxcIntegrand.resize(NPOINTS);
-    for (auto &f : fxcIntegrand) {
-      f.resize(nrs);
-      vecUtil::fill(f, numUtil::Inf);
-    }
-    // Fill the free energy integrand and the free parameter if passed in input
-    const auto &fxciData = in.getFreeEnergyIntegrand();
-    if (!fxciData.grid.empty()) {
-      for (const auto &theta : {Idx::THETA_DOWN, Idx::THETA, Idx::THETA_UP}) {
-        const double rsMaxi = fxciData.grid.back();
-        const Interpolator1D itp(fxciData.grid, fxciData.integrand[theta]);
-        for (size_t i = 0; i < nrs; ++i) {
-          const double &rs = rsGrid[i];
-          if (rs <= rsMaxi) {
-            fxcIntegrand[theta][i] = itp.eval(rs);
-            if (theta == Idx::THETA) { alpha[i] = fxciData.alpha[i]; }
-          }
-        }
-      }
-    }
-    // Set the index of the target state point in the free energy integrand
-    {
-      auto isTarget = [&](const double &rs) {
-        return numUtil::equalTol(rs, in.getCoupling());
-      };
-      const auto it = std::find_if(rsGrid.begin(), rsGrid.end(), isTarget);
-      if (it == rsGrid.end()) {
-        MPIUtil::throwError(
-            "Failed to find the target state point in the free energy grid");
-      }
-      fxcIdxTargetStatePoint = std::distance(rsGrid.begin(), it);
-    }
-    // Index of the first unsolved state point in the free energy integrand
-    {
-      const auto &fxciBegin = fxcIntegrand[Idx::THETA].begin();
-      const auto &fxciEnd = fxcIntegrand[Idx::THETA].end();
-      const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
-      fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it);
-    }
+    // Set variables related to the free energy calculation
+    setRsGrid(in);
+    setFxcIntegrand(in);
+    setAlpha(in);
+    setFxcIdxTargetStatePoint(in);
+    setFxcIdxUnsolvedStatePoint();
   }
 
   // Copy free energy integrand from another ThermoPropBase object
@@ -194,14 +144,7 @@ public:
         ++i;
       }
     }
-    // Index of the first unsolved state point in the free energy integrand
-    // (MAKE A FUNCTION OUT OF THIS)
-    {
-      const auto &fxciBegin = fxcIntegrand[Idx::THETA].begin();
-      const auto &fxciEnd = fxcIntegrand[Idx::THETA].end();
-      const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
-      fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it);
-    }
+    setFxcIdxUnsolvedStatePoint();
   }
 
   // Set the value of the free parameter in the structural properties
@@ -242,19 +185,14 @@ public:
   }
 
   // Get structural properties
-  template <typename CSR>
-  const CSR &getStructProp() {
+  std::vector<double> getSsf() {
     if (!structProp.isComputed()) { structProp.compute(); }
-    if (isZeroCoupling && isZeroDegeneracy) {
-      return structProp.getCsr(SIdx::RS_DOWN_THETA_DOWN);
-    }
-    if (!isZeroCoupling && isZeroDegeneracy) {
-      return structProp.getCsr(SIdx::RS_THETA_DOWN);
-    }
-    if (isZeroCoupling && !isZeroDegeneracy) {
-      return structProp.getCsr(SIdx::RS_DOWN_THETA);
-    }
-    return structProp.getCsr(SIdx::RS_THETA);
+    return structProp.getCsr(getStructPropIdx()).getSsf();
+  }
+
+  std::vector<double> getSlfc() {
+    if (!structProp.isComputed()) { structProp.compute(); }
+    return structProp.getCsr(getStructPropIdx()).getSlfc();
   }
 
   // Get free energy and free energy derivatives
@@ -363,6 +301,7 @@ protected:
   size_t fxcIdxTargetStatePoint;
   // Index of the first unsolved state point in the free energy integrand
   size_t fxcIdxUnsolvedStatePoint;
+
   // Compute the free energy
   double computeFreeEnergy(const SIdx iStruct, const bool normalize) const {
     Idx iThermo;
@@ -384,6 +323,91 @@ protected:
     const std::vector<double> &rs = structProp.getCouplingParameters();
     return thermoUtil::computeFreeEnergy(
         rsGrid, fxcIntegrand[iThermo], rs[iStruct], normalize);
+  }
+
+  // Build integration grid
+  void setRsGrid(const Input &in) {
+    const double &rs = in.getCoupling();
+    const double &drs = in.getCouplingResolution();
+    if (!numUtil::isZero(std::remainder(rs, drs))) {
+      MPIUtil::throwError(
+          "Inconsistent input parameters: the coupling parameter must be a "
+          "multiple of the coupling resolution");
+    }
+    rsGrid.push_back(0.0);
+    const double rsMax = rs + drs;
+    while (!numUtil::equalTol(rsGrid.back(), rsMax)) {
+      rsGrid.push_back(rsGrid.back() + drs);
+    }
+  }
+
+  // Build free energy integrand
+  void setFxcIntegrand(const Input &in) {
+    const size_t nrs = rsGrid.size();
+    // Initialize the free energy integrand
+    fxcIntegrand.resize(NPOINTS);
+    for (auto &f : fxcIntegrand) {
+      f.resize(nrs);
+      vecUtil::fill(f, numUtil::Inf);
+    }
+    // Fill the free energy integrand and the free parameter if passed in input
+    const auto &fxciData = in.getFreeEnergyIntegrand();
+    if (!fxciData.grid.empty()) {
+      for (const auto &theta : {Idx::THETA_DOWN, Idx::THETA, Idx::THETA_UP}) {
+        const double rsMaxi = fxciData.grid.back();
+        const Interpolator1D itp(fxciData.grid, fxciData.integrand[theta]);
+        for (size_t i = 0; i < nrs; ++i) {
+          const double &rs = rsGrid[i];
+          if (rs <= rsMaxi) { fxcIntegrand[theta][i] = itp.eval(rs); }
+        }
+      }
+    }
+  }
+
+  // Build free parameter vector
+  void setAlpha(const Input &in) {
+    // Initialize
+    const size_t nrs = rsGrid.size();
+    alpha.resize(nrs);
+    // Set free parameter if passed in input
+    const auto &fxciData = in.getFreeEnergyIntegrand();
+    if (!fxciData.grid.empty()) {
+      const double rsMaxi = fxciData.grid.back();
+      for (size_t i = 0; i < nrs; ++i) {
+        const double &rs = rsGrid[i];
+        if (rs <= rsMaxi) { alpha[i] = fxciData.alpha[i]; }
+      }
+    }
+  }
+
+  // Set the index of the target state in the free energy integrand
+  void setFxcIdxTargetStatePoint(const Input &in) {
+    auto isTarget = [&](const double &rs) {
+      return numUtil::equalTol(rs, in.getCoupling());
+    };
+    const auto it = std::find_if(rsGrid.begin(), rsGrid.end(), isTarget);
+    if (it == rsGrid.end()) {
+      MPIUtil::throwError(
+          "Failed to find the target state point in the free energy grid");
+    }
+    fxcIdxTargetStatePoint = std::distance(rsGrid.begin(), it);
+  }
+
+  // Set the index of the first unsolved state point in the free energy
+  // integrand
+  void setFxcIdxUnsolvedStatePoint() {
+    const auto &fxciBegin = fxcIntegrand[Idx::THETA].begin();
+    const auto &fxciEnd = fxcIntegrand[Idx::THETA].end();
+    const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
+    fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it);
+  }
+
+  // Get index to access the structural properties
+  SIdx getStructPropIdx() {
+    if (isZeroCoupling && isZeroDegeneracy) { return SIdx::RS_DOWN_THETA_DOWN; }
+    if (!isZeroCoupling && isZeroDegeneracy) { return SIdx::RS_THETA_DOWN; }
+    if (isZeroCoupling && !isZeroDegeneracy) { return SIdx::RS_DOWN_THETA; }
+    return SIdx::RS_THETA;
   }
 };
 

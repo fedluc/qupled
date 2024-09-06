@@ -43,10 +43,9 @@ double QVSStls::computeAlpha() {
 
 void QVSStls::updateSolution() {
   // Update the structural properties used for output
-  const auto &qstls = thermoProp.getStructProp<QStlsCSR>();
-  adr = qstls.getAdr();
-  ssf = qstls.getSsf();
-  slfc = qstls.getSlfc();
+  adr = thermoProp.getAdr();
+  ssf = thermoProp.getSsf();
+  slfc = thermoProp.getSlfc();
 }
 
 void QVSStls::initFreeEnergyIntegrand() {
@@ -98,6 +97,11 @@ vector<double> QThermoProp::getQData() const {
     qt = theta[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
   }
   return vector<double>({q, qr, qt});
+}
+
+Vector2D QThermoProp::getAdr() {
+  if (!structProp.isComputed()) { structProp.compute(); }
+  return structProp.getCsr(getStructPropIdx()).getAdr();
 }
 
 // -----------------------------------------------------------------

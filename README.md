@@ -9,14 +9,7 @@ Qupled is a python package that can be used to compute the properties of quantum
 
 ## Status
 
-Platform | Build Status
----------|:---------
-Linux      | [![Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml)
-OSX      | [![Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml)
-Linux (no MPI)     | [![Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_ubuntu.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_ubuntu.yml)
-OSX (no MPI)     | [![Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_macos.yml)
-
-[![Code Formatting](https://github.com/fedluc/qupled/actions/workflows/formatting.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/formatting.yml)
+[![Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml) [![Build & Test Status (no MPI)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_macos.yml) [![Code Formatting](https://github.com/fedluc/qupled/actions/workflows/formatting.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/formatting.yml)
 
 ## Dependencies
 

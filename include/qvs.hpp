@@ -133,6 +133,8 @@ public:
       : ThermoPropBase(in) {}
   // Get internal energy and internal energy derivatives
   std::vector<double> getQData() const;
+  // Get structural properties
+  Vector2D getAdr();
 };
 
 // -----------------------------------------------------------------

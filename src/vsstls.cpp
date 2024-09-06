@@ -38,9 +38,8 @@ double VSStls::computeAlpha() {
 
 void VSStls::updateSolution() {
   // Update the structural properties used for output
-  const auto &stls = thermoProp.getStructProp<StlsCSR>();
-  slfc = stls.getSlfc();
-  ssf = stls.getSsf();
+  slfc = thermoProp.getSlfc();
+  ssf = thermoProp.getSsf();
 }
 
 void VSStls::initFreeEnergyIntegrand() {
