@@ -101,7 +101,7 @@ protected:
   // Update structural output solution
   virtual void updateSolution() = 0;
 
-  // Setup free energy integrand
+  // Initialize free energy integrand
   virtual void initFreeEnergyIntegrand() = 0;
 };
 

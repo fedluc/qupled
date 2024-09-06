@@ -19,10 +19,35 @@
 class ThermoPropBase {
 
 public:
-  
-  // Set the value of the free parameter in the structural properties
-  void setAlpha(const double &alpha) { ; }
 
+  // Constructor
+  explicit ThermoPropBase(const VSInput &in);
+
+  // Set the value of the free parameter in the structural properties
+  void setAlpha(const double &alpha);
+  
+  // Copy free energy integrand
+  void copyFreeEnergyIntegrand(const ThermoPropBase &other);
+
+  // Check if there are unsolved state points in the free energy integrand
+  bool isFreeEnergyIntegrandIncomplete() const;
+  
+  // Get the first unsolved state point in the free energy integrand
+  double getFirstUnsolvedStatePoint() const;
+
+  // Compute the thermodynamic properties
+  void compute();
+
+  // Get structural properties
+  std::vector<double> getSsf();
+  std::vector<double> getSlfc();
+
+  // Get free energy and free energy derivatives
+  std::vector<double> getFreeEnergyData() const;
+
+  // Get internal energy and internal energy derivatives
+  std::vector<double> getInternalEnergyData() const;
+  
   // Get free energy integrand
   const std::vector<std::vector<double>> &getFreeEnergyIntegrand() const {
     return fxcIntegrand;
@@ -36,13 +61,58 @@ public:
 
 protected:
 
+  // using SIdx = typename StructProp::Idx;
+  enum SIdx {
+    RS_DOWN_THETA_DOWN,
+    RS_THETA_DOWN,
+    RS_UP_THETA_DOWN,
+    RS_DOWN_THETA,
+    RS_THETA,
+    RS_UP_THETA,
+    RS_DOWN_THETA_UP,
+    RS_THETA_UP,
+    RS_UP_THETA_UP,
+  };
+  enum Idx { THETA_DOWN, THETA, THETA_UP };
+  // Map between struct and thermo indexes
+  static constexpr int NPOINTS = 3;
+  // Output verbosity
+  const bool verbose;
   // Grid for thermodyamic integration
   std::vector<double> rsGrid;
   // Free parameter values for all the coupling parameters stored in rsGrid
   std::vector<double> alpha;
   // Free energy integrand for NPOINTS state points
   std::vector<std::vector<double>> fxcIntegrand;
+ // Flags marking particular state points
+  bool isZeroCoupling;
+  bool isZeroDegeneracy;
+  // Index of the target state point in the free energy integrand
+  size_t fxcIdxTargetStatePoint;
+  // Index of the first unsolved state point in the free energy integrand
+  size_t fxcIdxUnsolvedStatePoint;
 
+  // Compute the free energy
+  double computeFreeEnergy(const ThermoPropBase::SIdx iStruct, const bool normalize) const;
+
+  // Build the integration grid
+  void setRsGrid(const VSInput& in);
+
+  // Build the free energy integrand
+  void setFxcIntegrand(const VSInput& in);
+
+  // Build the free parameter vector
+  void setAlpha(const VSInput& in);
+
+  // Set the index of the target state point in the free energy integrand
+  void setFxcIdxTargetStatePoint(const VSInput& in);
+
+  // Set the index of the first unsolved state point in the free energy integrand
+  void setFxcIdxUnsolvedStatePoint();
+
+  // Get index to acces the structural properties
+  ThermoPropBase::SIdx getStructPropIdx();
+  
 };
 
 // -----------------------------------------------------------------
@@ -54,13 +124,10 @@ class VSBase {
 public:
 
   // Constructor from initial data
-  explicit VSBase(const VSInput &in_, const std::shared_ptr<ThermoPropBase> &thermoProp_)
-    : VSBase(in_, thermoProp_, MPIUtil::isRoot()) {}
-  // Constructor for recursive calculations
-  VSBase(const VSInput &in_, const std::shared_ptr<ThermoPropBase> &thermoProp_, const bool verbose_)
-    : in(in_),
-      thermoProp(std::move(thermoProp_)),
-      verbose(verbose) {}
+  explicit VSBase(const VSInput &in_)
+    : VSBase(in_, MPIUtil::isRoot()) {}
+  VSBase(const VSInput &in_, const bool& verbose_)
+    : in(in_), verbose(verbose_) {}
 
   // Destructor
   virtual ~VSBase() = default;
@@ -77,18 +144,22 @@ protected:
 
   // Input data
   VSInput in;
-  // Thermodynamic properties
-  std::shared_ptr<ThermoPropBase> thermoProp;
   // Free parameter
   double alpha;
   // Output verbosity
   const bool verbose;
 
+  // Getters for the thermodynamic properties
+  virtual const ThermoPropBase& getThermoProp() const = 0;
+  virtual ThermoPropBase& getThermoProp() = 0;
+  
   // Compute free parameter
   virtual double computeAlpha() = 0;
 
   // Initialize
-  virtual void init() = 0; // Scheme::init()
+  void init();
+  virtual void initScheme() = 0;
+  virtual void initFreeEnergyIntegrand() = 0;
   
   // Iterations to solve the vs scheme
   void doIterations();
@@ -98,6 +169,8 @@ protected:
 
   // Update structural output solution
   virtual void updateSolution() = 0;
+
+  
 };
 
 

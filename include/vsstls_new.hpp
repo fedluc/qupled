@@ -7,8 +7,15 @@
 #include <limits>
 #include <map>
 
-class ThermoProp : public ThermoPropBase {
+class ThermoProp: public ThermoPropBase {
+
+public:
+  
+  // Constructor
+  explicit ThermoProp(const VSStlsInput &in): ThermoPropBase(in) {}
+  
 };
+
 
 class VSStlsNew : public VSBase, public Rpa {
 
@@ -16,13 +23,30 @@ public:
 
   // Constructor from initial data
   explicit VSStlsNew(const VSStlsInput &in_)
-    : VSStlsNew(in_, std::make_shared<ThermoProp>()) {}
+    : VSBase(in_), Rpa(in_), thermoProp(in_) {}
   // Constructor for recursive calculations
-  VSStlsNew(const VSStlsInput &in_, const std::shared_ptr<ThermoProp> &thermoProp_)
-    : VSBase(in_, thermoProp_, false), Rpa(in_, false) {}
-
-private:
+  VSStlsNew(const VSStlsInput &in_, const ThermoProp &thermoProp_)
+    : VSBase(in_), Rpa(in_, false), thermoProp(in_) {
+    thermoProp.copyFreeEnergyIntegrand(thermoProp_);
+  }
   
+  // Solve the scheme
+  using VSBase::compute;
+  
+private:
+
+  // Input
+  VSStlsInput in;
+  // Verbosity
+  using VSBase::verbose;
+  // Getter
+  const ThermoPropBase& getThermoProp() const { return thermoProp; }
+  ThermoPropBase& getThermoProp() { return thermoProp; }
+  // Thermodynamic properties
+  ThermoProp thermoProp;
+  // Initialize
+  void initScheme();
+  void initFreeEnergyIntegrand();
   // Compute free parameter
   double computeAlpha();
   // Iterations to solve the vs-stls scheme
