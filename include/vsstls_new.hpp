@@ -7,14 +7,16 @@
 #include <limits>
 #include <map>
 
-class StlsCSRNew: public CSR, public Stls {
+class StlsCSRNew : public CSR, public Stls {
 
 public:
-  
+
   // Constructor
   explicit StlsCSRNew(const VSStlsInput &in_)
-    : CSR(in_), Stls(in_.toStlsInput(), false, false), in(in_) {}
-  
+      : CSR(in_),
+        Stls(in_.toStlsInput(), false, false),
+        in(in_) {}
+
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();
@@ -27,10 +29,10 @@ public:
   void updateSolution() { Stls::updateSolution(); }
 
   // Getters
-  std::vector<double> getSsf() const  { return Stls::getSsf(); }
+  std::vector<double> getSsf() const { return Stls::getSsf(); }
   std::vector<double> getSlfc() const { return Stls::getSlfc(); }
   std::vector<double> getWvg() const { return Stls::getWvg(); }
-  
+
 private:
 
   // Input parameters
@@ -39,13 +41,12 @@ private:
   double getDerivative(const std::shared_ptr<std::vector<double>> &f,
                        const size_t &idx,
                        const Derivative &type);
-  
 };
 
 class StructPropNew : public StructPropBase {
 
 public:
-  
+
   explicit StructPropNew(const VSStlsInput &in_);
 
 private:
@@ -54,13 +55,10 @@ private:
   std::vector<std::shared_ptr<StlsCSRNew>> csr;
   // setup the csr vector
   std::vector<VSStlsInput> setupCSRInput(const VSStlsInput &in);
-  void setupCSR(const VSStlsInput& in_);
-  // 
+  void setupCSR(const VSStlsInput &in_);
+  //
   void doIterations();
-  
-  
 };
-
 
 class ThermoProp : public ThermoPropBase {
 
@@ -73,9 +71,7 @@ private:
 
   // Structural properties
   std::shared_ptr<StructPropNew> structProp;
-  
 };
-
 
 class VSStlsNew : public VSBase, public Stls {
 
@@ -85,10 +81,10 @@ public:
   explicit VSStlsNew(const VSStlsInput &in_);
   // Constructor for recursive calculations
   VSStlsNew(const VSStlsInput &in_, const ThermoProp &thermoProp_);
-  
+
   // Solve the scheme
   using VSBase::compute;
-  
+
 private:
 
   // Input
@@ -106,5 +102,4 @@ private:
   void updateSolution();
 };
 
-  
 #endif

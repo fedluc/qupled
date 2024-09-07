@@ -11,12 +11,16 @@ using namespace std;
 // -----------------------------------------------------------------
 
 VSStlsNew::VSStlsNew(const VSStlsInput &in_)
-  : VSBase(in_), Stls(in_.toStlsInput()), thermoProp(make_shared<ThermoProp>(in_)) {
+    : VSBase(in_),
+      Stls(in_.toStlsInput()),
+      thermoProp(make_shared<ThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
 }
 
 VSStlsNew::VSStlsNew(const VSStlsInput &in_, const ThermoProp &thermoProp_)
-  : VSBase(in_), Stls(in_.toStlsInput(), false, false), thermoProp(make_shared<ThermoProp>(in_)) {
+    : VSBase(in_),
+      Stls(in_.toStlsInput(), false, false),
+      thermoProp(make_shared<ThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
   thermoProp->copyFreeEnergyIntegrand(thermoProp_);
 }
@@ -53,9 +57,7 @@ void VSStlsNew::updateSolution() {
   ssf = thermoProp->getSsf();
 }
 
-void VSStlsNew::initScheme() {
-  Rpa::init();
-}
+void VSStlsNew::initScheme() { Rpa::init(); }
 
 void VSStlsNew::initFreeEnergyIntegrand() {
   if (!thermoProp->isFreeEnergyIntegrandIncomplete()) { return; }
@@ -87,23 +89,25 @@ void VSStlsNew::initFreeEnergyIntegrand() {
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-ThermoProp::ThermoProp(const VSStlsInput &in_): ThermoPropBase(in_), structProp(make_shared<StructPropNew>(in_)) {
+ThermoProp::ThermoProp(const VSStlsInput &in_)
+    : ThermoPropBase(in_),
+      structProp(make_shared<StructPropNew>(in_)) {
   ThermoPropBase::structProp = structProp;
 }
-
 
 // -----------------------------------------------------------------
 // StructProp class
 // -----------------------------------------------------------------
 
-StructPropNew::StructPropNew(const VSStlsInput &in_) : StructPropBase() {
+StructPropNew::StructPropNew(const VSStlsInput &in_)
+    : StructPropBase() {
   setupCSR(in_);
   setupCSRDependencies();
-  for (const auto& c : csr) {
+  for (const auto &c : csr) {
     StructPropBase::csr.push_back(c);
   }
 }
-						       
+
 void StructPropNew::setupCSR(const VSStlsInput &in) {
   std::vector<VSStlsInput> inVector = setupCSRInput(in);
   for (const auto &inTmp : inVector) {
@@ -224,8 +228,8 @@ void StlsCSRNew::computeSlfc() {
 }
 
 double StlsCSRNew::getDerivative(const shared_ptr<vector<double>> &f,
-				 const size_t &idx,
-				 const Derivative &type) {
+                                 const size_t &idx,
+                                 const Derivative &type) {
   const vector<double> fData = *f;
   switch (type) {
   case BACKWARD:

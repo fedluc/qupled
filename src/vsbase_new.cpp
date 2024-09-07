@@ -67,7 +67,7 @@ double VSBase::alphaDifference(const double &alphaTmp) {
 // -----------------------------------------------------------------
 
 ThermoPropBase::ThermoPropBase(const VSInput &in)
-  : verbose(MPIUtil::isRoot()) { //, structProp(in) {
+    : verbose(MPIUtil::isRoot()) { //, structProp(in) {
   // Check if we are solving for particular state points
   isZeroCoupling = (in.getCoupling() == 0.0);
   isZeroDegeneracy = (in.getDegeneracy() == 0.0);
@@ -79,13 +79,13 @@ ThermoPropBase::ThermoPropBase(const VSInput &in)
   setFxcIdxUnsolvedStatePoint();
 }
 
-
 void ThermoPropBase::setRsGrid(const VSInput &in) {
   const double &rs = in.getCoupling();
   const double &drs = in.getCouplingResolution();
   if (!numUtil::isZero(std::remainder(rs, drs))) {
-    MPIUtil::throwError("Inconsistent input parameters: the coupling parameter must be a "
-			"multiple of the coupling resolution");
+    MPIUtil::throwError(
+        "Inconsistent input parameters: the coupling parameter must be a "
+        "multiple of the coupling resolution");
   }
   rsGrid.push_back(0.0);
   const double rsMax = rs + drs;
@@ -109,8 +109,8 @@ void ThermoPropBase::setFxcIntegrand(const VSInput &in) {
       const double rsMaxi = fxciData.grid.back();
       const Interpolator1D itp(fxciData.grid, fxciData.integrand[theta]);
       for (size_t i = 0; i < nrs; ++i) {
-	const double &rs = rsGrid[i];
-	if (rs <= rsMaxi) { fxcIntegrand[theta][i] = itp.eval(rs); }
+        const double &rs = rsGrid[i];
+        if (rs <= rsMaxi) { fxcIntegrand[theta][i] = itp.eval(rs); }
       }
     }
   }
@@ -137,7 +137,8 @@ void ThermoPropBase::setFxcIdxTargetStatePoint(const VSInput &in) {
   };
   const auto it = std::find_if(rsGrid.begin(), rsGrid.end(), isTarget);
   if (it == rsGrid.end()) {
-    MPIUtil::throwError("Failed to find the target state point in the free energy grid");
+    MPIUtil::throwError(
+        "Failed to find the target state point in the free energy grid");
   }
   fxcIdxTargetStatePoint = std::distance(rsGrid.begin(), it);
 }
@@ -148,7 +149,6 @@ void ThermoPropBase::setFxcIdxUnsolvedStatePoint() {
   const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
   fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it);
 }
-
 
 void ThermoPropBase::copyFreeEnergyIntegrand(const ThermoPropBase &other) {
   assert(other.rsGrid[1] - other.rsGrid[0] == rsGrid[1] - rsGrid[0]);
@@ -261,7 +261,6 @@ std::vector<double> ThermoPropBase::getFreeEnergyData() const {
   return std::vector<double>({fxc, fxcr, fxcrr, fxct, fxctt, fxcrt});
 }
 
-
 std::vector<double> ThermoPropBase::getInternalEnergyData() const {
   assert(structProp);
   // Internal energy
@@ -289,8 +288,8 @@ std::vector<double> ThermoPropBase::getInternalEnergyData() const {
   return std::vector<double>({u, ur, ut});
 }
 
-
-double ThermoPropBase::computeFreeEnergy(const ThermoPropBase::SIdx iStruct, const bool normalize) const {
+double ThermoPropBase::computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
+                                         const bool normalize) const {
   Idx iThermo;
   switch (iStruct) {
   case SIdx::RS_DOWN_THETA_DOWN:
@@ -309,7 +308,8 @@ double ThermoPropBase::computeFreeEnergy(const ThermoPropBase::SIdx iStruct, con
   }
   assert(structProp);
   const std::vector<double> &rs = structProp->getCouplingParameters();
-  return thermoUtil::computeFreeEnergy(rsGrid, fxcIntegrand[iThermo], rs[iStruct], normalize);
+  return thermoUtil::computeFreeEnergy(
+      rsGrid, fxcIntegrand[iThermo], rs[iStruct], normalize);
 }
 
 ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
@@ -324,10 +324,10 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
 // -----------------------------------------------------------------
 
 StructPropBase::StructPropBase()
-  : verbose(MPIUtil::isRoot()),
-    csrIsInitialized(false),
-    computed(false),
-    outVector(NPOINTS) {}
+    : verbose(MPIUtil::isRoot()),
+      csrIsInitialized(false),
+      computed(false),
+      outVector(NPOINTS) {}
 
 void StructPropBase::setupCSRDependencies() {
   for (size_t i = 0; i < csr.size(); ++i) {
@@ -354,17 +354,20 @@ void StructPropBase::setupCSRDependencies() {
     case RS_DOWN_THETA_DOWN:
     case RS_THETA_DOWN:
     case RS_UP_THETA_DOWN:
-      csr[i]->setDThetaData(*csr[i + NRS], *csr[i + 2 * NRS], CSR::Derivative::FORWARD);
+      csr[i]->setDThetaData(
+          *csr[i + NRS], *csr[i + 2 * NRS], CSR::Derivative::FORWARD);
       break;
     case RS_DOWN_THETA:
     case RS_THETA:
     case RS_UP_THETA:
-      csr[i]->setDThetaData(*csr[i + NRS], *csr[i - NRS], CSR::Derivative::CENTERED);
+      csr[i]->setDThetaData(
+          *csr[i + NRS], *csr[i - NRS], CSR::Derivative::CENTERED);
       break;
     case RS_DOWN_THETA_UP:
     case RS_THETA_UP:
     case RS_UP_THETA_UP:
-      csr[i]->setDThetaData(*csr[i - NRS], *csr[i - 2 * NRS], CSR::Derivative::BACKWARD);
+      csr[i]->setDThetaData(
+          *csr[i - NRS], *csr[i - 2 * NRS], CSR::Derivative::BACKWARD);
       break;
     }
   }
@@ -375,7 +378,7 @@ int StructPropBase::compute() {
     if (!csrIsInitialized) {
       assert(!csr.empty());
       for (auto &c : csr) {
-	c->init();
+        c->init();
       }
       csrIsInitialized = true;
     }
@@ -394,17 +397,17 @@ void StructPropBase::setAlpha(const double &alpha) {
   }
 }
 
-const CSR& StructPropBase::getCsr(const Idx &idx) const {
+const CSR &StructPropBase::getCsr(const Idx &idx) const {
   assert(!csr.empty());
   return *csr[idx];
 }
-
 
 double StructPropBase::getAlpha() const {
   return getCsr(Idx::RS_THETA).getAlpha();
 }
 
-const std::vector<double>& StructPropBase::getBase(std::function<double(const CSR &)> f) const {
+const std::vector<double> &
+StructPropBase::getBase(std::function<double(const CSR &)> f) const {
   for (size_t i = 0; i < csr.size(); ++i) {
     outVector[i] = f(*csr[i]);
   }
@@ -414,7 +417,6 @@ const std::vector<double>& StructPropBase::getBase(std::function<double(const CS
 std::vector<double> StructPropBase::getCouplingParameters() const {
   return getBase([&](const CSR &c) { return c.getInput().getCoupling(); });
 }
-
 
 std::vector<double> StructPropBase::getDegeneracyParameters() const {
   return getBase([&](const CSR &c) { return c.getInput().getDegeneracy(); });
@@ -428,20 +430,17 @@ std::vector<double> StructPropBase::getFreeEnergyIntegrand() const {
   return getBase([&](const CSR &c) { return c.getFreeEnergyIntegrand(); });
 }
 
-
 // -----------------------------------------------------------------
 // CSR class
 // -----------------------------------------------------------------
 
-void CSR::setDrsData(CSR &csrRsUp,
-		CSR &csrRsDown,
-		const Derivative &dTypeRs) {
+void CSR::setDrsData(CSR &csrRsUp, CSR &csrRsDown, const Derivative &dTypeRs) {
   lfcRs = DerivativeData{dTypeRs, csrRsUp.lfc, csrRsDown.lfc};
 }
 
 void CSR::setDThetaData(CSR &csrThetaUp,
-		   CSR &csrThetaDown,
-		   const Derivative &dTypeTheta) {
+                        CSR &csrThetaDown,
+                        const Derivative &dTypeTheta) {
   lfcTheta = DerivativeData{dTypeTheta, csrThetaUp.lfc, csrThetaDown.lfc};
 }
 
@@ -455,9 +454,9 @@ double CSR::getFreeEnergyIntegrand() const {
 }
 
 double CSR::getDerivative(const double &f0,
-		     const double &f1,
-		     const double &f2,
-		     const Derivative &type) {
+                          const double &f1,
+                          const double &f2,
+                          const Derivative &type) {
   switch (type) {
   case BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2; break;
   case CENTERED: return f1 - f2; break;

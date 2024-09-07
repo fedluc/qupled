@@ -24,21 +24,22 @@ public:
 
   // Constructor from initial data
   explicit VSBase(const VSInput &in_)
-    : VSBase(in_, MPIUtil::isRoot()) {}
-  VSBase(const VSInput &in_, const bool& verbose_)
-    : in(in_), verbose(verbose_) {}
+      : VSBase(in_, MPIUtil::isRoot()) {}
+  VSBase(const VSInput &in_, const bool &verbose_)
+      : in(in_),
+        verbose(verbose_) {}
 
   // Destructor
   virtual ~VSBase() = default;
-  
+
   // Compute vs-stls scheme
-  int compute(); 
+  int compute();
 
   // Getters
   std::vector<std::vector<double>> getFreeEnergyIntegrand() const;
   std::vector<double> getFreeEnergyGrid() const;
   std::vector<double> getAlpha() const;
-		   
+
 protected:
 
   // Input data
@@ -49,15 +50,15 @@ protected:
   const bool verbose;
   // Thermodynamic properties (this must be set from the derived classes)
   std::shared_ptr<ThermoPropBase> thermoProp;
-  
+
   // Compute free parameter
   virtual double computeAlpha() = 0;
-  
+
   // Initialize
   void init();
   virtual void initScheme() = 0;
   virtual void initFreeEnergyIntegrand() = 0;
-  
+
   // Iterations to solve the vs scheme
   void doIterations();
 
@@ -66,10 +67,7 @@ protected:
 
   // Update structural output solution
   virtual void updateSolution() = 0;
-
-  
 };
-
 
 // -----------------------------------------------------------------
 // StructPropBase class
@@ -103,13 +101,13 @@ public:
 
   // Compute structural properties
   int compute();
-  
+
   // Set free parameter
   void setAlpha(const double &alpha);
 
   // Get coupling parameters for all the state points
   std::vector<double> getCouplingParameters() const;
-  
+
   // Get degeneracy parameters for all the state points
   std::vector<double> getDegeneracyParameters() const;
 
@@ -132,7 +130,8 @@ protected:
 
   // Output verbosity
   const bool verbose;
-  // Vector containing NPOINTS state points to be solved simultaneously (this must be defined in the derived class)
+  // Vector containing NPOINTS state points to be solved simultaneously (this
+  // must be defined in the derived class)
   std::vector<std::shared_ptr<CSR>> csr;
   // Flag marking whether the initialization for the stls data is done
   bool csrIsInitialized;
@@ -140,15 +139,16 @@ protected:
   bool computed;
   // Vector used as output parameter in the getters functions
   mutable std::vector<double> outVector;
-  
+
   // Setup dependencies for CSR objects
   void setupCSRDependencies();
 
   // Perform iterations to compute structural properties
   virtual void doIterations() = 0;
-  
+
   // Generic getter function to return vector data
-  const std::vector<double> &getBase(std::function<double(const CSR &)> f) const;
+  const std::vector<double> &
+  getBase(std::function<double(const CSR &)> f) const;
 };
 
 // -----------------------------------------------------------------
@@ -167,13 +167,13 @@ public:
 
   // Set the value of the free parameter in the structural properties
   void setAlpha(const double &alpha);
-  
+
   // Copy free energy integrand
   void copyFreeEnergyIntegrand(const ThermoPropBase &other);
 
   // Check if there are unsolved state points in the free energy integrand
   bool isFreeEnergyIntegrandIncomplete() const;
-  
+
   // Get the first unsolved state point in the free energy integrand
   double getFirstUnsolvedStatePoint() const;
 
@@ -189,7 +189,7 @@ public:
 
   // Get internal energy and internal energy derivatives
   std::vector<double> getInternalEnergyData() const;
-  
+
   // Get free energy integrand
   const std::vector<std::vector<double>> &getFreeEnergyIntegrand() const {
     return fxcIntegrand;
@@ -217,35 +217,36 @@ protected:
   std::vector<double> alpha;
   // Free energy integrand for NPOINTS state points
   std::vector<std::vector<double>> fxcIntegrand;
- // Flags marking particular state points
+  // Flags marking particular state points
   bool isZeroCoupling;
   bool isZeroDegeneracy;
   // Index of the target state point in the free energy integrand
   size_t fxcIdxTargetStatePoint;
   // Index of the first unsolved state point in the free energy integrand
   size_t fxcIdxUnsolvedStatePoint;
-  
+
   // Compute the free energy
-  double computeFreeEnergy(const ThermoPropBase::SIdx iStruct, const bool normalize) const;
+  double computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
+                           const bool normalize) const;
 
   // Build the integration grid
-  void setRsGrid(const VSInput& in);
+  void setRsGrid(const VSInput &in);
 
   // Build the free energy integrand
-  void setFxcIntegrand(const VSInput& in);
+  void setFxcIntegrand(const VSInput &in);
 
   // Build the free parameter vector
-  void setAlpha(const VSInput& in);
+  void setAlpha(const VSInput &in);
 
   // Set the index of the target state point in the free energy integrand
-  void setFxcIdxTargetStatePoint(const VSInput& in);
+  void setFxcIdxTargetStatePoint(const VSInput &in);
 
-  // Set the index of the first unsolved state point in the free energy integrand
+  // Set the index of the first unsolved state point in the free energy
+  // integrand
   void setFxcIdxUnsolvedStatePoint();
 
   // Get index to acces the structural properties
   ThermoPropBase::SIdx getStructPropIdx();
-  
 };
 
 // -----------------------------------------------------------------
@@ -257,7 +258,7 @@ class CSR {
 public:
 
   using T = std::vector<double>; // Temporary replacement for template parameter
-  
+
   // Enumerator to denote the numerical schemes used for the derivatives
   enum Derivative { CENTERED, FORWARD, BACKWARD };
 
@@ -267,18 +268,23 @@ public:
     std::shared_ptr<T> up;
     std::shared_ptr<T> down;
   };
-  
+
   // Constructor
-  CSR(const VSInput &in_) : in(in_), lfc(std::make_shared<T>()), alpha(DEFAULT_ALPHA) {}
+  CSR(const VSInput &in_)
+      : in(in_),
+        lfc(std::make_shared<T>()),
+        alpha(DEFAULT_ALPHA) {}
 
   // Destructor
   virtual ~CSR() = default;
-  
+
   // Set the data to compute the coupling parameter derivative
   void setDrsData(CSR &csrRsUp, CSR &csrRsDown, const Derivative &dTypeRs);
 
   // Set the data to compute the degeneracy parameter derivative
-  void setDThetaData(CSR &csrThetaUp, CSR &csrThetaDown, const Derivative &dTypeTheta);
+  void setDThetaData(CSR &csrThetaUp,
+                     CSR &csrThetaDown,
+                     const Derivative &dTypeTheta);
 
   // Set the free parameter
   void setAlpha(const double &alpha) { this->alpha = alpha; }
@@ -301,10 +307,10 @@ public:
   virtual void computeSsf() = 0;
   virtual double computeError() = 0;
   virtual void updateSolution() = 0;
-  virtual std::vector<double> getSsf() const  = 0;
+  virtual std::vector<double> getSsf() const = 0;
   virtual std::vector<double> getSlfc() const = 0;
   virtual std::vector<double> getWvg() const = 0;
-  
+
 protected:
 
   // Default value of alpha
