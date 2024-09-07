@@ -96,7 +96,7 @@ public:
   static constexpr int NPOINTS = NRS * NTHETA;
 
   // Constructor
-  explicit StructPropBase(const VSInput &in);
+  explicit StructPropBase();
 
   // Destructor
   virtual ~StructPropBase() = default;
@@ -132,24 +132,17 @@ protected:
 
   // Output verbosity
   const bool verbose;
-  // Vector containing NPOINTS state points to be solved simultaneously
-  virtual const std::vector<CSR>& getCsr() const = 0;
-  virtual std::vector<CSR>& getCsr() = 0;
+  // Vector containing NPOINTS state points to be solved simultaneously (this must be defined in the derived class)
+  std::vector<std::shared_ptr<CSR>> csr;
   // Flag marking whether the initialization for the stls data is done
   bool csrIsInitialized;
   // Flag marking whether the structural properties were computed
   bool computed;
   // Vector used as output parameter in the getters functions
   mutable std::vector<double> outVector;
-
-  // Setup input for the CSR objects
-  std::vector<VSInput> setupCSRInput(const VSInput &in);
-
+  
   // Setup dependencies for CSR objects
   void setupCSRDependencies();
-  
-  // Setup CSR objects
-  void setupCSR(const std::vector<VSInput> &in);
 
   // Perform iterations to compute structural properties
   virtual void doIterations() = 0;
@@ -274,9 +267,13 @@ public:
     std::shared_ptr<T> up;
     std::shared_ptr<T> down;
   };
+  
   // Constructor
   CSR(const VSInput &in_) : in(in_), lfc(std::make_shared<T>()), alpha(DEFAULT_ALPHA) {}
 
+  // Destructor
+  virtual ~CSR() = default;
+  
   // Set the data to compute the coupling parameter derivative
   void setDrsData(CSR &csrRsUp, CSR &csrRsDown, const Derivative &dTypeRs);
 
@@ -299,17 +296,14 @@ public:
   double getFreeEnergyIntegrand() const;
 
   // Publicly esposed private scheme methods
-  // virtual void init() = 0;
-  // virtual void initialGuess() = 0;
-  // virtual void computeSsf() = 0;
-  // virtual double computeError() = 0;
-  // virtual void updateSolution() = 0;
-  // virtual const std::vector<double>& getSsf() const  = 0;
-  // virtual const std::vector<double>& getSlfc() const = 0;
-  // virtual const std::vector<double>& getWvg() const = 0;
-  const std::vector<double>& getSsf() const  {return std::vector<double>();}
-  const std::vector<double>& getSlfc() const {return std::vector<double>();}
-  const std::vector<double>& getWvg() const {return std::vector<double>();}
+  virtual void init() = 0;
+  virtual void initialGuess() = 0;
+  virtual void computeSsf() = 0;
+  virtual double computeError() = 0;
+  virtual void updateSolution() = 0;
+  virtual std::vector<double> getSsf() const  = 0;
+  virtual std::vector<double> getSlfc() const = 0;
+  virtual std::vector<double> getWvg() const = 0;
   
 protected:
 

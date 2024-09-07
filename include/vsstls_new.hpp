@@ -13,13 +13,32 @@ public:
   
   // Constructor
   explicit StlsCSRNew(const VSStlsInput &in_)
-    : CSR(in_), Stls(in_.toStlsInput(), false, false) {}
+    : CSR(in_), Stls(in_.toStlsInput(), false, false), in(in_) {}
+  
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();
 
+  // Publicly esposed private stls methods
+  void init() { Stls::init(); }
+  void initialGuess() { Stls::initialGuess(); }
+  void computeSsf() { Stls::computeSsf(); }
+  double computeError() { return Stls::computeError(); }
+  void updateSolution() { Stls::updateSolution(); }
+
+  // Getters
+  std::vector<double> getSsf() const  { return Stls::getSsf(); }
+  std::vector<double> getSlfc() const { return Stls::getSlfc(); }
+  std::vector<double> getWvg() const { return Stls::getWvg(); }
+  
 private:
 
+  // Input parameters
+  VSStlsInput in;
+  // Helper methods to compute the derivatives
+  double getDerivative(const std::shared_ptr<std::vector<double>> &f,
+                       const size_t &idx,
+                       const Derivative &type);
   
 };
 
@@ -27,12 +46,18 @@ class StructPropNew : public StructPropBase {
 
 public:
   
-  explicit StructPropNew(const VSStlsInput &in_) : StructPropBase(in_) {}
+  explicit StructPropNew(const VSStlsInput &in_);
 
 private:
 
+  // Vector containing NPOINTS state points to be solved simultaneously
+  std::vector<std::shared_ptr<StlsCSRNew>> csr;
+  // setup the csr vector
+  std::vector<VSStlsInput> setupCSRInput(const VSStlsInput &in);
+  void setupCSR(const VSStlsInput& in_);
+  // 
   void doIterations();
-  std::vector<CSR> csr;
+  
   
 };
 

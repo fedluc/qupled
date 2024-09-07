@@ -323,61 +323,29 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
 // StructPropBase class
 // -----------------------------------------------------------------
 
-StructPropBase::StructPropBase(const VSInput &in)
+StructPropBase::StructPropBase()
   : verbose(MPIUtil::isRoot()),
     csrIsInitialized(false),
     computed(false),
-    outVector(NPOINTS) {
-  setupCSR(setupCSRInput(in));
-  setupCSRDependencies();
-}
+    outVector(NPOINTS) {}
 
-std::vector<VSInput> StructPropBase::setupCSRInput(const VSInput &in) {
-  const double &drs = in.getCouplingResolution();
-  const double &dTheta = in.getDegeneracyResolution();
-  // If there is a risk of having negative state parameters, shift the
-  // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  const double rs = std::max(in.getCoupling(), drs);
-  const double theta = std::max(in.getDegeneracy(), dTheta);
-  // Setup objects
-  std::vector<VSInput> out;
-  for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
-    for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
-      VSInput inTmp = in;
-      inTmp.setDegeneracy(thetaTmp);
-      inTmp.setCoupling(rsTmp);
-      out.push_back(inTmp);
-    }
-  }
-  return out;
-}
-
-void StructPropBase::setupCSR(const std::vector<VSInput> &in) {
-  // for (const auto &inTmp : in) {
-  //   getCsr().push_back(CSR(inTmp));
-  // }
-  // assert(getCsr().size() == NPOINTS);
-}
-
-// Setup dependencies for CSR objects
 void StructPropBase::setupCSRDependencies() {
-  vector<CSR> &csr = getCsr();
   for (size_t i = 0; i < csr.size(); ++i) {
     switch (i) {
     case RS_DOWN_THETA_DOWN:
     case RS_DOWN_THETA:
     case RS_DOWN_THETA_UP:
-      csr[i].setDrsData(csr[i + 1], csr[i + 2], CSR::Derivative::FORWARD);
+      csr[i]->setDrsData(*csr[i + 1], *csr[i + 2], CSR::Derivative::FORWARD);
       break;
     case RS_THETA_DOWN:
     case RS_THETA:
     case RS_THETA_UP:
-      csr[i].setDrsData(csr[i + 1], csr[i - 1], CSR::Derivative::CENTERED);
+      csr[i]->setDrsData(*csr[i + 1], *csr[i - 1], CSR::Derivative::CENTERED);
       break;
     case RS_UP_THETA_DOWN:
     case RS_UP_THETA:
     case RS_UP_THETA_UP:
-      csr[i].setDrsData(csr[i - 1], csr[i - 2], CSR::Derivative::BACKWARD);
+      csr[i]->setDrsData(*csr[i - 1], *csr[i - 2], CSR::Derivative::BACKWARD);
       break;
     }
   }
@@ -386,29 +354,29 @@ void StructPropBase::setupCSRDependencies() {
     case RS_DOWN_THETA_DOWN:
     case RS_THETA_DOWN:
     case RS_UP_THETA_DOWN:
-      csr[i].setDThetaData(csr[i + NRS], csr[i + 2 * NRS], CSR::Derivative::FORWARD);
+      csr[i]->setDThetaData(*csr[i + NRS], *csr[i + 2 * NRS], CSR::Derivative::FORWARD);
       break;
     case RS_DOWN_THETA:
     case RS_THETA:
     case RS_UP_THETA:
-      csr[i].setDThetaData(csr[i + NRS], csr[i - NRS], CSR::Derivative::CENTERED);
+      csr[i]->setDThetaData(*csr[i + NRS], *csr[i - NRS], CSR::Derivative::CENTERED);
       break;
     case RS_DOWN_THETA_UP:
     case RS_THETA_UP:
     case RS_UP_THETA_UP:
-      csr[i].setDThetaData(csr[i - NRS], csr[i - 2 * NRS], CSR::Derivative::BACKWARD);
+      csr[i]->setDThetaData(*csr[i - NRS], *csr[i - 2 * NRS], CSR::Derivative::BACKWARD);
       break;
     }
   }
 }
-
 
 int StructPropBase::compute() {
   try {
     if (!csrIsInitialized) {
-      // for (auto &c : getCsr()) {
-      // 	c.init();
-      // }
+      assert(!csr.empty());
+      for (auto &c : csr) {
+	c->init();
+      }
       csrIsInitialized = true;
     }
     doIterations();
@@ -421,22 +389,24 @@ int StructPropBase::compute() {
 }
 
 void StructPropBase::setAlpha(const double &alpha) {
-  for (auto &c : getCsr()) {
-    c.setAlpha(alpha);
+  for (auto &c : csr) {
+    c->setAlpha(alpha);
   }
 }
+
+const CSR& StructPropBase::getCsr(const Idx &idx) const {
+  assert(!csr.empty());
+  return *csr[idx];
+}
+
 
 double StructPropBase::getAlpha() const {
   return getCsr(Idx::RS_THETA).getAlpha();
 }
 
-const CSR& StructPropBase::getCsr(const Idx &idx) const {
-  return getCsr()[idx];
-}
-
 const std::vector<double>& StructPropBase::getBase(std::function<double(const CSR &)> f) const {
-  for (size_t i = 0; i < NPOINTS; ++i) {
-    outVector[i] = f(getCsr()[i]);
+  for (size_t i = 0; i < csr.size(); ++i) {
+    outVector[i] = f(*csr[i]);
   }
   return outVector;
 }
