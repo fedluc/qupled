@@ -47,14 +47,12 @@ protected:
   double alpha;
   // Output verbosity
   const bool verbose;
-
-  // Getters for the thermodynamic properties (it might be possible to remove this by defining thermoProp to be a shared_ptr<ThermoPropBase>
-  virtual const ThermoPropBase& getThermoProp() const = 0;
-  virtual ThermoPropBase& getThermoProp() = 0;
+  // Thermodynamic properties (this must be set from the derived classes)
+  std::shared_ptr<ThermoPropBase> thermoProp;
   
   // Compute free parameter
   virtual double computeAlpha() = 0;
-
+  
   // Initialize
   void init();
   virtual void initScheme() = 0;
@@ -99,6 +97,9 @@ public:
 
   // Constructor
   explicit StructPropBase(const VSInput &in);
+
+  // Destructor
+  virtual ~StructPropBase() = default;
 
   // Compute structural properties
   int compute();
@@ -168,6 +169,9 @@ public:
   // Constructor
   explicit ThermoPropBase(const VSInput &in);
 
+  // Destructor
+  virtual ~ThermoPropBase() = default;
+
   // Set the value of the free parameter in the structural properties
   void setAlpha(const double &alpha);
   
@@ -212,6 +216,8 @@ protected:
   static constexpr int NPOINTS = 3;
   // Output verbosity
   const bool verbose;
+  // Structural properties (this must be set from the derived classes)
+  std::shared_ptr<StructPropBase> structProp;
   // Grid for thermodyamic integration
   std::vector<double> rsGrid;
   // Free parameter values for all the coupling parameters stored in rsGrid
@@ -225,10 +231,6 @@ protected:
   size_t fxcIdxTargetStatePoint;
   // Index of the first unsolved state point in the free energy integrand
   size_t fxcIdxUnsolvedStatePoint;
-
-  // Getters for the structural properties
-  virtual const StructPropBase& getStructProp() const = 0;
-  virtual StructPropBase& getStructProp() = 0;
   
   // Compute the free energy
   double computeFreeEnergy(const ThermoPropBase::SIdx iStruct, const bool normalize) const;

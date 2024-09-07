@@ -29,15 +29,18 @@ void VSBase::init() {
 }
 
 vector<vector<double>> VSBase::getFreeEnergyIntegrand() const {
-  return getThermoProp().getFreeEnergyIntegrand();
+  assert(thermoProp);
+  return thermoProp->getFreeEnergyIntegrand();
 }
 
 vector<double> VSBase::getFreeEnergyGrid() const {
-  return getThermoProp().getFreeEnergyGrid();
+  assert(thermoProp);
+  return thermoProp->getFreeEnergyGrid();
 }
 
 vector<double> VSBase::getAlpha() const {
-  return getThermoProp().getAlpha();
+  assert(thermoProp);
+  return thermoProp->getAlpha();
 }
 
 void VSBase::doIterations() {
@@ -52,8 +55,9 @@ void VSBase::doIterations() {
 }
 
 double VSBase::alphaDifference(const double &alphaTmp) {
+  assert(thermoProp);
   alpha = alphaTmp;
-  getThermoProp().setAlpha(alpha);
+  thermoProp->setAlpha(alpha);
   const double alphaTheoretical = computeAlpha();
   return alpha - alphaTheoretical;
 }
@@ -164,7 +168,8 @@ void ThermoPropBase::copyFreeEnergyIntegrand(const ThermoPropBase &other) {
 }
 
 void ThermoPropBase::setAlpha(const double &alpha) {
-  getStructProp().setAlpha(alpha);
+  assert(structProp);
+  structProp->setAlpha(alpha);
 }
 
 bool ThermoPropBase::isFreeEnergyIntegrandIncomplete() const {
@@ -180,9 +185,10 @@ double ThermoPropBase::getFirstUnsolvedStatePoint() const {
 }
 
 void ThermoPropBase::compute() {
-  getStructProp().compute();
-  const std::vector<double> fxciTmp = getStructProp().getFreeEnergyIntegrand();
-  const double alphaTmp = getStructProp().getAlpha();
+  assert(structProp);
+  structProp->compute();
+  const std::vector<double> fxciTmp = structProp->getFreeEnergyIntegrand();
+  const double alphaTmp = structProp->getAlpha();
   const size_t &idx = fxcIdxTargetStatePoint;
   fxcIntegrand[THETA_DOWN][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
   fxcIntegrand[THETA_DOWN][idx] = fxciTmp[SIdx::RS_THETA_DOWN];
@@ -199,21 +205,21 @@ void ThermoPropBase::compute() {
 }
 
 std::vector<double> ThermoPropBase::getSsf() {
-  auto& structProp = getStructProp();
-  if (!structProp.isComputed()) { structProp.compute(); }
-  return structProp.getCsr(getStructPropIdx()).getSsf();
+  assert(structProp);
+  if (!structProp->isComputed()) { structProp->compute(); }
+  return structProp->getCsr(getStructPropIdx()).getSsf();
 }
 
 std::vector<double> ThermoPropBase::getSlfc() {
-  auto& structProp = getStructProp();
-  if (!structProp.isComputed()) { structProp.compute(); }
-  return structProp.getCsr(getStructPropIdx()).getSlfc();
+  assert(structProp);
+  if (!structProp->isComputed()) { structProp->compute(); }
+  return structProp->getCsr(getStructPropIdx()).getSlfc();
 }
 
 std::vector<double> ThermoPropBase::getFreeEnergyData() const {
-  auto& structProp = getStructProp();
-  const std::vector<double> rsVec = structProp.getCouplingParameters();
-  const std::vector<double> thetaVec = structProp.getDegeneracyParameters();
+  assert(structProp);
+  const std::vector<double> rsVec = structProp->getCouplingParameters();
+  const std::vector<double> thetaVec = structProp->getDegeneracyParameters();
   // Free energy
   const double fxc = computeFreeEnergy(SIdx::RS_THETA, true);
   // Free energy derivatives with respect to the coupling parameter
@@ -257,16 +263,16 @@ std::vector<double> ThermoPropBase::getFreeEnergyData() const {
 
 
 std::vector<double> ThermoPropBase::getInternalEnergyData() const {
+  assert(structProp);
   // Internal energy
-  auto& structProp = getStructProp();
-  const std::vector<double> uVec = structProp.getInternalEnergy();
+  const std::vector<double> uVec = structProp->getInternalEnergy();
   const double u = uVec[SIdx::RS_THETA];
   // Internal energy derivative with respect to the coupling parameter
   double ur;
   {
-    const std::vector<double> rs = structProp.getCouplingParameters();
+    const std::vector<double> rs = structProp->getCouplingParameters();
     const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
-    const std::vector<double> rsu = structProp.getFreeEnergyIntegrand();
+    const std::vector<double> rsu = structProp->getFreeEnergyIntegrand();
     const double &u0 = rsu[SIdx::RS_UP_THETA];
     const double &u1 = rsu[SIdx::RS_DOWN_THETA];
     ur = (u0 - u1) / (2.0 * drs) - u;
@@ -274,7 +280,7 @@ std::vector<double> ThermoPropBase::getInternalEnergyData() const {
   // Internal energy derivative with respect to the degeneracy parameter
   double ut;
   {
-    const std::vector<double> theta = structProp.getDegeneracyParameters();
+    const std::vector<double> theta = structProp->getDegeneracyParameters();
     const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
     const double u0 = uVec[SIdx::RS_THETA_UP];
     const double u1 = uVec[SIdx::RS_THETA_DOWN];
@@ -301,7 +307,8 @@ double ThermoPropBase::computeFreeEnergy(const ThermoPropBase::SIdx iStruct, con
     iThermo = THETA;
     break;
   }
-  const std::vector<double> &rs = getStructProp().getCouplingParameters();
+  assert(structProp);
+  const std::vector<double> &rs = structProp->getCouplingParameters();
   return thermoUtil::computeFreeEnergy(rsGrid, fxcIntegrand[iThermo], rs[iStruct], normalize);
 }
 
@@ -311,7 +318,6 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
   if (isZeroCoupling && !isZeroDegeneracy) { return SIdx::RS_DOWN_THETA; }
   return SIdx::RS_THETA;
 }
-
 
 // -----------------------------------------------------------------
 // StructPropBase class

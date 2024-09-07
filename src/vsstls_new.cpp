@@ -10,11 +10,22 @@ using namespace std;
 // VSStls class
 // -----------------------------------------------------------------
 
+VSStlsNew::VSStlsNew(const VSStlsInput &in_)
+  : VSBase(in_), Stls(in_.toStlsInput()), thermoProp(make_shared<ThermoProp>(in_)) {
+  VSBase::thermoProp = thermoProp;
+}
+
+VSStlsNew::VSStlsNew(const VSStlsInput &in_, const ThermoProp &thermoProp_)
+  : VSBase(in_), Stls(in_.toStlsInput(), false, false), thermoProp(make_shared<ThermoProp>(in_)) {
+  VSBase::thermoProp = thermoProp;
+  thermoProp->copyFreeEnergyIntegrand(thermoProp_);
+}
+
 double VSStlsNew::computeAlpha() {
   // Compute the free energy integrand
-  thermoProp.compute();
+  thermoProp->compute();
   // Free energy
-  const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
+  const vector<double> freeEnergyData = thermoProp->getFreeEnergyData();
   const double &fxc = freeEnergyData[0];
   const double &fxcr = freeEnergyData[1];
   const double &fxcrr = freeEnergyData[2];
@@ -22,7 +33,7 @@ double VSStlsNew::computeAlpha() {
   const double &fxctt = freeEnergyData[4];
   const double &fxcrt = freeEnergyData[5];
   // Internal energy
-  const vector<double> internalEnergyData = thermoProp.getInternalEnergyData();
+  const vector<double> internalEnergyData = thermoProp->getInternalEnergyData();
   const double &uint = internalEnergyData[0];
   const double &uintr = internalEnergyData[1];
   const double &uintt = internalEnergyData[2];
@@ -38,8 +49,8 @@ double VSStlsNew::computeAlpha() {
 
 void VSStlsNew::updateSolution() {
   // Update the structural properties used for output
-  slfc = thermoProp.getSlfc();
-  ssf = thermoProp.getSsf();
+  slfc = thermoProp->getSlfc();
+  ssf = thermoProp->getSsf();
 }
 
 void VSStlsNew::initScheme() {
@@ -47,7 +58,7 @@ void VSStlsNew::initScheme() {
 }
 
 void VSStlsNew::initFreeEnergyIntegrand() {
-  if (!thermoProp.isFreeEnergyIntegrandIncomplete()) { return; }
+  if (!thermoProp->isFreeEnergyIntegrandIncomplete()) { return; }
   if (verbose) {
     printf("Missing points in the free energy integrand: subcalls will be "
            "performed to collect the necessary data\n");
@@ -57,13 +68,13 @@ void VSStlsNew::initFreeEnergyIntegrand() {
            "----------\n");
   }
   VSStlsInput inTmp = in;
-  while (thermoProp.isFreeEnergyIntegrandIncomplete()) {
-    const double rs = thermoProp.getFirstUnsolvedStatePoint();
+  while (thermoProp->isFreeEnergyIntegrandIncomplete()) {
+    const double rs = thermoProp->getFirstUnsolvedStatePoint();
     if (verbose) { printf("Subcall: solving VS scheme for rs = %.5f:\n", rs); }
     inTmp.setCoupling(rs);
-    VSStlsNew scheme(inTmp, thermoProp);
+    VSStlsNew scheme(inTmp, *thermoProp);
     scheme.compute();
-    thermoProp.copyFreeEnergyIntegrand(scheme.getThermoProp());
+    thermoProp->copyFreeEnergyIntegrand(*(scheme.thermoProp));
     if (verbose) {
       printf("Done\n");
       printf("-----------------------------------------------------------------"
@@ -71,6 +82,15 @@ void VSStlsNew::initFreeEnergyIntegrand() {
     }
   }
 }
+
+// -----------------------------------------------------------------
+// ThermoPropBase class
+// -----------------------------------------------------------------
+
+ThermoProp::ThermoProp(const VSStlsInput &in_): ThermoPropBase(in_), structProp(make_shared<StructPropNew>(in_)) {
+  ThermoPropBase::structProp = structProp;
+}
+
 
 // -----------------------------------------------------------------
 // StructProp class

@@ -33,9 +33,6 @@ private:
 
   void doIterations();
   std::vector<CSR> csr;
-  const std::vector<CSR>& getCsr() const { return csr; }
-  std::vector<CSR>& getCsr() { return csr; }
-  
   
 };
 
@@ -43,16 +40,14 @@ private:
 class ThermoProp : public ThermoPropBase {
 
 public:
-  
-  explicit ThermoProp(const VSStlsInput &in_): ThermoPropBase(in_), structProp(in_) {}
+
+  // Constructor
+  explicit ThermoProp(const VSStlsInput &in_);
 
 private:
 
   // Structural properties
-  StructPropNew structProp;
-  // Getter
-  const StructPropBase& getStructProp() const { return structProp; }
-  StructPropBase& getStructProp() { return structProp; }
+  std::shared_ptr<StructPropNew> structProp;
   
 };
 
@@ -62,13 +57,9 @@ class VSStlsNew : public VSBase, public Stls {
 public:
 
   // Constructor from initial data
-  explicit VSStlsNew(const VSStlsInput &in_)
-    : VSBase(in_), Stls(in_.toStlsInput()), thermoProp(in_) {}
+  explicit VSStlsNew(const VSStlsInput &in_);
   // Constructor for recursive calculations
-  VSStlsNew(const VSStlsInput &in_, const ThermoProp &thermoProp_)
-    : VSBase(in_), Stls(in_.toStlsInput(), false, false), thermoProp(in_) {
-    thermoProp.copyFreeEnergyIntegrand(thermoProp_);
-  }
+  VSStlsNew(const VSStlsInput &in_, const ThermoProp &thermoProp_);
   
   // Solve the scheme
   using VSBase::compute;
@@ -80,10 +71,7 @@ private:
   // Verbosity
   using VSBase::verbose;
   // Thermodynamic properties
-  ThermoProp thermoProp;
-  // Getter
-  const ThermoPropBase& getThermoProp() const { return thermoProp; }
-  ThermoPropBase& getThermoProp() { return thermoProp; }
+  std::shared_ptr<ThermoProp> thermoProp;
   // Initialize
   void initScheme();
   void initFreeEnergyIntegrand();
