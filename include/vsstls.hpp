@@ -7,67 +7,118 @@
 #include <limits>
 #include <map>
 
+class ThermoProp;
+class StructProp;
+class StlsCSR;
+
 // -----------------------------------------------------------------
-// Solver for the VS-STLS scheme
+// VSStls class
 // -----------------------------------------------------------------
 
-class StlsCSR : public CSR<std::vector<double>, Stls, VSStlsInput> {
+class VSStls : public VSBase, public Stls {
+
+public:
+
+  // Constructor from initial data
+  explicit VSStls(const VSStlsInput &in_);
+  // Constructor for recursive calculations
+  VSStls(const VSStlsInput &in_, const ThermoProp &thermoProp_);
+  // Solve the scheme
+  using VSBase::compute;
+
+private:
+
+  // Input
+  VSStlsInput in;
+  // Verbosity
+  using VSBase::verbose;
+  // Thermodynamic properties
+  std::shared_ptr<ThermoProp> thermoProp;
+  // Initialize
+  void initScheme();
+  void initFreeEnergyIntegrand();
+  // Compute free parameter
+  double computeAlpha();
+  // Iterations to solve the vs-stls scheme
+  void updateSolution();
+};
+
+// -----------------------------------------------------------------
+// ThermoProp class
+// -----------------------------------------------------------------
+
+class ThermoProp : public ThermoPropBase {
+
+public:
+
+  // Constructor
+  explicit ThermoProp(const VSStlsInput &in_);
+
+private:
+
+  // Structural properties
+  std::shared_ptr<StructProp> structProp;
+};
+
+// -----------------------------------------------------------------
+// StructProp class
+// -----------------------------------------------------------------
+
+class StructProp : public StructPropBase {
+
+public:
+
+  explicit StructProp(const VSStlsInput &in_);
+
+private:
+
+  // Vector containing NPOINTS state points to be solved simultaneously
+  std::vector<std::shared_ptr<StlsCSR>> csr;
+  // setup the csr vector
+  std::vector<VSStlsInput> setupCSRInput(const VSStlsInput &in);
+  void setupCSR(const VSStlsInput &in_);
+  //
+  void doIterations();
+};
+
+// -----------------------------------------------------------------
+// StlsCSR class
+// -----------------------------------------------------------------
+
+class StlsCSR : public CSR, public Stls {
 
 public:
 
   // Constructor
   explicit StlsCSR(const VSStlsInput &in_)
-      : CSR(in_, Stls(in_.toStlsInput(), false, false)) {}
+      : CSR(in_),
+        Stls(in_.toStlsInput(), false, false),
+        in(in_) {}
+
   // Compute static local field correction
   void computeSlfcStls();
   void computeSlfc();
 
+  // Publicly esposed private stls methods
+  void init() { Stls::init(); }
+  void initialGuess() { Stls::initialGuess(); }
+  void computeSsf() { Stls::computeSsf(); }
+  double computeError() { return Stls::computeError(); }
+  void updateSolution() { Stls::updateSolution(); }
+
+  // Getters
+  std::vector<double> getSsf() const { return Stls::getSsf(); }
+  std::vector<double> getSlfc() const { return Stls::getSlfc(); }
+  std::vector<double> getWvg() const { return Stls::getWvg(); }
+
 private:
 
-  using CSR = CSR<std::vector<double>, Stls, VSStlsInput>;
+  // Input parameters
+  VSStlsInput in;
   // Helper methods to compute the derivatives
   double getDerivative(const std::shared_ptr<std::vector<double>> &f,
                        const size_t &idx,
                        const Derivative &type);
-};
-
-class StructProp : public StructPropBase<StlsCSR, VSStlsInput> {
-
-public:
-
-  // Constructor
-  explicit StructProp(const VSStlsInput &in_)
-      : StructPropBase(in_) {}
-
-protected:
-
-  using StructPropBase = StructPropBase<StlsCSR, VSStlsInput>;
-  // Perform iterations to compute structural properties
-  void doIterations();
-};
-
-using ThermoProp = ThermoPropBase<StructProp, VSStlsInput>;
-
-class VSStls : public VSBase<ThermoProp, Rpa, VSStlsInput> {
-
-public:
-
-  // Constructor from initial data
-  explicit VSStls(const VSStlsInput &in_)
-      : VSBase(in_) {}
-  // Constructor for recursive calculations
-  VSStls(const VSStlsInput &in_, const ThermoProp &thermoProp_)
-      : VSBase(in_, thermoProp_) {}
-
-private:
-
-  using VSBase = VSBase<ThermoProp, Rpa, VSStlsInput>;
-  // Compute free parameter
-  double computeAlpha();
-  // Iterations to solve the vs-stls scheme
-  void updateSolution();
-  // Setup free energy integrand
-  void initFreeEnergyIntegrand();
 };
 
 #endif

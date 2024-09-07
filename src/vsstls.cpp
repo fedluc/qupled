@@ -10,11 +10,28 @@ using namespace std;
 // VSStls class
 // -----------------------------------------------------------------
 
+VSStls::VSStls(const VSStlsInput &in_)
+    : VSBase(in_),
+      Stls(in_.toStlsInput()),
+      in(in_),
+      thermoProp(make_shared<ThermoProp>(in_)) {
+  VSBase::thermoProp = thermoProp;
+}
+
+VSStls::VSStls(const VSStlsInput &in_, const ThermoProp &thermoProp_)
+  : VSBase(in_, false),
+      Stls(in_.toStlsInput(), false, false),
+      in(in_),
+      thermoProp(make_shared<ThermoProp>(in_)) {
+  VSBase::thermoProp = thermoProp;
+  thermoProp->copyFreeEnergyIntegrand(thermoProp_);
+}
+
 double VSStls::computeAlpha() {
   // Compute the free energy integrand
-  thermoProp.compute();
+  thermoProp->compute();
   // Free energy
-  const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
+  const vector<double> freeEnergyData = thermoProp->getFreeEnergyData();
   const double &fxc = freeEnergyData[0];
   const double &fxcr = freeEnergyData[1];
   const double &fxcrr = freeEnergyData[2];
@@ -22,7 +39,7 @@ double VSStls::computeAlpha() {
   const double &fxctt = freeEnergyData[4];
   const double &fxcrt = freeEnergyData[5];
   // Internal energy
-  const vector<double> internalEnergyData = thermoProp.getInternalEnergyData();
+  const vector<double> internalEnergyData = thermoProp->getInternalEnergyData();
   const double &uint = internalEnergyData[0];
   const double &uintr = internalEnergyData[1];
   const double &uintt = internalEnergyData[2];
@@ -38,12 +55,14 @@ double VSStls::computeAlpha() {
 
 void VSStls::updateSolution() {
   // Update the structural properties used for output
-  slfc = thermoProp.getSlfc();
-  ssf = thermoProp.getSsf();
+  slfc = thermoProp->getSlfc();
+  ssf = thermoProp->getSsf();
 }
 
+void VSStls::initScheme() { Rpa::init(); }
+
 void VSStls::initFreeEnergyIntegrand() {
-  if (!thermoProp.isFreeEnergyIntegrandIncomplete()) { return; }
+  if (!thermoProp->isFreeEnergyIntegrandIncomplete()) { return; }
   if (verbose) {
     printf("Missing points in the free energy integrand: subcalls will be "
            "performed to collect the necessary data\n");
@@ -53,13 +72,13 @@ void VSStls::initFreeEnergyIntegrand() {
            "----------\n");
   }
   VSStlsInput inTmp = in;
-  while (thermoProp.isFreeEnergyIntegrandIncomplete()) {
-    const double rs = thermoProp.getFirstUnsolvedStatePoint();
+  while (thermoProp->isFreeEnergyIntegrandIncomplete()) {
+    const double rs = thermoProp->getFirstUnsolvedStatePoint();
     if (verbose) { printf("Subcall: solving VS scheme for rs = %.5f:\n", rs); }
     inTmp.setCoupling(rs);
-    VSStls scheme(inTmp, thermoProp);
+    VSStls scheme(inTmp, *thermoProp);
     scheme.compute();
-    thermoProp.copyFreeEnergyIntegrand(scheme.getThermoProp());
+    thermoProp->copyFreeEnergyIntegrand(*(scheme.thermoProp));
     if (verbose) {
       printf("Done\n");
       printf("-----------------------------------------------------------------"
@@ -69,11 +88,57 @@ void VSStls::initFreeEnergyIntegrand() {
 }
 
 // -----------------------------------------------------------------
+// ThermoPropBase class
+// -----------------------------------------------------------------
+
+ThermoProp::ThermoProp(const VSStlsInput &in_)
+    : ThermoPropBase(in_),
+      structProp(make_shared<StructProp>(in_)) {
+  ThermoPropBase::structProp = structProp;
+}
+
+// -----------------------------------------------------------------
 // StructProp class
 // -----------------------------------------------------------------
 
+StructProp::StructProp(const VSStlsInput &in_)
+    : StructPropBase() {
+  setupCSR(in_);
+  setupCSRDependencies();
+}
+
+void StructProp::setupCSR(const VSStlsInput &in) {
+  std::vector<VSStlsInput> inVector = setupCSRInput(in);
+  for (const auto &inTmp : inVector) {
+    csr.push_back(make_shared<StlsCSR>(inTmp));
+  }
+  for (const auto &c : csr) {
+    StructPropBase::csr.push_back(c);
+  }
+}
+
+std::vector<VSStlsInput> StructProp::setupCSRInput(const VSStlsInput &in) {
+  const double &drs = in.getCouplingResolution();
+  const double &dTheta = in.getDegeneracyResolution();
+  // If there is a risk of having negative state parameters, shift the
+  // parameters so that rs - drs = 0 and/or theta - dtheta = 0
+  const double rs = std::max(in.getCoupling(), drs);
+  const double theta = std::max(in.getDegeneracy(), dTheta);
+  // Setup objects
+  std::vector<VSStlsInput> out;
+  for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
+    for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
+      VSStlsInput inTmp = in;
+      inTmp.setDegeneracy(thetaTmp);
+      inTmp.setCoupling(rsTmp);
+      out.push_back(inTmp);
+    }
+  }
+  return out;
+}
+
 void StructProp::doIterations() {
-  const auto &in = csr[0].getInput();
+  const auto &in = csr[0]->getInput();
   const int maxIter = in.getNIter();
   const int ompThreads = in.getNThreads();
   const double minErr = in.getErrMin();
@@ -81,7 +146,7 @@ void StructProp::doIterations() {
   int counter = 0;
   // Define initial guess
   for (auto &c : csr) {
-    c.initialGuess();
+    c->initialGuess();
   }
   // Iteration to solve for the structural properties
   const bool useOMP = ompThreads > 1;
@@ -91,15 +156,15 @@ void StructProp::doIterations() {
     {
 #pragma omp for
       for (auto &c : csr) {
-        c.computeSsf();
-        c.computeSlfcStls();
+        c->computeSsf();
+        c->computeSlfcStls();
       }
 #pragma omp for
       for (size_t i = 0; i < csr.size(); ++i) {
         auto &c = csr[i];
-        c.computeSlfc();
-        if (i == RS_THETA) { err = c.computeError(); }
-        c.updateSolution();
+        c->computeSlfc();
+        if (i == RS_THETA) { err = c->computeError(); }
+        c->updateSolution();
       }
     }
     counter++;
@@ -107,7 +172,7 @@ void StructProp::doIterations() {
   if (verbose) {
     printf("Alpha = %.5e, Residual error "
            "(structural properties) = %.5e\n",
-           csr[RS_THETA].getAlpha(),
+           csr[RS_THETA]->getAlpha(),
            err);
   }
 }
@@ -164,8 +229,8 @@ void StlsCSR::computeSlfc() {
 }
 
 double StlsCSR::getDerivative(const shared_ptr<vector<double>> &f,
-                              const size_t &idx,
-                              const Derivative &type) {
+			      const size_t &idx,
+			      const Derivative &type) {
   const vector<double> fData = *f;
   switch (type) {
   case BACKWARD:

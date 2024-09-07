@@ -44,13 +44,12 @@ Python3_add_library(qupled MODULE
 		    esa.cpp
 		    stls.cpp
 		    qstls.cpp
+		    vsbase.cpp
 		    vsstls.cpp
 		    qvs.cpp
 		    python_util.cpp
 		    python_wrappers.cpp
-		    python_modules.cpp
-		    vsbase_new.cpp
-		    vsstls_new.cpp)
+		    python_modules.cpp)
 
 
 # Include directories
