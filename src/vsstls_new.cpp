@@ -71,3 +71,47 @@ void VSStlsNew::initFreeEnergyIntegrand() {
     }
   }
 }
+
+// -----------------------------------------------------------------
+// StructProp class
+// -----------------------------------------------------------------
+
+void StructPropNew::doIterations() {
+ //  const auto &in = csr[0].getInput();
+//   const int maxIter = in.getNIter();
+//   const int ompThreads = in.getNThreads();
+//   const double minErr = in.getErrMin();
+//   double err = 1.0;
+//   int counter = 0;
+//   // Define initial guess
+//   for (auto &c : csr) {
+//     c.initialGuess();
+//   }
+//   // Iteration to solve for the structural properties
+//   const bool useOMP = ompThreads > 1;
+//   while (counter < maxIter + 1 && err > minErr) {
+// // Compute new solution and error
+// #pragma omp parallel num_threads(ompThreads) if (useOMP)
+//     {
+// #pragma omp for
+//       for (auto &c : csr) {
+//         c.computeSsf();
+//         c.computeSlfcStls();
+//       }
+// #pragma omp for
+//       for (size_t i = 0; i < csr.size(); ++i) {
+//         auto &c = csr[i];
+//         c.computeSlfc();
+//         if (i == RS_THETA) { err = c.computeError(); }
+//         c.updateSolution();
+//       }
+//     }
+//     counter++;
+//   }
+//   if (verbose) {
+//     printf("Alpha = %.5e, Residual error "
+//            "(structural properties) = %.5e\n",
+//            csr[RS_THETA].getAlpha(),
+//            err);
+//   }
+}
