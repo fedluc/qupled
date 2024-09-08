@@ -18,7 +18,7 @@ using ItgType = Integrator1D::Type;
 
 QVSStls::QVSStls(const QVSStlsInput &in_)
     : VSBase(in_),
-      Qstls(in_.toQstlsInput()),
+      Qstls(in_.toQstlsInput(), false, false),
       in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;

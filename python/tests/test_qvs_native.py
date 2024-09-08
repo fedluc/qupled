@@ -37,7 +37,7 @@ def test_qvsstls_compute():
         assert scheme.slfc.size == nx
         assert scheme.ssf.size == nx
         assert scheme.ssfHF.size == nx
-        assert scheme.recovery == ""
+        assert scheme.recovery == "recovery_rs1.000_theta1.000_QVSSTLS.bin"
         assert scheme.rdf(scheme.wvg).size == nx
     finally:
         fixedFilem = "THETA_DOWN.bin"
