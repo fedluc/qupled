@@ -12,274 +12,270 @@ using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
 using ItgType = Integrator1D::Type;
 
-// // -----------------------------------------------------------------
-// // qVSStls class
-// // -----------------------------------------------------------------
+// -----------------------------------------------------------------
+// QVSStls class
+// -----------------------------------------------------------------
 
-// double QVSStls::computeAlpha() {
-//   //  Compute the free energy integrand
-//   thermoProp.compute();
-//   // Free energy
-//   const vector<double> freeEnergyData = thermoProp.getFreeEnergyData();
-//   const double &fxcr = freeEnergyData[1];
-//   const double &fxcrr = freeEnergyData[2];
-//   const double &fxct = freeEnergyData[3];
-//   const double &fxctt = freeEnergyData[4];
-//   const double &fxcrt = freeEnergyData[5];
-//   // QAdder
-//   const vector<double> QData = thermoProp.getQData();
-//   const double &Q = QData[0];
-//   const double &Qr = QData[1];
-//   const double &Qt = QData[2];
-//   // Alpha
-//   double numer = Q - (1.0 / 6.0) * fxcrr + (1.0 / 3.0) * fxcr;
-//   double denom = Q + (1.0 / 3.0) * Qr;
-//   if (in.getDegeneracy() > 0.0) {
-//     numer += -(2.0 / 3.0) * fxctt - (2.0 / 3.0) * fxcrt + (1.0 / 3.0) * fxct;
-//     denom += (2.0 / 3.0) * Qt;
-//   }
-//   return numer / denom;
-// }
+QVSStls::QVSStls(const QVSStlsInput &in_)
+    : VSBase(in_),
+      Qstls(in_.toQstlsInput()),
+      in(in_),
+      thermoProp(make_shared<QThermoProp>(in_)) {
+  VSBase::thermoProp = thermoProp;
+}
 
-// void QVSStls::updateSolution() {
-//   // Update the structural properties used for output
-//   adr = thermoProp.getAdr();
-//   ssf = thermoProp.getSsf();
-//   slfc = thermoProp.getSlfc();
-// }
+QVSStls::QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_)
+    : VSBase(in_, false),
+      Qstls(in_.toQstlsInput(), false, false),
+      in(in_),
+      thermoProp(make_shared<QThermoProp>(in_)) {
+  VSBase::thermoProp = thermoProp;
+  thermoProp->copyFreeEnergyIntegrand(thermoProp_);
+}
 
-// void QVSStls::initFreeEnergyIntegrand() {
-//   if (!thermoProp.isFreeEnergyIntegrandIncomplete()) { return; }
-//   if (verbose) {
-//     printf("Missing points in the free energy integrand: subcalls will be "
-//            "performed to collect the necessary data\n");
-//   }
-//   QVSStlsInput inTmp = in;
-//   while (thermoProp.isFreeEnergyIntegrandIncomplete()) {
-//     const double rs = thermoProp.getFirstUnsolvedStatePoint();
-//     if (verbose) { printf("Subcall: solving qVS scheme for rs = %.5f:\n",
-//     rs); } inTmp.setCoupling(rs); QVSStls scheme(inTmp, thermoProp);
-//     scheme.compute();
-//     thermoProp.copyFreeEnergyIntegrand(scheme.getThermoProp());
-//     if (verbose) {
-//       printf("Done\n");
-//       printf("-----------------------------------------------------------------"
-//              "----------\n");
-//     }
-//   }
-// }
+double QVSStls::computeAlpha() {
+  //  Compute the free energy integrand
+  thermoProp->compute();
+  // Free energy
+  const vector<double> freeEnergyData = thermoProp->getFreeEnergyData();
+  const double &fxcr = freeEnergyData[1];
+  const double &fxcrr = freeEnergyData[2];
+  const double &fxct = freeEnergyData[3];
+  const double &fxctt = freeEnergyData[4];
+  const double &fxcrt = freeEnergyData[5];
+  // QAdder
+  const vector<double> QData = thermoProp->getQData();
+  const double &Q = QData[0];
+  const double &Qr = QData[1];
+  const double &Qt = QData[2];
+  // Alpha
+  double numer = Q - (1.0 / 6.0) * fxcrr + (1.0 / 3.0) * fxcr;
+  double denom = Q + (1.0 / 3.0) * Qr;
+  if (in.getDegeneracy() > 0.0) {
+    numer += -(2.0 / 3.0) * fxctt - (2.0 / 3.0) * fxcrt + (1.0 / 3.0) * fxct;
+    denom += (2.0 / 3.0) * Qt;
+  }
+  return numer / denom;
+}
 
-// // -----------------------------------------------------------------
-// // qThermoProp class
-// // -----------------------------------------------------------------
+void QVSStls::updateSolution() {
+  // Update the structural properties used for output
+  adr = thermoProp->getAdr();
+  ssf = thermoProp->getSsf();
+  slfc = thermoProp->getSlfc();
+}
 
-// vector<double> QThermoProp::getQData() const {
-//   // QAdder
-//   const std::vector<double> qVec = structProp.getQ();
-//   const std::vector<double> rs = structProp.getCouplingParameters();
-//   const double q = qVec[SIdx::RS_THETA] / rs[SIdx::RS_THETA];
-//   // QAdder derivative with respect to the coupling parameter
-//   double qr;
-//   {
-//     const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
-//     const double &q0 = qVec[SIdx::RS_UP_THETA];
-//     const double &q1 = qVec[SIdx::RS_DOWN_THETA];
-//     qr = (q0 - q1) / (2.0 * drs) - q;
-//   }
-//   // QAdder derivative with respect to the degeneracy parameter
-//   double qt;
-//   {
-//     const std::vector<double> theta = structProp.getDegeneracyParameters();
-//     const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
-//     const double q0 = qVec[SIdx::RS_THETA_UP] / rs[SIdx::RS_THETA];
-//     const double q1 = qVec[SIdx::RS_THETA_DOWN] / rs[SIdx::RS_THETA];
-//     qt = theta[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
-//   }
-//   return vector<double>({q, qr, qt});
-// }
+void QVSStls::initScheme() { Qstls::init(); }
 
-// Vector2D QThermoProp::getAdr() {
-//   if (!structProp.isComputed()) { structProp.compute(); }
-//   return structProp.getCsr(getStructPropIdx()).getAdr();
-// }
+void QVSStls::initFreeEnergyIntegrand() {
+  if (!thermoProp->isFreeEnergyIntegrandIncomplete()) { return; }
+  if (verbose) {
+    printf("Missing points in the free energy integrand: subcalls will be "
+           "performed to collect the necessary data\n");
+  }
+  QVSStlsInput inTmp = in;
+  while (thermoProp->isFreeEnergyIntegrandIncomplete()) {
+    const double rs = thermoProp->getFirstUnsolvedStatePoint();
+    if (verbose) { printf("Subcall: solving qVS scheme for rs = %.5f:\n", rs); }
+    inTmp.setCoupling(rs);
+    QVSStls scheme(inTmp, *thermoProp);
+    scheme.compute();
+    thermoProp->copyFreeEnergyIntegrand(*(scheme.thermoProp));
+    if (verbose) {
+      printf("Done\n");
+      printf("-----------------------------------------------------------------"
+             "----------\n");
+    }
+  }
+}
 
-// // -----------------------------------------------------------------
-// // qStructProp class
-// // -----------------------------------------------------------------
+// -----------------------------------------------------------------
+// qThermoProp class
+// -----------------------------------------------------------------
 
-// void QStructProp::doIterations() {
-//   const auto &in = csr[0].getInput();
-//   const int maxIter = in.getNIter();
-//   const int ompThreads = in.getNThreads();
-//   const double minErr = in.getErrMin();
-//   double err = 1.0;
-//   int counter = 0;
-//   // Define initial guess
-//   for (auto &c : csr) {
-//     c.initialGuess();
-//   }
-//   // Iteration to solve for the structural properties
-//   const bool useOMP = ompThreads > 1;
-//   while (counter < maxIter + 1 && err > minErr) {
-// #pragma omp parallel num_threads(ompThreads) if (useOMP)
-//     {
-// #pragma omp for
-//       for (auto &c : csr) {
-//         c.computeAdrStls();
-//       }
-// #pragma omp for
-//       for (size_t i = 0; i < csr.size(); ++i) {
-//         auto &c = csr[i];
-//         c.computeAdr();
-//         c.computeSsf();
-//         if (i == RS_THETA) { err = c.computeError(); }
-//         c.updateSolution();
-//       }
-//     }
-//     counter++;
-//   }
-//   if (verbose) {
-//     printf("Alpha = %.5e, Residual error "
-//            "(structural properties) = %.5e\n",
-//            csr[RS_THETA].getAlpha(),
-//            err);
-//   }
-//   // Set static structure factor for output
-//   for (auto &c : csr) {
-//     c.updateSsf();
-//   }
-// }
+QThermoProp::QThermoProp(const QVSStlsInput &in_)
+    : ThermoPropBase(in_),
+      structProp(make_shared<QStructProp>(in_)) {
+  ThermoPropBase::structProp = structProp;
+}
 
-// vector<double> QStructProp::getQ() const {
-//   return getBase([&](const QStlsCSR &q) -> double { return q.getQAdder(); });
-// }
+vector<double> QThermoProp::getQData() const {
+  // QAdder
+  const std::vector<double> qVec = structProp->getQ();
+  const std::vector<double> rs = structProp->getCouplingParameters();
+  const double q = qVec[SIdx::RS_THETA] / rs[SIdx::RS_THETA];
+  // QAdder derivative with respect to the coupling parameter
+  double qr;
+  {
+    const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
+    const double &q0 = qVec[SIdx::RS_UP_THETA];
+    const double &q1 = qVec[SIdx::RS_DOWN_THETA];
+    qr = (q0 - q1) / (2.0 * drs) - q;
+  }
+  // QAdder derivative with respect to the degeneracy parameter
+  double qt;
+  {
+    const std::vector<double> theta = structProp->getDegeneracyParameters();
+    const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
+    const double q0 = qVec[SIdx::RS_THETA_UP] / rs[SIdx::RS_THETA];
+    const double q1 = qVec[SIdx::RS_THETA_DOWN] / rs[SIdx::RS_THETA];
+    qt = theta[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
+  }
+  return vector<double>({q, qr, qt});
+}
 
-// // -----------------------------------------------------------------
-// // qStlsCSR class
-// // -----------------------------------------------------------------
+Vector2D QThermoProp::getAdr() {
+  if (!structProp->isComputed()) { structProp->compute(); }
+  return structProp->getCsr(getStructPropIdx()).getAdr();
+}
 
-// void QStlsCSR::init() {
-//   switch (lfcTheta.type) {
-//   case CENTERED: adrFixedFileName = "THETA.bin"; break;
-//   case FORWARD: adrFixedFileName = "THETA_DOWN.bin"; break;
-//   case BACKWARD: adrFixedFileName = "THETA_UP.bin"; break;
-//   }
-//   if (!in.getFixed().empty()) {
-//     std::filesystem::path fullPath = in.getFixed();
-//     fullPath /= adrFixedFileName;
-//     adrFixedFileName = fullPath.string();
-//   }
-//   if (std::filesystem::exists(adrFixedFileName)) {
-//     Stls::init();
-//     readAdrFixedFile(adrFixed, adrFixedFileName, false);
-//   } else {
-//     Qstls::init();
-//   }
-//   // MPI barrier to make sure that all processes see the same files
-//   MPIUtil::barrier();
-// }
+// -----------------------------------------------------------------
+// qStructProp class
+// -----------------------------------------------------------------
 
-// void QStlsCSR::computeAdrStls() {
-//   Qstls::computeAdr();
-//   *lfc = adr;
-// }
+QStructProp::QStructProp(const QVSStlsInput &in_)
+    : StructPropBase() {
+  setupCSR(in_);
+  setupCSRDependencies();
+}
 
-// void QStlsCSR::computeAdr() {
-//   // Check that alpha has been set to a value that is not the default
-//   assert(alpha != DEFAULT_ALPHA);
-//   // Derivative contributions
-//   const double &rs = in.getCoupling();
-//   // const double& theta = in.getDegeneracy();
-//   const double &theta = 0.0;
-//   const double &dx = in.getWaveVectorGridRes();
-//   const double &drs = in.getCouplingResolution();
-//   const double &dTheta = in.getDegeneracyResolution();
-//   const Vector2D &lfcData = *lfc;
-//   const Vector2D &rsUp = *lfcRs.up;
-//   const Vector2D &rsDown = *lfcRs.down;
-//   const Vector2D &thetaUp = *lfcTheta.up;
-//   const Vector2D &thetaDown = *lfcTheta.down;
-//   const double a_drs = alpha * rs / (6.0 * drs);
-//   const double a_dx = alpha / (6.0 * dx);
-//   const double a_dt = alpha * theta / (3.0 * dTheta);
-//   const size_t nx = wvg.size();
-//   const int nl = adrFixed.size(1);
-//   for (int l = 0; l < nl; ++l) {
-//     // Wave-vector derivative contribution
-//     adr(0, l) -= a_dx * wvg[0] * getDerivative(lfc, l, 0, FORWARD);
-//     for (size_t i = 1; i < nx - 1; ++i) {
-//       adr(i, l) -= a_dx * wvg[i] * getDerivative(lfc, l, i, CENTERED);
-//     }
-//     adr(nx - 1, l) -=
-//         a_dx * wvg[nx - 1] * getDerivative(lfc, l, nx - 1, BACKWARD);
-//     // Coupling parameter contribution
-//     if (rs > 0.0) {
-//       for (size_t i = 0; i < nx; ++i) {
-//         adr(i, l) -=
-//             a_drs * CSR::getDerivative(
-//                         lfcData(i, l), rsUp(i, l), rsDown(i, l), lfcRs.type);
-//       }
-//     }
-//     // Degeneracy parameter contribution
-//     if (theta > 0.0) {
-//       for (size_t i = 0; i < nx; ++i) {
-//         adr(i, l) -= a_dt * CSR::getDerivative(lfcData(i, l),
-//                                                thetaUp(i, l),
-//                                                thetaDown(i, l),
-//                                                lfcTheta.type);
-//       }
-//     }
-//     // Extra 1/3 term present in the adr for qVS
-//     for (size_t i = 0; i < nx; ++i) {
-//       adr(i, l) += alpha / 3.0 * lfcData(i, l);
-//     }
-//   }
-// }
+void QStructProp::setupCSR(const QVSStlsInput &in) {
+  std::vector<QVSStlsInput> inVector = setupCSRInput(in);
+  for (const auto &inTmp : inVector) {
+    csr.push_back(make_shared<QstlsCSR>(inTmp));
+  }
+  for (const auto &c : csr) {
+    StructPropBase::csr.push_back(c);
+  }
+}
 
-// double QStlsCSR::getQAdder() const {
-//   Integrator1D itg1(ItgType::DEFAULT, in.getIntError());
-//   Integrator2D itg2(ItgType::DEFAULT, ItgType::DEFAULT, in.getIntError());
-//   const bool segregatedItg = in.getInt2DScheme() == "segregated";
-//   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
-//   const Interpolator1D ssfItp(wvg, ssf);
-//   QAdder QTmp(in.getDegeneracy(),
-//               mu,
-//               wvg.front(),
-//               wvg.back(),
-//               itgGrid,
-//               itg1,
-//               itg2,
-//               ssfItp);
-//   return QTmp.get();
-// }
+std::vector<QVSStlsInput> QStructProp::setupCSRInput(const QVSStlsInput &in) {
+  const double &drs = in.getCouplingResolution();
+  const double &dTheta = in.getDegeneracyResolution();
+  // If there is a risk of having negative state parameters, shift the
+  // parameters so that rs - drs = 0 and/or theta - dtheta = 0
+  const double rs = std::max(in.getCoupling(), drs);
+  const double theta = std::max(in.getDegeneracy(), dTheta);
+  // Setup objects
+  std::vector<QVSStlsInput> out;
+  for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
+    for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
+      QVSStlsInput inTmp = in;
+      inTmp.setDegeneracy(thetaTmp);
+      inTmp.setCoupling(rsTmp);
+      out.push_back(inTmp);
+    }
+  }
+  return out;
+}
 
-// double QStlsCSR::getDerivative(const shared_ptr<Vector2D> &f,
-//                                const int &l,
-//                                const size_t &idx,
-//                                const Derivative &type) {
-//   const Vector2D &fData = *f;
-//   switch (type) {
-//   case BACKWARD:
-//     assert(idx >= 2);
-//     return CSR::getDerivative(
-//         fData(idx, l), fData(idx - 1, l), fData(idx - 2, l), type);
-//     break;
-//   case CENTERED:
-//     assert(idx >= 1 && idx < fData.size() - 1);
-//     return CSR::getDerivative(
-//         fData(idx, l), fData(idx + 1, l), fData(idx - 1, l), type);
-//     break;
-//   case FORWARD:
-//     assert(idx < fData.size() - 2);
-//     return CSR::getDerivative(
-//         fData(idx, l), fData(idx + 1, l), fData(idx + 2, l), type);
-//     break;
-//   default:
-//     assert(false);
-//     return -1;
-//     break;
-//   }
-// }
+void QStructProp::doIterations() {
+  const auto &in = csr[0]->getInput();
+  const int maxIter = in.getNIter();
+  const int ompThreads = in.getNThreads();
+  const double minErr = in.getErrMin();
+  double err = 1.0;
+  int counter = 0;
+  // Define initial guess
+  for (auto &c : csr) {
+    c->initialGuess();
+  }
+  // Iteration to solve for the structural properties
+  const bool useOMP = ompThreads > 1;
+  while (counter < maxIter + 1 && err > minErr) {
+#pragma omp parallel num_threads(ompThreads) if (useOMP)
+    {
+#pragma omp for
+      for (auto &c : csr) {
+        c->computeAdrQStls();
+      }
+#pragma omp for
+      for (size_t i = 0; i < csr.size(); ++i) {
+        auto &c = csr[i];
+        c->computeAdr();
+        c->computeSsf();
+        if (i == RS_THETA) { err = c->computeError(); }
+        c->updateSolution();
+      }
+    }
+    counter++;
+  }
+  if (verbose) {
+    printf("Alpha = %.5e, Residual error "
+           "(structural properties) = %.5e\n",
+           csr[RS_THETA]->getAlpha(),
+           err);
+  }
+  // Set static structure factor for output
+  for (auto &c : csr) {
+    c->updateSsf();
+  }
+}
+
+vector<double> QStructProp::getQ() const {
+  for (size_t i = 0; i < csr.size(); ++i) {
+    outVector[i] = csr[i]->getQAdder();
+  }
+  return outVector;
+}
+
+// -----------------------------------------------------------------
+// qStlsCSR class
+// -----------------------------------------------------------------
+
+void QstlsCSR::init() {
+  switch (lfcTheta.type) {
+  case CENTERED: adrFixedFileName = "THETA.bin"; break;
+  case FORWARD: adrFixedFileName = "THETA_DOWN.bin"; break;
+  case BACKWARD: adrFixedFileName = "THETA_UP.bin"; break;
+  }
+  if (!in.getFixed().empty()) {
+    std::filesystem::path fullPath = in.getFixed();
+    fullPath /= adrFixedFileName;
+    adrFixedFileName = fullPath.string();
+  }
+  if (std::filesystem::exists(adrFixedFileName)) {
+    Stls::init();
+    readAdrFixedFile(adrFixed, adrFixedFileName, false);
+  } else {
+    Qstls::init();
+  }
+  // MPI barrier to make sure that all processes see the same files
+  MPIUtil::barrier();
+}
+
+void QstlsCSR::computeAdrQStls() {
+  Qstls::computeAdr();
+  *lfc = adr;
+}
+
+Vector2D QstlsCSR::getDerivativeContribution() const {
+  Vector2D out = CSR::getDerivativeContribution();
+  out.linearCombination(*lfc, -alpha / 3.0);
+  return out;
+}
+
+void QstlsCSR::computeAdr() {
+  Vector2D adrDerivative = getDerivativeContribution();
+  adr.diff(adrDerivative);
+}
+
+double QstlsCSR::getQAdder() const {
+  Integrator1D itg1(ItgType::DEFAULT, in.getIntError());
+  Integrator2D itg2(ItgType::DEFAULT, ItgType::DEFAULT, in.getIntError());
+  const bool segregatedItg = in.getInt2DScheme() == "segregated";
+  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  const Interpolator1D ssfItp(wvg, ssf);
+  QAdder QTmp(in.getDegeneracy(),
+              mu,
+              wvg.front(),
+              wvg.back(),
+              itgGrid,
+              itg1,
+              itg2,
+              ssfItp);
+  return QTmp.get();
+}
 
 // // -----------------------------------------------------------------
 // // QAdder class

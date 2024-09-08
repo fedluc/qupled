@@ -104,3 +104,8 @@ void Vector2D::div(const Vector2D &v_) {
   assert(v_.size() == v.size());
   v = vecUtil::div(v, v_.v);
 }
+
+void Vector2D::linearCombination(const Vector2D &v_, const double &num) {
+  assert(v_.size() == v.size());
+  v = vecUtil::linearCombination(v, 1, v_.v, num);
+}

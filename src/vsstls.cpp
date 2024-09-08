@@ -78,7 +78,7 @@ void VSStls::initFreeEnergyIntegrand() {
     inTmp.setCoupling(rs);
     VSStls scheme(inTmp, *thermoProp);
     scheme.compute();
-    thermoProp->copyFreeEnergyIntegrand(*(scheme.thermoProp));
+    thermoProp->copyFreeEnergyIntegrand(*scheme.thermoProp);
     if (verbose) {
       printf("Done\n");
       printf("-----------------------------------------------------------------"

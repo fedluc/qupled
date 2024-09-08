@@ -80,6 +80,9 @@ public:
   // Element-wise division between this vector and v_
   void div(const Vector2D &v_);
 
+  // Element-wise linear combination v += num*v_
+  void linearCombination(const Vector2D &v_, const double &num_);
+
 private:
 
   // Underlying vector structure with s1*s2 entries

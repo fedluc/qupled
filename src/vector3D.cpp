@@ -99,3 +99,8 @@ void Vector3D::div(const Vector3D &v_) {
   assert(v_.size() == v.size());
   v = vecUtil::div(v, v_.v);
 }
+
+void Vector3D::linearCombination(const Vector3D &v_, const double &num) {
+  assert(v_.size() == v.size());
+  v = vecUtil::linearCombination(v, 1.0, v_.v, num);
+}

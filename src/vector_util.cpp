@@ -49,6 +49,20 @@ namespace vecUtil {
     return res;
   }
 
+  // Element-wise linear combination of two vectors
+  std::vector<double> linearCombination(const std::vector<double> &v1,
+                                        const double a,
+                                        const std::vector<double> &v2,
+                                        const double b) {
+    const size_t n = v1.size();
+    assert(v2.size() == n);
+    vector<double> res(n);
+    for (size_t i = 0; i < n; ++i) {
+      res[i] = a * v1[i] + b * v2[i];
+    }
+    return res;
+  }
+
   // Root square difference between two vectors
   double rms(const vector<double> &v1,
              const vector<double> &v2,

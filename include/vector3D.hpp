@@ -81,6 +81,9 @@ public:
   // Element-wise division between this vector and v_
   void div(const Vector3D &v_);
 
+  // Element-wise linear combination v += num*v_
+  void linearCombination(const Vector3D &v_, const double &num_);
+
 private:
 
   // Underlying vector structure with s1*s2*s3 entries
