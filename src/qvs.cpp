@@ -90,7 +90,7 @@ void QVSStls::initFreeEnergyIntegrand() {
 }
 
 // -----------------------------------------------------------------
-// qThermoProp class
+// QThermoProp class
 // -----------------------------------------------------------------
 
 QThermoProp::QThermoProp(const QVSStlsInput &in_)
@@ -130,7 +130,7 @@ Vector2D QThermoProp::getAdr() {
 }
 
 // -----------------------------------------------------------------
-// qStructProp class
+// QStructProp class
 // -----------------------------------------------------------------
 
 QStructProp::QStructProp(const QVSStlsInput &in_)
@@ -167,6 +167,11 @@ std::vector<QVSStlsInput> QStructProp::setupCSRInput(const QVSStlsInput &in) {
     }
   }
   return out;
+}
+
+
+const QstlsCSR &QStructProp::getCsr(const Idx &idx) const {
+  return *csr[idx];
 }
 
 void QStructProp::doIterations() {
@@ -220,7 +225,7 @@ vector<double> QStructProp::getQ() const {
 }
 
 // -----------------------------------------------------------------
-// qStlsCSR class
+// QstlsCSR class
 // -----------------------------------------------------------------
 
 void QstlsCSR::init() {
@@ -277,58 +282,57 @@ double QstlsCSR::getQAdder() const {
   return QTmp.get();
 }
 
-// // -----------------------------------------------------------------
-// // QAdder class
-// // -----------------------------------------------------------------
+// -----------------------------------------------------------------
+// QAdder class
+// -----------------------------------------------------------------
 
-// // SSF interpolation
-// double QAdder::ssf(const double &y) const { return interp.eval(y); }
+// SSF interpolation
+double QAdder::ssf(const double &y) const { return interp.eval(y); }
 
-// // Denominator integrand
-// double QAdder::integrandDenominator(const double y) const {
-//   const double y2 = y * y;
-//   return 1.0 / (exp(y2 / Theta - mu) + 1.0);
-// }
+// Denominator integrand
+double QAdder::integrandDenominator(const double y) const {
+  const double y2 = y * y;
+  return 1.0 / (exp(y2 / Theta - mu) + 1.0);
+}
 
-// // Numerator integrand1
-// double QAdder::integrandNumerator1(const double q) const {
-//   const double w = itg2.getX();
-//   if (q == 0.0) { return 0.0; };
-//   double w2 = w * w;
-//   double q2 = q * q;
-//   double logarg = (w + 2 * q) / (w - 2 * q);
-//   logarg = (logarg < 0.0) ? -logarg : logarg;
-//   if (w == 0.0) { return 1.0 / (12.0 * (exp(q2 / Theta - mu) + 1.0)); };
-//   return q2 / (exp(q2 / Theta - mu) + 1.0) * (q / w * log(logarg) - 1.0) /
-//   w2;
-// }
+// Numerator integrand1
+double QAdder::integrandNumerator1(const double q) const {
+  const double w = itg2.getX();
+  if (q == 0.0) { return 0.0; };
+  double w2 = w * w;
+  double q2 = q * q;
+  double logarg = (w + 2 * q) / (w - 2 * q);
+  logarg = (logarg < 0.0) ? -logarg : logarg;
+  if (w == 0.0) { return 1.0 / (12.0 * (exp(q2 / Theta - mu) + 1.0)); };
+  return q2 / (exp(q2 / Theta - mu) + 1.0) * (q / w * log(logarg) - 1.0) / w2;
+}
 
-// // Numerator integrand2
-// double QAdder::integrandNumerator2(const double w) const {
-//   return (ssf(w) - 1.0);
-// }
+// Numerator integrand2
+double QAdder::integrandNumerator2(const double w) const {
+  return (ssf(w) - 1.0);
+}
 
-// // Denominator integral
-// void QAdder::getIntDenominator(double &res) const {
-//   auto func = [&](double y) -> double { return integrandDenominator(y); };
-//   itg1.compute(func, ItgParam(limits.first, limits.second));
-//   res = itg1.getSolution();
-// }
+// Denominator integral
+void QAdder::getIntDenominator(double &res) const {
+  auto func = [&](double y) -> double { return integrandDenominator(y); };
+  itg1.compute(func, ItgParam(limits.first, limits.second));
+  res = itg1.getSolution();
+}
 
-// // Get total QAdder
-// double QAdder::get() const {
-//   double Denominator;
-//   getIntDenominator(Denominator);
-//   auto func1 = [&](const double &w) -> double {
-//     return integrandNumerator2(w);
-//   };
-//   auto func2 = [&](const double &q) -> double {
-//     return integrandNumerator1(q);
-//   };
-//   itg2.compute(
-//       func1,
-//       func2,
-//       Itg2DParam(limits.first, limits.second, limits.first, limits.second),
-//       itgGrid);
-//   return 12.0 / (M_PI * lambda) * itg2.getSolution() / Denominator;
-// }
+// Get total QAdder
+double QAdder::get() const {
+  double Denominator;
+  getIntDenominator(Denominator);
+  auto func1 = [&](const double &w) -> double {
+    return integrandNumerator2(w);
+  };
+  auto func2 = [&](const double &q) -> double {
+    return integrandNumerator1(q);
+  };
+  itg2.compute(
+      func1,
+      func2,
+      Itg2DParam(limits.first, limits.second, limits.first, limits.second),
+      itgGrid);
+  return 12.0 / (M_PI * lambda) * itg2.getSolution() / Denominator;
+}
