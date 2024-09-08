@@ -183,71 +183,12 @@ void StructProp::doIterations() {
 
 void StlsCSR::computeSlfcStls() {
   Stls::computeSlfc();
-  *lfc = slfcNew;
+  *lfc = Vector2D(slfcNew);
 }
 
 void StlsCSR::computeSlfc() {
-  // Check that alpha has been set to a value that is not the default
-  assert(alpha != DEFAULT_ALPHA);
-  // Derivative contributions
-  const double &rs = in.getCoupling();
-  // const double& theta = in.getDegeneracy();
-  const double &theta = 0.0;
-  const double &dx = in.getWaveVectorGridRes();
-  const double &drs = in.getCouplingResolution();
-  const double &dTheta = in.getDegeneracyResolution();
-  const vector<double> &lfcData = *lfc;
-  const vector<double> &rsUp = *lfcRs.up;
-  const vector<double> &rsDown = *lfcRs.down;
-  const vector<double> &thetaUp = *lfcTheta.up;
-  const vector<double> &thetaDown = *lfcTheta.down;
-  const double a_drs = alpha * rs / (6.0 * drs);
-  const double a_dx = alpha / (6.0 * dx);
-  const double a_dt = alpha * theta / (3.0 * dTheta);
-  const size_t nx = wvg.size();
-  // Wave-vector derivative
-  slfcNew[0] -= a_dx * wvg[0] * getDerivative(lfc, 0, FORWARD);
-  for (size_t i = 1; i < nx - 1; ++i) {
-    slfcNew[i] -= a_dx * wvg[i] * getDerivative(lfc, i, CENTERED);
-  }
-  slfcNew[nx - 1] -= a_dx * wvg[nx - 1] * getDerivative(lfc, nx - 1, BACKWARD);
-  // Coupling parameter contribution
-  if (rs > 0.0) {
-    for (size_t i = 0; i < nx; ++i) {
-      slfcNew[i] -= a_drs * CSR::getDerivative(
-                                lfcData[i], rsUp[i], rsDown[i], lfcRs.type);
-    }
-  }
-  // Degeneracy parameter contribution
-  if (theta > 0.0) {
-    for (size_t i = 0; i < nx; ++i) {
-      slfcNew[i] -=
-          a_dt * CSR::getDerivative(
-                     lfcData[i], thetaUp[i], thetaDown[i], lfcTheta.type);
-    }
-  }
-}
-
-double StlsCSR::getDerivative(const shared_ptr<vector<double>> &f,
-			      const size_t &idx,
-			      const Derivative &type) {
-  const vector<double> fData = *f;
-  switch (type) {
-  case BACKWARD:
-    assert(idx >= 2);
-    return CSR::getDerivative(fData[idx], fData[idx - 1], fData[idx - 2], type);
-    break;
-  case CENTERED:
-    assert(idx >= 1 && idx < fData.size() - 1);
-    return CSR::getDerivative(fData[idx], fData[idx + 1], fData[idx - 1], type);
-    break;
-  case FORWARD:
-    assert(idx < fData.size() - 2);
-    return CSR::getDerivative(fData[idx], fData[idx + 1], fData[idx + 2], type);
-    break;
-  default:
-    assert(false);
-    return -1;
-    break;
+  Vector2D slfcDerivative = getDerivativeContribution();
+  for (size_t i = 0; i < slfcNew.size(); ++i) {
+    slfcNew[i] -= slfcDerivative(i);
   }
 }

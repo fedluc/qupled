@@ -115,10 +115,7 @@ private:
 
   // Input parameters
   VSStlsInput in;
-  // Helper methods to compute the derivatives
-  double getDerivative(const std::shared_ptr<std::vector<double>> &f,
-                       const size_t &idx,
-                       const Derivative &type);
+
 };
 
 #endif

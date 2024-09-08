@@ -17,6 +17,12 @@ Vector2D::Vector2D(const vector<vector<double>> &v_) {
   }
 }
 
+Vector2D::Vector2D(const vector<double> &v_) {
+  s1 = v_.size();
+  s2 = 1;
+  v = v_;
+}
+
 size_t Vector2D::size() const { return s1 * s2; }
 
 size_t Vector2D::size(const size_t i) const {

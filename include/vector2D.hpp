@@ -20,7 +20,8 @@ public:
   explicit Vector2D()
       : Vector2D(0, 0) {}
   explicit Vector2D(const std::vector<std::vector<double>> &v_);
-
+  explicit Vector2D(const std::vector<double> &v_);
+  
   // Return overall size of the array
   size_t size() const;
 

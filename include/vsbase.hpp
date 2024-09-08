@@ -6,6 +6,7 @@
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
+#include "vector2D.hpp"
 #include <limits>
 #include <map>
 #include <memory>
@@ -221,6 +222,7 @@ protected:
   getBase(std::function<double(const CSR &)> f) const;
 };
 
+
 // -----------------------------------------------------------------
 // CSR (compressibility-sum-rule) class
 // -----------------------------------------------------------------
@@ -229,19 +231,18 @@ class CSR {
 
 public:
 
-  using T = std::vector<double>; // Temporary replacement for template parameter
   // Enumerator to denote the numerical schemes used for the derivatives
   enum Derivative { CENTERED, FORWARD, BACKWARD };
   // Data for the local field correction with modified state point
   struct DerivativeData {
     Derivative type;
-    std::shared_ptr<T> up;
-    std::shared_ptr<T> down;
+    std::shared_ptr<Vector2D> up;
+    std::shared_ptr<Vector2D> down;
   };
   // Constructor
   CSR(const VSInput &in_)
       : in(in_),
-        lfc(std::make_shared<T>()),
+        lfc(std::make_shared<Vector2D>()),
         alpha(DEFAULT_ALPHA) {}
   // Destructor
   virtual ~CSR() = default;
@@ -278,18 +279,24 @@ protected:
   // Input data
   const VSInput in;
   // local field correction (static or dynamic)
-  std::shared_ptr<T> lfc;
+  std::shared_ptr<Vector2D> lfc;
   // Free parameter
   double alpha;
   // Data for the local field correction with modified coupling paramter
   DerivativeData lfcRs;
   // Data for the local field correction with modified degeneracy parameter
   DerivativeData lfcTheta;
+  // Compute the local field correction with the derivatives contribution
+  Vector2D getDerivativeContribution() const;
   // Helper methods to compute the derivatives
+  double getDerivative(const std::shared_ptr<Vector2D> &f,
+                         const int &l,
+                         const size_t &idx,
+                         const Derivative &type) const;
   double getDerivative(const double &f0,
                        const double &f1,
                        const double &f2,
-                       const Derivative &type);
+                       const Derivative &type) const;
 };
 
 #endif
