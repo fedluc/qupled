@@ -19,7 +19,7 @@ VSStls::VSStls(const VSStlsInput &in_)
 }
 
 VSStls::VSStls(const VSStlsInput &in_, const ThermoProp &thermoProp_)
-  : VSBase(in_, false),
+    : VSBase(in_, false),
       Stls(in_.toStlsInput(), false, false),
       in(in_),
       thermoProp(make_shared<ThermoProp>(in_)) {

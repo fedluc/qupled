@@ -454,7 +454,7 @@ double CSR::getFreeEnergyIntegrand() const {
 }
 
 Vector2D CSR::getDerivativeContribution() const {
-    // Check that alpha has been set to a value that is not the default
+  // Check that alpha has been set to a value that is not the default
   assert(alpha != DEFAULT_ALPHA);
   // Derivative contributions
   const double &rs = in.getCoupling();
@@ -471,7 +471,7 @@ Vector2D CSR::getDerivativeContribution() const {
   const double a_drs = alpha * rs / (6.0 * drs);
   const double a_dx = alpha / (6.0 * dx);
   const double a_dt = alpha * theta / (3.0 * dTheta);
-  const vector<double>& wvg = getWvg();
+  const vector<double> &wvg = getWvg();
   const double nx = wvg.size();
   Vector2D out(lfc->size(0), lfc->size(1));
   for (size_t l = 0; l < lfc->size(1); ++l) {
@@ -486,10 +486,8 @@ Vector2D CSR::getDerivativeContribution() const {
     if (rs > 0.0) {
       for (size_t i = 0; i < nx; ++i) {
         out(i, l) +=
-            a_drs * CSR::getDerivative(lfcData(i, l),
-				       rsUp(i, l),
-				       rsDown(i, l),
-				       lfcRs.type);
+            a_drs * CSR::getDerivative(
+                        lfcData(i, l), rsUp(i, l), rsDown(i, l), lfcRs.type);
       }
     }
     // Degeneracy parameter contribution
@@ -505,11 +503,10 @@ Vector2D CSR::getDerivativeContribution() const {
   return out;
 }
 
-
 double CSR::getDerivative(const shared_ptr<Vector2D> &f,
-			  const int &l,
-			  const size_t &idx,
-			  const Derivative &type) const {
+                          const int &l,
+                          const size_t &idx,
+                          const Derivative &type) const {
   const Vector2D &fData = *f;
   switch (type) {
   case BACKWARD:

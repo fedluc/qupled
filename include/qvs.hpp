@@ -172,12 +172,13 @@
 // Solver for the qVS-STLS scheme
 // -----------------------------------------------------------------
 
-class QVSStls: public VSBase {
+class QVSStls : public VSBase {
 
 public:
 
   // Constructor
-  QVSStls(const QVSStlsInput& in_): VSBase(in_) {}
+  QVSStls(const QVSStlsInput &in_)
+      : VSBase(in_) {}
   // Getters
   Vector2D getAdr() const { return adr; }
 

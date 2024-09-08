@@ -5,8 +5,8 @@
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "thermo_util.hpp"
-#include "vector_util.hpp"
 #include "vector2D.hpp"
+#include "vector_util.hpp"
 #include <limits>
 #include <map>
 #include <memory>
@@ -66,11 +66,7 @@ protected:
 // Indexes
 // -----------------------------------------------------------------
 
-enum ThermoIdx {
-  THETA_DOWN,
-  THETA,
-  THETA_UP
-};
+enum ThermoIdx { THETA_DOWN, THETA, THETA_UP };
 
 enum StructIdx {
   RS_DOWN_THETA_DOWN,
@@ -163,7 +159,6 @@ protected:
   ThermoPropBase::SIdx getStructPropIdx();
 };
 
-
 // -----------------------------------------------------------------
 // StructPropBase class
 // -----------------------------------------------------------------
@@ -221,7 +216,6 @@ protected:
   const std::vector<double> &
   getBase(std::function<double(const CSR &)> f) const;
 };
-
 
 // -----------------------------------------------------------------
 // CSR (compressibility-sum-rule) class
@@ -290,9 +284,9 @@ protected:
   Vector2D getDerivativeContribution() const;
   // Helper methods to compute the derivatives
   double getDerivative(const std::shared_ptr<Vector2D> &f,
-                         const int &l,
-                         const size_t &idx,
-                         const Derivative &type) const;
+                       const int &l,
+                       const size_t &idx,
+                       const Derivative &type) const;
   double getDerivative(const double &f0,
                        const double &f1,
                        const double &f2,

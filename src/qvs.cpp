@@ -57,9 +57,8 @@ using ItgType = Integrator1D::Type;
 //   QVSStlsInput inTmp = in;
 //   while (thermoProp.isFreeEnergyIntegrandIncomplete()) {
 //     const double rs = thermoProp.getFirstUnsolvedStatePoint();
-//     if (verbose) { printf("Subcall: solving qVS scheme for rs = %.5f:\n", rs); }
-//     inTmp.setCoupling(rs);
-//     QVSStls scheme(inTmp, thermoProp);
+//     if (verbose) { printf("Subcall: solving qVS scheme for rs = %.5f:\n",
+//     rs); } inTmp.setCoupling(rs); QVSStls scheme(inTmp, thermoProp);
 //     scheme.compute();
 //     thermoProp.copyFreeEnergyIntegrand(scheme.getThermoProp());
 //     if (verbose) {
@@ -304,7 +303,8 @@ using ItgType = Integrator1D::Type;
 //   double logarg = (w + 2 * q) / (w - 2 * q);
 //   logarg = (logarg < 0.0) ? -logarg : logarg;
 //   if (w == 0.0) { return 1.0 / (12.0 * (exp(q2 / Theta - mu) + 1.0)); };
-//   return q2 / (exp(q2 / Theta - mu) + 1.0) * (q / w * log(logarg) - 1.0) / w2;
+//   return q2 / (exp(q2 / Theta - mu) + 1.0) * (q / w * log(logarg) - 1.0) /
+//   w2;
 // }
 
 // // Numerator integrand2

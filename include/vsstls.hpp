@@ -115,7 +115,6 @@ private:
 
   // Input parameters
   VSStlsInput in;
-
 };
 
 #endif
