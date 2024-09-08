@@ -65,7 +65,7 @@ void QVSStls::updateSolution() {
   slfc = thermoProp->getSlfc();
 }
 
-void QVSStls::initScheme() { Qstls::init(); }
+void QVSStls::initScheme() { Rpa::init(); }
 
 void QVSStls::initFreeEnergyIntegrand() {
   if (!thermoProp->isFreeEnergyIntegrandIncomplete()) { return; }

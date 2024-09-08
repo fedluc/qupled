@@ -231,12 +231,10 @@ double Qstls::computeError() const { return rms(ssfNew, ssfOld, false); }
 // Update solution during qstls iterations
 void Qstls::updateSolution() {
   const double aMix = in.getMixingParameter();
-  ssfOld = sum(mult(ssfNew, aMix), mult(ssfOld, 1 - aMix));
+  ssfOld = linearCombination(ssfNew, aMix, ssfOld, 1 - aMix);
   if (useIet) {
-    Vector2D tmp = adr;
     adrOld.mult(1 - aMix);
-    tmp.mult(aMix);
-    adrOld.sum(tmp);
+    adrOld.linearCombination(adr, aMix);
   }
 }
 

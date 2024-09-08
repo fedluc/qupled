@@ -184,7 +184,7 @@ double Stls::computeError() const { return rms(slfc, slfcNew, false); }
 // Update solution during stls iterations
 void Stls::updateSolution() {
   const double aMix = in.getMixingParameter();
-  slfc = sum(mult(slfcNew, aMix), mult(slfc, 1 - aMix));
+  slfc = linearCombination(slfcNew, aMix, slfc, 1 - aMix);
 }
 
 // Recovery files
