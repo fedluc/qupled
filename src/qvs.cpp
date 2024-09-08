@@ -169,10 +169,7 @@ std::vector<QVSStlsInput> QStructProp::setupCSRInput(const QVSStlsInput &in) {
   return out;
 }
 
-
-const QstlsCSR &QStructProp::getCsr(const Idx &idx) const {
-  return *csr[idx];
-}
+const QstlsCSR &QStructProp::getCsr(const Idx &idx) const { return *csr[idx]; }
 
 void QStructProp::doIterations() {
   const auto &in = csr[0]->getInput();
