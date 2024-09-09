@@ -22,8 +22,8 @@ jobs:
       run: |
         brew update
         brew install cmake gsl libomp openmpi fmt boost-python3
-	pip3 install --upgrade pip
-	pip3 install -r python/requirements.txt
+        pip3 install --upgrade pip
+        pip3 install -r python/requirements.txt
         
     - name: Configure CMake
       run: |
