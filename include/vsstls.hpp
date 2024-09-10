@@ -30,8 +30,6 @@ private:
 
   // Input
   VSStlsInput in;
-  // Verbosity
-  using VSBase::verbose;
   // Thermodynamic properties
   std::shared_ptr<ThermoProp> thermoProp;
   // Initialize
@@ -41,6 +39,9 @@ private:
   double computeAlpha();
   // Iterations to solve the vs-stls scheme
   void updateSolution();
+  // Print info
+  void print(const std::string &msg) { VSBase::print(msg); }
+  void println(const std::string &msg) { VSBase::println(msg); }
 };
 
 // -----------------------------------------------------------------
@@ -64,7 +65,7 @@ private:
 // StructProp class
 // -----------------------------------------------------------------
 
-class StructProp : public StructPropBase {
+class StructProp : public Logger, public StructPropBase {
 
 public:
 

@@ -14,8 +14,8 @@ using ItgType = Integrator1D::Type;
 
 // Constructor
 Rpa::Rpa(const RpaInput &in_, const bool verbose_)
-    : in(in_),
-      verbose(verbose_ && isRoot()),
+    : Logger(verbose_ && isRoot()),
+      in(in_),
       itg(ItgType::DEFAULT, in_.getIntError()) {
   // Assemble the wave-vector grid
   buildWvGrid();
@@ -32,14 +32,14 @@ Rpa::Rpa(const RpaInput &in_, const bool verbose_)
 int Rpa::compute() {
   try {
     init();
-    if (verbose) cout << "Structural properties calculation ..." << endl;
-    if (verbose) cout << "Computing static local field correction: ";
+    println("Structural properties calculation ...");
+    print("Computing static local field correction: ");
     computeSlfc();
-    if (verbose) cout << "Done" << endl;
-    if (verbose) cout << "Computing static structure factor: ";
+    println("Done");
+    print("Computing static structure factor: ");
     computeSsf();
-    if (verbose) cout << "Done" << endl;
-    if (verbose) cout << "Done" << endl;
+    println("Done");
+    println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;
@@ -49,15 +49,15 @@ int Rpa::compute() {
 
 // Initialize basic properties
 void Rpa::init() {
-  if (verbose) cout << "Computing chemical potential: ";
+  print("Computing chemical potential: ");
   computeChemicalPotential();
-  if (verbose) cout << "Done" << endl;
-  if (verbose) cout << "Computing ideal density response: ";
+  println("Done");
+  print("Computing ideal density response: ");
   computeIdr();
-  if (verbose) cout << "Done" << endl;
-  if (verbose) cout << "Computing HF static structure factor: ";
+  println("Done");
+  print("Computing HF static structure factor: ");
   computeSsfHF();
-  if (verbose) cout << "Done" << endl;
+  println("Done");
 }
 
 // Set up wave-vector grid
@@ -179,9 +179,8 @@ vector<double> Rpa::getRdf(const vector<double> &r) const {
 
 vector<double> Rpa::getSdr() const {
   if (in.getDegeneracy() == 0.0) {
-    std::cout
-        << "The static density response cannot be computed in the ground state."
-        << std::endl;
+    println("The static density response cannot be computed in the "
+            "ground state.");
     return vector<double>();
   }
   vector<double> sdr(wvg.size(), -1.5 * in.getDegeneracy());

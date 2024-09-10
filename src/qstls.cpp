@@ -48,9 +48,9 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_, const bool writeFiles_)
 int Qstls::compute() {
   try {
     init();
-    if (verbose) cout << "Structural properties calculation ..." << endl;
+    println("Structural properties calculation ...");
     doIterations();
-    if (verbose) cout << "Done" << endl;
+    println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;
@@ -60,16 +60,13 @@ int Qstls::compute() {
 
 void Qstls::init() {
   Stls::init();
-  if (verbose)
-    cout << "Computing fixed component of the auxiliary density response: ";
+  print("Computing fixed component of the auxiliary density response: ");
   computeAdrFixed();
-  if (verbose) cout << "Done" << endl;
+  println("Done");
   if (useIet) {
-    if (verbose)
-      cout << "Computing fixed component of the iet auxiliary density "
-              "response: ";
+    print("Computing fixed component of the iet auxiliary density response: ");
     computeAdrFixedIet();
-    if (verbose) cout << "Done" << endl;
+    println("Done");
   }
 }
 
@@ -99,12 +96,10 @@ void Qstls::doIterations() {
     // End timing
     double toc = timer();
     // Print diagnostic
-    if (verbose) {
-      printf("--- iteration %d ---\n", counter);
-      printf("Elapsed time: %f seconds\n", toc - tic);
-      printf("Residual error: %.5e\n", err);
-      fflush(stdout);
-    }
+    println(fmt::format("--- iteration {:d} ---", counter));
+    println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
+    println(fmt::format("Residual error: {:.5e}", err));
+    fflush(stdout);
   }
   // Set static structure factor for output
   ssf = ssfOld;

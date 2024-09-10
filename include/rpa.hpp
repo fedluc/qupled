@@ -2,6 +2,7 @@
 #define RPA_HPP
 
 #include "input.hpp"
+#include "logger.hpp"
 #include "numerics.hpp"
 #include "vector2D.hpp"
 #include <vector>
@@ -10,7 +11,7 @@
 // Solver for the Random-Phase approximation scheme
 // -----------------------------------------------------------------
 
-class Rpa {
+class Rpa : public Logger {
 
 public:
 
@@ -37,8 +38,6 @@ protected:
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
   // Input data
   const RpaInput in;
-  // Output verbosity
-  const bool verbose;
   // Name of the recovery files
   std::string recoveryFileName;
   // Integrator

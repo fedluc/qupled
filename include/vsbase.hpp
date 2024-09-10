@@ -2,6 +2,7 @@
 #define VSBASE_HPP
 
 #include "input.hpp"
+#include "logger.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "thermo_util.hpp"
@@ -19,7 +20,7 @@ class CSR;
 // VSBase class
 // -----------------------------------------------------------------
 
-class VSBase {
+class VSBase : public Logger {
 
 public:
 
@@ -27,8 +28,8 @@ public:
   explicit VSBase(const VSInput &in_)
       : VSBase(in_, MPIUtil::isRoot()) {}
   VSBase(const VSInput &in_, const bool &verbose_)
-      : in(in_),
-        verbose(verbose_) {}
+      : Logger(verbose_),
+        in(in_) {}
   // Destructor
   virtual ~VSBase() = default;
   // Compute vs-stls scheme
@@ -44,8 +45,6 @@ protected:
   VSInput in;
   // Free parameter
   double alpha;
-  // Output verbosity
-  const bool verbose;
   // Thermodynamic properties (this must be set from the derived classes)
   std::shared_ptr<ThermoPropBase> thermoProp;
   // Compute free parameter
@@ -124,8 +123,6 @@ protected:
   using Idx = ThermoIdx;
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
-  // Output verbosity
-  const bool verbose;
   // Structural properties (this must be set from the derived classes)
   std::shared_ptr<StructPropBase> structProp;
   // Grid for thermodyamic integration
@@ -197,8 +194,6 @@ public:
 
 protected:
 
-  // Output verbosity
-  const bool verbose;
   // Vector containing NPOINTS state points to be solved simultaneously (this
   // must be defined in the derived class)
   std::vector<std::shared_ptr<CSR>> csr;

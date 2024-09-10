@@ -3,6 +3,7 @@
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
+#include <fmt/core.h>
 
 using namespace std;
 
@@ -13,9 +14,9 @@ using namespace std;
 int VSBase::compute() {
   try {
     init();
-    if (verbose) cout << "Free parameter calculation ..." << endl;
+    println("Free parameter calculation ...");
     doIterations();
-    if (verbose) cout << "Done" << endl;
+    println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;
@@ -50,7 +51,7 @@ void VSBase::doIterations() {
   SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
   rsol.solve(func, in.getAlphaGuess());
   alpha = rsol.getSolution();
-  if (verbose) { std::cout << "Free parameter = " << alpha << std::endl; }
+  println(fmt::format("Free parameter = {:.5f}", alpha));
   updateSolution();
 }
 
@@ -66,8 +67,7 @@ double VSBase::alphaDifference(const double &alphaTmp) {
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-ThermoPropBase::ThermoPropBase(const VSInput &in)
-    : verbose(MPIUtil::isRoot()) { //, structProp(in) {
+ThermoPropBase::ThermoPropBase(const VSInput &in) {
   // Check if we are solving for particular state points
   isZeroCoupling = (in.getCoupling() == 0.0);
   isZeroDegeneracy = (in.getDegeneracy() == 0.0);
@@ -82,7 +82,7 @@ ThermoPropBase::ThermoPropBase(const VSInput &in)
 void ThermoPropBase::setRsGrid(const VSInput &in) {
   const double &rs = in.getCoupling();
   const double &drs = in.getCouplingResolution();
-  if (!numUtil::isZero(std::remainder(rs, drs))) {
+  if (!numUtil::isZero(remainder(rs, drs))) {
     MPIUtil::throwError(
         "Inconsistent input parameters: the coupling parameter must be a "
         "multiple of the coupling resolution");
@@ -135,19 +135,19 @@ void ThermoPropBase::setFxcIdxTargetStatePoint(const VSInput &in) {
   auto isTarget = [&](const double &rs) {
     return numUtil::equalTol(rs, in.getCoupling());
   };
-  const auto it = std::find_if(rsGrid.begin(), rsGrid.end(), isTarget);
+  const auto it = find_if(rsGrid.begin(), rsGrid.end(), isTarget);
   if (it == rsGrid.end()) {
     MPIUtil::throwError(
         "Failed to find the target state point in the free energy grid");
   }
-  fxcIdxTargetStatePoint = std::distance(rsGrid.begin(), it);
+  fxcIdxTargetStatePoint = distance(rsGrid.begin(), it);
 }
 
 void ThermoPropBase::setFxcIdxUnsolvedStatePoint() {
   const auto &fxciBegin = fxcIntegrand[Idx::THETA].begin();
   const auto &fxciEnd = fxcIntegrand[Idx::THETA].end();
-  const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
-  fxcIdxUnsolvedStatePoint = std::distance(fxciBegin, it);
+  const auto &it = find(fxciBegin, fxciEnd, numUtil::Inf);
+  fxcIdxUnsolvedStatePoint = distance(fxciBegin, it);
 }
 
 void ThermoPropBase::copyFreeEnergyIntegrand(const ThermoPropBase &other) {
@@ -157,8 +157,8 @@ void ThermoPropBase::copyFreeEnergyIntegrand(const ThermoPropBase &other) {
   for (const auto &theta : {Idx::THETA_DOWN, Idx::THETA, Idx::THETA_UP}) {
     const auto &fxciBegin = fxcIntegrand[theta].begin();
     const auto &fxciEnd = fxcIntegrand[theta].end();
-    const auto &it = std::find(fxciBegin, fxciEnd, numUtil::Inf);
-    size_t i = std::distance(fxciBegin, it);
+    const auto &it = find(fxciBegin, fxciEnd, numUtil::Inf);
+    size_t i = distance(fxciBegin, it);
     while (i < nrs && i < nrsOther) {
       fxcIntegrand[theta][i] = other.fxcIntegrand[theta][i];
       ++i;
@@ -187,7 +187,7 @@ double ThermoPropBase::getFirstUnsolvedStatePoint() const {
 void ThermoPropBase::compute() {
   assert(structProp);
   structProp->compute();
-  const std::vector<double> fxciTmp = structProp->getFreeEnergyIntegrand();
+  const vector<double> fxciTmp = structProp->getFreeEnergyIntegrand();
   const double alphaTmp = structProp->getAlpha();
   const size_t &idx = fxcIdxTargetStatePoint;
   fxcIntegrand[THETA_DOWN][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
@@ -204,22 +204,22 @@ void ThermoPropBase::compute() {
   alpha[idx + 1] = alphaTmp;
 }
 
-std::vector<double> ThermoPropBase::getSsf() {
+vector<double> ThermoPropBase::getSsf() {
   assert(structProp);
   if (!structProp->isComputed()) { structProp->compute(); }
   return structProp->getCsr(getStructPropIdx()).getSsf();
 }
 
-std::vector<double> ThermoPropBase::getSlfc() {
+vector<double> ThermoPropBase::getSlfc() {
   assert(structProp);
   if (!structProp->isComputed()) { structProp->compute(); }
   return structProp->getCsr(getStructPropIdx()).getSlfc();
 }
 
-std::vector<double> ThermoPropBase::getFreeEnergyData() const {
+vector<double> ThermoPropBase::getFreeEnergyData() const {
   assert(structProp);
-  const std::vector<double> rsVec = structProp->getCouplingParameters();
-  const std::vector<double> thetaVec = structProp->getDegeneracyParameters();
+  const vector<double> rsVec = structProp->getCouplingParameters();
+  const vector<double> thetaVec = structProp->getDegeneracyParameters();
   // Free energy
   const double fxc = computeFreeEnergy(SIdx::RS_THETA, true);
   // Free energy derivatives with respect to the coupling parameter
@@ -258,20 +258,20 @@ std::vector<double> ThermoPropBase::getFreeEnergyData() const {
     const double f3 = computeFreeEnergy(SIdx::RS_DOWN_THETA_DOWN, false);
     fxcrt = t_rs * (f0 - f1 - f2 + f3) / (4.0 * drs * dt) - 2.0 * fxct;
   }
-  return std::vector<double>({fxc, fxcr, fxcrr, fxct, fxctt, fxcrt});
+  return vector<double>({fxc, fxcr, fxcrr, fxct, fxctt, fxcrt});
 }
 
-std::vector<double> ThermoPropBase::getInternalEnergyData() const {
+vector<double> ThermoPropBase::getInternalEnergyData() const {
   assert(structProp);
   // Internal energy
-  const std::vector<double> uVec = structProp->getInternalEnergy();
+  const vector<double> uVec = structProp->getInternalEnergy();
   const double u = uVec[SIdx::RS_THETA];
   // Internal energy derivative with respect to the coupling parameter
   double ur;
   {
-    const std::vector<double> rs = structProp->getCouplingParameters();
+    const vector<double> rs = structProp->getCouplingParameters();
     const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
-    const std::vector<double> rsu = structProp->getFreeEnergyIntegrand();
+    const vector<double> rsu = structProp->getFreeEnergyIntegrand();
     const double &u0 = rsu[SIdx::RS_UP_THETA];
     const double &u1 = rsu[SIdx::RS_DOWN_THETA];
     ur = (u0 - u1) / (2.0 * drs) - u;
@@ -279,13 +279,13 @@ std::vector<double> ThermoPropBase::getInternalEnergyData() const {
   // Internal energy derivative with respect to the degeneracy parameter
   double ut;
   {
-    const std::vector<double> theta = structProp->getDegeneracyParameters();
+    const vector<double> theta = structProp->getDegeneracyParameters();
     const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
     const double u0 = uVec[SIdx::RS_THETA_UP];
     const double u1 = uVec[SIdx::RS_THETA_DOWN];
     ut = theta[SIdx::RS_THETA] * (u0 - u1) / (2.0 * dt);
   }
-  return std::vector<double>({u, ur, ut});
+  return vector<double>({u, ur, ut});
 }
 
 double ThermoPropBase::computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
@@ -307,7 +307,7 @@ double ThermoPropBase::computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
     break;
   }
   assert(structProp);
-  const std::vector<double> &rs = structProp->getCouplingParameters();
+  const vector<double> &rs = structProp->getCouplingParameters();
   return thermoUtil::computeFreeEnergy(
       rsGrid, fxcIntegrand[iThermo], rs[iStruct], normalize);
 }
@@ -324,8 +324,7 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
 // -----------------------------------------------------------------
 
 StructPropBase::StructPropBase()
-    : verbose(MPIUtil::isRoot()),
-      csrIsInitialized(false),
+    : csrIsInitialized(false),
       computed(false),
       outVector(NPOINTS) {}
 
@@ -385,8 +384,8 @@ int StructPropBase::compute() {
     doIterations();
     computed = true;
     return 0;
-  } catch (const std::runtime_error &err) {
-    std::cerr << err.what() << std::endl;
+  } catch (const runtime_error &err) {
+    cerr << err.what() << endl;
     return 1;
   }
 }
@@ -406,27 +405,27 @@ double StructPropBase::getAlpha() const {
   return getCsr(Idx::RS_THETA).getAlpha();
 }
 
-const std::vector<double> &
-StructPropBase::getBase(std::function<double(const CSR &)> f) const {
+const vector<double> &
+StructPropBase::getBase(function<double(const CSR &)> f) const {
   for (size_t i = 0; i < csr.size(); ++i) {
     outVector[i] = f(*csr[i]);
   }
   return outVector;
 }
 
-std::vector<double> StructPropBase::getCouplingParameters() const {
+vector<double> StructPropBase::getCouplingParameters() const {
   return getBase([&](const CSR &c) { return c.getInput().getCoupling(); });
 }
 
-std::vector<double> StructPropBase::getDegeneracyParameters() const {
+vector<double> StructPropBase::getDegeneracyParameters() const {
   return getBase([&](const CSR &c) { return c.getInput().getDegeneracy(); });
 }
 
-std::vector<double> StructPropBase::getInternalEnergy() const {
+vector<double> StructPropBase::getInternalEnergy() const {
   return getBase([&](const CSR &c) { return c.getInternalEnergy(); });
 }
 
-std::vector<double> StructPropBase::getFreeEnergyIntegrand() const {
+vector<double> StructPropBase::getFreeEnergyIntegrand() const {
   return getBase([&](const CSR &c) { return c.getFreeEnergyIntegrand(); });
 }
 

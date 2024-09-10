@@ -3,6 +3,7 @@
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
+#include <fmt/core.h>
 
 using namespace std;
 
@@ -63,28 +64,23 @@ void VSStls::initScheme() { Rpa::init(); }
 
 void VSStls::initFreeEnergyIntegrand() {
   if (!thermoProp->isFreeEnergyIntegrandIncomplete()) { return; }
-  if (verbose) {
-    printf("Missing points in the free energy integrand: subcalls will be "
-           "performed to collect the necessary data\n");
-  }
-  if (verbose) {
-    printf("-----------------------------------------------------------------"
-           "----------\n");
-  }
+  println("Missing points in the free energy integrand: subcalls will be "
+          "performed to collect the necessary data");
+  println("-----------------------------------------------------------------"
+          "----------");
   VSStlsInput inTmp = in;
   while (thermoProp->isFreeEnergyIntegrandIncomplete()) {
     const double rs = thermoProp->getFirstUnsolvedStatePoint();
-    if (verbose) { printf("Subcall: solving VS scheme for rs = %.5f:\n", rs); }
+    println(fmt::format("Subcall: solving VS scheme for rs = {:.5f}", rs));
     inTmp.setCoupling(rs);
     VSStls scheme(inTmp, *thermoProp);
     scheme.compute();
     thermoProp->copyFreeEnergyIntegrand(*scheme.thermoProp);
-    if (verbose) {
-      printf("Done\n");
-      printf("-----------------------------------------------------------------"
-             "----------\n");
-    }
+    println("Done");
+    println("-----------------------------------------------------------------"
+            "----------");
   }
+  println("Subcalls completed");
 }
 
 // -----------------------------------------------------------------
@@ -102,7 +98,8 @@ ThermoProp::ThermoProp(const VSStlsInput &in_)
 // -----------------------------------------------------------------
 
 StructProp::StructProp(const VSStlsInput &in_)
-    : StructPropBase() {
+    : Logger(MPIUtil::isRoot()),
+      StructPropBase() {
   setupCSR(in_);
   setupCSRDependencies();
 }
@@ -169,12 +166,10 @@ void StructProp::doIterations() {
     }
     counter++;
   }
-  if (verbose) {
-    printf("Alpha = %.5e, Residual error "
-           "(structural properties) = %.5e\n",
-           csr[RS_THETA]->getAlpha(),
-           err);
-  }
+  println(fmt::format("Alpha = {:.5e}, Residual error "
+                      "(structural properties) = {:.5e}",
+                      csr[RS_THETA]->getAlpha(),
+                      err));
 }
 
 // -----------------------------------------------------------------

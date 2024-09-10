@@ -12,14 +12,14 @@ using namespace std;
 int ESA::compute() {
   try {
     init();
-    if (verbose) cout << "Structural properties calculation ..." << endl;
-    if (verbose) cout << "Computing static local field correction: ";
+    println("Structural properties calculation ...");
+    print("Computing static local field correction: ");
     computeSlfc();
-    if (verbose) cout << "Done" << endl;
-    if (verbose) cout << "Computing static structure factor: ";
+    println("Done");
+    print("Computing static structure factor: ");
     computeSsf();
-    if (verbose) cout << "Done" << endl;
-    if (verbose) cout << "Done" << endl;
+    println("Done");
+    println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;

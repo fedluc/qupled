@@ -5,6 +5,7 @@
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
 #include <filesystem>
+#include <fmt/core.h>
 
 using namespace std;
 using namespace vecUtil;
@@ -69,24 +70,23 @@ void QVSStls::initScheme() { Rpa::init(); }
 
 void QVSStls::initFreeEnergyIntegrand() {
   if (!thermoProp->isFreeEnergyIntegrandIncomplete()) { return; }
-  if (verbose) {
-    printf("Missing points in the free energy integrand: subcalls will be "
-           "performed to collect the necessary data\n");
-  }
+  println("Missing points in the free energy integrand: subcalls will be "
+          "performed to collect the necessary data");
+  println("-----------------------------------------------------------------"
+          "----------");
   QVSStlsInput inTmp = in;
   while (thermoProp->isFreeEnergyIntegrandIncomplete()) {
     const double rs = thermoProp->getFirstUnsolvedStatePoint();
-    if (verbose) { printf("Subcall: solving qVS scheme for rs = %.5f:\n", rs); }
+    println(fmt::format("Subcall: solving qVS scheme for rs = {:.5f}", rs));
     inTmp.setCoupling(rs);
     QVSStls scheme(inTmp, *thermoProp);
     scheme.compute();
     thermoProp->copyFreeEnergyIntegrand(*(scheme.thermoProp));
-    if (verbose) {
-      printf("Done\n");
-      printf("-----------------------------------------------------------------"
-             "----------\n");
-    }
+    println("Done");
+    println("-----------------------------------------------------------------"
+            "----------");
   }
+  println("Subcalls completed");
 }
 
 // -----------------------------------------------------------------
@@ -134,7 +134,8 @@ Vector2D QThermoProp::getAdr() {
 // -----------------------------------------------------------------
 
 QStructProp::QStructProp(const QVSStlsInput &in_)
-    : StructPropBase() {
+    : Logger(MPIUtil::isRoot()),
+      StructPropBase() {
   setupCSR(in_);
   setupCSRDependencies();
 }
@@ -202,12 +203,10 @@ void QStructProp::doIterations() {
     }
     counter++;
   }
-  if (verbose) {
-    printf("Alpha = %.5e, Residual error "
-           "(structural properties) = %.5e\n",
-           csr[RS_THETA]->getAlpha(),
-           err);
-  }
+  println(fmt::format("Alpha = {:.5e}, Residual error "
+                      "(structural properties) = {:.5e}",
+                      csr[RS_THETA]->getAlpha(),
+                      err));
   // Set static structure factor for output
   for (auto &c : csr) {
     c->updateSsf();

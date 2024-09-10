@@ -28,6 +28,7 @@ add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 # Source code
 Python3_add_library(qupled MODULE
+		    logger.cpp
 		    numerics.cpp
 		    vector2D.cpp
 		    vector3D.cpp

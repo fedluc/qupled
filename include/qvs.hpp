@@ -33,8 +33,6 @@ private:
 
   // Input
   QVSStlsInput in;
-  // Verbosity
-  using VSBase::verbose;
   // Thermodyanmic properties
   std::shared_ptr<QThermoProp> thermoProp;
   // Initialize
@@ -44,6 +42,9 @@ private:
   double computeAlpha();
   // Iterations to solve the qvsstls-scheme
   void updateSolution();
+  // Print info
+  void print(const std::string &msg) { VSBase::print(msg); }
+  void println(const std::string &msg) { VSBase::println(msg); }
 };
 
 // -----------------------------------------------------------------
@@ -70,7 +71,7 @@ private:
 // Class to handle the structural properties
 // -----------------------------------------------------------------
 
-class QStructProp : public StructPropBase {
+class QStructProp : public Logger, public StructPropBase {
 
 public:
 

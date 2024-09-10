@@ -39,9 +39,9 @@ Stls::Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_)
 int Stls::compute() {
   try {
     init();
-    if (verbose) cout << "Structural properties calculation ..." << endl;
+    println("Structural properties calculation ...");
     doIterations();
-    if (verbose) cout << "Done" << endl;
+    println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;
@@ -53,9 +53,9 @@ int Stls::compute() {
 void Stls::init() {
   Rpa::init();
   if (useIet) {
-    if (verbose) cout << "Computing bridge function adder: ";
+    print("Computing bridge function adder: ");
     computeBf();
-    if (verbose) cout << "Done" << endl;
+    println("Done");
   }
 }
 
@@ -132,12 +132,10 @@ void Stls::doIterations() {
     // End timing
     double toc = timer();
     // Print diagnostic
-    if (verbose) {
-      printf("--- iteration %d ---\n", counter);
-      printf("Elapsed time: %f seconds\n", toc - tic);
-      printf("Residual error: %.5e\n", err);
-      fflush(stdout);
-    }
+    println(fmt::format("--- iteration {:d} ---", counter));
+    println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
+    println(fmt::format("Residual error: {:.5e}", err));
+    fflush(stdout);
   }
 }
 
