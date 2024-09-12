@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build & Test (macOS)
 
 on:
   push:
@@ -8,11 +8,14 @@ on:
     branches:
       - master
 
+env:
+  PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
+
 jobs:
 
   build_and_test:
   
-    runs-on: macos-13
+    runs-on: macos-latest
     
     steps:
     - name: Checkout repository
@@ -22,13 +25,15 @@ jobs:
       run: |
         brew update
         brew install cmake gsl libomp openmpi fmt boost-python3
+        python3 -m venv ${PYTHON_VENV_ROOT}
+        source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install --upgrade pip
         pip3 install -r python/requirements.txt
         
     - name: Configure CMake
       run: |
         export OpenMP_ROOT=$(brew --prefix)/opt/libomp
-        cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=Release
+        cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=OFF
         
     - name: Build
       run: |
@@ -36,5 +41,6 @@ jobs:
         
     - name: Tests
       run: |
+        source ${PYTHON_VENV_ROOT}/bin/activate
         cd build
         pytest -k "not test_examples" tests

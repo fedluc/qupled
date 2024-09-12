@@ -2,7 +2,7 @@
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(Boost
 	     COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
-	     COMPONENTS numpy3 REQUIRED)
+	     COMPONENTS numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED)
 
 
 # Setup MPI environment
@@ -65,8 +65,8 @@ if(USE_MPI)
 endif()
 target_link_libraries(qupled PUBLIC
 		      OpenMP::OpenMP_CXX
-		      Boost::python
-		      Boost::numpy3
+		      Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}
+		      Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}
 		      GSL::gsl
 		      GSL::gslcblas
 		      fmt::fmt)
