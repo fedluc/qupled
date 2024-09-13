@@ -25,8 +25,8 @@ def test_init(stls_input_instance):
 
 
 def test_defaults(stls_input_instance):
-    assert stls_input_instance.error == 0
-    assert stls_input_instance.mixing == 0
+    assert np.isnan(stls_input_instance.error)
+    assert np.isnan(stls_input_instance.mixing)
     assert stls_input_instance.iet == ""
     assert stls_input_instance.iterations == 0
     assert stls_input_instance.outputFrequency == 0
@@ -120,31 +120,43 @@ def test_guess(stls_input_instance):
     assert excinfo.value.args[0] == "The initial guess is inconsistent"
 
 
+def test_isEqual_default(stls_input_instance):
+    assert not stls_input_instance.isEqual(stls_input_instance)
+
+
 def test_isEqual(stls_input_instance):
     thisStls = qp.StlsInput()
-    assert stls_input_instance.isEqual(thisStls)
     thisStls.coupling = 2.0
-    thisStls.theory = "QSTLS"
-    assert not stls_input_instance.isEqual(thisStls)
+    thisStls.degeneracy = 1.0
+    thisStls.intError = 0.1
+    thisStls.threads = 1
+    thisStls.theory = "STLS"
+    thisStls.matsubara = 1
+    thisStls.resolution = 0.1
+    thisStls.cutoff = 1.0
+    thisStls.error = 0.1
+    thisStls.mixing = 1.0
+    thisStls.outputFrequency = 1
+    assert thisStls.isEqual(thisStls)
 
 
 def test_print(stls_input_instance, capfd):
     stls_input_instance.print()
     captured = capfd.readouterr().out
     captured = captured.split("\n")
-    assert "Coupling parameter = 0" in captured
-    assert "Degeneracy parameter = 0" in captured
+    assert "Coupling parameter = nan" in captured
+    assert "Degeneracy parameter = nan" in captured
     assert "Number of OMP threads = 0" in captured
     assert "Scheme for 2D integrals = " in captured
-    assert "Integral relative error = 0" in captured
+    assert "Integral relative error = nan" in captured
     assert "Theory to be solved = " in captured
-    assert "Guess for chemical potential = 0,0" in captured
+    assert "Guess for chemical potential = " in captured
     assert "Number of Matsubara frequencies = 0" in captured
-    assert "Wave-vector resolution = 0" in captured
-    assert "Wave-vector cutoff = 0" in captured
+    assert "Wave-vector resolution = nan" in captured
+    assert "Wave-vector cutoff = nan" in captured
     assert "Iet mapping scheme = " in captured
     assert "Maximum number of iterations = 0" in captured
-    assert "Minimum error for convergence = 0" in captured
-    assert "Mixing parameter = 0" in captured
+    assert "Minimum error for convergence = nan" in captured
+    assert "Mixing parameter = nan" in captured
     assert "Output frequency = 0" in captured
     assert "File with recovery data = " in captured

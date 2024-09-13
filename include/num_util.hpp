@@ -10,7 +10,8 @@
 namespace numUtil {
 
   constexpr double Inf = std::numeric_limits<double>::infinity();
-  constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
+  constexpr double NaN = std::numeric_limits<double>::signaling_NaN();
+  constexpr double iNaN = std::numeric_limits<int>::signaling_NaN();
   constexpr double dtol = 1e-10;
 
   // Check if a double is zero within the tolerance dTol

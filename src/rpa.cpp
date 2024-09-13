@@ -178,12 +178,14 @@ vector<double> Rpa::getRdf(const vector<double> &r) const {
 }
 
 vector<double> Rpa::getSdr() const {
-  if (in.getDegeneracy() == 0.0) {
+  const double theta = in.getDegeneracy();
+  if (isnan(theta)) { return vector<double>(); }
+  if (theta == 0.0) {
     println("The static density response cannot be computed in the "
             "ground state.");
     return vector<double>();
   }
-  vector<double> sdr(wvg.size(), -1.5 * in.getDegeneracy());
+  vector<double> sdr(wvg.size(), -1.5 * theta);
   const double fact = 4 * lambda * in.getCoupling() / M_PI;
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double x2 = wvg[i] * wvg[i];

@@ -1,11 +1,20 @@
 #ifndef INPUT_HPP
 #define INPUT_HPP
 
+#include "num_util.hpp"
 #include "vector2D.hpp"
 #include <cassert>
 #include <iostream>
 #include <string>
 #include <vector>
+
+// -----------------------------------------------------------------
+// Default values
+// -----------------------------------------------------------------
+
+constexpr double DEFAULT_DOUBLE = numUtil::NaN;
+constexpr int DEFAULT_INT = numUtil::iNaN;
+constexpr bool DEFAULT_BOOL = false;
 
 // -----------------------------------------------------------------
 // Base class to handle input for the dielectric schemes
@@ -17,14 +26,12 @@ public:
 
   // Constructor
   explicit Input()
-      : intError(0),
-        rs(0),
-        Theta(0),
-        nThreads(0),
-        isClassicTheory(false),
-        isQuantumTheory(false),
-        int2DScheme(""),
-        theory("") {}
+      : intError(DEFAULT_DOUBLE),
+        rs(DEFAULT_DOUBLE),
+        Theta(DEFAULT_DOUBLE),
+        nThreads(DEFAULT_INT),
+        isClassicTheory(DEFAULT_BOOL),
+        isQuantumTheory(DEFAULT_BOOL) {}
   // Setters
   void setCoupling(const double &rs);
   void setDegeneracy(const double &Theta);
@@ -74,11 +81,10 @@ public:
 
   // Contructor
   explicit IterationInput()
-      : aMix(0),
-        errMin(0),
-        nIter(0),
-        outIter(0),
-        recoveryFileName("") {}
+      : aMix(DEFAULT_DOUBLE),
+        errMin(DEFAULT_DOUBLE),
+        nIter(DEFAULT_INT),
+        outIter(DEFAULT_INT) {}
   // Setters
   void setErrMin(const double &errMin);
   void setMixingParameter(const double &aMix);
@@ -126,9 +132,6 @@ public:
       return wvg == other.wvg && slfc == other.slfc;
     }
   };
-  // Contructor
-  explicit ClassicInput()
-      : IETMapping("") {}
   // Setters
   void setGuess(const Guess &guess);
   void setIETMapping(const std::string &IETMapping);
@@ -162,17 +165,12 @@ public:
     std::vector<double> wvg;
     std::vector<double> ssf;
     Vector2D adr;
-    int matsubara = 0;
+    int matsubara = DEFAULT_INT;
     bool operator==(const Guess &other) const {
       return wvg == other.wvg && ssf == other.ssf && adr == other.adr &&
              matsubara == other.matsubara;
     }
   };
-  // Contructors
-  explicit QuantumInput()
-      : fixed(""),
-        fixedIet(""),
-        IETMapping("") {}
   // Setters
   void setFixed(const std::string &fixed);
   void setFixedIet(const std::string &fixedIet);
@@ -212,10 +210,9 @@ public:
 
   // Constructor
   explicit RpaInput()
-      : dx(0),
-        xmax(0),
-        nl(0),
-        muGuess(std::vector<double>(2, 0)) {}
+      : dx(DEFAULT_DOUBLE),
+        xmax(DEFAULT_DOUBLE),
+        nl(DEFAULT_INT) {}
   // Setters
   void setChemicalPotentialGuess(const std::vector<double> &muGuess);
   void setNMatsubara(const int &nMatsubara);
@@ -311,11 +308,10 @@ public:
   };
   // Contructor
   explicit VSInput()
-      : alphaGuess(std::vector<double>(2, 0)),
-        drs(0),
-        dTheta(0),
-        errMinAlpha(0),
-        nIterAlpha(0) {}
+      : drs(DEFAULT_DOUBLE),
+        dTheta(DEFAULT_DOUBLE),
+        errMinAlpha(DEFAULT_DOUBLE),
+        nIterAlpha(DEFAULT_INT) {}
   // Setters
   void setAlphaGuess(const std::vector<double> &alphaGuess);
   void setCouplingResolution(const double &drs);

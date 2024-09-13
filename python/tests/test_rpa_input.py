@@ -1,4 +1,5 @@
 import os
+import math
 import pytest
 import set_path
 import qupled.qupled as qp
@@ -23,16 +24,16 @@ def test_init(rpa_input_instance):
 
 
 def test_defaults(rpa_input_instance):
-    assert rpa_input_instance.coupling == 0
-    assert rpa_input_instance.degeneracy == 0
+    assert math.isnan(rpa_input_instance.coupling)
+    assert math.isnan(rpa_input_instance.degeneracy)
     assert rpa_input_instance.theory == ""
-    assert rpa_input_instance.intError == 0
+    assert math.isnan(rpa_input_instance.intError)
     assert rpa_input_instance.int2DScheme == ""
     assert rpa_input_instance.threads == 0
-    assert all(x == y for x, y in zip(rpa_input_instance.chemicalPotential, [0, 0]))
+    assert rpa_input_instance.chemicalPotential.size == 0
     assert rpa_input_instance.matsubara == 0
-    assert rpa_input_instance.resolution == 0
-    assert rpa_input_instance.cutoff == 0
+    assert math.isnan(rpa_input_instance.resolution)
+    assert math.isnan(rpa_input_instance.cutoff)
 
 
 def test_coupling(rpa_input_instance):
@@ -154,25 +155,35 @@ def test_cutoff(rpa_input_instance):
     )
 
 
+def test_isEqual_default(rpa_input_instance):
+    assert not rpa_input_instance.isEqual(rpa_input_instance)
+
+
 def test_isEqual(rpa_input_instance):
     thisRpa = qp.RpaInput()
-    assert rpa_input_instance.isEqual(thisRpa)
     thisRpa.coupling = 2.0
-    thisRpa.theory = "QSTLS"
-    assert not rpa_input_instance.isEqual(thisRpa)
+    thisRpa.degeneracy = 1.0
+    thisRpa.intError = 0.1
+    thisRpa.threads = 1
+    thisRpa.theory = "STLS"
+    thisRpa.matsubara = 1
+    thisRpa.resolution = 0.1
+    thisRpa.cutoff = 1.0
+    thisRpa.error = 0.1
+    assert thisRpa.isEqual(thisRpa)
 
 
 def test_print(rpa_input_instance, capfd):
     rpa_input_instance.print()
     captured = capfd.readouterr().out
     captured = captured.split("\n")
-    assert "Coupling parameter = 0" in captured
-    assert "Degeneracy parameter = 0" in captured
+    assert "Coupling parameter = nan" in captured
+    assert "Degeneracy parameter = nan" in captured
     assert "Number of OMP threads = 0" in captured
     assert "Scheme for 2D integrals = " in captured
-    assert "Integral relative error = 0" in captured
+    assert "Integral relative error = nan" in captured
     assert "Theory to be solved = " in captured
-    assert "Guess for chemical potential = 0,0" in captured
+    assert "Guess for chemical potential = " in captured
     assert "Number of Matsubara frequencies = 0" in captured
-    assert "Wave-vector resolution = 0" in captured
-    assert "Wave-vector cutoff = 0" in captured
+    assert "Wave-vector resolution = nan" in captured
+    assert "Wave-vector cutoff = nan" in captured

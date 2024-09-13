@@ -1,6 +1,7 @@
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include <cmath>
+#include <fmt/core.h>
 
 using namespace std;
 using namespace MPIUtil;
@@ -73,7 +74,8 @@ void Input::print() const {
 
 bool Input::isEqual(const Input &in) const {
   return (int2DScheme == in.int2DScheme && nThreads == in.nThreads &&
-          rs == in.rs && theory == in.theory && Theta == in.Theta);
+          rs == in.rs && theory == in.theory && Theta == in.Theta &&
+          intError == in.intError);
 }
 
 // -----------------------------------------------------------------
@@ -235,8 +237,11 @@ void RpaInput::setWaveVectorGridCutoff(const double &xmax) {
 void RpaInput::print() const {
   if (!isRoot()) { return; }
   Input::print();
-  cout << "Guess for chemical potential = " << muGuess.at(0) << ","
-       << muGuess.at(1) << endl;
+  string muString;
+  if (!muGuess.empty()) {
+    muString = fmt::format("{%.3f}, {%.3f}", muGuess.at(0), muGuess.at(1));
+  }
+  cout << "Guess for chemical potential = " << muString << endl;
   cout << "Number of Matsubara frequencies = " << nl << endl;
   cout << "Wave-vector resolution = " << dx << endl;
   cout << "Wave-vector cutoff = " << xmax << endl;
@@ -345,8 +350,12 @@ void VSInput::print() const {
   if (!isRoot()) { return; }
   RpaInput::print();
   IterationInput::print();
-  cout << "Guess for the free parameter = " << alphaGuess.at(0) << ","
-       << alphaGuess.at(1) << endl;
+  string alphaString;
+  if (!alphaGuess.empty()) {
+    alphaString =
+        fmt::format("{%.3f}, {%.3f}", alphaGuess.at(0), alphaGuess.at(1));
+  }
+  cout << "Guess for the free parameter = " << alphaString << endl;
   cout << "Resolution for the coupling parameter grid = " << drs << endl;
   cout << "Resolution for the degeneracy parameter grid = " << dTheta << endl;
   cout << "Minimum error for convergence (alpha) = " << errMinAlpha << endl;

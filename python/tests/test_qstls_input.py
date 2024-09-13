@@ -89,32 +89,45 @@ def test_guessIet(qstls_input_instance):
         assert excinfo.value.args[0] == "The initial guess is inconsistent"
 
 
-def test_isEqual(qstls_input_instance):
+def test_isEqual_default(qstls_input_instance):
     thisQstls = qp.QstlsInput()
-    assert qstls_input_instance.isEqual(thisQstls)
-    thisQstls.coupling = 2.0
-    thisQstls.theory = "STLS"
     assert not qstls_input_instance.isEqual(thisQstls)
+
+
+def test_isEqual_nonDefault(qstls_input_instance):
+    thisQstls = qp.QstlsInput()
+    thisQstls.coupling = 2.0
+    thisQstls.degeneracy = 1.0
+    thisQstls.intError = 0.1
+    thisQstls.threads = 1
+    thisQstls.theory = "STLS"
+    thisQstls.matsubara = 1
+    thisQstls.resolution = 0.1
+    thisQstls.cutoff = 1.0
+    thisQstls.error = 0.1
+    thisQstls.mixing = 1.0
+    thisQstls.outputFrequency = 1
+    assert thisQstls.isEqual(thisQstls)
 
 
 def test_print(qstls_input_instance, capfd):
     qstls_input_instance.print()
     captured = capfd.readouterr().out
     captured = captured.split("\n")
-    assert "Coupling parameter = 0" in captured
-    assert "Degeneracy parameter = 0" in captured
+    assert "Coupling parameter = nan" in captured
+    assert "Degeneracy parameter = nan" in captured
     assert "Number of OMP threads = 0" in captured
     assert "Scheme for 2D integrals = " in captured
-    assert "Integral relative error = 0" in captured
+    assert "Integral relative error = nan" in captured
     assert "Theory to be solved = " in captured
-    assert "Guess for chemical potential = 0,0" in captured
+    assert "Guess for chemical potential = " in captured
     assert "Number of Matsubara frequencies = 0" in captured
-    assert "Wave-vector resolution = 0" in captured
-    assert "Wave-vector cutoff = 0" in captured
+    assert "Wave-vector resolution = nan" in captured
+    assert "Wave-vector cutoff = nan" in captured
     assert "Iet mapping scheme = " in captured
     assert "Maximum number of iterations = 0" in captured
-    assert "Minimum error for convergence = 0" in captured
-    assert "Mixing parameter = 0" in captured
+    assert "Minimum error for convergence = nan" in captured
+    assert "Mixing parameter = nan" in captured
     assert "Output frequency = 0" in captured
     assert "File with recovery data = " in captured
     assert "File with fixed adr component = " in captured
