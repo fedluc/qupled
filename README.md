@@ -1,6 +1,6 @@
 # Qupled: quantum plasmas and dielectric formalism
 
-Qupled is a python package that can be used to compute the properties of quantum plasmas via the dielectric formalism. The plasma properties can be computed to arbitrary precision by leveraging on a simple Python interface combined with the speed of C++
+Qupled is a Python package designed for calculating the properties of quantum plasmas using the dielectric formalism. By combining a straightforward Python interface with the speed of C++, it allows for efficient and accurate computations of quantum plasma properties.
 
 <p align="center">
   <img src="examples/readme/qupled_animation_light.svg#gh-light-mode-only" width="100%">
@@ -9,7 +9,11 @@ Qupled is a python package that can be used to compute the properties of quantum
 
 ## Status
 
-[![Build & Test Status](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml) [![Build & Test Status (no MPI)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_nompi_macos.yml) [![Code Formatting](https://github.com/fedluc/qupled/actions/workflows/formatting.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/formatting.yml)
+[![Build & Test (Linux)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml)
+[![Build & Test (Linux-MPI)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu_mpi.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu_mpi.yml)
+[![Build & Test (macOS)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml)
+[![Build & Test (macOS-MPI)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos_mpi.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos_mpi.yml)
+[![Code Formatting](https://github.com/fedluc/qupled/actions/workflows/formatting.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/formatting.yml)
 
 ## Dependencies
 
