@@ -2,7 +2,7 @@ import os
 import pytest
 import set_path
 from qupled.classic import ESA
-from qupled.classic import Rpa
+from qupled.classic import ClassicScheme
 
 
 @pytest.fixture
@@ -11,7 +11,7 @@ def esa_instance():
 
 
 def test_default(esa_instance):
-    assert issubclass(ESA, Rpa)
+    assert issubclass(ESA, ClassicScheme)
     assert all(x == y for x, y in zip(esa_instance.allowedTheories, ["ESA"]))
     assert esa_instance.inputs.coupling == 1.0
     assert esa_instance.inputs.degeneracy == 1.0
@@ -42,11 +42,11 @@ def test_set_input():
 def test_compute(esa_instance, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCheckInputs = mocker.patch("qupled.classic.Rpa._checkInputs")
+    mockCheckInputs = mocker.patch("qupled.classic.ESA._checkInputs")
     mockCompute = mocker.patch("qupled.qupled.ESA.compute")
-    mockCheckStatusAndClean = mocker.patch("qupled.classic.Rpa._checkStatusAndClean")
-    mockSetHdfFile = mocker.patch("qupled.classic.Rpa._setHdfFile")
-    mockSave = mocker.patch("qupled.classic.Rpa._save")
+    mockCheckStatusAndClean = mocker.patch("qupled.classic.ESA._checkStatusAndClean")
+    mockSetHdfFile = mocker.patch("qupled.classic.ESA._setHdfFile")
+    mockSave = mocker.patch("qupled.classic.ESA._save")
     esa_instance.compute()
     assert mockMPITime.call_count == 2
     assert mockMPIBarrier.call_count == 1
