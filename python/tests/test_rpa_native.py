@@ -20,7 +20,16 @@ def test_rpa_properties():
 
 
 def test_rpa_compute():
-    inputs = qpc.Rpa(1.0, 1.0).inputs
+    inputs = qp.RpaInput()
+    inputs.coupling = 1.0
+    inputs.degeneracy = 1.0
+    inputs.theory = "RPA"
+    inputs.chemicalPotential = [-10,10]
+    inputs.cutoff = 10.0
+    inputs.matsubara = 128
+    inputs.resolution = 0.1
+    inputs.intError = 1.0e-5
+    inputs.threads = 1
     scheme = qp.Rpa(inputs)
     scheme.compute()
     nx = scheme.wvg.size
