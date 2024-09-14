@@ -10,8 +10,9 @@ import qupled.qupled as qp
 # ClassicScheme class
 # -----------------------------------------------------------------------
 
+
 class ClassicScheme(ABC):
-    
+
     # Setup inputs object
     def _setInputs(
         self,
@@ -34,20 +35,17 @@ class ClassicScheme(ABC):
         self.inputs.intError = 1.0e-5
         self.inputs.threads = 1
 
-
     # Compute the scheme
     @abstractmethod
     def compute(self):
         pass
 
-    
     # Check input before computing
     def _checkInputs(self) -> None:
         """Checks that the content of :obj:`inputs` is correct"""
         if self.inputs.theory not in self.allowedTheories:
             sys.exit("Invalid dielectric theory")
 
-    
     # Check that the dielectric scheme was solved without errors
     @qu.MPI.runOnlyOnRoot
     def _checkStatusAndClean(self, status: bool) -> None:
@@ -63,7 +61,6 @@ class ClassicScheme(ABC):
         else:
             sys.exit("Error while solving the dielectric theory")
 
-    
     # Save results to disk
     def _setHdfFile(self) -> None:
         """Sets the name of the hdf file used to store the output"""
@@ -72,7 +69,6 @@ class ClassicScheme(ABC):
             self.inputs.degeneracy,
             self.inputs.theory,
         )
-
 
     @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
@@ -96,7 +92,6 @@ class ClassicScheme(ABC):
         pd.DataFrame(self.scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
         pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
 
-
     # Compute radial distribution function
     def computeRdf(
         self, rdfGrid: np.ndarray = None, writeToHdf: bool = True
@@ -117,7 +112,6 @@ class ClassicScheme(ABC):
             writeToHdf = False
         return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
 
-
     # Compute the internal energy
     def computeInternalEnergy(self) -> float:
         """Computes the internal energy from the data stored in the output file.
@@ -131,7 +125,6 @@ class ClassicScheme(ABC):
             self.scheme.wvg, self.scheme.ssf, self.inputs.coupling
         )
 
-    
     # Plot results
     @qu.MPI.runOnlyOnRoot
     def plot(
@@ -157,7 +150,6 @@ class ClassicScheme(ABC):
             self.computeRdf(rdfGrid)
         qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
 
-    
     # Check if a solution is available to perform a given action
     def _checkSolution(self, action: str) -> None:
         """Check if a solution is available to be used
@@ -174,16 +166,15 @@ class ClassicScheme(ABC):
 # ClassicSchemeNew class
 # -----------------------------------------------------------------------
 
-class ClassicSchemeNew(): # making this inherit from ABC causes issues
 
-    
+class ClassicSchemeNew:  # making this inherit from ABC causes issues
+
     # Check input before computing
     def _checkInputs(self) -> None:
         """Checks that the content of :obj:`inputs` is correct"""
         if self.inputs.theory not in self.allowedTheories:
             sys.exit("Invalid dielectric theory")
 
-    
     # Check that the dielectric scheme was solved without errors
     @qu.MPI.runOnlyOnRoot
     def _checkStatusAndClean(self, status: bool) -> None:
@@ -199,7 +190,6 @@ class ClassicSchemeNew(): # making this inherit from ABC causes issues
         else:
             sys.exit("Error while solving the dielectric theory")
 
-    
     # Save results to disk
     def _setHdfFile(self) -> None:
         """Sets the name of the hdf file used to store the output"""
@@ -208,7 +198,6 @@ class ClassicSchemeNew(): # making this inherit from ABC causes issues
             self.inputs.degeneracy,
             self.inputs.theory,
         )
-
 
     @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
@@ -231,7 +220,6 @@ class ClassicSchemeNew(): # making this inherit from ABC causes issues
         pd.DataFrame(self.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
         pd.DataFrame(self.wvg).to_hdf(self.hdfFileName, key="wvg")
 
-
     # Compute radial distribution function
     def computeRdf(
         self, rdfGrid: np.ndarray = None, writeToHdf: bool = True
@@ -251,7 +239,6 @@ class ClassicSchemeNew(): # making this inherit from ABC causes issues
             writeToHdf = False
         return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
 
-
     # Compute the internal energy
     def computeInternalEnergy(self) -> float:
         """Computes the internal energy from the data stored in the output file.
@@ -260,11 +247,8 @@ class ClassicSchemeNew(): # making this inherit from ABC causes issues
             The internal energy
 
         """
-        return qp.computeInternalEnergy(
-            self.wvg, self.ssf, self.inputs.coupling
-        )
+        return qp.computeInternalEnergy(self.wvg, self.ssf, self.inputs.coupling)
 
-    
     # Plot results
     @qu.MPI.runOnlyOnRoot
     def plot(
@@ -322,7 +306,7 @@ class Rpa(qp.Rpa, ClassicSchemeNew):
         # Allowed theories
         self.allowedTheories = ["RPA"]
         # Input object
-        self.inputs: qupled.qupled.RpaInput = inputs #: Inputs to solve the scheme.
+        self.inputs: qupled.qupled.RpaInput = inputs  #: Inputs to solve the scheme.
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 
@@ -414,8 +398,7 @@ class ESA(ClassicScheme):
         self.scheme: qp.ESA = None
         # File to store output on disk
         self.hdfFileName = None
-        
-        
+
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
@@ -429,7 +412,8 @@ class ESA(ClassicScheme):
         self._checkStatusAndClean(status)
         self._setHdfFile()
         self._save()
-        
+
+
 # -----------------------------------------------------------------------
 # Stls class
 # -----------------------------------------------------------------------
