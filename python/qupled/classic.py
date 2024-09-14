@@ -169,12 +169,133 @@ class ClassicScheme(ABC):
         if self.scheme is None:
             sys.exit("No solution to " + action)
 
+
+# -----------------------------------------------------------------------
+# ClassicSchemeNew class
+# -----------------------------------------------------------------------
+
+class ClassicSchemeNew(): # making this inherit from ABC causes issues
+
+    
+    # Check input before computing
+    def _checkInputs(self) -> None:
+        """Checks that the content of :obj:`inputs` is correct"""
+        if self.inputs.theory not in self.allowedTheories:
+            sys.exit("Invalid dielectric theory")
+
+    
+    # Check that the dielectric scheme was solved without errors
+    @qu.MPI.runOnlyOnRoot
+    def _checkStatusAndClean(self, status: bool) -> None:
+        """Checks that the scheme was solved correctly and removes temporarary files generated at run-time
+
+        Args:
+            status: status obtained from the native code. If status == 0 the scheme was solved correctly.
+        """
+        if status == 0:
+            if os.path.isfile(self.recovery):
+                os.remove(self.recovery)
+            print("Dielectric theory solved successfully!")
+        else:
+            sys.exit("Error while solving the dielectric theory")
+
+    
+    # Save results to disk
+    def _setHdfFile(self) -> None:
+        """Sets the name of the hdf file used to store the output"""
+        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (
+            self.inputs.coupling,
+            self.inputs.degeneracy,
+            self.inputs.theory,
+        )
+
+
+    @qu.MPI.runOnlyOnRoot
+    def _save(self) -> None:
+        """Stores the results obtained by solving the scheme."""
+        pd.DataFrame(
+            {
+                "coupling": self.inputs.coupling,
+                "degeneracy": self.inputs.degeneracy,
+                "theory": self.inputs.theory,
+                "resolution": self.inputs.resolution,
+                "cutoff": self.inputs.cutoff,
+                "matsubara": self.inputs.matsubara,
+            },
+            index=["info"],
+        ).to_hdf(self.hdfFileName, key="info", mode="w")
+        pd.DataFrame(self.idr).to_hdf(self.hdfFileName, key="idr")
+        pd.DataFrame(self.sdr).to_hdf(self.hdfFileName, key="sdr")
+        pd.DataFrame(self.slfc).to_hdf(self.hdfFileName, key="slfc")
+        pd.DataFrame(self.ssf).to_hdf(self.hdfFileName, key="ssf")
+        pd.DataFrame(self.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
+        pd.DataFrame(self.wvg).to_hdf(self.hdfFileName, key="wvg")
+
+
+    # Compute radial distribution function
+    def computeRdf(
+        self, rdfGrid: np.ndarray = None, writeToHdf: bool = True
+    ) -> np.array:
+        """Computes the radial distribution function from the data stored in the output file.
+
+        Args:
+            rdfGrid: The grid used to compute the radial distribution function.
+                (Defaults to None, see :func:`qupled.util.Hdf.computeRdf`)
+            writeToHdf: Flag marking whether the rdf data should be added to the output hdf file, default to True
+
+        Returns:
+            The radial distribution function
+
+        """
+        if qu.MPI().getRank() > 0:
+            writeToHdf = False
+        return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
+
+
+    # Compute the internal energy
+    def computeInternalEnergy(self) -> float:
+        """Computes the internal energy from the data stored in the output file.
+
+        Returns:
+            The internal energy
+
+        """
+        return qp.computeInternalEnergy(
+            self.wvg, self.ssf, self.inputs.coupling
+        )
+
+    
+    # Plot results
+    @qu.MPI.runOnlyOnRoot
+    def plot(
+        self,
+        toPlot: list[str],
+        matsubara: np.ndarray = None,
+        rdfGrid: np.ndarray = None,
+    ) -> None:
+        """Plots the results stored in the output file`.
+
+        Args:
+            toPlot: A list of quantities to plot. This list can include all the values written to the
+                 output hdf file. The radial distribution funciton is computed and added to the output
+                 file if necessary
+            matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
+                (Default = None, all matsubara frequencies are plotted)
+            rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
+                distribution function is plotted (Default = None, see :func:`qupled.classic.Stls.computeRdf`)
+
+        """
+        if "rdf" in toPlot:
+            self.computeRdf(rdfGrid)
+        qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
+
+
 # -----------------------------------------------------------------------
 # RPA class
 # -----------------------------------------------------------------------
 
 
-class Rpa(ClassicScheme):
+class Rpa(qp.Rpa, ClassicSchemeNew):
     """
     Class used to setup and solve the classical Randon-Phase approximaton scheme as described by
     `Bohm and Pines <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
@@ -194,30 +315,14 @@ class Rpa(ClassicScheme):
     # Constructor
     def __init__(
         self,
-        coupling: float,
-        degeneracy: float,
-        chemicalPotential: list[float] = [-10.0, 10.0],
-        cutoff: float = 10.0,
-        matsubara: int = 128,
-        resolution: float = 0.1,
+        inputs: qp.RpaInput,
     ):
+        # Construct the base classes
+        super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["RPA"]
         # Input object
-        self.inputs: qupled.qupled.RpaInput = (
-            qp.RpaInput()
-        )  #: Inputs to solve the scheme.
-        self._setInputs(
-            coupling,
-            degeneracy,
-            "RPA",
-            chemicalPotential,
-            cutoff,
-            matsubara,
-            resolution,
-        )
-        # Scheme to solve
-        self.scheme: qp.Rpa = None
+        self.inputs: qupled.qupled.RpaInput = inputs #: Inputs to solve the scheme.
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 
@@ -254,8 +359,7 @@ class Rpa(ClassicScheme):
         The name of the hdf file is stored in :obj:`hdfFileName`.
         """
         self._checkInputs()
-        self.scheme = qp.Rpa(self.inputs)
-        status = self.scheme.compute()
+        status = super().compute()
         self._checkStatusAndClean(status)
         self._setHdfFile()
         self._save()
