@@ -66,20 +66,16 @@ protected:
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
-  void initialGuessSsf(const std::vector<double> &wvg_,
+  bool initialGuessFromRecovery();
+  bool initialGuessFromInput();
+  bool initialGuessSsf(const std::vector<double> &wvg_,
                        const std::vector<double> &adr_);
-  void initialGuessAdr(const std::vector<double> &wvg_, const Vector2D &adr_);
+  bool initialGuessAdr(const std::vector<double> &wvg_, const Vector2D &adr_);
   double computeError() const;
   void updateSolution();
   // Recovery files
   void writeRecovery();
-  void readRecovery(const std::string &fileName,
-                    std::vector<double> &wvg_,
-                    Vector3D &adrFixed_,
-                    double &Theta,
-                    int &nl) const;
-  void readRecovery(const std::string &fileName,
-                    std::vector<double> &wvg_,
+  void readRecovery(std::vector<double> &wvg_,
                     std::vector<double> &ssf_,
                     Vector2D &adr_,
                     Vector3D &adrFixed_,

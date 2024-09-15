@@ -142,38 +142,44 @@ void Stls::doIterations() {
 // Initial guess for stls iterations
 void Stls::initialGuess() {
   // From recovery file
-  if (!in.getRecoveryFileName().empty()) {
-    vector<double> wvgFile;
-    vector<double> slfcFile;
-    readRecovery(wvgFile, slfcFile);
-    const Interpolator1D slfci(wvgFile, slfcFile);
-    const double xmaxi = wvgFile.back();
-    for (size_t i = 0; i < wvg.size(); ++i) {
-      const double x = wvg[i];
-      if (x <= xmaxi) {
-        slfc[i] = slfci.eval(x);
-      } else {
-        slfc[i] = 1.0;
-      }
-    }
-    return;
-  }
+  if (initialGuessFromRecovery()) { return; }
   // From guess in input
-  if (in.getGuess().wvg.size() > 0) {
-    const Interpolator1D slfci(in.getGuess().wvg, in.getGuess().slfc);
-    const double xmaxi = in.getGuess().wvg.back();
-    for (size_t i = 0; i < wvg.size(); ++i) {
-      const double x = wvg[i];
-      if (x <= xmaxi) {
-        slfc[i] = slfci.eval(x);
-      } else {
-        slfc[i] = 1.0;
-      }
-    }
-    return;
-  }
+  if (initialGuessFromInput()) { return; }
   // Default
   fill(slfc.begin(), slfc.end(), 0.0);
+}
+
+bool Stls::initialGuessFromRecovery() {
+  vector<double> wvgFile;
+  vector<double> slfcFile;
+  readRecovery(wvgFile, slfcFile);
+  const Interpolator1D slfci(wvgFile, slfcFile);
+  if (!slfci.isValid()) { return false; }
+  const double xmaxi = wvgFile.back();
+  for (size_t i = 0; i < wvg.size(); ++i) {
+    const double x = wvg[i];
+    if (x <= xmaxi) {
+      slfc[i] = slfci.eval(x);
+    } else {
+      slfc[i] = 1.0;
+    }
+  }
+  return true;
+}
+
+bool Stls::initialGuessFromInput() {
+  const Interpolator1D slfci(in.getGuess().wvg, in.getGuess().slfc);
+  if (!slfci.isValid()) { return false; }
+  const double xmaxi = in.getGuess().wvg.back();
+  for (size_t i = 0; i < wvg.size(); ++i) {
+    const double x = wvg[i];
+    if (x <= xmaxi) {
+      slfc[i] = slfci.eval(x);
+    } else {
+      slfc[i] = 1.0;
+    }
+  }
+  return true;
 }
 
 // Compute residual error for the stls iterations
@@ -205,6 +211,7 @@ void Stls::writeRecovery() {
 void Stls::readRecovery(vector<double> &wvgFile,
                         vector<double> &slfcFile) const {
   const string fileName = in.getRecoveryFileName();
+  if (fileName.empty()) { return; }
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {

@@ -63,6 +63,8 @@ public:
   explicit Interpolator1D();
   // Destructor
   ~Interpolator1D();
+  // Check if the data used to construct the interpolator is valid
+  bool isValid() const;
   // Reset
   void reset(const double &x, const double &y, const size_t n_);
   // Evaluate
@@ -70,6 +72,8 @@ public:
 
 private:
 
+  // Type
+  const gsl_interp_type *TYPE = gsl_interp_cspline;
   // Spline
   gsl_spline *spline;
   // Accelerator
@@ -98,6 +102,8 @@ public:
   explicit Interpolator2D();
   // Destructor
   ~Interpolator2D();
+  // Check if the data used to construct the interpolator is valid
+  bool isValid() const;
   // Reset
   void reset(const double &x,
              const double &y,
@@ -109,6 +115,8 @@ public:
 
 private:
 
+  // Type
+  const gsl_interp2d_type *TYPE = gsl_interp2d_bicubic;
   // Spline
   gsl_spline2d *spline;
   // Accelerator

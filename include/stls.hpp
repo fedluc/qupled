@@ -48,6 +48,8 @@ protected:
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
+  bool initialGuessFromRecovery();
+  bool initialGuessFromInput();
   double computeError() const;
   void updateSolution();
   // Write recovery files
