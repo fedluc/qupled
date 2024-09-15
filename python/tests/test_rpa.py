@@ -3,7 +3,7 @@ import pytest
 import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
-from qupled.classic import Rpa, ClassicSchemeNew
+from qupled.classic import Rpa, ClassicScheme
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def rpa_instance():
 
 
 def test_default(rpa_instance):
-    issubclass(Rpa, ClassicSchemeNew)
+    issubclass(Rpa, ClassicScheme)
     issubclass(Rpa, qp.Rpa)
     assert all(x == y for x, y in zip(rpa_instance.allowedTheories, ["RPA"]))
     assert rpa_instance.hdfFileName is None

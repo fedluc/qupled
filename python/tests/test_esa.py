@@ -2,7 +2,7 @@ import os
 import pytest
 import set_path
 import qupled.qupled as qp
-from qupled.classic import ESA, ClassicSchemeNew
+from qupled.classic import ESA, ClassicScheme
 
 
 @pytest.fixture
@@ -22,7 +22,7 @@ def esa_instance():
 
 
 def test_default(esa_instance):
-    assert issubclass(ESA, ClassicSchemeNew)
+    assert issubclass(ESA, ClassicScheme)
     assert issubclass(ESA, qp.ESA)
     assert all(x == y for x, y in zip(esa_instance.allowedTheories, ["ESA"]))
     assert esa_instance.hdfFileName is None

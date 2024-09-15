@@ -14,162 +14,6 @@ import qupled.qupled as qp
 
 class ClassicScheme(ABC):
 
-    # Setup inputs object
-    def _setInputs(
-        self,
-        coupling: float,
-        degeneracy: float,
-        theory: str,
-        chemicalPotential: list[float],
-        cutoff: float,
-        matsubara: int,
-        resolution: float,
-    ) -> None:
-        # """ Sets up the content of :obj:`inputs` """
-        self.inputs.coupling = coupling
-        self.inputs.degeneracy = degeneracy
-        self.inputs.theory = theory
-        self.inputs.chemicalPotential = chemicalPotential
-        self.inputs.cutoff = cutoff
-        self.inputs.matsubara = matsubara
-        self.inputs.resolution = resolution
-        self.inputs.intError = 1.0e-5
-        self.inputs.threads = 1
-
-    # Compute the scheme
-    @abstractmethod
-    def compute(self):
-        pass
-
-    # Check input before computing
-    def _checkInputs(self) -> None:
-        """Checks that the content of :obj:`inputs` is correct"""
-        if self.inputs.theory not in self.allowedTheories:
-            sys.exit("Invalid dielectric theory")
-
-    # Check that the dielectric scheme was solved without errors
-    @qu.MPI.runOnlyOnRoot
-    def _checkStatusAndClean(self, status: bool) -> None:
-        """Checks that the scheme was solved correctly and removes temporarary files generated at run-time
-
-        Args:
-            status: status obtained from the native code. If status == 0 the scheme was solved correctly.
-        """
-        if status == 0:
-            if os.path.isfile(self.scheme.recovery):
-                os.remove(self.scheme.recovery)
-            print("Dielectric theory solved successfully!")
-        else:
-            sys.exit("Error while solving the dielectric theory")
-
-    # Save results to disk
-    def _setHdfFile(self) -> None:
-        """Sets the name of the hdf file used to store the output"""
-        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (
-            self.inputs.coupling,
-            self.inputs.degeneracy,
-            self.inputs.theory,
-        )
-
-    @qu.MPI.runOnlyOnRoot
-    def _save(self) -> None:
-        """Stores the results obtained by solving the scheme."""
-        assert self.scheme is not None
-        pd.DataFrame(
-            {
-                "coupling": self.inputs.coupling,
-                "degeneracy": self.inputs.degeneracy,
-                "theory": self.inputs.theory,
-                "resolution": self.inputs.resolution,
-                "cutoff": self.inputs.cutoff,
-                "matsubara": self.inputs.matsubara,
-            },
-            index=["info"],
-        ).to_hdf(self.hdfFileName, key="info", mode="w")
-        pd.DataFrame(self.scheme.idr).to_hdf(self.hdfFileName, key="idr")
-        pd.DataFrame(self.scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
-        pd.DataFrame(self.scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
-        pd.DataFrame(self.scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
-        pd.DataFrame(self.scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
-        pd.DataFrame(self.scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
-
-    # Compute radial distribution function
-    def computeRdf(
-        self, rdfGrid: np.ndarray = None, writeToHdf: bool = True
-    ) -> np.array:
-        """Computes the radial distribution function from the data stored in the output file.
-
-        Args:
-            rdfGrid: The grid used to compute the radial distribution function.
-                (Defaults to None, see :func:`qupled.util.Hdf.computeRdf`)
-            writeToHdf: Flag marking whether the rdf data should be added to the output hdf file, default to True
-
-        Returns:
-            The radial distribution function
-
-        """
-        self._checkSolution("compute the radial distribution function")
-        if qu.MPI().getRank() > 0:
-            writeToHdf = False
-        return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
-
-    # Compute the internal energy
-    def computeInternalEnergy(self) -> float:
-        """Computes the internal energy from the data stored in the output file.
-
-        Returns:
-            The internal energy
-
-        """
-        self._checkSolution("compute the internal energy")
-        return qp.computeInternalEnergy(
-            self.scheme.wvg, self.scheme.ssf, self.inputs.coupling
-        )
-
-    # Plot results
-    @qu.MPI.runOnlyOnRoot
-    def plot(
-        self,
-        toPlot: list[str],
-        matsubara: np.ndarray = None,
-        rdfGrid: np.ndarray = None,
-    ) -> None:
-        """Plots the results stored in the output file`.
-
-        Args:
-            toPlot: A list of quantities to plot. This list can include all the values written to the
-                 output hdf file. The radial distribution funciton is computed and added to the output
-                 file if necessary
-            matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
-                (Default = None, all matsubara frequencies are plotted)
-            rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
-                distribution function is plotted (Default = None, see :func:`qupled.classic.Stls.computeRdf`)
-
-        """
-        self._checkSolution("plot results")
-        if "rdf" in toPlot:
-            self.computeRdf(rdfGrid)
-        qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
-
-    # Check if a solution is available to perform a given action
-    def _checkSolution(self, action: str) -> None:
-        """Check if a solution is available to be used
-
-        Args:
-            action: Name of the action to be performed. Only used to print an error message if no solution is found
-
-        """
-        if self.scheme is None:
-            sys.exit("No solution to " + action)
-
-
-# -----------------------------------------------------------------------
-# ClassicSchemeNew class
-# -----------------------------------------------------------------------
-
-
-class ClassicSchemeNew(ABC):
-
     # Compute the scheme
     def compute(self, compute: Callable[None, int], save: Callable) -> None:
         self._checkInputs()
@@ -288,11 +132,11 @@ class ClassicSchemeNew(ABC):
 # -----------------------------------------------------------------------
 
 
-class RpaMetaclass(type(ClassicSchemeNew), type(qp.Rpa)):
+class RpaMetaclass(type(ClassicScheme), type(qp.Rpa)):
     pass
 
 
-class Rpa(qp.Rpa, ClassicSchemeNew, metaclass=RpaMetaclass):
+class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
     """
     Class used to setup and solve the classical Randon-Phase approximaton scheme as described by
     `Bohm and Pines <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
@@ -347,7 +191,7 @@ class Rpa(qp.Rpa, ClassicSchemeNew, metaclass=RpaMetaclass):
 
         The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        ClassicSchemeNew.compute(self, qp.Rpa.compute, self._save)
+        ClassicScheme.compute(self, qp.Rpa.compute, self._save)
 
 
 # -----------------------------------------------------------------------
@@ -355,11 +199,11 @@ class Rpa(qp.Rpa, ClassicSchemeNew, metaclass=RpaMetaclass):
 # -----------------------------------------------------------------------
 
 
-class ESAMetaclass(type(ClassicSchemeNew), type(qp.Rpa)):
+class ESAMetaclass(type(ClassicScheme), type(qp.Rpa)):
     pass
 
 
-class ESA(ClassicSchemeNew, qp.ESA, metaclass=ESAMetaclass):
+class ESA(ClassicScheme, qp.ESA, metaclass=ESAMetaclass):
     """
     Class used to setup and solve the Effective Static Approximation scheme as described by
     `Dornheim and collaborators <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`_.
@@ -414,7 +258,7 @@ class ESA(ClassicSchemeNew, qp.ESA, metaclass=ESAMetaclass):
 
         The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        ClassicSchemeNew.compute(self, qp.ESA.compute, self._save)
+        ClassicScheme.compute(self, qp.ESA.compute, self._save)
 
 
 # -----------------------------------------------------------------------
@@ -422,11 +266,11 @@ class ESA(ClassicSchemeNew, qp.ESA, metaclass=ESAMetaclass):
 # -----------------------------------------------------------------------
 
 
-class StlsMetaclass(type(ClassicSchemeNew), type(qp.Stls)):
+class StlsMetaclass(type(ClassicScheme), type(qp.Stls)):
     pass
 
 
-class Stls(ClassicSchemeNew, qp.Stls, metaclass=StlsMetaclass):
+class Stls(ClassicScheme, qp.Stls, metaclass=StlsMetaclass):
     """
     Class used to setup and solve the classical STLS scheme as described by
     `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
@@ -482,7 +326,7 @@ class Stls(ClassicSchemeNew, qp.Stls, metaclass=StlsMetaclass):
 
         The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        ClassicSchemeNew.compute(self, qp.Stls.compute, self._save)
+        ClassicScheme.compute(self, qp.Stls.compute, self._save)
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
