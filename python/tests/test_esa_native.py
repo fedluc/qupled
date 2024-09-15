@@ -2,10 +2,10 @@ import os
 import pytest
 import set_path
 import qupled.qupled as qp
-import qupled.classic as qpc
 
 
 def test_esa_properties():
+    assert issubclass(qp.ESA, qp.Rpa)
     scheme = qp.ESA(qp.RpaInput())
     assert hasattr(scheme, "idr")
     assert hasattr(scheme, "sdr")

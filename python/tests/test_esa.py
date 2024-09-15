@@ -7,6 +7,7 @@ from qupled.classic import ESA, ClassicSchemeNew
 
 @pytest.fixture
 def esa_instance():
+    assert issubclass(qp.Stls, qp.Rpa)
     inputs = qp.RpaInput()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0

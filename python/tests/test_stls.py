@@ -5,53 +5,33 @@ import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.classic import Stls
-from qupled.classic import ClassicScheme
+from qupled.classic import ClassicSchemeNew
 
 
 @pytest.fixture
 def stls_instance():
-    return Stls(1.0, 1.0)
+    inputs = qp.StlsInput()
+    inputs.coupling = 1.0
+    inputs.degeneracy = 1.0
+    inputs.theory = "STLS"
+    inputs.chemicalPotential = [-10, 10]
+    inputs.cutoff = 10.0
+    inputs.matsubara = 128
+    inputs.resolution = 0.1
+    inputs.intError = 1.0e-5
+    inputs.threads = 1
+    inputs.error = 1.0e-5
+    inputs.mixing = 1.0
+    inputs.iterations = 1000
+    inputs.outputFrequency = 10
+    return Stls(inputs)
 
 
 def test_default(stls_instance):
-    assert issubclass(Stls, ClassicScheme)
+    assert issubclass(Stls, ClassicSchemeNew)
+    assert issubclass(Stls, qp.Stls)
     assert all(x == y for x, y in zip(stls_instance.allowedTheories, ["STLS"]))
-    assert stls_instance.inputs.coupling == 1.0
-    assert stls_instance.inputs.degeneracy == 1.0
-    assert stls_instance.inputs.theory == "STLS"
-    assert all(
-        x == y for x, y in zip(stls_instance.inputs.chemicalPotential, [-10.0, 10.0])
-    )
-    assert stls_instance.inputs.cutoff == 10.0
-    assert stls_instance.inputs.error == 1.0e-5
-    assert stls_instance.inputs.mixing == 1.0
-    assert stls_instance.inputs.iterations == 1000
-    assert stls_instance.inputs.matsubara == 128
-    assert stls_instance.inputs.outputFrequency == 10
-    assert stls_instance.inputs.recoveryFile == ""
-    assert stls_instance.inputs.resolution == 0.1
-    assert stls_instance.inputs.intError == 1.0e-5
-    assert stls_instance.inputs.threads == 1
-    assert stls_instance.scheme is None
     assert stls_instance.hdfFileName is None
-
-
-def test_set_input():
-    stls = Stls(
-        2.0, 0.5, [-5, 5], 20, 1.0e-8, 0.5, None, 100, 32, 100, "recoveryFile", 0.01
-    )
-    assert stls.inputs.coupling == 2.0
-    assert stls.inputs.degeneracy == 0.5
-    assert stls.inputs.theory == "STLS"
-    assert all(x == y for x, y in zip(stls.inputs.chemicalPotential, [-5.0, 5.0]))
-    assert stls.inputs.cutoff == 20
-    assert stls.inputs.error == 1.0e-8
-    assert stls.inputs.mixing == 0.5
-    assert stls.inputs.iterations == 100
-    assert stls.inputs.matsubara == 32
-    assert stls.inputs.outputFrequency == 100
-    assert stls.inputs.recoveryFile == "recoveryFile"
-    assert stls.inputs.resolution == 0.01
 
 
 def test_compute(stls_instance, mocker):
@@ -74,7 +54,6 @@ def test_compute(stls_instance, mocker):
 
 def test_save(stls_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    stls_instance.scheme = qp.Stls(stls_instance.inputs)
     stls_instance._setHdfFile()
     try:
         stls_instance._save()
@@ -102,11 +81,11 @@ def test_save(stls_instance, mocker):
         os.remove(stls_instance.hdfFileName)
 
 
-def test_setGuess(stls_instance, mocker):
+def test_getInitialGuess(stls_instance, mocker):
     arr = np.ones(10)
     mockHdfRead = mocker.patch(
         "qupled.util.Hdf.read", return_value={"wvg": arr, "slfc": arr}
     )
-    stls_instance.setGuess("dummyFileName")
-    assert np.array_equal(stls_instance.inputs.guess.wvg, arr)
-    assert np.array_equal(stls_instance.inputs.guess.slfc, arr)
+    guess = stls_instance.getInitialGuess("dummyFileName")
+    assert np.array_equal(guess.wvg, arr)
+    assert np.array_equal(guess.slfc, arr)
