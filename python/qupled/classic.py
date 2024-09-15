@@ -1,6 +1,7 @@
 import sys
 import os
 from abc import ABC, abstractmethod
+from typing import Callable
 import numpy as np
 import pandas as pd
 import qupled.util as qu
@@ -167,7 +168,15 @@ class ClassicScheme(ABC):
 # -----------------------------------------------------------------------
 
 
-class ClassicSchemeNew:  # making this inherit from ABC causes issues
+class ClassicSchemeNew(ABC):
+
+    # Compute the scheme
+    def compute(self, compute: Callable[None, int]) -> None:
+        self._checkInputs()
+        status = compute()
+        self._checkStatusAndClean(status)
+        self._setHdfFile()
+        self._save()
 
     # Check input before computing
     def _checkInputs(self) -> None:
@@ -279,7 +288,11 @@ class ClassicSchemeNew:  # making this inherit from ABC causes issues
 # -----------------------------------------------------------------------
 
 
-class Rpa(qp.Rpa, ClassicSchemeNew):
+class RpaMetaclass(type(ClassicSchemeNew), type(qp.Rpa)):
+    pass
+
+
+class Rpa(qp.Rpa, ClassicSchemeNew, metaclass=RpaMetaclass):
     """
     Class used to setup and solve the classical Randon-Phase approximaton scheme as described by
     `Bohm and Pines <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
@@ -288,25 +301,17 @@ class Rpa(qp.Rpa, ClassicSchemeNew):
     the results are saved to an hdf file and can be plotted via the method :obj:`plot`.
 
     Args:
-        coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.
-        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
-        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
-        matsubara: Number of matsubara frequencies, defaults to 128.
-        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+        inputs: Input parameters.
     """
 
     # Constructor
-    def __init__(
-        self,
-        inputs: qp.RpaInput,
-    ):
+    def __init__(self, inputs: qp.RpaInput):
         # Construct the base classes
         super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["RPA"]
         # Input object
-        self.inputs: qupled.qupled.RpaInput = inputs  #: Inputs to solve the scheme.
+        self.inputs: qupled.qupled.RpaInput = inputs
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 
@@ -342,11 +347,7 @@ class Rpa(qp.Rpa, ClassicSchemeNew):
 
         The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        self._checkInputs()
-        status = super().compute()
-        self._checkStatusAndClean(status)
-        self._setHdfFile()
-        self._save()
+        ClassicSchemeNew.compute(self, qp.Rpa.compute)
 
 
 # -----------------------------------------------------------------------
@@ -354,64 +355,66 @@ class Rpa(qp.Rpa, ClassicSchemeNew):
 # -----------------------------------------------------------------------
 
 
-class ESA(ClassicScheme):
+class ESAMetaclass(type(ClassicSchemeNew), type(qp.Rpa)):
+    pass
+
+
+class ESA(ClassicSchemeNew, qp.ESA, metaclass=ESAMetaclass):
     """
-    Class used to setup and solve the hybrid Effective Static Approximation scheme as described by
+    Class used to setup and solve the Effective Static Approximation scheme as described by
     `Dornheim and collaborators <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`_.
-    This class inherits most of its methods and attributes from :obj:`qupled.classic.Rpa`.
+    The inputs used to solve the scheme are defined when creating the class, but can be
+    later modified by changing the attribute :obj:`inputs`. After the solution is completed
+    the results are saved to an hdf file and can be plotted via the method :obj:`plot`.
 
     Args:
-        coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.
-        chemicalPotential: Initial guess for the chemical potential, defaults to [-100.0, 100.0].
-        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
-        matsubara: Number of matsubara frequencies, defaults to 128.
-        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+        inputs: Input parameters used to solve the scheme.
     """
 
     # Constructor
-    def __init__(
-        self,
-        coupling: float,
-        degeneracy: float,
-        chemicalPotential: list[float] = [-10.0, 10.0],
-        cutoff: float = 10.0,
-        matsubara: int = 128,
-        resolution: float = 0.1,
-    ):
+    def __init__(self, inputs: qp.RpaInput):
+        # Construct the base classes
+        super().__init__(inputs)
         # Allowed theories
-        self.allowedTheories: list[str] = ["ESA"]
+        self.allowedTheories = ["ESA"]
         # Input object
-        self.inputs: qupled.qupled.RpaInput = (
-            qp.RpaInput()
-        )  #: Inputs to solve the scheme.
-        super()._setInputs(
-            coupling,
-            degeneracy,
-            "ESA",
-            chemicalPotential,
-            cutoff,
-            matsubara,
-            resolution,
-        )
-        # Scheme to solve
-        self.scheme: qp.ESA = None
+        self.inputs: qupled.qupled.RpaInput = inputs
         # File to store output on disk
-        self.hdfFileName = None
+        self.hdfFileName: str = None  #: Name of the output file
 
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results to and hdf file. See the method :func:`qupled.classic.Rpa.compute`
-        to see which results are saved.
+        """Solves the scheme and saves the results.
+
+        The results are stored as pandas dataframes in an hdf file with the following keywords:
+
+        - info: A dataframe containing information on the input parameters, it includes:
+
+          - coupling: the coupling parameter,
+          - degeneracy: the degeneracy parameter,
+          - theory: the theory that is being solved,
+          - resolution: the resolution in the wave-vector grid,
+          - cutoff: the cutoff in the wave-vector grid,
+          - matsubara: the number of matsubara frequencies
+
+        - idr (*ndarray*, 2D): the ideal density response
+        - sdr (*ndarray*):  the static density response
+        - slfc (*ndarray*):  the static local field correction
+        - ssf (*ndarray*):  the static structure factor
+        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
+        - wvg (*ndarray*):  the wave-vector grid
+
+        If the radial distribution function was computed (see computeRdf), then the hdf file contains
+        two additional keywords:
+
+        - rdf (*ndarray*):  the radial distribution function
+        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
+
+        The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        self._checkInputs()
-        self.scheme = qp.ESA(self.inputs)
-        status = self.scheme.compute()
-        self._checkStatusAndClean(status)
-        self._setHdfFile()
-        self._save()
+        ClassicSchemeNew.compute(self, qp.ESA.compute)
 
 
 # -----------------------------------------------------------------------

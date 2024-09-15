@@ -6,11 +6,30 @@ import qupled.classic as qpc
 
 
 def test_esa_properties():
-    issubclass(qp.ESA, qp.Rpa)
+    scheme = qp.ESA(qp.RpaInput())
+    assert hasattr(scheme, "idr")
+    assert hasattr(scheme, "sdr")
+    assert hasattr(scheme, "slfc")
+    assert hasattr(scheme, "ssf")
+    assert hasattr(scheme, "ssfHF")
+    with pytest.raises(RuntimeError) as excinfo:
+        hasattr(scheme, "uInt")
+    assert excinfo.value.args[0] == "No data to compute the internal energy"
+    assert hasattr(scheme, "wvg")
+    assert hasattr(scheme, "recovery")
 
 
 def test_esa_compute():
-    inputs = qpc.ESA(1.0, 1.0).inputs
+    inputs = qp.RpaInput()
+    inputs.coupling = 1.0
+    inputs.degeneracy = 1.0
+    inputs.theory = "RPA"
+    inputs.chemicalPotential = [-10, 10]
+    inputs.cutoff = 10.0
+    inputs.matsubara = 128
+    inputs.resolution = 0.1
+    inputs.intError = 1.0e-5
+    inputs.threads = 1
     scheme = qp.ESA(inputs)
     scheme.compute()
     nx = scheme.wvg.size
