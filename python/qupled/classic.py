@@ -171,12 +171,12 @@ class ClassicScheme(ABC):
 class ClassicSchemeNew(ABC):
 
     # Compute the scheme
-    def compute(self, compute: Callable[None, int]) -> None:
+    def compute(self, compute: Callable[None, int], save: Callable) -> None:
         self._checkInputs()
         status = compute()
         self._checkStatusAndClean(status)
         self._setHdfFile()
-        self._save()
+        save()
 
     # Check input before computing
     def _checkInputs(self) -> None:
@@ -311,7 +311,7 @@ class Rpa(qp.Rpa, ClassicSchemeNew, metaclass=RpaMetaclass):
         # Allowed theories
         self.allowedTheories = ["RPA"]
         # Input object
-        self.inputs: qupled.qupled.RpaInput = inputs
+        self.inputs: qp.RpaInput = inputs
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 
@@ -347,7 +347,7 @@ class Rpa(qp.Rpa, ClassicSchemeNew, metaclass=RpaMetaclass):
 
         The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        ClassicSchemeNew.compute(self, qp.Rpa.compute)
+        ClassicSchemeNew.compute(self, qp.Rpa.compute, self._save)
 
 
 # -----------------------------------------------------------------------
@@ -378,7 +378,7 @@ class ESA(ClassicSchemeNew, qp.ESA, metaclass=ESAMetaclass):
         # Allowed theories
         self.allowedTheories = ["ESA"]
         # Input object
-        self.inputs: qupled.qupled.RpaInput = inputs
+        self.inputs: qp.RpaInput = inputs
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 
@@ -414,7 +414,7 @@ class ESA(ClassicSchemeNew, qp.ESA, metaclass=ESAMetaclass):
 
         The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        ClassicSchemeNew.compute(self, qp.ESA.compute)
+        ClassicSchemeNew.compute(self, qp.ESA.compute, self._save)
 
 
 # -----------------------------------------------------------------------
@@ -422,120 +422,67 @@ class ESA(ClassicSchemeNew, qp.ESA, metaclass=ESAMetaclass):
 # -----------------------------------------------------------------------
 
 
-class Stls(ClassicScheme):
+class StlsMetaclass(type(ClassicSchemeNew), type(qp.Stls)):
+    pass
+
+
+class Stls(ClassicSchemeNew, qp.Stls, metaclass=StlsMetaclass):
     """
     Class used to setup and solve the classical STLS scheme as described by
     `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
-    This class inherits most of its methods and attributes from :obj:`qupled.classic.Rpa`.
+    The inputs used to solve the scheme are defined when creating the class, but can be
+    later modified by changing the attribute :obj:`inputs`. After the solution is completed
+    the results are saved to an hdf file and can be plotted via the method :obj:`plot`.
 
     Args:
-        coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.
-        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
-        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
-        error: Minimum error for convergence, defaults to 1.0e-5.
-        mixing: Mixing parameter for iterative solution, defaults to 1.0.
-        guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
-        iterations: Maximum number of iterations, defaults to 1000.
-        matsubara: Number of matsubara frequencies, defaults to 128.
-        outputFrequency: Frequency used to print the recovery files, defaults to 10.
-        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
-        resolution: Resolution of the wave-vector grid, defaults to 0.1.
+        inputs: Input parameters used to solve the scheme.
     """
 
     # Constructor
-    def __init__(
-        self,
-        coupling: float,
-        degeneracy: float,
-        chemicalPotential: list[float] = [-10.0, 10.0],
-        cutoff: float = 10.0,
-        error: float = 1.0e-5,
-        mixing: float = 1.0,
-        guess: qp.StlsGuess = None,
-        iterations: int = 1000,
-        matsubara: int = 128,
-        outputFrequency: int = 10,
-        recoveryFile: str = None,
-        resolution: float = 0.1,
-    ):
+    def __init__(self, inputs: qp.StlsInput):
+        # Construct the base classes
+        super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["STLS"]
         # Input object
-        self.inputs: qupled.qupled.StlsInput = (
-            qp.StlsInput()
-        )  #: Inputs to solve the scheme.
-        self._setInputs(
-            coupling,
-            degeneracy,
-            "STLS",
-            chemicalPotential,
-            cutoff,
-            error,
-            mixing,
-            guess,
-            iterations,
-            matsubara,
-            outputFrequency,
-            recoveryFile,
-            resolution,
-        )
-        # Scheme to solve
-        self.scheme: qp.Stls = None
+        self.inputs: qp.StlsInput = inputs
         # File to store output on disk
-        self.hdfFileName: str = None
-
-    # Setup inputs object
-    def _setInputs(
-        self,
-        coupling: float,
-        degeneracy: float,
-        theory: str,
-        chemicalPotential: list[float],
-        cutoff: float,
-        error: float,
-        mixing: float,
-        guess: qp.StlsGuess,
-        iterations: int,
-        matsubara: int,
-        outputFrequency: int,
-        recoveryFile: str,
-        resolution: float,
-    ) -> None:
-        """Sets up the content of :obj:`inputs`"""
-        super()._setInputs(
-            coupling,
-            degeneracy,
-            theory,
-            chemicalPotential,
-            cutoff,
-            matsubara,
-            resolution,
-        )
-        self.inputs.error = error
-        self.inputs.mixing = mixing
-        if guess is not None:
-            self.inputs.guess = guess
-        self.inputs.iterations = iterations
-        self.inputs.outputFrequency = outputFrequency
-        if recoveryFile is not None:
-            self.inputs.recoveryFile = recoveryFile
+        self.hdfFileName: str = None  #: Name of the output file
 
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results to and hdf file. Extends the output produced by
-        :func:`qupled.classic.Rpa.compute` by adding the option to save the residual error in the
-        scheme solution. The information concerning the error can be accessed via the `error` key in
-        the `info` dataframe.
+        """Solves the scheme and saves the results.
+
+        The results are stored as pandas dataframes in an hdf file with the following keywords:
+
+        - info: A dataframe containing information on the input parameters, it includes:
+
+          - coupling: the coupling parameter,
+          - degeneracy: the degeneracy parameter,
+          - error: the residual error at the end of the solution
+          - theory: the theory that is being solved,
+          - resolution: the resolution in the wave-vector grid,
+          - cutoff: the cutoff in the wave-vector grid,
+          - matsubara: the number of matsubara frequencies
+
+        - idr (*ndarray*, 2D): the ideal density response
+        - sdr (*ndarray*):  the static density response
+        - slfc (*ndarray*):  the static local field correction
+        - ssf (*ndarray*):  the static structure factor
+        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
+        - wvg (*ndarray*):  the wave-vector grid
+
+        If the radial distribution function was computed (see computeRdf), then the hdf file contains
+        two additional keywords:
+
+        - rdf (*ndarray*):  the radial distribution function
+        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
+
+        The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        self._checkInputs()
-        self.scheme = qp.Stls(self.inputs)
-        status = self.scheme.compute()
-        self._checkStatusAndClean(status)
-        self._setHdfFile()
-        self._save()
+        ClassicSchemeNew.compute(self, qp.Stls.compute, self._save)
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
@@ -546,7 +493,7 @@ class Stls(ClassicScheme):
             {
                 "coupling": self.inputs.coupling,
                 "degeneracy": self.inputs.degeneracy,
-                "error": self.scheme.error,
+                "error": self.error,
                 "theory": self.inputs.theory,
                 "resolution": self.inputs.resolution,
                 "cutoff": self.inputs.cutoff,
@@ -556,7 +503,7 @@ class Stls(ClassicScheme):
         ).to_hdf(self.hdfFileName, key="info")
 
     # Set the initial guess from a dataframe produced in output
-    def setGuess(self, fileName: str) -> None:
+    def getInitialGuess(self, fileName: str) -> qp.StlsGuess:
         """Constructs an initial guess object by extracting the information from an output file.
 
         Args:
@@ -566,7 +513,7 @@ class Stls(ClassicScheme):
         hdfData = qu.Hdf().read(fileName, ["wvg", "slfc"])
         guess.wvg = hdfData["wvg"]
         guess.slfc = hdfData["slfc"]
-        self.inputs.guess = guess
+        return guess
 
 
 # -----------------------------------------------------------------------
