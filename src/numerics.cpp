@@ -29,22 +29,23 @@ void GslWrappers::callGSLAlloc(Ptr &ptr, Func &&gslFunction, Args &&...args) {
 // -----------------------------------------------------------------
 
 // Constructors
-Interpolator1D::Interpolator1D(const vector<double> &x,
-                               const vector<double> &y) {
+Interpolator1D::Interpolator1D() {
+  n = 0;
+  spline = nullptr;
+  acc = nullptr;
+}
+
+Interpolator1D::Interpolator1D(const vector<double> &x, const vector<double> &y)
+    : Interpolator1D() {
   assert(x.size() == y.size());
   setup(x[0], y[0], x.size());
 }
 
 Interpolator1D::Interpolator1D(const double &x,
                                const double &y,
-                               const size_t n_) {
+                               const size_t n_)
+    : Interpolator1D() {
   setup(x, y, n_);
-}
-
-Interpolator1D::Interpolator1D() {
-  n = 0;
-  spline = nullptr;
-  acc = nullptr;
 }
 
 // Destructor
@@ -56,10 +57,19 @@ Interpolator1D::~Interpolator1D() {
 // Setup interpolator
 void Interpolator1D::setup(const double &x, const double &y, const size_t n_) {
   n = n_;
+  if (!isValid()) {
+    n = 0;
+    return;
+  }
   cutoff = *(&x + n - 1);
-  callGSLAlloc(spline, gsl_spline_alloc, gsl_interp_cspline, n);
+  callGSLAlloc(spline, gsl_spline_alloc, TYPE, n);
   callGSLAlloc(acc, gsl_interp_accel_alloc);
   callGSLFunction(gsl_spline_init, spline, &x, &y, n);
+}
+
+// Check if the interpolator can be setup correctly
+bool Interpolator1D::isValid() const {
+  return n >= gsl_interp_type_min_size(TYPE);
 }
 
 // Reset existing interpolator
@@ -82,14 +92,6 @@ double Interpolator1D::eval(const double &x) const {
 // -----------------------------------------------------------------
 
 // Constructors
-Interpolator2D::Interpolator2D(const double &x,
-                               const double &y,
-                               const double &z,
-                               const int nx_,
-                               const int ny_) {
-  setup(x, y, z, nx_, ny_);
-}
-
 Interpolator2D::Interpolator2D() {
   nx = 0;
   ny = 0;
@@ -98,11 +100,25 @@ Interpolator2D::Interpolator2D() {
   yacc = nullptr;
 }
 
+Interpolator2D::Interpolator2D(const double &x,
+                               const double &y,
+                               const double &z,
+                               const int nx_,
+                               const int ny_)
+    : Interpolator2D() {
+  setup(x, y, z, nx_, ny_);
+}
+
 // Destructor
 Interpolator2D::~Interpolator2D() {
   gsl_spline2d_free(spline);
   gsl_interp_accel_free(xacc);
   gsl_interp_accel_free(yacc);
+}
+
+// Check if the interpolator can be setup correctly
+bool Interpolator2D::isValid() const {
+  return nx + ny >= gsl_interp2d_type_min_size(TYPE);
 }
 
 // Setup interpolator
@@ -113,7 +129,12 @@ void Interpolator2D::setup(const double &x,
                            const int ny_) {
   nx = nx_;
   ny = ny_;
-  callGSLAlloc(spline, gsl_spline2d_alloc, gsl_interp2d_bicubic, nx, ny);
+  if (!isValid()) {
+    nx = 0;
+    ny = 0;
+    return;
+  }
+  callGSLAlloc(spline, gsl_spline2d_alloc, TYPE, nx, ny);
   callGSLAlloc(xacc, gsl_interp_accel_alloc);
   callGSLAlloc(yacc, gsl_interp_accel_alloc);
   // Ensure that z is stored in the correct order

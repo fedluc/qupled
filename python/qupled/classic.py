@@ -1,3 +1,4 @@
+from __future__ import annotations
 import sys
 import os
 from abc import ABC, abstractmethod
@@ -148,14 +149,39 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
         inputs: Input parameters.
     """
 
+    class Input(qp.RpaInput):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.Rpa` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float):
+            super().__init__()
+            self.coupling: float = coupling
+            """ Coupling parameter """
+            self.degeneracy: float = degeneracy
+            """ Degeneracy parameter """
+            self.chemicalPotential: list[float] = [-10.0, 10.0]
+            """ Initial guess for the chemical potential """
+            self.matsubara: int = 128
+            """ Number of matsubara frequencies"""
+            self.resolution: float = 0.1
+            """ Resolution of the wave-vector grid """
+            self.cutoff: float = 10.0
+            """ cutoff for the wave-vector grid """
+            # Undocumented default values
+            self.theory: list[str] = "RPA"
+            self.intError: float = 1.0e-5
+            self.int2DScheme: str = "full"
+            self.threads: int = 1
+
     # Constructor
-    def __init__(self, inputs: qp.RpaInput):
+    def __init__(self, inputs: Rpa.Input):
         # Construct the base classes
         super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["RPA"]
         # Input object
-        self.inputs: qp.RpaInput = inputs
+        self.inputs: Rpa.Input = inputs
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 
@@ -215,14 +241,24 @@ class ESA(ClassicScheme, qp.ESA, metaclass=ESAMetaclass):
         inputs: Input parameters used to solve the scheme.
     """
 
+    class Input(Rpa.Input):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.ESA` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float):
+            super().__init__(coupling, degeneracy)
+            # Undocumented default values
+            self.theory = "ESA"
+
     # Constructor
-    def __init__(self, inputs: qp.RpaInput):
+    def __init__(self, inputs: ESA.Input):
         # Construct the base classes
         super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["ESA"]
         # Input object
-        self.inputs: qp.RpaInput = inputs
+        self.inputs: ESA.Input = inputs
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 
@@ -282,14 +318,36 @@ class Stls(ClassicScheme, qp.Stls, metaclass=StlsMetaclass):
         inputs: Input parameters used to solve the scheme.
     """
 
+    class Input(Rpa.Input, qp.StlsInput):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.Stls` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float):
+            super().__init__(coupling, degeneracy)
+            self.error: float = 1.0e-5
+            """ minimum error for convergence """
+            self.mixing: float = 1.0
+            """ mixing paramter """
+            self.iterations: int = 1000
+            """ Maximum number of iterations """
+            self.outputFrequency: int = 10
+            """ Output frequency to write the recovery file """
+            self.recoveryFile: str = ""
+            """ Name of the recovery file """
+            self.guess: qp.StlsGuess = qp.StlsGuess()
+            """ Initial guess """
+            # Undocumented default values
+            self.theory = "STLS"
+
     # Constructor
-    def __init__(self, inputs: qp.StlsInput):
+    def __init__(self, inputs: Stls.Input):
         # Construct the base classes
         super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["STLS"]
         # Input object
-        self.inputs: qp.StlsInput = inputs
+        self.inputs: Stls.Input = inputs
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 

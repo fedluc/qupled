@@ -139,9 +139,6 @@ void ClassicInput::setIETMapping(const string &IETMapping) {
 }
 
 void ClassicInput::setGuess(const Guess &guess) {
-  if (guess.wvg.size() < 3 || guess.slfc.size() < 3) {
-    throwError("The initial guess does not contain enough points");
-  }
   if (guess.wvg.size() != guess.slfc.size()) {
     throwError("The initial guess is inconsistent");
   }
@@ -168,16 +165,11 @@ void QuantumInput::setFixedIet(const string &fixedIet) {
 }
 
 void QuantumInput::setGuess(const Guess &guess) {
-  if (guess.wvg.size() < 3 || guess.ssf.size() < 3) {
-    throwError("The initial guess does not contain enough points");
-  }
-  bool consistentGuess = guess.wvg.size() == guess.ssf.size();
   const size_t nl = guess.matsubara;
-  if (guess.adr.size(0) > 0) {
-    consistentGuess = consistentGuess &&
-                      guess.adr.size(0) == guess.wvg.size() &&
-                      guess.adr.size(1) == nl;
-  }
+  const size_t nx = guess.wvg.size();
+  const bool consistentGuess = guess.ssf.size() == nx &&
+                               guess.adr.size(0) == nx &&
+                               guess.adr.size(1) == nl;
   if (!consistentGuess) { throwError("The initial guess is inconsistent"); }
   this->guess = guess;
 }

@@ -10,21 +10,7 @@ from qupled.classic import ClassicScheme
 
 @pytest.fixture
 def stls_instance():
-    inputs = qp.StlsInput()
-    inputs.coupling = 1.0
-    inputs.degeneracy = 1.0
-    inputs.theory = "STLS"
-    inputs.chemicalPotential = [-10, 10]
-    inputs.cutoff = 10.0
-    inputs.matsubara = 128
-    inputs.resolution = 0.1
-    inputs.intError = 1.0e-5
-    inputs.threads = 1
-    inputs.error = 1.0e-5
-    inputs.mixing = 1.0
-    inputs.iterations = 1000
-    inputs.outputFrequency = 10
-    return Stls(inputs)
+    return Stls(Stls.Input(1.0, 1.0))
 
 
 def test_default(stls_instance):

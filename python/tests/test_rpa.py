@@ -18,7 +18,7 @@ def rpa_instance():
     inputs.resolution = 0.1
     inputs.intError = 1.0e-5
     inputs.threads = 1
-    return Rpa(inputs)
+    return Rpa(Rpa.Input(1.0, 1.0))
 
 
 def test_default(rpa_instance):

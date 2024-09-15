@@ -112,27 +112,9 @@ void Qstls::initialGuess() {
   assert(!adr.empty());
   assert(!useIet || !adrOld.empty());
   // From recovery file
-  const string &fileName = in.getRecoveryFileName();
-  if (!fileName.empty()) {
-    vector<double> wvg_;
-    vector<double> ssf_;
-    Vector2D adr_;
-    Vector3D adrFixed_;
-    double Theta;
-    int nl_;
-    readRecovery(fileName, wvg_, ssf_, adr_, adrFixed_, Theta, nl_);
-    initialGuessSsf(wvg_, ssf_);
-    if (useIet) { initialGuessAdr(wvg_, adr_); }
-    if (checkAdrFixed(wvg_, Theta, nl_) == 0) { adrFixed = adrFixed_; }
-    return;
-  }
+  if (initialGuessFromRecovery()) { return; }
   // From guess in input
-  if (in.getGuess().wvg.size() > 0) {
-    const auto &guess = in.getGuess();
-    initialGuessSsf(guess.wvg, guess.ssf);
-    if (useIet) { initialGuessAdr(guess.wvg, guess.adr); }
-    return;
-  }
+  if (initialGuessFromInput()) { return; }
   // Default
   Rpa rpa(in, false);
   int status = rpa.compute();
@@ -143,26 +125,46 @@ void Qstls::initialGuess() {
   if (useIet) { adrOld.fill(0.0); }
 }
 
-void Qstls::initialGuessSsf(const vector<double> &wvg_,
+bool Qstls::initialGuessFromRecovery() {
+  vector<double> wvg_;
+  vector<double> ssf_;
+  Vector2D adr_;
+  Vector3D adrFixed_;
+  double Theta;
+  int nl_;
+  readRecovery(wvg_, ssf_, adr_, adrFixed_, Theta, nl_);
+  const bool ssfIsSet = initialGuessSsf(wvg_, ssf_);
+  const bool adrIsSet = (useIet) ? initialGuessAdr(wvg_, adr_) : true;
+  const bool adrFixedIsSet = checkAdrFixed(wvg_, Theta, nl_) == 0;
+  if (adrFixedIsSet) { adrFixed = adrFixed_; }
+  return ssfIsSet && adrIsSet && adrFixedIsSet;
+}
+
+bool Qstls::initialGuessFromInput() {
+  const auto &guess = in.getGuess();
+  const bool ssfIsSet = initialGuessSsf(guess.wvg, guess.ssf);
+  const bool adrIsSet = (useIet) ? initialGuessAdr(guess.wvg, guess.adr) : true;
+  return ssfIsSet && adrIsSet;
+}
+
+bool Qstls::initialGuessSsf(const vector<double> &wvg_,
                             const vector<double> &ssf_) {
   const int nx = wvg.size();
   const Interpolator1D ssfi(wvg_, ssf_);
+  if (!ssfi.isValid()) { return false; }
   const double xMax = wvg_.back();
   for (int i = 0; i < nx; ++i) {
     const double &x = wvg[i];
     ssfOld[i] = (x <= xMax) ? ssfi.eval(x) : 1.0;
   }
+  return true;
 }
 
-void Qstls::initialGuessAdr(const vector<double> &wvg_, const Vector2D &adr_) {
+bool Qstls::initialGuessAdr(const vector<double> &wvg_, const Vector2D &adr_) {
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
   const int nx_ = adr_.size(0);
   const int nl_ = adr_.size(1);
-  if (nx_ == 0 || nl_ == 0) {
-    adrOld.fill(0.0);
-    return;
-  }
   const double &xMax = wvg_.back();
   vector<Interpolator1D> itp(nl_);
   for (int l = 0; l < nl_; ++l) {
@@ -171,6 +173,7 @@ void Qstls::initialGuessAdr(const vector<double> &wvg_, const Vector2D &adr_) {
       tmp[i] = adr_(i, l);
     }
     itp[l].reset(wvg_[0], tmp[0], nx_);
+    if (!itp[l].isValid()) { return false; }
   }
   for (int i = 0; i < nx; ++i) {
     const double &x = wvg[i];
@@ -182,6 +185,7 @@ void Qstls::initialGuessAdr(const vector<double> &wvg_, const Vector2D &adr_) {
       adrOld(i, l) = (l <= nl_) ? itp[l].eval(x) : 0.0;
     }
   }
+  return true;
 }
 
 // Compute auxiliary density response
@@ -323,16 +327,20 @@ int Qstls::checkAdrFixed(const vector<double> &wvg_,
                          const double Theta_,
                          const int nl_) const {
   constexpr double tol = 1e-15;
-  const vector<double> wvgDiff = diff(wvg_, wvg);
-  const double &wvgMaxDiff = abs(*max_element(wvgDiff.begin(), wvgDiff.end()));
+  bool consistentGrid = wvg_.size() == wvg.size();
+  if (consistentGrid) {
+    const vector<double> wvgDiff = diff(wvg_, wvg);
+    const double &wvgMaxDiff =
+        abs(*max_element(wvgDiff.begin(), wvgDiff.end()));
+    consistentGrid = consistentGrid && wvgMaxDiff <= tol;
+  }
   const bool consistentMatsubara = nl_ == in.getNMatsubara();
   const bool consistentTheta = abs(Theta_ - in.getDegeneracy()) <= tol;
-  const bool consistentGrid = wvg_.size() == wvg.size() && wvgMaxDiff <= tol;
+  if (!consistentGrid) { std::cerr << "Inconsistent grid values" << std::endl; }
   if (!consistentMatsubara) {
     std::cerr << "Inconsistent Matsubara" << std::endl;
   }
   if (!consistentTheta) { std::cerr << "Inconsistent Theta" << std::endl; }
-  if (!consistentGrid) { std::cerr << "Inconsistent grid values" << std::endl; }
   if (!consistentMatsubara || !consistentTheta || !consistentGrid) { return 1; }
   return 0;
 }
@@ -464,23 +472,14 @@ void Qstls::writeRecovery() {
   }
 }
 
-void Qstls::readRecovery(const string &fileName,
-                         vector<double> &wvg_,
-                         Vector3D &adrFixed_,
-                         double &Theta,
-                         int &nl) const {
-  vector<double> tmp1;
-  Vector2D tmp2;
-  readRecovery(fileName, wvg_, tmp1, tmp2, adrFixed_, Theta, nl);
-}
-
-void Qstls::readRecovery(const string &fileName,
-                         vector<double> &wvg_,
+void Qstls::readRecovery(vector<double> &wvg_,
                          vector<double> &ssf_,
                          Vector2D &adr_,
                          Vector3D &adrFixed_,
                          double &Theta,
                          int &nl) const {
+  const string &fileName = in.getRecoveryFileName();
+  if (fileName.empty()) { return; }
   ifstream file;
   file.open(fileName, ios::binary);
   if (!file.is_open()) {

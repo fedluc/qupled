@@ -8,17 +8,7 @@ from qupled.classic import ESA, ClassicScheme
 @pytest.fixture
 def esa_instance():
     assert issubclass(qp.Stls, qp.Rpa)
-    inputs = qp.RpaInput()
-    inputs.coupling = 1.0
-    inputs.degeneracy = 1.0
-    inputs.theory = "ESA"
-    inputs.chemicalPotential = [-10, 10]
-    inputs.cutoff = 10.0
-    inputs.matsubara = 128
-    inputs.resolution = 0.1
-    inputs.intError = 1.0e-5
-    inputs.threads = 1
-    return ESA(inputs)
+    return ESA(ESA.Input(1.0, 1.0))
 
 
 def test_default(esa_instance):
