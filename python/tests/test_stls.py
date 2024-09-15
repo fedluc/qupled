@@ -5,7 +5,7 @@ import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.classic import Stls
-from qupled.classic import ClassicSchemeNew
+from qupled.classic import ClassicScheme
 
 
 @pytest.fixture
@@ -28,7 +28,7 @@ def stls_instance():
 
 
 def test_default(stls_instance):
-    assert issubclass(Stls, ClassicSchemeNew)
+    assert issubclass(Stls, ClassicScheme)
     assert issubclass(Stls, qp.Stls)
     assert all(x == y for x, y in zip(stls_instance.allowedTheories, ["STLS"]))
     assert stls_instance.hdfFileName is None
