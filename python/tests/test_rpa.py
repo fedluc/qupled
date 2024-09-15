@@ -3,7 +3,7 @@ import pytest
 import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
-from qupled.classic import Rpa
+from qupled.classic import Rpa, ClassicSchemeNew
 
 
 @pytest.fixture
@@ -22,6 +22,8 @@ def rpa_instance():
 
 
 def test_default(rpa_instance):
+    issubclass(Rpa, ClassicSchemeNew)
+    issubclass(Rpa, qp.Rpa)
     assert all(x == y for x, y in zip(rpa_instance.allowedTheories, ["RPA"]))
     assert rpa_instance.hdfFileName is None
 
@@ -55,7 +57,6 @@ def test_compute(rpa_instance, mocker):
 def test_checkStatusAndClean(rpa_instance, mocker, capsys):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     mockCheckInputs = mocker.patch("os.remove")
-    rpa_instance.scheme = qp.Rpa(rpa_instance.inputs)
     rpa_instance._checkStatusAndClean(0)
     captured = capsys.readouterr()
     assert mockMPIIsRoot.call_count == 1
@@ -72,7 +73,6 @@ def test_setHdfFile(rpa_instance):
 
 def test_save(rpa_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    rpa_instance.scheme = qp.Rpa(rpa_instance.inputs)
     rpa_instance._setHdfFile()
     try:
         rpa_instance._save()
@@ -109,7 +109,6 @@ def test_computeRdf(rpa_instance, mocker):
 
 def test_computeInternalEnergy(rpa_instance, mocker):
     mockComputeInternalEnergy = mocker.patch("qupled.qupled.computeInternalEnergy")
-    rpa_instance.scheme = qp.Rpa(rpa_instance.inputs)
     rpa_instance.computeInternalEnergy()
     assert mockComputeInternalEnergy.call_count == 1
 
