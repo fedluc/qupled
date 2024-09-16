@@ -16,7 +16,7 @@ import qupled.qupled as qp
 class ClassicScheme(ABC):
 
     # Compute the scheme
-    def compute(self, compute: Callable[None, int], save: Callable) -> None:
+    def computeScheme(self, compute: Callable[None, int], save: Callable) -> None:
         self._checkInputs()
         status = compute()
         self._checkStatusAndClean(status)
@@ -217,7 +217,7 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
 
         The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        ClassicScheme.compute(self, qp.Rpa.compute, self._save)
+        super().computeScheme(super().compute, self._save)
 
 
 # -----------------------------------------------------------------------
@@ -225,7 +225,7 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
 # -----------------------------------------------------------------------
 
 
-class ESAMetaclass(type(ClassicScheme), type(qp.Rpa)):
+class ESAMetaclass(type(ClassicScheme), type(qp.ESA)):
     pass
 
 
@@ -294,7 +294,7 @@ class ESA(ClassicScheme, qp.ESA, metaclass=ESAMetaclass):
 
         The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        ClassicScheme.compute(self, qp.ESA.compute, self._save)
+        super().computeScheme(super().compute, self._save)
 
 
 # -----------------------------------------------------------------------
@@ -384,7 +384,7 @@ class Stls(ClassicScheme, qp.Stls, metaclass=StlsMetaclass):
 
         The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        ClassicScheme.compute(self, qp.Stls.compute, self._save)
+        super().computeScheme(super().compute, self._save)
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
@@ -422,8 +422,7 @@ class Stls(ClassicScheme, qp.Stls, metaclass=StlsMetaclass):
 # StlsIet class
 # -----------------------------------------------------------------------
 
-
-class StlsIet(Stls):
+class StlsIet(ClassicScheme, qp.Stls, metaclass=StlsMetaclass):
     """
 
     Class used to setup and solve the classical STLS-IET scheme as described by
@@ -432,91 +431,72 @@ class StlsIet(Stls):
     This class inherits most of its methods and attributes from :obj:`qupled.classic.Stls`.
 
     Args:
-        coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.
-        chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
-        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
-        error: Minimum error for convergence, defaults to 1.0e-5.
-        mapping: Classical to quantum mapping. See :func:`qupled.qupled.StlsInput.iet`
-        mixing: Mixing parameter for iterative solution, defaults to 1.0.
-        guess:  Initial guess for the iterative solution, defaults to None, i.e. slfc = 0.
-        iterations: Maximum number of iterations, defaults to 1000.
-        matsubara: Number of matsubara frequencies, defaults to 128.
-        outputFrequency: Frequency used to print the recovery files, defaults to 10.
-        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
-        resolution: Resolution of the wave-vector grid, defaults to 0.1.
-        scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`qupled.qupled.Input.int2DScheme`
+        inputs: Input parameters used to solve the scheme.
     """
 
+    class Input(Stls.Input):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.StlsIet` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float, theory: str):
+            super().__init__(coupling, degeneracy)
+            self.theory = theory
+            """ Dielectric theory to solve ["STLS-HNC", "STLS-IOI" or  "STLS-LCT"] """
+
     # Constructor
-    def __init__(
-        self,
-        coupling: float,
-        degeneracy: float,
-        theory: str,
-        chemicalPotential: list[float] = [-10.0, 10.0],
-        cutoff: float = 10.0,
-        error: float = 1.0e-5,
-        mapping: str = "standard",
-        mixing: float = 1.0,
-        guess: qp.StlsGuess = None,
-        iterations: int = 1000,
-        matsubara: int = 128,
-        outputFrequency: int = 10,
-        recoveryFile: str = None,
-        resolution: float = 0.1,
-        scheme2DIntegrals: str = "full",
-    ):
+    def __init__(self, inputs: StlsIet.Input):
+        # Construct the base classes
+        super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
         # Input object
-        self.inputs: qupled.qupled.StlsInput = (
-            qp.StlsInput()
-        )  #: Inputs to solve the scheme.
-        super()._setInputs(
-            coupling,
-            degeneracy,
-            theory,
-            chemicalPotential,
-            cutoff,
-            error,
-            mixing,
-            guess,
-            iterations,
-            matsubara,
-            outputFrequency,
-            recoveryFile,
-            resolution,
-        )
-        self.inputs.iet = mapping
-        self.inputs.int2DScheme = scheme2DIntegrals
-        self._checkInputs()
-        # Scheme to solve
-        self.scheme: qp.Stls = None
+        self.inputs: Stls.Input = inputs
         # File to store output on disk
-        self.hdfFileName = None
+        self.hdfFileName: str = None  #: Name of the output file
 
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results to and hdf file. Extends the output produced by
-        :func:`qupled.classic.Stls.compute` by adding the option to save the bridge function adder
-        as a new dataframe in the hdf file. The bridge function adder dataframe can be accessed as `bf`.
+        """Solves the scheme and saves the results.
+
+        The results are stored as pandas dataframes in an hdf file with the following keywords:
+
+        - info: A dataframe containing information on the input parameters, it includes:
+
+          - coupling: the coupling parameter,
+          - degeneracy: the degeneracy parameter,
+          - error: the residual error at the end of the solution
+          - theory: the theory that is being solved,
+          - resolution: the resolution in the wave-vector grid,
+          - cutoff: the cutoff in the wave-vector grid,
+          - matsubara: the number of matsubara frequencies
+
+        - idr (*ndarray*, 2D): the ideal density response
+        - sdr (*ndarray*):  the static density response
+        - slfc (*ndarray*):  the static local field correction
+        - ssf (*ndarray*):  the static structure factor
+        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
+        - wvg (*ndarray*):  the wave-vector grid
+        - bf (*ndarray*): the bridge function adder
+
+        If the radial distribution function was computed (see computeRdf), then the hdf file contains
+        two additional keywords:
+
+        - rdf (*ndarray*):  the radial distribution function
+        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
+
+        The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        self._checkInputs()
-        self.scheme = qp.Stls(self.inputs)
-        status = self.scheme.compute()
-        self._checkStatusAndClean(status)
-        self._setHdfFile()
-        self._save()
+        super().computeScheme(super().compute, self._save)
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
         """Stores the results obtained by solving the scheme."""
         super()._save()
-        pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
+        pd.DataFrame(self.bf).to_hdf(self.hdfFileName, key="bf")
 
 
 # -----------------------------------------------------------------------
