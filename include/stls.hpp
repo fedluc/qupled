@@ -23,7 +23,7 @@ public:
   int compute();
   // Getters
   double getError() const { return computeError(); }
-  std::vector<double> getBf() const { return bf; }
+  const std::vector<double> &getBf() const { return bf; }
 
 protected:
 

@@ -35,9 +35,9 @@ public:
   // Compute vs-stls scheme
   int compute();
   // Getters
-  std::vector<std::vector<double>> getFreeEnergyIntegrand() const;
-  std::vector<double> getFreeEnergyGrid() const;
-  std::vector<double> getAlpha() const;
+  const std::vector<std::vector<double>> &getFreeEnergyIntegrand() const;
+  const std::vector<double> &getFreeEnergyGrid() const;
+  const std::vector<double> &getAlpha() const;
 
 protected:
 
@@ -102,8 +102,8 @@ public:
   // Compute the thermodynamic properties
   void compute();
   // Get structural properties
-  std::vector<double> getSsf();
-  std::vector<double> getSlfc();
+  const std::vector<double> &getSsf();
+  const std::vector<double> &getSlfc();
   // Get free energy and free energy derivatives
   std::vector<double> getFreeEnergyData() const;
   // Get internal energy and internal energy derivatives
@@ -115,7 +115,7 @@ public:
   // Get free energy grid
   const std::vector<double> &getFreeEnergyGrid() const { return rsGrid; }
   // Get free parameter values except the last one
-  std::vector<double> getAlpha() const { return alpha; }
+  const std::vector<double> &getAlpha() const { return alpha; }
 
 protected:
 
@@ -178,13 +178,13 @@ public:
   // Set free parameter
   void setAlpha(const double &alpha);
   // Get coupling parameters for all the state points
-  std::vector<double> getCouplingParameters() const;
+  const std::vector<double> &getCouplingParameters() const;
   // Get degeneracy parameters for all the state points
-  std::vector<double> getDegeneracyParameters() const;
+  const std::vector<double> &getDegeneracyParameters() const;
   // Get internal energy for all the state points
-  std::vector<double> getInternalEnergy() const;
+  const std::vector<double> &getInternalEnergy() const;
   // Get free energy integrand for all the state points
-  std::vector<double> getFreeEnergyIntegrand() const;
+  const std::vector<double> &getFreeEnergyIntegrand() const;
   // Get the free parameter
   double getAlpha() const;
   // Get structural properties for output
@@ -257,9 +257,9 @@ public:
   virtual void computeSsf() = 0;
   virtual double computeError() = 0;
   virtual void updateSolution() = 0;
-  virtual std::vector<double> getSsf() const = 0;
-  virtual std::vector<double> getSlfc() const = 0;
-  virtual std::vector<double> getWvg() const = 0;
+  virtual const std::vector<double> &getSsf() const = 0;
+  virtual const std::vector<double> &getSlfc() const = 0;
+  virtual const std::vector<double> &getWvg() const = 0;
 
 protected:
 
