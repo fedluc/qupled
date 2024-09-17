@@ -25,6 +25,8 @@ public:
   VSStls(const VSStlsInput &in_, const ThermoProp &thermoProp_);
   // Solve the scheme
   using VSBase::compute;
+  // Getters
+  const VSStlsInput &getInput() const { return in; }
 
 private:
 

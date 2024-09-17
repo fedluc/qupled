@@ -135,7 +135,7 @@ std::vector<VSStlsInput> StructProp::setupCSRInput(const VSStlsInput &in) {
 }
 
 void StructProp::doIterations() {
-  const auto &in = csr[0]->getInput();
+  const auto &in = csr[0]->CSR::getInput();
   const int maxIter = in.getNIter();
   const int ompThreads = in.getNThreads();
   const double minErr = in.getErrMin();

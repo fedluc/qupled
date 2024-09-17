@@ -93,6 +93,7 @@ class PyRpa {
 public:
 
   static int compute(Rpa &rpa);
+  static RpaInput getInput(const Rpa &rpa);
   static bn::ndarray getIdr(const Rpa &rpa);
   static bn::ndarray getRdf(const Rpa &rpa, const bn::ndarray &r);
   static bn::ndarray getSdr(const Rpa &rpa);
@@ -112,6 +113,7 @@ class PyStls {
 public:
 
   static int compute(Stls &stls);
+  static StlsInput getInput(const Stls &stls);
   static double getError(const Stls &stls);
   static bn::ndarray getBf(const Stls &stls);
 };
@@ -124,6 +126,7 @@ class PyVSStls {
 public:
 
   static int compute(VSStls &vsstls);
+  static VSStlsInput getInput(const VSStls &vsstls);
   static double getError(const VSStls &vsstls);
   static bn::ndarray getAlpha(const VSStls &vsstls);
   static bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls);
@@ -138,6 +141,7 @@ class PyQstls {
 public:
 
   static int compute(Qstls &qstls);
+  static QstlsInput getInput(const Qstls &qstls);
   static double getError(const Qstls &qstls);
   static bn::ndarray getAdr(const Qstls &qstls);
 };
@@ -150,6 +154,7 @@ class PyQVSStls {
 public:
 
   static int compute(QVSStls &qvsstls);
+  static QVSStlsInput getInput(const QVSStls &qvsstls);
   static double getError(const QVSStls &qvsstls);
   static bn::ndarray getAlpha(const QVSStls &qvsstls);
   static bn::ndarray getAdr(const QVSStls &qvsstls);

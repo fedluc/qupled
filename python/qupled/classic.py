@@ -180,8 +180,6 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
         super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["RPA"]
-        # Input object
-        self.inputs: Rpa.Input = inputs
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 
@@ -257,8 +255,6 @@ class ESA(ClassicScheme, qp.ESA, metaclass=ESAMetaclass):
         super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["ESA"]
-        # Input object
-        self.inputs: ESA.Input = inputs
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 
@@ -386,8 +382,6 @@ class Stls(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
         super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["STLS"]
-        # Input object
-        self.inputs: Stls.Input = inputs
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 
@@ -460,8 +454,6 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
         super().__init__(inputs)
         # Allowed theories
         self.allowedTheories = ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
-        # Input object
-        self.inputs: Stls.Input = inputs
         # File to store output on disk
         self.hdfFileName: str = None  #: Name of the output file
 

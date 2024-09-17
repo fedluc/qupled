@@ -22,6 +22,7 @@ public:
   // Compute stls scheme
   int compute();
   // Getters
+  const StlsInput &getInput() const { return in; }
   double getError() const { return computeError(); }
   const std::vector<double> &getBf() const { return bf; }
 
