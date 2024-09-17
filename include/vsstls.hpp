@@ -108,9 +108,9 @@ public:
   void updateSolution() { Stls::updateSolution(); }
 
   // Getters
-  std::vector<double> getSsf() const { return Stls::getSsf(); }
-  std::vector<double> getSlfc() const { return Stls::getSlfc(); }
-  std::vector<double> getWvg() const { return Stls::getWvg(); }
+  const std::vector<double> &getSsf() const { return Stls::getSsf(); }
+  const std::vector<double> &getSlfc() const { return Stls::getSlfc(); }
+  const std::vector<double> &getWvg() const { return Stls::getWvg(); }
 
 private:
 

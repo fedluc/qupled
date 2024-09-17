@@ -22,15 +22,15 @@ public:
   // Compute the scheme
   int compute();
   // Getters
-  Vector2D getIdr() const { return idr; }
-  std::vector<double> getSlfc() const { return slfc; }
-  std::vector<double> getSsf() const { return ssf; }
-  std::vector<double> getSsfHF() const { return ssfHF; }
-  std::vector<double> getWvg() const { return wvg; }
+  const Vector2D &getIdr() const { return idr; }
+  const std::vector<double> &getSlfc() const { return slfc; }
+  const std::vector<double> &getSsf() const { return ssf; }
+  const std::vector<double> &getSsfHF() const { return ssfHF; }
+  const std::vector<double> &getWvg() const { return wvg; }
   std::vector<double> getRdf(const std::vector<double> &r) const;
   std::vector<double> getSdr() const;
   double getUInt() const;
-  std::string getRecoveryFileName() const { return recoveryFileName; }
+  const std::string &getRecoveryFileName() const { return recoveryFileName; }
 
 protected:
 

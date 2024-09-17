@@ -60,7 +60,7 @@ public:
   // Get internal energy and internal energy derivatives
   std::vector<double> getQData() const;
   // Get structural properties
-  Vector2D getAdr();
+  const Vector2D &getAdr();
 
 private:
 
@@ -120,9 +120,9 @@ public:
   // Compute Q
   double getQAdder() const;
   // Getters
-  std::vector<double> getSsf() const { return Qstls::getSsf(); }
-  std::vector<double> getSlfc() const { return Qstls::getSlfc(); }
-  std::vector<double> getWvg() const { return Qstls::getWvg(); }
+  const std::vector<double> &getSsf() const { return Qstls::getSsf(); }
+  const std::vector<double> &getSlfc() const { return Qstls::getSlfc(); }
+  const std::vector<double> &getWvg() const { return Qstls::getWvg(); }
 
 private:
 

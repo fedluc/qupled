@@ -29,17 +29,17 @@ void VSBase::init() {
   initFreeEnergyIntegrand();
 }
 
-vector<vector<double>> VSBase::getFreeEnergyIntegrand() const {
+const vector<vector<double>> &VSBase::getFreeEnergyIntegrand() const {
   assert(thermoProp);
   return thermoProp->getFreeEnergyIntegrand();
 }
 
-vector<double> VSBase::getFreeEnergyGrid() const {
+const vector<double> &VSBase::getFreeEnergyGrid() const {
   assert(thermoProp);
   return thermoProp->getFreeEnergyGrid();
 }
 
-vector<double> VSBase::getAlpha() const {
+const vector<double> &VSBase::getAlpha() const {
   assert(thermoProp);
   return thermoProp->getAlpha();
 }
@@ -204,13 +204,13 @@ void ThermoPropBase::compute() {
   alpha[idx + 1] = alphaTmp;
 }
 
-vector<double> ThermoPropBase::getSsf() {
+const vector<double> &ThermoPropBase::getSsf() {
   assert(structProp);
   if (!structProp->isComputed()) { structProp->compute(); }
   return structProp->getCsr(getStructPropIdx()).getSsf();
 }
 
-vector<double> ThermoPropBase::getSlfc() {
+const vector<double> &ThermoPropBase::getSlfc() {
   assert(structProp);
   if (!structProp->isComputed()) { structProp->compute(); }
   return structProp->getCsr(getStructPropIdx()).getSlfc();
@@ -413,19 +413,19 @@ StructPropBase::getBase(function<double(const CSR &)> f) const {
   return outVector;
 }
 
-vector<double> StructPropBase::getCouplingParameters() const {
+const vector<double> &StructPropBase::getCouplingParameters() const {
   return getBase([&](const CSR &c) { return c.getInput().getCoupling(); });
 }
 
-vector<double> StructPropBase::getDegeneracyParameters() const {
+const vector<double> &StructPropBase::getDegeneracyParameters() const {
   return getBase([&](const CSR &c) { return c.getInput().getDegeneracy(); });
 }
 
-vector<double> StructPropBase::getInternalEnergy() const {
+const vector<double> &StructPropBase::getInternalEnergy() const {
   return getBase([&](const CSR &c) { return c.getInternalEnergy(); });
 }
 
-vector<double> StructPropBase::getFreeEnergyIntegrand() const {
+const vector<double> &StructPropBase::getFreeEnergyIntegrand() const {
   return getBase([&](const CSR &c) { return c.getFreeEnergyIntegrand(); });
 }
 

@@ -124,7 +124,7 @@ vector<double> QThermoProp::getQData() const {
   return vector<double>({q, qr, qt});
 }
 
-Vector2D QThermoProp::getAdr() {
+const Vector2D &QThermoProp::getAdr() {
   if (!structProp->isComputed()) { structProp->compute(); }
   return structProp->getCsr(getStructPropIdx()).getAdr();
 }
