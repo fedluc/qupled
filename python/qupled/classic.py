@@ -298,15 +298,55 @@ class ESA(ClassicScheme, qp.ESA, metaclass=ESAMetaclass):
 
 
 # -----------------------------------------------------------------------
+# IterativeScheme class
+# -----------------------------------------------------------------------
+
+
+class IterativeScheme(ClassicScheme):
+
+    # Set the initial guess from a dataframe produced in output
+    @staticmethod
+    def getInitialGuess(fileName: str) -> qp.StlsGuess:
+        """Constructs an initial guess object by extracting the information from an output file.
+
+        Args:
+            fileName : name of the file used to extract the information for the initial guess.
+        """
+        guess = qp.StlsGuess()
+        hdfData = qu.Hdf().read(fileName, ["wvg", "slfc"])
+        guess.wvg = hdfData["wvg"]
+        guess.slfc = hdfData["slfc"]
+        return guess
+
+    # Save results to disk
+    @qu.MPI.runOnlyOnRoot
+    def _save(self) -> None:
+        """Stores the results obtained by solving the scheme."""
+        super()._save()
+        pd.DataFrame(
+            {
+                "coupling": self.inputs.coupling,
+                "degeneracy": self.inputs.degeneracy,
+                "error": self.error,
+                "theory": self.inputs.theory,
+                "resolution": self.inputs.resolution,
+                "cutoff": self.inputs.cutoff,
+                "matsubara": self.inputs.matsubara,
+            },
+            index=["info"],
+        ).to_hdf(self.hdfFileName, key="info")
+
+
+# -----------------------------------------------------------------------
 # Stls class
 # -----------------------------------------------------------------------
 
 
-class StlsMetaclass(type(ClassicScheme), type(qp.Stls)):
+class StlsMetaclass(type(IterativeScheme), type(qp.Stls)):
     pass
 
 
-class Stls(ClassicScheme, qp.Stls, metaclass=StlsMetaclass):
+class Stls(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
     """
     Class used to setup and solve the classical STLS scheme as described by
     `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
@@ -386,43 +426,13 @@ class Stls(ClassicScheme, qp.Stls, metaclass=StlsMetaclass):
         """
         super().computeScheme(super().compute, self._save)
 
-    # Save results to disk
-    @qu.MPI.runOnlyOnRoot
-    def _save(self) -> None:
-        """Stores the results obtained by solving the scheme."""
-        super()._save()
-        pd.DataFrame(
-            {
-                "coupling": self.inputs.coupling,
-                "degeneracy": self.inputs.degeneracy,
-                "error": self.error,
-                "theory": self.inputs.theory,
-                "resolution": self.inputs.resolution,
-                "cutoff": self.inputs.cutoff,
-                "matsubara": self.inputs.matsubara,
-            },
-            index=["info"],
-        ).to_hdf(self.hdfFileName, key="info")
-
-    # Set the initial guess from a dataframe produced in output
-    def getInitialGuess(self, fileName: str) -> qp.StlsGuess:
-        """Constructs an initial guess object by extracting the information from an output file.
-
-        Args:
-            fileName : name of the file used to extract the information for the initial guess.
-        """
-        guess = qp.StlsGuess()
-        hdfData = qu.Hdf().read(fileName, ["wvg", "slfc"])
-        guess.wvg = hdfData["wvg"]
-        guess.slfc = hdfData["slfc"]
-        return guess
-
 
 # -----------------------------------------------------------------------
 # StlsIet class
 # -----------------------------------------------------------------------
 
-class StlsIet(ClassicScheme, qp.Stls, metaclass=StlsMetaclass):
+
+class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
     """
 
     Class used to setup and solve the classical STLS-IET scheme as described by
