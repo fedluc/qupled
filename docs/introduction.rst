@@ -67,10 +67,4 @@ To build the code, the following dependencies must be satisfied:
   - `Open-MPI (v5.0) <https://www.open-mpi.org/software/ompi/v5.0/>`_
   - `FMT (v10.2) <https://github.com/fmtlib/fmt/>`_
 
-To test and run the code, the following python packages must be installed
-
-  - `matplotlib (v>=3.7) <https://matplotlib.org>`_
-  - `numpy (v>=1.24)  <https://numpy.org>`_
-  - `pandas (v>=2.0) <https://pandas.pydata.org>`_
-  - `pytest (v>=8.0) <https://docs.pytest.org/en/8.0.x/>`_
-  - `pytest-mock (v>=3.12) <https://pypi.org/project/pytest-mock/>`_
+To run the code it is necessary to install the python packages summarized in the `requirements file <https://github.com/fedluc/qupled/blob/master/python/requirements.txt>`_ by running ``pip install -r python/requirements.txt`` from the root directory of the repository.
