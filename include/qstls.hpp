@@ -24,6 +24,7 @@ public:
   // Compute qstls scheme
   int compute();
   // Getters
+  const QstlsInput &getInput() const { return in; }
   double getError() const { return computeError(); }
   const Vector2D &getAdr() const { return adr; }
   const Vector3D &getAdrFixed() const { return adrFixed; }

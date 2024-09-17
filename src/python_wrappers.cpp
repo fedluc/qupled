@@ -125,6 +125,8 @@ void PyQstlsGuess::setMatsubara(QstlsInput::Guess &guess, const int matsubara) {
 
 int PyRpa::compute(Rpa &rpa) { return rpa.compute(); }
 
+RpaInput PyRpa::getInput(const Rpa &rpa) { return rpa.getInput(); }
+
 bn::ndarray PyRpa::getIdr(const Rpa &rpa) {
   return pythonUtil::toNdArray2D(rpa.getIdr());
 }
@@ -165,6 +167,8 @@ string PyRpa::getRecoveryFileName(const Rpa &rpa) {
 
 int PyStls::compute(Stls &stls) { return stls.compute(); }
 
+StlsInput PyStls::getInput(const Stls &stls) { return stls.getInput(); }
+
 double PyStls::getError(const Stls &stls) { return stls.getError(); }
 
 bn::ndarray PyStls::getBf(const Stls &stls) {
@@ -176,6 +180,10 @@ bn::ndarray PyStls::getBf(const Stls &stls) {
 // -----------------------------------------------------------------
 
 int PyVSStls::compute(VSStls &vsstls) { return vsstls.compute(); }
+
+VSStlsInput PyVSStls::getInput(const VSStls &vsstls) {
+  return vsstls.getInput();
+}
 
 double PyVSStls::getError(const VSStls &vsstls) {
   // NOTE: This is just a place-holder, getError is not yet implemented in
@@ -202,6 +210,8 @@ bn::ndarray PyVSStls::getFreeEnergyGrid(const VSStls &vsstls) {
 
 int PyQstls::compute(Qstls &qstls) { return qstls.compute(); }
 
+QstlsInput PyQstls::getInput(const Qstls &qstls) { return qstls.getInput(); }
+
 double PyQstls::getError(const Qstls &qstls) { return qstls.getError(); }
 
 bn::ndarray PyQstls::getAdr(const Qstls &qstls) {
@@ -213,6 +223,10 @@ bn::ndarray PyQstls::getAdr(const Qstls &qstls) {
 // -----------------------------------------------------------------
 
 int PyQVSStls::compute(QVSStls &qvsstls) { return qvsstls.compute(); }
+
+QVSStlsInput PyQVSStls::getInput(const QVSStls &qvsstls) {
+  return qvsstls.getInput();
+}
 
 double PyQVSStls::getError(const QVSStls &qvsstls) {
   // NOTE: This is just a place-holder, getError is not yet implemented in

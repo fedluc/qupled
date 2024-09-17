@@ -22,6 +22,7 @@ public:
   // Compute the scheme
   int compute();
   // Getters
+  const RpaInput &getInput() const { return in; }
   const Vector2D &getIdr() const { return idr; }
   const std::vector<double> &getSlfc() const { return slfc; }
   const std::vector<double> &getSsf() const { return ssf; }

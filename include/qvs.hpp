@@ -28,6 +28,8 @@ public:
   QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_);
   // Solve the scheme
   using VSBase::compute;
+  // Getters
+  const QVSStlsInput &getInput() const { return in; }
 
 private:
 

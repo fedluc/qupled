@@ -161,6 +161,7 @@ BOOST_PYTHON_MODULE(qupled) {
   bp::class_<Rpa>("Rpa", bp::init<const RpaInput>())
       .def("compute", &PyRpa::compute)
       .def("rdf", &PyRpa::getRdf)
+      .add_property("input", &PyRpa::getInput)
       .add_property("idr", &PyRpa::getIdr)
       .add_property("sdr", &PyRpa::getSdr)
       .add_property("slfc", &PyRpa::getSlfc)
@@ -177,12 +178,14 @@ BOOST_PYTHON_MODULE(qupled) {
   // Class to solve classical schemes
   bp::class_<Stls, bp::bases<Rpa>>("Stls", bp::init<const StlsInput>())
       .def("compute", &PyStls::compute)
+      .add_property("input", &PyStls::getInput)
       .add_property("error", &PyStls::getError)
       .add_property("bf", &PyStls::getBf);
 
   // Class to solve the classical VS scheme
   bp::class_<VSStls, bp::bases<Rpa>>("VSStls", bp::init<const VSStlsInput>())
       .def("compute", &PyVSStls::compute)
+      .add_property("input", &PyVSStls::getInput)
       .add_property("error", &PyVSStls::getError)
       .add_property("alpha", &PyVSStls::getAlpha)
       .add_property("freeEnergyIntegrand", &PyVSStls::getFreeEnergyIntegrand)
@@ -191,12 +194,14 @@ BOOST_PYTHON_MODULE(qupled) {
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls", bp::init<const QstlsInput>())
       .def("compute", &PyQstls::compute)
+      .add_property("input", &PyQstls::getInput)
       .add_property("error", &PyQstls::getError)
       .add_property("adr", &PyQstls::getAdr);
 
   // Class to solve the quantum VS scheme
   bp::class_<QVSStls, bp::bases<Rpa>>("QVSStls", bp::init<const QVSStlsInput>())
       .def("compute", &PyQVSStls::compute)
+      .add_property("input", &PyQVSStls::getInput)
       .add_property("error", &PyQVSStls::getError)
       .add_property("freeEnergyIntegrand", &PyQVSStls::getFreeEnergyIntegrand)
       .add_property("freeEnergyGrid", &PyQVSStls::getFreeEnergyGrid)
