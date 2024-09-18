@@ -19,7 +19,7 @@ using ItgType = Integrator1D::Type;
 
 QVSStls::QVSStls(const QVSStlsInput &in_)
     : VSBase(in_),
-      Qstls(in_.toQstlsInput(), false, false),
+      Qstls(in_, false, false),
       in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
@@ -27,7 +27,7 @@ QVSStls::QVSStls(const QVSStlsInput &in_)
 
 QVSStls::QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_)
     : VSBase(in_, false),
-      Qstls(in_.toQstlsInput(), false, false),
+      Qstls(in_, false, false),
       in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
@@ -94,7 +94,7 @@ void QVSStls::initFreeEnergyIntegrand() {
 // -----------------------------------------------------------------
 
 QThermoProp::QThermoProp(const QVSStlsInput &in_)
-    : ThermoPropBase(in_),
+    : ThermoPropBase(in_, in_),
       structProp(make_shared<QStructProp>(in_)) {
   ThermoPropBase::structProp = structProp;
 }
@@ -135,13 +135,14 @@ Vector2D QThermoProp::getAdr() {
 
 QStructProp::QStructProp(const QVSStlsInput &in_)
     : Logger(MPIUtil::isRoot()),
-      StructPropBase() {
-  setupCSR(in_);
+      StructPropBase(),
+      in(in_){
+  setupCSR();
   setupCSRDependencies();
 }
 
-void QStructProp::setupCSR(const QVSStlsInput &in) {
-  std::vector<QVSStlsInput> inVector = setupCSRInput(in);
+void QStructProp::setupCSR() {
+  std::vector<QVSStlsInput> inVector = setupCSRInput();
   for (const auto &inTmp : inVector) {
     csr.push_back(make_shared<QstlsCSR>(inTmp));
   }
@@ -150,7 +151,7 @@ void QStructProp::setupCSR(const QVSStlsInput &in) {
   }
 }
 
-std::vector<QVSStlsInput> QStructProp::setupCSRInput(const QVSStlsInput &in) {
+std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
   const double &drs = in.getCouplingResolution();
   const double &dTheta = in.getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
@@ -173,7 +174,6 @@ std::vector<QVSStlsInput> QStructProp::setupCSRInput(const QVSStlsInput &in) {
 const QstlsCSR &QStructProp::getCsr(const Idx &idx) const { return *csr[idx]; }
 
 void QStructProp::doIterations() {
-  const auto &in = csr[0]->getInput();
   const int maxIter = in.getNIter();
   const int ompThreads = in.getNThreads();
   const double minErr = in.getErrMin();

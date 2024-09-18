@@ -348,8 +348,6 @@ void VSInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand &fxcIntegrand) {
 
 void VSInput::print() const {
   if (!isRoot()) { return; }
-  RpaInput::print();
-  IterationInput::print();
   string alphaString;
   if (!alphaGuess.empty()) {
     alphaString =
@@ -363,8 +361,7 @@ void VSInput::print() const {
 }
 
 bool VSInput::isEqual(const VSInput &in) const {
-  return (RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
-          alphaGuess == in.alphaGuess && drs == in.drs && dTheta == in.dTheta &&
+  return (alphaGuess == in.alphaGuess && drs == in.drs && dTheta == in.dTheta &&
           errMinAlpha == in.errMinAlpha && nIterAlpha == in.nIterAlpha &&
           fxcIntegrand == in.fxcIntegrand);
 }
@@ -375,16 +372,12 @@ bool VSInput::isEqual(const VSInput &in) const {
 
 void VSStlsInput::print() const {
   if (!isRoot()) { return; }
+  StlsInput::print();
   VSInput::print();
-  ClassicInput::print();
 }
 
 bool VSStlsInput::isEqual(const VSStlsInput &in) const {
-  return (VSInput::isEqual(in) && ClassicInput::isEqual(in));
-}
-
-StlsInput VSStlsInput::toStlsInput() const {
-  return StlsInput(RpaInput(*this), IterationInput(*this), IETMapping);
+  return (VSInput::isEqual(in) && StlsInput::isEqual(in));
 }
 
 // -----------------------------------------------------------------
@@ -393,14 +386,10 @@ StlsInput VSStlsInput::toStlsInput() const {
 
 void QVSStlsInput::print() const {
   if (!isRoot()) { return; }
+  QstlsInput::print();
   VSInput::print();
-  QuantumInput::print();
 }
 
 bool QVSStlsInput::isEqual(const QVSStlsInput &in) const {
-  return (VSInput::isEqual(in) && QuantumInput::isEqual(in));
-}
-
-QstlsInput QVSStlsInput::toQstlsInput() const {
-  return QstlsInput(RpaInput(*this), IterationInput(*this), IETMapping);
+  return (VSInput::isEqual(in) && QstlsInput::isEqual(in));
 }
