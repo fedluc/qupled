@@ -136,7 +136,7 @@ const Vector2D &QThermoProp::getAdr() {
 QStructProp::QStructProp(const QVSStlsInput &in_)
     : Logger(MPIUtil::isRoot()),
       StructPropBase(),
-      in(in_){
+      in(in_) {
   setupCSR();
   setupCSRDependencies();
 }

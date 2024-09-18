@@ -231,7 +231,7 @@ public:
   // Constructor
   CSR(const VSInput &inVS_, const RpaInput &inRpa_)
       : inVS(inVS_),
-	inRpa(inRpa_),
+        inRpa(inRpa_),
         lfc(std::make_shared<Vector2D>()),
         alpha(DEFAULT_ALPHA) {}
   // Destructor

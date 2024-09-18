@@ -413,12 +413,11 @@ StructPropBase::getBase(function<double(const CSR &)> f) const {
   return outVector;
 }
 
-
-const vector<double>& StructPropBase::getCouplingParameters() const {
+const vector<double> &StructPropBase::getCouplingParameters() const {
   return getBase([&](const CSR &c) { return c.getCoupling(); });
 }
 
-const vector<double>& StructPropBase::getDegeneracyParameters() const {
+const vector<double> &StructPropBase::getDegeneracyParameters() const {
   return getBase([&](const CSR &c) { return c.getDegeneracy(); });
 }
 
