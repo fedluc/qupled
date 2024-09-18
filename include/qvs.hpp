@@ -86,11 +86,13 @@ public:
 
 private:
 
+  // Inputs
+  const QVSStlsInput in;
   // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<std::shared_ptr<QstlsCSR>> csr;
   // Setup dependencies in the CSR objects
-  std::vector<QVSStlsInput> setupCSRInput(const QVSStlsInput &in);
-  void setupCSR(const QVSStlsInput &in_);
+  std::vector<QVSStlsInput> setupCSRInput();
+  void setupCSR();
   // Perform iterations to compute structural properties
   void doIterations();
 };
@@ -105,8 +107,8 @@ public:
 
   // Constructor
   explicit QstlsCSR(const QVSStlsInput &in_)
-      : CSR(in_),
-        Qstls(in_.toQstlsInput(), false, false),
+      : CSR(in_, in_),
+        Qstls(in_, false, false),
         in(in_) {}
   // Compute auxiliary density response
   void computeAdrQStls();

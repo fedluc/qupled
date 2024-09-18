@@ -292,7 +292,7 @@ public:
 // Class to handle input for the VS schemes
 // -----------------------------------------------------------------
 
-class VSInput : public RpaInput, public IterationInput {
+class VSInput {
 
 public:
 
@@ -351,7 +351,7 @@ private:
 // Class to handle input for the VSStls scheme
 // -----------------------------------------------------------------
 
-class VSStlsInput : public VSInput, public ClassicInput {
+class VSStlsInput : public VSInput, public StlsInput {
 
 public:
 
@@ -359,15 +359,13 @@ public:
   void print() const;
   // Compare two VSStls objects
   bool isEqual(const VSStlsInput &in) const;
-  // Convert to StlsInput
-  StlsInput toStlsInput() const;
 };
 
 // -----------------------------------------------------------------
 // Class to handle input for the QVSStls scheme
 // -----------------------------------------------------------------
 
-class QVSStlsInput : public VSInput, public QuantumInput {
+class QVSStlsInput : public VSInput, public QstlsInput {
 
 public:
 
@@ -375,8 +373,6 @@ public:
   void print() const;
   // Compare two VSStls objects
   bool isEqual(const QVSStlsInput &in) const;
-  // Convert to QstlsInput
-  QstlsInput toQstlsInput() const;
 };
 
 #endif

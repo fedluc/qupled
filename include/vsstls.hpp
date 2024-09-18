@@ -75,11 +75,13 @@ public:
 
 private:
 
+  // Input
+  const VSStlsInput in;
   // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<std::shared_ptr<StlsCSR>> csr;
   // setup the csr vector
-  std::vector<VSStlsInput> setupCSRInput(const VSStlsInput &in);
-  void setupCSR(const VSStlsInput &in_);
+  std::vector<VSStlsInput> setupCSRInput();
+  void setupCSR();
   //
   void doIterations();
 };
@@ -94,8 +96,8 @@ public:
 
   // Constructor
   explicit StlsCSR(const VSStlsInput &in_)
-      : CSR(in_),
-        Stls(in_.toStlsInput(), false, false),
+      : CSR(in_, in_),
+        Stls(in_, false, false),
         in(in_) {}
 
   // Compute static local field correction

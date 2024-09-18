@@ -13,7 +13,7 @@ using namespace std;
 
 VSStls::VSStls(const VSStlsInput &in_)
     : VSBase(in_),
-      Stls(in_.toStlsInput(), false, false),
+      Stls(in_, false, false),
       in(in_),
       thermoProp(make_shared<ThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
@@ -21,7 +21,7 @@ VSStls::VSStls(const VSStlsInput &in_)
 
 VSStls::VSStls(const VSStlsInput &in_, const ThermoProp &thermoProp_)
     : VSBase(in_, false),
-      Stls(in_.toStlsInput(), false, false),
+      Stls(in_, false, false),
       in(in_),
       thermoProp(make_shared<ThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
@@ -88,7 +88,7 @@ void VSStls::initFreeEnergyIntegrand() {
 // -----------------------------------------------------------------
 
 ThermoProp::ThermoProp(const VSStlsInput &in_)
-    : ThermoPropBase(in_),
+    : ThermoPropBase(in_, in_),
       structProp(make_shared<StructProp>(in_)) {
   ThermoPropBase::structProp = structProp;
 }
@@ -99,13 +99,14 @@ ThermoProp::ThermoProp(const VSStlsInput &in_)
 
 StructProp::StructProp(const VSStlsInput &in_)
     : Logger(MPIUtil::isRoot()),
-      StructPropBase() {
-  setupCSR(in_);
+      StructPropBase(),
+      in(in_) {
+  setupCSR();
   setupCSRDependencies();
 }
 
-void StructProp::setupCSR(const VSStlsInput &in) {
-  std::vector<VSStlsInput> inVector = setupCSRInput(in);
+void StructProp::setupCSR() {
+  std::vector<VSStlsInput> inVector = setupCSRInput();
   for (const auto &inTmp : inVector) {
     csr.push_back(make_shared<StlsCSR>(inTmp));
   }
@@ -114,7 +115,7 @@ void StructProp::setupCSR(const VSStlsInput &in) {
   }
 }
 
-std::vector<VSStlsInput> StructProp::setupCSRInput(const VSStlsInput &in) {
+std::vector<VSStlsInput> StructProp::setupCSRInput() {
   const double &drs = in.getCouplingResolution();
   const double &dTheta = in.getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
@@ -135,7 +136,6 @@ std::vector<VSStlsInput> StructProp::setupCSRInput(const VSStlsInput &in) {
 }
 
 void StructProp::doIterations() {
-  const auto &in = csr[0]->CSR::getInput();
   const int maxIter = in.getNIter();
   const int ompThreads = in.getNThreads();
   const double minErr = in.getErrMin();

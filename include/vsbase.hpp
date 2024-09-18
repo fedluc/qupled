@@ -88,7 +88,7 @@ class ThermoPropBase {
 public:
 
   // Constructor
-  explicit ThermoPropBase(const VSInput &in);
+  explicit ThermoPropBase(const VSInput &inVS, const RpaInput &inRpa);
   // Destructor
   virtual ~ThermoPropBase() = default;
   // Set the value of the free parameter in the structural properties
@@ -142,13 +142,13 @@ protected:
   double computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
                            const bool normalize) const;
   // Build the integration grid
-  void setRsGrid(const VSInput &in);
+  void setRsGrid(const VSInput &inVS, const RpaInput &inRpa);
   // Build the free energy integrand
   void setFxcIntegrand(const VSInput &in);
   // Build the free parameter vector
   void setAlpha(const VSInput &in);
   // Set the index of the target state point in the free energy integrand
-  void setFxcIdxTargetStatePoint(const VSInput &in);
+  void setFxcIdxTargetStatePoint(const RpaInput &in);
   // Set the index of the first unsolved state point in the free energy
   // integrand
   void setFxcIdxUnsolvedStatePoint();
@@ -229,8 +229,9 @@ public:
     std::shared_ptr<Vector2D> down;
   };
   // Constructor
-  CSR(const VSInput &in_)
-      : in(in_),
+  CSR(const VSInput &inVS_, const RpaInput &inRpa_)
+      : inVS(inVS_),
+	inRpa(inRpa_),
         lfc(std::make_shared<Vector2D>()),
         alpha(DEFAULT_ALPHA) {}
   // Destructor
@@ -245,8 +246,9 @@ public:
   void setAlpha(const double &alpha) { this->alpha = alpha; }
   // Get the free parameter
   double getAlpha() const { return alpha; }
-  // Get input parameters
-  const VSInput &getInput() const { return in; }
+  // Get input
+  double getCoupling() const { return inRpa.getCoupling(); }
+  double getDegeneracy() const { return inRpa.getDegeneracy(); }
   // Compute the internal energy
   double getInternalEnergy() const;
   // Compute the free energy integrand
@@ -266,7 +268,8 @@ protected:
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
   // Input data
-  const VSInput in;
+  const VSInput inVS;
+  const RpaInput inRpa;
   // local field correction (static or dynamic)
   std::shared_ptr<Vector2D> lfc;
   // Free parameter

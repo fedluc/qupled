@@ -67,21 +67,21 @@ double VSBase::alphaDifference(const double &alphaTmp) {
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-ThermoPropBase::ThermoPropBase(const VSInput &in) {
+ThermoPropBase::ThermoPropBase(const VSInput &inVS, const RpaInput &inRpa) {
   // Check if we are solving for particular state points
-  isZeroCoupling = (in.getCoupling() == 0.0);
-  isZeroDegeneracy = (in.getDegeneracy() == 0.0);
+  isZeroCoupling = (inRpa.getCoupling() == 0.0);
+  isZeroDegeneracy = (inRpa.getDegeneracy() == 0.0);
   // Set variables related to the free energy calculation
-  setRsGrid(in);
-  setFxcIntegrand(in);
-  setAlpha(in);
-  setFxcIdxTargetStatePoint(in);
+  setRsGrid(inVS, inRpa);
+  setFxcIntegrand(inVS);
+  setAlpha(inVS);
+  setFxcIdxTargetStatePoint(inRpa);
   setFxcIdxUnsolvedStatePoint();
 }
 
-void ThermoPropBase::setRsGrid(const VSInput &in) {
-  const double &rs = in.getCoupling();
-  const double &drs = in.getCouplingResolution();
+void ThermoPropBase::setRsGrid(const VSInput &inVS, const RpaInput &inRpa) {
+  const double &rs = inRpa.getCoupling();
+  const double &drs = inVS.getCouplingResolution();
   if (!numUtil::isZero(remainder(rs, drs))) {
     MPIUtil::throwError(
         "Inconsistent input parameters: the coupling parameter must be a "
@@ -131,7 +131,7 @@ void ThermoPropBase::setAlpha(const VSInput &in) {
   }
 }
 
-void ThermoPropBase::setFxcIdxTargetStatePoint(const VSInput &in) {
+void ThermoPropBase::setFxcIdxTargetStatePoint(const RpaInput &in) {
   auto isTarget = [&](const double &rs) {
     return numUtil::equalTol(rs, in.getCoupling());
   };
@@ -413,12 +413,13 @@ StructPropBase::getBase(function<double(const CSR &)> f) const {
   return outVector;
 }
 
-const vector<double> &StructPropBase::getCouplingParameters() const {
-  return getBase([&](const CSR &c) { return c.getInput().getCoupling(); });
+
+const vector<double>& StructPropBase::getCouplingParameters() const {
+  return getBase([&](const CSR &c) { return c.getCoupling(); });
 }
 
-const vector<double> &StructPropBase::getDegeneracyParameters() const {
-  return getBase([&](const CSR &c) { return c.getInput().getDegeneracy(); });
+const vector<double>& StructPropBase::getDegeneracyParameters() const {
+  return getBase([&](const CSR &c) { return c.getDegeneracy(); });
 }
 
 const vector<double> &StructPropBase::getInternalEnergy() const {
@@ -444,7 +445,7 @@ void CSR::setDThetaData(CSR &csrThetaUp,
 }
 
 double CSR::getInternalEnergy() const {
-  const double rs = in.getCoupling();
+  const double rs = inRpa.getCoupling();
   return thermoUtil::computeInternalEnergy(getWvg(), getSsf(), rs);
 }
 
@@ -456,12 +457,12 @@ Vector2D CSR::getDerivativeContribution() const {
   // Check that alpha has been set to a value that is not the default
   assert(alpha != DEFAULT_ALPHA);
   // Derivative contributions
-  const double &rs = in.getCoupling();
+  const double &rs = inRpa.getCoupling();
   // const double& theta = in.getDegeneracy();
   const double &theta = 0.0;
-  const double &dx = in.getWaveVectorGridRes();
-  const double &drs = in.getCouplingResolution();
-  const double &dTheta = in.getDegeneracyResolution();
+  const double &dx = inRpa.getWaveVectorGridRes();
+  const double &drs = inVS.getCouplingResolution();
+  const double &dTheta = inVS.getDegeneracyResolution();
   const Vector2D &lfcData = *lfc;
   const Vector2D &rsUp = *lfcRs.up;
   const Vector2D &rsDown = *lfcRs.down;
