@@ -1,3 +1,4 @@
+
 import os
 import pytest
 import set_path
@@ -7,8 +8,7 @@ import qupled.classic as qpc
 
 def test_vsstls_properties():
     assert issubclass(qp.VSStls, qp.Rpa)
-    inputs = qpc.VSStls(1.0, 1.0).inputs
-    scheme = qp.VSStls(inputs)
+    scheme = qp.VSStls(qp.VSStlsInput())
     assert hasattr(scheme, "freeEnergyIntegrand")
     assert hasattr(scheme, "freeEnergyGrid")
 

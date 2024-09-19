@@ -320,19 +320,14 @@ void VSInput::setNIterAlpha(const int &nIterAlpha) {
 }
 
 void VSInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand &fxcIntegrand) {
-  if (fxcIntegrand.integrand.size() < 3) {
-    throwError(
-        "The free energy integrand does not contain enough temperature points");
-  }
-  for (const auto &fxci : fxcIntegrand.integrand) {
-    if (fxci.size() != fxcIntegrand.integrand[0].size()) {
+  const auto &integrands = fxcIntegrand.integrand;
+  const size_t referenceSize = (integrands.empty()) ? 0 : integrands[0].size();
+  for (const auto &integrand : integrands) {
+    if (integrand.size() != referenceSize) {
       throwError("The free energy integrand is inconsistent");
     }
   }
-  if (fxcIntegrand.grid.size() < 3 || fxcIntegrand.integrand[0].size() < 3) {
-    throwError("The free energy integrand does not contain enough points");
-  }
-  if (fxcIntegrand.grid.size() != fxcIntegrand.integrand[0].size()) {
+  if (fxcIntegrand.grid.size() != referenceSize) {
     throwError("The free energy integrand is inconsistent");
   }
   this->fxcIntegrand = fxcIntegrand;

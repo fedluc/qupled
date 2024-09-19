@@ -108,9 +108,11 @@ void ThermoPropBase::setFxcIntegrand(const VSInput &in) {
     for (const auto &theta : {Idx::THETA_DOWN, Idx::THETA, Idx::THETA_UP}) {
       const double rsMaxi = fxciData.grid.back();
       const Interpolator1D itp(fxciData.grid, fxciData.integrand[theta]);
-      for (size_t i = 0; i < nrs; ++i) {
-        const double &rs = rsGrid[i];
-        if (rs <= rsMaxi) { fxcIntegrand[theta][i] = itp.eval(rs); }
+      if (itp.isValid()) {
+	for (size_t i = 0; i < nrs; ++i) {
+	  const double &rs = rsGrid[i];
+	  if (rs <= rsMaxi) { fxcIntegrand[theta][i] = itp.eval(rs); }
+	}
       }
     }
   }

@@ -168,11 +168,25 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
             """ Resolution of the wave-vector grid """
             self.cutoff: float = 10.0
             """ cutoff for the wave-vector grid """
+            self.intError: float = 1.0e-5
+            """ Accuracy (expressed as a relative error) in the computation of the integrals """
+            self.int2DScheme: str = "full"
+            """ Scheme used to solve two-dimensional integrals
+            allowed options include:
+        
+            - full: the inner integral is evaluated at arbitrary points 
+	      selected automatically by the quadrature rule
+        
+	    - segregated: the inner integral is evaluated on a fixed 
+	      grid that depends on the integrand that is being processed
+        
+            Segregated is usually faster than full but it could become 
+	    less accurate if the fixed points are not chosen correctly
+            """
+            self.threads: int = 1
+            """ Number of OMP threads for parallel calculations"""
             # Undocumented default values
             self.theory: list[str] = "RPA"
-            self.intError: float = 1.0e-5
-            self.int2DScheme: str = "full"
-            self.threads: int = 1
 
     # Constructor
     def __init__(self, inputs: Rpa.Input):
@@ -501,125 +515,108 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
         pd.DataFrame(self.bf).to_hdf(self.hdfFileName, key="bf")
 
 
+
 # -----------------------------------------------------------------------
 # VSStls class
 # -----------------------------------------------------------------------
 
 
-class VSStls(Stls):
+class VSStlsMetaclass(type(IterativeScheme), type(qp.VSStls)):
+    pass
+
+
+class VSStls(IterativeScheme, qp.VSStls, metaclass=VSStlsMetaclass):
     """
-    Class used to setup and solve the classical VS-STLS scheme as described by
+     Class used to setup and solve the classical VS-STLS scheme as described by
     `Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_ and by
     `Sjostrom and Dufty <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.88.115123>`_.
-    This class inherits most of its methods and attributes from :obj:`qupled.classic.Stls`
 
     Args:
-        coupling: Coupling parameter.
-        degeneracy: Degeneracy parameter.
-        chemicalPotential: Initial guess for the chemical potential, defaults to [-100.0, 100.0].
-        cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
-        error: Minimum error for convergence, defaults to 1.0e-5.
-        mixing: Mixing parameter for iterative solution, defaults to 1.0.
-        iterations: Maximum number of iterations, defaults to 1000.
-        matsubara: Number of matsubara frequencies, defaults to 128.
-        outputFrequency: Frequency used to print the recovery files, defaults to 10.
-        recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
-        resolution: Resolution of the wave-vector grid, defaults to 0.1.
-        alpha: Initial guess for the free parameter, defaults to [0.5, 1.0]
-        couplingResolution: Resolution of the coupling parameter grid, defaults to 0.01
-        degeneracyResolution: Resolution of the degeneracy parameter grid, defaults to 0.01
-        errorAlpha: Minimum error for convergence in the free parameter iterations, defaults to 1.0e-3
-        iterationsAlpha: Maximum number of iterations for the free parameter, defaults to 50
-        errorIntegrals: Accuracy (as a relative error) for the integral computations, defaults to 1.0-5
-        threads: number of OMP threads for parallel calculations, defualts to 1
+        inputs: Input parameters used to solve the scheme.
     """
 
+    class Input(Stls.Input, qp.VSStlsInput):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.Stls` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float):
+            super().__init__(coupling, degeneracy)
+            """ Name of the theory that is solved """
+            self.alpha: list[float] = [0.5, 1.0]
+            """ Initial guess for the free parameter """
+            self.couplingResolution: float = 0.1
+            """ Resolution of the coupling parameter grid """
+            self.degeneracyResolution: float = 0.1
+            """ Resolution of the degeneracy parameter grid """
+            self.errorAlpha: float = 1.0e-3
+            """ Minimum error for convergence in the free parameter """
+            self.iterationsAlpha: int = 50
+            """ Maximum number of iterations to determine the free parameter """
+            self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = qp.FreeEnergyIntegrand()
+            """ Pre-computed free energy integrand """
+            # Undocumented default values
+            self.theory = "VSSTLS"
+            
     # Constructor
-    def __init__(
-        self,
-        coupling: float,
-        degeneracy: float,
-        chemicalPotential: list[float] = [-100.0, 100.0],
-        cutoff: float = 10.0,
-        error: float = 1.0e-5,
-        mixing: float = 1.0,
-        guess: qp.StlsGuess = None,
-        iterations: int = 1000,
-        matsubara: int = 128,
-        outputFrequency: int = 10,
-        recoveryFile: str = None,
-        resolution: float = 0.1,
-        alpha: list[float] = [0.5, 1.0],
-        couplingResolution: float = 0.01,
-        degeneracyResolution: float = 0.01,
-        errorAlpha: float = 1.0e-3,
-        iterationsAlpha: int = 50,
-        errorIntegrals: float = 1.0e-5,
-        threads: int = 1,
-    ):
+    def __init__(self, inputs: VSStls.Input):
+        # Construct the base classes
+        super().__init__(inputs)
         # Allowed theories
-        self.allowedTheories: list[str] = ["VSSTLS"]
-        # Input object
-        self.inputs: qupled.qupled.VSStlsInput = (
-            qp.VSStlsInput()
-        )  #: Inputs to solve the scheme.
-        super()._setInputs(
-            coupling,
-            degeneracy,
-            "VSSTLS",
-            chemicalPotential,
-            cutoff,
-            error,
-            mixing,
-            guess,
-            iterations,
-            matsubara,
-            outputFrequency,
-            recoveryFile,
-            resolution,
-        )
-        self.inputs.alpha = alpha
-        self.inputs.couplingResolution = couplingResolution
-        self.inputs.degeneracyResolution = degeneracyResolution
-        self.inputs.errorAlpha = errorAlpha
-        self.inputs.iterationsAlpha = iterationsAlpha
-        self.inputs.threads = threads
-        self.inputs.intError = errorIntegrals
-        # Scheme to solve
-        self.scheme: qp.VSStls = None
+        self.allowedTheories = ["VSSTLS"]
         # File to store output on disk
-        self.hdfFileName = None
+        self.hdfFileName: str = None  #: Name of the output file
 
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results to and hdf file. Extends the output produced by
-        :func:`qupled.classic.Stls.compute` by adding the option to save the free energy integrand
-        and the corresponding coupling parameter grid as a new dataframe in the hdf file. The free
-        energy integrand dataframe can be accessed as `fxci` and the corresponding coupling parameter
-        grid data frame as `fxcGrid`.
+        """Solves the scheme and saves the results.
+
+        The results are stored as pandas dataframes in an hdf file with the following keywords:
+
+        - info: A dataframe containing information on the input parameters, it includes:
+
+          - coupling: the coupling parameter,
+          - degeneracy: the degeneracy parameter,
+          - error: the residual error at the end of the solution
+          - theory: the theory that is being solved,
+          - resolution: the resolution in the wave-vector grid,
+          - cutoff: the cutoff in the wave-vector grid,
+          - matsubara: the number of matsubara frequencies
+
+        - fxcGrid (*ndarray*): coupling parameter grid
+        - fxci (*ndarray*): the free energy integrand
+        - idr (*ndarray*, 2D): the ideal density response
+        - sdr (*ndarray*):  the static density response
+        - slfc (*ndarray*):  the static local field correction
+        - ssf (*ndarray*):  the static structure factor
+        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
+        - wvg (*ndarray*):  the wave-vector grid
+
+        If the radial distribution function was computed (see computeRdf), then the hdf file contains
+        two additional keywords:
+
+        - rdf (*ndarray*):  the radial distribution function
+        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
+
+        The name of the hdf file is stored in :obj:`hdfFileName`.
         """
-        self._checkInputs()
-        self.scheme = qp.VSStls(self.inputs)
-        status = self.scheme.compute()
-        self._checkStatusAndClean(status)
-        self._setHdfFile()
-        self._save()
+        super().computeScheme(super().compute, self._save)
 
     # Save results
     @qu.MPI.runOnlyOnRoot
     def _save(self) -> None:
         """Stores the results obtained by solving the scheme."""
         super()._save()
-        pd.DataFrame(self.scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
-        pd.DataFrame(self.scheme.freeEnergyIntegrand).to_hdf(
+        pd.DataFrame(self.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
+        pd.DataFrame(self.freeEnergyIntegrand).to_hdf(
             self.hdfFileName, key="fxci"
         )
-        pd.DataFrame(self.scheme.alpha).to_hdf(self.hdfFileName, key="alpha")
+        pd.DataFrame(self.alpha).to_hdf(self.hdfFileName, key="alpha")
 
     # Set the free energy integrand from a dataframe produced in output
-    def setFreeEnergyIntegrand(self, fileName: str) -> None:
+    def getFreeEnergyIntegrand(self, fileName: str) -> qp.FreeEnergyIntegrand():
         """Constructs the free energy integrand by extracting the information from an output file.
 
         Args:
@@ -630,4 +627,4 @@ class VSStls(Stls):
         fxci.grid = hdfData["fxcGrid"]
         fxci.integrand = np.ascontiguousarray(hdfData["fxci"])
         fxci.alpha = hdfData["alpha"]
-        self.inputs.freeEnergyIntegrand = fxci
+        return fxci

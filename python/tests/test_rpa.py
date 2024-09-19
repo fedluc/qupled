@@ -28,14 +28,6 @@ def test_default(rpa_instance):
     assert rpa_instance.hdfFileName is None
 
 
-def test_checkInputs(rpa_instance):
-    rpa_instance._checkInputs()
-    rpa_instance.inputs.theory = "STLS"
-    with pytest.raises(SystemExit) as excinfo:
-        rpa_instance._checkInputs()
-    assert excinfo.value.code == "Invalid dielectric theory"
-
-
 def test_compute(rpa_instance, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
