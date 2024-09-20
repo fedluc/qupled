@@ -3,20 +3,38 @@ import os
 import pytest
 import set_path
 import qupled.qupled as qp
-import qupled.classic as qpc
 
 
 def test_vsstls_properties():
     assert issubclass(qp.VSStls, qp.Rpa)
-    scheme = qp.VSStls(qp.VSStlsInput())
+    inputs = qp.VSStlsInput()
+    inputs.coupling = 1.0
+    inputs.couplingResolution = 0.1
+    scheme = qp.VSStls(inputs)
     assert hasattr(scheme, "freeEnergyIntegrand")
     assert hasattr(scheme, "freeEnergyGrid")
 
 
 def test_vsstls_compute():
-    inputs = qpc.VSStls(
-        1.0, 1.0, couplingResolution=0.1, degeneracyResolution=0.1, cutoff=5
-    ).inputs
+    inputs = qp.VSStlsInput()
+    inputs.coupling = 1.0
+    inputs.degeneracy = 1.0
+    inputs.theory = "VSSTLS"
+    inputs.chemicalPotential = [-10, 10]
+    inputs.cutoff = 5.0
+    inputs.matsubara = 128
+    inputs.resolution = 0.1
+    inputs.intError = 1.0e-5
+    inputs.threads = 1
+    inputs.error = 1.0e-5
+    inputs.mixing = 1.0
+    inputs.iterations = 1000
+    inputs.outputFrequency = 10
+    inputs.couplingResolution = 0.1
+    inputs.degeneracyResolution = 0.1
+    inputs.errorAlpha = 1.0e-3
+    inputs.iterationsAlpha = 50
+    inputs.alpha = [0.5, 1.0]
     scheme = qp.VSStls(inputs)
     scheme.compute()
     try:
