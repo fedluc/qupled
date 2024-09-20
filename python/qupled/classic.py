@@ -17,17 +17,9 @@ class ClassicScheme(ABC):
 
     # Compute the scheme
     def computeScheme(self, compute: Callable[None, int], save: Callable) -> None:
-        self._checkInputs()
         status = compute()
         self._checkStatusAndClean(status)
-        self._setHdfFile()
         save()
-
-    # Check input before computing
-    def _checkInputs(self) -> None:
-        """Checks that the content of :obj:`inputs` is correct"""
-        if self.inputs.theory not in self.allowedTheories:
-            sys.exit("Invalid dielectric theory")
 
     # Check that the dielectric scheme was solved without errors
     @qu.MPI.runOnlyOnRoot
@@ -45,9 +37,9 @@ class ClassicScheme(ABC):
             sys.exit("Error while solving the dielectric theory")
 
     # Save results to disk
-    def _setHdfFile(self) -> None:
+    def _getHdfFile(self) -> str:
         """Sets the name of the hdf file used to store the output"""
-        self.hdfFileName = "rs%5.3f_theta%5.3f_%s.h5" % (
+        return "rs%5.3f_theta%5.3f_%s.h5" % (
             self.inputs.coupling,
             self.inputs.degeneracy,
             self.inputs.theory,
@@ -192,10 +184,8 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
     def __init__(self, inputs: Rpa.Input):
         # Construct the base classes
         super().__init__(inputs)
-        # Allowed theories
-        self.allowedTheories = ["RPA"]
         # File to store output on disk
-        self.hdfFileName: str = None  #: Name of the output file
+        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
 
     # Compute
     @qu.MPI.recordTime
@@ -267,10 +257,8 @@ class ESA(ClassicScheme, qp.ESA, metaclass=ESAMetaclass):
     def __init__(self, inputs: ESA.Input):
         # Construct the base classes
         super().__init__(inputs)
-        # Allowed theories
-        self.allowedTheories = ["ESA"]
         # File to store output on disk
-        self.hdfFileName: str = None  #: Name of the output file
+        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
 
     # Compute
     @qu.MPI.recordTime
@@ -394,10 +382,8 @@ class Stls(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
     def __init__(self, inputs: Stls.Input):
         # Construct the base classes
         super().__init__(inputs)
-        # Allowed theories
-        self.allowedTheories = ["STLS"]
         # File to store output on disk
-        self.hdfFileName: str = None  #: Name of the output file
+        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
 
     # Compute
     @qu.MPI.recordTime
@@ -459,17 +445,17 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
 
         def __init__(self, coupling: float, degeneracy: float, theory: str):
             super().__init__(coupling, degeneracy)
+            if theory not in ["STLS-HNC", "STLS-IOI" or "STLS-LCT"]:
+                sys.exit("Invalid dielectric theory")
             self.theory = theory
-            """ Dielectric theory to solve ["STLS-HNC", "STLS-IOI" or  "STLS-LCT"] """
+            """ Dielectric theory to solve  """
 
     # Constructor
     def __init__(self, inputs: StlsIet.Input):
         # Construct the base classes
         super().__init__(inputs)
-        # Allowed theories
-        self.allowedTheories = ["STLS-HNC", "STLS-IOI", "STLS-LCT"]
         # File to store output on disk
-        self.hdfFileName: str = None  #: Name of the output file
+        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
 
     # Compute
     @qu.MPI.recordTime
@@ -515,7 +501,6 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
         pd.DataFrame(self.bf).to_hdf(self.hdfFileName, key="bf")
 
 
-
 # -----------------------------------------------------------------------
 # VSStls class
 # -----------------------------------------------------------------------
@@ -553,19 +538,19 @@ class VSStls(IterativeScheme, qp.VSStls, metaclass=VSStlsMetaclass):
             """ Minimum error for convergence in the free parameter """
             self.iterationsAlpha: int = 50
             """ Maximum number of iterations to determine the free parameter """
-            self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = qp.FreeEnergyIntegrand()
+            self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = (
+                qp.FreeEnergyIntegrand()
+            )
             """ Pre-computed free energy integrand """
             # Undocumented default values
             self.theory = "VSSTLS"
-            
+
     # Constructor
     def __init__(self, inputs: VSStls.Input):
         # Construct the base classes
         super().__init__(inputs)
-        # Allowed theories
-        self.allowedTheories = ["VSSTLS"]
         # File to store output on disk
-        self.hdfFileName: str = None  #: Name of the output file
+        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
 
     # Compute
     @qu.MPI.recordTime
@@ -610,9 +595,7 @@ class VSStls(IterativeScheme, qp.VSStls, metaclass=VSStlsMetaclass):
         """Stores the results obtained by solving the scheme."""
         super()._save()
         pd.DataFrame(self.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
-        pd.DataFrame(self.freeEnergyIntegrand).to_hdf(
-            self.hdfFileName, key="fxci"
-        )
+        pd.DataFrame(self.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
         pd.DataFrame(self.alpha).to_hdf(self.hdfFileName, key="alpha")
 
     # Set the free energy integrand from a dataframe produced in output

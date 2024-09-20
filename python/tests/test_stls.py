@@ -16,31 +16,25 @@ def stls_instance():
 def test_default(stls_instance):
     assert issubclass(Stls, ClassicScheme)
     assert issubclass(Stls, qp.Stls)
-    assert all(x == y for x, y in zip(stls_instance.allowedTheories, ["STLS"]))
-    assert stls_instance.hdfFileName is None
+    assert stls_instance.hdfFileName == "rs1.000_theta1.000_STLS.h5"
 
 
 def test_compute(stls_instance, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCheckInputs = mocker.patch("qupled.classic.Stls._checkInputs")
     mockCompute = mocker.patch("qupled.qupled.Stls.compute")
     mockCheckStatusAndClean = mocker.patch("qupled.classic.Stls._checkStatusAndClean")
-    mockSetHdfFile = mocker.patch("qupled.classic.Stls._setHdfFile")
     mockSave = mocker.patch("qupled.classic.Stls._save")
     stls_instance.compute()
     assert mockMPITime.call_count == 2
     assert mockMPIBarrier.call_count == 1
-    assert mockCheckInputs.call_count == 1
     assert mockCompute.call_count == 1
     assert mockCheckStatusAndClean.call_count == 1
-    assert mockSetHdfFile.call_count == 1
     assert mockSave.call_count == 1
 
 
 def test_save(stls_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    stls_instance._setHdfFile()
     try:
         stls_instance._save()
         assert mockMPIIsRoot.call_count == 2

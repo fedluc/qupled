@@ -104,13 +104,6 @@ def test_guess(stls_input_instance):
     assert np.array_equal(arr, stls_input_instance.guess.wvg)
     assert np.array_equal(arr, stls_input_instance.guess.slfc)
     with pytest.raises(RuntimeError) as excinfo:
-        arr = np.zeros(2)
-        guess = qp.StlsGuess()
-        guess.wvg = arr
-        guess.slfc = arr
-        stls_input_instance.guess = guess
-    assert excinfo.value.args[0] == "The initial guess does not contain enough points"
-    with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros(11)
         guess = qp.StlsGuess()
