@@ -5,7 +5,7 @@ import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.classic import Stls
-from qupled.classic import ClassicScheme
+from qupled.classic import IterativeScheme
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def stls_instance():
 
 
 def test_default(stls_instance):
-    assert issubclass(Stls, ClassicScheme)
+    assert issubclass(Stls, IterativeScheme)
     assert issubclass(Stls, qp.Stls)
     assert stls_instance.hdfFileName == "rs1.000_theta1.000_STLS.h5"
 
@@ -66,6 +66,6 @@ def test_getInitialGuess(stls_instance, mocker):
     mockHdfRead = mocker.patch(
         "qupled.util.Hdf.read", return_value={"wvg": arr, "slfc": arr}
     )
-    guess = stls_instance.getInitialGuess("dummyFileName")
+    guess = Stls.getInitialGuess("dummyFileName")
     assert np.array_equal(guess.wvg, arr)
     assert np.array_equal(guess.slfc, arr)
