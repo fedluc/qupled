@@ -12,7 +12,6 @@ def qstls_input_instance():
 
 def test_init(qstls_input_instance):
     assert issubclass(qp.QstlsInput, qp.RpaInput)
-    assert issubclass(qp.QstlsInput, qp.IterationInput)
     assert hasattr(qstls_input_instance, "guess")
     assert hasattr(qstls_input_instance.guess, "wvg")
     assert hasattr(qstls_input_instance.guess, "ssf")

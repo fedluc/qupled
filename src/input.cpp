@@ -174,24 +174,14 @@ void QuantumInput::setGuess(const Guess &guess) {
   this->guess = guess;
 }
 
-void QuantumInput::setIETMapping(const string &IETMapping) {
-  const vector<string> mappings = {"standard", "sqrt", "linear"};
-  if (count(mappings.begin(), mappings.end(), IETMapping) == 0) {
-    throwError("Unknown IET mapping: " + IETMapping);
-  }
-  this->IETMapping = IETMapping;
-}
-
 void QuantumInput::print() const {
   if (!isRoot()) { return; }
-  cout << "Iet mapping scheme = " << IETMapping << endl;
   cout << "File with fixed adr component = " << fixed << endl;
   cout << "File with fixed adr component (iet) = " << fixedIet << endl;
 }
 
 bool QuantumInput::isEqual(const QuantumInput &in) const {
-  return (fixed == in.fixed && fixedIet == in.fixedIet && guess == in.guess &&
-          IETMapping == in.IETMapping);
+  return (fixed == in.fixed && fixedIet == in.fixedIet && guess == in.guess);
 }
 
 // -----------------------------------------------------------------
@@ -266,18 +256,12 @@ bool StlsInput::isEqual(const StlsInput &in) const {
 
 void QstlsInput::print() const {
   if (!isRoot()) { return; }
-  RpaInput::print();
-  IterationInput::print();
+  StlsInput::print();
   QuantumInput::print();
 }
 
 bool QstlsInput::isEqual(const QstlsInput &in) const {
-  return (RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
-          QuantumInput::isEqual(in));
-}
-
-StlsInput QstlsInput::toStlsInput() const {
-  return StlsInput(RpaInput(*this), IterationInput(*this), IETMapping);
+  return (StlsInput::isEqual(in) && QuantumInput::isEqual(in));
 }
 
 // -----------------------------------------------------------------

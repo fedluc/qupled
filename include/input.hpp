@@ -175,12 +175,10 @@ public:
   void setFixed(const std::string &fixed);
   void setFixedIet(const std::string &fixedIet);
   void setGuess(const Guess &guess);
-  void setIETMapping(const std::string &IETMapping);
   // Getters
   std::string getFixed() const { return fixed; }
   std::string getFixedIet() const { return fixedIet; }
   Guess getGuess() const { return guess; }
-  std::string getIETMapping() const { return IETMapping; }
   // Print content of the data structure
   void print() const;
   // Compare two QstlsInput objects
@@ -195,9 +193,6 @@ protected:
   std::string fixedIet;
   // Initial guess
   Guess guess;
-  // Mapping between the quantum and classical state points for the IET-based
-  // schemes
-  std::string IETMapping;
 };
 
 // -----------------------------------------------------------------
@@ -248,15 +243,9 @@ class StlsInput : public RpaInput, public IterationInput, public ClassicInput {
 
 public:
 
+  //
   // Constructors
   explicit StlsInput() = default;
-  explicit StlsInput(const RpaInput &rpa,
-                     const IterationInput &iter,
-                     const std::string &iet)
-      : RpaInput(rpa),
-        IterationInput(iter) {
-    if (!iet.empty()) { setIETMapping(iet); }
-  }
   // Print content of the data structure
   void print() const;
   // Compare two QstlsInput objects
@@ -267,25 +256,26 @@ public:
 // Class to handle input for the QSTLS and QSTLS-IET schemes
 // -----------------------------------------------------------------
 
-class QstlsInput : public RpaInput, public IterationInput, public QuantumInput {
+class QstlsInput : public StlsInput, public QuantumInput {
 
 public:
 
+  // Typedef
+  using Guess = QuantumInput::Guess;
   // Constructors
   explicit QstlsInput() = default;
-  explicit QstlsInput(const RpaInput &rpa,
-                      const IterationInput &iter,
-                      const std::string &iet)
-      : RpaInput(rpa),
-        IterationInput(iter) {
-    if (!iet.empty()) { setIETMapping(iet); }
-  }
+  // Setters
+  using QuantumInput::setGuess;
+  // Getters
+  using QuantumInput::getGuess;
   // Print content of the data structure
   void print() const;
   // Compare two QstlsInput objects
   bool isEqual(const QstlsInput &in) const;
-  // Convert to StlsInput
-  StlsInput toStlsInput() const;
+
+private:
+
+  using QuantumInput::guess;
 };
 
 // -----------------------------------------------------------------

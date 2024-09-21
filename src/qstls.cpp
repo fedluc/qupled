@@ -20,7 +20,7 @@ using Itg2DParam = Integrator2D::Param;
 // -----------------------------------------------------------------
 
 Qstls::Qstls(const QstlsInput &in_, const bool verbose_, const bool writeFiles_)
-    : Stls(in_.toStlsInput(), verbose_, writeFiles_),
+    : Stls(in_, verbose_, writeFiles_),
       in(in_) {
   // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {

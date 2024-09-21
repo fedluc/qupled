@@ -15,6 +15,7 @@ import qupled.classic as qc
 # QuantumIterativeScheme class
 # -----------------------------------------------------------------------
 
+
 class QuantumIterativeScheme(qc.IterativeScheme):
 
     # Set the initial guess from a dataframe produced in output
@@ -29,7 +30,7 @@ class QuantumIterativeScheme(qc.IterativeScheme):
         hdfData = qu.Hdf().read(fileName, ["wvg", "ssf"])
         guess.wvg = hdfData["wvg"]
         guess.ssf = hdfData["ssf"]
-        return  guess
+        return guess
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
@@ -42,6 +43,7 @@ class QuantumIterativeScheme(qc.IterativeScheme):
 # -----------------------------------------------------------------------
 # Qstls class
 # -----------------------------------------------------------------------
+
 
 class QstlsMetaclass(type(QuantumIterativeScheme), type(qp.Qstls)):
     pass
@@ -73,14 +75,12 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
             # Undocumented default values
             self.theory = "QSTLS"
 
-    
     # Constructor
     def __init__(self, inputs: Qstls.Input):
         # Construct the base classes
         super().__init__(inputs)
         # File to store output on disk
         self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
-
 
     # Compute
     @qu.MPI.recordTime

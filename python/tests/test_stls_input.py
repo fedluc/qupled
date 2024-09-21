@@ -12,7 +12,6 @@ def stls_input_instance():
 
 def test_init(stls_input_instance):
     assert issubclass(qp.StlsInput, qp.RpaInput)
-    assert issubclass(qp.StlsInput, qp.IterationInput)
     assert hasattr(stls_input_instance, "error")
     assert hasattr(stls_input_instance, "mixing")
     assert hasattr(stls_input_instance, "iet")

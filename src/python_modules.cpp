@@ -57,46 +57,21 @@ BOOST_PYTHON_MODULE(qupled) {
       .def("isEqual", &RpaInput::isEqual);
 
   // Class for the input of the Stls scheme
-  bp::class_<IterationInput>("IterationInput")
-      .add_property(
-          "error", &IterationInput::getErrMin, &IterationInput::setErrMin)
-      .add_property("mixing",
-                    &IterationInput::getMixingParameter,
-                    &IterationInput::setMixingParameter)
-      .add_property(
-          "iterations", &IterationInput::getNIter, &IterationInput::setNIter)
-      .add_property("outputFrequency",
-                    &IterationInput::getOutIter,
-                    &IterationInput::setOutIter)
-      .add_property("recoveryFile",
-                    &IterationInput::getRecoveryFileName,
-                    &IterationInput::setRecoveryFileName)
-      .def("print", &IterationInput::print)
-      .def("isEqual", &IterationInput::isEqual);
-
-  // Class for the initial guess of the Stls scheme
-  bp::class_<StlsInput::Guess>("StlsGuess")
-      .add_property("wvg", &PyStlsGuess::getWvg, &PyStlsGuess::setWvg)
-      .add_property("slfc", &PyStlsGuess::getSlfc, &PyStlsGuess::setSlfc);
-
-  // Class for the input of the Stls scheme
-  bp::class_<StlsInput, bp::bases<RpaInput, IterationInput>>("StlsInput")
-      .add_property("iet", &StlsInput::getIETMapping, &StlsInput::setIETMapping)
+  bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
+      .add_property("error", &StlsInput::getErrMin, &StlsInput::setErrMin)
       .add_property("guess", &StlsInput::getGuess, &StlsInput::setGuess)
+      .add_property("iet", &StlsInput::getIETMapping, &StlsInput::setIETMapping)
+      .add_property("mixing",
+                    &StlsInput::getMixingParameter,
+                    &StlsInput::setMixingParameter)
+      .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter)
+      .add_property(
+          "outputFrequency", &StlsInput::getOutIter, &StlsInput::setOutIter)
+      .add_property("recoveryFile",
+                    &StlsInput::getRecoveryFileName,
+                    &StlsInput::setRecoveryFileName)
       .def("print", &StlsInput::print)
       .def("isEqual", &StlsInput::isEqual);
-
-  // Class for the free energy integrand of the VSStls scheme
-  bp::class_<VSStlsInput::FreeEnergyIntegrand>("FreeEnergyIntegrand")
-      .add_property("grid",
-                    &PyFreeEnergyIntegrand::getGrid,
-                    &PyFreeEnergyIntegrand::setGrid)
-      .add_property("integrand",
-                    &PyFreeEnergyIntegrand::getIntegrand,
-                    &PyFreeEnergyIntegrand::setIntegrand)
-      .add_property("alpha",
-                    &PyFreeEnergyIntegrand::getAlpha,
-                    &PyFreeEnergyIntegrand::setAlpha);
 
   // Class for the input of the VSStls scheme
   bp::class_<VSInput>("VSInput")
@@ -126,19 +101,8 @@ BOOST_PYTHON_MODULE(qupled) {
       .def("print", &VSStlsInput::print)
       .def("isEqual", &VSStlsInput::isEqual);
 
-  // Class for the initial guess of the Qstls scheme
-  bp::class_<QstlsInput::Guess>("QstlsGuess")
-      .add_property("wvg", &PyQstlsGuess::getWvg, &PyQstlsGuess::setWvg)
-      .add_property("ssf", &PyQstlsGuess::getSsf, &PyQstlsGuess::setSsf)
-      .add_property("adr", &PyQstlsGuess::getAdr, &PyQstlsGuess::setAdr)
-      .add_property("matsubara",
-                    &PyQstlsGuess::getMatsubara,
-                    &PyQstlsGuess::setMatsubara);
-
   // Class for the input of the Qstls scheme
-  bp::class_<QstlsInput, bp::bases<RpaInput, IterationInput>>("QstlsInput")
-      .add_property(
-          "iet", &QstlsInput::getIETMapping, &QstlsInput::setIETMapping)
+  bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
       .add_property("guess", &QstlsInput::getGuess, &QstlsInput::setGuess)
       .add_property("fixed", &QstlsInput::getFixed, &QstlsInput::setFixed)
       .add_property(
@@ -157,6 +121,33 @@ BOOST_PYTHON_MODULE(qupled) {
       .def("print", &QVSStlsInput::print)
       .def("isEqual", &QVSStlsInput::isEqual);
 
+  // Class for the initial guess of the Stls scheme
+  bp::class_<StlsInput::Guess>("StlsGuess")
+      .add_property("wvg", &PyStlsGuess::getWvg, &PyStlsGuess::setWvg)
+      .add_property("slfc", &PyStlsGuess::getSlfc, &PyStlsGuess::setSlfc);
+  
+  // Class for the initial guess of the Qstls scheme
+  bp::class_<QstlsInput::Guess>("QstlsGuess")
+      .add_property("wvg", &PyQstlsGuess::getWvg, &PyQstlsGuess::setWvg)
+      .add_property("ssf", &PyQstlsGuess::getSsf, &PyQstlsGuess::setSsf)
+      .add_property("adr", &PyQstlsGuess::getAdr, &PyQstlsGuess::setAdr)
+      .add_property("matsubara",
+                    &PyQstlsGuess::getMatsubara,
+                    &PyQstlsGuess::setMatsubara);
+
+  // Class for the free energy integrand of the VSStls scheme
+  bp::class_<VSStlsInput::FreeEnergyIntegrand>("FreeEnergyIntegrand")
+      .add_property("grid",
+                    &PyFreeEnergyIntegrand::getGrid,
+                    &PyFreeEnergyIntegrand::setGrid)
+      .add_property("integrand",
+                    &PyFreeEnergyIntegrand::getIntegrand,
+                    &PyFreeEnergyIntegrand::setIntegrand)
+      .add_property("alpha",
+                    &PyFreeEnergyIntegrand::getAlpha,
+                    &PyFreeEnergyIntegrand::setAlpha);
+
+  
   // Class to solve the classical RPA scheme
   bp::class_<Rpa>("Rpa", bp::init<const RpaInput>())
       .def("compute", &PyRpa::compute)
