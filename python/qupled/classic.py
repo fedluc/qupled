@@ -543,6 +543,7 @@ class VSStls(IterativeScheme, qp.VSStls, metaclass=VSStlsMetaclass):
             )
             """ Pre-computed free energy integrand """
             # Undocumented default values
+            self.threads = 9
             self.theory = "VSSTLS"
 
     # Constructor
@@ -599,7 +600,8 @@ class VSStls(IterativeScheme, qp.VSStls, metaclass=VSStlsMetaclass):
         pd.DataFrame(self.alpha).to_hdf(self.hdfFileName, key="alpha")
 
     # Set the free energy integrand from a dataframe produced in output
-    def getFreeEnergyIntegrand(self, fileName: str) -> qp.FreeEnergyIntegrand():
+    @staticmethod
+    def getFreeEnergyIntegrand(fileName: str) -> qp.FreeEnergyIntegrand():
         """Constructs the free energy integrand by extracting the information from an output file.
 
         Args:
