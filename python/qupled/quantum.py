@@ -37,7 +37,7 @@ class QuantumIterativeScheme(qc.IterativeScheme):
     def _save(self) -> None:
         """Stores the results obtained by solving the scheme."""
         super()._save()
-        pd.DataFrame(self.scheme.adr).to_hdf(self.hdfFileName, key="adr")
+        pd.DataFrame(self.adr).to_hdf(self.hdfFileName, key="adr")
 
 
 # -----------------------------------------------------------------------
@@ -66,7 +66,7 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
         """
 
         def __init__(self, coupling: float, degeneracy: float):
-            super().__init__(coupling, degeneracy)
+            super().__init__(coupling, degeneracy, False)
             self.fixed: str = ""
             """ Name of the file storing the fixed component of the auxiliary density 
 	    response in the QSTLS scheme. """

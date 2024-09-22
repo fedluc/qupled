@@ -361,7 +361,7 @@ class Stls(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
         Class used to manage the input for the :obj:`qupled.classic.Stls` class.
         """
 
-        def __init__(self, coupling: float, degeneracy: float):
+        def __init__(self, coupling: float, degeneracy: float, initGuess: bool = True):
             super().__init__(coupling, degeneracy)
             self.error: float = 1.0e-5
             """ minimum error for convergence """
@@ -373,8 +373,9 @@ class Stls(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
             """ Output frequency to write the recovery file """
             self.recoveryFile: str = ""
             """ Name of the recovery file """
-            self.guess: qp.StlsGuess = qp.StlsGuess()
-            """ Initial guess """
+            if (initGuess):
+                self.guess: qp.StlsGuess = qp.StlsGuess()
+                """ Initial guess """
             # Undocumented default values
             self.theory = "STLS"
 

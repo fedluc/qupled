@@ -3,20 +3,28 @@ import pytest
 import glob
 import set_path
 import qupled.qupled as qp
-import qupled.quantum as qpq
-
 
 def test_qstls_properties():
     assert issubclass(qp.Qstls, qp.Stls)
-    inputs = qpq.Qstls(1.0, 1.0).inputs
-    scheme = qp.Qstls(inputs)
+    scheme = qp.Qstls(qp.QstlsInput())
     assert hasattr(scheme, "adr")
 
 
 def test_qstls_compute():
-    inputs = qpq.Qstls(
-        1.0, 1.0, matsubara=32, cutoff=5, outputFrequency=2, threads=16
-    ).inputs
+    inputs = qp.QstlsInput()
+    inputs.coupling = 1.0
+    inputs.degeneracy = 1.0
+    inputs.theory = "QSTLS"
+    inputs.chemicalPotential = [-10, 10]
+    inputs.cutoff = 5.0
+    inputs.matsubara = 32
+    inputs.resolution = 0.1
+    inputs.intError = 1.0e-5
+    inputs.threads = 16
+    inputs.error = 1.0e-5
+    inputs.mixing = 1.0
+    inputs.iterations = 1000
+    inputs.outputFrequency = 2
     scheme = qp.Qstls(inputs)
     scheme.compute()
     try:
@@ -41,25 +49,23 @@ def test_qstls_compute():
             os.remove(fixedFile)
 
 
-def test_qstls_iet_properties():
-    inputs = qpq.QstlsIet(1.0, 1.0, "QSTLS-HNC").inputs
-    scheme = qp.Qstls(inputs)
-    assert hasattr(scheme, "bf")
-
-
 def test_qstls_iet_compute():
     ietSchemes = {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}
     for schemeName in ietSchemes:
-        inputs = qpq.QstlsIet(
-            10.0,
-            1.0,
-            schemeName,
-            matsubara=16,
-            cutoff=5,
-            outputFrequency=2,
-            mixing=0.5,
-            threads=16,
-        ).inputs
+        inputs = qp.QstlsInput()
+        inputs.coupling = 10.0
+        inputs.degeneracy = 1.0
+        inputs.theory = schemeName
+        inputs.chemicalPotential = [-10, 10]
+        inputs.cutoff = 5.0
+        inputs.matsubara = 16
+        inputs.resolution = 0.1
+        inputs.intError = 1.0e-5
+        inputs.threads = 16
+        inputs.error = 1.0e-5
+        inputs.mixing = 0.5
+        inputs.iterations = 1000
+        inputs.outputFrequency = 2
         scheme = qp.Qstls(inputs)
         scheme.compute()
         try:

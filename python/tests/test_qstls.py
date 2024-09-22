@@ -13,9 +13,9 @@ def qstls_instance():
 
 
 def test_default(qstls_instance):
-    assert issubclass(Stls, IterativeScheme)
-    assert issubclass(Stls, qp.Stls)
-    assert stls_instance.hdfFileName == "rs1.000_theta1.000_QSTLS.h5"
+    assert issubclass(Qstls, QuantumIterativeScheme)
+    assert issubclass(Qstls, qp.Stls)
+    assert qstls_instance.hdfFileName == "rs1.000_theta1.000_QSTLS.h5"
 
 
 def test_compute(qstls_instance, mocker):

@@ -165,7 +165,7 @@ bool Qstls::initialGuessAdr(const vector<double> &wvg_, const Vector2D &adr_) {
   const int nl = in.getNMatsubara();
   const int nx_ = adr_.size(0);
   const int nl_ = adr_.size(1);
-  const double &xMax = wvg_.back();
+  const double xMax = (wvg_.empty()) ? 0.0 : wvg_.back();
   vector<Interpolator1D> itp(nl_);
   for (int l = 0; l < nl_; ++l) {
     vector<double> tmp(nx_);
@@ -182,7 +182,7 @@ bool Qstls::initialGuessAdr(const vector<double> &wvg_, const Vector2D &adr_) {
       continue;
     }
     for (int l = 0; l < nl; ++l) {
-      adrOld(i, l) = (l <= nl_) ? itp[l].eval(x) : 0.0;
+      adrOld(i, l) = (l < nl_) ? itp[l].eval(x) : 0.0;
     }
   }
   return true;

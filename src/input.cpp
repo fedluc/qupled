@@ -167,9 +167,11 @@ void QuantumInput::setFixedIet(const string &fixedIet) {
 void QuantumInput::setGuess(const Guess &guess) {
   const size_t nl = guess.matsubara;
   const size_t nx = guess.wvg.size();
+  const size_t adrRows = (guess.adr.empty()) ? 0 : nx;
+  const size_t adrCols = (guess.adr.empty()) ? 0 : nl;
   const bool consistentGuess = guess.ssf.size() == nx &&
-                               guess.adr.size(0) == nx &&
-                               guess.adr.size(1) == nl;
+                               guess.adr.size(0) == adrRows &&
+                               guess.adr.size(1) == adrCols;
   if (!consistentGuess) { throwError("The initial guess is inconsistent"); }
   this->guess = guess;
 }
