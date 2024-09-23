@@ -62,7 +62,7 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
 
     class Input(qc.Stls.Input, qp.QstlsInput):
         """
-        Class used to manage the input for the :obj:`qupled.classic.Qstls` class.
+        Class used to manage the input for the :obj:`qupled.quantum.Qstls` class.
         """
 
         def __init__(self, coupling: float, degeneracy: float):
@@ -119,172 +119,146 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
         super().computeScheme(super().compute, self._save)
 
 
-# # -----------------------------------------------------------------------
-# # QstlsIet class
-# # -----------------------------------------------------------------------
+# -----------------------------------------------------------------------
+# QstlsIet class
+# -----------------------------------------------------------------------
 
 
-# class QstlsIet(Qstls):
-#     """
-#     Class used to setup and solve the classical STLS-IET scheme as described by
-#     `Tolias <https://pubs.aip.org/aip/jcp/article/158/14/141102/
-#     2877795/Quantum-version-of-the-integral-equation-theory>`_. This class inherits most of
-#     its methods and attributes from :obj:`qupled.quantum.Qstls`.
+class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
+    """
+    Class used to setup and solve the classical QSTLS-IET scheme as described by
+    `Tolias <https://pubs.aip.org/aip/jcp/article/158/14/141102/
+    2877795/Quantum-version-of-the-integral-equation-theory>`_.
 
-#     Args:
-#         coupling: Coupling parameter.
-#         degeneracy: Degeneracy parameter.
-#         chemicalPotential: Initial guess for the chemical potential, defaults to [-10.0, 10.0].
-#         cutoff:  Cutoff for the wave-vector grid, defaults to 10.0.
-#         error: Minimum error for covergence, defaults to 1.0e-5.
-#         fixed: The name of the file storing the fixed component of the auxiliary density response.
-#                if no name is given the fixed component is computed from scratch.
-#         fixediet: The name of the zip file storing the files with the fixed component of the auxiliary
-#                   density response for the IET schemes. If no name is given the fixed component
-#                   is computed from scratch.
-#         mapping: Classical to quantum mapping. See :func:`qupled.qupled.StlsInput.iet`
-#         mixing: Mixing parameter for iterative solution, defaults to 1.0.
-#         guess:  Initial guess for the iterative solution, defaults to None, i.e. ssf from stls solution.
-#         iterations: Maximum number of iterations, defaults to 1000.
-#         matsubara: Number of matsubara frequencies, defaults to 128.
-#         outputFrequency: Frequency used to print the recovery files, defaults to 10.
-#         recoveryFile: Name of the recovery file used to restart the simulation, defualts to None.
-#         resolution: Resolution of the wave-vector grid, defaults to 0.1.
-#         scheme2DIntegrals: numerical scheme used to solve two-dimensional integrals. See :func:`qupled.qupled.Input.int2DScheme`
-#         threads: OMP threads for parallel calculations
-#     """
+    
+    Args:
+        inputs: Input parameters used to solve the scheme.
+    """
 
-#     # Constructor
-#     def __init__(
-#         self,
-#         coupling: float,
-#         degeneracy: float,
-#         theory: str,
-#         chemicalPotential: list[float] = [-10.0, 10.0],
-#         cutoff: float = 10.0,
-#         error: float = 1.0e-5,
-#         fixed: str = None,
-#         fixediet: str = None,
-#         mapping: str = "standard",
-#         mixing: float = 1.0,
-#         guess: qp.QstlsGuess = None,
-#         iterations: int = 1000,
-#         matsubara: int = 128,
-#         outputFrequency: int = 10,
-#         recoveryFile: str = None,
-#         resolution: float = 0.1,
-#         scheme2DIntegrals: str = "full",
-#         threads: int = 1,
-#     ):
-#         # Allowed theories
-#         self.allowedTheories = ["QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"]
-#         # Set theory
-#         self.inputs: qupled.qupled.QstlsInput = (
-#             qp.QstlsInput()
-#         )  #: Inputs to solve the scheme.
-#         self._setInputs(
-#             coupling,
-#             degeneracy,
-#             theory,
-#             chemicalPotential,
-#             cutoff,
-#             error,
-#             fixed,
-#             mixing,
-#             guess,
-#             iterations,
-#             matsubara,
-#             outputFrequency,
-#             recoveryFile,
-#             resolution,
-#             scheme2DIntegrals,
-#             threads,
-#         )
-#         if fixediet is not None:
-#             self.inputs.fixediet = fixediet
-#         self.inputs.iet = mapping
-#         self._checkInputs()
-#         # Temporary folder to store the unpacked files with the auxiliary density response
-#         self.tmpRunDir = None
-#         # Scheme to solve
-#         self.scheme: qp.QstlsIet = None
-#         # File to store output on disk
-#         self.hdfFileName = None
+    class Input(Qstls.Input, qp.QstlsInput):
+        """
+        Class used to manage the input for the :obj:`qupled.quantum.QStlsIet` class.
+        """
 
-#     # Compute
-#     @qu.MPI.recordTime
-#     @qu.MPI.synchronizeRanks
-#     def compute(self) -> None:
-#         """Solves the scheme and saves the results to an hdf file. Extends the output produced by
-#         :func:`qupled.classic.Qstls.compute` by adding  by adding two functionalities: (1) save the
-#         bridge function adder as a new dataframe in the hdf file. The bridge function adder dataframe
-#         can be accessed as `bf` (2) create a zip file to group all the files produced at run-time
-#         and containing the fixed component of the auxiliary density response for the IET schemes.
-#         """
-#         self._checkInputs()
-#         self._setFixedIetFileName()
-#         self.scheme = qp.Qstls(self.inputs)
-#         status = self.scheme.compute()
-#         self._checkStatusAndClean(status)
-#         self._setHdfFile()
-#         self._save()
+        def __init__(self, coupling: float, degeneracy: float, theory: str):
+            super().__init__(coupling, degeneracy)
+            if theory not in ["QSTLS-HNC", "QSTLS-IOI" or "QSTLS-LCT"]:
+                sys.exit("Invalid dielectric theory")
+            self.theory = theory
+            """ Dielectric theory to solve  """
+            self.mapping = "standard"
+            """ Classical-to-quantum mapping used in the iet schemes
+            allowed options include:
+        
+              - standard: inversely proportional to the degeneracy parameter
+        
+	      - sqrt: inversely proportional to the square root of the sum
+                      of the squares of one and the degeneracy parameter
+            
+              - linear: inversely proportional to one plus the degeneracy
+                        parameter.
+            
+            Far from the ground state all mappings lead identical results, but at
+            the ground state they can differ significantly (the standard
+            mapping diverges)
+            """
+            self.fixediet = ""
+            """ Name of the zip file storing the fixed components of the auxiliary density
+	    response in the QSTLS-IET schemes """
 
-#     # Set name of the file with the fixed component of the auxiliary density response
-#     @qu.MPI.synchronizeRanks
-#     def _setFixedIetFileName(self) -> None:
-#         """Sets the file name for the file storing the fixed component of the auxiliary density response"""
-#         if self.inputs.fixediet != "":
-#             self.tmpRunDir = "qupled_tmp_run_directory"
-#             self._unpackFixedAdrFiles()
-#             self.inputs.fixediet = self.tmpRunDir
+    # Constructor
+    def __init__(self, inputs: QstlsIet.Input):
+        # Setup the folder structure to load the fixed component of the adr
+        self.fixedIetSourceFile = inputs.fixediet
+        if inputs.fixediet != "":
+            inputs.fixediet = "qupled_tmp_run_directory"
+        # Construct the base class
+        super().__init__(inputs)
+        # File to store the output on disk
+        self.hdfFileName: str = self._getHdfFile() #. Name of the output file
+        
+    # Compute
+    @qu.MPI.recordTime
+    @qu.MPI.synchronizeRanks
+    def compute(self) -> None:
+        """Solves the scheme and saves the results.
 
-#     # Unpack zip folder with fixed component of the auxiliary density response
-#     @qu.MPI.runOnlyOnRoot
-#     def _unpackFixedAdrFiles(self) -> None:
-#         """Unpacks the zip file storing the fixed component of the auxiliary density response"""
-#         assert self.inputs.fixediet != ""
-#         assert self.tmpRunDir is not None
-#         with zf.ZipFile(self.inputs.fixediet, "r") as zipFile:
-#             zipFile.extractall(self.tmpRunDir)
+        The results are stored as pandas dataframes in an hdf file with the following keywords:
 
-#     # Check that the dielectric scheme was solved without errors
-#     @qu.MPI.runOnlyOnRoot
-#     def _checkStatusAndClean(self, status) -> None:
-#         # Remove the temporary run directory
-#         if self.tmpRunDir is not None and os.path.isdir(self.tmpRunDir):
-#             rmtree(self.tmpRunDir)
-#         # Check that the scheme was solved correctly
-#         super()._checkStatusAndClean(status)
+        - info: A dataframe containing information on the input parameters, it includes:
 
-#     # Save results to disk
-#     @qu.MPI.runOnlyOnRoot
-#     def _save(self) -> None:
-#         """
-#         Stores the results obtained by solving the scheme.
-#         """
-#         super()._save()
-#         pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
-#         # Zip all files for the fixed component of the auxiliary density response
-#         if self.inputs.fixediet == "":
-#             adrFileName = "adr_fixed_theta%5.3f_matsubara%d_%s" % (
-#                 self.inputs.degeneracy,
-#                 self.inputs.matsubara,
-#                 self.inputs.theory,
-#             )
-#             with zf.ZipFile(adrFileName + ".zip", "w") as zipFile:
-#                 for adrFile in glob(adrFileName + "_wv*.bin"):
-#                     zipFile.write(adrFile)
-#                     os.remove(adrFile)
+          - coupling: the coupling parameter,
+          - degeneracy: the degeneracy parameter,
+          - error: the residual error at the end of the solution
+          - theory: the theory that is being solved,
+          - resolution: the resolution in the wave-vector grid,
+          - cutoff: the cutoff in the wave-vector grid,
+          - matsubara: the number of matsubara frequencies
 
-#     # Set the initial guess from a dataframe produced in output
-#     def setGuess(self, fileName: str) -> None:
-#         guess = qp.QstlsGuess()
-#         hdfData = qu.Hdf().read(fileName, ["wvg", "ssf", "adr", "matsubara"])
-#         guess.wvg = hdfData["wvg"]
-#         guess.ssf = hdfData["ssf"]
-#         guess.adr = np.ascontiguousarray(hdfData["adr"])
-#         guess.matsubara = hdfData["matsubara"]
-#         self.inputs.guess = guess
+        - adr (*ndarray*, 2D): the auxiliary density response
+        - bf (*ndarray*): the bridge function adder
+        - idr (*ndarray*, 2D): the ideal density response
+        - sdr (*ndarray*):  the static density response
+        - slfc (*ndarray*):  the static local field correction
+        - ssf (*ndarray*):  the static structure factor
+        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
+        - wvg (*ndarray*):  the wave-vector grid
+
+        If the radial distribution function was computed (see computeRdf), then the hdf file contains
+        two additional keywords:
+
+        - rdf (*ndarray*):  the radial distribution function
+        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
+
+        The name of the hdf file is stored in :obj:`hdfFileName`.
+        """
+        self._unpackFixedAdrFiles()
+        status = super().compute()
+        self._checkStatusAndClean(status)
+        self._save()
+
+    # Unpack zip folder with fixed component of the auxiliary density response
+    @qu.MPI.runOnlyOnRoot
+    def _unpackFixedAdrFiles(self) -> None:
+        if (self.fixedIetSourceFile != ""):
+            with zf.ZipFile(self.fixedIetSourceFile, "r") as zipFile:
+                zipFile.extractall(self.inputs.fixediet)
+                
+
+    # Check that the dielectric scheme was solved without errors
+    @qu.MPI.runOnlyOnRoot
+    def _checkStatusAndClean(self, status) -> None:
+        # Remove the temporary run directory
+        if os.path.isdir(self.inputs.fixediet):
+            rmtree(self.inputs.fixediet)
+        # Check that the scheme was solved correctly
+        super()._checkStatusAndClean(status)
+
+    # Save results to disk
+    @qu.MPI.runOnlyOnRoot
+    def _save(self) -> None:
+        super()._save()
+        pd.DataFrame(self.scheme.bf).to_hdf(self.hdfFileName, key="bf")
+        # Zip all files for the fixed component of the auxiliary density response
+        if self.inputs.fixediet == "":
+            adrFileName = "adr_fixed_theta%5.3f_matsubara%d_%s" % (
+                self.inputs.degeneracy,
+                self.inputs.matsubara,
+                self.inputs.theory,
+            )
+            with zf.ZipFile(adrFileName + ".zip", "w") as zipFile:
+                for adrFile in glob(adrFileName + "_wv*.bin"):
+                    zipFile.write(adrFile)
+                    os.remove(adrFile)
+
+    # Set the initial guess from a dataframe produced in output
+    @staticmethod
+    def getInitialGuess(fileName: str) -> qp.QstlsInput:
+        guess = QuantumIterativeScheme.getInitialGuess(fileName)
+        hdfData = qu.Hdf().read(fileName, ["adr", "matsubara"])
+        guess.adr = np.ascontiguousarray(hdfData["adr"])
+        guess.matsubara = hdfData["matsubara"]
+        return guess
 
 
 # # -----------------------------------------------------------------------

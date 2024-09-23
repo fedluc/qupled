@@ -450,7 +450,23 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
                 sys.exit("Invalid dielectric theory")
             self.theory = theory
             """ Dielectric theory to solve  """
-
+            self.mapping = "standard"
+            """ Classical-to-quantum mapping used in the iet schemes
+            allowed options include:
+        
+              - standard: inversely proportional to the degeneracy parameter
+        
+	      - sqrt: inversely proportional to the square root of the sum
+                      of the squares of one and the degeneracy parameter
+            
+              - linear: inversely proportional to one plus the degeneracy
+                        parameter.
+            
+            Far from the ground state all mappings lead identical results, but at
+            the ground state they can differ significantly (the standard
+            mapping diverges)
+            """
+            
     # Constructor
     def __init__(self, inputs: StlsIet.Input):
         # Construct the base classes
@@ -476,13 +492,13 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
           - cutoff: the cutoff in the wave-vector grid,
           - matsubara: the number of matsubara frequencies
 
+        - bf (*ndarray*): the bridge function adder
         - idr (*ndarray*, 2D): the ideal density response
         - sdr (*ndarray*):  the static density response
         - slfc (*ndarray*):  the static local field correction
         - ssf (*ndarray*):  the static structure factor
         - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
         - wvg (*ndarray*):  the wave-vector grid
-        - bf (*ndarray*): the bridge function adder
 
         If the radial distribution function was computed (see computeRdf), then the hdf file contains
         two additional keywords:

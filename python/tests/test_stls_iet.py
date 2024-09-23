@@ -3,9 +3,7 @@ import pytest
 import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
-from qupled.classic import StlsIet, ClassicScheme
-from qupled.classic import Stls
-
+from qupled.classic import StlsIet, IterativeScheme
 
 @pytest.fixture
 def stls_iet_instance():
@@ -13,7 +11,7 @@ def stls_iet_instance():
 
 
 def test_default(stls_iet_instance):
-    assert issubclass(StlsIet, ClassicScheme)
+    assert issubclass(StlsIet, IterativeScheme)
     assert issubclass(StlsIet, qp.Stls)
     assert stls_iet_instance.hdfFileName == "rs1.000_theta1.000_STLS-HNC.h5"
 
