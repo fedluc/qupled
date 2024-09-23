@@ -4,6 +4,7 @@ import glob
 import set_path
 import qupled.qupled as qp
 
+
 def test_qstls_properties():
     assert issubclass(qp.Qstls, qp.Stls)
     scheme = qp.Qstls(qp.QstlsInput())

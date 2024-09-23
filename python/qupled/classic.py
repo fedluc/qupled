@@ -373,7 +373,7 @@ class Stls(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
             """ Output frequency to write the recovery file """
             self.recoveryFile: str = ""
             """ Name of the recovery file """
-            if (initGuess):
+            if initGuess:
                 self.guess: qp.StlsGuess = qp.StlsGuess()
                 """ Initial guess """
             # Undocumented default values
@@ -466,7 +466,7 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
             the ground state they can differ significantly (the standard
             mapping diverges)
             """
-            
+
     # Constructor
     def __init__(self, inputs: StlsIet.Input):
         # Construct the base classes

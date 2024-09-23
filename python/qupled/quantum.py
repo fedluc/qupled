@@ -130,7 +130,7 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
     `Tolias <https://pubs.aip.org/aip/jcp/article/158/14/141102/
     2877795/Quantum-version-of-the-integral-equation-theory>`_.
 
-    
+
     Args:
         inputs: Input parameters used to solve the scheme.
     """
@@ -175,8 +175,8 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
         # Construct the base class
         super().__init__(inputs)
         # File to store the output on disk
-        self.hdfFileName: str = self._getHdfFile() #. Name of the output file
-        
+        self.hdfFileName: str = self._getHdfFile()  # . Name of the output file
+
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
@@ -220,10 +220,9 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
     # Unpack zip folder with fixed component of the auxiliary density response
     @qu.MPI.runOnlyOnRoot
     def _unpackFixedAdrFiles(self) -> None:
-        if (self.fixedIetSourceFile != ""):
+        if self.fixedIetSourceFile != "":
             with zf.ZipFile(self.fixedIetSourceFile, "r") as zipFile:
                 zipFile.extractall(self.inputs.fixediet)
-                
 
     # Check that the dielectric scheme was solved without errors
     @qu.MPI.runOnlyOnRoot

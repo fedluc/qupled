@@ -125,7 +125,7 @@ BOOST_PYTHON_MODULE(qupled) {
   bp::class_<StlsInput::Guess>("StlsGuess")
       .add_property("wvg", &PyStlsGuess::getWvg, &PyStlsGuess::setWvg)
       .add_property("slfc", &PyStlsGuess::getSlfc, &PyStlsGuess::setSlfc);
-  
+
   // Class for the initial guess of the Qstls scheme
   bp::class_<QstlsInput::Guess>("QstlsGuess")
       .add_property("wvg", &PyQstlsGuess::getWvg, &PyQstlsGuess::setWvg)
@@ -147,7 +147,6 @@ BOOST_PYTHON_MODULE(qupled) {
                     &PyFreeEnergyIntegrand::getAlpha,
                     &PyFreeEnergyIntegrand::setAlpha);
 
-  
   // Class to solve the classical RPA scheme
   bp::class_<Rpa>("Rpa", bp::init<const RpaInput>())
       .def("compute", &PyRpa::compute)

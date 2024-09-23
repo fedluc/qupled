@@ -5,6 +5,7 @@ import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.classic import StlsIet, IterativeScheme
 
+
 @pytest.fixture
 def stls_iet_instance():
     return StlsIet(StlsIet.Input(1.0, 1.0, "STLS-HNC"))
