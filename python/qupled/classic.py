@@ -446,7 +446,7 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
 
         def __init__(self, coupling: float, degeneracy: float, theory: str):
             super().__init__(coupling, degeneracy)
-            if theory not in ["STLS-HNC", "STLS-IOI" or "STLS-LCT"]:
+            if theory not in {"STLS-HNC", "STLS-IOI", "STLS-LCT"}:
                 sys.exit("Invalid dielectric theory")
             self.theory = theory
             """ Dielectric theory to solve  """

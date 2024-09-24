@@ -142,7 +142,8 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
 
         def __init__(self, coupling: float, degeneracy: float, theory: str):
             super().__init__(coupling, degeneracy)
-            if theory not in ["QSTLS-HNC", "QSTLS-IOI" or "QSTLS-LCT"]:
+            if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
+                print(theory)
                 sys.exit("Invalid dielectric theory")
             self.theory = theory
             """ Dielectric theory to solve  """
