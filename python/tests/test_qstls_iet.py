@@ -88,7 +88,6 @@ def test_checkStatusAndClean(qstls_iet_instance, mocker, capsys):
 
 def test_save(qstls_iet_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    qstls_iet_instance.scheme = qp.Qstls(qstls_iet_instance.inputs)
     adrFileName = "adr_fixed_theta%5.3f_matsubara%d_%s.zip" % (
         qstls_iet_instance.inputs.degeneracy,
         qstls_iet_instance.inputs.matsubara,

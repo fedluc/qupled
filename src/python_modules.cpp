@@ -95,9 +95,6 @@ BOOST_PYTHON_MODULE(qupled) {
 
   // Class for the input of the VSStls scheme
   bp::class_<VSStlsInput, bp::bases<VSInput, StlsInput>>("VSStlsInput")
-      .add_property(
-          "iet", &VSStlsInput::getIETMapping, &VSStlsInput::setIETMapping)
-      .add_property("guess", &VSStlsInput::getGuess, &VSStlsInput::setGuess)
       .def("print", &VSStlsInput::print)
       .def("isEqual", &VSStlsInput::isEqual);
 
@@ -112,12 +109,6 @@ BOOST_PYTHON_MODULE(qupled) {
 
   // Class for the input of the QVSStls scheme
   bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput")
-      .add_property(
-          "iet", &QVSStlsInput::getIETMapping, &QVSStlsInput::setIETMapping)
-      .add_property("guess", &QVSStlsInput::getGuess, &QVSStlsInput::setGuess)
-      .add_property("fixed", &QVSStlsInput::getFixed, &QVSStlsInput::setFixed)
-      .add_property(
-          "fixediet", &QVSStlsInput::getFixedIet, &QVSStlsInput::setFixedIet)
       .def("print", &QVSStlsInput::print)
       .def("isEqual", &QVSStlsInput::isEqual);
 

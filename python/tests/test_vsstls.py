@@ -4,7 +4,7 @@ import numpy as np
 import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
-from qupled.classic import VSStls, ClassicScheme
+from qupled.classic import VSStls, IterativeScheme
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ def vsstls_instance():
 
 
 def test_default(vsstls_instance):
-    assert issubclass(VSStls, ClassicScheme)
+    assert issubclass(VSStls, IterativeScheme)
     assert issubclass(VSStls, qp.VSStls)
     assert vsstls_instance.hdfFileName == "rs1.000_theta1.000_VSSTLS.h5"
 
