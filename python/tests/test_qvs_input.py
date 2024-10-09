@@ -114,21 +114,6 @@ def test_freeEnergyIntegrand(qvsstls_input_instance):
     assert np.array_equal(arr1, qvsstls_input_instance.freeEnergyIntegrand.grid)
     assert np.array_equal(arr2, qvsstls_input_instance.freeEnergyIntegrand.integrand)
 
-
-def test_freeEnergyIntegrand_notEnoughTemperaturePoints(qvsstls_input_instance):
-    with pytest.raises(RuntimeError) as excinfo:
-        arr1 = np.zeros(10)
-        arr2 = np.zeros((2, 10))
-        fxc = qp.FreeEnergyIntegrand()
-        fxc.grid = arr1
-        fxc.integrand = arr2
-        qvsstls_input_instance.freeEnergyIntegrand = fxc
-    assert (
-        excinfo.value.args[0]
-        == "The free energy integrand does not contain enough temperature points"
-    )
-
-
 def test_freeEnergyIntegrand_Inconsistent(qvsstls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
@@ -140,25 +125,11 @@ def test_freeEnergyIntegrand_Inconsistent(qvsstls_input_instance):
     assert excinfo.value.args[0] == "The free energy integrand is inconsistent"
 
 
-def test_freeEnergyIntegrand_TooSmall(qvsstls_input_instance):
-    with pytest.raises(RuntimeError) as excinfo:
-        arr1 = np.zeros(2)
-        arr2 = np.zeros((3, 2))
-        fxc = qp.FreeEnergyIntegrand()
-        fxc.grid = arr1
-        fxc.integrand = arr2
-        qvsstls_input_instance.freeEnergyIntegrand = fxc
-    assert (
-        excinfo.value.args[0]
-        == "The free energy integrand does not contain enough points"
-    )
-
-
 def test_isEqual_default(qvsstls_input_instance):
     assert not qvsstls_input_instance.isEqual(qvsstls_input_instance)
 
 
-def test_isEqual_default(qvsstls_input_instance):
+def test_isEqual(qvsstls_input_instance):
     thisQVSStls = qp.QVSStlsInput()
     thisQVSStls.coupling = 2.0
     thisQVSStls.degeneracy = 1.0

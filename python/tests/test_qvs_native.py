@@ -2,12 +2,12 @@ import os
 import pytest
 import set_path
 import qupled.qupled as qp
-import qupled.quantum as qpq
-
 
 def test_qvsstls_properties():
     assert issubclass(qp.QVSStls, qp.Rpa)
-    inputs = qpq.QVSStls(1.0, 1.0).inputs
+    inputs = qp.QVSStlsInput()
+    inputs.coupling = 1.0
+    inputs.couplingResolution = 0.1
     scheme = qp.QVSStls(inputs)
     assert hasattr(scheme, "freeEnergyIntegrand")
     assert hasattr(scheme, "freeEnergyGrid")
@@ -15,15 +15,25 @@ def test_qvsstls_properties():
 
 
 def test_qvsstls_compute():
-    inputs = qpq.QVSStls(
-        1.0,
-        1.0,
-        matsubara=32,
-        couplingResolution=0.1,
-        degeneracyResolution=0.1,
-        cutoff=5,
-        threads=16,
-    ).inputs
+    inputs = qp.QVSStlsInput()
+    inputs.coupling = 1.0
+    inputs.degeneracy = 1.0
+    inputs.theory = "QVSSTLS"
+    inputs.chemicalPotential = [-10, 10]
+    inputs.cutoff = 5.0
+    inputs.matsubara = 32
+    inputs.resolution = 0.1
+    inputs.intError = 1.0e-5
+    inputs.threads = 16
+    inputs.error = 1.0e-5
+    inputs.mixing = 1.0
+    inputs.iterations = 1000
+    inputs.outputFrequency = 10
+    inputs.couplingResolution = 0.1
+    inputs.degeneracyResolution = 0.1
+    inputs.errorAlpha = 1.0e-3
+    inputs.iterationsAlpha = 50
+    inputs.alpha = [0.5, 1.0]
     scheme = qp.QVSStls(inputs)
     scheme.compute()
     try:
