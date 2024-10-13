@@ -135,8 +135,7 @@ bool Qstls::initialGuessFromRecovery() {
   readRecovery(wvg_, ssf_, adr_, adrFixed_, Theta, nl_);
   const bool ssfIsSet = initialGuessSsf(wvg_, ssf_);
   const bool adrIsSet = (useIet) ? initialGuessAdr(wvg_, adr_) : true;
-  const bool adrFixedIsSet = checkAdrFixed(wvg_, Theta, nl_) == 0;
-  if (adrFixedIsSet) { adrFixed = adrFixed_; }
+  const bool adrFixedIsSet = initialGuessAdrFixed(wvg_, Theta, nl_, adrFixed_);
   return ssfIsSet && adrIsSet && adrFixedIsSet;
 }
 
@@ -185,6 +184,15 @@ bool Qstls::initialGuessAdr(const vector<double> &wvg_, const Vector2D &adr_) {
       adrOld(i, l) = (l < nl_) ? itp[l].eval(x) : 0.0;
     }
   }
+  return true;
+}
+
+bool Qstls::initialGuessAdrFixed(const vector<double> &wvg_,
+                                 const double &Theta,
+                                 const int &nl_,
+                                 const Vector3D &adrFixed_) {
+  if (!checkAdrFixed(wvg_, Theta, nl_)) { return false; }
+  adrFixed = adrFixed_;
   return true;
 }
 
@@ -317,15 +325,15 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   readDataFromBinary<Vector3D>(file, res);
   file.close();
   if (!file) { throwError("Error in reading from file " + fileName); }
-  if (checkAdrFixed(wvg_, Theta_, nl_) != 0) {
+  if (!checkAdrFixed(wvg_, Theta_, nl_)) {
     throwError("Fixed component of the auxiliary density response"
                " loaded from file is incompatible with input");
   }
 }
 
-int Qstls::checkAdrFixed(const vector<double> &wvg_,
-                         const double Theta_,
-                         const int nl_) const {
+bool Qstls::checkAdrFixed(const vector<double> &wvg_,
+                          const double Theta_,
+                          const int nl_) const {
   constexpr double tol = 1e-15;
   bool consistentGrid = wvg_.size() == wvg.size();
   if (consistentGrid) {
@@ -336,13 +344,7 @@ int Qstls::checkAdrFixed(const vector<double> &wvg_,
   }
   const bool consistentMatsubara = nl_ == in.getNMatsubara();
   const bool consistentTheta = abs(Theta_ - in.getDegeneracy()) <= tol;
-  if (!consistentGrid) { std::cerr << "Inconsistent grid values" << std::endl; }
-  if (!consistentMatsubara) {
-    std::cerr << "Inconsistent Matsubara" << std::endl;
-  }
-  if (!consistentTheta) { std::cerr << "Inconsistent Theta" << std::endl; }
-  if (!consistentMatsubara || !consistentTheta || !consistentGrid) { return 1; }
-  return 0;
+  return consistentMatsubara && consistentTheta && consistentGrid;
 }
 
 void Qstls::computeAdrIet() {

@@ -19,7 +19,7 @@ def test_default(qvsstls_instance):
     assert issubclass(QVSStls, qp.QVSStls)
     assert qvsstls_instance.hdfFileName == "rs1.000_theta1.000_QVSSTLS.h5"
 
-    
+
 def test_compute(qvsstls_instance, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
@@ -34,7 +34,7 @@ def test_compute(qvsstls_instance, mocker):
     assert mockCompute.call_count == 1
     assert mockCheckStatusAndClean.call_count == 1
     assert mockSave.call_count == 1
-    
+
 
 def test_unpackFixedAdrFiles(qvsstls_instance, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")

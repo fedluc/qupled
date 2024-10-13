@@ -3,6 +3,7 @@ import pytest
 import set_path
 import qupled.qupled as qp
 
+
 def test_qvsstls_properties():
     assert issubclass(qp.QVSStls, qp.Rpa)
     inputs = qp.QVSStlsInput()

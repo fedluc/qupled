@@ -265,6 +265,7 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
 # QVSStls class
 # -----------------------------------------------------------------------
 
+
 class QVSStlsMetaclass(type(QuantumIterativeScheme), type(qp.QVSStls)):
     pass
 
@@ -302,7 +303,7 @@ class QVSStls(QuantumIterativeScheme, qp.QVSStls, metaclass=QVSStlsMetaclass):
             # Undocumented default values
             self.threads = 9
             self.theory = "QVSSTLS"
-            
+
     # Constructor
     def __init__(self, inputs: Qstls.Input):
         # Setup the folder structure to load the fixed component of the adr
@@ -361,7 +362,7 @@ class QVSStls(QuantumIterativeScheme, qp.QVSStls, metaclass=QVSStlsMetaclass):
         if self.fixedSourceFile != "":
             with zf.ZipFile(self.inputs.fixed, "r") as zipFile:
                 zipFile.extractall(self.inputs.fixediet)
-            
+
     # Check that the dielectric scheme was solved without errors
     @qu.MPI.runOnlyOnRoot
     def _checkStatusAndClean(self, status) -> None:
@@ -388,7 +389,7 @@ class QVSStls(QuantumIterativeScheme, qp.QVSStls, metaclass=QVSStlsMetaclass):
                 for adrFile in glob("THETA*.bin"):
                     zipFile.write(adrFile)
                     os.remove(adrFile)
-                    
+
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
     def getFreeEnergyIntegrand(fileName: str) -> qp.FreeEnergyIntegrand():

@@ -55,9 +55,9 @@ protected:
   void readAdrFixedFile(Vector3D &res,
                         const std::string &fileName,
                         const bool iet) const;
-  int checkAdrFixed(const std::vector<double> &wvg_,
-                    const double Theta_,
-                    const int nl_) const;
+  bool checkAdrFixed(const std::vector<double> &wvg_,
+                     const double Theta_,
+                     const int nl_) const;
   void computeAdrIet();
   void computeAdrFixedIet();
   void getAdrFixedIetFileInfo();
@@ -72,6 +72,10 @@ protected:
   bool initialGuessSsf(const std::vector<double> &wvg_,
                        const std::vector<double> &adr_);
   bool initialGuessAdr(const std::vector<double> &wvg_, const Vector2D &adr_);
+  bool initialGuessAdrFixed(const std::vector<double> &wvg_,
+                            const double &Theta,
+                            const int &nl_,
+                            const Vector3D &adrFixed_);
   double computeError() const;
   void updateSolution();
   // Recovery files

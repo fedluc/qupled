@@ -114,6 +114,7 @@ def test_freeEnergyIntegrand(qvsstls_input_instance):
     assert np.array_equal(arr1, qvsstls_input_instance.freeEnergyIntegrand.grid)
     assert np.array_equal(arr2, qvsstls_input_instance.freeEnergyIntegrand.integrand)
 
+
 def test_freeEnergyIntegrand_Inconsistent(qvsstls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
