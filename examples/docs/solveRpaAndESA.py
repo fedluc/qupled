@@ -2,19 +2,19 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import yaml
-import qupled.classic as qpc
+from qupled.classic import Rpa, ESA
 import qupled.util as qpu
 
 # Define an Rpa object to solve the RPA scheme
 print("######### Solving the RPA scheme #########")
-rpa = qpc.Rpa(10.0, 1.0, cutoff=10)
+rpa = Rpa(Rpa.Input(10.0, 1.0))
 
 # Solve the RPA scheme
 rpa.compute()
 
 # Define an ESA object to solve the ESA scheme
 print("######### Solving the ESA scheme #########")
-esa = qpc.ESA(10.0, 1.0, cutoff=10)
+esa = ESA(ESA.Input(10.0, 1.0))
 
 # Solve the ESA scheme
 esa.compute()

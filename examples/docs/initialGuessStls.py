@@ -1,18 +1,15 @@
-import numpy as np
-import pandas as pd
-import qupled.classic as qpc
+from qupled.classic import Stls
+from qupled.classic import IterativeScheme
 
-# Define an Stls object to solve the STLS scheme
-stls = qpc.Stls(10.0, 1.0, mixing=0.2, cutoff=10)
+# Define the input parameters
+inputs = Stls.Input(10.0, 1.0)
+inputs.mixing = 0.2
 
 # Solve scheme
-stls.compute()
+Stls(inputs).compute()
 
 # Create a custom initial guess from the output files of the previous run
-stls.setGuess("rs10.000_theta1.000_STLS.h5")
-
-# Change the coupling parameter
-stls.inputs.coupling = 10.0
+inputs.guess = Stls.getInitialGuess("rs10.000_theta1.000_STLS.h5")
 
 # Solve the scheme again with the new initial guess and coupling parameter
-stls.compute()
+Stls(inputs).compute()

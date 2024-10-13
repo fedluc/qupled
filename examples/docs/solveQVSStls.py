@@ -1,26 +1,27 @@
-import numpy as np
-import qupled.quantum as qpq
+from qupled.quantum import QVSStls
 
-# Solve the QVSStls scheme for rs=1.0 and theta=1.0
-qvsstls = qpq.QVSStls(
-    1.0,
-    1.0,
-    mixing=0.5,
-    matsubara=16,
-    alpha=[-0.2, 0.4],
-    errorIntegrals=1e-5,
-    iterations=100,
-    threads=16,
-)
+# Define the input parameters
+inputs = QVSStls.Input(1.0, 1.0)
+inputs.mixing = 0.5
+inputs.matsubara = 16
+inputs.alpha = [-0.2, 0.4]
+inputs.iterations = 100
+inputs.threads = 16
 
-# Solve the QVSSTLS scheme
+# Solve scheme for rs = 1.0
+qvsstls = QVSStls(inputs)
 qvsstls.compute()
 
-# Setup a new  simulation for rs=2.0 and theta=1.0 and use the free energy
-# integrand computed for rs = 1.0
-qvsstls.inputs.coupling = 2.0
-qvsstls.inputs.alpha = [0.1, 0.5]
-qvsstls.setFreeEnergyIntegrand("rs1.000_theta1.000_QVSSTLS.h5")
+# Load the free energy integrand computed for rs = 1.0
+fxci = QVSStls.getFreeEnergyIntegrand("rs1.000_theta1.000_QVSSTLS.h5")
+
+# Setup a new  simulation for rs=2.0
+inputs.coupling = 2.0
+inputs.alpha = [0.1, 0.5]
+inputs.freeEnergyIntegrand = fxci
+
+# Solve scheme for rs = 2.0
+qvsstls = QVSStls(inputs)
 qvsstls.compute()
 
 # Plot the results

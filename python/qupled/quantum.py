@@ -360,8 +360,8 @@ class QVSStls(QuantumIterativeScheme, qp.QVSStls, metaclass=QVSStlsMetaclass):
     @qu.MPI.runOnlyOnRoot
     def _unpackFixedAdrFiles(self) -> None:
         if self.fixedSourceFile != "":
-            with zf.ZipFile(self.inputs.fixed, "r") as zipFile:
-                zipFile.extractall(self.inputs.fixediet)
+            with zf.ZipFile(self.fixedSourceFile, "r") as zipFile:
+                zipFile.extractall(self.inputs.fixed)
 
     # Check that the dielectric scheme was solved without errors
     @qu.MPI.runOnlyOnRoot

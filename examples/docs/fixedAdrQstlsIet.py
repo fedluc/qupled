@@ -1,27 +1,23 @@
-import qupled.quantum as qpq
+from qupled.quantum import QstlsIet
 
-# Define a Qstls object to solve the QSTLS-HNC scheme
-qstls = qpq.QstlsIet(
-    30.0,
-    1.0,
-    "QSTLS-HNC",
-    mixing=0.2,
-    resolution=0.1,
-    cutoff=5,
-    matsubara=16,
-    scheme2DIntegrals="segregated",
-    threads=16,
-)
+# Define the input parameters
+inputs = QstlsIet.Input(10.0, 1.0, "QSTLS-HNC")
+inputs.mixing = 0.5
+inputs.matsubara = 16
+inputs.threads = 16
+inputs.int2DScheme = "segregated"
 
 # Solve the QSTLS-HNC scheme and store the internal energy (v1 calculation)
+qstls = QstlsIet(inputs)
 qstls.compute()
 uInt1 = qstls.computeInternalEnergy()
 
 # Pass in input the fixed component of the auxiliary density response
-qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
-qstls.inputs.fixediet = "adr_fixed_theta1.000_matsubara16_QSTLS-HNC.zip"
+inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
+inputs.fixediet = "adr_fixed_theta1.000_matsubara16_QSTLS-HNC.zip"
 
 # Repeat the calculation and recompute the internal energy (v2 calculation)
+qstls = QstlsIet(inputs)
 qstls.compute()
 uInt2 = qstls.computeInternalEnergy()
 
