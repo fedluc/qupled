@@ -46,7 +46,7 @@ def test_unpackFixedAdrFiles(qvsstls_instance, mocker):
         for filename in filenames:
             with open(filename, "w") as file:
                 file.write("this is a test file\n")
-        with zf.ZipFile(qvsstls.inputs.fixed, "w") as zipFile:
+        with zf.ZipFile(qvsstls.fixedSourceFile, "w") as zipFile:
             for filename in filenames:
                 zipFile.write(filename)
                 os.remove(filename)
@@ -59,7 +59,7 @@ def test_unpackFixedAdrFiles(qvsstls_instance, mocker):
             if os.path.isfile("testFile.zip"):
                 os.remove("testFile.zip")
             if os.path.isdir(qvsstls.inputs.fixed):
-                rmtree(qvsstls.inputs.tmpRunDir)
+                rmtree(qvsstls.inputs.fixed)
 
 
 def test_checkStatusAndClean(qvsstls_instance, mocker, capsys):

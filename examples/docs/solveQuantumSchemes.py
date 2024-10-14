@@ -1,3 +1,4 @@
+import numpy as np
 from qupled.quantum import Qstls, QstlsIet
 
 # Define the input parameters
