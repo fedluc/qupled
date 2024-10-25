@@ -74,7 +74,7 @@ class ClassicScheme(ABC):
 
         Args:
             rdfGrid: The grid used to compute the radial distribution function.
-                (Defaults to None, see :func:`qupled.util.Hdf.computeRdf`)
+                Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`)
             writeToHdf: Flag marking whether the rdf data should be added to the output hdf file, default to True
 
         Returns:
@@ -103,7 +103,7 @@ class ClassicScheme(ABC):
         matsubara: np.ndarray = None,
         rdfGrid: np.ndarray = None,
     ) -> None:
-        """Plots the results stored in the output file`.
+        """Plots the results stored in the output file.
 
         Args:
             toPlot: A list of quantities to plot. This list can include all the values written to the
@@ -112,7 +112,7 @@ class ClassicScheme(ABC):
             matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
                 (Default = None, all matsubara frequencies are plotted)
             rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
-                distribution function is plotted (Default = None, see :func:`qupled.classic.Stls.computeRdf`)
+                distribution function is plotted. Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`).
 
         """
         if "rdf" in toPlot:
@@ -133,52 +133,12 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
     """
     Class used to setup and solve the classical Randon-Phase approximaton scheme as described by
     `Bohm and Pines <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
-    The inputs used to solve the scheme are defined when creating the class, but can be
-    later modified by changing the attribute :obj:`inputs`. After the solution is completed
-    the results are saved to an hdf file and can be plotted via the method :obj:`plot`.
+    After the solution is completed the results are saved to an hdf file and can be plotted
+    via the method :obj:`plot`.
 
     Args:
         inputs: Input parameters.
     """
-
-    class Input(qp.RpaInput):
-        """
-        Class used to manage the input for the :obj:`qupled.classic.Rpa` class.
-        """
-
-        def __init__(self, coupling: float, degeneracy: float):
-            super().__init__()
-            self.coupling: float = coupling
-            """ Coupling parameter """
-            self.degeneracy: float = degeneracy
-            """ Degeneracy parameter """
-            self.chemicalPotential: list[float] = [-10.0, 10.0]
-            """ Initial guess for the chemical potential """
-            self.matsubara: int = 128
-            """ Number of matsubara frequencies"""
-            self.resolution: float = 0.1
-            """ Resolution of the wave-vector grid """
-            self.cutoff: float = 10.0
-            """ cutoff for the wave-vector grid """
-            self.intError: float = 1.0e-5
-            """ Accuracy (expressed as a relative error) in the computation of the integrals """
-            self.int2DScheme: str = "full"
-            """ Scheme used to solve two-dimensional integrals
-            allowed options include:
-        
-            - full: the inner integral is evaluated at arbitrary points 
-	      selected automatically by the quadrature rule
-        
-	    - segregated: the inner integral is evaluated on a fixed 
-	      grid that depends on the integrand that is being processed
-        
-            Segregated is usually faster than full but it could become 
-	    less accurate if the fixed points are not chosen correctly
-            """
-            self.threads: int = 1
-            """ Number of OMP threads for parallel calculations"""
-            # Undocumented default values
-            self.theory: list[str] = "RPA"
 
     # Constructor
     def __init__(self, inputs: Rpa.Input):
@@ -191,9 +151,10 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results.
+        """
+        Solves the scheme and saves the results.
 
-        The results are stored as pandas dataframes in an hdf file with the following keywords:
+        The results are stored in :obj:`hdfFileName` as pandas dataframes with the following keywords:
 
         - info: A dataframe containing information on the input parameters, it includes:
 
@@ -211,15 +172,129 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
         - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
         - wvg (*ndarray*):  the wave-vector grid
 
-        If the radial distribution function was computed (see computeRdf), then the hdf file contains
+        If the radial distribution function is computed (see :obj:`computeRdf`), then the output file contains
         two additional keywords:
 
         - rdf (*ndarray*):  the radial distribution function
         - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
-
-        The name of the hdf file is stored in :obj:`hdfFileName`.
         """
         super().computeScheme(super().compute, self._save)
+
+    # Input class
+    class Input(qp.RpaInput):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.Rpa` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float):
+            super().__init__()
+            self.coupling: float = coupling
+            self.degeneracy: float = degeneracy
+            self.chemicalPotential: list[float] = [-10.0, 10.0]
+            self.matsubara: int = 128
+            self.resolution: float = 0.1
+            self.cutoff: float = 10.0
+            self.intError: float = 1.0e-5
+            self.int2DScheme: str = "full"
+            self.threads: int = 1
+            self.theory: str = "RPA"
+
+        @property
+        def coupling(self) -> float:
+            """Coupling parameter."""
+            return super().coupling
+
+        @property
+        def degeneracy(self) -> float:
+            """Degeneracy parameter."""
+            return super().degeneracy
+
+        @property
+        def chemicalPotential(self) -> list[float]:
+            """
+            Initial guess for the chemical potential. Default = ``[-10, 10]``
+            """
+            return super().chemicalPotential
+
+        @property
+        def matsubara(self) -> int:
+            """Number of Matsubara frequencies. Default = ``128``"""
+            return super().matsubara
+
+        @property
+        def resolution(self) -> float:
+            """Resolution of the wave-vector grid. Default = ``0.1``"""
+            return super().resolution
+
+        @property
+        def cutoff(self) -> float:
+            """Cutoff for the wave-vector grid. Default = ``10.0``"""
+            return super().cutoff
+
+        @property
+        def intError(self) -> float:
+            """Accuracy (relative error) in the computation of integrals. Default = ``1.0e-5``"""
+            return super().intError
+
+        @property
+        def int2DScheme(self) -> str:
+            """
+            Scheme used to solve two-dimensional integrals
+            allowed options include:
+
+            - full: the inner integral is evaluated at arbitrary points
+              selected automatically by the quadrature rule
+
+            - segregated: the inner integral is evaluated on a fixed
+              grid that depends on the integrand that is being processed
+
+            Segregated is usually faster than full but it could become
+            less accurate if the fixed points are not chosen correctly. Default = ``'full'``
+            """
+            return super().int2DScheme
+
+        @property
+        def threads(self) -> int:
+            """Number of OMP threads for parallel calculations. Default = ``1``"""
+            return super().threads
+
+        # Setters
+
+        @coupling.setter
+        def coupling(self, value: float):
+            super(Rpa.Input, self.__class__).coupling.fset(self, value)
+
+        @degeneracy.setter
+        def degeneracy(self, value: float):
+            super(Rpa.Input, self.__class__).degeneracy.fset(self, value)
+
+        @chemicalPotential.setter
+        def chemicalPotential(self, value: list[float]):
+            super(Rpa.Input, self.__class__).chemicalPotential.fset(self, value)
+
+        @matsubara.setter
+        def matsubara(self, value: int):
+            super(Rpa.Input, self.__class__).matsubara.fset(self, value)
+
+        @resolution.setter
+        def resolution(self, value: float):
+            super(Rpa.Input, self.__class__).resolution.fset(self, value)
+
+        @cutoff.setter
+        def cutoff(self, value: float):
+            super(Rpa.Input, self.__class__).cutoff.fset(self, value)
+
+        @intError.setter
+        def intError(self, value: float):
+            super(Rpa.Input, self.__class__).intError.fset(self, value)
+
+        @int2DScheme.setter
+        def int2DScheme(self, value: str):
+            super(Rpa.Input, self.__class__).int2DScheme.fset(self, value)
+
+        @threads.setter
+        def threads(self, value: int):
+            super(Rpa.Input, self.__class__).threads.fset(self, value)
 
 
 # -----------------------------------------------------------------------
@@ -529,7 +604,7 @@ class VSStlsMetaclass(type(IterativeScheme), type(qp.VSStls)):
 
 class VSStls(IterativeScheme, qp.VSStls, metaclass=VSStlsMetaclass):
     """
-     Class used to setup and solve the classical VS-STLS scheme as described by
+    Class used to setup and solve the classical VS-STLS scheme as described by
     `Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_ and by
     `Sjostrom and Dufty <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.88.115123>`_.
 

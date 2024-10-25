@@ -14,8 +14,9 @@ Classic schemes
 
 .. autoclass:: qupled.classic.Rpa
     :members:
-    :undoc-members:
-
+    :inherited-members:
+    :exclude-members: Input
+		      
 .. autoclass:: qupled.classic.Stls
     :members:
     :undoc-members:
@@ -55,41 +56,8 @@ Quantum schemes
 Input
 -----
 
-.. autoclass:: qupled.qupled.RpaInput
+.. autoclass:: qupled.classic.Rpa.Input
     :members:
-    :undoc-members:
-
-.. autoclass:: qupled.qupled.IterationInput
-    :members:
-    :undoc-members:
-       
-.. autoclass:: qupled.qupled.StlsInput
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: qupled.qupled.VSInput
-    :members:
-    :undoc-members:
-       
-.. autoclass:: qupled.qupled.VSStlsInput
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: qupled.qupled.FreeEnergyIntegrand
-    :members:
-    :undoc-members:
-
-.. autoclass:: qupled.qupled.QstlsInput
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-.. autoclass:: qupled.qupled.QVSStlsInput
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 Initial guess
 -------------

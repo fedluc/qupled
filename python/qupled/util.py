@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import colormaps as cm
+import functools
 import qupled.qupled as qp
 
 # -----------------------------------------------------------------------
@@ -287,6 +288,7 @@ class MPI:
     def runOnlyOnRoot(func):
         """Python decorator for all methods that have to be run only by root"""
 
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if MPI().isRoot():
                 return func(*args, **kwargs)
@@ -297,6 +299,7 @@ class MPI:
     def synchronizeRanks(func):
         """Python decorator for all methods that need to rank synchronization"""
 
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             func(*args, **kwargs)
             MPI().barrier()
@@ -307,6 +310,7 @@ class MPI:
     def recordTime(func):
         """Python decorator for all methods that have to be timed"""
 
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             tic = MPI().timer()
             func(*args, **kwargs)

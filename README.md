@@ -36,12 +36,10 @@ cmake --install .
 After installation Qupled can be used as a regular Python package
 
 ```python
-import qupled.classic as qpc
-import qupled.quantum as qpq
 # Solve the stls dielectric scheme for coupling = 10 and degeneracy 1.0
-qpc.Stls(10.0, 1.0).compute()
-# Solve the qstls dielectric scheme for coupling = 5 and degeneracy 2.0
-qpq.Qstls(5.0, 2.0).compute()
+from qupled.classic import Stls
+inputs = Stls.Input(10.0, 1.0)
+Stls(inputs).compute()
 ```
 
 ## Documentation
