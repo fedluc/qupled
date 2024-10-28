@@ -131,11 +131,6 @@ class RpaMetaclass(type(ClassicScheme), type(qp.Rpa)):
 
 class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
     """
-    Class used to setup and solve the classical Randon-Phase approximaton scheme as described by
-    `Bohm and Pines <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
-    After the solution is completed the results are saved to an hdf file and can be plotted
-    via the method :obj:`plot`.
-
     Args:
         inputs: Input parameters.
     """
@@ -145,7 +140,7 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
         # Construct the base classes
         super().__init__(inputs)
         # File to store output on disk
-        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
+        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file.
 
     # Compute
     @qu.MPI.recordTime
@@ -153,30 +148,6 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
     def compute(self) -> None:
         """
         Solves the scheme and saves the results.
-
-        The results are stored in :obj:`hdfFileName` as pandas dataframes with the following keywords:
-
-        - info: A dataframe containing information on the input parameters, it includes:
-
-          - coupling: the coupling parameter,
-          - degeneracy: the degeneracy parameter,
-          - theory: the theory that is being solved,
-          - resolution: the resolution in the wave-vector grid,
-          - cutoff: the cutoff in the wave-vector grid,
-          - matsubara: the number of matsubara frequencies
-
-        - idr (*ndarray*, 2D): the ideal density response
-        - sdr (*ndarray*):  the static density response
-        - slfc (*ndarray*):  the static local field correction
-        - ssf (*ndarray*):  the static structure factor
-        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
-        - wvg (*ndarray*):  the wave-vector grid
-
-        If the radial distribution function is computed (see :obj:`computeRdf`), then the output file contains
-        two additional keywords:
-
-        - rdf (*ndarray*):  the radial distribution function
-        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
         """
         super().computeScheme(super().compute, self._save)
 
@@ -308,25 +279,9 @@ class ESAMetaclass(type(ClassicScheme), type(qp.ESA)):
 
 class ESA(ClassicScheme, qp.ESA, metaclass=ESAMetaclass):
     """
-    Class used to setup and solve the Effective Static Approximation scheme as described by
-    `Dornheim and collaborators <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`_.
-    The inputs used to solve the scheme are defined when creating the class, but can be
-    later modified by changing the attribute :obj:`inputs`. After the solution is completed
-    the results are saved to an hdf file and can be plotted via the method :obj:`plot`.
-
     Args:
-        inputs: Input parameters used to solve the scheme.
+        inputs: Input parameters.
     """
-
-    class Input(Rpa.Input):
-        """
-        Class used to manage the input for the :obj:`qupled.classic.ESA` class.
-        """
-
-        def __init__(self, coupling: float, degeneracy: float):
-            super().__init__(coupling, degeneracy)
-            # Undocumented default values
-            self.theory = "ESA"
 
     # Constructor
     def __init__(self, inputs: ESA.Input):
@@ -339,35 +294,21 @@ class ESA(ClassicScheme, qp.ESA, metaclass=ESAMetaclass):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results.
-
-        The results are stored as pandas dataframes in an hdf file with the following keywords:
-
-        - info: A dataframe containing information on the input parameters, it includes:
-
-          - coupling: the coupling parameter,
-          - degeneracy: the degeneracy parameter,
-          - theory: the theory that is being solved,
-          - resolution: the resolution in the wave-vector grid,
-          - cutoff: the cutoff in the wave-vector grid,
-          - matsubara: the number of matsubara frequencies
-
-        - idr (*ndarray*, 2D): the ideal density response
-        - sdr (*ndarray*):  the static density response
-        - slfc (*ndarray*):  the static local field correction
-        - ssf (*ndarray*):  the static structure factor
-        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
-        - wvg (*ndarray*):  the wave-vector grid
-
-        If the radial distribution function was computed (see computeRdf), then the hdf file contains
-        two additional keywords:
-
-        - rdf (*ndarray*):  the radial distribution function
-        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
-
-        The name of the hdf file is stored in :obj:`hdfFileName`.
+        """
+        Solves the scheme and saves the results.
         """
         super().computeScheme(super().compute, self._save)
+
+    # Input class
+    class Input(Rpa.Input):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.ESA` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float):
+            super().__init__(coupling, degeneracy)
+            # Undocumented default values
+            self.theory = "ESA"
 
 
 # -----------------------------------------------------------------------
@@ -421,38 +362,9 @@ class StlsMetaclass(type(IterativeScheme), type(qp.Stls)):
 
 class Stls(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
     """
-    Class used to setup and solve the classical STLS scheme as described by
-    `Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
-    The inputs used to solve the scheme are defined when creating the class, but can be
-    later modified by changing the attribute :obj:`inputs`. After the solution is completed
-    the results are saved to an hdf file and can be plotted via the method :obj:`plot`.
-
     Args:
-        inputs: Input parameters used to solve the scheme.
+        inputs: Input parameters.
     """
-
-    class Input(Rpa.Input, qp.StlsInput):
-        """
-        Class used to manage the input for the :obj:`qupled.classic.Stls` class.
-        """
-
-        def __init__(self, coupling: float, degeneracy: float, initGuess: bool = True):
-            super().__init__(coupling, degeneracy)
-            self.error: float = 1.0e-5
-            """ minimum error for convergence """
-            self.mixing: float = 1.0
-            """ mixing paramter """
-            self.iterations: int = 1000
-            """ Maximum number of iterations """
-            self.outputFrequency: int = 10
-            """ Output frequency to write the recovery file """
-            self.recoveryFile: str = ""
-            """ Name of the recovery file """
-            if initGuess:
-                self.guess: qp.StlsGuess = qp.StlsGuess()
-                """ Initial guess """
-            # Undocumented default values
-            self.theory = "STLS"
 
     # Constructor
     def __init__(self, inputs: Stls.Input):
@@ -465,36 +377,83 @@ class Stls(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results.
-
-        The results are stored as pandas dataframes in an hdf file with the following keywords:
-
-        - info: A dataframe containing information on the input parameters, it includes:
-
-          - coupling: the coupling parameter,
-          - degeneracy: the degeneracy parameter,
-          - error: the residual error at the end of the solution
-          - theory: the theory that is being solved,
-          - resolution: the resolution in the wave-vector grid,
-          - cutoff: the cutoff in the wave-vector grid,
-          - matsubara: the number of matsubara frequencies
-
-        - idr (*ndarray*, 2D): the ideal density response
-        - sdr (*ndarray*):  the static density response
-        - slfc (*ndarray*):  the static local field correction
-        - ssf (*ndarray*):  the static structure factor
-        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
-        - wvg (*ndarray*):  the wave-vector grid
-
-        If the radial distribution function was computed (see computeRdf), then the hdf file contains
-        two additional keywords:
-
-        - rdf (*ndarray*):  the radial distribution function
-        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
-
-        The name of the hdf file is stored in :obj:`hdfFileName`.
+        """
+        Solves the scheme and saves the results.
         """
         super().computeScheme(super().compute, self._save)
+
+    # Input class
+    class Input(Rpa.Input, qp.StlsInput):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.Stls` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float, initGuess: bool = True):
+            super().__init__(coupling, degeneracy)
+            self.error: float = 1.0e-5
+            self.mixing: float = 1.0
+            self.iterations: int = 1000
+            self.outputFrequency: int = 10
+            self.recoveryFile: str = ""
+            if initGuess:
+                self.guess: qp.StlsGuess = qp.StlsGuess()
+            self.theory: str = "STLS"
+
+        @property
+        def error(self) -> float:
+            """Minimum error for convergence. Default = ``1.0e-5``"""
+            return super().error
+
+        @property
+        def mixing(self) -> float:
+            """Mixing parameter. Default = ``1.0``"""
+            return super().mixing
+
+        @property
+        def iterations(self) -> int:
+            """Maximum number of iterations. Default = ``1000``"""
+            return super().iterations
+
+        @property
+        def outputFrequency(self) -> int:
+            """Output frequency to write the recovery file. Default = ``10``"""
+            return super().outputFrequency
+
+        @property
+        def recoveryFile(self) -> str:
+            """Name of the recovery file. Default = ``""``"""
+            return super().recoveryFile
+
+        @property
+        def guess(self) -> qupled.qupled.StlsGuess:
+            """Initial guess."""
+            return super().guess
+
+        # Setters
+
+        @error.setter
+        def error(self, value: float):
+            super(Stls.Input, self.__class__).error.fset(self, value)
+
+        @mixing.setter
+        def mixing(self, value: float):
+            super(Stls.Input, self.__class__).mixing.fset(self, value)
+
+        @iterations.setter
+        def iterations(self, value: int):
+            super(Stls.Input, self.__class__).iterations.fset(self, value)
+
+        @outputFrequency.setter
+        def outputFrequency(self, value: int):
+            super(Stls.Input, self.__class__).outputFrequency.fset(self, value)
+
+        @recoveryFile.setter
+        def recoveryFile(self, value: str):
+            super(Stls.Input, self.__class__).recoveryFile.fset(self, value)
+
+        @guess.setter
+        def guess(self, value: qupled.qupled.StlsGuess):
+            super(Stls.Input, self.__class__).guess.fset(self, value)
 
 
 # -----------------------------------------------------------------------

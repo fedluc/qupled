@@ -12,16 +12,179 @@ quantum schemes and the classes used to handle the inputs, initial guesses and o
 Classic schemes
 ---------------
 
+Rpa scheme
+~~~~~~~~~~
+
+The :obj:`qupled.classic.Rpa` class is used to setup and perform all the necessary calculations
+for the solution of the `Random-Phase Approximation <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_ .
+The solution parameters are specified with a dedicated class called :obj:`qupled.classic.Rpa.Input`.
+After the solution is completed the results are written to an hdf file in the form of
+:ref:`pandas dataframes <rpa_pandas_table>`.
+
 .. autoclass:: qupled.classic.Rpa
     :members:
     :inherited-members:
-    :exclude-members: Input
-		      
+    :exclude-members: Input, rdf
+
+
+.. autoclass:: qupled.classic.Rpa.Input
+    :members:
+
+.. _rpa_pandas_table:
+.. list-table:: Content of the pandas dataframe stored in the output file
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Item
+     - Data Type
+     - Description
+   * - :ref:`info <rpa_info_table>`
+     - Pandas DataFrame
+     - Information on the input parameters
+   * - idr
+     - ndarray (2D)
+     - Ideal density response
+   * - sdr
+     - ndarray
+     - Static density response
+   * - slfc
+     - ndarray
+     - Static local field correction
+   * - ssf
+     - ndarray
+     - Static structure factor
+   * - ssfHF
+     - ndarray
+     - Hartree-Fock static structure factor
+   * - wvg
+     - ndarray
+     - Wave-vector grid
+   * - rdf*
+     - ndarray
+     - Radial distribution function
+   * - rdfGrid*
+     - ndarray
+     - Grid used to compute radial distribution function
+
+\* available only if the radial distribution function was computed.
+
+.. _rpa_info_table:
+.. list-table:: Content of the info Dataframe
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Item
+     - Data Type
+     - Description
+   * - coupling
+     - float
+     - Coupling parameter
+   * - degeneracy
+     - float
+     - Degeneracy parameter
+   * - theory
+     - str
+     - The theory that is being solved
+   * - resolution
+     - float
+     - Resolution in the wave-vector grid
+   * - cutoff
+     - float
+     - Cutoff in the wave-vector grid
+   * - matsubara
+     - int
+     - Number of matsubara frequencies
+
+       
+Stls scheme
+~~~~~~~~~~~		      
+
+The :obj:`qupled.classic.Stls` class is used to setup and perform all the necessary calculations
+for the solution of the `Stls scheme <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_ .
+The solution parameters are specified with a dedicated class called :obj:`qupled.classic.Stls.Input`.
+After the solution is completed the results are written to an hdf file in the form of
+:ref:`pandas dataframes <stls_pandas_table>`.
+
 .. autoclass:: qupled.classic.Stls
     :members:
-    :undoc-members:
-    :show-inheritance:
+    :inherited-members:
+    :exclude-members: Input, rdf
 
+.. autoclass:: qupled.classic.Stls.Input	       
+    :members:
+    :inherited-members:
+    :exclude-members: print, isEqual
+       
+       
+.. _stls_pandas_table:
+.. list-table:: Content of the pandas dataframe stored in the output file
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Item
+     - Data Type
+     - Description
+   * - :ref:`info <stls_info_table>`
+     - Pandas DataFrame
+     - Information on the solution
+   * - idr
+     - ndarray (2D)
+     - Ideal density response
+   * - sdr
+     - ndarray
+     - Static density response
+   * - slfc
+     - ndarray
+     - Static local field correction
+   * - ssf
+     - ndarray
+     - Static structure factor
+   * - ssfHF
+     - ndarray
+     - Hartree-Fock static structure factor
+   * - wvg
+     - ndarray
+     - Wave-vector grid
+   * - rdf*
+     - ndarray
+     - Radial distribution function
+   * - rdfGrid*
+     - ndarray
+     - Grid used to compute radial distribution function
+
+\* available only if the radial distribution function was computed.
+
+.. _stls_info_table:
+.. list-table:: Content of the info Dataframe
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Item
+     - Data Type
+     - Description
+   * - coupling
+     - float
+     - Coupling parameter
+   * - degeneracy
+     - float
+     - Degeneracy parameter
+   * - error
+     - float
+     - The residual error at the end of the solution
+   * - theory
+     - str
+     - The theory that is being solved
+   * - resolution
+     - float
+     - Resolution in the wave-vector grid
+   * - cutoff
+     - float
+     - Cutoff in the wave-vector grid
+   * - matsubara
+     - int
+     - Number of matsubara frequencies
+
+       
 .. autoclass:: qupled.classic.StlsIet
     :members:
     :undoc-members:
@@ -34,10 +197,23 @@ Classic schemes
 Hybrid schemes
 --------------
 
+ESA scheme
+~~~~~~~~~~
+
+The :obj:`qupled.classic.ESA` class is used to setup and perform all the necessary calculations
+for the solution of the `Effective Static Approximation <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_ .
+The solution parameters are specified with a dedicated class called :obj:`qupled.classic.ESA.Input`.
+After the solution is completed the results are written to an hdf file in the form of :ref:`pandas dataframes <rpa_pandas_table>`.
+
 .. autoclass:: qupled.classic.ESA
     :members:
+    :inherited-members:
+    :exclude-members: Input, rdf
+
+.. autoclass:: qupled.classic.ESA.Input
+    :members:
     :show-inheritance:
-    
+		      
 Quantum schemes
 ---------------
        
@@ -56,9 +232,8 @@ Quantum schemes
 Input
 -----
 
-.. autoclass:: qupled.classic.Rpa.Input
-    :members:
 
+       
 Initial guess
 -------------
 
@@ -76,3 +251,4 @@ Output
 
 .. autoclass:: qupled.util.Hdf
    :members:
+
