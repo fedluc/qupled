@@ -463,43 +463,9 @@ class Stls(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
 
 class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
     """
-
-    Class used to setup and solve the classical STLS-IET scheme as described by
-    `Tanaka <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_ and by
-    `Tolias and collaborators <https://aip.scitation.org/doi/full/10.1063/1.4969071>`_.
-    This class inherits most of its methods and attributes from :obj:`qupled.classic.Stls`.
-
     Args:
-        inputs: Input parameters used to solve the scheme.
+        inputs: Input parameters.
     """
-
-    class Input(Stls.Input):
-        """
-        Class used to manage the input for the :obj:`qupled.classic.StlsIet` class.
-        """
-
-        def __init__(self, coupling: float, degeneracy: float, theory: str):
-            super().__init__(coupling, degeneracy)
-            if theory not in {"STLS-HNC", "STLS-IOI", "STLS-LCT"}:
-                sys.exit("Invalid dielectric theory")
-            self.theory = theory
-            """ Dielectric theory to solve  """
-            self.mapping = "standard"
-            """ Classical-to-quantum mapping used in the iet schemes
-            allowed options include:
-        
-              - standard: inversely proportional to the degeneracy parameter
-        
-	      - sqrt: inversely proportional to the square root of the sum
-                      of the squares of one and the degeneracy parameter
-            
-              - linear: inversely proportional to one plus the degeneracy
-                        parameter.
-            
-            Far from the ground state all mappings lead identical results, but at
-            the ground state they can differ significantly (the standard
-            mapping diverges)
-            """
 
     # Constructor
     def __init__(self, inputs: StlsIet.Input):
@@ -512,36 +478,7 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results.
-
-        The results are stored as pandas dataframes in an hdf file with the following keywords:
-
-        - info: A dataframe containing information on the input parameters, it includes:
-
-          - coupling: the coupling parameter,
-          - degeneracy: the degeneracy parameter,
-          - error: the residual error at the end of the solution
-          - theory: the theory that is being solved,
-          - resolution: the resolution in the wave-vector grid,
-          - cutoff: the cutoff in the wave-vector grid,
-          - matsubara: the number of matsubara frequencies
-
-        - bf (*ndarray*): the bridge function adder
-        - idr (*ndarray*, 2D): the ideal density response
-        - sdr (*ndarray*):  the static density response
-        - slfc (*ndarray*):  the static local field correction
-        - ssf (*ndarray*):  the static structure factor
-        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
-        - wvg (*ndarray*):  the wave-vector grid
-
-        If the radial distribution function was computed (see computeRdf), then the hdf file contains
-        two additional keywords:
-
-        - rdf (*ndarray*):  the radial distribution function
-        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
-
-        The name of the hdf file is stored in :obj:`hdfFileName`.
-        """
+        """Solves the scheme and saves the results."""
         super().computeScheme(super().compute, self._save)
 
     # Save results to disk
@@ -550,6 +487,42 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
         """Stores the results obtained by solving the scheme."""
         super()._save()
         pd.DataFrame(self.bf).to_hdf(self.hdfFileName, key="bf")
+
+    # Input class
+    class Input(Stls.Input):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.StlsIet` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float, theory: str):
+            super().__init__(coupling, degeneracy)
+            if theory not in {"STLS-HNC", "STLS-IOI", "STLS-LCT"}:
+                sys.exit("Invalid dielectric theory")
+            self.theory = theory
+            self.mapping = "standard"
+
+        @property
+        def mapping(self) -> str:
+            """
+            Mapping for the classical-to-quantum coupling parameter
+            :math:`\Gamma` used in the iet schemes. Allowed options include:
+
+            - standard: :math:`\Gamma \propto \Theta^{-1}`
+
+            - sqrt: :math:`\Gamma \propto (1 + \Theta)^{-1/2}`
+
+            - linear: :math:`\Gamma \propto (1 + \Theta)^{-1}`
+
+            where :math:`\Theta` is the degeneracy parameter. Far from the ground state
+            (i.e. :math:`\Theta\gg1`) all mappings lead identical results, but at
+            the ground state they can differ significantly (the standard
+            mapping diverges). Default = ``standard``.
+            """
+            return super().mapping
+
+        @mapping.setter
+        def mapping(self, value: str):
+            super(StlsIet.Input, self.__class__).mapping.fset(self, value)
 
 
 # -----------------------------------------------------------------------
@@ -563,39 +536,9 @@ class VSStlsMetaclass(type(IterativeScheme), type(qp.VSStls)):
 
 class VSStls(IterativeScheme, qp.VSStls, metaclass=VSStlsMetaclass):
     """
-    Class used to setup and solve the classical VS-STLS scheme as described by
-    `Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_ and by
-    `Sjostrom and Dufty <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.88.115123>`_.
-
     Args:
-        inputs: Input parameters used to solve the scheme.
+        inputs: Input parameters.
     """
-
-    class Input(Stls.Input, qp.VSStlsInput):
-        """
-        Class used to manage the input for the :obj:`qupled.classic.Stls` class.
-        """
-
-        def __init__(self, coupling: float, degeneracy: float):
-            super().__init__(coupling, degeneracy)
-            """ Name of the theory that is solved """
-            self.alpha: list[float] = [0.5, 1.0]
-            """ Initial guess for the free parameter """
-            self.couplingResolution: float = 0.1
-            """ Resolution of the coupling parameter grid """
-            self.degeneracyResolution: float = 0.1
-            """ Resolution of the degeneracy parameter grid """
-            self.errorAlpha: float = 1.0e-3
-            """ Minimum error for convergence in the free parameter """
-            self.iterationsAlpha: int = 50
-            """ Maximum number of iterations to determine the free parameter """
-            self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = (
-                qp.FreeEnergyIntegrand()
-            )
-            """ Pre-computed free energy integrand """
-            # Undocumented default values
-            self.threads = 9
-            self.theory = "VSSTLS"
 
     # Constructor
     def __init__(self, inputs: VSStls.Input):
@@ -608,37 +551,7 @@ class VSStls(IterativeScheme, qp.VSStls, metaclass=VSStlsMetaclass):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results.
-
-        The results are stored as pandas dataframes in an hdf file with the following keywords:
-
-        - info: A dataframe containing information on the input parameters, it includes:
-
-          - coupling: the coupling parameter,
-          - degeneracy: the degeneracy parameter,
-          - error: the residual error at the end of the solution
-          - theory: the theory that is being solved,
-          - resolution: the resolution in the wave-vector grid,
-          - cutoff: the cutoff in the wave-vector grid,
-          - matsubara: the number of matsubara frequencies
-
-        - fxcGrid (*ndarray*): coupling parameter grid
-        - fxci (*ndarray*): the free energy integrand
-        - idr (*ndarray*, 2D): the ideal density response
-        - sdr (*ndarray*):  the static density response
-        - slfc (*ndarray*):  the static local field correction
-        - ssf (*ndarray*):  the static structure factor
-        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
-        - wvg (*ndarray*):  the wave-vector grid
-
-        If the radial distribution function was computed (see computeRdf), then the hdf file contains
-        two additional keywords:
-
-        - rdf (*ndarray*):  the radial distribution function
-        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
-
-        The name of the hdf file is stored in :obj:`hdfFileName`.
-        """
+        """Solves the scheme and saves the results."""
         super().computeScheme(super().compute, self._save)
 
     # Save results
@@ -664,3 +577,86 @@ class VSStls(IterativeScheme, qp.VSStls, metaclass=VSStlsMetaclass):
         fxci.integrand = np.ascontiguousarray(hdfData["fxci"])
         fxci.alpha = hdfData["alpha"]
         return fxci
+
+    class Input(Stls.Input, qp.VSStlsInput):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.VSStls` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float):
+            super().__init__(coupling, degeneracy)
+            self.alpha: list[float] = [0.5, 1.0]
+            self.couplingResolution: float = 0.1
+            self.degeneracyResolution: float = 0.1
+            self.errorAlpha: float = 1.0e-3
+            self.iterationsAlpha: int = 50
+            self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = (
+                qp.FreeEnergyIntegrand()
+            )
+            self.threads: int = 9
+            self.theory: str = "VSSTLS"
+
+        @property
+        def alpha(self) -> list[float]:
+            """Initial guess for the free parameter. Default = ``[0.5, 1.0]``"""
+            return super().alpha
+
+        @property
+        def couplingResolution(self) -> float:
+            """Resolution of the coupling parameter grid. Default = ``0.1``"""
+            return super().couplingResolution
+
+        @property
+        def degeneracyResolution(self) -> float:
+            """Resolution of the degeneracy parameter grid. Default = ``0.1``"""
+            return super().degeneracyResolution
+
+        @property
+        def errorAlpha(self) -> float:
+            """Minimum error for convergence in the free parameter. Default = ``1.0e-3``"""
+            return super().errorAlpha
+
+        @property
+        def iterationsAlpha(self) -> int:
+            """Maximum number of iterations to determine the free parameter. Default = ``50``"""
+            return super().iterationsAlpha
+
+        @property
+        def freeEnergyIntegrand(self) -> qupled.FreeEnergyIntegrand:
+            """Pre-computed free energy integrand."""
+            return super().freeEnergyIntegrand
+
+        @property
+        def threads(self) -> int:
+            """Number of threads. Default = ``9``"""
+            return super().threads
+
+        # Setters
+
+        @alpha.setter
+        def alpha(self, value: list[float]):
+            super(VSStls.Input, self.__class__).alpha.fset(self, value)
+
+        @couplingResolution.setter
+        def couplingResolution(self, value: float):
+            super(VSStls.Input, self.__class__).couplingResolution.fset(self, value)
+
+        @degeneracyResolution.setter
+        def degeneracyResolution(self, value: float):
+            super(VSStls.Input, self.__class__).degeneracyResolution.fset(self, value)
+
+        @errorAlpha.setter
+        def errorAlpha(self, value: float):
+            super(VSStls.Input, self.__class__).errorAlpha.fset(self, value)
+
+        @iterationsAlpha.setter
+        def iterationsAlpha(self, value: int):
+            super(VSStls.Input, self.__class__).iterationsAlpha.fset(self, value)
+
+        @freeEnergyIntegrand.setter
+        def freeEnergyIntegrand(self, value: qupled.FreeEnergyIntegrand):
+            super(VSStls.Input, self.__class__).freeEnergyIntegrand.fset(self, value)
+
+        @threads.setter
+        def threads(self, value: int):
+            super(VSStls.Input, self.__class__).threads.fset(self, value)

@@ -60,7 +60,8 @@ BOOST_PYTHON_MODULE(qupled) {
   bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
       .add_property("error", &StlsInput::getErrMin, &StlsInput::setErrMin)
       .add_property("guess", &StlsInput::getGuess, &StlsInput::setGuess)
-      .add_property("iet", &StlsInput::getIETMapping, &StlsInput::setIETMapping)
+      .add_property(
+          "mapping", &StlsInput::getIETMapping, &StlsInput::setIETMapping)
       .add_property("mixing",
                     &StlsInput::getMixingParameter,
                     &StlsInput::setMixingParameter)

@@ -20,7 +20,7 @@ def test_init(vsstls_input_instance):
     assert hasattr(vsstls_input_instance, "freeEnergyIntegrand")
     assert hasattr(vsstls_input_instance.freeEnergyIntegrand, "grid")
     assert hasattr(vsstls_input_instance.freeEnergyIntegrand, "integrand")
-    assert hasattr(vsstls_input_instance, "iet")
+    assert hasattr(vsstls_input_instance, "mapping")
     assert hasattr(vsstls_input_instance, "guess")
 
 

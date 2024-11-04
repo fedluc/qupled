@@ -113,8 +113,7 @@ After the solution is completed the results are written to an hdf file in the fo
 .. autoclass:: qupled.classic.Stls.Input	       
     :members:
     :inherited-members:
-    :exclude-members: print, isEqual
-       
+    :exclude-members: print, isEqual       
        
 .. _stls_pandas_table:
 .. list-table:: Content of the pandas dataframe stored in the output file
@@ -184,16 +183,128 @@ After the solution is completed the results are written to an hdf file in the fo
      - int
      - Number of matsubara frequencies
 
-       
+Stls-Iet schemes
+~~~~~~~~~~~~~~~~	      
+
+The :obj:`qupled.classic.StlsIet` class is used to setup and perform all the necessary calculations
+for the solution of the `Stls-Iet schemes <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_ .
+The solution parameters are specified with a dedicated class called :obj:`qupled.classic.StlsIet.Input`.
+After the solution is completed the results are written to an hdf file in the form of
+:ref:`pandas dataframes <stlsiet_pandas_table>`.
+    
 .. autoclass:: qupled.classic.StlsIet
     :members:
-    :undoc-members:
-    :show-inheritance:
-       
+    :inherited-members:
+    :exclude-members: Input, rdf
+
+.. autoclass:: qupled.classic.StlsIet.Input 
+    :members:
+    :inherited-members:
+    :exclude-members: print, isEqual
+
+.. _stlsiet_pandas_table:
+.. list-table:: Content of the pandas dataframe stored in the output file
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Item
+     - Data Type
+     - Description
+   * - :ref:`info <stls_info_table>`
+     - Pandas DataFrame
+     - Information on the solution
+   * - bf
+     - ndarray
+     - The bridge function adder
+   * - idr
+     - ndarray (2D)
+     - Ideal density response
+   * - sdr
+     - ndarray
+     - Static density response
+   * - slfc
+     - ndarray
+     - Static local field correction
+   * - ssf
+     - ndarray
+     - Static structure factor
+   * - ssfHF
+     - ndarray
+     - Hartree-Fock static structure factor
+   * - wvg
+     - ndarray
+     - Wave-vector grid
+   * - rdf*
+     - ndarray
+     - Radial distribution function
+   * - rdfGrid*
+     - ndarray
+     - Grid used to compute radial distribution function
+
+VSStls scheme
+~~~~~~~~~~~~~
+
+The :obj:`qupled.classic.VSStls` class is used to setup and perform all the necessary calculations
+for the solution of the `VSStls scheme <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.88.115123>`_.
+The solution parameters are specified with a dedicated class called :obj:`qupled.classic.VSStls.Input`.
+After the solution is completed the results are written to an hdf file in the form of
+:ref:`pandas dataframes <vsstls_pandas_table>`.
+    
 .. autoclass:: qupled.classic.VSStls
     :members:
-    :show-inheritance:
+    :inherited-members:
+    :exclude-members: Input, rdf
 
+.. autoclass:: qupled.classic.VSStls.Input 
+    :members:
+    :inherited-members:
+    :exclude-members: print, isEqual
+
+.. _vsstls_pandas_table:
+.. list-table:: Content of the pandas dataframe stored in the output file
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Item
+     - Data Type
+     - Description
+   * - :ref:`info <stls_info_table>`
+     - Pandas DataFrame
+     - Information on the solution
+   * - alpha
+     - ndarray
+     - The free parameter
+   * - fxcGrid
+     - ndarray
+     - The coupling parameter grid
+   * - fxci
+     - ndarray (2D)
+     - The free energy integrand
+   * - idr
+     - ndarray (2D)
+     - Ideal density response
+   * - sdr
+     - ndarray
+     - Static density response
+   * - slfc
+     - ndarray
+     - Static local field correction
+   * - ssf
+     - ndarray
+     - Static structure factor
+   * - ssfHF
+     - ndarray
+     - Hartree-Fock static structure factor
+   * - wvg
+     - ndarray
+     - Wave-vector grid
+   * - rdf*
+     - ndarray
+     - Radial distribution function
+   * - rdfGrid*
+     - ndarray
+     - Grid used to compute radial distribution function
+       
 Hybrid schemes
 --------------
 

@@ -14,7 +14,7 @@ def test_init(stls_input_instance):
     assert issubclass(qp.StlsInput, qp.RpaInput)
     assert hasattr(stls_input_instance, "error")
     assert hasattr(stls_input_instance, "mixing")
-    assert hasattr(stls_input_instance, "iet")
+    assert hasattr(stls_input_instance, "mapping")
     assert hasattr(stls_input_instance, "iterations")
     assert hasattr(stls_input_instance, "outputFrequency")
     assert hasattr(stls_input_instance, "recoveryFile")
@@ -26,7 +26,7 @@ def test_init(stls_input_instance):
 def test_defaults(stls_input_instance):
     assert np.isnan(stls_input_instance.error)
     assert np.isnan(stls_input_instance.mixing)
-    assert stls_input_instance.iet == ""
+    assert stls_input_instance.mapping == ""
     assert stls_input_instance.iterations == 0
     assert stls_input_instance.outputFrequency == 0
     assert stls_input_instance.recoveryFile == ""
@@ -59,15 +59,15 @@ def test_mixing(stls_input_instance):
         )
 
 
-def test_iet(stls_input_instance):
-    allowedIet = ["standard", "sqrt", "linear"]
-    for iet in allowedIet:
-        stls_input_instance.iet = iet
-        thisIet = stls_input_instance.iet
-        assert thisIet == iet
+def test_mapping(stls_input_instance):
+    allowedMapping = ["standard", "sqrt", "linear"]
+    for mapping in allowedMapping:
+        stls_input_instance.mapping = mapping
+        thisMapping = stls_input_instance.mapping
+        assert thisMapping == mapping
     with pytest.raises(RuntimeError) as excinfo:
-        stls_input_instance.iet = "dummyIET"
-    assert excinfo.value.args[0] == "Unknown IET mapping: dummyIET"
+        stls_input_instance.mapping = "dummy"
+    assert excinfo.value.args[0] == "Unknown IET mapping: dummy"
 
 
 def test_iterations(stls_input_instance):
