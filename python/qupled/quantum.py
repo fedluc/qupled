@@ -66,8 +66,7 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results.
-        """
+        """Solves the scheme and saves the results."""
         super().computeScheme(super().compute, self._save)
 
     # Input class
@@ -88,8 +87,8 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
 
         @property
         def fixed(self) -> str:
-            """Name of the file storing the fixed component of the auxiliary density 
-	    response. Default = ``""``"""
+            """Name of the file storing the fixed component of the auxiliary density
+            response. Default = ``""``"""
             return super().fixed
 
         @property
@@ -98,7 +97,7 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
             return super().guess
 
         # Setters
-               
+
         @fixed.setter
         def fixed(self, value: str):
             super(Qstls.Input, self.__class__).fixed.fset(self, value)
@@ -134,8 +133,7 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results.
-        """
+        """Solves the scheme and saves the results."""
         self._unpackFixedAdrFiles()
         status = super().compute()
         self._checkStatusAndClean(status)
@@ -183,7 +181,6 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
         guess.matsubara = hdfData["matsubara"]
         return guess
 
-
     # Input class
     class Input(Qstls.Input, qp.QstlsInput):
         """
@@ -218,7 +215,6 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
             """
             return super().mapping
 
-
         @property
         def fixediet(self) -> str:
             """
@@ -226,7 +222,7 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
             of the auxiliary density response. Default = ``""``
             """
             return super().fixediet
-        
+
         @mapping.setter
         def mapping(self, value: str):
             super(QstlsIet.Input, self.__class__).mapping.fset(self, value)
@@ -234,6 +230,7 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
         @fixediet.setter
         def fixediet(self, value: str):
             super(QstlsIet.Input, self.__class__).fixediet.fset(self, value)
+
 
 # -----------------------------------------------------------------------
 # QVSStls class
@@ -291,8 +288,7 @@ class QVSStls(QuantumIterativeScheme, qp.QVSStls, metaclass=QVSStlsMetaclass):
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
-        """Solves the scheme and saves the results.
-        """
+        """Solves the scheme and saves the results."""
         self._unpackFixedAdrFiles()
         status = super().compute()
         self._checkStatusAndClean(status)
