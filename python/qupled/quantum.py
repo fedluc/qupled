@@ -51,15 +51,26 @@ class QstlsMetaclass(type(QuantumIterativeScheme), type(qp.Qstls)):
 
 class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
     """
-
-    Class used to setup and solve the quantum QSTLS scheme as described by
-    `Schweng and Bohm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_
-    This class inherits most of its methods and attributes from :obj:`qupled.classic.Stls`.
-
     Args:
-        inputs: Input parameters used to solve the scheme.
+        inputs: Input parameters.
     """
 
+    # Constructor
+    def __init__(self, inputs: Qstls.Input):
+        # Construct the base classes
+        super().__init__(inputs)
+        # File to store output on disk
+        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
+
+    # Compute
+    @qu.MPI.recordTime
+    @qu.MPI.synchronizeRanks
+    def compute(self) -> None:
+        """Solves the scheme and saves the results.
+        """
+        super().computeScheme(super().compute, self._save)
+
+    # Input class
     class Input(qc.Stls.Input, qp.QstlsInput):
         """
         Class used to manage the input for the :obj:`qupled.quantum.Qstls` class.
@@ -75,48 +86,26 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
             # Undocumented default values
             self.theory = "QSTLS"
 
-    # Constructor
-    def __init__(self, inputs: Qstls.Input):
-        # Construct the base classes
-        super().__init__(inputs)
-        # File to store output on disk
-        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
+        @property
+        def fixed(self) -> str:
+            """Name of the file storing the fixed component of the auxiliary density 
+	    response. Default = ``""``"""
+            return super().fixed
 
-    # Compute
-    @qu.MPI.recordTime
-    @qu.MPI.synchronizeRanks
-    def compute(self) -> None:
-        """Solves the scheme and saves the results.
+        @property
+        def guess(self) -> qupled.qupled.QStlsGuess:
+            """Initial guess."""
+            return super().guess
 
-        The results are stored as pandas dataframes in an hdf file with the following keywords:
+        # Setters
+               
+        @fixed.setter
+        def fixed(self, value: str):
+            super(Qstls.Input, self.__class__).fixed.fset(self, value)
 
-        - info: A dataframe containing information on the input parameters, it includes:
-
-          - coupling: the coupling parameter,
-          - degeneracy: the degeneracy parameter,
-          - error: the residual error at the end of the solution
-          - theory: the theory that is being solved,
-          - resolution: the resolution in the wave-vector grid,
-          - cutoff: the cutoff in the wave-vector grid,
-          - matsubara: the number of matsubara frequencies
-
-        - adr (*ndarray*, 2D): the auxiliary density response
-        - idr (*ndarray*, 2D): the ideal density response
-        - sdr (*ndarray*):  the static density response
-        - slfc (*ndarray*):  the static local field correction
-        - ssf (*ndarray*):  the static structure factor
-        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
-        - wvg (*ndarray*):  the wave-vector grid
-
-        If the radial distribution function was computed (see computeRdf), then the hdf file contains
-        two additional keywords:
-
-        - rdf (*ndarray*):  the radial distribution function
-        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
-
-        The name of the hdf file is stored in :obj:`hdfFileName`.
-        """
-        super().computeScheme(super().compute, self._save)
+        @guess.setter
+        def guess(self, value: qupled.qupled.QStlsGuess):
+            super(Qstls.Input, self.__class__).guess.fset(self, value)
 
 
 # -----------------------------------------------------------------------
@@ -126,46 +115,9 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
 
 class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
     """
-    Class used to setup and solve the classical QSTLS-IET scheme as described by
-    `Tolias <https://pubs.aip.org/aip/jcp/article/158/14/141102/
-    2877795/Quantum-version-of-the-integral-equation-theory>`_.
-
-
     Args:
-        inputs: Input parameters used to solve the scheme.
+        inputs: Input parameters.
     """
-
-    class Input(Qstls.Input, qp.QstlsInput):
-        """
-        Class used to manage the input for the :obj:`qupled.quantum.QStlsIet` class.
-        """
-
-        def __init__(self, coupling: float, degeneracy: float, theory: str):
-            super().__init__(coupling, degeneracy)
-            if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
-                print(theory)
-                sys.exit("Invalid dielectric theory")
-            self.theory = theory
-            """ Dielectric theory to solve  """
-            self.mapping = "standard"
-            """ Classical-to-quantum mapping used in the iet schemes
-            allowed options include:
-        
-              - standard: inversely proportional to the degeneracy parameter
-        
-	      - sqrt: inversely proportional to the square root of the sum
-                      of the squares of one and the degeneracy parameter
-            
-              - linear: inversely proportional to one plus the degeneracy
-                        parameter.
-            
-            Far from the ground state all mappings lead identical results, but at
-            the ground state they can differ significantly (the standard
-            mapping diverges)
-            """
-            self.fixediet = ""
-            """ Name of the zip file storing the fixed components of the auxiliary density
-	    response in the QSTLS-IET schemes """
 
     # Constructor
     def __init__(self, inputs: QstlsIet.Input):
@@ -183,35 +135,6 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """Solves the scheme and saves the results.
-
-        The results are stored as pandas dataframes in an hdf file with the following keywords:
-
-        - info: A dataframe containing information on the input parameters, it includes:
-
-          - coupling: the coupling parameter,
-          - degeneracy: the degeneracy parameter,
-          - error: the residual error at the end of the solution
-          - theory: the theory that is being solved,
-          - resolution: the resolution in the wave-vector grid,
-          - cutoff: the cutoff in the wave-vector grid,
-          - matsubara: the number of matsubara frequencies
-
-        - adr (*ndarray*, 2D): the auxiliary density response
-        - bf (*ndarray*): the bridge function adder
-        - idr (*ndarray*, 2D): the ideal density response
-        - sdr (*ndarray*):  the static density response
-        - slfc (*ndarray*):  the static local field correction
-        - ssf (*ndarray*):  the static structure factor
-        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
-        - wvg (*ndarray*):  the wave-vector grid
-
-        If the radial distribution function was computed (see computeRdf), then the hdf file contains
-        two additional keywords:
-
-        - rdf (*ndarray*):  the radial distribution function
-        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
-
-        The name of the hdf file is stored in :obj:`hdfFileName`.
         """
         self._unpackFixedAdrFiles()
         status = super().compute()
@@ -261,6 +184,57 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
         return guess
 
 
+    # Input class
+    class Input(Qstls.Input, qp.QstlsInput):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.QStlsIet` class.
+        Accepted theories: ``QSTLS-HNC``, ``QSTLS-IOI`` and ``QSTLS-LCT``.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float, theory: str):
+            super().__init__(coupling, degeneracy)
+            if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
+                sys.exit("Invalid dielectric theory")
+            self.theory = theory
+            self.mapping = "standard"
+            self.fixediet = ""
+
+        @property
+        def mapping(self) -> str:
+            r"""
+            Mapping for the classical-to-quantum coupling parameter
+            :math:`\Gamma` used in the iet schemes. Allowed options include:
+
+            - standard: :math:`\Gamma \propto \Theta^{-1}`
+
+            - sqrt: :math:`\Gamma \propto (1 + \Theta)^{-1/2}`
+
+            - linear: :math:`\Gamma \propto (1 + \Theta)^{-1}`
+
+            where :math:`\Theta` is the degeneracy parameter. Far from the ground state
+            (i.e. :math:`\Theta\gg1`) all mappings lead identical results, but at
+            the ground state they can differ significantly (the standard
+            mapping diverges). Default = ``standard``.
+            """
+            return super().mapping
+
+
+        @property
+        def fixediet(self) -> str:
+            """
+            Name of the zip file storing the iet part of the fixed components
+            of the auxiliary density response. Default = ``""``
+            """
+            return super().fixediet
+        
+        @mapping.setter
+        def mapping(self, value: str):
+            super(QstlsIet.Input, self.__class__).mapping.fset(self, value)
+
+        @fixediet.setter
+        def fixediet(self, value: str):
+            super(QstlsIet.Input, self.__class__).fixediet.fset(self, value)
+
 # -----------------------------------------------------------------------
 # QVSStls class
 # -----------------------------------------------------------------------
@@ -272,15 +246,13 @@ class QVSStlsMetaclass(type(QuantumIterativeScheme), type(qp.QVSStls)):
 
 class QVSStls(QuantumIterativeScheme, qp.QVSStls, metaclass=QVSStlsMetaclass):
     """
-    Class used to setup and solve the quantum VS-STLS scheme.
-
     Args:
-        inputs: Input parameters used to solve the scheme.
+        inputs: Input parameters.
     """
 
     class Input(Qstls.Input, qp.QVSStlsInput):
         """
-        Class used to manage the input for the :obj:`qupled.classic.Stls` class.
+        Class used to manage the input for the :obj:`qupled.classic.QVSStls` class.
         """
 
         def __init__(self, coupling: float, degeneracy: float):
@@ -320,36 +292,6 @@ class QVSStls(QuantumIterativeScheme, qp.QVSStls, metaclass=QVSStlsMetaclass):
     @qu.MPI.synchronizeRanks
     def compute(self) -> None:
         """Solves the scheme and saves the results.
-
-        The results are stored as pandas dataframes in an hdf file with the following keywords:
-
-        - info: A dataframe containing information on the input parameters, it includes:
-
-          - coupling: the coupling parameter,
-          - degeneracy: the degeneracy parameter,
-          - error: the residual error at the end of the solution
-          - theory: the theory that is being solved,
-          - resolution: the resolution in the wave-vector grid,
-          - cutoff: the cutoff in the wave-vector grid,
-          - matsubara: the number of matsubara frequencies
-
-        - adr (*ndarray*, 2D): the auxiliary density response
-        - fxcGrid (*ndarray*): coupling parameter grid
-        - fxci (*ndarray*): the free energy integrand
-        - idr (*ndarray*, 2D): the ideal density response
-        - sdr (*ndarray*):  the static density response
-        - slfc (*ndarray*):  the static local field correction
-        - ssf (*ndarray*):  the static structure factor
-        - ssfHF (*ndarray*):  the Hartree-Fock static structure factor
-        - wvg (*ndarray*):  the wave-vector grid
-
-        If the radial distribution function was computed (see computeRdf), then the hdf file contains
-        two additional keywords:
-
-        - rdf (*ndarray*):  the radial distribution function
-        - rdfGrid (*ndarray*):  the grid used to compute the radial distribution function
-
-        The name of the hdf file is stored in :obj:`hdfFileName`.
         """
         self._unpackFixedAdrFiles()
         status = super().compute()

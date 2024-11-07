@@ -492,6 +492,7 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
     class Input(Stls.Input):
         """
         Class used to manage the input for the :obj:`qupled.classic.StlsIet` class.
+        Accepted theories: ``STLS-HNC``, ``STLS-IOI`` and ``STLS-LCT``.
         """
 
         def __init__(self, coupling: float, degeneracy: float, theory: str):
@@ -503,7 +504,7 @@ class StlsIet(IterativeScheme, qp.Stls, metaclass=StlsMetaclass):
 
         @property
         def mapping(self) -> str:
-            """
+            r"""
             Mapping for the classical-to-quantum coupling parameter
             :math:`\Gamma` used in the iet schemes. Allowed options include:
 
