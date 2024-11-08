@@ -92,7 +92,7 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
             return super().fixed
 
         @property
-        def guess(self) -> qupled.qupled.QStlsGuess:
+        def guess(self) -> qupled.qupled.QstlsGuess:
             """Initial guess."""
             return super().guess
 
@@ -332,3 +332,87 @@ class QVSStls(QuantumIterativeScheme, qp.QVSStls, metaclass=QVSStlsMetaclass):
     @staticmethod
     def getFreeEnergyIntegrand(fileName: str) -> qp.FreeEnergyIntegrand():
         return qc.VSStls.getFreeEnergyIntegrand(fileName)
+
+    #
+    class Input(Qstls.Input, qp.QVSStlsInput):
+        """
+        Class used to manage the input for the :obj:`qupled.classic.QVSStls` class.
+        """
+
+        def __init__(self, coupling: float, degeneracy: float):
+            super().__init__(coupling, degeneracy)
+            self.alpha: list[float] = [0.5, 1.0]
+            self.couplingResolution: float = 0.1
+            self.degeneracyResolution: float = 0.1
+            self.errorAlpha: float = 1.0e-3
+            self.iterationsAlpha: int = 50
+            self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = (
+                qp.FreeEnergyIntegrand()
+            )
+            self.threads: int = 9
+            self.theory: str = "QVSSTLS"
+
+        @property
+        def alpha(self) -> list[float]:
+            """Initial guess for the free parameter. Default = ``[0.5, 1.0]``"""
+            return super().alpha
+
+        @property
+        def couplingResolution(self) -> float:
+            """Resolution of the coupling parameter grid. Default = ``0.1``"""
+            return super().couplingResolution
+
+        @property
+        def degeneracyResolution(self) -> float:
+            """Resolution of the degeneracy parameter grid. Default = ``0.1``"""
+            return super().degeneracyResolution
+
+        @property
+        def errorAlpha(self) -> float:
+            """Minimum error for convergence in the free parameter. Default = ``1.0e-3``"""
+            return super().errorAlpha
+
+        @property
+        def iterationsAlpha(self) -> int:
+            """Maximum number of iterations to determine the free parameter. Default = ``50``"""
+            return super().iterationsAlpha
+
+        @property
+        def freeEnergyIntegrand(self) -> qupled.FreeEnergyIntegrand:
+            """Pre-computed free energy integrand."""
+            return super().freeEnergyIntegrand
+
+        @property
+        def threads(self) -> int:
+            """Number of threads. Default = ``9``"""
+            return super().threads
+
+        # Setters
+
+        @alpha.setter
+        def alpha(self, value: list[float]):
+            super(QVSStls.Input, self.__class__).alpha.fset(self, value)
+
+        @couplingResolution.setter
+        def couplingResolution(self, value: float):
+            super(QVSStls.Input, self.__class__).couplingResolution.fset(self, value)
+
+        @degeneracyResolution.setter
+        def degeneracyResolution(self, value: float):
+            super(QVSStls.Input, self.__class__).degeneracyResolution.fset(self, value)
+
+        @errorAlpha.setter
+        def errorAlpha(self, value: float):
+            super(QVSStls.Input, self.__class__).errorAlpha.fset(self, value)
+
+        @iterationsAlpha.setter
+        def iterationsAlpha(self, value: int):
+            super(QVSStls.Input, self.__class__).iterationsAlpha.fset(self, value)
+
+        @freeEnergyIntegrand.setter
+        def freeEnergyIntegrand(self, value: qupled.FreeEnergyIntegrand):
+            super(QVSStls.Input, self.__class__).freeEnergyIntegrand.fset(self, value)
+
+        @threads.setter
+        def threads(self, value: int):
+            super(QVSStls.Input, self.__class__).threads.fset(self, value)

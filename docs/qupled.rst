@@ -331,9 +331,9 @@ Quantum schemes
 Qstls scheme
 ~~~~~~~~~~~~
 
-The :obj:`qupled.classic.Qstls` class is used to setup and perform all the necessary calculations
+The :obj:`qupled.quantum.Qstls` class is used to setup and perform all the necessary calculations
 for the solution of the `Qstls scheme <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_.
-The solution parameters are specified with a dedicated class called :obj:`qupled.classic.Qstls.Input`.
+The solution parameters are specified with a dedicated class called :obj:`qupled.quantum.Qstls.Input`.
 After the solution is completed the results are written to an hdf file in the form of
 :ref:`pandas dataframes <qstls_pandas_table>`.
      
@@ -389,10 +389,10 @@ After the solution is completed the results are written to an hdf file in the fo
 Qstls-IET scheme
 ~~~~~~~~~~~~~~~~
 
-The :obj:`qupled.classic.Qstls` class is used to setup and perform all the necessary calculations
+The :obj:`qupled.quantum.QstlsIet` class is used to setup and perform all the necessary calculations
 for the solution of the `Qstls-IET schemes <https://pubs.aip.org/aip/jcp/article/158/14/141102/
 2877795/Quantum-version-of-the-integral-equation-theory>`_.
-The solution parameters are specified with a dedicated class called :obj:`qupled.classic.QstlsIet.Input`.
+The solution parameters are specified with a dedicated class called :obj:`qupled.quantum.QstlsIet.Input`.
 After the solution is completed the results are written to an hdf file in the form of
 :ref:`pandas dataframes <qstlsiet_pandas_table>`.
 
@@ -451,9 +451,9 @@ After the solution is completed the results are written to an hdf file in the fo
 QVSStls scheme
 ~~~~~~~~~~~~~~~~
 
-The :obj:`qupled.classic.QVSStls` class is used to setup and perform all the necessary calculations
+The :obj:`qupled.quantum.QVSStls` class is used to setup and perform all the necessary calculations
 for the solution of the QVSStls schemes.
-The solution parameters are specified with a dedicated class called :obj:`qupled.classic.QstlsIet.Input`.
+The solution parameters are specified with a dedicated class called :obj:`qupled.quantum.QstlsIet.Input`.
 After the solution is completed the results are written to an hdf file in the form of
 :ref:`pandas dataframes <qvsstls_pandas_table>`.
 

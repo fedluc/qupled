@@ -579,6 +579,7 @@ class VSStls(IterativeScheme, qp.VSStls, metaclass=VSStlsMetaclass):
         fxci.alpha = hdfData["alpha"]
         return fxci
 
+    # Input class
     class Input(Stls.Input, qp.VSStlsInput):
         """
         Class used to manage the input for the :obj:`qupled.classic.VSStls` class.

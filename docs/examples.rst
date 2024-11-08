@@ -50,8 +50,8 @@ integrals that appear in the schemes.
 .. literalinclude:: ../examples/docs/solveQuantumSchemes.py
    :language: python
 
-Solving the VS-STLS schemes
-------------------------------------
+Solving the VS schemes
+---------------------------
 
 This example shows how to solve the classical VS-STLS scheme at finite temperature.
 First the scheme is solved up to rs = 5.0, then the results are
