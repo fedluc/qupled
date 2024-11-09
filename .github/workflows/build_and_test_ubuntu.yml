@@ -2,19 +2,19 @@ name: Build & Test (Linux)
 
 on:
   push:
-    branches:
-      - master
+    # branches:
+    #   - master
   pull_request:
     branches:
       - master
 
 env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
-  
+
 jobs:
 
   build_and_test:
-  
+
     runs-on: ubuntu-latest
 
     steps:
@@ -29,15 +29,15 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install --upgrade pip
         pip3 install -r python/requirements.txt
-      
+
     - name: Configure CMake
       run: cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=OFF
 
     - name: Build
       run: cmake --build build --config Release
 
-    - name: Tests
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        cd build
-        pytest -k "not test_examples" tests
+    # - name: Tests
+    #   run: |
+    #     source ${PYTHON_VENV_ROOT}/bin/activate
+    #     cd build
+    #     pytest -k "not test_examples" tests

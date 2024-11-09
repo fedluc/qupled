@@ -12,10 +12,4 @@ We use `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_ and `black
 Documentation
 -------------
 
-All the documentation is stored in the ``docs`` folder. Changes can be made by editing the ``.rst`` files in ``docs``. After the changes are applied the documentation should be built in order to check that it has the correct format. The `sphinx <https://www.sphinx-doc.org/en/master/>`_ and `sphinx_rdt_theme <https://pypi.org/project/sphinx-rtd-theme/>`_ python packages must be installed in order to build the documentation correctly. The documentation is built by navigating to the ``docs`` folder and running
-
-.. code-block:: console
-
-   sphinx-build -b html . _build
-
-The result of the build can be inspected by opening ``docs/_build/index.html``.
+The documentation is located in the ``docs`` folder, with changes made by editing the ``.rst`` files within it. Once modifications are complete, the documentation should be rebuilt to ensure it is correctly formatted. To build the documentation, you’ll need the Python packages `sphinx <https://www.sphinx-doc.org/en/master/>`_ and `sphinx_rdt_theme <https://pypi.org/project/sphinx-rtd-theme/>`_. From the build directory, use the command ``cmake --build . --target docs`` to build the documentation, which will also compile the qupled library if it hasn't been built yet. The build output can be viewed by opening ``docs/index.html`` in the build directory.

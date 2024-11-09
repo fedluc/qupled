@@ -11,6 +11,10 @@ set(QUPLED_OUTPUT_DIR ${CMAKE_BINARY_DIR}/qupled)
 add_subdirectory(python)
 add_subdirectory(src)
 
+# Install
+install(DIRECTORY ${QUPLED_OUTPUT_DIR}
+	DESTINATION ${QUPLED_INSTALL_DIR})
+
 # Formatting
 add_custom_target(format
     COMMAND black ${CMAKE_SOURCE_DIR}
@@ -19,7 +23,8 @@ add_custom_target(format
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
-
-# Install
-install(DIRECTORY ${QUPLED_OUTPUT_DIR}
-	DESTINATION ${QUPLED_INSTALL_DIR})
+# Formatting
+add_custom_target(docs
+    COMMAND sphinx-build -b html ${CMAKE_SOURCE_DIR}/docs docs
+)
+add_dependencies(docs qupled)
