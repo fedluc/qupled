@@ -2,8 +2,8 @@ name: Build & Test (Linux)
 
 on:
   push:
-    # branches:
-    #   - master
+    branches:
+      - master
   pull_request:
     branches:
       - master
@@ -36,8 +36,8 @@ jobs:
     - name: Build
       run: cmake --build build --config Release
 
-    # - name: Tests
-    #   run: |
-    #     source ${PYTHON_VENV_ROOT}/bin/activate
-    #     cd build
-    #     pytest -k "not test_examples" tests
+    - name: Tests
+      run: |
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        cd build
+        pytest -k "not test_examples" tests
