@@ -27,4 +27,3 @@ add_custom_target(format
 add_custom_target(docs
     COMMAND sphinx-build -b html ${CMAKE_SOURCE_DIR}/docs docs
 )
-add_dependencies(docs qupled)
