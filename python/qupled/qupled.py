@@ -7,27 +7,33 @@ from __future__ import annotations
 class Rpa:
     pass
 
+
 class ESA:
     pass
+
 
 class Stls:
     pass
 
+
 class VSStls:
     pass
+
 
 class Qstls:
     pass
 
+
 class QVSStls:
     pass
+
 
 class RpaInput:
     pass
 
 
 class IterationInput:
-   pass
+    pass
 
 
 class StlsInput(RpaInput, IterationInput):
@@ -35,7 +41,7 @@ class StlsInput(RpaInput, IterationInput):
 
 
 class VSInput:
-   pass
+    pass
 
 
 class VSStlsInput(StlsInput, VSInput):
