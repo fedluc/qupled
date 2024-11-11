@@ -1,6 +1,5 @@
 import os
 import pytest
-import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.classic import StlsIet, IterativeScheme

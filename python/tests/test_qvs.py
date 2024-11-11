@@ -3,7 +3,6 @@ from shutil import rmtree
 import pytest
 import numpy as np
 import zipfile as zf
-import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.quantum import QVSStls, QuantumIterativeScheme

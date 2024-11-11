@@ -125,90 +125,160 @@ class ClassicScheme(ABC):
 # -----------------------------------------------------------------------
 
 
-class RpaMetaclass(type(ClassicScheme), type(qp.Rpa)):
-    pass
+class _ClassicSchemeNew:
 
-
-class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
-    """
-    Args:
-        inputs: Input parameters.
-    """
-
-    # Constructor
-    def __init__(self, inputs: Rpa.Input):
-        # Construct the base classes
-        super().__init__(inputs)
+    def __init__(self):
         # File to store output on disk
-        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file.
+        self.hdfFileName: str = None  #: Name of the output file.
+        
+    # Compute the scheme
+    def _compute(self, scheme, save: Callable = None) -> None:
+        self.hdfFileName = self._getHdfFile(scheme.inputs)
+        status = scheme.compute()
+        self._checkStatusAndClean(status, scheme.recovery)
+        save() if save is not None else self._save(scheme)
+
+    # Check that the dielectric scheme was solved without errors
+    @qu.MPI.runOnlyOnRoot
+    def _checkStatusAndClean(self, status: bool, recovery: str) -> None:
+        """Checks that the scheme was solved correctly and removes temporarary files generated at run-time
+
+        Args:
+            status: status obtained from the native code. If status == 0 the scheme was solved correctly.
+            recovery: name of the recovery file.
+        """
+        if status == 0:
+            if os.path.isfile(recovery):
+                os.remove(recovery)
+            print("Dielectric theory solved successfully!")
+        else:
+            sys.exit("Error while solving the dielectric theory")
+
+    # Save results to disk
+    def _getHdfFile(self, inputs) -> str:
+        """Sets the name of the hdf file used to store the output
+
+        Args:
+            inputs: input parameters
+        """
+        coupling = inputs.coupling
+        degeneracy = inputs.degeneracy
+        theory = inputs.theory
+        return f"rs{coupling:5.3f}_theta{degeneracy:5.3f}_{theory}.h5"
+
+    @qu.MPI.runOnlyOnRoot
+    def _save(self, scheme) -> None:
+        inputs = scheme.inputs
+        """Stores the results obtained by solving the scheme."""
+        pd.DataFrame(
+            {
+                "coupling": inputs.coupling,
+                "degeneracy": inputs.degeneracy,
+                "theory": inputs.theory,
+                "resolution": inputs.resolution,
+                "cutoff": inputs.cutoff,
+                "matsubara": inputs.matsubara,
+            },
+            index=["info"],
+        ).to_hdf(self.hdfFileName, key="info", mode="w")
+        pd.DataFrame(scheme.idr).to_hdf(self.hdfFileName, key="idr")
+        pd.DataFrame(scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
+        pd.DataFrame(scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
+        pd.DataFrame(scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
+        pd.DataFrame(scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
+        pd.DataFrame(scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
+
+    # Compute radial distribution function
+    def computeRdf(
+        self, rdfGrid: np.ndarray = None, writeToHdf: bool = True
+    ) -> np.array:
+        """Computes the radial distribution function from the data stored in the output file.
+
+        Args:
+            rdfGrid: The grid used to compute the radial distribution function.
+                Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`)
+            writeToHdf: Flag marking whether the rdf data should be added to the output hdf file, default to True
+
+        Returns:
+            The radial distribution function
+
+        """
+        if qu.MPI().getRank() > 0:
+            writeToHdf = False
+        return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
+
+    # Compute the internal energy
+    def computeInternalEnergy(self) -> float:
+        """Computes the internal energy from the data stored in the output file.
+
+        Returns:
+            The internal energy
+
+        """
+        return qu.Hdf().computeInternalEnergy(self.hdfFileName)
+
+    # Plot results
+    @qu.MPI.runOnlyOnRoot
+    def plot(
+        self,
+        toPlot: list[str],
+        matsubara: np.ndarray = None,
+        rdfGrid: np.ndarray = None,
+    ) -> None:
+        """Plots the results stored in the output file.
+
+        Args:
+            toPlot: A list of quantities to plot. This list can include all the values written to the
+                 output hdf file. The radial distribution funciton is computed and added to the output
+                 file if necessary
+            matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
+                (Default = None, all matsubara frequencies are plotted)
+            rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
+                distribution function is plotted. Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`).
+
+        """
+        if "rdf" in toPlot:
+            self.computeRdf(rdfGrid)
+        qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
+
+
+class Rpa(_ClassicSchemeNew):
 
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self) -> None:
+    def compute(self, inputs) -> None:
         """
         Solves the scheme and saves the results.
+
+        Args:
+            inputs: Input parameters.
         """
-        super().computeScheme(super().compute, self._save)
+        scheme = qp.Rpa(inputs.getNative())
+        super()._compute(scheme)
 
     # Input class
-    class Input(qp.RpaInput):
+    class Input():
         """
         Class used to manage the input for the :obj:`qupled.classic.Rpa` class.
         """
 
         def __init__(self, coupling: float, degeneracy: float):
-            super().__init__()
             self.coupling: float = coupling
-            self.degeneracy: float = degeneracy
-            self.chemicalPotential: list[float] = [-10.0, 10.0]
-            self.matsubara: int = 128
-            self.resolution: float = 0.1
-            self.cutoff: float = 10.0
-            self.intError: float = 1.0e-5
-            self.int2DScheme: str = "full"
-            self.threads: int = 1
-            self.theory: str = "RPA"
-
-        @property
-        def coupling(self) -> float:
             """Coupling parameter."""
-            return super().coupling
-
-        @property
-        def degeneracy(self) -> float:
+            self.degeneracy: float = degeneracy
             """Degeneracy parameter."""
-            return super().degeneracy
-
-        @property
-        def chemicalPotential(self) -> list[float]:
-            """
-            Initial guess for the chemical potential. Default = ``[-10, 10]``
-            """
-            return super().chemicalPotential
-
-        @property
-        def matsubara(self) -> int:
+            self.chemicalPotential: list[float] = [-10.0, 10.0]
+            """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
+            self.matsubara: int = 128
             """Number of Matsubara frequencies. Default = ``128``"""
-            return super().matsubara
-
-        @property
-        def resolution(self) -> float:
-            """Resolution of the wave-vector grid. Default = ``0.1``"""
-            return super().resolution
-
-        @property
-        def cutoff(self) -> float:
-            """Cutoff for the wave-vector grid. Default = ``10.0``"""
-            return super().cutoff
-
-        @property
-        def intError(self) -> float:
+            self.resolution: float = 0.1
+            """Resolution of the wave-vector grid. Default =  ``0.1``"""
+            self.cutoff: float = 10.0
+            """Cutoff for the wave-vector grid. Default =  ``10.0``"""
+            self.intError: float = 1.0e-5
             """Accuracy (relative error) in the computation of integrals. Default = ``1.0e-5``"""
-            return super().intError
-
-        @property
-        def int2DScheme(self) -> str:
+            self.int2DScheme: str = "full"
             """
             Scheme used to solve two-dimensional integrals
             allowed options include:
@@ -220,84 +290,41 @@ class Rpa(qp.Rpa, ClassicScheme, metaclass=RpaMetaclass):
               grid that depends on the integrand that is being processed
 
             Segregated is usually faster than full but it could become
-            less accurate if the fixed points are not chosen correctly. Default = ``'full'``
+            less accurate if the fixed points are not chosen correctly. Default =  ``'full'``
             """
-            return super().int2DScheme
+            self.threads: int = 1
+            """Number of OMP threads for parallel calculations. Default =  ``1``"""
+            self.theory: str = "RPA"
 
-        @property
-        def threads(self) -> int:
-            """Number of OMP threads for parallel calculations. Default = ``1``"""
-            return super().threads
-
-        # Setters
-
-        @coupling.setter
-        def coupling(self, value: float):
-            super(Rpa.Input, self.__class__).coupling.fset(self, value)
-
-        @degeneracy.setter
-        def degeneracy(self, value: float):
-            super(Rpa.Input, self.__class__).degeneracy.fset(self, value)
-
-        @chemicalPotential.setter
-        def chemicalPotential(self, value: list[float]):
-            super(Rpa.Input, self.__class__).chemicalPotential.fset(self, value)
-
-        @matsubara.setter
-        def matsubara(self, value: int):
-            super(Rpa.Input, self.__class__).matsubara.fset(self, value)
-
-        @resolution.setter
-        def resolution(self, value: float):
-            super(Rpa.Input, self.__class__).resolution.fset(self, value)
-
-        @cutoff.setter
-        def cutoff(self, value: float):
-            super(Rpa.Input, self.__class__).cutoff.fset(self, value)
-
-        @intError.setter
-        def intError(self, value: float):
-            super(Rpa.Input, self.__class__).intError.fset(self, value)
-
-        @int2DScheme.setter
-        def int2DScheme(self, value: str):
-            super(Rpa.Input, self.__class__).int2DScheme.fset(self, value)
-
-        @threads.setter
-        def threads(self, value: int):
-            super(Rpa.Input, self.__class__).threads.fset(self, value)
+        def getNative(self) -> qp.RpaInput:
+            native_input = qp.RpaInput()
+            for attr, value in self.__dict__.items():
+                setattr(native_input, attr, value)
+            return native_input
 
 
 # -----------------------------------------------------------------------
 # ESA class
 # -----------------------------------------------------------------------
 
-
-class ESAMetaclass(type(ClassicScheme), type(qp.ESA)):
-    pass
-
-
-class ESA(ClassicScheme, qp.ESA, metaclass=ESAMetaclass):
+class ESA(_ClassicSchemeNew):
     """
     Args:
         inputs: Input parameters.
     """
 
-    # Constructor
-    def __init__(self, inputs: ESA.Input):
-        # Construct the base classes
-        super().__init__(inputs)
-        # File to store output on disk
-        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
-
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self) -> None:
+    def compute(self, inputs) -> None:
         """
         Solves the scheme and saves the results.
+
+        Args:
+            inputs: Input parameters.
         """
-        super().computeScheme(super().compute, self._save)
+        scheme = qp.ESA(inputs.getNative())
+        super()._compute(scheme)
 
     # Input class
     class Input(Rpa.Input):

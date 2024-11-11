@@ -2,7 +2,6 @@ import os
 import glob
 import importlib
 import pytest
-import set_path
 
 
 def cleanExampleFiles():

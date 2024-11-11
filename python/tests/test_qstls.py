@@ -1,7 +1,6 @@
 import os
 import pytest
 import numpy as np
-import set_path
 import qupled.qupled as qp
 from qupled.util import Hdf
 from qupled.quantum import Qstls, QuantumIterativeScheme
