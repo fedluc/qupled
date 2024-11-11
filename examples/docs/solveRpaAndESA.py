@@ -1,31 +1,29 @@
-import numpy as np
-import pandas as pd
+from pprint import pprint
 import matplotlib.pyplot as plt
-import yaml
 from qupled.classic import Rpa, ESA
 import qupled.util as qpu
 
 # Define an Rpa object to solve the RPA scheme
 print("######### Solving the RPA scheme #########")
-rpa = Rpa(Rpa.Input(10.0, 1.0))
+rpa = Rpa()
 
 # Solve the RPA scheme
-rpa.compute()
+rpa.compute(Rpa.Input(10.0, 1.0))
 
 # Define an ESA object to solve the ESA scheme
 print("######### Solving the ESA scheme #########")
-esa = ESA(ESA.Input(10.0, 1.0))
+esa = ESA()
 
 # Solve the ESA scheme
-esa.compute()
+esa.compute(ESA.Input(10.0, 1.0))
 
 # Inspect the outuput files to see what data was saved
 outputFileRPA = rpa.hdfFileName
 outputFileESA = esa.hdfFileName
 print("########## Data stored for the RPA scheme #########")
-print(yaml.dump(qpu.Hdf().inspect(outputFileRPA)))
+pprint(qpu.Hdf().inspect(outputFileRPA))
 print("########## Data stored for the ESA scheme #########")
-print(yaml.dump(qpu.Hdf().inspect(outputFileESA)))
+pprint(qpu.Hdf().inspect(outputFileRPA))
 
 # Retrieve some information that we want to plot from the output files
 hdfDataRPA = qpu.Hdf().read(

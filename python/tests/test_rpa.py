@@ -4,9 +4,11 @@ from qupled.qupled import Rpa as RpaNative
 from qupled.util import Hdf
 from qupled.classic import Rpa
 
+
 @pytest.fixture
 def rpa():
     return Rpa()
+
 
 @pytest.fixture
 def rpa_input():

@@ -16,7 +16,7 @@ import qupled.classic as qc
 # -----------------------------------------------------------------------
 
 
-class QuantumIterativeScheme(qc.IterativeScheme):
+class QuantumIterativeScheme(qc._IterativeScheme):
 
     # Set the initial guess from a dataframe produced in output
     @staticmethod

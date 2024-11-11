@@ -2,9 +2,11 @@ import os
 import pytest
 from qupled.classic import ESA
 
+
 @pytest.fixture
 def esa():
     return ESA()
+
 
 @pytest.fixture
 def esa_input():

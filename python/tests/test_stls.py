@@ -1,30 +1,32 @@
 import os
 import pytest
 import numpy as np
-import qupled.qupled as qp
+from qupled.qupled import Stls as StlsNative
 from qupled.util import Hdf
 from qupled.classic import Stls
-from qupled.classic import IterativeScheme
 
 
 @pytest.fixture
-def stls_instance():
-    return Stls(Stls.Input(1.0, 1.0))
+def stls():
+    return Stls()
 
 
-def test_default(stls_instance):
-    assert issubclass(Stls, IterativeScheme)
-    assert issubclass(Stls, qp.Stls)
-    assert stls_instance.hdfFileName == "rs1.000_theta1.000_STLS.h5"
+@pytest.fixture
+def stls_input():
+    return Stls.Input(1.0, 1.0)
 
 
-def test_compute(stls_instance, mocker):
+def test_default(stls):
+    assert stls.hdfFileName is None
+
+
+def test_compute(stls, stls_input, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
     mockCompute = mocker.patch("qupled.qupled.Stls.compute")
     mockCheckStatusAndClean = mocker.patch("qupled.classic.Stls._checkStatusAndClean")
     mockSave = mocker.patch("qupled.classic.Stls._save")
-    stls_instance.compute()
+    stls.compute(stls_input)
     assert mockMPITime.call_count == 2
     assert mockMPIBarrier.call_count == 1
     assert mockCompute.call_count == 1
@@ -32,13 +34,15 @@ def test_compute(stls_instance, mocker):
     assert mockSave.call_count == 1
 
 
-def test_save(stls_instance, mocker):
+def test_save(stls, stls_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        stls_instance._save()
+        scheme = StlsNative(stls_input.getNative())
+        stls.hdfFileName = stls._getHdfFile(scheme.inputs)
+        stls._save(scheme)
         assert mockMPIIsRoot.call_count == 2
-        assert os.path.isfile(stls_instance.hdfFileName)
-        inspectData = Hdf().inspect(stls_instance.hdfFileName)
+        assert os.path.isfile(stls.hdfFileName)
+        inspectData = Hdf().inspect(stls.hdfFileName)
         expectedEntries = [
             "coupling",
             "degeneracy",
@@ -57,10 +61,10 @@ def test_save(stls_instance, mocker):
         for entry in expectedEntries:
             assert entry in inspectData
     finally:
-        os.remove(stls_instance.hdfFileName)
+        os.remove(stls.hdfFileName)
 
 
-def test_getInitialGuess(stls_instance, mocker):
+def test_getInitialGuess(mocker):
     arr = np.ones(10)
     mockHdfRead = mocker.patch(
         "qupled.util.Hdf.read", return_value={"wvg": arr, "slfc": arr}
