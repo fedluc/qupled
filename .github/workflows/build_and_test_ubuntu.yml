@@ -2,8 +2,6 @@ name: Build & Test (Linux)
 
 on:
   push:
-    branches:
-      - master
   pull_request:
     branches:
       - master
@@ -24,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake libboost-all-dev libopenmpi-dev libgsl-dev libomp-dev libfmt-dev python3-dev
+        sudo apt-get install -y cmake libboost-all-dev libgsl-dev libomp-dev libfmt-dev python3-dev
         python3 -m venv ${PYTHON_VENV_ROOT}
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install --upgrade pip

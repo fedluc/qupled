@@ -27,7 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         brew update
-        brew install cmake gsl libomp openmpi fmt boost-python3
+        brew install cmake gsl libomp fmt boost-python3
         python3 -m venv ${PYTHON_VENV_ROOT}
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install --upgrade pip

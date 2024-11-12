@@ -3,7 +3,6 @@ numpy<2.0
 pandas~=2.0
 pytest~=8.0
 pytest-mock~=3.12
-python-abc~=0.2.0
 sphinx-rtd-theme~=2.0.0
 sphinxcontrib-applehelp~=2.0.0
 sphinxcontrib-devhelp~=2.0.0
