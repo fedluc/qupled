@@ -1,8 +1,6 @@
 from __future__ import annotations
 import sys
 import os
-from abc import ABC, abstractmethod
-from typing import Callable
 import numpy as np
 import pandas as pd
 import qupled.util as qu
@@ -139,7 +137,7 @@ class Rpa(_ClassicScheme):
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self, inputs) -> None:
+    def compute(self, inputs: Rpa.Input) -> None:
         """
         Solves the scheme and saves the results.
 
@@ -210,7 +208,7 @@ class ESA(_ClassicScheme):
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self, inputs) -> None:
+    def compute(self, inputs: ESA.Input) -> None:
         """
         Solves the scheme and saves the results.
 
@@ -284,7 +282,7 @@ class Stls(_IterativeScheme):
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self, inputs) -> None:
+    def compute(self, inputs: Stls.Input) -> None:
         """
         Solves the scheme and saves the results.
 
@@ -301,7 +299,7 @@ class Stls(_IterativeScheme):
         Class used to manage the input for the :obj:`qupled.classic.Stls` class.
         """
 
-        def __init__(self, coupling: float, degeneracy: float, initGuess: bool = True):
+        def __init__(self, coupling: float, degeneracy: float):
             super().__init__(coupling, degeneracy)
             self.error: float = 1.0e-5
             """Minimum error for convergence. Default = ``1.0e-5``"""
@@ -313,9 +311,9 @@ class Stls(_IterativeScheme):
             """Output frequency to write the recovery file. Default = ``10``"""
             self.recoveryFile: str = ""
             """Name of the recovery file. Default = ``""``"""
-            if initGuess:
-                self.guess: qp.StlsGuess = qp.StlsGuess()
-                """Initial guess."""
+            self.guess: qp.StlsGuess = qp.StlsGuess()
+            """Initial guess."""
+            # Undocumented default values
             self.theory: str = "STLS"
 
         def getNative(self) -> qp.StlsInput:
@@ -335,7 +333,7 @@ class StlsIet(_IterativeScheme):
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self, inputs) -> None:
+    def compute(self, inputs: StlsIet.Input) -> None:
         """
         Solves the scheme and saves the results.
 
@@ -399,7 +397,7 @@ class VSStls(_IterativeScheme):
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self, inputs) -> None:
+    def compute(self, inputs: VSStls.Input) -> None:
         """
         Solves the scheme and saves the results.
 
@@ -458,6 +456,7 @@ class VSStls(_IterativeScheme):
             """Pre-computed free energy integrand."""
             self.threads: int = 9
             """Number of threads. Default = ``9``"""
+            # Undocumented default values
             self.theory: str = "VSSTLS"
 
         def getNative(self) -> qp.VSStlsInput:
