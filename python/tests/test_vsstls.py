@@ -1,30 +1,32 @@
 import os
 import pytest
 import numpy as np
-import set_path
-import qupled.qupled as qp
+from qupled.qupled import VSStls as VSStlsNative
 from qupled.util import Hdf
-from qupled.classic import VSStls, IterativeScheme
+from qupled.classic import VSStls
 
 
 @pytest.fixture
-def vsstls_instance():
-    return VSStls(VSStls.Input(1.0, 1.0))
+def vsstls():
+    return VSStls()
 
 
-def test_default(vsstls_instance):
-    assert issubclass(VSStls, IterativeScheme)
-    assert issubclass(VSStls, qp.VSStls)
-    assert vsstls_instance.hdfFileName == "rs1.000_theta1.000_VSSTLS.h5"
+@pytest.fixture
+def vsstls_input():
+    return VSStls.Input(1.0, 1.0)
 
 
-def test_compute(vsstls_instance, mocker):
+def test_default(vsstls):
+    assert vsstls.hdfFileName is None
+
+
+def test_compute(vsstls, vsstls_input, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
     mockCompute = mocker.patch("qupled.qupled.VSStls.compute")
     mockCheckStatusAndClean = mocker.patch("qupled.classic.VSStls._checkStatusAndClean")
     mockSave = mocker.patch("qupled.classic.VSStls._save")
-    vsstls_instance.compute()
+    vsstls.compute(vsstls_input)
     assert mockMPITime.call_count == 2
     assert mockMPIBarrier.call_count == 1
     assert mockCompute.call_count == 1
@@ -32,13 +34,15 @@ def test_compute(vsstls_instance, mocker):
     assert mockSave.call_count == 1
 
 
-def test_save(vsstls_instance, mocker):
+def test_save(vsstls, vsstls_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        vsstls_instance._save()
+        scheme = VSStlsNative(vsstls_input.toNative())
+        vsstls.hdfFileName = vsstls._getHdfFile(scheme.inputs)
+        vsstls._save(scheme)
         assert mockMPIIsRoot.call_count == 3
-        assert os.path.isfile(vsstls_instance.hdfFileName)
-        inspectData = Hdf().inspect(vsstls_instance.hdfFileName)
+        assert os.path.isfile(vsstls.hdfFileName)
+        inspectData = Hdf().inspect(vsstls.hdfFileName)
         expectedEntries = [
             "coupling",
             "degeneracy",
@@ -60,17 +64,17 @@ def test_save(vsstls_instance, mocker):
         for entry in expectedEntries:
             assert entry in inspectData
     finally:
-        os.remove(vsstls_instance.hdfFileName)
+        os.remove(vsstls.hdfFileName)
 
 
-def test_getFreeEnergyIntegrand(vsstls_instance, mocker):
+def test_getFreeEnergyIntegrand(vsstls, mocker):
     arr1D = np.ones(10)
     arr2D = np.ones((3, 10))
     mockHdfRead = mocker.patch(
         "qupled.util.Hdf.read",
         return_value={"fxcGrid": arr1D, "fxci": arr2D, "alpha": arr1D},
     )
-    fxci = vsstls_instance.getFreeEnergyIntegrand("dummyFileName")
+    fxci = vsstls.getFreeEnergyIntegrand("dummyFileName")
     assert np.array_equal(fxci.grid, arr1D)
     assert np.array_equal(fxci.alpha, arr1D)
     assert np.array_equal(fxci.integrand, arr2D)

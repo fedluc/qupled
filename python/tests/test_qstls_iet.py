@@ -1,103 +1,106 @@
 import os
-from shutil import rmtree
 import pytest
 import numpy as np
-import zipfile as zf
-import set_path
-import qupled.qupled as qp
+from qupled.qupled import Qstls as QstlsNative
 from qupled.util import Hdf
-from qupled.quantum import QstlsIet, QuantumIterativeScheme
+from qupled.quantum import QstlsIet
 
 
 @pytest.fixture
-def qstls_iet_instance():
-    return QstlsIet(QstlsIet.Input(1.0, 1.0, "QSTLS-HNC"))
+def qstls_iet():
+    return QstlsIet()
 
 
-def test_default(qstls_iet_instance):
-    assert issubclass(QstlsIet, QuantumIterativeScheme)
-    assert issubclass(QstlsIet, qp.Qstls)
-    assert qstls_iet_instance.fixedIetSourceFile == ""
-    assert qstls_iet_instance.hdfFileName == "rs1.000_theta1.000_QSTLS-HNC.h5"
+@pytest.fixture
+def qstls_iet_input():
+    return QstlsIet.Input(1.0, 1.0, "QSTLS-HNC")
 
 
-def test_compute(qstls_iet_instance, mocker):
+def test_default(qstls_iet):
+    assert qstls_iet.hdfFileName is None
+
+
+def test_compute(qstls_iet, qstls_iet_input, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockUnpackFixedAdrFiles = mocker.patch(
-        "qupled.quantum.QstlsIet._unpackFixedAdrFiles"
-    )
-    mockCompute = mocker.patch("qupled.qupled.Qstls.compute")
-    mockCheckStatusAndClean = mocker.patch(
-        "qupled.quantum.QstlsIet._checkStatusAndClean"
-    )
+    mockUnpack = mocker.patch("qupled.quantum.QstlsIet._unpackFixedAdrFiles")
+    mockCompute = mocker.patch("qupled.quantum.QstlsIet._compute")
     mockSave = mocker.patch("qupled.quantum.QstlsIet._save")
-    qstls_iet_instance.compute()
+    mockZip = mocker.patch("qupled.quantum.QstlsIet._zipFixedAdrFiles")
+    mockClean = mocker.patch("qupled.quantum.QstlsIet._cleanFixedAdrFiles")
+    qstls_iet.compute(qstls_iet_input)
     assert mockMPITime.call_count == 2
     assert mockMPIBarrier.call_count == 1
-    assert mockUnpackFixedAdrFiles.call_count == 1
+    assert mockUnpack.call_count == 1
     assert mockCompute.call_count == 1
-    assert mockCheckStatusAndClean.call_count == 1
     assert mockSave.call_count == 1
+    assert mockZip.call_count == 1
+    assert mockClean.call_count == 1
 
 
-def test_unpackFixedAdrFiles(qstls_iet_instance, mocker):
+def test_unpackFixedAdrFiles_no_files(qstls_iet, qstls_iet_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    inputs = qstls_iet_instance.inputs
-    inputs.fixediet = "testFile.zip"
-    qstls = QstlsIet(inputs)
-    try:
-        filenames = ["testFile1.txt", "testFile2.txt", "testFile3.txt"]
-        for filename in filenames:
-            with open(filename, "w") as file:
-                file.write("this is a test file\n")
-        with zf.ZipFile(qstls.fixedIetSourceFile, "w") as zipFile:
-            for filename in filenames:
-                zipFile.write(filename)
-                os.remove(filename)
-        qstls._unpackFixedAdrFiles()
-        assert mockMPIIsRoot.call_count == 1
-    finally:
-        for filename in filenames:
-            if os.path.isfile(filename):
-                os.remove(filename)
-            if os.path.isfile("testFile.zip"):
-                os.remove("testFile.zip")
-            if os.path.isdir(qstls.inputs.fixediet):
-                rmtree(qstls.inputs.fixediet)
+    mockZip = mocker.patch("qupled.quantum.zf.ZipFile.__init__", return_value=None)
+    mockExtractAll = mocker.patch("qupled.quantum.zf.ZipFile.extractall")
+    qstls_iet._unpackFixedAdrFiles(qstls_iet_input)
+    assert mockMPIIsRoot.call_count == 1
+    assert mockZip.call_count == 0
+    assert mockExtractAll.call_count == 0
 
 
-def test_checkStatusAndClean(qstls_iet_instance, mocker, capsys):
+def test_unpackFixedAdrFiles_with_files(qstls_iet, qstls_iet_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    qstls_iet_instance._checkStatusAndClean(0)
-    captured = capsys.readouterr()
-    assert mockMPIIsRoot.call_count == 2
-    assert "Dielectric theory solved successfully!\n" in captured
-    with pytest.raises(SystemExit) as excinfo:
-        qstls_iet_instance._checkStatusAndClean(1)
-    assert excinfo.value.code == "Error while solving the dielectric theory"
-    inputs = qstls_iet_instance.inputs
-    inputs.fixediet = "testFile.zip"
-    qstls = QstlsIet(inputs)
-    qstls._checkStatusAndClean(0)
-    assert not os.path.isdir(qstls.inputs.fixediet)
-    with pytest.raises(SystemExit) as excinfo:
-        qstls_iet_instance._checkStatusAndClean(1)
-    assert not os.path.isdir(qstls_iet_instance.inputs.fixediet)
+    mockZip = mocker.patch("qupled.quantum.zf.ZipFile.__init__", return_value=None)
+    mockExtractAll = mocker.patch("qupled.quantum.zf.ZipFile.extractall")
+    qstls_iet_input.fixediet = "testFile.zip"
+    qstls_iet._unpackFixedAdrFiles(qstls_iet_input)
+    assert mockMPIIsRoot.call_count == 1
+    assert mockZip.call_count == 1
+    assert mockExtractAll.call_count == 1
 
 
-def test_save(qstls_iet_instance, mocker):
+def test_zipFixedAdrFiles_no_file(qstls_iet, qstls_iet_input, mocker, capsys):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    adrFileName = "adr_fixed_theta%5.3f_matsubara%d_%s.zip" % (
-        qstls_iet_instance.inputs.degeneracy,
-        qstls_iet_instance.inputs.matsubara,
-        qstls_iet_instance.inputs.theory,
+    mockZip = mocker.patch("qupled.quantum.zf.ZipFile.__init__", return_value=None)
+    mockGlob = mocker.patch(
+        "qupled.quantum.glob", return_value={"binFile1", "binFile2"}
     )
+    mockRemove = mocker.patch("os.remove")
+    mockWrite = mocker.patch("qupled.quantum.zf.ZipFile.write")
+    qstls_iet._zipFixedAdrFiles(qstls_iet_input)
+    assert mockMPIIsRoot.call_count == 1
+    assert mockZip.call_count == 1
+    assert mockGlob.call_count == 1
+    assert mockRemove.call_count == 2
+    assert mockWrite.call_count == 2
+
+
+def test_cleanFixedAdrFiles_no_files(qstls_iet, qstls_iet_input, mocker, capsys):
+    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
+    mockRemove = mocker.patch("qupled.quantum.rmtree")
+    qstls_iet._cleanFixedAdrFiles(qstls_iet_input)
+    assert mockMPIIsRoot.call_count == 1
+    assert mockRemove.call_count == 0
+
+
+def test_cleanFixedAdrFiles_with_files(qstls_iet, qstls_iet_input, mocker, capsys):
+    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
+    mockIsDir = mocker.patch("os.path.isdir", return_value=True)
+    mockRemove = mocker.patch("qupled.quantum.rmtree")
+    qstls_iet._cleanFixedAdrFiles(qstls_iet_input)
+    assert mockMPIIsRoot.call_count == 1
+    assert mockRemove.call_count == 1
+
+
+def test_save(qstls_iet, qstls_iet_input, mocker):
+    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        qstls_iet_instance._save()
+        scheme = QstlsNative(qstls_iet_input.toNative())
+        qstls_iet.hdfFileName = qstls_iet._getHdfFile(scheme.inputs)
+        qstls_iet._save(scheme)
         assert mockMPIIsRoot.call_count == 4
-        assert os.path.isfile(qstls_iet_instance.hdfFileName)
-        inspectData = Hdf().inspect(qstls_iet_instance.hdfFileName)
+        assert os.path.isfile(qstls_iet.hdfFileName)
+        inspectData = Hdf().inspect(qstls_iet.hdfFileName)
         expectedEntries = [
             "coupling",
             "degeneracy",
@@ -117,22 +120,5 @@ def test_save(qstls_iet_instance, mocker):
         ]
         for entry in expectedEntries:
             assert entry in inspectData
-        assert os.path.isfile(adrFileName)
     finally:
-        os.remove(qstls_iet_instance.hdfFileName)
-        os.remove(adrFileName)
-
-
-def test_getInitialGuess(qstls_iet_instance, mocker):
-    arr1D = np.ones(10)
-    arr2D = np.ones((10, 128))
-    n = 128
-    mockHdfRead = mocker.patch(
-        "qupled.util.Hdf.read",
-        return_value={"wvg": arr1D, "ssf": arr1D, "adr": arr2D, "matsubara": n},
-    )
-    guess = QstlsIet.getInitialGuess("dummyFileName")
-    assert np.array_equal(guess.wvg, arr1D)
-    assert np.array_equal(guess.ssf, arr1D)
-    assert np.array_equal(guess.adr, arr2D)
-    assert np.array_equal(guess.matsubara, n)
+        os.remove(qstls_iet.hdfFileName)

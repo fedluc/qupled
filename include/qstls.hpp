@@ -38,9 +38,10 @@ protected:
   Vector2D adrOld;
   Vector3D adrFixed;
   std::string adrFixedFileName =
-      fmt::format("adr_fixed_theta{:.3f}_matsubara{:}.bin",
+      fmt::format("adr_fixed_theta{:.3f}_matsubara{:}_{}.bin",
                   in.getDegeneracy(),
-                  in.getNMatsubara());
+                  in.getNMatsubara(),
+                  in.getTheory());
   std::map<int, std::pair<std::string, bool>> adrFixedIetFileInfo;
   // Static structure factor (for iterations)
   std::vector<double> ssfNew;

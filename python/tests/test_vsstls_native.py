@@ -1,6 +1,5 @@
 import os
 import pytest
-import set_path
 import qupled.qupled as qp
 
 

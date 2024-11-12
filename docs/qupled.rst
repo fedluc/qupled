@@ -518,13 +518,11 @@ After the solution is completed the results are written to an hdf file in the fo
 Initial guess
 -------------
 
-.. autoclass:: qupled.qupled.StlsGuess
+.. autoclass:: qupled.classic.Stls.Guess
     :members:
-    :undoc-members:
     
-.. autoclass:: qupled.qupled.QstlsGuess
+.. autoclass:: qupled.quantum.Qstls.Guess
     :members:
-    :undoc-members:
 
 
 Output

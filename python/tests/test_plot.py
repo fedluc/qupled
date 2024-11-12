@@ -1,7 +1,6 @@
 import os
 import pytest
 import numpy as np
-import set_path
 from qupled.util import Plot
 
 

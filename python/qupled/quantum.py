@@ -12,32 +12,60 @@ import qupled.qupled as qp
 import qupled.classic as qc
 
 # -----------------------------------------------------------------------
-# QuantumIterativeScheme class
+# _QuantumIterativeScheme class
 # -----------------------------------------------------------------------
 
 
-class QuantumIterativeScheme(qc.IterativeScheme):
+class _QuantumIterativeScheme(qc._IterativeScheme):
 
     # Set the initial guess from a dataframe produced in output
     @staticmethod
-    def getInitialGuess(fileName: str) -> qp.QstlsGuess:
+    def getInitialGuess(fileName: str) -> _QuantumIterativeScheme.Guess:
         """Constructs an initial guess object by extracting the information from an output file.
 
         Args:
             fileName : name of the file used to extract the information for the initial guess.
         """
-        guess = qp.QstlsGuess()
-        hdfData = qu.Hdf().read(fileName, ["wvg", "ssf"])
-        guess.wvg = hdfData["wvg"]
-        guess.ssf = hdfData["ssf"]
-        return guess
+        hdfData = qu.Hdf().read(fileName, ["wvg", "ssf", "adr", "matsubara"])
+        return _QuantumIterativeScheme.Guess(
+            hdfData["wvg"],
+            hdfData["ssf"],
+            np.ascontiguousarray(hdfData["adr"]),
+            hdfData["matsubara"],
+        )
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
-    def _save(self) -> None:
+    def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
-        super()._save()
-        pd.DataFrame(self.adr).to_hdf(self.hdfFileName, key="adr")
+        super()._save(scheme)
+        pd.DataFrame(scheme.adr).to_hdf(self.hdfFileName, key="adr")
+
+    # Initial guess
+    class Guess:
+
+        def __init__(
+            self,
+            wvg: np.ndarray = None,
+            ssf: np.ndarray = None,
+            adr: np.ndarray = None,
+            matsubara: int = 0,
+        ):
+            self.wvg = wvg
+            """ Wave-vector grid. Default = ``None``"""
+            self.ssf = ssf
+            """ Static structure factor. Default = ``None``"""
+            self.adr = adr
+            """ Auxiliary density response. Default = ``None``"""
+            self.matsubara = matsubara
+            """ Number of matsubara frequencies. Default = ``0``"""
+
+        def toNative(self) -> qp.QStlsGuess:
+            native_guess = qp.QstlsGuess()
+            for attr, value in self.__dict__.items():
+                native_value = value if value is not None else np.empty(0)
+                setattr(native_guess, attr, native_value)
+            return native_guess
 
 
 # -----------------------------------------------------------------------
@@ -45,66 +73,46 @@ class QuantumIterativeScheme(qc.IterativeScheme):
 # -----------------------------------------------------------------------
 
 
-class QstlsMetaclass(type(QuantumIterativeScheme), type(qp.Qstls)):
-    pass
-
-
-class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
-    """
-    Args:
-        inputs: Input parameters.
-    """
-
-    # Constructor
-    def __init__(self, inputs: Qstls.Input):
-        # Construct the base classes
-        super().__init__(inputs)
-        # File to store output on disk
-        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
+class Qstls(_QuantumIterativeScheme):
 
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self) -> None:
-        """Solves the scheme and saves the results."""
-        super().computeScheme(super().compute, self._save)
+    def compute(self, inputs: Qstls.Input) -> None:
+        """
+        Solves the scheme and saves the results.
+
+        Args:
+            inputs: Input parameters.
+        """
+        scheme = qp.Qstls(inputs.toNative())
+        self._compute(scheme)
+        self._save(scheme)
 
     # Input class
-    class Input(qc.Stls.Input, qp.QstlsInput):
+    class Input(qc.Stls.Input):
         """
         Class used to manage the input for the :obj:`qupled.quantum.Qstls` class.
         """
 
         def __init__(self, coupling: float, degeneracy: float):
-            super().__init__(coupling, degeneracy, False)
+            super().__init__(coupling, degeneracy)
             self.fixed: str = ""
             """ Name of the file storing the fixed component of the auxiliary density 
 	    response in the QSTLS scheme. """
-            self.guess: qp.QstlsGuess = qp.QstlsGuess()
-            """ Initial guess """
+            self.guess: Qstls.Guess = Qstls.Guess()
+            """Initial guess. Default = ``Qstls.Guess()``"""
             # Undocumented default values
             self.theory = "QSTLS"
 
-        @property
-        def fixed(self) -> str:
-            """Name of the file storing the fixed component of the auxiliary density
-            response. Default = ``""``"""
-            return super().fixed
-
-        @property
-        def guess(self) -> qupled.qupled.QstlsGuess:
-            """Initial guess."""
-            return super().guess
-
-        # Setters
-
-        @fixed.setter
-        def fixed(self, value: str):
-            super(Qstls.Input, self.__class__).fixed.fset(self, value)
-
-        @guess.setter
-        def guess(self, value: qupled.qupled.QStlsGuess):
-            super(Qstls.Input, self.__class__).guess.fset(self, value)
+        def toNative(self) -> qp.QstlsInput:
+            native_input = qp.QstlsInput()
+            for attr, value in self.__dict__.items():
+                if attr == "guess":
+                    setattr(native_input, attr, value.toNative())
+                else:
+                    setattr(native_input, attr, value)
+            return native_input
 
 
 # -----------------------------------------------------------------------
@@ -112,124 +120,93 @@ class Qstls(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
 # -----------------------------------------------------------------------
 
 
-class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
+class QstlsIet(_QuantumIterativeScheme):
     """
     Args:
         inputs: Input parameters.
     """
 
-    # Constructor
-    def __init__(self, inputs: QstlsIet.Input):
-        # Setup the folder structure to load the fixed component of the adr
-        self.fixedIetSourceFile = inputs.fixediet
-        if inputs.fixediet != "":
-            inputs.fixediet = "qupled_tmp_run_directory"
-        # Construct the base class
-        super().__init__(inputs)
-        # File to store the output on disk
-        self.hdfFileName: str = self._getHdfFile()  # . Name of the output file
-
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self) -> None:
-        """Solves the scheme and saves the results."""
-        self._unpackFixedAdrFiles()
-        status = super().compute()
-        self._checkStatusAndClean(status)
-        self._save()
+    def compute(self, inputs: QsltsIet.Input) -> None:
+        """
+        Solves the scheme and saves the results.
+
+        Args:
+            inputs: Input parameters.
+        """
+        self._unpackFixedAdrFiles(inputs)
+        scheme = qp.Qstls(inputs.toNative())
+        self._compute(scheme)
+        self._save(scheme)
+        self._zipFixedAdrFiles(inputs)
+        self._cleanFixedAdrFiles(scheme.inputs)
 
     # Unpack zip folder with fixed component of the auxiliary density response
     @qu.MPI.runOnlyOnRoot
-    def _unpackFixedAdrFiles(self) -> None:
-        if self.fixedIetSourceFile != "":
-            with zf.ZipFile(self.fixedIetSourceFile, "r") as zipFile:
-                zipFile.extractall(self.inputs.fixediet)
-
-    # Check that the dielectric scheme was solved without errors
-    @qu.MPI.runOnlyOnRoot
-    def _checkStatusAndClean(self, status) -> None:
-        # Remove the temporary run directory
-        if os.path.isdir(self.inputs.fixediet):
-            rmtree(self.inputs.fixediet)
-        # Check that the scheme was solved correctly
-        super()._checkStatusAndClean(status)
+    def _unpackFixedAdrFiles(self, inputs) -> None:
+        fixedIetSourceFile = inputs.fixediet
+        if inputs.fixediet != "":
+            inputs.fixediet = "qupled_tmp_run_directory"
+        if fixedIetSourceFile != "":
+            with zf.ZipFile(fixedIetSourceFile, "r") as zipFile:
+                zipFile.extractall(inputs.fixediet)
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
-    def _save(self) -> None:
-        super()._save()
-        pd.DataFrame(self.bf).to_hdf(self.hdfFileName, key="bf")
-        # Zip all files for the fixed component of the auxiliary density response
-        if self.inputs.fixediet == "":
-            adrFileName = "adr_fixed_theta%5.3f_matsubara%d_%s" % (
-                self.inputs.degeneracy,
-                self.inputs.matsubara,
-                self.inputs.theory,
-            )
-            with zf.ZipFile(adrFileName + ".zip", "w") as zipFile:
-                for adrFile in glob(adrFileName + "_wv*.bin"):
-                    zipFile.write(adrFile)
-                    os.remove(adrFile)
+    def _save(self, scheme) -> None:
+        super()._save(scheme)
+        pd.DataFrame(scheme.bf).to_hdf(self.hdfFileName, key="bf")
 
-    # Set the initial guess from a dataframe produced in output
-    @staticmethod
-    def getInitialGuess(fileName: str) -> qp.QstlsInput:
-        guess = QuantumIterativeScheme.getInitialGuess(fileName)
-        hdfData = qu.Hdf().read(fileName, ["adr", "matsubara"])
-        guess.adr = np.ascontiguousarray(hdfData["adr"])
-        guess.matsubara = hdfData["matsubara"]
-        return guess
+    # Zip all files for the fixed component of the auxiliary density response
+    @qu.MPI.runOnlyOnRoot
+    def _zipFixedAdrFiles(self, inputs) -> None:
+        if inputs.fixediet == "":
+            degeneracy = inputs.degeneracy
+            matsubara = inputs.matsubara
+            theory = inputs.theory
+            adrFile = f"adr_fixed_theta{degeneracy:5.3f}_matsubara{matsubara}_{theory}"
+            adrFileZip = f"{adrFile}.zip"
+            adrFileBin = f"{adrFile}_wv*.bin"
+            with zf.ZipFile(adrFileZip, "w") as zipFile:
+                for binFile in glob(adrFileBin):
+                    zipFile.write(binFile)
+                    os.remove(binFile)
+
+    # Remove temporaray run directory
+    @qu.MPI.runOnlyOnRoot
+    def _cleanFixedAdrFiles(self, inputs) -> None:
+        if os.path.isdir(inputs.fixediet):
+            rmtree(inputs.fixediet)
 
     # Input class
-    class Input(Qstls.Input, qp.QstlsInput):
+    class Input(qc.StlsIet.Input, Qstls.Input):
         """
         Class used to manage the input for the :obj:`qupled.classic.QStlsIet` class.
         Accepted theories: ``QSTLS-HNC``, ``QSTLS-IOI`` and ``QSTLS-LCT``.
         """
 
         def __init__(self, coupling: float, degeneracy: float, theory: str):
-            super().__init__(coupling, degeneracy)
+            qc.StlsIet.Input.__init__(self, coupling, degeneracy, "STLS-HNC")
+            Qstls.Input.__init__(self, coupling, degeneracy)
             if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
                 sys.exit("Invalid dielectric theory")
             self.theory = theory
-            self.mapping = "standard"
             self.fixediet = ""
-
-        @property
-        def mapping(self) -> str:
-            r"""
-            Mapping for the classical-to-quantum coupling parameter
-            :math:`\Gamma` used in the iet schemes. Allowed options include:
-
-            - standard: :math:`\Gamma \propto \Theta^{-1}`
-
-            - sqrt: :math:`\Gamma \propto (1 + \Theta)^{-1/2}`
-
-            - linear: :math:`\Gamma \propto (1 + \Theta)^{-1}`
-
-            where :math:`\Theta` is the degeneracy parameter. Far from the ground state
-            (i.e. :math:`\Theta\gg1`) all mappings lead identical results, but at
-            the ground state they can differ significantly (the standard
-            mapping diverges). Default = ``standard``.
-            """
-            return super().mapping
-
-        @property
-        def fixediet(self) -> str:
             """
             Name of the zip file storing the iet part of the fixed components
             of the auxiliary density response. Default = ``""``
             """
-            return super().fixediet
 
-        @mapping.setter
-        def mapping(self, value: str):
-            super(QstlsIet.Input, self.__class__).mapping.fset(self, value)
-
-        @fixediet.setter
-        def fixediet(self, value: str):
-            super(QstlsIet.Input, self.__class__).fixediet.fset(self, value)
+        def toNative(self) -> qp.QstlsInput:
+            native_input = qp.QstlsInput()
+            for attr, value in self.__dict__.items():
+                if attr == "guess":
+                    setattr(native_input, attr, value.toNative())
+                else:
+                    setattr(native_input, attr, value)
+            return native_input
 
 
 # -----------------------------------------------------------------------
@@ -237,182 +214,87 @@ class QstlsIet(QuantumIterativeScheme, qp.Qstls, metaclass=QstlsMetaclass):
 # -----------------------------------------------------------------------
 
 
-class QVSStlsMetaclass(type(QuantumIterativeScheme), type(qp.QVSStls)):
-    pass
-
-
-class QVSStls(QuantumIterativeScheme, qp.QVSStls, metaclass=QVSStlsMetaclass):
-    """
-    Args:
-        inputs: Input parameters.
-    """
-
-    class Input(Qstls.Input, qp.QVSStlsInput):
-        """
-        Class used to manage the input for the :obj:`qupled.classic.QVSStls` class.
-        """
-
-        def __init__(self, coupling: float, degeneracy: float):
-            super().__init__(coupling, degeneracy)
-            """ Name of the theory that is solved """
-            self.alpha: list[float] = [0.5, 1.0]
-            """ Initial guess for the free parameter """
-            self.couplingResolution: float = 0.1
-            """ Resolution of the coupling parameter grid """
-            self.degeneracyResolution: float = 0.1
-            """ Resolution of the degeneracy parameter grid """
-            self.errorAlpha: float = 1.0e-3
-            """ Minimum error for convergence in the free parameter """
-            self.iterationsAlpha: int = 50
-            """ Maximum number of iterations to determine the free parameter """
-            self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = (
-                qp.FreeEnergyIntegrand()
-            )
-            """ Pre-computed free energy integrand """
-            # Undocumented default values
-            self.threads = 9
-            self.theory = "QVSSTLS"
-
-    # Constructor
-    def __init__(self, inputs: Qstls.Input):
-        # Setup the folder structure to load the fixed component of the adr
-        self.fixedSourceFile = inputs.fixed
-        if inputs.fixed != "":
-            inputs.fixed = "qupled_tmp_run_directory"
-        # Construct the base classes
-        super().__init__(inputs)
-        # File to store output on disk
-        self.hdfFileName: str = self._getHdfFile()  #: Name of the output file
+class QVSStls(_QuantumIterativeScheme):
 
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self) -> None:
-        """Solves the scheme and saves the results."""
-        self._unpackFixedAdrFiles()
-        status = super().compute()
-        self._checkStatusAndClean(status)
-        self._save()
+    def compute(self, inputs: QVSStls.Input) -> None:
+        """
+        Solves the scheme and saves the results.
+
+        Args:
+            inputs: Input parameters.
+        """
+        self._unpackFixedAdrFiles(inputs)
+        scheme = qp.QVSStls(inputs.toNative())
+        self._compute(scheme)
+        self._save(scheme)
+        self._zipFixedAdrFiles(inputs)
+        self._cleanFixedAdrFiles(scheme.inputs)
 
     # Unpack zip folder with fixed component of the auxiliary density response
     @qu.MPI.runOnlyOnRoot
-    def _unpackFixedAdrFiles(self) -> None:
-        if self.fixedSourceFile != "":
-            with zf.ZipFile(self.fixedSourceFile, "r") as zipFile:
-                zipFile.extractall(self.inputs.fixed)
-
-    # Check that the dielectric scheme was solved without errors
-    @qu.MPI.runOnlyOnRoot
-    def _checkStatusAndClean(self, status) -> None:
-        # Remove the temporary run directory
-        if os.path.isdir(self.inputs.fixed):
-            rmtree(self.inputs.fixed)
-        # Check that the scheme was solved correctly
-        super()._checkStatusAndClean(status)
+    def _unpackFixedAdrFiles(self, inputs) -> None:
+        fixedSourceFile = inputs.fixed
+        if inputs.fixed != "":
+            inputs.fixed = "qupled_tmp_run_directory"
+        if fixedSourceFile != "":
+            with zf.ZipFile(fixedSourceFile, "r") as zipFile:
+                zipFile.extractall(inputs.fixed)
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
-    def _save(self) -> None:
-        super()._save()
-        pd.DataFrame(self.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
-        pd.DataFrame(self.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
-        pd.DataFrame(self.alpha).to_hdf(self.hdfFileName, key="alpha")
-        # Zip all files for the fixed component of the auxiliary density response
-        if self.inputs.fixed == "":
-            adrFileName = "adr_fixed_theta%5.3f_matsubara%d.zip" % (
-                self.inputs.degeneracy,
-                self.inputs.matsubara,
+    def _save(self, scheme) -> None:
+        super()._save(scheme)
+        pd.DataFrame(scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
+        pd.DataFrame(scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
+        pd.DataFrame(scheme.alpha).to_hdf(self.hdfFileName, key="alpha")
+
+    # Zip all files for the fixed component of the auxiliary density response
+    @qu.MPI.runOnlyOnRoot
+    def _zipFixedAdrFiles(self, inputs) -> None:
+        if inputs.fixed == "":
+            degeneracy = inputs.degeneracy
+            matsubara = inputs.matsubara
+            theory = inputs.theory
+            adrFileZip = (
+                f"adr_fixed_theta{degeneracy:5.3f}_matsubara{matsubara}_{theory}.zip"
             )
-            with zf.ZipFile(adrFileName, "w") as zipFile:
-                for adrFile in glob("THETA*.bin"):
-                    zipFile.write(adrFile)
-                    os.remove(adrFile)
+            adrFileBin = "THETA*.bin"
+            with zf.ZipFile(adrFileZip, "w") as zipFile:
+                for binFile in glob(adrFileBin):
+                    zipFile.write(binFile)
+                    os.remove(binFile)
+
+    # Remove the temporary run directory
+    @qu.MPI.runOnlyOnRoot
+    def _cleanFixedAdrFiles(self, inputs) -> None:
+        if os.path.isdir(inputs.fixed):
+            rmtree(inputs.fixed)
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
     def getFreeEnergyIntegrand(fileName: str) -> qp.FreeEnergyIntegrand():
         return qc.VSStls.getFreeEnergyIntegrand(fileName)
 
-    #
-    class Input(Qstls.Input, qp.QVSStlsInput):
+    # Input class
+    class Input(qc.VSStls.Input, Qstls.Input):
         """
         Class used to manage the input for the :obj:`qupled.classic.QVSStls` class.
         """
 
         def __init__(self, coupling: float, degeneracy: float):
-            super().__init__(coupling, degeneracy)
-            self.alpha: list[float] = [0.5, 1.0]
-            self.couplingResolution: float = 0.1
-            self.degeneracyResolution: float = 0.1
-            self.errorAlpha: float = 1.0e-3
-            self.iterationsAlpha: int = 50
-            self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = (
-                qp.FreeEnergyIntegrand()
-            )
-            self.threads: int = 9
+            qc.VSStls.Input.__init__(self, coupling, degeneracy)
+            Qstls.Input.__init__(self, coupling, degeneracy)
+            # Undocumented default values
             self.theory: str = "QVSSTLS"
 
-        @property
-        def alpha(self) -> list[float]:
-            """Initial guess for the free parameter. Default = ``[0.5, 1.0]``"""
-            return super().alpha
-
-        @property
-        def couplingResolution(self) -> float:
-            """Resolution of the coupling parameter grid. Default = ``0.1``"""
-            return super().couplingResolution
-
-        @property
-        def degeneracyResolution(self) -> float:
-            """Resolution of the degeneracy parameter grid. Default = ``0.1``"""
-            return super().degeneracyResolution
-
-        @property
-        def errorAlpha(self) -> float:
-            """Minimum error for convergence in the free parameter. Default = ``1.0e-3``"""
-            return super().errorAlpha
-
-        @property
-        def iterationsAlpha(self) -> int:
-            """Maximum number of iterations to determine the free parameter. Default = ``50``"""
-            return super().iterationsAlpha
-
-        @property
-        def freeEnergyIntegrand(self) -> qupled.FreeEnergyIntegrand:
-            """Pre-computed free energy integrand."""
-            return super().freeEnergyIntegrand
-
-        @property
-        def threads(self) -> int:
-            """Number of threads. Default = ``9``"""
-            return super().threads
-
-        # Setters
-
-        @alpha.setter
-        def alpha(self, value: list[float]):
-            super(QVSStls.Input, self.__class__).alpha.fset(self, value)
-
-        @couplingResolution.setter
-        def couplingResolution(self, value: float):
-            super(QVSStls.Input, self.__class__).couplingResolution.fset(self, value)
-
-        @degeneracyResolution.setter
-        def degeneracyResolution(self, value: float):
-            super(QVSStls.Input, self.__class__).degeneracyResolution.fset(self, value)
-
-        @errorAlpha.setter
-        def errorAlpha(self, value: float):
-            super(QVSStls.Input, self.__class__).errorAlpha.fset(self, value)
-
-        @iterationsAlpha.setter
-        def iterationsAlpha(self, value: int):
-            super(QVSStls.Input, self.__class__).iterationsAlpha.fset(self, value)
-
-        @freeEnergyIntegrand.setter
-        def freeEnergyIntegrand(self, value: qupled.FreeEnergyIntegrand):
-            super(QVSStls.Input, self.__class__).freeEnergyIntegrand.fset(self, value)
-
-        @threads.setter
-        def threads(self, value: int):
-            super(QVSStls.Input, self.__class__).threads.fset(self, value)
+        def toNative(self) -> qp.QVSStlsInput:
+            native_input = qp.QVSStlsInput()
+            for attr, value in self.__dict__.items():
+                if attr == "guess":
+                    setattr(native_input, attr, value.toNative())
+                else:
+                    setattr(native_input, attr, value)
+            return native_input
