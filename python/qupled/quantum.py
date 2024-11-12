@@ -20,17 +20,16 @@ class _QuantumIterativeScheme(qc._IterativeScheme):
 
     # Set the initial guess from a dataframe produced in output
     @staticmethod
-    def getInitialGuess(fileName: str) -> qp.QstlsGuess:
+    def getInitialGuess(fileName: str) -> _QuantumIterativeScheme.Guess:
         """Constructs an initial guess object by extracting the information from an output file.
 
         Args:
             fileName : name of the file used to extract the information for the initial guess.
         """
-        guess = qp.QstlsGuess()
-        hdfData = qu.Hdf().read(fileName, ["wvg", "ssf"])
-        guess.wvg = hdfData["wvg"]
-        guess.ssf = hdfData["ssf"]
-        return guess
+        hdfData = qu.Hdf().read(fileName, ["wvg", "ssf", "adr", "matsubara"])
+        return _QuantumIterativeScheme.Guess(
+            hdfData["wvg"], hdfData["ssf"], hdfData["adr"], hdfData["matsubara"]
+        )
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
@@ -38,6 +37,32 @@ class _QuantumIterativeScheme(qc._IterativeScheme):
         """Stores the results obtained by solving the scheme."""
         super()._save(scheme)
         pd.DataFrame(scheme.adr).to_hdf(self.hdfFileName, key="adr")
+
+    # Initial guess
+    class Guess:
+
+        def __init__(
+            self,
+            wvg: np.ndarray = None,
+            ssf: np.ndarray = None,
+            adr: np.ndarray = None,
+            matsubara: int = 0,
+        ):
+            self.wvg = wvg
+            """ Wave-vector grid. Default = ``None``"""
+            self.ssf = ssf
+            """ Static structure factor. Default = ``None``"""
+            self.adr = adr
+            """ Auxiliary density response. Default = ``None``"""
+            self.matsubara = matsubara
+            """ Number of matsubara frequencies. Default = ``0``"""
+
+        def toNative(self) -> qp.QStlsGuess:
+            native_guess = qp.QstlsGuess()
+            for attr, value in self.__dict__.items():
+                native_value = value if value is not None else np.empty(0)
+                setattr(native_guess, attr, native_value)
+            return native_guess
 
 
 # -----------------------------------------------------------------------
@@ -57,7 +82,7 @@ class Qstls(_QuantumIterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.Qstls(inputs.getNative())
+        scheme = qp.Qstls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -72,15 +97,18 @@ class Qstls(_QuantumIterativeScheme):
             self.fixed: str = ""
             """ Name of the file storing the fixed component of the auxiliary density 
 	    response in the QSTLS scheme. """
-            self.guess: qp.QstlsGuess = qp.QstlsGuess()
-            """ Initial guess """
+            self.guess: Qstls.Guess = Qstls.Guess()
+            """Initial guess. Default = ``Qstls.Guess()``"""
             # Undocumented default values
             self.theory = "QSTLS"
 
-        def getNative(self) -> qp.QstlsInput:
+        def toNative(self) -> qp.QstlsInput:
             native_input = qp.QstlsInput()
             for attr, value in self.__dict__.items():
-                setattr(native_input, attr, value)
+                if attr == "guess":
+                    setattr(native_input, attr, value.toNative())
+                else:
+                    setattr(native_input, attr, value)
             return native_input
 
 
@@ -106,7 +134,7 @@ class QstlsIet(_QuantumIterativeScheme):
             inputs: Input parameters.
         """
         self._unpackFixedAdrFiles(inputs)
-        scheme = qp.Qstls(inputs.getNative())
+        scheme = qp.Qstls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
         self._zipFixedAdrFiles(inputs)
@@ -149,15 +177,6 @@ class QstlsIet(_QuantumIterativeScheme):
         if os.path.isdir(inputs.fixediet):
             rmtree(inputs.fixediet)
 
-    # Set the initial guess from a dataframe produced in output
-    @staticmethod
-    def getInitialGuess(fileName: str) -> qp.QstlsGuess:
-        guess = Qstls.getInitialGuess(fileName)
-        hdfData = qu.Hdf().read(fileName, ["adr", "matsubara"])
-        guess.adr = np.ascontiguousarray(hdfData["adr"])
-        guess.matsubara = hdfData["matsubara"]
-        return guess
-
     # Input class
     class Input(qc.StlsIet.Input, Qstls.Input):
         """
@@ -177,10 +196,13 @@ class QstlsIet(_QuantumIterativeScheme):
             of the auxiliary density response. Default = ``""``
             """
 
-        def getNative(self) -> qp.QstlsInput:
+        def toNative(self) -> qp.QstlsInput:
             native_input = qp.QstlsInput()
             for attr, value in self.__dict__.items():
-                setattr(native_input, attr, value)
+                if attr == "guess":
+                    setattr(native_input, attr, value.toNative())
+                else:
+                    setattr(native_input, attr, value)
             return native_input
 
 
@@ -202,13 +224,12 @@ class QVSStls(_QuantumIterativeScheme):
             inputs: Input parameters.
         """
         self._unpackFixedAdrFiles(inputs)
-        scheme = qp.QVSStls(inputs.getNative())
+        scheme = qp.QVSStls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
         self._zipFixedAdrFiles(inputs)
         self._cleanFixedAdrFiles(scheme.inputs)
 
-        
     # Unpack zip folder with fixed component of the auxiliary density response
     @qu.MPI.runOnlyOnRoot
     def _unpackFixedAdrFiles(self, inputs) -> None:
@@ -264,8 +285,11 @@ class QVSStls(_QuantumIterativeScheme):
             # Undocumented default values
             self.theory: str = "QVSSTLS"
 
-        def getNative(self) -> qp.QVSStlsInput:
+        def toNative(self) -> qp.QVSStlsInput:
             native_input = qp.QVSStlsInput()
             for attr, value in self.__dict__.items():
-                setattr(native_input, attr, value)
+                if attr == "guess":
+                    setattr(native_input, attr, value.toNative())
+                else:
+                    setattr(native_input, attr, value)
             return native_input

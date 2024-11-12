@@ -16,7 +16,6 @@ def qvsstls_input():
     return QVSStls.Input(1.0, 1.0)
 
 
-
 def test_default(qvsstls):
     assert qvsstls.hdfFileName is None
 
@@ -59,6 +58,7 @@ def test_unpackFixedAdrFiles_with_files(qvsstls, qvsstls_input, mocker):
     assert mockZip.call_count == 1
     assert mockExtractAll.call_count == 1
 
+
 def test_zipFixedAdrFiles_no_file(qvsstls, qvsstls_input, mocker, capsys):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     mockZip = mocker.patch("qupled.quantum.zf.ZipFile.__init__", return_value=None)
@@ -95,7 +95,7 @@ def test_cleanFixedAdrFiles_with_files(qvsstls, qvsstls_input, mocker, capsys):
 def test_save(qvsstls, qvsstls_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = QVSStlsNative(qvsstls_input.getNative())
+        scheme = QVSStlsNative(qvsstls_input.toNative())
         qvsstls.hdfFileName = qvsstls._getHdfFile(scheme.inputs)
         qvsstls._save(scheme)
         assert mockMPIIsRoot.call_count == 4

@@ -37,7 +37,7 @@ def test_compute(qstls, qstls_input, mocker):
 def test_save(qstls, qstls_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = QstlsNative(qstls_input.getNative())
+        scheme = QstlsNative(qstls_input.toNative())
         qstls.hdfFileName = qstls._getHdfFile(scheme.inputs)
         qstls._save(scheme)
         assert mockMPIIsRoot.call_count == 3
@@ -68,8 +68,11 @@ def test_save(qstls, qstls_input, mocker):
 def test_getInitialGuess(mocker):
     arr = np.ones(10)
     mockHdfRead = mocker.patch(
-        "qupled.util.Hdf.read", return_value={"wvg": arr, "ssf": arr}
+        "qupled.util.Hdf.read",
+        return_value={"wvg": arr, "ssf": arr, "adr": arr, "matsubara": 10},
     )
     guess = Qstls.getInitialGuess("dummyFileName")
     assert np.array_equal(guess.wvg, arr)
     assert np.array_equal(guess.ssf, arr)
+    assert np.array_equal(guess.adr, arr)
+    assert np.array_equal(guess.matsubara, 10)

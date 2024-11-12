@@ -95,7 +95,7 @@ def test_cleanFixedAdrFiles_with_files(qstls_iet, qstls_iet_input, mocker, capsy
 def test_save(qstls_iet, qstls_iet_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = QstlsNative(qstls_iet_input.getNative())
+        scheme = QstlsNative(qstls_iet_input.toNative())
         qstls_iet.hdfFileName = qstls_iet._getHdfFile(scheme.inputs)
         qstls_iet._save(scheme)
         assert mockMPIIsRoot.call_count == 4
@@ -122,18 +122,3 @@ def test_save(qstls_iet, qstls_iet_input, mocker):
             assert entry in inspectData
     finally:
         os.remove(qstls_iet.hdfFileName)
-
-
-def test_getInitialGuess(mocker):
-    arr1D = np.ones(10)
-    arr2D = np.ones((10, 128))
-    n = 128
-    mockHdfRead = mocker.patch(
-        "qupled.util.Hdf.read",
-        return_value={"wvg": arr1D, "ssf": arr1D, "adr": arr2D, "matsubara": n},
-    )
-    guess = QstlsIet.getInitialGuess("dummyFileName")
-    assert np.array_equal(guess.wvg, arr1D)
-    assert np.array_equal(guess.ssf, arr1D)
-    assert np.array_equal(guess.adr, arr2D)
-    assert np.array_equal(guess.matsubara, n)

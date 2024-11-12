@@ -144,7 +144,7 @@ class Rpa(_ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.Rpa(inputs.getNative())
+        scheme = qp.Rpa(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -187,7 +187,7 @@ class Rpa(_ClassicScheme):
             """Number of OMP threads for parallel calculations. Default =  ``1``"""
             self.theory: str = "RPA"
 
-        def getNative(self) -> qp.RpaInput:
+        def toNative(self) -> qp.RpaInput:
             native_input = qp.RpaInput()
             for attr, value in self.__dict__.items():
                 setattr(native_input, attr, value)
@@ -215,7 +215,7 @@ class ESA(_ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.ESA(inputs.getNative())
+        scheme = qp.ESA(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -240,17 +240,14 @@ class _IterativeScheme(_ClassicScheme):
 
     # Set the initial guess from a dataframe produced in output
     @staticmethod
-    def getInitialGuess(fileName: str) -> qp.StlsGuess:
+    def getInitialGuess(fileName: str) -> _IterativeScheme.Guess:
         """Constructs an initial guess object by extracting the information from an output file.
 
         Args:
             fileName : name of the file used to extract the information for the initial guess.
         """
-        guess = qp.StlsGuess()
         hdfData = qu.Hdf().read(fileName, ["wvg", "slfc"])
-        guess.wvg = hdfData["wvg"]
-        guess.slfc = hdfData["slfc"]
-        return guess
+        return _IterativeScheme.Guess(hdfData["wvg"], hdfData["slfc"])
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
@@ -271,6 +268,22 @@ class _IterativeScheme(_ClassicScheme):
             index=["info"],
         ).to_hdf(self.hdfFileName, key="info")
 
+    # Initial guess
+    class Guess:
+
+        def __init__(self, wvg: np.ndarray = None, slfc: np.ndarray = None):
+            self.wvg = wvg
+            """ Wave-vector grid. Default = ``None``"""
+            self.slfc = slfc
+            """ Static local field correction. Default = ``None``"""
+
+        def toNative(self) -> qp.StlsGuess:
+            native_guess = qp.StlsGuess()
+            for attr, value in self.__dict__.items():
+                native_value = value if value is not None else np.empty(0)
+                setattr(native_guess, attr, native_value)
+            return native_guess
+
 
 # -----------------------------------------------------------------------
 # Stls class
@@ -289,7 +302,7 @@ class Stls(_IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.Stls(inputs.getNative())
+        scheme = qp.Stls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -311,15 +324,18 @@ class Stls(_IterativeScheme):
             """Output frequency to write the recovery file. Default = ``10``"""
             self.recoveryFile: str = ""
             """Name of the recovery file. Default = ``""``"""
-            self.guess: qp.StlsGuess = qp.StlsGuess()
-            """Initial guess."""
+            self.guess: Stls.Guess = Stls.Guess()
+            """Initial guess. Default = ``Stls.Guess()``"""
             # Undocumented default values
             self.theory: str = "STLS"
 
-        def getNative(self) -> qp.StlsInput:
+        def toNative(self) -> qp.StlsInput:
             native_input = qp.StlsInput()
             for attr, value in self.__dict__.items():
-                setattr(native_input, attr, value)
+                if attr == "guess":
+                    setattr(native_input, attr, value.toNative())
+                else:
+                    setattr(native_input, attr, value)
             return native_input
 
 
@@ -340,7 +356,7 @@ class StlsIet(_IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.Stls(inputs.getNative())
+        scheme = qp.Stls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -380,10 +396,13 @@ class StlsIet(_IterativeScheme):
             mapping diverges). Default = ``standard``.
             """
 
-        def getNative(self) -> qp.StlsInput:
+        def toNative(self) -> qp.StlsInput:
             native_input = qp.StlsInput()
             for attr, value in self.__dict__.items():
-                setattr(native_input, attr, value)
+                if attr == "guess":
+                    setattr(native_input, attr, value.toNative())
+                else:
+                    setattr(native_input, attr, value)
             return native_input
 
 
@@ -404,7 +423,7 @@ class VSStls(_IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.VSStls(inputs.getNative())
+        scheme = qp.VSStls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -459,8 +478,11 @@ class VSStls(_IterativeScheme):
             # Undocumented default values
             self.theory: str = "VSSTLS"
 
-        def getNative(self) -> qp.VSStlsInput:
+        def toNative(self) -> qp.VSStlsInput:
             native_input = qp.VSStlsInput()
             for attr, value in self.__dict__.items():
-                setattr(native_input, attr, value)
+                if attr == "guess":
+                    setattr(native_input, attr, value.toNative())
+                else:
+                    setattr(native_input, attr, value)
             return native_input

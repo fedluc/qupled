@@ -53,7 +53,7 @@ def test_getHdfFile(rpa, rpa_input):
 def test_save(rpa, rpa_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = RpaNative(rpa_input.getNative())
+        scheme = RpaNative(rpa_input.toNative())
         rpa.hdfFileName = rpa._getHdfFile(scheme.inputs)
         rpa._save(scheme)
         assert mockMPIIsRoot.call_count == 1

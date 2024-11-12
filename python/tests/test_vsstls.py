@@ -37,7 +37,7 @@ def test_compute(vsstls, vsstls_input, mocker):
 def test_save(vsstls, vsstls_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = VSStlsNative(vsstls_input.getNative())
+        scheme = VSStlsNative(vsstls_input.toNative())
         vsstls.hdfFileName = vsstls._getHdfFile(scheme.inputs)
         vsstls._save(scheme)
         assert mockMPIIsRoot.call_count == 3
