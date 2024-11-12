@@ -28,7 +28,10 @@ class _QuantumIterativeScheme(qc._IterativeScheme):
         """
         hdfData = qu.Hdf().read(fileName, ["wvg", "ssf", "adr", "matsubara"])
         return _QuantumIterativeScheme.Guess(
-            hdfData["wvg"], hdfData["ssf"], hdfData["adr"], hdfData["matsubara"]
+            hdfData["wvg"],
+            hdfData["ssf"],
+            np.ascontiguousarray(hdfData["adr"]),
+            hdfData["matsubara"],
         )
 
     # Save results to disk
@@ -163,7 +166,7 @@ class QstlsIet(_QuantumIterativeScheme):
             degeneracy = inputs.degeneracy
             matsubara = inputs.matsubara
             theory = inputs.theory
-            adrFile = f"adr_fixed_theta{degeneracy:5.3f}_{matsubara}_{theory}"
+            adrFile = f"adr_fixed_theta{degeneracy:5.3f}_matsubara{matsubara}_{theory}"
             adrFileZip = f"{adrFile}.zip"
             adrFileBin = f"{adrFile}_wv*.bin"
             with zf.ZipFile(adrFileZip, "w") as zipFile:
@@ -255,7 +258,9 @@ class QVSStls(_QuantumIterativeScheme):
             degeneracy = inputs.degeneracy
             matsubara = inputs.matsubara
             theory = inputs.theory
-            adrFileZip = f"adr_fixed_theta{degeneracy:5.3f}_{matsubara}_{theory}.zip"
+            adrFileZip = (
+                f"adr_fixed_theta{degeneracy:5.3f}_matsubara{matsubara}_{theory}.zip"
+            )
             adrFileBin = "THETA*.bin"
             with zf.ZipFile(adrFileZip, "w") as zipFile:
                 for binFile in glob(adrFileBin):

@@ -1,5 +1,8 @@
 from qupled.quantum import Qstls
 
+# Define the object used to solve the scheme
+qstls = Qstls()
+
 # Define the input parameters
 inputs = Qstls.Input(10.0, 1.0)
 inputs.mixing = 0.5
@@ -7,16 +10,14 @@ inputs.matsubara = 16
 inputs.threads = 16
 
 # Solve the QSTLS scheme and store the internal energy (v1 calculation)
-qstls = Qstls(inputs)
-qstls.compute()
+qstls.compute(inputs)
 uInt1 = qstls.computeInternalEnergy()
 
 # Pass in input the fixed component of the auxiliary density response
-inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
+inputs.fixed = "adr_fixed_theta1.000_matsubara16_QSTLS.bin"
 
 # Repeat the calculation and recompute the internal energy (v2 calculation)
-qstls = Qstls(inputs)
-qstls.compute()
+qstls.compute(inputs)
 uInt2 = qstls.computeInternalEnergy()
 
 # Compare the internal energies obtained with the two methods
@@ -27,10 +28,10 @@ print("Internal energy (v2) = %.8f" % uInt2)
 inputs.coupling = 20.0
 
 # Compute with the updated coupling parameter
-Qstls(inputs).compute()
+qstls.compute(inputs)
 
 # Change the degeneracy parameter
 inputs.degeneracy = 2.0
 
 # Compute with the update degeneracy parameter (this throws an error)
-Qstls(inputs).compute()
+qstls.compute(inputs)
