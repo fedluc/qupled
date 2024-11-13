@@ -61,3 +61,19 @@ jobs:
 
     - name: Build
       run: cmake --build build-linux --config Release
+
+  build-pip:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Create directories
+      run: |
+      	   mkdir -p release/linux
+	   mkdir -p release/macos
+
+    - name: Copy data
+      run: |
+      	   cp -r build-linux/qupled release/linux
+	   cp -r build-macos/qupled release/macos
