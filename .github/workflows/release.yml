@@ -1,7 +1,7 @@
 name: Release
 
 on:
-  push:	
+  push:
 
 env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
@@ -9,9 +9,8 @@ env:
 jobs:
 
   build-macos:
-  
     runs-on: macos-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -39,8 +38,13 @@ jobs:
       run: |
         cmake --build build-macos --config Release
 
-  build-linux:
+    - name: Upload macOS build folder as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-build-folder
+        path: build-macos
 
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -62,12 +66,28 @@ jobs:
     - name: Build
       run: cmake --build build-linux --config Release
 
-  build-pip:
+    - name: Upload Linux build folder as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: linux-build-folder
+        path: build-linux
 
+  build-pip:
     runs-on: ubuntu-latest
     needs: [build-linux, build-macos]
 
     steps:
+    - name: Download macOS build folder
+      uses: actions/download-artifact@v3
+      with:
+        name: macos-build-folder
+        path: build-macos
+
+    - name: Download Linux build folder
+      uses: actions/download-artifact@v3
+      with:
+        name: linux-build-folder
+        path: build-linux
 
     - name: Create directories
       run: |
