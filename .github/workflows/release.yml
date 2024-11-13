@@ -28,21 +28,21 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install --upgrade pip
         pip3 install -r python/requirements.txt
-        
+
     - name: Configure CMake
       run: |
         export OpenMP_ROOT=$(brew --prefix)/opt/libomp
-        cmake -Bbuild-macos -H. -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=OFF
-        
+        cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=OFF
+
     - name: Build
       run: |
-        cmake --build build-macos --config Release
+        cmake --build build --config Release
 
-    - name: Upload macOS build folder as artifact
+    - name: Upload macOS built library as artifact
       uses: actions/upload-artifact@v3
       with:
-        name: macos-build-folder
-        path: build-macos
+        name: macos-library
+        path: build/qupled/qupled.so
 
   build-linux:
     runs-on: ubuntu-latest
@@ -61,33 +61,33 @@ jobs:
         pip3 install -r python/requirements.txt
 
     - name: Configure CMake
-      run: cmake -Bbuild-linux -H. -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=OFF
+      run: cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=OFF
 
     - name: Build
-      run: cmake --build build-linux --config Release
+      run: cmake --build build --config Release
 
-    - name: Upload Linux build folder as artifact
+    - name: Upload Linux built library as artifact
       uses: actions/upload-artifact@v3
       with:
-        name: linux-build-folder
-        path: build-linux
+        name: linux-library
+        path: build/qupled/qupled.so
 
   build-pip:
     runs-on: ubuntu-latest
     needs: [build-linux, build-macos]
 
     steps:
-    - name: Download macOS build folder
+    - name: Download macOS built library
       uses: actions/download-artifact@v3
       with:
-        name: macos-build-folder
-        path: build-macos
+        name: macos-library
+        path: release/macos
 
-    - name: Download Linux build folder
+    - name: Download Linux built library
       uses: actions/download-artifact@v3
       with:
-        name: linux-build-folder
-        path: build-linux
+        name: linux-library
+        path: release/linux
 
     - name: Create directories
       run: |
@@ -96,5 +96,5 @@ jobs:
 
     - name: Copy data
       run: |
-           cp -r build-linux/qupled release/linux
-           cp -r build-macos/qupled release/macos
+           ls release/macos
+           ls release/linux
