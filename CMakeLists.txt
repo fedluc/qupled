@@ -26,8 +26,8 @@ add_dependencies(pip qupled)
 # Formatting
 add_custom_target(format
     COMMAND black ${CMAKE_SOURCE_DIR}
-    COMMAND find ${CMAKE_SOURCE_DIR} -name "*.cpp" | xargs clang-format --style=file -i
-    COMMAND find ${CMAKE_SOURCE_DIR} -name "*.hpp" | xargs clang-format --style=file -i
+    COMMAND find ${CMAKE_SOURCE_DIR}/src -name "*.cpp" | xargs clang-format --style=file -i
+    COMMAND find ${CMAKE_SOURCE_DIR}/include -name "*.hpp" | xargs clang-format --style=file -i
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
