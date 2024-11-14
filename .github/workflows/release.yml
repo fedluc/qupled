@@ -2,6 +2,8 @@ name: Release
 
 on:
   push:
+    tags:
+      - 'v*'
 
 env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
@@ -83,22 +85,28 @@ jobs:
     - name: Setup release directory
       run: |
         mkdir release
-        cp python/release/* release
-        cp python/qupled release
+        cp -r python/release/* release
+        cp -r python/qupled release
         cd release
       
-    - name: Download macOS built library
+    - name: Download native library for macOS
       uses: actions/download-artifact@v3
       with:
         name: macos-library
         path: release/qupled/Darwin
 
-    - name: Download Linux built library
+    - name: Download native library for Linux
       uses: actions/download-artifact@v3
       with:
         name: linux-library
         path: release/qupled/Linux
 
+    - name: Set version in TOML file
+      run: |
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" pyproject.toml
+          
     - name: Show release data
       run: |
+        head pyproject.toml
         tree
