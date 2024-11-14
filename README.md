@@ -14,6 +14,7 @@ Qupled is a Python package designed for calculating the properties of quantum pl
 [![Build & Test (macOS)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml)
 [![Build & Test (macOS-MPI)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos_mpi.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos_mpi.yml)
 [![Code Formatting](https://github.com/fedluc/qupled/actions/workflows/formatting.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/formatting.yml)
+![](https://readthedocs.org/projects/qupled/badge/?version=latest&style=flat)
 
 ## Dependencies
 
