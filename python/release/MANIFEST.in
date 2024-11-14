@@ -1,1 +1,2 @@
-include qupled/qupled.so
+include qupled/Darwin/qupled.so
+include qupled/Linux/qupled.so
