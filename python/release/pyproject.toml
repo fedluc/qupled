@@ -1,6 +1,6 @@
 [project]
 name = "qupled-test"
-version = "0.0.1"
+version = ""
 description = "qupled: a package to investigate quantum plasmas via the dielectric formalism"
 readme = "README.md"
 requires-python = ">=3.10, <3.13"
@@ -38,4 +38,3 @@ docs = [
 
 [tool.setuptools]
 include-package-data = true
-packages = ["qupled"]
