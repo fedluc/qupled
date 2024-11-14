@@ -1,6 +1,6 @@
 import os
 import pytest
-from qupled.qupled import Rpa as RpaNative
+from qupled import native
 from qupled.util import Hdf
 from qupled.classic import Rpa
 
@@ -22,7 +22,7 @@ def test_default(rpa):
 def test_compute(rpa, rpa_input, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCompute = mocker.patch("qupled.qupled.Rpa.compute")
+    mockCompute = mocker.patch("qupled.native.Rpa.compute")
     mockCheckStatusAndClean = mocker.patch("qupled.classic.Rpa._checkStatusAndClean")
     mockSave = mocker.patch("qupled.classic.Rpa._save")
     rpa.compute(rpa_input)
@@ -53,7 +53,7 @@ def test_getHdfFile(rpa, rpa_input):
 def test_save(rpa, rpa_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = RpaNative(rpa_input.toNative())
+        scheme = native.Rpa(rpa_input.toNative())
         rpa.hdfFileName = rpa._getHdfFile(scheme.inputs)
         rpa._save(scheme)
         assert mockMPIIsRoot.call_count == 1

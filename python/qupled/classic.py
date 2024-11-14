@@ -3,8 +3,9 @@ import sys
 import os
 import numpy as np
 import pandas as pd
+from qupled import native
 import qupled.util as qu
-import qupled.qupled as qp
+
 
 # -----------------------------------------------------------------------
 # _ClassicScheme class
@@ -144,7 +145,7 @@ class Rpa(_ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.Rpa(inputs.toNative())
+        scheme = native.Rpa(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -187,8 +188,8 @@ class Rpa(_ClassicScheme):
             """Number of OMP threads for parallel calculations. Default =  ``1``"""
             self.theory: str = "RPA"
 
-        def toNative(self) -> qp.RpaInput:
-            native_input = qp.RpaInput()
+        def toNative(self) -> native.RpaInput:
+            native_input = native.RpaInput()
             for attr, value in self.__dict__.items():
                 setattr(native_input, attr, value)
             return native_input
@@ -215,7 +216,7 @@ class ESA(_ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.ESA(inputs.toNative())
+        scheme = native.ESA(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -277,8 +278,8 @@ class _IterativeScheme(_ClassicScheme):
             self.slfc = slfc
             """ Static local field correction. Default = ``None``"""
 
-        def toNative(self) -> qp.StlsGuess:
-            native_guess = qp.StlsGuess()
+        def toNative(self) -> native.StlsGuess:
+            native_guess = native.StlsGuess()
             for attr, value in self.__dict__.items():
                 native_value = value if value is not None else np.empty(0)
                 setattr(native_guess, attr, native_value)
@@ -302,7 +303,7 @@ class Stls(_IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.Stls(inputs.toNative())
+        scheme = native.Stls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -329,8 +330,8 @@ class Stls(_IterativeScheme):
             # Undocumented default values
             self.theory: str = "STLS"
 
-        def toNative(self) -> qp.StlsInput:
-            native_input = qp.StlsInput()
+        def toNative(self) -> native.StlsInput:
+            native_input = native.StlsInput()
             for attr, value in self.__dict__.items():
                 if attr == "guess":
                     setattr(native_input, attr, value.toNative())
@@ -356,7 +357,7 @@ class StlsIet(_IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.Stls(inputs.toNative())
+        scheme = native.Stls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -396,8 +397,8 @@ class StlsIet(_IterativeScheme):
             mapping diverges). Default = ``standard``.
             """
 
-        def toNative(self) -> qp.StlsInput:
-            native_input = qp.StlsInput()
+        def toNative(self) -> native.StlsInput:
+            native_input = native.StlsInput()
             for attr, value in self.__dict__.items():
                 if attr == "guess":
                     setattr(native_input, attr, value.toNative())
@@ -423,7 +424,7 @@ class VSStls(_IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.VSStls(inputs.toNative())
+        scheme = native.VSStls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -438,13 +439,13 @@ class VSStls(_IterativeScheme):
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
-    def getFreeEnergyIntegrand(fileName: str) -> qp.FreeEnergyIntegrand():
+    def getFreeEnergyIntegrand(fileName: str) -> native.FreeEnergyIntegrand():
         """Constructs the free energy integrand by extracting the information from an output file.
 
         Args:
             fileName : name of the file used to extract the information for the free energy integrand.
         """
-        fxci = qp.FreeEnergyIntegrand()
+        fxci = native.FreeEnergyIntegrand()
         hdfData = qu.Hdf().read(fileName, ["fxcGrid", "fxci", "alpha"])
         fxci.grid = hdfData["fxcGrid"]
         fxci.integrand = np.ascontiguousarray(hdfData["fxci"])
@@ -470,7 +471,7 @@ class VSStls(_IterativeScheme):
             self.iterationsAlpha: int = 50
             """Maximum number of iterations to determine the free parameter. Default = ``50``"""
             self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = (
-                qp.FreeEnergyIntegrand()
+                native.FreeEnergyIntegrand()
             )
             """Pre-computed free energy integrand."""
             self.threads: int = 9
@@ -478,8 +479,8 @@ class VSStls(_IterativeScheme):
             # Undocumented default values
             self.theory: str = "VSSTLS"
 
-        def toNative(self) -> qp.VSStlsInput:
-            native_input = qp.VSStlsInput()
+        def toNative(self) -> native.VSStlsInput:
+            native_input = native.VSStlsInput()
             for attr, value in self.__dict__.items():
                 if attr == "guess":
                     setattr(native_input, attr, value.toNative())

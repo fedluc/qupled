@@ -7,8 +7,8 @@ from glob import glob
 import zipfile as zf
 import numpy as np
 import pandas as pd
+from qupled import native
 import qupled.util as qu
-import qupled.qupled as qp
 import qupled.classic as qc
 
 # -----------------------------------------------------------------------
@@ -60,8 +60,8 @@ class _QuantumIterativeScheme(qc._IterativeScheme):
             self.matsubara = matsubara
             """ Number of matsubara frequencies. Default = ``0``"""
 
-        def toNative(self) -> qp.QStlsGuess:
-            native_guess = qp.QstlsGuess()
+        def toNative(self) -> native.QStlsGuess:
+            native_guess = native.QstlsGuess()
             for attr, value in self.__dict__.items():
                 native_value = value if value is not None else np.empty(0)
                 setattr(native_guess, attr, native_value)
@@ -85,7 +85,7 @@ class Qstls(_QuantumIterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = qp.Qstls(inputs.toNative())
+        scheme = native.Qstls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
 
@@ -105,8 +105,8 @@ class Qstls(_QuantumIterativeScheme):
             # Undocumented default values
             self.theory = "QSTLS"
 
-        def toNative(self) -> qp.QstlsInput:
-            native_input = qp.QstlsInput()
+        def toNative(self) -> native.QstlsInput:
+            native_input = native.QstlsInput()
             for attr, value in self.__dict__.items():
                 if attr == "guess":
                     setattr(native_input, attr, value.toNative())
@@ -137,7 +137,7 @@ class QstlsIet(_QuantumIterativeScheme):
             inputs: Input parameters.
         """
         self._unpackFixedAdrFiles(inputs)
-        scheme = qp.Qstls(inputs.toNative())
+        scheme = native.Qstls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
         self._zipFixedAdrFiles(inputs)
@@ -199,8 +199,8 @@ class QstlsIet(_QuantumIterativeScheme):
             of the auxiliary density response. Default = ``""``
             """
 
-        def toNative(self) -> qp.QstlsInput:
-            native_input = qp.QstlsInput()
+        def toNative(self) -> native.QstlsInput:
+            native_input = native.QstlsInput()
             for attr, value in self.__dict__.items():
                 if attr == "guess":
                     setattr(native_input, attr, value.toNative())
@@ -227,7 +227,7 @@ class QVSStls(_QuantumIterativeScheme):
             inputs: Input parameters.
         """
         self._unpackFixedAdrFiles(inputs)
-        scheme = qp.QVSStls(inputs.toNative())
+        scheme = native.QVSStls(inputs.toNative())
         self._compute(scheme)
         self._save(scheme)
         self._zipFixedAdrFiles(inputs)
@@ -275,7 +275,7 @@ class QVSStls(_QuantumIterativeScheme):
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
-    def getFreeEnergyIntegrand(fileName: str) -> qp.FreeEnergyIntegrand():
+    def getFreeEnergyIntegrand(fileName: str) -> native.FreeEnergyIntegrand():
         return qc.VSStls.getFreeEnergyIntegrand(fileName)
 
     # Input class
@@ -290,8 +290,8 @@ class QVSStls(_QuantumIterativeScheme):
             # Undocumented default values
             self.theory: str = "QVSSTLS"
 
-        def toNative(self) -> qp.QVSStlsInput:
-            native_input = qp.QVSStlsInput()
+        def toNative(self) -> native.QVSStlsInput:
+            native_input = native.QVSStlsInput()
             for attr, value in self.__dict__.items():
                 if attr == "guess":
                     setattr(native_input, attr, value.toNative())

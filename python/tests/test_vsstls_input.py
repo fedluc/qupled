@@ -1,16 +1,16 @@
 import os
 import pytest
 import numpy as np
-import qupled.qupled as qp
+from qupled import native
 
 
 @pytest.fixture
 def vsstls_input_instance():
-    return qp.VSStlsInput()
+    return native.VSStlsInput()
 
 
 def test_init(vsstls_input_instance):
-    assert issubclass(qp.VSStlsInput, qp.VSInput)
+    assert issubclass(native.VSStlsInput, native.VSInput)
     assert hasattr(vsstls_input_instance, "errorAlpha")
     assert hasattr(vsstls_input_instance, "iterationsAlpha")
     assert hasattr(vsstls_input_instance, "alpha")
@@ -93,7 +93,7 @@ def test_degeneracyResolution(vsstls_input_instance):
 def test_freeEnergyIntegrand(vsstls_input_instance):
     arr1 = np.zeros(10)
     arr2 = np.zeros((3, 10))
-    fxc = qp.FreeEnergyIntegrand()
+    fxc = native.FreeEnergyIntegrand()
     fxc.grid = arr1
     fxc.integrand = arr2
     vsstls_input_instance.freeEnergyIntegrand = fxc
@@ -105,7 +105,7 @@ def test_freeEnergyIntegrand_Inconsistent(vsstls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros((3, 11))
-        fxc = qp.FreeEnergyIntegrand()
+        fxc = native.FreeEnergyIntegrand()
         fxc.grid = arr1
         fxc.integrand = arr2
         vsstls_input_instance.freeEnergyIntegrand = fxc
@@ -117,7 +117,7 @@ def test_isEqual_default(vsstls_input_instance):
 
 
 def test_isEqual(vsstls_input_instance):
-    thisVSStls = qp.VSStlsInput()
+    thisVSStls = native.VSStlsInput()
     thisVSStls.coupling = 2.0
     thisVSStls.degeneracy = 1.0
     thisVSStls.intError = 0.1

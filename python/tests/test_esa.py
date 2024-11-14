@@ -20,7 +20,7 @@ def test_default(esa):
 def test_compute(esa, esa_input, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCompute = mocker.patch("qupled.qupled.ESA.compute")
+    mockCompute = mocker.patch("qupled.native.ESA.compute")
     mockCheckStatusAndClean = mocker.patch("qupled.classic.ESA._checkStatusAndClean")
     mockSave = mocker.patch("qupled.classic.ESA._save")
     esa.compute(esa_input)

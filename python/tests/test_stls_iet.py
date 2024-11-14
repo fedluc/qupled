@@ -1,6 +1,6 @@
 import os
 import pytest
-from qupled.qupled import Stls as StlsNative
+from qupled import native
 from qupled.util import Hdf
 from qupled.classic import StlsIet
 
@@ -22,7 +22,7 @@ def test_default(stls_iet):
 def test_compute(stls_iet, stls_iet_input, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCompute = mocker.patch("qupled.qupled.Stls.compute")
+    mockCompute = mocker.patch("qupled.native.Stls.compute")
     mockCheckStatusAndClean = mocker.patch(
         "qupled.classic.StlsIet._checkStatusAndClean"
     )
@@ -38,7 +38,7 @@ def test_compute(stls_iet, stls_iet_input, mocker):
 def test_save(stls_iet, stls_iet_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = StlsNative(stls_iet_input.toNative())
+        scheme = native.Stls(stls_iet_input.toNative())
         stls_iet.hdfFileName = stls_iet._getHdfFile(scheme.inputs)
         stls_iet._save(scheme)
         assert mockMPIIsRoot.call_count == 3

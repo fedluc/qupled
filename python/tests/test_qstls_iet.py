@@ -1,7 +1,7 @@
 import os
 import pytest
 import numpy as np
-from qupled.qupled import Qstls as QstlsNative
+from qupled import native
 from qupled.util import Hdf
 from qupled.quantum import QstlsIet
 
@@ -95,7 +95,7 @@ def test_cleanFixedAdrFiles_with_files(qstls_iet, qstls_iet_input, mocker, capsy
 def test_save(qstls_iet, qstls_iet_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = QstlsNative(qstls_iet_input.toNative())
+        scheme = native.Qstls(qstls_iet_input.toNative())
         qstls_iet.hdfFileName = qstls_iet._getHdfFile(scheme.inputs)
         qstls_iet._save(scheme)
         assert mockMPIIsRoot.call_count == 4

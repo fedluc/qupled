@@ -1,7 +1,7 @@
 import os
 import pytest
 import numpy as np
-from qupled.qupled import VSStls as VSStlsNative
+from qupled import native
 from qupled.util import Hdf
 from qupled.classic import VSStls
 
@@ -23,7 +23,7 @@ def test_default(vsstls):
 def test_compute(vsstls, vsstls_input, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCompute = mocker.patch("qupled.qupled.VSStls.compute")
+    mockCompute = mocker.patch("qupled.native.VSStls.compute")
     mockCheckStatusAndClean = mocker.patch("qupled.classic.VSStls._checkStatusAndClean")
     mockSave = mocker.patch("qupled.classic.VSStls._save")
     vsstls.compute(vsstls_input)
@@ -37,7 +37,7 @@ def test_compute(vsstls, vsstls_input, mocker):
 def test_save(vsstls, vsstls_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = VSStlsNative(vsstls_input.toNative())
+        scheme = native.VSStls(vsstls_input.toNative())
         vsstls.hdfFileName = vsstls._getHdfFile(scheme.inputs)
         vsstls._save(scheme)
         assert mockMPIIsRoot.call_count == 3

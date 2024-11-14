@@ -71,8 +71,9 @@ target_link_libraries(qupled PUBLIC
 		      GSL::gslcblas
 		      fmt::fmt)
 
-# Create python package							
-set_target_properties(qupled PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${QUPLED_OUTPUT_DIR})
+# Create python package
+set(QUPLED_NATIVE_OUTPUT_DIR ${QUPLED_OUTPUT_DIR}/${CMAKE_SYSTEM_NAME})
+set_target_properties(qupled PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${QUPLED_NATIVE_OUTPUT_DIR})
 
 
 # Define installation directory

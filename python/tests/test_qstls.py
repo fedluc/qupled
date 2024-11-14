@@ -1,7 +1,7 @@
 import os
 import pytest
 import numpy as np
-from qupled.qupled import Qstls as QstlsNative
+from qupled import native
 from qupled.util import Hdf
 from qupled.quantum import Qstls
 
@@ -23,7 +23,7 @@ def test_default(qstls):
 def test_compute(qstls, qstls_input, mocker):
     mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
     mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCompute = mocker.patch("qupled.qupled.Qstls.compute")
+    mockCompute = mocker.patch("qupled.native.Qstls.compute")
     mockCheckStatusAndClean = mocker.patch("qupled.quantum.Qstls._checkStatusAndClean")
     mockSave = mocker.patch("qupled.quantum.Qstls._save")
     qstls.compute(qstls_input)
@@ -37,7 +37,7 @@ def test_compute(qstls, qstls_input, mocker):
 def test_save(qstls, qstls_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = QstlsNative(qstls_input.toNative())
+        scheme = native.Qstls(qstls_input.toNative())
         qstls.hdfFileName = qstls._getHdfFile(scheme.inputs)
         qstls._save(scheme)
         assert mockMPIIsRoot.call_count == 3

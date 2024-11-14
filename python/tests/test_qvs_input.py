@@ -1,16 +1,16 @@
 import os
 import pytest
 import numpy as np
-import qupled.qupled as qp
+from qupled import native
 
 
 @pytest.fixture
 def qvsstls_input_instance():
-    return qp.QVSStlsInput()
+    return native.QVSStlsInput()
 
 
 def test_init(qvsstls_input_instance):
-    assert issubclass(qp.QVSStlsInput, qp.VSInput)
+    assert issubclass(native.QVSStlsInput, native.VSInput)
     assert hasattr(qvsstls_input_instance, "errorAlpha")
     assert hasattr(qvsstls_input_instance, "iterationsAlpha")
     assert hasattr(qvsstls_input_instance, "alpha")
@@ -106,7 +106,7 @@ def test_degeneracyResolution(qvsstls_input_instance):
 def test_freeEnergyIntegrand(qvsstls_input_instance):
     arr1 = np.zeros(10)
     arr2 = np.zeros((3, 10))
-    fxc = qp.FreeEnergyIntegrand()
+    fxc = native.FreeEnergyIntegrand()
     fxc.grid = arr1
     fxc.integrand = arr2
     qvsstls_input_instance.freeEnergyIntegrand = fxc
@@ -118,7 +118,7 @@ def test_freeEnergyIntegrand_Inconsistent(qvsstls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros((3, 11))
-        fxc = qp.FreeEnergyIntegrand()
+        fxc = native.FreeEnergyIntegrand()
         fxc.grid = arr1
         fxc.integrand = arr2
         qvsstls_input_instance.freeEnergyIntegrand = fxc
@@ -130,7 +130,7 @@ def test_isEqual_default(qvsstls_input_instance):
 
 
 def test_isEqual(qvsstls_input_instance):
-    thisQVSStls = qp.QVSStlsInput()
+    thisQVSStls = native.QVSStlsInput()
     thisQVSStls.coupling = 2.0
     thisQVSStls.degeneracy = 1.0
     thisQVSStls.intError = 0.1

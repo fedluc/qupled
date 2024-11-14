@@ -38,11 +38,11 @@ jobs:
       run: |
         cmake --build build --config Release
 
-    - name: Upload macOS built library as artifact
+    - name: Upload native library as artifact
       uses: actions/upload-artifact@v3
       with:
         name: macos-library
-        path: build/qupled/qupled.so
+        path: build/qupled/Darwin/qupled.so
 
   build-linux:
     runs-on: ubuntu-latest
@@ -66,11 +66,11 @@ jobs:
     - name: Build
       run: cmake --build build --config Release
 
-    - name: Upload Linux built library as artifact
+    - name: Upload native library as artifact
       uses: actions/upload-artifact@v3
       with:
         name: linux-library
-        path: build/qupled/qupled.so
+        path: build/qupled/Linux/qupled.so
 
   build-pip:
     runs-on: ubuntu-latest
