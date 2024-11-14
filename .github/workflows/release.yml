@@ -117,3 +117,40 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         python -m build
       working-directory: release
+
+    - name: Upload pip package as an artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: qupled
+        path: release/dist
+
+  test-pip-macos:
+    runs-on: macos-latest
+    needs: build-pip
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Download pip package
+      uses: actions/download-artifact@v3
+      with:
+        name: qupled
+        path: release/qupled
+        
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
+    - name: Set up Python environment
+      run: |
+        python3 -m venv ${PYTHON_VENV_ROOT}
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        pip3 install --upgrade pip
+        pip3 install release/qupled/*.whl pytest pytest-mock
+
+    - name: Test pip package
+      run: |
+        pytest 
+      working-directory: python
