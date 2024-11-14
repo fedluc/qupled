@@ -77,24 +77,28 @@ jobs:
     needs: [build-linux, build-macos]
 
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup release directory
+      run: |
+        mkdir release
+        cp python/release/* release
+        cp python/qupled release
+        cd release
+      
     - name: Download macOS built library
       uses: actions/download-artifact@v3
       with:
         name: macos-library
-        path: release/macos
+        path: release/qupled/Darwin
 
     - name: Download Linux built library
       uses: actions/download-artifact@v3
       with:
         name: linux-library
-        path: release/linux
+        path: release/qupled/Linux
 
-    - name: Create directories
+    - name: Show release data
       run: |
-           mkdir -p release/linux
-           mkdir -p release/macos
-
-    - name: Copy data
-      run: |
-           ls release/macos
-           ls release/linux
+        tree
