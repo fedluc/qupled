@@ -82,7 +82,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Setup release directory
+    - name: Set up Python environment
+      run: |
+        python3 -m venv ${PYTHON_VENV_ROOT}
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        pip3 install --upgrade pip
+        pip3 install build twin
+
+    - name: Set up release directory
       run: |
         mkdir release
         cp -r python/release/* release
@@ -102,15 +109,10 @@ jobs:
 
     - name: Set version in TOML file
       run: |
-          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-          echo "VERSION1=${VERSION}"
-          echo "VERSION2=$VERSION"
-          echo "VERSION3=${GITHUB_REF#refs/tags/v}"
-          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" pyproject.toml
+        sed -i "s/^version = \".*\"/version = \"${GITHUB_REF#refs/tags/v}\"/" pyproject.toml
       working-directory: release
 
-    - name: Show release data
+    - name: Build pip package
       run: |
-        head pyproject.toml
-        tree
+        python -m build
       working-directory: release
