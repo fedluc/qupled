@@ -87,7 +87,7 @@ jobs:
         python3 -m venv ${PYTHON_VENV_ROOT}
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install --upgrade pip
-        pip3 install build twin
+        pip3 install build twine
 
     - name: Set up release directory
       run: |
