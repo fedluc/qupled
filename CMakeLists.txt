@@ -16,14 +16,12 @@ install(DIRECTORY ${QUPLED_OUTPUT_DIR}
 	DESTINATION ${QUPLED_INSTALL_DIR})
 
 # Pip package
-add_custom_target(pip
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/release
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/python/pyproject.toml ${CMAKE_BINARY_DIR}/release/
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/python/MANIFEST.in ${CMAKE_BINARY_DIR}/release/
+add_custom_target(release
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/python/release ${CMAKE_BINARY_DIR}/release
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_BINARY_DIR}/qupled ${CMAKE_BINARY_DIR}/release/qupled
     COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_BINARY_DIR}/release python -m build
 )
-add_dependencies(pip qupled)
+add_dependencies(release qupled)
 
 # Formatting
 add_custom_target(format
