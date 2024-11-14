@@ -114,5 +114,6 @@ jobs:
 
     - name: Build pip package
       run: |
+        source ${PYTHON_VENV_ROOT}/bin/activate
         python -m build
       working-directory: release
