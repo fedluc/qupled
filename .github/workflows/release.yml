@@ -87,7 +87,6 @@ jobs:
         mkdir release
         cp -r python/release/* release
         cp -r python/qupled release
-        cd release
 
     # - name: Download native library for macOS
     #   uses: actions/download-artifact@v3
@@ -103,7 +102,8 @@ jobs:
 
     - name: Set version in TOML file
       run: |
-          ls 
+          ls
+      working-directory: release
           # echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
           # sed -i "s/^version = \".*\"/version = \"$VERSION\"/" pyproject.toml
 
