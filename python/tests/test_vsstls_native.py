@@ -1,20 +1,20 @@
 import os
 import pytest
-import qupled.qupled as qp
+from qupled import native
 
 
 def test_vsstls_properties():
-    assert issubclass(qp.VSStls, qp.Rpa)
-    inputs = qp.VSStlsInput()
+    assert issubclass(native.VSStls, native.Rpa)
+    inputs = native.VSStlsInput()
     inputs.coupling = 1.0
     inputs.couplingResolution = 0.1
-    scheme = qp.VSStls(inputs)
+    scheme = native.VSStls(inputs)
     assert hasattr(scheme, "freeEnergyIntegrand")
     assert hasattr(scheme, "freeEnergyGrid")
 
 
 def test_vsstls_compute():
-    inputs = qp.VSStlsInput()
+    inputs = native.VSStlsInput()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
     inputs.theory = "VSSTLS"
@@ -33,7 +33,7 @@ def test_vsstls_compute():
     inputs.errorAlpha = 1.0e-3
     inputs.iterationsAlpha = 50
     inputs.alpha = [0.5, 1.0]
-    scheme = qp.VSStls(inputs)
+    scheme = native.VSStls(inputs)
     scheme.compute()
     try:
         nx = scheme.wvg.size

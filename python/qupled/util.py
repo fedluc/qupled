@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib import colormaps as cm
 import functools
-import qupled.qupled as qp
+from qupled import native
 
 # -----------------------------------------------------------------------
 # Hdf class
@@ -192,7 +192,7 @@ class Hdf:
         hdfData = self.read(hdf, ["wvg", "ssf"])
         if rdfGrid is None:
             rdfGrid = np.arange(0.0, 10.0, 0.01)
-        rdf = qp.computeRdf(rdfGrid, hdfData["wvg"], hdfData["ssf"])
+        rdf = native.computeRdf(rdfGrid, hdfData["wvg"], hdfData["ssf"])
         if saveRdf:
             pd.DataFrame(rdfGrid).to_hdf(hdf, key="rdfGrid", mode="r+")
             pd.DataFrame(rdf).to_hdf(hdf, key="rdf", mode="r+")
@@ -208,7 +208,7 @@ class Hdf:
             The internal energy
         """
         hdfData = self.read(hdf, ["wvg", "ssf", "coupling"])
-        return qp.computeInternalEnergy(
+        return native.computeInternalEnergy(
             hdfData["wvg"], hdfData["ssf"], hdfData["coupling"]
         )
 
@@ -266,7 +266,7 @@ class MPI:
     """Class to handle the calls to the MPI API"""
 
     def __init__(self):
-        self.qpMPI = qp.MPI
+        self.qpMPI = native.MPI
 
     def getRank(self):
         """Get rank of the process"""

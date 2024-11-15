@@ -1,0 +1,40 @@
+[project]
+name = "qupled"
+version = ""
+description = "qupled: a package to investigate quantum plasmas via the dielectric formalism"
+readme = "README.md"
+requires-python = ">=3.10, <3.13"
+authors = [
+    { name = "Federico Lucco Castello", email = "federico.luccocastello@gmail.com" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)"
+]
+dependencies = [
+    "matplotlib~=3.7",
+    "numpy<2.0",
+    "pandas~=2.0",
+    "tables~=3.10"
+]
+
+[project.optional-dependencies]
+testing = [
+    "pytest~=8.0",
+    "pytest-mock~=3.12"
+]
+docs = [
+    "sphinx-rtd-theme~=2.0.0",
+    "sphinxcontrib-applehelp~=2.0.0",
+    "sphinxcontrib-devhelp~=2.0.0",
+    "sphinxcontrib-htmlhelp~=2.1.0",
+    "sphinxcontrib-jquery~=4.1",
+    "sphinxcontrib-jsmath~=1.0.1",
+    "sphinxcontrib-qthelp~=2.0.0",
+    "sphinxcontrib-serializinghtml~=2.0.0"
+]
+
+[tool.setuptools]
+include-package-data = true

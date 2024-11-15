@@ -1,11 +1,11 @@
 import os
 import pytest
-import qupled.qupled as qp
+from qupled import native
 
 
 def test_esa_properties():
-    assert issubclass(qp.ESA, qp.Rpa)
-    scheme = qp.ESA(qp.RpaInput())
+    assert issubclass(native.ESA, native.Rpa)
+    scheme = native.ESA(native.RpaInput())
     assert hasattr(scheme, "idr")
     assert hasattr(scheme, "sdr")
     assert hasattr(scheme, "slfc")
@@ -19,7 +19,7 @@ def test_esa_properties():
 
 
 def test_esa_compute():
-    inputs = qp.RpaInput()
+    inputs = native.RpaInput()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
     inputs.theory = "RPA"
@@ -29,7 +29,7 @@ def test_esa_compute():
     inputs.resolution = 0.1
     inputs.intError = 1.0e-5
     inputs.threads = 1
-    scheme = qp.ESA(inputs)
+    scheme = native.ESA(inputs)
     scheme.compute()
     nx = scheme.wvg.size
     assert nx >= 3

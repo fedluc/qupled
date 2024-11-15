@@ -1,21 +1,21 @@
 import os
 import pytest
-import qupled.qupled as qp
+from qupled import native
 
 
 def test_qvsstls_properties():
-    assert issubclass(qp.QVSStls, qp.Rpa)
-    inputs = qp.QVSStlsInput()
+    assert issubclass(native.QVSStls, native.Rpa)
+    inputs = native.QVSStlsInput()
     inputs.coupling = 1.0
     inputs.couplingResolution = 0.1
-    scheme = qp.QVSStls(inputs)
+    scheme = native.QVSStls(inputs)
     assert hasattr(scheme, "freeEnergyIntegrand")
     assert hasattr(scheme, "freeEnergyGrid")
     assert hasattr(scheme, "adr")
 
 
 def test_qvsstls_compute():
-    inputs = qp.QVSStlsInput()
+    inputs = native.QVSStlsInput()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
     inputs.theory = "QVSSTLS"
@@ -34,7 +34,7 @@ def test_qvsstls_compute():
     inputs.errorAlpha = 1.0e-3
     inputs.iterationsAlpha = 50
     inputs.alpha = [0.5, 1.0]
-    scheme = qp.QVSStls(inputs)
+    scheme = native.QVSStls(inputs)
     scheme.compute()
     try:
         nx = scheme.wvg.size

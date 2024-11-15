@@ -1,7 +1,7 @@
 import os
 import pytest
 import numpy as np
-from qupled.qupled import QVSStls as QVSStlsNative
+from qupled import native
 from qupled.util import Hdf
 from qupled.quantum import QVSStls
 
@@ -95,7 +95,7 @@ def test_cleanFixedAdrFiles_with_files(qvsstls, qvsstls_input, mocker, capsys):
 def test_save(qvsstls, qvsstls_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     try:
-        scheme = QVSStlsNative(qvsstls_input.toNative())
+        scheme = native.QVSStls(qvsstls_input.toNative())
         qvsstls.hdfFileName = qvsstls._getHdfFile(scheme.inputs)
         qvsstls._save(scheme)
         assert mockMPIIsRoot.call_count == 4
