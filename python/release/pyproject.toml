@@ -1,5 +1,5 @@
 [project]
-name = "qupled-test"
+name = "qupled"
 version = ""
 description = "qupled: a package to investigate quantum plasmas via the dielectric formalism"
 readme = "README.md"
