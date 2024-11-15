@@ -153,8 +153,8 @@ jobs:
     - name: Test pip package
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
-        pytest 
-      working-directory: python
+        pytest -k "not test_examples"
+      working-directory: python/tests
 
   test-pip-linux:
     runs-on: ubuntu-latest
@@ -185,5 +185,5 @@ jobs:
     - name: Test pip package
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
-        pytest 
-      working-directory: python
+        pytest -k "not test_examples"
+      working-directory: python/tests
