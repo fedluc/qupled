@@ -194,7 +194,7 @@ jobs:
 
   publish:
    runs-on: ubuntu-latest
-   needs: build-pip
+   needs: [test-pip-linux, test-pip-macos]
 
    steps:
    - name: Download pip package
