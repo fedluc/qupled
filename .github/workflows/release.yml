@@ -87,7 +87,7 @@ jobs:
         python3 -m venv ${PYTHON_VENV_ROOT}
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install --upgrade pip
-        pip3 install build twine
+        pip3 install build
 
     - name: Set up release directory
       run: |
@@ -191,3 +191,31 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         pytest -k "not test_examples"
       working-directory: python/tests
+
+  publish:
+   runs-on: ubuntu-latest
+   needs: build-pip
+
+   steps:
+   - name: Download pip package
+     uses: actions/download-artifact@v3
+     with:
+       name: qupled
+       path: qupled
+
+   - name: Set up Python environment
+     run: |
+       python3 -m venv ${PYTHON_VENV_ROOT}
+       source ${PYTHON_VENV_ROOT}/bin/activate
+       pip3 install --upgrade pip
+       pip3 install twine
+
+   - name: Publish to PyPI
+     env:
+       TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+       TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+     run: |
+       source ${PYTHON_VENV_ROOT}/bin/activate
+       twine upload --non-interactive qupled/*
+
+  
