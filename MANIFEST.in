@@ -1,2 +1,3 @@
-include qupled/Darwin/qupled.so
-include qupled/Linux/qupled.so
+include LICENSE
+include README.md
+recursive-include qupled/native *
