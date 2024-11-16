@@ -1,8 +1,9 @@
 *~
 *#
 Makefile
-build
 docs/_build
 *.DS_Store
 *__pycache__
 *.vscode
+dist
+qupled.egg-info

@@ -41,4 +41,5 @@ docs = [
 ]
 
 [tool.setuptools]
-packages = ["qupled"]
+include-package-data = false
+packages = ["qupled", "qupled.native"]

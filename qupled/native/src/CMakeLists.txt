@@ -1,3 +1,9 @@
+# Set cmake version
+cmake_minimum_required (VERSION 3.30)
+
+# Define project name
+project(native LANGUAGES CXX)
+
 # Setup python environment
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(Boost
@@ -27,7 +33,7 @@ add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 
 # Source code
-Python3_add_library(qupled MODULE
+Python3_add_library(native MODULE
 		    logger.cpp
 		    numerics.cpp
 		    vector2D.cpp
@@ -54,16 +60,16 @@ Python3_add_library(qupled MODULE
 
 
 # Include directories
-target_include_directories(qupled PUBLIC
+target_include_directories(native PUBLIC
 			   ../include)
 
 
 # Link external libraries
 if(USE_MPI)
-    target_link_libraries(qupled PUBLIC
+    target_link_libraries(native PUBLIC
 			  MPI::MPI_CXX)
 endif()
-target_link_libraries(qupled PUBLIC
+target_link_libraries(native PUBLIC
 		      OpenMP::OpenMP_CXX
 		      Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}
 		      Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}

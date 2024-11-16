@@ -11,6 +11,7 @@ class CMakeBuild(build_ext):
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
             f"-DCMAKE_BUILD_TYPE={cfg}",
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=qupled",
         ]
         
         build_args = ['--config', cfg]
@@ -24,11 +25,11 @@ class CMakeExtension(Extension):
         self.sourcedir = os.path.abspath(sourcedir)
 
 setup(
-    name="qupled",
-    version="0.1.0",
-    description="A package with quantum and classical utilities.",
-    packages=["qupled"],
-    ext_modules=[CMakeExtension("qupled.native.qupled_native", sourcedir="qupled/native/src")],
+    # name="qupled",
+    # version="0.1.0",
+    # description="A package with quantum and classical utilities.",
+    # packages=["qupled"],
+    ext_modules=[CMakeExtension("qupled.native.native", sourcedir="qupled/native/src")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
 )
