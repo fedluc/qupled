@@ -42,4 +42,5 @@ jobs:
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install tox
+        export OpenMP_ROOT=$(brew --prefix)/opt/libomp	
         ./devtool test
