@@ -30,7 +30,7 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install --upgrade pip
         pip3 install build setuptools
-	./devtool build
+        ./devtool build
 
     - name: Tests
       run: |
