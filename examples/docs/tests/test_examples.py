@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import importlib
 import pytest
@@ -12,11 +13,16 @@ def cleanExampleFiles():
 
 
 def runExample(exampleName, mocker):
+    examples_dir = os.path.abspath("examples/docs")
     try:
+        if examples_dir not in sys.path:
+            sys.path.insert(0, examples_dir)
         mockPlotShow = mocker.patch("matplotlib.pyplot.show")
         importlib.import_module(exampleName)
     finally:
         cleanExampleFiles()
+        if examples_dir in sys.path:
+            sys.path.remove(examples_dir)
 
 
 def runExampleWithError(exampleName, mocker, expectedErrorMessage):

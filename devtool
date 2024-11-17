@@ -7,25 +7,28 @@ import shutil
 from pathlib import Path
 
 
-def build(nompi, debug):
-    """Build the Python package with optional parameters."""
-    # env = os.environ.copy()
-    # if nompi:
-    #     env["BUILD_NOMPI"] = "1"
-    # if debug:
-    #     env["BUILD_DEBUG"] = "1"
-    # Call the build process
+def build(nompi):
+    if nompi:
+        os.environ["USE_MPI"] = "OFF"
     subprocess.run(["python", "-m", "build"], check=True)
     print("Build completed.")
 
 
-def test():
-    wheel_file = list(Path(".").rglob("*.whl"))
+def run_tox(environment):
+    wheel_file = list(Path(".").rglob("qupled*.tar.gz"))
     if not wheel_file:
         print("No .whl files found. Ensure the package is built first.")
         return
     os.environ["WHEEL_FILE"] = str(wheel_file[0])
-    subprocess.run(["tox"], check=True)
+    subprocess.run(["tox", "-e", environment], check=True)
+
+
+def test():
+    run_tox("test")
+
+
+def examples():
+    run_tox("examples")
 
 
 def format_code():
@@ -51,36 +54,43 @@ def clean():
 
 def main():
     parser = argparse.ArgumentParser(
-        description="A utility script for building, testing, formatting, and generating documentation for the qupled project."
+        description="""A utility script for building, testing, formatting,
+        and generating documentation for the qupled project."""
     )
-    parser.add_argument(
-        "command",
-        choices=["build", "clean", "docs", "format", "test"],
-        help="The command to run. Choices are: build, clean, docs, format, test, format.",
-    )
-    # Add optional arguments for `build`
-    parser.add_argument(
+
+    subparsers = parser.add_subparsers(dest="command", help="Sub-command to run")
+
+    # Build command
+    build_parser = subparsers.add_parser("build", help="Build the Python package")
+    build_parser.add_argument(
         "--nompi",
         action="store_true",
         help="Build without MPI support (default: False).",
     )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Build with debug symbols (default: False).",
-    )
+
+    # Other commands
+    subparsers.add_parser("clean", help="Clean up build artifacts")
+    subparsers.add_parser("docs", help="Generate documentation")
+    subparsers.add_parser("examples", help="Run tests for the examples")
+    subparsers.add_parser("format", help="Format the source code")
+    subparsers.add_parser("test", help="Run tests")
+
     args = parser.parse_args()
 
     if args.command == "build":
-        build(args.nompi, args.debug)
+        build(args.nompi)
     elif args.command == "clean":
         clean()
     elif args.command == "docs":
         docs()
+    elif args.command == "examples":
+        examples()
     elif args.command == "format":
         format_code()
     elif args.command == "test":
         test()
+    else:
+        parser.print_help()
 
 
 if __name__ == "__main__":

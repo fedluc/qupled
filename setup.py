@@ -8,12 +8,14 @@ class CMakeBuild(build_ext):
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
         cfg = "Debug" if self.debug else "Release"
-
+        use_mpi = os.environ.get("USE_MPI")
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
             f"-DCMAKE_BUILD_TYPE={cfg}",
+            f"-DUSE_MPI={use_mpi}",
         ]
-
+        # if use_mpi is not None:
+        #     cmake_args = cmake_args + use_mpi
         build_args = ["--config", cfg]
         os.makedirs(self.build_temp, exist_ok=True)
         subprocess.check_call(
