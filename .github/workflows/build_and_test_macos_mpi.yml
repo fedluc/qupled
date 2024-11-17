@@ -28,7 +28,6 @@ jobs:
       run: |
         brew update
         brew install cmake gsl libomp openmpi fmt boost-python3
-        export OpenMP_ROOT=$(brew --prefix)/opt/libomp	
         python3 -m venv ${PYTHON_VENV_ROOT}
 
     - name: Build
@@ -36,6 +35,7 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install --upgrade pip
         pip3 install build setuptools
+	export OpenMP_ROOT=$(brew --prefix)/opt/libomp	
         ./devtool build
 
     - name: Tests
