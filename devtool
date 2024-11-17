@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+
+import os
+import argparse
+import subprocess
+import shutil
+from pathlib import Path
+
+
+def build(nompi, debug):
+    """Build the Python package with optional parameters."""
+    # env = os.environ.copy()
+    # if nompi:
+    #     env["BUILD_NOMPI"] = "1"
+    # if debug:
+    #     env["BUILD_DEBUG"] = "1"
+    # Call the build process
+    subprocess.run(["python", "-m", "build"], check=True)
+    print("Build completed.")
+
+
+def test():
+    wheel_file = list(Path(".").rglob("*.whl"))
+    if not wheel_file:
+        print("No .whl files found. Ensure the package is built first.")
+        return
+    os.environ["WHEEL_FILE"] = str(wheel_file[0])
+    subprocess.run(["tox"], check=True)
+
+
+def format_code():
+    subprocess.run(["black", "."], check=True)
+    cpp_files = list(Path("qupled").rglob("*.cpp"))
+    hpp_files = list(Path("qupled").rglob("*.hpp"))
+    for f in cpp_files + hpp_files:
+
+        subprocess.run(["clang-format", "--style=file", "-i", str(f)], check=True)
+
+
+def docs():
+    subprocess.run(["sphinx-build", "-b", "html", "docs", "docs/_build"])
+
+
+def clean():
+    folders_to_clean = ["dist", "qupled.egg-info", "docs/_build"]
+    for folder in folders_to_clean:
+        if os.path.exists(folder):
+            print(f"Removing folder: {folder}")
+            shutil.rmtree(folder)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="A utility script for building, testing, formatting, and generating documentation for the qupled project."
+    )
+    parser.add_argument(
+        "command",
+        choices=["build", "clean", "docs", "format", "test"],
+        help="The command to run. Choices are: build, clean, docs, format, test, format.",
+    )
+    # Add optional arguments for `build`
+    parser.add_argument(
+        "--nompi",
+        action="store_true",
+        help="Build without MPI support (default: False).",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Build with debug symbols (default: False).",
+    )
+    args = parser.parse_args()
+
+    if args.command == "build":
+        build(args.nompi, args.debug)
+    elif args.command == "clean":
+        clean()
+    elif args.command == "docs":
+        docs()
+    elif args.command == "format":
+        format_code()
+    elif args.command == "test":
+        test()
+
+
+if __name__ == "__main__":
+    main()
