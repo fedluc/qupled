@@ -38,5 +38,5 @@ jobs:
     - name: Tests
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
-	pip3 install tox
+        pip3 install tox
         ./devtool test
