@@ -33,10 +33,6 @@ class CMakeExtension(Extension):
 
 
 setup(
-    # name="qupled",
-    # version="0.1.0",
-    # description="A package with quantum and classical utilities.",
-    # packages=["qupled"],
     ext_modules=[CMakeExtension("qupled.native", sourcedir="qupled/native/src")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
