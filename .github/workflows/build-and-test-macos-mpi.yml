@@ -1,10 +1,7 @@
-name: Build & Test (Linux)
+name: Build & Test (macOS-MPI)
 
 on:
-  push:
-  pull_request:
-    branches:
-      - master
+  workflow_call:
 
 env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
@@ -13,7 +10,7 @@ jobs:
 
   build_and_test:
 
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
 
     steps:
     - name: Checkout repository
@@ -22,23 +19,23 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake libboost-all-dev libgsl-dev libomp-dev libfmt-dev python3-dev
+        brew update
+        brew install cmake gsl libomp openmpi fmt boost-python3
         python3 -m venv ${PYTHON_VENV_ROOT}
-
+        pip3 install --upgrade pip
+        pip3 install -r dev/requirements.txt
+	
     - name: Build
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
-        pip3 install --upgrade pip
-        pip3 install build setuptools
-        ./devtool build --nompi
+        export OpenMP_ROOT=$(brew --prefix)/opt/libomp	
+        ./devtool build
 
     - name: Tests
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
-        pip3 install tox
         ./devtool test
