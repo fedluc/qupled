@@ -8,13 +8,13 @@ on:
 
 jobs:
   linux:
-    uses: ./.github/workflows/build-test-macos.yml
+    uses: ./.github/workflows/build-and-test-macos.yml
 
   macos:
-    uses: ./.github/workflows/build-test-linux.yml
+    uses: ./.github/workflows/build-and-test-linux.yml
 
   linux-MPI:
-    uses: ./.github/workflows/build-test-macos-mpi.yml
+    uses: ./.github/workflows/build-and-test-macos-mpi.yml
 
   macos-MPI:
-    uses: ./.github/workflows/build-test-linux-mpi.yml
+    uses: ./.github/workflows/build-and-test-linux-mpi.yml
