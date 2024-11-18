@@ -26,16 +26,17 @@ jobs:
         brew update
         brew install cmake gsl libomp fmt boost-python3
         python3 -m venv ${PYTHON_VENV_ROOT}
-        pip3 install --upgrade pip
-        pip3 install -r dev/requirements.txt
 
     - name: Build
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
+	pip3 install --upgrade pip
+        pip3 install build setuptools
         export OpenMP_ROOT=$(brew --prefix)/opt/libomp	
         ./devtool build --nompi
 
     - name: Tests
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
+	pip3 install tox
         ./devtool test

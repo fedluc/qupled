@@ -27,14 +27,16 @@ jobs:
         sudo apt-get install -y cmake libboost-all-dev libgsl-dev libomp-dev libfmt-dev python3-dev
         python3 -m venv ${PYTHON_VENV_ROOT}
         pip3 install --upgrade pip
-        pip3 install -r dev/requirements.txt
 
     - name: Build
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
+        pip3 install --upgrade pip
+        pip3 install build setuptools
         ./devtool build --nompi
 
     - name: Tests
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
+	pip3 install tox
         ./devtool test
