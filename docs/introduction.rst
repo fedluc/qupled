@@ -30,41 +30,33 @@ All the calculations are performed in normalized units. The wave vectors are nor
 Fermi wave-vector and the frequencies are normalized to :math:`2\pi E_{\mathrm{f}}/h`. Here :math:`E_{\mathrm{f}}`
 is the Fermi energy and :math:`h` is Planck's constant.
 
-Building qupled
----------------
+Installing qupled
+-----------------
 
-Qupled is a hybrid C++/python code that can be built by using the CMake build system. The build process is
-summarized as follows:
+Qupled can be installed as a pip package by running
 
 .. code-block:: console
 
-   git clone git@github.com:fedluc/qupled.git
-   cd qupled
-   mkdir build
-   cd build
-   cmake -DCMAKE_BUILD_TYPE=Release ..
-   cmake --build .
-   pytest tests
-   cmake --install .
+   pip install qupled
 		
-This will create the python package that can be used to solve the dielectric schemes, test it and install it
-in a folder accessible at runtime.  The build directory can be cleaned by running ``make true-clean``. For debugging
-purposes it is also possible to build a debug configuration by typing ``cmake -DCMAKE_BUILD_TYPE=Debug ..``
-followed by the build command. By default qupled is built with support for MPI, but it is also possible to compile the
-code without MPI by typing ``cmake -DUSE_MPI=OFF ..`` followed by the build command.
+This will also install all the python packages that are necessary for running the package. Note that, depending on the platform,
+the installation procedure might rquire to compile some C++ code. Hence, before trying to install or run qupled make sure that
+the following dependencies are satisfied:
 
-Dependencies
-------------
+  - `CMake <https://cmake.org/download/>`_
+  - `Boost <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
+  - `GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
+  - `OpenMP <https://en.wikipedia.org/wiki/OpenMP>`_
+  - `Open-MPI <https://www.open-mpi.org/software/ompi/v5.0/>`_
 
-To build the code, the following dependencies must be satisfied:
+For linux distributions all these dependencies can be installed with
 
+.. code-block:: console
 
-  - `Python (v3.12) <https://www.python.org/downloads/>`_
-  - `CMake (v3.26) <https://cmake.org/download/>`_
-  - `Boost (v1.84) <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
-  - `GNU Scientific Library (v2.7) <https://www.gnu.org/software/gsl/>`_
-  - `OpenMP (v5.0) <https://en.wikipedia.org/wiki/OpenMP>`_
-  - `Open-MPI (v5.0) <https://www.open-mpi.org/software/ompi/v5.0/>`_
-  - `FMT (v10.2) <https://github.com/fmtlib/fmt/>`_
+   sudo apt-get install -y cmake libboost-all-dev libopenmpi-dev libgsl-dev libomp-dev libfmt-dev python3-dev
 
-To run the code it is necessary to install the python packages summarized in the `requirements file <https://github.com/fedluc/qupled/blob/master/python/requirements.txt>`_ by running ``pip install -r python/requirements.txt`` from the root directory of the repository.
+For macOS they can be installed directly from homebrew
+
+.. code-block:: console
+
+   brew install cmake gsl libomp openmpi fmt boost-python3

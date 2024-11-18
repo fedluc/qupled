@@ -1,6 +1,10 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "cmake"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "qupled"
-version = ""
+version = "0.0.3"
 description = "qupled: a package to investigate quantum plasmas via the dielectric formalism"
 readme = "README.md"
 requires-python = ">=3.10, <3.13"
@@ -37,4 +41,5 @@ docs = [
 ]
 
 [tool.setuptools]
-include-package-data = true
+include-package-data = false
+packages = ["qupled", "qupled.native"]

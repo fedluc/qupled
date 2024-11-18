@@ -8,33 +8,13 @@ Qupled is a Python package designed for calculating the properties of quantum pl
 <p>
 
 ## Status
-
-[![Build & Test (Linux)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu.yml)
-[![Build & Test (Linux-MPI)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu_mpi.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_ubuntu_mpi.yml)
-[![Build & Test (macOS)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos.yml)
-[![Build & Test (macOS-MPI)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos_mpi.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build_and_test_macos_mpi.yml)
+[![Build & Test](https://github.com/fedluc/qupled/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build-and-test.yml)
 [![Code Formatting](https://github.com/fedluc/qupled/actions/workflows/formatting.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/formatting.yml)
 ![](https://readthedocs.org/projects/qupled/badge/?version=latest&style=flat)
-
-## Dependencies
-
-Before trying to build, test or run the code one should make sure that [these dependencies](https://qupled.readthedocs.io/en/latest/introduction.html#dependencies) are satisfied.
  
-## Building & running
+## Running 
 
-Qupled can be compiled with `cmake`, tested with `pytest` and installed with the following procedure
-
-```bash
-git clone https://github.com/fedluc/qupled.git
-cd qupled
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake --build .
-pytest tests
-cmake --install .
-```
-After installation Qupled can be used as a regular Python package
+After [installation](https://qupled.readthedocs.io/en/latest/introduction.html#dependencies) qupled can be used as a regular Python package
 
 ```python
 # Solve the stls dielectric scheme for coupling = 10 and degeneracy 1.0
@@ -52,26 +32,6 @@ More detailed information on the package together with a list of examples is ava
 Qupled has been used in the following publications:
 
 ``` bibtex
-@article{tolias2021integral,
-  title={Integral equation theory based dielectric scheme for strongly coupled electron liquids},
-  author={Tolias, Panagiotis and Lucco Castello, F and Dornheim, Tobias},
-  journal={The Journal of Chemical Physics},
-  volume={155},
-  number={13},
-  year={2021},
-  publisher={AIP Publishing}
-}
-
-@article{tolias2023quantum,
-  title={Quantum version of the integral equation theory-based dielectric scheme for strongly coupled electron liquids},
-  author={Tolias, Panagiotis and Lucco Castello, Federico and Dornheim, Tobias},
-  journal={The Journal of Chemical Physics},
-  volume={158},
-  number={14},
-  year={2023},
-  publisher={AIP Publishing}
-}
-
 @article{PhysRevB.109.125134,
   title = {Revisiting the Vashishta-Singwi dielectric scheme for the warm dense uniform electron fluid},
   author = {Tolias, Panagiotis and Lucco Castello, Federico and Kalkavouras, Fotios and Dornheim, Tobias},
@@ -87,5 +47,23 @@ Qupled has been used in the following publications:
   url = {https://link.aps.org/doi/10.1103/PhysRevB.109.125134}
 }
 
+@article{tolias2023quantum,
+  title={Quantum version of the integral equation theory-based dielectric scheme for strongly coupled electron liquids},
+  author={Tolias, Panagiotis and Lucco Castello, Federico and Dornheim, Tobias},
+  journal={The Journal of Chemical Physics},
+  volume={158},
+  number={14},
+  year={2023},
+  publisher={AIP Publishing}
+}
 
+@article{tolias2021integral,
+  title={Integral equation theory based dielectric scheme for strongly coupled electron liquids},
+  author={Tolias, Panagiotis and Lucco Castello, F and Dornheim, Tobias},
+  journal={The Journal of Chemical Physics},
+  volume={155},
+  number={13},
+  year={2021},
+  publisher={AIP Publishing}
+}
 ```

@@ -1,4 +1,0 @@
-file(GLOB PYTHON_FILES_TO_COPY "*.py")
-file(COPY ${PYTHON_FILES_TO_COPY} DESTINATION ${QUPLED_OUTPUT_DIR}/../tests)
-file(GLOB PYTHON_FILES_TO_COPY "../../examples/docs/*.py")
-file(COPY ${PYTHON_FILES_TO_COPY} DESTINATION ${QUPLED_OUTPUT_DIR}/../tests/examples/docs)

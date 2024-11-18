@@ -16,7 +16,7 @@ void qupledInitialization() {
 void qupledCleanUp() { MPIUtil::finalize(); }
 
 // Classes exposed to Python
-BOOST_PYTHON_MODULE(qupled) {
+BOOST_PYTHON_MODULE(native) {
 
   // Docstring formatting
   bp::docstring_options docopt;

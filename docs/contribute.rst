@@ -1,15 +1,58 @@
 How to contribute
 =================
 
-If you want to make contributions to the code make sure to read the following guidelines concerning the
-formatting and documentation.
+The following guidelines explain how to contribute to both the codebase and the documentation. To properly set up the
+tools mentioned below, start by installing the required Python packages with the following command:
+
+.. code-block:: console
+
+   pip install -r dev/requirements.txt
+
+Developing
+----------
+
+Qupled is an open-source project, and contributions from external developers are always welcome.
+If you'd like to add or test new features, you can build the code by running:
+
+.. code-block:: console
+
+   ./devtool build
+
+This command, executed from the root directory of the project, will generate the build and place it in the ``dist``
+directory as a Python wheel file. To verify that everything is working correctly, run:
+
+.. code-block:: console
+
+   ./devtool test
+
+Tests are also executed automatically whenever new code is pushed to the remote repository. If all the tests
+pass correctly you can then proceed to install your new version of qupled with:
+
+.. code-block:: console
+
+   pip install --force-reinstall dist/qupled*.whl
 
 Formatting
 ----------
 
-We use `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_ and `black <https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html>`_ to enforce a uniform formatting style for the C++ and Python code-base. The code formatting is checked automatically every time a pull request or a push is made. To ensure that the correct formatting is applied run ``cmake --build . --target format`` from the build directory.
+To maintain consistent code formatting across the C++ and Python codebases, we use
+`clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_ and
+`black <https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html>`_.
+The formatting is automatically checked every time new code is pushed to the repository.
+To manually ensure the correct formatting is applied, run:
+
+.. code-block:: console
+
+   ./devtool format
 
 Documentation
 -------------
 
-The documentation is located in the ``docs`` folder, with changes made by editing the ``.rst`` files within it. Once modifications are complete, the documentation should be rebuilt to ensure it is correctly formatted. To build the documentation, you’ll need the Python packages `sphinx <https://www.sphinx-doc.org/en/master/>`_ and `sphinx_rdt_theme <https://pypi.org/project/sphinx-rtd-theme/>`_. From the build directory, use the command ``cmake --build . --target docs`` to build the documentation, which will also compile the qupled library if it hasn't been built yet. The build output can be viewed by opening ``docs/index.html`` in the build directory.
+The documentation is stored in the ``docs`` directory, and changes can be made by editing the ``.rst`` files within it.
+Once you've made your changes, you can verify and build the documentation using:
+
+.. code-block:: console
+
+   ./devtool docs
+
+The generated output can be viewed by opening ``docs/_build/index.html`` in your browser.
