@@ -13,7 +13,7 @@ def build(nompi):
 
 
 def run_tox(environment):
-    wheel_file = list(Path(".").rglob("*.whl"))
+    wheel_file = list(Path(".").rglob("qupled*.whl"))
     if not wheel_file:
         print("No .whl files found. Ensure the package is built first.")
         return
