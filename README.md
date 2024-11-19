@@ -31,39 +31,8 @@ More detailed information on the package together with a list of examples is ava
 
 Qupled has been used in the following publications:
 
-``` bibtex
-@article{PhysRevB.109.125134,
-  title = {Revisiting the Vashishta-Singwi dielectric scheme for the warm dense uniform electron fluid},
-  author = {Tolias, Panagiotis and Lucco Castello, Federico and Kalkavouras, Fotios and Dornheim, Tobias},
-  journal = {Phys. Rev. B},
-  volume = {109},
-  issue = {12},
-  pages = {125134},
-  numpages = {22},
-  year = {2024},
-  month = {Mar},
-  publisher = {American Physical Society},
-  doi = {10.1103/PhysRevB.109.125134},
-  url = {https://link.aps.org/doi/10.1103/PhysRevB.109.125134}
-}
-
-@article{tolias2023quantum,
-  title={Quantum version of the integral equation theory-based dielectric scheme for strongly coupled electron liquids},
-  author={Tolias, Panagiotis and Lucco Castello, Federico and Dornheim, Tobias},
-  journal={The Journal of Chemical Physics},
-  volume={158},
-  number={14},
-  year={2023},
-  publisher={AIP Publishing}
-}
-
-@article{tolias2021integral,
-  title={Integral equation theory based dielectric scheme for strongly coupled electron liquids},
-  author={Tolias, Panagiotis and Lucco Castello, F and Dornheim, Tobias},
-  journal={The Journal of Chemical Physics},
-  volume={155},
-  number={13},
-  year={2021},
-  publisher={AIP Publishing}
-}
-```
+<ol>
+  <li>Tolias, P., Lucco Castello, F., Kalkavouras, F., &#38; Dornheim, T. (2024). Revisiting the Vashishta-Singwi dielectric scheme for the warm dense uniform electron fluid. <i>Phys. Rev. B</i>, <i>109</i>(12)</li>
+  <li>Tolias, P., Lucco Castello, F., &#38; Dornheim, T. (2023). Quantum version of the integral equation theory-based dielectric scheme for strongly coupled electron liquids. <i>The Journal of Chemical Physics</i>, <i>158</i>(14)</li>
+  <li>Tolias, P., Lucco Castello, F., &#38; Dornheim, T. (2021). Integral equation theory based dielectric scheme for strongly coupled electron liquids. <i>The Journal of Chemical Physics</i>, <i>155</i>(13)</li>
+</ol>
