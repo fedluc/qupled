@@ -8,7 +8,7 @@ from pathlib import Path
 def build(nompi):
     if nompi:
         os.environ["USE_MPI"] = "OFF"
-    subprocess.run(["python", "-m", "build"], check=True)
+    subprocess.run(["python3", "-m", "build"], check=True)
     print("Build completed.")
 
 
