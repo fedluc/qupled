@@ -12,15 +12,22 @@ def build(nompi):
     print("Build completed.")
 
 
-def run_tox(environment):
-    if os.path.exists(".tox"):
-        shutil.rmtree(".tox")
+def get_wheel_file():
     wheel_file = list(Path(".").rglob("qupled*.whl"))
     if not wheel_file:
         print("No .whl files found. Ensure the package is built first.")
-        return
-    os.environ["WHEEL_FILE"] = str(wheel_file[0])
-    subprocess.run(["tox", "-e", environment], check=True)
+        return None
+    else:
+        return str(wheel_file[0])
+
+
+def run_tox(environment):
+    if os.path.exists(".tox"):
+        shutil.rmtree(".tox")
+    wheel_file = get_wheel_file()
+    if wheel_file is not None:
+        os.environ["WHEEL_FILE"] = wheel_file
+        subprocess.run(["tox", "-e", environment], check=True)
 
 
 def test():
@@ -40,15 +47,27 @@ def format_code():
 
 
 def docs():
-    subprocess.run(["sphinx-build", "-b", "html", "docs", os.path.join("docs", "_build")])
+    subprocess.run(
+        ["sphinx-build", "-b", "html", "docs", os.path.join("docs", "_build")]
+    )
 
 
 def clean():
-    folders_to_clean = ["dist", os.path.join("src", "qupled.egg-info"), os.path.join("docs", "_build")]
+    folders_to_clean = [
+        "dist",
+        os.path.join("src", "qupled.egg-info"),
+        os.path.join("docs", "_build"),
+    ]
     for folder in folders_to_clean:
         if os.path.exists(folder):
             print(f"Removing folder: {folder}")
             shutil.rmtree(folder)
+
+
+def install():
+    wheel_file = get_wheel_file()
+    if wheel_file is not None:
+        subprocess.run(["pip", "install", "--force-reinstall", wheel_file], check=True)
 
 
 def run():
@@ -86,6 +105,8 @@ def run():
         examples()
     elif args.command == "format":
         format_code()
+    elif args.command == "install":
+        install()
     elif args.command == "test":
         test()
     else:

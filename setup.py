@@ -12,9 +12,7 @@ setup(
             ],
         )
     ],
-    cmdclass={
-        "build_ext": BuildExtension
-    },
+    cmdclass={"build_ext": BuildExtension},
     zip_safe=False,
     package_dir={"": "src"},
 )
