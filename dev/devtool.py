@@ -13,6 +13,8 @@ def build(nompi):
 
 
 def run_tox(environment):
+    if os.path.exists(".tox"):
+        shutil.rmtree(".tox")
     wheel_file = list(Path(".").rglob("qupled*.whl"))
     if not wheel_file:
         print("No .whl files found. Ensure the package is built first.")
@@ -34,16 +36,15 @@ def format_code():
     cpp_files = list(Path("qupled").rglob("*.cpp"))
     hpp_files = list(Path("qupled").rglob("*.hpp"))
     for f in cpp_files + hpp_files:
-
         subprocess.run(["clang-format", "--style=file", "-i", str(f)], check=True)
 
 
 def docs():
-    subprocess.run(["sphinx-build", "-b", "html", "docs", "docs/_build"])
+    subprocess.run(["sphinx-build", "-b", "html", "docs", os.path.join("docs", "_build")])
 
 
 def clean():
-    folders_to_clean = ["dist", "qupled.egg-info", "docs/_build"]
+    folders_to_clean = ["dist", os.path.join("src", "qupled.egg-info"), os.path.join("docs", "_build")]
     for folder in folders_to_clean:
         if os.path.exists(folder):
             print(f"Removing folder: {folder}")

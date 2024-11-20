@@ -76,3 +76,7 @@ target_link_libraries(native PUBLIC
 		      GSL::gsl
 		      GSL::gslcblas
 		      fmt::fmt)
+
+# Install
+install(TARGETS native
+	DESTINATION .)
