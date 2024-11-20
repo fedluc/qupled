@@ -1,3 +1,3 @@
 include LICENSE
 include README.md
-recursive-include qupled/native *
+recursive-include src/qupled/native *

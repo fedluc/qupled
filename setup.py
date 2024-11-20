@@ -33,7 +33,8 @@ class CMakeExtension(Extension):
 
 
 setup(
-    ext_modules=[CMakeExtension("qupled.native", sourcedir="qupled/native/src")],
+    ext_modules=[CMakeExtension("qupled.native", sourcedir="src/qupled/native/src")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
+    package_dir={"": "src"},
 )
