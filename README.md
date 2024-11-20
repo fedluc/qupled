@@ -32,7 +32,13 @@ More detailed information on the package together with a list of examples is ava
 Qupled has been used in the following publications:
 
 <ol>
-  <li>Tolias, P., Lucco Castello, F., Kalkavouras, F., &#38; Dornheim, T. (2024). Revisiting the Vashishta-Singwi dielectric scheme for the warm dense uniform electron fluid. <i>Phys. Rev. B</i>, <i>109</i>(12)</li>
-  <li>Tolias, P., Lucco Castello, F., &#38; Dornheim, T. (2023). Quantum version of the integral equation theory-based dielectric scheme for strongly coupled electron liquids. <i>The Journal of Chemical Physics</i>, <i>158</i>(14)</li>
-  <li>Tolias, P., Lucco Castello, F., &#38; Dornheim, T. (2021). Integral equation theory based dielectric scheme for strongly coupled electron liquids. <i>The Journal of Chemical Physics</i>, <i>155</i>(13)</li>
+  <li>
+    <a href="https://journals.aps.org/prb/abstract/10.1103/PhysRevB.109.125134">Tolias, P., Lucco Castello, F., Kalkavouras, F., &#38; Dornheim, T. (2024). Revisiting the Vashishta-Singwi dielectric scheme for the warm dense uniform electron fluid. <i>Phys. Rev. B</i>, <i>109</i>(12)</a>
+  </li>
+  <li>
+    <a href="https://pubs.aip.org/aip/jcp/article/158/14/141102/2877795/Quantum-version-of-the-integral-equation-theory">Tolias, P., Lucco Castello, F., &#38; Dornheim, T. (2023). Quantum version of the integral equation theory-based dielectric scheme for strongly coupled electron liquids. <i>The Journal of Chemical Physics</i>, <i>158</i>(14)</a>
+  </li>
+  <li>
+    <a href="https://pubs.aip.org/aip/jcp/article/155/13/134115/353165/Integral-equation-theory-based-dielectric-scheme">Tolias, P., Lucco Castello, F., &#38; Dornheim, T. (2021). Integral equation theory based dielectric scheme for strongly coupled electron liquids. <i>The Journal of Chemical Physics</i>, <i>155</i>(13)</a>
+  </li>
 </ol>
