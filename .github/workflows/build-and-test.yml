@@ -9,7 +9,13 @@ on:
 jobs:
   linux:
     uses: ./.github/workflows/build-and-test-linux.yml
-
+    steps:
+      - name: Upload Linux Build Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-build-artifact
+          path: dist/
+	  
   macos:
     uses: ./.github/workflows/build-and-test-macos.yml
 
