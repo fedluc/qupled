@@ -8,8 +8,9 @@ on:
 
 jobs:
   linux:
-    uses: ./.github/workflows/build-and-test-linux.yml
     steps:
+      - name: Build and test
+      	uses: ./.github/workflows/build-and-test-linux.yml
       - name: Upload Linux Build Artifact
         uses: actions/upload-artifact@v3
         with:
