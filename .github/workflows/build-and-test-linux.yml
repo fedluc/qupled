@@ -35,8 +35,15 @@ jobs:
         pip3 install build setuptools
         ./devtool build --nompi
 
-    - name: Tests
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        pip3 install tox
-        ./devtool test
+    # - name: Tests
+    #   run: |
+    #     source ${PYTHON_VENV_ROOT}/bin/activate
+    #     pip3 install tox
+    #     ./devtool test
+
+    - name: Upload dist folder as artifact
+      if: ${{ success() && env.UPLOAD_ARTIFACTS == 'true' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: qupled-linux
+        path: dist

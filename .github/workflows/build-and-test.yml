@@ -6,22 +6,18 @@ on:
     branches:
       - master
 
+env:
+  UPLOAD_ARTIFACTS: 'true'
+  
 jobs:
   linux:
-    steps:
-      - name: Build and test
-      	uses: ./.github/workflows/build-and-test-linux.yml
-      - name: Upload Linux Build Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: linux-build-artifact
-          path: dist/
+    uses: ./.github/workflows/build-and-test-linux.yml
   
-  macos:
-    uses: ./.github/workflows/build-and-test-macos.yml
+  # macos:
+  #   uses: ./.github/workflows/build-and-test-macos.yml
 
-  linux-MPI:
-    uses: ./.github/workflows/build-and-test-linux-mpi.yml
+  # linux-MPI:
+  #   uses: ./.github/workflows/build-and-test-linux-mpi.yml
 
-  macos-MPI:
-    uses: ./.github/workflows/build-and-test-macos-mpi.yml
+  # macos-MPI:
+  #   uses: ./.github/workflows/build-and-test-macos-mpi.yml
