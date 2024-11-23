@@ -42,8 +42,7 @@ jobs:
     #     ./devtool test
 
     - name: Upload dist folder as artifact
-      # if: ${{ success() && env.UPLOAD_ARTIFACTS == 'true' }}
-      if: ${{ success() }}
+      if: ${{ success() && ${UPLOAD_ARTIFACTS} == 'true' }}
       uses: actions/upload-artifact@v3
       with:
         name: qupled-linux
