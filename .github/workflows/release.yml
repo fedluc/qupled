@@ -35,15 +35,6 @@ jobs:
        name: qupled-linux-mpi
        path: qupled-linux-mpi
 
-   - name: Download macos package
-     uses: actions/download-artifact@v4
-     with:
-       name: qupled-macos-mpi
-       path: qupled-macos-mpi
-
-   - name: Copy macOS wheels to target package
-     run: cp qupled-macos-mpi/*.whl qupled-linux-mpi/
-
    - name: Set up Python environment
      run: |
        python3 -m venv ${PYTHON_VENV_ROOT}
@@ -57,4 +48,4 @@ jobs:
        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
      run: |
        source ${PYTHON_VENV_ROOT}/bin/activate
-       twine upload --non-interactive qupled-linux-mpi/*
+       twine upload --non-interactive qupled-linux-mpi/*.tar.gz

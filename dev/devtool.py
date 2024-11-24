@@ -79,7 +79,7 @@ def run():
     subparsers = parser.add_subparsers(dest="command", help="Sub-command to run")
 
     # Build command
-    build_parser = subparsers.add_parser("build", help="Build the Python package")
+    build_parser = subparsers.add_parser("build", help="Build the qupled package")
     build_parser.add_argument(
         "--nompi",
         action="store_true",
@@ -91,6 +91,7 @@ def run():
     subparsers.add_parser("docs", help="Generate documentation")
     subparsers.add_parser("examples", help="Run tests for the examples")
     subparsers.add_parser("format", help="Format the source code")
+    subparsers.add_parser("install", help="Install the qupled package")
     subparsers.add_parser("test", help="Run tests")
 
     args = parser.parse_args()
