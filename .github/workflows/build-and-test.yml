@@ -5,13 +5,12 @@ on:
   pull_request:
     branches:
       - master
-
-env:
-  UPLOAD_ARTIFACTS: 'true'
   
 jobs:
   linux:
     uses: ./.github/workflows/build-and-test-linux.yml
+    with:
+      upload-artifact: false
   
   # macos:
   #   uses: ./.github/workflows/build-and-test-macos.yml

@@ -2,7 +2,11 @@ name: Build & Test (Linux)
 
 on:
   workflow_call:
-
+    inputs:
+      upload-artifact:
+        required: true
+        type: string
+	
 env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
 
@@ -42,7 +46,7 @@ jobs:
     #     ./devtool test
 
     - name: Upload dist folder as artifact
-      if: ${{ success() && $UPLOAD_ARTIFACTS == 'true' }}
+      if: ${{ success() && inputs.upload-artifact == 'true' }}
       uses: actions/upload-artifact@v3
       with:
         name: qupled-linux
