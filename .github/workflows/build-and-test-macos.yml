@@ -2,6 +2,10 @@ name: Build & Test (macOS)
 
 on:
   workflow_call:
+    inputs:
+      upload-artifact:
+        required: true
+        type: string
 
 env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
@@ -40,3 +44,10 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install tox
         ./devtool test
+
+    - name: Upload artifact
+      if: ${{ success() && inputs.upload-artifact == 'true' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: qupled-linux
+        path: dist

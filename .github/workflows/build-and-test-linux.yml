@@ -39,13 +39,13 @@ jobs:
         pip3 install build setuptools
         ./devtool build --nompi
 
-    # - name: Tests
-    #   run: |
-    #     source ${PYTHON_VENV_ROOT}/bin/activate
-    #     pip3 install tox
-    #     ./devtool test
+    - name: Tests
+      run: |
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        pip3 install tox
+        ./devtool test
 
-    - name: Upload dist folder as artifact
+    - name: Upload artifact
       if: ${{ success() && inputs.upload-artifact == 'true' }}
       uses: actions/upload-artifact@v3
       with:
