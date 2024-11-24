@@ -5,15 +5,19 @@ Qupled is a package that can be used to compute the properties of quantum one co
 plasmas via theoretical approaches based on the dielectric formalism. The theoretical
 approaches which can be solved with qupled include:
 
-  * The classical RPA scheme (`Böhm and Pines <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_)
-  * The classical STLS scheme (`Tanaka and Ichimaru <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_)
-  * The classical STLS-HNC scheme (`Tanaka <https://pubs.aip.org/aip/jcp/article/145/21/214104/196066/Correlational-and-thermodynamic-properties-of>`_)
-  * The classical STLS-IET scheme (`Tolias and collaborators <https://pubs.aip.org/aip/jcp/article/155/13/134115/353165/Integral-equation-theory-based-dielectric-scheme>`_)
-  * The classical VS-STLS scheme (`Vashishta and Singwi <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_)
-  * The hybrid ESA scheme (`Dornheim and collaborators <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`_)
-  * The quantum STLS (QSTLS) scheme (`Schweng and Böhm <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_)
-  * The quantum QSTLS-IET scheme (`Tolias and others <https://pubs.aip.org/aip/jcp/article/158/14/141102/2877795/Quantum-version-of-the-integral-equation-theory>`_)
-  * The quantum VS-STLS (QVS) scheme
+  * The classical schemes
+    
+    * `RPA <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_
+    * `STLS <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_
+    * `STLS-IET <https://pubs.aip.org/aip/jcp/article/155/13/134115/353165/Integral-equation-theory-based-dielectric-scheme>`_
+    * `VS-STLS <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.6.875>`_      
+  * The quantum schemes
+    
+    * `QSTLS <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_
+    * `QSTLS-IET <https://pubs.aip.org/aip/jcp/article/158/14/141102/2877795/Quantum-version-of-the-integral-equation-theory>`_
+    * QVS
+      
+  * The hybrid `ESA <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.165102>`_ scheme
 
 Qupled supports both MPI and OpenMP parallelizations to handle the most computationally-intensive
 calculations in the quantum and in the classical VS-STLS scheme.
@@ -33,15 +37,11 @@ is the Fermi energy and :math:`h` is Planck's constant.
 Installing qupled
 -----------------
 
-Qupled can be installed as a pip package by running
+External dependencies
+~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: console
-
-   pip install qupled
-		
-This will also install all the python packages that are necessary for running the package. Note that, depending on the platform,
-the installation procedure might rquire to compile some C++ code. Hence, before trying to install or run qupled make sure that
-the following dependencies are satisfied:
+The installation of qupled may require compiling some C++ code, depending on the platform and installation method.
+Therefore, ensure the following dependencies are met before attempting to install or run qupled:
 
   - `CMake <https://cmake.org/download/>`_
   - `Boost <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
@@ -60,3 +60,28 @@ For macOS they can be installed directly from homebrew
 .. code-block:: console
 
    brew install cmake gsl libomp openmpi fmt boost-python3
+
+Install with pip
+~~~~~~~~~~~~~~~~
+
+Qupled can be installed as a pip package by running
+
+.. code-block:: console
+
+   pip install qupled
+		
+This will also install all the python packages that are necessary for running the package.
+
+Install from source
+~~~~~~~~~~~~~~~~~~~
+
+Qupled and all its python dependencies can also be installed from source by running
+
+.. code-block:: console
+
+   git clone https://github.com/fedluc/qupled.git
+   cd qupled
+   pip install -r dev/requirements.txt
+   ./devtool build
+   ./devtool test
+   ./devtool install
