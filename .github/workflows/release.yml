@@ -1,19 +1,19 @@
-# name: Release
+name: Release
 
-# on:
-#   push:
-#     tags:
-#       - 'v*'
+on:
+  push:
+    tags:
+      - 'v*'
 
-# env:
-#   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
+env:
+  PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
 
-# jobs:
+jobs:
 
-#   build-and-test-linux:
-#     uses: ./.github/workflows/build-and-test-linux-mpi.yml
-#     with:
-#       upload-artifact: true
+  build-and-test-linux:
+    uses: ./.github/workflows/build-and-test-linux-mpi.yml
+    with:
+      upload-artifact: true
 
 #   build-and-test-macos:
 #     uses: ./.github/workflows/build-and-test-macos-mpi.yml
