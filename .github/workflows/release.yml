@@ -14,49 +14,48 @@ jobs:
     uses: ./.github/workflows/build-and-test-linux-mpi.yml
     with:
       upload-artifact: true
+      build-version: ${GITHUB_REF#refs/tags/v}
 
-#   build-and-test-macos:
-#     uses: ./.github/workflows/build-and-test-macos-mpi.yml
-#     with:
-#       upload-artifact: true
+  build-and-test-macos:
+    uses: ./.github/workflows/build-and-test-macos-mpi.yml
+    with:
+      upload-artifact: true
+      build-version: ${GITHUB_REF#refs/tags/v}
 
-#   publish:
+  publish:
 
-#    runs-on: ubuntu-latest
-#    needs: [build-and-test-linux, build-and-test-macos]
+   runs-on: ubuntu-latest
+   needs: [build-and-test-linux, build-and-test-macos]
 
-#    steps:
+   steps:
 
-#    - name: Set version in TOML file
-#       run: |
-#         sed -i "s/^version = \".*\"/version = \"${GITHUB_REF#refs/tags/v}\"/" pyproject.toml
+   - name: Download linux package
+     uses: actions/download-artifact@v4
+     with:
+       name: qupled
+       path: qupled-linux-mpi
 
-#    - name: Download linux package
-#      uses: actions/download-artifact@v4
-#      with:
-#        name: qupled
-#        path: qupled-linux-mpi
+   - name: Download macos package
+     uses: actions/download-artifact@v4
+     with:
+       name: qupled-macos-mpi
+       path: qupled-macos-mpi
 
-#    - name: Download macos package
-#      uses: actions/download-artifact@v4
-#      with:
-#        name: qupled-macos-mpi
-#        path: qupled-macos-mpi
+   - name: Copy macOS wheels to target package
+     run: cp qupled-macos-mpi/*.whl qupled/
 
-#    - name: Copy macOS wheels to target package
-#      run: cp qupled-macos-mpi/*.whl qupled/
+   - name: Set up Python environment
+     run: |
+       python3 -m venv ${PYTHON_VENV_ROOT}
+       source ${PYTHON_VENV_ROOT}/bin/activate
+       pip3 install --upgrade pip
+       pip3 install twine
 
-#    - name: Set up Python environment
-#      run: |
-#        python3 -m venv ${PYTHON_VENV_ROOT}
-#        source ${PYTHON_VENV_ROOT}/bin/activate
-#        pip3 install --upgrade pip
-#        pip3 install twine
-
-#    - name: Publish to PyPI
-#      env:
-#        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-#        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-#      run: |
-#        source ${PYTHON_VENV_ROOT}/bin/activate
-#        # twine upload --non-interactive qupled/*
+   - name: Publish to PyPI
+     env:
+       TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+       TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+     run: |
+       source ${PYTHON_VENV_ROOT}/bin/activate
+       ls qupled/*
+       # twine upload --non-interactive qupled/*
