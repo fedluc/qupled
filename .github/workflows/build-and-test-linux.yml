@@ -6,6 +6,10 @@ on:
       upload-artifact:
         required: true
         type: string
+      build-version:
+        required: false
+        type: string
+        default: ""
 
 env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
@@ -32,6 +36,11 @@ jobs:
         python3 -m venv ${PYTHON_VENV_ROOT}
         pip3 install --upgrade pip
 
+    - name: Set build version
+      run: |
+        if: ${{ success() && build-version != '' }}
+        sed -i "s/^version = \".*\"/version = \"${GITHUB_REF#refs/tags/v}\"/" pyproject.toml
+
     - name: Build
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
@@ -47,7 +56,7 @@ jobs:
 
     - name: Upload artifact
       if: ${{ success() && inputs.upload-artifact == 'true' }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: qupled-linux
         path: dist
