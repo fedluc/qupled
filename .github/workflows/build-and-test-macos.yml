@@ -6,6 +6,10 @@ on:
       upload-artifact:
         required: true
         type: string
+      build-version:
+        required: false
+        type: string
+        default: ""
 
 env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
@@ -30,6 +34,11 @@ jobs:
         brew update
         brew install cmake gsl libomp fmt boost-python3
         python3 -m venv ${PYTHON_VENV_ROOT}
+
+    - name: Set build version
+      if: ${{ inputs.build-version != '' }}
+      run: |
+        sed -i "s/^version = \".*\"/version = \"${inputs.build-version}\"/" pyproject.toml
 
     - name: Build
       run: |

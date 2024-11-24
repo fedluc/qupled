@@ -40,7 +40,6 @@ jobs:
       if: ${{ inputs.build-version != '' }}
       run: |
         sed -i "s/^version = \".*\"/version = \"${inputs.build-version}\"/" pyproject.toml
-        cat pyproject.toml
 
     - name: Build
       run: |
