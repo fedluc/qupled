@@ -38,7 +38,7 @@ jobs:
 
     - name: Set build version
       run: |
-        if: ${{ build-version != '' }}
+        if: ${{ inputs.build-version != '' }}
         sed -i "s/^version = \".*\"/version = \"${GITHUB_REF#refs/tags/v}\"/" pyproject.toml
 
     - name: Build
