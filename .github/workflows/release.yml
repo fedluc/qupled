@@ -57,5 +57,4 @@ jobs:
        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
      run: |
        source ${PYTHON_VENV_ROOT}/bin/activate
-       ls qupled-linux-mpi/*
-       # twine upload --non-interactive qupled/*
+       twine upload --non-interactive qupled-linux-mpi/*
