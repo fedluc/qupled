@@ -10,7 +10,7 @@ jobs:
   linux:
     uses: ./.github/workflows/build-and-test-linux.yml
     with:
-      upload-artifact: false
+      upload-artifact: true
   
   # macos:
   #   uses: ./.github/workflows/build-and-test-macos.yml
