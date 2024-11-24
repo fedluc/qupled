@@ -11,7 +11,8 @@ jobs:
     uses: ./.github/workflows/build-and-test-linux.yml
     with:
       upload-artifact: false
-  
+      build-version: v0.0.4
+
   # macos:
   #   uses: ./.github/workflows/build-and-test-macos.yml
   #   with:

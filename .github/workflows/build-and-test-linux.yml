@@ -37,9 +37,10 @@ jobs:
         pip3 install --upgrade pip
 
     - name: Set build version
+      if: ${{ inputs.build-version != '' }}
       run: |
-        if: ${{ inputs.build-version != '' }}
-        sed -i "s/^version = \".*\"/version = \"${GITHUB_REF#refs/tags/v}\"/" pyproject.toml
+        sed -i "s/^version = \".*\"/version = \"${inputs.build-version}\"/" pyproject.toml
+        cat pyproject.toml
 
     - name: Build
       run: |
