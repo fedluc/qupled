@@ -40,8 +40,9 @@ def examples():
 
 def format_code():
     subprocess.run(["black", "."], check=True)
-    cpp_files = list(Path("qupled").rglob("*.cpp"))
-    hpp_files = list(Path("qupled").rglob("*.hpp"))
+    native_files_folder = Path(os.path.join("src", "qupled", "native"))
+    cpp_files = list(native_files_folder.rglob("*.cpp"))
+    hpp_files = list(native_files_folder.rglob("*.hpp"))
     for f in cpp_files + hpp_files:
         subprocess.run(["clang-format", "--style=file", "-i", str(f)], check=True)
 

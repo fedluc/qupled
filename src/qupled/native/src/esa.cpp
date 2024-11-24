@@ -4,12 +4,257 @@
 
 using namespace std;
 
+class Dual2 {
+public:
+
+  double val;
+  double dx;
+  double dy;
+  double dxx;
+  double dyy;
+  double dxy;
+
+  // Constructor
+  Dual2(double value,
+        double dx = 0.0,
+        double dy = 0.0,
+        double dxx = 0.0,
+        double dyy = 0.0,
+        double dxy = 0.0)
+      : val(value),
+        dx(dx),
+        dy(dy),
+        dxx(dxx),
+        dyy(dyy),
+        dxy(dxy) {}
+
+  // Overload addition operator
+  Dual2 operator+(const Dual2 &other) const {
+    return Dual2(val + other.val,
+                 dx + other.dx,
+                 dy + other.dy,
+                 dxx + other.dxx,
+                 dyy + other.dyy,
+                 dxy + other.dxy);
+  }
+
+  // Overload subtraction operator
+  Dual2 operator-(const Dual2 &other) const {
+    return Dual2(val - other.val,
+                 dx - other.dx,
+                 dy - other.dy,
+                 dxx - other.dxx,
+                 dyy - other.dyy,
+                 dxy - other.dxy);
+  }
+
+  // Overload multiplication operator
+  Dual2 operator*(const Dual2 &other) const {
+    return Dual2(val * other.val,
+                 val * other.dx + dx * other.val,
+                 val * other.dy + dy * other.val,
+                 val * other.dxx + 2 * dx * other.dx + dxx * other.val,
+                 val * other.dyy + 2 * dy * other.dy + dyy * other.val,
+                 val * other.dxy + dx * other.dy + dy * other.dx +
+                     dxy * other.val);
+  }
+
+  // Overload division operator
+  Dual2 operator/(const Dual2 &other) const {
+    double inv_val = 1.0 / other.val;
+    double inv_val2 = inv_val * inv_val;
+    double inv_val3 = inv_val2 * inv_val;
+    return Dual2(
+        val * inv_val,
+        (dx - val * other.dx * inv_val) * inv_val,
+        (dy - val * other.dy * inv_val) * inv_val,
+        (dxx - 2 * dx * other.dx * inv_val - val * other.dxx * inv_val +
+         2 * val * other.dx * other.dx * inv_val2) *
+            inv_val,
+        (dyy - 2 * dy * other.dy * inv_val - val * other.dyy * inv_val +
+         2 * val * other.dy * other.dy * inv_val2) *
+            inv_val,
+        (dxy - dx * other.dy * inv_val - dy * other.dx * inv_val -
+         val * other.dxy * inv_val + 2 * val * other.dx * other.dy * inv_val2) *
+            inv_val);
+  }
+
+  // Overload addition operator: Dual2 + double
+  Dual2 operator+(double scalar) const {
+    return Dual2(val + scalar, dx, dy, dxx, dyy, dxy);
+  }
+
+  // Overload addition operator: double + Dual2
+  friend Dual2 operator+(double scalar, const Dual2 &dual) {
+    return dual + scalar; // Reuse the Dual2 + double operator
+  }
+
+  // Overload subtraction operator: Dual2 - double
+  Dual2 operator-(double scalar) const {
+    return Dual2(val - scalar, dx, dy, dxx, dyy, dxy);
+  }
+
+  // Overload subtraction operator: double - Dual2
+  friend Dual2 operator-(double scalar, const Dual2 &dual) {
+    return Dual2(
+        scalar - dual.val, -dual.dx, -dual.dy, -dual.dxx, -dual.dyy, -dual.dxy);
+  }
+
+  // Overload multiplication operator: Dual2 * double
+  Dual2 operator*(double scalar) const {
+    return Dual2(val * scalar,
+                 dx * scalar,
+                 dy * scalar,
+                 dxx * scalar,
+                 dyy * scalar,
+                 dxy * scalar);
+  }
+
+  // Overload multiplication operator: double * Dual2
+  friend Dual2 operator*(double scalar, const Dual2 &dual) {
+    return dual * scalar; // Reuse the Dual2 * double operator
+  }
+
+  // Overload division operator: Dual2 / double
+  Dual2 operator/(double scalar) const {
+    double inv_scalar = 1.0 / scalar;
+    return Dual2(val * inv_scalar,
+                 dx * inv_scalar,
+                 dy * inv_scalar,
+                 dxx * inv_scalar,
+                 dyy * inv_scalar,
+                 dxy * inv_scalar);
+  }
+
+  // Overload division operator: double / Dual2
+  friend Dual2 operator/(double scalar, const Dual2 &dual) {
+    double inv_val = 1.0 / dual.val;
+    return Dual2(scalar * inv_val,
+                 -scalar * dual.dx * inv_val * inv_val,
+                 -scalar * dual.dy * inv_val * inv_val,
+                 scalar * (2 * dual.dx * dual.dx - dual.dxx * dual.val) *
+                     inv_val * inv_val * inv_val,
+                 scalar * (2 * dual.dy * dual.dy - dual.dyy * dual.val) *
+                     inv_val * inv_val * inv_val,
+                 scalar * (2 * dual.dx * dual.dy - dual.dxy * dual.val) *
+                     inv_val * inv_val * inv_val);
+  }
+
+  // Overload sine function
+  friend Dual2 sin(const Dual2 &x) {
+    return Dual2(std::sin(x.val),
+                 std::cos(x.val) * x.dx,
+                 std::cos(x.val) * x.dy,
+                 -std::sin(x.val) * x.dx * x.dx + std::cos(x.val) * x.dxx -
+                     std::sin(x.val) * x.dy * x.dy + std::cos(x.val) * x.dyy -
+                     std::sin(x.val) * x.dx * x.dy + std::cos(x.val) * x.dxy);
+  }
+
+  // Overload exponential function
+  friend Dual2 exp(const Dual2 &x) {
+    double exp_val = std::exp(x.val);
+    return Dual2(exp_val,
+                 exp_val * x.dx,
+                 exp_val * x.dy,
+                 exp_val * (x.dx * x.dx + x.dxx),
+                 exp_val * (x.dy * x.dy + x.dyy),
+                 exp_val * (x.dx * x.dy + x.dxy));
+  }
+
+  // Overload square root function
+  friend Dual2 sqrt(const Dual2 &x) {
+    double sqrt_val = std::sqrt(x.val);
+    double inv_sqrt = 0.5 / sqrt_val;
+    return Dual2(sqrt_val,
+                 x.dx * inv_sqrt,
+                 x.dy * inv_sqrt,
+                 (x.dxx - x.dx * x.dx / (2 * x.val)) * inv_sqrt,
+                 (x.dyy - x.dy * x.dy / (2 * x.val)) * inv_sqrt,
+                 (x.dxy - x.dx * x.dy / (2 * x.val)) * inv_sqrt);
+  }
+
+  // Overload hyperbolic tangent function
+  friend Dual2 tanh(const Dual2 &x) {
+    double tanh_val = std::tanh(x.val);
+    double sech2_val = 1.0 - tanh_val * tanh_val;
+    return Dual2(tanh_val,
+                 x.dx * sech2_val,
+                 x.dy * sech2_val,
+                 sech2_val * (x.dxx - 2 * x.dx * tanh_val * x.dx),
+                 sech2_val * (x.dyy - 2 * x.dy * tanh_val * x.dy),
+                 sech2_val * (x.dxy - tanh_val * (x.dx * x.dy + x.dy * x.dx)));
+  }
+};
+
+// QMC free energy function constants
+Dual2 fxcAutoDiff(const Dual2 &theta, const Dual2 &rs) {
+
+  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
+
+  const Dual2 thetaInv = 1.0 / theta;
+  const Dual2 theta2 = theta * theta;
+  const Dual2 theta3 = theta * theta2;
+  const Dual2 theta4 = theta2 * theta2;
+  const Dual2 tanhThetaInv = tanh(thetaInv);
+  const Dual2 tanhSqrtThetaInv = tanh(sqrt(thetaInv));
+  const Dual2 rsInv = 1.0 / rs;
+  const Dual2 sqrtRs = sqrt(rs);
+  constexpr double omega = 1.0;
+  constexpr double fb1 = 0.3436902;
+  constexpr double fb2 = 7.82159531356;
+  constexpr double fb3 = 0.300483986662;
+  constexpr double fb4 = 15.8443467125;
+  const double fb5 = fb3 * pow(3.0 / 2.0, 1.0 / 2.0) * omega / lambda;
+  constexpr double fc1 = 0.8759442;
+  constexpr double fc2 = -0.230130843551;
+  constexpr double fd1 = 0.72700876;
+  constexpr double fd2 = 2.38264734144;
+  constexpr double fd3 = 0.30221237251;
+  constexpr double fd4 = 4.39347718395;
+  constexpr double fd5 = 0.729951339845;
+  constexpr double fe1 = 0.25388214;
+  constexpr double fe2 = 0.815795138599;
+  constexpr double fe3 = 0.0646844410481;
+  constexpr double fe4 = 15.0984620477;
+  constexpr double fe5 = 0.230761357474;
+
+  // const Dual2 faNumerator =
+  //       0.610887 * tanhThetaInv * (0.75 + 3.04363 * theta2 - 0.09227 * theta3
+  //       + 1.7035 * theta4);
+  // const Dual2 fa = faNumerator / theta;
+  //     // ((0.75 + 3.04363 * theta2 - 0.09227 * theta3 + 1.7035 * theta4) /
+  //     //  (1.0 + 8.31051 * theta2 + 5.1105 * theta4));
+  // const Dual2 fb =  ((fb1 + fb2 * theta2 + fb3 * theta4) /
+  //                                      (1.0 + fb4 * theta2 + fb5 * theta4));
+  // const Dual2 fd =  ((fd1 + fd2 * theta2 + fd3 * theta4) /
+  //                                      (1.0 + fd4 * theta2 + fd5 * theta4));
+  // const Dual2 fe =  ((fe1 + fe2 * theta2 + fe3 * theta4) /
+  //                                  (1.0 + fe4 * theta2 + fe5 * theta4));
+  // const Dual2 fc = (fc1 + fc2 * exp(-1.0 * thetaInv)) * fe;
+
+  const Dual2 fa =
+      0.610887 * tanhThetaInv *
+      ((0.75 + 3.04363 * theta2 - 0.09227 * theta3 + 1.7035 * theta4) /
+       (1.0 + 8.31051 * theta2 + 5.1105 * theta4));
+  const Dual2 fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4) /
+                                       (1.0 + fb4 * theta2 + fb5 * theta4));
+  const Dual2 fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4) /
+                                       (1.0 + fd4 * theta2 + fd5 * theta4));
+  const Dual2 fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4) /
+                                   (1.0 + fe4 * theta2 + fe5 * theta4));
+  const Dual2 fc = (fc1 + fc2 * exp(-1.0 * thetaInv)) * fe;
+
+  return -1.0 * rsInv * (omega * fa + fb * sqrtRs + fc * rs) /
+         (1.0 + fd * sqrtRs + fe * rs);
+}
+
 // -----------------------------------------------------------------
 // ESA class
 // -----------------------------------------------------------------
 
 // Compute scheme
 int ESA::compute() {
+
   try {
     init();
     println("Structural properties calculation ...");
@@ -147,6 +392,25 @@ void ESA::computeSlfc() {
   const double fxctt = (fxcData[7] - 2.0 * fxcData[4] + fxcData[1]) / dx2;
   const double fxctr =
       (fxcData[8] - fxcData[6] - fxcData[2] + fxcData[0]) / fdx2;
+
+  println("################# TESTING (start) ###################");
+  {
+    // Create Dual2 numbers for x and y
+    Dual2 drs(rs, 1.0, 0.0, 0.0, 0.0, 0.0);
+    Dual2 dtheta(theta, 0.0, 1.0, 0.0, 0.0, 0.0);
+
+    // Compute f(x, y) = sin(x) * exp(y)
+    Dual2 result = fxcAutoDiff(dtheta, drs);
+
+    // Output results
+    std::cout << "f(x, y) = " << result.val << ", " << fxcData[4] << std::endl;
+    std::cout << "∂f/∂x = " << result.dx << ", " << fxcr << std::endl;
+    std::cout << "∂f/∂y = " << result.dy << ", " << fxct << std::endl;
+    std::cout << "∂²f/∂x² = " << result.dxx << ", " << fxcrr << std::endl;
+    std::cout << "∂²f/∂y² = " << result.dyy << ", " << fxctt << std::endl;
+    std::cout << "∂²f/∂x∂y = " << result.dxy << ", " << fxctr << std::endl;
+  }
+  println("################# TESTING (end) ###################");
 
   // Loop over the wave vector grid size
   for (size_t i = 0; i < wvg.size(); ++i) {

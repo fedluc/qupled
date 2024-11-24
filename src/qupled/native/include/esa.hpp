@@ -24,7 +24,7 @@ protected:
   // Function for free energy derivatives
   double fxc(const double &theta, const double &rs) const;
   // Resolution for the free energy derivatives
-  const double dx = 1e-6;
+  const double dx = 1e-3;
 };
 
 #endif
