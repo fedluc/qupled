@@ -39,7 +39,7 @@ jobs:
       if: ${{ inputs.build-version != '' }}
       run: |
         BUILD_VERSION=${{ inputs.build-version }}
-        sed -i "s/^version = \".*\"/version = \"${BUILD_VERSION}\"/" pyproject.toml
+        sed -i "" "s/^version = \".*\"/version = \"${BUILD_VERSION}\"/" pyproject.toml
 
     - name: Build
       run: |
