@@ -8,30 +8,6 @@ tools mentioned below, start by installing the required Python packages with the
 
    pip install -r dev/requirements.txt
 
-Developing
-----------
-
-Qupled is an open-source project, and contributions from external developers are always welcome.
-If you'd like to add or test new features, you can build the code by running:
-
-.. code-block:: console
-
-   ./devtool build
-
-This command, executed from the root directory of the project, will generate the build and place it in the ``dist``
-directory as a Python wheel file. To verify that everything is working correctly, run:
-
-.. code-block:: console
-
-   ./devtool test
-
-Tests are also executed automatically whenever new code is pushed to the remote repository. If all the tests
-pass correctly you can then proceed to install your new version of qupled with:
-
-.. code-block:: console
-
-   pip install --force-reinstall dist/qupled*.whl
-
 Formatting
 ----------
 

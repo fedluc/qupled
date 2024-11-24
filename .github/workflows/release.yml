@@ -10,198 +10,39 @@ env:
 
 jobs:
 
-  build-macos:
-    runs-on: macos-latest
+  build-and-test-linux:
+    uses: ./.github/workflows/build-and-test-linux-mpi.yml
+    with:
+      upload-artifact: true
+      build-version: ${GITHUB_REF#refs/tags/v}
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
-
-    - name: Install dependencies
-      run: |
-        brew update
-        brew install cmake gsl libomp openmpi fmt boost-python3
-        python3 -m venv ${PYTHON_VENV_ROOT}
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        pip3 install --upgrade pip
-        pip3 install -r python/requirements.txt
-
-    - name: Configure CMake
-      run: |
-        export OpenMP_ROOT=$(brew --prefix)/opt/libomp
-        cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=Release
-
-    - name: Build
-      run: |
-        cmake --build build --config Release
-
-    - name: Upload native library as artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: macos-library
-        path: build/qupled/Darwin/qupled.so
-
-  build-linux:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake libboost-all-dev libopenmpi-dev libgsl-dev libomp-dev libfmt-dev python3-dev
-        python3 -m venv ${PYTHON_VENV_ROOT}
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        pip3 install --upgrade pip
-        pip3 install -r python/requirements.txt
-
-    - name: Configure CMake
-      run: cmake -Bbuild -H. -DCMAKE_BUILD_TYPE=Release
-
-    - name: Build
-      run: cmake --build build --config Release
-
-    - name: Upload native library as artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: linux-library
-        path: build/qupled/Linux/qupled.so
-
-  build-pip:
-    runs-on: ubuntu-latest
-    needs: [build-linux, build-macos]
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Set up Python environment
-      run: |
-        python3 -m venv ${PYTHON_VENV_ROOT}
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        pip3 install --upgrade pip
-        pip3 install build
-
-    - name: Set up release directory
-      run: |
-        mkdir release
-        cp -r python/release/* release
-        cp -r python/qupled release
-
-    - name: Download native library for macOS
-      uses: actions/download-artifact@v3
-      with:
-        name: macos-library
-        path: release/qupled/Darwin
-
-    - name: Download native library for Linux
-      uses: actions/download-artifact@v3
-      with:
-        name: linux-library
-        path: release/qupled/Linux
-
-    - name: Set version in TOML file
-      run: |
-        sed -i "s/^version = \".*\"/version = \"${GITHUB_REF#refs/tags/v}\"/" pyproject.toml
-      working-directory: release
-
-    - name: Build pip package
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        python -m build
-      working-directory: release
-
-    - name: Upload pip package as an artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: qupled
-        path: release/dist
-
-  test-pip-macos:
-    runs-on: macos-latest
-    needs: build-pip
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Download pip package
-      uses: actions/download-artifact@v3
-      with:
-        name: qupled
-        path: release/qupled
-        
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
-
-    - name: Install dependencies
-      run: |
-        brew update
-        brew install gsl libomp openmpi fmt boost-python3
-        python3 -m venv ${PYTHON_VENV_ROOT}
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        pip3 install --upgrade pip
-        pip3 install release/qupled/*.whl pytest pytest-mock
-
-    - name: Test pip package
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        pytest -k "not test_examples"
-      working-directory: python/tests
-
-  test-pip-linux:
-    runs-on: ubuntu-latest
-    needs: build-pip
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-
-    - name: Download pip package
-      uses: actions/download-artifact@v3
-      with:
-        name: qupled
-        path: release/qupled
-        
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libboost-all-dev libopenmpi-dev libgsl-dev libomp-dev libfmt-dev python3-dev
-        python3 -m venv ${PYTHON_VENV_ROOT}
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        pip3 install --upgrade pip
-        pip3 install release/qupled/*.whl pytest pytest-mock
-
-    - name: Test pip package
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        pytest -k "not test_examples"
-      working-directory: python/tests
+  build-and-test-macos:
+    uses: ./.github/workflows/build-and-test-macos-mpi.yml
+    with:
+      upload-artifact: true
+      build-version: ${GITHUB_REF#refs/tags/v}
 
   publish:
+
    runs-on: ubuntu-latest
-   needs: [test-pip-linux, test-pip-macos]
+   needs: [build-and-test-linux, build-and-test-macos]
 
    steps:
-   - name: Download pip package
-     uses: actions/download-artifact@v3
+
+   - name: Download linux package
+     uses: actions/download-artifact@v4
      with:
-       name: qupled
-       path: qupled
+       name: qupled-linux-mpi
+       path: qupled-linux-mpi
+
+   - name: Download macos package
+     uses: actions/download-artifact@v4
+     with:
+       name: qupled-macos-mpi
+       path: qupled-macos-mpi
+
+   - name: Copy macOS wheels to target package
+     run: cp qupled-macos-mpi/*.whl qupled-linux-mpi/
 
    - name: Set up Python environment
      run: |
@@ -216,6 +57,4 @@ jobs:
        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
      run: |
        source ${PYTHON_VENV_ROOT}/bin/activate
-       twine upload --non-interactive qupled/*
-
-  
+       twine upload --non-interactive qupled-linux-mpi/*
