@@ -4,255 +4,10 @@
 
 using namespace std;
 
-class Dual2 {
-public:
-
-  double val;
-  double dx;
-  double dy;
-  double dxx;
-  double dyy;
-  double dxy;
-
-  // Constructor
-  Dual2(double value,
-        double dx = 0.0,
-        double dy = 0.0,
-        double dxx = 0.0,
-        double dyy = 0.0,
-        double dxy = 0.0)
-      : val(value),
-        dx(dx),
-        dy(dy),
-        dxx(dxx),
-        dyy(dyy),
-        dxy(dxy) {}
-
-  // Overload addition operator
-  Dual2 operator+(const Dual2 &other) const {
-    return Dual2(val + other.val,
-                 dx + other.dx,
-                 dy + other.dy,
-                 dxx + other.dxx,
-                 dyy + other.dyy,
-                 dxy + other.dxy);
-  }
-
-  // Overload subtraction operator
-  Dual2 operator-(const Dual2 &other) const {
-    return Dual2(val - other.val,
-                 dx - other.dx,
-                 dy - other.dy,
-                 dxx - other.dxx,
-                 dyy - other.dyy,
-                 dxy - other.dxy);
-  }
-
-  // Overload multiplication operator
-  Dual2 operator*(const Dual2 &other) const {
-    return Dual2(val * other.val,
-                 val * other.dx + dx * other.val,
-                 val * other.dy + dy * other.val,
-                 val * other.dxx + 2 * dx * other.dx + dxx * other.val,
-                 val * other.dyy + 2 * dy * other.dy + dyy * other.val,
-                 val * other.dxy + dx * other.dy + dy * other.dx +
-                     dxy * other.val);
-  }
-
-  // Overload division operator
-  Dual2 operator/(const Dual2 &other) const {
-    double inv_val = 1.0 / other.val;
-    double inv_val2 = inv_val * inv_val;
-    double inv_val3 = inv_val2 * inv_val;
-    return Dual2(
-        val * inv_val,
-        (dx - val * other.dx * inv_val) * inv_val,
-        (dy - val * other.dy * inv_val) * inv_val,
-        (dxx - 2 * dx * other.dx * inv_val - val * other.dxx * inv_val +
-         2 * val * other.dx * other.dx * inv_val2) *
-            inv_val,
-        (dyy - 2 * dy * other.dy * inv_val - val * other.dyy * inv_val +
-         2 * val * other.dy * other.dy * inv_val2) *
-            inv_val,
-        (dxy - dx * other.dy * inv_val - dy * other.dx * inv_val -
-         val * other.dxy * inv_val + 2 * val * other.dx * other.dy * inv_val2) *
-            inv_val);
-  }
-
-  // Overload addition operator: Dual2 + double
-  Dual2 operator+(double scalar) const {
-    return Dual2(val + scalar, dx, dy, dxx, dyy, dxy);
-  }
-
-  // Overload addition operator: double + Dual2
-  friend Dual2 operator+(double scalar, const Dual2 &dual) {
-    return dual + scalar; // Reuse the Dual2 + double operator
-  }
-
-  // Overload subtraction operator: Dual2 - double
-  Dual2 operator-(double scalar) const {
-    return Dual2(val - scalar, dx, dy, dxx, dyy, dxy);
-  }
-
-  // Overload subtraction operator: double - Dual2
-  friend Dual2 operator-(double scalar, const Dual2 &dual) {
-    return Dual2(
-        scalar - dual.val, -dual.dx, -dual.dy, -dual.dxx, -dual.dyy, -dual.dxy);
-  }
-
-  // Overload multiplication operator: Dual2 * double
-  Dual2 operator*(double scalar) const {
-    return Dual2(val * scalar,
-                 dx * scalar,
-                 dy * scalar,
-                 dxx * scalar,
-                 dyy * scalar,
-                 dxy * scalar);
-  }
-
-  // Overload multiplication operator: double * Dual2
-  friend Dual2 operator*(double scalar, const Dual2 &dual) {
-    return dual * scalar; // Reuse the Dual2 * double operator
-  }
-
-  // Overload division operator: Dual2 / double
-  Dual2 operator/(double scalar) const {
-    double inv_scalar = 1.0 / scalar;
-    return Dual2(val * inv_scalar,
-                 dx * inv_scalar,
-                 dy * inv_scalar,
-                 dxx * inv_scalar,
-                 dyy * inv_scalar,
-                 dxy * inv_scalar);
-  }
-
-  // Overload division operator: double / Dual2
-  friend Dual2 operator/(double scalar, const Dual2 &dual) {
-    double inv_val = 1.0 / dual.val;
-    return Dual2(scalar * inv_val,
-                 -scalar * dual.dx * inv_val * inv_val,
-                 -scalar * dual.dy * inv_val * inv_val,
-                 scalar * (2 * dual.dx * dual.dx - dual.dxx * dual.val) *
-                     inv_val * inv_val * inv_val,
-                 scalar * (2 * dual.dy * dual.dy - dual.dyy * dual.val) *
-                     inv_val * inv_val * inv_val,
-                 scalar * (2 * dual.dx * dual.dy - dual.dxy * dual.val) *
-                     inv_val * inv_val * inv_val);
-  }
-
-  // Overload sine function
-  friend Dual2 sin(const Dual2 &x) {
-    return Dual2(std::sin(x.val),
-                 std::cos(x.val) * x.dx,
-                 std::cos(x.val) * x.dy,
-                 -std::sin(x.val) * x.dx * x.dx + std::cos(x.val) * x.dxx -
-                     std::sin(x.val) * x.dy * x.dy + std::cos(x.val) * x.dyy -
-                     std::sin(x.val) * x.dx * x.dy + std::cos(x.val) * x.dxy);
-  }
-
-  // Overload exponential function
-  friend Dual2 exp(const Dual2 &x) {
-    double exp_val = std::exp(x.val);
-    return Dual2(exp_val,
-                 exp_val * x.dx,
-                 exp_val * x.dy,
-                 exp_val * (x.dx * x.dx + x.dxx),
-                 exp_val * (x.dy * x.dy + x.dyy),
-                 exp_val * (x.dx * x.dy + x.dxy));
-  }
-
-  // Overload square root function
-  friend Dual2 sqrt(const Dual2 &x) {
-    double sqrt_val = std::sqrt(x.val);
-    double inv_sqrt = 0.5 / sqrt_val;
-    return Dual2(sqrt_val,
-                 x.dx * inv_sqrt,
-                 x.dy * inv_sqrt,
-                 (x.dxx - x.dx * x.dx / (2 * x.val)) * inv_sqrt,
-                 (x.dyy - x.dy * x.dy / (2 * x.val)) * inv_sqrt,
-                 (x.dxy - x.dx * x.dy / (2 * x.val)) * inv_sqrt);
-  }
-
-  // Overload hyperbolic tangent function
-  friend Dual2 tanh(const Dual2 &x) {
-    double tanh_val = std::tanh(x.val);
-    double sech2_val = 1.0 - tanh_val * tanh_val;
-    return Dual2(tanh_val,
-                 x.dx * sech2_val,
-                 x.dy * sech2_val,
-                 sech2_val * (x.dxx - 2 * x.dx * tanh_val * x.dx),
-                 sech2_val * (x.dyy - 2 * x.dy * tanh_val * x.dy),
-                 sech2_val * (x.dxy - tanh_val * (x.dx * x.dy + x.dy * x.dx)));
-  }
-};
-
-// QMC free energy function constants
-Dual2 fxcAutoDiff(const Dual2 &theta, const Dual2 &rs) {
-
-  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
-
-  const Dual2 thetaInv = 1.0 / theta;
-  const Dual2 theta2 = theta * theta;
-  const Dual2 theta3 = theta * theta2;
-  const Dual2 theta4 = theta2 * theta2;
-  const Dual2 tanhThetaInv = tanh(thetaInv);
-  const Dual2 tanhSqrtThetaInv = tanh(sqrt(thetaInv));
-  const Dual2 rsInv = 1.0 / rs;
-  const Dual2 sqrtRs = sqrt(rs);
-  constexpr double omega = 1.0;
-  constexpr double fb1 = 0.3436902;
-  constexpr double fb2 = 7.82159531356;
-  constexpr double fb3 = 0.300483986662;
-  constexpr double fb4 = 15.8443467125;
-  const double fb5 = fb3 * pow(3.0 / 2.0, 1.0 / 2.0) * omega / lambda;
-  constexpr double fc1 = 0.8759442;
-  constexpr double fc2 = -0.230130843551;
-  constexpr double fd1 = 0.72700876;
-  constexpr double fd2 = 2.38264734144;
-  constexpr double fd3 = 0.30221237251;
-  constexpr double fd4 = 4.39347718395;
-  constexpr double fd5 = 0.729951339845;
-  constexpr double fe1 = 0.25388214;
-  constexpr double fe2 = 0.815795138599;
-  constexpr double fe3 = 0.0646844410481;
-  constexpr double fe4 = 15.0984620477;
-  constexpr double fe5 = 0.230761357474;
-
-  // const Dual2 faNumerator =
-  //       0.610887 * tanhThetaInv * (0.75 + 3.04363 * theta2 - 0.09227 * theta3
-  //       + 1.7035 * theta4);
-  // const Dual2 fa = faNumerator / theta;
-  //     // ((0.75 + 3.04363 * theta2 - 0.09227 * theta3 + 1.7035 * theta4) /
-  //     //  (1.0 + 8.31051 * theta2 + 5.1105 * theta4));
-  // const Dual2 fb =  ((fb1 + fb2 * theta2 + fb3 * theta4) /
-  //                                      (1.0 + fb4 * theta2 + fb5 * theta4));
-  // const Dual2 fd =  ((fd1 + fd2 * theta2 + fd3 * theta4) /
-  //                                      (1.0 + fd4 * theta2 + fd5 * theta4));
-  // const Dual2 fe =  ((fe1 + fe2 * theta2 + fe3 * theta4) /
-  //                                  (1.0 + fe4 * theta2 + fe5 * theta4));
-  // const Dual2 fc = (fc1 + fc2 * exp(-1.0 * thetaInv)) * fe;
-
-  const Dual2 fa =
-      0.610887 * tanhThetaInv *
-      ((0.75 + 3.04363 * theta2 - 0.09227 * theta3 + 1.7035 * theta4) /
-       (1.0 + 8.31051 * theta2 + 5.1105 * theta4));
-  const Dual2 fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4) /
-                                       (1.0 + fb4 * theta2 + fb5 * theta4));
-  const Dual2 fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4) /
-                                       (1.0 + fd4 * theta2 + fd5 * theta4));
-  const Dual2 fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4) /
-                                   (1.0 + fe4 * theta2 + fe5 * theta4));
-  const Dual2 fc = (fc1 + fc2 * exp(-1.0 * thetaInv)) * fe;
-
-  return -1.0 * rsInv * (omega * fa + fb * sqrtRs + fc * rs) /
-         (1.0 + fd * sqrtRs + fe * rs);
-}
-
 // -----------------------------------------------------------------
 // ESA class
 // -----------------------------------------------------------------
 
-// Compute scheme
 int ESA::compute() {
 
   try {
@@ -273,8 +28,15 @@ int ESA::compute() {
 }
 
 void ESA::computeSlfc() {
+  const double slfcAsymptotic = 1.0 - onTop();
+  for (size_t i = 0; i < wvg.size(); ++i) {
+    const double& x = wvg[i];
+    const double AF = activationFunction(x);
+    slfc[i] = slfcNN(x) * (1.0 - AF) + slfcAsymptotic * AF;
+  }
+}
 
-  // Get the degeneracy and coupling parameters
+double ESA::onTop() const {
   const double theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const double theta3_2 = pow(theta, 1.5);
@@ -284,9 +46,6 @@ void ESA::computeSlfc() {
   const double sqrtRs = sqrt(rs);
   const double rs2 = rs * rs;
   const double rs3 = rs2 * rs;
-  const double lambdaRs = -(M_PI / 12.0) * lambda * rs;
-
-  // Constants for the computation of the static local field correction
   constexpr double g0aa1 = 18.4376509088802;
   constexpr double g0ba1 = 24.1338558554951;
   constexpr double g0ba2 = 1.86499223116244;
@@ -304,11 +63,34 @@ void ESA::computeSlfc() {
   constexpr double g0bd1 = -0.598507865444083;
   constexpr double g0bd2 = 0.513161640681146;
   constexpr double g0d0 = 0.0837741;
+  const double g0a =
+      (g0a0 + g0aa1 * theta) / (1.0 + g0ba1 * theta + g0ba2 * theta3);
+  const double g0b =
+      (g0b0 + g0ab1 * sqrtTheta) / (1.0 + g0bb1 * theta + g0bb2 * theta2);
+  const double g0c = (g0c0 + g0ac1 * sqrtTheta + g0ac2 * theta3_2)
+    / (1.0 + g0bc1 * theta + g0bc2 * theta2);
+  const double g0d =
+      (g0d0 + g0ad1 * sqrtTheta) / (1.0 + g0bd1 * theta + g0bd2 * theta2);
+  return 0.5 * (1.0 + g0a * sqrtRs + g0b * rs) / (1.0 + g0c * rs + g0d * rs3);
+}
 
+double ESA::activationFunction(const double& x) const {
+  const double theta = in.getDegeneracy();
+  const double theta2 = theta * theta;
   constexpr double Eta = 3.0;
   constexpr double Ax = 2.64;
   constexpr double Bx = 0.31;
   constexpr double Cx = 0.08;
+  const double xm = Ax + Bx * theta + Cx * theta2;
+  return 0.5 * (1.0 + tanh(Eta * (x - xm)));
+}
+
+double ESA::slfcNN(const double& x) const {
+  const double theta = in.getDegeneracy();
+  const double rs = in.getCoupling();
+  const double theta3_2 = pow(theta, 1.5);
+  const double sqrtX = sqrt(x);
+  const double xp125 = pow(x, 1.25);
   constexpr double aa1 = 0.66477593;
   constexpr double aa2 = -4.59280227;
   constexpr double aa3 = 1.24649624;
@@ -345,7 +127,6 @@ void ESA::computeSlfc() {
   constexpr double cd1 = 0.63867766;
   constexpr double cd2 = 1.07863273;
   constexpr double cd3 = -0.35630091;
-
   const double aa = aa1 + aa2 * theta + aa3 * theta3_2;
   const double ba = ba1 + ba2 * theta + ba3 * theta3_2;
   const double ca = ca1 + ca2 * theta + ca3 * theta3_2;
@@ -358,79 +139,84 @@ void ESA::computeSlfc() {
   const double ad = ad1 + ad2 * theta + ad3 * theta3_2;
   const double bd = bd1 + bd2 * theta + bd3 * theta3_2;
   const double cd = cd1 + cd2 * theta + cd3 * theta3_2;
-  const double xm = Ax + Bx * theta + Cx * theta2;
-
-  const double g0a =
-      (g0a0 + g0aa1 * theta) / (1.0 + g0ba1 * theta + g0ba2 * theta3);
-  const double g0b =
-      (g0b0 + g0ab1 * sqrtTheta) / (1.0 + g0bb1 * theta + g0bb2 * theta2);
-  const double g0c = ((g0c0 + g0ac1 * sqrtTheta + g0ac2 * theta3_2) /
-                      (1.0 + g0bc1 * theta + g0bc2 * theta2));
-  const double g0d =
-      (g0d0 + g0ad1 * sqrtTheta) / (1.0 + g0bd1 * theta + g0bd2 * theta2);
-  const double g = 1.0 / 2.0 * (1.0 + g0a * sqrtRs + g0b * rs) /
-                   (1.0 + g0c * rs + g0d * rs3);
-
   const double a = (aa + ba * rs) / (1.0 + ca * rs);
   const double b = (ab + bb * rs) / (1.0 + cb * rs);
   const double c = (ac + bc * rs) / (1.0 + cc * rs);
   const double d = (ad + bd * rs) / (1.0 + cd * rs);
-
-  // Assigning derivatives to variables
-  vector<double> fxcData;
-  for (const double &thetaTmp : {theta - dx, theta, theta + dx}) {
-    for (const double &rsTmp : {rs - dx, rs, rs + dx}) {
-      fxcData.push_back(fxc(thetaTmp, rsTmp));
-    }
-  }
-  const double tdx = 2.0 * dx;
-  const double dx2 = dx * dx;
-  const double fdx2 = 4.0 * dx2;
-  const double fxcr = (fxcData[5] - fxcData[3]) / tdx;
-  const double fxct = (fxcData[7] - fxcData[1]) / tdx;
-  const double fxcrr = (fxcData[5] - 2.0 * fxcData[4] + fxcData[3]) / dx2;
-  const double fxctt = (fxcData[7] - 2.0 * fxcData[4] + fxcData[1]) / dx2;
-  const double fxctr =
-      (fxcData[8] - fxcData[6] - fxcData[2] + fxcData[0]) / fdx2;
-
-  println("################# TESTING (start) ###################");
-  {
-    // Create Dual2 numbers for x and y
-    Dual2 drs(rs, 1.0, 0.0, 0.0, 0.0, 0.0);
-    Dual2 dtheta(theta, 0.0, 1.0, 0.0, 0.0, 0.0);
-
-    // Compute f(x, y) = sin(x) * exp(y)
-    Dual2 result = fxcAutoDiff(dtheta, drs);
-
-    // Output results
-    std::cout << "f(x, y) = " << result.val << ", " << fxcData[4] << std::endl;
-    std::cout << "∂f/∂x = " << result.dx << ", " << fxcr << std::endl;
-    std::cout << "∂f/∂y = " << result.dy << ", " << fxct << std::endl;
-    std::cout << "∂²f/∂x² = " << result.dxx << ", " << fxcrr << std::endl;
-    std::cout << "∂²f/∂y² = " << result.dyy << ", " << fxctt << std::endl;
-    std::cout << "∂²f/∂x∂y = " << result.dxy << ", " << fxctr << std::endl;
-  }
-  println("################# TESTING (end) ###################");
-
-  // Loop over the wave vector grid size
-  for (size_t i = 0; i < wvg.size(); ++i) {
-    const double &x = wvg[i];
-    const double x2 = x * x;
-    const double sqrtX = sqrt(x);
-    const double xp125 = pow(x, 1.25);
-    const double AF = 1.0 / 2.0 * (1.0 + tanh(Eta * (x - xm)));
-    const double GCSR =
-        lambdaRs * x2 *
-        (4.0 * theta2 * fxctt + rs2 * fxcrr + 4.0 * theta * rs * fxctr -
-         2.0 * theta * fxct - 2.0 * rs * fxcr);
-    const double Gnnfit =
-        (1.0 + a * x + b * sqrtX) / (1.0 + c * x + d * xp125 + GCSR);
-    const double Gesa = GCSR * Gnnfit * (1.0 - AF) + (1.0 - g) * AF;
-    slfc[i] = Gesa;
-  }
+  const double csr = slfcCSR(x);
+  return csr * (1.0 + a * x + b * sqrtX) / (1.0 + c * x + d * xp125 + csr);
 }
 
-// QMC free energy function constants
+double ESA::slfcCSR(const double& x) const {
+  const double theta = in.getDegeneracy();
+  const double rs = in.getCoupling();
+  const double x2 = x * x;
+  const double lambdaRs = -(M_PI / 12.0) * lambda * rs;
+  const Dual2 fxc = freeEnergy(rs, theta);
+  double slfcUnscaled = rs * (rs * fxc.dxx - 2.0 * fxc.dx);
+  if (theta > 0.0){
+    slfcUnscaled += theta * (4.0 * theta * fxc.dyy
+			     + 4.0 * rs * fxc.dxy
+			     - 2.0 * fxc.dy);
+  }
+  return lambdaRs * x2 * slfcUnscaled;
+}
+
+Dual2 ESA::freeEnergy(const double &rs, const double &theta) const {
+  // x = rs, y = theta
+  Dual2 drs(rs, 1.0, 0.0, 0.0, 0.0, 0.0);
+  Dual2 dtheta(theta, 0.0, 1.0, 0.0, 0.0, 0.0);
+  return freeEnergy(drs, dtheta);
+}
+
+Dual2 ESA::freeEnergy(const Dual2 &rs, const Dual2 &theta) const {
+  const Dual2 thetaInv = 1.0 / theta;
+  const Dual2 theta2 = theta * theta;
+  const Dual2 theta3 = theta * theta2;
+  const Dual2 theta4 = theta2 * theta2;
+  const Dual2 tanhThetaInv = tanh(thetaInv);
+  const Dual2 tanhSqrtThetaInv = tanh(sqrt(thetaInv));
+  const Dual2 rsInv = 1.0 / rs;
+  const Dual2 sqrtRs = sqrt(rs);
+  constexpr double omega = 1.0;
+  constexpr double fa0 = 0.610887;
+  constexpr double fa1 = 0.75;
+  constexpr double fa2 = 3.04363;
+  constexpr double fa3 = 0.09227;
+  constexpr double fa4 = 1.7035;
+  constexpr double fa5 = 8.31051;
+  constexpr double fa6 = 5.1105;
+  constexpr double fb1 = 0.3436902;
+  constexpr double fb2 = 7.82159531356;
+  constexpr double fb3 = 0.300483986662;
+  constexpr double fb4 = 15.8443467125;
+  const double fb5 = fb3 * pow(3.0 / 2.0, 1.0 / 2.0) * omega / lambda;
+  constexpr double fc1 = 0.8759442;
+  constexpr double fc2 = -0.230130843551;
+  constexpr double fd1 = 0.72700876;
+  constexpr double fd2 = 2.38264734144;
+  constexpr double fd3 = 0.30221237251;
+  constexpr double fd4 = 4.39347718395;
+  constexpr double fd5 = 0.729951339845;
+  constexpr double fe1 = 0.25388214;
+  constexpr double fe2 = 0.815795138599;
+  constexpr double fe3 = 0.0646844410481;
+  constexpr double fe4 = 15.0984620477;
+  constexpr double fe5 = 0.230761357474;
+  const Dual2 fa = fa0 * tanhThetaInv * ((fa1 + fa2 * theta2 - fa3 * theta3 + fa4 * theta4)
+					 / (1.0 + fa5 * theta2 + fa6 * theta4));
+  const Dual2 fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4)
+				       / (1.0 + fb4 * theta2 + fb5 * theta4));
+  const Dual2 fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4)
+				       / (1.0 + fd4 * theta2 + fd5 * theta4));
+  const Dual2 fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4)
+				   / (1.0 + fe4 * theta2 + fe5 * theta4));
+  const Dual2 fc = (fc1 + fc2 * exp(-1.0 * thetaInv)) * fe;
+
+  return -1.0 * rsInv * (omega * fa + fb * sqrtRs + fc * rs) /
+         (1.0 + fd * sqrtRs + fe * rs);
+}
+
 double ESA::fxc(const double &theta, const double &rs) const {
 
   const double thetaInv = 1.0 / theta;
