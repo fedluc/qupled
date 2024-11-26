@@ -30,7 +30,7 @@ int ESA::compute() {
 void ESA::computeSlfc() {
   const double slfcAsymptotic = 1.0 - onTop();
   for (size_t i = 0; i < wvg.size(); ++i) {
-    const double& x = wvg[i];
+    const double &x = wvg[i];
     const double AF = activationFunction(x);
     slfc[i] = slfcNN(x) * (1.0 - AF) + slfcAsymptotic * AF;
   }
@@ -67,14 +67,14 @@ double ESA::onTop() const {
       (g0a0 + g0aa1 * theta) / (1.0 + g0ba1 * theta + g0ba2 * theta3);
   const double g0b =
       (g0b0 + g0ab1 * sqrtTheta) / (1.0 + g0bb1 * theta + g0bb2 * theta2);
-  const double g0c = (g0c0 + g0ac1 * sqrtTheta + g0ac2 * theta3_2)
-    / (1.0 + g0bc1 * theta + g0bc2 * theta2);
+  const double g0c = (g0c0 + g0ac1 * sqrtTheta + g0ac2 * theta3_2) /
+                     (1.0 + g0bc1 * theta + g0bc2 * theta2);
   const double g0d =
       (g0d0 + g0ad1 * sqrtTheta) / (1.0 + g0bd1 * theta + g0bd2 * theta2);
   return 0.5 * (1.0 + g0a * sqrtRs + g0b * rs) / (1.0 + g0c * rs + g0d * rs3);
 }
 
-double ESA::activationFunction(const double& x) const {
+double ESA::activationFunction(const double &x) const {
   const double theta = in.getDegeneracy();
   const double theta2 = theta * theta;
   constexpr double Eta = 3.0;
@@ -85,7 +85,7 @@ double ESA::activationFunction(const double& x) const {
   return 0.5 * (1.0 + tanh(Eta * (x - xm)));
 }
 
-double ESA::slfcNN(const double& x) const {
+double ESA::slfcNN(const double &x) const {
   const double theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const double theta3_2 = pow(theta, 1.5);
@@ -147,17 +147,16 @@ double ESA::slfcNN(const double& x) const {
   return csr * (1.0 + a * x + b * sqrtX) / (1.0 + c * x + d * xp125 + csr);
 }
 
-double ESA::slfcCSR(const double& x) const {
+double ESA::slfcCSR(const double &x) const {
   const double theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const double x2 = x * x;
   const double lambdaRs = -(M_PI / 12.0) * lambda * rs;
   const Dual2 fxc = freeEnergy(rs, theta);
   double slfcUnscaled = rs * (rs * fxc.dxx - 2.0 * fxc.dx);
-  if (theta > 0.0){
-    slfcUnscaled += theta * (4.0 * theta * fxc.dyy
-			     + 4.0 * rs * fxc.dxy
-			     - 2.0 * fxc.dy);
+  if (theta > 0.0) {
+    slfcUnscaled +=
+        theta * (4.0 * theta * fxc.dyy + 4.0 * rs * fxc.dxy - 2.0 * fxc.dy);
   }
   return lambdaRs * x2 * slfcUnscaled;
 }
@@ -203,14 +202,15 @@ Dual2 ESA::freeEnergy(const Dual2 &rs, const Dual2 &theta) const {
   constexpr double fe3 = 0.0646844410481;
   constexpr double fe4 = 15.0984620477;
   constexpr double fe5 = 0.230761357474;
-  const Dual2 fa = fa0 * tanhThetaInv * ((fa1 + fa2 * theta2 - fa3 * theta3 + fa4 * theta4)
-					 / (1.0 + fa5 * theta2 + fa6 * theta4));
-  const Dual2 fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4)
-				       / (1.0 + fb4 * theta2 + fb5 * theta4));
-  const Dual2 fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4)
-				       / (1.0 + fd4 * theta2 + fd5 * theta4));
-  const Dual2 fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4)
-				   / (1.0 + fe4 * theta2 + fe5 * theta4));
+  const Dual2 fa = fa0 * tanhThetaInv *
+                   ((fa1 + fa2 * theta2 - fa3 * theta3 + fa4 * theta4) /
+                    (1.0 + fa5 * theta2 + fa6 * theta4));
+  const Dual2 fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4) /
+                                       (1.0 + fb4 * theta2 + fb5 * theta4));
+  const Dual2 fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4) /
+                                       (1.0 + fd4 * theta2 + fd5 * theta4));
+  const Dual2 fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4) /
+                                   (1.0 + fe4 * theta2 + fe5 * theta4));
   const Dual2 fc = (fc1 + fc2 * exp(-1.0 * thetaInv)) * fe;
 
   return -1.0 * rsInv * (omega * fa + fb * sqrtRs + fc * rs) /

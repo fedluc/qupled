@@ -24,15 +24,15 @@ protected:
   // On top value of the radial distribution function
   double onTop() const;
   // Activation function for the asymptotic limit of slfc
-  double activationFunction(const double& x) const;
+  double activationFunction(const double &x) const;
   // Parametrization of the slfc obtained from neural networks
-  double slfcNN(const double& x) const;
+  double slfcNN(const double &x) const;
   // slfc from the compressibility sum rule
-  double slfcCSR(const double& x) const;
+  double slfcCSR(const double &x) const;
   // Parametrization of the free energy
   Dual2 freeEnergy(const double &rs, const double &theta) const;
   Dual2 freeEnergy(const Dual2 &rs, const Dual2 &theta) const;
-  double fxc(const double& theta, const double &rs) const;
+  double fxc(const double &theta, const double &rs) const;
   // Resolution for the free energy derivatives
   const double dx = 1e-3;
 };
