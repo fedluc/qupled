@@ -152,7 +152,7 @@ double ESA::slfcCSR(const double &x) const {
   const double rs = in.getCoupling();
   const double x2 = x * x;
   const double lambdaRs = -(M_PI / 12.0) * lambda * rs;
-  const Dual2 fxc = freeEnergy(rs, theta);
+  const AutoDiff2D fxc = freeEnergy(rs, theta);
   double slfcUnscaled = rs * (rs * fxc.dxx - 2.0 * fxc.dx);
   if (theta > 0.0) {
     slfcUnscaled +=
@@ -161,25 +161,25 @@ double ESA::slfcCSR(const double &x) const {
   return lambdaRs * x2 * slfcUnscaled;
 }
 
-Dual2 ESA::freeEnergy(const double &rs, const double &theta) const {
+AutoDiff2D ESA::freeEnergy(const double &rs, const double &theta) const {
   // x = rs, y = theta
-  Dual2 drs(rs, 1.0, 0.0, 0.0, 0.0, 0.0);
-  Dual2 dtheta(theta, 0.0, 1.0, 0.0, 0.0, 0.0);
+  AutoDiff2D drs(rs, 1.0, 0.0, 0.0, 0.0, 0.0);
+  AutoDiff2D dtheta(theta, 0.0, 1.0, 0.0, 0.0, 0.0);
   return freeEnergy(drs, dtheta);
 }
 
-Dual2 ESA::freeEnergy(const Dual2 &rs, const Dual2 &theta) const {
+AutoDiff2D ESA::freeEnergy(const AutoDiff2D &rs, const AutoDiff2D &theta) const {
   const bool isGroundState = theta.val == 0.0;
-  const Dual2 thetaInv = 1.0 / theta;
-  const Dual2 theta2 = theta * theta;
-  const Dual2 theta3 = theta * theta2;
-  const Dual2 theta4 = theta2 * theta2;
-  const Dual2 tanhThetaInv = (isGroundState) ? Dual2(1.0) : tanh(thetaInv);
-  const Dual2 tanhSqrtThetaInv =
-      (isGroundState) ? Dual2(1.0) : tanh(sqrt(thetaInv));
-  const Dual2 expThetaInv = (isGroundState) ? Dual2(0.0) : exp(-1.0 * thetaInv);
-  const Dual2 rsInv = 1.0 / rs;
-  const Dual2 sqrtRs = sqrt(rs);
+  const AutoDiff2D thetaInv = 1.0 / theta;
+  const AutoDiff2D theta2 = theta * theta;
+  const AutoDiff2D theta3 = theta * theta2;
+  const AutoDiff2D theta4 = theta2 * theta2;
+  const AutoDiff2D tanhThetaInv = (isGroundState) ? AutoDiff2D(1.0) : tanh(thetaInv);
+  const AutoDiff2D tanhSqrtThetaInv =
+      (isGroundState) ? AutoDiff2D(1.0) : tanh(sqrt(thetaInv));
+  const AutoDiff2D expThetaInv = (isGroundState) ? AutoDiff2D(0.0) : exp(-1.0 * thetaInv);
+  const AutoDiff2D rsInv = 1.0 / rs;
+  const AutoDiff2D sqrtRs = sqrt(rs);
   constexpr double omega = 1.0;
   constexpr double fa0 = 0.610887;
   constexpr double fa1 = 0.75;
@@ -205,16 +205,16 @@ Dual2 ESA::freeEnergy(const Dual2 &rs, const Dual2 &theta) const {
   constexpr double fe3 = 0.0646844410481;
   constexpr double fe4 = 15.0984620477;
   constexpr double fe5 = 0.230761357474;
-  const Dual2 fa = fa0 * tanhThetaInv *
+  const AutoDiff2D fa = fa0 * tanhThetaInv *
                    ((fa1 + fa2 * theta2 - fa3 * theta3 + fa4 * theta4) /
                     (1.0 + fa5 * theta2 + fa6 * theta4));
-  const Dual2 fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4) /
+  const AutoDiff2D fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4) /
                                        (1.0 + fb4 * theta2 + fb5 * theta4));
-  const Dual2 fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4) /
+  const AutoDiff2D fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4) /
                                        (1.0 + fd4 * theta2 + fd5 * theta4));
-  const Dual2 fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4) /
+  const AutoDiff2D fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4) /
                                    (1.0 + fe4 * theta2 + fe5 * theta4));
-  const Dual2 fc = (fc1 + fc2 * expThetaInv) * fe;
+  const AutoDiff2D fc = (fc1 + fc2 * expThetaInv) * fe;
   return -1.0 * rsInv * (omega * fa + fb * sqrtRs + fc * rs) /
          (1.0 + fd * sqrtRs + fe * rs);
 }

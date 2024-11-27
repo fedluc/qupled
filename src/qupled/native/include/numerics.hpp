@@ -423,7 +423,8 @@ private:
 // Classes for automatic differentiation
 // -----------------------------------------------------------------
 
-class Dual2 {
+// Automatic differentiation for two dimensional functions
+class AutoDiff2D {
 public:
 
   double val;
@@ -433,56 +434,56 @@ public:
   double dyy;
   double dxy;
 
-  // Constructor
-  Dual2(double value,
-        double dx = 0.0,
-        double dy = 0.0,
-        double dxx = 0.0,
-        double dyy = 0.0,
-        double dxy = 0.0)
-      : val(value),
-        dx(dx),
-        dy(dy),
-        dxx(dxx),
-        dyy(dyy),
-        dxy(dxy) {}
+  // Constructors
+  AutoDiff2D(double val_,
+             double dx_ = 0.0,
+             double dy_ = 0.0,
+             double dxx_ = 0.0,
+             double dyy_ = 0.0,
+             double dxy_ = 0.0)
+      : val(val_),
+        dx(dx_),
+        dy(dy_),
+        dxx(dxx_),
+        dyy(dyy_),
+        dxy(dxy_) {}
 
   // Overload addition operator
-  Dual2 operator+(const Dual2 &other) const {
-    return Dual2(val + other.val,
-                 dx + other.dx,
-                 dy + other.dy,
-                 dxx + other.dxx,
-                 dyy + other.dyy,
-                 dxy + other.dxy);
+  AutoDiff2D operator+(const AutoDiff2D &other) const {
+    return AutoDiff2D(val + other.val,
+                      dx + other.dx,
+                      dy + other.dy,
+                      dxx + other.dxx,
+                      dyy + other.dyy,
+                      dxy + other.dxy);
   }
 
   // Overload subtraction operator
-  Dual2 operator-(const Dual2 &other) const {
-    return Dual2(val - other.val,
-                 dx - other.dx,
-                 dy - other.dy,
-                 dxx - other.dxx,
-                 dyy - other.dyy,
-                 dxy - other.dxy);
+  AutoDiff2D operator-(const AutoDiff2D &other) const {
+    return AutoDiff2D(val - other.val,
+                      dx - other.dx,
+                      dy - other.dy,
+                      dxx - other.dxx,
+                      dyy - other.dyy,
+                      dxy - other.dxy);
   }
 
   // Overload multiplication operator
-  Dual2 operator*(const Dual2 &other) const {
-    return Dual2(val * other.val,
-                 val * other.dx + dx * other.val,
-                 val * other.dy + dy * other.val,
-                 val * other.dxx + 2 * dx * other.dx + dxx * other.val,
-                 val * other.dyy + 2 * dy * other.dy + dyy * other.val,
-                 val * other.dxy + dx * other.dy + dy * other.dx +
-                     dxy * other.val);
+  AutoDiff2D operator*(const AutoDiff2D &other) const {
+    return AutoDiff2D(val * other.val,
+                      val * other.dx + dx * other.val,
+                      val * other.dy + dy * other.val,
+                      val * other.dxx + 2 * dx * other.dx + dxx * other.val,
+                      val * other.dyy + 2 * dy * other.dy + dyy * other.val,
+                      val * other.dxy + dx * other.dy + dy * other.dx +
+                          dxy * other.val);
   }
 
   // Overload division operator
-  Dual2 operator/(const Dual2 &other) const {
+  AutoDiff2D operator/(const AutoDiff2D &other) const {
     const double inv_val = 1.0 / other.val;
     const double inv_val2 = inv_val * inv_val;
-    return Dual2(
+    return AutoDiff2D(
         val * inv_val,
         (dx - val * other.dx * inv_val) * inv_val,
         (dy - val * other.dy * inv_val) * inv_val,
@@ -497,110 +498,112 @@ public:
             inv_val);
   }
 
-  // Overload addition operator: Dual2 + double
-  Dual2 operator+(double scalar) const {
-    return Dual2(val + scalar, dx, dy, dxx, dyy, dxy);
+  // Overload addition operator: AutoDiff2D + double
+  AutoDiff2D operator+(double scalar) const {
+    return AutoDiff2D(val + scalar, dx, dy, dxx, dyy, dxy);
   }
 
-  // Overload addition operator: double + Dual2
-  friend Dual2 operator+(double scalar, const Dual2 &dual) {
-    return dual + scalar; // Reuse the Dual2 + double operator
+  // Overload addition operator: double + AutoDiff2D
+  friend AutoDiff2D operator+(double scalar, const AutoDiff2D &dual) {
+    return dual + scalar;
   }
 
-  // Overload subtraction operator: Dual2 - double
-  Dual2 operator-(double scalar) const {
-    return Dual2(val - scalar, dx, dy, dxx, dyy, dxy);
+  // Overload subtraction operator: AutoDiff2D - double
+  AutoDiff2D operator-(double scalar) const {
+    return AutoDiff2D(val - scalar, dx, dy, dxx, dyy, dxy);
   }
 
-  // Overload subtraction operator: double - Dual2
-  friend Dual2 operator-(double scalar, const Dual2 &dual) {
-    return Dual2(
+  // Overload subtraction operator: double - AutoDiff2D
+  friend AutoDiff2D operator-(double scalar, const AutoDiff2D &dual) {
+    return AutoDiff2D(
         scalar - dual.val, -dual.dx, -dual.dy, -dual.dxx, -dual.dyy, -dual.dxy);
   }
 
-  // Overload multiplication operator: Dual2 * double
-  Dual2 operator*(double scalar) const {
-    return Dual2(val * scalar,
-                 dx * scalar,
-                 dy * scalar,
-                 dxx * scalar,
-                 dyy * scalar,
-                 dxy * scalar);
+  // Overload multiplication operator: AutoDiff2D * double
+  AutoDiff2D operator*(double scalar) const {
+    return AutoDiff2D(val * scalar,
+                      dx * scalar,
+                      dy * scalar,
+                      dxx * scalar,
+                      dyy * scalar,
+                      dxy * scalar);
   }
 
-  // Overload multiplication operator: double * Dual2
-  friend Dual2 operator*(double scalar, const Dual2 &dual) {
-    return dual * scalar; // Reuse the Dual2 * double operator
+  // Overload multiplication operator: double * AutoDiff2D
+  friend AutoDiff2D operator*(double scalar, const AutoDiff2D &dual) {
+    return dual * scalar; // Reuse the AutoDiff2D * double operator
   }
 
-  // Overload division operator: Dual2 / double
-  Dual2 operator/(double scalar) const {
+  // Overload division operator: AutoDiff2D / double
+  AutoDiff2D operator/(double scalar) const {
     const double inv_scalar = 1.0 / scalar;
-    return Dual2(val * inv_scalar,
-                 dx * inv_scalar,
-                 dy * inv_scalar,
-                 dxx * inv_scalar,
-                 dyy * inv_scalar,
-                 dxy * inv_scalar);
+    return AutoDiff2D(val * inv_scalar,
+                      dx * inv_scalar,
+                      dy * inv_scalar,
+                      dxx * inv_scalar,
+                      dyy * inv_scalar,
+                      dxy * inv_scalar);
   }
 
-  // Overload division operator: double / Dual2
-  friend Dual2 operator/(double scalar, const Dual2 &dual) {
+  // Overload division operator: double / AutoDiff2D
+  friend AutoDiff2D operator/(double scalar, const AutoDiff2D &dual) {
     const double inv_val = 1.0 / dual.val;
-    return Dual2(scalar * inv_val,
-                 -scalar * dual.dx * inv_val * inv_val,
-                 -scalar * dual.dy * inv_val * inv_val,
-                 scalar * (2 * dual.dx * dual.dx - dual.dxx * dual.val) *
-                     inv_val * inv_val * inv_val,
-                 scalar * (2 * dual.dy * dual.dy - dual.dyy * dual.val) *
-                     inv_val * inv_val * inv_val,
-                 scalar * (2 * dual.dx * dual.dy - dual.dxy * dual.val) *
-                     inv_val * inv_val * inv_val);
+    return AutoDiff2D(scalar * inv_val,
+                      -scalar * dual.dx * inv_val * inv_val,
+                      -scalar * dual.dy * inv_val * inv_val,
+                      scalar * (2 * dual.dx * dual.dx - dual.dxx * dual.val) *
+                          inv_val * inv_val * inv_val,
+                      scalar * (2 * dual.dy * dual.dy - dual.dyy * dual.val) *
+                          inv_val * inv_val * inv_val,
+                      scalar * (2 * dual.dx * dual.dy - dual.dxy * dual.val) *
+                          inv_val * inv_val * inv_val);
   }
 
   // Overload sine function
-  friend Dual2 sin(const Dual2 &x) {
-    return Dual2(std::sin(x.val),
-                 std::cos(x.val) * x.dx,
-                 std::cos(x.val) * x.dy,
-                 -std::sin(x.val) * x.dx * x.dx + std::cos(x.val) * x.dxx -
-                     std::sin(x.val) * x.dy * x.dy + std::cos(x.val) * x.dyy -
-                     std::sin(x.val) * x.dx * x.dy + std::cos(x.val) * x.dxy);
+  friend AutoDiff2D sin(const AutoDiff2D &x) {
+    return AutoDiff2D(
+        std::sin(x.val),
+        std::cos(x.val) * x.dx,
+        std::cos(x.val) * x.dy,
+        -std::sin(x.val) * x.dx * x.dx + std::cos(x.val) * x.dxx -
+            std::sin(x.val) * x.dy * x.dy + std::cos(x.val) * x.dyy -
+            std::sin(x.val) * x.dx * x.dy + std::cos(x.val) * x.dxy);
   }
 
   // Overload exponential function
-  friend Dual2 exp(const Dual2 &x) {
+  friend AutoDiff2D exp(const AutoDiff2D &x) {
     const double exp_val = std::exp(x.val);
-    return Dual2(exp_val,
-                 exp_val * x.dx,
-                 exp_val * x.dy,
-                 exp_val * (x.dx * x.dx + x.dxx),
-                 exp_val * (x.dy * x.dy + x.dyy),
-                 exp_val * (x.dx * x.dy + x.dxy));
+    return AutoDiff2D(exp_val,
+                      exp_val * x.dx,
+                      exp_val * x.dy,
+                      exp_val * (x.dx * x.dx + x.dxx),
+                      exp_val * (x.dy * x.dy + x.dyy),
+                      exp_val * (x.dx * x.dy + x.dxy));
   }
 
   // Overload square root function
-  friend Dual2 sqrt(const Dual2 &x) {
+  friend AutoDiff2D sqrt(const AutoDiff2D &x) {
     const double sqrt_val = std::sqrt(x.val);
     const double inv_sqrt = 0.5 / sqrt_val;
-    return Dual2(sqrt_val,
-                 x.dx * inv_sqrt,
-                 x.dy * inv_sqrt,
-                 (x.dxx - x.dx * x.dx / (2 * x.val)) * inv_sqrt,
-                 (x.dyy - x.dy * x.dy / (2 * x.val)) * inv_sqrt,
-                 (x.dxy - x.dx * x.dy / (2 * x.val)) * inv_sqrt);
+    return AutoDiff2D(sqrt_val,
+                      x.dx * inv_sqrt,
+                      x.dy * inv_sqrt,
+                      (x.dxx - x.dx * x.dx / (2 * x.val)) * inv_sqrt,
+                      (x.dyy - x.dy * x.dy / (2 * x.val)) * inv_sqrt,
+                      (x.dxy - x.dx * x.dy / (2 * x.val)) * inv_sqrt);
   }
 
   // Overload hyperbolic tangent function
-  friend Dual2 tanh(const Dual2 &x) {
+  friend AutoDiff2D tanh(const AutoDiff2D &x) {
     const double tanh_val = std::tanh(x.val);
     const double sech2_val = 1.0 - tanh_val * tanh_val;
-    return Dual2(tanh_val,
-                 x.dx * sech2_val,
-                 x.dy * sech2_val,
-                 sech2_val * (x.dxx - 2 * x.dx * tanh_val * x.dx),
-                 sech2_val * (x.dyy - 2 * x.dy * tanh_val * x.dy),
-                 sech2_val * (x.dxy - tanh_val * (x.dx * x.dy + x.dy * x.dx)));
+    return AutoDiff2D(tanh_val,
+                      x.dx * sech2_val,
+                      x.dy * sech2_val,
+                      sech2_val * (x.dxx - 2 * x.dx * tanh_val * x.dx),
+                      sech2_val * (x.dyy - 2 * x.dy * tanh_val * x.dy),
+                      sech2_val *
+                          (x.dxy - tanh_val * (x.dx * x.dy + x.dy * x.dx)));
   }
 };
 

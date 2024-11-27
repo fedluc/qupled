@@ -30,10 +30,8 @@ protected:
   // slfc from the compressibility sum rule
   double slfcCSR(const double &x) const;
   // Parametrization of the free energy
-  Dual2 freeEnergy(const double &rs, const double &theta) const;
-  Dual2 freeEnergy(const Dual2 &rs, const Dual2 &theta) const;
-  // Resolution for the free energy derivatives
-  const double dx = 1e-3;
+  AutoDiff2D freeEnergy(const double &rs, const double &theta) const;
+  AutoDiff2D freeEnergy(const AutoDiff2D &rs, const AutoDiff2D &theta) const;
 };
 
 #endif
