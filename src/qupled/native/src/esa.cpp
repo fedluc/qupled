@@ -169,12 +169,15 @@ Dual2 ESA::freeEnergy(const double &rs, const double &theta) const {
 }
 
 Dual2 ESA::freeEnergy(const Dual2 &rs, const Dual2 &theta) const {
+  const bool isGroundState = theta.val == 0.0;
   const Dual2 thetaInv = 1.0 / theta;
   const Dual2 theta2 = theta * theta;
   const Dual2 theta3 = theta * theta2;
   const Dual2 theta4 = theta2 * theta2;
-  const Dual2 tanhThetaInv = tanh(thetaInv);
-  const Dual2 tanhSqrtThetaInv = tanh(sqrt(thetaInv));
+  const Dual2 tanhThetaInv = (isGroundState) ? Dual2(1.0) : tanh(thetaInv);
+  const Dual2 tanhSqrtThetaInv =
+      (isGroundState) ? Dual2(1.0) : tanh(sqrt(thetaInv));
+  const Dual2 expThetaInv = (isGroundState) ? Dual2(0.0) : exp(-1.0 * thetaInv);
   const Dual2 rsInv = 1.0 / rs;
   const Dual2 sqrtRs = sqrt(rs);
   constexpr double omega = 1.0;
@@ -211,53 +214,7 @@ Dual2 ESA::freeEnergy(const Dual2 &rs, const Dual2 &theta) const {
                                        (1.0 + fd4 * theta2 + fd5 * theta4));
   const Dual2 fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4) /
                                    (1.0 + fe4 * theta2 + fe5 * theta4));
-  const Dual2 fc = (fc1 + fc2 * exp(-1.0 * thetaInv)) * fe;
-
+  const Dual2 fc = (fc1 + fc2 * expThetaInv) * fe;
   return -1.0 * rsInv * (omega * fa + fb * sqrtRs + fc * rs) /
-         (1.0 + fd * sqrtRs + fe * rs);
-}
-
-double ESA::fxc(const double &theta, const double &rs) const {
-
-  const double thetaInv = 1.0 / theta;
-  const double theta2 = theta * theta;
-  const double theta3 = theta * theta2;
-  const double theta4 = theta2 * theta2;
-  const double tanhThetaInv = tanh(thetaInv);
-  const double tanhSqrtThetaInv = tanh(sqrt(thetaInv));
-  const double rsInv = 1.0 / rs;
-  const double sqrtRs = sqrt(rs);
-  constexpr double omega = 1.0;
-  constexpr double fb1 = 0.3436902;
-  constexpr double fb2 = 7.82159531356;
-  constexpr double fb3 = 0.300483986662;
-  constexpr double fb4 = 15.8443467125;
-  const double fb5 = fb3 * pow(3.0 / 2.0, 1.0 / 2.0) * omega / lambda;
-  constexpr double fc1 = 0.8759442;
-  constexpr double fc2 = -0.230130843551;
-  constexpr double fd1 = 0.72700876;
-  constexpr double fd2 = 2.38264734144;
-  constexpr double fd3 = 0.30221237251;
-  constexpr double fd4 = 4.39347718395;
-  constexpr double fd5 = 0.729951339845;
-  constexpr double fe1 = 0.25388214;
-  constexpr double fe2 = 0.815795138599;
-  constexpr double fe3 = 0.0646844410481;
-  constexpr double fe4 = 15.0984620477;
-  constexpr double fe5 = 0.230761357474;
-
-  const double fa =
-      0.610887 * tanhThetaInv *
-      ((0.75 + 3.04363 * theta2 - 0.09227 * theta3 + 1.7035 * theta4) /
-       (1.0 + 8.31051 * theta2 + 5.1105 * theta4));
-  const double fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4) /
-                                        (1.0 + fb4 * theta2 + fb5 * theta4));
-  const double fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4) /
-                                        (1.0 + fd4 * theta2 + fd5 * theta4));
-  const double fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4) /
-                                    (1.0 + fe4 * theta2 + fe5 * theta4));
-  const double fc = (fc1 + fc2 * exp(-thetaInv)) * fe;
-
-  return -rsInv * (omega * fa + fb * sqrtRs + fc * rs) /
          (1.0 + fd * sqrtRs + fe * rs);
 }

@@ -32,7 +32,6 @@ protected:
   // Parametrization of the free energy
   Dual2 freeEnergy(const double &rs, const double &theta) const;
   Dual2 freeEnergy(const Dual2 &rs, const Dual2 &theta) const;
-  double fxc(const double &theta, const double &rs) const;
   // Resolution for the free energy derivatives
   const double dx = 1e-3;
 };
