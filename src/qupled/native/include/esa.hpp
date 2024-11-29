@@ -3,6 +3,9 @@
 
 #include "rpa.hpp"
 
+// Forward declarations
+class AutoDiff2;
+
 // -----------------------------------------------------------------
 // Solver for the ESA scheme
 // -----------------------------------------------------------------
@@ -30,8 +33,8 @@ protected:
   // slfc from the compressibility sum rule
   double slfcCSR(const double &x) const;
   // Parametrization of the free energy
-  AutoDiff2D freeEnergy(const double &rs, const double &theta) const;
-  AutoDiff2D freeEnergy(const AutoDiff2D &rs, const AutoDiff2D &theta) const;
+  AutoDiff2 freeEnergy(const double &rs, const double &theta) const;
+  AutoDiff2 freeEnergy(const AutoDiff2 &rs, const AutoDiff2 &theta) const;
 };
 
 #endif
