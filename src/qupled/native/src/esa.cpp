@@ -1,7 +1,7 @@
 #include "esa.hpp"
+#include "auto_diff.hpp"
 #include "input.hpp"
 #include "numerics.hpp"
-#include "auto_diff.hpp"
 
 using namespace std;
 
@@ -169,8 +169,7 @@ AutoDiff2 ESA::freeEnergy(const double &rs, const double &theta) const {
   return freeEnergy(drs, dtheta);
 }
 
-AutoDiff2 ESA::freeEnergy(const AutoDiff2 &rs,
-                           const AutoDiff2 &theta) const {
+AutoDiff2 ESA::freeEnergy(const AutoDiff2 &rs, const AutoDiff2 &theta) const {
   const bool isGroundState = theta.val == 0.0;
   const AutoDiff2 thetaInv = 1.0 / theta;
   const AutoDiff2 theta2 = theta * theta;
@@ -210,16 +209,14 @@ AutoDiff2 ESA::freeEnergy(const AutoDiff2 &rs,
   constexpr double fe4 = 15.0984620477;
   constexpr double fe5 = 0.230761357474;
   const AutoDiff2 fa = fa0 * tanhThetaInv *
-                        ((fa1 + fa2 * theta2 - fa3 * theta3 + fa4 * theta4) /
-                         (1.0 + fa5 * theta2 + fa6 * theta4));
-  const AutoDiff2 fb =
-      tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4) /
-                          (1.0 + fb4 * theta2 + fb5 * theta4));
-  const AutoDiff2 fd =
-      tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4) /
-                          (1.0 + fd4 * theta2 + fd5 * theta4));
+                       ((fa1 + fa2 * theta2 - fa3 * theta3 + fa4 * theta4) /
+                        (1.0 + fa5 * theta2 + fa6 * theta4));
+  const AutoDiff2 fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4) /
+                                           (1.0 + fb4 * theta2 + fb5 * theta4));
+  const AutoDiff2 fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4) /
+                                           (1.0 + fd4 * theta2 + fd5 * theta4));
   const AutoDiff2 fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4) /
-                                        (1.0 + fe4 * theta2 + fe5 * theta4));
+                                       (1.0 + fe4 * theta2 + fe5 * theta4));
   const AutoDiff2 fc = (fc1 + fc2 * expThetaInv) * fe;
   return -1.0 * rsInv * (omega * fa + fb * sqrtRs + fc * rs) /
          (1.0 + fd * sqrtRs + fe * rs);
