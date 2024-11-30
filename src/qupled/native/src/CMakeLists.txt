@@ -36,7 +36,6 @@ add_compile_options(-Wall -Wextra -Wpedantic -O3)
 Python3_add_library(native MODULE
 		    logger.cpp
 		    numerics.cpp
-		    auto_diff.cpp
 		    vector2D.cpp
 		    vector3D.cpp
 		    internal_energy.cpp

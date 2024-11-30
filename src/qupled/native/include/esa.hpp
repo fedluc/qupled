@@ -1,10 +1,8 @@
 #ifndef ESA_HPP
 #define ESA_HPP
 
+#include "auto_diff.hpp"
 #include "rpa.hpp"
-
-// Forward declarations
-class AutoDiff2;
 
 // -----------------------------------------------------------------
 // Solver for the ESA scheme
