@@ -486,18 +486,18 @@ Vector2D CSR::getDerivativeContribution() const {
     // Coupling parameter contribution
     if (rs > 0.0) {
       for (size_t i = 0; i < nx; ++i) {
-        out(i, l) +=
-            a_drs * CSR::getDerivative(
-                        lfcData(i, l), rsUp(i, l), rsDown(i, l), lfcRs.type);
+        out(i, l) += a_drs
+                     * CSR::getDerivative(
+                         lfcData(i, l), rsUp(i, l), rsDown(i, l), lfcRs.type);
       }
     }
     // Degeneracy parameter contribution
     if (theta > 0.0) {
       for (size_t i = 0; i < nx; ++i) {
-        out(i, l) += a_dt * CSR::getDerivative(lfcData(i, l),
-                                               thetaUp(i, l),
-                                               thetaDown(i, l),
-                                               lfcTheta.type);
+        out(i, l) +=
+            a_dt
+            * CSR::getDerivative(
+                lfcData(i, l), thetaUp(i, l), thetaDown(i, l), lfcTheta.type);
       }
     }
   }

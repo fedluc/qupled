@@ -215,9 +215,9 @@ double Idr::integrand(const double &y, const int &l) const {
   double tplT = 2 * M_PI * l * Theta;
   double tplT2 = tplT * tplT;
   if (x > 0.0) {
-    return 1.0 / (2 * x) * y / (exp(y2 / Theta - mu) + 1.0) *
-           log(((x2 + txy) * (x2 + txy) + tplT2) /
-               ((x2 - txy) * (x2 - txy) + tplT2));
+    return 1.0 / (2 * x) * y / (exp(y2 / Theta - mu) + 1.0)
+           * log(((x2 + txy) * (x2 + txy) + tplT2)
+                 / ((x2 - txy) * (x2 - txy) + tplT2));
   } else {
     return 0;
   }
@@ -230,21 +230,21 @@ double Idr::integrand(const double &y) const {
   double xy = x * y;
   if (x > 0.0) {
     if (x < 2 * y) {
-      return 1.0 / (Theta * x) *
-             ((y2 - x2 / 4.0) * log((2 * y + x) / (2 * y - x)) + xy) * y /
-             (exp(y2 / Theta - mu) + exp(-y2 / Theta + mu) + 2.0);
+      return 1.0 / (Theta * x)
+             * ((y2 - x2 / 4.0) * log((2 * y + x) / (2 * y - x)) + xy) * y
+             / (exp(y2 / Theta - mu) + exp(-y2 / Theta + mu) + 2.0);
     } else if (x > 2 * y) {
-      return 1.0 / (Theta * x) *
-             ((y2 - x2 / 4.0) * log((2 * y + x) / (x - 2 * y)) + xy) * y /
-             (exp(y2 / Theta - mu) + exp(-y2 / Theta + mu) + 2.0);
+      return 1.0 / (Theta * x)
+             * ((y2 - x2 / 4.0) * log((2 * y + x) / (x - 2 * y)) + xy) * y
+             / (exp(y2 / Theta - mu) + exp(-y2 / Theta + mu) + 2.0);
     } else {
-      return 1.0 / (Theta)*y2 /
-             (exp(y2 / Theta - mu) + exp(-y2 / Theta + mu) + 2.0);
+      return 1.0 / (Theta)*y2
+             / (exp(y2 / Theta - mu) + exp(-y2 / Theta + mu) + 2.0);
       ;
     }
   } else {
-    return (2.0 / Theta) * y2 /
-           (exp(y2 / Theta - mu) + exp(-y2 / Theta + mu) + 2.0);
+    return (2.0 / Theta) * y2
+           / (exp(y2 / Theta - mu) + exp(-y2 / Theta + mu) + 2.0);
   }
 }
 
@@ -344,12 +344,12 @@ double SsfHF::integrand(const double &y) const {
   double ypx = y + x;
   double ymx = y - x;
   if (x > 0.0) {
-    return -3.0 * Theta / (4.0 * x) * y / (exp(y2 / Theta - mu) + 1.0) *
-           log((1 + exp(mu - ymx * ymx / Theta)) /
-               (1 + exp(mu - ypx * ypx / Theta)));
+    return -3.0 * Theta / (4.0 * x) * y / (exp(y2 / Theta - mu) + 1.0)
+           * log((1 + exp(mu - ymx * ymx / Theta))
+                 / (1 + exp(mu - ypx * ypx / Theta)));
   } else {
-    return -3.0 * y2 /
-           ((1.0 + exp(y2 / Theta - mu)) * (1.0 + exp(y2 / Theta - mu)));
+    return -3.0 * y2
+           / ((1.0 + exp(y2 / Theta - mu)) * (1.0 + exp(y2 / Theta - mu)));
   }
 }
 

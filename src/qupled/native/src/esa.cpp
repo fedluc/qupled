@@ -97,8 +97,8 @@ double ESA::onTop() const {
       (g0a0 + g0aa1 * theta) / (1.0 + g0ba1 * theta + g0ba2 * theta3);
   const double g0b =
       (g0b0 + g0ab1 * sqrtTheta) / (1.0 + g0bb1 * theta + g0bb2 * theta2);
-  const double g0c = (g0c0 + g0ac1 * sqrtTheta + g0ac2 * theta3_2) /
-                     (1.0 + g0bc1 * theta + g0bc2 * theta2);
+  const double g0c = (g0c0 + g0ac1 * sqrtTheta + g0ac2 * theta3_2)
+                     / (1.0 + g0bc1 * theta + g0bc2 * theta2);
   const double g0d =
       (g0d0 + g0ad1 * sqrtTheta) / (1.0 + g0bd1 * theta + g0bd2 * theta2);
   return 0.5 * (1.0 + g0a * sqrtRs + g0b * rs) / (1.0 + g0c * rs + g0d * rs3);
@@ -167,8 +167,8 @@ void ESA::computeSlfcCSRCoefficients() {
   const double rs = in.getCoupling();
   const AutoDiff2 fxc = freeEnergy(rs, theta);
   slfcCoeff.csr =
-      rs * (rs * fxc.dxx - 2.0 * fxc.dx) +
-      theta * (4.0 * theta * fxc.dyy + 4.0 * rs * fxc.dxy - 2.0 * fxc.dy);
+      rs * (rs * fxc.dxx - 2.0 * fxc.dx)
+      + theta * (4.0 * theta * fxc.dyy + 4.0 * rs * fxc.dxy - 2.0 * fxc.dy);
   slfcCoeff.csr *= -(M_PI / 12.0) * lambda * rs;
 }
 
@@ -218,16 +218,19 @@ AutoDiff2 ESA::freeEnergy(const AutoDiff2 &rs, const AutoDiff2 &theta) const {
   constexpr double fe3 = 0.0646844410481;
   constexpr double fe4 = 15.0984620477;
   constexpr double fe5 = 0.230761357474;
-  const AutoDiff2 fa = fa0 * tanhThetaInv *
-                       ((fa1 + fa2 * theta2 - fa3 * theta3 + fa4 * theta4) /
-                        (1.0 + fa5 * theta2 + fa6 * theta4));
-  const AutoDiff2 fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4) /
-                                           (1.0 + fb4 * theta2 + fb5 * theta4));
-  const AutoDiff2 fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4) /
-                                           (1.0 + fd4 * theta2 + fd5 * theta4));
-  const AutoDiff2 fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4) /
-                                       (1.0 + fe4 * theta2 + fe5 * theta4));
+  const AutoDiff2 fa = fa0 * tanhThetaInv
+                       * ((fa1 + fa2 * theta2 - fa3 * theta3 + fa4 * theta4)
+                          / (1.0 + fa5 * theta2 + fa6 * theta4));
+  const AutoDiff2 fb = tanhSqrtThetaInv
+                       * ((fb1 + fb2 * theta2 + fb3 * theta4)
+                          / (1.0 + fb4 * theta2 + fb5 * theta4));
+  const AutoDiff2 fd = tanhSqrtThetaInv
+                       * ((fd1 + fd2 * theta2 + fd3 * theta4)
+                          / (1.0 + fd4 * theta2 + fd5 * theta4));
+  const AutoDiff2 fe = tanhThetaInv
+                       * ((fe1 + fe2 * theta2 + fe3 * theta4)
+                          / (1.0 + fe4 * theta2 + fe5 * theta4));
   const AutoDiff2 fc = (fc1 + fc2 * expThetaInv) * fe;
-  return -1.0 * rsInv * (omega * fa + fb * sqrtRs + fc * rs) /
-         (1.0 + fd * sqrtRs + fe * rs);
+  return -1.0 * rsInv * (omega * fa + fb * sqrtRs + fc * rs)
+         / (1.0 + fd * sqrtRs + fe * rs);
 }

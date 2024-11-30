@@ -81,8 +81,8 @@ AutoDiff<T> operator/(const AutoDiff<T> &dual1, const AutoDiff<T> &dual2) {
   const auto inv_val_ = 1.0 / dual2.val_;
   return AutoDiff<T>(dual1.val_ * inv_val_,
                      (dual1.dx_ - dual1.val_ * dual2.dx_ * inv_val_) * inv_val_,
-                     (dual1.dy_ - dual1.val_ * dual2.dy_ * inv_val_) *
-                         inv_val_);
+                     (dual1.dy_ - dual1.val_ * dual2.dy_ * inv_val_)
+                         * inv_val_);
 }
 
 template <typename T>

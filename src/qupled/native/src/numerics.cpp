@@ -13,8 +13,8 @@ template <typename Func, typename... Args>
 void GslWrappers::callGSLFunction(Func &&gslFunction, Args &&...args) {
   int status = gslFunction(std::forward<Args>(args)...);
   if (status) {
-    throwError("GSL error: " + std::to_string(status) + ", " +
-               std::string(gsl_strerror(status)));
+    throwError("GSL error: " + std::to_string(status) + ", "
+               + std::string(gsl_strerror(status)));
   }
 }
 
