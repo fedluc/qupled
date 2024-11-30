@@ -9,43 +9,19 @@
 // -----------------------------------------------------------------
 
 template <typename T>
-class AutoDiff {};
-
-// First order derivatives
-template <>
-class AutoDiff<double> {
+class AutoDiff {
 public:
 
-  double val;
-  double dx;
-  double dy;
+  T val;
+  T dx;
+  T dy;
 
   // Constructors
-  AutoDiff(double val_, double dx_ = 0.0, double dy_ = 0.0)
+  AutoDiff(const T &val_, const T &dx_, const T &dy_)
       : val(val_),
         dx(dx_),
         dy(dy_) {}
 };
-using AutoDiff1 = AutoDiff<double>;
-
-// Second order derivatives
-template <>
-class AutoDiff<AutoDiff1> {
-public:
-
-  AutoDiff1 val;
-  AutoDiff1 dx;
-  AutoDiff1 dy;
-
-  AutoDiff(AutoDiff1 val_, AutoDiff1 dx_ = 0.0, AutoDiff1 dy_ = 0.0)
-      : val(val_),
-        dx(dx_),
-        dy(dy_) {}
-
-  AutoDiff(const double &val_, const double &dx_ = 0.0, const double &dy_ = 0.0)
-      : AutoDiff(AutoDiff1(val_, dx_, dy_), AutoDiff1(dx_), AutoDiff1(dy_)) {}
-};
-using AutoDiff2 = AutoDiff<AutoDiff1>;
 
 // addition operators
 template <typename T>
@@ -145,5 +121,28 @@ AutoDiff<T> tanh(const AutoDiff<T> &x) {
   const auto sech2_val = 1.0 - tanh_val * tanh_val;
   return AutoDiff<T>(tanh_val, x.dx * sech2_val, x.dy * sech2_val);
 }
+
+// First order derivatives
+class AutoDiff1 : public AutoDiff<double> {
+public:
+
+  // Constructors
+  AutoDiff1(double val_, double dx_ = 0.0, double dy_ = 0.0)
+      : AutoDiff<double>(val_, dx_, dy_) {}
+  AutoDiff1(const AutoDiff<double> &other)
+      : AutoDiff<double>(other) {}
+};
+
+// Second order derivatives
+class AutoDiff2 : public AutoDiff<AutoDiff1> {
+public:
+
+  // Constructors
+  AutoDiff2(double val_, double dx_ = 0.0, double dy_ = 0.0)
+      : AutoDiff<AutoDiff1>(
+            AutoDiff1(val_, dx_, dy_), AutoDiff1(dx_), AutoDiff1(dy_)) {}
+  AutoDiff2(const AutoDiff<AutoDiff1> &other)
+      : AutoDiff<AutoDiff1>(other) {}
+};
 
 #endif
