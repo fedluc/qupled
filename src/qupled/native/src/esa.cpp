@@ -162,48 +162,14 @@ void ESA::computeSlfcNNCoefficients() {
   slfcCoeff.nnd = (ad + bd * rs) / (1.0 + cd * rs);
 }
 
-// -----------------------------------------------------------------
-// EXPERIMENTAL
-// -----------------------------------------------------------------
-
-AutoDiff2 test1(const AutoDiff2 &rs, const AutoDiff2 &theta) {
-  return 1.0 + 2.0 * rs + 3.0 * theta + theta * theta;
-}
-
-// -----------------------------------------------------------------
-// EXPERIMENTAL
-// -----------------------------------------------------------------
-
 void ESA::computeSlfcCSRCoefficients() {
   const double theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const AutoDiff2 fxc = freeEnergy(rs, theta);
-  // slfcCoeff.csr = rs * (rs * fxc.dxx - 2.0 * fxc.dx);
-  // if (theta > 0.0) {
-  //   slfcCoeff.csr +=
-  //       theta * (4.0 * theta * fxc.dyy + 4.0 * rs * fxc.dxy - 2.0 * fxc.dy);
-  // }
-  slfcCoeff.csr = rs * (rs * fxc.dx.dx - 2.0 * fxc.dx.val);
-  if (theta > 0.0) {
-    slfcCoeff.csr += theta * (4.0 * theta * fxc.dy.dy + 4.0 * rs * fxc.dx.dy -
-                              2.0 * fxc.dy.val);
-  }
+  slfcCoeff.csr =
+      rs * (rs * fxc.dxx - 2.0 * fxc.dx) +
+      theta * (4.0 * theta * fxc.dyy + 4.0 * rs * fxc.dxy - 2.0 * fxc.dy);
   slfcCoeff.csr *= -(M_PI / 12.0) * lambda * rs;
-  {
-    AutoDiff2 drs(1.0, 1.0, 0.0);
-    AutoDiff2 dtheta(1.0, 0.0, 1.0);
-    const AutoDiff2 autodiff = test1(drs, dtheta);
-    std::cerr << std::endl;
-    std::cerr << autodiff.val.val << ", 7.0 " << std::endl;
-    std::cerr << autodiff.val.dx << ", 2.0 " << std::endl;
-    std::cerr << autodiff.val.dy << ", 5.0 " << std::endl;
-    std::cerr << autodiff.dx.val << ", 2.0 " << std::endl;
-    std::cerr << autodiff.dy.val << ", 5.0 " << std::endl;
-    std::cerr << autodiff.dx.dx << ", 0.0 " << std::endl;
-    std::cerr << autodiff.dx.dy << ", 0.0 " << std::endl;
-    std::cerr << autodiff.dy.dx << ", 0.0 " << std::endl;
-    std::cerr << autodiff.dy.dy << ", 2.0 " << std::endl;
-  }
 }
 
 AutoDiff2 ESA::freeEnergy(const double &rs, const double &theta) const {
@@ -214,7 +180,7 @@ AutoDiff2 ESA::freeEnergy(const double &rs, const double &theta) const {
 }
 
 AutoDiff2 ESA::freeEnergy(const AutoDiff2 &rs, const AutoDiff2 &theta) const {
-  const bool isGroundState = theta.val.val == 0.0;
+  const bool isGroundState = theta.val == 0.0;
   const AutoDiff2 thetaInv = 1.0 / theta;
   const AutoDiff2 theta2 = theta * theta;
   const AutoDiff2 theta3 = theta * theta2;
