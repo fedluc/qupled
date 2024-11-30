@@ -30,7 +30,7 @@ private:
   double slfcCSR(const double &x) const;
   // Compute static local field correction coefficients
   struct SlfcCoefficients {
-    // Coefficients for the long wavelength limit 
+    // Coefficients for the long wavelength limit
     double lwl;
     // Coefficients for the activation function
     double afEta;
