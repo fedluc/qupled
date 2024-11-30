@@ -10,7 +10,6 @@ using namespace std;
 // -----------------------------------------------------------------
 
 int ESA::compute() {
-
   try {
     init();
     println("Structural properties calculation ...");
@@ -29,12 +28,46 @@ int ESA::compute() {
 }
 
 void ESA::computeSlfc() {
-  const double slfcAsymptotic = 1.0 - onTop();
+  computeSlfcCoefficients();
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double &x = wvg[i];
     const double AF = activationFunction(x);
-    slfc[i] = slfcNN(x) * (1.0 - AF) + slfcAsymptotic * AF;
+    slfc[i] = slfcNN(x) * (1.0 - AF) + slfcCoeff.lwl * AF;
   }
+}
+
+double ESA::slfcNN(const double &x) const {
+  const double sqrtX = sqrt(x);
+  const double xp125 = pow(x, 1.25);
+  const double &a = slfcCoeff.nna;
+  const double &b = slfcCoeff.nnb;
+  const double &c = slfcCoeff.nnc;
+  const double &d = slfcCoeff.nnd;
+  const double csr = slfcCSR(x);
+  return csr * (1.0 + a * x + b * sqrtX) / (1.0 + c * x + d * xp125 + csr);
+}
+
+double ESA::slfcCSR(const double &x) const {
+  return x * x * slfcCoeff.csr;
+}
+
+
+double ESA::activationFunction(const double &x) const {
+  return 0.5 * (1.0 + tanh(slfcCoeff.afEta * (x - slfcCoeff.afxm)));
+}
+
+
+void ESA::computeSlfcCoefficients() {
+  // Long wave-lenght limit
+  slfcCoeff.lwl = 1.0 - onTop();
+  // Activation function
+  const double &theta = in.getDegeneracy();
+  slfcCoeff.afEta = 3.0;
+  slfcCoeff.afxm = 2.64 + theta * (0.31 + 0.08 * theta);
+  // Neural network parametrization
+  computeSlfcNNCoefficients();
+  // Compressibility sum-rule
+  computeSlfcCSRCoefficients();
 }
 
 double ESA::onTop() const {
@@ -75,23 +108,10 @@ double ESA::onTop() const {
   return 0.5 * (1.0 + g0a * sqrtRs + g0b * rs) / (1.0 + g0c * rs + g0d * rs3);
 }
 
-double ESA::activationFunction(const double &x) const {
-  const double theta = in.getDegeneracy();
-  const double theta2 = theta * theta;
-  constexpr double Eta = 3.0;
-  constexpr double Ax = 2.64;
-  constexpr double Bx = 0.31;
-  constexpr double Cx = 0.08;
-  const double xm = Ax + Bx * theta + Cx * theta2;
-  return 0.5 * (1.0 + tanh(Eta * (x - xm)));
-}
-
-double ESA::slfcNN(const double &x) const {
+void ESA::computeSlfcNNCoefficients() {
   const double theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const double theta3_2 = pow(theta, 1.5);
-  const double sqrtX = sqrt(x);
-  const double xp125 = pow(x, 1.25);
   constexpr double aa1 = 0.66477593;
   constexpr double aa2 = -4.59280227;
   constexpr double aa3 = 1.24649624;
@@ -140,27 +160,99 @@ double ESA::slfcNN(const double &x) const {
   const double ad = ad1 + ad2 * theta + ad3 * theta3_2;
   const double bd = bd1 + bd2 * theta + bd3 * theta3_2;
   const double cd = cd1 + cd2 * theta + cd3 * theta3_2;
-  const double a = (aa + ba * rs) / (1.0 + ca * rs);
-  const double b = (ab + bb * rs) / (1.0 + cb * rs);
-  const double c = (ac + bc * rs) / (1.0 + cc * rs);
-  const double d = (ad + bd * rs) / (1.0 + cd * rs);
-  const double csr = slfcCSR(x);
-  return csr * (1.0 + a * x + b * sqrtX) / (1.0 + c * x + d * xp125 + csr);
+  slfcCoeff.nna = (aa + ba * rs) / (1.0 + ca * rs);
+  slfcCoeff.nnb = (ab + bb * rs) / (1.0 + cb * rs);
+  slfcCoeff.nnc = (ac + bc * rs) / (1.0 + cc * rs);
+  slfcCoeff.nnd = (ad + bd * rs) / (1.0 + cd * rs);
 }
 
-double ESA::slfcCSR(const double &x) const {
+
+// -----------------------------------------------------------------
+// EXPERIMENTAL 
+// -----------------------------------------------------------------
+
+Dual<2> freeEnergyNew(const Dual<2> &rs, const Dual<2> &theta) {
+  const bool isGroundState = theta.val == 0.0;
+  const Dual<2> thetaInv = 1.0 / theta;
+  const Dual<2> theta2 = theta * theta;
+  const Dual<2> theta3 = theta * theta2;
+  const Dual<2> theta4 = theta2 * theta2;
+  const Dual<2> tanhThetaInv =
+      (isGroundState) ? Dual<2>(1.0) : tanh(thetaInv);
+  const Dual<2> tanhSqrtThetaInv =
+      (isGroundState) ? Dual<2>(1.0) : tanh(sqrt(thetaInv));
+  const Dual<2> expThetaInv =
+      (isGroundState) ? Dual<2>(0.0) : exp(-1.0 * thetaInv);
+  const Dual<2> rsInv = 1.0 / rs;
+  const Dual<2> sqrtRs = sqrt(rs);
+  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
+  constexpr double omega = 1.0;
+  constexpr double fa0 = 0.610887;
+  constexpr double fa1 = 0.75;
+  constexpr double fa2 = 3.04363;
+  constexpr double fa3 = 0.09227;
+  constexpr double fa4 = 1.7035;
+  constexpr double fa5 = 8.31051;
+  constexpr double fa6 = 5.1105;
+  constexpr double fb1 = 0.3436902;
+  constexpr double fb2 = 7.82159531356;
+  constexpr double fb3 = 0.300483986662;
+  constexpr double fb4 = 15.8443467125;
+  const double fb5 = fb3 * pow(3.0 / 2.0, 1.0 / 2.0) * omega / lambda;
+  constexpr double fc1 = 0.8759442;
+  constexpr double fc2 = -0.230130843551;
+  constexpr double fd1 = 0.72700876;
+  constexpr double fd2 = 2.38264734144;
+  constexpr double fd3 = 0.30221237251;
+  constexpr double fd4 = 4.39347718395;
+  constexpr double fd5 = 0.729951339845;
+  constexpr double fe1 = 0.25388214;
+  constexpr double fe2 = 0.815795138599;
+  constexpr double fe3 = 0.0646844410481;
+  constexpr double fe4 = 15.0984620477;
+  constexpr double fe5 = 0.230761357474;
+  const Dual<2> fa = fa0 * tanhThetaInv *
+                       ((fa1 + fa2 * theta2 - fa3 * theta3 + fa4 * theta4) /
+                        (1.0 + fa5 * theta2 + fa6 * theta4));
+  const Dual<2> fb = tanhSqrtThetaInv * ((fb1 + fb2 * theta2 + fb3 * theta4) /
+                                           (1.0 + fb4 * theta2 + fb5 * theta4));
+  const Dual<2> fd = tanhSqrtThetaInv * ((fd1 + fd2 * theta2 + fd3 * theta4) /
+                                           (1.0 + fd4 * theta2 + fd5 * theta4));
+  const Dual<2> fe = tanhThetaInv * ((fe1 + fe2 * theta2 + fe3 * theta4) /
+                                       (1.0 + fe4 * theta2 + fe5 * theta4));
+  const Dual<2> fc = (fc1 + fc2 * expThetaInv) * fe;
+  return -1.0 * rsInv * (omega * fa + fb * sqrtRs + fc * rs) /
+         (1.0 + fd * sqrtRs + fe * rs);
+}
+
+// -----------------------------------------------------------------
+// EXPERIMENTAL 
+// -----------------------------------------------------------------
+
+
+void ESA::computeSlfcCSRCoefficients() {
   const double theta = in.getDegeneracy();
   const double rs = in.getCoupling();
-  const double x2 = x * x;
-  const double lambdaRs = -(M_PI / 12.0) * lambda * rs;
   const AutoDiff2 fxc = freeEnergy(rs, theta);
-  double slfcUnscaled = rs * (rs * fxc.dxx - 2.0 * fxc.dx);
+  slfcCoeff.csr = rs * (rs * fxc.dxx - 2.0 * fxc.dx);
   if (theta > 0.0) {
-    slfcUnscaled +=
+    slfcCoeff.csr +=
         theta * (4.0 * theta * fxc.dyy + 4.0 * rs * fxc.dxy - 2.0 * fxc.dy);
   }
-  return lambdaRs * x2 * slfcUnscaled;
+  slfcCoeff.csr *= -(M_PI / 12.0) * lambda * rs;
+  // {
+  //   Dual<2> drs(rs, 2, 0);
+  //   Dual<2> dtheta(theta, 2, 1);
+  //   const Dual<2> fxcNew = freeEnergyNew(drs, dtheta);
+  //   std::cerr << fxcNew.val << " " << fxc.val << std::endl;
+  //   std::cerr << fxcNew.der[0].val << " " << fxc.dx << std::endl;
+  //   std::cerr << fxcNew.der[1].val << " " << fxc.dy << std::endl;
+  //   std::cerr << fxcNew.der[0].der[0] << " " << fxc.dxx << std::endl;
+  //   std::cerr << fxcNew.der[0].der[1] << " " << fxc.dxy << std::endl;
+  //   std::cerr << fxcNew.der[1].der[1] << " " << fxc.dyy << std::endl;
+  // }
 }
+
 
 AutoDiff2 ESA::freeEnergy(const double &rs, const double &theta) const {
   // x = rs, y = theta
