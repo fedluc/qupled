@@ -174,8 +174,10 @@ void ESA::computeSlfcCSRCoefficients() {
 
 AutoDiff2 ESA::freeEnergy(const double &rs, const double &theta) const {
   // x = rs, y = theta
-  AutoDiff2 drs(rs, 1.0, 0.0);
-  AutoDiff2 dtheta(theta, 0.0, 1.0);
+  std::vector<AutoDiff1> drsDep = {AutoDiff1(1.0), AutoDiff1(0.0)};
+  std::vector<AutoDiff1> dthetaDep = {AutoDiff1(0.0), AutoDiff1(1.0)};
+  AutoDiff2 drs(rs, drsDep);
+  AutoDiff2 dtheta(theta, dthetaDep);
   return freeEnergy(drs, dtheta);
 }
 
