@@ -8,71 +8,88 @@
 // Classes for automatic differentiation
 // -----------------------------------------------------------------
 
-template <typename T>
-class AutoDiff {
+template <int Order>
+class Dual {
 public:
 
   double val;
-  std::vector<T> der;
+  std::vector<Dual<Order-1>> der;
   // Constructors
-  AutoDiff(const double &val_, const size_t &nvar, const size_t &index)
+  Dual(const double &val_, const size_t &nvar, const size_t &index)
+      : val(val_),
+        der(nvar, Dual<Order-1>(0.0, nvar, -1)) {
+    if (index >= 0 && index < nvar) {
+            der[index] = Dual<Order - 1>(1.0, nvar, -1);
+    }
+  }
+};
+
+template <>
+class Dual<1> {
+public:
+
+  double val;
+  std::vector<double> der;
+  // Constructors
+  Dual(const double &val_, const size_t &nvar, const size_t &index)
       : val(val_),
         der(nvar) {
     if (index >= 0 && index < nvar) { der[index] = 1; }
   }
 };
 
+
 // addition operators
-template <typename T>
-AutoDiff<T> operator+(const AutoDiff<T> &dual1, const AutoDiff<T> &dual2) {
+template <int Order>
+Dual<Order> operator+(const Dual<Order> &dual1, const Dual<Order> &dual2) {
   const size_t &nvar = dual1.der.size();
-  AutoDiff<T> result = AutoDiff<T>(dual1.val + dual2.val, nvar, -1);
+  Dual<Order> result = Dual<Order>(dual1.val + dual2.val, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = dual1.der[i] + dual2.der[i];
   }
   return result;
 }
 
-template <typename T>
-AutoDiff<T> operator+(const AutoDiff<T> &dual, const double &scalar) {
+template <int Order>
+Dual<Order> operator+(const Dual<Order> &dual, const double &scalar) {
   const size_t &nvar = dual.der.size();
-  AutoDiff<T> result = AutoDiff<T>(dual.val + scalar, nvar, -1);
+  Dual<Order> result = Dual<Order>(dual.val + scalar, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = dual.der[i];
   }
   return result;
 }
 
-template <typename T>
-AutoDiff<T> operator+(const double &scalar, const AutoDiff<T> &dual) {
+template <int Order>
+Dual<Order> operator+(const double &scalar, const Dual<Order> &dual) {
   return dual + scalar;
 }
 
 // subtraction operators
-template <typename T>
-AutoDiff<T> operator-(const AutoDiff<T> &dual1, const AutoDiff<T> &dual2) {
+template <int Order>
+Dual<Order> operator-(const Dual<Order> &dual1, const Dual<Order> &dual2) {
   const size_t &nvar = dual1.der.size();
-  AutoDiff<T> result = AutoDiff<T>(dual1.val - dual2.val, nvar, -1);
+  Dual<Order> result = Dual<Order>(dual1.val - dual2.val, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = dual1.der[i] - dual2.der[i];
   }
   return result;
 }
 
-template <typename T>
-AutoDiff<T> operator-(const AutoDiff<T> &dual, double scalar) {
+template <int Order>
+Dual<Order> operator-(const Dual<Order> &dual, double scalar) {
   const size_t &nvar = dual.der.size();
-  AutoDiff<T> result = AutoDiff<T>(dual.val - scalar, nvar, -1);
+  Dual<Order> result = Dual<Order>(dual.val - scalar, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = dual.der[i];
   }
   return result;
 }
 
-template <typename T>
-AutoDiff<T> operator-(const double &scalar, const AutoDiff<T> &dual) {
+template <int Order>
+Dual<Order> operator-(const double &scalar, const Dual<Order> &dual) {
   const size_t &nvar = dual.der.size();
-  AutoDiff<T> result = AutoDiff<T>(scalar - dual.val, nvar, -1);
+  Dual<Order> result = Dual<Order>(scalar - dual.val, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = -dual.der[i];
   }
@@ -80,37 +97,37 @@ AutoDiff<T> operator-(const double &scalar, const AutoDiff<T> &dual) {
 }
 
 // multiplication operators
-template <typename T>
-AutoDiff<T> operator*(const AutoDiff<T> &dual1, const AutoDiff<T> &dual2) {
+template <int Order>
+Dual<Order> operator*(const Dual<Order> &dual1, const Dual<Order> &dual2) {
   const size_t &nvar = dual1.der.size();
-  AutoDiff<T> result = AutoDiff<T>(dual1.val * dual2.val, nvar, -1);
+  Dual<Order> result = Dual<Order>(dual1.val * dual2.val, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = dual1.val * dual2.der[i] + dual1.der[i] * dual2.val;
   }
   return result;
 }
 
-template <typename T>
-AutoDiff<T> operator*(const AutoDiff<T> &dual, const double &scalar) {
+template <int Order>
+Dual<Order> operator*(const Dual<Order> &dual, const double &scalar) {
   const size_t &nvar = dual.der.size();
-  AutoDiff<T> result = AutoDiff<T>(dual.val * scalar, nvar, -1);
+  Dual<Order> result = Dual<Order>(dual.val * scalar, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = dual.der[i] * scalar;
   }
   return result;
 }
 
-template <typename T>
-AutoDiff<T> operator*(const double &scalar, const AutoDiff<T> &dual) {
+template <int Order>
+Dual<Order> operator*(const double &scalar, const Dual<Order> &dual) {
   return dual * scalar;
 }
 
 // division operators
-template <typename T>
-AutoDiff<T> operator/(const AutoDiff<T> &dual1, const AutoDiff<T> &dual2) {
+template <int Order>
+Dual<Order> operator/(const Dual<Order> &dual1, const Dual<Order> &dual2) {
   const size_t &nvar = dual1.der.size();
   const double inv_val = 1.0 / dual2.val;
-  AutoDiff<T> result = AutoDiff<T>(dual1.val * inv_val, nvar, -1);
+  Dual<Order> result = Dual<Order>(dual1.val * inv_val, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] =
         (dual1.der[i] - dual1.val * dual2.der[i] * inv_val) * inv_val;
@@ -118,23 +135,23 @@ AutoDiff<T> operator/(const AutoDiff<T> &dual1, const AutoDiff<T> &dual2) {
   return result;
 }
 
-template <typename T>
-AutoDiff<T> operator/(const AutoDiff<T> &dual, const double &scalar) {
+template <int Order>
+Dual<Order> operator/(const Dual<Order> &dual, const double &scalar) {
   const size_t &nvar = dual.der.size();
   const double inv_scalar = 1.0 / scalar;
-  AutoDiff<T> result = AutoDiff<T>(dual.val * inv_scalar, nvar, -1);
+  Dual<Order> result = Dual<Order>(dual.val * inv_scalar, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = dual.der[i] * inv_scalar;
   }
   return result;
 }
 
-template <typename T>
-AutoDiff<T> operator/(const double &scalar, const AutoDiff<T> &dual) {
+template <int Order>
+Dual<Order> operator/(const double &scalar, const Dual<Order> &dual) {
   const size_t &nvar = dual.der.size();
   const double inv_val = 1.0 / dual.val;
   const double inv_val2 = inv_val * inv_val;
-  AutoDiff<T> result = AutoDiff<T>(scalar * inv_val, nvar, -1);
+  Dual<Order> result = Dual<Order>(scalar * inv_val, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = -scalar * dual.der[i] * inv_val2;
   }
@@ -142,11 +159,11 @@ AutoDiff<T> operator/(const double &scalar, const AutoDiff<T> &dual) {
 }
 
 // exponential function
-template <typename T>
-AutoDiff<T> exp(const AutoDiff<T> &x) {
+template <int Order>
+Dual<Order> exp(const Dual<Order> &x) {
   const size_t &nvar = x.der.size();
   const double exp_val = exp(x.val);
-  AutoDiff<T> result = AutoDiff<T>(exp_val, nvar, -1);
+  Dual<Order> result = Dual<Order>(exp_val, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = exp_val * x.der[i];
   }
@@ -154,12 +171,12 @@ AutoDiff<T> exp(const AutoDiff<T> &x) {
 }
 
 // square root function
-template <typename T>
-AutoDiff<T> sqrt(const AutoDiff<T> &x) {
+template <int Order>
+Dual<Order> sqrt(const Dual<Order> &x) {
   const size_t &nvar = x.der.size();
   const double sqrt_val = sqrt(x.val);
   const double inv_sqrt = 0.5 / sqrt_val;
-  AutoDiff<T> result = AutoDiff<T>(sqrt_val, nvar, -1);
+  Dual<Order> result = Dual<Order>(sqrt_val, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = x.der[i] * inv_sqrt;
   }
@@ -167,12 +184,12 @@ AutoDiff<T> sqrt(const AutoDiff<T> &x) {
 }
 
 // hyperbolic tangent function
-template <typename T>
-AutoDiff<T> tanh(const AutoDiff<T> &x) {
+template <int Order>
+Dual<Order> tanh(const Dual<Order> &x) {
   const size_t &nvar = x.der.size();
   const double tanh_val = tanh(x.val);
   const double sech2_val = 1.0 - tanh_val * tanh_val;
-  AutoDiff<T> result = AutoDiff<T>(tanh_val, nvar, -1);
+  Dual<Order> result = Dual<Order>(tanh_val, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.der[i] = x.der[i] * sech2_val;
   }
@@ -180,28 +197,28 @@ AutoDiff<T> tanh(const AutoDiff<T> &x) {
 }
 
 // First order derivatives
-class AutoDiff1 : public AutoDiff<double> {
+class AutoDiff1 : public Dual<1> {
 public:
 
   // Constructors
-  AutoDiff1(const double val_ = 0, const size_t index = -1)
-      : AutoDiff<double>(val_, 2, index) {}
-  AutoDiff1(const AutoDiff<double> &other)
-      : AutoDiff<double>(other) {}
+  AutoDiff1(const double val_, const size_t index = -1)
+      : Dual<1>(val_, 2, index) {}
+  AutoDiff1(const Dual<1> &other)
+      : Dual<1>(other) {}
   // Aliases for convenient access of the results
   const double &dx() const { return der[0]; }
   const double &dy() const { return der[1]; }
 };
 
 // Second order derivatives
-class AutoDiff2 : public AutoDiff<AutoDiff1> {
+class AutoDiff2 : public Dual<2> {
 public:
 
   // Constructors
   AutoDiff2(const double &val_, const size_t index = -1)
-      : AutoDiff<AutoDiff1>(val_, 2, index) {}
-  AutoDiff2(const AutoDiff<AutoDiff1> &other)
-      : AutoDiff<AutoDiff1>(other) {}
+      : Dual<2>(val_, 2, index) {}
+  AutoDiff2(const Dual<2> &other)
+      : Dual<2>(other) {}
   // Aliases for convenient access of the results
   const double &dx() const { return der[0].val; }
   const double &dy() const { return der[1].val; }
