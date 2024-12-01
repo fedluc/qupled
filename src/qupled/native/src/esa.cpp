@@ -167,17 +167,15 @@ void ESA::computeSlfcCSRCoefficients() {
   const double rs = in.getCoupling();
   const AutoDiff2 fxc = freeEnergy(rs, theta);
   slfcCoeff.csr =
-      rs * (rs * fxc.dxx - 2.0 * fxc.dx)
-      + theta * (4.0 * theta * fxc.dyy + 4.0 * rs * fxc.dxy - 2.0 * fxc.dy);
+      rs * (rs * fxc.dxx() - 2.0 * fxc.dx())
+      + theta
+            * (4.0 * theta * fxc.dyy() + 4.0 * rs * fxc.dxy() - 2.0 * fxc.dy());
   slfcCoeff.csr *= -(M_PI / 12.0) * lambda * rs;
 }
 
 AutoDiff2 ESA::freeEnergy(const double &rs, const double &theta) const {
-  // x = rs, y = theta
-  std::vector<AutoDiff1> drsDep = {AutoDiff1(1.0), AutoDiff1(0.0)};
-  std::vector<AutoDiff1> dthetaDep = {AutoDiff1(0.0), AutoDiff1(1.0)};
-  AutoDiff2 drs(rs, drsDep);
-  AutoDiff2 dtheta(theta, dthetaDep);
+  AutoDiff2 drs(rs, 0);
+  AutoDiff2 dtheta(theta, 1);
   return freeEnergy(drs, dtheta);
 }
 
