@@ -1,8 +1,10 @@
 #ifndef ESA_HPP
 #define ESA_HPP
 
-#include "auto_diff.hpp"
 #include "rpa.hpp"
+
+// Forward declarations
+class Dual22;
 
 // -----------------------------------------------------------------
 // Solver for the ESA scheme
@@ -50,8 +52,8 @@ private:
   // Activation function for the asymptotic limit of slfc
   double activationFunction(const double &x) const;
   // Parametrization of the free energy
-  AutoDiff2 freeEnergy(const double &rs, const double &theta) const;
-  AutoDiff2 freeEnergy(const AutoDiff2 &rs, const AutoDiff2 &theta) const;
+  Dual22 freeEnergy(const double &rs, const double &theta) const;
+  Dual22 freeEnergy(const Dual22 &rs, const Dual22 &theta) const;
 };
 
 #endif
