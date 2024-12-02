@@ -73,9 +73,9 @@ void Input::print() const {
 }
 
 bool Input::isEqual(const Input &in) const {
-  return (int2DScheme == in.int2DScheme && nThreads == in.nThreads &&
-          rs == in.rs && theory == in.theory && Theta == in.Theta &&
-          intError == in.intError);
+  return (int2DScheme == in.int2DScheme && nThreads == in.nThreads
+          && rs == in.rs && theory == in.theory && Theta == in.Theta
+          && intError == in.intError);
 }
 
 // -----------------------------------------------------------------
@@ -122,8 +122,8 @@ void IterationInput::print() const {
 }
 
 bool IterationInput::isEqual(const IterationInput &in) const {
-  return (aMix == in.aMix && errMin == in.errMin && nIter == in.nIter &&
-          outIter == in.outIter && recoveryFileName == in.recoveryFileName);
+  return (aMix == in.aMix && errMin == in.errMin && nIter == in.nIter
+          && outIter == in.outIter && recoveryFileName == in.recoveryFileName);
 }
 
 // -----------------------------------------------------------------
@@ -169,9 +169,9 @@ void QuantumInput::setGuess(const Guess &guess) {
   const size_t nx = guess.wvg.size();
   const size_t adrRows = (guess.adr.empty()) ? 0 : nx;
   const size_t adrCols = (guess.adr.empty()) ? 0 : nl;
-  const bool consistentGuess = guess.ssf.size() == nx &&
-                               guess.adr.size(0) == adrRows &&
-                               guess.adr.size(1) == adrCols;
+  const bool consistentGuess = guess.ssf.size() == nx
+                               && guess.adr.size(0) == adrRows
+                               && guess.adr.size(1) == adrCols;
   if (!consistentGuess) { throwError("The initial guess is inconsistent"); }
   this->guess = guess;
 }
@@ -232,8 +232,8 @@ void RpaInput::print() const {
 }
 
 bool RpaInput::isEqual(const RpaInput &in) const {
-  return (Input::isEqual(in) && dx == in.dx && muGuess == in.muGuess &&
-          nl == in.nl && xmax == in.xmax);
+  return (Input::isEqual(in) && dx == in.dx && muGuess == in.muGuess
+          && nl == in.nl && xmax == in.xmax);
 }
 
 // -----------------------------------------------------------------
@@ -248,8 +248,8 @@ void StlsInput::print() const {
 }
 
 bool StlsInput::isEqual(const StlsInput &in) const {
-  return (RpaInput::isEqual(in) && IterationInput::isEqual(in) &&
-          ClassicInput::isEqual(in));
+  return (RpaInput::isEqual(in) && IterationInput::isEqual(in)
+          && ClassicInput::isEqual(in));
 }
 
 // -----------------------------------------------------------------
@@ -334,9 +334,9 @@ void VSInput::print() const {
 }
 
 bool VSInput::isEqual(const VSInput &in) const {
-  return (alphaGuess == in.alphaGuess && drs == in.drs && dTheta == in.dTheta &&
-          errMinAlpha == in.errMinAlpha && nIterAlpha == in.nIterAlpha &&
-          fxcIntegrand == in.fxcIntegrand);
+  return (alphaGuess == in.alphaGuess && drs == in.drs && dTheta == in.dTheta
+          && errMinAlpha == in.errMinAlpha && nIterAlpha == in.nIterAlpha
+          && fxcIntegrand == in.fxcIntegrand);
 }
 
 // -----------------------------------------------------------------

@@ -28,8 +28,8 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_, const bool writeFiles_)
                "for the quantum schemes");
   }
   // Check if iet scheme should be solved
-  useIet = in.getTheory() == "QSTLS-HNC" || in.getTheory() == "QSTLS-IOI" ||
-           in.getTheory() == "QSTLS-LCT";
+  useIet = in.getTheory() == "QSTLS-HNC" || in.getTheory() == "QSTLS-IOI"
+           || in.getTheory() == "QSTLS-LCT";
   // Allocate arrays
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
@@ -611,8 +611,8 @@ AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
     const double t2 = t * t;
     double logarg = (t + txq) / (t - txq);
     logarg = (logarg < 0.0) ? -logarg : logarg;
-    return y / (2.0 * t + y2 - x2) *
-           ((q2 - t2 / (4.0 * x2)) * log(logarg) + q * t / x);
+    return y / (2.0 * t + y2 - x2)
+           * ((q2 - t2 / (4.0 * x2)) * log(logarg) + q * t / x);
   }
   if (x == y && t == 0.0) { return 0.0; };
   const double tplT = 2.0 * M_PI * l * Theta;
@@ -726,13 +726,13 @@ double AdrFixedIet::integrand(const double &t,
   if (l == 0) {
     double logarg = (qmypx + fxt) / (qmypx - fxt);
     if (logarg < 0.0) logarg = -logarg;
-    return t / (exp(t2 / Theta - mu) + exp(-t2 / Theta + mu) + 2.0) *
-           ((t2 - qmypx * qmypx / (16.0 * x2)) * log(logarg) +
-            (t / x) * qmypx / 2.0);
+    return t / (exp(t2 / Theta - mu) + exp(-t2 / Theta + mu) + 2.0)
+           * ((t2 - qmypx * qmypx / (16.0 * x2)) * log(logarg)
+              + (t / x) * qmypx / 2.0);
   }
   const double fplT = 4.0 * M_PI * l * Theta;
   const double fplT2 = fplT * fplT;
-  const double logarg = ((qmypx + fxt) * (qmypx + fxt) + fplT2) /
-                        ((qmypx - fxt) * (qmypx - fxt) + fplT2);
+  const double logarg = ((qmypx + fxt) * (qmypx + fxt) + fplT2)
+                        / ((qmypx - fxt) * (qmypx - fxt) + fplT2);
   return t / (exp(t2 / Theta - mu) + 1.0) * log(logarg);
 }

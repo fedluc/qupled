@@ -167,8 +167,8 @@ public:
     Vector2D adr;
     int matsubara = DEFAULT_INT;
     bool operator==(const Guess &other) const {
-      return wvg == other.wvg && ssf == other.ssf && adr == other.adr &&
-             matsubara == other.matsubara;
+      return wvg == other.wvg && ssf == other.ssf && adr == other.adr
+             && matsubara == other.matsubara;
     }
   };
   // Setters
@@ -292,8 +292,8 @@ public:
     std::vector<double> alpha;
     std::vector<std::vector<double>> integrand;
     bool operator==(const FreeEnergyIntegrand &other) const {
-      return grid == other.grid && integrand == other.integrand &&
-             alpha == other.alpha;
+      return grid == other.grid && integrand == other.integrand
+             && alpha == other.alpha;
     }
   };
   // Contructor

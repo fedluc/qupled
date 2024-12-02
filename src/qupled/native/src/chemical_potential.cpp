@@ -15,6 +15,6 @@ void ChemicalPotential::compute(const vector<double> &guess) {
 }
 
 double ChemicalPotential::normalizationCondition(const double &mu) const {
-  return gsl_sf_gamma(1.5) * gsl_sf_fermi_dirac_half(mu) -
-         2.0 / (3.0 * pow(Theta, 3.0 / 2.0));
+  return gsl_sf_gamma(1.5) * gsl_sf_fermi_dirac_half(mu)
+         - 2.0 / (3.0 * pow(Theta, 3.0 / 2.0));
 }

@@ -3,6 +3,9 @@
 
 #include "rpa.hpp"
 
+// Forward declarations
+class Dual22;
+
 // -----------------------------------------------------------------
 // Solver for the ESA scheme
 // -----------------------------------------------------------------
@@ -17,14 +20,40 @@ public:
   // Compute the scheme
   int compute();
 
-protected:
+private:
 
-  // Funtion for the ESA static local field correction
+  // Static local field correction
   void computeSlfc();
-  // Function for free energy derivatives
-  double fxc(const double &theta, const double &rs) const;
-  // Resolution for the free energy derivatives
-  const double dx = 1e-6;
+  // Parametrization of the slfc obtained from neural networks
+  double slfcNN(const double &x) const;
+  // slfc from the compressibility sum rule
+  double slfcCSR(const double &x) const;
+  // Compute static local field correction coefficients
+  struct SlfcCoefficients {
+    // Coefficients for the long wavelength limit
+    double lwl;
+    // Coefficients for the activation function
+    double afEta;
+    double afxm;
+    // Coefficients for the neural network parametrization
+    double nna;
+    double nnb;
+    double nnc;
+    double nnd;
+    // Coefficients for the compressibility sum-rule
+    double csr;
+  };
+  SlfcCoefficients slfcCoeff;
+  void computeSlfcCoefficients();
+  void computeSlfcNNCoefficients();
+  void computeSlfcCSRCoefficients();
+  // On top value of the radial distribution function
+  double onTop() const;
+  // Activation function for the asymptotic limit of slfc
+  double activationFunction(const double &x) const;
+  // Parametrization of the free energy
+  Dual22 freeEnergy(const double &rs, const double &theta) const;
+  Dual22 freeEnergy(const Dual22 &rs, const Dual22 &theta) const;
 };
 
 #endif
