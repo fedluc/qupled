@@ -1,5 +1,5 @@
-#include "dual.hpp"
 #include "esa.hpp"
+#include "dual.hpp"
 #include "input.hpp"
 #include "numerics.hpp"
 
