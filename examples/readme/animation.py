@@ -1,18 +1,27 @@
 import os
+import tempfile
+import shutil
 import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import colormaps as cm
 from scour.scour import start, getInOut, parse_args
-import qupled.classic as qpc
-import qupled.quantum as qpq
+from qupled.util import Hdf
+from qupled.quantum import Qstls
 
 
 def main():
-    darkmode = True
     nIterations = 33
-    svg_files = create_all_svg_files(nIterations, darkmode)
-    combine_svg_files(svg_files, darkmode)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        original_dir = os.getcwd()
+        os.chdir(temp_dir)
+        try:
+            for darkmode in [True, False]:
+                svg_files = create_all_svg_files(nIterations, darkmode)
+                animation_file = combine_svg_files(svg_files, darkmode)
+                shutil.copy(animation_file, original_dir)
+        finally:
+            os.chdir(original_dir)
 
 
 def create_all_svg_files(nFiles, darkmode):
@@ -50,10 +59,10 @@ def combine_svg_files(svg_files, darkmode):
             svg_content = svg_content[svg_content.index("<svg") :]
             svg_content = add_animation(svg_content, begin_visible, begin_hidden)
             svg_image += image_template.format(svg_content)
-        os.remove(svg_file)
     with open(animation_file, "w") as fw:
         fw.write(svg_template.format(svg_image))
     optimise_svg(animation_file)
+    return animation_file
 
 
 def add_animation(svg_content, begin, end):
@@ -91,26 +100,21 @@ def create_one_svg_file(i, errorList, darkmode):
 
 
 def solve_qstls(i):
-    qstls = qpq.Qstls(
-        15.0,
-        1.0,
-        mixing=0.3,
-        resolution=0.1,
-        cutoff=10,
-        matsubara=16,
-        threads=16,
-        iterations=0,
-    )
+    qstls = Qstls()
+    inputs = Qstls.Input(15.0, 1.0)
+    inputs.mixing = 0.3
+    inputs.resolution = 0.1
+    inputs.cutoff = 10
+    inputs.matsubara = 16
+    inputs.threads = 16
+    inputs.iterations = 0
     if i > 0:
-        qstls.setGuess("rs15.000_theta1.000_QSTLS.h5")
-        qstls.inputs.fixed = "adr_fixed_theta1.000_matsubara16.bin"
-    qstls.compute()
+        inputs.guess = Qstls.getInitialGuess("rs15.000_theta1.000_QSTLS.h5")
+        inputs.fixed = "adr_fixed_theta1.000_matsubara16_QSTLS.bin"
+    qstls.compute(inputs)
+    results = Hdf().read(qstls.hdfFileName, ["wvg", "adr", "ssf", "idr", "error"])
     return QStlsData(
-        qstls.scheme.wvg,
-        qstls.scheme.adr,
-        qstls.scheme.idr,
-        qstls.scheme.ssf,
-        qstls.scheme.error,
+        results["wvg"], results["adr"], results["idr"], results["ssf"], results["error"]
     )
 
 
