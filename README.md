@@ -33,10 +33,13 @@ Qupled has been used in the following publications:
 
 <ol>
   <li>
-    <a href="https://journals.aps.org/prb/abstract/10.1103/PhysRevB.109.125134">Tolias, P., Lucco Castello, F., Kalkavouras, F., &#38; Dornheim, T. (2024). Revisiting the Vashishta-Singwi dielectric scheme for the warm dense uniform electron fluid. <i>Phys. Rev. B</i>, <i>109</i>(12)</a>
+    <a href="https://journals.aps.org/prb/abstract/10.1103/PhysRevB.109.125134">Tolias, P., Lucco Castello, F., Kalkavouras, F., &#38; Dornheim, T. (2024). Revisiting the Vashishta-Singwi dielectric scheme for the warm dense uniform electron fluid. <i>Physical Review B</i>, <i>109</i>(12)</a>
   </li>
   <li>
     <a href="https://pubs.aip.org/aip/jcp/article/158/14/141102/2877795/Quantum-version-of-the-integral-equation-theory">Tolias, P., Lucco Castello, F., &#38; Dornheim, T. (2023). Quantum version of the integral equation theory-based dielectric scheme for strongly coupled electron liquids. <i>The Journal of Chemical Physics</i>, <i>158</i>(14)</a>
+  </li>
+  <li>
+    <a href="https://iopscience.iop.org/article/10.1209/0295-5075/ac7166/meta">Lucco Castello, F., Tolias, P., &#38; Dornheim, T. (2022). Classical bridge functions in classical and quantum plasma liquids. <i>Europhysics Letters</i>, <i>138</i>(4)</a>
   </li>
   <li>
     <a href="https://pubs.aip.org/aip/jcp/article/155/13/134115/353165/Integral-equation-theory-based-dielectric-scheme">Tolias, P., Lucco Castello, F., &#38; Dornheim, T. (2021). Integral equation theory based dielectric scheme for strongly coupled electron liquids. <i>The Journal of Chemical Physics</i>, <i>155</i>(13)</a>
