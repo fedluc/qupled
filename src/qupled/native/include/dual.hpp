@@ -169,6 +169,18 @@ Dual<Order> exp(const Dual<Order> &x) {
   return result;
 }
 
+// logarithmic function
+template <int Order>
+Dual<Order> log(const Dual<Order> &x) {
+  const size_t &nvar = x.grad.size();
+  const auto &log_func = log(x.func);
+  Dual<Order> result = Dual<Order>(log_func, nvar, -1);
+  for (size_t i = 0; i < nvar; ++i) {
+    result.grad[i] = x.grad[i] / x.func;
+  }
+  return result;
+}
+
 // square root function
 template <int Order>
 Dual<Order> sqrt(const Dual<Order> &x) {

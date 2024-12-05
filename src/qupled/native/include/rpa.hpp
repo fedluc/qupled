@@ -7,6 +7,9 @@
 #include "vector2D.hpp"
 #include <vector>
 
+// Forward declarations
+class Dual11;
+
 // -----------------------------------------------------------------
 // Solver for the Random-Phase approximation scheme
 // -----------------------------------------------------------------
@@ -131,11 +134,9 @@ public:
       : Omega(Omega_),
         x(x_) {}
   // Get real part
-  double re0() const;
+  Dual11 re0() const;
   // Get imaginary part
   double im0() const;
-  // Get frequency derivative of the real part
-  double re0Der() const;
 
 private:
 
@@ -294,9 +295,7 @@ private:
   // Plasmon contribution
   double plasmon() const;
   // Dielectric response function
-  double drf(const double &Omega) const;
-  // Frequency derivative of the dielectric response function
-  double drfDer(const double &Omega) const;
+  Dual11 drf(const double &Omega) const;
 };
 
 #endif
