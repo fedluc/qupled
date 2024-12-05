@@ -2,10 +2,8 @@
 
 Qupled is a Python package designed for calculating the properties of quantum plasmas using the dielectric formalism. By combining a straightforward Python interface with the speed of C++, it allows for efficient and accurate computations of quantum plasma properties.
 
-<p align="center">
-  <img src="https://github.com/fedluc/qupled/blob/master/examples/readme/qupled_animation_light.svg#gh-light-mode-only" width="100%">
-  <img src="https://github.com/fedluc/qupled/blob/master/examples/readme/qupled_animation_dark.svg#gh-dark-mode-only" width="100%">
-<p>
+![](https://github.com/fedluc/qupled/blob/master/examples/readme/qupled_animation_light.svg#gh-light-mode-only)
+![](https://github.com/fedluc/qupled/blob/master/examples/readme/qupled_animation_dark.svg#gh-dark-mode-only)
 
 ## Status
 [![Build & Test](https://github.com/fedluc/qupled/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/build-and-test.yml)
