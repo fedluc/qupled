@@ -5,79 +5,43 @@ import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import colormaps as cm
-from scour.scour import start, getInOut, parse_args
 from qupled.util import Hdf
 from qupled.quantum import Qstls
 
 
 def main():
-    nIterations = 33
     with tempfile.TemporaryDirectory() as temp_dir:
         original_dir = os.getcwd()
         os.chdir(temp_dir)
         try:
-            for darkmode in [True, False]:
-                svg_files = create_all_svg_files(nIterations, darkmode)
-                animation_file = combine_svg_files(svg_files, darkmode)
-                shutil.copy(animation_file, original_dir)
+            svg_files = create_svg_files()
+            for svg_file in svg_files:
+                shutil.copy(svg_file, original_dir)
         finally:
             os.chdir(original_dir)
 
 
-def create_all_svg_files(nFiles, darkmode):
-    fig, ax = plt.subplots()
-    images = []
+def create_svg_files():
+    plot_data, error = get_plot_data()
+    if plot_data is not None:
+        svg_files = []
+        for darkmode in [True, False]:
+            svg_files.append(create_one_svg_file(darkmode, plot_data, error))
+        return svg_files
+    else:
+        return []
+
+
+def get_plot_data():
+    plot_data = None
     error = []
-    file_names = []
-    for i in range(nFiles):
-        file_names.append(create_one_svg_file(i, error, darkmode))
-    return file_names
+    while plot_data is None or plot_data.error > 1e-5:
+        plot_data = solve_qstls()
+        error.append(plot_data.error)
+    return plot_data, error
 
 
-def combine_svg_files(svg_files, darkmode):
-    svg_template = """
-    <svg width="864pt" height="576pt" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-     {}
-    </svg>
-    """
-    image_template = """
-    <g visibility="hidden">
-     {}
-    </g>
-    """
-    image_duration = 0.18  # in seconds
-    svg_image = ""
-    animation_file = "qupled_animation_light.svg"
-    if darkmode:
-        animation_file = "qupled_animation_dark.svg"
-    for i in range(len(svg_files)):
-        svg_file = svg_files[i]
-        begin_visible = i * image_duration
-        begin_hidden = begin_visible + image_duration
-        with open(svg_file, "r") as f:
-            svg_content = f.read()
-            svg_content = svg_content[svg_content.index("<svg") :]
-            svg_content = add_animation(svg_content, begin_visible, begin_hidden)
-            svg_image += image_template.format(svg_content)
-    with open(animation_file, "w") as fw:
-        fw.write(svg_template.format(svg_image))
-    optimise_svg(animation_file)
-    return animation_file
-
-
-def add_animation(svg_content, begin, end):
-    animation_xml = f"""
-     <animate attributeName="visibility" values="hidden;visible" begin="{begin}s"/>
-     <animate attributeName="visibility" values="visible;hidden" begin="{end}s"/>
-    """
-    index = svg_content.index("</svg>")
-    modified_svg_content = svg_content[:index] + animation_xml + svg_content[index:]
-    return modified_svg_content
-
-
-def create_one_svg_file(i, errorList, darkmode):
-    # Solve scheme
-    plot_data = solve_qstls(i)
+def create_one_svg_file(darkmode, plot_data, error):
     # Get plot settings
     settings = PlotSettings(darkmode)
     plt.figure(figsize=settings.figure_size)
@@ -87,30 +51,35 @@ def create_one_svg_file(i, errorList, darkmode):
     # Plot quantities of interest
     plot_density_response(plt, plot_data, settings)
     plot_ssf(plt, plot_data, settings)
-    plot_error(plt, i, errorList, plot_data.error, settings)
+    plot_error(plt, error, settings)
     # Combine plots
     plt.tight_layout()
     # Save figure
-    file_name = f"plot{i:03}.svg"
+    file_name = settings.figure_name
     plt.savefig(file_name)
     plt.close()
-    # Optimise svg file
-    optimise_svg(file_name)
     return file_name
 
 
-def solve_qstls(i):
+def solve_qstls():
     qstls = Qstls()
-    inputs = Qstls.Input(15.0, 1.0)
+    rs = 15.0
+    theta = 1.0
+    inputs = Qstls.Input(rs, theta)
     inputs.mixing = 0.3
     inputs.resolution = 0.1
     inputs.cutoff = 10
     inputs.matsubara = 16
     inputs.threads = 16
     inputs.iterations = 0
-    if i > 0:
-        inputs.guess = Qstls.getInitialGuess("rs15.000_theta1.000_QSTLS.h5")
-        inputs.fixed = "adr_fixed_theta1.000_matsubara16_QSTLS.bin"
+    guess_file = f"rs{rs:.3f}_theta{theta:.3f}_QSTLS.h5"
+    adr_file = f"adr_fixed_theta{theta:.3f}_matsubara{inputs.matsubara}_QSTLS.bin"
+    inputs.guess = (
+        Qstls.getInitialGuess(guess_file)
+        if os.path.exists(guess_file)
+        else inputs.guess
+    )
+    inputs.fixed = adr_file if os.path.exists(adr_file) else inputs.fixed
     qstls.compute(inputs)
     results = Hdf().read(qstls.hdfFileName, ["wvg", "adr", "ssf", "idr", "error"])
     return QStlsData(
@@ -165,14 +134,12 @@ def plot_ssf(plt, plot_data, settings):
     plt.yticks(fontsize=settings.ticksz)
 
 
-def plot_error(plt, iteration, errorList, error, settings):
-    errorList.append(error)
+def plot_error(plt, error, settings):
+    iterations = range(len(error))
     horizontalLineColor = mpl.rcParams["text.color"]
     plt.subplot(2, 1, 1)
-    plt.plot(
-        range(iteration + 1), errorList, color=settings.color, linewidth=settings.width
-    )
-    plt.scatter(iteration, error, color="red", s=150, alpha=1)
+    plt.plot(iterations, error, color=settings.color, linewidth=settings.width)
+    plt.scatter(iterations[-1], error[-1], color="red", s=150, alpha=1)
     plt.axhline(y=1.0e-5, color=horizontalLineColor, linestyle="--")
     plt.text(
         3, 1.5e-5, "Convergence", horizontalalignment="center", fontsize=settings.ticksz
@@ -227,14 +194,14 @@ class PlotSettings:
         self.labelsz = 16
         self.ticksz = 14
         self.width = 2.0
-        self.theme = "ggplot"
-        self.colormap = cm["viridis"].reversed()
+        self.theme = "dark_background" if darkmode else "ggplot"
+        self.colormap = cm["plasma"] if darkmode else cm["viridis"].reversed()
         self.xlim = 6
-        if darkmode:
-            self.theme = "dark_background"
-            self.colormap = cm["plasma"]
         self.color = self.colormap(1.0)
         self.figure_size = (12, 8)
+        self.figure_name = (
+            "qupled_animation_dark.svg" if darkmode else "qupled_animation_light.svg"
+        )
 
 
 if __name__ == "__main__":

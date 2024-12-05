@@ -2,7 +2,6 @@ black
 build
 pytest
 pytest-mock
-scour
 setuptools
 Sphinx
 sphinx-rtd-theme
