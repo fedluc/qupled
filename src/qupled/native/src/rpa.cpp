@@ -1,5 +1,6 @@
 #include "rpa.hpp"
 #include "chemical_potential.hpp"
+#include "dual.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
@@ -268,26 +269,27 @@ vector<double> Idr::get() const {
 // -----------------------------------------------------------------
 
 // Real part at zero temperature
-double IdrGround::re0() const {
-  double adder1 = 0.0;
-  double adder2 = 0.0;
-  double preFactor = 0.0;
+Dual11 IdrGround::re0() const {
+  const Dual11 dOmega = Dual11(Omega, 0);
+  Dual11 adder1 = Dual11(0.0);
+  Dual11 adder2 = Dual11(0.0);
+  Dual11 preFactor = Dual11(0.0);
   if (x > 0.0) {
-    double x_2 = x / 2.0;
-    double Omega_2x = Omega / (2.0 * x);
-    double sumFactor = x_2 + Omega_2x;
-    double diffFactor = x_2 - Omega_2x;
-    double sumFactor2 = sumFactor * sumFactor;
-    double diffFactor2 = diffFactor * diffFactor;
-    preFactor = 0.5;
-    if (sumFactor != 1.0) {
-      double log_sum_arg = (sumFactor + 1.0) / (sumFactor - 1.0);
-      if (log_sum_arg < 0.0) log_sum_arg = -log_sum_arg;
+    const double x_2 = x / 2.0;
+    const Dual11 Omega_2x = dOmega / (2.0 * x);
+    const Dual11 sumFactor = x_2 + Omega_2x;
+    const Dual11 diffFactor = x_2 - Omega_2x;
+    const Dual11 sumFactor2 = sumFactor * sumFactor;
+    const Dual11 diffFactor2 = diffFactor * diffFactor;
+    preFactor = preFactor + 0.5;
+    if (sumFactor.val() != 1.0) {
+      Dual11 log_sum_arg = (sumFactor + 1.0) / (sumFactor - 1.0);
+      if (log_sum_arg.val() < 0.0) log_sum_arg = -1.0 * log_sum_arg;
       adder1 = 1.0 / (4.0 * x) * (1.0 - sumFactor2) * log(log_sum_arg);
     }
-    if (diffFactor != 1.0 && diffFactor != -1.0) {
-      double log_diff_arg = (diffFactor + 1.0) / (diffFactor - 1.0);
-      if (log_diff_arg < 0.0) log_diff_arg = -log_diff_arg;
+    if (diffFactor.val() != 1.0 && diffFactor.val() != -1.0) {
+      Dual11 log_diff_arg = (diffFactor + 1.0) / (diffFactor - 1.0);
+      if (log_diff_arg.val() < 0.0) log_diff_arg = -1.0 * log_diff_arg;
       adder2 = 1.0 / (4.0 * x) * (1.0 - diffFactor2) * log(log_diff_arg);
     }
   }
@@ -311,27 +313,6 @@ double IdrGround::im0() const {
     if (diffFactor2 < 1.0) { adder2 = 1 - diffFactor2; }
   }
   return preFactor * (adder1 - adder2);
-}
-
-// Frequency derivative of the real part at zero temperature
-double IdrGround::re0Der() const {
-  double adder1 = 0.0;
-  double adder2 = 0.0;
-  double x_2 = x / 2.0;
-  double Omega_2x = Omega / (2.0 * x);
-  double sumFactor = x_2 + Omega_2x;
-  double diffFactor = x_2 - Omega_2x;
-  if (sumFactor != 1.0) {
-    double log_sum_arg = (sumFactor + 1.0) / (sumFactor - 1.0);
-    if (log_sum_arg < 0.0) log_sum_arg = -log_sum_arg;
-    adder1 = 1.0 / (4.0 * x * x) * (1.0 - sumFactor * log(log_sum_arg));
-  }
-  if (diffFactor != 1.0 && diffFactor != -1.0) {
-    double log_diff_arg = (diffFactor + 1.0) / (diffFactor - 1.0);
-    if (log_diff_arg < 0.0) log_diff_arg = -log_diff_arg;
-    adder2 = -1.0 / (4.0 * x * x) * (1.0 - diffFactor * log(log_diff_arg));
-  }
-  return adder1 + adder2;
 }
 
 // -----------------------------------------------------------------
@@ -405,8 +386,7 @@ double SsfGround::get() const {
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg.compute(func, ItgParam(yMin, yMax));
-  double ssfP;
-  ssfP = plasmon();
+  const double ssfP = plasmon();
   return ssfHF + itg.getSolution() + ssfP;
 }
 
@@ -415,7 +395,7 @@ double SsfGround::integrand(const double &Omega) const {
   double x2 = x * x;
   double fact = (4.0 * lambda * rs) / (M_PI * x2);
   IdrGround idrTmp(Omega, x);
-  const double idrRe = idrTmp.re0();
+  const double idrRe = idrTmp.re0().val();
   const double idrIm = idrTmp.im0();
   const double factRe = 1 + fact * (1 - slfc) * idrRe;
   const double factIm = fact * (1 - slfc) * idrIm;
@@ -436,15 +416,12 @@ double SsfGround::integrand(const double &Omega) const {
 double SsfGround::plasmon() const {
   // Look for a region where the dielectric function changes sign
   bool search_root = false;
-  const double wCo = x * x + 2 * x;
-  const double dw = wCo;
-  const double wLo = wCo;
+  const double wLo = x * (x + 2);
   double wHi;
-  const int signLo = (drf(wLo) >= 0) ? 1 : -1;
-  for (size_t i = 1; i < 1000; i++) {
-    wHi = wLo + dw * i;
-    const double signHi = (drf(wHi) >= 0) ? 1 : -1;
-    ;
+  const bool signLo = (drf(wLo).val() >= 0);
+  for (size_t i = 1; i < 11; i++) {
+    wHi = wLo * std::pow(2, i);
+    const bool signHi = (drf(wHi).val() >= 0);
     if (signHi != signLo) {
       search_root = true;
       break;
@@ -453,31 +430,22 @@ double SsfGround::plasmon() const {
   // Return if no root can be found
   if (!search_root) return 0;
   // Compute plasmon frequency
-  auto func = [this](const double &Omega) -> double { return drf(Omega); };
+  auto func = [this](const double &Omega) -> double {
+    return drf(Omega).val();
+  };
   const double guess[] = {wLo, wHi};
   BrentRootSolver rsol;
   rsol.solve(func, vector<double>(begin(guess), end(guess)));
   // Output
   const double fact = (4.0 * lambda * rs) / (M_PI * x * x);
-  return 1.5 / (fact * abs(drfDer(rsol.getSolution())));
+  return 1.5 / (fact * abs(drf(rsol.getSolution()).dx()));
 }
 
 // Dielectric response function
-double SsfGround::drf(const double &Omega) const {
+Dual11 SsfGround::drf(const double &Omega) const {
+  const Dual11 dOmega = Dual11(Omega, 0);
   const double fact = (4.0 * lambda * rs) / (M_PI * x * x);
-  const double idrRe = IdrGround(Omega, x).re0();
+  const Dual11 idrRe = IdrGround(Omega, x).re0();
   assert(Omega >= x * x + 2 * x);
   return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
-}
-
-// Frequency derivative of the dielectric response function
-double SsfGround::drfDer(const double &Omega) const {
-  const double fact = (4.0 * lambda * rs) / (M_PI * x * x);
-  Integrator1D itgTmp = itg;
-  const IdrGround idrTmp(Omega, x);
-  const double idrRe = idrTmp.re0();
-  const double idrReDer = idrTmp.re0Der();
-  double denom = (1.0 - fact * slfc * idrRe);
-  assert(Omega >= x * x + 2 * x);
-  return fact * idrReDer / (denom * denom);
 }
