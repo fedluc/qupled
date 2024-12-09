@@ -31,10 +31,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        brew update
-        brew install cmake gsl libomp openmpi fmt boost-python3
         python3 -m venv ${PYTHON_VENV_ROOT}
-        pip3 install --upgrade pip
+        python3 dev/install_external_dependencies.py
 
     - name: Set build version
       if: ${{ inputs.build-version != '' }}
