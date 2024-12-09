@@ -6,7 +6,7 @@ import subprocess
 def install_dependencies():
     system = platform.system()
     if system == "Linux":
-        subprocess.check_call(["apt-get", "update"])
+        # subprocess.check_call(["apt-get", "update"])
         subprocess.check_call(
             [
                 "apt-get",
