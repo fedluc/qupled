@@ -14,7 +14,7 @@ def install_dependencies():
                     "install",
                     "-y",
                     "cmake",
-                    "libboost-all-dev",
+                    "libboost-all-dev=1.83",
                     "libopenmpi-dev",
                     "libgsl-dev",
                     "libomp-dev",
