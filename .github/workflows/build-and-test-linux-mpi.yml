@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         python3 -m venv ${PYTHON_VENV_ROOT}
-        python3 dev/install_external_dependencies.py
+        sudo python3 dev/install_external_dependencies.py
 
     - name: Set build version
       if: ${{ inputs.build-version != '' }}
