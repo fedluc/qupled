@@ -31,21 +31,17 @@ jobs:
 
     - name: Install dependencies
       run: |
-        brew update
-        brew install cmake gsl libomp openmpi fmt boost-python3
+        ./devtool install-deps
         python3 -m venv ${PYTHON_VENV_ROOT}
-        pip3 install --upgrade pip
 
     - name: Set build version
       if: ${{ inputs.build-version != '' }}
       run: |
-        BUILD_VERSION=${{ inputs.build-version }}
-        sed -i "" "s/^version = \".*\"/version = \"${BUILD_VERSION}\"/" pyproject.toml
+        ./devtool update-version ${{ inputs.build-version }}
 
     - name: Build
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
-        export OpenMP_ROOT=$(brew --prefix)/opt/libomp
         pip3 install --upgrade pip
         pip3 install build setuptools
         ./devtool build

@@ -24,22 +24,15 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.10"
-
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake libboost-all-dev libopenmpi-dev libgsl-dev libomp-dev libfmt-dev python3-dev
+        ./devtool install-deps
         python3 -m venv ${PYTHON_VENV_ROOT}
 
     - name: Set build version
       if: ${{ inputs.build-version != '' }}
       run: |
-        BUILD_VERSION=${{ inputs.build-version }}
-        sed -i "s/^version = \".*\"/version = \"${BUILD_VERSION}\"/" pyproject.toml
+        ./devtool update-version ${{ inputs.build-version }}
 
     - name: Build
       run: |
