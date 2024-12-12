@@ -98,7 +98,6 @@ def install_dependencies():
                 check=True,
             )
         elif shutil.which("brew"):
-            subprocess.run(["brew", "update"], check=True)
             subprocess.run(
                 [
                     "brew",

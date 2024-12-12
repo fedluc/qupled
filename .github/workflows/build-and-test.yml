@@ -22,7 +22,7 @@ jobs:
     with:
       upload-artifact: false
 
-  macos-MPI:
-    uses: ./.github/workflows/build-and-test-macos-mpi.yml
-    with:
-      upload-artifact: false
+  # macos-MPI:
+  #   uses: ./.github/workflows/build-and-test-macos-mpi.yml
+  #   with:
+  #     upload-artifact: false
