@@ -10,14 +10,8 @@ env:
 
 jobs:
 
-  build-and-test-linux:
-    uses: ./.github/workflows/build-and-test-linux-mpi.yml
-    with:
-      upload-artifact: true
-      build-version: ${GITHUB_REF#refs/tags/v}
-
-  build-and-test-macos:
-    uses: ./.github/workflows/build-and-test-macos-mpi.yml
+  build-and-test:
+    uses: ./.github/workflows/build-and-test-base.yml
     with:
       upload-artifact: true
       build-version: ${GITHUB_REF#refs/tags/v}
@@ -25,15 +19,15 @@ jobs:
   publish:
 
    runs-on: ubuntu-latest
-   needs: [build-and-test-linux, build-and-test-macos]
+   needs: [build-and-test]
 
    steps:
 
    - name: Download linux package
      uses: actions/download-artifact@v4
      with:
-       name: qupled-linux-mpi
-       path: qupled-linux-mpi
+       name: qupled-ubuntu-latest
+       path: qupled-ubuntu-latest
 
    - name: Set up Python environment
      run: |
@@ -48,4 +42,4 @@ jobs:
        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
      run: |
        source ${PYTHON_VENV_ROOT}/bin/activate
-       twine upload --non-interactive qupled-linux-mpi/*.tar.gz
+       twine upload --non-interactive qupled-ubuntu-latest/*.tar.gz

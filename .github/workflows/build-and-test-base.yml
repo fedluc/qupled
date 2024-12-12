@@ -1,4 +1,4 @@
-name: Build & Test (macOS-MPI)
+name: Build & Test
 
 on:
   workflow_call:
@@ -15,37 +15,35 @@ env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
 
 jobs:
-
   build_and_test:
-
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
     - name: Set up Python
+      if: ${{ matrix.os == 'macos-latest' }}
       uses: actions/setup-python@v4
       with:
         python-version: "3.12"
 
     - name: Install dependencies
       run: |
-        brew update
-        brew install cmake gsl libomp openmpi fmt boost-python3
+        ./devtool install-deps
         python3 -m venv ${PYTHON_VENV_ROOT}
-        pip3 install --upgrade pip
 
     - name: Set build version
       if: ${{ inputs.build-version != '' }}
       run: |
-        BUILD_VERSION=${{ inputs.build-version }}
-        sed -i "" "s/^version = \".*\"/version = \"${BUILD_VERSION}\"/" pyproject.toml
+        ./devtool update-version ${{ inputs.build-version }}
 
     - name: Build
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
-        export OpenMP_ROOT=$(brew --prefix)/opt/libomp
         pip3 install --upgrade pip
         pip3 install build setuptools
         ./devtool build
@@ -60,5 +58,5 @@ jobs:
       if: ${{ success() && inputs.upload-artifact == 'true' }}
       uses: actions/upload-artifact@v4
       with:
-        name: qupled-macos-mpi
+        name: qupled-${{ matrix.os }}
         path: dist

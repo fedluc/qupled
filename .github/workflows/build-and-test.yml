@@ -7,22 +7,7 @@ on:
       - master
   
 jobs:
-  linux:
-    uses: ./.github/workflows/build-and-test-linux.yml
-    with:
-      upload-artifact: false
-
-  macos:
-    uses: ./.github/workflows/build-and-test-macos.yml
-    with:
-      upload-artifact: false
-
   linux-MPI:
-    uses: ./.github/workflows/build-and-test-linux-mpi.yml
-    with:
-      upload-artifact: false
-
-  macos-MPI:
-    uses: ./.github/workflows/build-and-test-macos-mpi.yml
+    uses: ./.github/workflows/build-and-test-base.yml
     with:
       upload-artifact: false
