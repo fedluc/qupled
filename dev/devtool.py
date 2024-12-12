@@ -84,6 +84,7 @@ def install_dependencies():
             subprocess.run(["apt-get", "update"], check=True)
             subprocess.run(
                 [
+                    "sudo",
                     "apt-get",
                     "install",
                     "-y",
@@ -98,6 +99,7 @@ def install_dependencies():
                 check=True,
             )
         elif shutil.which("brew"):
+            subprocess.run(["brew", "update"], check=True)
             subprocess.run(
                 [
                     "brew",
