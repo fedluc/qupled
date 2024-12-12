@@ -31,7 +31,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        ./devtool install-deps
+        sudo ./devtool install-deps
         python3 -m venv ${PYTHON_VENV_ROOT}
 
     - name: Set build version

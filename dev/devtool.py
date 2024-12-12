@@ -80,11 +80,11 @@ def install():
 def install_dependencies():
     print("Installing dependencies...")
     if os.name == "posix":
-        if shutil.which("apt-get"):
+        if shutil.which("apt"):
+            subprocess.run("apt", "update")
             subprocess.run(
                 [
-                    "sudo",
-                    "apt-get",
+                    "apt",
                     "install",
                     "-y",
                     "cmake",
@@ -98,6 +98,7 @@ def install_dependencies():
                 check=True,
             )
         elif shutil.which("brew"):
+            subprocess.run("brew", "update")
             subprocess.run(
                 [
                     "brew",
