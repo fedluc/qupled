@@ -53,3 +53,10 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install tox
         ./devtool test
+
+    - name: Upload artifact
+      if: ${{ success() && inputs.upload-artifact == 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: qupled-${{ matrix.os }}
+        path: dist
