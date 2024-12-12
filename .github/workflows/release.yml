@@ -42,4 +42,5 @@ jobs:
        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
      run: |
        source ${PYTHON_VENV_ROOT}/bin/activate
-       twine upload --non-interactive qupled-ubuntu-latest/*.tar.gz
+       ls qupled-ubuntu-latest/*
+       # twine upload --non-interactive qupled-ubuntu-latest/*.tar.gz
