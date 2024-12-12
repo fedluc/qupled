@@ -8,6 +8,6 @@ on:
   
 jobs:
   linux-MPI:
-    uses: ./.github/workflows/build-and-test-linux-mpi.yml
+    uses: ./.github/workflows/build-and-test-base.yml
     with:
-      upload-artifact: true
+      upload-artifact: false
