@@ -81,7 +81,7 @@ def install_dependencies():
     print("Installing dependencies...")
     if os.name == "posix":
         if shutil.which("apt"):
-            subprocess.run("apt", "update")
+            subprocess.run(["apt", "update"], check=True)
             subprocess.run(
                 [
                     "apt",
@@ -98,7 +98,7 @@ def install_dependencies():
                 check=True,
             )
         elif shutil.which("brew"):
-            subprocess.run("brew", "update")
+            subprocess.run(["brew", "update"], check=True)
             subprocess.run(
                 [
                     "brew",
