@@ -81,7 +81,7 @@ def install_dependencies():
     print("Installing dependencies...")
     if os.name == "posix":
         if shutil.which("apt-get"):
-            subprocess.run(["apt-get", "update"], check=True)
+            subprocess.run(["sudo", "apt-get", "update"], check=True)
             subprocess.run(
                 [
                     "sudo",
