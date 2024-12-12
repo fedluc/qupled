@@ -80,11 +80,11 @@ def install():
 def install_dependencies():
     print("Installing dependencies...")
     if os.name == "posix":
-        if shutil.which("apt"):
-            subprocess.run(["apt", "update"], check=True)
+        if shutil.which("apt-get"):
+            subprocess.run(["apt-get", "update"], check=True)
             subprocess.run(
                 [
-                    "apt",
+                    "apt-get",
                     "install",
                     "-y",
                     "cmake",
