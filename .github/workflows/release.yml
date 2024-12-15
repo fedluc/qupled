@@ -38,8 +38,8 @@ jobs:
 
    - name: Publish to PyPI
      env:
-       TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-       TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+       TWINE_USERNAME: __token__
+       TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
      run: |
        source ${PYTHON_VENV_ROOT}/bin/activate
        twine upload --non-interactive qupled-ubuntu-latest/*.tar.gz
