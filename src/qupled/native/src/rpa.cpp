@@ -102,9 +102,9 @@ void Rpa::computeSsfHF() {
   assert(ssfHF.size() == wvg.size());
   if (in.getDegeneracy() == 0.0) {
     computeSsfHFGround();
-    return;
+  } else {
+    computeSsfHFFinite();
   }
-  computeSsfHFFinite();
 }
 
 void Rpa::computeSsfHFFinite() {
@@ -126,9 +126,9 @@ void Rpa::computeSsf() {
   assert(ssf.size() == wvg.size());
   if (in.getDegeneracy() == 0.0) {
     computeSsfGround();
-    return;
+  } else {
+    computeSsfFinite();
   }
-  computeSsfFinite();
 }
 
 // Compute static structure factor at finite temperature
@@ -153,8 +153,7 @@ void Rpa::computeSsfGround() {
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    double yMin = 0.0;
-    if (x > 2.0) yMin = x * (x - 2.0);
+    const double yMin = std::max(0.0, x * (x - 2.0));
     const double yMax = x * (x + 2.0);
     SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], yMin, yMax, itg);
     ssf[i] = ssfTmp.get();
@@ -269,7 +268,7 @@ vector<double> Idr::get() const {
 // -----------------------------------------------------------------
 
 // Real part at zero temperature
-Dual11 IdrGround::re0() const {
+Dual11 IdrGround::re() const {
   const Dual11 dOmega = Dual11(Omega, 0);
   Dual11 adder1 = Dual11(0.0);
   Dual11 adder2 = Dual11(0.0);
@@ -297,7 +296,7 @@ Dual11 IdrGround::re0() const {
 }
 
 // Imaginary part at zero temperature
-double IdrGround::im0() const {
+double IdrGround::im() const {
   double preFactor = 0.0;
   double adder1 = 0.0;
   double adder2 = 0.0;
@@ -387,7 +386,7 @@ double SsfGround::get() const {
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg.compute(func, ItgParam(yMin, yMax));
   const double ssfP = plasmon();
-  return ssfHF + itg.getSolution() + ssfP;
+  return itg.getSolution() + ssfP;
 }
 
 // Integrand for zero temperature calculations
@@ -395,13 +394,13 @@ double SsfGround::integrand(const double &Omega) const {
   double x2 = x * x;
   double fact = (4.0 * lambda * rs) / (M_PI * x2);
   IdrGround idrTmp(Omega, x);
-  const double idrRe = idrTmp.re0().val();
-  const double idrIm = idrTmp.im0();
+  const double idrRe = idrTmp.re().val();
+  const double idrIm = idrTmp.im();
   const double factRe = 1 + fact * (1 - slfc) * idrRe;
   const double factIm = fact * (1 - slfc) * idrIm;
   const double factRe2 = factRe * factRe;
   const double factIm2 = factIm * factIm;
-  return 1.5 / (M_PI)*idrIm * (1.0 / (factRe2 + factIm2) - 1.0);
+  return 1.5 / (M_PI) * idrIm * (1.0 / (factRe2 + factIm2));
 }
 
 // NOTE: At the plasmon frequency, the imaginary part of the ideal
@@ -445,7 +444,7 @@ double SsfGround::plasmon() const {
 Dual11 SsfGround::drf(const double &Omega) const {
   const Dual11 dOmega = Dual11(Omega, 0);
   const double fact = (4.0 * lambda * rs) / (M_PI * x * x);
-  const Dual11 idrRe = IdrGround(Omega, x).re0();
+  const Dual11 idrRe = IdrGround(Omega, x).re();
   assert(Omega >= x * x + 2 * x);
   return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
 }

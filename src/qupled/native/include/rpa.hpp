@@ -134,9 +134,9 @@ public:
       : Omega(Omega_),
         x(x_) {}
   // Get real part
-  Dual11 re0() const;
+  Dual11 re() const;
   // Get imaginary part
-  double im0() const;
+  double im() const;
 
 private:
 
@@ -296,6 +296,11 @@ private:
   double plasmon() const;
   // Dielectric response function
   Dual11 drf(const double &Omega) const;
+};
+
+
+class DielectricResponseGround {
+  
 };
 
 #endif
