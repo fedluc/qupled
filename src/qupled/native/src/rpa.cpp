@@ -158,6 +158,18 @@ void Rpa::computeSsfGround() {
     SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], yMin, yMax, itg);
     ssf[i] = ssfTmp.get();
   }
+
+  std::cerr << std::endl << "PLASMON CALCULATION" << std::endl;
+  for (size_t i = 0; i < nx; ++i) {
+    const double x = wvg[i];
+    Plasmon plasmon(x, rs, slfc[i]);
+    const double wp = plasmon.get();
+    std::cerr << x << ", " << wp << std::endl;
+    if (wp < 0.0) {
+      break;
+    }
+  }
+  
 }
 
 // Compute static local field correction
@@ -447,4 +459,48 @@ Dual11 SsfGround::drf(const double &Omega) const {
   const Dual11 idrRe = IdrGround(Omega, x).re();
   assert(Omega >= x * x + 2 * x);
   return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
+}
+
+
+// -----------------------------------------------------------------
+// Plasmon class
+// -----------------------------------------------------------------
+
+// Plasmon contribution to the static structure factor
+double Plasmon::get() const {
+  if ( x == 0.0 ) { return wp; }
+  // Look for a region where the dielectric function changes sign
+  bool search_root = false;
+  const double wLo = x * (x + 2);
+  double wHi;
+  const bool signLo = (equation(wLo).val() >= 0);
+  for (size_t i = 1; i < 11; i++) {
+    wHi = wLo * pow(2, i);
+    const bool signHi = (equation(wHi).val() >= 0);
+    if (signHi != signLo) {
+      search_root = true;
+      break;
+    }
+  }
+  // Return if no root can be found
+  if (!search_root) return -1;
+  // Compute plasmon frequency
+  auto func = [this](const double &Omega) -> double {
+    return equation(Omega).val();
+  };
+  const double guess[] = {wLo, wHi};
+  BrentRootSolver rsol;
+  rsol.solve(func, vector<double>(begin(guess), end(guess)));
+  // Output
+  return rsol.getSolution();
+}
+
+
+// Dielectric response function
+Dual11 Plasmon::equation(const double &Omega) const {
+  const Dual11 dOmega = Dual11(Omega, 0);
+  const double fact = (4.0 * lambda * rs) / (M_PI * x * x);
+  const Dual11 idrRe = IdrGround(Omega, x).re();
+  assert(Omega >= x * x + 2 * x);
+  return 1.0 + fact * idrRe * (1.0 - slfc);
 }

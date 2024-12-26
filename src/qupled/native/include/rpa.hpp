@@ -6,6 +6,7 @@
 #include "numerics.hpp"
 #include "vector2D.hpp"
 #include <vector>
+#include <complex>
 
 // Forward declarations
 class Dual11;
@@ -299,7 +300,34 @@ private:
 };
 
 
-class DielectricResponseGround {
+class Plasmon {
+
+public:
+
+  // Constructor
+  Plasmon(const double &x_,
+	  const double &rs_,
+	  const double &slfc_)
+      : x(x_),
+        rs(rs_),
+        slfc(slfc_) {}
+  // Get result of integration
+  double get() const;
+  
+private:
+  
+  // Wave-vector
+  const double x;
+  // Coupling parameter
+  const double rs;
+  // Static local field correction
+  const double slfc;
+  // Constant for unit conversion
+  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
+  // Plasma frequency
+  const double wp = 4.0 * sqrt( lambda * rs / 3.0 / M_PI );
+  // Dispersion equation
+  Dual11 equation(const double &Omega) const;
   
 };
 
