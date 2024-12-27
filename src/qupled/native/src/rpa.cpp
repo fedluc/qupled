@@ -160,10 +160,14 @@ void Rpa::computeSsfGround() {
   }
 
   std::cerr << std::endl << "PLASMON CALCULATION" << std::endl;
+  double wpGuess = -1;
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    Plasmon plasmon(x, rs, slfc[i]);
-    const double wp = plasmon.get();
+    DielectricResponse dr(x, rs, slfc[i]);
+    const double wp = dr.plasmon(wpGuess);
+    if ( i >= 0 ) {
+      wpGuess = wp;
+    }
     std::cerr << x << ", " << wp << std::endl;
     if (wp < 0.0) {
       break;
@@ -280,7 +284,7 @@ vector<double> Idr::get() const {
 // -----------------------------------------------------------------
 
 // Real part at zero temperature
-Dual11 IdrGround::re() const {
+Dual11 IdrGround::real() const {
   const Dual11 dOmega = Dual11(Omega, 0);
   Dual11 adder1 = Dual11(0.0);
   Dual11 adder2 = Dual11(0.0);
@@ -308,20 +312,21 @@ Dual11 IdrGround::re() const {
 }
 
 // Imaginary part at zero temperature
-double IdrGround::im() const {
-  double preFactor = 0.0;
-  double adder1 = 0.0;
-  double adder2 = 0.0;
+Dual11 IdrGround::imag() const {
+  const Dual11 dOmega = Dual11(Omega, 0);
+  Dual11 preFactor = Dual11(0.0);
+  Dual11 adder1 = Dual11(0.0);
+  Dual11 adder2 = Dual11(0.0);
   if (x > 0.0) {
-    double x_2 = x / 2.0;
-    double Omega_2x = Omega / (2.0 * x);
-    double sumFactor = x_2 + Omega_2x;
-    double diffFactor = x_2 - Omega_2x;
-    double sumFactor2 = sumFactor * sumFactor;
-    double diffFactor2 = diffFactor * diffFactor;
-    preFactor = -M_PI / (4.0 * x);
-    if (sumFactor2 < 1.0) { adder1 = 1 - sumFactor2; }
-    if (diffFactor2 < 1.0) { adder2 = 1 - diffFactor2; }
+    Dual11 x_2 = Dual11(x / 2.0);
+    Dual11 Omega_2x = dOmega / (2.0 * x);
+    Dual11 sumFactor = x_2 + Omega_2x;
+    Dual11 diffFactor = x_2 - Omega_2x;
+    Dual11 sumFactor2 = sumFactor * sumFactor;
+    Dual11 diffFactor2 = diffFactor * diffFactor;
+    preFactor = Dual11(-M_PI / (4.0 * x));
+    if (sumFactor2.val() < 1.0) { adder1 = 1 - sumFactor2; }
+    if (diffFactor2.val() < 1.0) { adder2 = 1 - diffFactor2; }
   }
   return preFactor * (adder1 - adder2);
 }
@@ -406,8 +411,8 @@ double SsfGround::integrand(const double &Omega) const {
   double x2 = x * x;
   double fact = (4.0 * lambda * rs) / (M_PI * x2);
   IdrGround idrTmp(Omega, x);
-  const double idrRe = idrTmp.re().val();
-  const double idrIm = idrTmp.im();
+  const double idrRe = idrTmp.real().val();
+  const double idrIm = idrTmp.imag().val();
   const double factRe = 1 + fact * (1 - slfc) * idrRe;
   const double factIm = fact * (1 - slfc) * idrIm;
   const double factRe2 = factRe * factRe;
@@ -456,51 +461,58 @@ double SsfGround::plasmon() const {
 Dual11 SsfGround::drf(const double &Omega) const {
   const Dual11 dOmega = Dual11(Omega, 0);
   const double fact = (4.0 * lambda * rs) / (M_PI * x * x);
-  const Dual11 idrRe = IdrGround(Omega, x).re();
+  const Dual11 idrRe = IdrGround(Omega, x).real();
   assert(Omega >= x * x + 2 * x);
   return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
 }
 
 
 // -----------------------------------------------------------------
-// Plasmon class
+// DielectricResponse class
 // -----------------------------------------------------------------
 
-// Plasmon contribution to the static structure factor
-double Plasmon::get() const {
+// Get the plasmon frequency
+double DielectricResponse::plasmon(const double& guess) const {
   if ( x == 0.0 ) { return wp; }
-  // Look for a region where the dielectric function changes sign
-  bool search_root = false;
-  const double wLo = x * (x + 2);
-  double wHi;
-  const bool signLo = (equation(wLo).val() >= 0);
-  for (size_t i = 1; i < 11; i++) {
-    wHi = wLo * pow(2, i);
-    const bool signHi = (equation(wHi).val() >= 0);
-    if (signHi != signLo) {
-      search_root = true;
-      break;
-    }
-  }
-  // Return if no root can be found
-  if (!search_root) return -1;
   // Compute plasmon frequency
-  auto func = [this](const double &Omega) -> double {
-    return equation(Omega).val();
+  auto func = [this](const double &Omega) -> pair<double, double> {
+    const Dual11 deq = dispersionEquation(Omega);
+    return pair<double, double>(deq.val(), deq.dx());
   };
-  const double guess[] = {wLo, wHi};
-  BrentRootSolver rsol;
-  rsol.solve(func, vector<double>(begin(guess), end(guess)));
+  QuasiNewtonRootSolver rsol;
+  try {
+    rsol.solve(func, guess);
+  } catch (const std::runtime_error& e) {
+    // The plasmon does not exist
+    return -1;
+  }
   // Output
   return rsol.getSolution();
 }
 
 
-// Dielectric response function
-Dual11 Plasmon::equation(const double &Omega) const {
+// Real part and its derivative
+Dual11 DielectricResponse::dualReal(const double &Omega) const {
   const Dual11 dOmega = Dual11(Omega, 0);
-  const double fact = (4.0 * lambda * rs) / (M_PI * x * x);
-  const Dual11 idrRe = IdrGround(Omega, x).re();
+  // const Dual11 idrRe = ip * IdrGround(Omega, x).real();
+  // const Dual11 idrIm = ip * IdrGround(Omega, x).imag();
+  // return 1 + ()/(
+  return dOmega;
+}
+
+// Imaginary part and its derivative
+Dual11 DielectricResponse::dualImag(const double &Omega) const {
+  const Dual11 dOmega = Dual11(Omega, 0);
+  // const Dual11 idrRe = ip * IdrGround(Omega, x).real();
+  // const Dual11 idrIm = ip * IdrGround(Omega, x).imag();
+  // return 1 + ()/(
+  return dOmega;
+}
+
+// Dispersion equation
+Dual11 DielectricResponse::dispersionEquation(const double &Omega) const {
+  const Dual11 dOmega = Dual11(Omega, 0);
+  const Dual11 idrRe = ip * IdrGround(Omega, x).real();
   assert(Omega >= x * x + 2 * x);
-  return 1.0 + fact * idrRe * (1.0 - slfc);
+  return 1.0 + idrRe * (1.0 - slfc);
 }

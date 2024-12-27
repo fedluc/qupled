@@ -3,10 +3,10 @@
 
 #include "input.hpp"
 #include "logger.hpp"
+#include "num_util.hpp"
 #include "numerics.hpp"
 #include "vector2D.hpp"
 #include <vector>
-#include <complex>
 
 // Forward declarations
 class Dual11;
@@ -135,9 +135,9 @@ public:
       : Omega(Omega_),
         x(x_) {}
   // Get real part
-  Dual11 re() const;
+  Dual11 real() const;
   // Get imaginary part
-  double im() const;
+  Dual11 imag() const;
 
 private:
 
@@ -300,22 +300,28 @@ private:
 };
 
 
-class Plasmon {
+class DielectricResponse {
 
 public:
-
+  
   // Constructor
-  Plasmon(const double &x_,
-	  const double &rs_,
-	  const double &slfc_)
-      : x(x_),
-        rs(rs_),
-        slfc(slfc_) {}
-  // Get result of integration
-  double get() const;
+  DielectricResponse(const double &x_,
+		     const double &rs_,
+		     const double &slfc_) : x(x_), rs(rs_), slfc(slfc_) {}
   
+  // Real part
+  // double real(const double& Omega) const { return dualReal(Omega).val() }
+  // // Imaginary part
+  // double imag(const double& Omega) const { return dualImag(Omega).val(); }
+  // // Derivative of the real part
+  // double dreal(const double& Omega) const { return dualReal(Omega).dx(); }
+  // // Derivative of the imaginary part
+  // double dimag(const double& Omega) const { return dualImag(Omega).dx(); }
+  // Find the zero of the dielectric response
+  double plasmon(const double& guess) const;
+ 
 private:
-  
+
   // Wave-vector
   const double x;
   // Coupling parameter
@@ -326,8 +332,14 @@ private:
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
   // Plasma frequency
   const double wp = 4.0 * sqrt( lambda * rs / 3.0 / M_PI );
+  // Interaction potential
+  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
+  // Real part and its derivative
+  Dual11 dualReal(const double& Omega) const;
+  // Imaginary part and its derivative
+  Dual11 dualImag(const double& Omega) const;
   // Dispersion equation
-  Dual11 equation(const double &Omega) const;
+  Dual11 dispersionEquation(const double &Omega) const;
   
 };
 

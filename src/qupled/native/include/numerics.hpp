@@ -38,6 +38,37 @@ namespace GslWrappers {
     }
   };
 
+
+  // Wrapper to gsl_function_fdf
+  template <typename T>
+  class GslFunctionFdfWrap : public gsl_function_fdf {
+
+  private:
+
+    const T &func_and_der;
+    static double invoke_func(double x, void *params) {
+      return (static_cast<GslFunctionFdfWrap *>(params)->func_and_der(x)).first;
+    }
+    static double invoke_der(double x, void *params) {
+      return (static_cast<GslFunctionFdfWrap *>(params)->func_and_der(x)).second;
+    }
+    static void invoke_func_and_der(double x, void *params, double *f, double *df) {
+      const auto fdf = static_cast<GslFunctionFdfWrap *>(params)->func_and_der(x);
+      *f = fdf.first;
+      *df = fdf.second;
+    }
+    
+  public:
+
+    explicit GslFunctionFdfWrap(const T &func_)
+      : func_and_der(func_) {
+      f = &GslFunctionFdfWrap::invoke_func;
+      df = &GslFunctionFdfWrap::invoke_der;
+      fdf = &GslFunctionFdfWrap::invoke_func_and_der;
+      params = this;
+    }
+  };
+  
   // Wrapper to handle errors in GSL functions
   template <typename Func, typename... Args>
   void callGSLFunction(Func &&gslFunction, Args &&...args);
@@ -192,6 +223,25 @@ public:
   explicit SecantSolver() {}
   void solve(const std::function<double(double)> &func,
              const std::vector<double> &guess);
+};
+
+class QuasiNewtonRootSolver : public RootSolverBase {
+
+public:
+
+  explicit QuasiNewtonRootSolver();
+  ~QuasiNewtonRootSolver();
+  void solve(const std::function<std::pair<double,double>(double)> &func,
+             const double &guess);
+
+private:
+
+  // Function to solve
+  gsl_function_fdf *F;
+  // Type of solver
+  const gsl_root_fdfsolver_type *rst;
+  // Solver
+  gsl_root_fdfsolver *rs;
 };
 
 // -----------------------------------------------------------------
