@@ -299,16 +299,16 @@ private:
   Dual11 drf(const double &Omega) const;
 };
 
-
 class DielectricResponse {
 
 public:
-  
+
   // Constructor
-  DielectricResponse(const double &x_,
-		     const double &rs_,
-		     const double &slfc_) : x(x_), rs(rs_), slfc(slfc_) {}
-  
+  DielectricResponse(const double &x_, const double &rs_, const double &slfc_)
+      : x(x_),
+        rs(rs_),
+        slfc(slfc_) {}
+
   // Real part
   // double real(const double& Omega) const { return dualReal(Omega).val() }
   // // Imaginary part
@@ -318,8 +318,8 @@ public:
   // // Derivative of the imaginary part
   // double dimag(const double& Omega) const { return dualImag(Omega).dx(); }
   // Find the zero of the dielectric response
-  double plasmon(const double& guess) const;
- 
+  double plasmon(const double &guess) const;
+
 private:
 
   // Wave-vector
@@ -331,16 +331,15 @@ private:
   // Constant for unit conversion
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
   // Plasma frequency
-  const double wp = 4.0 * sqrt( lambda * rs / 3.0 / M_PI );
+  const double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
   // Interaction potential
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   // Real part and its derivative
-  Dual11 dualReal(const double& Omega) const;
+  Dual11 dualReal(const double &Omega) const;
   // Imaginary part and its derivative
-  Dual11 dualImag(const double& Omega) const;
+  Dual11 dualImag(const double &Omega) const;
   // Dispersion equation
   Dual11 dispersionEquation(const double &Omega) const;
-  
 };
 
 #endif

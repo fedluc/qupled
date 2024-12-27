@@ -1,4 +1,5 @@
 #include "rpa.hpp"
+#include "cdual.hpp"
 #include "chemical_potential.hpp"
 #include "dual.hpp"
 #include "input.hpp"
@@ -165,15 +166,10 @@ void Rpa::computeSsfGround() {
     const double x = wvg[i];
     DielectricResponse dr(x, rs, slfc[i]);
     const double wp = dr.plasmon(wpGuess);
-    if ( i >= 0 ) {
-      wpGuess = wp;
-    }
+    if (i >= 0) { wpGuess = wp; }
     std::cerr << x << ", " << wp << std::endl;
-    if (wp < 0.0) {
-      break;
-    }
+    if (wp < 0.0) { break; }
   }
-  
 }
 
 // Compute static local field correction
@@ -417,7 +413,7 @@ double SsfGround::integrand(const double &Omega) const {
   const double factIm = fact * (1 - slfc) * idrIm;
   const double factRe2 = factRe * factRe;
   const double factIm2 = factIm * factIm;
-  return 1.5 / (M_PI) * idrIm * (1.0 / (factRe2 + factIm2));
+  return 1.5 / (M_PI)*idrIm * (1.0 / (factRe2 + factIm2));
 }
 
 // NOTE: At the plasmon frequency, the imaginary part of the ideal
@@ -466,14 +462,13 @@ Dual11 SsfGround::drf(const double &Omega) const {
   return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
 }
 
-
 // -----------------------------------------------------------------
 // DielectricResponse class
 // -----------------------------------------------------------------
 
 // Get the plasmon frequency
-double DielectricResponse::plasmon(const double& guess) const {
-  if ( x == 0.0 ) { return wp; }
+double DielectricResponse::plasmon(const double &guess) const {
+  if (x == 0.0) { return wp; }
   // Compute plasmon frequency
   auto func = [this](const double &Omega) -> pair<double, double> {
     const Dual11 deq = dispersionEquation(Omega);
@@ -482,7 +477,7 @@ double DielectricResponse::plasmon(const double& guess) const {
   QuasiNewtonRootSolver rsol;
   try {
     rsol.solve(func, guess);
-  } catch (const std::runtime_error& e) {
+  } catch (const std::runtime_error &e) {
     // The plasmon does not exist
     return -1;
   }
@@ -490,10 +485,11 @@ double DielectricResponse::plasmon(const double& guess) const {
   return rsol.getSolution();
 }
 
-
 // Real part and its derivative
 Dual11 DielectricResponse::dualReal(const double &Omega) const {
   const Dual11 dOmega = Dual11(Omega, 0);
+  const CDual11 tmp = CDual11(dOmega, dOmega * 2);
+  std::cerr << tmp.real.val() << " " << tmp.imag.val() << std::endl;
   // const Dual11 idrRe = ip * IdrGround(Omega, x).real();
   // const Dual11 idrIm = ip * IdrGround(Omega, x).imag();
   // return 1 + ()/(

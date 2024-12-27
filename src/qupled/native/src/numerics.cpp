@@ -238,7 +238,7 @@ void SecantSolver::solve(const function<double(double)> &func,
 
 // Constructor
 QuasiNewtonRootSolver::QuasiNewtonRootSolver()
-  : rst(gsl_root_fdfsolver_secant) {
+    : rst(gsl_root_fdfsolver_secant) {
   callGSLAlloc(rs, gsl_root_fdfsolver_alloc, rst);
 }
 
@@ -246,8 +246,8 @@ QuasiNewtonRootSolver::QuasiNewtonRootSolver()
 QuasiNewtonRootSolver::~QuasiNewtonRootSolver() { gsl_root_fdfsolver_free(rs); }
 
 // Invoke root solver
-void QuasiNewtonRootSolver::solve(const function<pair<double, double>(double)> &func,
-				  const double &guess) {
+void QuasiNewtonRootSolver::solve(
+    const function<pair<double, double>(double)> &func, const double &guess) {
   // Set up function
   GslFunctionFdfWrap<decltype(func)> Fp(func);
   F = static_cast<gsl_function_fdf *>(&Fp);
