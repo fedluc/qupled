@@ -271,10 +271,10 @@ public:
   SsfGround(const double &x_,
             const double &rs_,
             const double &slfc_,
-	    const double &wp_,
+            const double &wp_,
             Integrator1D &itg_)
       : SsfBase(x_, 0, rs_, 0, slfc_),
-	wp(wp_),
+        wp(wp_),
         yMin(std::max(0.0, x * (x - 2.0))),
         yMax(x * (x + 2.0)),
         itg(itg_) {}

@@ -434,7 +434,7 @@ double DielectricResponse::plasmon(const double &guess) const {
     return -1;
   }
   // Check if the minimum is a zero
-  const double wp =  rsol.getSolution();
+  const double wp = rsol.getSolution();
   bool isZero = abs(dispersionEquation(wp).val()) < 1e-10;
   // Output
   return (isZero) ? wp : -1;
