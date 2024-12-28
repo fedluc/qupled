@@ -133,9 +133,9 @@ public:
       : Omega(Omega_),
         x(x_) {}
   // Get real part
-  Dual11 real() const;
+  Dual21 real() const;
   // Get imaginary part
-  Dual11 imag() const;
+  Dual21 imag() const;
 
 private:
 
@@ -306,7 +306,7 @@ public:
         rs(rs_),
         slfc(slfc_) {}
   // Evaluate the dielectric response for a frequency Omega
-  CDual11 get(const double &Omega) const;
+  CDual21 get(const double &Omega) const;
   // Find the zero of the dielectric response
   double plasmon(const double &guess) const;
 
@@ -325,7 +325,7 @@ private:
   // Interaction potential
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   // Dispersion equation
-  Dual11 dispersionEquation(const double &Omega) const;
+  Dual21 dispersionEquation(const double &Omega) const;
 };
 
 #endif

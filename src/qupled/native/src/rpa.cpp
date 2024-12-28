@@ -158,7 +158,6 @@ void Rpa::computeSsfGround() {
     DielectricResponse dr(x, rs, slfc[i]);
     const double wp = (wpGuess >= 0) ? dr.plasmon(wpGuess) : -1;
     wpGuess = wp;
-    if (wp >= 1) { std::cerr << std::endl << x << " " << wp << std::endl; }
     SsfGround ssfTmp(x, rs, slfc[i], wp, itg);
     ssf[i] = ssfTmp.get();
   }
@@ -272,26 +271,26 @@ vector<double> Idr::get() const {
 // -----------------------------------------------------------------
 
 // Real part at zero temperature
-Dual11 IdrGround::real() const {
-  const Dual11 dOmega = Dual11(Omega, 0);
-  Dual11 adder1 = Dual11(0.0);
-  Dual11 adder2 = Dual11(0.0);
-  Dual11 preFactor = Dual11(0.0);
+Dual21 IdrGround::real() const {
+  const Dual21 dOmega = Dual21(Omega, 0);
+  Dual21 adder1 = Dual21(0.0);
+  Dual21 adder2 = Dual21(0.0);
+  Dual21 preFactor = Dual21(0.0);
   if (x > 0.0) {
     const double x_2 = x / 2.0;
-    const Dual11 Omega_2x = dOmega / (2.0 * x);
-    const Dual11 sumFactor = x_2 + Omega_2x;
-    const Dual11 diffFactor = x_2 - Omega_2x;
-    const Dual11 sumFactor2 = sumFactor * sumFactor;
-    const Dual11 diffFactor2 = diffFactor * diffFactor;
+    const Dual21 Omega_2x = dOmega / (2.0 * x);
+    const Dual21 sumFactor = x_2 + Omega_2x;
+    const Dual21 diffFactor = x_2 - Omega_2x;
+    const Dual21 sumFactor2 = sumFactor * sumFactor;
+    const Dual21 diffFactor2 = diffFactor * diffFactor;
     preFactor = preFactor + 0.5;
     if (sumFactor.val() != 1.0) {
-      Dual11 log_sum_arg = (sumFactor + 1.0) / (sumFactor - 1.0);
+      Dual21 log_sum_arg = (sumFactor + 1.0) / (sumFactor - 1.0);
       if (log_sum_arg.val() < 0.0) log_sum_arg = -1.0 * log_sum_arg;
       adder1 = 1.0 / (4.0 * x) * (1.0 - sumFactor2) * log(log_sum_arg);
     }
     if (diffFactor.val() != 1.0 && diffFactor.val() != -1.0) {
-      Dual11 log_diff_arg = (diffFactor + 1.0) / (diffFactor - 1.0);
+      Dual21 log_diff_arg = (diffFactor + 1.0) / (diffFactor - 1.0);
       if (log_diff_arg.val() < 0.0) log_diff_arg = -1.0 * log_diff_arg;
       adder2 = 1.0 / (4.0 * x) * (1.0 - diffFactor2) * log(log_diff_arg);
     }
@@ -300,19 +299,19 @@ Dual11 IdrGround::real() const {
 }
 
 // Imaginary part at zero temperature
-Dual11 IdrGround::imag() const {
-  const Dual11 dOmega = Dual11(Omega, 0);
-  Dual11 preFactor = Dual11(0.0);
-  Dual11 adder1 = Dual11(0.0);
-  Dual11 adder2 = Dual11(0.0);
+Dual21 IdrGround::imag() const {
+  const Dual21 dOmega = Dual21(Omega, 0);
+  Dual21 preFactor = Dual21(0.0);
+  Dual21 adder1 = Dual21(0.0);
+  Dual21 adder2 = Dual21(0.0);
   if (x > 0.0) {
-    Dual11 x_2 = Dual11(x / 2.0);
-    Dual11 Omega_2x = dOmega / (2.0 * x);
-    Dual11 sumFactor = x_2 + Omega_2x;
-    Dual11 diffFactor = x_2 - Omega_2x;
-    Dual11 sumFactor2 = sumFactor * sumFactor;
-    Dual11 diffFactor2 = diffFactor * diffFactor;
-    preFactor = Dual11(-M_PI / (4.0 * x));
+    Dual21 x_2 = Dual21(x / 2.0);
+    Dual21 Omega_2x = dOmega / (2.0 * x);
+    Dual21 sumFactor = x_2 + Omega_2x;
+    Dual21 diffFactor = x_2 - Omega_2x;
+    Dual21 sumFactor2 = sumFactor * sumFactor;
+    Dual21 diffFactor2 = diffFactor * diffFactor;
+    preFactor = Dual21(-M_PI / (4.0 * x));
     if (sumFactor2.val() < 1.0) { adder1 = 1 - sumFactor2; }
     if (diffFactor2.val() < 1.0) { adder2 = 1 - diffFactor2; }
   }
@@ -397,7 +396,7 @@ double SsfGround::get() const {
 // Integrand for zero temperature calculations
 double SsfGround::integrand(const double &Omega) const {
   const DielectricResponse dr = DielectricResponse(x, rs, slfc);
-  const CDual11 phi = 1.0 / dr.get(Omega);
+  const CDual21 phi = 1.0 / dr.get(Omega);
   return -phi.imag.val();
 }
 
@@ -413,9 +412,9 @@ double SsfGround::plasmon() const {
 // -----------------------------------------------------------------
 
 // Real part and its derivative
-CDual11 DielectricResponse::get(const double &Omega) const {
+CDual21 DielectricResponse::get(const double &Omega) const {
   const IdrGround idr = IdrGround(Omega, x);
-  const CDual11 cidr = CDual11(idr.real(), idr.imag());
+  const CDual21 cidr = CDual21(idr.real(), idr.imag());
   return 1.0 + cidr / (1.0 + cidr * (ip * (1 - slfc) - 1.0));
 }
 
@@ -424,8 +423,8 @@ double DielectricResponse::plasmon(const double &guess) const {
   if (x == 0.0) { return wp; }
   // Compute plasmon frequency
   auto func = [this](const double &Omega) -> pair<double, double> {
-    const Dual11 deq = dispersionEquation(Omega);
-    return pair<double, double>(deq.val(), deq.dx());
+    const Dual21 deq = dispersionEquation(Omega);
+    return pair<double, double>(deq.dx(), deq.dxx());
   };
   QuasiNewtonRootSolver rsol;
   try {
@@ -434,14 +433,17 @@ double DielectricResponse::plasmon(const double &guess) const {
     // The plasmon does not exist
     return -1;
   }
+  // Check if the minimum is a zero
+  const double wp =  rsol.getSolution();
+  bool isZero = abs(dispersionEquation(wp).val()) < 1e-10;
   // Output
-  return rsol.getSolution();
+  return (isZero) ? wp : -1;
 }
 
 // Dispersion equation
-Dual11 DielectricResponse::dispersionEquation(const double &Omega) const {
-  const Dual11 dOmega = Dual11(Omega, 0);
-  const Dual11 idrRe = ip * IdrGround(Omega, x).real();
-  assert(Omega >= x * x + 2 * x);
-  return 1.0 + idrRe * (1.0 - slfc);
+Dual21 DielectricResponse::dispersionEquation(const double &Omega) const {
+  const IdrGround idr = IdrGround(Omega, x);
+  const CDual21 cidr = CDual21(idr.real(), idr.imag());
+  const CDual21 deq = 1.0 + ip * cidr * (1.0 - slfc);
+  return deq.real * deq.real + deq.imag * deq.imag;
 }

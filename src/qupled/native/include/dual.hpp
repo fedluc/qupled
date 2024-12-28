@@ -90,7 +90,7 @@ Dual<Order> operator-(const double &scalar, const Dual<Order> &dual) {
   const size_t &nvar = dual.grad.size();
   Dual<Order> result = Dual<Order>(scalar - dual.func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
-    result.grad[i] = -dual.grad[i];
+    result.grad[i] = -1.0 * dual.grad[i];
   }
   return result;
 }
