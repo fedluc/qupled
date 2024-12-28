@@ -1,6 +1,7 @@
 #ifndef RPA_HPP
 #define RPA_HPP
 
+#include "cdual.hpp"
 #include "input.hpp"
 #include "logger.hpp"
 #include "num_util.hpp"
@@ -272,20 +273,17 @@ public:
   // Constructor for zero temperature calculations
   SsfGround(const double &x_,
             const double &rs_,
-            const double &ssfHF_,
             const double &slfc_,
-            const double &yMin_,
-            const double &yMax_,
             Integrator1D &itg_)
-      : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
-        yMin(yMin_),
-        yMax(yMax_),
+      : SsfBase(x_, 0, rs_, 0, slfc_),
+        yMin(std::max(0.0, x * (x - 2.0))),
+        yMax(x * (x + 2.0)),
         itg(itg_) {}
   // Get result of integration
   double get() const;
 
 private:
-
+  
   // Integration limits for zero temperature calculations
   const double yMin;
   const double yMax;
@@ -308,15 +306,8 @@ public:
       : x(x_),
         rs(rs_),
         slfc(slfc_) {}
-
-  // Real part
-  // double real(const double& Omega) const { return dualReal(Omega).val() }
-  // // Imaginary part
-  // double imag(const double& Omega) const { return dualImag(Omega).val(); }
-  // // Derivative of the real part
-  // double dreal(const double& Omega) const { return dualReal(Omega).dx(); }
-  // // Derivative of the imaginary part
-  // double dimag(const double& Omega) const { return dualImag(Omega).dx(); }
+  // Evaluate the dielectric response for a frequency Omega
+  CDual11 get(const double &Omega) const;
   // Find the zero of the dielectric response
   double plasmon(const double &guess) const;
 
@@ -334,10 +325,6 @@ private:
   const double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
   // Interaction potential
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  // Real part and its derivative
-  Dual11 dualReal(const double &Omega) const;
-  // Imaginary part and its derivative
-  Dual11 dualImag(const double &Omega) const;
   // Dispersion equation
   Dual11 dispersionEquation(const double &Omega) const;
 };

@@ -57,7 +57,7 @@ void Rpa::init() {
   print("Computing ideal density response: ");
   computeIdr();
   println("Done");
-  print("Computing HF static structure factor: ");
+  print("Computing Hartree-Fock static structure factor: ");
   computeSsfHF();
   println("Done");
 }
@@ -154,9 +154,7 @@ void Rpa::computeSsfGround() {
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    const double yMin = std::max(0.0, x * (x - 2.0));
-    const double yMax = x * (x + 2.0);
-    SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], yMin, yMax, itg);
+    SsfGround ssfTmp(x, rs, slfc[i], itg);
     ssf[i] = ssfTmp.get();
   }
 
@@ -399,21 +397,14 @@ double SsfGround::get() const {
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg.compute(func, ItgParam(yMin, yMax));
   const double ssfP = plasmon();
-  return itg.getSolution() + ssfP;
+  return 1.5 / ( M_PI ) * itg.getSolution() + ssfP;
 }
 
 // Integrand for zero temperature calculations
 double SsfGround::integrand(const double &Omega) const {
-  double x2 = x * x;
-  double fact = (4.0 * lambda * rs) / (M_PI * x2);
-  IdrGround idrTmp(Omega, x);
-  const double idrRe = idrTmp.real().val();
-  const double idrIm = idrTmp.imag().val();
-  const double factRe = 1 + fact * (1 - slfc) * idrRe;
-  const double factIm = fact * (1 - slfc) * idrIm;
-  const double factRe2 = factRe * factRe;
-  const double factIm2 = factIm * factIm;
-  return 1.5 / (M_PI)*idrIm * (1.0 / (factRe2 + factIm2));
+  const DielectricResponse dr = DielectricResponse(x, rs, slfc);
+  const CDual11 phi = 1.0 / dr.get(Omega);
+  return -phi.imag.val();
 }
 
 // NOTE: At the plasmon frequency, the imaginary part of the ideal
@@ -466,6 +457,13 @@ Dual11 SsfGround::drf(const double &Omega) const {
 // DielectricResponse class
 // -----------------------------------------------------------------
 
+// Real part and its derivative
+CDual11 DielectricResponse::get(const double &Omega) const {
+  const IdrGround idr = IdrGround(Omega, x);
+  const CDual11 cidr = CDual11(idr.real(), idr.imag());
+  return 1.0 + cidr / ( 1.0 + cidr * (ip * (1 - slfc) - 1.0));
+}
+
 // Get the plasmon frequency
 double DielectricResponse::plasmon(const double &guess) const {
   if (x == 0.0) { return wp; }
@@ -483,26 +481,6 @@ double DielectricResponse::plasmon(const double &guess) const {
   }
   // Output
   return rsol.getSolution();
-}
-
-// Real part and its derivative
-Dual11 DielectricResponse::dualReal(const double &Omega) const {
-  const Dual11 dOmega = Dual11(Omega, 0);
-  const CDual11 tmp = CDual11(dOmega, dOmega * 2);
-  std::cerr << tmp.real.val() << " " << tmp.imag.val() << std::endl;
-  // const Dual11 idrRe = ip * IdrGround(Omega, x).real();
-  // const Dual11 idrIm = ip * IdrGround(Omega, x).imag();
-  // return 1 + ()/(
-  return dOmega;
-}
-
-// Imaginary part and its derivative
-Dual11 DielectricResponse::dualImag(const double &Omega) const {
-  const Dual11 dOmega = Dual11(Omega, 0);
-  // const Dual11 idrRe = ip * IdrGround(Omega, x).real();
-  // const Dual11 idrIm = ip * IdrGround(Omega, x).imag();
-  // return 1 + ()/(
-  return dOmega;
 }
 
 // Dispersion equation

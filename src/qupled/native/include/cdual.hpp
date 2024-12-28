@@ -55,7 +55,7 @@ CDual<Dual> operator-(const double &scalar, const CDual<Dual> &dual) {
 template <typename Dual>
 CDual<Dual> operator*(const CDual<Dual> &dual1, const CDual<Dual> &dual2) {
   return CDual<Dual>(dual1.real * dual2.real - dual1.imag * dual2.imag,
-                     dual1.real * dual2.imag + dual2.imag * dual2.real);
+                     dual1.real * dual2.imag + dual1.imag * dual2.real);
 }
 
 template <typename Dual>
@@ -71,9 +71,9 @@ CDual<Dual> operator*(const double &scalar, const CDual<Dual> &dual) {
 // division operators
 template <typename Dual>
 CDual<Dual> operator/(const CDual<Dual> &dual1, const CDual<Dual> &dual2) {
-  const double denom = dual2.real * dual2.real + dual2.imag * dual2.imag;
-  const double renum = dual1.real * dual2.real + dual1.imag * dual2.imag;
-  const double imnum = dual1.real * dual2.imag - dual2.imag * dual2.real;
+  const Dual denom = dual2.real * dual2.real + dual2.imag * dual2.imag;
+  const Dual renum = dual1.real * dual2.real + dual1.imag * dual2.imag;
+  const Dual imnum = dual1.imag * dual2.real - dual1.real * dual2.imag;
   return CDual<Dual>(renum / denom, imnum / denom);
 }
 
@@ -84,7 +84,7 @@ CDual<Dual> operator/(const CDual<Dual> &dual, const double &scalar) {
 
 template <typename Dual>
 CDual<Dual> operator/(const double &scalar, const CDual<Dual> &dual) {
-  const double denom = dual.real * dual.real + dual.imag * dual.imag;
+  const Dual denom = dual.real * dual.real + dual.imag * dual.imag;
   return CDual<Dual>(scalar * dual.real / denom, -scalar * dual.imag / denom);
 }
 
