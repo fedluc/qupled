@@ -9,9 +9,6 @@
 #include "vector2D.hpp"
 #include <vector>
 
-// Forward declarations
-class Dual11;
-
 // -----------------------------------------------------------------
 // Solver for the Random-Phase approximation scheme
 // -----------------------------------------------------------------
@@ -274,8 +271,10 @@ public:
   SsfGround(const double &x_,
             const double &rs_,
             const double &slfc_,
+	    const double &wp_,
             Integrator1D &itg_)
       : SsfBase(x_, 0, rs_, 0, slfc_),
+	wp(wp_),
         yMin(std::max(0.0, x * (x - 2.0))),
         yMax(x * (x + 2.0)),
         itg(itg_) {}
@@ -283,7 +282,9 @@ public:
   double get() const;
 
 private:
-  
+
+  // Plasmon frequency
+  const double wp;
   // Integration limits for zero temperature calculations
   const double yMin;
   const double yMax;
@@ -293,8 +294,6 @@ private:
   double integrand(const double &Omega) const;
   // Plasmon contribution
   double plasmon() const;
-  // Dielectric response function
-  Dual11 drf(const double &Omega) const;
 };
 
 class DielectricResponse {

@@ -150,23 +150,17 @@ void Rpa::computeSsfFinite() {
 void Rpa::computeSsfGround() {
   const double rs = in.getCoupling();
   const size_t nx = wvg.size();
+  double wpGuess = 4.0 * sqrt(lambda * rs / 3.0 / M_PI); // Plasma frequency
   assert(slfc.size() == nx);
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    SsfGround ssfTmp(x, rs, slfc[i], itg);
-    ssf[i] = ssfTmp.get();
-  }
-
-  std::cerr << std::endl << "PLASMON CALCULATION" << std::endl;
-  double wpGuess = -1;
-  for (size_t i = 0; i < nx; ++i) {
-    const double x = wvg[i];
     DielectricResponse dr(x, rs, slfc[i]);
-    const double wp = dr.plasmon(wpGuess);
-    if (i >= 0) { wpGuess = wp; }
-    std::cerr << x << ", " << wp << std::endl;
-    if (wp < 0.0) { break; }
+    const double wp = (wpGuess >= 0) ? dr.plasmon(wpGuess) : -1;
+    wpGuess = wp;
+    if (wp >= 1) { std::cerr << std::endl << x << " " << wp << std::endl; }
+    SsfGround ssfTmp(x, rs, slfc[i], wp, itg);
+    ssf[i] = ssfTmp.get();
   }
 }
 
@@ -397,7 +391,7 @@ double SsfGround::get() const {
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg.compute(func, ItgParam(yMin, yMax));
   const double ssfP = plasmon();
-  return 1.5 / ( M_PI ) * itg.getSolution() + ssfP;
+  return 1.5 / (M_PI)*itg.getSolution() + ssfP;
 }
 
 // Integrand for zero temperature calculations
@@ -407,50 +401,11 @@ double SsfGround::integrand(const double &Omega) const {
   return -phi.imag.val();
 }
 
-// NOTE: At the plasmon frequency, the imaginary part of the ideal
-// density response is zero. Hence, all the following definitions
-// for the dielectric function are constructed with the assumption
-// that the imaginary part of the ideal density response is zero
-// and should not be used for frequencies omega < 2*x + x^2 (with
-// x a normalized wave-vector) where such approximation is not
-// valid
-
 // Plasmon contribution to the static structure factor
 double SsfGround::plasmon() const {
-  // Look for a region where the dielectric function changes sign
-  bool search_root = false;
-  const double wLo = x * (x + 2);
-  double wHi;
-  const bool signLo = (drf(wLo).val() >= 0);
-  for (size_t i = 1; i < 11; i++) {
-    wHi = wLo * std::pow(2, i);
-    const bool signHi = (drf(wHi).val() >= 0);
-    if (signHi != signLo) {
-      search_root = true;
-      break;
-    }
-  }
-  // Return if no root can be found
-  if (!search_root) return 0;
-  // Compute plasmon frequency
-  auto func = [this](const double &Omega) -> double {
-    return drf(Omega).val();
-  };
-  const double guess[] = {wLo, wHi};
-  BrentRootSolver rsol;
-  rsol.solve(func, vector<double>(begin(guess), end(guess)));
-  // Output
-  const double fact = (4.0 * lambda * rs) / (M_PI * x * x);
-  return 1.5 / (fact * abs(drf(rsol.getSolution()).dx()));
-}
-
-// Dielectric response function
-Dual11 SsfGround::drf(const double &Omega) const {
-  const Dual11 dOmega = Dual11(Omega, 0);
-  const double fact = (4.0 * lambda * rs) / (M_PI * x * x);
-  const Dual11 idrRe = IdrGround(Omega, x).real();
-  assert(Omega >= x * x + 2 * x);
-  return 1.0 + fact * idrRe / (1.0 - fact * slfc * idrRe);
+  if (wp < 0) { return 0.0; }
+  const DielectricResponse dr = DielectricResponse(x, rs, slfc);
+  return 1.5 / abs(dr.get(wp).real.dx());
 }
 
 // -----------------------------------------------------------------
@@ -461,7 +416,7 @@ Dual11 SsfGround::drf(const double &Omega) const {
 CDual11 DielectricResponse::get(const double &Omega) const {
   const IdrGround idr = IdrGround(Omega, x);
   const CDual11 cidr = CDual11(idr.real(), idr.imag());
-  return 1.0 + cidr / ( 1.0 + cidr * (ip * (1 - slfc) - 1.0));
+  return 1.0 + cidr / (1.0 + cidr * (ip * (1 - slfc) - 1.0));
 }
 
 // Get the plasmon frequency
