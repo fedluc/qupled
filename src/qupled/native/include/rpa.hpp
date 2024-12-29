@@ -271,38 +271,29 @@ public:
   SsfGround(const double &x_,
             const double &rs_,
             const double &slfc_,
-            Integrator1D &itg_,
-	    const bool computePlasmon_,)
+            const double &wp_,
+            Integrator1D &itg_)
       : SsfBase(x_, 0, rs_, 0, slfc_),
         wp(wp_),
         yMin(std::max(0.0, x * (x - 2.0))),
         yMax(x * (x + 2.0)),
-        itg(itg_),
-        computePlasmon(computePlasmon_) {}
+        itg(itg_) {}
   // Get result of integration
   double get() const;
 
 private:
 
+  // Plasmon frequency
+  const double wp;
   // Integration limits for zero temperature calculations
   const double yMin;
   const double yMax;
-  // Flag marking whether to compute the plasmon contribution or not
-  const bool computePlasmon;
-  // Plasma frequency
-  const double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
-  // Interaction potential
-  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   // Integrator object
   Integrator1D &itg;
   // Integrand for zero temperature calculations
   double integrand(const double &Omega) const;
   // Plasmon contribution
   double plasmon() const;
-  // Dielectric response function
-  CDual21 dielectricResponse(const double &Omega) const;
-  // Dispersion equation for the plasmon
-  Dual21 dispersionEquation(const double &Omega) const;
 };
 
 class DielectricResponse {
@@ -329,8 +320,12 @@ private:
   const double slfc;
   // Constant for unit conversion
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
-
-
+  // Plasma frequency
+  const double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
+  // Interaction potential
+  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
+  // Dispersion equation
+  Dual21 dispersionEquation(const double &Omega) const;
 };
 
 #endif
