@@ -7,7 +7,7 @@ name = "qupled"
 version = "0.0.4"
 description = "qupled: a package to investigate quantum plasmas via the dielectric formalism"
 readme = "README.md"
-requires-python = ">=3.10, <=3.13"
+requires-python = ">=3.10"
 authors = [
     { name = "Federico Lucco Castello", email = "federico.luccocastello@gmail.com" }
 ]
