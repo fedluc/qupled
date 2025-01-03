@@ -1,5 +1,8 @@
 #include "numerics.hpp"
 #include "mpi_util.hpp"
+#include <gsl/gsl_sf_dilog.h>
+#include <gsl/gsl_sf_fermi_dirac.h>
+#include <gsl/gsl_sf_gamma.h>
 
 using namespace std;
 using namespace GslWrappers;
@@ -22,6 +25,29 @@ template <typename Ptr, typename Func, typename... Args>
 void GslWrappers::callGSLAlloc(Ptr &ptr, Func &&gslFunction, Args &&...args) {
   ptr = gslFunction(std::forward<Args>(args)...);
   if (!ptr) { throwError("GSL error: allocation error"); }
+}
+
+// -----------------------------------------------------------------
+// Wrappers to GSL special functions
+// -----------------------------------------------------------------
+
+double SpecialFunctions::fermiDirac(const double &x) {
+  gsl_sf_result gamma, fd;
+  callGSLFunction(gsl_sf_gamma_e, 1.5, &gamma);
+  callGSLFunction(gsl_sf_fermi_dirac_half_e, x, &fd);
+  return gamma.val * fd.val;
+}
+
+double SpecialFunctions::dilog(const double &x) {
+  gsl_sf_result result;
+  callGSLFunction(gsl_sf_dilog_e, x, &result);
+  return result.val;
+}
+
+double SpecialFunctions::spence(const double &x) {
+  if (x <= 1.0) { return dilog(x); }
+  const double pi2 = M_PI * M_PI;
+  return pi2 / 3 - 0.5 * log(x) - dilog(1.0 / x);
 }
 
 // -----------------------------------------------------------------

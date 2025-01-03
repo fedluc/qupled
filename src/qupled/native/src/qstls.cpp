@@ -12,6 +12,7 @@ using namespace std;
 using namespace vecUtil;
 using namespace binUtil;
 using namespace MPIUtil;
+using namespace SpecialFunctions;
 using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
 
@@ -752,8 +753,10 @@ double AdrGround::integrand(const double &y, const bool isReal) const {
   const double y_2 = y / 2.0;
   const double y2_4x = y * y / (4.0 * x);
   const auto Gamma = AdrGround::Gamma(isReal);
-  const double Gamma1 = Gamma.get(Omega_2x + x_2 + y_2, Omega_2x + x_2 - y_2, y2_4x - Omega_2x - x_4);
-  const double Gamma2 = Gamma.get(Omega_2x - x_2 + y_2, Omega_2x - x_2 - y_2, y2_4x - Omega_2x + x_4);
+  const double Gamma1 = Gamma.get(
+      Omega_2x + x_2 + y_2, Omega_2x + x_2 - y_2, y2_4x - Omega_2x - x_4);
+  const double Gamma2 = Gamma.get(
+      Omega_2x - x_2 + y_2, Omega_2x - x_2 - y_2, y2_4x - Omega_2x + x_4);
   return y * ssf(y) * (Gamma1 + Gamma2);
 }
 
@@ -770,23 +773,25 @@ double AdrGround::real() const { return compute(true); }
 double AdrGround::imag() const { return compute(false); }
 
 // Auxiliary function
-double AdrGround::Gamma::get(const double &a,
-			     const double &b,
-			     const double &c) const {
+double
+AdrGround::Gamma::get(const double &a, const double &b, const double &c) const {
   return (isReal) ? real(a, b, c) : imag(a, b, c);
 }
 
-double AdrGround::Gamma::real(const double &a, const double &b, const double &c) const {
+double AdrGround::Gamma::real(const double &a,
+                              const double &b,
+                              const double &c) const {
   return Gamma1(a, c) - Gamma1(b, c);
 }
 
-double AdrGround::Gamma::imag(const double &a, const double &b, const double &c) const {
+double AdrGround::Gamma::imag(const double &a,
+                              const double &b,
+                              const double &c) const {
   if (a < -1.0 || b > 1.0) { return 0.0; }
   return Gamma2(min(1.0, a), max(-1.0, b), c);
 }
 
 double AdrGround::Gamma::Gamma1(const double &c, const double &a) const {
-  auto dilog = [&](const double &y) -> double { return y; };
   const double logarg = abs((1.0 - c) / (c + 1.0));
   const double c2m1 = c * c - 1.0;
   const double dilogarg1 = (a + c) / (c - 1.0);
@@ -794,11 +799,12 @@ double AdrGround::Gamma::Gamma1(const double &c, const double &a) const {
   return a - (2.0 * c + c2m1 * log(logarg)) * log(abs(a + c))
          + (0.5 * (a + 1.0) - c) * (a - 1.0) * log(abs(a - 1.0))
          - (0.5 * (a - 1.0) - c) * (a + 1.0) * log(abs(a + 1.0))
-         + c2m1 * (dilog(dilogarg1) - dilog(dilogarg2));
+         + c2m1 * (spence(dilogarg1) - spence(dilogarg2));
 }
 
-double
-AdrGround::Gamma::Gamma2(const double &a, const double &b, const double &c) const {
+double AdrGround::Gamma::Gamma2(const double &a,
+                                const double &b,
+                                const double &c) const {
   const double logarg = abs((a + c) / (b + c));
   return -M_PI * (1 - c * c) * log(logarg) - (a - b) * ((a + b) / 2.0 - c);
 }

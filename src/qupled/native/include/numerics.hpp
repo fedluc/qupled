@@ -82,6 +82,20 @@ namespace GslWrappers {
 } // namespace GslWrappers
 
 // -----------------------------------------------------------------
+// Wrappers to GSL special functions
+// -----------------------------------------------------------------
+
+namespace SpecialFunctions {
+
+  // Fermi-Dirac function
+  double fermiDirac(const double &x);
+  // Dilogarithm function
+  double dilog(const double &x);
+  // Spence function
+  double spence(const double &x);
+} // namespace SpecialFunctions
+
+// -----------------------------------------------------------------
 // Classes to interpolate data
 // -----------------------------------------------------------------
 

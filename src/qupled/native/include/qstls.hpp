@@ -379,7 +379,8 @@ private:
   class Gamma {
   public:
 
-    Gamma(const bool isReal_) : isReal(isReal_) {} 
+    Gamma(const bool isReal_)
+        : isReal(isReal_) {}
     double get(const double &a, const double &b, const double &c) const;
 
   private:
@@ -391,5 +392,37 @@ private:
     double Gamma2(const double &a, const double &b, const double &c) const;
   };
 };
+
+// class QSsfGround : public SsfGround {
+
+// public:
+
+//   // Constructor for zero temperature calculations
+//   QSsfGround(const double &x_,
+// 	     const double &rs_,
+// 	     const double &xMax_,
+// 	     const Interpolator1D &ssfi_,
+// 	     Integrator1D &itg_)
+//     : SsfBase(x_, rs_, 0, 0, itg_),
+//       wMin(0.0), wMax(0.0), yMin(0.0), yMax(xMax_), ssfi(ssfi_) {}
+//   // Get result of integration
+//   double get() const;
+
+// private:
+
+//   // Integration limits for zero temperature calculations
+//   const double wMin;
+//   const double wMax;
+//   const double yMin;
+//   const double yMax;
+//   // Integrator object
+//   Integrator1D &itg;
+//   // Interpolator
+//   const Interpolator1D &ssfi;
+//   // Interaction potential
+//   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
+//   // Integrand for zero temperature calculations
+//   double integrand(const double &Omega) const;
+// };
 
 #endif
