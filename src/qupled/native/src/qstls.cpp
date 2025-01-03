@@ -736,3 +736,69 @@ double AdrFixedIet::integrand(const double &t,
                         / ((qmypx - fxt) * (qmypx - fxt) + fplT2);
   return t / (exp(t2 / Theta - mu) + 1.0) * log(logarg);
 }
+
+// -----------------------------------------------------------------
+// AdrGround class
+// -----------------------------------------------------------------
+
+// Compute static structure factor
+double AdrGround::ssf(const double &y) const { return ssfi.eval(y); }
+
+// Integrands
+double AdrGround::integrand(const double &y, const bool isReal) const {
+  const double Omega_2x = Omega / (2.0 * x);
+  const double x_2 = x / 2.0;
+  const double x_4 = x_2 / 2.0;
+  const double y_2 = y / 2.0;
+  const double y2_4x = y * y / (4.0 * x);
+  const auto Gamma = AdrGround::Gamma(isReal);
+  const double Gamma1 = Gamma.get(Omega_2x + x_2 + y_2, Omega_2x + x_2 - y_2, y2_4x - Omega_2x - x_4);
+  const double Gamma2 = Gamma.get(Omega_2x - x_2 + y_2, Omega_2x - x_2 - y_2, y2_4x - Omega_2x + x_4);
+  return y * ssf(y) * (Gamma1 + Gamma2);
+}
+
+double AdrGround::compute(const bool isReal) const {
+  auto func = [&](const double &y) -> double { return integrand(y, isReal); };
+  itg.compute(func, ItgParam(yMin, yMax));
+  return -(3.0 / 32.0) * itg.getSolution();
+}
+
+// Get real part
+double AdrGround::real() const { return compute(true); }
+
+// Get imaginary part
+double AdrGround::imag() const { return compute(false); }
+
+// Auxiliary function
+double AdrGround::Gamma::get(const double &a,
+			     const double &b,
+			     const double &c) const {
+  return (isReal) ? real(a, b, c) : imag(a, b, c);
+}
+
+double AdrGround::Gamma::real(const double &a, const double &b, const double &c) const {
+  return Gamma1(a, c) - Gamma1(b, c);
+}
+
+double AdrGround::Gamma::imag(const double &a, const double &b, const double &c) const {
+  if (a < -1.0 || b > 1.0) { return 0.0; }
+  return Gamma2(min(1.0, a), max(-1.0, b), c);
+}
+
+double AdrGround::Gamma::Gamma1(const double &c, const double &a) const {
+  auto dilog = [&](const double &y) -> double { return y; };
+  const double logarg = abs((1.0 - c) / (c + 1.0));
+  const double c2m1 = c * c - 1.0;
+  const double dilogarg1 = (a + c) / (c - 1.0);
+  const double dilogarg2 = (a + c) / (c + 1.0);
+  return a - (2.0 * c + c2m1 * log(logarg)) * log(abs(a + c))
+         + (0.5 * (a + 1.0) - c) * (a - 1.0) * log(abs(a - 1.0))
+         - (0.5 * (a - 1.0) - c) * (a + 1.0) * log(abs(a + 1.0))
+         + c2m1 * (dilog(dilogarg1) - dilog(dilogarg2));
+}
+
+double
+AdrGround::Gamma::Gamma2(const double &a, const double &b, const double &c) const {
+  const double logarg = abs((a + c) / (b + c));
+  return -M_PI * (1 - c * c) * log(logarg) - (a - b) * ((a + b) / 2.0 - c);
+}

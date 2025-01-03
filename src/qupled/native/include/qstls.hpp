@@ -330,4 +330,66 @@ private:
   Integrator1D &itg;
 };
 
+// -----------------------------------------------------------------
+// Ground state calculations
+// -----------------------------------------------------------------
+
+class AdrGround {
+
+public:
+
+  // Constructor for zero temperature calculations
+  AdrGround(const double &x_,
+            const double &Omega_,
+            const Interpolator1D &ssfi_,
+            const double &yMin_,
+            const double &yMax_,
+            Integrator1D &itg_)
+      : x(x_),
+        Omega(Omega_),
+        ssfi(ssfi_),
+        yMin(yMin_),
+        yMax(yMax_),
+        itg(itg_) {}
+  // Get real part
+  double real() const;
+  // Get imaginary part
+  double imag() const;
+
+private:
+
+  // Wave-vector
+  const double x;
+  // Frequency
+  const double Omega;
+  // Interpolator for the static structure factor
+  const Interpolator1D &ssfi;
+  // Integration limits for zero temperature calculations
+  const double yMin;
+  const double yMax;
+  // Integrator object
+  Integrator1D &itg;
+  // Compute the static structure factor
+  double ssf(const double &y) const;
+  // Integrands
+  double compute(const bool isReal) const;
+  double integrand(const double &y, const bool isReal) const;
+
+  // Auxiliary function
+  class Gamma {
+  public:
+
+    Gamma(const bool isReal_) : isReal(isReal_) {} 
+    double get(const double &a, const double &b, const double &c) const;
+
+  private:
+
+    const bool isReal;
+    double real(const double &a, const double &b, const double &c) const;
+    double imag(const double &a, const double &b, const double &c) const;
+    double Gamma1(const double &a, const double &b) const;
+    double Gamma2(const double &a, const double &b, const double &c) const;
+  };
+};
+
 #endif
