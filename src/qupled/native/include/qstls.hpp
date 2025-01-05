@@ -339,14 +339,14 @@ class AdrGround {
 public:
 
   // Constructor for zero temperature calculations
-  AdrGround(const double &x_,
-            const double &Omega_,
+  AdrGround(const double &Omega_,
+            const double &x_,
             const Interpolator1D &ssfi_,
             const double &yMin_,
             const double &yMax_,
             Integrator1D &itg_)
-      : x(x_),
-        Omega(Omega_),
+      : Omega(Omega_),
+        x(x_),
         ssfi(ssfi_),
         yMin(yMin_),
         yMax(yMax_),
@@ -358,10 +358,10 @@ public:
 
 private:
 
-  // Wave-vector
-  const double x;
   // Frequency
   const double Omega;
+  // Wave-vector
+  const double x;
   // Interpolator for the static structure factor
   const Interpolator1D &ssfi;
   // Integration limits for zero temperature calculations
@@ -393,36 +393,52 @@ private:
   };
 };
 
-// class QSsfGround : public SsfGround {
+class QSsfGround {
 
-// public:
+public:
 
-//   // Constructor for zero temperature calculations
-//   QSsfGround(const double &x_,
-// 	     const double &rs_,
-// 	     const double &xMax_,
-// 	     const Interpolator1D &ssfi_,
-// 	     Integrator1D &itg_)
-//     : SsfBase(x_, rs_, 0, 0, itg_),
-//       wMin(0.0), wMax(0.0), yMin(0.0), yMax(xMax_), ssfi(ssfi_) {}
-//   // Get result of integration
-//   double get() const;
+  // Constructor for zero temperature calculations
+  QSsfGround(const double &x_,
+             const double &rs_,
+             const double &xMax_,
+             const double &ssfHF_,
+             const Interpolator1D &ssfi_,
+             Integrator1D &itg_)
+      : x(x_),
+        rs(rs_),
+        ssfHF(ssfHF_),
+        wMin(std::max(0.0, x * (x - 2.0))),
+        wMax(x * (x + 2.0)),
+        yMin(0.0),
+        yMax(xMax_),
+        itg(itg_),
+        ssfi(ssfi_) {}
+  // Get result of integration
+  double get() const;
 
-// private:
+private:
 
-//   // Integration limits for zero temperature calculations
-//   const double wMin;
-//   const double wMax;
-//   const double yMin;
-//   const double yMax;
-//   // Integrator object
-//   Integrator1D &itg;
-//   // Interpolator
-//   const Interpolator1D &ssfi;
-//   // Interaction potential
-//   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-//   // Integrand for zero temperature calculations
-//   double integrand(const double &Omega) const;
-// };
+  // Wave-vector
+  const double x;
+  // Coupling parameter
+  const double rs;
+  // HF static structure factor
+  const double ssfHF;
+  // Constant for unit conversion
+  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
+  // Integration limits for zero temperature calculations
+  const double wMin;
+  const double wMax;
+  const double yMin;
+  const double yMax;
+  // Integrator object
+  Integrator1D &itg;
+  // Interpolator
+  const Interpolator1D &ssfi;
+  // Interaction potential
+  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
+  // Integrand for zero temperature calculations
+  double integrand(const double &Omega) const;
+};
 
 #endif

@@ -24,10 +24,10 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_, const bool writeFiles_)
     : Stls(in_, verbose_, writeFiles_),
       in(in_) {
   // Throw error message for ground state calculations
-  if (in.getDegeneracy() == 0.0) {
-    throwError("Ground state calculations are not available "
-               "for the quantum schemes");
-  }
+  // if (in.getDegeneracy() == 0.0) {
+  //   throwError("Ground state calculations are not available "
+  //              "for the quantum schemes");
+  // }
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "QSTLS-HNC" || in.getTheory() == "QSTLS-IOI"
            || in.getTheory() == "QSTLS-LCT";
@@ -61,14 +61,13 @@ int Qstls::compute() {
 
 void Qstls::init() {
   Stls::init();
-  print("Computing fixed component of the auxiliary density response: ");
-  computeAdrFixed();
-  println("Done");
-  if (useIet) {
-    print("Computing fixed component of the iet auxiliary density response: ");
-    computeAdrFixedIet();
-    println("Done");
-  }
+  // print("Computing fixed component of the auxiliary density response: ");
+  // computeAdrFixed();
+  // println("Done");
+  // if (useIet) {
+  //   print("Computing fixed component of the iet auxiliary density response:
+  //   "); computeAdrFixedIet(); println("Done");
+  // }
 }
 
 // qstls iterations
@@ -80,30 +79,43 @@ void Qstls::doIterations() {
   int counter = 0;
   // Define initial guess
   initialGuess();
-  while (counter < maxIter + 1 && err > minErr) {
-    // Start timing
-    double tic = timer();
-    // Update auxiliary density response
-    computeAdr();
-    // Update static structure factor
-    computeSsf();
-    // Update diagnostic
-    counter++;
-    err = computeError();
-    // Update solution
-    updateSolution();
-    // Write output
-    if (counter % outIter == 0 && writeFiles) { writeRecovery(); };
-    // End timing
-    double toc = timer();
-    // Print diagnostic
-    println(fmt::format("--- iteration {:d} ---", counter));
-    println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
-    println(fmt::format("Residual error: {:.5e}", err));
-    fflush(stdout);
-  }
+  // while (counter < maxIter + 1 && err > minErr) {
+  //   // Start timing
+  //   double tic = timer();
+  //   // Update auxiliary density response
+  //   computeAdr();
+  //   // Update static structure factor
+  //   computeSsf();
+  //   // Update diagnostic
+  //   counter++;
+  //   err = computeError();
+  //   // Update solution
+  //   updateSolution();
+  //   // Write output
+  //   if (counter % outIter == 0 && writeFiles) { writeRecovery(); };
+  //   // End timing
+  //   double toc = timer();
+  //   // Print diagnostic
+  //   println(fmt::format("--- iteration {:d} ---", counter));
+  //   println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
+  //   println(fmt::format("Residual error: {:.5e}", err));
+  //   fflush(stdout);
+  // }
   // Set static structure factor for output
-  ssf = ssfOld;
+  // ssf = ssfOld;
+  {
+    std::cerr << "ZERO TEMPERATURE TEST" << std::endl;
+    const Interpolator1D ssfi(wvg, ssfOld);
+    const double rs = in.getCoupling();
+    const size_t nx = wvg.size();
+    const double xMax = wvg.back();
+    for (size_t i = 0; i < nx; ++i) {
+      const double x = wvg[i];
+      QSsfGround ssfTmp(x, rs, xMax, ssfHF[i], ssfi, itg);
+      ssf[i] = ssfTmp.get();
+      std::cerr << x << std::endl;
+    }
+  }
 }
 
 // Initial guess for qstls iterations
@@ -756,8 +768,8 @@ double AdrGround::integrand(const double &y, const bool isReal) const {
   const double Gamma1 = Gamma.get(
       Omega_2x + x_2 + y_2, Omega_2x + x_2 - y_2, y2_4x - Omega_2x - x_4);
   const double Gamma2 = Gamma.get(
-      Omega_2x - x_2 + y_2, Omega_2x - x_2 - y_2, y2_4x - Omega_2x + x_4);
-  return y * ssf(y) * (Gamma1 + Gamma2);
+      Omega_2x - x_2 + y_2, Omega_2x - x_2 - y_2, -y2_4x - Omega_2x + x_4);
+  return y * (ssf(y) - 1.0) * (Gamma1 + Gamma2);
 }
 
 double AdrGround::compute(const bool isReal) const {
@@ -791,7 +803,7 @@ double AdrGround::Gamma::imag(const double &a,
   return Gamma2(min(1.0, a), max(-1.0, b), c);
 }
 
-double AdrGround::Gamma::Gamma1(const double &c, const double &a) const {
+double AdrGround::Gamma::Gamma1(const double &a, const double &c) const {
   const double logarg = abs((1.0 - c) / (c + 1.0));
   const double c2m1 = c * c - 1.0;
   const double dilogarg1 = (a + c) / (c - 1.0);
@@ -806,5 +818,35 @@ double AdrGround::Gamma::Gamma2(const double &a,
                                 const double &b,
                                 const double &c) const {
   const double logarg = abs((a + c) / (b + c));
-  return -M_PI * (1 - c * c) * log(logarg) - (a - b) * ((a + b) / 2.0 - c);
+  return -M_PI * ((1 - c * c) * log(logarg) - (a - b) * ((a + b) / 2.0 - c));
+}
+
+// -----------------------------------------------------------------
+// QSsfGround class
+// -----------------------------------------------------------------
+
+// Get result of integration
+double QSsfGround::get() const {
+  if (x == 0.0) return 0.0;
+  if (rs == 0.0) return ssfHF;
+  auto func = [&](const double &y) -> double { return integrand(y); };
+  itg.compute(func, ItgParam(wMin, wMax));
+  // const double ssfP = plasmon();
+  return 1.5 / M_PI * itg.getSolution();
+}
+
+// Integrand for zero temperature calculations
+double QSsfGround::integrand(const double &Omega) const {
+  const IdrGround idr = IdrGround(Omega, x);
+  Integrator1D itgLocal = itg;
+  const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
+  const double rei = idr.real().val();
+  const double imi = idr.imag().val();
+  const double rea = adr.real();
+  const double ima = adr.imag();
+  const double denom1 = 1 + ip * (rei - rea);
+  const double denom2 = ip * (imi - ima);
+  const double denom = denom1 * denom1 + denom2 * denom2;
+  const double numer = imi - ip * (imi * rea + rei * ima);
+  return numer / denom;
 }

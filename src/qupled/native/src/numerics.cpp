@@ -45,9 +45,11 @@ double SpecialFunctions::dilog(const double &x) {
 }
 
 double SpecialFunctions::spence(const double &x) {
-  if (x <= 1.0) { return dilog(x); }
+  if (x < 1.0) { return dilog(x); }
   const double pi2 = M_PI * M_PI;
-  return pi2 / 3 - 0.5 * log(x) - dilog(1.0 / x);
+  const double logx = log(x);
+  const double logx2 = logx * logx;
+  return pi2 / 3.0 - 0.5 * logx2 - dilog(1.0 / x);
 }
 
 // -----------------------------------------------------------------
