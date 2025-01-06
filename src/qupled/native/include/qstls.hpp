@@ -376,21 +376,22 @@ private:
   double integrand(const double &y, const bool isReal) const;
 
   // Auxiliary function
+  template<typename T>
   class Gamma {
   public:
 
     Gamma(const bool isReal_)
         : isReal(isReal_) {}
-    Dual0 get(const Dual0 &a, const Dual0 &b, const Dual0 &c) const;
+    T get(const T &a, const T &b, const T &c) const;
 
   private:
 
     const bool isReal;
-    Dual0 real(const Dual0 &a, const Dual0 &b, const Dual0 &c) const;
-    Dual0 imag(const Dual0 &a, const Dual0 &b, const Dual0 &c) const;
-    Dual0 Gamma1(const Dual0 &a, const Dual0 &b) const;
-    Dual0 Gamma2(const Dual0 &a, const Dual0 &b, const Dual0 &c) const;
-    Dual0 spence(const Dual0 &x) const;
+    T real(const T &a, const T &b, const T &c) const;
+    T imag(const T &a, const T &b, const T &c) const;
+    T Gamma1(const T &a, const T &b) const;
+    T Gamma2(const T &a, const T &b, const T &c) const;
+    T spence(const T &x) const;
   };
 };
 

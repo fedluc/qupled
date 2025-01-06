@@ -92,6 +92,7 @@ CDual<Dual> operator/(const double &scalar, const CDual<Dual> &dual) {
 // Wrappers for specific derivative calculations
 // -----------------------------------------------------------------
 
+using CDual0 = CDual<Dual0>;
 using CDual11 = CDual<Dual11>;
 using CDual21 = CDual<Dual21>;
 using CDual12 = CDual<Dual12>;

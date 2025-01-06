@@ -133,9 +133,11 @@ public:
       : Omega(Omega_),
         x(x_) {}
   // Get real part
-  Dual21 real() const;
+  template<typename T>
+  T real() const;
   // Get imaginary part
-  Dual21 imag() const;
+  template<typename T>
+  T imag() const;
 
 private:
 
@@ -306,7 +308,8 @@ public:
         rs(rs_),
         slfc(slfc_) {}
   // Evaluate the dielectric response for a frequency Omega
-  CDual21 get(const double &Omega) const;
+  template<typename T>
+  CDual<T> get(const double &Omega) const;
   // Find the zero of the dielectric response
   double plasmon(const double &guess) const;
 
