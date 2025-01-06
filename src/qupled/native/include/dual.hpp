@@ -1,9 +1,9 @@
 #ifndef DUAL_HPP
 #define DUAL_HPP
 
+#include "numerics.hpp"
 #include <cmath>
 #include <vector>
-#include "numerics.hpp"
 
 using namespace SpecialFunctions;
 
@@ -25,6 +25,8 @@ public:
       grad[index] = Dual<Order - 1>(1.0, nvar, -1);
     }
   }
+  Dual(const double &func_, const int nvar, const int index)
+      : Dual(Dual<Order - 1>(func_, nvar, index), nvar, index) {}
 };
 
 template <>
@@ -162,7 +164,8 @@ Dual<Order> operator/(const double &scalar, const Dual<Order> &dual) {
 
 // Smaller-than operator
 template <int Order>
-std::vector<bool> operator<(const Dual<Order> &dual1, const Dual<Order> &dual2) {
+std::vector<bool> operator<(const Dual<Order> &dual1,
+                            const Dual<Order> &dual2) {
   const size_t &nvar = dual1.grad.size();
   std::vector<bool> result(nvar + 1);
   result[0] = dual1.func < dual2.func;
@@ -185,7 +188,8 @@ std::vector<bool> operator<(const double &scalar, const Dual<Order> &dual) {
 
 // Larger-than operator
 template <int Order>
-std::vector<bool> operator>(const Dual<Order> &dual1, const Dual<Order> &dual2) {
+std::vector<bool> operator>(const Dual<Order> &dual1,
+                            const Dual<Order> &dual2) {
   const size_t &nvar = dual1.grad.size();
   std::vector<bool> result(nvar + 1);
   result[0] = dual1.func > dual2.func;
@@ -321,11 +325,11 @@ public:
 
   // Constructors
   explicit Dual21(const double func_, const int index = -1)
-      : Dual<2>(Dual<1>(func_, 1, index), 1, index) {}
+      : Dual<2>(func_, 1, index) {}
   Dual21(const Dual<2> &other)
       : Dual<2>(other) {}
   Dual21(const double val, const double dx, const double dxx)
-    : Dual21(0) {
+      : Dual21(0) {
     func.func = val;
     grad[0].func = dx;
     grad[0].grad[0] = dxx;
@@ -357,7 +361,7 @@ public:
 
   // Constructors
   explicit Dual22(const double &func_, const int index = -1)
-      : Dual<2>(Dual<1>(func_, 2, index), 2, index) {}
+      : Dual<2>(func_, 2, index) {}
   Dual22(const Dual<2> &other)
       : Dual<2>(other) {}
   // Aliases for convenient access of the results

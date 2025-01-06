@@ -786,9 +786,8 @@ double AdrGround::real() const { return compute(true); }
 double AdrGround::imag() const { return compute(false); }
 
 // Auxiliary function
-Dual21 AdrGround::Gamma::get(const Dual21 &a,
-			     const Dual21 &b,
-			     const Dual21 &c) const {
+Dual21
+AdrGround::Gamma::get(const Dual21 &a, const Dual21 &b, const Dual21 &c) const {
   return (isReal) ? real(a, b, c) : imag(a, b, c);
 }
 
@@ -854,7 +853,6 @@ double QSsfGround::integrand(const double &Omega) const {
   const double numer = imi - ip * (imi * rea + rei * ima);
   return numer / denom;
 }
-
 
 // // -----------------------------------------------------------------
 // // QDielectricResponse class
