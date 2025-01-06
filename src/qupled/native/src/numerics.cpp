@@ -44,14 +44,6 @@ double SpecialFunctions::dilog(const double &x) {
   return result.val;
 }
 
-double SpecialFunctions::spence(const double &x) {
-  if (x < 1.0) { return dilog(x); }
-  const double pi2 = M_PI * M_PI;
-  const double logx = log(x);
-  const double logx2 = logx * logx;
-  return pi2 / 3.0 - 0.5 * logx2 - dilog(1.0 / x);
-}
-
 // -----------------------------------------------------------------
 // Interpolator class
 // -----------------------------------------------------------------

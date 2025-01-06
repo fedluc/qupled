@@ -759,17 +759,17 @@ double AdrGround::ssf(const double &y) const { return ssfi.eval(y); }
 
 // Integrands
 double AdrGround::integrand(const double &y, const bool isReal) const {
-  const Dual21 Omega_2x = Dual21(Omega, 0) / (2.0 * x);
+  const Dual0 Omega_2x = Dual0(Omega, 0) / (2.0 * x);
   const double x_2 = x / 2.0;
   const double x_4 = x_2 / 2.0;
   const double y_2 = y / 2.0;
   const double y2_4x = y * y / (4.0 * x);
   const auto Gamma = AdrGround::Gamma(isReal);
-  const Dual21 Gamma1 = Gamma.get(
+  const Dual0 Gamma1 = Gamma.get(
       Omega_2x + x_2 + y_2, Omega_2x + x_2 - y_2, y2_4x - Omega_2x - x_4);
-  const Dual21 Gamma2 = Gamma.get(
+  const Dual0 Gamma2 = Gamma.get(
       Omega_2x - x_2 + y_2, Omega_2x - x_2 - y_2, -y2_4x - Omega_2x + x_4);
-  const Dual21 GammaSum = Gamma1 + Gamma2;
+  const Dual0 GammaSum = Gamma1 + Gamma2;
   return y * (ssf(y) - 1.0) * GammaSum.val();
 }
 
@@ -786,42 +786,51 @@ double AdrGround::real() const { return compute(true); }
 double AdrGround::imag() const { return compute(false); }
 
 // Auxiliary function
-Dual21
-AdrGround::Gamma::get(const Dual21 &a, const Dual21 &b, const Dual21 &c) const {
+Dual0 AdrGround::Gamma::get(const Dual0 &a,
+                            const Dual0 &b,
+                            const Dual0 &c) const {
   return (isReal) ? real(a, b, c) : imag(a, b, c);
 }
 
-Dual21 AdrGround::Gamma::real(const Dual21 &a,
-                              const Dual21 &b,
-                              const Dual21 &c) const {
+Dual0 AdrGround::Gamma::real(const Dual0 &a,
+                             const Dual0 &b,
+                             const Dual0 &c) const {
   return Gamma1(a, c) - Gamma1(b, c);
 }
 
-Dual21 AdrGround::Gamma::imag(const Dual21 &a,
-                              const Dual21 &b,
-                              const Dual21 &c) const {
-  if (a.val() < -1.0 || b.val() > 1.0) { return Dual21(0.0); }
-  const Dual21 aCap = (a.val() <= 1.0) ? a : Dual21(1.0);
-  const Dual21 bCap = (b.val() >= -1.0) ? b : Dual21(-1.0);
+Dual0 AdrGround::Gamma::imag(const Dual0 &a,
+                             const Dual0 &b,
+                             const Dual0 &c) const {
+  if (a.val() < -1.0 || b.val() > 1.0) { return Dual0(0.0); }
+  const Dual0 aCap = (a.val() <= 1.0) ? a : Dual0(1.0);
+  const Dual0 bCap = (b.val() >= -1.0) ? b : Dual0(-1.0);
   return Gamma2(aCap, bCap, c);
 }
 
-Dual21 AdrGround::Gamma::Gamma1(const Dual21 &a, const Dual21 &c) const {
-  const Dual21 logarg = abs((1.0 - c) / (c + 1.0));
-  const Dual21 c2m1 = c * c - 1.0;
-  const Dual21 dilogarg1 = (a + c) / (c - 1.0);
-  const Dual21 dilogarg2 = (a + c) / (c + 1.0);
+Dual0 AdrGround::Gamma::Gamma1(const Dual0 &a, const Dual0 &c) const {
+  const Dual0 logarg = abs((1.0 - c) / (c + 1.0));
+  const Dual0 c2m1 = c * c - 1.0;
+  const Dual0 dilogarg1 = (a + c) / (c - 1.0);
+  const Dual0 dilogarg2 = (a + c) / (c + 1.0);
   return a - (2.0 * c + c2m1 * log(logarg)) * log(abs(a + c))
          + (0.5 * (a + 1.0) - c) * (a - 1.0) * log(abs(a - 1.0))
          - (0.5 * (a - 1.0) - c) * (a + 1.0) * log(abs(a + 1.0))
          + c2m1 * (spence(dilogarg1) - spence(dilogarg2));
 }
 
-Dual21 AdrGround::Gamma::Gamma2(const Dual21 &a,
-                                const Dual21 &b,
-                                const Dual21 &c) const {
-  const Dual21 logarg = abs((a + c) / (b + c));
+Dual0 AdrGround::Gamma::Gamma2(const Dual0 &a,
+                               const Dual0 &b,
+                               const Dual0 &c) const {
+  const Dual0 logarg = abs((a + c) / (b + c));
   return -M_PI * ((1 - c * c) * log(logarg) - (a - b) * ((a + b) / 2.0 - c));
+}
+
+Dual0 AdrGround::Gamma::spence(const Dual0 &x) const {
+  if (x.val() < 1.0) { return dilog(x); }
+  const double pi2 = M_PI * M_PI;
+  const Dual0 logx = log(x);
+  const Dual0 logx2 = logx * logx;
+  return pi2 / 3.0 - 0.5 * logx2 - dilog(1.0 / x);
 }
 
 // -----------------------------------------------------------------

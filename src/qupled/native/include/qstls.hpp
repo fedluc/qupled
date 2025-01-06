@@ -381,15 +381,16 @@ private:
 
     Gamma(const bool isReal_)
         : isReal(isReal_) {}
-    Dual21 get(const Dual21 &a, const Dual21 &b, const Dual21 &c) const;
+    Dual0 get(const Dual0 &a, const Dual0 &b, const Dual0 &c) const;
 
   private:
 
     const bool isReal;
-    Dual21 real(const Dual21 &a, const Dual21 &b, const Dual21 &c) const;
-    Dual21 imag(const Dual21 &a, const Dual21 &b, const Dual21 &c) const;
-    Dual21 Gamma1(const Dual21 &a, const Dual21 &b) const;
-    Dual21 Gamma2(const Dual21 &a, const Dual21 &b, const Dual21 &c) const;
+    Dual0 real(const Dual0 &a, const Dual0 &b, const Dual0 &c) const;
+    Dual0 imag(const Dual0 &a, const Dual0 &b, const Dual0 &c) const;
+    Dual0 Gamma1(const Dual0 &a, const Dual0 &b) const;
+    Dual0 Gamma2(const Dual0 &a, const Dual0 &b, const Dual0 &c) const;
+    Dual0 spence(const Dual0 &x) const;
   };
 };
 

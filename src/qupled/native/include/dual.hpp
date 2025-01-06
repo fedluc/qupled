@@ -30,7 +30,7 @@ public:
 };
 
 template <>
-class Dual<1> {
+class Dual<0> {
 public:
 
   double func;
@@ -38,8 +38,9 @@ public:
   // Constructors
   Dual(const double &func_, const int nvar, const int index)
       : func(func_),
-        grad(nvar) {
-    if (index >= 0 && index < nvar) { grad[index] = 1; }
+        grad(0) {
+    static_cast<void>(nvar);
+    static_cast<void>(index);
   }
 };
 
@@ -286,24 +287,22 @@ Dual<Order> dilog(const Dual<Order> &x) {
   return result;
 }
 
-// spence function
-template <int Order>
-Dual<Order> spence(const Dual<Order> &x) {
-  const bool smallerThanOne = (x.func < 1.0)[0];
-  if (smallerThanOne) {
-    Dual<Order> result = dilog(x);
-    return result;
-  }
-  const auto logx = log(x);
-  const auto logx2 = logx * logx;
-  const auto inv_x = 1.0 / x;
-  const auto dilog_inv_x = dilog(inv_x);
-  return M_PI * M_PI / 3.0 - 0.5 * logx2 - dilog_inv_x;
-}
-
 // -----------------------------------------------------------------
 // Wrappers for specific derivative calculations
 // -----------------------------------------------------------------
+
+// First order derivatives for functions of one variable
+class Dual0 : public Dual<0> {
+public:
+
+  // Constructors
+  explicit Dual0(const double func_, const int index = -1)
+      : Dual<0>(func_, 0, index) {}
+  Dual0(const Dual<0> &other)
+      : Dual<0>(other) {}
+  // Aliases for convenient access of the results
+  const double &val() const { return func; }
+};
 
 // First order derivatives for functions of one variable
 class Dual11 : public Dual<1> {
@@ -315,8 +314,8 @@ public:
   Dual11(const Dual<1> &other)
       : Dual<1>(other) {}
   // Aliases for convenient access of the results
-  const double &val() const { return func; }
-  const double &dx() const { return grad[0]; }
+  const double &val() const { return func.func; }
+  const double &dx() const { return grad[0].func; }
 };
 
 // Second order derivatives for functions of one variable
@@ -330,14 +329,14 @@ public:
       : Dual<2>(other) {}
   Dual21(const double val, const double dx, const double dxx)
       : Dual21(0) {
-    func.func = val;
-    grad[0].func = dx;
-    grad[0].grad[0] = dxx;
+    func.func.func = val;
+    grad[0].func.func = dx;
+    grad[0].grad[0].func = dxx;
   }
   // Aliases for convenient access of the results
-  const double &val() const { return func.func; }
-  const double &dx() const { return grad[0].func; }
-  const double &dxx() const { return grad[0].grad[0]; }
+  const double &val() const { return func.func.func; }
+  const double &dx() const { return grad[0].func.func; }
+  const double &dxx() const { return grad[0].grad[0].func; }
 };
 
 // First order derivatives for functions of two variables
@@ -350,9 +349,9 @@ public:
   Dual12(const Dual<1> &other)
       : Dual<1>(other) {}
   // Aliases for convenient access of the results
-  const double &val() const { return func; }
-  const double &dx() const { return grad[0]; }
-  const double &dy() const { return grad[1]; }
+  const double &val() const { return func.func; }
+  const double &dx() const { return grad[0].func; }
+  const double &dy() const { return grad[1].func; }
 };
 
 // Second order derivatives for functions of two variables
@@ -365,13 +364,13 @@ public:
   Dual22(const Dual<2> &other)
       : Dual<2>(other) {}
   // Aliases for convenient access of the results
-  const double &val() const { return func.func; }
-  const double &dx() const { return grad[0].func; }
-  const double &dy() const { return grad[1].func; }
-  const double &dxx() const { return grad[0].grad[0]; }
-  const double &dxy() const { return grad[0].grad[1]; }
-  const double &dyx() const { return grad[1].grad[0]; }
-  const double &dyy() const { return grad[1].grad[1]; }
+  const double &val() const { return func.func.func; }
+  const double &dx() const { return grad[0].func.func; }
+  const double &dy() const { return grad[1].func.func; }
+  const double &dxx() const { return grad[0].grad[0].func; }
+  const double &dxy() const { return grad[0].grad[1].func; }
+  const double &dyx() const { return grad[1].grad[0].func; }
+  const double &dyy() const { return grad[1].grad[1].func; }
 };
 
 #endif
