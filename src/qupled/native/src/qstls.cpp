@@ -759,17 +759,18 @@ double AdrGround::ssf(const double &y) const { return ssfi.eval(y); }
 
 // Integrands
 double AdrGround::integrand(const double &y, const bool isReal) const {
-  const double Omega_2x = Omega / (2.0 * x);
+  const Dual21 Omega_2x = Dual21(Omega, 0) / (2.0 * x);
   const double x_2 = x / 2.0;
   const double x_4 = x_2 / 2.0;
   const double y_2 = y / 2.0;
   const double y2_4x = y * y / (4.0 * x);
   const auto Gamma = AdrGround::Gamma(isReal);
-  const double Gamma1 = Gamma.get(
+  const Dual21 Gamma1 = Gamma.get(
       Omega_2x + x_2 + y_2, Omega_2x + x_2 - y_2, y2_4x - Omega_2x - x_4);
-  const double Gamma2 = Gamma.get(
+  const Dual21 Gamma2 = Gamma.get(
       Omega_2x - x_2 + y_2, Omega_2x - x_2 - y_2, -y2_4x - Omega_2x + x_4);
-  return y * (ssf(y) - 1.0) * (Gamma1 + Gamma2);
+  const Dual21 GammaSum = Gamma1 + Gamma2;
+  return y * (ssf(y) - 1.0) * GammaSum.val();
 }
 
 double AdrGround::compute(const bool isReal) const {
@@ -785,39 +786,42 @@ double AdrGround::real() const { return compute(true); }
 double AdrGround::imag() const { return compute(false); }
 
 // Auxiliary function
-double
-AdrGround::Gamma::get(const double &a, const double &b, const double &c) const {
+Dual21 AdrGround::Gamma::get(const Dual21 &a,
+			     const Dual21 &b,
+			     const Dual21 &c) const {
   return (isReal) ? real(a, b, c) : imag(a, b, c);
 }
 
-double AdrGround::Gamma::real(const double &a,
-                              const double &b,
-                              const double &c) const {
+Dual21 AdrGround::Gamma::real(const Dual21 &a,
+                              const Dual21 &b,
+                              const Dual21 &c) const {
   return Gamma1(a, c) - Gamma1(b, c);
 }
 
-double AdrGround::Gamma::imag(const double &a,
-                              const double &b,
-                              const double &c) const {
-  if (a < -1.0 || b > 1.0) { return 0.0; }
-  return Gamma2(min(1.0, a), max(-1.0, b), c);
+Dual21 AdrGround::Gamma::imag(const Dual21 &a,
+                              const Dual21 &b,
+                              const Dual21 &c) const {
+  if (a.val() < -1.0 || b.val() > 1.0) { return Dual21(0.0); }
+  const Dual21 aCap = (a.val() <= 1.0) ? a : Dual21(1.0);
+  const Dual21 bCap = (b.val() >= -1.0) ? b : Dual21(-1.0);
+  return Gamma2(aCap, bCap, c);
 }
 
-double AdrGround::Gamma::Gamma1(const double &a, const double &c) const {
-  const double logarg = abs((1.0 - c) / (c + 1.0));
-  const double c2m1 = c * c - 1.0;
-  const double dilogarg1 = (a + c) / (c - 1.0);
-  const double dilogarg2 = (a + c) / (c + 1.0);
+Dual21 AdrGround::Gamma::Gamma1(const Dual21 &a, const Dual21 &c) const {
+  const Dual21 logarg = abs((1.0 - c) / (c + 1.0));
+  const Dual21 c2m1 = c * c - 1.0;
+  const Dual21 dilogarg1 = (a + c) / (c - 1.0);
+  const Dual21 dilogarg2 = (a + c) / (c + 1.0);
   return a - (2.0 * c + c2m1 * log(logarg)) * log(abs(a + c))
          + (0.5 * (a + 1.0) - c) * (a - 1.0) * log(abs(a - 1.0))
          - (0.5 * (a - 1.0) - c) * (a + 1.0) * log(abs(a + 1.0))
          + c2m1 * (spence(dilogarg1) - spence(dilogarg2));
 }
 
-double AdrGround::Gamma::Gamma2(const double &a,
-                                const double &b,
-                                const double &c) const {
-  const double logarg = abs((a + c) / (b + c));
+Dual21 AdrGround::Gamma::Gamma2(const Dual21 &a,
+                                const Dual21 &b,
+                                const Dual21 &c) const {
+  const Dual21 logarg = abs((a + c) / (b + c));
   return -M_PI * ((1 - c * c) * log(logarg) - (a - b) * ((a + b) / 2.0 - c));
 }
 
@@ -850,3 +854,51 @@ double QSsfGround::integrand(const double &Omega) const {
   const double numer = imi - ip * (imi * rea + rei * ima);
   return numer / denom;
 }
+
+
+// // -----------------------------------------------------------------
+// // QDielectricResponse class
+// // -----------------------------------------------------------------
+
+// // Real part and its derivative
+// CDual21 QDielectricResponse::get(const double &Omega) const {
+//   const IdrGround idr = IdrGround(Omega, x);
+//   Integrator1D itgLocal = itg;
+//   const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
+//   const CDual21 cidr = CDual21(idr.real(), idr.imag());
+//   const CDual21 cadr = CDual21(adr.real(), adr.imag());
+//   const CDual21 lfc = cadr / cidr;
+//   return 1.0 + cidr / (1.0 + cidr * (ip * (1 - lfc) - 1.0));
+// }
+
+// // Get the plasmon frequency
+// double QDielectricResponse::plasmon(const double &guess) const {
+//   if (x == 0.0) { return wp; }
+//   // Compute plasmon frequency
+//   auto func = [this](const double &Omega) -> pair<double, double> {
+//     const Dual21 deq = dispersionEquation(Omega);
+//     return pair<double, double>(deq.dx(), deq.dxx());
+//   };
+//   QuasiNewtonRootSolver rsol;
+//   try {
+//     rsol.solve(func, guess);
+//   } catch (const std::runtime_error &e) {
+//     // The plasmon does not exist
+//     return -1;
+//   }
+//   // Check if the minimum is a zero
+//   const double wp = rsol.getSolution();
+//   bool isZero = abs(dispersionEquation(wp).val()) < 1e-10;
+//   // Output
+//   return (isZero) ? wp : -1;
+// }
+
+// // Dispersion equation
+// Dual21 QDielectricResponse::dispersionEquation(const double &Omega) const {
+//   const IdrGround idr = IdrGround(Omega, x);
+//   const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
+//   const CDual21 cidr = CDual21(idr.real(), idr.imag());
+//   const CDual21 cadr = CDual21(adr.real(), adr.imag());
+//   const CDual21 deq = 1.0 + ip * cidr * (1.0 - slfc);
+//   return deq.real * deq.real + deq.imag * deq.imag;
+// }

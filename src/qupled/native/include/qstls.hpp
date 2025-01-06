@@ -381,15 +381,15 @@ private:
 
     Gamma(const bool isReal_)
         : isReal(isReal_) {}
-    double get(const double &a, const double &b, const double &c) const;
+    Dual21 get(const Dual21 &a, const Dual21 &b, const Dual21 &c) const;
 
   private:
 
     const bool isReal;
-    double real(const double &a, const double &b, const double &c) const;
-    double imag(const double &a, const double &b, const double &c) const;
-    double Gamma1(const double &a, const double &b) const;
-    double Gamma2(const double &a, const double &b, const double &c) const;
+    Dual21 real(const Dual21 &a, const Dual21 &b, const Dual21 &c) const;
+    Dual21 imag(const Dual21 &a, const Dual21 &b, const Dual21 &c) const;
+    Dual21 Gamma1(const Dual21 &a, const Dual21 &b) const;
+    Dual21 Gamma2(const Dual21 &a, const Dual21 &b, const Dual21 &c) const;
   };
 };
 
@@ -403,7 +403,7 @@ public:
              const double &xMax_,
              const double &ssfHF_,
              const Interpolator1D &ssfi_,
-             Integrator1D &itg_)
+             const Integrator1D &itg_)
       : x(x_),
         rs(rs_),
         ssfHF(ssfHF_),
@@ -432,7 +432,7 @@ private:
   const double yMin;
   const double yMax;
   // Integrator object
-  Integrator1D &itg;
+  const Integrator1D &itg;
   // Interpolator
   const Interpolator1D &ssfi;
   // Interaction potential
@@ -440,5 +440,49 @@ private:
   // Integrand for zero temperature calculations
   double integrand(const double &Omega) const;
 };
+
+// class QDielectricResponse {
+
+// public:
+
+//   // Constructor
+//   QDielectricResponse(const double &x_,
+// 		      const double &rs_,
+// 		      const double &xMax_,
+// 		      const Interpolator1D &ssfi_,
+// 		      const Integrator1D &itg_)
+//       : x(x_),
+//         rs(rs_),
+// 	yMin(0.0),
+//         yMax(xMax_),
+// 	itg(itg_),
+//   	ssfi(ssfi_) {}
+//   // Evaluate the dielectric response for a frequency Omega
+//   CDual21 get(const double &Omega) const;
+//   // Find the zero of the dielectric response
+//   double plasmon(const double &guess) const;
+
+// private:
+
+//   // Wave-vector
+//   const double x;
+//   // Coupling parameter
+//   const double rs;
+//   // Integration limits for zero temperature calculations
+//   const double yMin;
+//   const double yMax;
+//   // Integrator object
+//   const Integrator1D &itg;
+//   // Interpolator for the static structure factor
+//   const Interpolator1D &ssfi;
+//   // Constant for unit conversion
+//   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
+//   // Plasma frequency
+//   const double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
+//   // Interaction potential
+//   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
+//   // Dispersion equation
+//   Dual21 dispersionEquation(const double &Omega) const;
+// };
 
 #endif
