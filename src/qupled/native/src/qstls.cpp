@@ -758,59 +758,63 @@ double AdrFixedIet::integrand(const double &t,
 double AdrGround::ssf(const double &y) const { return ssfi.eval(y); }
 
 // Integrands
-double AdrGround::integrand(const double &y, const bool isReal) const {
-  const Dual0 Omega_2x = Dual0(Omega, 0) / (2.0 * x);
+template <typename T>
+T AdrGround::integrand(const double &y, const bool isReal) const {
+  const T Omega_2x = T(Omega, 0) / (2.0 * x);
   const double x_2 = x / 2.0;
   const double x_4 = x_2 / 2.0;
   const double y_2 = y / 2.0;
   const double y2_4x = y * y / (4.0 * x);
-  const auto Gamma = AdrGround::Gamma<Dual0>(isReal);
-  const Dual0 Gamma1 = Gamma.get(
+  const auto Gamma = AdrGround::Gamma<T>(isReal);
+  const T Gamma1 = Gamma.get(
       Omega_2x + x_2 + y_2, Omega_2x + x_2 - y_2, y2_4x - Omega_2x - x_4);
-  const Dual0 Gamma2 = Gamma.get(
+  const T Gamma2 = Gamma.get(
       Omega_2x - x_2 + y_2, Omega_2x - x_2 - y_2, -y2_4x - Omega_2x + x_4);
-  const Dual0 GammaSum = Gamma1 + Gamma2;
-  return y * (ssf(y) - 1.0) * GammaSum.val();
+  const T GammaSum = Gamma1 + Gamma2;
+  return y * (ssf(y) - 1.0) * GammaSum;
 }
 
-double AdrGround::compute(const bool isReal) const {
-  auto func = [&](const double &y) -> double { return integrand(y, isReal); };
+template <>
+Dual0 AdrGround::compute<Dual0>(const bool isReal) const {
+  auto func = [&](const double &y) -> double {
+    return integrand<Dual0>(y, isReal).val();
+  };
   itg.compute(func, ItgParam(yMin, yMax));
-  return -(3.0 / 32.0) * itg.getSolution();
+  return -(3.0 / 32.0) * Dual0(itg.getSolution());
 }
 
 // Get real part
-double AdrGround::real() const { return compute(true); }
+template <typename T>
+T AdrGround::real() const {
+  return compute<T>(true);
+}
 
 // Get imaginary part
-double AdrGround::imag() const { return compute(false); }
+template <typename T>
+T AdrGround::imag() const {
+  return compute<T>(false);
+}
 
 // Auxiliary function
-template<typename T>
-T AdrGround::Gamma<T>::get(const T &a,
-                            const T &b,
-                            const T &c) const {
+template <typename T>
+T AdrGround::Gamma<T>::get(const T &a, const T &b, const T &c) const {
   return (isReal) ? real(a, b, c) : imag(a, b, c);
 }
 
-template<typename T>
-T AdrGround::Gamma<T>::real(const T &a,
-                             const T &b,
-                             const T &c) const {
+template <typename T>
+T AdrGround::Gamma<T>::real(const T &a, const T &b, const T &c) const {
   return Gamma1(a, c) - Gamma1(b, c);
 }
 
-template<typename T>
-T AdrGround::Gamma<T>::imag(const T &a,
-                             const T &b,
-                             const T &c) const {
+template <typename T>
+T AdrGround::Gamma<T>::imag(const T &a, const T &b, const T &c) const {
   if (a.val() < -1.0 || b.val() > 1.0) { return T(0.0); }
   const T aCap = (a.val() <= 1.0) ? a : T(1.0);
   const T bCap = (b.val() >= -1.0) ? b : T(-1.0);
   return Gamma2(aCap, bCap, c);
 }
 
-template<typename T>
+template <typename T>
 T AdrGround::Gamma<T>::Gamma1(const T &a, const T &c) const {
   const T logarg = abs((1.0 - c) / (c + 1.0));
   const T c2m1 = c * c - 1.0;
@@ -822,15 +826,13 @@ T AdrGround::Gamma<T>::Gamma1(const T &a, const T &c) const {
          + c2m1 * (spence(dilogarg1) - spence(dilogarg2));
 }
 
-template<typename T>
-T AdrGround::Gamma<T>::Gamma2(const T &a,
-                               const T &b,
-                               const T &c) const {
+template <typename T>
+T AdrGround::Gamma<T>::Gamma2(const T &a, const T &b, const T &c) const {
   const T logarg = abs((a + c) / (b + c));
   return -M_PI * ((1 - c * c) * log(logarg) - (a - b) * ((a + b) / 2.0 - c));
 }
 
-template<typename T>
+template <typename T>
 T AdrGround::Gamma<T>::spence(const T &x) const {
   if (x.val() < 1.0) { return dilog(x); }
   const double pi2 = M_PI * M_PI;
@@ -860,8 +862,8 @@ double QSsfGround::integrand(const double &Omega) const {
   const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
   const double rei = idr.real<Dual0>().val();
   const double imi = idr.imag<Dual0>().val();
-  const double rea = adr.real();
-  const double ima = adr.imag();
+  const double rea = adr.real<Dual0>().val();
+  const double ima = adr.imag<Dual0>().val();
   const double denom1 = 1 + ip * (rei - rea);
   const double denom2 = ip * (imi - ima);
   const double denom = denom1 * denom1 + denom2 * denom2;

@@ -271,7 +271,7 @@ vector<double> Idr::get() const {
 // -----------------------------------------------------------------
 
 // Real part at zero temperature
-template<typename T>
+template <typename T>
 T IdrGround::real() const {
   const T dOmega = T(Omega, 0);
   T adder1 = T(0.0);
@@ -303,7 +303,7 @@ template Dual11 IdrGround::real<Dual11>() const;
 template Dual21 IdrGround::real<Dual21>() const;
 
 // Imaginary part at zero temperature
-template<typename T>
+template <typename T>
 T IdrGround::imag() const {
   const T dOmega = T(Omega, 0);
   T preFactor = T(0.0);
@@ -325,7 +325,6 @@ T IdrGround::imag() const {
 template Dual0 IdrGround::imag<Dual0>() const;
 template Dual11 IdrGround::imag<Dual11>() const;
 template Dual21 IdrGround::imag<Dual21>() const;
-
 
 // -----------------------------------------------------------------
 // SsfHF class
@@ -421,7 +420,7 @@ double SsfGround::plasmon() const {
 // -----------------------------------------------------------------
 
 // Real part and its derivative
-template<typename T>
+template <typename T>
 CDual<T> DielectricResponse::get(const double &Omega) const {
   const IdrGround idr = IdrGround(Omega, x);
   const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());

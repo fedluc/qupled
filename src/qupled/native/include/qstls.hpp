@@ -352,9 +352,11 @@ public:
         yMax(yMax_),
         itg(itg_) {}
   // Get real part
-  double real() const;
+  template <typename T>
+  T real() const;
   // Get imaginary part
-  double imag() const;
+  template <typename T>
+  T imag() const;
 
 private:
 
@@ -372,11 +374,13 @@ private:
   // Compute the static structure factor
   double ssf(const double &y) const;
   // Integrands
-  double compute(const bool isReal) const;
-  double integrand(const double &y, const bool isReal) const;
+  template <typename T>
+  T compute(const bool isReal) const;
+  template <typename T>
+  T integrand(const double &y, const bool isReal) const;
 
   // Auxiliary function
-  template<typename T>
+  template <typename T>
   class Gamma {
   public:
 
