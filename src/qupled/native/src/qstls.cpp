@@ -774,13 +774,11 @@ T AdrGround::integrand(const double &y, const bool isReal) const {
   return y * (ssf(y) - 1.0) * GammaSum;
 }
 
-template <>
-Dual0 AdrGround::compute<Dual0>(const bool isReal) const {
-  auto func = [&](const double &y) -> double {
-    return integrand<Dual0>(y, isReal).val();
-  };
-  itg.compute(func, ItgParam(yMin, yMax));
-  return -(3.0 / 32.0) * Dual0(itg.getSolution());
+template <typename T>
+T AdrGround::compute(const bool isReal) const {
+  auto func = [&](const double &y) -> T { return integrand<T>(y, isReal); };
+  const T dual = integral(func, ItgParam(yMin, yMax), itg);
+  return (-3.0 / 32.0) * dual;
 }
 
 // Get real part
