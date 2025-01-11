@@ -24,10 +24,10 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_, const bool writeFiles_)
     : Stls(in_, verbose_, writeFiles_),
       in(in_) {
   // Throw error message for ground state calculations
-  // if (in.getDegeneracy() == 0.0) {
-  //   throwError("Ground state calculations are not available "
-  //              "for the quantum schemes");
-  // }
+  if (in.getDegeneracy() == 0.0 && useIet) {
+    throwError("Ground state calculations are not available "
+               "for the quantum IET schemes");
+  }
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "QSTLS-HNC" || in.getTheory() == "QSTLS-IOI"
            || in.getTheory() == "QSTLS-LCT";
@@ -61,13 +61,14 @@ int Qstls::compute() {
 
 void Qstls::init() {
   Stls::init();
-  // print("Computing fixed component of the auxiliary density response: ");
-  // computeAdrFixed();
-  // println("Done");
-  // if (useIet) {
-  //   print("Computing fixed component of the iet auxiliary density response:
-  //   "); computeAdrFixedIet(); println("Done");
-  // }
+  print("Computing fixed component of the auxiliary density response: ");
+  computeAdrFixed();
+  println("Done");
+  if (useIet) {
+    print("Computing fixed component of the iet auxiliary density response: ");
+    computeAdrFixedIet();
+    println("Done");
+  }
 }
 
 // qstls iterations
@@ -79,43 +80,30 @@ void Qstls::doIterations() {
   int counter = 0;
   // Define initial guess
   initialGuess();
-  // while (counter < maxIter + 1 && err > minErr) {
-  //   // Start timing
-  //   double tic = timer();
-  //   // Update auxiliary density response
-  //   computeAdr();
-  //   // Update static structure factor
-  //   computeSsf();
-  //   // Update diagnostic
-  //   counter++;
-  //   err = computeError();
-  //   // Update solution
-  //   updateSolution();
-  //   // Write output
-  //   if (counter % outIter == 0 && writeFiles) { writeRecovery(); };
-  //   // End timing
-  //   double toc = timer();
-  //   // Print diagnostic
-  //   println(fmt::format("--- iteration {:d} ---", counter));
-  //   println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
-  //   println(fmt::format("Residual error: {:.5e}", err));
-  //   fflush(stdout);
-  // }
-  // Set static structure factor for output
-  // ssf = ssfOld;
-  {
-    std::cerr << "ZERO TEMPERATURE TEST" << std::endl;
-    const Interpolator1D ssfi(wvg, ssfOld);
-    const double rs = in.getCoupling();
-    const size_t nx = wvg.size();
-    const double xMax = wvg.back();
-    for (size_t i = 0; i < nx; ++i) {
-      const double x = wvg[i];
-      QSsfGround ssfTmp(x, rs, xMax, ssfHF[i], ssfi, itg);
-      ssf[i] = ssfTmp.get();
-      std::cerr << x << std::endl;
-    }
+  while (counter < maxIter + 1 && err > minErr) {
+    // Start timing
+    double tic = timer();
+    // Update auxiliary density response
+    computeAdr();
+    // Update static structure factor
+    computeSsf();
+    // Update diagnostic
+    counter++;
+    err = computeError();
+    // Update solution
+    updateSolution();
+    // Write output
+    if (counter % outIter == 0 && writeFiles) { writeRecovery(); };
+    // End timing
+    double toc = timer();
+    // Print diagnostic
+    println(fmt::format("--- iteration {:d} ---", counter));
+    println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
+    println(fmt::format("Residual error: {:.5e}", err));
+    fflush(stdout);
   }
+  // Set static structure factor for output
+  ssf = ssfOld;
 }
 
 // Initial guess for qstls iterations
@@ -211,6 +199,7 @@ bool Qstls::initialGuessAdrFixed(const vector<double> &wvg_,
 
 // Compute auxiliary density response
 void Qstls::computeAdr() {
+  if (in.getDegeneracy() == 0.0) { return; }
   const int nx = wvg.size();
   const Interpolator1D ssfi(wvg, ssfOld);
   for (int i = 0; i < nx; ++i) {
@@ -224,7 +213,13 @@ void Qstls::computeAdr() {
 }
 
 // Compute static structure factor
-void Qstls::computeSsf() { computeSsfFinite(); }
+void Qstls::computeSsf() {
+  if (in.getDegeneracy() == 0.0) {
+    computeSsfGround();
+  } else {
+    computeSsfFinite();
+  }
+}
 
 // Compute static structure factor at finite temperature
 void Qstls::computeSsfFinite() {
@@ -245,6 +240,24 @@ void Qstls::computeSsfFinite() {
   }
 }
 
+// Compute static structure factor at zero temperature
+void Qstls::computeSsfGround() {
+  const Interpolator1D ssfi(wvg, ssfOld);
+  const double rs = in.getCoupling();
+  const size_t nx = wvg.size();
+  const double xMax = wvg.back();
+  double wpGuess = 4.0 * sqrt(lambda * rs / 3.0 / M_PI); // Plasma frequency
+  for (size_t i = 0; i < nx; ++i) {
+    const double x = wvg[i];
+    const QDielectricResponse dr = QDielectricResponse(x, rs, xMax, ssfi, itg);
+    const double wp = (wpGuess >= 0) ? dr.plasmon(wpGuess) : -1;
+    wpGuess = wp;
+    if (wpGuess >= 0) { std::cerr << wp << std::endl; };
+    QSsfGround ssfTmp(x, rs, wp, xMax, ssfHF[i], ssfi, itg);
+    ssfNew[i] = ssfTmp.get();
+  }
+}
+
 // Compute residual error for the qstls iterations
 double Qstls::computeError() const { return rms(ssfNew, ssfOld, false); }
 
@@ -259,6 +272,7 @@ void Qstls::updateSolution() {
 }
 
 void Qstls::computeAdrFixed() {
+  if (in.getDegeneracy() == 0.0) { return; }
   // Check if it adrFixed can be loaded from input
   if (!in.getFixed().empty()) {
     readAdrFixedFile(adrFixed, in.getFixed(), false);
@@ -849,69 +863,85 @@ double QSsfGround::get() const {
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg.compute(func, ItgParam(wMin, wMax));
-  // const double ssfP = plasmon();
-  return 1.5 / M_PI * itg.getSolution();
+  const double ssfP = plasmon();
+  return 1.5 / M_PI * itg.getSolution() + ssfP;
 }
 
 // Integrand for zero temperature calculations
 double QSsfGround::integrand(const double &Omega) const {
-  const IdrGround idr = IdrGround(Omega, x);
   Integrator1D itgLocal = itg;
-  const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
-  const double rei = idr.real<Dual0>().val();
-  const double imi = idr.imag<Dual0>().val();
-  const double rea = adr.real<Dual0>().val();
-  const double ima = adr.imag<Dual0>().val();
-  const double denom1 = 1 + ip * (rei - rea);
-  const double denom2 = ip * (imi - ima);
-  const double denom = denom1 * denom1 + denom2 * denom2;
-  const double numer = imi - ip * (imi * rea + rei * ima);
-  return numer / denom;
+  const QDielectricResponse dr =
+      QDielectricResponse(x, rs, yMax, ssfi, itgLocal);
+  const CDual0 phi = 1.0 / dr.get<Dual0>(Omega);
+  return -phi.imag.val();
+  // const double ip = 4.0 * lambda * rs / (M_PI * x * x);
+  // const IdrGround idr = IdrGround(Omega, x);
+  // Integrator1D itgLocal = itg;
+  // const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
+  // const double rei = idr.real<Dual0>().val();
+  // const double imi = idr.imag<Dual0>().val();
+  // const double rea = adr.real<Dual0>().val();
+  // const double ima = adr.imag<Dual0>().val();
+  // const double denom1 = 1 + ip * (rei - rea);
+  // const double denom2 = ip * (imi - ima);
+  // const double denom = denom1 * denom1 + denom2 * denom2;
+  // const double numer = imi - ip * (imi * rea + rei * ima);
+  // return numer / denom;
 }
 
-// // -----------------------------------------------------------------
-// // QDielectricResponse class
-// // -----------------------------------------------------------------
+// Plasmon contribution to the static structure factor
+double QSsfGround::plasmon() const {
+  if (wp < 0) { return 0.0; }
+  Integrator1D itgLocal = itg;
+  const QDielectricResponse dr =
+      QDielectricResponse(x, rs, yMax, ssfi, itgLocal);
+  return 1.5 / abs(dr.get<Dual11>(wp).real.dx());
+}
 
-// // Real part and its derivative
-// CDual21 QDielectricResponse::get(const double &Omega) const {
-//   const IdrGround idr = IdrGround(Omega, x);
-//   Integrator1D itgLocal = itg;
-//   const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
-//   const CDual21 cidr = CDual21(idr.real(), idr.imag());
-//   const CDual21 cadr = CDual21(adr.real(), adr.imag());
-//   const CDual21 lfc = cadr / cidr;
-//   return 1.0 + cidr / (1.0 + cidr * (ip * (1 - lfc) - 1.0));
-// }
+// -----------------------------------------------------------------
+// QDielectricResponse class
+// -----------------------------------------------------------------
 
-// // Get the plasmon frequency
-// double QDielectricResponse::plasmon(const double &guess) const {
-//   if (x == 0.0) { return wp; }
-//   // Compute plasmon frequency
-//   auto func = [this](const double &Omega) -> pair<double, double> {
-//     const Dual21 deq = dispersionEquation(Omega);
-//     return pair<double, double>(deq.dx(), deq.dxx());
-//   };
-//   QuasiNewtonRootSolver rsol;
-//   try {
-//     rsol.solve(func, guess);
-//   } catch (const std::runtime_error &e) {
-//     // The plasmon does not exist
-//     return -1;
-//   }
-//   // Check if the minimum is a zero
-//   const double wp = rsol.getSolution();
-//   bool isZero = abs(dispersionEquation(wp).val()) < 1e-10;
-//   // Output
-//   return (isZero) ? wp : -1;
-// }
+// Real part and its derivative
+template <typename T>
+CDual<T> QDielectricResponse::get(const double &Omega) const {
+  const IdrGround idr = IdrGround(Omega, x);
+  const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itg);
+  const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());
+  const CDual<T> cadr = CDual<T>(adr.real<T>(), adr.imag<T>());
+  const CDual<T> lfc = cadr / cidr;
+  return 1.0 + cidr / (1.0 + cidr * (ip * (1 - lfc) - 1.0));
+}
 
-// // Dispersion equation
-// Dual21 QDielectricResponse::dispersionEquation(const double &Omega) const {
-//   const IdrGround idr = IdrGround(Omega, x);
-//   const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
-//   const CDual21 cidr = CDual21(idr.real(), idr.imag());
-//   const CDual21 cadr = CDual21(adr.real(), adr.imag());
-//   const CDual21 deq = 1.0 + ip * cidr * (1.0 - slfc);
-//   return deq.real * deq.real + deq.imag * deq.imag;
-// }
+// Get the plasmon frequency
+double QDielectricResponse::plasmon(const double &guess) const {
+  if (x == 0.0) { return wp; }
+  // Compute plasmon frequency
+  auto func = [this](const double &Omega) -> pair<double, double> {
+    const Dual21 deq = dispersionEquation(Omega);
+    return pair<double, double>(deq.dx(), deq.dxx());
+  };
+  QuasiNewtonRootSolver rsol;
+  try {
+    rsol.solve(func, guess);
+  } catch (const std::runtime_error &e) {
+    // The plasmon does not exist
+    return -1;
+  }
+  // Check if the minimum is a zero
+  const double wp = rsol.getSolution();
+  const bool isZero = abs(dispersionEquation(wp).val()) < 1e-5;
+  // Output
+  return (isZero) ? wp : -1;
+}
+
+// Dispersion equation
+Dual21 QDielectricResponse::dispersionEquation(const double &Omega) const {
+  const IdrGround idr = IdrGround(Omega, x);
+  const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itg);
+  const CDual21 cidr = CDual21(idr.real<Dual21>(), idr.imag<Dual21>());
+  const CDual21 cadr = CDual21(adr.real<Dual21>(), adr.imag<Dual21>());
+  const CDual21 lfc = cadr / cidr;
+  const CDual21 deq = 1.0 + ip * cidr * (1.0 - lfc);
+  return deq.real * deq.real + deq.imag * deq.imag;
+}

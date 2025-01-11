@@ -384,6 +384,12 @@ public:
   const double &dxx() const { return grad[0].grad[0].func; }
 };
 
+inline Dual21 integral(const std::function<Dual21(double)> &integrand,
+                       const Integrator1D::Param &param,
+                       const Integrator1D &itg) {
+  return Dual21(integral<2>(integrand, param, itg));
+}
+
 // First order derivatives for functions of two variables
 class Dual12 : public Dual<1> {
 public:
