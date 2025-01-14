@@ -404,15 +404,15 @@ double SsfGround::get() const {
 // Integrand for zero temperature calculations
 double SsfGround::integrand(const double &Omega) const {
   const DielectricResponse dr = DielectricResponse(x, rs, slfc);
-  const CDual0 phi = 1.0 / dr.get<Dual0>(Omega);
-  return -phi.imag.val();
+  return dr.dr<Dual0>(Omega).imag.val();
 }
 
 // Plasmon contribution to the static structure factor
 double SsfGround::plasmon() const {
   if (wp < 0) { return 0.0; }
+  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   const DielectricResponse dr = DielectricResponse(x, rs, slfc);
-  return 1.5 / abs(dr.get<Dual11>(wp).real.dx());
+  return 1.5 / abs(dr.get<Dual11>(wp).real.dx()) / ip;
 }
 
 // -----------------------------------------------------------------
@@ -422,9 +422,14 @@ double SsfGround::plasmon() const {
 // Real part and its derivative
 template <typename T>
 CDual<T> DielectricResponse::get(const double &Omega) const {
+  return 1.0 / (1.0 - ip * dr<T>(Omega));
+}
+
+template <typename T>
+CDual<T> DielectricResponse::dr(const double &Omega) const {
   const IdrGround idr = IdrGround(Omega, x);
   const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());
-  return 1.0 + cidr / (1.0 + cidr * (ip * (1 - slfc) - 1.0));
+  return cidr / (1.0 + ip * cidr * (1.0 - slfc));
 }
 
 // Get the plasmon frequency

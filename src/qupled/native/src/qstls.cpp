@@ -872,30 +872,17 @@ double QSsfGround::integrand(const double &Omega) const {
   Integrator1D itgLocal = itg;
   const QDielectricResponse dr =
       QDielectricResponse(x, rs, yMax, ssfi, itgLocal);
-  const CDual0 phi = 1.0 / dr.get<Dual0>(Omega);
-  return -phi.imag.val();
-  // const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  // const IdrGround idr = IdrGround(Omega, x);
-  // Integrator1D itgLocal = itg;
-  // const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
-  // const double rei = idr.real<Dual0>().val();
-  // const double imi = idr.imag<Dual0>().val();
-  // const double rea = adr.real<Dual0>().val();
-  // const double ima = adr.imag<Dual0>().val();
-  // const double denom1 = 1 + ip * (rei - rea);
-  // const double denom2 = ip * (imi - ima);
-  // const double denom = denom1 * denom1 + denom2 * denom2;
-  // const double numer = imi - ip * (imi * rea + rei * ima);
-  // return numer / denom;
+  return dr.dr<Dual0>(Omega).imag.val();
 }
 
 // Plasmon contribution to the static structure factor
 double QSsfGround::plasmon() const {
   if (wp < 0) { return 0.0; }
   Integrator1D itgLocal = itg;
+  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   const QDielectricResponse dr =
       QDielectricResponse(x, rs, yMax, ssfi, itgLocal);
-  return 1.5 / abs(dr.get<Dual11>(wp).real.dx());
+  return 1.5 / abs(dr.get<Dual11>(wp).real.dx()) / ip;
 }
 
 // -----------------------------------------------------------------
@@ -905,12 +892,17 @@ double QSsfGround::plasmon() const {
 // Real part and its derivative
 template <typename T>
 CDual<T> QDielectricResponse::get(const double &Omega) const {
+  return 1.0 / (1.0 - ip * dr<T>(Omega));
+}
+
+template <typename T>
+CDual<T> QDielectricResponse::dr(const double &Omega) const {
   const IdrGround idr = IdrGround(Omega, x);
   const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itg);
   const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());
   const CDual<T> cadr = CDual<T>(adr.real<T>(), adr.imag<T>());
   const CDual<T> lfc = cadr / cidr;
-  return 1.0 + cidr / (1.0 + cidr * (ip * (1 - lfc) - 1.0));
+  return cidr / (1.0 + ip * cidr * (1.0 - lfc));
 }
 
 // Get the plasmon frequency
@@ -943,5 +935,5 @@ Dual21 QDielectricResponse::dispersionEquation(const double &Omega) const {
   const CDual21 cadr = CDual21(adr.real<Dual21>(), adr.imag<Dual21>());
   const CDual21 lfc = cadr / cidr;
   const CDual21 deq = 1.0 + ip * cidr * (1.0 - lfc);
-  return deq.real * deq.real + deq.imag * deq.imag;
+  return deq.real * deq.real; // + deq.imag * deq.imag;
 }

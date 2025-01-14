@@ -470,6 +470,9 @@ public:
   // Evaluate the dielectric response for a frequency Omega
   template <typename T>
   CDual<T> get(const double &Omega) const;
+  // Evaluate the density response for a frequency Omega
+  template <typename T>
+  CDual<T> dr(const double &Omega) const;
   // Find the zero of the dielectric response
   double plasmon(const double &guess) const;
 
