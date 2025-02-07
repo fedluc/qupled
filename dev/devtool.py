@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 
-def build(nompi):
+def build(nompi, native_only):
     # Build without MPI
     if nompi:
         os.environ["USE_MPI"] = "OFF"
@@ -15,7 +15,15 @@ def build(nompi):
             ["brew", "--prefix"], capture_output=True, text=True
         ).stdout.strip()
         os.environ["OpenMP_ROOT"] = str(Path(brew_prefix, "opt", "libomp"))
-    subprocess.run(["python3", "-m", "build"], check=True)
+    if native_only:
+        build_folder = "dist-native-only"
+        if not os.path.exists(build_folder):
+            os.makedirs(build_folder)
+        os.chdir(build_folder)
+        subprocess.run(["cmake", "../src/qupled/native/src"], check=True)
+        subprocess.run(["cmake", "--build", "."], check=True)
+    else:    
+        subprocess.run(["python3", "-m", "build"], check=True)
     print("Build completed.")
 
 
@@ -62,6 +70,7 @@ def docs():
 def clean():
     folders_to_clean = [
         Path("dist"),
+        Path("dist-native-only"),
         Path("src", "qupled.egg-info"),
         Path("docs", "_build"),
     ]
@@ -149,6 +158,11 @@ def run():
         action="store_true",
         help="Build without MPI support (default: False).",
     )
+    build_parser.add_argument(
+        "--native-only",
+        action="store_true",
+        help="Build only native code in C++ (default: False).",
+    )
 
     # Update version command
     version_parser = subparsers.add_parser(
@@ -168,7 +182,7 @@ def run():
     args = parser.parse_args()
 
     if args.command == "build":
-        build(args.nompi)
+        build(args.nompi, args.native_only)
     elif args.command == "clean":
         clean()
     elif args.command == "docs":
