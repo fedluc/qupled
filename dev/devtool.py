@@ -22,7 +22,7 @@ def build(nompi, native_only):
         os.chdir(build_folder)
         subprocess.run(["cmake", "../src/qupled/native/src"], check=True)
         subprocess.run(["cmake", "--build", "."], check=True)
-    else:    
+    else:
         subprocess.run(["python3", "-m", "build"], check=True)
     print("Build completed.")
 
