@@ -331,7 +331,7 @@ private:
   // Interaction potential
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   // Dispersion equation
-  Dual21 dispersionEquation(const double &Omega) const;
+  Dual11 dispersionEquation(const double &Omega) const;
 };
 
 #endif

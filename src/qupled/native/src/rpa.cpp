@@ -422,7 +422,9 @@ double SsfGround::plasmon() const {
 // Real part and its derivative
 template <typename T>
 CDual<T> DielectricResponse::get(const double &Omega) const {
-  return 1.0 / (1.0 - ip * dr<T>(Omega));
+  const IdrGround idr = IdrGround(Omega, x);
+  const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());
+  return 1.0 + ip * cidr / (1.0 - ip * cidr * slfc);
 }
 
 template <typename T>
@@ -435,29 +437,23 @@ CDual<T> DielectricResponse::dr(const double &Omega) const {
 // Get the plasmon frequency
 double DielectricResponse::plasmon(const double &guess) const {
   if (x == 0.0) { return wp; }
-  // Compute plasmon frequency
-  auto func = [this](const double &Omega) -> pair<double, double> {
-    const Dual21 deq = dispersionEquation(Omega);
-    return pair<double, double>(deq.dx(), deq.dxx());
+  auto func = [this](const double &Omega) -> double {
+    const Dual11 deq = dispersionEquation(Omega);
+    return deq.val();
   };
-  QuasiNewtonRootSolver rsol;
+  const std::vector<double> guess_ = {x * (x + 2.0), 2.0 * guess};
+  BrentRootSolver rsol;
   try {
-    rsol.solve(func, guess);
+    rsol.solve(func, guess_);
+    return rsol.getSolution();
   } catch (const std::runtime_error &e) {
     // The plasmon does not exist
     return -1;
   }
-  // Check if the minimum is a zero
-  const double wp = rsol.getSolution();
-  bool isZero = abs(dispersionEquation(wp).val()) < 1e-10;
-  // Output
-  return (isZero) ? wp : -1;
 }
 
 // Dispersion equation
-Dual21 DielectricResponse::dispersionEquation(const double &Omega) const {
+Dual11 DielectricResponse::dispersionEquation(const double &Omega) const {
   const IdrGround idr = IdrGround(Omega, x);
-  const CDual21 cidr = CDual21(idr.real<Dual21>(), idr.imag<Dual21>());
-  const CDual21 deq = 1.0 + ip * cidr * (1.0 - slfc);
-  return deq.real * deq.real + deq.imag * deq.imag;
+  return 1.0 + ip * idr.real<Dual11>() * (1.0 - slfc);
 }

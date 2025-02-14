@@ -252,7 +252,6 @@ void Qstls::computeSsfGround() {
     const QDielectricResponse dr = QDielectricResponse(x, rs, xMax, ssfi, itg);
     const double wp = (wpGuess >= 0) ? dr.plasmon(wpGuess) : -1;
     wpGuess = wp;
-    if (wpGuess >= 0) { std::cerr << wp << std::endl; };
     QSsfGround ssfTmp(x, rs, wp, xMax, ssfHF[i], ssfi, itg);
     ssfNew[i] = ssfTmp.get();
   }
@@ -768,6 +767,25 @@ double AdrFixedIet::integrand(const double &t,
 // AdrGround class
 // -----------------------------------------------------------------
 
+// Get real part
+template <typename T>
+T AdrGround::real() const {
+  return compute<T>(true);
+}
+
+// Get imaginary part
+template <typename T>
+T AdrGround::imag() const {
+  return compute<T>(false);
+}
+
+template <typename T>
+T AdrGround::compute(const bool isReal) const {
+  auto func = [&](const double &y) -> T { return integrand<T>(y, isReal); };
+  const T dual = integral(func, ItgParam(yMin, yMax), itg);
+  return (-3.0 / 32.0) * dual;
+}
+
 // Compute static structure factor
 double AdrGround::ssf(const double &y) const { return ssfi.eval(y); }
 
@@ -786,25 +804,6 @@ T AdrGround::integrand(const double &y, const bool isReal) const {
       Omega_2x - x_2 + y_2, Omega_2x - x_2 - y_2, -y2_4x - Omega_2x + x_4);
   const T GammaSum = Gamma1 + Gamma2;
   return y * (ssf(y) - 1.0) * GammaSum;
-}
-
-template <typename T>
-T AdrGround::compute(const bool isReal) const {
-  auto func = [&](const double &y) -> T { return integrand<T>(y, isReal); };
-  const T dual = integral(func, ItgParam(yMin, yMax), itg);
-  return (-3.0 / 32.0) * dual;
-}
-
-// Get real part
-template <typename T>
-T AdrGround::real() const {
-  return compute<T>(true);
-}
-
-// Get imaginary part
-template <typename T>
-T AdrGround::imag() const {
-  return compute<T>(false);
 }
 
 // Auxiliary function
@@ -870,6 +869,17 @@ double QSsfGround::get() const {
 // Integrand for zero temperature calculations
 double QSsfGround::integrand(const double &Omega) const {
   Integrator1D itgLocal = itg;
+  // const IdrGround idr = IdrGround(Omega, x);
+  // const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
+  // const CDual<Dual0> cidr = CDual<Dual0>(idr.real<Dual0>(), idr.imag<Dual0>());
+  // const CDual<Dual0> cadr = CDual<Dual0>(adr.real<Dual0>(), adr.imag<Dual0>());
+  // const double ip = 4.0 * lambda * rs / (M_PI * x * x);
+  // const double numer = cidr.imag.val() - ip * cidr.imag.val() * cadr.real.val() +
+  //   ip * cidr.real.val() * cadr.imag.val();
+  // const double denomReal = 1 + ip * (cidr.real.val() - cadr.real.val());
+  // const double denomImag = ip * (cidr.imag.val() - cadr.imag.val());
+  // const double denom = denomReal * denomReal + denomImag * denomImag;
+  // return numer/denom;
   const QDielectricResponse dr =
       QDielectricResponse(x, rs, yMax, ssfi, itgLocal);
   return dr.dr<Dual0>(Omega).imag.val();
@@ -892,7 +902,12 @@ double QSsfGround::plasmon() const {
 // Real part and its derivative
 template <typename T>
 CDual<T> QDielectricResponse::get(const double &Omega) const {
-  return 1.0 / (1.0 - ip * dr<T>(Omega));
+  const IdrGround idr = IdrGround(Omega, x);
+  const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itg);
+  const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());
+  const CDual<T> cadr = CDual<T>(adr.real<T>(), adr.imag<T>());
+  const CDual<T> lfc = cadr / cidr;
+  return 1.0 + ip * cidr / (1.0 - ip * cidr * lfc);
 }
 
 template <typename T>
@@ -902,38 +917,51 @@ CDual<T> QDielectricResponse::dr(const double &Omega) const {
   const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());
   const CDual<T> cadr = CDual<T>(adr.real<T>(), adr.imag<T>());
   const CDual<T> lfc = cadr / cidr;
-  return cidr / (1.0 + ip * cidr * (1.0 - lfc));
+  // const CDual<T> v1 = cidr; // cidr * (1.0 - lfc);
+  // const CDual<T> v2 = cidr * 1.0; //- cidr * lfc;
+  // std::cerr << x << " " << Omega << " " << (v1.imag.val() - v2.imag.val()) << " " << (v1.real.val() - v2.real.val()) << std::endl;
+  // return cidr / (1.0 + ip * cidr * (1.0 - lfc));
+  return cidr / (1.0 + ip * (cidr - cadr));
 }
 
 // Get the plasmon frequency
 double QDielectricResponse::plasmon(const double &guess) const {
   if (x == 0.0) { return wp; }
+  // Look for a region where the dielectric function changes sign
+  bool search_root = false;
+  const double wLo = x * (x + 2);
+  double wHi;
+  const bool signLo = (dispersionEquation(wLo).val() >= 0);
+  for (size_t i = 1; i < 11; i++) {
+    wHi = wLo * std::pow(2, i);
+    const bool signHi = (dispersionEquation(wHi).val() >= 0);
+    if (signHi != signLo) {
+      search_root = true;
+      break;
+    }
+  }
+  // Return if no root can be found
+  if (!search_root) return -1;
   // Compute plasmon frequency
-  auto func = [this](const double &Omega) -> pair<double, double> {
-    const Dual21 deq = dispersionEquation(Omega);
-    return pair<double, double>(deq.dx(), deq.dxx());
+  auto func = [this](const double &Omega) -> double {
+    const Dual11 deq = dispersionEquation(Omega);
+    return deq.val();
   };
-  QuasiNewtonRootSolver rsol;
+  const std::vector<double> guess_ = {wLo, wHi};
+  BrentRootSolver rsol;
   try {
-    rsol.solve(func, guess);
+    rsol.solve(func, guess_);
+    std::cerr << rsol.getSolution() << std::endl;
+    return rsol.getSolution();
   } catch (const std::runtime_error &e) {
     // The plasmon does not exist
     return -1;
   }
-  // Check if the minimum is a zero
-  const double wp = rsol.getSolution();
-  const bool isZero = abs(dispersionEquation(wp).val()) < 1e-5;
-  // Output
-  return (isZero) ? wp : -1;
 }
 
 // Dispersion equation
-Dual21 QDielectricResponse::dispersionEquation(const double &Omega) const {
+Dual11 QDielectricResponse::dispersionEquation(const double &Omega) const {
   const IdrGround idr = IdrGround(Omega, x);
   const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itg);
-  const CDual21 cidr = CDual21(idr.real<Dual21>(), idr.imag<Dual21>());
-  const CDual21 cadr = CDual21(adr.real<Dual21>(), adr.imag<Dual21>());
-  const CDual21 lfc = cadr / cidr;
-  const CDual21 deq = 1.0 + ip * cidr * (1.0 - lfc);
-  return deq.real * deq.real; // + deq.imag * deq.imag;
+  return 1.0 + ip * (idr.real<Dual11>() - adr.real<Dual11>());
 }

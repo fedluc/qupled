@@ -48,7 +48,7 @@ CDual<Dual> operator-(const CDual<Dual> &dual, double scalar) {
 
 template <typename Dual>
 CDual<Dual> operator-(const double &scalar, const CDual<Dual> &dual) {
-  return CDual<Dual>(scalar - dual.real, dual.imag);
+  return CDual<Dual>(scalar - dual.real, -1.0 * dual.imag);
 }
 
 // multiplication operators
