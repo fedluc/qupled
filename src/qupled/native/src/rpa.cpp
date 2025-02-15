@@ -7,6 +7,7 @@
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include <cmath>
+#include <complex>
 
 using namespace std;
 using namespace thermoUtil;
@@ -150,16 +151,14 @@ void Rpa::computeSsfFinite() {
 void Rpa::computeSsfGround() {
   const double rs = in.getCoupling();
   const size_t nx = wvg.size();
-  double wpGuess = 4.0 * sqrt(lambda * rs / 3.0 / M_PI); // Plasma frequency
+  double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
   assert(slfc.size() == nx);
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    DielectricResponse dr(x, rs, slfc[i]);
-    const double wp = (wpGuess >= 0) ? dr.plasmon(wpGuess) : -1;
-    wpGuess = wp;
-    SsfGround ssfTmp(x, rs, slfc[i], wp, itg);
+    SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], wp, itg);
     ssf[i] = ssfTmp.get();
+    wp = ssfTmp.getPlasmonFrequency();
   }
 }
 
@@ -392,7 +391,8 @@ double Ssf::get() const {
 // -----------------------------------------------------------------
 
 // Get result of integration
-double SsfGround::get() const {
+double SsfGround::get() {
+  computePlasmonFrequency();
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
@@ -403,57 +403,40 @@ double SsfGround::get() const {
 
 // Integrand for zero temperature calculations
 double SsfGround::integrand(const double &Omega) const {
-  const DielectricResponse dr = DielectricResponse(x, rs, slfc);
-  return dr.dr<Dual0>(Omega).imag.val();
+  const IdrGround idr = IdrGround(Omega, x);
+  const complex<double> cidr =
+      complex(idr.real<Dual0>().val(), idr.imag<Dual0>().val());
+  const complex<double> dr = cidr / (1.0 + ip * cidr * (1.0 - slfc));
+  return dr.imag();
 }
 
 // Plasmon contribution to the static structure factor
-double SsfGround::plasmon() const {
-  if (wp < 0) { return 0.0; }
-  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  const DielectricResponse dr = DielectricResponse(x, rs, slfc);
-  return 1.5 / abs(dr.get<Dual11>(wp).real.dx()) / ip;
-}
-
-// -----------------------------------------------------------------
-// DielectricResponse class
-// -----------------------------------------------------------------
-
-// Real part and its derivative
-template <typename T>
-CDual<T> DielectricResponse::get(const double &Omega) const {
-  const IdrGround idr = IdrGround(Omega, x);
-  const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());
-  return 1.0 + ip * cidr / (1.0 - ip * cidr * slfc);
-}
-
-template <typename T>
-CDual<T> DielectricResponse::dr(const double &Omega) const {
-  const IdrGround idr = IdrGround(Omega, x);
-  const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());
-  return cidr / (1.0 + ip * cidr * (1.0 - slfc));
+double SsfGround::plasmon() {
+  if (wp < 0.0) { return 0.0; }
+  const IdrGround idr = IdrGround(wp, x);
+  const double idrRe = idr.real<Dual0>().val();
+  const double denom = ip * idr.real<Dual11>().dx() * (1.0 - slfc);
+  return -1.5 * idrRe / denom;
 }
 
 // Get the plasmon frequency
-double DielectricResponse::plasmon(const double &guess) const {
-  if (x == 0.0) { return wp; }
+void SsfGround::computePlasmonFrequency() {
+  if (wpGuess < 0.0) { return; }
+  if (x == 0.0) {
+    // The plasma frequency
+    wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
+    return;
+  }
   auto func = [this](const double &Omega) -> double {
-    const Dual11 deq = dispersionEquation(Omega);
-    return deq.val();
+    const IdrGround idr = IdrGround(Omega, x);
+    return 1.0 + ip * idr.real<Dual0>().val() * (1.0 - slfc);
   };
-  const std::vector<double> guess_ = {x * (x + 2.0), 2.0 * guess};
   BrentRootSolver rsol;
   try {
-    rsol.solve(func, guess_);
-    return rsol.getSolution();
+    rsol.solve(func, {x * (x + 2.0), 2.0 * wpGuess});
+    wp = rsol.getSolution();
   } catch (const std::runtime_error &e) {
     // The plasmon does not exist
-    return -1;
+    wp = -1;
   }
-}
-
-// Dispersion equation
-Dual11 DielectricResponse::dispersionEquation(const double &Omega) const {
-  const IdrGround idr = IdrGround(Omega, x);
-  return 1.0 + ip * idr.real<Dual11>() * (1.0 - slfc);
 }

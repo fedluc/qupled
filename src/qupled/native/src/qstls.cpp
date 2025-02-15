@@ -255,6 +255,14 @@ void Qstls::computeSsfGround() {
     QSsfGround ssfTmp(x, rs, wp, xMax, ssfHF[i], ssfi, itg);
     ssfNew[i] = ssfTmp.get();
   }
+  for (size_t i = 0; i < nx; ++i) {
+    const double x = wvg[i];
+    if (x > 0.65 && x < 0.75) {
+      std::cerr << ssfNew[i - 1] << " " << " " << ssfNew[i] << " "
+                << ssfNew[i + 1] << std::endl;
+      ssfNew[i] = (ssfNew[i + 1] + ssfNew[i - 1]) / 2.0;
+    }
+  }
 }
 
 // Compute residual error for the qstls iterations
@@ -869,17 +877,6 @@ double QSsfGround::get() const {
 // Integrand for zero temperature calculations
 double QSsfGround::integrand(const double &Omega) const {
   Integrator1D itgLocal = itg;
-  // const IdrGround idr = IdrGround(Omega, x);
-  // const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
-  // const CDual<Dual0> cidr = CDual<Dual0>(idr.real<Dual0>(), idr.imag<Dual0>());
-  // const CDual<Dual0> cadr = CDual<Dual0>(adr.real<Dual0>(), adr.imag<Dual0>());
-  // const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  // const double numer = cidr.imag.val() - ip * cidr.imag.val() * cadr.real.val() +
-  //   ip * cidr.real.val() * cadr.imag.val();
-  // const double denomReal = 1 + ip * (cidr.real.val() - cadr.real.val());
-  // const double denomImag = ip * (cidr.imag.val() - cadr.imag.val());
-  // const double denom = denomReal * denomReal + denomImag * denomImag;
-  // return numer/denom;
   const QDielectricResponse dr =
       QDielectricResponse(x, rs, yMax, ssfi, itgLocal);
   return dr.dr<Dual0>(Omega).imag.val();
@@ -890,9 +887,11 @@ double QSsfGround::plasmon() const {
   if (wp < 0) { return 0.0; }
   Integrator1D itgLocal = itg;
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  const QDielectricResponse dr =
-      QDielectricResponse(x, rs, yMax, ssfi, itgLocal);
-  return 1.5 / abs(dr.get<Dual11>(wp).real.dx()) / ip;
+  const IdrGround idr = IdrGround(wp, x);
+  const AdrGround adr = AdrGround(wp, x, ssfi, yMin, yMax, itgLocal);
+  const double idrRe = idr.real<Dual0>().val();
+  const double denom = ip * (idr.real<Dual11>().dx() - adr.real<Dual11>().dx());
+  return -1.5 * idrRe / denom;
 }
 
 // -----------------------------------------------------------------
@@ -919,8 +918,9 @@ CDual<T> QDielectricResponse::dr(const double &Omega) const {
   const CDual<T> lfc = cadr / cidr;
   // const CDual<T> v1 = cidr; // cidr * (1.0 - lfc);
   // const CDual<T> v2 = cidr * 1.0; //- cidr * lfc;
-  // std::cerr << x << " " << Omega << " " << (v1.imag.val() - v2.imag.val()) << " " << (v1.real.val() - v2.real.val()) << std::endl;
-  // return cidr / (1.0 + ip * cidr * (1.0 - lfc));
+  // std::cerr << x << " " << Omega << " " << (v1.imag.val() - v2.imag.val()) <<
+  // " " << (v1.real.val() - v2.real.val()) << std::endl; return cidr / (1.0 +
+  // ip * cidr * (1.0 - lfc));
   return cidr / (1.0 + ip * (cidr - cadr));
 }
 
@@ -951,7 +951,20 @@ double QDielectricResponse::plasmon(const double &guess) const {
   BrentRootSolver rsol;
   try {
     rsol.solve(func, guess_);
-    std::cerr << rsol.getSolution() << std::endl;
+    // DEBUG
+    const IdrGround idr = IdrGround(rsol.getSolution(), x);
+    const AdrGround adr =
+        AdrGround(rsol.getSolution(), x, ssfi, yMin, yMax, itg);
+    const double re =
+        1.0 + ip * (idr.real<Dual0>().val() - adr.real<Dual0>().val());
+    const double im = ip * (idr.imag<Dual0>().val() - adr.imag<Dual0>().val());
+    auto func = [&](const double &y) -> double { return ssfi.eval(y) - 1.0; };
+    itg.compute(func, ItgParam(yMin, yMax));
+    const double an = wp + 3.0 / (10.0 * wp) * x * x
+                      - wp * wp * wp / 4.0 * itg.getSolution() * x * x;
+    std::cerr << x << " " << rsol.getSolution() << " " << an << " " << re << " "
+              << im << std::endl;
+    // DEBUG
     return rsol.getSolution();
   } catch (const std::runtime_error &e) {
     // The plasmon does not exist

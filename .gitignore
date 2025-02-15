@@ -7,4 +7,5 @@ docs/_build
 *.vscode
 .tox
 dist
+dist-native-only
 qupled.egg-info

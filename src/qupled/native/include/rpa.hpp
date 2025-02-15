@@ -272,66 +272,40 @@ public:
   // Constructor for zero temperature calculations
   SsfGround(const double &x_,
             const double &rs_,
+            const double &ssfHF_,
             const double &slfc_,
-            const double &wp_,
+            const double &wpGuess_,
             Integrator1D &itg_)
-      : SsfBase(x_, 0, rs_, 0, slfc_),
-        wp(wp_),
+      : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
+        wpGuess(wpGuess_),
+        wp(-1.0),
         yMin(std::max(0.0, x * (x - 2.0))),
         yMax(x * (x + 2.0)),
         itg(itg_) {}
   // Get result of integration
-  double get() const;
+  double get();
+  // Get plasmon frequency
+  double getPlasmonFrequency() const { return wp; }
 
 private:
 
+  // Initial guess for the plasmon frequency calculation
+  const double wpGuess;
   // Plasmon frequency
-  const double wp;
+  double wp;
   // Integration limits for zero temperature calculations
   const double yMin;
   const double yMax;
+  // Interaction potential
+  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   // Integrator object
   Integrator1D &itg;
   // Integrand for zero temperature calculations
   double integrand(const double &Omega) const;
-  // Plasmon contribution
-  double plasmon() const;
-};
-
-class DielectricResponse {
-
-public:
-
-  // Constructor
-  DielectricResponse(const double &x_, const double &rs_, const double &slfc_)
-      : x(x_),
-        rs(rs_),
-        slfc(slfc_) {}
-  // Evaluate the dielectric response for a frequency Omega
-  template <typename T>
-  CDual<T> get(const double &Omega) const;
-  // Evaluate the density response for a frequency Omega
-  template <typename T>
-  CDual<T> dr(const double &Omega) const;
-  // Find the zero of the dielectric response
-  double plasmon(const double &guess) const;
-
-private:
-
-  // Wave-vector
-  const double x;
-  // Coupling parameter
-  const double rs;
-  // Static local field correction
-  const double slfc;
-  // Constant for unit conversion
-  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
-  // Plasma frequency
-  const double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
-  // Interaction potential
-  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  // Dispersion equation
-  Dual11 dispersionEquation(const double &Omega) const;
+  // Plasmon contribution to the static structure factor
+  double plasmon();
+  // Find the plasmon frequency
+  void computePlasmonFrequency();
 };
 
 #endif
