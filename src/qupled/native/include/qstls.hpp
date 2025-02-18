@@ -407,15 +407,15 @@ public:
   // Constructor for zero temperature calculations
   QSsfGround(const double &x_,
              const double &rs_,
-             const double &wp_,
              const double &xMax_,
              const double &ssfHF_,
+             const double &wpGuess_,
              const Interpolator1D &ssfi_,
              Integrator1D &itg_)
       : x(x_),
         rs(rs_),
         ssfHF(ssfHF_),
-        wp(wp_),
+        wpGuess(wpGuess_),
         wMin(std::max(0.0, x * (x - 2.0))),
         wMax(x * (x + 2.0)),
         yMin(0.0),
@@ -423,7 +423,9 @@ public:
         itg(itg_),
         ssfi(ssfi_) {}
   // Get result of integration
-  double get() const;
+  double get();
+  // Get plasmon frequency
+  double getPlasmonFrequency() const { return wp; }
 
 private:
 
@@ -433,8 +435,10 @@ private:
   const double rs;
   // HF static structure factor
   const double ssfHF;
+  // Initial guess for the plasmon frequency calculation
+  const double wpGuess;
   // Plasmon frequency
-  const double wp;
+  double wp;
   // Integration limits for zero temperature calculations
   const double wMin;
   const double wMax;
@@ -446,57 +450,14 @@ private:
   const Interpolator1D &ssfi;
   // Constant for unit conversion
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
-  // Integrand for zero temperature calculations
-  double integrand(const double &Omega) const;
-  double plasmon() const;
-};
-
-class QDielectricResponse {
-
-public:
-
-  // Constructor
-  QDielectricResponse(const double &x_,
-                      const double &rs_,
-                      const double &xMax_,
-                      const Interpolator1D &ssfi_,
-                      Integrator1D &itg_)
-      : x(x_),
-        rs(rs_),
-        yMin(0.0),
-        yMax(xMax_),
-        itg(itg_),
-        ssfi(ssfi_) {}
-  // Evaluate the dielectric response for a frequency Omega
-  template <typename T>
-  CDual<T> get(const double &Omega) const;
-  // Evaluate the density response for a frequency Omega
-  template <typename T>
-  CDual<T> dr(const double &Omega) const;
-  // Find the zero of the dielectric response
-  double plasmon(const double &guess) const;
-
-private:
-
-  // Wave-vector
-  const double x;
-  // Coupling parameter
-  const double rs;
-  // Integration limits for zero temperature calculations
-  const double yMin;
-  const double yMax;
-  // Integrator object
-  Integrator1D &itg;
-  // Interpolator for the static structure factor
-  const Interpolator1D &ssfi;
-  // Constant for unit conversion
-  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
-  // Plasma frequency
-  const double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
   // Interaction potential
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  // Dispersion equation
-  Dual11 dispersionEquation(const double &Omega) const;
+  // Integrand for zero temperature calculations
+  double integrand(const double &Omega) const;
+  // Plasmon contribution to the static structure factor
+  double plasmon();
+  // Find the plasmon frequency
+  void computePlasmonFrequency();
 };
 
 #endif

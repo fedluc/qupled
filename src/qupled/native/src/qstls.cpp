@@ -1,9 +1,11 @@
 #include "qstls.hpp"
 #include "bin_util.hpp"
+#include "dual.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "vector_util.hpp"
+#include <complex>
 #include <filesystem>
 #include <fmt/core.h>
 #include <numeric>
@@ -15,6 +17,7 @@ using namespace MPIUtil;
 using namespace SpecialFunctions;
 using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
+using cdouble = complex<double>;
 
 // -----------------------------------------------------------------
 // QSTLS class
@@ -246,22 +249,12 @@ void Qstls::computeSsfGround() {
   const double rs = in.getCoupling();
   const size_t nx = wvg.size();
   const double xMax = wvg.back();
-  double wpGuess = 4.0 * sqrt(lambda * rs / 3.0 / M_PI); // Plasma frequency
+  double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    const QDielectricResponse dr = QDielectricResponse(x, rs, xMax, ssfi, itg);
-    const double wp = (wpGuess >= 0) ? dr.plasmon(wpGuess) : -1;
-    wpGuess = wp;
-    QSsfGround ssfTmp(x, rs, wp, xMax, ssfHF[i], ssfi, itg);
+    QSsfGround ssfTmp(x, rs, xMax, ssfHF[i], wp, ssfi, itg);
     ssfNew[i] = ssfTmp.get();
-  }
-  for (size_t i = 0; i < nx; ++i) {
-    const double x = wvg[i];
-    if (x > 0.65 && x < 0.75) {
-      std::cerr << ssfNew[i - 1] << " " << " " << ssfNew[i] << " "
-                << ssfNew[i + 1] << std::endl;
-      ssfNew[i] = (ssfNew[i + 1] + ssfNew[i - 1]) / 2.0;
-    }
+    wp = ssfTmp.getPlasmonFrequency();
   }
 }
 
@@ -865,7 +858,8 @@ T AdrGround::Gamma<T>::spence(const T &x) const {
 // -----------------------------------------------------------------
 
 // Get result of integration
-double QSsfGround::get() const {
+double QSsfGround::get() {
+  computePlasmonFrequency();
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
@@ -877,13 +871,18 @@ double QSsfGround::get() const {
 // Integrand for zero temperature calculations
 double QSsfGround::integrand(const double &Omega) const {
   Integrator1D itgLocal = itg;
-  const QDielectricResponse dr =
-      QDielectricResponse(x, rs, yMax, ssfi, itgLocal);
-  return dr.dr<Dual0>(Omega).imag.val();
+  const IdrGround idr = IdrGround(Omega, x);
+  const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
+  const cdouble cidr =
+      complex(idr.real<Dual0>().val(), idr.imag<Dual0>().val());
+  const cdouble cadr =
+      complex(adr.real<Dual0>().val(), adr.imag<Dual0>().val());
+  const cdouble dr = cidr / (1.0 + ip * (cidr - cadr));
+  return dr.imag();
 }
 
 // Plasmon contribution to the static structure factor
-double QSsfGround::plasmon() const {
+double QSsfGround::plasmon() {
   if (wp < 0) { return 0.0; }
   Integrator1D itgLocal = itg;
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
@@ -894,87 +893,27 @@ double QSsfGround::plasmon() const {
   return -1.5 * idrRe / denom;
 }
 
-// -----------------------------------------------------------------
-// QDielectricResponse class
-// -----------------------------------------------------------------
-
-// Real part and its derivative
-template <typename T>
-CDual<T> QDielectricResponse::get(const double &Omega) const {
-  const IdrGround idr = IdrGround(Omega, x);
-  const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itg);
-  const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());
-  const CDual<T> cadr = CDual<T>(adr.real<T>(), adr.imag<T>());
-  const CDual<T> lfc = cadr / cidr;
-  return 1.0 + ip * cidr / (1.0 - ip * cidr * lfc);
-}
-
-template <typename T>
-CDual<T> QDielectricResponse::dr(const double &Omega) const {
-  const IdrGround idr = IdrGround(Omega, x);
-  const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itg);
-  const CDual<T> cidr = CDual<T>(idr.real<T>(), idr.imag<T>());
-  const CDual<T> cadr = CDual<T>(adr.real<T>(), adr.imag<T>());
-  const CDual<T> lfc = cadr / cidr;
-  // const CDual<T> v1 = cidr; // cidr * (1.0 - lfc);
-  // const CDual<T> v2 = cidr * 1.0; //- cidr * lfc;
-  // std::cerr << x << " " << Omega << " " << (v1.imag.val() - v2.imag.val()) <<
-  // " " << (v1.real.val() - v2.real.val()) << std::endl; return cidr / (1.0 +
-  // ip * cidr * (1.0 - lfc));
-  return cidr / (1.0 + ip * (cidr - cadr));
-}
-
 // Get the plasmon frequency
-double QDielectricResponse::plasmon(const double &guess) const {
-  if (x == 0.0) { return wp; }
-  // Look for a region where the dielectric function changes sign
-  bool search_root = false;
-  const double wLo = x * (x + 2);
-  double wHi;
-  const bool signLo = (dispersionEquation(wLo).val() >= 0);
-  for (size_t i = 1; i < 11; i++) {
-    wHi = wLo * std::pow(2, i);
-    const bool signHi = (dispersionEquation(wHi).val() >= 0);
-    if (signHi != signLo) {
-      search_root = true;
-      break;
-    }
+void QSsfGround::computePlasmonFrequency() {
+  if (wpGuess < 0.0) { return; }
+  if (x == 0.0) {
+    // The plasma frequency
+    wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
+    return;
   }
-  // Return if no root can be found
-  if (!search_root) return -1;
   // Compute plasmon frequency
   auto func = [this](const double &Omega) -> double {
-    const Dual11 deq = dispersionEquation(Omega);
-    return deq.val();
+    Integrator1D itgLocal = itg;
+    const IdrGround idr = IdrGround(Omega, x);
+    const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
+    return 1.0 + ip * (idr.real<Dual0>().val() - adr.real<Dual0>().val());
   };
-  const std::vector<double> guess_ = {wLo, wHi};
   BrentRootSolver rsol;
   try {
-    rsol.solve(func, guess_);
-    // DEBUG
-    const IdrGround idr = IdrGround(rsol.getSolution(), x);
-    const AdrGround adr =
-        AdrGround(rsol.getSolution(), x, ssfi, yMin, yMax, itg);
-    const double re =
-        1.0 + ip * (idr.real<Dual0>().val() - adr.real<Dual0>().val());
-    const double im = ip * (idr.imag<Dual0>().val() - adr.imag<Dual0>().val());
-    auto func = [&](const double &y) -> double { return ssfi.eval(y) - 1.0; };
-    itg.compute(func, ItgParam(yMin, yMax));
-    const double an = wp + 3.0 / (10.0 * wp) * x * x
-                      - wp * wp * wp / 4.0 * itg.getSolution() * x * x;
-    std::cerr << x << " " << rsol.getSolution() << " " << an << " " << re << " "
-              << im << std::endl;
-    // DEBUG
-    return rsol.getSolution();
+    rsol.solve(func, {x * (x + 2.0), 2.0 * wpGuess});
+    wp = rsol.getSolution();
   } catch (const std::runtime_error &e) {
     // The plasmon does not exist
-    return -1;
+    wp = -1;
   }
-}
-
-// Dispersion equation
-Dual11 QDielectricResponse::dispersionEquation(const double &Omega) const {
-  const IdrGround idr = IdrGround(Omega, x);
-  const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itg);
-  return 1.0 + ip * (idr.real<Dual11>() - adr.real<Dual11>());
 }

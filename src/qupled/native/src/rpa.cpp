@@ -1,5 +1,4 @@
 #include "rpa.hpp"
-#include "cdual.hpp"
 #include "chemical_potential.hpp"
 #include "dual.hpp"
 #include "input.hpp"
@@ -14,6 +13,7 @@ using namespace thermoUtil;
 using namespace MPIUtil;
 using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
+using cdouble = complex<double>;
 
 // Constructor
 Rpa::Rpa(const RpaInput &in_, const bool verbose_)
@@ -404,9 +404,9 @@ double SsfGround::get() {
 // Integrand for zero temperature calculations
 double SsfGround::integrand(const double &Omega) const {
   const IdrGround idr = IdrGround(Omega, x);
-  const complex<double> cidr =
+  const cdouble cidr =
       complex(idr.real<Dual0>().val(), idr.imag<Dual0>().val());
-  const complex<double> dr = cidr / (1.0 + ip * cidr * (1.0 - slfc));
+  const cdouble dr = cidr / (1.0 + ip * cidr * (1.0 - slfc));
   return dr.imag();
 }
 

@@ -1,7 +1,6 @@
 #ifndef RPA_HPP
 #define RPA_HPP
 
-#include "cdual.hpp"
 #include "input.hpp"
 #include "logger.hpp"
 #include "num_util.hpp"
