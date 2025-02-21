@@ -9,6 +9,7 @@
 
 using namespace std;
 using namespace vecUtil;
+using namespace MPIUtil;
 using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
 using ItgType = Integrator1D::Type;
