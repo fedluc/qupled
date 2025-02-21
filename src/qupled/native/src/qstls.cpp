@@ -249,12 +249,10 @@ void Qstls::computeSsfGround() {
   const double rs = in.getCoupling();
   const size_t nx = wvg.size();
   const double xMax = wvg.back();
-  double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    QSsfGround ssfTmp(x, rs, xMax, ssfHF[i], wp, ssfi, itg);
+    QSsfGround ssfTmp(x, rs, xMax, ssfHF[i], ssfi, itg);
     ssfNew[i] = ssfTmp.get();
-    wp = ssfTmp.getPlasmonFrequency();
   }
 }
 
@@ -768,89 +766,39 @@ double AdrFixedIet::integrand(const double &t,
 // AdrGround class
 // -----------------------------------------------------------------
 
-// Get real part
-template <typename T>
-T AdrGround::real() const {
-  return compute<T>(true);
+// Get
+double AdrGround::get() {
+  auto tMin = [&](const double &y) -> double { return x * (x + y); };
+  auto tMax = [&](const double &y) -> double { return x * (x - y); };
+  auto func1 = [&](const double &y) -> double { return integrand1(y); };
+  auto func2 = [&](const double &t) -> double { return integrand2(t); };
+  itg2.compute(func1, func2, Itg2DParam(0, yMax, tMin, tMax), {});
+  return -(3.0 / 8.0) * itg2.getSolution();
 }
 
-// Get imaginary part
-template <typename T>
-T AdrGround::imag() const {
-  return compute<T>(false);
+double AdrGround::integrand1(const double &y) const {
+  return y * (ssf(y) - 1.0);
 }
 
-template <typename T>
-T AdrGround::compute(const bool isReal) const {
-  auto func = [&](const double &y) -> T { return integrand<T>(y, isReal); };
-  const T dual = integral(func, ItgParam(yMin, yMax), itg);
-  return (-3.0 / 32.0) * dual;
-}
-
-// Compute static structure factor
-double AdrGround::ssf(const double &y) const { return ssfi.eval(y); }
-
-// Integrands
-template <typename T>
-T AdrGround::integrand(const double &y, const bool isReal) const {
-  const T Omega_2x = T(Omega, 0) / (2.0 * x);
-  const double x_2 = x / 2.0;
-  const double x_4 = x_2 / 2.0;
-  const double y_2 = y / 2.0;
-  const double y2_4x = y * y / (4.0 * x);
-  const auto Gamma = AdrGround::Gamma<T>(isReal);
-  const T Gamma1 = Gamma.get(
-      Omega_2x + x_2 + y_2, Omega_2x + x_2 - y_2, y2_4x - Omega_2x - x_4);
-  const T Gamma2 = Gamma.get(
-      Omega_2x - x_2 + y_2, Omega_2x - x_2 - y_2, -y2_4x - Omega_2x + x_4);
-  const T GammaSum = Gamma1 + Gamma2;
-  return y * (ssf(y) - 1.0) * GammaSum;
-}
-
-// Auxiliary function
-template <typename T>
-T AdrGround::Gamma<T>::get(const T &a, const T &b, const T &c) const {
-  return (isReal) ? real(a, b, c) : imag(a, b, c);
-}
-
-template <typename T>
-T AdrGround::Gamma<T>::real(const T &a, const T &b, const T &c) const {
-  return Gamma1(a, c) - Gamma1(b, c);
-}
-
-template <typename T>
-T AdrGround::Gamma<T>::imag(const T &a, const T &b, const T &c) const {
-  if (a.val() < -1.0 || b.val() > 1.0) { return T(0.0); }
-  const T aCap = (a.val() <= 1.0) ? a : T(1.0);
-  const T bCap = (b.val() >= -1.0) ? b : T(-1.0);
-  return Gamma2(aCap, bCap, c);
-}
-
-template <typename T>
-T AdrGround::Gamma<T>::Gamma1(const T &a, const T &c) const {
-  const T logarg = abs((1.0 - c) / (c + 1.0));
-  const T c2m1 = c * c - 1.0;
-  const T dilogarg1 = (a + c) / (c - 1.0);
-  const T dilogarg2 = (a + c) / (c + 1.0);
-  return a - (2.0 * c + c2m1 * log(logarg)) * log(abs(a + c))
-         + (0.5 * (a + 1.0) - c) * (a - 1.0) * log(abs(a - 1.0))
-         - (0.5 * (a - 1.0) - c) * (a + 1.0) * log(abs(a + 1.0))
-         + c2m1 * (spence(dilogarg1) - spence(dilogarg2));
-}
-
-template <typename T>
-T AdrGround::Gamma<T>::Gamma2(const T &a, const T &b, const T &c) const {
-  const T logarg = abs((a + c) / (b + c));
-  return -M_PI * ((1 - c * c) * log(logarg) - (a - b) * ((a + b) / 2.0 - c));
-}
-
-template <typename T>
-T AdrGround::Gamma<T>::spence(const T &x) const {
-  if (x.val() < 1.0) { return dilog(x); }
-  const double pi2 = M_PI * M_PI;
-  const T logx = log(x);
-  const T logx2 = logx * logx;
-  return pi2 / 3.0 - 0.5 * logx2 - dilog(1.0 / x);
+double AdrGround::integrand2(const double &t) const {
+  if (x == 0.0) { return 0.0; }
+  const double y = itg2.getX();
+  const double x2 = x * x;
+  const double Omega2 = Omega * Omega;
+  const double t2 = t * t;
+  const double y2 = y * y;
+  const double tx = 2.0 * x;
+  const double tptx = t + tx;
+  const double tmtx = t - tx;
+  const double tptx2 = tptx * tptx;
+  const double tmtx2 = tmtx * tmtx;
+  const double logarg = (tptx2 + Omega2) / (tmtx2 + Omega2);
+  const double part1 =
+      (0.5 - t2 / (8.0 * x2) + Omega2 / (8.0 * x2)) * log(logarg);
+  const double part2 =
+      0.5 * Omega * t / x2 * (atan(tptx / Omega) - atan(tmtx / Omega));
+  const double part3 = part1 - part2 + t / x;
+  return part3 / (2.0 * t + y2 - x2);
 }
 
 // -----------------------------------------------------------------
@@ -859,61 +807,18 @@ T AdrGround::Gamma<T>::spence(const T &x) const {
 
 // Get result of integration
 double QSsfGround::get() {
-  computePlasmonFrequency();
+  // computePlasmonFrequency();
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
-  itg.compute(func, ItgParam(wMin, wMax));
-  const double ssfP = plasmon();
-  return 1.5 / M_PI * itg.getSolution() + ssfP;
+  itg.compute(func, ItgParam(0, 20));
+  return 1.5 / (M_PI)*itg.getSolution() + ssfHF;
 }
 
 // Integrand for zero temperature calculations
 double QSsfGround::integrand(const double &Omega) const {
-  Integrator1D itgLocal = itg;
-  const IdrGround idr = IdrGround(Omega, x);
-  const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
-  const cdouble cidr =
-      complex(idr.real<Dual0>().val(), idr.imag<Dual0>().val());
-  const cdouble cadr =
-      complex(adr.real<Dual0>().val(), adr.imag<Dual0>().val());
-  const cdouble dr = cidr / (1.0 + ip * (cidr - cadr));
-  return dr.imag();
-}
-
-// Plasmon contribution to the static structure factor
-double QSsfGround::plasmon() {
-  if (wp < 0) { return 0.0; }
-  Integrator1D itgLocal = itg;
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  const IdrGround idr = IdrGround(wp, x);
-  const AdrGround adr = AdrGround(wp, x, ssfi, yMin, yMax, itgLocal);
-  const double idrRe = idr.real<Dual0>().val();
-  const double denom = ip * (idr.real<Dual11>().dx() - adr.real<Dual11>().dx());
-  return -1.5 * idrRe / denom;
-}
-
-// Get the plasmon frequency
-void QSsfGround::computePlasmonFrequency() {
-  if (wpGuess < 0.0) { return; }
-  if (x == 0.0) {
-    // The plasma frequency
-    wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
-    return;
-  }
-  // Compute plasmon frequency
-  auto func = [this](const double &Omega) -> double {
-    Integrator1D itgLocal = itg;
-    const IdrGround idr = IdrGround(Omega, x);
-    const AdrGround adr = AdrGround(Omega, x, ssfi, yMin, yMax, itgLocal);
-    return 1.0 + ip * (idr.real<Dual0>().val() - adr.real<Dual0>().val());
-  };
-  BrentRootSolver rsol;
-  try {
-    rsol.solve(func, {x * (x + 2.0), 2.0 * wpGuess});
-    wp = rsol.getSolution();
-  } catch (const std::runtime_error &e) {
-    // The plasmon does not exist
-    wp = -1;
-  }
+  const double idr = IdrGround(Omega, x).get();
+  const double adr = AdrGround(Omega, x, ssfi, xMax).get();
+  return idr / (1.0 + ip * (idr - adr)) - idr;
 }

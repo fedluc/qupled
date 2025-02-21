@@ -343,21 +343,13 @@ public:
   AdrGround(const double &Omega_,
             const double &x_,
             const Interpolator1D &ssfi_,
-            const double &yMin_,
-            const double &yMax_,
-            Integrator1D &itg_)
+            const double &yMax_)
       : Omega(Omega_),
         x(x_),
         ssfi(ssfi_),
-        yMin(yMin_),
-        yMax(yMax_),
-        itg(itg_) {}
-  // Get real part
-  template <typename T>
-  T real() const;
-  // Get imaginary part
-  template <typename T>
-  T imag() const;
+        yMax(yMax_) {}
+  // Get
+  double get();
 
 private:
 
@@ -368,36 +360,14 @@ private:
   // Interpolator for the static structure factor
   const Interpolator1D &ssfi;
   // Integration limits for zero temperature calculations
-  const double yMin;
   const double yMax;
   // Integrator object
-  Integrator1D &itg;
+  Integrator2D itg2 = Integrator2D(1.0e-5);
   // Compute the static structure factor
   double ssf(const double &y) const;
   // Integrands
-  template <typename T>
-  T compute(const bool isReal) const;
-  template <typename T>
-  T integrand(const double &y, const bool isReal) const;
-
-  // Auxiliary function
-  template <typename T>
-  class Gamma {
-  public:
-
-    Gamma(const bool isReal_)
-        : isReal(isReal_) {}
-    T get(const T &a, const T &b, const T &c) const;
-
-  private:
-
-    const bool isReal;
-    T real(const T &a, const T &b, const T &c) const;
-    T imag(const T &a, const T &b, const T &c) const;
-    T Gamma1(const T &a, const T &b) const;
-    T Gamma2(const T &a, const T &b, const T &c) const;
-    T spence(const T &x) const;
-  };
+  double integrand1(const double &y) const;
+  double integrand2(const double &t) const;
 };
 
 class QSsfGround {
@@ -409,23 +379,16 @@ public:
              const double &rs_,
              const double &xMax_,
              const double &ssfHF_,
-             const double &wpGuess_,
              const Interpolator1D &ssfi_,
              Integrator1D &itg_)
       : x(x_),
         rs(rs_),
         ssfHF(ssfHF_),
-        wpGuess(wpGuess_),
-        wMin(std::max(0.0, x * (x - 2.0))),
-        wMax(x * (x + 2.0)),
-        yMin(0.0),
-        yMax(xMax_),
+        xMax(xMax_),
         itg(itg_),
         ssfi(ssfi_) {}
   // Get result of integration
   double get();
-  // Get plasmon frequency
-  double getPlasmonFrequency() const { return wp; }
 
 private:
 
@@ -435,29 +398,16 @@ private:
   const double rs;
   // HF static structure factor
   const double ssfHF;
-  // Initial guess for the plasmon frequency calculation
-  const double wpGuess;
-  // Plasmon frequency
-  double wp;
   // Integration limits for zero temperature calculations
-  const double wMin;
-  const double wMax;
-  const double yMin;
-  const double yMax;
+  const double xMax;
   // Integrator object
   Integrator1D &itg;
   // Interpolator
   const Interpolator1D &ssfi;
   // Constant for unit conversion
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
-  // Interaction potential
-  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   // Integrand for zero temperature calculations
   double integrand(const double &Omega) const;
-  // Plasmon contribution to the static structure factor
-  double plasmon();
-  // Find the plasmon frequency
-  void computePlasmonFrequency();
 };
 
 #endif
