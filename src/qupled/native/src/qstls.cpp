@@ -1,11 +1,9 @@
 #include "qstls.hpp"
 #include "bin_util.hpp"
-#include "dual.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "vector_util.hpp"
-#include <complex>
 #include <filesystem>
 #include <fmt/core.h>
 #include <numeric>
@@ -17,7 +15,6 @@ using namespace MPIUtil;
 using namespace SpecialFunctions;
 using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
-using cdouble = complex<double>;
 
 // -----------------------------------------------------------------
 // QSTLS class

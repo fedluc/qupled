@@ -1,11 +1,8 @@
 #ifndef DUAL_HPP
 #define DUAL_HPP
 
-#include "numerics.hpp"
 #include <cmath>
 #include <vector>
-
-using namespace SpecialFunctions;
 
 // -----------------------------------------------------------------
 // Classes for automatic differentiation
@@ -30,7 +27,7 @@ public:
 };
 
 template <>
-class Dual<0> {
+class Dual<1> {
 public:
 
   double func;
@@ -38,9 +35,8 @@ public:
   // Constructors
   Dual(const double &func_, const int nvar, const int index)
       : func(func_),
-        grad(0) {
-    static_cast<void>(nvar);
-    static_cast<void>(index);
+        grad(nvar) {
+    if (index >= 0 && index < nvar) { grad[index] = 1; }
   }
 };
 
@@ -163,54 +159,6 @@ Dual<Order> operator/(const double &scalar, const Dual<Order> &dual) {
   return result;
 }
 
-// Smaller-than operator
-template <int Order>
-std::vector<bool> operator<(const Dual<Order> &dual1,
-                            const Dual<Order> &dual2) {
-  const size_t nvar = dual1.grad.size();
-  std::vector<bool> result(nvar + 1);
-  result[0] = dual1.func < dual2.func;
-  for (size_t i = 1; i < nvar + 1; ++i) {
-    result[i] = dual1.grad[i] < dual1.grad[i];
-  }
-  return result;
-}
-
-template <int Order>
-std::vector<bool> operator<(const Dual<Order> &dual, const double &scalar) {
-  const auto scalarDual = Dual<Order>(scalar, dual.grad.size(), -1);
-  return dual < scalarDual;
-}
-
-template <int Order>
-std::vector<bool> operator<(const double &scalar, const Dual<Order> &dual) {
-  return dual > scalar;
-}
-
-// Larger-than operator
-template <int Order>
-std::vector<bool> operator>(const Dual<Order> &dual1,
-                            const Dual<Order> &dual2) {
-  const size_t nvar = dual1.grad.size();
-  std::vector<bool> result(nvar + 1);
-  result[0] = dual1.func > dual2.func;
-  for (size_t i = 1; i < nvar + 1; ++i) {
-    result[i] = dual1.grad[i] > dual1.grad[i];
-  }
-  return result;
-}
-
-template <int Order>
-std::vector<bool> operator>(const Dual<Order> &dual, const double &scalar) {
-  const auto scalarDual = Dual<Order>(scalar, dual.grad.size(), -1);
-  return dual > scalarDual;
-}
-
-template <int Order>
-std::vector<bool> operator>(const double &scalar, const Dual<Order> &dual) {
-  return dual < scalar;
-}
-
 // exponential function
 template <int Order>
 Dual<Order> exp(const Dual<Order> &x) {
@@ -261,87 +209,9 @@ Dual<Order> tanh(const Dual<Order> &x) {
   return result;
 }
 
-// Absolute value function
-template <int Order>
-Dual<Order> abs(const Dual<Order> &x) {
-  const size_t nvar = x.grad.size();
-  const auto abs_func = abs(x.func);
-  const auto sign_func = x.func / abs_func;
-  Dual<Order> result = Dual<Order>(abs_func, nvar, -1);
-  for (size_t i = 0; i < nvar; ++i) {
-    result.grad[i] = x.grad[i] * sign_func;
-  }
-  return result;
-}
-
-// dilog function
-template <int Order>
-Dual<Order> dilog(const Dual<Order> &x) {
-  const size_t nvar = x.grad.size();
-  const auto dilog_func = dilog(x.func);
-  const auto der_value = -1.0 * log(1.0 - x.func) / x.func;
-  Dual<Order> result(dilog_func, nvar, -1);
-  for (size_t i = 0; i < nvar; ++i) {
-    result.grad[i] = x.grad[i] * der_value;
-  }
-  return result;
-}
-
-// Apply integral operator
-template <int Order>
-Dual<Order> integral(const std::function<Dual<Order>(double)> &integrand,
-                     const Integrator1D::Param &param,
-                     const Integrator1D &itg) {
-  const Dual<Order> x = integrand(1.0);
-  const size_t nvar = x.grad.size();
-  auto integrand_func = [&](const double &y) -> Dual<Order - 1> {
-    return integrand(y).func;
-  };
-  Dual<Order> result(integral(integrand_func, param, itg), nvar, -1);
-  for (size_t i = 0; i < nvar; ++i) {
-    auto integrand_der = [&](const double &y) -> Dual<Order - 1> {
-      return integrand(y).grad[i];
-    };
-    result.grad[i] = integral(integrand_der, param, itg);
-  }
-  return result;
-}
-
-template <>
-inline Dual<0> integral(const std::function<Dual<0>(double)> &integrand,
-                        const Integrator1D::Param &param,
-                        const Integrator1D &itg) {
-  const Dual<0> x = integrand(1.0);
-  const size_t nvar = x.grad.size();
-  auto integrand_func = [&](const double &y) -> double {
-    return integrand(y).func;
-  };
-  itg.compute(integrand_func, param);
-  return Dual<0>(itg.getSolution(), nvar, -1);
-}
-
 // -----------------------------------------------------------------
 // Wrappers for specific derivative calculations
 // -----------------------------------------------------------------
-
-// First order derivatives for functions of one variable
-class Dual0 : public Dual<0> {
-public:
-
-  // Constructors
-  explicit Dual0(const double func_, const int index = -1)
-      : Dual<0>(func_, 0, index) {}
-  Dual0(const Dual<0> &other)
-      : Dual<0>(other) {}
-  // Aliases for convenient access of the results
-  const double &val() const { return func; }
-};
-
-inline Dual0 integral(const std::function<Dual0(double)> &integrand,
-                      const Integrator1D::Param &param,
-                      const Integrator1D &itg) {
-  return Dual0(integral<0>(integrand, param, itg));
-}
 
 // First order derivatives for functions of one variable
 class Dual11 : public Dual<1> {
@@ -353,15 +223,9 @@ public:
   Dual11(const Dual<1> &other)
       : Dual<1>(other) {}
   // Aliases for convenient access of the results
-  const double &val() const { return func.func; }
-  const double &dx() const { return grad[0].func; }
+  const double &val() const { return func; }
+  const double &dx() const { return grad[0]; }
 };
-
-inline Dual11 integral(const std::function<Dual11(double)> &integrand,
-                       const Integrator1D::Param &param,
-                       const Integrator1D &itg) {
-  return Dual11(integral<1>(integrand, param, itg));
-}
 
 // Second order derivatives for functions of one variable
 class Dual21 : public Dual<2> {
@@ -372,23 +236,11 @@ public:
       : Dual<2>(func_, 1, index) {}
   Dual21(const Dual<2> &other)
       : Dual<2>(other) {}
-  Dual21(const double val, const double dx, const double dxx)
-      : Dual21(0) {
-    func.func.func = val;
-    grad[0].func.func = dx;
-    grad[0].grad[0].func = dxx;
-  }
   // Aliases for convenient access of the results
-  const double &val() const { return func.func.func; }
-  const double &dx() const { return grad[0].func.func; }
-  const double &dxx() const { return grad[0].grad[0].func; }
+  const double &val() const { return func.func; }
+  const double &dx() const { return grad[0].func; }
+  const double &dxx() const { return grad[0].grad[0]; }
 };
-
-inline Dual21 integral(const std::function<Dual21(double)> &integrand,
-                       const Integrator1D::Param &param,
-                       const Integrator1D &itg) {
-  return Dual21(integral<2>(integrand, param, itg));
-}
 
 // First order derivatives for functions of two variables
 class Dual12 : public Dual<1> {
@@ -400,9 +252,9 @@ public:
   Dual12(const Dual<1> &other)
       : Dual<1>(other) {}
   // Aliases for convenient access of the results
-  const double &val() const { return func.func; }
-  const double &dx() const { return grad[0].func; }
-  const double &dy() const { return grad[1].func; }
+  const double &val() const { return func; }
+  const double &dx() const { return grad[0]; }
+  const double &dy() const { return grad[1]; }
 };
 
 // Second order derivatives for functions of two variables
@@ -415,13 +267,13 @@ public:
   Dual22(const Dual<2> &other)
       : Dual<2>(other) {}
   // Aliases for convenient access of the results
-  const double &val() const { return func.func.func; }
-  const double &dx() const { return grad[0].func.func; }
-  const double &dy() const { return grad[1].func.func; }
-  const double &dxx() const { return grad[0].grad[0].func; }
-  const double &dxy() const { return grad[0].grad[1].func; }
-  const double &dyx() const { return grad[1].grad[0].func; }
-  const double &dyy() const { return grad[1].grad[1].func; }
+  const double &val() const { return func.func; }
+  const double &dx() const { return grad[0].func; }
+  const double &dy() const { return grad[1].func; }
+  const double &dxx() const { return grad[0].grad[0]; }
+  const double &dxy() const { return grad[0].grad[1]; }
+  const double &dyx() const { return grad[1].grad[0]; }
+  const double &dyy() const { return grad[1].grad[1]; }
 };
 
 #endif

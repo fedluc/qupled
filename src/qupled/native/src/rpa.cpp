@@ -1,19 +1,16 @@
 #include "rpa.hpp"
 #include "chemical_potential.hpp"
-#include "dual.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include <cmath>
-#include <complex>
 
 using namespace std;
 using namespace thermoUtil;
 using namespace MPIUtil;
 using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
-using cdouble = complex<double>;
 
 // Constructor
 Rpa::Rpa(const RpaInput &in_, const bool verbose_)
@@ -266,62 +263,6 @@ vector<double> Idr::get() const {
 // -----------------------------------------------------------------
 // IdrGround class
 // -----------------------------------------------------------------
-
-// Real part at zero temperature
-template <typename T>
-T IdrGround::real() const {
-  const T dOmega = T(Omega, 0);
-  T adder1 = T(0.0);
-  T adder2 = T(0.0);
-  T preFactor = T(0.0);
-  if (x > 0.0) {
-    const double x_2 = x / 2.0;
-    const T Omega_2x = dOmega / (2.0 * x);
-    const T sumFactor = x_2 + Omega_2x;
-    const T diffFactor = x_2 - Omega_2x;
-    const T sumFactor2 = sumFactor * sumFactor;
-    const T diffFactor2 = diffFactor * diffFactor;
-    preFactor = preFactor + 0.5;
-    if (sumFactor.val() != 1.0) {
-      T log_sum_arg = (sumFactor + 1.0) / (sumFactor - 1.0);
-      if (log_sum_arg.val() < 0.0) log_sum_arg = -1.0 * log_sum_arg;
-      adder1 = 1.0 / (4.0 * x) * (1.0 - sumFactor2) * log(log_sum_arg);
-    }
-    if (diffFactor.val() != 1.0 && diffFactor.val() != -1.0) {
-      T log_diff_arg = (diffFactor + 1.0) / (diffFactor - 1.0);
-      if (log_diff_arg.val() < 0.0) log_diff_arg = -1.0 * log_diff_arg;
-      adder2 = 1.0 / (4.0 * x) * (1.0 - diffFactor2) * log(log_diff_arg);
-    }
-  }
-  return preFactor + adder1 + adder2;
-}
-template Dual0 IdrGround::real<Dual0>() const;
-template Dual11 IdrGround::real<Dual11>() const;
-template Dual21 IdrGround::real<Dual21>() const;
-
-// Imaginary part at zero temperature
-template <typename T>
-T IdrGround::imag() const {
-  const T dOmega = T(Omega, 0);
-  T preFactor = T(0.0);
-  T adder1 = T(0.0);
-  T adder2 = T(0.0);
-  if (x > 0.0) {
-    T x_2 = T(x / 2.0);
-    T Omega_2x = dOmega / (2.0 * x);
-    T sumFactor = x_2 + Omega_2x;
-    T diffFactor = x_2 - Omega_2x;
-    T sumFactor2 = sumFactor * sumFactor;
-    T diffFactor2 = diffFactor * diffFactor;
-    preFactor = T(-M_PI / (4.0 * x));
-    if (sumFactor2.val() < 1.0) { adder1 = 1 - sumFactor2; }
-    if (diffFactor2.val() < 1.0) { adder2 = 1 - diffFactor2; }
-  }
-  return preFactor * (adder1 - adder2);
-}
-template Dual0 IdrGround::imag<Dual0>() const;
-template Dual11 IdrGround::imag<Dual11>() const;
-template Dual21 IdrGround::imag<Dual21>() const;
 
 // Get
 double IdrGround::get() const {

@@ -3,7 +3,6 @@
 
 #include "input.hpp"
 #include "logger.hpp"
-#include "num_util.hpp"
 #include "numerics.hpp"
 #include "vector2D.hpp"
 #include <vector>
@@ -131,12 +130,6 @@ public:
   IdrGround(const double &Omega_, const double &x_)
       : Omega(Omega_),
         x(x_) {}
-  // Get real part
-  template <typename T>
-  T real() const;
-  // Get imaginary part
-  template <typename T>
-  T imag() const;
   // Get
   double get() const;
 

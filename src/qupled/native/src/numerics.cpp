@@ -38,12 +38,6 @@ double SpecialFunctions::fermiDirac(const double &x) {
   return gamma.val * fd.val;
 }
 
-double SpecialFunctions::dilog(const double &x) {
-  gsl_sf_result result;
-  callGSLFunction(gsl_sf_dilog_e, x, &result);
-  return result.val;
-}
-
 // -----------------------------------------------------------------
 // Interpolator class
 // -----------------------------------------------------------------
@@ -248,43 +242,6 @@ void SecantSolver::solve(const function<double(double)> &func,
   // Check if the solver managed to find a solution
   if (status != GSL_SUCCESS) {
     throwError("The secant root solver "
-               "did not converge to the desired accuracy.");
-  }
-}
-
-// -----------------------------------------------------------------
-// SecantDerivativeRootSolver class
-// -----------------------------------------------------------------
-
-// Constructor
-QuasiNewtonRootSolver::QuasiNewtonRootSolver()
-    : rst(gsl_root_fdfsolver_secant) {
-  callGSLAlloc(rs, gsl_root_fdfsolver_alloc, rst);
-}
-
-// Destructor
-QuasiNewtonRootSolver::~QuasiNewtonRootSolver() { gsl_root_fdfsolver_free(rs); }
-
-// Invoke root solver
-void QuasiNewtonRootSolver::solve(
-    const function<pair<double, double>(double)> &func, const double &guess) {
-  // Set up function
-  GslFunctionFdfWrap<decltype(func)> Fp(func);
-  F = static_cast<gsl_function_fdf *>(&Fp);
-  // Set up solver
-  sol = guess;
-  callGSLFunction(gsl_root_fdfsolver_set, rs, F, sol);
-  // Call solver
-  do {
-    callGSLFunction(gsl_root_fdfsolver_iterate, rs);
-    const double x = sol;
-    sol = gsl_root_fdfsolver_root(rs);
-    status = gsl_root_test_delta(sol, x, 0, relErr);
-    iter++;
-  } while (status == GSL_CONTINUE && iter < maxIter);
-  // Check if the solver managed to find a solution
-  if (status != GSL_SUCCESS) {
-    throwError("The quasi-newton root solver "
                "did not converge to the desired accuracy.");
   }
 }
