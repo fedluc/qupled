@@ -240,8 +240,9 @@ void RpaInput::print() const {
 }
 
 bool RpaInput::isEqual(const RpaInput &in) const {
+  const bool OmegaMaxIsEqual = (Theta == 0.0) ? OmegaMax == in.OmegaMax : true;
   return (Input::isEqual(in) && dx == in.dx && muGuess == in.muGuess
-          && nl == in.nl && xmax == in.xmax && OmegaMax == in.OmegaMax);
+          && nl == in.nl && xmax == in.xmax && OmegaMaxIsEqual);
 }
 
 // -----------------------------------------------------------------

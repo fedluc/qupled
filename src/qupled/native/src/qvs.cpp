@@ -22,6 +22,10 @@ QVSStls::QVSStls(const QVSStlsInput &in_)
       Qstls(in_, false, false),
       in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
+  if (in.getDegeneracy() == 0.0) {
+    throwError("Ground state calculations are not available "
+               "for the quantum VS scheme");
+  }
   VSBase::thermoProp = thermoProp;
 }
 
@@ -30,6 +34,10 @@ QVSStls::QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_)
       Qstls(in_, false, false),
       in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
+  if (in.getDegeneracy() == 0.0) {
+    throwError("Ground state calculations are not available "
+               "for the quantum VS scheme");
+  }
   VSBase::thermoProp = thermoProp;
   thermoProp->copyFreeEnergyIntegrand(thermoProp_);
 }

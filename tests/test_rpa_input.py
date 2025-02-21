@@ -20,6 +20,7 @@ def test_init(rpa_input_instance):
     assert hasattr(rpa_input_instance, "matsubara")
     assert hasattr(rpa_input_instance, "resolution")
     assert hasattr(rpa_input_instance, "cutoff")
+    assert hasattr(rpa_input_instance, "frequencyCutoff")
 
 
 def test_defaults(rpa_input_instance):
@@ -186,3 +187,4 @@ def test_print(rpa_input_instance, capfd):
     assert "Number of Matsubara frequencies = 0" in captured
     assert "Wave-vector resolution = nan" in captured
     assert "Wave-vector cutoff = nan" in captured
+    assert "Frequency cutoff = nan" in captured

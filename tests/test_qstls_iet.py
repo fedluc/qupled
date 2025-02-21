@@ -108,6 +108,7 @@ def test_save(qstls_iet, qstls_iet_input, mocker):
             "error",
             "resolution",
             "cutoff",
+            "frequencyCutoff",
             "matsubara",
             "adr",
             "idr",

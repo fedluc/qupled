@@ -25,7 +25,7 @@ calculations in the quantum and in the classical VS-STLS scheme.
 Limitations
 -----------
 
-Ground state (zero temperature) calculations are not available for the quantum schemes (QSTLS, QSTLS-IET and QVS).
+Ground state (zero temperature) calculations are not available for the QSTLS-IET and QVS schemes.
 
 Units
 -----

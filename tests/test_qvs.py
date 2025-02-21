@@ -108,6 +108,7 @@ def test_save(qvsstls, qvsstls_input, mocker):
             "error",
             "resolution",
             "cutoff",
+            "frequencyCutoff",
             "matsubara",
             "idr",
             "sdr",

@@ -17,13 +17,13 @@ class Hdf:
 
     # Construct
     def __init__(self):
-        # The first entry is a descriptive name of the
         self.entries = {
             "alpha": self.Entries("Free Parameter for VS schemes", "numpy"),
             "adr": self.Entries("Auxiliary density response", "numpy2D"),
             "bf": self.Entries("Bridge function adder", "numpy"),
             "coupling": self.Entries("Coupling parameter", "number"),
             "cutoff": self.Entries("Cutoff for the wave-vector grid", "number"),
+            "frequencyCutoff": self.Entries("Cutoff for the frequency", "number"),
             "degeneracy": self.Entries("Degeneracy parameter", "number"),
             "error": self.Entries("Residual error in the solution", "number"),
             "fxcGrid": self.Entries("Coupling parameter", "numpy"),

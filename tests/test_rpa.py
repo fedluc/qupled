@@ -65,6 +65,7 @@ def test_save(rpa, rpa_input, mocker):
             "theory",
             "resolution",
             "cutoff",
+            "frequencyCutoff",
             "matsubara",
             "idr",
             "sdr",
