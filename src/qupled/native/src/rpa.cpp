@@ -147,12 +147,13 @@ void Rpa::computeSsfFinite() {
 // Compute static structure factor at zero temperature
 void Rpa::computeSsfGround() {
   const double rs = in.getCoupling();
+  const double OmegaMax = in.getFrequencyCutoff();
   const size_t nx = wvg.size();
   assert(slfc.size() == nx);
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], itg);
+    SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], OmegaMax, itg);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -176,12 +177,7 @@ vector<double> Rpa::getRdf(const vector<double> &r) const {
 
 vector<double> Rpa::getSdr() const {
   const double theta = in.getDegeneracy();
-  if (isnan(theta)) { return vector<double>(); }
-  if (theta == 0.0) {
-    println("The static density response cannot be computed in the "
-            "ground state.");
-    return vector<double>();
-  }
+  if (isnan(theta) || theta == 0.0) { return vector<double>(); }
   vector<double> sdr(wvg.size(), -1.5 * theta);
   const double fact = 4 * lambda * in.getCoupling() / M_PI;
   for (size_t i = 0; i < wvg.size(); ++i) {
@@ -330,35 +326,29 @@ double Ssf::get() const {
   assert(Theta > 0.0);
   if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
-  const double fact1 = 4.0 * lambda * rs / M_PI;
-  const double x2 = x * x;
   double fact2 = 0.0;
   for (int l = 0; l < nl; ++l) {
-    const double fact3 = 1.0 + fact1 / x2 * (1 - slfc) * idr[l];
+    const double fact3 = 1.0 + ip * (1 - slfc) * idr[l];
     double fact4 = idr[l] * idr[l] / fact3;
     if (l > 0) fact4 *= 2;
     fact2 += fact4;
   }
-  return ssfHF - 1.5 * fact1 / x2 * Theta * (1 - slfc) * fact2;
+  return ssfHF - 1.5 * ip * Theta * (1 - slfc) * fact2;
 }
 
 // -----------------------------------------------------------------
 // SsfGround class
 // -----------------------------------------------------------------
 
-// Get result of integration
 double SsfGround::get() {
-  // computePlasmonFrequency();
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
-  itg.compute(func, ItgParam(0, 20));
+  itg.compute(func, ItgParam(0, OmegaMax));
   return 1.5 / (M_PI)*itg.getSolution() + ssfHF;
 }
 
-// Integrand for zero temperature calculations
 double SsfGround::integrand(const double &Omega) const {
-  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  const double idr = IdrGround(Omega, x).get();
+  const double idr = IdrGround(x, Omega).get();
   return idr / (1.0 + ip * idr * (1.0 - slfc)) - idr;
 }

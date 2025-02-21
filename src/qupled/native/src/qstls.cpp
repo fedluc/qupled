@@ -12,7 +12,6 @@ using namespace std;
 using namespace vecUtil;
 using namespace binUtil;
 using namespace MPIUtil;
-using namespace SpecialFunctions;
 using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
 
@@ -244,13 +243,16 @@ void Qstls::computeSsfFinite() {
 void Qstls::computeSsfGround() {
   const Interpolator1D ssfi(wvg, ssfOld);
   const double rs = in.getCoupling();
+  const double OmegaMax = in.getFrequencyCutoff();
   const size_t nx = wvg.size();
   const double xMax = wvg.back();
-  for (size_t i = 0; i < nx; ++i) {
-    const double x = wvg[i];
-    QSsfGround ssfTmp(x, rs, xMax, ssfHF[i], ssfi, itg);
+  auto loopFunc = [&](int i) -> void {
+    Integrator1D itgTmp(itg);
+    QssfGround ssfTmp(wvg[i], rs, ssfHF[i], xMax, OmegaMax, ssfi, itgTmp);
     ssfNew[i] = ssfTmp.get();
-  }
+  };
+  const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
+  gatherLoopData(ssfNew.data(), loopData, nx);
 }
 
 // Compute residual error for the qstls iterations
@@ -526,27 +528,6 @@ void Qstls::readRecovery(vector<double> &wvg_,
 }
 
 // -----------------------------------------------------------------
-// Qssf class
-// -----------------------------------------------------------------
-
-// Get static structure factor
-double Qssf::get() const {
-  if (rs == 0.0) return ssfHF;
-  if (x == 0.0) return 0.0;
-  const double f1 = 4.0 * lambda * rs / M_PI;
-  const double f2 = 1 - bf;
-  const double x2 = x * x;
-  double f3 = 0.0;
-  for (int l = 0; l < nl; ++l) {
-    const double f4 = f2 * idr[l];
-    const double f5 = 1.0 + f1 / x2 * (f4 - adr[l]);
-    const double f6 = idr[l] * (f4 - adr[l]) / f5;
-    f3 += (l == 0) ? f6 : 2 * f6;
-  }
-  return ssfHF - 1.5 * f1 / x2 * Theta * f3;
-}
-
-// -----------------------------------------------------------------
 // AdrBase class
 // -----------------------------------------------------------------
 
@@ -769,17 +750,17 @@ double AdrGround::get() {
   auto tMax = [&](const double &y) -> double { return x * (x - y); };
   auto func1 = [&](const double &y) -> double { return integrand1(y); };
   auto func2 = [&](const double &t) -> double { return integrand2(t); };
-  itg2.compute(func1, func2, Itg2DParam(0, yMax, tMin, tMax), {});
-  return -(3.0 / 8.0) * itg2.getSolution();
+  itg.compute(func1, func2, Itg2DParam(0, yMax, tMin, tMax), {});
+  return -(3.0 / 8.0) * itg.getSolution();
 }
 
 double AdrGround::integrand1(const double &y) const {
-  return y * (ssf(y) - 1.0);
+  return y * (ssfi.eval(y) - 1.0);
 }
 
 double AdrGround::integrand2(const double &t) const {
   if (x == 0.0) { return 0.0; }
-  const double y = itg2.getX();
+  const double y = itg.getX();
   const double x2 = x * x;
   const double Omega2 = Omega * Omega;
   const double t2 = t * t;
@@ -799,23 +780,39 @@ double AdrGround::integrand2(const double &t) const {
 }
 
 // -----------------------------------------------------------------
-// QSsfGround class
+// Qssf class
 // -----------------------------------------------------------------
 
-// Get result of integration
-double QSsfGround::get() {
-  // computePlasmonFrequency();
+double Qssf::get() const {
+  if (rs == 0.0) return ssfHF;
+  if (x == 0.0) return 0.0;
+  const double f2 = 1 - bf;
+  double f3 = 0.0;
+  for (int l = 0; l < nl; ++l) {
+    const double f4 = f2 * idr[l];
+    const double f5 = 1.0 + ip * (f4 - adr[l]);
+    const double f6 = idr[l] * (f4 - adr[l]) / f5;
+    f3 += (l == 0) ? f6 : 2 * f6;
+  }
+  return ssfHF - 1.5 * ip * Theta * f3;
+}
+
+// -----------------------------------------------------------------
+// QssfGround class
+// -----------------------------------------------------------------
+
+double QssfGround::get() {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
-  itg.compute(func, ItgParam(0, 20));
+  itg.compute(func, ItgParam(0, OmegaMax));
   return 1.5 / (M_PI)*itg.getSolution() + ssfHF;
 }
 
-// Integrand for zero temperature calculations
-double QSsfGround::integrand(const double &Omega) const {
+double QssfGround::integrand(const double &Omega) const {
+  Integrator2D itg2 = Integrator2D(itg.getAccuracy());
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  const double idr = IdrGround(Omega, x).get();
-  const double adr = AdrGround(Omega, x, ssfi, xMax).get();
+  const double idr = IdrGround(x, Omega).get();
+  const double adr = AdrGround(x, Omega, ssfi, xMax, itg2).get();
   return idr / (1.0 + ip * (idr - adr)) - idr;
 }

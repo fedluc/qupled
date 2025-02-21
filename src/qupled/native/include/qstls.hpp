@@ -91,36 +91,6 @@ protected:
 };
 
 // -----------------------------------------------------------------
-// Class for the static structure factor
-// -----------------------------------------------------------------
-
-class Qssf : public Ssf {
-
-public:
-
-  // Constructor for quantum schemes
-  Qssf(const double &x_,
-       const double &Theta_,
-       const double &rs_,
-       const double &ssfHF_,
-       const int &nl_,
-       const double *idr_,
-       const double *adr_,
-       const double &bf_)
-      : Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_),
-        adr(adr_),
-        bf(bf_) {}
-  // Get static structure factor
-  double get() const;
-
-private:
-
-  // Auxiliary density response
-  const double *adr;
-  // Bridge function
-  const double bf;
-};
-// -----------------------------------------------------------------
 // Classes for the auxiliary density response
 // -----------------------------------------------------------------
 
@@ -249,7 +219,6 @@ private:
   const std::vector<double> &itgGrid;
 };
 
-// Class for the auxiliary density response calculation in the IET scheme
 class AdrIet : public AdrBase {
 
 public:
@@ -331,23 +300,19 @@ private:
   Integrator1D &itg;
 };
 
-// -----------------------------------------------------------------
-// Ground state calculations
-// -----------------------------------------------------------------
-
-class AdrGround {
+class AdrGround : public AdrBase {
 
 public:
 
   // Constructor for zero temperature calculations
-  AdrGround(const double &Omega_,
-            const double &x_,
+  AdrGround(const double &x_,
+            const double &Omega_,
             const Interpolator1D &ssfi_,
-            const double &yMax_)
-      : Omega(Omega_),
-        x(x_),
-        ssfi(ssfi_),
-        yMax(yMax_) {}
+            const double &yMax_,
+            Integrator2D &itg_)
+      : AdrBase(0.0, 0.0, yMax_, x_, ssfi_),
+        Omega(Omega_),
+        itg(itg_) {}
   // Get
   double get();
 
@@ -355,57 +320,68 @@ private:
 
   // Frequency
   const double Omega;
-  // Wave-vector
-  const double x;
-  // Interpolator for the static structure factor
-  const Interpolator1D &ssfi;
-  // Integration limits for zero temperature calculations
-  const double yMax;
   // Integrator object
-  Integrator2D itg2 = Integrator2D(1.0e-5);
-  // Compute the static structure factor
-  double ssf(const double &y) const;
+  Integrator2D &itg;
   // Integrands
   double integrand1(const double &y) const;
   double integrand2(const double &t) const;
 };
 
-class QSsfGround {
+// -----------------------------------------------------------------
+// Class for the static structure factor
+// -----------------------------------------------------------------
+
+class Qssf : public Ssf {
+
+public:
+
+  // Constructor for quantum schemes
+  Qssf(const double &x_,
+       const double &Theta_,
+       const double &rs_,
+       const double &ssfHF_,
+       const int &nl_,
+       const double *idr_,
+       const double *adr_,
+       const double &bf_)
+      : Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_),
+        adr(adr_),
+        bf(bf_) {}
+  // Get static structure factor
+  double get() const;
+
+private:
+
+  // Auxiliary density response
+  const double *adr;
+  // Bridge function
+  const double bf;
+};
+
+class QssfGround : public SsfGround {
 
 public:
 
   // Constructor for zero temperature calculations
-  QSsfGround(const double &x_,
+  QssfGround(const double &x_,
              const double &rs_,
-             const double &xMax_,
              const double &ssfHF_,
+             const double &xMax_,
+             const double &OmegaMax_,
              const Interpolator1D &ssfi_,
              Integrator1D &itg_)
-      : x(x_),
-        rs(rs_),
-        ssfHF(ssfHF_),
+      : SsfGround(x_, rs_, ssfHF_, 0.0, OmegaMax_, itg_),
         xMax(xMax_),
-        itg(itg_),
         ssfi(ssfi_) {}
   // Get result of integration
   double get();
 
 private:
 
-  // Wave-vector
-  const double x;
-  // Coupling parameter
-  const double rs;
-  // HF static structure factor
-  const double ssfHF;
-  // Integration limits for zero temperature calculations
+  // Integration limit for the wave-vector integral
   const double xMax;
-  // Integrator object
-  Integrator1D &itg;
   // Interpolator
   const Interpolator1D &ssfi;
-  // Constant for unit conversion
-  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
   // Integrand for zero temperature calculations
   double integrand(const double &Omega) const;
 };

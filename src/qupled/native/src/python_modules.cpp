@@ -53,6 +53,9 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("cutoff",
                     &RpaInput::getWaveVectorGridCutoff,
                     &RpaInput::setWaveVectorGridCutoff)
+      .add_property("frequencyCutoff",
+                    &RpaInput::getFrequencyCutoff,
+                    &RpaInput::setFrequencyCutoff)
       .def("print", &RpaInput::print)
       .def("isEqual", &RpaInput::isEqual);
 

@@ -207,17 +207,20 @@ public:
   explicit RpaInput()
       : dx(DEFAULT_DOUBLE),
         xmax(DEFAULT_DOUBLE),
+        OmegaMax(DEFAULT_DOUBLE),
         nl(DEFAULT_INT) {}
   // Setters
   void setChemicalPotentialGuess(const std::vector<double> &muGuess);
   void setNMatsubara(const int &nMatsubara);
-  void setWaveVectorGridRes(const double &waveVectorGridRes);
-  void setWaveVectorGridCutoff(const double &waveVectorGridCutoff);
+  void setWaveVectorGridRes(const double &dx);
+  void setWaveVectorGridCutoff(const double &xmax);
+  void setFrequencyCutoff(const double &OmegaMax);
   // Getters
   std::vector<double> getChemicalPotentialGuess() const { return muGuess; }
   int getNMatsubara() const { return nl; }
   double getWaveVectorGridRes() const { return dx; }
   double getWaveVectorGridCutoff() const { return xmax; }
+  double getFrequencyCutoff() const { return OmegaMax; }
   // Print content of the data structure
   void print() const;
   // Compare two StlsInput objects
@@ -227,8 +230,10 @@ protected:
 
   // Wave-vector grid resolution
   double dx;
-  // cutoff for the wave-vector grid
+  // Cutoff for the wave-vector grid
   double xmax;
+  // Cutoff for the frequency (only relevant in the ground state)
+  double OmegaMax;
   // Number of matsubara frequencies
   int nl;
   // Initial guess for the chemical potential calculation

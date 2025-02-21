@@ -39,7 +39,8 @@ class _QuantumIterativeScheme(qc._IterativeScheme):
     def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
         super()._save(scheme)
-        pd.DataFrame(scheme.adr).to_hdf(self.hdfFileName, key="adr")
+        if scheme.inputs.degeneracy > 0:
+            pd.DataFrame(scheme.adr).to_hdf(self.hdfFileName, key="adr")
 
     # Initial guess
     class Guess:

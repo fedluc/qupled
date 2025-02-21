@@ -127,18 +127,18 @@ class IdrGround {
 public:
 
   // Constructor
-  IdrGround(const double &Omega_, const double &x_)
-      : Omega(Omega_),
-        x(x_) {}
+  IdrGround(const double &x_, const double &Omega_)
+      : x(x_),
+        Omega(Omega_) {}
   // Get
   double get() const;
 
 private:
 
-  // Frequency
-  const double Omega;
   // Wave-vector
   const double x;
+  // Frequency
+  const double Omega;
 };
 
 // -----------------------------------------------------------------
@@ -220,6 +220,8 @@ protected:
   const double slfc;
   // Constant for unit conversion
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
+  // Normalized interaction potential
+  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   // Constructor
   SsfBase(const double &x_,
           const double &Theta_,
@@ -268,14 +270,18 @@ public:
             const double &rs_,
             const double &ssfHF_,
             const double &slfc_,
+            const double &OmegaMax_,
             Integrator1D &itg_)
       : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
+        OmegaMax(OmegaMax_),
         itg(itg_) {}
   // Get result of integration
   double get();
 
-private:
+protected:
 
+  // Integration limit
+  const double OmegaMax;
   // Integrator object
   Integrator1D &itg;
   // Integrand for zero temperature calculations
