@@ -137,6 +137,8 @@ public:
   // Get imaginary part
   template <typename T>
   T imag() const;
+  // Get
+  double get() const;
 
 private:
 
@@ -144,6 +146,8 @@ private:
   const double Omega;
   // Wave-vector
   const double x;
+  // Idr integrand for frequency = l and wave-vector x
+  double integrand(const double &y) const;
 };
 
 // -----------------------------------------------------------------
@@ -273,38 +277,18 @@ public:
             const double &rs_,
             const double &ssfHF_,
             const double &slfc_,
-            const double &wpGuess_,
             Integrator1D &itg_)
       : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
-        wpGuess(wpGuess_),
-        wp(-1.0),
-        yMin(std::max(0.0, x * (x - 2.0))),
-        yMax(x * (x + 2.0)),
         itg(itg_) {}
   // Get result of integration
   double get();
-  // Get plasmon frequency
-  double getPlasmonFrequency() const { return wp; }
 
 private:
 
-  // Initial guess for the plasmon frequency calculation
-  const double wpGuess;
-  // Plasmon frequency
-  double wp;
-  // Integration limits for zero temperature calculations
-  const double yMin;
-  const double yMax;
-  // Interaction potential
-  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   // Integrator object
   Integrator1D &itg;
   // Integrand for zero temperature calculations
   double integrand(const double &Omega) const;
-  // Plasmon contribution to the static structure factor
-  double plasmon();
-  // Find the plasmon frequency
-  void computePlasmonFrequency();
 };
 
 #endif

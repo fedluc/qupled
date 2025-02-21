@@ -151,14 +151,12 @@ void Rpa::computeSsfFinite() {
 void Rpa::computeSsfGround() {
   const double rs = in.getCoupling();
   const size_t nx = wvg.size();
-  double wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
   assert(slfc.size() == nx);
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], wp, itg);
+    SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], itg);
     ssf[i] = ssfTmp.get();
-    wp = ssfTmp.getPlasmonFrequency();
   }
 }
 
@@ -325,6 +323,27 @@ template Dual0 IdrGround::imag<Dual0>() const;
 template Dual11 IdrGround::imag<Dual11>() const;
 template Dual21 IdrGround::imag<Dual21>() const;
 
+// Get result of integration
+double IdrGround::get() const {
+  Integrator1D itg = Integrator1D(1.0e-5);
+  auto func = [&](const double &y) -> double { return integrand(y); };
+  itg.compute(func, ItgParam(0, 1));
+  return itg.getSolution();
+}
+
+double IdrGround::integrand(const double &y) const {
+  double x2 = x * x;
+  double txy = 2 * x * y;
+  double Omega2 = Omega * Omega;
+  if (x > 0.0) {
+    return 1.0 / (2 * x) * y
+           * log(((x2 + txy) * (x2 + txy) + Omega2)
+                 / ((x2 - txy) * (x2 - txy) + Omega2));
+  } else {
+    return 0;
+  }
+}
+
 // -----------------------------------------------------------------
 // SsfHF class
 // -----------------------------------------------------------------
@@ -392,51 +411,17 @@ double Ssf::get() const {
 
 // Get result of integration
 double SsfGround::get() {
-  computePlasmonFrequency();
+  // computePlasmonFrequency();
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
-  itg.compute(func, ItgParam(yMin, yMax));
-  const double ssfP = plasmon();
-  return 1.5 / (M_PI)*itg.getSolution() + ssfP;
+  itg.compute(func, ItgParam(0, 20));
+  return 1.5 / (M_PI)*itg.getSolution() + ssfHF;
 }
 
 // Integrand for zero temperature calculations
 double SsfGround::integrand(const double &Omega) const {
-  const IdrGround idr = IdrGround(Omega, x);
-  const cdouble cidr =
-      complex(idr.real<Dual0>().val(), idr.imag<Dual0>().val());
-  const cdouble dr = cidr / (1.0 + ip * cidr * (1.0 - slfc));
-  return dr.imag();
-}
-
-// Plasmon contribution to the static structure factor
-double SsfGround::plasmon() {
-  if (wp < 0.0) { return 0.0; }
-  const IdrGround idr = IdrGround(wp, x);
-  const double idrRe = idr.real<Dual0>().val();
-  const double denom = ip * idr.real<Dual11>().dx() * (1.0 - slfc);
-  return -1.5 * idrRe / denom;
-}
-
-// Get the plasmon frequency
-void SsfGround::computePlasmonFrequency() {
-  if (wpGuess < 0.0) { return; }
-  if (x == 0.0) {
-    // The plasma frequency
-    wp = 4.0 * sqrt(lambda * rs / 3.0 / M_PI);
-    return;
-  }
-  auto func = [this](const double &Omega) -> double {
-    const IdrGround idr = IdrGround(Omega, x);
-    return 1.0 + ip * idr.real<Dual0>().val() * (1.0 - slfc);
-  };
-  BrentRootSolver rsol;
-  try {
-    rsol.solve(func, {x * (x + 2.0), 2.0 * wpGuess});
-    wp = rsol.getSolution();
-  } catch (const std::runtime_error &e) {
-    // The plasmon does not exist
-    wp = -1;
-  }
+  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
+  const double idr = IdrGround(Omega, x).get();
+  return idr / (1.0 + ip * idr * (1.0 - slfc)) - idr;
 }
