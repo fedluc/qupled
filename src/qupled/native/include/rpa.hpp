@@ -146,8 +146,6 @@ private:
   const double Omega;
   // Wave-vector
   const double x;
-  // Idr integrand for frequency = l and wave-vector x
-  double integrand(const double &y) const;
 };
 
 // -----------------------------------------------------------------

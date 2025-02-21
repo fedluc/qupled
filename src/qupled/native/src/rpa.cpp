@@ -323,25 +323,21 @@ template Dual0 IdrGround::imag<Dual0>() const;
 template Dual11 IdrGround::imag<Dual11>() const;
 template Dual21 IdrGround::imag<Dual21>() const;
 
-// Get result of integration
+// Get
 double IdrGround::get() const {
-  Integrator1D itg = Integrator1D(1.0e-5);
-  auto func = [&](const double &y) -> double { return integrand(y); };
-  itg.compute(func, ItgParam(0, 1));
-  return itg.getSolution();
-}
-
-double IdrGround::integrand(const double &y) const {
-  double x2 = x * x;
-  double txy = 2 * x * y;
-  double Omega2 = Omega * Omega;
-  if (x > 0.0) {
-    return 1.0 / (2 * x) * y
-           * log(((x2 + txy) * (x2 + txy) + Omega2)
-                 / ((x2 - txy) * (x2 - txy) + Omega2));
-  } else {
-    return 0;
-  }
+  const double x2 = x * x;
+  const double Omega2 = Omega * Omega;
+  const double tx = 2.0 * x;
+  const double x2ptx = x2 + tx;
+  const double x2mtx = x2 - tx;
+  const double x2ptx2 = x2ptx * x2ptx;
+  const double x2mtx2 = x2mtx * x2mtx;
+  const double logarg = (x2ptx2 + Omega2) / (x2mtx2 + Omega2);
+  const double part1 = (0.5 - x2 / 8.0 + Omega2 / (8.0 * x2)) * log(logarg);
+  const double part2 =
+      0.5 * Omega * (atan(x2ptx / Omega) - atan(x2mtx / Omega));
+  if (x > 0.0) { return (part1 - part2 + x) / tx; }
+  return 0;
 }
 
 // -----------------------------------------------------------------
