@@ -22,6 +22,8 @@ public:
       grad[index] = Dual<Order - 1>(1.0, nvar, -1);
     }
   }
+  Dual(const double &func_, const int nvar, const int index)
+      : Dual(Dual<Order - 1>(func_, nvar, index), nvar, index) {}
 };
 
 template <>
@@ -41,7 +43,7 @@ public:
 // addition operators
 template <int Order>
 Dual<Order> operator+(const Dual<Order> &dual1, const Dual<Order> &dual2) {
-  const size_t &nvar = dual1.grad.size();
+  const size_t nvar = dual1.grad.size();
   Dual<Order> result = Dual<Order>(dual1.func + dual2.func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = dual1.grad[i] + dual2.grad[i];
@@ -51,7 +53,7 @@ Dual<Order> operator+(const Dual<Order> &dual1, const Dual<Order> &dual2) {
 
 template <int Order>
 Dual<Order> operator+(const Dual<Order> &dual, const double &scalar) {
-  const size_t &nvar = dual.grad.size();
+  const size_t nvar = dual.grad.size();
   Dual<Order> result = Dual<Order>(dual.func + scalar, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = dual.grad[i];
@@ -67,7 +69,7 @@ Dual<Order> operator+(const double &scalar, const Dual<Order> &dual) {
 // subtraction operators
 template <int Order>
 Dual<Order> operator-(const Dual<Order> &dual1, const Dual<Order> &dual2) {
-  const size_t &nvar = dual1.grad.size();
+  const size_t nvar = dual1.grad.size();
   Dual<Order> result = Dual<Order>(dual1.func - dual2.func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = dual1.grad[i] - dual2.grad[i];
@@ -77,7 +79,7 @@ Dual<Order> operator-(const Dual<Order> &dual1, const Dual<Order> &dual2) {
 
 template <int Order>
 Dual<Order> operator-(const Dual<Order> &dual, double scalar) {
-  const size_t &nvar = dual.grad.size();
+  const size_t nvar = dual.grad.size();
   Dual<Order> result = Dual<Order>(dual.func - scalar, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = dual.grad[i];
@@ -87,10 +89,10 @@ Dual<Order> operator-(const Dual<Order> &dual, double scalar) {
 
 template <int Order>
 Dual<Order> operator-(const double &scalar, const Dual<Order> &dual) {
-  const size_t &nvar = dual.grad.size();
+  const size_t nvar = dual.grad.size();
   Dual<Order> result = Dual<Order>(scalar - dual.func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
-    result.grad[i] = -dual.grad[i];
+    result.grad[i] = -1.0 * dual.grad[i];
   }
   return result;
 }
@@ -98,7 +100,7 @@ Dual<Order> operator-(const double &scalar, const Dual<Order> &dual) {
 // multiplication operators
 template <int Order>
 Dual<Order> operator*(const Dual<Order> &dual1, const Dual<Order> &dual2) {
-  const size_t &nvar = dual1.grad.size();
+  const size_t nvar = dual1.grad.size();
   Dual<Order> result = Dual<Order>(dual1.func * dual2.func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = dual1.func * dual2.grad[i] + dual1.grad[i] * dual2.func;
@@ -108,7 +110,7 @@ Dual<Order> operator*(const Dual<Order> &dual1, const Dual<Order> &dual2) {
 
 template <int Order>
 Dual<Order> operator*(const Dual<Order> &dual, const double &scalar) {
-  const size_t &nvar = dual.grad.size();
+  const size_t nvar = dual.grad.size();
   Dual<Order> result = Dual<Order>(dual.func * scalar, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = dual.grad[i] * scalar;
@@ -124,8 +126,8 @@ Dual<Order> operator*(const double &scalar, const Dual<Order> &dual) {
 // division operators
 template <int Order>
 Dual<Order> operator/(const Dual<Order> &dual1, const Dual<Order> &dual2) {
-  const size_t &nvar = dual1.grad.size();
-  const auto &inv_func = 1.0 / dual2.func;
+  const size_t nvar = dual1.grad.size();
+  const auto inv_func = 1.0 / dual2.func;
   Dual<Order> result = Dual<Order>(dual1.func * inv_func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] =
@@ -136,8 +138,8 @@ Dual<Order> operator/(const Dual<Order> &dual1, const Dual<Order> &dual2) {
 
 template <int Order>
 Dual<Order> operator/(const Dual<Order> &dual, const double &scalar) {
-  const size_t &nvar = dual.grad.size();
-  const auto &inv_scalar = 1.0 / scalar;
+  const size_t nvar = dual.grad.size();
+  const auto inv_scalar = 1.0 / scalar;
   Dual<Order> result = Dual<Order>(dual.func * inv_scalar, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = dual.grad[i] * inv_scalar;
@@ -147,9 +149,9 @@ Dual<Order> operator/(const Dual<Order> &dual, const double &scalar) {
 
 template <int Order>
 Dual<Order> operator/(const double &scalar, const Dual<Order> &dual) {
-  const size_t &nvar = dual.grad.size();
-  const auto &inv_func = 1.0 / dual.func;
-  const auto &inv_func2 = inv_func * inv_func;
+  const size_t nvar = dual.grad.size();
+  const auto inv_func = 1.0 / dual.func;
+  const auto inv_func2 = inv_func * inv_func;
   Dual<Order> result = Dual<Order>(scalar * inv_func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = -scalar * dual.grad[i] * inv_func2;
@@ -160,8 +162,8 @@ Dual<Order> operator/(const double &scalar, const Dual<Order> &dual) {
 // exponential function
 template <int Order>
 Dual<Order> exp(const Dual<Order> &x) {
-  const size_t &nvar = x.grad.size();
-  const auto &exp_func = exp(x.func);
+  const size_t nvar = x.grad.size();
+  const auto exp_func = exp(x.func);
   Dual<Order> result = Dual<Order>(exp_func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = exp_func * x.grad[i];
@@ -172,8 +174,8 @@ Dual<Order> exp(const Dual<Order> &x) {
 // logarithmic function
 template <int Order>
 Dual<Order> log(const Dual<Order> &x) {
-  const size_t &nvar = x.grad.size();
-  const auto &log_func = log(x.func);
+  const size_t nvar = x.grad.size();
+  const auto log_func = log(x.func);
   Dual<Order> result = Dual<Order>(log_func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = x.grad[i] / x.func;
@@ -184,9 +186,9 @@ Dual<Order> log(const Dual<Order> &x) {
 // square root function
 template <int Order>
 Dual<Order> sqrt(const Dual<Order> &x) {
-  const size_t &nvar = x.grad.size();
-  const auto &sqrt_func = sqrt(x.func);
-  const auto &inv_sqrt = 0.5 / sqrt_func;
+  const size_t nvar = x.grad.size();
+  const auto sqrt_func = sqrt(x.func);
+  const auto inv_sqrt = 0.5 / sqrt_func;
   Dual<Order> result = Dual<Order>(sqrt_func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = x.grad[i] * inv_sqrt;
@@ -197,9 +199,9 @@ Dual<Order> sqrt(const Dual<Order> &x) {
 // hyperbolic tangent function
 template <int Order>
 Dual<Order> tanh(const Dual<Order> &x) {
-  const size_t &nvar = x.grad.size();
-  const auto &tanh_func = tanh(x.func);
-  const auto &sech2_func = 1.0 - tanh_func * tanh_func;
+  const size_t nvar = x.grad.size();
+  const auto tanh_func = tanh(x.func);
+  const auto sech2_func = 1.0 - tanh_func * tanh_func;
   Dual<Order> result = Dual<Order>(tanh_func, nvar, -1);
   for (size_t i = 0; i < nvar; ++i) {
     result.grad[i] = x.grad[i] * sech2_func;
@@ -231,7 +233,7 @@ public:
 
   // Constructors
   explicit Dual21(const double func_, const int index = -1)
-      : Dual<2>(Dual<1>(func_, 1, index), 1, index) {}
+      : Dual<2>(func_, 1, index) {}
   Dual21(const Dual<2> &other)
       : Dual<2>(other) {}
   // Aliases for convenient access of the results
@@ -261,7 +263,7 @@ public:
 
   // Constructors
   explicit Dual22(const double &func_, const int index = -1)
-      : Dual<2>(Dual<1>(func_, 2, index), 2, index) {}
+      : Dual<2>(func_, 2, index) {}
   Dual22(const Dual<2> &other)
       : Dual<2>(other) {}
   // Aliases for convenient access of the results

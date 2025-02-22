@@ -50,6 +50,7 @@ def test_save(vsstls, vsstls_input, mocker):
             "error",
             "resolution",
             "cutoff",
+            "frequencyCutoff",
             "matsubara",
             "idr",
             "sdr",

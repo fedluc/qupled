@@ -51,6 +51,7 @@ def test_save(stls_iet, stls_iet_input, mocker):
             "error",
             "resolution",
             "cutoff",
+            "frequencyCutoff",
             "matsubara",
             "bf",
             "idr",

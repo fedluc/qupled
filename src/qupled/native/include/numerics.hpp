@@ -49,6 +49,17 @@ namespace GslWrappers {
 } // namespace GslWrappers
 
 // -----------------------------------------------------------------
+// Wrappers to GSL special functions
+// -----------------------------------------------------------------
+
+namespace SpecialFunctions {
+
+  // Fermi-Dirac function
+  double fermiDirac(const double &x);
+
+} // namespace SpecialFunctions
+
+// -----------------------------------------------------------------
 // Classes to interpolate data
 // -----------------------------------------------------------------
 

@@ -21,6 +21,7 @@ def mockOutput(hdfFileName):
             "theory": "theory",
             "resolution": 0.0,
             "cutoff": 0,
+            "frequencyCutoff": 0,
             "matsubara": 0,
         },
         index=["info"],
@@ -51,6 +52,7 @@ def mockRdfOutput(hdfFileName):
             "theory": "theory",
             "resolution": 0.0,
             "cutoff": 0,
+            "frequencyCutoff": 0,
             "matsubara": 0,
         },
         index=["info"],
@@ -89,6 +91,7 @@ def test_read(hdf_instance):
                 "error",
                 "resolution",
                 "cutoff",
+                "frequencyCutoff",
                 "matsubara",
             ]:
                 assert readData[entry] == 0.0

@@ -115,6 +115,7 @@ def test_print(qstls_input_instance, capfd):
     assert "Number of Matsubara frequencies = 0" in captured
     assert "Wave-vector resolution = nan" in captured
     assert "Wave-vector cutoff = nan" in captured
+    assert "Frequency cutoff = nan" in captured
     assert "Iet mapping scheme = " in captured
     assert "Maximum number of iterations = 0" in captured
     assert "Minimum error for convergence = nan" in captured

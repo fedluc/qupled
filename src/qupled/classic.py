@@ -63,13 +63,15 @@ class _ClassicScheme:
                 "theory": inputs.theory,
                 "resolution": inputs.resolution,
                 "cutoff": inputs.cutoff,
+                "frequencyCutoff": inputs.frequencyCutoff,
                 "matsubara": inputs.matsubara,
             },
             index=["info"],
         ).to_hdf(self.hdfFileName, key="info", mode="w")
-        pd.DataFrame(scheme.idr).to_hdf(self.hdfFileName, key="idr")
-        pd.DataFrame(scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
-        pd.DataFrame(scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
+        if inputs.degeneracy > 0:
+            pd.DataFrame(scheme.idr).to_hdf(self.hdfFileName, key="idr")
+            pd.DataFrame(scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
+            pd.DataFrame(scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
         pd.DataFrame(scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
         pd.DataFrame(scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
         pd.DataFrame(scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
@@ -168,6 +170,8 @@ class Rpa(_ClassicScheme):
             """Resolution of the wave-vector grid. Default =  ``0.1``"""
             self.cutoff: float = 10.0
             """Cutoff for the wave-vector grid. Default =  ``10.0``"""
+            self.frequencyCutoff: float = 10.0
+            """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
             self.intError: float = 1.0e-5
             """Accuracy (relative error) in the computation of integrals. Default = ``1.0e-5``"""
             self.int2DScheme: str = "full"
@@ -264,6 +268,7 @@ class _IterativeScheme(_ClassicScheme):
                 "theory": inputs.theory,
                 "resolution": inputs.resolution,
                 "cutoff": inputs.cutoff,
+                "frequencyCutoff": inputs.frequencyCutoff,
                 "matsubara": inputs.matsubara,
             },
             index=["info"],

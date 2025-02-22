@@ -50,6 +50,7 @@ def test_save(qstls, qstls_input, mocker):
             "error",
             "resolution",
             "cutoff",
+            "frequencyCutoff",
             "matsubara",
             "adr",
             "idr",

@@ -65,6 +65,7 @@ protected:
   // Compute static structure factor at finite temperature
   void computeSsf();
   void computeSsfFinite();
+  void computeSsfGround();
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
@@ -89,36 +90,6 @@ protected:
                     int &nl) const;
 };
 
-// -----------------------------------------------------------------
-// Class for the static structure factor
-// -----------------------------------------------------------------
-
-class Qssf : public Ssf {
-
-public:
-
-  // Constructor for quantum schemes
-  Qssf(const double &x_,
-       const double &Theta_,
-       const double &rs_,
-       const double &ssfHF_,
-       const int &nl_,
-       const double *idr_,
-       const double *adr_,
-       const double &bf_)
-      : Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_),
-        adr(adr_),
-        bf(bf_) {}
-  // Get static structure factor
-  double get() const;
-
-private:
-
-  // Auxiliary density response
-  const double *adr;
-  // Bridge function
-  const double bf;
-};
 // -----------------------------------------------------------------
 // Classes for the auxiliary density response
 // -----------------------------------------------------------------
@@ -248,7 +219,6 @@ private:
   const std::vector<double> &itgGrid;
 };
 
-// Class for the auxiliary density response calculation in the IET scheme
 class AdrIet : public AdrBase {
 
 public:
@@ -328,6 +298,92 @@ private:
                    const double &l) const;
   // Integrator object
   Integrator1D &itg;
+};
+
+class AdrGround : public AdrBase {
+
+public:
+
+  // Constructor for zero temperature calculations
+  AdrGround(const double &x_,
+            const double &Omega_,
+            const Interpolator1D &ssfi_,
+            const double &yMax_,
+            Integrator2D &itg_)
+      : AdrBase(0.0, 0.0, yMax_, x_, ssfi_),
+        Omega(Omega_),
+        itg(itg_) {}
+  // Get
+  double get();
+
+private:
+
+  // Frequency
+  const double Omega;
+  // Integrator object
+  Integrator2D &itg;
+  // Integrands
+  double integrand1(const double &y) const;
+  double integrand2(const double &t) const;
+};
+
+// -----------------------------------------------------------------
+// Class for the static structure factor
+// -----------------------------------------------------------------
+
+class Qssf : public Ssf {
+
+public:
+
+  // Constructor for quantum schemes
+  Qssf(const double &x_,
+       const double &Theta_,
+       const double &rs_,
+       const double &ssfHF_,
+       const int &nl_,
+       const double *idr_,
+       const double *adr_,
+       const double &bf_)
+      : Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_),
+        adr(adr_),
+        bf(bf_) {}
+  // Get static structure factor
+  double get() const;
+
+private:
+
+  // Auxiliary density response
+  const double *adr;
+  // Bridge function
+  const double bf;
+};
+
+class QssfGround : public SsfGround {
+
+public:
+
+  // Constructor for zero temperature calculations
+  QssfGround(const double &x_,
+             const double &rs_,
+             const double &ssfHF_,
+             const double &xMax_,
+             const double &OmegaMax_,
+             const Interpolator1D &ssfi_,
+             Integrator1D &itg_)
+      : SsfGround(x_, rs_, ssfHF_, 0.0, OmegaMax_, itg_),
+        xMax(xMax_),
+        ssfi(ssfi_) {}
+  // Get result of integration
+  double get();
+
+private:
+
+  // Integration limit for the wave-vector integral
+  const double xMax;
+  // Interpolator
+  const Interpolator1D &ssfi;
+  // Integrand for zero temperature calculations
+  double integrand(const double &Omega) const;
 };
 
 #endif

@@ -7,9 +7,6 @@
 #include "vector2D.hpp"
 #include <vector>
 
-// Forward declarations
-class Dual11;
-
 // -----------------------------------------------------------------
 // Solver for the Random-Phase approximation scheme
 // -----------------------------------------------------------------
@@ -130,20 +127,18 @@ class IdrGround {
 public:
 
   // Constructor
-  IdrGround(const double &Omega_, const double &x_)
-      : Omega(Omega_),
-        x(x_) {}
-  // Get real part
-  Dual11 re0() const;
-  // Get imaginary part
-  double im0() const;
+  IdrGround(const double &x_, const double &Omega_)
+      : x(x_),
+        Omega(Omega_) {}
+  // Get
+  double get() const;
 
 private:
 
-  // Frequency
-  const double Omega;
   // Wave-vector
   const double x;
+  // Frequency
+  const double Omega;
 };
 
 // -----------------------------------------------------------------
@@ -225,6 +220,8 @@ protected:
   const double slfc;
   // Constant for unit conversion
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
+  // Normalized interaction potential
+  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   // Constructor
   SsfBase(const double &x_,
           const double &Theta_,
@@ -273,29 +270,22 @@ public:
             const double &rs_,
             const double &ssfHF_,
             const double &slfc_,
-            const double &yMin_,
-            const double &yMax_,
+            const double &OmegaMax_,
             Integrator1D &itg_)
       : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
-        yMin(yMin_),
-        yMax(yMax_),
+        OmegaMax(OmegaMax_),
         itg(itg_) {}
   // Get result of integration
-  double get() const;
+  double get();
 
-private:
+protected:
 
-  // Integration limits for zero temperature calculations
-  const double yMin;
-  const double yMax;
+  // Integration limit
+  const double OmegaMax;
   // Integrator object
   Integrator1D &itg;
   // Integrand for zero temperature calculations
   double integrand(const double &Omega) const;
-  // Plasmon contribution
-  double plasmon() const;
-  // Dielectric response function
-  Dual11 drf(const double &Omega) const;
 };
 
 #endif

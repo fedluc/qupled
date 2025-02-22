@@ -218,6 +218,13 @@ void RpaInput::setWaveVectorGridCutoff(const double &xmax) {
   this->xmax = xmax;
 }
 
+void RpaInput::setFrequencyCutoff(const double &OmegaMax) {
+  if (OmegaMax <= 0.0) {
+    throwError("The frequency cutoff must be larger than zero");
+  }
+  this->OmegaMax = OmegaMax;
+}
+
 void RpaInput::print() const {
   if (!isRoot()) { return; }
   Input::print();
@@ -229,11 +236,13 @@ void RpaInput::print() const {
   cout << "Number of Matsubara frequencies = " << nl << endl;
   cout << "Wave-vector resolution = " << dx << endl;
   cout << "Wave-vector cutoff = " << xmax << endl;
+  cout << "Frequency cutoff = " << OmegaMax << endl;
 }
 
 bool RpaInput::isEqual(const RpaInput &in) const {
+  const bool OmegaMaxIsEqual = (Theta == 0.0) ? OmegaMax == in.OmegaMax : true;
   return (Input::isEqual(in) && dx == in.dx && muGuess == in.muGuess
-          && nl == in.nl && xmax == in.xmax);
+          && nl == in.nl && xmax == in.xmax && OmegaMaxIsEqual);
 }
 
 // -----------------------------------------------------------------
