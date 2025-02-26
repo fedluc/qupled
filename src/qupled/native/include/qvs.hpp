@@ -106,10 +106,7 @@ class QstlsCSR : public CSR, public Qstls {
 public:
 
   // Constructor
-  explicit QstlsCSR(const QVSStlsInput &in_)
-      : CSR(in_, in_),
-        Qstls(in_, false, false),
-        in(in_) {}
+  explicit QstlsCSR(const QVSStlsInput &in_);
   // Compute auxiliary density response
   void computeAdrQStls();
   void computeAdr();
