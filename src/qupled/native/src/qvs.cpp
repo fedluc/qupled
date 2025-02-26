@@ -230,9 +230,9 @@ vector<double> QStructProp::getQ() const {
 // -----------------------------------------------------------------
 
 QstlsCSR::QstlsCSR(const QVSStlsInput &in_)
-      : CSR(in_, in_),
-        Qstls(in_, false, false),
-        in(in_) {
+    : CSR(in_, in_),
+      Qstls(in_, false, false),
+      in(in_) {
   if (in.getDegeneracy() == 0.0) {
     throwError("Ground state calculations are not available "
                "for the quantum VS scheme");
