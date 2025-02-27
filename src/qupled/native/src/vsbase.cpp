@@ -459,8 +459,7 @@ Vector2D CSR::getDerivativeContribution() const {
   assert(alpha != DEFAULT_ALPHA);
   // Derivative contributions
   const double &rs = inRpa.getCoupling();
-  // const double& theta = in.getDegeneracy();
-  const double &theta = 0.0;
+  const double &theta = inRpa.getDegeneracy();
   const double &dx = inRpa.getWaveVectorGridRes();
   const double &drs = inVS.getCouplingResolution();
   const double &dTheta = inVS.getDegeneracyResolution();
