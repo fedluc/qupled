@@ -1,6 +1,7 @@
 #ifndef VSSTLS_HPP
 #define VSSTLS_HPP
 
+#include "esa.hpp"
 #include "input.hpp"
 #include "stls.hpp"
 #include "vsbase.hpp"
@@ -90,14 +91,14 @@ private:
 // StlsCSR class
 // -----------------------------------------------------------------
 
-class StlsCSR : public CSR, public Stls {
+class StlsCSR : public CSR, public ESA {
 
 public:
 
   // Constructor
   explicit StlsCSR(const VSStlsInput &in_)
       : CSR(in_, in_),
-        Stls(in_, false, false),
+        ESA(in_, false),
         in(in_) {}
 
   // Compute static local field correction
@@ -105,16 +106,16 @@ public:
   void computeSlfc();
 
   // Publicly esposed private stls methods
-  void init() { Stls::init(); }
-  void initialGuess() { Stls::initialGuess(); }
-  void computeSsf() { Stls::computeSsf(); }
-  double computeError() { return Stls::computeError(); }
-  void updateSolution() { Stls::updateSolution(); }
+  void init() { ESA::init(); }
+  void initialGuess() {}
+  void computeSsf() { ESA::computeSsf(); }
+  double computeError() { return 0; }
+  void updateSolution() {}
 
   // Getters
-  const std::vector<double> &getSsf() const { return Stls::getSsf(); }
-  const std::vector<double> &getSlfc() const { return Stls::getSlfc(); }
-  const std::vector<double> &getWvg() const { return Stls::getWvg(); }
+  const std::vector<double> &getSsf() const { return ESA::getSsf(); }
+  const std::vector<double> &getSlfc() const { return ESA::getSlfc(); }
+  const std::vector<double> &getWvg() const { return ESA::getWvg(); }
 
 private:
 

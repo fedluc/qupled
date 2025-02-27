@@ -136,40 +136,14 @@ std::vector<VSStlsInput> StructProp::setupCSRInput() {
 }
 
 void StructProp::doIterations() {
-  const int maxIter = in.getNIter();
-  const int ompThreads = in.getNThreads();
-  const double minErr = in.getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
   for (auto &c : csr) {
-    c->initialGuess();
+    c->computeSlfcStls();
   }
-  // Iteration to solve for the structural properties
-  const bool useOMP = ompThreads > 1;
-  while (counter < maxIter + 1 && err > minErr) {
-// Compute new solution and error
-#pragma omp parallel num_threads(ompThreads) if (useOMP)
-    {
-#pragma omp for
-      for (auto &c : csr) {
-        c->computeSsf();
-        c->computeSlfcStls();
-      }
-#pragma omp for
-      for (size_t i = 0; i < csr.size(); ++i) {
-        auto &c = csr[i];
-        c->computeSlfc();
-        if (i == RS_THETA) { err = c->computeError(); }
-        c->updateSolution();
-      }
-    }
-    counter++;
+  for (auto &c : csr) {
+    c->computeSlfc();
+    c->computeSsf();
   }
-  println(fmt::format("Alpha = {:.5e}, Residual error "
-                      "(structural properties) = {:.5e}",
-                      csr[RS_THETA]->getAlpha(),
-                      err));
+  println(fmt::format("Alpha = {:.5e}", csr[RS_THETA]->getAlpha()));
 }
 
 // -----------------------------------------------------------------
@@ -177,13 +151,13 @@ void StructProp::doIterations() {
 // -----------------------------------------------------------------
 
 void StlsCSR::computeSlfcStls() {
-  Stls::computeSlfc();
-  *lfc = Vector2D(slfcNew);
+  ESA::computeSlfc();
+  *lfc = Vector2D(slfc);
 }
 
 void StlsCSR::computeSlfc() {
   Vector2D slfcDerivative = getDerivativeContribution();
-  for (size_t i = 0; i < slfcNew.size(); ++i) {
-    slfcNew[i] -= slfcDerivative(i);
+  for (size_t i = 0; i < slfc.size(); ++i) {
+    slfc[i] -= slfcDerivative(i);
   }
 }

@@ -17,10 +17,12 @@ public:
   // ESA constructor
   explicit ESA(const RpaInput &in_)
       : Rpa(in_) {}
+  explicit ESA(const RpaInput &in_, const bool &verbose_)
+      : Rpa(in_, verbose_) {}
   // Compute the scheme
   int compute();
 
-private:
+protected:
 
   // Static local field correction
   void computeSlfc();
