@@ -102,8 +102,7 @@ public:
         in(in_) {}
 
   // Compute static local field correction
-  void computeSlfcStls();
-  void computeSlfc();
+  void computeSlfc() { ESA::computeSlfc(); };
 
   // Publicly esposed private stls methods
   void init() { ESA::init(); }

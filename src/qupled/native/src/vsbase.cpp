@@ -45,14 +45,10 @@ const vector<double> &VSBase::getAlpha() const {
 }
 
 void VSBase::doIterations() {
-  auto func = [this](const double &alphaTmp) -> double {
-    return alphaDifference(alphaTmp);
-  };
-  SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
-  rsol.solve(func, in.getAlphaGuess());
-  alpha = rsol.getSolution();
-  println(fmt::format("Free parameter = {:.5f}", alpha));
+  alpha = computeAlpha();
+  thermoProp->setAlpha(alpha);
   updateSolution();
+  std::cerr << "Alpha = " << alpha << std::endl;
 }
 
 double VSBase::alphaDifference(const double &alphaTmp) {
@@ -60,6 +56,7 @@ double VSBase::alphaDifference(const double &alphaTmp) {
   alpha = alphaTmp;
   thermoProp->setAlpha(alpha);
   const double alphaTheoretical = computeAlpha();
+  std::cerr << alpha << " " << alphaTheoretical << std::endl;
   return alpha - alphaTheoretical;
 }
 

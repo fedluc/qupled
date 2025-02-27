@@ -179,42 +179,9 @@ std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
 const QstlsCSR &QStructProp::getCsr(const Idx &idx) const { return *csr[idx]; }
 
 void QStructProp::doIterations() {
-  const int maxIter = in.getNIter();
-  const int ompThreads = in.getNThreads();
-  const double minErr = in.getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
   for (auto &c : csr) {
-    c->initialGuess();
-  }
-  // Iteration to solve for the structural properties
-  const bool useOMP = ompThreads > 1;
-  while (counter < maxIter + 1 && err > minErr) {
-#pragma omp parallel num_threads(ompThreads) if (useOMP)
-    {
-#pragma omp for
-      for (auto &c : csr) {
-        c->computeAdrQStls();
-      }
-#pragma omp for
-      for (size_t i = 0; i < csr.size(); ++i) {
-        auto &c = csr[i];
-        c->computeAdr();
-        c->computeSsf();
-        if (i == RS_THETA) { err = c->computeError(); }
-        c->updateSolution();
-      }
-    }
-    counter++;
-  }
-  println(fmt::format("Alpha = {:.5e}, Residual error "
-                      "(structural properties) = {:.5e}",
-                      csr[RS_THETA]->getAlpha(),
-                      err));
-  // Set static structure factor for output
-  for (auto &c : csr) {
-    c->updateSsf();
+    c->computeSlfc();
+    c->computeSsf();
   }
 }
 
@@ -228,53 +195,6 @@ vector<double> QStructProp::getQ() const {
 // -----------------------------------------------------------------
 // QstlsCSR class
 // -----------------------------------------------------------------
-
-QstlsCSR::QstlsCSR(const QVSStlsInput &in_)
-    : CSR(in_, in_),
-      Qstls(in_, false, false),
-      in(in_) {
-  if (in.getDegeneracy() == 0.0) {
-    throwError("Ground state calculations are not available "
-               "for the quantum VS scheme");
-  }
-}
-
-void QstlsCSR::init() {
-  switch (lfcTheta.type) {
-  case CENTERED: adrFixedFileName = "THETA.bin"; break;
-  case FORWARD: adrFixedFileName = "THETA_DOWN.bin"; break;
-  case BACKWARD: adrFixedFileName = "THETA_UP.bin"; break;
-  }
-  if (!in.getFixed().empty()) {
-    std::filesystem::path fullPath = in.getFixed();
-    fullPath /= adrFixedFileName;
-    adrFixedFileName = fullPath.string();
-  }
-  if (std::filesystem::exists(adrFixedFileName)) {
-    Stls::init();
-    readAdrFixedFile(adrFixed, adrFixedFileName, false);
-  } else {
-    Qstls::init();
-  }
-  // MPI barrier to make sure that all processes see the same files
-  MPIUtil::barrier();
-}
-
-void QstlsCSR::computeAdrQStls() {
-  Qstls::computeAdr();
-  *lfc = adr;
-}
-
-Vector2D QstlsCSR::getDerivativeContribution() const {
-  Vector2D out = CSR::getDerivativeContribution();
-  out.linearCombination(*lfc, -alpha / 3.0);
-  return out;
-}
-
-void QstlsCSR::computeAdr() {
-  Vector2D adrDerivative = getDerivativeContribution();
-  adr.diff(adrDerivative);
-}
 
 double QstlsCSR::getQAdder() const {
   Integrator1D itg1(ItgType::DEFAULT, in.getIntError());

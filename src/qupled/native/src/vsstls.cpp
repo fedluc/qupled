@@ -137,27 +137,7 @@ std::vector<VSStlsInput> StructProp::setupCSRInput() {
 
 void StructProp::doIterations() {
   for (auto &c : csr) {
-    c->computeSlfcStls();
-  }
-  for (auto &c : csr) {
     c->computeSlfc();
     c->computeSsf();
-  }
-  println(fmt::format("Alpha = {:.5e}", csr[RS_THETA]->getAlpha()));
-}
-
-// -----------------------------------------------------------------
-// StlsCSR class
-// -----------------------------------------------------------------
-
-void StlsCSR::computeSlfcStls() {
-  ESA::computeSlfc();
-  *lfc = Vector2D(slfc);
-}
-
-void StlsCSR::computeSlfc() {
-  Vector2D slfcDerivative = getDerivativeContribution();
-  for (size_t i = 0; i < slfc.size(); ++i) {
-    slfc[i] -= slfcDerivative(i);
   }
 }

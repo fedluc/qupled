@@ -1,6 +1,7 @@
 #ifndef QVS_HPP
 #define QVS_HPP
 
+#include "esa.hpp"
 #include "input.hpp"
 #include "numerics.hpp"
 #include "qstls.hpp"
@@ -101,36 +102,40 @@ private:
 // Class to solve one state point
 // -----------------------------------------------------------------
 
-class QstlsCSR : public CSR, public Qstls {
+class QstlsCSR : public CSR, public ESA {
 
 public:
 
   // Constructor
-  explicit QstlsCSR(const QVSStlsInput &in_);
-  // Compute auxiliary density response
-  void computeAdrQStls();
-  void computeAdr();
+  explicit QstlsCSR(const QVSStlsInput &in_)
+      : CSR(in_, in_),
+        ESA(in_, false),
+        in(in_) {}
+
+  // Compute static local field correction
+  void computeSlfc() { ESA::computeSlfc(); };
+
   // Publicly esposed private stls methods
-  void init();
-  void initialGuess() { Qstls::initialGuess(); }
-  void computeSsf() { Qstls::computeSsf(); }
-  double computeError() { return Qstls::computeError(); }
-  void updateSolution() { Qstls::updateSolution(); }
-  // Update the static structure factor
-  void updateSsf() { ssf = ssfOld; };
+  void init() { ESA::init(); }
+  void initialGuess() {}
+  void computeSsf() { ESA::computeSsf(); }
+  double computeError() { return 0; }
+  void updateSolution() {}
+
+  // Getters
+  const std::vector<double> &getSsf() const { return ESA::getSsf(); }
+  const std::vector<double> &getSlfc() const { return ESA::getSlfc(); }
+  const std::vector<double> &getWvg() const { return ESA::getWvg(); }
+  const Vector2D &getAdr() const { return adr; }
   // Compute Q
   double getQAdder() const;
-  // Getters
-  const std::vector<double> &getSsf() const { return Qstls::getSsf(); }
-  const std::vector<double> &getSlfc() const { return Qstls::getSlfc(); }
-  const std::vector<double> &getWvg() const { return Qstls::getWvg(); }
 
 private:
 
-  // Input
+  // Input parameters
   QVSStlsInput in;
-  // Compute derivative contribution to the auxiliary density response
-  Vector2D getDerivativeContribution() const;
+  // Auxiliary density response
+  const Vector2D adr = Vector2D();
 };
 
 // -----------------------------------------------------------------
