@@ -1,5 +1,4 @@
-import sys
-import os
+from enum import Enum
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -15,30 +14,102 @@ from qupled import native
 class Hdf:
     """Class to manipulate the output hdf files produced when a scheme is solved."""
 
+    class EntryKeys(Enum):
+        ALPHA = "alpha"
+        ADR = "adr"
+        BF = "bf"
+        COUPLING = "coupling"
+        CUTOFF = "cutoff"
+        FREQUENCY_CUTOFF = "frequencyCutoff"
+        DEGENERACY = "degeneracy"
+        ERROR = "error"
+        FXC_GRID = "fxcGrid"
+        FXCI = "fxci"
+        MATSUBARA = "matsubara"
+        IDR = "idr"
+        INFO = "info"
+        RESOLUTION = "resolution"
+        RDF = "rdf"
+        RDF_GRID = "rdfGrid"
+        SDR = "sdr"
+        SLFC = "slfc"
+        SSF = "ssf"
+        SSF_HF = "ssfHF"
+        THEORY = "theory"
+        WVG = "wvg"
+
+    class EntryType(Enum):
+        NUMPY = "numpy"
+        NUMPY2D = "numpy2D"
+        NUMBER = "number"
+        STRING = "string"
+
     # Construct
     def __init__(self):
         self.entries = {
-            "alpha": self.Entries("Free Parameter for VS schemes", "numpy"),
-            "adr": self.Entries("Auxiliary density response", "numpy2D"),
-            "bf": self.Entries("Bridge function adder", "numpy"),
-            "coupling": self.Entries("Coupling parameter", "number"),
-            "cutoff": self.Entries("Cutoff for the wave-vector grid", "number"),
-            "frequencyCutoff": self.Entries("Cutoff for the frequency", "number"),
-            "degeneracy": self.Entries("Degeneracy parameter", "number"),
-            "error": self.Entries("Residual error in the solution", "number"),
-            "fxcGrid": self.Entries("Coupling parameter", "numpy"),
-            "fxci": self.Entries("Free Energy integrand", "numpy2D"),
-            "matsubara": self.Entries("Number of matsubara frequencies", "number"),
-            "idr": self.Entries("Ideal density response", "numpy2D"),
-            "resolution": self.Entries("Resolution for the wave-vector grid", "number"),
-            "rdf": self.Entries("Radial distribution function", "numpy"),
-            "rdfGrid": self.Entries("Inter-particle distance", "numpy"),
-            "sdr": self.Entries("Static density response", "numpy"),
-            "slfc": self.Entries("Static local field correction", "numpy"),
-            "ssf": self.Entries("Static structure factor", "numpy"),
-            "ssfHF": self.Entries("Hartree-Fock static structure factor", "numpy"),
-            "theory": self.Entries("Theory that is being solved", "string"),
-            "wvg": self.Entries("Wave-vector", "numpy"),
+            Hdf.EntryKeys.ALPHA.value: self.Entries(
+                "Free Parameter for VS schemes", Hdf.EntryType.NUMPY.value
+            ),
+            Hdf.EntryKeys.ADR.value: self.Entries(
+                "Auxiliary density response", Hdf.EntryType.NUMPY2D.value
+            ),
+            Hdf.EntryKeys.BF.value: self.Entries(
+                "Bridge function adder", Hdf.EntryType.NUMPY.value
+            ),
+            Hdf.EntryKeys.COUPLING.value: self.Entries(
+                "Coupling parameter", Hdf.EntryType.NUMBER.value
+            ),
+            Hdf.EntryKeys.CUTOFF.value: self.Entries(
+                "Cutoff for the wave-vector grid", Hdf.EntryType.NUMBER.value
+            ),
+            Hdf.EntryKeys.FREQUENCY_CUTOFF.value: self.Entries(
+                "Cutoff for the frequency", Hdf.EntryType.NUMBER.value
+            ),
+            Hdf.EntryKeys.DEGENERACY.value: self.Entries(
+                "Degeneracy parameter", Hdf.EntryType.NUMBER.value
+            ),
+            Hdf.EntryKeys.ERROR.value: self.Entries(
+                "Residual error in the solution", Hdf.EntryType.NUMBER.value
+            ),
+            Hdf.EntryKeys.FXC_GRID.value: self.Entries(
+                "Coupling parameter", Hdf.EntryType.NUMPY.value
+            ),
+            Hdf.EntryKeys.FXCI.value: self.Entries(
+                "Free Energy integrand", Hdf.EntryType.NUMPY2D.value
+            ),
+            Hdf.EntryKeys.MATSUBARA.value: self.Entries(
+                "Number of matsubara frequencies", Hdf.EntryType.NUMBER.value
+            ),
+            Hdf.EntryKeys.IDR.value: self.Entries(
+                "Ideal density response", Hdf.EntryType.NUMPY2D.value
+            ),
+            Hdf.EntryKeys.RESOLUTION.value: self.Entries(
+                "Resolution for the wave-vector grid", Hdf.EntryType.NUMBER.value
+            ),
+            Hdf.EntryKeys.RDF.value: self.Entries(
+                "Radial distribution function", Hdf.EntryType.NUMPY.value
+            ),
+            Hdf.EntryKeys.RDF_GRID.value: self.Entries(
+                "Inter-particle distance", Hdf.EntryType.NUMPY.value
+            ),
+            Hdf.EntryKeys.SDR.value: self.Entries(
+                "Static density response", Hdf.EntryType.NUMPY.value
+            ),
+            Hdf.EntryKeys.SLFC.value: self.Entries(
+                "Static local field correction", Hdf.EntryType.NUMPY.value
+            ),
+            Hdf.EntryKeys.SSF.value: self.Entries(
+                "Static structure factor", Hdf.EntryType.NUMPY.value
+            ),
+            Hdf.EntryKeys.SSF_HF.value: self.Entries(
+                "Hartree-Fock static structure factor", Hdf.EntryType.NUMPY.value
+            ),
+            Hdf.EntryKeys.THEORY.value: self.Entries(
+                "Theory that is being solved", Hdf.EntryType.STRING.value
+            ),
+            Hdf.EntryKeys.WVG.value: self.Entries(
+                "Wave-vector", Hdf.EntryType.NUMPY.value
+            ),
         }
 
     # Structure used to cathegorize the entries stored in the hdf file
@@ -49,10 +120,10 @@ class Hdf:
                 entryType  # Type of entry (numpy, numpy2, number or string)
             )
             assert (
-                self.entryType == "numpy"
-                or self.entryType == "numpy2D"
-                or self.entryType == "number"
-                or self.entryType == "string"
+                self.entryType == Hdf.EntryType.NUMPY.value
+                or self.entryType == Hdf.EntryType.NUMPY2D.value
+                or self.entryType == Hdf.EntryType.NUMBER.value
+                or self.entryType == Hdf.EntryType.STRING.value
             )
 
     # Read data in hdf file
@@ -69,19 +140,24 @@ class Hdf:
 
         """
         output = dict.fromkeys(toRead)
-        for name in toRead:
-            if name not in self.entries:
-                sys.exit("Unknown entry")
-            if self.entries[name].entryType == "numpy":
-                output[name] = pd.read_hdf(hdf, name)[0].to_numpy()
-            elif self.entries[name].entryType == "numpy2D":
-                output[name] = pd.read_hdf(hdf, name).to_numpy()
-            elif self.entries[name].entryType == "number":
-                output[name] = pd.read_hdf(hdf, "info")[name].iloc[0].tolist()
-            elif self.entries[name].entryType == "string":
-                output[name] = pd.read_hdf(hdf, "info")[name].iloc[0]
-            else:
-                sys.exit("Unknown entry type")
+        with pd.HDFStore(hdf, mode="r") as store:
+            for name in toRead:
+                if name not in self.entries:
+                    raise KeyError(f"Unknown entry: {name}")
+                if self.entries[name].entryType == Hdf.EntryType.NUMPY.value:
+                    output[name] = store[name][0].to_numpy()
+                elif self.entries[name].entryType == Hdf.EntryType.NUMPY2D.value:
+                    output[name] = store[name].to_numpy()
+                elif self.entries[name].entryType == Hdf.EntryType.NUMBER.value:
+                    output[name] = (
+                        store[Hdf.EntryKeys.INFO.value][name].iloc[0].tolist()
+                    )
+                elif self.entries[name].entryType == Hdf.EntryType.STRING.value:
+                    output[name] = store[Hdf.EntryKeys.INFO.value][name].iloc[0]
+                else:
+                    raise ValueError(
+                        f"Unknown entry type: {self.entries[name].entryType}"
+                    )
         return output
 
     # Get all quantities stored in an hdf file
@@ -100,9 +176,9 @@ class Hdf:
             datasetNames = [
                 name[1:] if name.startswith("/") else name for name in store.keys()
             ]
-            if "info" in datasetNames:
-                datasetNames.remove("info")
-                for name in store["info"].keys():
+            if Hdf.EntryKeys.INFO.value in datasetNames:
+                datasetNames.remove(Hdf.EntryKeys.INFO.value)
+                for name in store[Hdf.EntryKeys.INFO.value].keys():
                     datasetNames.append(name)
         output = dict.fromkeys(datasetNames)
         for key in output.keys():
@@ -128,51 +204,59 @@ class Hdf:
             description = (
                 self.entries[name].description if name in self.entries.keys() else ""
             )
-            if name == "rdf":
-                x = self.read(hdf, [name, "rdfGrid"])
+            if name == Hdf.EntryKeys.RDF.value:
+                x = self.read(hdf, [name, Hdf.EntryKeys.RDF_GRID.value])
                 Plot.plot1D(
-                    x["rdfGrid"],
+                    x[Hdf.EntryKeys.RDF_GRID.value],
                     x[name],
-                    self.entries["rdfGrid"].description,
+                    self.entries[Hdf.EntryKeys.RDF_GRID.value].description,
                     description,
                 )
-            elif name in ["adr", "idr"]:
-                x = self.read(hdf, [name, "wvg", "matsubara"])
+            elif name in [Hdf.EntryKeys.ADR.value, Hdf.EntryKeys.IDR.value]:
+                x = self.read(
+                    hdf, [name, Hdf.EntryKeys.WVG.value, Hdf.EntryKeys.MATSUBARA.value]
+                )
                 if matsubara is None:
-                    matsubara = np.arange(x["matsubara"])
+                    matsubara = np.arange(x[Hdf.EntryKeys.MATSUBARA.value])
                 Plot.plot1DParametric(
-                    x["wvg"],
+                    x[Hdf.EntryKeys.WVG.value],
                     x[name],
-                    self.entries["wvg"].description,
+                    self.entries[Hdf.EntryKeys.WVG.value].description,
                     description,
                     matsubara,
                 )
-            elif name == "fxci":
-                x = self.read(hdf, [name, "fxcGrid"])
+            elif name == Hdf.EntryKeys.FXCI.value:
+                x = self.read(hdf, [name, Hdf.EntryKeys.FXC_GRID.value])
                 Plot.plot1D(
-                    x["fxcGrid"],
+                    x[Hdf.EntryKeys.FXC_GRID.value],
                     x[name][1, :],
-                    self.entries["fxcGrid"].description,
+                    self.entries[Hdf.EntryKeys.FXC_GRID.value].description,
                     description,
                 )
-            elif name in ["bf", "sdr", "slfc", "ssf", "ssfHF"]:
-                x = self.read(hdf, [name, "wvg"])
+            elif name in [
+                Hdf.EntryKeys.BF.value,
+                Hdf.EntryKeys.SDR.value,
+                Hdf.EntryKeys.SLFC.value,
+                Hdf.EntryKeys.SSF.value,
+                Hdf.EntryKeys.SSF_HF.value,
+            ]:
+                x = self.read(hdf, [name, Hdf.EntryKeys.WVG.value])
                 Plot.plot1D(
-                    x["wvg"],
+                    x[Hdf.EntryKeys.WVG.value],
                     x[name],
-                    self.entries["wvg"].description,
+                    self.entries[Hdf.EntryKeys.WVG.value].description,
                     self.entries[name].description,
                 )
-            elif name == "alpha":
-                x = self.read(hdf, [name, "fxcGrid"])
+            elif name == Hdf.EntryKeys.ALPHA.value:
+                x = self.read(hdf, [name, Hdf.EntryKeys.FXC_GRID.value])
                 Plot.plot1D(
-                    x["fxcGrid"][::2],
+                    x[Hdf.EntryKeys.FXC_GRID.value][::2],
                     x[name][::2],
-                    self.entries["fxcGrid"].description,
+                    self.entries[Hdf.EntryKeys.FXC_GRID.value].description,
                     self.entries[name].description,
                 )
             else:
-                sys.exit("Unknown quantity to plot")
+                raise ValueError(f"Unknown quantity to plot: {name}")
 
     def computeRdf(
         self, hdf: str, rdfGrid: np.array = None, saveRdf: bool = True
@@ -189,13 +273,17 @@ class Hdf:
             The radial distribution function
 
         """
-        hdfData = self.read(hdf, ["wvg", "ssf"])
+        hdfData = self.read(hdf, [Hdf.EntryKeys.WVG.value, Hdf.EntryKeys.SSF.value])
         if rdfGrid is None:
             rdfGrid = np.arange(0.0, 10.0, 0.01)
-        rdf = native.computeRdf(rdfGrid, hdfData["wvg"], hdfData["ssf"])
+        rdf = native.computeRdf(
+            rdfGrid, hdfData[Hdf.EntryKeys.WVG.value], hdfData[Hdf.EntryKeys.SSF.value]
+        )
         if saveRdf:
-            pd.DataFrame(rdfGrid).to_hdf(hdf, key="rdfGrid", mode="r+")
-            pd.DataFrame(rdf).to_hdf(hdf, key="rdf", mode="r+")
+            pd.DataFrame(rdfGrid).to_hdf(
+                hdf, key=Hdf.EntryKeys.RDF_GRID.value, mode="r+"
+            )
+            pd.DataFrame(rdf).to_hdf(hdf, key=Hdf.EntryKeys.RDF.value, mode="r+")
         return rdf
 
     def computeInternalEnergy(self, hdf: str) -> float:
@@ -207,9 +295,18 @@ class Hdf:
         Returns:
             The internal energy
         """
-        hdfData = self.read(hdf, ["wvg", "ssf", "coupling"])
+        hdfData = self.read(
+            hdf,
+            [
+                Hdf.EntryKeys.WVG.value,
+                Hdf.EntryKeys.SSF.value,
+                Hdf.EntryKeys.COUPLING.value,
+            ],
+        )
         return native.computeInternalEnergy(
-            hdfData["wvg"], hdfData["ssf"], hdfData["coupling"]
+            hdfData[Hdf.EntryKeys.WVG.value],
+            hdfData[Hdf.EntryKeys.SSF.value],
+            hdfData[Hdf.EntryKeys.COUPLING.value],
         )
 
 

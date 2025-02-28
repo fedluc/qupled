@@ -26,12 +26,20 @@ class _QuantumIterativeScheme(qc._IterativeScheme):
         Args:
             fileName : name of the file used to extract the information for the initial guess.
         """
-        hdfData = qu.Hdf().read(fileName, ["wvg", "ssf", "adr", "matsubara"])
+        hdfData = qu.Hdf().read(
+            fileName,
+            [
+                qu.Hdf.EntryKeys.WVG.value,
+                qu.Hdf.EntryKeys.SSF.value,
+                qu.Hdf.EntryKeys.ADR.value,
+                qu.Hdf.EntryKeys.MATSUBARA.value,
+            ],
+        )
         return _QuantumIterativeScheme.Guess(
-            hdfData["wvg"],
-            hdfData["ssf"],
-            np.ascontiguousarray(hdfData["adr"]),
-            hdfData["matsubara"],
+            hdfData[qu.Hdf.EntryKeys.WVG.value],
+            hdfData[qu.Hdf.EntryKeys.SSF.value],
+            np.ascontiguousarray(hdfData[qu.Hdf.EntryKeys.ADR.value]),
+            hdfData[qu.Hdf.EntryKeys.MATSUBARA.value],
         )
 
     # Save results to disk
@@ -40,7 +48,9 @@ class _QuantumIterativeScheme(qc._IterativeScheme):
         """Stores the results obtained by solving the scheme."""
         super()._save(scheme)
         if scheme.inputs.degeneracy > 0:
-            pd.DataFrame(scheme.adr).to_hdf(self.hdfFileName, key="adr")
+            pd.DataFrame(scheme.adr).to_hdf(
+                self.hdfFileName, key=qu.Hdf.EntryKeys.ADR.value
+            )
 
     # Initial guess
     class Guess:
@@ -130,7 +140,7 @@ class QstlsIet(_QuantumIterativeScheme):
     # Compute
     @qu.MPI.recordTime
     @qu.MPI.synchronizeRanks
-    def compute(self, inputs: QsltsIet.Input) -> None:
+    def compute(self, inputs: QstlsIet.Input) -> None:
         """
         Solves the scheme and saves the results.
 
@@ -276,7 +286,7 @@ class QVSStls(_QuantumIterativeScheme):
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
-    def getFreeEnergyIntegrand(fileName: str) -> native.FreeEnergyIntegrand():
+    def getFreeEnergyIntegrand(fileName: str) -> native.FreeEnergyIntegrand:
         return qc.VSStls.getFreeEnergyIntegrand(fileName)
 
     # Input class

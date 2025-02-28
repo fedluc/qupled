@@ -58,23 +58,35 @@ class _ClassicScheme:
         """Stores the results obtained by solving the scheme."""
         pd.DataFrame(
             {
-                "coupling": inputs.coupling,
-                "degeneracy": inputs.degeneracy,
-                "theory": inputs.theory,
-                "resolution": inputs.resolution,
-                "cutoff": inputs.cutoff,
-                "frequencyCutoff": inputs.frequencyCutoff,
-                "matsubara": inputs.matsubara,
+                qu.Hdf.EntryKeys.COUPLING.value: inputs.coupling,
+                qu.Hdf.EntryKeys.DEGENERACY.value: inputs.degeneracy,
+                qu.Hdf.EntryKeys.THEORY.value: inputs.theory,
+                qu.Hdf.EntryKeys.RESOLUTION.value: inputs.resolution,
+                qu.Hdf.EntryKeys.CUTOFF.value: inputs.cutoff,
+                qu.Hdf.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequencyCutoff,
+                qu.Hdf.EntryKeys.MATSUBARA.value: inputs.matsubara,
             },
-            index=["info"],
-        ).to_hdf(self.hdfFileName, key="info", mode="w")
+            index=[qu.Hdf.EntryKeys.INFO.value],
+        ).to_hdf(self.hdfFileName, key=qu.Hdf.EntryKeys.INFO.value, mode="w")
         if inputs.degeneracy > 0:
-            pd.DataFrame(scheme.idr).to_hdf(self.hdfFileName, key="idr")
-            pd.DataFrame(scheme.sdr).to_hdf(self.hdfFileName, key="sdr")
-            pd.DataFrame(scheme.slfc).to_hdf(self.hdfFileName, key="slfc")
-        pd.DataFrame(scheme.ssf).to_hdf(self.hdfFileName, key="ssf")
-        pd.DataFrame(scheme.ssfHF).to_hdf(self.hdfFileName, key="ssfHF")
-        pd.DataFrame(scheme.wvg).to_hdf(self.hdfFileName, key="wvg")
+            pd.DataFrame(scheme.idr).to_hdf(
+                self.hdfFileName, key=qu.Hdf.EntryKeys.IDR.value
+            )
+            pd.DataFrame(scheme.sdr).to_hdf(
+                self.hdfFileName, key=qu.Hdf.EntryKeys.SDR.value
+            )
+            pd.DataFrame(scheme.slfc).to_hdf(
+                self.hdfFileName, key=qu.Hdf.EntryKeys.SLFC.value
+            )
+        pd.DataFrame(scheme.ssf).to_hdf(
+            self.hdfFileName, key=qu.Hdf.EntryKeys.SSF.value
+        )
+        pd.DataFrame(scheme.ssfHF).to_hdf(
+            self.hdfFileName, key=qu.Hdf.EntryKeys.SSF_HF.value
+        )
+        pd.DataFrame(scheme.wvg).to_hdf(
+            self.hdfFileName, key=qu.Hdf.EntryKeys.WVG.value
+        )
 
     # Compute radial distribution function
     def computeRdf(
@@ -125,7 +137,7 @@ class _ClassicScheme:
                 distribution function is plotted. Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`).
 
         """
-        if "rdf" in toPlot:
+        if qu.Hdf.EntryKeys.RDF.value in toPlot:
             self.computeRdf(rdfGrid)
         qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
 
@@ -262,17 +274,17 @@ class _IterativeScheme(_ClassicScheme):
         inputs = scheme.inputs
         pd.DataFrame(
             {
-                "coupling": inputs.coupling,
-                "degeneracy": inputs.degeneracy,
-                "error": scheme.error,
-                "theory": inputs.theory,
-                "resolution": inputs.resolution,
-                "cutoff": inputs.cutoff,
-                "frequencyCutoff": inputs.frequencyCutoff,
-                "matsubara": inputs.matsubara,
+                qu.Hdf.EntryKeys.COUPLING.value: inputs.coupling,
+                qu.Hdf.EntryKeys.DEGENERACY.value: inputs.degeneracy,
+                qu.Hdf.EntryKeys.ERROR.value: scheme.error,
+                qu.Hdf.EntryKeys.THEORY.value: inputs.theory,
+                qu.Hdf.EntryKeys.RESOLUTION.value: inputs.resolution,
+                qu.Hdf.EntryKeys.CUTOFF.value: inputs.cutoff,
+                qu.Hdf.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequencyCutoff,
+                qu.Hdf.EntryKeys.MATSUBARA.value: inputs.matsubara,
             },
-            index=["info"],
-        ).to_hdf(self.hdfFileName, key="info")
+            index=[qu.Hdf.EntryKeys.INFO.value],
+        ).to_hdf(self.hdfFileName, key=qu.Hdf.EntryKeys.INFO.value)
 
     # Initial guess
     class Guess:
@@ -444,17 +456,24 @@ class VSStls(_IterativeScheme):
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
-    def getFreeEnergyIntegrand(fileName: str) -> native.FreeEnergyIntegrand():
+    def getFreeEnergyIntegrand(fileName: str) -> native.FreeEnergyIntegrand:
         """Constructs the free energy integrand by extracting the information from an output file.
 
         Args:
             fileName : name of the file used to extract the information for the free energy integrand.
         """
         fxci = native.FreeEnergyIntegrand()
-        hdfData = qu.Hdf().read(fileName, ["fxcGrid", "fxci", "alpha"])
-        fxci.grid = hdfData["fxcGrid"]
-        fxci.integrand = np.ascontiguousarray(hdfData["fxci"])
-        fxci.alpha = hdfData["alpha"]
+        hdfData = qu.Hdf().read(
+            fileName,
+            [
+                qu.Hdf.EntryKeys.FXC_GRID.value,
+                qu.Hdf.EntryKeys.FXCI.value,
+                qu.Hdf.EntryKeys.ALPHA.value,
+            ],
+        )
+        fxci.grid = hdfData[qu.Hdf.EntryKeys.FXC_GRID.value]
+        fxci.integrand = np.ascontiguousarray(hdfData[qu.Hdf.EntryKeys.FXCI.value])
+        fxci.alpha = hdfData[qu.Hdf.EntryKeys.ALPHA.value]
         return fxci
 
     # Input class
@@ -475,7 +494,7 @@ class VSStls(_IterativeScheme):
             """Minimum error for convergence in the free parameter. Default = ``1.0e-3``"""
             self.iterationsAlpha: int = 50
             """Maximum number of iterations to determine the free parameter. Default = ``50``"""
-            self.freeEnergyIntegrand: qupled.FreeEnergyIntegrand = (
+            self.freeEnergyIntegrand: native.FreeEnergyIntegrand = (
                 native.FreeEnergyIntegrand()
             )
             """Pre-computed free energy integrand."""
