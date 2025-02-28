@@ -23,10 +23,6 @@ QVSStls::QVSStls(const QVSStlsInput &in_)
       Qstls(in_, false, false),
       in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
-  if (in.getDegeneracy() == 0.0) {
-    throwError("Ground state calculations are not available "
-               "for the quantum VS scheme");
-  }
   VSBase::thermoProp = thermoProp;
 }
 
@@ -35,10 +31,6 @@ QVSStls::QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_)
       Qstls(in_, false, false),
       in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
-  if (in.getDegeneracy() == 0.0) {
-    throwError("Ground state calculations are not available "
-               "for the quantum VS scheme");
-  }
   VSBase::thermoProp = thermoProp;
   thermoProp->copyFreeEnergyIntegrand(thermoProp_);
 }
@@ -105,6 +97,10 @@ void QVSStls::initFreeEnergyIntegrand() {
 QThermoProp::QThermoProp(const QVSStlsInput &in_)
     : ThermoPropBase(in_, in_),
       structProp(make_shared<QStructProp>(in_)) {
+  if (isZeroDegeneracy) {
+    throwError("Ground state calculations are not available "
+               "for the quantum VS scheme");
+  }
   ThermoPropBase::structProp = structProp;
 }
 
@@ -232,6 +228,16 @@ vector<double> QStructProp::getQ() const {
 // -----------------------------------------------------------------
 // QstlsCSR class
 // -----------------------------------------------------------------
+
+QstlsCSR::QstlsCSR(const QVSStlsInput &in_)
+    : CSR(in_, in_),
+      Qstls(in_, false, false),
+      in(in_) {
+  if (in.getDegeneracy() == 0.0) {
+    throwError("Ground state calculations are not available "
+               "for the quantum VS scheme");
+  }
+}
 
 void QstlsCSR::init() {
   switch (lfcTheta.type) {
