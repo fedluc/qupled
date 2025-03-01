@@ -1,5 +1,4 @@
 import os
-import pytest
 from qupled import native
 
 

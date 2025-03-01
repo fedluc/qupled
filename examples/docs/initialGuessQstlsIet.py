@@ -8,7 +8,7 @@ inputs = QstlsIet.Input(10.0, 1.0, "QSTLS-HNC")
 inputs.mixing = 0.5
 inputs.matsubara = 16
 inputs.threads = 16
-inputs.int2DScheme = "segregated"
+inputs.integral_strategy = "segregated"
 
 # Solve the scheme
 qstls.compute(inputs)
