@@ -1,6 +1,5 @@
 import os
 import pytest
-import numpy as np
 from qupled import native
 from qupled.util import Hdf
 from qupled.quantum import QstlsIet
@@ -52,7 +51,7 @@ def test_unpackFixedAdrFiles_with_files(qstls_iet, qstls_iet_input, mocker):
     mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
     mockZip = mocker.patch("qupled.quantum.zf.ZipFile.__init__", return_value=None)
     mockExtractAll = mocker.patch("qupled.quantum.zf.ZipFile.extractall")
-    qstls_iet_input.fixediet = "testFile.zip"
+    qstls_iet_input.fixed_iet = "testFile.zip"
     qstls_iet._unpackFixedAdrFiles(qstls_iet_input)
     assert mockMPIIsRoot.call_count == 1
     assert mockZip.call_count == 1

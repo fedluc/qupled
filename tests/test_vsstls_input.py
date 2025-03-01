@@ -11,48 +11,48 @@ def vsstls_input_instance():
 
 def test_init(vsstls_input_instance):
     assert issubclass(native.VSStlsInput, native.VSInput)
-    assert hasattr(vsstls_input_instance, "errorAlpha")
-    assert hasattr(vsstls_input_instance, "iterationsAlpha")
+    assert hasattr(vsstls_input_instance, "error_alpha")
+    assert hasattr(vsstls_input_instance, "iterations_alpha")
     assert hasattr(vsstls_input_instance, "alpha")
-    assert hasattr(vsstls_input_instance, "couplingResolution")
-    assert hasattr(vsstls_input_instance, "degeneracyResolution")
-    assert hasattr(vsstls_input_instance, "freeEnergyIntegrand")
-    assert hasattr(vsstls_input_instance.freeEnergyIntegrand, "grid")
-    assert hasattr(vsstls_input_instance.freeEnergyIntegrand, "integrand")
+    assert hasattr(vsstls_input_instance, "coupling_resolution")
+    assert hasattr(vsstls_input_instance, "degeneracy_resolution")
+    assert hasattr(vsstls_input_instance, "free_energy_integrand")
+    assert hasattr(vsstls_input_instance.free_energy_integrand, "grid")
+    assert hasattr(vsstls_input_instance.free_energy_integrand, "integrand")
     assert hasattr(vsstls_input_instance, "mapping")
     assert hasattr(vsstls_input_instance, "guess")
 
 
 def test_defaults(vsstls_input_instance):
-    assert np.isnan(vsstls_input_instance.errorAlpha)
-    assert vsstls_input_instance.iterationsAlpha == 0
+    assert np.isnan(vsstls_input_instance.error_alpha)
+    assert vsstls_input_instance.iterations_alpha == 0
     assert vsstls_input_instance.alpha.size == 0
-    assert np.isnan(vsstls_input_instance.couplingResolution)
-    assert np.isnan(vsstls_input_instance.degeneracyResolution)
-    assert vsstls_input_instance.freeEnergyIntegrand.grid.size == 0
-    assert vsstls_input_instance.freeEnergyIntegrand.integrand.size == 0
+    assert np.isnan(vsstls_input_instance.coupling_resolution)
+    assert np.isnan(vsstls_input_instance.degeneracy_resolution)
+    assert vsstls_input_instance.free_energy_integrand.grid.size == 0
+    assert vsstls_input_instance.free_energy_integrand.integrand.size == 0
     assert vsstls_input_instance.guess.wvg.size == 0
     assert vsstls_input_instance.guess.slfc.size == 0
 
 
-def test_errorAlpha(vsstls_input_instance):
-    vsstls_input_instance.errorAlpha = 0.001
-    errorAlpha = vsstls_input_instance.errorAlpha
-    assert errorAlpha == 0.001
+def test_error_alpha(vsstls_input_instance):
+    vsstls_input_instance.error_alpha = 0.001
+    error_alpha = vsstls_input_instance.error_alpha
+    assert error_alpha == 0.001
     with pytest.raises(RuntimeError) as excinfo:
-        vsstls_input_instance.errorAlpha = -0.1
+        vsstls_input_instance.error_alpha = -0.1
     assert (
         excinfo.value.args[0]
         == "The minimum error for convergence must be larger than zero"
     )
 
 
-def test_iterationsAlpha(vsstls_input_instance):
-    vsstls_input_instance.iterationsAlpha = 1
-    iterationsAlpha = vsstls_input_instance.iterationsAlpha
-    assert iterationsAlpha == 1
+def test_iterations_alpha(vsstls_input_instance):
+    vsstls_input_instance.iterations_alpha = 1
+    iterations_alpha = vsstls_input_instance.iterations_alpha
+    assert iterations_alpha == 1
     with pytest.raises(RuntimeError) as excinfo:
-        vsstls_input_instance.iterationsAlpha = -2
+        vsstls_input_instance.iterations_alpha = -2
     assert excinfo.value.args[0] == "The maximum number of iterations can't be negative"
 
 
@@ -66,61 +66,61 @@ def test_alpha(vsstls_input_instance):
         assert excinfo.value.args[0] == "Invalid guess for free parameter calculation"
 
 
-def test_couplingResolution(vsstls_input_instance):
-    vsstls_input_instance.couplingResolution = 0.01
-    couplingResolution = vsstls_input_instance.couplingResolution
-    assert couplingResolution == 0.01
+def test_coupling_resolution(vsstls_input_instance):
+    vsstls_input_instance.coupling_resolution = 0.01
+    coupling_resolution = vsstls_input_instance.coupling_resolution
+    assert coupling_resolution == 0.01
     with pytest.raises(RuntimeError) as excinfo:
-        vsstls_input_instance.couplingResolution = -0.1
+        vsstls_input_instance.coupling_resolution = -0.1
     assert (
         excinfo.value.args[0]
         == "The coupling parameter resolution must be larger than zero"
     )
 
 
-def test_degeneracyResolution(vsstls_input_instance):
-    vsstls_input_instance.degeneracyResolution = 0.01
-    degeneracyResolution = vsstls_input_instance.degeneracyResolution
-    assert degeneracyResolution == 0.01
+def test_degeneracy_resolution(vsstls_input_instance):
+    vsstls_input_instance.degeneracy_resolution = 0.01
+    degeneracy_resolution = vsstls_input_instance.degeneracy_resolution
+    assert degeneracy_resolution == 0.01
     with pytest.raises(RuntimeError) as excinfo:
-        vsstls_input_instance.degeneracyResolution = -0.1
+        vsstls_input_instance.degeneracy_resolution = -0.1
     assert (
         excinfo.value.args[0]
         == "The degeneracy parameter resolution must be larger than zero"
     )
 
 
-def test_freeEnergyIntegrand(vsstls_input_instance):
+def test_free_energy_integrand(vsstls_input_instance):
     arr1 = np.zeros(10)
     arr2 = np.zeros((3, 10))
     fxc = native.FreeEnergyIntegrand()
     fxc.grid = arr1
     fxc.integrand = arr2
-    vsstls_input_instance.freeEnergyIntegrand = fxc
-    assert np.array_equal(arr1, vsstls_input_instance.freeEnergyIntegrand.grid)
-    assert np.array_equal(arr2, vsstls_input_instance.freeEnergyIntegrand.integrand)
+    vsstls_input_instance.free_energy_integrand = fxc
+    assert np.array_equal(arr1, vsstls_input_instance.free_energy_integrand.grid)
+    assert np.array_equal(arr2, vsstls_input_instance.free_energy_integrand.integrand)
 
 
-def test_freeEnergyIntegrand_Inconsistent(vsstls_input_instance):
+def test_free_energy_integrand_Inconsistent(vsstls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros((3, 11))
         fxc = native.FreeEnergyIntegrand()
         fxc.grid = arr1
         fxc.integrand = arr2
-        vsstls_input_instance.freeEnergyIntegrand = fxc
+        vsstls_input_instance.free_energy_integrand = fxc
     assert excinfo.value.args[0] == "The free energy integrand is inconsistent"
 
 
-def test_isEqual_default(vsstls_input_instance):
-    assert not vsstls_input_instance.isEqual(vsstls_input_instance)
+def test_is_equal_default(vsstls_input_instance):
+    assert not vsstls_input_instance.is_equal(vsstls_input_instance)
 
 
-def test_isEqual(vsstls_input_instance):
+def test_is_equal(vsstls_input_instance):
     thisVSStls = native.VSStlsInput()
     thisVSStls.coupling = 2.0
     thisVSStls.degeneracy = 1.0
-    thisVSStls.intError = 0.1
+    thisVSStls.integral_error = 0.1
     thisVSStls.threads = 1
     thisVSStls.theory = "STLS"
     thisVSStls.matsubara = 1
@@ -128,12 +128,12 @@ def test_isEqual(vsstls_input_instance):
     thisVSStls.cutoff = 1.0
     thisVSStls.error = 0.1
     thisVSStls.mixing = 1.0
-    thisVSStls.outputFrequency = 1
-    thisVSStls.couplingResolution = 0.1
-    thisVSStls.degeneracyResolution = 0.1
-    thisVSStls.errorAlpha = 0.1
-    thisVSStls.iterationsAlpha = 1
-    assert thisVSStls.isEqual(thisVSStls)
+    thisVSStls.output_frequency = 1
+    thisVSStls.coupling_resolution = 0.1
+    thisVSStls.degeneracy_resolution = 0.1
+    thisVSStls.error_alpha = 0.1
+    thisVSStls.iterations_alpha = 1
+    assert thisVSStls.is_equal(thisVSStls)
 
 
 def test_print(vsstls_input_instance, capfd):

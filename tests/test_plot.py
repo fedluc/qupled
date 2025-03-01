@@ -1,4 +1,3 @@
-import os
 import pytest
 import numpy as np
 from qupled.util import Plot

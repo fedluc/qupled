@@ -1,4 +1,3 @@
-import os
 import pytest
 import numpy as np
 from qupled import native
@@ -17,7 +16,7 @@ def test_init(qstls_input_instance):
     assert hasattr(qstls_input_instance.guess, "adr")
     assert hasattr(qstls_input_instance.guess, "matsubara")
     assert hasattr(qstls_input_instance, "fixed")
-    assert hasattr(qstls_input_instance, "fixediet")
+    assert hasattr(qstls_input_instance, "fixed_iet")
 
 
 def test_defaults(qstls_input_instance):
@@ -26,7 +25,7 @@ def test_defaults(qstls_input_instance):
     assert qstls_input_instance.guess.adr.size == 0
     assert qstls_input_instance.guess.matsubara == 0
     assert qstls_input_instance.fixed == ""
-    assert qstls_input_instance.fixediet == ""
+    assert qstls_input_instance.fixed_iet == ""
 
 
 def test_fixed(qstls_input_instance):
@@ -35,9 +34,9 @@ def test_fixed(qstls_input_instance):
     assert fixed == "fixedFile"
 
 
-def test_fixed(qstls_input_instance):
-    qstls_input_instance.fixediet = "fixedFile"
-    fixed = qstls_input_instance.fixediet
+def test_fixed_iet(qstls_input_instance):
+    qstls_input_instance.fixed_iet = "fixedFile"
+    fixed = qstls_input_instance.fixed_iet
     assert fixed == "fixedFile"
 
 
@@ -80,16 +79,16 @@ def test_guessIet(qstls_input_instance):
         assert excinfo.value.args[0] == "The initial guess is inconsistent"
 
 
-def test_isEqual_default(qstls_input_instance):
+def test_is_equal_default(qstls_input_instance):
     thisQstls = native.QstlsInput()
-    assert not qstls_input_instance.isEqual(thisQstls)
+    assert not qstls_input_instance.is_equal(thisQstls)
 
 
-def test_isEqual_nonDefault(qstls_input_instance):
+def test_is_equal_nonDefault(qstls_input_instance):
     thisQstls = native.QstlsInput()
     thisQstls.coupling = 2.0
     thisQstls.degeneracy = 1.0
-    thisQstls.intError = 0.1
+    thisQstls.integral_error = 0.1
     thisQstls.threads = 1
     thisQstls.theory = "STLS"
     thisQstls.matsubara = 1
@@ -97,8 +96,8 @@ def test_isEqual_nonDefault(qstls_input_instance):
     thisQstls.cutoff = 1.0
     thisQstls.error = 0.1
     thisQstls.mixing = 1.0
-    thisQstls.outputFrequency = 1
-    assert thisQstls.isEqual(thisQstls)
+    thisQstls.output_frequency = 1
+    assert thisQstls.is_equal(thisQstls)
 
 
 def test_print(qstls_input_instance, capfd):

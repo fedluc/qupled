@@ -1,4 +1,3 @@
-import os
 import pytest
 from qupled.classic import ESA
 

@@ -37,12 +37,14 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("coupling", &RpaInput::getCoupling, &RpaInput::setCoupling)
       .add_property(
           "degeneracy", &RpaInput::getDegeneracy, &RpaInput::setDegeneracy)
+      .add_property("integral_strategy",
+                    &RpaInput::getInt2DScheme,
+                    &RpaInput::setInt2DScheme)
       .add_property(
-          "int2DScheme", &RpaInput::getInt2DScheme, &RpaInput::setInt2DScheme)
-      .add_property("intError", &RpaInput::getIntError, &RpaInput::setIntError)
+          "integral_error", &RpaInput::getIntError, &RpaInput::setIntError)
       .add_property("threads", &RpaInput::getNThreads, &RpaInput::setNThreads)
       .add_property("theory", &RpaInput::getTheory, &RpaInput::setTheory)
-      .add_property("chemicalPotential",
+      .add_property("chemical_potential",
                     &PyRpaInput::getChemicalPotentialGuess,
                     &PyRpaInput::setChemicalPotentialGuess)
       .add_property(
@@ -53,11 +55,11 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("cutoff",
                     &RpaInput::getWaveVectorGridCutoff,
                     &RpaInput::setWaveVectorGridCutoff)
-      .add_property("frequencyCutoff",
+      .add_property("frequency_cutoff",
                     &RpaInput::getFrequencyCutoff,
                     &RpaInput::setFrequencyCutoff)
       .def("print", &RpaInput::print)
-      .def("isEqual", &RpaInput::isEqual);
+      .def("is_equal", &RpaInput::isEqual);
 
   // Class for the input of the Stls scheme
   bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
@@ -70,51 +72,51 @@ BOOST_PYTHON_MODULE(native) {
                     &StlsInput::setMixingParameter)
       .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter)
       .add_property(
-          "outputFrequency", &StlsInput::getOutIter, &StlsInput::setOutIter)
-      .add_property("recoveryFile",
+          "output_frequency", &StlsInput::getOutIter, &StlsInput::setOutIter)
+      .add_property("recovery_file",
                     &StlsInput::getRecoveryFileName,
                     &StlsInput::setRecoveryFileName)
       .def("print", &StlsInput::print)
-      .def("isEqual", &StlsInput::isEqual);
+      .def("is_equal", &StlsInput::isEqual);
 
   // Class for the input of the VSStls scheme
   bp::class_<VSInput>("VSInput")
       .add_property(
-          "errorAlpha", &VSInput::getErrMinAlpha, &VSInput::setErrMinAlpha)
+          "error_alpha", &VSInput::getErrMinAlpha, &VSInput::setErrMinAlpha)
       .add_property(
-          "iterationsAlpha", &VSInput::getNIterAlpha, &VSInput::setNIterAlpha)
+          "iterations_alpha", &VSInput::getNIterAlpha, &VSInput::setNIterAlpha)
       .add_property(
           "alpha", &PyVSInput::getAlphaGuess, &PyVSInput::setAlphaGuess)
-      .add_property("couplingResolution",
+      .add_property("coupling_resolution",
                     &VSInput::getCouplingResolution,
                     &VSInput::setCouplingResolution)
-      .add_property("degeneracyResolution",
+      .add_property("degeneracy_resolution",
                     &VSInput::getDegeneracyResolution,
                     &VSInput::setDegeneracyResolution)
-      .add_property("freeEnergyIntegrand",
+      .add_property("free_energy_integrand",
                     &VSInput::getFreeEnergyIntegrand,
                     &VSInput::setFreeEnergyIntegrand)
       .def("print", &VSInput::print)
-      .def("isEqual", &VSInput::isEqual);
+      .def("is_equal", &VSInput::isEqual);
 
   // Class for the input of the VSStls scheme
   bp::class_<VSStlsInput, bp::bases<VSInput, StlsInput>>("VSStlsInput")
       .def("print", &VSStlsInput::print)
-      .def("isEqual", &VSStlsInput::isEqual);
+      .def("is_equal", &VSStlsInput::isEqual);
 
   // Class for the input of the Qstls scheme
   bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
       .add_property("guess", &QstlsInput::getGuess, &QstlsInput::setGuess)
       .add_property("fixed", &QstlsInput::getFixed, &QstlsInput::setFixed)
       .add_property(
-          "fixediet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet)
+          "fixed_iet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet)
       .def("print", &QstlsInput::print)
-      .def("isEqual", &QstlsInput::isEqual);
+      .def("is_equal", &QstlsInput::isEqual);
 
   // Class for the input of the QVSStls scheme
   bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput")
       .def("print", &QVSStlsInput::print)
-      .def("isEqual", &QVSStlsInput::isEqual);
+      .def("is_equal", &QVSStlsInput::isEqual);
 
   // Class for the initial guess of the Stls scheme
   bp::class_<StlsInput::Guess>("StlsGuess")
@@ -151,8 +153,8 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("sdr", &PyRpa::getSdr)
       .add_property("slfc", &PyRpa::getSlfc)
       .add_property("ssf", &PyRpa::getSsf)
-      .add_property("ssfHF", &PyRpa::getSsfHF)
-      .add_property("uInt", &PyRpa::getUInt)
+      .add_property("ssf_HF", &PyRpa::getSsfHF)
+      .add_property("internal_energy", &PyRpa::getUInt)
       .add_property("wvg", &PyRpa::getWvg)
       .add_property("recovery", &PyRpa::getRecoveryFileName);
 
@@ -173,8 +175,8 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("inputs", &PyVSStls::getInput)
       .add_property("error", &PyVSStls::getError)
       .add_property("alpha", &PyVSStls::getAlpha)
-      .add_property("freeEnergyIntegrand", &PyVSStls::getFreeEnergyIntegrand)
-      .add_property("freeEnergyGrid", &PyVSStls::getFreeEnergyGrid);
+      .add_property("free_energy_integrand", &PyVSStls::getFreeEnergyIntegrand)
+      .add_property("free_energy_grid", &PyVSStls::getFreeEnergyGrid);
 
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls", bp::init<const QstlsInput>())
@@ -188,20 +190,20 @@ BOOST_PYTHON_MODULE(native) {
       .def("compute", &PyQVSStls::compute)
       .add_property("inputs", &PyQVSStls::getInput)
       .add_property("error", &PyQVSStls::getError)
-      .add_property("freeEnergyIntegrand", &PyQVSStls::getFreeEnergyIntegrand)
-      .add_property("freeEnergyGrid", &PyQVSStls::getFreeEnergyGrid)
+      .add_property("free_energy_integrand", &PyQVSStls::getFreeEnergyIntegrand)
+      .add_property("free_energy_grid", &PyQVSStls::getFreeEnergyGrid)
       .add_property("adr", &PyQVSStls::getAdr)
       .add_property("alpha", &PyQVSStls::getAlpha);
 
   // MPI class
   bp::class_<PyMPI>("MPI")
       .def("rank", &PyMPI::rank)
-      .def("isRoot", &PyMPI::isRoot)
+      .def("is_root", &PyMPI::isRoot)
       .def("barrier", &PyMPI::barrier)
       .def("timer", &PyMPI::timer);
 
   // Post-process methods
-  bp::def("computeRdf", &PyThermo::computeRdf);
-  bp::def("computeInternalEnergy", &PyThermo::computeInternalEnergy);
-  bp::def("computeFreeEnergy", &PyThermo::computeFreeEnergy);
+  bp::def("compute_rdf", &PyThermo::computeRdf);
+  bp::def("compute_internal_energy", &PyThermo::computeInternalEnergy);
+  bp::def("compute_free_energy", &PyThermo::computeFreeEnergy);
 }

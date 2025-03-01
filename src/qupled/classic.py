@@ -63,7 +63,7 @@ class _ClassicScheme:
                 qu.Hdf.EntryKeys.THEORY.value: inputs.theory,
                 qu.Hdf.EntryKeys.RESOLUTION.value: inputs.resolution,
                 qu.Hdf.EntryKeys.CUTOFF.value: inputs.cutoff,
-                qu.Hdf.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequencyCutoff,
+                qu.Hdf.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequency_cutoff,
                 qu.Hdf.EntryKeys.MATSUBARA.value: inputs.matsubara,
             },
             index=[qu.Hdf.EntryKeys.INFO.value],
@@ -81,7 +81,7 @@ class _ClassicScheme:
         pd.DataFrame(scheme.ssf).to_hdf(
             self.hdfFileName, key=qu.Hdf.EntryKeys.SSF.value
         )
-        pd.DataFrame(scheme.ssfHF).to_hdf(
+        pd.DataFrame(scheme.ssf_HF).to_hdf(
             self.hdfFileName, key=qu.Hdf.EntryKeys.SSF_HF.value
         )
         pd.DataFrame(scheme.wvg).to_hdf(
@@ -174,7 +174,7 @@ class Rpa(_ClassicScheme):
             """Coupling parameter."""
             self.degeneracy: float = degeneracy
             """Degeneracy parameter."""
-            self.chemicalPotential: list[float] = [-10.0, 10.0]
+            self.chemical_potential: list[float] = [-10.0, 10.0]
             """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
             self.matsubara: int = 128
             """Number of Matsubara frequencies. Default = ``128``"""
@@ -182,11 +182,11 @@ class Rpa(_ClassicScheme):
             """Resolution of the wave-vector grid. Default =  ``0.1``"""
             self.cutoff: float = 10.0
             """Cutoff for the wave-vector grid. Default =  ``10.0``"""
-            self.frequencyCutoff: float = 10.0
+            self.frequency_cutoff: float = 10.0
             """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
-            self.intError: float = 1.0e-5
+            self.integral_error: float = 1.0e-5
             """Accuracy (relative error) in the computation of integrals. Default = ``1.0e-5``"""
-            self.int2DScheme: str = "full"
+            self.integral_strategy: str = "full"
             """
             Scheme used to solve two-dimensional integrals
             allowed options include:
@@ -263,8 +263,13 @@ class _IterativeScheme(_ClassicScheme):
         Args:
             fileName : name of the file used to extract the information for the initial guess.
         """
-        hdfData = qu.Hdf().read(fileName, ["wvg", "slfc"])
-        return _IterativeScheme.Guess(hdfData["wvg"], hdfData["slfc"])
+        hdfData = qu.Hdf().read(
+            fileName, [qu.Hdf.EntryKeys.WVG.value, qu.Hdf.EntryKeys.SLFC.value]
+        )
+        return _IterativeScheme.Guess(
+            hdfData[qu.Hdf.EntryKeys.WVG.value],
+            hdfData[qu.Hdf.EntryKeys.SLFC.value],
+        )
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
@@ -280,7 +285,7 @@ class _IterativeScheme(_ClassicScheme):
                 qu.Hdf.EntryKeys.THEORY.value: inputs.theory,
                 qu.Hdf.EntryKeys.RESOLUTION.value: inputs.resolution,
                 qu.Hdf.EntryKeys.CUTOFF.value: inputs.cutoff,
-                qu.Hdf.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequencyCutoff,
+                qu.Hdf.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequency_cutoff,
                 qu.Hdf.EntryKeys.MATSUBARA.value: inputs.matsubara,
             },
             index=[qu.Hdf.EntryKeys.INFO.value],
@@ -338,9 +343,9 @@ class Stls(_IterativeScheme):
             """Mixing parameter. Default = ``1.0``"""
             self.iterations: int = 1000
             """Maximum number of iterations. Default = ``1000``"""
-            self.outputFrequency: int = 10
+            self.output_frequency: int = 10
             """Output frequency to write the recovery file. Default = ``10``"""
-            self.recoveryFile: str = ""
+            self.recovery_file: str = ""
             """Name of the recovery file. Default = ``""``"""
             self.guess: Stls.Guess = Stls.Guess()
             """Initial guess. Default = ``Stls.Guess()``"""
@@ -450,9 +455,15 @@ class VSStls(_IterativeScheme):
     def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
         super()._save(scheme)
-        pd.DataFrame(scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
-        pd.DataFrame(scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
-        pd.DataFrame(scheme.alpha).to_hdf(self.hdfFileName, key="alpha")
+        pd.DataFrame(scheme.free_energy_grid).to_hdf(
+            self.hdfFileName, key=qu.Hdf.EntryKeys.FXC_GRID.value
+        )
+        pd.DataFrame(scheme.free_energy_integrand).to_hdf(
+            self.hdfFileName, key=qu.Hdf.EntryKeys.FXCI.value
+        )
+        pd.DataFrame(scheme.alpha).to_hdf(
+            self.hdfFileName, key=qu.Hdf.EntryKeys.ALPHA.value
+        )
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
@@ -486,15 +497,15 @@ class VSStls(_IterativeScheme):
             super().__init__(coupling, degeneracy)
             self.alpha: list[float] = [0.5, 1.0]
             """Initial guess for the free parameter. Default = ``[0.5, 1.0]``"""
-            self.couplingResolution: float = 0.1
+            self.coupling_resolution: float = 0.1
             """Resolution of the coupling parameter grid. Default = ``0.1``"""
-            self.degeneracyResolution: float = 0.1
+            self.degeneracy_resolution: float = 0.1
             """Resolution of the degeneracy parameter grid. Default = ``0.1``"""
-            self.errorAlpha: float = 1.0e-3
+            self.error_alpha: float = 1.0e-3
             """Minimum error for convergence in the free parameter. Default = ``1.0e-3``"""
-            self.iterationsAlpha: int = 50
+            self.iterations_alpha: int = 50
             """Maximum number of iterations to determine the free parameter. Default = ``50``"""
-            self.freeEnergyIntegrand: native.FreeEnergyIntegrand = (
+            self.free_energy_integrand: native.FreeEnergyIntegrand = (
                 native.FreeEnergyIntegrand()
             )
             """Pre-computed free energy integrand."""

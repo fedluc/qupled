@@ -276,7 +276,7 @@ class Hdf:
         hdfData = self.read(hdf, [Hdf.EntryKeys.WVG.value, Hdf.EntryKeys.SSF.value])
         if rdfGrid is None:
             rdfGrid = np.arange(0.0, 10.0, 0.01)
-        rdf = native.computeRdf(
+        rdf = native.compute_rdf(
             rdfGrid, hdfData[Hdf.EntryKeys.WVG.value], hdfData[Hdf.EntryKeys.SSF.value]
         )
         if saveRdf:
@@ -303,7 +303,7 @@ class Hdf:
                 Hdf.EntryKeys.COUPLING.value,
             ],
         )
-        return native.computeInternalEnergy(
+        return native.compute_internal_energy(
             hdfData[Hdf.EntryKeys.WVG.value],
             hdfData[Hdf.EntryKeys.SSF.value],
             hdfData[Hdf.EntryKeys.COUPLING.value],
@@ -371,7 +371,7 @@ class MPI:
 
     def isRoot(self):
         """Check if the current process is root (rank 0)"""
-        return self.qpMPI.isRoot()
+        return self.qpMPI.is_root()
 
     def barrier(self):
         """Setup and MPI barrier"""

@@ -157,12 +157,12 @@ class QstlsIet(_QuantumIterativeScheme):
     # Unpack zip folder with fixed component of the auxiliary density response
     @qu.MPI.runOnlyOnRoot
     def _unpackFixedAdrFiles(self, inputs) -> None:
-        fixedIetSourceFile = inputs.fixediet
-        if inputs.fixediet != "":
-            inputs.fixediet = "qupled_tmp_run_directory"
+        fixedIetSourceFile = inputs.fixed_iet
+        if inputs.fixed_iet != "":
+            inputs.fixed_iet = "qupled_tmp_run_directory"
         if fixedIetSourceFile != "":
             with zf.ZipFile(fixedIetSourceFile, "r") as zipFile:
-                zipFile.extractall(inputs.fixediet)
+                zipFile.extractall(inputs.fixed_iet)
 
     # Save results to disk
     @qu.MPI.runOnlyOnRoot
@@ -173,7 +173,7 @@ class QstlsIet(_QuantumIterativeScheme):
     # Zip all files for the fixed component of the auxiliary density response
     @qu.MPI.runOnlyOnRoot
     def _zipFixedAdrFiles(self, inputs) -> None:
-        if inputs.fixediet == "":
+        if inputs.fixed_iet == "":
             degeneracy = inputs.degeneracy
             matsubara = inputs.matsubara
             theory = inputs.theory
@@ -188,8 +188,8 @@ class QstlsIet(_QuantumIterativeScheme):
     # Remove temporaray run directory
     @qu.MPI.runOnlyOnRoot
     def _cleanFixedAdrFiles(self, inputs) -> None:
-        if os.path.isdir(inputs.fixediet):
-            rmtree(inputs.fixediet)
+        if os.path.isdir(inputs.fixed_iet):
+            rmtree(inputs.fixed_iet)
 
     # Input class
     class Input(qc.StlsIet.Input, Qstls.Input):
@@ -204,7 +204,7 @@ class QstlsIet(_QuantumIterativeScheme):
             if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
                 sys.exit("Invalid dielectric theory")
             self.theory = theory
-            self.fixediet = ""
+            self.fixed_iet = ""
             """
             Name of the zip file storing the iet part of the fixed components
             of the auxiliary density response. Default = ``""``
@@ -258,9 +258,15 @@ class QVSStls(_QuantumIterativeScheme):
     @qu.MPI.runOnlyOnRoot
     def _save(self, scheme) -> None:
         super()._save(scheme)
-        pd.DataFrame(scheme.freeEnergyGrid).to_hdf(self.hdfFileName, key="fxcGrid")
-        pd.DataFrame(scheme.freeEnergyIntegrand).to_hdf(self.hdfFileName, key="fxci")
-        pd.DataFrame(scheme.alpha).to_hdf(self.hdfFileName, key="alpha")
+        pd.DataFrame(scheme.free_energy_grid).to_hdf(
+            self.hdfFileName, key=qu.Hdf.EntryKeys.FXC_GRID.value
+        )
+        pd.DataFrame(scheme.free_energy_integrand).to_hdf(
+            self.hdfFileName, key=qu.Hdf.EntryKeys.FXCI.value
+        )
+        pd.DataFrame(scheme.alpha).to_hdf(
+            self.hdfFileName, key=qu.Hdf.EntryKeys.ALPHA.value
+        )
 
     # Zip all files for the fixed component of the auxiliary density response
     @qu.MPI.runOnlyOnRoot

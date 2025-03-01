@@ -1,5 +1,4 @@
 import os
-import pytest
 import glob
 from qupled import native
 
@@ -15,16 +14,16 @@ def test_qstls_compute():
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
     inputs.theory = "QSTLS"
-    inputs.chemicalPotential = [-10, 10]
+    inputs.chemical_potential = [-10, 10]
     inputs.cutoff = 5.0
     inputs.matsubara = 32
     inputs.resolution = 0.1
-    inputs.intError = 1.0e-5
+    inputs.integral_error = 1.0e-5
     inputs.threads = 16
     inputs.error = 1.0e-5
     inputs.mixing = 1.0
     inputs.iterations = 1000
-    inputs.outputFrequency = 2
+    inputs.output_frequency = 2
     scheme = native.Qstls(inputs)
     scheme.compute()
     try:
@@ -37,7 +36,7 @@ def test_qstls_compute():
         assert scheme.sdr.size == nx
         assert scheme.slfc.size == nx
         assert scheme.ssf.size == nx
-        assert scheme.ssfHF.size == nx
+        assert scheme.ssf_HF.size == nx
         assert scheme.recovery == "recovery_rs1.000_theta1.000_QSTLS.bin"
         assert os.path.isfile(scheme.recovery)
         assert scheme.rdf(scheme.wvg).size == nx
@@ -56,16 +55,16 @@ def test_qstls_iet_compute():
         inputs.coupling = 10.0
         inputs.degeneracy = 1.0
         inputs.theory = schemeName
-        inputs.chemicalPotential = [-10, 10]
+        inputs.chemical_potential = [-10, 10]
         inputs.cutoff = 5.0
         inputs.matsubara = 16
         inputs.resolution = 0.1
-        inputs.intError = 1.0e-5
+        inputs.integral_error = 1.0e-5
         inputs.threads = 16
         inputs.error = 1.0e-5
         inputs.mixing = 0.5
         inputs.iterations = 1000
-        inputs.outputFrequency = 2
+        inputs.output_frequency = 2
         scheme = native.Qstls(inputs)
         scheme.compute()
         try:
@@ -76,7 +75,7 @@ def test_qstls_iet_compute():
             assert scheme.sdr.size == nx
             assert scheme.slfc.size == nx
             assert scheme.ssf.size == nx
-            assert scheme.ssfHF.size == nx
+            assert scheme.ssf_HF.size == nx
             recovery = "recovery_rs10.000_theta1.000_" + schemeName + ".bin"
             assert scheme.recovery == recovery
             assert os.path.isfile(scheme.recovery)
