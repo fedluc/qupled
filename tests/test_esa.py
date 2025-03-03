@@ -1,6 +1,6 @@
 import pytest
-from qupled.util import MPI
 from qupled.classic import ESA
+from qupled.util import MPI
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def esa_input():
 
 
 def test_default(esa):
-    assert esa.hdfFileName == None
+    assert esa.hdf_file_name == None
 
 
 def test_compute(esa, esa_input, mocker):

@@ -17,7 +17,7 @@ def qstls_input():
 
 
 def test_default(qstls):
-    assert qstls.hdfFileName is None
+    assert qstls.hdf_file_name is None
 
 
 def test_compute(qstls, qstls_input, mocker):
@@ -36,11 +36,11 @@ def test_save(qstls, qstls_input, mocker):
     mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
         scheme = NativeQstls(qstls_input.toNative())
-        qstls.hdfFileName = qstls._getHdfFile(scheme.inputs)
+        qstls.hdf_file_name = qstls._get_hdf_file(scheme.inputs)
         qstls._save(scheme)
         assert mockMPIIsRoot.call_count == 3
-        assert os.path.isfile(qstls.hdfFileName)
-        inspectData = HDF().inspect(qstls.hdfFileName)
+        assert os.path.isfile(qstls.hdf_file_name)
+        inspectData = HDF().inspect(qstls.hdf_file_name)
         expectedEntries = [
             HDF.EntryKeys.COUPLING.value,
             HDF.EntryKeys.DEGENERACY.value,
@@ -61,7 +61,7 @@ def test_save(qstls, qstls_input, mocker):
         for entry in expectedEntries:
             assert entry in inspectData
     finally:
-        os.remove(qstls.hdfFileName)
+        os.remove(qstls.hdf_file_name)
 
 
 def test_getInitialGuess(mocker):

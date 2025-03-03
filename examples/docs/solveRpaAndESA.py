@@ -18,8 +18,8 @@ esa = ESA()
 esa.compute(ESA.Input(10.0, 1.0))
 
 # Inspect the outuput files to see what data was saved
-outputFileRPA = rpa.hdfFileName
-outputFileESA = esa.hdfFileName
+outputFileRPA = rpa.hdf_file_name
+outputFileESA = esa.hdf_file_name
 print("########## Data stored for the RPA scheme #########")
 pprint(qpu.HDF().inspect(outputFileRPA))
 print("########## Data stored for the ESA scheme #########")

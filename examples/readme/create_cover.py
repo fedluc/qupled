@@ -81,7 +81,7 @@ def solve_qstls():
     )
     inputs.fixed = adr_file if os.path.exists(adr_file) else inputs.fixed
     qstls.compute(inputs)
-    results = HDF().read(qstls.hdfFileName, ["wvg", "adr", "ssf", "idr", "error"])
+    results = HDF().read(qstls.hdf_file_name, ["wvg", "adr", "ssf", "idr", "error"])
     return QStlsData(
         results["wvg"], results["adr"], results["idr"], results["ssf"], results["error"]
     )

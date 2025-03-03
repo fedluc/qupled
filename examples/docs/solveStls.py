@@ -19,7 +19,7 @@ stls.plot(["ssf", "slfc", "rdf"])
 stls.plot(["idr"], matsubara=np.arange(1, 10, 2))
 
 # Access the static structure factor from the output file
-ssf = HDF().read(stls.hdfFileName, ["ssf"])["ssf"]
+ssf = HDF().read(stls.hdf_file_name, ["ssf"])["ssf"]
 print("Static structure factor from the output file: ")
 print(ssf)
 

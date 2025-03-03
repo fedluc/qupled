@@ -15,7 +15,7 @@ inputs.threads = 16
 qvsstls.compute(inputs)
 
 # Load the free energy integrand computed for rs = 1.0
-fxci = QVSStls.getFreeEnergyIntegrand("rs1.000_theta1.000_QVSSTLS.h5")
+fxci = QVSStls.get_free_energy_integrand("rs1.000_theta1.000_QVSSTLS.h5")
 
 # Setup a new  simulation for rs=2.0
 inputs.coupling = 2.0

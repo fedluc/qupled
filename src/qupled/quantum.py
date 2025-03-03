@@ -49,7 +49,7 @@ class _QuantumIterativeScheme(qc._IterativeScheme):
         super()._save(scheme)
         if scheme.inputs.degeneracy > 0:
             pd.DataFrame(scheme.adr).to_hdf(
-                self.hdfFileName, key=qu.HDF.EntryKeys.ADR.value
+                self.hdf_file_name, key=qu.HDF.EntryKeys.ADR.value
             )
 
     # Initial guess
@@ -168,7 +168,7 @@ class QstlsIet(_QuantumIterativeScheme):
     @qu.MPI.run_only_on_root
     def _save(self, scheme) -> None:
         super()._save(scheme)
-        pd.DataFrame(scheme.bf).to_hdf(self.hdfFileName, key="bf")
+        pd.DataFrame(scheme.bf).to_hdf(self.hdf_file_name, key="bf")
 
     # Zip all files for the fixed component of the auxiliary density response
     @qu.MPI.run_only_on_root
@@ -259,13 +259,13 @@ class QVSStls(_QuantumIterativeScheme):
     def _save(self, scheme) -> None:
         super()._save(scheme)
         pd.DataFrame(scheme.free_energy_grid).to_hdf(
-            self.hdfFileName, key=qu.HDF.EntryKeys.FXC_GRID.value
+            self.hdf_file_name, key=qu.HDF.EntryKeys.FXC_GRID.value
         )
         pd.DataFrame(scheme.free_energy_integrand).to_hdf(
-            self.hdfFileName, key=qu.HDF.EntryKeys.FXCI.value
+            self.hdf_file_name, key=qu.HDF.EntryKeys.FXCI.value
         )
         pd.DataFrame(scheme.alpha).to_hdf(
-            self.hdfFileName, key=qu.HDF.EntryKeys.ALPHA.value
+            self.hdf_file_name, key=qu.HDF.EntryKeys.ALPHA.value
         )
 
     # Zip all files for the fixed component of the auxiliary density response
@@ -292,8 +292,8 @@ class QVSStls(_QuantumIterativeScheme):
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
-    def getFreeEnergyIntegrand(fileName: str) -> native.FreeEnergyIntegrand:
-        return qc.VSStls.getFreeEnergyIntegrand(fileName)
+    def get_free_energy_integrand(fileName: str) -> native.FreeEnergyIntegrand:
+        return qc.VSStls.get_free_energy_integrand(fileName)
 
     # Input class
     class Input(qc.VSStls.Input, Qstls.Input):

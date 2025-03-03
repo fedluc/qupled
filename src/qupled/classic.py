@@ -1,8 +1,11 @@
 from __future__ import annotations
-import sys
+
 import os
+import sys
+
 import numpy as np
 import pandas as pd
+
 from qupled import native
 import qupled.util as qu
 
@@ -16,18 +19,18 @@ class _ClassicScheme:
 
     def __init__(self):
         # File to store output on disk
-        self.hdfFileName: str = None  #: Name of the output file.
+        self.hdf_file_name: str = None  #: Name of the output file.
 
     # Compute the scheme
     def _compute(self, scheme) -> None:
-        self.hdfFileName = self._getHdfFile(scheme.inputs)
+        self.hdf_file_name = self._get_hdf_file(scheme.inputs)
         status = scheme.compute()
-        self._checkStatusAndClean(status, scheme.recovery)
+        self._check_status_and_clean(status, scheme.recovery)
 
     # Check that the dielectric scheme was solved without errors
     @qu.MPI.run_only_on_root
-    def _checkStatusAndClean(self, status: bool, recovery: str) -> None:
-        """Checks that the scheme was solved correctly and removes temporarary files generated at run-time
+    def _check_status_and_clean(self, status: bool, recovery: str) -> None:
+        """Checks that the scheme was solved correctly and removes temporary files generated at run-time
 
         Args:
             status: status obtained from the native code. If status == 0 the scheme was solved correctly.
@@ -41,7 +44,7 @@ class _ClassicScheme:
             sys.exit("Error while solving the dielectric theory")
 
     # Save results to disk
-    def _getHdfFile(self, inputs) -> str:
+    def _get_hdf_file(self, inputs) -> str:
         """Sets the name of the hdf file used to store the output
 
         Args:
@@ -67,79 +70,79 @@ class _ClassicScheme:
                 qu.HDF.EntryKeys.MATSUBARA.value: inputs.matsubara,
             },
             index=[qu.HDF.EntryKeys.INFO.value],
-        ).to_hdf(self.hdfFileName, key=qu.HDF.EntryKeys.INFO.value, mode="w")
+        ).to_hdf(self.hdf_file_name, key=qu.HDF.EntryKeys.INFO.value, mode="w")
         if inputs.degeneracy > 0:
             pd.DataFrame(scheme.idr).to_hdf(
-                self.hdfFileName, key=qu.HDF.EntryKeys.IDR.value
+                self.hdf_file_name, key=qu.HDF.EntryKeys.IDR.value
             )
             pd.DataFrame(scheme.sdr).to_hdf(
-                self.hdfFileName, key=qu.HDF.EntryKeys.SDR.value
+                self.hdf_file_name, key=qu.HDF.EntryKeys.SDR.value
             )
             pd.DataFrame(scheme.slfc).to_hdf(
-                self.hdfFileName, key=qu.HDF.EntryKeys.SLFC.value
+                self.hdf_file_name, key=qu.HDF.EntryKeys.SLFC.value
             )
         pd.DataFrame(scheme.ssf).to_hdf(
-            self.hdfFileName, key=qu.HDF.EntryKeys.SSF.value
+            self.hdf_file_name, key=qu.HDF.EntryKeys.SSF.value
         )
         pd.DataFrame(scheme.ssf_HF).to_hdf(
-            self.hdfFileName, key=qu.HDF.EntryKeys.SSF_HF.value
+            self.hdf_file_name, key=qu.HDF.EntryKeys.SSF_HF.value
         )
         pd.DataFrame(scheme.wvg).to_hdf(
-            self.hdfFileName, key=qu.HDF.EntryKeys.WVG.value
+            self.hdf_file_name, key=qu.HDF.EntryKeys.WVG.value
         )
 
     # Compute radial distribution function
-    def computeRdf(
-        self, rdfGrid: np.ndarray = None, writeToHdf: bool = True
+    def compute_rdf(
+        self, rdf_grid: np.ndarray = None, write_to_hdf: bool = True
     ) -> np.array:
         """Computes the radial distribution function from the data stored in the output file.
 
         Args:
-            rdfGrid: The grid used to compute the radial distribution function.
+            rdf_grid: The grid used to compute the radial distribution function.
                 Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`)
-            writeToHdf: Flag marking whether the rdf data should be added to the output hdf file, default to True
+            write_to_hdf: Flag marking whether the rdf data should be added to the output hdf file, default to True
 
         Returns:
             The radial distribution function
 
         """
         if qu.MPI().rank() > 0:
-            writeToHdf = False
-        return qu.HDF().compute_rdf(self.hdfFileName, rdfGrid, writeToHdf)
+            write_to_hdf = False
+        return qu.HDF().compute_rdf(self.hdf_file_name, rdf_grid, write_to_hdf)
 
     # Compute the internal energy
-    def computeInternalEnergy(self) -> float:
+    def compute_internal_energy(self) -> float:
         """Computes the internal energy from the data stored in the output file.
 
         Returns:
             The internal energy
 
         """
-        return qu.HDF().compute_internal_energy(self.hdfFileName)
+        return qu.HDF().compute_internal_energy(self.hdf_file_name)
 
     # Plot results
     @qu.MPI.run_only_on_root
     def plot(
         self,
-        toPlot: list[str],
+        to_plot: list[str],
         matsubara: np.ndarray = None,
-        rdfGrid: np.ndarray = None,
+        rdf_grid: np.ndarray = None,
     ) -> None:
         """Plots the results stored in the output file.
 
         Args:
-            toPlot: A list of quantities to plot. This list can include all the values written to the
-                 output hdf file. The radial distribution funciton is computed and added to the output
+            to_plot: A list of quantities to plot. This list can include all the values written to the
+                 output hdf file. The radial distribution function is computed and added to the output
                  file if necessary
             matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
                 (Default = None, all matsubara frequencies are plotted)
-            rdfGrid: The grid used to compute the radial distribution function. Applies only when the radial
+            rdf_grid: The grid used to compute the radial distribution function. Applies only when the radial
                 distribution function is plotted. Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`).
 
         """
-        if qu.HDF.EntryKeys.RDF.value in toPlot:
-            self.computeRdf(rdfGrid)
-        qu.HDF().plot(self.hdfFileName, toPlot, matsubara)
+        if qu.HDF.EntryKeys.RDF.value in to_plot:
+            self.compute_rdf(rdf_grid)
+        qu.HDF().plot(self.hdf_file_name, to_plot, matsubara)
 
 
 # -----------------------------------------------------------------------
@@ -159,7 +162,7 @@ class Rpa(_ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = native.Rpa(inputs.toNative())
+        scheme = native.Rpa(inputs.to_native())
         self._compute(scheme)
         self._save(scheme)
 
@@ -204,7 +207,7 @@ class Rpa(_ClassicScheme):
             """Number of OMP threads for parallel calculations. Default =  ``1``"""
             self.theory: str = "RPA"
 
-        def toNative(self) -> native.RpaInput:
+        def to_native(self) -> native.RpaInput:
             native_input = native.RpaInput()
             for attr, value in self.__dict__.items():
                 setattr(native_input, attr, value)
@@ -232,7 +235,7 @@ class ESA(_ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = native.ESA(inputs.toNative())
+        scheme = native.ESA(inputs.to_native())
         self._compute(scheme)
         self._save(scheme)
 
@@ -257,18 +260,18 @@ class _IterativeScheme(_ClassicScheme):
 
     # Set the initial guess from a dataframe produced in output
     @staticmethod
-    def getInitialGuess(fileName: str) -> _IterativeScheme.Guess:
+    def get_initial_guess(file_name: str) -> _IterativeScheme.Guess:
         """Constructs an initial guess object by extracting the information from an output file.
 
         Args:
-            fileName : name of the file used to extract the information for the initial guess.
+            file_name : name of the file used to extract the information for the initial guess.
         """
-        hdfData = qu.HDF().read(
-            fileName, [qu.HDF.EntryKeys.WVG.value, qu.HDF.EntryKeys.SLFC.value]
+        hdf_data = qu.HDF().read(
+            file_name, [qu.HDF.EntryKeys.WVG.value, qu.HDF.EntryKeys.SLFC.value]
         )
         return _IterativeScheme.Guess(
-            hdfData[qu.HDF.EntryKeys.WVG.value],
-            hdfData[qu.HDF.EntryKeys.SLFC.value],
+            hdf_data[qu.HDF.EntryKeys.WVG.value],
+            hdf_data[qu.HDF.EntryKeys.SLFC.value],
         )
 
     # Save results to disk
@@ -289,7 +292,7 @@ class _IterativeScheme(_ClassicScheme):
                 qu.HDF.EntryKeys.MATSUBARA.value: inputs.matsubara,
             },
             index=[qu.HDF.EntryKeys.INFO.value],
-        ).to_hdf(self.hdfFileName, key=qu.HDF.EntryKeys.INFO.value)
+        ).to_hdf(self.hdf_file_name, key=qu.HDF.EntryKeys.INFO.value)
 
     # Initial guess
     class Guess:
@@ -300,7 +303,7 @@ class _IterativeScheme(_ClassicScheme):
             self.slfc = slfc
             """ Static local field correction. Default = ``None``"""
 
-        def toNative(self) -> native.StlsGuess:
+        def to_native(self) -> native.StlsGuess:
             native_guess = native.StlsGuess()
             for attr, value in self.__dict__.items():
                 native_value = value if value is not None else np.empty(0)
@@ -325,7 +328,7 @@ class Stls(_IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = native.Stls(inputs.toNative())
+        scheme = native.Stls(inputs.to_native())
         self._compute(scheme)
         self._save(scheme)
 
@@ -352,11 +355,11 @@ class Stls(_IterativeScheme):
             # Undocumented default values
             self.theory: str = "STLS"
 
-        def toNative(self) -> native.StlsInput:
+        def to_native(self) -> native.StlsInput:
             native_input = native.StlsInput()
             for attr, value in self.__dict__.items():
                 if attr == "guess":
-                    setattr(native_input, attr, value.toNative())
+                    setattr(native_input, attr, value.to_native())
                 else:
                     setattr(native_input, attr, value)
             return native_input
@@ -379,7 +382,7 @@ class StlsIet(_IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = native.Stls(inputs.toNative())
+        scheme = native.Stls(inputs.to_native())
         self._compute(scheme)
         self._save(scheme)
 
@@ -388,7 +391,7 @@ class StlsIet(_IterativeScheme):
     def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
         super()._save(scheme)
-        pd.DataFrame(scheme.bf).to_hdf(self.hdfFileName, key="bf")
+        pd.DataFrame(scheme.bf).to_hdf(self.hdf_file_name, key="bf")
 
     # Input class
     class Input(Stls.Input):
@@ -419,11 +422,11 @@ class StlsIet(_IterativeScheme):
             mapping diverges). Default = ``standard``.
             """
 
-        def toNative(self) -> native.StlsInput:
+        def to_native(self) -> native.StlsInput:
             native_input = native.StlsInput()
             for attr, value in self.__dict__.items():
                 if attr == "guess":
-                    setattr(native_input, attr, value.toNative())
+                    setattr(native_input, attr, value.to_native())
                 else:
                     setattr(native_input, attr, value)
             return native_input
@@ -446,7 +449,7 @@ class VSStls(_IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = native.VSStls(inputs.toNative())
+        scheme = native.VSStls(inputs.to_native())
         self._compute(scheme)
         self._save(scheme)
 
@@ -456,35 +459,35 @@ class VSStls(_IterativeScheme):
         """Stores the results obtained by solving the scheme."""
         super()._save(scheme)
         pd.DataFrame(scheme.free_energy_grid).to_hdf(
-            self.hdfFileName, key=qu.HDF.EntryKeys.FXC_GRID.value
+            self.hdf_file_name, key=qu.HDF.EntryKeys.FXC_GRID.value
         )
         pd.DataFrame(scheme.free_energy_integrand).to_hdf(
-            self.hdfFileName, key=qu.HDF.EntryKeys.FXCI.value
+            self.hdf_file_name, key=qu.HDF.EntryKeys.FXCI.value
         )
         pd.DataFrame(scheme.alpha).to_hdf(
-            self.hdfFileName, key=qu.HDF.EntryKeys.ALPHA.value
+            self.hdf_file_name, key=qu.HDF.EntryKeys.ALPHA.value
         )
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
-    def getFreeEnergyIntegrand(fileName: str) -> native.FreeEnergyIntegrand:
+    def get_free_energy_integrand(file_name: str) -> native.FreeEnergyIntegrand:
         """Constructs the free energy integrand by extracting the information from an output file.
 
         Args:
-            fileName : name of the file used to extract the information for the free energy integrand.
+            file_name : name of the file used to extract the information for the free energy integrand.
         """
         fxci = native.FreeEnergyIntegrand()
-        hdfData = qu.HDF().read(
-            fileName,
+        hdf_data = qu.HDF().read(
+            file_name,
             [
                 qu.HDF.EntryKeys.FXC_GRID.value,
                 qu.HDF.EntryKeys.FXCI.value,
                 qu.HDF.EntryKeys.ALPHA.value,
             ],
         )
-        fxci.grid = hdfData[qu.HDF.EntryKeys.FXC_GRID.value]
-        fxci.integrand = np.ascontiguousarray(hdfData[qu.HDF.EntryKeys.FXCI.value])
-        fxci.alpha = hdfData[qu.HDF.EntryKeys.ALPHA.value]
+        fxci.grid = hdf_data[qu.HDF.EntryKeys.FXC_GRID.value]
+        fxci.integrand = np.ascontiguousarray(hdf_data[qu.HDF.EntryKeys.FXCI.value])
+        fxci.alpha = hdf_data[qu.HDF.EntryKeys.ALPHA.value]
         return fxci
 
     # Input class
@@ -514,11 +517,11 @@ class VSStls(_IterativeScheme):
             # Undocumented default values
             self.theory: str = "VSSTLS"
 
-        def toNative(self) -> native.VSStlsInput:
+        def to_native(self) -> native.VSStlsInput:
             native_input = native.VSStlsInput()
             for attr, value in self.__dict__.items():
                 if attr == "guess":
-                    setattr(native_input, attr, value.toNative())
+                    setattr(native_input, attr, value.to_native())
                 else:
                     setattr(native_input, attr, value)
             return native_input

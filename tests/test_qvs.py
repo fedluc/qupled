@@ -20,7 +20,7 @@ def qvsstls_input():
 
 
 def test_default(qvsstls):
-    assert qvsstls.hdfFileName is None
+    assert qvsstls.hdf_file_name is None
 
 
 def test_compute(qvsstls, qvsstls_input, mocker):
@@ -110,11 +110,11 @@ def test_save(qvsstls, qvsstls_input, mocker):
     mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
         scheme = NativeQVSStls(qvsstls_input.toNative())
-        qvsstls.hdfFileName = qvsstls._getHdfFile(scheme.inputs)
+        qvsstls.hdf_file_name = qvsstls._get_hdf_file(scheme.inputs)
         qvsstls._save(scheme)
         assert mockMPIIsRoot.call_count == 4
-        assert os.path.isfile(qvsstls.hdfFileName)
-        inspectData = HDF().inspect(qvsstls.hdfFileName)
+        assert os.path.isfile(qvsstls.hdf_file_name)
+        inspectData = HDF().inspect(qvsstls.hdf_file_name)
         expectedEntries = [
             HDF.EntryKeys.COUPLING.value,
             HDF.EntryKeys.DEGENERACY.value,
@@ -138,7 +138,7 @@ def test_save(qvsstls, qvsstls_input, mocker):
         for entry in expectedEntries:
             assert entry in inspectData
     finally:
-        os.remove(qvsstls.hdfFileName)
+        os.remove(qvsstls.hdf_file_name)
 
 
 def test_setFreeEnergyIntegrand(mocker):
@@ -153,7 +153,7 @@ def test_setFreeEnergyIntegrand(mocker):
             HDF.EntryKeys.ALPHA.value: arr1D,
         },
     )
-    fxc = QVSStls.getFreeEnergyIntegrand("dummyFileName")
+    fxc = QVSStls.get_free_energy_integrand("dummyFileName")
     assert np.array_equal(fxc.grid, arr1D)
     assert np.array_equal(fxc.alpha, arr1D)
     assert np.array_equal(fxc.integrand, arr2D)

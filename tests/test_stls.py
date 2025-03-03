@@ -1,9 +1,11 @@
 import os
-import pytest
+
 import numpy as np
+import pytest
+
+from qupled.classic import Stls
 from qupled.native import Stls as NativeStls
 from qupled.util import HDF, MPI
-from qupled.classic import Stls
 
 
 @pytest.fixture
@@ -17,31 +19,31 @@ def stls_input():
 
 
 def test_default(stls):
-    assert stls.hdfFileName is None
+    assert stls.hdf_file_name is None
 
 
 def test_compute(stls, stls_input, mocker):
-    mockMPITime = mocker.patch.object(MPI, MPI.timer.__name__, return_value=0)
-    mockMPIBarrier = mocker.patch.object(MPI, MPI.barrier.__name__)
-    mockCompute = mocker.patch.object(Stls, Stls._compute.__name__)
-    mockSave = mocker.patch.object(Stls, Stls._save.__name__)
+    mock_mpi_time = mocker.patch.object(MPI, MPI.timer.__name__, return_value=0)
+    mock_mpi_barrier = mocker.patch.object(MPI, MPI.barrier.__name__)
+    mock_compute = mocker.patch.object(Stls, Stls._compute.__name__)
+    mock_save = mocker.patch.object(Stls, Stls._save.__name__)
     stls.compute(stls_input)
-    assert mockMPITime.call_count == 2
-    assert mockMPIBarrier.call_count == 1
-    assert mockCompute.call_count == 1
-    assert mockSave.call_count == 1
+    assert mock_mpi_time.call_count == 2
+    assert mock_mpi_barrier.call_count == 1
+    assert mock_compute.call_count == 1
+    assert mock_save.call_count == 1
 
 
 def test_save(stls, stls_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
+    mock_mpi_is_root = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
-        scheme = NativeStls(stls_input.toNative())
-        stls.hdfFileName = stls._getHdfFile(scheme.inputs)
+        scheme = NativeStls(stls_input.to_native())
+        stls.hdf_file_name = stls._get_hdf_file(scheme.inputs)
         stls._save(scheme)
-        assert mockMPIIsRoot.call_count == 2
-        assert os.path.isfile(stls.hdfFileName)
-        inspectData = HDF().inspect(stls.hdfFileName)
-        expectedEntries = [
+        assert mock_mpi_is_root.call_count == 2
+        assert os.path.isfile(stls.hdf_file_name)
+        inspect_data = HDF().inspect(stls.hdf_file_name)
+        expected_entries = [
             HDF.EntryKeys.COUPLING.value,
             HDF.EntryKeys.DEGENERACY.value,
             HDF.EntryKeys.THEORY.value,
@@ -57,19 +59,19 @@ def test_save(stls, stls_input, mocker):
             HDF.EntryKeys.SSF_HF.value,
             HDF.EntryKeys.WVG.value,
         ]
-        for entry in expectedEntries:
-            assert entry in inspectData
+        for entry in expected_entries:
+            assert entry in inspect_data
     finally:
-        os.remove(stls.hdfFileName)
+        os.remove(stls.hdf_file_name)
 
 
-def test_getInitialGuess(mocker):
+def test_get_initial_guess(mocker):
     arr = np.ones(10)
     mocker.patch.object(
         HDF,
         HDF.read.__name__,
         return_value={HDF.EntryKeys.WVG.value: arr, HDF.EntryKeys.SLFC.value: arr},
     )
-    guess = Stls.getInitialGuess("dummyFileName")
+    guess = Stls.get_initial_guess("dummy_file_name")
     assert np.array_equal(guess.wvg, arr)
     assert np.array_equal(guess.slfc, arr)
