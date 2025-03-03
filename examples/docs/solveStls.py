@@ -1,6 +1,6 @@
 import numpy as np
 from qupled.classic import Stls
-from qupled.util import Hdf
+from qupled.util import HDF
 
 # Define the object used to solve the scheme
 stls = Stls()
@@ -19,7 +19,7 @@ stls.plot(["ssf", "slfc", "rdf"])
 stls.plot(["idr"], matsubara=np.arange(1, 10, 2))
 
 # Access the static structure factor from the output file
-ssf = Hdf().read(stls.hdfFileName, ["ssf"])["ssf"]
+ssf = HDF().read(stls.hdfFileName, ["ssf"])["ssf"]
 print("Static structure factor from the output file: ")
 print(ssf)
 

@@ -2,7 +2,7 @@ import os
 import pytest
 import numpy as np
 from qupled import native
-from qupled.util import Hdf, MPI
+from qupled.util import HDF, MPI
 from qupled.classic import VSStls
 
 
@@ -33,32 +33,32 @@ def test_compute(vsstls, vsstls_input, mocker):
 
 
 def test_save(vsstls, vsstls_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
         scheme = native.VSStls(vsstls_input.toNative())
         vsstls.hdfFileName = vsstls._getHdfFile(scheme.inputs)
         vsstls._save(scheme)
         assert mockMPIIsRoot.call_count == 3
         assert os.path.isfile(vsstls.hdfFileName)
-        inspectData = Hdf().inspect(vsstls.hdfFileName)
+        inspectData = HDF().inspect(vsstls.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING.value,
-            Hdf.EntryKeys.DEGENERACY.value,
-            Hdf.EntryKeys.THEORY.value,
-            Hdf.EntryKeys.ERROR.value,
-            Hdf.EntryKeys.RESOLUTION.value,
-            Hdf.EntryKeys.CUTOFF.value,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
-            Hdf.EntryKeys.MATSUBARA.value,
-            Hdf.EntryKeys.IDR.value,
-            Hdf.EntryKeys.SDR.value,
-            Hdf.EntryKeys.SLFC.value,
-            Hdf.EntryKeys.SSF.value,
-            Hdf.EntryKeys.SSF_HF.value,
-            Hdf.EntryKeys.WVG.value,
-            Hdf.EntryKeys.FXC_GRID.value,
-            Hdf.EntryKeys.FXCI.value,
-            Hdf.EntryKeys.ALPHA.value,
+            HDF.EntryKeys.COUPLING.value,
+            HDF.EntryKeys.DEGENERACY.value,
+            HDF.EntryKeys.THEORY.value,
+            HDF.EntryKeys.ERROR.value,
+            HDF.EntryKeys.RESOLUTION.value,
+            HDF.EntryKeys.CUTOFF.value,
+            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
+            HDF.EntryKeys.MATSUBARA.value,
+            HDF.EntryKeys.IDR.value,
+            HDF.EntryKeys.SDR.value,
+            HDF.EntryKeys.SLFC.value,
+            HDF.EntryKeys.SSF.value,
+            HDF.EntryKeys.SSF_HF.value,
+            HDF.EntryKeys.WVG.value,
+            HDF.EntryKeys.FXC_GRID.value,
+            HDF.EntryKeys.FXCI.value,
+            HDF.EntryKeys.ALPHA.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -70,12 +70,12 @@ def test_getFreeEnergyIntegrand(vsstls, mocker):
     arr1D = np.ones(10)
     arr2D = np.ones((3, 10))
     mocker.patch.object(
-        Hdf,
-        Hdf.read.__name__,
+        HDF,
+        HDF.read.__name__,
         return_value={
-            Hdf.EntryKeys.FXC_GRID.value: arr1D,
-            Hdf.EntryKeys.FXCI.value: arr2D,
-            Hdf.EntryKeys.ALPHA.value: arr1D,
+            HDF.EntryKeys.FXC_GRID.value: arr1D,
+            HDF.EntryKeys.FXCI.value: arr2D,
+            HDF.EntryKeys.ALPHA.value: arr1D,
         },
     )
     fxci = vsstls.getFreeEnergyIntegrand("dummyFileName")

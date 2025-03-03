@@ -1,7 +1,7 @@
 import os
 import pytest
 from qupled.native import Stls as NativeStls
-from qupled.util import Hdf, MPI
+from qupled.util import HDF, MPI
 from qupled.classic import StlsIet
 
 
@@ -32,30 +32,30 @@ def test_compute(stls_iet, stls_iet_input, mocker):
 
 
 def test_save(stls_iet, stls_iet_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
         scheme = NativeStls(stls_iet_input.toNative())
         stls_iet.hdfFileName = stls_iet._getHdfFile(scheme.inputs)
         stls_iet._save(scheme)
         assert mockMPIIsRoot.call_count == 3
         assert os.path.isfile(stls_iet.hdfFileName)
-        inspectData = Hdf().inspect(stls_iet.hdfFileName)
+        inspectData = HDF().inspect(stls_iet.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING.value,
-            Hdf.EntryKeys.DEGENERACY.value,
-            Hdf.EntryKeys.THEORY.value,
-            Hdf.EntryKeys.ERROR.value,
-            Hdf.EntryKeys.RESOLUTION.value,
-            Hdf.EntryKeys.CUTOFF.value,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
-            Hdf.EntryKeys.MATSUBARA.value,
-            Hdf.EntryKeys.BF.value,
-            Hdf.EntryKeys.IDR.value,
-            Hdf.EntryKeys.SDR.value,
-            Hdf.EntryKeys.SLFC.value,
-            Hdf.EntryKeys.SSF.value,
-            Hdf.EntryKeys.SSF_HF.value,
-            Hdf.EntryKeys.WVG.value,
+            HDF.EntryKeys.COUPLING.value,
+            HDF.EntryKeys.DEGENERACY.value,
+            HDF.EntryKeys.THEORY.value,
+            HDF.EntryKeys.ERROR.value,
+            HDF.EntryKeys.RESOLUTION.value,
+            HDF.EntryKeys.CUTOFF.value,
+            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
+            HDF.EntryKeys.MATSUBARA.value,
+            HDF.EntryKeys.BF.value,
+            HDF.EntryKeys.IDR.value,
+            HDF.EntryKeys.SDR.value,
+            HDF.EntryKeys.SLFC.value,
+            HDF.EntryKeys.SSF.value,
+            HDF.EntryKeys.SSF_HF.value,
+            HDF.EntryKeys.WVG.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData

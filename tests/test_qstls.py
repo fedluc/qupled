@@ -2,7 +2,7 @@ import os
 import pytest
 import numpy as np
 from qupled.native import Qstls as NativeQstls
-from qupled.util import Hdf, MPI
+from qupled.util import HDF, MPI
 from qupled.quantum import Qstls
 
 
@@ -33,30 +33,30 @@ def test_compute(qstls, qstls_input, mocker):
 
 
 def test_save(qstls, qstls_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
         scheme = NativeQstls(qstls_input.toNative())
         qstls.hdfFileName = qstls._getHdfFile(scheme.inputs)
         qstls._save(scheme)
         assert mockMPIIsRoot.call_count == 3
         assert os.path.isfile(qstls.hdfFileName)
-        inspectData = Hdf().inspect(qstls.hdfFileName)
+        inspectData = HDF().inspect(qstls.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING.value,
-            Hdf.EntryKeys.DEGENERACY.value,
-            Hdf.EntryKeys.THEORY.value,
-            Hdf.EntryKeys.ERROR.value,
-            Hdf.EntryKeys.RESOLUTION.value,
-            Hdf.EntryKeys.CUTOFF.value,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
-            Hdf.EntryKeys.MATSUBARA.value,
-            Hdf.EntryKeys.ADR.value,
-            Hdf.EntryKeys.IDR.value,
-            Hdf.EntryKeys.SDR.value,
-            Hdf.EntryKeys.SLFC.value,
-            Hdf.EntryKeys.SSF.value,
-            Hdf.EntryKeys.SSF_HF.value,
-            Hdf.EntryKeys.WVG.value,
+            HDF.EntryKeys.COUPLING.value,
+            HDF.EntryKeys.DEGENERACY.value,
+            HDF.EntryKeys.THEORY.value,
+            HDF.EntryKeys.ERROR.value,
+            HDF.EntryKeys.RESOLUTION.value,
+            HDF.EntryKeys.CUTOFF.value,
+            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
+            HDF.EntryKeys.MATSUBARA.value,
+            HDF.EntryKeys.ADR.value,
+            HDF.EntryKeys.IDR.value,
+            HDF.EntryKeys.SDR.value,
+            HDF.EntryKeys.SLFC.value,
+            HDF.EntryKeys.SSF.value,
+            HDF.EntryKeys.SSF_HF.value,
+            HDF.EntryKeys.WVG.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -67,13 +67,13 @@ def test_save(qstls, qstls_input, mocker):
 def test_getInitialGuess(mocker):
     arr = np.ones(10)
     mocker.patch.object(
-        Hdf,
-        Hdf.read.__name__,
+        HDF,
+        HDF.read.__name__,
         return_value={
-            Hdf.EntryKeys.WVG.value: arr,
-            Hdf.EntryKeys.SSF.value: arr,
-            Hdf.EntryKeys.ADR.value: arr,
-            Hdf.EntryKeys.MATSUBARA.value: 10,
+            HDF.EntryKeys.WVG.value: arr,
+            HDF.EntryKeys.SSF.value: arr,
+            HDF.EntryKeys.ADR.value: arr,
+            HDF.EntryKeys.MATSUBARA.value: 10,
         },
     )
     guess = Qstls.getInitialGuess("dummyFileName")

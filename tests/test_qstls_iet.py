@@ -4,7 +4,7 @@ import zipfile
 import glob
 import shutil
 from qupled.native import Qstls as NativeQstls
-from qupled.util import Hdf, MPI
+from qupled.util import HDF, MPI
 from qupled.quantum import QstlsIet
 
 
@@ -41,7 +41,7 @@ def test_compute(qstls_iet, qstls_iet_input, mocker):
 
 
 def test_unpackFixedAdrFiles_no_files(qstls_iet, qstls_iet_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mockZip = mocker.patch.object(
         zipfile.ZipFile, zipfile.ZipFile.__init__.__name__, return_value=None
     )
@@ -55,7 +55,7 @@ def test_unpackFixedAdrFiles_no_files(qstls_iet, qstls_iet_input, mocker):
 
 
 def test_unpackFixedAdrFiles_with_files(qstls_iet, qstls_iet_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mockZip = mocker.patch.object(
         zipfile.ZipFile, zipfile.ZipFile.__init__.__name__, return_value=None
     )
@@ -70,7 +70,7 @@ def test_unpackFixedAdrFiles_with_files(qstls_iet, qstls_iet_input, mocker):
 
 
 def test_zipFixedAdrFiles_no_file(qstls_iet, qstls_iet_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mockZip = mocker.patch.object(
         zipfile.ZipFile, zipfile.ZipFile.__init__.__name__, return_value=None
     )
@@ -92,7 +92,7 @@ def test_cleanFixedAdrFiles_no_files(
     qstls_iet_input,
     mocker,
 ):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mockRemove = mocker.patch.object(shutil, shutil.rmtree.__name__)
     qstls_iet._cleanFixedAdrFiles(qstls_iet_input)
     assert mockMPIIsRoot.call_count == 1
@@ -104,7 +104,7 @@ def test_cleanFixedAdrFiles_with_files(
     qstls_iet_input,
     mocker,
 ):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mockIsDir = mocker.patch.object(os.path, os.path.isdir.__name__, return_value=True)
     mockRemove = mocker.patch.object(shutil, shutil.rmtree.__name__)
     qstls_iet._cleanFixedAdrFiles(qstls_iet_input)
@@ -114,31 +114,31 @@ def test_cleanFixedAdrFiles_with_files(
 
 
 def test_save(qstls_iet, qstls_iet_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
         scheme = NativeQstls(qstls_iet_input.toNative())
         qstls_iet.hdfFileName = qstls_iet._getHdfFile(scheme.inputs)
         qstls_iet._save(scheme)
         assert mockMPIIsRoot.call_count == 4
         assert os.path.isfile(qstls_iet.hdfFileName)
-        inspectData = Hdf().inspect(qstls_iet.hdfFileName)
+        inspectData = HDF().inspect(qstls_iet.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING.value,
-            Hdf.EntryKeys.DEGENERACY.value,
-            Hdf.EntryKeys.THEORY.value,
-            Hdf.EntryKeys.ERROR.value,
-            Hdf.EntryKeys.RESOLUTION.value,
-            Hdf.EntryKeys.CUTOFF.value,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
-            Hdf.EntryKeys.MATSUBARA.value,
-            Hdf.EntryKeys.ADR.value,
-            Hdf.EntryKeys.IDR.value,
-            Hdf.EntryKeys.SDR.value,
-            Hdf.EntryKeys.SLFC.value,
-            Hdf.EntryKeys.BF.value,
-            Hdf.EntryKeys.SSF.value,
-            Hdf.EntryKeys.SSF_HF.value,
-            Hdf.EntryKeys.WVG.value,
+            HDF.EntryKeys.COUPLING.value,
+            HDF.EntryKeys.DEGENERACY.value,
+            HDF.EntryKeys.THEORY.value,
+            HDF.EntryKeys.ERROR.value,
+            HDF.EntryKeys.RESOLUTION.value,
+            HDF.EntryKeys.CUTOFF.value,
+            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
+            HDF.EntryKeys.MATSUBARA.value,
+            HDF.EntryKeys.ADR.value,
+            HDF.EntryKeys.IDR.value,
+            HDF.EntryKeys.SDR.value,
+            HDF.EntryKeys.SLFC.value,
+            HDF.EntryKeys.BF.value,
+            HDF.EntryKeys.SSF.value,
+            HDF.EntryKeys.SSF_HF.value,
+            HDF.EntryKeys.WVG.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData

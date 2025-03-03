@@ -1,7 +1,7 @@
 import os
 import pytest
 from qupled.native import Rpa as NativeRpa
-from qupled.util import Hdf, MPI
+from qupled.util import HDF, MPI
 from qupled.classic import Rpa
 
 
@@ -32,7 +32,7 @@ def test_compute(rpa, rpa_input, mocker):
 
 
 def test_checkStatusAndClean(rpa, mocker, capsys):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mocker.patch.object(os, os.remove.__name__)
     rpa._checkStatusAndClean(0, "")
     captured = capsys.readouterr()
@@ -49,28 +49,28 @@ def test_getHdfFile(rpa, rpa_input):
 
 
 def test_save(rpa, rpa_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
         scheme = NativeRpa(rpa_input.toNative())
         rpa.hdfFileName = rpa._getHdfFile(scheme.inputs)
         rpa._save(scheme)
         assert mockMPIIsRoot.call_count == 1
         assert os.path.isfile(rpa.hdfFileName)
-        inspectData = Hdf().inspect(rpa.hdfFileName)
+        inspectData = HDF().inspect(rpa.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING.value,
-            Hdf.EntryKeys.DEGENERACY.value,
-            Hdf.EntryKeys.THEORY.value,
-            Hdf.EntryKeys.RESOLUTION.value,
-            Hdf.EntryKeys.CUTOFF.value,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
-            Hdf.EntryKeys.MATSUBARA.value,
-            Hdf.EntryKeys.IDR.value,
-            Hdf.EntryKeys.SDR.value,
-            Hdf.EntryKeys.SLFC.value,
-            Hdf.EntryKeys.SSF.value,
-            Hdf.EntryKeys.SSF_HF.value,
-            Hdf.EntryKeys.WVG.value,
+            HDF.EntryKeys.COUPLING.value,
+            HDF.EntryKeys.DEGENERACY.value,
+            HDF.EntryKeys.THEORY.value,
+            HDF.EntryKeys.RESOLUTION.value,
+            HDF.EntryKeys.CUTOFF.value,
+            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
+            HDF.EntryKeys.MATSUBARA.value,
+            HDF.EntryKeys.IDR.value,
+            HDF.EntryKeys.SDR.value,
+            HDF.EntryKeys.SLFC.value,
+            HDF.EntryKeys.SSF.value,
+            HDF.EntryKeys.SSF_HF.value,
+            HDF.EntryKeys.WVG.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -79,8 +79,8 @@ def test_save(rpa, rpa_input, mocker):
 
 
 def test_computeRdf(rpa, mocker):
-    mockMPIGetRank = mocker.patch.object(MPI, MPI.getRank.__name__, return_value=0)
-    mockComputeRdf = mocker.patch.object(Hdf, Hdf.computeRdf.__name__)
+    mockMPIGetRank = mocker.patch.object(MPI, MPI.rank.__name__, return_value=0)
+    mockComputeRdf = mocker.patch.object(HDF, HDF.compute_rdf.__name__)
     rpa.computeRdf()
     assert mockMPIGetRank.call_count == 1
     assert mockComputeRdf.call_count == 1
@@ -88,21 +88,21 @@ def test_computeRdf(rpa, mocker):
 
 def test_computeInternalEnergy(rpa, mocker):
     mockComputeInternalEnergy = mocker.patch.object(
-        Hdf, Hdf.computeInternalEnergy.__name__
+        HDF, HDF.compute_internal_energy.__name__
     )
     rpa.computeInternalEnergy()
     assert mockComputeInternalEnergy.call_count == 1
 
 
 def test_plot(rpa, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
-    mockComputeRdf = mocker.patch.object(Hdf, Hdf.computeRdf.__name__)
-    mockPlot = mocker.patch.object(Hdf, Hdf.plot.__name__)
-    rpa.plot([Hdf.EntryKeys.SSF.value, Hdf.EntryKeys.IDR.value])
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
+    mockComputeRdf = mocker.patch.object(HDF, HDF.compute_rdf.__name__)
+    mockPlot = mocker.patch.object(HDF, HDF.plot.__name__)
+    rpa.plot([HDF.EntryKeys.SSF.value, HDF.EntryKeys.IDR.value])
     assert mockMPIIsRoot.call_count == 1
     assert mockComputeRdf.call_count == 0
     assert mockPlot.call_count == 1
-    rpa.plot([Hdf.EntryKeys.SSF.value, Hdf.EntryKeys.RDF.value])
+    rpa.plot([HDF.EntryKeys.SSF.value, HDF.EntryKeys.RDF.value])
     assert mockMPIIsRoot.call_count == 2
     assert mockComputeRdf.call_count == 1
     assert mockPlot.call_count == 2

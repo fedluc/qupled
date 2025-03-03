@@ -2,7 +2,7 @@ import os
 import pytest
 import numpy as np
 from qupled.native import Stls as NativeStls
-from qupled.util import Hdf, MPI
+from qupled.util import HDF, MPI
 from qupled.classic import Stls
 
 
@@ -33,29 +33,29 @@ def test_compute(stls, stls_input, mocker):
 
 
 def test_save(stls, stls_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
         scheme = NativeStls(stls_input.toNative())
         stls.hdfFileName = stls._getHdfFile(scheme.inputs)
         stls._save(scheme)
         assert mockMPIIsRoot.call_count == 2
         assert os.path.isfile(stls.hdfFileName)
-        inspectData = Hdf().inspect(stls.hdfFileName)
+        inspectData = HDF().inspect(stls.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING.value,
-            Hdf.EntryKeys.DEGENERACY.value,
-            Hdf.EntryKeys.THEORY.value,
-            Hdf.EntryKeys.ERROR.value,
-            Hdf.EntryKeys.RESOLUTION.value,
-            Hdf.EntryKeys.CUTOFF.value,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
-            Hdf.EntryKeys.MATSUBARA.value,
-            Hdf.EntryKeys.IDR.value,
-            Hdf.EntryKeys.SDR.value,
-            Hdf.EntryKeys.SLFC.value,
-            Hdf.EntryKeys.SSF.value,
-            Hdf.EntryKeys.SSF_HF.value,
-            Hdf.EntryKeys.WVG.value,
+            HDF.EntryKeys.COUPLING.value,
+            HDF.EntryKeys.DEGENERACY.value,
+            HDF.EntryKeys.THEORY.value,
+            HDF.EntryKeys.ERROR.value,
+            HDF.EntryKeys.RESOLUTION.value,
+            HDF.EntryKeys.CUTOFF.value,
+            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
+            HDF.EntryKeys.MATSUBARA.value,
+            HDF.EntryKeys.IDR.value,
+            HDF.EntryKeys.SDR.value,
+            HDF.EntryKeys.SLFC.value,
+            HDF.EntryKeys.SSF.value,
+            HDF.EntryKeys.SSF_HF.value,
+            HDF.EntryKeys.WVG.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -66,9 +66,9 @@ def test_save(stls, stls_input, mocker):
 def test_getInitialGuess(mocker):
     arr = np.ones(10)
     mocker.patch.object(
-        Hdf,
-        Hdf.read.__name__,
-        return_value={Hdf.EntryKeys.WVG.value: arr, Hdf.EntryKeys.SLFC.value: arr},
+        HDF,
+        HDF.read.__name__,
+        return_value={HDF.EntryKeys.WVG.value: arr, HDF.EntryKeys.SLFC.value: arr},
     )
     guess = Stls.getInitialGuess("dummyFileName")
     assert np.array_equal(guess.wvg, arr)

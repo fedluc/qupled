@@ -25,7 +25,7 @@ class _ClassicScheme:
         self._checkStatusAndClean(status, scheme.recovery)
 
     # Check that the dielectric scheme was solved without errors
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _checkStatusAndClean(self, status: bool, recovery: str) -> None:
         """Checks that the scheme was solved correctly and removes temporarary files generated at run-time
 
@@ -52,40 +52,40 @@ class _ClassicScheme:
         theory = inputs.theory
         return f"rs{coupling:5.3f}_theta{degeneracy:5.3f}_{theory}.h5"
 
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _save(self, scheme) -> None:
         inputs = scheme.inputs
         """Stores the results obtained by solving the scheme."""
         pd.DataFrame(
             {
-                qu.Hdf.EntryKeys.COUPLING.value: inputs.coupling,
-                qu.Hdf.EntryKeys.DEGENERACY.value: inputs.degeneracy,
-                qu.Hdf.EntryKeys.THEORY.value: inputs.theory,
-                qu.Hdf.EntryKeys.RESOLUTION.value: inputs.resolution,
-                qu.Hdf.EntryKeys.CUTOFF.value: inputs.cutoff,
-                qu.Hdf.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequency_cutoff,
-                qu.Hdf.EntryKeys.MATSUBARA.value: inputs.matsubara,
+                qu.HDF.EntryKeys.COUPLING.value: inputs.coupling,
+                qu.HDF.EntryKeys.DEGENERACY.value: inputs.degeneracy,
+                qu.HDF.EntryKeys.THEORY.value: inputs.theory,
+                qu.HDF.EntryKeys.RESOLUTION.value: inputs.resolution,
+                qu.HDF.EntryKeys.CUTOFF.value: inputs.cutoff,
+                qu.HDF.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequency_cutoff,
+                qu.HDF.EntryKeys.MATSUBARA.value: inputs.matsubara,
             },
-            index=[qu.Hdf.EntryKeys.INFO.value],
-        ).to_hdf(self.hdfFileName, key=qu.Hdf.EntryKeys.INFO.value, mode="w")
+            index=[qu.HDF.EntryKeys.INFO.value],
+        ).to_hdf(self.hdfFileName, key=qu.HDF.EntryKeys.INFO.value, mode="w")
         if inputs.degeneracy > 0:
             pd.DataFrame(scheme.idr).to_hdf(
-                self.hdfFileName, key=qu.Hdf.EntryKeys.IDR.value
+                self.hdfFileName, key=qu.HDF.EntryKeys.IDR.value
             )
             pd.DataFrame(scheme.sdr).to_hdf(
-                self.hdfFileName, key=qu.Hdf.EntryKeys.SDR.value
+                self.hdfFileName, key=qu.HDF.EntryKeys.SDR.value
             )
             pd.DataFrame(scheme.slfc).to_hdf(
-                self.hdfFileName, key=qu.Hdf.EntryKeys.SLFC.value
+                self.hdfFileName, key=qu.HDF.EntryKeys.SLFC.value
             )
         pd.DataFrame(scheme.ssf).to_hdf(
-            self.hdfFileName, key=qu.Hdf.EntryKeys.SSF.value
+            self.hdfFileName, key=qu.HDF.EntryKeys.SSF.value
         )
         pd.DataFrame(scheme.ssf_HF).to_hdf(
-            self.hdfFileName, key=qu.Hdf.EntryKeys.SSF_HF.value
+            self.hdfFileName, key=qu.HDF.EntryKeys.SSF_HF.value
         )
         pd.DataFrame(scheme.wvg).to_hdf(
-            self.hdfFileName, key=qu.Hdf.EntryKeys.WVG.value
+            self.hdfFileName, key=qu.HDF.EntryKeys.WVG.value
         )
 
     # Compute radial distribution function
@@ -103,9 +103,9 @@ class _ClassicScheme:
             The radial distribution function
 
         """
-        if qu.MPI().getRank() > 0:
+        if qu.MPI().rank() > 0:
             writeToHdf = False
-        return qu.Hdf().computeRdf(self.hdfFileName, rdfGrid, writeToHdf)
+        return qu.HDF().compute_rdf(self.hdfFileName, rdfGrid, writeToHdf)
 
     # Compute the internal energy
     def computeInternalEnergy(self) -> float:
@@ -115,10 +115,10 @@ class _ClassicScheme:
             The internal energy
 
         """
-        return qu.Hdf().computeInternalEnergy(self.hdfFileName)
+        return qu.HDF().compute_internal_energy(self.hdfFileName)
 
     # Plot results
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def plot(
         self,
         toPlot: list[str],
@@ -137,9 +137,9 @@ class _ClassicScheme:
                 distribution function is plotted. Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`).
 
         """
-        if qu.Hdf.EntryKeys.RDF.value in toPlot:
+        if qu.HDF.EntryKeys.RDF.value in toPlot:
             self.computeRdf(rdfGrid)
-        qu.Hdf().plot(self.hdfFileName, toPlot, matsubara)
+        qu.HDF().plot(self.hdfFileName, toPlot, matsubara)
 
 
 # -----------------------------------------------------------------------
@@ -150,8 +150,8 @@ class _ClassicScheme:
 class Rpa(_ClassicScheme):
 
     # Compute
-    @qu.MPI.recordTime
-    @qu.MPI.synchronizeRanks
+    @qu.MPI.record_time
+    @qu.MPI.synchronize_ranks
     def compute(self, inputs: Rpa.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -223,8 +223,8 @@ class ESA(_ClassicScheme):
     """
 
     # Compute
-    @qu.MPI.recordTime
-    @qu.MPI.synchronizeRanks
+    @qu.MPI.record_time
+    @qu.MPI.synchronize_ranks
     def compute(self, inputs: ESA.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -263,33 +263,33 @@ class _IterativeScheme(_ClassicScheme):
         Args:
             fileName : name of the file used to extract the information for the initial guess.
         """
-        hdfData = qu.Hdf().read(
-            fileName, [qu.Hdf.EntryKeys.WVG.value, qu.Hdf.EntryKeys.SLFC.value]
+        hdfData = qu.HDF().read(
+            fileName, [qu.HDF.EntryKeys.WVG.value, qu.HDF.EntryKeys.SLFC.value]
         )
         return _IterativeScheme.Guess(
-            hdfData[qu.Hdf.EntryKeys.WVG.value],
-            hdfData[qu.Hdf.EntryKeys.SLFC.value],
+            hdfData[qu.HDF.EntryKeys.WVG.value],
+            hdfData[qu.HDF.EntryKeys.SLFC.value],
         )
 
     # Save results to disk
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
         super()._save(scheme)
         inputs = scheme.inputs
         pd.DataFrame(
             {
-                qu.Hdf.EntryKeys.COUPLING.value: inputs.coupling,
-                qu.Hdf.EntryKeys.DEGENERACY.value: inputs.degeneracy,
-                qu.Hdf.EntryKeys.ERROR.value: scheme.error,
-                qu.Hdf.EntryKeys.THEORY.value: inputs.theory,
-                qu.Hdf.EntryKeys.RESOLUTION.value: inputs.resolution,
-                qu.Hdf.EntryKeys.CUTOFF.value: inputs.cutoff,
-                qu.Hdf.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequency_cutoff,
-                qu.Hdf.EntryKeys.MATSUBARA.value: inputs.matsubara,
+                qu.HDF.EntryKeys.COUPLING.value: inputs.coupling,
+                qu.HDF.EntryKeys.DEGENERACY.value: inputs.degeneracy,
+                qu.HDF.EntryKeys.ERROR.value: scheme.error,
+                qu.HDF.EntryKeys.THEORY.value: inputs.theory,
+                qu.HDF.EntryKeys.RESOLUTION.value: inputs.resolution,
+                qu.HDF.EntryKeys.CUTOFF.value: inputs.cutoff,
+                qu.HDF.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequency_cutoff,
+                qu.HDF.EntryKeys.MATSUBARA.value: inputs.matsubara,
             },
-            index=[qu.Hdf.EntryKeys.INFO.value],
-        ).to_hdf(self.hdfFileName, key=qu.Hdf.EntryKeys.INFO.value)
+            index=[qu.HDF.EntryKeys.INFO.value],
+        ).to_hdf(self.hdfFileName, key=qu.HDF.EntryKeys.INFO.value)
 
     # Initial guess
     class Guess:
@@ -316,8 +316,8 @@ class _IterativeScheme(_ClassicScheme):
 class Stls(_IterativeScheme):
 
     # Compute
-    @qu.MPI.recordTime
-    @qu.MPI.synchronizeRanks
+    @qu.MPI.record_time
+    @qu.MPI.synchronize_ranks
     def compute(self, inputs: Stls.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -370,8 +370,8 @@ class Stls(_IterativeScheme):
 class StlsIet(_IterativeScheme):
 
     # Compute
-    @qu.MPI.recordTime
-    @qu.MPI.synchronizeRanks
+    @qu.MPI.record_time
+    @qu.MPI.synchronize_ranks
     def compute(self, inputs: StlsIet.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -384,7 +384,7 @@ class StlsIet(_IterativeScheme):
         self._save(scheme)
 
     # Save results to disk
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
         super()._save(scheme)
@@ -437,8 +437,8 @@ class StlsIet(_IterativeScheme):
 class VSStls(_IterativeScheme):
 
     # Compute
-    @qu.MPI.recordTime
-    @qu.MPI.synchronizeRanks
+    @qu.MPI.record_time
+    @qu.MPI.synchronize_ranks
     def compute(self, inputs: VSStls.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -451,18 +451,18 @@ class VSStls(_IterativeScheme):
         self._save(scheme)
 
     # Save results
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
         super()._save(scheme)
         pd.DataFrame(scheme.free_energy_grid).to_hdf(
-            self.hdfFileName, key=qu.Hdf.EntryKeys.FXC_GRID.value
+            self.hdfFileName, key=qu.HDF.EntryKeys.FXC_GRID.value
         )
         pd.DataFrame(scheme.free_energy_integrand).to_hdf(
-            self.hdfFileName, key=qu.Hdf.EntryKeys.FXCI.value
+            self.hdfFileName, key=qu.HDF.EntryKeys.FXCI.value
         )
         pd.DataFrame(scheme.alpha).to_hdf(
-            self.hdfFileName, key=qu.Hdf.EntryKeys.ALPHA.value
+            self.hdfFileName, key=qu.HDF.EntryKeys.ALPHA.value
         )
 
     # Set the free energy integrand from a dataframe produced in output
@@ -474,17 +474,17 @@ class VSStls(_IterativeScheme):
             fileName : name of the file used to extract the information for the free energy integrand.
         """
         fxci = native.FreeEnergyIntegrand()
-        hdfData = qu.Hdf().read(
+        hdfData = qu.HDF().read(
             fileName,
             [
-                qu.Hdf.EntryKeys.FXC_GRID.value,
-                qu.Hdf.EntryKeys.FXCI.value,
-                qu.Hdf.EntryKeys.ALPHA.value,
+                qu.HDF.EntryKeys.FXC_GRID.value,
+                qu.HDF.EntryKeys.FXCI.value,
+                qu.HDF.EntryKeys.ALPHA.value,
             ],
         )
-        fxci.grid = hdfData[qu.Hdf.EntryKeys.FXC_GRID.value]
-        fxci.integrand = np.ascontiguousarray(hdfData[qu.Hdf.EntryKeys.FXCI.value])
-        fxci.alpha = hdfData[qu.Hdf.EntryKeys.ALPHA.value]
+        fxci.grid = hdfData[qu.HDF.EntryKeys.FXC_GRID.value]
+        fxci.integrand = np.ascontiguousarray(hdfData[qu.HDF.EntryKeys.FXCI.value])
+        fxci.alpha = hdfData[qu.HDF.EntryKeys.ALPHA.value]
         return fxci
 
     # Input class

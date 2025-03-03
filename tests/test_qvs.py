@@ -5,7 +5,7 @@ import glob
 import pytest
 import numpy as np
 from qupled.native import QVSStls as NativeQVSStls
-from qupled.util import Hdf, MPI
+from qupled.util import HDF, MPI
 from qupled.quantum import QVSStls
 
 
@@ -42,7 +42,7 @@ def test_compute(qvsstls, qvsstls_input, mocker):
 
 
 def test_unpackFixedAdrFiles_no_files(qvsstls, qvsstls_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mockZip = mocker.patch.object(
         zipfile.ZipFile, zipfile.ZipFile.__init__.__name__, return_value=None
     )
@@ -56,7 +56,7 @@ def test_unpackFixedAdrFiles_no_files(qvsstls, qvsstls_input, mocker):
 
 
 def test_unpackFixedAdrFiles_with_files(qvsstls, qvsstls_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mockZip = mocker.patch.object(
         zipfile.ZipFile, zipfile.ZipFile.__init__.__name__, return_value=None
     )
@@ -71,7 +71,7 @@ def test_unpackFixedAdrFiles_with_files(qvsstls, qvsstls_input, mocker):
 
 
 def test_zipFixedAdrFiles_no_file(qvsstls, qvsstls_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mockZip = mocker.patch.object(
         zipfile.ZipFile, zipfile.ZipFile.__init__.__name__, return_value=None
     )
@@ -89,7 +89,7 @@ def test_zipFixedAdrFiles_no_file(qvsstls, qvsstls_input, mocker):
 
 
 def test_cleanFixedAdrFiles_no_files(qvsstls, qvsstls_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mockRemove = mocker.patch.object(shutil, shutil.rmtree.__name__)
     qvsstls._cleanFixedAdrFiles(qvsstls_input)
     assert mockMPIIsRoot.call_count == 1
@@ -97,7 +97,7 @@ def test_cleanFixedAdrFiles_no_files(qvsstls, qvsstls_input, mocker):
 
 
 def test_cleanFixedAdrFiles_with_files(qvsstls, qvsstls_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     mockIsDir = mocker.patch.object(os.path, os.path.isdir.__name__, return_value=True)
     mockRemove = mocker.patch.object(shutil, shutil.rmtree.__name__)
     qvsstls._cleanFixedAdrFiles(qvsstls_input)
@@ -107,33 +107,33 @@ def test_cleanFixedAdrFiles_with_files(qvsstls, qvsstls_input, mocker):
 
 
 def test_save(qvsstls, qvsstls_input, mocker):
-    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
         scheme = NativeQVSStls(qvsstls_input.toNative())
         qvsstls.hdfFileName = qvsstls._getHdfFile(scheme.inputs)
         qvsstls._save(scheme)
         assert mockMPIIsRoot.call_count == 4
         assert os.path.isfile(qvsstls.hdfFileName)
-        inspectData = Hdf().inspect(qvsstls.hdfFileName)
+        inspectData = HDF().inspect(qvsstls.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING.value,
-            Hdf.EntryKeys.DEGENERACY.value,
-            Hdf.EntryKeys.THEORY.value,
-            Hdf.EntryKeys.ERROR.value,
-            Hdf.EntryKeys.RESOLUTION.value,
-            Hdf.EntryKeys.CUTOFF.value,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
-            Hdf.EntryKeys.MATSUBARA.value,
-            Hdf.EntryKeys.IDR.value,
-            Hdf.EntryKeys.SDR.value,
-            Hdf.EntryKeys.SLFC.value,
-            Hdf.EntryKeys.SSF.value,
-            Hdf.EntryKeys.SSF_HF.value,
-            Hdf.EntryKeys.WVG.value,
-            Hdf.EntryKeys.FXC_GRID.value,
-            Hdf.EntryKeys.FXCI.value,
-            Hdf.EntryKeys.ADR.value,
-            Hdf.EntryKeys.ALPHA.value,
+            HDF.EntryKeys.COUPLING.value,
+            HDF.EntryKeys.DEGENERACY.value,
+            HDF.EntryKeys.THEORY.value,
+            HDF.EntryKeys.ERROR.value,
+            HDF.EntryKeys.RESOLUTION.value,
+            HDF.EntryKeys.CUTOFF.value,
+            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
+            HDF.EntryKeys.MATSUBARA.value,
+            HDF.EntryKeys.IDR.value,
+            HDF.EntryKeys.SDR.value,
+            HDF.EntryKeys.SLFC.value,
+            HDF.EntryKeys.SSF.value,
+            HDF.EntryKeys.SSF_HF.value,
+            HDF.EntryKeys.WVG.value,
+            HDF.EntryKeys.FXC_GRID.value,
+            HDF.EntryKeys.FXCI.value,
+            HDF.EntryKeys.ADR.value,
+            HDF.EntryKeys.ALPHA.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -145,12 +145,12 @@ def test_setFreeEnergyIntegrand(mocker):
     arr1D = np.ones(10)
     arr2D = np.ones((3, 10))
     mocker.patch.object(
-        Hdf,
-        Hdf.read.__name__,
+        HDF,
+        HDF.read.__name__,
         return_value={
-            Hdf.EntryKeys.FXC_GRID.value: arr1D,
-            Hdf.EntryKeys.FXCI.value: arr2D,
-            Hdf.EntryKeys.ALPHA.value: arr1D,
+            HDF.EntryKeys.FXC_GRID.value: arr1D,
+            HDF.EntryKeys.FXCI.value: arr2D,
+            HDF.EntryKeys.ALPHA.value: arr1D,
         },
     )
     fxc = QVSStls.getFreeEnergyIntegrand("dummyFileName")

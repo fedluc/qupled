@@ -26,30 +26,30 @@ class _QuantumIterativeScheme(qc._IterativeScheme):
         Args:
             fileName : name of the file used to extract the information for the initial guess.
         """
-        hdfData = qu.Hdf().read(
+        hdfData = qu.HDF().read(
             fileName,
             [
-                qu.Hdf.EntryKeys.WVG.value,
-                qu.Hdf.EntryKeys.SSF.value,
-                qu.Hdf.EntryKeys.ADR.value,
-                qu.Hdf.EntryKeys.MATSUBARA.value,
+                qu.HDF.EntryKeys.WVG.value,
+                qu.HDF.EntryKeys.SSF.value,
+                qu.HDF.EntryKeys.ADR.value,
+                qu.HDF.EntryKeys.MATSUBARA.value,
             ],
         )
         return _QuantumIterativeScheme.Guess(
-            hdfData[qu.Hdf.EntryKeys.WVG.value],
-            hdfData[qu.Hdf.EntryKeys.SSF.value],
-            np.ascontiguousarray(hdfData[qu.Hdf.EntryKeys.ADR.value]),
-            hdfData[qu.Hdf.EntryKeys.MATSUBARA.value],
+            hdfData[qu.HDF.EntryKeys.WVG.value],
+            hdfData[qu.HDF.EntryKeys.SSF.value],
+            np.ascontiguousarray(hdfData[qu.HDF.EntryKeys.ADR.value]),
+            hdfData[qu.HDF.EntryKeys.MATSUBARA.value],
         )
 
     # Save results to disk
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
         super()._save(scheme)
         if scheme.inputs.degeneracy > 0:
             pd.DataFrame(scheme.adr).to_hdf(
-                self.hdfFileName, key=qu.Hdf.EntryKeys.ADR.value
+                self.hdfFileName, key=qu.HDF.EntryKeys.ADR.value
             )
 
     # Initial guess
@@ -87,8 +87,8 @@ class _QuantumIterativeScheme(qc._IterativeScheme):
 class Qstls(_QuantumIterativeScheme):
 
     # Compute
-    @qu.MPI.recordTime
-    @qu.MPI.synchronizeRanks
+    @qu.MPI.record_time
+    @qu.MPI.synchronize_ranks
     def compute(self, inputs: Qstls.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -138,8 +138,8 @@ class QstlsIet(_QuantumIterativeScheme):
     """
 
     # Compute
-    @qu.MPI.recordTime
-    @qu.MPI.synchronizeRanks
+    @qu.MPI.record_time
+    @qu.MPI.synchronize_ranks
     def compute(self, inputs: QstlsIet.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -155,7 +155,7 @@ class QstlsIet(_QuantumIterativeScheme):
         self._cleanFixedAdrFiles(scheme.inputs)
 
     # Unpack zip folder with fixed component of the auxiliary density response
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _unpackFixedAdrFiles(self, inputs) -> None:
         fixedIetSourceFile = inputs.fixed_iet
         if inputs.fixed_iet != "":
@@ -165,13 +165,13 @@ class QstlsIet(_QuantumIterativeScheme):
                 zipFile.extractall(inputs.fixed_iet)
 
     # Save results to disk
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _save(self, scheme) -> None:
         super()._save(scheme)
         pd.DataFrame(scheme.bf).to_hdf(self.hdfFileName, key="bf")
 
     # Zip all files for the fixed component of the auxiliary density response
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _zipFixedAdrFiles(self, inputs) -> None:
         if inputs.fixed_iet == "":
             degeneracy = inputs.degeneracy
@@ -186,7 +186,7 @@ class QstlsIet(_QuantumIterativeScheme):
                     os.remove(binFile)
 
     # Remove temporaray run directory
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _cleanFixedAdrFiles(self, inputs) -> None:
         if os.path.isdir(inputs.fixed_iet):
             shutil.rmtree(inputs.fixed_iet)
@@ -228,8 +228,8 @@ class QstlsIet(_QuantumIterativeScheme):
 class QVSStls(_QuantumIterativeScheme):
 
     # Compute
-    @qu.MPI.recordTime
-    @qu.MPI.synchronizeRanks
+    @qu.MPI.record_time
+    @qu.MPI.synchronize_ranks
     def compute(self, inputs: QVSStls.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -245,7 +245,7 @@ class QVSStls(_QuantumIterativeScheme):
         self._cleanFixedAdrFiles(scheme.inputs)
 
     # Unpack zip folder with fixed component of the auxiliary density response
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _unpackFixedAdrFiles(self, inputs) -> None:
         fixedSourceFile = inputs.fixed
         if inputs.fixed != "":
@@ -255,21 +255,21 @@ class QVSStls(_QuantumIterativeScheme):
                 zipFile.extractall(inputs.fixed)
 
     # Save results to disk
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _save(self, scheme) -> None:
         super()._save(scheme)
         pd.DataFrame(scheme.free_energy_grid).to_hdf(
-            self.hdfFileName, key=qu.Hdf.EntryKeys.FXC_GRID.value
+            self.hdfFileName, key=qu.HDF.EntryKeys.FXC_GRID.value
         )
         pd.DataFrame(scheme.free_energy_integrand).to_hdf(
-            self.hdfFileName, key=qu.Hdf.EntryKeys.FXCI.value
+            self.hdfFileName, key=qu.HDF.EntryKeys.FXCI.value
         )
         pd.DataFrame(scheme.alpha).to_hdf(
-            self.hdfFileName, key=qu.Hdf.EntryKeys.ALPHA.value
+            self.hdfFileName, key=qu.HDF.EntryKeys.ALPHA.value
         )
 
     # Zip all files for the fixed component of the auxiliary density response
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _zipFixedAdrFiles(self, inputs) -> None:
         if inputs.fixed == "":
             degeneracy = inputs.degeneracy
@@ -285,7 +285,7 @@ class QVSStls(_QuantumIterativeScheme):
                     os.remove(binFile)
 
     # Remove the temporary run directory
-    @qu.MPI.runOnlyOnRoot
+    @qu.MPI.run_only_on_root
     def _cleanFixedAdrFiles(self, inputs) -> None:
         if os.path.isdir(inputs.fixed):
             shutil.rmtree(inputs.fixed)
