@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+from matplotlib import pyplot as plt
 from qupled.util import Plot
 
 
@@ -9,7 +10,7 @@ def plot_instance():
 
 
 def test_plot1D(plot_instance, mocker):
-    mockPlotShow = mocker.patch("matplotlib.pyplot.show")
+    mockPlotShow = mocker.patch.object(plt, plt.show.__name__)
     x = np.arange(0, 10, 0.1)
     y = np.zeros(len(x))
     plot_instance.plot1D(x, y, "x", "y")
@@ -17,7 +18,7 @@ def test_plot1D(plot_instance, mocker):
 
 
 def test_plot1DParametric(plot_instance, mocker):
-    mockPlotShow = mocker.patch("matplotlib.pyplot.show")
+    mockPlotShow = mocker.patch.object(plt, plt.show.__name__)
     x = np.arange(0, 10, 0.1)
     y = np.zeros((len(x), 2))
     parameter = np.array([0, 1])

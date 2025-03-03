@@ -1,11 +1,11 @@
 import os
 import pytest
-from qupled import native
+from qupled.native import Stls, Rpa, StlsInput
 
 
 def test_stls_properties():
-    assert issubclass(native.Stls, native.Rpa)
-    scheme = native.Stls(native.StlsInput())
+    assert issubclass(Stls, Rpa)
+    scheme = Stls(StlsInput())
     assert hasattr(scheme, "idr")
     assert hasattr(scheme, "sdr")
     assert hasattr(scheme, "slfc")
@@ -20,7 +20,7 @@ def test_stls_properties():
 
 
 def test_stls_compute():
-    inputs = native.StlsInput()
+    inputs = StlsInput()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
     inputs.theory = "STLS"
@@ -34,7 +34,7 @@ def test_stls_compute():
     inputs.mixing = 1.0
     inputs.iterations = 1000
     inputs.output_frequency = 10
-    scheme = native.Stls(inputs)
+    scheme = Stls(inputs)
     scheme.compute()
     try:
         nx = scheme.wvg.size
@@ -56,7 +56,7 @@ def test_stls_compute():
 def test_stls_iet_compute():
     ietSchemes = {"STLS-HNC", "STLS-IOI", "STLS-LCT"}
     for schemeName in ietSchemes:
-        inputs = native.StlsInput()
+        inputs = StlsInput()
         inputs.coupling = 10.0
         inputs.degeneracy = 1.0
         inputs.theory = schemeName
@@ -70,7 +70,7 @@ def test_stls_iet_compute():
         inputs.mixing = 0.5
         inputs.iterations = 1000
         inputs.output_frequency = 2
-        scheme = native.Stls(inputs)
+        scheme = Stls(inputs)
         scheme.compute()
         try:
             nx = scheme.wvg.size

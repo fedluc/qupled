@@ -1,19 +1,19 @@
 import os
-from qupled import native
+from qupled.native import VSStls, VSStlsInput, Rpa
 
 
 def test_vsstls_properties():
-    assert issubclass(native.VSStls, native.Rpa)
-    inputs = native.VSStlsInput()
+    assert issubclass(VSStls, Rpa)
+    inputs = VSStlsInput()
     inputs.coupling = 1.0
     inputs.coupling_resolution = 0.1
-    scheme = native.VSStls(inputs)
+    scheme = VSStls(inputs)
     assert hasattr(scheme, "free_energy_integrand")
     assert hasattr(scheme, "free_energy_grid")
 
 
 def test_vsstls_compute():
-    inputs = native.VSStlsInput()
+    inputs = VSStlsInput()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
     inputs.theory = "VSSTLS"
@@ -32,7 +32,7 @@ def test_vsstls_compute():
     inputs.error_alpha = 1.0e-3
     inputs.iterations_alpha = 50
     inputs.alpha = [0.5, 1.0]
-    scheme = native.VSStls(inputs)
+    scheme = VSStls(inputs)
     scheme.compute()
     try:
         nx = scheme.wvg.size

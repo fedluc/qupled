@@ -1,15 +1,15 @@
 import pytest
 import numpy as np
-from qupled import native
+from qupled.native import StlsInput, RpaInput, StlsGuess
 
 
 @pytest.fixture
 def stls_input_instance():
-    return native.StlsInput()
+    return StlsInput()
 
 
 def test_init(stls_input_instance):
-    assert issubclass(native.StlsInput, native.RpaInput)
+    assert issubclass(StlsInput, RpaInput)
     assert hasattr(stls_input_instance, "error")
     assert hasattr(stls_input_instance, "mixing")
     assert hasattr(stls_input_instance, "mapping")
@@ -94,7 +94,7 @@ def test_recovery_file(stls_input_instance):
 
 def test_guess(stls_input_instance):
     arr = np.zeros(10)
-    guess = native.StlsGuess()
+    guess = StlsGuess()
     guess.wvg = arr
     guess.slfc = arr
     stls_input_instance.guess = guess
@@ -103,7 +103,7 @@ def test_guess(stls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros(11)
-        guess = native.StlsGuess()
+        guess = StlsGuess()
         guess.wvg = arr1
         guess.slfc = arr2
         stls_input_instance.guess = guess
@@ -115,7 +115,7 @@ def test_is_equal_default(stls_input_instance):
 
 
 def test_is_equal(stls_input_instance):
-    thisStls = native.StlsInput()
+    thisStls = StlsInput()
     thisStls.coupling = 2.0
     thisStls.degeneracy = 1.0
     thisStls.integral_error = 0.1

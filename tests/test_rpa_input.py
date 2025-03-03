@@ -1,11 +1,11 @@
 import math
 import pytest
-from qupled import native
+from qupled.native import RpaInput
 
 
 @pytest.fixture
 def rpa_input_instance():
-    return native.RpaInput()
+    return RpaInput()
 
 
 def test_init(rpa_input_instance):
@@ -159,7 +159,7 @@ def test_is_equal_default(rpa_input_instance):
 
 
 def test_is_equal(rpa_input_instance):
-    thisRpa = native.RpaInput()
+    thisRpa = RpaInput()
     thisRpa.coupling = 2.0
     thisRpa.degeneracy = 1.0
     thisRpa.integral_error = 0.1

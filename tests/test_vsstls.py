@@ -2,7 +2,7 @@ import os
 import pytest
 import numpy as np
 from qupled import native
-from qupled.util import Hdf
+from qupled.util import Hdf, MPI
 from qupled.classic import VSStls
 
 
@@ -21,21 +21,19 @@ def test_default(vsstls):
 
 
 def test_compute(vsstls, vsstls_input, mocker):
-    mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
-    mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCompute = mocker.patch("qupled.native.VSStls.compute")
-    mockCheckStatusAndClean = mocker.patch("qupled.classic.VSStls._checkStatusAndClean")
-    mockSave = mocker.patch("qupled.classic.VSStls._save")
+    mockMPITime = mocker.patch.object(MPI, MPI.timer.__name__, return_value=0)
+    mockMPIBarrier = mocker.patch.object(MPI, MPI.barrier.__name__)
+    mockCompute = mocker.patch.object(VSStls, VSStls._compute.__name__)
+    mockSave = mocker.patch.object(VSStls, VSStls._save.__name__)
     vsstls.compute(vsstls_input)
     assert mockMPITime.call_count == 2
     assert mockMPIBarrier.call_count == 1
     assert mockCompute.call_count == 1
-    assert mockCheckStatusAndClean.call_count == 1
     assert mockSave.call_count == 1
 
 
 def test_save(vsstls, vsstls_input, mocker):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
     try:
         scheme = native.VSStls(vsstls_input.toNative())
         vsstls.hdfFileName = vsstls._getHdfFile(scheme.inputs)
@@ -44,23 +42,23 @@ def test_save(vsstls, vsstls_input, mocker):
         assert os.path.isfile(vsstls.hdfFileName)
         inspectData = Hdf().inspect(vsstls.hdfFileName)
         expectedEntries = [
-            "coupling",
-            "degeneracy",
-            "theory",
-            "error",
-            "resolution",
-            "cutoff",
-            "frequencyCutoff",
-            "matsubara",
-            "idr",
-            "sdr",
-            "slfc",
-            "ssf",
-            "ssfHF",
-            "wvg",
-            "fxcGrid",
-            "fxci",
-            "alpha",
+            Hdf.EntryKeys.COUPLING,
+            Hdf.EntryKeys.DEGENERACY,
+            Hdf.EntryKeys.THEORY,
+            Hdf.EntryKeys.ERROR,
+            Hdf.EntryKeys.RESOLUTION,
+            Hdf.EntryKeys.CUTOFF,
+            Hdf.EntryKeys.FREQUENCY_CUTOFF,
+            Hdf.EntryKeys.MATSUBARA,
+            Hdf.EntryKeys.IDR,
+            Hdf.EntryKeys.SDR,
+            Hdf.EntryKeys.SLFC,
+            Hdf.EntryKeys.SSF,
+            Hdf.EntryKeys.SSF_HF,
+            Hdf.EntryKeys.WVG,
+            Hdf.EntryKeys.FXC_GRID,
+            Hdf.EntryKeys.FXCI,
+            Hdf.EntryKeys.ALPHA,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -71,9 +69,14 @@ def test_save(vsstls, vsstls_input, mocker):
 def test_getFreeEnergyIntegrand(vsstls, mocker):
     arr1D = np.ones(10)
     arr2D = np.ones((3, 10))
-    mockHdfRead = mocker.patch(
-        "qupled.util.Hdf.read",
-        return_value={"fxcGrid": arr1D, "fxci": arr2D, "alpha": arr1D},
+    mocker.patch.object(
+        Hdf,
+        Hdf.read.__name__,
+        return_value={
+            Hdf.EntryKeys.FXC_GRID: arr1D,
+            Hdf.EntryKeys.FXCI: arr2D,
+            Hdf.EntryKeys.ALPHA: arr1D,
+        },
     )
     fxci = vsstls.getFreeEnergyIntegrand("dummyFileName")
     assert np.array_equal(fxci.grid, arr1D)

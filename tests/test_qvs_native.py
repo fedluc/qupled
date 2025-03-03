@@ -1,20 +1,20 @@
 import os
-from qupled import native
+from qupled.native import QVSStls, QVSStlsInput, Rpa
 
 
 def test_qvsstls_properties():
-    assert issubclass(native.QVSStls, native.Rpa)
-    inputs = native.QVSStlsInput()
+    assert issubclass(QVSStls, Rpa)
+    inputs = QVSStlsInput()
     inputs.coupling = 1.0
     inputs.coupling_resolution = 0.1
-    scheme = native.QVSStls(inputs)
+    scheme = QVSStls(inputs)
     assert hasattr(scheme, "free_energy_integrand")
     assert hasattr(scheme, "free_energy_grid")
     assert hasattr(scheme, "adr")
 
 
 def test_qvsstls_compute():
-    inputs = native.QVSStlsInput()
+    inputs = QVSStlsInput()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
     inputs.theory = "QVSSTLS"
@@ -33,7 +33,7 @@ def test_qvsstls_compute():
     inputs.error_alpha = 1.0e-3
     inputs.iterations_alpha = 50
     inputs.alpha = [0.5, 1.0]
-    scheme = native.QVSStls(inputs)
+    scheme = QVSStls(inputs)
     scheme.compute()
     try:
         nx = scheme.wvg.size

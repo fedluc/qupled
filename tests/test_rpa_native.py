@@ -1,9 +1,9 @@
 import pytest
-from qupled import native
+from qupled.native import Rpa, RpaInput
 
 
 def test_rpa_properties():
-    scheme = native.Rpa(native.RpaInput())
+    scheme = Rpa(RpaInput())
     assert hasattr(scheme, "idr")
     assert hasattr(scheme, "sdr")
     assert hasattr(scheme, "slfc")
@@ -17,7 +17,7 @@ def test_rpa_properties():
 
 
 def test_rpa_compute():
-    inputs = native.RpaInput()
+    inputs = RpaInput()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
     inputs.theory = "RPA"
@@ -27,7 +27,7 @@ def test_rpa_compute():
     inputs.resolution = 0.1
     inputs.integral_error = 1.0e-5
     inputs.threads = 1
-    scheme = native.Rpa(inputs)
+    scheme = Rpa(inputs)
     scheme.compute()
     nx = scheme.wvg.size
     assert nx >= 3

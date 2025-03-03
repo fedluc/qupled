@@ -1,7 +1,7 @@
 import os
 import pytest
-from qupled import native
-from qupled.util import Hdf
+from qupled.native import Rpa as NativeRpa
+from qupled.util import Hdf, MPI
 from qupled.classic import Rpa
 
 
@@ -20,22 +20,20 @@ def test_default(rpa):
 
 
 def test_compute(rpa, rpa_input, mocker):
-    mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
-    mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCompute = mocker.patch("qupled.native.Rpa.compute")
-    mockCheckStatusAndClean = mocker.patch("qupled.classic.Rpa._checkStatusAndClean")
-    mockSave = mocker.patch("qupled.classic.Rpa._save")
+    mockMPITime = mocker.patch.object(MPI, MPI.timer.__name__, return_value=0)
+    mockMPIBarrier = mocker.patch.object(MPI, MPI.barrier.__name__)
+    mockCompute = mocker.patch.object(Rpa, Rpa._compute.__name__)
+    mockSave = mocker.patch.object(Rpa, Rpa._save.__name__)
     rpa.compute(rpa_input)
     assert mockMPITime.call_count == 2
     assert mockMPIBarrier.call_count == 1
     assert mockCompute.call_count == 1
-    assert mockCheckStatusAndClean.call_count == 1
     assert mockSave.call_count == 1
 
 
 def test_checkStatusAndClean(rpa, mocker, capsys):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    mockCheckInputs = mocker.patch("os.remove")
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mocker.patch.object(os, os.remove.__name__)
     rpa._checkStatusAndClean(0, "")
     captured = capsys.readouterr()
     assert mockMPIIsRoot.call_count == 1
@@ -51,28 +49,28 @@ def test_getHdfFile(rpa, rpa_input):
 
 
 def test_save(rpa, rpa_input, mocker):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
     try:
-        scheme = native.Rpa(rpa_input.toNative())
+        scheme = NativeRpa(rpa_input.toNative())
         rpa.hdfFileName = rpa._getHdfFile(scheme.inputs)
         rpa._save(scheme)
         assert mockMPIIsRoot.call_count == 1
         assert os.path.isfile(rpa.hdfFileName)
         inspectData = Hdf().inspect(rpa.hdfFileName)
         expectedEntries = [
-            "coupling",
-            "degeneracy",
-            "theory",
-            "resolution",
-            "cutoff",
-            "frequencyCutoff",
-            "matsubara",
-            "idr",
-            "sdr",
-            "slfc",
-            "ssf",
-            "ssfHF",
-            "wvg",
+            Hdf.EntryKeys.COUPLING,
+            Hdf.EntryKeys.DEGENERACY,
+            Hdf.EntryKeys.THEORY,
+            Hdf.EntryKeys.RESOLUTION,
+            Hdf.EntryKeys.CUTOFF,
+            Hdf.EntryKeys.FREQUENCY_CUTOFF,
+            Hdf.EntryKeys.MATSUBARA,
+            Hdf.EntryKeys.IDR,
+            Hdf.EntryKeys.SDR,
+            Hdf.EntryKeys.SLFC,
+            Hdf.EntryKeys.SSF,
+            Hdf.EntryKeys.SSF_HF,
+            Hdf.EntryKeys.WVG,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -81,28 +79,30 @@ def test_save(rpa, rpa_input, mocker):
 
 
 def test_computeRdf(rpa, mocker):
-    mockMPIGetRank = mocker.patch("qupled.util.MPI.getRank", return_value=0)
-    mockComputeRdf = mocker.patch("qupled.util.Hdf.computeRdf")
+    mockMPIGetRank = mocker.patch.object(MPI, MPI.getRank.__name__, return_value=0)
+    mockComputeRdf = mocker.patch.object(Hdf, Hdf.computeRdf.__name__)
     rpa.computeRdf()
     assert mockMPIGetRank.call_count == 1
     assert mockComputeRdf.call_count == 1
 
 
 def test_computeInternalEnergy(rpa, mocker):
-    mockComputeInternalEnergy = mocker.patch("qupled.util.Hdf.computeInternalEnergy")
+    mockComputeInternalEnergy = mocker.patch.object(
+        Hdf, Hdf.computeInternalEnergy.__name__
+    )
     rpa.computeInternalEnergy()
     assert mockComputeInternalEnergy.call_count == 1
 
 
 def test_plot(rpa, mocker):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    mockComputeRdf = mocker.patch("qupled.classic.Rpa.computeRdf")
-    mockPlot = mocker.patch("qupled.util.Hdf.plot")
-    rpa.plot(["ssf", "idr"])
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockComputeRdf = mocker.patch.object(Hdf, Hdf.computeRdf.__name__)
+    mockPlot = mocker.patch.object(Hdf, Hdf.plot.__name__)
+    rpa.plot([Hdf.EntryKeys.SSF, Hdf.EntryKeys.IDR])
     assert mockMPIIsRoot.call_count == 1
     assert mockComputeRdf.call_count == 0
     assert mockPlot.call_count == 1
-    rpa.plot(["ssf", "rdf"])
+    rpa.plot([Hdf.EntryKeys.SSF, Hdf.EntryKeys.RDF])
     assert mockMPIIsRoot.call_count == 2
     assert mockComputeRdf.call_count == 1
     assert mockPlot.call_count == 2

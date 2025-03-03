@@ -1,8 +1,8 @@
 import os
 import pytest
 import numpy as np
-from qupled import native
-from qupled.util import Hdf
+from qupled.native import Qstls as NativeQstls
+from qupled.util import Hdf, MPI
 from qupled.quantum import Qstls
 
 
@@ -21,44 +21,42 @@ def test_default(qstls):
 
 
 def test_compute(qstls, qstls_input, mocker):
-    mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
-    mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCompute = mocker.patch("qupled.native.Qstls.compute")
-    mockCheckStatusAndClean = mocker.patch("qupled.quantum.Qstls._checkStatusAndClean")
-    mockSave = mocker.patch("qupled.quantum.Qstls._save")
+    mockMPITime = mocker.patch.object(MPI, MPI.timer.__name__, return_value=0)
+    mockMPIBarrier = mocker.patch.object(MPI, MPI.barrier.__name__)
+    mockCompute = mocker.patch.object(Qstls, Qstls._compute.__name__)
+    mockSave = mocker.patch.object(Qstls, Qstls._save.__name__)
     qstls.compute(qstls_input)
     assert mockMPITime.call_count == 2
     assert mockMPIBarrier.call_count == 1
     assert mockCompute.call_count == 1
-    assert mockCheckStatusAndClean.call_count == 1
     assert mockSave.call_count == 1
 
 
 def test_save(qstls, qstls_input, mocker):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
     try:
-        scheme = native.Qstls(qstls_input.toNative())
+        scheme = NativeQstls(qstls_input.toNative())
         qstls.hdfFileName = qstls._getHdfFile(scheme.inputs)
         qstls._save(scheme)
         assert mockMPIIsRoot.call_count == 3
         assert os.path.isfile(qstls.hdfFileName)
         inspectData = Hdf().inspect(qstls.hdfFileName)
         expectedEntries = [
-            "coupling",
-            "degeneracy",
-            "theory",
-            "error",
-            "resolution",
-            "cutoff",
-            "frequencyCutoff",
-            "matsubara",
-            "adr",
-            "idr",
-            "sdr",
-            "slfc",
-            "ssf",
-            "ssfHF",
-            "wvg",
+            Hdf.EntryKeys.COUPLING,
+            Hdf.EntryKeys.DEGENERACY,
+            Hdf.EntryKeys.THEORY,
+            Hdf.EntryKeys.ERROR,
+            Hdf.EntryKeys.RESOLUTION,
+            Hdf.EntryKeys.CUTOFF,
+            Hdf.EntryKeys.FREQUENCY_CUTOFF,
+            Hdf.EntryKeys.MATSUBARA,
+            Hdf.EntryKeys.ADR,
+            Hdf.EntryKeys.IDR,
+            Hdf.EntryKeys.SDR,
+            Hdf.EntryKeys.SLFC,
+            Hdf.EntryKeys.SSF,
+            Hdf.EntryKeys.SSF_HF,
+            Hdf.EntryKeys.WVG,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -68,9 +66,15 @@ def test_save(qstls, qstls_input, mocker):
 
 def test_getInitialGuess(mocker):
     arr = np.ones(10)
-    mockHdfRead = mocker.patch(
-        "qupled.util.Hdf.read",
-        return_value={"wvg": arr, "ssf": arr, "adr": arr, "matsubara": 10},
+    mocker.patch.object(
+        Hdf,
+        Hdf.read.__name__,
+        return_value={
+            Hdf.EntryKeys.WVG: arr,
+            Hdf.EntryKeys.SSF: arr,
+            Hdf.EntryKeys.ADR: arr,
+            Hdf.EntryKeys.MATSUBARA: 10,
+        },
     )
     guess = Qstls.getInitialGuess("dummyFileName")
     assert np.array_equal(guess.wvg, arr)

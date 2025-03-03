@@ -1,7 +1,10 @@
 import os
 import pytest
-from qupled import native
-from qupled.util import Hdf
+import zipfile
+import glob
+import shutil
+from qupled.native import Qstls as NativeQstls
+from qupled.util import Hdf, MPI
 from qupled.quantum import QstlsIet
 
 
@@ -20,13 +23,13 @@ def test_default(qstls_iet):
 
 
 def test_compute(qstls_iet, qstls_iet_input, mocker):
-    mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
-    mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockUnpack = mocker.patch("qupled.quantum.QstlsIet._unpackFixedAdrFiles")
-    mockCompute = mocker.patch("qupled.quantum.QstlsIet._compute")
-    mockSave = mocker.patch("qupled.quantum.QstlsIet._save")
-    mockZip = mocker.patch("qupled.quantum.QstlsIet._zipFixedAdrFiles")
-    mockClean = mocker.patch("qupled.quantum.QstlsIet._cleanFixedAdrFiles")
+    mockMPITime = mocker.patch.object(MPI, MPI.timer.__name__, return_value=0)
+    mockMPIBarrier = mocker.patch.object(MPI, MPI.barrier.__name__)
+    mockUnpack = mocker.patch.object(QstlsIet, QstlsIet._unpackFixedAdrFiles.__name__)
+    mockCompute = mocker.patch.object(QstlsIet, QstlsIet._compute.__name__)
+    mockSave = mocker.patch.object(QstlsIet, QstlsIet._save.__name__)
+    mockZip = mocker.patch.object(QstlsIet, QstlsIet._zipFixedAdrFiles.__name__)
+    mockClean = mocker.patch.object(QstlsIet, QstlsIet._cleanFixedAdrFiles.__name__)
     qstls_iet.compute(qstls_iet_input)
     assert mockMPITime.call_count == 2
     assert mockMPIBarrier.call_count == 1
@@ -38,9 +41,13 @@ def test_compute(qstls_iet, qstls_iet_input, mocker):
 
 
 def test_unpackFixedAdrFiles_no_files(qstls_iet, qstls_iet_input, mocker):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    mockZip = mocker.patch("qupled.quantum.zf.ZipFile.__init__", return_value=None)
-    mockExtractAll = mocker.patch("qupled.quantum.zf.ZipFile.extractall")
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockZip = mocker.patch.object(
+        zipfile.ZipFile, zipfile.ZipFile.__init__.__name__, return_value=None
+    )
+    mockExtractAll = mocker.patch.object(
+        zipfile.ZipFile, zipfile.ZipFile.extractall.__name__, return_value=None
+    )
     qstls_iet._unpackFixedAdrFiles(qstls_iet_input)
     assert mockMPIIsRoot.call_count == 1
     assert mockZip.call_count == 0
@@ -48,9 +55,13 @@ def test_unpackFixedAdrFiles_no_files(qstls_iet, qstls_iet_input, mocker):
 
 
 def test_unpackFixedAdrFiles_with_files(qstls_iet, qstls_iet_input, mocker):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    mockZip = mocker.patch("qupled.quantum.zf.ZipFile.__init__", return_value=None)
-    mockExtractAll = mocker.patch("qupled.quantum.zf.ZipFile.extractall")
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockZip = mocker.patch.object(
+        zipfile.ZipFile, zipfile.ZipFile.__init__.__name__, return_value=None
+    )
+    mockExtractAll = mocker.patch.object(
+        zipfile.ZipFile, zipfile.ZipFile.extractall.__name__, return_value=None
+    )
     qstls_iet_input.fixed_iet = "testFile.zip"
     qstls_iet._unpackFixedAdrFiles(qstls_iet_input)
     assert mockMPIIsRoot.call_count == 1
@@ -58,14 +69,16 @@ def test_unpackFixedAdrFiles_with_files(qstls_iet, qstls_iet_input, mocker):
     assert mockExtractAll.call_count == 1
 
 
-def test_zipFixedAdrFiles_no_file(qstls_iet, qstls_iet_input, mocker, capsys):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    mockZip = mocker.patch("qupled.quantum.zf.ZipFile.__init__", return_value=None)
-    mockGlob = mocker.patch(
-        "qupled.quantum.glob", return_value={"binFile1", "binFile2"}
+def test_zipFixedAdrFiles_no_file(qstls_iet, qstls_iet_input, mocker):
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockZip = mocker.patch.object(
+        zipfile.ZipFile, zipfile.ZipFile.__init__.__name__, return_value=None
     )
-    mockRemove = mocker.patch("os.remove")
-    mockWrite = mocker.patch("qupled.quantum.zf.ZipFile.write")
+    mockGlob = mocker.patch.object(
+        glob, glob.glob.__name__, return_value={"binFile1", "binFile2"}
+    )
+    mockRemove = mocker.patch.object(os, os.remove.__name__)
+    mockWrite = mocker.patch.object(zipfile.ZipFile, zipfile.ZipFile.write.__name__)
     qstls_iet._zipFixedAdrFiles(qstls_iet_input)
     assert mockMPIIsRoot.call_count == 1
     assert mockZip.call_count == 1
@@ -74,49 +87,58 @@ def test_zipFixedAdrFiles_no_file(qstls_iet, qstls_iet_input, mocker, capsys):
     assert mockWrite.call_count == 2
 
 
-def test_cleanFixedAdrFiles_no_files(qstls_iet, qstls_iet_input, mocker, capsys):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    mockRemove = mocker.patch("qupled.quantum.rmtree")
+def test_cleanFixedAdrFiles_no_files(
+    qstls_iet,
+    qstls_iet_input,
+    mocker,
+):
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockRemove = mocker.patch.object(shutil, shutil.rmtree.__name__)
     qstls_iet._cleanFixedAdrFiles(qstls_iet_input)
     assert mockMPIIsRoot.call_count == 1
     assert mockRemove.call_count == 0
 
 
-def test_cleanFixedAdrFiles_with_files(qstls_iet, qstls_iet_input, mocker, capsys):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
-    mockIsDir = mocker.patch("os.path.isdir", return_value=True)
-    mockRemove = mocker.patch("qupled.quantum.rmtree")
+def test_cleanFixedAdrFiles_with_files(
+    qstls_iet,
+    qstls_iet_input,
+    mocker,
+):
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
+    mockIsDir = mocker.patch.object(os.path, os.path.isdir.__name__, return_value=True)
+    mockRemove = mocker.patch.object(shutil, shutil.rmtree.__name__)
     qstls_iet._cleanFixedAdrFiles(qstls_iet_input)
     assert mockMPIIsRoot.call_count == 1
+    assert mockIsDir.call_count == 1
     assert mockRemove.call_count == 1
 
 
 def test_save(qstls_iet, qstls_iet_input, mocker):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
+    mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
     try:
-        scheme = native.Qstls(qstls_iet_input.toNative())
+        scheme = NativeQstls(qstls_iet_input.toNative())
         qstls_iet.hdfFileName = qstls_iet._getHdfFile(scheme.inputs)
         qstls_iet._save(scheme)
         assert mockMPIIsRoot.call_count == 4
         assert os.path.isfile(qstls_iet.hdfFileName)
         inspectData = Hdf().inspect(qstls_iet.hdfFileName)
         expectedEntries = [
-            "coupling",
-            "degeneracy",
-            "theory",
-            "error",
-            "resolution",
-            "cutoff",
-            "frequencyCutoff",
-            "matsubara",
-            "adr",
-            "idr",
-            "sdr",
-            "slfc",
-            "bf",
-            "ssf",
-            "ssfHF",
-            "wvg",
+            Hdf.EntryKeys.COUPLING,
+            Hdf.EntryKeys.DEGENERACY,
+            Hdf.EntryKeys.THEORY,
+            Hdf.EntryKeys.ERROR,
+            Hdf.EntryKeys.RESOLUTION,
+            Hdf.EntryKeys.CUTOFF,
+            Hdf.EntryKeys.FREQUENCY_CUTOFF,
+            Hdf.EntryKeys.MATSUBARA,
+            Hdf.EntryKeys.ADR,
+            Hdf.EntryKeys.IDR,
+            Hdf.EntryKeys.SDR,
+            Hdf.EntryKeys.SLFC,
+            Hdf.EntryKeys.BF,
+            Hdf.EntryKeys.SSF,
+            Hdf.EntryKeys.SSF_HF,
+            Hdf.EntryKeys.WVG,
         ]
         for entry in expectedEntries:
             assert entry in inspectData

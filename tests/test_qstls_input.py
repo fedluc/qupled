@@ -1,15 +1,15 @@
 import pytest
 import numpy as np
-from qupled import native
+from qupled.native import QstlsInput, RpaInput, QstlsGuess
 
 
 @pytest.fixture
 def qstls_input_instance():
-    return native.QstlsInput()
+    return QstlsInput()
 
 
 def test_init(qstls_input_instance):
-    assert issubclass(native.QstlsInput, native.RpaInput)
+    assert issubclass(QstlsInput, RpaInput)
     assert hasattr(qstls_input_instance, "guess")
     assert hasattr(qstls_input_instance.guess, "wvg")
     assert hasattr(qstls_input_instance.guess, "ssf")
@@ -42,7 +42,7 @@ def test_fixed_iet(qstls_input_instance):
 
 def test_guess(qstls_input_instance):
     arr = np.zeros(10)
-    guess = native.QstlsGuess()
+    guess = QstlsGuess()
     guess.wvg = arr
     guess.ssf = arr
     qstls_input_instance.guess = guess
@@ -51,7 +51,7 @@ def test_guess(qstls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros(11)
-        guess = native.QstlsGuess()
+        guess = QstlsGuess()
         guess.wvg = arr1
         guess.ssf = arr2
         qstls_input_instance.guess = guess
@@ -62,7 +62,7 @@ def test_guessIet(qstls_input_instance):
     arr1 = np.zeros(10)
     arr2 = np.zeros((10, 4))
     matsubara = 4
-    guess = native.QstlsGuess()
+    guess = QstlsGuess()
     guess.wvg = arr1
     guess.ssf = arr1
     guess.adr = arr2
@@ -80,12 +80,12 @@ def test_guessIet(qstls_input_instance):
 
 
 def test_is_equal_default(qstls_input_instance):
-    thisQstls = native.QstlsInput()
+    thisQstls = QstlsInput()
     assert not qstls_input_instance.is_equal(thisQstls)
 
 
 def test_is_equal_nonDefault(qstls_input_instance):
-    thisQstls = native.QstlsInput()
+    thisQstls = QstlsInput()
     thisQstls.coupling = 2.0
     thisQstls.degeneracy = 1.0
     thisQstls.integral_error = 0.1

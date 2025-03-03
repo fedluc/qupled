@@ -1,16 +1,16 @@
 import os
 import glob
-from qupled import native
+from qupled.native import Qstls, Stls, QstlsInput
 
 
 def test_qstls_properties():
-    assert issubclass(native.Qstls, native.Stls)
-    scheme = native.Qstls(native.QstlsInput())
+    assert issubclass(Qstls, Stls)
+    scheme = Qstls(QstlsInput())
     assert hasattr(scheme, "adr")
 
 
 def test_qstls_compute():
-    inputs = native.QstlsInput()
+    inputs = QstlsInput()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
     inputs.theory = "QSTLS"
@@ -24,7 +24,7 @@ def test_qstls_compute():
     inputs.mixing = 1.0
     inputs.iterations = 1000
     inputs.output_frequency = 2
-    scheme = native.Qstls(inputs)
+    scheme = Qstls(inputs)
     scheme.compute()
     try:
         nx = scheme.wvg.size
@@ -51,7 +51,7 @@ def test_qstls_compute():
 def test_qstls_iet_compute():
     ietSchemes = {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}
     for schemeName in ietSchemes:
-        inputs = native.QstlsInput()
+        inputs = QstlsInput()
         inputs.coupling = 10.0
         inputs.degeneracy = 1.0
         inputs.theory = schemeName
@@ -65,7 +65,7 @@ def test_qstls_iet_compute():
         inputs.mixing = 0.5
         inputs.iterations = 1000
         inputs.output_frequency = 2
-        scheme = native.Qstls(inputs)
+        scheme = Qstls(inputs)
         scheme.compute()
         try:
             nx = scheme.wvg.size

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import sys
 import os
-from shutil import rmtree
-from glob import glob
-import zipfile as zf
+import shutil
+import glob
+from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 from qupled import native
@@ -161,7 +161,7 @@ class QstlsIet(_QuantumIterativeScheme):
         if inputs.fixed_iet != "":
             inputs.fixed_iet = "qupled_tmp_run_directory"
         if fixedIetSourceFile != "":
-            with zf.ZipFile(fixedIetSourceFile, "r") as zipFile:
+            with ZipFile(fixedIetSourceFile, "r") as zipFile:
                 zipFile.extractall(inputs.fixed_iet)
 
     # Save results to disk
@@ -180,8 +180,8 @@ class QstlsIet(_QuantumIterativeScheme):
             adrFile = f"adr_fixed_theta{degeneracy:5.3f}_matsubara{matsubara}_{theory}"
             adrFileZip = f"{adrFile}.zip"
             adrFileBin = f"{adrFile}_wv*.bin"
-            with zf.ZipFile(adrFileZip, "w") as zipFile:
-                for binFile in glob(adrFileBin):
+            with ZipFile(adrFileZip, "w") as zipFile:
+                for binFile in glob.glob(adrFileBin):
                     zipFile.write(binFile)
                     os.remove(binFile)
 
@@ -189,7 +189,7 @@ class QstlsIet(_QuantumIterativeScheme):
     @qu.MPI.runOnlyOnRoot
     def _cleanFixedAdrFiles(self, inputs) -> None:
         if os.path.isdir(inputs.fixed_iet):
-            rmtree(inputs.fixed_iet)
+            shutil.rmtree(inputs.fixed_iet)
 
     # Input class
     class Input(qc.StlsIet.Input, Qstls.Input):
@@ -251,7 +251,7 @@ class QVSStls(_QuantumIterativeScheme):
         if inputs.fixed != "":
             inputs.fixed = "qupled_tmp_run_directory"
         if fixedSourceFile != "":
-            with zf.ZipFile(fixedSourceFile, "r") as zipFile:
+            with ZipFile(fixedSourceFile, "r") as zipFile:
                 zipFile.extractall(inputs.fixed)
 
     # Save results to disk
@@ -279,8 +279,8 @@ class QVSStls(_QuantumIterativeScheme):
                 f"adr_fixed_theta{degeneracy:5.3f}_matsubara{matsubara}_{theory}.zip"
             )
             adrFileBin = "THETA*.bin"
-            with zf.ZipFile(adrFileZip, "w") as zipFile:
-                for binFile in glob(adrFileBin):
+            with ZipFile(adrFileZip, "w") as zipFile:
+                for binFile in glob.glob(adrFileBin):
                     zipFile.write(binFile)
                     os.remove(binFile)
 
@@ -288,7 +288,7 @@ class QVSStls(_QuantumIterativeScheme):
     @qu.MPI.runOnlyOnRoot
     def _cleanFixedAdrFiles(self, inputs) -> None:
         if os.path.isdir(inputs.fixed):
-            rmtree(inputs.fixed)
+            shutil.rmtree(inputs.fixed)
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
