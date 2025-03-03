@@ -116,24 +116,24 @@ def test_save(qvsstls, qvsstls_input, mocker):
         assert os.path.isfile(qvsstls.hdfFileName)
         inspectData = Hdf().inspect(qvsstls.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING,
-            Hdf.EntryKeys.DEGENERACY,
-            Hdf.EntryKeys.THEORY,
-            Hdf.EntryKeys.ERROR,
-            Hdf.EntryKeys.RESOLUTION,
-            Hdf.EntryKeys.CUTOFF,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF,
-            Hdf.EntryKeys.MATSUBARA,
-            Hdf.EntryKeys.IDR,
-            Hdf.EntryKeys.SDR,
-            Hdf.EntryKeys.SLFC,
-            Hdf.EntryKeys.SSF,
-            Hdf.EntryKeys.SSF_HF,
-            Hdf.EntryKeys.WVG,
-            Hdf.EntryKeys.FXC_GRID,
-            Hdf.EntryKeys.FXCI,
-            Hdf.EntryKeys.ADR,
-            Hdf.EntryKeys.ALPHA,
+            Hdf.EntryKeys.COUPLING.value,
+            Hdf.EntryKeys.DEGENERACY.value,
+            Hdf.EntryKeys.THEORY.value,
+            Hdf.EntryKeys.ERROR.value,
+            Hdf.EntryKeys.RESOLUTION.value,
+            Hdf.EntryKeys.CUTOFF.value,
+            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
+            Hdf.EntryKeys.MATSUBARA.value,
+            Hdf.EntryKeys.IDR.value,
+            Hdf.EntryKeys.SDR.value,
+            Hdf.EntryKeys.SLFC.value,
+            Hdf.EntryKeys.SSF.value,
+            Hdf.EntryKeys.SSF_HF.value,
+            Hdf.EntryKeys.WVG.value,
+            Hdf.EntryKeys.FXC_GRID.value,
+            Hdf.EntryKeys.FXCI.value,
+            Hdf.EntryKeys.ADR.value,
+            Hdf.EntryKeys.ALPHA.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -148,9 +148,9 @@ def test_setFreeEnergyIntegrand(mocker):
         Hdf,
         Hdf.read.__name__,
         return_value={
-            Hdf.EntryKeys.FXC_GRID: arr1D,
-            Hdf.EntryKeys.FXCI: arr2D,
-            Hdf.EntryKeys.ALPHA: arr1D,
+            Hdf.EntryKeys.FXC_GRID.value: arr1D,
+            Hdf.EntryKeys.FXCI.value: arr2D,
+            Hdf.EntryKeys.ALPHA.value: arr1D,
         },
     )
     fxc = QVSStls.getFreeEnergyIntegrand("dummyFileName")

@@ -41,21 +41,21 @@ def test_save(stls_iet, stls_iet_input, mocker):
         assert os.path.isfile(stls_iet.hdfFileName)
         inspectData = Hdf().inspect(stls_iet.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING,
-            Hdf.EntryKeys.DEGENERACY,
-            Hdf.EntryKeys.THEORY,
-            Hdf.EntryKeys.ERROR,
-            Hdf.EntryKeys.RESOLUTION,
-            Hdf.EntryKeys.CUTOFF,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF,
-            Hdf.EntryKeys.MATSUBARA,
-            Hdf.EntryKeys.BF,
-            Hdf.EntryKeys.IDR,
-            Hdf.EntryKeys.SDR,
-            Hdf.EntryKeys.SLFC,
-            Hdf.EntryKeys.SSF,
-            Hdf.EntryKeys.SSF_HF,
-            Hdf.EntryKeys.WVG,
+            Hdf.EntryKeys.COUPLING.value,
+            Hdf.EntryKeys.DEGENERACY.value,
+            Hdf.EntryKeys.THEORY.value,
+            Hdf.EntryKeys.ERROR.value,
+            Hdf.EntryKeys.RESOLUTION.value,
+            Hdf.EntryKeys.CUTOFF.value,
+            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
+            Hdf.EntryKeys.MATSUBARA.value,
+            Hdf.EntryKeys.BF.value,
+            Hdf.EntryKeys.IDR.value,
+            Hdf.EntryKeys.SDR.value,
+            Hdf.EntryKeys.SLFC.value,
+            Hdf.EntryKeys.SSF.value,
+            Hdf.EntryKeys.SSF_HF.value,
+            Hdf.EntryKeys.WVG.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData

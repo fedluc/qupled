@@ -42,21 +42,21 @@ def test_save(qstls, qstls_input, mocker):
         assert os.path.isfile(qstls.hdfFileName)
         inspectData = Hdf().inspect(qstls.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING,
-            Hdf.EntryKeys.DEGENERACY,
-            Hdf.EntryKeys.THEORY,
-            Hdf.EntryKeys.ERROR,
-            Hdf.EntryKeys.RESOLUTION,
-            Hdf.EntryKeys.CUTOFF,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF,
-            Hdf.EntryKeys.MATSUBARA,
-            Hdf.EntryKeys.ADR,
-            Hdf.EntryKeys.IDR,
-            Hdf.EntryKeys.SDR,
-            Hdf.EntryKeys.SLFC,
-            Hdf.EntryKeys.SSF,
-            Hdf.EntryKeys.SSF_HF,
-            Hdf.EntryKeys.WVG,
+            Hdf.EntryKeys.COUPLING.value,
+            Hdf.EntryKeys.DEGENERACY.value,
+            Hdf.EntryKeys.THEORY.value,
+            Hdf.EntryKeys.ERROR.value,
+            Hdf.EntryKeys.RESOLUTION.value,
+            Hdf.EntryKeys.CUTOFF.value,
+            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
+            Hdf.EntryKeys.MATSUBARA.value,
+            Hdf.EntryKeys.ADR.value,
+            Hdf.EntryKeys.IDR.value,
+            Hdf.EntryKeys.SDR.value,
+            Hdf.EntryKeys.SLFC.value,
+            Hdf.EntryKeys.SSF.value,
+            Hdf.EntryKeys.SSF_HF.value,
+            Hdf.EntryKeys.WVG.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -70,10 +70,10 @@ def test_getInitialGuess(mocker):
         Hdf,
         Hdf.read.__name__,
         return_value={
-            Hdf.EntryKeys.WVG: arr,
-            Hdf.EntryKeys.SSF: arr,
-            Hdf.EntryKeys.ADR: arr,
-            Hdf.EntryKeys.MATSUBARA: 10,
+            Hdf.EntryKeys.WVG.value: arr,
+            Hdf.EntryKeys.SSF.value: arr,
+            Hdf.EntryKeys.ADR.value: arr,
+            Hdf.EntryKeys.MATSUBARA.value: 10,
         },
     )
     guess = Qstls.getInitialGuess("dummyFileName")

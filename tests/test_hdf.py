@@ -62,7 +62,7 @@ def mockRdfOutput(hdfFileName):
     pd.DataFrame(wvgData).to_hdf(hdfFileName, key=Hdf.EntryKeys.WVG.value)
 
 
-def test_entry_keys(self):
+def test_entry_keys():
     expected_keys = {
         "ALPHA": "alpha",
         "ADR": "adr",
@@ -87,23 +87,23 @@ def test_entry_keys(self):
         "THEORY": "theory",
         "WVG": "wvg",
     }
-    self.assertEqual(len(Hdf.EntryKeys), len(expected_keys))
+    assert len(Hdf.EntryKeys) == len(expected_keys)
     for key, value in expected_keys.items():
-        self.assertTrue(hasattr(Hdf.EntryKeys, key))
-        self.assertEqual(getattr(Hdf.EntryKeys, key).value, value)
+        assert hasattr(Hdf.EntryKeys, key)
+        assert getattr(Hdf.EntryKeys, key).value == value
 
 
-def test_entry_type(self):
+def test_entry_type():
     expected_types = {
         "NUMPY": "numpy",
         "NUMPY2D": "numpy2D",
         "NUMBER": "number",
         "STRING": "string",
     }
-    self.assertEqual(len(Hdf.EntryType), len(expected_types))
+    assert len(Hdf.EntryType) == len(expected_types)
     for key, value in expected_types.items():
-        self.assertTrue(hasattr(Hdf.EntryType, key))
-        self.assertEqual(getattr(Hdf.EntryType, key).value, value)
+        assert hasattr(Hdf.EntryType, key)
+        assert getattr(Hdf.EntryType, key).value == value
 
 
 def test_set_entries(hdf_instance):

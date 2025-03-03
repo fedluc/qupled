@@ -58,19 +58,19 @@ def test_save(rpa, rpa_input, mocker):
         assert os.path.isfile(rpa.hdfFileName)
         inspectData = Hdf().inspect(rpa.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING,
-            Hdf.EntryKeys.DEGENERACY,
-            Hdf.EntryKeys.THEORY,
-            Hdf.EntryKeys.RESOLUTION,
-            Hdf.EntryKeys.CUTOFF,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF,
-            Hdf.EntryKeys.MATSUBARA,
-            Hdf.EntryKeys.IDR,
-            Hdf.EntryKeys.SDR,
-            Hdf.EntryKeys.SLFC,
-            Hdf.EntryKeys.SSF,
-            Hdf.EntryKeys.SSF_HF,
-            Hdf.EntryKeys.WVG,
+            Hdf.EntryKeys.COUPLING.value,
+            Hdf.EntryKeys.DEGENERACY.value,
+            Hdf.EntryKeys.THEORY.value,
+            Hdf.EntryKeys.RESOLUTION.value,
+            Hdf.EntryKeys.CUTOFF.value,
+            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
+            Hdf.EntryKeys.MATSUBARA.value,
+            Hdf.EntryKeys.IDR.value,
+            Hdf.EntryKeys.SDR.value,
+            Hdf.EntryKeys.SLFC.value,
+            Hdf.EntryKeys.SSF.value,
+            Hdf.EntryKeys.SSF_HF.value,
+            Hdf.EntryKeys.WVG.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -98,11 +98,11 @@ def test_plot(rpa, mocker):
     mockMPIIsRoot = mocker.patch.object(MPI, MPI.isRoot.__name__)
     mockComputeRdf = mocker.patch.object(Hdf, Hdf.computeRdf.__name__)
     mockPlot = mocker.patch.object(Hdf, Hdf.plot.__name__)
-    rpa.plot([Hdf.EntryKeys.SSF, Hdf.EntryKeys.IDR])
+    rpa.plot([Hdf.EntryKeys.SSF.value, Hdf.EntryKeys.IDR.value])
     assert mockMPIIsRoot.call_count == 1
     assert mockComputeRdf.call_count == 0
     assert mockPlot.call_count == 1
-    rpa.plot([Hdf.EntryKeys.SSF, Hdf.EntryKeys.RDF])
+    rpa.plot([Hdf.EntryKeys.SSF.value, Hdf.EntryKeys.RDF.value])
     assert mockMPIIsRoot.call_count == 2
     assert mockComputeRdf.call_count == 1
     assert mockPlot.call_count == 2

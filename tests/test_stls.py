@@ -42,20 +42,20 @@ def test_save(stls, stls_input, mocker):
         assert os.path.isfile(stls.hdfFileName)
         inspectData = Hdf().inspect(stls.hdfFileName)
         expectedEntries = [
-            Hdf.EntryKeys.COUPLING,
-            Hdf.EntryKeys.DEGENERACY,
-            Hdf.EntryKeys.THEORY,
-            Hdf.EntryKeys.ERROR,
-            Hdf.EntryKeys.RESOLUTION,
-            Hdf.EntryKeys.CUTOFF,
-            Hdf.EntryKeys.FREQUENCY_CUTOFF,
-            Hdf.EntryKeys.MATSUBARA,
-            Hdf.EntryKeys.IDR,
-            Hdf.EntryKeys.SDR,
-            Hdf.EntryKeys.SLFC,
-            Hdf.EntryKeys.SSF,
-            Hdf.EntryKeys.SSF_HF,
-            Hdf.EntryKeys.WVG,
+            Hdf.EntryKeys.COUPLING.value,
+            Hdf.EntryKeys.DEGENERACY.value,
+            Hdf.EntryKeys.THEORY.value,
+            Hdf.EntryKeys.ERROR.value,
+            Hdf.EntryKeys.RESOLUTION.value,
+            Hdf.EntryKeys.CUTOFF.value,
+            Hdf.EntryKeys.FREQUENCY_CUTOFF.value,
+            Hdf.EntryKeys.MATSUBARA.value,
+            Hdf.EntryKeys.IDR.value,
+            Hdf.EntryKeys.SDR.value,
+            Hdf.EntryKeys.SLFC.value,
+            Hdf.EntryKeys.SSF.value,
+            Hdf.EntryKeys.SSF_HF.value,
+            Hdf.EntryKeys.WVG.value,
         ]
         for entry in expectedEntries:
             assert entry in inspectData
@@ -68,7 +68,7 @@ def test_getInitialGuess(mocker):
     mocker.patch.object(
         Hdf,
         Hdf.read.__name__,
-        return_value={Hdf.EntryKeys.WVG: arr, Hdf.EntryKeys.SLFC: arr},
+        return_value={Hdf.EntryKeys.WVG.value: arr, Hdf.EntryKeys.SLFC.value: arr},
     )
     guess = Stls.getInitialGuess("dummyFileName")
     assert np.array_equal(guess.wvg, arr)
