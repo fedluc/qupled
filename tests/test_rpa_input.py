@@ -54,7 +54,7 @@ def test_degeneracy(rpa_input_instance):
 
 
 def test_theory(rpa_input_instance):
-    allowedTheories = [
+    allowed_theories = [
         "RPA",
         "ESA",
         "STLS",
@@ -67,10 +67,10 @@ def test_theory(rpa_input_instance):
         "QSTLS-IOI",
         "QSTLS-LCT",
     ]
-    for theory in allowedTheories:
+    for theory in allowed_theories:
         rpa_input_instance.theory = theory
-        thisTheory = rpa_input_instance.theory
-        assert thisTheory == theory
+        this_theory = rpa_input_instance.theory
+        assert this_theory == theory
     with pytest.raises(RuntimeError) as excinfo:
         rpa_input_instance.theory = "dummyTheory"
     assert excinfo.value.args[0] == "Invalid dielectric theory: dummyTheory"
@@ -92,8 +92,8 @@ def test_integral_strategy(rpa_input_instance):
     allowed_strategies = ["full", "segregated"]
     for strategy in allowed_strategies:
         rpa_input_instance.integral_strategy = strategy
-        thisScheme = rpa_input_instance.integral_strategy
-        assert thisScheme == strategy
+        this_scheme = rpa_input_instance.integral_strategy
+        assert this_scheme == strategy
     with pytest.raises(RuntimeError) as excinfo:
         rpa_input_instance.integral_strategy = "dummyScheme"
     assert excinfo.value.args[0] == "Unknown scheme for 2D integrals: dummyScheme"
@@ -159,17 +159,17 @@ def test_is_equal_default(rpa_input_instance):
 
 
 def test_is_equal(rpa_input_instance):
-    thisRpa = RpaInput()
-    thisRpa.coupling = 2.0
-    thisRpa.degeneracy = 1.0
-    thisRpa.integral_error = 0.1
-    thisRpa.threads = 1
-    thisRpa.theory = "STLS"
-    thisRpa.matsubara = 1
-    thisRpa.resolution = 0.1
-    thisRpa.cutoff = 1.0
-    thisRpa.error = 0.1
-    assert thisRpa.is_equal(thisRpa)
+    this_rpa = RpaInput()
+    this_rpa.coupling = 2.0
+    this_rpa.degeneracy = 1.0
+    this_rpa.integral_error = 0.1
+    this_rpa.threads = 1
+    this_rpa.theory = "STLS"
+    this_rpa.matsubara = 1
+    this_rpa.resolution = 0.1
+    this_rpa.cutoff = 1.0
+    this_rpa.error = 0.1
+    assert this_rpa.is_equal(this_rpa)
 
 
 def test_print(rpa_input_instance, capfd):

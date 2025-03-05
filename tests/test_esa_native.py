@@ -1,5 +1,4 @@
 import pytest
-from qupled.util import HDF
 from qupled.native import ESA, Rpa, RpaInput
 
 

@@ -39,7 +39,7 @@ def test_check_status_and_clean(rpa, mocker, capsys):
     rpa._check_status_and_clean(0, "")
     captured = capsys.readouterr()
     assert mock_mpi_is_root.call_count == 1
-    assert "Dielectric theory solved successfully!\n" in captured
+    assert "Dielectric theory solved successfully!\n" in captured.out
     with pytest.raises(SystemExit) as excinfo:
         rpa._check_status_and_clean(1, "")
     assert excinfo.value.code == "Error while solving the dielectric theory"

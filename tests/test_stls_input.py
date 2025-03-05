@@ -58,11 +58,11 @@ def test_mixing(stls_input_instance):
 
 
 def test_mapping(stls_input_instance):
-    allowedMapping = ["standard", "sqrt", "linear"]
-    for mapping in allowedMapping:
+    allowed_mapping = ["standard", "sqrt", "linear"]
+    for mapping in allowed_mapping:
         stls_input_instance.mapping = mapping
-        thisMapping = stls_input_instance.mapping
-        assert thisMapping == mapping
+        this_mapping = stls_input_instance.mapping
+        assert this_mapping == mapping
     with pytest.raises(RuntimeError) as excinfo:
         stls_input_instance.mapping = "dummy"
     assert excinfo.value.args[0] == "Unknown IET mapping: dummy"
@@ -115,19 +115,19 @@ def test_is_equal_default(stls_input_instance):
 
 
 def test_is_equal(stls_input_instance):
-    thisStls = StlsInput()
-    thisStls.coupling = 2.0
-    thisStls.degeneracy = 1.0
-    thisStls.integral_error = 0.1
-    thisStls.threads = 1
-    thisStls.theory = "STLS"
-    thisStls.matsubara = 1
-    thisStls.resolution = 0.1
-    thisStls.cutoff = 1.0
-    thisStls.error = 0.1
-    thisStls.mixing = 1.0
-    thisStls.output_frequency = 1
-    assert thisStls.is_equal(thisStls)
+    this_stls = StlsInput()
+    this_stls.coupling = 2.0
+    this_stls.degeneracy = 1.0
+    this_stls.integral_error = 0.1
+    this_stls.threads = 1
+    this_stls.theory = "STLS"
+    this_stls.matsubara = 1
+    this_stls.resolution = 0.1
+    this_stls.cutoff = 1.0
+    this_stls.error = 0.1
+    this_stls.mixing = 1.0
+    this_stls.output_frequency = 1
+    assert this_stls.is_equal(this_stls)
 
 
 def test_print(stls_input_instance, capfd):

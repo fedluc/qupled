@@ -100,7 +100,7 @@ def test_free_energy_integrand(vsstls_input_instance):
     assert np.array_equal(arr2, vsstls_input_instance.free_energy_integrand.integrand)
 
 
-def test_free_energy_integrand_Inconsistent(vsstls_input_instance):
+def test_free_energy_integrand_inconsistent(vsstls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros((3, 11))
@@ -116,23 +116,23 @@ def test_is_equal_default(vsstls_input_instance):
 
 
 def test_is_equal(vsstls_input_instance):
-    thisVSStls = VSStlsInput()
-    thisVSStls.coupling = 2.0
-    thisVSStls.degeneracy = 1.0
-    thisVSStls.integral_error = 0.1
-    thisVSStls.threads = 1
-    thisVSStls.theory = "STLS"
-    thisVSStls.matsubara = 1
-    thisVSStls.resolution = 0.1
-    thisVSStls.cutoff = 1.0
-    thisVSStls.error = 0.1
-    thisVSStls.mixing = 1.0
-    thisVSStls.output_frequency = 1
-    thisVSStls.coupling_resolution = 0.1
-    thisVSStls.degeneracy_resolution = 0.1
-    thisVSStls.error_alpha = 0.1
-    thisVSStls.iterations_alpha = 1
-    assert thisVSStls.is_equal(thisVSStls)
+    this_vs_stls = VSStlsInput()
+    this_vs_stls.coupling = 2.0
+    this_vs_stls.degeneracy = 1.0
+    this_vs_stls.integral_error = 0.1
+    this_vs_stls.threads = 1
+    this_vs_stls.theory = "STLS"
+    this_vs_stls.matsubara = 1
+    this_vs_stls.resolution = 0.1
+    this_vs_stls.cutoff = 1.0
+    this_vs_stls.error = 0.1
+    this_vs_stls.mixing = 1.0
+    this_vs_stls.output_frequency = 1
+    this_vs_stls.coupling_resolution = 0.1
+    this_vs_stls.degeneracy_resolution = 0.1
+    this_vs_stls.error_alpha = 0.1
+    this_vs_stls.iterations_alpha = 1
+    assert this_vs_stls.is_equal(this_vs_stls)
 
 
 def test_print(vsstls_input_instance, capfd):

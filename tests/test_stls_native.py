@@ -54,12 +54,12 @@ def test_stls_compute():
 
 
 def test_stls_iet_compute():
-    ietSchemes = {"STLS-HNC", "STLS-IOI", "STLS-LCT"}
-    for schemeName in ietSchemes:
+    iet_schemes = {"STLS-HNC", "STLS-IOI", "STLS-LCT"}
+    for scheme_name in iet_schemes:
         inputs = StlsInput()
         inputs.coupling = 10.0
         inputs.degeneracy = 1.0
-        inputs.theory = schemeName
+        inputs.theory = scheme_name
         inputs.chemical_potential = [-10, 10]
         inputs.cutoff = 5.0
         inputs.matsubara = 32
@@ -81,7 +81,7 @@ def test_stls_iet_compute():
             assert scheme.slfc.size == nx
             assert scheme.ssf.size == nx
             assert scheme.ssf_HF.size == nx
-            recovery = "recovery_rs10.000_theta1.000_" + schemeName + ".bin"
+            recovery = "recovery_rs10.000_theta1.000_" + scheme_name + ".bin"
             assert scheme.recovery == recovery
             assert os.path.isfile(scheme.recovery)
             assert scheme.rdf(scheme.wvg).size == nx

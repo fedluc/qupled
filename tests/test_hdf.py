@@ -11,7 +11,7 @@ def hdf_instance():
     return HDF()
 
 
-def mockOutput(hdfFileName):
+def mock_output(hdf_file_name):
     data1D = np.zeros(2)
     data2D = np.zeros((2, 2))
     pd.DataFrame(
@@ -26,25 +26,25 @@ def mockOutput(hdfFileName):
             HDF.EntryKeys.MATSUBARA.value: 0,
         },
         index=[HDF.EntryKeys.INFO.value],
-    ).to_hdf(hdfFileName, key=HDF.EntryKeys.INFO.value, mode="w")
-    pd.DataFrame(data1D).to_hdf(hdfFileName, key=HDF.EntryKeys.ALPHA.value)
-    pd.DataFrame(data2D).to_hdf(hdfFileName, key=HDF.EntryKeys.ADR.value)
-    pd.DataFrame(data1D).to_hdf(hdfFileName, key=HDF.EntryKeys.BF.value)
-    pd.DataFrame(data1D).to_hdf(hdfFileName, key=HDF.EntryKeys.FXC_GRID.value)
-    pd.DataFrame(data2D).to_hdf(hdfFileName, key=HDF.EntryKeys.FXCI.value)
-    pd.DataFrame(data2D).to_hdf(hdfFileName, key=HDF.EntryKeys.IDR.value)
-    pd.DataFrame(data1D).to_hdf(hdfFileName, key=HDF.EntryKeys.RDF.value)
-    pd.DataFrame(data1D).to_hdf(hdfFileName, key=HDF.EntryKeys.RDF_GRID.value)
-    pd.DataFrame(data1D).to_hdf(hdfFileName, key=HDF.EntryKeys.SDR.value)
-    pd.DataFrame(data1D).to_hdf(hdfFileName, key=HDF.EntryKeys.SLFC.value)
-    pd.DataFrame(data1D).to_hdf(hdfFileName, key=HDF.EntryKeys.SSF.value)
-    pd.DataFrame(data1D).to_hdf(hdfFileName, key=HDF.EntryKeys.SSF_HF.value)
-    pd.DataFrame(data1D).to_hdf(hdfFileName, key=HDF.EntryKeys.WVG.value)
+    ).to_hdf(hdf_file_name, key=HDF.EntryKeys.INFO.value, mode="w")
+    pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.ALPHA.value)
+    pd.DataFrame(data2D).to_hdf(hdf_file_name, key=HDF.EntryKeys.ADR.value)
+    pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.BF.value)
+    pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.FXC_GRID.value)
+    pd.DataFrame(data2D).to_hdf(hdf_file_name, key=HDF.EntryKeys.FXCI.value)
+    pd.DataFrame(data2D).to_hdf(hdf_file_name, key=HDF.EntryKeys.IDR.value)
+    pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.RDF.value)
+    pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.RDF_GRID.value)
+    pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.SDR.value)
+    pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.SLFC.value)
+    pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.SSF.value)
+    pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.SSF_HF.value)
+    pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.WVG.value)
 
 
-def mockRdfOutput(hdfFileName):
-    wvgData = np.arange(0, 5, 0.1)
-    ssfData = np.ones(len(wvgData))
+def mock_rdf_output(hdf_file_name):
+    wvg_data = np.arange(0, 5, 0.1)
+    ssf_data = np.ones(len(wvg_data))
     pd.DataFrame(
         {
             HDF.EntryKeys.COUPLING.value: 1.0,
@@ -57,9 +57,9 @@ def mockRdfOutput(hdfFileName):
             HDF.EntryKeys.MATSUBARA.value: 0,
         },
         index=[HDF.EntryKeys.INFO.value],
-    ).to_hdf(hdfFileName, key=HDF.EntryKeys.INFO.value, mode="w")
-    pd.DataFrame(ssfData).to_hdf(hdfFileName, key=HDF.EntryKeys.SSF.value)
-    pd.DataFrame(wvgData).to_hdf(hdfFileName, key=HDF.EntryKeys.WVG.value)
+    ).to_hdf(hdf_file_name, key=HDF.EntryKeys.INFO.value, mode="w")
+    pd.DataFrame(ssf_data).to_hdf(hdf_file_name, key=HDF.EntryKeys.SSF.value)
+    pd.DataFrame(wvg_data).to_hdf(hdf_file_name, key=HDF.EntryKeys.WVG.value)
 
 
 def test_entry_keys():
@@ -124,12 +124,12 @@ def test_set_entries(hdf_instance):
 
 
 def test_read(hdf_instance):
-    hdfFileName = "testOutput.h5"
-    mockOutput(hdfFileName)
-    allHdfEntries = hdf_instance.entries.keys()
-    readData = hdf_instance.read(hdfFileName, allHdfEntries)
+    hdf_file_name = "testOutput.h5"
+    mock_output(hdf_file_name)
+    all_hdf_entries = hdf_instance.entries.keys()
+    read_data = hdf_instance.read(hdf_file_name, all_hdf_entries)
     try:
-        for entry in allHdfEntries:
+        for entry in all_hdf_entries:
             if entry in [
                 HDF.EntryKeys.COUPLING.value,
                 HDF.EntryKeys.DEGENERACY.value,
@@ -139,7 +139,7 @@ def test_read(hdf_instance):
                 HDF.EntryKeys.FREQUENCY_CUTOFF.value,
                 HDF.EntryKeys.MATSUBARA.value,
             ]:
-                assert readData[entry] == 0.0
+                assert read_data[entry] == 0.0
             elif entry in [
                 HDF.EntryKeys.BF.value,
                 HDF.EntryKeys.FXC_GRID.value,
@@ -152,42 +152,42 @@ def test_read(hdf_instance):
                 HDF.EntryKeys.WVG.value,
                 HDF.EntryKeys.ALPHA.value,
             ]:
-                assert np.array_equal(readData[entry], np.zeros(2))
+                assert np.array_equal(read_data[entry], np.zeros(2))
             elif entry in [
                 HDF.EntryKeys.ADR.value,
                 HDF.EntryKeys.FXCI.value,
                 HDF.EntryKeys.IDR.value,
             ]:
-                assert np.array_equal(readData[entry], np.zeros((2, 2)))
+                assert np.array_equal(read_data[entry], np.zeros((2, 2)))
             elif entry == HDF.EntryKeys.THEORY.value:
-                assert readData[entry] == "theory"
+                assert read_data[entry] == "theory"
             else:
                 assert False
         with pytest.raises(KeyError) as excinfo:
-            hdf_instance.read(hdfFileName, ["dummyEntry"])
+            hdf_instance.read(hdf_file_name, ["dummyEntry"])
             assert str(excinfo.value) == "Unknown entry: dummyEntry"
     finally:
-        os.remove(hdfFileName)
+        os.remove(hdf_file_name)
 
 
 def test_inspect(hdf_instance):
-    hdfFileName = "testOutput.h5"
-    mockOutput(hdfFileName)
-    allHdfEntries = hdf_instance.entries.keys()
-    inspectData = hdf_instance.inspect(hdfFileName)
+    hdf_file_name = "testOutput.h5"
+    mock_output(hdf_file_name)
+    all_hdf_entries = hdf_instance.entries.keys()
+    inspect_data = hdf_instance.inspect(hdf_file_name)
     try:
-        for entry in allHdfEntries:
-            assert entry in list(inspectData.keys())
-            assert inspectData[entry] == hdf_instance.entries[entry].description
+        for entry in all_hdf_entries:
+            assert entry in list(inspect_data.keys())
+            assert inspect_data[entry] == hdf_instance.entries[entry].description
     finally:
-        os.remove(hdfFileName)
+        os.remove(hdf_file_name)
 
 
 def test_plot(hdf_instance, mocker):
-    hdfFileName = "testOutput.h5"
-    mockPlotShow = mocker.patch.object(plt, plt.show.__name__)
-    mockOutput(hdfFileName)
-    toPlot = [
+    hdf_file_name = "testOutput.h5"
+    mock_plot_show = mocker.patch.object(plt, plt.show.__name__)
+    mock_output(hdf_file_name)
+    to_plot = [
         HDF.EntryKeys.RDF.value,
         HDF.EntryKeys.ADR.value,
         HDF.EntryKeys.IDR.value,
@@ -200,36 +200,36 @@ def test_plot(hdf_instance, mocker):
         HDF.EntryKeys.ALPHA.value,
     ]
     try:
-        hdf_instance.plot(hdfFileName, toPlot)
-        assert mockPlotShow.call_count == len(toPlot)
+        hdf_instance.plot(hdf_file_name, to_plot)
+        assert mock_plot_show.call_count == len(to_plot)
         with pytest.raises(ValueError) as excinfo:
-            hdf_instance.plot(hdfFileName, ["dummyQuantityToPlot"])
+            hdf_instance.plot(hdf_file_name, ["dummyQuantityToPlot"])
             assert str(excinfo.value) == "Unknown quantity to plot: dummyQuantityToPlot"
     finally:
-        os.remove(hdfFileName)
+        os.remove(hdf_file_name)
 
 
-def test_computeRdf(hdf_instance):
-    hdfFileName = "testOutput.h5"
-    mockRdfOutput(hdfFileName)
+def test_compute_rdf(hdf_instance):
+    hdf_file_name = "testOutput.h5"
+    mock_rdf_output(hdf_file_name)
     try:
-        hdf_instance.compute_rdf(hdfFileName, np.arange(0, 10, 0.1), False)
-        inspectData = hdf_instance.inspect(hdfFileName)
-        assert HDF.EntryKeys.RDF.value not in list(inspectData.keys())
-        assert HDF.EntryKeys.RDF_GRID.value not in list(inspectData.keys())
-        hdf_instance.compute_rdf(hdfFileName, np.arange(0, 10, 0.1), True)
-        inspectData = hdf_instance.inspect(hdfFileName)
-        assert HDF.EntryKeys.RDF.value in list(inspectData.keys())
-        assert HDF.EntryKeys.RDF_GRID.value in list(inspectData.keys())
+        hdf_instance.compute_rdf(hdf_file_name, np.arange(0, 10, 0.1), False)
+        inspect_data = hdf_instance.inspect(hdf_file_name)
+        assert HDF.EntryKeys.RDF.value not in list(inspect_data.keys())
+        assert HDF.EntryKeys.RDF_GRID.value not in list(inspect_data.keys())
+        hdf_instance.compute_rdf(hdf_file_name, np.arange(0, 10, 0.1), True)
+        inspect_data = hdf_instance.inspect(hdf_file_name)
+        assert HDF.EntryKeys.RDF.value in list(inspect_data.keys())
+        assert HDF.EntryKeys.RDF_GRID.value in list(inspect_data.keys())
     finally:
-        os.remove(hdfFileName)
+        os.remove(hdf_file_name)
 
 
-def test_computeInternalEnergy(hdf_instance):
-    hdfFileName = "testOutput.h5"
-    mockRdfOutput(hdfFileName)
+def test_compute_internal_energy(hdf_instance):
+    hdf_file_name = "testOutput.h5"
+    mock_rdf_output(hdf_file_name)
     try:
-        uint = hdf_instance.compute_internal_energy(hdfFileName)
+        uint = hdf_instance.compute_internal_energy(hdf_file_name)
         assert uint == 0.0
     finally:
-        os.remove(hdfFileName)
+        os.remove(hdf_file_name)

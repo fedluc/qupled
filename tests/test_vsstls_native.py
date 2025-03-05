@@ -47,4 +47,4 @@ def test_vsstls_compute():
         assert scheme.rdf(scheme.wvg).size == nx
     finally:
         if os.path.isfile(scheme.recovery):
-            os.remove(scheme.recover)
+            os.remove(scheme.recovery)
