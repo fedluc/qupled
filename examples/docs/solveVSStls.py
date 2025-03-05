@@ -16,7 +16,7 @@ vsstls.compute(inputs)
 vsstls.plot(["ssf", "slfc", "fxci", "sdr"])
 
 # Load the free energy integrand computed for rs = 5.0
-fxci = VSStls.getFreeEnergyIntegrand("rs5.000_theta1.000_VSSTLS.h5")
+fxci = VSStls.get_free_energy_integrand("rs5.000_theta1.000_VSSTLS.h5")
 
 # Setup a new VSStls simulation for rs = 10.0
 inputs.coupling = 10.0

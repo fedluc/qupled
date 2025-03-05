@@ -25,4 +25,4 @@ print(ssf)
 
 # Compute the internal energy
 print("Internal energy: ")
-print(stls.computeInternalEnergy())
+print(stls.compute_internal_energy())

@@ -14,7 +14,7 @@ inputs.integral_strategy = "segregated"
 qstls.compute(inputs)
 
 # Create a custom initial guess from the output files of the previous run
-inputs.guess = QstlsIet.getInitialGuess("rs10.000_theta1.000_QSTLS-HNC.h5")
+inputs.guess = QstlsIet.get_initial_guess("rs10.000_theta1.000_QSTLS-HNC.h5")
 
 # Solve the scheme again with the new initial guess
 qstls.compute(inputs)
