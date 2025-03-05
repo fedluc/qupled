@@ -113,7 +113,7 @@ def test_free_energy_integrand(qvsstls_input_instance):
     assert np.array_equal(arr2, qvsstls_input_instance.free_energy_integrand.integrand)
 
 
-def test_free_energy_integrand_Inconsistent(qvsstls_input_instance):
+def test_free_energy_integrand_inconsistent(qvsstls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros((3, 11))
@@ -129,23 +129,23 @@ def test_is_equal_default(qvsstls_input_instance):
 
 
 def test_is_equal(qvsstls_input_instance):
-    thisQVSStls = QVSStlsInput()
-    thisQVSStls.coupling = 2.0
-    thisQVSStls.degeneracy = 1.0
-    thisQVSStls.integral_error = 0.1
-    thisQVSStls.threads = 1
-    thisQVSStls.theory = "STLS"
-    thisQVSStls.matsubara = 1
-    thisQVSStls.resolution = 0.1
-    thisQVSStls.cutoff = 1.0
-    thisQVSStls.error = 0.1
-    thisQVSStls.mixing = 1.0
-    thisQVSStls.output_frequency = 1
-    thisQVSStls.coupling_resolution = 0.1
-    thisQVSStls.degeneracy_resolution = 0.1
-    thisQVSStls.error_alpha = 0.1
-    thisQVSStls.iterations_alpha = 1
-    assert thisQVSStls.is_equal(thisQVSStls)
+    this_qvsstls = QVSStlsInput()
+    this_qvsstls.coupling = 2.0
+    this_qvsstls.degeneracy = 1.0
+    this_qvsstls.integral_error = 0.1
+    this_qvsstls.threads = 1
+    this_qvsstls.theory = "STLS"
+    this_qvsstls.matsubara = 1
+    this_qvsstls.resolution = 0.1
+    this_qvsstls.cutoff = 1.0
+    this_qvsstls.error = 0.1
+    this_qvsstls.mixing = 1.0
+    this_qvsstls.output_frequency = 1
+    this_qvsstls.coupling_resolution = 0.1
+    this_qvsstls.degeneracy_resolution = 0.1
+    this_qvsstls.error_alpha = 0.1
+    this_qvsstls.iterations_alpha = 1
+    assert this_qvsstls.is_equal(this_qvsstls)
 
 
 def test_print(qvsstls_input_instance, capfd):

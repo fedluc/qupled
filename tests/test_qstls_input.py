@@ -58,7 +58,7 @@ def test_guess(qstls_input_instance):
     assert excinfo.value.args[0] == "The initial guess is inconsistent"
 
 
-def test_guessIet(qstls_input_instance):
+def test_guess_iet(qstls_input_instance):
     arr1 = np.zeros(10)
     arr2 = np.zeros((10, 4))
     matsubara = 4
@@ -80,24 +80,24 @@ def test_guessIet(qstls_input_instance):
 
 
 def test_is_equal_default(qstls_input_instance):
-    thisQstls = QstlsInput()
-    assert not qstls_input_instance.is_equal(thisQstls)
+    this_qstls = QstlsInput()
+    assert not qstls_input_instance.is_equal(this_qstls)
 
 
-def test_is_equal_nonDefault(qstls_input_instance):
-    thisQstls = QstlsInput()
-    thisQstls.coupling = 2.0
-    thisQstls.degeneracy = 1.0
-    thisQstls.integral_error = 0.1
-    thisQstls.threads = 1
-    thisQstls.theory = "STLS"
-    thisQstls.matsubara = 1
-    thisQstls.resolution = 0.1
-    thisQstls.cutoff = 1.0
-    thisQstls.error = 0.1
-    thisQstls.mixing = 1.0
-    thisQstls.output_frequency = 1
-    assert thisQstls.is_equal(thisQstls)
+def test_is_equal_non_default(qstls_input_instance):
+    this_qstls = QstlsInput()
+    this_qstls.coupling = 2.0
+    this_qstls.degeneracy = 1.0
+    this_qstls.integral_error = 0.1
+    this_qstls.threads = 1
+    this_qstls.theory = "STLS"
+    this_qstls.matsubara = 1
+    this_qstls.resolution = 0.1
+    this_qstls.cutoff = 1.0
+    this_qstls.error = 0.1
+    this_qstls.mixing = 1.0
+    this_qstls.output_frequency = 1
+    assert this_qstls.is_equal(this_qstls)
 
 
 def test_print(qstls_input_instance, capfd):

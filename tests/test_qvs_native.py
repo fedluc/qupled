@@ -49,14 +49,14 @@ def test_qvsstls_compute():
         assert scheme.recovery == "recovery_rs1.000_theta1.000_QVSSTLS.bin"
         assert scheme.rdf(scheme.wvg).size == nx
     finally:
-        fixedFilem = "THETA_DOWN.bin"
-        fixedFile = "THETA.bin"
-        fixedFilep = "THETA_UP.bin"
+        fixed_filem = "THETA_DOWN.bin"
+        fixed_file = "THETA.bin"
+        fixed_filep = "THETA_UP.bin"
         if os.path.isfile(scheme.recovery):
-            os.remove(scheme.recover)
-        if os.path.isfile(fixedFilem):
-            os.remove(fixedFilem)
-        if os.path.isfile(fixedFile):
-            os.remove(fixedFile)
-        if os.path.isfile(fixedFilep):
-            os.remove(fixedFilep)
+            os.remove(scheme.recovery)
+        if os.path.isfile(fixed_filem):
+            os.remove(fixed_filem)
+        if os.path.isfile(fixed_file):
+            os.remove(fixed_file)
+        if os.path.isfile(fixed_filep):
+            os.remove(fixed_filep)

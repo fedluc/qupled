@@ -41,20 +41,20 @@ def test_qstls_compute():
         assert os.path.isfile(scheme.recovery)
         assert scheme.rdf(scheme.wvg).size == nx
     finally:
-        fixedFile = "adr_fixed_theta1.000_matsubara32.bin"
+        fixed_file = "adr_fixed_theta1.000_matsubara32.bin"
         if os.path.isfile(scheme.recovery):
             os.remove(scheme.recovery)
-        if os.path.isfile(fixedFile):
-            os.remove(fixedFile)
+        if os.path.isfile(fixed_file):
+            os.remove(fixed_file)
 
 
 def test_qstls_iet_compute():
-    ietSchemes = {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}
-    for schemeName in ietSchemes:
+    iet_schemes = {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}
+    for scheme_name in iet_schemes:
         inputs = QstlsInput()
         inputs.coupling = 10.0
         inputs.degeneracy = 1.0
-        inputs.theory = schemeName
+        inputs.theory = scheme_name
         inputs.chemical_potential = [-10, 10]
         inputs.cutoff = 5.0
         inputs.matsubara = 16
@@ -76,13 +76,13 @@ def test_qstls_iet_compute():
             assert scheme.slfc.size == nx
             assert scheme.ssf.size == nx
             assert scheme.ssf_HF.size == nx
-            recovery = "recovery_rs10.000_theta1.000_" + schemeName + ".bin"
+            recovery = "recovery_rs10.000_theta1.000_" + scheme_name + ".bin"
             assert scheme.recovery == recovery
             assert os.path.isfile(scheme.recovery)
             assert scheme.rdf(scheme.wvg).size == nx
         finally:
             if os.path.isfile(scheme.recovery):
                 os.remove(scheme.recovery)
-            fileNames = glob.glob("adr_fixed*.bin")
-            for fileName in fileNames:
-                os.remove(fileName)
+            file_names = glob.glob("adr_fixed*.bin")
+            for file_name in file_names:
+                os.remove(file_name)
