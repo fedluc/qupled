@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from qupled import native
-from qupled.classic import VSStls
+from qupled.vsstls import VSStls
 from qupled.util import HDF, MPI
 
 

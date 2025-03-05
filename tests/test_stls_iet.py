@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from qupled.classic import StlsIet
+from qupled.stlsiet import StlsIet
 from qupled.native import Stls as NativeStls
 from qupled.util import HDF, MPI
 

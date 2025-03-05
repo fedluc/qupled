@@ -6,7 +6,7 @@ import pytest
 import numpy as np
 from qupled.native import QVSStls as NativeQVSStls
 from qupled.util import HDF, MPI
-from qupled.quantum import QVSStls
+from qupled.qvsstls import QVSStls
 
 
 @pytest.fixture

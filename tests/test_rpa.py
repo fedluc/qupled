@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from qupled.classic import Rpa
+from qupled.rpa import Rpa
 from qupled.native import Rpa as NativeRpa
 from qupled.util import HDF, MPI
 

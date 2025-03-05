@@ -1,5 +1,5 @@
 import pytest
-from qupled.classic import ESA
+from qupled.esa import ESA
 from qupled.util import MPI
 
 

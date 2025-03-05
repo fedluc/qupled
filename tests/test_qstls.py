@@ -3,7 +3,7 @@ import pytest
 import numpy as np
 from qupled.native import Qstls as NativeQstls
 from qupled.util import HDF, MPI
-from qupled.quantum import Qstls
+from qupled.qstls import Qstls
 
 
 @pytest.fixture

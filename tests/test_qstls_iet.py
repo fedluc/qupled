@@ -5,7 +5,7 @@ import glob
 import shutil
 from qupled.native import Qstls as NativeQstls
 from qupled.util import HDF, MPI
-from qupled.quantum import QstlsIet
+from qupled.qstlsiet import QstlsIet
 
 
 @pytest.fixture

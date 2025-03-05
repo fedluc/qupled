@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import colormaps as cm
 
-from qupled import native
+from . import native
 
 # -----------------------------------------------------------------------
 # Hdf class

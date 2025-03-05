@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 
-from qupled.classic import Stls
+from qupled.stls import Stls
 from qupled.native import Stls as NativeStls
 from qupled.util import HDF, MPI
 
