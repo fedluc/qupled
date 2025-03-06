@@ -1,23 +1,22 @@
-import os
 import pytest
 import numpy as np
-from qupled import native
+from qupled.native import QstlsInput, RpaInput, QstlsGuess
 
 
 @pytest.fixture
 def qstls_input_instance():
-    return native.QstlsInput()
+    return QstlsInput()
 
 
 def test_init(qstls_input_instance):
-    assert issubclass(native.QstlsInput, native.RpaInput)
+    assert issubclass(QstlsInput, RpaInput)
     assert hasattr(qstls_input_instance, "guess")
     assert hasattr(qstls_input_instance.guess, "wvg")
     assert hasattr(qstls_input_instance.guess, "ssf")
     assert hasattr(qstls_input_instance.guess, "adr")
     assert hasattr(qstls_input_instance.guess, "matsubara")
     assert hasattr(qstls_input_instance, "fixed")
-    assert hasattr(qstls_input_instance, "fixediet")
+    assert hasattr(qstls_input_instance, "fixed_iet")
 
 
 def test_defaults(qstls_input_instance):
@@ -26,7 +25,7 @@ def test_defaults(qstls_input_instance):
     assert qstls_input_instance.guess.adr.size == 0
     assert qstls_input_instance.guess.matsubara == 0
     assert qstls_input_instance.fixed == ""
-    assert qstls_input_instance.fixediet == ""
+    assert qstls_input_instance.fixed_iet == ""
 
 
 def test_fixed(qstls_input_instance):
@@ -35,15 +34,15 @@ def test_fixed(qstls_input_instance):
     assert fixed == "fixedFile"
 
 
-def test_fixed(qstls_input_instance):
-    qstls_input_instance.fixediet = "fixedFile"
-    fixed = qstls_input_instance.fixediet
+def test_fixed_iet(qstls_input_instance):
+    qstls_input_instance.fixed_iet = "fixedFile"
+    fixed = qstls_input_instance.fixed_iet
     assert fixed == "fixedFile"
 
 
 def test_guess(qstls_input_instance):
     arr = np.zeros(10)
-    guess = native.QstlsGuess()
+    guess = QstlsGuess()
     guess.wvg = arr
     guess.ssf = arr
     qstls_input_instance.guess = guess
@@ -52,18 +51,18 @@ def test_guess(qstls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros(11)
-        guess = native.QstlsGuess()
+        guess = QstlsGuess()
         guess.wvg = arr1
         guess.ssf = arr2
         qstls_input_instance.guess = guess
     assert excinfo.value.args[0] == "The initial guess is inconsistent"
 
 
-def test_guessIet(qstls_input_instance):
+def test_guess_iet(qstls_input_instance):
     arr1 = np.zeros(10)
     arr2 = np.zeros((10, 4))
     matsubara = 4
-    guess = native.QstlsGuess()
+    guess = QstlsGuess()
     guess.wvg = arr1
     guess.ssf = arr1
     guess.adr = arr2
@@ -80,25 +79,25 @@ def test_guessIet(qstls_input_instance):
         assert excinfo.value.args[0] == "The initial guess is inconsistent"
 
 
-def test_isEqual_default(qstls_input_instance):
-    thisQstls = native.QstlsInput()
-    assert not qstls_input_instance.isEqual(thisQstls)
+def test_is_equal_default(qstls_input_instance):
+    this_qstls = QstlsInput()
+    assert not qstls_input_instance.is_equal(this_qstls)
 
 
-def test_isEqual_nonDefault(qstls_input_instance):
-    thisQstls = native.QstlsInput()
-    thisQstls.coupling = 2.0
-    thisQstls.degeneracy = 1.0
-    thisQstls.intError = 0.1
-    thisQstls.threads = 1
-    thisQstls.theory = "STLS"
-    thisQstls.matsubara = 1
-    thisQstls.resolution = 0.1
-    thisQstls.cutoff = 1.0
-    thisQstls.error = 0.1
-    thisQstls.mixing = 1.0
-    thisQstls.outputFrequency = 1
-    assert thisQstls.isEqual(thisQstls)
+def test_is_equal_non_default(qstls_input_instance):
+    this_qstls = QstlsInput()
+    this_qstls.coupling = 2.0
+    this_qstls.degeneracy = 1.0
+    this_qstls.integral_error = 0.1
+    this_qstls.threads = 1
+    this_qstls.theory = "STLS"
+    this_qstls.matsubara = 1
+    this_qstls.resolution = 0.1
+    this_qstls.cutoff = 1.0
+    this_qstls.error = 0.1
+    this_qstls.mixing = 1.0
+    this_qstls.output_frequency = 1
+    assert this_qstls.is_equal(this_qstls)
 
 
 def test_print(qstls_input_instance, capfd):

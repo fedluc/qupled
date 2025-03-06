@@ -1,6 +1,6 @@
-import os
 import pytest
-from qupled.classic import ESA
+from qupled.esa import ESA
+from qupled.util import MPI
 
 
 @pytest.fixture
@@ -14,18 +14,16 @@ def esa_input():
 
 
 def test_default(esa):
-    assert esa.hdfFileName == None
+    assert esa.hdf_file_name is None
 
 
 def test_compute(esa, esa_input, mocker):
-    mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
-    mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCompute = mocker.patch("qupled.native.ESA.compute")
-    mockCheckStatusAndClean = mocker.patch("qupled.classic.ESA._checkStatusAndClean")
-    mockSave = mocker.patch("qupled.classic.ESA._save")
+    mock_mpi_time = mocker.patch.object(MPI, MPI.timer.__name__, return_value=0)
+    mock_mpi_barrier = mocker.patch.object(MPI, MPI.barrier.__name__)
+    mock_compute = mocker.patch.object(ESA, ESA._compute.__name__)
+    mock_save = mocker.patch.object(ESA, ESA._save.__name__)
     esa.compute(esa_input)
-    assert mockMPITime.call_count == 2
-    assert mockMPIBarrier.call_count == 1
-    assert mockCompute.call_count == 1
-    assert mockCheckStatusAndClean.call_count == 1
-    assert mockSave.call_count == 1
+    assert mock_mpi_time.call_count == 2
+    assert mock_mpi_barrier.call_count == 1
+    assert mock_compute.call_count == 1
+    assert mock_save.call_count == 1

@@ -1,8 +1,10 @@
 import os
+
 import pytest
-from qupled import native
-from qupled.util import Hdf
-from qupled.classic import StlsIet
+
+from qupled.stlsiet import StlsIet
+from qupled.native import Stls as NativeStls
+from qupled.util import HDF, MPI
 
 
 @pytest.fixture
@@ -16,52 +18,48 @@ def stls_iet_input():
 
 
 def test_default(stls_iet):
-    assert stls_iet.hdfFileName is None
+    assert stls_iet.hdf_file_name is None
 
 
 def test_compute(stls_iet, stls_iet_input, mocker):
-    mockMPITime = mocker.patch("qupled.util.MPI.timer", return_value=0)
-    mockMPIBarrier = mocker.patch("qupled.util.MPI.barrier")
-    mockCompute = mocker.patch("qupled.native.Stls.compute")
-    mockCheckStatusAndClean = mocker.patch(
-        "qupled.classic.StlsIet._checkStatusAndClean"
-    )
-    mockSave = mocker.patch("qupled.classic.StlsIet._save")
+    mock_mpi_time = mocker.patch.object(MPI, MPI.timer.__name__, return_value=0)
+    mock_mpi_barrier = mocker.patch.object(MPI, MPI.barrier.__name__)
+    mock_compute = mocker.patch.object(StlsIet, StlsIet._compute.__name__)
+    mock_save = mocker.patch.object(StlsIet, StlsIet._save.__name__)
     stls_iet.compute(stls_iet_input)
-    assert mockMPITime.call_count == 2
-    assert mockMPIBarrier.call_count == 1
-    assert mockCompute.call_count == 1
-    assert mockCheckStatusAndClean.call_count == 1
-    assert mockSave.call_count == 1
+    assert mock_mpi_time.call_count == 2
+    assert mock_mpi_barrier.call_count == 1
+    assert mock_compute.call_count == 1
+    assert mock_save.call_count == 1
 
 
 def test_save(stls_iet, stls_iet_input, mocker):
-    mockMPIIsRoot = mocker.patch("qupled.util.MPI.isRoot")
+    mock_mpi_is_root = mocker.patch.object(MPI, MPI.is_root.__name__)
     try:
-        scheme = native.Stls(stls_iet_input.toNative())
-        stls_iet.hdfFileName = stls_iet._getHdfFile(scheme.inputs)
+        scheme = NativeStls(stls_iet_input.to_native())
+        stls_iet.hdf_file_name = stls_iet._get_hdf_file(scheme.inputs)
         stls_iet._save(scheme)
-        assert mockMPIIsRoot.call_count == 3
-        assert os.path.isfile(stls_iet.hdfFileName)
-        inspectData = Hdf().inspect(stls_iet.hdfFileName)
-        expectedEntries = [
-            "coupling",
-            "degeneracy",
-            "theory",
-            "error",
-            "resolution",
-            "cutoff",
-            "frequencyCutoff",
-            "matsubara",
-            "bf",
-            "idr",
-            "sdr",
-            "slfc",
-            "ssf",
-            "ssfHF",
-            "wvg",
+        assert mock_mpi_is_root.call_count == 3
+        assert os.path.isfile(stls_iet.hdf_file_name)
+        inspect_data = HDF().inspect(stls_iet.hdf_file_name)
+        expected_entries = [
+            HDF.EntryKeys.COUPLING.value,
+            HDF.EntryKeys.DEGENERACY.value,
+            HDF.EntryKeys.THEORY.value,
+            HDF.EntryKeys.ERROR.value,
+            HDF.EntryKeys.RESOLUTION.value,
+            HDF.EntryKeys.CUTOFF.value,
+            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
+            HDF.EntryKeys.MATSUBARA.value,
+            HDF.EntryKeys.BF.value,
+            HDF.EntryKeys.IDR.value,
+            HDF.EntryKeys.SDR.value,
+            HDF.EntryKeys.SLFC.value,
+            HDF.EntryKeys.SSF.value,
+            HDF.EntryKeys.SSF_HF.value,
+            HDF.EntryKeys.WVG.value,
         ]
-        for entry in expectedEntries:
-            assert entry in inspectData
+        for entry in expected_entries:
+            assert entry in inspect_data
     finally:
-        os.remove(stls_iet.hdfFileName)
+        os.remove(stls_iet.hdf_file_name)

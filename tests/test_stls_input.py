@@ -1,22 +1,21 @@
-import os
 import pytest
 import numpy as np
-from qupled import native
+from qupled.native import StlsInput, RpaInput, StlsGuess
 
 
 @pytest.fixture
 def stls_input_instance():
-    return native.StlsInput()
+    return StlsInput()
 
 
 def test_init(stls_input_instance):
-    assert issubclass(native.StlsInput, native.RpaInput)
+    assert issubclass(StlsInput, RpaInput)
     assert hasattr(stls_input_instance, "error")
     assert hasattr(stls_input_instance, "mixing")
     assert hasattr(stls_input_instance, "mapping")
     assert hasattr(stls_input_instance, "iterations")
-    assert hasattr(stls_input_instance, "outputFrequency")
-    assert hasattr(stls_input_instance, "recoveryFile")
+    assert hasattr(stls_input_instance, "output_frequency")
+    assert hasattr(stls_input_instance, "recovery_file")
     assert hasattr(stls_input_instance, "guess")
     assert hasattr(stls_input_instance.guess, "wvg")
     assert hasattr(stls_input_instance.guess, "slfc")
@@ -27,8 +26,8 @@ def test_defaults(stls_input_instance):
     assert np.isnan(stls_input_instance.mixing)
     assert stls_input_instance.mapping == ""
     assert stls_input_instance.iterations == 0
-    assert stls_input_instance.outputFrequency == 0
-    assert stls_input_instance.recoveryFile == ""
+    assert stls_input_instance.output_frequency == 0
+    assert stls_input_instance.recovery_file == ""
     assert stls_input_instance.guess.wvg.size == 0
     assert stls_input_instance.guess.slfc.size == 0
 
@@ -59,11 +58,11 @@ def test_mixing(stls_input_instance):
 
 
 def test_mapping(stls_input_instance):
-    allowedMapping = ["standard", "sqrt", "linear"]
-    for mapping in allowedMapping:
+    allowed_mapping = ["standard", "sqrt", "linear"]
+    for mapping in allowed_mapping:
         stls_input_instance.mapping = mapping
-        thisMapping = stls_input_instance.mapping
-        assert thisMapping == mapping
+        this_mapping = stls_input_instance.mapping
+        assert this_mapping == mapping
     with pytest.raises(RuntimeError) as excinfo:
         stls_input_instance.mapping = "dummy"
     assert excinfo.value.args[0] == "Unknown IET mapping: dummy"
@@ -78,24 +77,24 @@ def test_iterations(stls_input_instance):
     assert excinfo.value.args[0] == "The maximum number of iterations can't be negative"
 
 
-def test_outputFrequency(stls_input_instance):
-    stls_input_instance.outputFrequency = 1
-    outputFrequency = stls_input_instance.outputFrequency
-    assert outputFrequency == 1
+def test_output_frequency(stls_input_instance):
+    stls_input_instance.output_frequency = 1
+    output_frequency = stls_input_instance.output_frequency
+    assert output_frequency == 1
     with pytest.raises(RuntimeError) as excinfo:
-        stls_input_instance.outputFrequency = -3
+        stls_input_instance.output_frequency = -3
     assert excinfo.value.args[0] == "The output frequency can't be negative"
 
 
-def test_recoveryFile(stls_input_instance):
-    stls_input_instance.recoveryFile = "dummyFile"
-    recoveryFile = stls_input_instance.recoveryFile
-    assert recoveryFile == "dummyFile"
+def test_recovery_file(stls_input_instance):
+    stls_input_instance.recovery_file = "dummyFile"
+    recovery_file = stls_input_instance.recovery_file
+    assert recovery_file == "dummyFile"
 
 
 def test_guess(stls_input_instance):
     arr = np.zeros(10)
-    guess = native.StlsGuess()
+    guess = StlsGuess()
     guess.wvg = arr
     guess.slfc = arr
     stls_input_instance.guess = guess
@@ -104,31 +103,31 @@ def test_guess(stls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros(11)
-        guess = native.StlsGuess()
+        guess = StlsGuess()
         guess.wvg = arr1
         guess.slfc = arr2
         stls_input_instance.guess = guess
     assert excinfo.value.args[0] == "The initial guess is inconsistent"
 
 
-def test_isEqual_default(stls_input_instance):
-    assert not stls_input_instance.isEqual(stls_input_instance)
+def test_is_equal_default(stls_input_instance):
+    assert not stls_input_instance.is_equal(stls_input_instance)
 
 
-def test_isEqual(stls_input_instance):
-    thisStls = native.StlsInput()
-    thisStls.coupling = 2.0
-    thisStls.degeneracy = 1.0
-    thisStls.intError = 0.1
-    thisStls.threads = 1
-    thisStls.theory = "STLS"
-    thisStls.matsubara = 1
-    thisStls.resolution = 0.1
-    thisStls.cutoff = 1.0
-    thisStls.error = 0.1
-    thisStls.mixing = 1.0
-    thisStls.outputFrequency = 1
-    assert thisStls.isEqual(thisStls)
+def test_is_equal(stls_input_instance):
+    this_stls = StlsInput()
+    this_stls.coupling = 2.0
+    this_stls.degeneracy = 1.0
+    this_stls.integral_error = 0.1
+    this_stls.threads = 1
+    this_stls.theory = "STLS"
+    this_stls.matsubara = 1
+    this_stls.resolution = 0.1
+    this_stls.cutoff = 1.0
+    this_stls.error = 0.1
+    this_stls.mixing = 1.0
+    this_stls.output_frequency = 1
+    assert this_stls.is_equal(this_stls)
 
 
 def test_print(stls_input_instance, capfd):

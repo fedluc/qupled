@@ -1,36 +1,35 @@
-import os
 import math
 import pytest
-from qupled import native
+from qupled.native import RpaInput
 
 
 @pytest.fixture
 def rpa_input_instance():
-    return native.RpaInput()
+    return RpaInput()
 
 
 def test_init(rpa_input_instance):
     assert hasattr(rpa_input_instance, "coupling")
     assert hasattr(rpa_input_instance, "degeneracy")
     assert hasattr(rpa_input_instance, "theory")
-    assert hasattr(rpa_input_instance, "intError")
-    assert hasattr(rpa_input_instance, "int2DScheme")
+    assert hasattr(rpa_input_instance, "integral_error")
+    assert hasattr(rpa_input_instance, "integral_strategy")
     assert hasattr(rpa_input_instance, "threads")
-    assert hasattr(rpa_input_instance, "chemicalPotential")
+    assert hasattr(rpa_input_instance, "chemical_potential")
     assert hasattr(rpa_input_instance, "matsubara")
     assert hasattr(rpa_input_instance, "resolution")
     assert hasattr(rpa_input_instance, "cutoff")
-    assert hasattr(rpa_input_instance, "frequencyCutoff")
+    assert hasattr(rpa_input_instance, "frequency_cutoff")
 
 
 def test_defaults(rpa_input_instance):
     assert math.isnan(rpa_input_instance.coupling)
     assert math.isnan(rpa_input_instance.degeneracy)
     assert rpa_input_instance.theory == ""
-    assert math.isnan(rpa_input_instance.intError)
-    assert rpa_input_instance.int2DScheme == ""
+    assert math.isnan(rpa_input_instance.integral_error)
+    assert rpa_input_instance.integral_strategy == ""
     assert rpa_input_instance.threads == 0
-    assert rpa_input_instance.chemicalPotential.size == 0
+    assert rpa_input_instance.chemical_potential.size == 0
     assert rpa_input_instance.matsubara == 0
     assert math.isnan(rpa_input_instance.resolution)
     assert math.isnan(rpa_input_instance.cutoff)
@@ -55,7 +54,7 @@ def test_degeneracy(rpa_input_instance):
 
 
 def test_theory(rpa_input_instance):
-    allowedTheories = [
+    allowed_theories = [
         "RPA",
         "ESA",
         "STLS",
@@ -68,35 +67,35 @@ def test_theory(rpa_input_instance):
         "QSTLS-IOI",
         "QSTLS-LCT",
     ]
-    for theory in allowedTheories:
+    for theory in allowed_theories:
         rpa_input_instance.theory = theory
-        thisTheory = rpa_input_instance.theory
-        assert thisTheory == theory
+        this_theory = rpa_input_instance.theory
+        assert this_theory == theory
     with pytest.raises(RuntimeError) as excinfo:
         rpa_input_instance.theory = "dummyTheory"
     assert excinfo.value.args[0] == "Invalid dielectric theory: dummyTheory"
 
 
-def test_intError(rpa_input_instance):
-    rpa_input_instance.intError = 1.0
-    intError = rpa_input_instance.intError
-    assert intError == 1.0
+def test_integral_error(rpa_input_instance):
+    rpa_input_instance.integral_error = 1.0
+    integral_error = rpa_input_instance.integral_error
+    assert integral_error == 1.0
     with pytest.raises(RuntimeError) as excinfo:
-        rpa_input_instance.intError = 0.0
+        rpa_input_instance.integral_error = 0.0
     assert (
         excinfo.value.args[0]
         == "The accuracy for the integral computations must be larger than zero"
     )
 
 
-def test_int2DScheme(rpa_input_instance):
-    allowedSchemes = ["full", "segregated"]
-    for scheme in allowedSchemes:
-        rpa_input_instance.int2DScheme = scheme
-        thisScheme = rpa_input_instance.int2DScheme
-        assert thisScheme == scheme
+def test_integral_strategy(rpa_input_instance):
+    allowed_strategies = ["full", "segregated"]
+    for strategy in allowed_strategies:
+        rpa_input_instance.integral_strategy = strategy
+        this_scheme = rpa_input_instance.integral_strategy
+        assert this_scheme == strategy
     with pytest.raises(RuntimeError) as excinfo:
-        rpa_input_instance.int2DScheme = "dummyScheme"
+        rpa_input_instance.integral_strategy = "dummyScheme"
     assert excinfo.value.args[0] == "Unknown scheme for 2D integrals: dummyScheme"
 
 
@@ -109,13 +108,13 @@ def test_threads(rpa_input_instance):
     assert excinfo.value.args[0] == "The number of threads must be larger than zero"
 
 
-def test_chemicalPotential(rpa_input_instance):
-    rpa_input_instance.chemicalPotential = [-10, 10]
-    chemicalPotential = rpa_input_instance.chemicalPotential
-    assert all(x == y for x, y in zip(chemicalPotential, [-10, 10]))
+def test_chemical_potential(rpa_input_instance):
+    rpa_input_instance.chemical_potential = [-10, 10]
+    chemical_potential = rpa_input_instance.chemical_potential
+    assert all(x == y for x, y in zip(chemical_potential, [-10, 10]))
     for cp in [[-1.0], [1, 2, 3], [10, -10]]:
         with pytest.raises(RuntimeError) as excinfo:
-            rpa_input_instance.chemicalPotential = cp
+            rpa_input_instance.chemical_potential = cp
         assert (
             excinfo.value.args[0] == "Invalid guess for chemical potential calculation"
         )
@@ -155,22 +154,22 @@ def test_cutoff(rpa_input_instance):
     )
 
 
-def test_isEqual_default(rpa_input_instance):
-    assert not rpa_input_instance.isEqual(rpa_input_instance)
+def test_is_equal_default(rpa_input_instance):
+    assert not rpa_input_instance.is_equal(rpa_input_instance)
 
 
-def test_isEqual(rpa_input_instance):
-    thisRpa = native.RpaInput()
-    thisRpa.coupling = 2.0
-    thisRpa.degeneracy = 1.0
-    thisRpa.intError = 0.1
-    thisRpa.threads = 1
-    thisRpa.theory = "STLS"
-    thisRpa.matsubara = 1
-    thisRpa.resolution = 0.1
-    thisRpa.cutoff = 1.0
-    thisRpa.error = 0.1
-    assert thisRpa.isEqual(thisRpa)
+def test_is_equal(rpa_input_instance):
+    this_rpa = RpaInput()
+    this_rpa.coupling = 2.0
+    this_rpa.degeneracy = 1.0
+    this_rpa.integral_error = 0.1
+    this_rpa.threads = 1
+    this_rpa.theory = "STLS"
+    this_rpa.matsubara = 1
+    this_rpa.resolution = 0.1
+    this_rpa.cutoff = 1.0
+    this_rpa.error = 0.1
+    assert this_rpa.is_equal(this_rpa)
 
 
 def test_print(rpa_input_instance, capfd):
