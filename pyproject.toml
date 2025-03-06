@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qupled"
-version = "0.0.4"
+version = "1.0.2"
 description = "qupled: a package to investigate quantum plasmas via the dielectric formalism"
 readme = "README.md"
 requires-python = ">=3.10, <3.14"
