@@ -133,7 +133,7 @@ def test_save(qvsstls, qvsstls_input, mocker):
             HDF.EntryKeys.SSF_HF.value,
             HDF.EntryKeys.WVG.value,
             HDF.EntryKeys.FXC_GRID.value,
-            HDF.EntryKeys.FXCI.value,
+            HDF.EntryKeys.FXC_INT.value,
             HDF.EntryKeys.ADR.value,
             HDF.EntryKeys.ALPHA.value,
         ]
@@ -151,7 +151,7 @@ def test_set_free_energy_integrand(mocker):
         HDF.read.__name__,
         return_value={
             HDF.EntryKeys.FXC_GRID.value: arr1d,
-            HDF.EntryKeys.FXCI.value: arr2d,
+            HDF.EntryKeys.FXC_INT.value: arr2d,
             HDF.EntryKeys.ALPHA.value: arr1d,
         },
     )

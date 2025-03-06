@@ -26,7 +26,7 @@ class HDF:
         DEGENERACY = "degeneracy"
         ERROR = "error"
         FXC_GRID = "fxc_grid"
-        FXCI = "fxc_int"
+        FXC_INT = "fxc_int"
         MATSUBARA = "matsubara"
         IDR = "idr"
         INFO = "info"
@@ -76,7 +76,7 @@ class HDF:
             HDF.EntryKeys.FXC_GRID.value: self.Entries(
                 "Coupling parameter", HDF.EntryType.NUMPY.value
             ),
-            HDF.EntryKeys.FXCI.value: self.Entries(
+            HDF.EntryKeys.FXC_INT.value: self.Entries(
                 "Free Energy integrand", HDF.EntryType.NUMPY2D.value
             ),
             HDF.EntryKeys.MATSUBARA.value: self.Entries(
@@ -227,7 +227,7 @@ class HDF:
                     description,
                     matsubara,
                 )
-            elif name == HDF.EntryKeys.FXCI.value:
+            elif name == HDF.EntryKeys.FXC_INT.value:
                 x = self.read(hdf, [name, HDF.EntryKeys.FXC_GRID.value])
                 Plot.plot_1D(
                     x[HDF.EntryKeys.FXC_GRID.value],

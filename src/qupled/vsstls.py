@@ -36,7 +36,7 @@ class VSStls(base.IterativeScheme):
             self.hdf_file_name, key=util.HDF.EntryKeys.FXC_GRID.value
         )
         pd.DataFrame(scheme.free_energy_integrand).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.FXCI.value
+            self.hdf_file_name, key=util.HDF.EntryKeys.FXC_INT.value
         )
         pd.DataFrame(scheme.alpha).to_hdf(
             self.hdf_file_name, key=util.HDF.EntryKeys.ALPHA.value
@@ -55,12 +55,14 @@ class VSStls(base.IterativeScheme):
             file_name,
             [
                 util.HDF.EntryKeys.FXC_GRID.value,
-                util.HDF.EntryKeys.FXCI.value,
+                util.HDF.EntryKeys.FXC_INT.value,
                 util.HDF.EntryKeys.ALPHA.value,
             ],
         )
         fxci.grid = hdf_data[util.HDF.EntryKeys.FXC_GRID.value]
-        fxci.integrand = np.ascontiguousarray(hdf_data[util.HDF.EntryKeys.FXCI.value])
+        fxci.integrand = np.ascontiguousarray(
+            hdf_data[util.HDF.EntryKeys.FXC_INT.value]
+        )
         fxci.alpha = hdf_data[util.HDF.EntryKeys.ALPHA.value]
         return fxci
 

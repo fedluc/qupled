@@ -4,22 +4,21 @@ from qupled.classic import VSStls
 vsstls = VSStls()
 
 # Define the input parameters
-inputs = VSStls.Input(5.0, 1.0)
+inputs = VSStls.Input(2.0, 1.0)
 inputs.mixing = 0.5
-inputs.degeneracy_resolution = 0.01
 inputs.alpha = [-0.2, 0.2]
 
 # Compute
 vsstls.compute(inputs)
 
 # Plot the results
-vsstls.plot(["ssf", "slfc", "fxci", "sdr"])
+vsstls.plot(["ssf", "slfc", "fxc_int", "sdr"])
 
-# Load the free energy integrand computed for rs = 5.0
-fxci = VSStls.get_free_energy_integrand("rs5.000_theta1.000_VSSTLS.h5")
+# Load the free energy integrand computed for rs = 2.0
+fxci = VSStls.get_free_energy_integrand("rs2.000_theta1.000_VSSTLS.h5")
 
-# Setup a new VSStls simulation for rs = 10.0
-inputs.coupling = 10.0
+# Setup a new VSStls simulation for rs = 5.0
+inputs.coupling = 5.0
 inputs.alpha = [0.5, 0.7]
 inputs.free_energy_integrand = fxci
 
@@ -27,4 +26,4 @@ inputs.free_energy_integrand = fxci
 vsstls.compute(inputs)
 
 # Plot the results
-vsstls.plot(["ssf", "slfc", "fxci"])
+vsstls.plot(["ssf", "slfc", "fxc_int"])

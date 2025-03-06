@@ -54,7 +54,7 @@ class QVSStls(base.QuantumIterativeScheme):
             self.hdf_file_name, key=util.HDF.EntryKeys.FXC_GRID.value
         )
         pd.DataFrame(scheme.free_energy_integrand).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.FXCI.value
+            self.hdf_file_name, key=util.HDF.EntryKeys.FXC_INT.value
         )
         pd.DataFrame(scheme.alpha).to_hdf(
             self.hdf_file_name, key=util.HDF.EntryKeys.ALPHA.value

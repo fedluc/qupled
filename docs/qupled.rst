@@ -528,6 +528,6 @@ Initial guess
 Output
 ------
 
-.. autoclass:: qupled.util.Hdf
+.. autoclass:: qupled.util.HDF
    :members:
 

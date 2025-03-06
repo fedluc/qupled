@@ -26,4 +26,4 @@ inputs.free_energy_integrand = fxci
 qvsstls.compute(inputs)
 
 # Plot the results
-qvsstls.plot(["ssf", "fxci"])
+qvsstls.plot(["ssf", "fxc_int"])

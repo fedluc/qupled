@@ -31,7 +31,7 @@ def mock_output(hdf_file_name):
     pd.DataFrame(data2D).to_hdf(hdf_file_name, key=HDF.EntryKeys.ADR.value)
     pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.BF.value)
     pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.FXC_GRID.value)
-    pd.DataFrame(data2D).to_hdf(hdf_file_name, key=HDF.EntryKeys.FXCI.value)
+    pd.DataFrame(data2D).to_hdf(hdf_file_name, key=HDF.EntryKeys.FXC_INT.value)
     pd.DataFrame(data2D).to_hdf(hdf_file_name, key=HDF.EntryKeys.IDR.value)
     pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.RDF.value)
     pd.DataFrame(data1D).to_hdf(hdf_file_name, key=HDF.EntryKeys.RDF_GRID.value)
@@ -73,7 +73,7 @@ def test_entry_keys():
         "DEGENERACY": "degeneracy",
         "ERROR": "error",
         "FXC_GRID": "fxc_grid",
-        "FXCI": "fxc_int",
+        "FXC_INT": "fxc_int",
         "MATSUBARA": "matsubara",
         "IDR": "idr",
         "INFO": "info",
@@ -155,7 +155,7 @@ def test_read(hdf_instance):
                 assert np.array_equal(read_data[entry], np.zeros(2))
             elif entry in [
                 HDF.EntryKeys.ADR.value,
-                HDF.EntryKeys.FXCI.value,
+                HDF.EntryKeys.FXC_INT.value,
                 HDF.EntryKeys.IDR.value,
             ]:
                 assert np.array_equal(read_data[entry], np.zeros((2, 2)))
@@ -191,7 +191,7 @@ def test_plot(hdf_instance, mocker):
         HDF.EntryKeys.RDF.value,
         HDF.EntryKeys.ADR.value,
         HDF.EntryKeys.IDR.value,
-        HDF.EntryKeys.FXCI.value,
+        HDF.EntryKeys.FXC_INT.value,
         HDF.EntryKeys.BF.value,
         HDF.EntryKeys.SDR.value,
         HDF.EntryKeys.SLFC.value,
