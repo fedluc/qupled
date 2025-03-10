@@ -14,6 +14,98 @@ from . import util
 
 DB_BASE = orm.declarative_base()
 
+
+# -----------------------------------------------------------------------
+# DataBaseHandler class
+# -----------------------------------------------------------------------
+
+
+class DataBaseHandler:
+
+    class InputTable:
+
+        TYPE_MAPPING = {int: sql.Integer, float: sql.Float, str: sql.String}
+
+        def __init__(self, input_cls, name):
+            columns = {
+                "__tablename__": name,
+                "id": sql.Column(sql.Integer, primary_key=True, autoincrement=True),
+            }
+            for attr, value in input_cls.__dict__.items():
+                if not attr.startswith("__") and not callable(value):
+                    sql_type = self.TYPE_MAPPING.get(type(value), sql.String)
+                    columns[attr] = sql.Column(sql_type, nullable=False)
+            self.table = type("InputTable", (DB_BASE,), columns)
+
+    class ResultTable:
+
+        def __init__(self, result_cls, name):
+            columns = {
+                "__tablename__": name,
+                "id": sql.Column(sql.Integer, primary_key=True, autoincrement=True),
+            }
+            for attr, value in result_cls.__dict__.items():
+                if not attr.startswith("__") and not callable(value):
+                    columns[attr] = sql.Column(sql.LargeBinary, nullable=True)
+            self.table = type("ResultTable", (DB_BASE,), columns)
+
+        @staticmethod
+        def numpy_to_bytes(arr: np.array) -> bytes:
+            arr_bytes = io.BytesIO()
+            np.save(arr_bytes, arr)
+            return arr_bytes.getvalue()
+
+
+# -----------------------------------------------------------------------
+# Input class
+# -----------------------------------------------------------------------
+
+
+class Input:
+
+    @staticmethod
+    def to_native(input_cls, native_input: any) -> any:
+        for attr, value in input_cls.__dict__.items():
+            setattr(native_input, attr, value)
+        return native_input
+
+    @staticmethod
+    def to_database_table(input_cls, table_name) -> ClassicScheme.InputLog:
+        input_data = {
+            attr: (json.dumps(value) if isinstance(value, (list, dict)) else value)
+            for attr, value in input_cls.__dict__.items()
+        }
+        table_cls = DataBaseHandler.ResultTable(input_cls, table_name)
+        return table_cls.table(**input_data)
+
+
+# -----------------------------------------------------------------------
+# Result class
+# -----------------------------------------------------------------------
+
+
+class Result:
+
+    @staticmethod
+    def from_native(result_cls, native_scheme: any) -> any:
+        for attr in result_cls.__dict__.keys():
+            value = getattr(native_scheme, attr)
+            setattr(result_cls, attr, value) if value is not None else None
+
+    @staticmethod
+    def to_database_table(result_cls, table_name) -> ClassicScheme.ResultLog:
+        result_data = {
+            attr: (
+                DataBaseHandler.ResultTable.numpy_to_bytes(value)
+                if value is not None
+                else None
+            )
+            for attr, value in result_cls.__dict__.items()
+        }
+        table_cls = DataBaseHandler.ResultTable(result_cls, table_name)
+        return table_cls.table(**result_data)
+
+
 # -----------------------------------------------------------------------
 # ClassicScheme class
 # -----------------------------------------------------------------------
@@ -167,84 +259,6 @@ class ClassicScheme:
         if util.HDF.EntryKeys.RDF.value in to_plot:
             self.compute_rdf(rdf_grid)
         util.HDF().plot(self.hdf_file_name, to_plot, matsubara)
-
-    class Input:
-
-        @staticmethod
-        def to_native(input_cls, native_input: any) -> any:
-            for attr, value in input_cls.__dict__.items():
-                setattr(native_input, attr, value)
-            return native_input
-
-        @staticmethod
-        def to_database_table(input_cls, name) -> ClassicScheme.InputLog:
-            input_data = {
-                attr: (json.dumps(value) if isinstance(value, (list, dict)) else value)
-                for attr, value in input_cls.__dict__.items()
-            }
-            input_log_class = ClassicScheme.Input.build_table_class(input_cls, name)
-            return input_log_class(**input_data)
-
-        TYPE_MAPPING = {
-            int: sql.Integer,
-            float: sql.Float,
-            str: sql.String,
-            list: sql.String,
-        }
-
-        @staticmethod
-        def build_table_class(input_cls, name) -> ClassicScheme.InputLog:
-            columns = {
-                "__tablename__": name,
-                "id": sql.Column(sql.Integer, primary_key=True, autoincrement=True),
-            }
-            for attr, value in input_cls.__dict__.items():
-                if not attr.startswith("__") and not callable(value):
-                    sql_type = ClassicScheme.Input.TYPE_MAPPING.get(
-                        type(value), sql.String
-                    )
-                    columns[attr] = sql.Column(sql_type, nullable=False)
-            return type("InputTable", (DB_BASE,), columns)
-
-    class Result:
-
-        @staticmethod
-        def from_native(result_cls, native_scheme: any) -> any:
-            for attr in result_cls.__dict__.keys():
-                value = getattr(native_scheme, attr)
-                setattr(result_cls, attr, value) if value is not None else None
-
-        @staticmethod
-        def to_database_table(result_cls, table_name) -> ClassicScheme.ResultLog:
-            result_data = {
-                attr: (
-                    ClassicScheme.Result.numpy_to_bytes(value)
-                    if value is not None
-                    else None
-                )
-                for attr, value in result_cls.__dict__.items()
-            }
-            result_log_class = ClassicScheme.Result.build_table_class(
-                result_cls, table_name
-            )
-            return result_log_class(**result_data)
-
-        @staticmethod
-        def numpy_to_bytes(arr: np.array) -> bytes:
-            arr_bytes = io.BytesIO()
-            np.save(arr_bytes, arr)
-            return arr_bytes.getvalue()
-
-        @staticmethod
-        def build_table_class(result_cls, name):
-            columns = {
-                "__tablename__": name,
-                "id": sql.Column(sql.Integer, primary_key=True, autoincrement=True),
-            }
-            for attr, value in result_cls.__dict__.items():
-                if not attr.startswith("__") and not callable(value):
-                    columns[attr] = sql.Column(sql.LargeBinary, nullable=True)
-            return type("ResultTable", (DB_BASE,), columns)
 
 
 # -----------------------------------------------------------------------

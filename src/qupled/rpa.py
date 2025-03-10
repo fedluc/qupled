@@ -73,12 +73,10 @@ class Rpa(base.ClassicScheme):
             self.theory: str = "RPA"
 
         def to_native(self) -> native.RpaInput:
-            return base.ClassicScheme.Input.to_native(self, native.RpaInput())
+            return base.Input.to_native(self, native.RpaInput())
 
         def to_database_table(self):
-            return base.ClassicScheme.Input.to_database_table(
-                self, Rpa.INPUT_TABLE_NAME
-            )
+            return base.Input.to_database_table(self, Rpa.INPUT_TABLE_NAME)
 
     # Results class
     class Results:
@@ -97,9 +95,7 @@ class Rpa(base.ClassicScheme):
             """Static structure factor"""
             self.wvg: np.ndarray = None
             """Wave-vector grid"""
-            base.ClassicScheme.Result.from_native(self, scheme)
+            base.Result.from_native(self, scheme)
 
         def to_database_table(self):
-            return base.ClassicScheme.Result.to_database_table(
-                self, Rpa.RESULT_TABLE_NAME
-            )
+            return base.Result.to_database_table(self, Rpa.RESULT_TABLE_NAME)
