@@ -3,12 +3,16 @@
 # -----------------------------------------------------------------------
 
 from __future__ import annotations
+import numpy as np
 from . import native
 from . import util
 from . import base
 
 
 class Rpa(base.ClassicScheme):
+
+    INPUT_TABLE_NAME = "RPA input"
+    RESULT_TABLE_NAME = "RPA results"
 
     # Compute
     @util.MPI.record_time
@@ -23,6 +27,9 @@ class Rpa(base.ClassicScheme):
         scheme = native.Rpa(inputs.to_native())
         self._compute(scheme)
         self._save(scheme)
+        self._save_to_database([inputs.to_database_table()])
+        results = Rpa.Results(scheme)
+        self._save_to_database([results.to_database_table()])
 
     # Input class
     class Input:
@@ -31,18 +38,14 @@ class Rpa(base.ClassicScheme):
         """
 
         def __init__(self, coupling: float, degeneracy: float):
-            self.coupling: float = coupling
-            """Coupling parameter."""
-            self.degeneracy: float = degeneracy
-            """Degeneracy parameter."""
             self.chemical_potential: list[float] = [-10.0, 10.0]
             """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
-            self.matsubara: int = 128
-            """Number of Matsubara frequencies. Default = ``128``"""
-            self.resolution: float = 0.1
-            """Resolution of the wave-vector grid. Default =  ``0.1``"""
+            self.coupling: float = coupling
+            """Coupling parameter."""
             self.cutoff: float = 10.0
             """Cutoff for the wave-vector grid. Default =  ``10.0``"""
+            self.degeneracy: float = degeneracy
+            """Degeneracy parameter."""
             self.frequency_cutoff: float = 10.0
             """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
             self.integral_error: float = 1.0e-5
@@ -61,12 +64,42 @@ class Rpa(base.ClassicScheme):
             Segregated is usually faster than full but it could become
             less accurate if the fixed points are not chosen correctly. Default =  ``'full'``
             """
+            self.matsubara: int = 128
+            """Number of Matsubara frequencies. Default = ``128``"""
+            self.resolution: float = 0.1
+            """Resolution of the wave-vector grid. Default =  ``0.1``"""
             self.threads: int = 1
             """Number of OMP threads for parallel calculations. Default =  ``1``"""
             self.theory: str = "RPA"
 
         def to_native(self) -> native.RpaInput:
-            native_input = native.RpaInput()
-            for attr, value in self.__dict__.items():
-                setattr(native_input, attr, value)
-            return native_input
+            return base.ClassicScheme.Input.to_native(self, native.RpaInput())
+
+        def to_database_table(self):
+            return base.ClassicScheme.Input.to_database_table(
+                self, Rpa.INPUT_TABLE_NAME
+            )
+
+    # Results class
+    class Results:
+        """
+        Class used to store the results for the :obj:`qupled.classic.Rpa` class.
+        """
+
+        def __init__(self, scheme):
+            self.idr: np.ndarray = None
+            """Ideal density response"""
+            self.sdr: np.ndarray = None
+            """Static density response"""
+            self.slfc: np.ndarray = None
+            """Static local field correction"""
+            self.ssf: np.ndarray = None
+            """Static structure factor"""
+            self.wvg: np.ndarray = None
+            """Wave-vector grid"""
+            base.ClassicScheme.Result.from_native(self, scheme)
+
+        def to_database_table(self):
+            return base.ClassicScheme.Result.to_database_table(
+                self, Rpa.RESULT_TABLE_NAME
+            )

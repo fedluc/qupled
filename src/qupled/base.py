@@ -2,12 +2,21 @@ from __future__ import annotations
 
 import os
 import sys
-
+import json
+import sqlalchemy as sql
+import sqlalchemy.orm as orm
 import numpy as np
+import io
 import pandas as pd
 
 from . import native
 from . import util
+
+DB_BASE = orm.declarative_base()
+
+# -----------------------------------------------------------------------
+# ClassicScheme class
+# -----------------------------------------------------------------------
 
 
 class ClassicScheme:
@@ -15,6 +24,7 @@ class ClassicScheme:
     def __init__(self):
         # File to store output on disk
         self.hdf_file_name: str = None  #: Name of the output file.
+        self.session = None
 
     # Compute the scheme
     def _compute(self, scheme) -> None:
@@ -86,6 +96,25 @@ class ClassicScheme:
             self.hdf_file_name, key=util.HDF.EntryKeys.WVG.value
         )
 
+    @util.MPI.run_only_on_root
+    def _save_to_database(self, tables: list[any]) -> None:
+        if self.session is None:
+            engine = sql.create_engine("sqlite:///scheme_results.db")
+            self.session = orm.sessionmaker(bind=engine)
+        session = self.session()
+        engine = session.get_bind()
+        try:
+            for table in tables:
+                if not sql.inspect(engine).has_table(table.__tablename__):
+                    table.__table__.create(engine)
+                session.add(table)
+                session.commit()
+        except Exception as e:
+            session.rollback()
+            print(f"Database error: {e}")
+        finally:
+            session.close()
+
     # Compute radial distribution function
     def compute_rdf(
         self, rdf_grid: np.ndarray = None, write_to_hdf: bool = True
@@ -138,6 +167,84 @@ class ClassicScheme:
         if util.HDF.EntryKeys.RDF.value in to_plot:
             self.compute_rdf(rdf_grid)
         util.HDF().plot(self.hdf_file_name, to_plot, matsubara)
+
+    class Input:
+
+        @staticmethod
+        def to_native(input_cls, native_input: any) -> any:
+            for attr, value in input_cls.__dict__.items():
+                setattr(native_input, attr, value)
+            return native_input
+
+        @staticmethod
+        def to_database_table(input_cls, name) -> ClassicScheme.InputLog:
+            input_data = {
+                attr: (json.dumps(value) if isinstance(value, (list, dict)) else value)
+                for attr, value in input_cls.__dict__.items()
+            }
+            input_log_class = ClassicScheme.Input.build_table_class(input_cls, name)
+            return input_log_class(**input_data)
+
+        TYPE_MAPPING = {
+            int: sql.Integer,
+            float: sql.Float,
+            str: sql.String,
+            list: sql.String,
+        }
+
+        @staticmethod
+        def build_table_class(input_cls, name) -> ClassicScheme.InputLog:
+            columns = {
+                "__tablename__": name,
+                "id": sql.Column(sql.Integer, primary_key=True, autoincrement=True),
+            }
+            for attr, value in input_cls.__dict__.items():
+                if not attr.startswith("__") and not callable(value):
+                    sql_type = ClassicScheme.Input.TYPE_MAPPING.get(
+                        type(value), sql.String
+                    )
+                    columns[attr] = sql.Column(sql_type, nullable=False)
+            return type("InputTable", (DB_BASE,), columns)
+
+    class Result:
+
+        @staticmethod
+        def from_native(result_cls, native_scheme: any) -> any:
+            for attr in result_cls.__dict__.keys():
+                value = getattr(native_scheme, attr)
+                setattr(result_cls, attr, value) if value is not None else None
+
+        @staticmethod
+        def to_database_table(result_cls, table_name) -> ClassicScheme.ResultLog:
+            result_data = {
+                attr: (
+                    ClassicScheme.Result.numpy_to_bytes(value)
+                    if value is not None
+                    else None
+                )
+                for attr, value in result_cls.__dict__.items()
+            }
+            result_log_class = ClassicScheme.Result.build_table_class(
+                result_cls, table_name
+            )
+            return result_log_class(**result_data)
+
+        @staticmethod
+        def numpy_to_bytes(arr: np.array) -> bytes:
+            arr_bytes = io.BytesIO()
+            np.save(arr_bytes, arr)
+            return arr_bytes.getvalue()
+
+        @staticmethod
+        def build_table_class(result_cls, name):
+            columns = {
+                "__tablename__": name,
+                "id": sql.Column(sql.Integer, primary_key=True, autoincrement=True),
+            }
+            for attr, value in result_cls.__dict__.items():
+                if not attr.startswith("__") and not callable(value):
+                    columns[attr] = sql.Column(sql.LargeBinary, nullable=True)
+            return type("ResultTable", (DB_BASE,), columns)
 
 
 # -----------------------------------------------------------------------
