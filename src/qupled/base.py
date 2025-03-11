@@ -12,9 +12,6 @@ import pandas as pd
 from . import native
 from . import util
 
-DB_BASE = orm.declarative_base()
-
-
 # -----------------------------------------------------------------------
 # DataBaseHandler class
 # -----------------------------------------------------------------------
@@ -23,31 +20,75 @@ DB_BASE = orm.declarative_base()
 class DataBaseHandler:
 
     TYPE_MAPPING = {int: sql.Integer, float: sql.Float, str: sql.String}
+    DB_BASE = orm.declarative_base()
 
-    def __init__(self, input_cls, input_table_name, result_cls, result_table_name):
-        self.input_table = self._build_input_table(input_cls, input_table_name)
-        self.result_table = self._build_result_table(result_cls, result_table_name)
+    def __init__(
+        self, inputs: any, results: any, inputs_table_name: str, results_table_name: str
+    ):
+        engine = sql.create_engine("sqlite:///scheme_results.db")
+        self.session = orm.sessionmaker(bind=engine)
+        self.inputs = inputs
+        self.results = results
+        self.input_table_cls = self._build_input_table_cls(inputs_table_name)
+        self.result_table_cls = self._build_result_table_cls(results_table_name)
+        self.input_table = None
+        self.result_table = None
 
-    def _build_input_table(self, input_cls, input_table_name):
+    def write(self):
+        self._fill_tables()
+        session = self.session()
+        engine = session.get_bind()
+        try:
+            for table in [self.input_table, self.result_table]:
+                if not sql.inspect(engine).has_table(table.__tablename__):
+                    table.__table__.create(engine)
+                session.add(table)
+                session.commit()
+        except Exception as e:
+            session.rollback()
+            print(f"Database error: {e}")
+        finally:
+            session.close()
+
+    def _build_input_table_cls(self, table_name):
         columns = {
-            "__tablename__": input_table_name,
+            "__tablename__": table_name,
             "id": sql.Column(sql.Integer, primary_key=True, autoincrement=True),
         }
-        for attr, value in input_cls.__dict__.items():
+        for attr, value in self.inputs.__dict__.items():
             if not attr.startswith("__") and not callable(value):
                 sql_type = self.TYPE_MAPPING.get(type(value), sql.String)
                 columns[attr] = sql.Column(sql_type, nullable=False)
-        return type("InputTable", (DB_BASE,), columns)
+        return type("InputTable", (DataBaseHandler.DB_BASE,), columns)
 
-    def _build_result_table(self, result_cls, result_table_name):
+    def _build_result_table_cls(self, table_name):
         columns = {
-            "__tablename__": result_table_name,
+            "__tablename__": table_name,
             "id": sql.Column(sql.Integer, primary_key=True, autoincrement=True),
         }
-        for attr, value in result_cls.__dict__.items():
+        for attr, value in self.results.__dict__.items():
             if not attr.startswith("__") and not callable(value):
                 columns[attr] = sql.Column(sql.LargeBinary, nullable=True)
-        return type("ResultTable", (DB_BASE,), columns)
+        return type("ResultTable", (DataBaseHandler.DB_BASE,), columns)
+
+    def _fill_tables(self):
+        # Populate the input table
+        input_data = {
+            attr: (json.dumps(value) if isinstance(value, (list, dict)) else value)
+            for attr, value in self.inputs.__dict__.items()
+        }
+        self.input_table = self.input_table_cls(**input_data)
+        # Populate the result table
+        result_data = {
+            attr: (self._numpy_to_bytes(value) if value is not None else None)
+            for attr, value in self.results.__dict__.items()
+        }
+        self.result_table = self.result_table_cls(**result_data)
+
+    def _numpy_to_bytes(self, arr: np.array) -> bytes:
+        arr_bytes = io.BytesIO()
+        np.save(arr_bytes, arr)
+        return arr_bytes.getvalue()
 
 
 # -----------------------------------------------------------------------
@@ -60,16 +101,9 @@ class Input:
     @staticmethod
     def to_native(input_cls, native_input: any) -> any:
         for attr, value in input_cls.__dict__.items():
-            setattr(native_input, attr, value)
+            if hasattr(native_input, attr):
+                setattr(native_input, attr, value)
         return native_input
-
-    @staticmethod
-    def to_database_table(input_cls, table_cls) -> any:
-        input_data = {
-            attr: (json.dumps(value) if isinstance(value, (list, dict)) else value)
-            for attr, value in input_cls.__dict__.items()
-        }
-        return table_cls(**input_data)
 
 
 # -----------------------------------------------------------------------
@@ -80,24 +114,11 @@ class Input:
 class Result:
 
     @staticmethod
-    def from_native(result_cls, native_scheme: any) -> any:
+    def from_native(result_cls, native_scheme: any):
         for attr in result_cls.__dict__.keys():
-            value = getattr(native_scheme, attr)
-            setattr(result_cls, attr, value) if value is not None else None
-
-    @staticmethod
-    def to_database_table(result_cls, table_cls) -> any:
-        result_data = {
-            attr: (Result.numpy_to_bytes(value) if value is not None else None)
-            for attr, value in result_cls.__dict__.items()
-        }
-        return table_cls(**result_data)
-
-    @staticmethod
-    def numpy_to_bytes(arr: np.array) -> bytes:
-        arr_bytes = io.BytesIO()
-        np.save(arr_bytes, arr)
-        return arr_bytes.getvalue()
+            if hasattr(native_scheme, attr):
+                value = getattr(native_scheme, attr)
+                setattr(result_cls, attr, value) if value is not None else None
 
 
 # -----------------------------------------------------------------------
