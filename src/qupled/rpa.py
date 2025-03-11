@@ -27,9 +27,12 @@ class Rpa(base.ClassicScheme):
         scheme = native.Rpa(inputs.to_native())
         self._compute(scheme)
         self._save(scheme)
-        self._save_to_database([inputs.to_database_table()])
         results = Rpa.Results(scheme)
-        self._save_to_database([results.to_database_table()])
+        db_handler = base.DataBaseHandler(
+            inputs, Rpa.INPUT_TABLE_NAME, results, Rpa.RESULT_TABLE_NAME
+        )
+        self._save_to_database([inputs.to_database_table(db_handler)])
+        self._save_to_database([results.to_database_table(db_handler)])
 
     # Input class
     class Input:
@@ -75,8 +78,8 @@ class Rpa(base.ClassicScheme):
         def to_native(self) -> native.RpaInput:
             return base.Input.to_native(self, native.RpaInput())
 
-        def to_database_table(self):
-            return base.Input.to_database_table(self, Rpa.INPUT_TABLE_NAME)
+        def to_database_table(self, db_handler):
+            return base.Input.to_database_table(self, db_handler.input_table)
 
     # Results class
     class Results:
@@ -97,5 +100,5 @@ class Rpa(base.ClassicScheme):
             """Wave-vector grid"""
             base.Result.from_native(self, scheme)
 
-        def to_database_table(self):
-            return base.Result.to_database_table(self, Rpa.RESULT_TABLE_NAME)
+        def to_database_table(self, db_handler):
+            return base.Result.to_database_table(self, db_handler.result_table)
