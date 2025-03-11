@@ -59,7 +59,7 @@ class DataBaseHandler:
             if not attr.startswith("__") and not callable(value):
                 sql_type = self.TYPE_MAPPING.get(type(value), sql.String)
                 columns[attr] = sql.Column(sql_type, nullable=False)
-        return type("InputTable", (DataBaseHandler.DB_BASE,), columns)
+        return type(f"{table_name}", (DataBaseHandler.DB_BASE,), columns)
 
     def _build_result_table_cls(self, table_name):
         columns = {
@@ -69,7 +69,7 @@ class DataBaseHandler:
         for attr, value in self.results.__dict__.items():
             if not attr.startswith("__") and not callable(value):
                 columns[attr] = sql.Column(sql.LargeBinary, nullable=True)
-        return type("ResultTable", (DataBaseHandler.DB_BASE,), columns)
+        return type(f"{table_name}", (DataBaseHandler.DB_BASE,), columns)
 
     def _fill_tables(self):
         # Populate the input table

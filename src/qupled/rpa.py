@@ -11,8 +11,8 @@ from . import base
 
 class Rpa(base.ClassicScheme):
 
-    INPUT_TABLE_NAME = "RPA input"
-    RESULT_TABLE_NAME = "RPA results"
+    INPUT_TABLE_NAME = "RPA_input"
+    RESULT_TABLE_NAME = "RPA_results"
 
     # Compute
     @util.MPI.record_time
