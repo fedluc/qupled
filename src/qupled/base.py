@@ -4,10 +4,10 @@ import os
 import sys
 import json
 import sqlalchemy as sql
-import sqlalchemy.orm as orm
 import numpy as np
 import io
 import pandas as pd
+from typing import Any, Dict
 
 from . import native
 from . import util
@@ -19,76 +19,99 @@ from . import util
 
 class DataBaseHandler:
 
-    TYPE_MAPPING = {int: sql.Integer, float: sql.Float, str: sql.String}
-    DB_BASE = orm.declarative_base()
+    TYPE_MAPPING = {
+        int: sql.Integer,
+        float: sql.Float,
+        str: sql.String,
+        list: sql.JSON,
+        dict: sql.JSON,
+        bytes: sql.LargeBinary,
+    }
+    PRIMARY_KEY = "id"
+    DATABASE_NAME = "scheme_results.db"
 
     def __init__(
-        self, inputs: any, results: any, inputs_table_name: str, results_table_name: str
+        self, inputs: Any, results: Any, inputs_table_name: str, results_table_name: str
     ):
-        engine = sql.create_engine("sqlite:///scheme_results.db")
-        self.session = orm.sessionmaker(bind=engine)
+        self.engine = sql.create_engine(f"sqlite:///{self.DATABASE_NAME}")
+        self.table_metadata = sql.MetaData()
         self.inputs = inputs
         self.results = results
-        self.input_table_cls = self._build_input_table_cls(inputs_table_name)
-        self.result_table_cls = self._build_result_table_cls(results_table_name)
-        self.input_table = None
-        self.result_table = None
+        self.inputs_table_name = inputs_table_name
+        self.results_table_name = results_table_name
+        self.run_id: int | None = None
 
-    def write(self):
-        self._fill_tables()
-        session = self.session()
-        engine = session.get_bind()
-        try:
-            for table in [self.input_table, self.result_table]:
-                if not sql.inspect(engine).has_table(table.__tablename__):
-                    table.__table__.create(engine)
-                session.add(table)
-                session.commit()
-        except Exception as e:
-            session.rollback()
-            print(f"Database error: {e}")
-        finally:
-            session.close()
+    def insert(self):
+        self._insert_runs_table()
+        self._insert_input_table()
+        self._insert_result_table()
 
-    def _build_input_table_cls(self, table_name):
-        columns = {
-            "__tablename__": table_name,
-            "id": sql.Column(sql.Integer, primary_key=True, autoincrement=True),
-        }
-        for attr, value in self.inputs.__dict__.items():
-            if not attr.startswith("__") and not callable(value):
-                sql_type = self.TYPE_MAPPING.get(type(value), sql.String)
-                columns[attr] = sql.Column(sql_type, nullable=False)
-        return type(f"{table_name}", (DataBaseHandler.DB_BASE,), columns)
+    def _insert_runs_table(self):
+        table = sql.Table(
+            "runs",
+            self.table_metadata,
+            sql.Column(
+                DataBaseHandler.PRIMARY_KEY,
+                sql.Integer,
+                primary_key=True,
+                autoincrement=True,
+            ),
+        )
+        self._create_table(table)
+        result = self._insert_data_to_table({}, table)
+        if result.inserted_primary_key:
+            self.run_id = result.inserted_primary_key[0]
 
-    def _build_result_table_cls(self, table_name):
-        columns = {
-            "__tablename__": table_name,
-            "id": sql.Column(sql.Integer, primary_key=True, autoincrement=True),
-        }
-        for attr, value in self.results.__dict__.items():
-            if not attr.startswith("__") and not callable(value):
-                columns[attr] = sql.Column(sql.LargeBinary, nullable=True)
-        return type(f"{table_name}", (DataBaseHandler.DB_BASE,), columns)
-
-    def _fill_tables(self):
-        # Populate the input table
-        input_data = {
+    def _insert_input_table(self):
+        data = {
             attr: (json.dumps(value) if isinstance(value, (list, dict)) else value)
             for attr, value in self.inputs.__dict__.items()
         }
-        self.input_table = self.input_table_cls(**input_data)
-        # Populate the result table
-        result_data = {
+        data[self.PRIMARY_KEY] = self.run_id
+        self._insert_table(data, self.inputs_table_name)
+
+    def _insert_result_table(self):
+        data = {
             attr: (self._numpy_to_bytes(value) if value is not None else None)
             for attr, value in self.results.__dict__.items()
         }
-        self.result_table = self.result_table_cls(**result_data)
+        data[self.PRIMARY_KEY] = self.run_id
+        self._insert_table(data, self.results_table_name)
+
+    def _insert_table(self, data: Dict[str, Any], table_name: str):
+        table = self._define_table(data, table_name)
+        self._create_table(table)
+        self._insert_data_to_table(data, table)
+
+    def _define_table(self, data: Dict[str, Any], table_name: str) -> sql.Table:
+        columns = []
+        for attr, value in data.items():
+            if not attr.startswith("__") and not callable(value):
+                primary_key = attr == self.PRIMARY_KEY
+                sql_type = self.TYPE_MAPPING.get(type(value), None)
+                columns.append(
+                    sql.Column(attr, sql_type, nullable=False, primary_key=primary_key)
+                )
+        table = sql.Table(table_name, self.table_metadata, *columns)
+        return table
+
+    def _insert_data_to_table(
+        self, data: Dict[str, Any], table: sql.Table
+    ) -> sql.CursorResult[Any]:
+        statement = sql.insert(table).values(data)
+        with self.engine.begin() as connection:
+            result = connection.execute(statement)
+            return result
 
     def _numpy_to_bytes(self, arr: np.array) -> bytes:
         arr_bytes = io.BytesIO()
         np.save(arr_bytes, arr)
         return arr_bytes.getvalue()
+
+    def _create_table(self, table: sql.Table):
+        table_exists = sql.inspect(self.engine).has_table(table.name)
+        if not table_exists:
+            table.create(self.engine)
 
 
 # -----------------------------------------------------------------------
@@ -202,25 +225,6 @@ class ClassicScheme:
         pd.DataFrame(scheme.wvg).to_hdf(
             self.hdf_file_name, key=util.HDF.EntryKeys.WVG.value
         )
-
-    @util.MPI.run_only_on_root
-    def _save_to_database(self, tables: list[any]) -> None:
-        if self.session is None:
-            engine = sql.create_engine("sqlite:///scheme_results.db")
-            self.session = orm.sessionmaker(bind=engine)
-        session = self.session()
-        engine = session.get_bind()
-        try:
-            for table in tables:
-                if not sql.inspect(engine).has_table(table.__tablename__):
-                    table.__table__.create(engine)
-                session.add(table)
-                session.commit()
-        except Exception as e:
-            session.rollback()
-            print(f"Database error: {e}")
-        finally:
-            session.close()
 
     # Compute radial distribution function
     def compute_rdf(

@@ -36,7 +36,7 @@ class ESA(base.ClassicScheme):
         db_handler = base.DataBaseHandler(
             inputs, results, ESA.INPUT_TABLE_NAME, ESA.RESULT_TABLE_NAME
         )
-        db_handler.write()
+        db_handler.insert()
 
     # Input class
     class Input(rpa.Rpa.Input):

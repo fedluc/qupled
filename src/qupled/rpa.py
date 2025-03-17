@@ -31,7 +31,7 @@ class Rpa(base.ClassicScheme):
         db_handler = base.DataBaseHandler(
             inputs, results, Rpa.INPUT_TABLE_NAME, Rpa.RESULT_TABLE_NAME
         )
-        db_handler.write()
+        db_handler.insert()
 
     # Input class
     class Input:
