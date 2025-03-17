@@ -18,16 +18,19 @@ Rpa scheme
 The :obj:`qupled.classic.Rpa` class is used to setup and perform all the necessary calculations
 for the solution of the `Random-Phase Approximation <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
 The solution parameters are specified with a dedicated class called :obj:`qupled.classic.Rpa.Input`.
-After the solution is completed the results are written to an hdf file in the form of
-:ref:`pandas dataframes <rpa_pandas_table>`.
+After the solution is completed the results listed in :obj:`qupled.classic.Rpa.Results` are written to the 
+output database.
 
 .. autoclass:: qupled.classic.Rpa
     :members:
     :inherited-members:
-    :exclude-members: Input, rdf
+    :exclude-members: Input, Results, rdf
 
 
 .. autoclass:: qupled.classic.Rpa.Input
+    :members:
+
+.. autoclass:: qupled.classic.Rpa.Results
     :members:
 
 .. _rpa_pandas_table:

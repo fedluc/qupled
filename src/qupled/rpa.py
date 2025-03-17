@@ -27,9 +27,9 @@ class Rpa(base.ClassicScheme):
         scheme = native.Rpa(inputs.to_native())
         self._compute(scheme)
         self._save(scheme)
-        results = Rpa.Results(scheme)
+        results = self.Results(scheme)
         db_handler = base.DataBaseHandler(
-            inputs, results, Rpa.INPUT_TABLE_NAME, Rpa.RESULT_TABLE_NAME
+            inputs, results, self.INPUT_TABLE_NAME, self.RESULT_TABLE_NAME
         )
         db_handler.insert()
 
