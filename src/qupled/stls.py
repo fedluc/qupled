@@ -57,10 +57,4 @@ class Stls(base.IterativeScheme):
             self.theory: str = "STLS"
 
         def to_native(self) -> native.StlsInput:
-            native_input = native.StlsInput()
-            for attr, value in self.__dict__.items():
-                if attr == "guess":
-                    setattr(native_input, attr, value.to_native())
-                else:
-                    setattr(native_input, attr, value)
-            return native_input
+            return base.Input.to_native(self, native.StlsInput())

@@ -131,9 +131,15 @@ class Input:
 
     @staticmethod
     def to_native(input_cls, native_input: any) -> any:
+        name = Input.to_native.__name__
         for attr, value in input_cls.__dict__.items():
             if hasattr(native_input, attr):
-                setattr(native_input, attr, value)
+                value_to_set = (
+                    tonative()
+                    if callable(tonative := getattr(value, name, None))
+                    else value
+                )
+                setattr(native_input, attr, value_to_set)
         return native_input
 
 
