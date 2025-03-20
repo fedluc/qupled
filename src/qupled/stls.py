@@ -11,6 +11,9 @@ from . import rpa
 
 class Stls(base.IterativeScheme):
 
+    INPUT_TABLE_NAME = "Stls_input"
+    RESULT_TABLE_NAME = "Stls_results"
+
     # Compute
     @util.MPI.record_time
     @util.MPI.synchronize_ranks
@@ -24,6 +27,11 @@ class Stls(base.IterativeScheme):
         scheme = native.Stls(inputs.to_native())
         self._compute(scheme)
         self._save(scheme)
+        results = rpa.Rpa.Results(scheme)
+        db_handler = base.DataBaseHandler(
+            inputs, results, self.INPUT_TABLE_NAME, self.RESULT_TABLE_NAME
+        )
+        db_handler.insert()
 
     # Input class
     class Input(rpa.Rpa.Input):

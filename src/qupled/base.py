@@ -19,7 +19,7 @@ from . import util
 
 class DataBaseHandler:
 
-    TYPE_MAPPING = {
+    SQL_TYPE_MAPPING = {
         int: sql.Integer,
         float: sql.Float,
         str: sql.String,
@@ -63,20 +63,28 @@ class DataBaseHandler:
             self.run_id = result.inserted_primary_key[0]
 
     def _insert_input_table(self):
-        data = {
-            attr: (json.dumps(value) if isinstance(value, (list, dict)) else value)
-            for attr, value in self.inputs.__dict__.items()
-        }
-        data[self.PRIMARY_KEY] = self.run_id
+        sql_mapping = lambda value: (
+            json.dumps(value) if isinstance(value, (list, dict)) else value
+        )
+        data = self._create_data(self.inputs, sql_mapping)
         self._insert_table(data, self.inputs_table_name)
 
     def _insert_result_table(self):
+        sql_mapping = lambda value: (
+            self._numpy_to_bytes(value) if value is not None else value
+        )
+        data = self._create_data(self.results, sql_mapping)
+        self._insert_table(data, self.results_table_name)
+
+    def _create_data(self, data_src, sql_mapping):
         data = {
-            attr: (self._numpy_to_bytes(value) if value is not None else None)
-            for attr, value in self.results.__dict__.items()
+            attr: mapped_value
+            for attr, value in data_src.__dict__.items()
+            if (mapped_value := sql_mapping(value))
+            and type(mapped_value) in self.SQL_TYPE_MAPPING.keys()
         }
         data[self.PRIMARY_KEY] = self.run_id
-        self._insert_table(data, self.results_table_name)
+        return data
 
     def _insert_table(self, data: Dict[str, Any], table_name: str):
         table = self._define_table(data, table_name)
@@ -88,7 +96,7 @@ class DataBaseHandler:
         for attr, value in data.items():
             if not attr.startswith("__") and not callable(value):
                 primary_key = attr == self.PRIMARY_KEY
-                sql_type = self.TYPE_MAPPING.get(type(value), None)
+                sql_type = self.SQL_TYPE_MAPPING.get(type(value), None)
                 columns.append(
                     sql.Column(attr, sql_type, nullable=False, primary_key=primary_key)
                 )
