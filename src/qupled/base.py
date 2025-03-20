@@ -205,7 +205,9 @@ class ClassicScheme:
         return f"rs{coupling:5.3f}_theta{degeneracy:5.3f}_{theory}.h5"
 
     @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
+    def _save(
+        self, scheme, results=None, input_table_name=None, results_table_name=None
+    ) -> None:
         inputs = scheme.inputs
         """Stores the results obtained by solving the scheme."""
         pd.DataFrame(
@@ -239,6 +241,11 @@ class ClassicScheme:
         pd.DataFrame(scheme.wvg).to_hdf(
             self.hdf_file_name, key=util.HDF.EntryKeys.WVG.value
         )
+        if results is not None:
+            db_handler = DataBaseHandler(
+                inputs, results, input_table_name, results_table_name
+            )
+            db_handler.insert()
 
     # Compute radial distribution function
     def compute_rdf(

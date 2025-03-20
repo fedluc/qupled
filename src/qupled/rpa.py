@@ -26,12 +26,9 @@ class Rpa(base.ClassicScheme):
         """
         scheme = native.Rpa(inputs.to_native())
         self._compute(scheme)
-        self._save(scheme)
-        results = self.Results(scheme)
-        db_handler = base.DataBaseHandler(
-            inputs, results, self.INPUT_TABLE_NAME, self.RESULT_TABLE_NAME
+        self._save(
+            scheme, self.Results(scheme), self.INPUT_TABLE_NAME, self.RESULT_TABLE_NAME
         )
-        db_handler.insert()
 
     # Input class
     class Input:
@@ -83,7 +80,7 @@ class Rpa(base.ClassicScheme):
         Class used to store the results for the :obj:`qupled.classic.Rpa` class.
         """
 
-        def __init__(self, scheme):
+        def __init__(self, scheme, init_from_native=True):
             self.idr: np.ndarray = None
             """Ideal density response"""
             self.sdr: np.ndarray = None
@@ -94,4 +91,5 @@ class Rpa(base.ClassicScheme):
             """Static structure factor"""
             self.wvg: np.ndarray = None
             """Wave-vector grid"""
-            base.Result.from_native(self, scheme)
+            if init_from_native:
+                base.Result.from_native(self, scheme)

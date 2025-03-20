@@ -26,12 +26,12 @@ class Stls(base.IterativeScheme):
         """
         scheme = native.Stls(inputs.to_native())
         self._compute(scheme)
-        self._save(scheme)
-        results = rpa.Rpa.Results(scheme)
-        db_handler = base.DataBaseHandler(
-            inputs, results, self.INPUT_TABLE_NAME, self.RESULT_TABLE_NAME
+        self._save(
+            scheme,
+            rpa.Rpa.Results(scheme),
+            self.INPUT_TABLE_NAME,
+            self.RESULT_TABLE_NAME,
         )
-        db_handler.insert()
 
     # Input class
     class Input(rpa.Rpa.Input):

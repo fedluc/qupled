@@ -5,13 +5,18 @@
 from __future__ import annotations
 import sys
 import pandas as pd
+import numpy as np
 from . import native
 from . import util
+from . import rpa
 from . import stls
 from . import base
 
 
 class StlsIet(base.IterativeScheme):
+
+    INPUT_TABLE_NAME = "StlsIet_input"
+    RESULT_TABLE_NAME = "StlsIet_results"
 
     # Compute
     @util.MPI.record_time
@@ -25,7 +30,12 @@ class StlsIet(base.IterativeScheme):
         """
         scheme = native.Stls(inputs.to_native())
         self._compute(scheme)
-        self._save(scheme)
+        self._save(
+            scheme,
+            rpa.Rpa.Results(scheme),
+            self.INPUT_TABLE_NAME,
+            self.RESULT_TABLE_NAME,
+        )
 
     # Save results to disk
     @util.MPI.run_only_on_root
@@ -63,11 +73,14 @@ class StlsIet(base.IterativeScheme):
             mapping diverges). Default = ``standard``.
             """
 
-        def to_native(self) -> native.StlsInput:
-            native_input = native.StlsInput()
-            for attr, value in self.__dict__.items():
-                if attr == "guess":
-                    setattr(native_input, attr, value.to_native())
-                else:
-                    setattr(native_input, attr, value)
-            return native_input
+    # Results class
+    class Results(rpa.Rpa.Results):
+        """
+        Class used to store the results for the :obj:`qupled.classic.StlsIet` class.
+        """
+
+        def __init__(self, scheme):
+            super().__init__(scheme, init_from_native=False)
+            self.bf: np.ndarray = None
+            """Bridge function adder"""
+            base.Result.from_native(self, scheme)
