@@ -7,11 +7,15 @@ import pandas as pd
 import numpy as np
 from . import native
 from . import util
+from . import rpa
 from . import stls
 from . import base as base
 
 
 class VSStls(base.IterativeScheme):
+
+    INPUT_TABLE_NAME = "VSStls_input"
+    RESULT_TABLE_NAME = "VSStls_results"
 
     # Compute
     @util.MPI.record_time
@@ -25,13 +29,19 @@ class VSStls(base.IterativeScheme):
         """
         scheme = native.VSStls(inputs.to_native())
         self._compute(scheme)
-        self._save(scheme)
+        self._save(scheme, inputs)
 
     # Save results
     @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
+    def _save(self, scheme, inputs) -> None:
         """Stores the results obtained by solving the scheme."""
-        super()._save(scheme)
+        super()._save(
+            scheme,
+            inputs,
+            self.Results(scheme),
+            self.INPUT_TABLE_NAME,
+            self.RESULT_TABLE_NAME,
+        )
         pd.DataFrame(scheme.free_energy_grid).to_hdf(
             self.hdf_file_name, key=util.HDF.EntryKeys.FXC_GRID.value
         )
@@ -94,10 +104,20 @@ class VSStls(base.IterativeScheme):
             self.theory: str = "VSSTLS"
 
         def to_native(self) -> native.VSStlsInput:
-            native_input = native.VSStlsInput()
-            for attr, value in self.__dict__.items():
-                if attr == "guess":
-                    setattr(native_input, attr, value.to_native())
-                else:
-                    setattr(native_input, attr, value)
-            return native_input
+            return base.Input.to_native(self, native.VSStlsInput())
+
+    # Results class
+    class Results(rpa.Rpa.Results):
+        """
+        Class used to store the results for the :obj:`qupled.classic.StlsIet` class.
+        """
+
+        def __init__(self, scheme):
+            super().__init__(scheme, init_from_native=False)
+            self.free_energy_grid = None
+            """Free energy grid"""
+            self.free_energy_integrand = None
+            """Free energy integrand"""
+            self.alpha = None
+            """Free parameter"""
+            base.Result.from_native(self, scheme)

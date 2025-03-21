@@ -206,7 +206,12 @@ class ClassicScheme:
 
     @util.MPI.run_only_on_root
     def _save(
-        self, scheme, results=None, input_table_name=None, results_table_name=None
+        self,
+        scheme,
+        inputs_db=None,
+        results=None,
+        input_table_name=None,
+        results_table_name=None,
     ) -> None:
         inputs = scheme.inputs
         """Stores the results obtained by solving the scheme."""
@@ -243,7 +248,7 @@ class ClassicScheme:
         )
         if results is not None:
             db_handler = DataBaseHandler(
-                inputs, results, input_table_name, results_table_name
+                inputs_db, results, input_table_name, results_table_name
             )
             db_handler.insert()
 
@@ -326,9 +331,16 @@ class IterativeScheme(ClassicScheme):
 
     # Save results to disk
     @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
+    def _save(
+        self,
+        scheme,
+        inputs_db=None,
+        results=None,
+        input_table_name=None,
+        results_table_name=None,
+    ) -> None:
         """Stores the results obtained by solving the scheme."""
-        super()._save(scheme)
+        super()._save(scheme, inputs_db, results, input_table_name, results_table_name)
         inputs = scheme.inputs
         pd.DataFrame(
             {

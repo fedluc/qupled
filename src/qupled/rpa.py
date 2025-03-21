@@ -27,7 +27,11 @@ class Rpa(base.ClassicScheme):
         scheme = native.Rpa(inputs.to_native())
         self._compute(scheme)
         self._save(
-            scheme, self.Results(scheme), self.INPUT_TABLE_NAME, self.RESULT_TABLE_NAME
+            scheme,
+            inputs,
+            self.Results(scheme),
+            self.INPUT_TABLE_NAME,
+            self.RESULT_TABLE_NAME,
         )
 
     # Input class

@@ -26,9 +26,9 @@ class ESA(base.ClassicScheme):
         """
         scheme = native.ESA(inputs.to_native())
         self._compute(scheme)
-        self._save(scheme)
         self._save(
             scheme,
+            inputs,
             rpa.Rpa.Results(scheme),
             self.INPUT_TABLE_NAME,
             self.RESULT_TABLE_NAME,

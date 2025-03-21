@@ -32,6 +32,7 @@ class StlsIet(base.IterativeScheme):
         self._compute(scheme)
         self._save(
             scheme,
+            inputs,
             rpa.Rpa.Results(scheme),
             self.INPUT_TABLE_NAME,
             self.RESULT_TABLE_NAME,
