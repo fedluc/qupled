@@ -78,12 +78,18 @@ class Rpa(base.ClassicScheme):
         def __init__(self, scheme, init_from_native=True):
             self.idr: np.ndarray = None
             """Ideal density response"""
+            self.rdf: np.ndarray = None
+            """Radial distribution function"""
+            self.rdf_grid: np.ndarray = None
+            """Radial distribution function grid"""
             self.sdr: np.ndarray = None
             """Static density response"""
             self.slfc: np.ndarray = None
             """Static local field correction"""
             self.ssf: np.ndarray = None
             """Static structure factor"""
+            self.uint: float = None
+            """Internal energy"""
             self.wvg: np.ndarray = None
             """Wave-vector grid"""
             if init_from_native:

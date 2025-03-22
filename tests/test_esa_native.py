@@ -11,7 +11,7 @@ def test_esa_properties():
     assert hasattr(scheme, "ssf")
     assert hasattr(scheme, "ssf_HF")
     with pytest.raises(RuntimeError) as excinfo:
-        hasattr(scheme, "internal_energy")
+        hasattr(scheme, "uint")
     assert excinfo.value.args[0] == "No data to compute the internal energy"
     assert hasattr(scheme, "wvg")
     assert hasattr(scheme, "recovery")

@@ -154,7 +154,7 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("slfc", &PyRpa::getSlfc)
       .add_property("ssf", &PyRpa::getSsf)
       .add_property("ssf_HF", &PyRpa::getSsfHF)
-      .add_property("internal_energy", &PyRpa::getUInt)
+      .add_property("uint", &PyRpa::getUInt)
       .add_property("wvg", &PyRpa::getWvg)
       .add_property("recovery", &PyRpa::getRecoveryFileName);
 
