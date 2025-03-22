@@ -15,9 +15,6 @@ from . import base
 
 class StlsIet(base.IterativeScheme):
 
-    INPUT_TABLE_NAME = "StlsIet_input"
-    RESULT_TABLE_NAME = "StlsIet_results"
-
     # Compute
     @util.MPI.record_time
     @util.MPI.synchronize_ranks
@@ -30,19 +27,13 @@ class StlsIet(base.IterativeScheme):
         """
         scheme = native.Stls(inputs.to_native())
         self._compute(scheme)
-        self._save(
-            scheme,
-            inputs,
-            rpa.Rpa.Results(scheme),
-            self.INPUT_TABLE_NAME,
-            self.RESULT_TABLE_NAME,
-        )
+        self._save(scheme, inputs)
 
     # Save results to disk
     @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
+    def _save(self, scheme, inputs) -> None:
         """Stores the results obtained by solving the scheme."""
-        super()._save(scheme)
+        super()._save(scheme, inputs, self.Results(scheme))
         pd.DataFrame(scheme.bf).to_hdf(self.hdf_file_name, key="bf")
 
     # Input class

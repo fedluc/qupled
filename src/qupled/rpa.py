@@ -11,9 +11,6 @@ from . import base
 
 class Rpa(base.ClassicScheme):
 
-    INPUT_TABLE_NAME = "RPA_input"
-    RESULT_TABLE_NAME = "RPA_results"
-
     # Compute
     @util.MPI.record_time
     @util.MPI.synchronize_ranks
@@ -26,13 +23,7 @@ class Rpa(base.ClassicScheme):
         """
         scheme = native.Rpa(inputs.to_native())
         self._compute(scheme)
-        self._save(
-            scheme,
-            inputs,
-            self.Results(scheme),
-            self.INPUT_TABLE_NAME,
-            self.RESULT_TABLE_NAME,
-        )
+        self._save(scheme, inputs, self.Results(scheme))
 
     # Input class
     class Input:

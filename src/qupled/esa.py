@@ -11,9 +11,6 @@ from . import base
 
 class ESA(base.ClassicScheme):
 
-    INPUT_TABLE_NAME = "ESA_input"
-    RESULT_TABLE_NAME = "ESA_results"
-
     # Compute
     @util.MPI.record_time
     @util.MPI.synchronize_ranks
@@ -26,13 +23,7 @@ class ESA(base.ClassicScheme):
         """
         scheme = native.ESA(inputs.to_native())
         self._compute(scheme)
-        self._save(
-            scheme,
-            inputs,
-            rpa.Rpa.Results(scheme),
-            self.INPUT_TABLE_NAME,
-            self.RESULT_TABLE_NAME,
-        )
+        self._save(scheme, inputs, rpa.Rpa.Results(scheme))
 
     # Input class
     class Input(rpa.Rpa.Input):

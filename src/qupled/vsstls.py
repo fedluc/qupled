@@ -14,9 +14,6 @@ from . import base as base
 
 class VSStls(base.IterativeScheme):
 
-    INPUT_TABLE_NAME = "VSStls_input"
-    RESULT_TABLE_NAME = "VSStls_results"
-
     # Compute
     @util.MPI.record_time
     @util.MPI.synchronize_ranks
@@ -35,13 +32,7 @@ class VSStls(base.IterativeScheme):
     @util.MPI.run_only_on_root
     def _save(self, scheme, inputs) -> None:
         """Stores the results obtained by solving the scheme."""
-        super()._save(
-            scheme,
-            inputs,
-            self.Results(scheme),
-            self.INPUT_TABLE_NAME,
-            self.RESULT_TABLE_NAME,
-        )
+        super()._save(scheme, inputs, self.Results(scheme))
         pd.DataFrame(scheme.free_energy_grid).to_hdf(
             self.hdf_file_name, key=util.HDF.EntryKeys.FXC_GRID.value
         )

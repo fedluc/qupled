@@ -1,16 +1,20 @@
 from __future__ import annotations
 
+import io
+import json
 import os
 import sys
-import json
-import sqlalchemy as sql
+from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict
+
 import numpy as np
-import io
 import pandas as pd
-from typing import Any, Dict
+import sqlalchemy as sql
 
 from . import native
 from . import util
+
 
 # -----------------------------------------------------------------------
 # DataBaseHandler class
@@ -19,57 +23,164 @@ from . import util
 
 class DataBaseHandler:
 
-    SQL_TYPE_MAPPING = {
-        int: sql.Integer,
-        float: sql.Float,
-        str: sql.String,
-        list: sql.JSON,
-        dict: sql.JSON,
-        bytes: sql.LargeBinary,
-    }
-    PRIMARY_KEY = "id"
     DATABASE_NAME = "scheme_results.db"
+    RUNS_TABLE_NAME = "Runs"
+    INPUTS_TABLE_NAME = "Inputs"
+    RESULTS_TABLE_NAME = "Results"
 
-    def __init__(
-        self, inputs: Any, results: Any, inputs_table_name: str, results_table_name: str
-    ):
+    class TableKeys(Enum):
+        COUPLING = "coupling"
+        DATE = "date"
+        DEGENERACY = "degeneracy"
+        NAME = "name"
+        PRIMARY_KEY = "id"
+        RUN_ID = "run_id"
+        THEORY = "theory"
+        TIME = "time"
+        VALUE = "value"
+
+    def __init__(self):
         self.engine = sql.create_engine(f"sqlite:///{self.DATABASE_NAME}")
         self.table_metadata = sql.MetaData()
-        self.inputs = inputs
-        self.results = results
-        self.inputs_table_name = inputs_table_name
-        self.results_table_name = results_table_name
+        self.run_table = self._build_run_table()
+        self.inputs_table = self._build_inputs_table()
+        self.results_table = self._build_results_table()
         self.run_id: int | None = None
 
-    def insert(self):
-        self._insert_runs_table()
-        self._insert_input_table()
-        self._insert_result_table()
+    def insert_run(self, inputs, results):
+        self._insert_run_data(inputs)
+        self._insert_inputs_data(inputs)
+        self._insert_results_data(results)
 
-    def _insert_runs_table(self):
+    def _build_run_table(self):
         table = sql.Table(
-            "runs",
+            self.RUNS_TABLE_NAME,
             self.table_metadata,
             sql.Column(
-                DataBaseHandler.PRIMARY_KEY,
+                self.TableKeys.PRIMARY_KEY.value,
                 sql.Integer,
                 primary_key=True,
                 autoincrement=True,
             ),
+            sql.Column(
+                self.TableKeys.THEORY.value,
+                sql.JSON,
+                nullable=False,
+            ),
+            sql.Column(
+                self.TableKeys.COUPLING.value,
+                sql.JSON,
+                nullable=False,
+            ),
+            sql.Column(
+                self.TableKeys.DEGENERACY.value,
+                sql.JSON,
+                nullable=False,
+            ),
+            sql.Column(
+                self.TableKeys.DATE.value,
+                sql.JSON,
+                nullable=False,
+            ),
+            sql.Column(
+                self.TableKeys.TIME.value,
+                sql.JSON,
+                nullable=False,
+            ),
         )
-        self._create_table(table)
-        result = self._insert_data_to_table({}, table)
-        if result.inserted_primary_key:
-            self.run_id = result.inserted_primary_key[0]
+        table.create(self.engine, checkfirst=True)
+        return table
 
-    def _insert_input_table(self):
-        sql_mapping = lambda value: (
-            json.dumps(value) if isinstance(value, (list, dict)) else value
+    def _build_inputs_table(self) -> sql.Table:
+        return self._build_data_table(self.INPUTS_TABLE_NAME, sql.JSON)
+
+    def _build_results_table(self) -> sql.Table:
+        return self._build_data_table(self.RESULTS_TABLE_NAME, sql.LargeBinary)
+
+    def _build_data_table(self, table_name, sql_data_type) -> sql.Table:
+        table = sql.Table(
+            table_name,
+            self.table_metadata,
+            sql.Column(
+                self.TableKeys.PRIMARY_KEY.value,
+                sql.Integer,
+                primary_key=True,
+                autoincrement=True,
+            ),
+            sql.Column(
+                self.TableKeys.RUN_ID.value,
+                sql.Integer,
+                sql.ForeignKey(
+                    f"{self.RUNS_TABLE_NAME}.{self.TableKeys.PRIMARY_KEY.value}"
+                ),
+                nullable=False,
+            ),
+            sql.Column(
+                self.TableKeys.NAME.value,
+                sql.String,
+                nullable=False,
+            ),
+            sql.Column(
+                self.TableKeys.VALUE.value,
+                sql_data_type,
+                nullable=False,
+            ),
         )
-        data = self._create_data(self.inputs, sql_mapping)
-        self._insert_table(data, self.inputs_table_name)
+        table.create(self.engine, checkfirst=True)
+        return table
 
-    def _insert_result_table(self):
+    def _insert_run_data(self, inputs: Any):
+        now = datetime.now()
+        data = {
+            self.TableKeys.THEORY.value: self._to_json(inputs.theory),
+            self.TableKeys.COUPLING.value: self._to_json(inputs.coupling),
+            self.TableKeys.DEGENERACY.value: self._to_json(inputs.degeneracy),
+            self.TableKeys.DATE.value: now.date().isoformat(),
+            self.TableKeys.TIME.value: now.time().isoformat(),
+        }
+        statement = sql.insert(self.run_table).values(data)
+        result = self._execute(statement)
+        if run_id := result.inserted_primary_key:
+            self.run_id = run_id[0]
+
+    def _insert_inputs_data(self, inputs: Any):
+        sql_mapping = lambda value: (self._to_json(value))
+        self._insert_data(self.inputs_table, inputs, sql_mapping)
+
+    def _insert_results_data(self, results: Any):
+        sql_mapping = lambda value: (self._numpy_to_bytes(value))
+        self._insert_data(self.results_table, results, sql_mapping)
+
+    def _insert_data(
+        self, table: sql.Table, data_src: Any, sql_mapping: Callable[[Any], Any]
+    ):
+        for attr, value in data_src.__dict__.items():
+            if mapped_value := sql_mapping(value):
+                data = {
+                    self.TableKeys.RUN_ID.value: self.run_id,
+                    self.TableKeys.NAME.value: attr,
+                    self.TableKeys.VALUE.value: mapped_value,
+                }
+                statement = sql.insert(table).values(data)
+                self._execute(statement)
+
+    def _execute(self, statement) -> sql.CursorResult[Any]:
+        with self.engine.begin() as connection:
+            result = connection.execute(statement)
+            return result
+
+    def _numpy_to_bytes(self, arr: np.array) -> bytes:
+        arr_bytes = io.BytesIO()
+        np.save(arr_bytes, arr)
+        return arr_bytes.getvalue()
+
+    def _to_json(self, data: any) -> json:
+        try:
+            return json.dumps(data)
+        except:
+            return None
+
+    """  def _insert_result_table(self):
         sql_mapping = lambda value: (
             self._numpy_to_bytes(value) if value is not None else value
         )
@@ -103,23 +214,11 @@ class DataBaseHandler:
         table = sql.Table(table_name, self.table_metadata, *columns)
         return table
 
-    def _insert_data_to_table(
-        self, data: Dict[str, Any], table: sql.Table
-    ) -> sql.CursorResult[Any]:
-        statement = sql.insert(table).values(data)
-        with self.engine.begin() as connection:
-            result = connection.execute(statement)
-            return result
-
     def _numpy_to_bytes(self, arr: np.array) -> bytes:
         arr_bytes = io.BytesIO()
         np.save(arr_bytes, arr)
         return arr_bytes.getvalue()
-
-    def _create_table(self, table: sql.Table):
-        table_exists = sql.inspect(self.engine).has_table(table.name)
-        if not table_exists:
-            table.create(self.engine)
+    """
 
 
 # -----------------------------------------------------------------------
@@ -168,7 +267,6 @@ class ClassicScheme:
     def __init__(self):
         # File to store output on disk
         self.hdf_file_name: str = None  #: Name of the output file.
-        self.session = None
 
     # Compute the scheme
     def _compute(self, scheme) -> None:
@@ -205,14 +303,7 @@ class ClassicScheme:
         return f"rs{coupling:5.3f}_theta{degeneracy:5.3f}_{theory}.h5"
 
     @util.MPI.run_only_on_root
-    def _save(
-        self,
-        scheme,
-        inputs_db=None,
-        results=None,
-        input_table_name=None,
-        results_table_name=None,
-    ) -> None:
+    def _save(self, scheme, inputs_db=None, results=None) -> None:
         inputs = scheme.inputs
         """Stores the results obtained by solving the scheme."""
         pd.DataFrame(
@@ -247,10 +338,8 @@ class ClassicScheme:
             self.hdf_file_name, key=util.HDF.EntryKeys.WVG.value
         )
         if results is not None:
-            db_handler = DataBaseHandler(
-                inputs_db, results, input_table_name, results_table_name
-            )
-            db_handler.insert()
+            db_handler = DataBaseHandler()
+            db_handler.insert_run(inputs_db, results)
 
     # Compute radial distribution function
     def compute_rdf(
@@ -331,16 +420,9 @@ class IterativeScheme(ClassicScheme):
 
     # Save results to disk
     @util.MPI.run_only_on_root
-    def _save(
-        self,
-        scheme,
-        inputs_db=None,
-        results=None,
-        input_table_name=None,
-        results_table_name=None,
-    ) -> None:
+    def _save(self, scheme, inputs_db=None, results=None) -> None:
         """Stores the results obtained by solving the scheme."""
-        super()._save(scheme, inputs_db, results, input_table_name, results_table_name)
+        super()._save(scheme, inputs_db, results)
         inputs = scheme.inputs
         pd.DataFrame(
             {
