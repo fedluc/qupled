@@ -5,7 +5,6 @@ import sys
 
 import numpy as np
 import pandas as pd
-from typing import Any
 
 from . import native
 from . import util
@@ -91,7 +90,7 @@ class Result:
         self.wvg: np.ndarray = None
         """Wave-vector grid"""
 
-    def from_native(self, native_scheme: Any):
+    def from_native(self, native_scheme: any):
         for attr in self.__dict__.keys():
             if hasattr(native_scheme, attr):
                 value = getattr(native_scheme, attr)
@@ -257,19 +256,21 @@ class IterativeScheme(ClassicScheme):
 
     # Set the initial guess from a dataframe produced in output
     @staticmethod
-    def get_initial_guess(file_name: str) -> IterativeScheme.Guess:
-        """Constructs an initial guess object by extracting the information from an output file.
+    def get_initial_guess(
+        run_id: str, database_name: str | None = None
+    ) -> IterativeScheme.Guess:
+        """Constructs an initial guess object by extracting the information from a database.
 
         Args:
-            file_name : name of the file used to extract the information for the initial guess.
+            run_id: ID of the run used to extract the information for the initial guess.
+            database_name: Name of the database file. Default is None.
+
+        Returns:
+            An instance of IterativeScheme.Guess containing the initial guess data.
         """
-        hdf_data = util.HDF().read(
-            file_name, [util.HDF.EntryKeys.WVG.value, util.HDF.EntryKeys.SLFC.value]
-        )
-        return IterativeScheme.Guess(
-            hdf_data[util.HDF.EntryKeys.WVG.value],
-            hdf_data[util.HDF.EntryKeys.SLFC.value],
-        )
+        names = [util.HDF.EntryKeys.WVG.value, util.HDF.EntryKeys.SLFC.value]
+        data = util.HDF.read(run_id, database_name, names)
+        return IterativeScheme.Guess(data[names[0]], data[names[1]])
 
     # Save results to disk
     @util.MPI.run_only_on_root

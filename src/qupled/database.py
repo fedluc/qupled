@@ -7,7 +7,7 @@ import json
 import struct
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict
+from collections.abc import Callable
 
 import numpy as np
 import sqlalchemy as sql
@@ -16,7 +16,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 class DataBaseHandler:
 
-    DATABASE_NAME = "scheme_results.db"
+    DEFAULT_DATABASE_NAME = "scheme_results.db"
     RUNS_TABLE_NAME = "Runs"
     INPUTS_TABLE_NAME = "Inputs"
     RESULTS_TABLE_NAME = "Results"
@@ -32,8 +32,10 @@ class DataBaseHandler:
         TIME = "time"
         VALUE = "value"
 
-    def __init__(self):
-        self.engine = sql.create_engine(f"sqlite:///{self.DATABASE_NAME}")
+    def __init__(self, database_name: str | None = None):
+        if database_name is None:
+            database_name = self.DEFAULT_DATABASE_NAME
+        self.engine = sql.create_engine(f"sqlite:///{database_name}")
         self.table_metadata = sql.MetaData()
         self.run_table = self._build_run_table()
         self.inputs_table = self._build_inputs_table()
@@ -120,7 +122,7 @@ class DataBaseHandler:
         table.create(self.engine, checkfirst=True)
         return table
 
-    def insert_run_data(self, inputs: Any):
+    def insert_run_data(self, inputs: any):
         now = datetime.now()
         data = {
             self.TableKeys.THEORY.value: self._to_json(inputs.theory),
@@ -134,19 +136,42 @@ class DataBaseHandler:
         if run_id := result.inserted_primary_key:
             self.run_id = run_id[0]
 
-    def insert_inputs_data(self, inputs: Dict[str, Any]):
+    def insert_inputs_data(self, inputs: dict[str, any]):
         sql_mapping = lambda value: (self._to_json(value))
-        for name, value in inputs.items():
-            if mapped_value := sql_mapping(value):
-                self._insert_data(self.inputs_table, name, mapped_value)
+        self._insert_data_from_dict(self.inputs_table, inputs, sql_mapping)
 
-    def insert_results_data(self, results: Dict[str, Any]):
+    def insert_results_data(self, results: dict[str, any]):
         sql_mapping = lambda value: (self._to_bytes(value))
-        for name, value in results.items():
-            if mapped_value := sql_mapping(value):
-                self._insert_data(self.results_table, name, mapped_value)
+        self._insert_data_from_dict(self.results_table, results, sql_mapping)
 
-    def _insert_data(self, table: sql.Table, name: str, value: Any):
+    def get_runs(self) -> list[dict[str, any]]:
+        statement = sql.select(self.run_table)
+        rows = self._execute(statement).mappings().all()
+        return [{key: row[key] for key in row.keys()} for row in rows]
+
+    def get_run_data(self, run_id: int) -> dict:
+        statement = sql.select(self.run_table).where(
+            self.run_table.c[self.TableKeys.PRIMARY_KEY.value] == run_id
+        )
+        result = self._execute(statement).mappings().first()
+        return {key: result[key] for key in result.keys()} if result is not None else {}
+
+    def get_inputs_data(self, run_id: int, names: list[str]) -> dict:
+        sql_mapping = lambda value: (self._from_json(value))
+        return self._get_data(self.inputs_table, run_id, names, sql_mapping)
+
+    def get_results_data(self, run_id: int, names: list[str]) -> dict:
+        sql_mapping = lambda value: (self._from_bytes(value))
+        return self._get_data(self.results_table, run_id, names, sql_mapping)
+
+    def _insert_data_from_dict(
+        self, table, data: dict[str, any], sql_mapping: Callable[[any], any]
+    ) -> None:
+        for name, value in data.items():
+            if mapped_value := sql_mapping(value):
+                self._insert_data(table, name, mapped_value)
+
+    def _insert_data(self, table: sql.Table, name: str, value: any):
         data = {
             self.TableKeys.RUN_ID.value: self.run_id,
             self.TableKeys.NAME.value: name,
@@ -165,7 +190,24 @@ class DataBaseHandler:
         )
         self._execute(statement)
 
-    def _execute(self, statement) -> sql.CursorResult[Any]:
+    def _get_data(
+        self,
+        table: sql.Table,
+        run_id: int,
+        names: list[str],
+        sql_mapping: Callable[[any], any],
+    ) -> dict:
+        conditions = [table.c[self.TableKeys.RUN_ID.value] == run_id]
+        if names:
+            conditions.append(table.c[self.TableKeys.NAME.value].in_(names))
+        statement = sql.select(table).where(*conditions)
+        rows = self._execute(statement).mappings().all()
+        return {
+            row[self.TableKeys.NAME.value]: sql_mapping(row[self.TableKeys.VALUE.value])
+            for row in rows
+        }
+
+    def _execute(self, statement) -> sql.CursorResult[any]:
         with self.engine.begin() as connection:
             result = connection.execute(statement)
             return result
@@ -180,8 +222,24 @@ class DataBaseHandler:
         else:
             return None
 
+    def _from_bytes(self, data: bytes) -> float | np.ndarray | None:
+        try:
+            if len(data) == 8:
+                return struct.unpack("d", data)[0]
+            else:
+                arr_bytes = io.BytesIO(data)
+                return np.load(arr_bytes, allow_pickle=False)
+        except Exception:
+            return None
+
     def _to_json(self, data: any) -> json:
         try:
             return json.dumps(data)
+        except:
+            return None
+
+    def _from_json(self, data: json) -> any:
+        try:
+            return json.loads(data)
         except:
             return None

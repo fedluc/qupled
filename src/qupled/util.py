@@ -7,6 +7,7 @@ import pandas as pd
 from matplotlib import colormaps as cm
 
 from . import native
+from . import database
 
 # -----------------------------------------------------------------------
 # Hdf class
@@ -128,39 +129,58 @@ class HDF:
                 or self.entry_type == HDF.EntryType.STRING.value
             )
 
-    # Read data in hdf file
-    def read(self, hdf: str, to_read: list[str]) -> dict:
-        """Reads an hdf file produced by coupled and returns the content in the form of a dictionary
+    # Read runs in the database
+    def read_runs(self, database_name: str | None = None) -> dict:
+        """Reads runs from the database and returns the content in the form of a dictionary.
 
         Args:
-            hdf: Name of the hdf file to read
-            to_read: A list of quantities to read. The list of quantities that can be extracted from
-                the hdf file can be obtained by running :func:`~qupled.util.Hdf.inspect`
+            database_name (str, optional): Name of the database to read from. Defaults to None.
 
         Returns:
-            A dictionary whose entries are the quantities listed in to_read
-
+            A dictionary whose keys are the run ids and values are the corresponding runs information.
         """
-        output = dict.fromkeys(to_read)
-        with pd.HDFStore(hdf, mode="r") as store:
-            for name in to_read:
-                if name not in self.entries:
-                    raise KeyError(f"Unknown entry: {name}")
-                if self.entries[name].entry_type == HDF.EntryType.NUMPY.value:
-                    output[name] = store[name][0].to_numpy()
-                elif self.entries[name].entry_type == HDF.EntryType.NUMPY2D.value:
-                    output[name] = store[name].to_numpy()
-                elif self.entries[name].entry_type == HDF.EntryType.NUMBER.value:
-                    output[name] = (
-                        store[HDF.EntryKeys.INFO.value][name].iloc[0].tolist()
-                    )
-                elif self.entries[name].entry_type == HDF.EntryType.STRING.value:
-                    output[name] = store[HDF.EntryKeys.INFO.value][name].iloc[0]
-                else:
-                    raise ValueError(
-                        f"Unknown entry type: {self.entries[name].entry_type}"
-                    )
-        return output
+        db_handler = database.DataBaseHandler(database_name)
+        return db_handler.get_runs()
+
+    # Read inputs in the database
+    def read_inputs(
+        self,
+        run_id: str,
+        database_name: str | None = None,
+        names: list[str] | None = None,
+    ) -> dict:
+        """Reads inputs from the database and returns the content in the form of a dictionary.
+
+        Args:
+            run_id: Identifier of the run to read input for.
+            database_name: Name of the database to read from (default is None).
+            names: A list of quantities to read (default is None, which reads all available quantities).
+
+        Returns:
+            A dictionary whose keys are the quantities listed in names and values are the corresponding inputs.
+        """
+        db_handler = database.DataBaseHandler(database_name)
+        return db_handler.get_inputs_data(run_id, names if names is not None else [])
+
+    # Read results in the database
+    def read_results(
+        self,
+        run_id: str,
+        database_name: str | None = None,
+        names: list[str] | None = None,
+    ) -> dict:
+        """Reads results from the database and returns the content in the form of a dictionary.
+
+        Args:
+            run_id: Identifier of the run to read results for.
+            database_name: Name of the database to read from (default is None).
+            names: A list of quantities to read (default is None, which reads all available quantities).
+
+        Returns:
+            A dictionary whose keys are the quantities listed in names and values are the corresponding results.
+        """
+        db_handler = database.DataBaseHandler(database_name)
+        return db_handler.get_results_data(run_id, names if names is not None else [])
 
     # Get all quantities stored in an hdf file
     def inspect(self, hdf: str) -> dict:
