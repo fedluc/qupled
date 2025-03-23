@@ -24,15 +24,17 @@ class StlsIet(base.IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = native.Stls(inputs.to_native())
+        self.inputs = inputs
+        scheme = native.Stls(self.inputs.to_native())
         self._compute(scheme)
-        self._save(scheme, inputs)
+        self.results = self.Result(scheme)
+        self._save(scheme)
 
     # Save results to disk
     @util.MPI.run_only_on_root
-    def _save(self, scheme, inputs) -> None:
+    def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
-        super()._save(scheme, inputs, self.Result(scheme))
+        super()._save(scheme)
         pd.DataFrame(scheme.bf).to_hdf(self.hdf_file_name, key="bf")
 
     # Input class

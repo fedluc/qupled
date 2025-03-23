@@ -21,9 +21,11 @@ class ESA(base.ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = native.ESA(inputs.to_native())
+        self.inputs = inputs
+        scheme = native.ESA(self.inputs.to_native())
         self._compute(scheme)
-        self._save(scheme, inputs, rpa.Rpa.Result(scheme))
+        self.results = rpa.Rpa.Result(scheme)
+        self._save(scheme)
 
     # Input class
     class Input(rpa.Rpa.Input):

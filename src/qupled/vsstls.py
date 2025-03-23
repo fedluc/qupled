@@ -23,15 +23,17 @@ class VSStls(base.IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = native.VSStls(inputs.to_native())
+        self.inputs = inputs
+        scheme = native.VSStls(self.inputs.to_native())
         self._compute(scheme)
-        self._save(scheme, inputs)
+        self.results = self.Result(scheme)
+        self._save(scheme)
 
     # Save results
     @util.MPI.run_only_on_root
-    def _save(self, scheme, inputs) -> None:
+    def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
-        super()._save(scheme, inputs, self.Result(scheme))
+        super()._save(scheme)
         pd.DataFrame(scheme.free_energy_grid).to_hdf(
             self.hdf_file_name, key=util.HDF.EntryKeys.FXC_GRID.value
         )

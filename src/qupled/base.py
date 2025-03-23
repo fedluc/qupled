@@ -5,6 +5,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+from typing import Any
 
 from . import native
 from . import util
@@ -90,11 +91,16 @@ class Result:
         self.wvg: np.ndarray = None
         """Wave-vector grid"""
 
-    def from_native(self, native_scheme: any):
+    def from_native(self, native_scheme: Any):
         for attr in self.__dict__.keys():
             if hasattr(native_scheme, attr):
                 value = getattr(native_scheme, attr)
                 setattr(self, attr, value) if value is not None else None
+
+    def compute_rdf(self, rdf_grid: np.ndarray | None = None):
+        if rdf_grid is None:
+            self.rdf_grid = np.arange(0.0, 10.0, 0.01)
+        self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)
 
 
 # -----------------------------------------------------------------------
@@ -109,6 +115,8 @@ class ClassicScheme:
         self.hdf_file_name: str = None  #: Name of the output file.
         self.db_handler = DataBaseHandler()
         self.run_id = None
+        self.results = None
+        self.inputs = None
 
     # Compute the scheme
     def _compute(self, scheme) -> None:
@@ -179,27 +187,31 @@ class ClassicScheme:
         pd.DataFrame(scheme.wvg).to_hdf(
             self.hdf_file_name, key=util.HDF.EntryKeys.WVG.value
         )
-        if results is not None:
-            self.run_id = self.db_handler.insert_run(inputs_db, results)
+        if self.results is not None:
+            self.run_id = self.db_handler.insert_run(self.inputs, self.results)
 
     # Compute radial distribution function
-    def compute_rdf(
-        self, rdf_grid: np.ndarray = None, write_to_hdf: bool = True
-    ) -> np.array:
+    @util.MPI.run_only_on_root
+    def compute_rdf(self, rdf_grid: np.ndarray = None) -> None:
         """Computes the radial distribution function from the data stored in the output file.
 
         Args:
             rdf_grid: The grid used to compute the radial distribution function.
                 Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`)
-            write_to_hdf: Flag marking whether the rdf data should be added to the output hdf file, default to True
 
-        Returns:
-            The radial distribution function
 
         """
-        if util.MPI().rank() > 0:
-            write_to_hdf = False
-        return util.HDF().compute_rdf(self.hdf_file_name, rdf_grid, write_to_hdf)
+        if self.results is not None:
+            self.results.compute_rdf(rdf_grid)
+            self.db_handler.insert_results_data(
+                {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid}
+            )
+            pd.DataFrame(self.results.rdf_grid).to_hdf(
+                self.hdf_file_name, key=util.HDF.EntryKeys.RDF_GRID.value, mode="r+"
+            )
+            pd.DataFrame(self.results.rdf).to_hdf(
+                self.hdf_file_name, key=util.HDF.EntryKeys.RDF.value, mode="r+"
+            )
 
     # Compute the internal energy
     def compute_internal_energy(self) -> float:
@@ -261,9 +273,9 @@ class IterativeScheme(ClassicScheme):
 
     # Save results to disk
     @util.MPI.run_only_on_root
-    def _save(self, scheme, inputs_db=None, results=None) -> None:
+    def _save(self, scheme) -> None:
         """Stores the results obtained by solving the scheme."""
-        super()._save(scheme, inputs_db, results)
+        super()._save(scheme)
         inputs = scheme.inputs
         pd.DataFrame(
             {

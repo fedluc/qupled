@@ -21,9 +21,11 @@ class Stls(base.IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = native.Stls(inputs.to_native())
+        self.inputs = inputs
+        scheme = native.Stls(self.inputs.to_native())
         self._compute(scheme)
-        self._save(scheme, inputs, rpa.Rpa.Result(scheme))
+        self.results = rpa.Rpa.Result(scheme)
+        self._save(scheme)
 
     # Input class
     class Input(base.Input):

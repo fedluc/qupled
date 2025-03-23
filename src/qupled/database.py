@@ -7,10 +7,11 @@ import json
 import struct
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any, Callable, Dict
 
 import numpy as np
 import sqlalchemy as sql
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 
 class DataBaseHandler:
@@ -41,8 +42,8 @@ class DataBaseHandler:
 
     def insert_run(self, inputs, results):
         self.insert_run_data(inputs)
-        self.insert_inputs_data(inputs)
-        self.insert_results_data(results)
+        self.insert_inputs_data(inputs.__dict__)
+        self.insert_results_data(results.__dict__)
         return self.run_id
 
     def _build_run_table(self):
@@ -95,12 +96,6 @@ class DataBaseHandler:
             table_name,
             self.table_metadata,
             sql.Column(
-                self.TableKeys.PRIMARY_KEY.value,
-                sql.Integer,
-                primary_key=True,
-                autoincrement=True,
-            ),
-            sql.Column(
                 self.TableKeys.RUN_ID.value,
                 sql.Integer,
                 sql.ForeignKey(
@@ -117,6 +112,9 @@ class DataBaseHandler:
                 self.TableKeys.VALUE.value,
                 sql_data_type,
                 nullable=True,
+            ),
+            sql.PrimaryKeyConstraint(
+                self.TableKeys.RUN_ID.value, self.TableKeys.NAME.value
             ),
         )
         table.create(self.engine, checkfirst=True)
@@ -136,26 +134,36 @@ class DataBaseHandler:
         if run_id := result.inserted_primary_key:
             self.run_id = run_id[0]
 
-    def insert_inputs_data(self, inputs: Any):
+    def insert_inputs_data(self, inputs: Dict[str, Any]):
         sql_mapping = lambda value: (self._to_json(value))
-        self._insert_data(self.inputs_table, inputs, sql_mapping)
-
-    def insert_results_data(self, results: Any):
-        sql_mapping = lambda value: (self._to_bytes(value))
-        self._insert_data(self.results_table, results, sql_mapping)
-
-    def _insert_data(
-        self, table: sql.Table, data_src: Any, sql_mapping: Callable[[Any], Any]
-    ):
-        for attr, value in data_src.__dict__.items():
+        for name, value in inputs.items():
             if mapped_value := sql_mapping(value):
-                data = {
-                    self.TableKeys.RUN_ID.value: self.run_id,
-                    self.TableKeys.NAME.value: attr,
-                    self.TableKeys.VALUE.value: mapped_value,
-                }
-                statement = sql.insert(table).values(data)
-                self._execute(statement)
+                self._insert_data(self.inputs_table, name, mapped_value)
+
+    def insert_results_data(self, results: Dict[str, Any]):
+        sql_mapping = lambda value: (self._to_bytes(value))
+        for name, value in results.items():
+            if mapped_value := sql_mapping(value):
+                self._insert_data(self.results_table, name, mapped_value)
+
+    def _insert_data(self, table: sql.Table, name: str, value: Any):
+        data = {
+            self.TableKeys.RUN_ID.value: self.run_id,
+            self.TableKeys.NAME.value: name,
+            self.TableKeys.VALUE.value: value,
+        }
+        statement = (
+            sqlite_insert(table)
+            .values(data)
+            .on_conflict_do_update(
+                index_elements=[
+                    self.TableKeys.RUN_ID.value,
+                    self.TableKeys.NAME.value,
+                ],
+                set_={self.TableKeys.VALUE.value: value},
+            )
+        )
+        self._execute(statement)
 
     def _execute(self, statement) -> sql.CursorResult[Any]:
         with self.engine.begin() as connection:
