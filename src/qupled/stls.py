@@ -23,10 +23,10 @@ class Stls(base.IterativeScheme):
         """
         scheme = native.Stls(inputs.to_native())
         self._compute(scheme)
-        self._save(scheme, inputs, rpa.Rpa.Results(scheme))
+        self._save(scheme, inputs, rpa.Rpa.Result(scheme))
 
     # Input class
-    class Input(rpa.Rpa.Input):
+    class Input(base.Input):
         """
         Class used to manage the input for the :obj:`qupled.classic.Stls` class.
         """
@@ -49,4 +49,4 @@ class Stls(base.IterativeScheme):
             self.theory: str = "STLS"
 
         def to_native(self) -> native.StlsInput:
-            return base.Input.to_native(self, native.StlsInput())
+            return super().to_native(native.StlsInput())

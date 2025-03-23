@@ -18,10 +18,43 @@ from qupled.database import DataBaseHandler
 
 class Input:
 
-    @staticmethod
-    def to_native(input_cls, native_input: any) -> any:
+    def __init__(self, coupling: float, degeneracy: float):
+        self.chemical_potential: list[float] = [-10.0, 10.0]
+        """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
+        self.coupling: float = coupling
+        """Coupling parameter."""
+        self.cutoff: float = 10.0
+        """Cutoff for the wave-vector grid. Default =  ``10.0``"""
+        self.degeneracy: float = degeneracy
+        """Degeneracy parameter."""
+        self.frequency_cutoff: float = 10.0
+        """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
+        self.integral_error: float = 1.0e-5
+        """Accuracy (relative error) in the computation of integrals. Default = ``1.0e-5``"""
+        self.integral_strategy: str = "full"
+        """
+        Scheme used to solve two-dimensional integrals
+        allowed options include:
+
+        - full: the inner integral is evaluated at arbitrary points
+            selected automatically by the quadrature rule
+
+        - segregated: the inner integral is evaluated on a fixed
+            grid that depends on the integrand that is being processed
+
+        Segregated is usually faster than full but it could become
+        less accurate if the fixed points are not chosen correctly. Default =  ``'full'``
+        """
+        self.matsubara: int = 128
+        """Number of Matsubara frequencies. Default = ``128``"""
+        self.resolution: float = 0.1
+        """Resolution of the wave-vector grid. Default =  ``0.1``"""
+        self.threads: int = 1
+        """Number of OMP threads for parallel calculations. Default =  ``1``"""
+
+    def to_native(self, native_input: any) -> any:
         name = Input.to_native.__name__
-        for attr, value in input_cls.__dict__.items():
+        for attr, value in self.__dict__.items():
             if hasattr(native_input, attr):
                 value_to_set = (
                     tonative()
@@ -39,12 +72,29 @@ class Input:
 
 class Result:
 
-    @staticmethod
-    def from_native(result_cls, native_scheme: any):
-        for attr in result_cls.__dict__.keys():
+    def __init__(self):
+        self.idr: np.ndarray = None
+        """Ideal density response"""
+        self.rdf: np.ndarray = None
+        """Radial distribution function"""
+        self.rdf_grid: np.ndarray = None
+        """Radial distribution function grid"""
+        self.sdr: np.ndarray = None
+        """Static density response"""
+        self.slfc: np.ndarray = None
+        """Static local field correction"""
+        self.ssf: np.ndarray = None
+        """Static structure factor"""
+        self.uint: float = None
+        """Internal energy"""
+        self.wvg: np.ndarray = None
+        """Wave-vector grid"""
+
+    def from_native(self, native_scheme: any):
+        for attr in self.__dict__.keys():
             if hasattr(native_scheme, attr):
                 value = getattr(native_scheme, attr)
-                setattr(result_cls, attr, value) if value is not None else None
+                setattr(self, attr, value) if value is not None else None
 
 
 # -----------------------------------------------------------------------

@@ -8,7 +8,6 @@ import pandas as pd
 import numpy as np
 from . import native
 from . import util
-from . import rpa
 from . import stls
 from . import base
 
@@ -33,7 +32,7 @@ class StlsIet(base.IterativeScheme):
     @util.MPI.run_only_on_root
     def _save(self, scheme, inputs) -> None:
         """Stores the results obtained by solving the scheme."""
-        super()._save(scheme, inputs, self.Results(scheme))
+        super()._save(scheme, inputs, self.Result(scheme))
         pd.DataFrame(scheme.bf).to_hdf(self.hdf_file_name, key="bf")
 
     # Input class
@@ -66,13 +65,12 @@ class StlsIet(base.IterativeScheme):
             """
 
     # Results class
-    class Results(rpa.Rpa.Results):
+    class Result(base.Result):
         """
         Class used to store the results for the :obj:`qupled.classic.StlsIet` class.
         """
 
         def __init__(self, scheme):
-            super().__init__(scheme, init_from_native=False)
+            super().__init__()
             self.bf: np.ndarray = None
-            """Bridge function adder"""
-            base.Result.from_native(self, scheme)
+            super().from_native(scheme)

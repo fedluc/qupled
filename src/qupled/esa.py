@@ -23,7 +23,7 @@ class ESA(base.ClassicScheme):
         """
         scheme = native.ESA(inputs.to_native())
         self._compute(scheme)
-        self._save(scheme, inputs, rpa.Rpa.Results(scheme))
+        self._save(scheme, inputs, rpa.Rpa.Result(scheme))
 
     # Input class
     class Input(rpa.Rpa.Input):

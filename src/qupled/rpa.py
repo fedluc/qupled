@@ -23,74 +23,27 @@ class Rpa(base.ClassicScheme):
         """
         scheme = native.Rpa(inputs.to_native())
         self._compute(scheme)
-        self._save(scheme, inputs, self.Results(scheme))
+        self._save(scheme, inputs, self.Result(scheme))
 
     # Input class
-    class Input:
+    class Input(base.Input):
         """
         Class used to manage the input for the :obj:`qupled.classic.Rpa` class.
         """
 
         def __init__(self, coupling: float, degeneracy: float):
-            self.chemical_potential: list[float] = [-10.0, 10.0]
-            """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
-            self.coupling: float = coupling
-            """Coupling parameter."""
-            self.cutoff: float = 10.0
-            """Cutoff for the wave-vector grid. Default =  ``10.0``"""
-            self.degeneracy: float = degeneracy
-            """Degeneracy parameter."""
-            self.frequency_cutoff: float = 10.0
-            """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
-            self.integral_error: float = 1.0e-5
-            """Accuracy (relative error) in the computation of integrals. Default = ``1.0e-5``"""
-            self.integral_strategy: str = "full"
-            """
-            Scheme used to solve two-dimensional integrals
-            allowed options include:
-
-            - full: the inner integral is evaluated at arbitrary points
-              selected automatically by the quadrature rule
-
-            - segregated: the inner integral is evaluated on a fixed
-              grid that depends on the integrand that is being processed
-
-            Segregated is usually faster than full but it could become
-            less accurate if the fixed points are not chosen correctly. Default =  ``'full'``
-            """
-            self.matsubara: int = 128
-            """Number of Matsubara frequencies. Default = ``128``"""
-            self.resolution: float = 0.1
-            """Resolution of the wave-vector grid. Default =  ``0.1``"""
-            self.threads: int = 1
-            """Number of OMP threads for parallel calculations. Default =  ``1``"""
+            super().__init__(coupling, degeneracy)
             self.theory: str = "RPA"
 
         def to_native(self) -> native.RpaInput:
-            return base.Input.to_native(self, native.RpaInput())
+            return super().to_native(native.RpaInput())
 
     # Results class
-    class Results:
+    class Result(base.Result):
         """
         Class used to store the results for the :obj:`qupled.classic.Rpa` class.
         """
 
-        def __init__(self, scheme, init_from_native=True):
-            self.idr: np.ndarray = None
-            """Ideal density response"""
-            self.rdf: np.ndarray = None
-            """Radial distribution function"""
-            self.rdf_grid: np.ndarray = None
-            """Radial distribution function grid"""
-            self.sdr: np.ndarray = None
-            """Static density response"""
-            self.slfc: np.ndarray = None
-            """Static local field correction"""
-            self.ssf: np.ndarray = None
-            """Static structure factor"""
-            self.uint: float = None
-            """Internal energy"""
-            self.wvg: np.ndarray = None
-            """Wave-vector grid"""
-            if init_from_native:
-                base.Result.from_native(self, scheme)
+        def __init__(self, scheme):
+            super().__init__()
+            super().from_native(scheme)
