@@ -60,41 +60,6 @@ void Stls2D::init() {
   computeSsfHF2D();
   println("Done");
 }
-void Stls2D::computeChemicalPotential2D() {
-  mu = log(exp(1/in.getDegeneracy())-1);
-}
-
-void Stls2D::computeIdr2D() {
-  if (in.getDegeneracy() == 0.0) return;
-  const size_t nx = wvg.size();
-  const size_t nl = in.getNMatsubara();
-  assert(idr.size(0) == nx && idr.size(1) == nl);
-  for (size_t i = 0; i < nx; ++i) {
-    Idr idrTmp(
-        nl, wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
-    idr.fill(i, idrTmp.get());
-  }
-}
-
-void Stls2D::computeSsfHF2D() {
-  // placeholder
-}
-
-// Compute static local field correction
-void Stls2D::computeSlfc2D() {
-  assert(ssf.size() == wvg.size());
-  assert(slfc.size() == wvg.size());
-  computeSlfcStls2D();
-}
-
-void Stls2D::computeSlfcStls2D() {
-  const int nx = wvg.size();
-  const Interpolator1D itp(wvg, ssf);
-  for (int i = 0; i < nx; ++i) {
-    Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
-    slfcNew[i] = slfcTmp.get();
-  }
-}
 
 // stls iterations
 void Stls2D::doIterations() {
@@ -109,7 +74,7 @@ void Stls2D::doIterations() {
     // Start timing
     double tic = timer();
     // Update static structure factor
-    computeSsf();
+    computeSsf2D();
     // Update static local field correction
     computeSlfc2D();
     // Update diagnostic
@@ -129,6 +94,57 @@ void Stls2D::doIterations() {
   }
 }
 
+void Stls2D::computeChemicalPotential2D() {
+  mu = log(exp(1/in.getDegeneracy())-1);
+}
+
+void Stls2D::computeIdr2D() {
+  if (in.getDegeneracy() == 0.0) return;
+  const size_t nx = wvg.size();
+  const size_t nl = in.getNMatsubara();
+  assert(idr.size(0) == nx && idr.size(1) == nl);
+  for (size_t i = 0; i < nx; ++i) {
+    Idr idrTmp(
+        nl, wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
+    idr.fill(i, idrTmp.get());
+  }
+}
+
+void Stls2D::computeSsf2D() {
+  // placeholder;
+}
+
+void Stls2D::computeSsfHF2D() {
+  Integrator2D itg2(ItgType::DEFAULT, ItgType::DEFAULT, in.getIntError());
+  const bool segregatedItg = in.getInt2DScheme() == "segregated";
+  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  for (size_t i = 0; i < wvg.size(); ++i) {
+    SSFHF2D ssfHF2DTmp(in.getDegeneracy(),
+                        wvg[i],
+                        mu,
+                        wvg.front(),
+                        wvg.back(),
+                        itgGrid,
+                        itg2);
+    ssfHF[i] = ssfHF2DTmp.get();
+  }
+}
+
+// Compute static local field correction
+void Stls2D::computeSlfc2D() {
+  assert(ssf.size() == wvg.size());
+  assert(slfc.size() == wvg.size());
+  computeSlfcStls2D();
+}
+
+void Stls2D::computeSlfcStls2D() {
+  const int nx = wvg.size();
+  const Interpolator1D itp(wvg, ssf);
+  for (int i = 0; i < nx; ++i) {
+    Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
+    slfcNew[i] = slfcTmp.get();
+  }
+}
 
 // -----------------------------------------------------------------
 // SlfcBase class
@@ -214,7 +230,7 @@ double Idr::integrand2DStls(const double &y) const {
   if (x > 0.0) {
     - 1.0 / (Theta * x * pow(cosh(y2 / (2 * Theta) - mu/2), 2) * y * sqrt(x2 / 4.0 - y2));
   } else {
-    return 0; // placeholder 
+    return 0; 
   }
 }
 
@@ -229,7 +245,11 @@ double Slfc::integrand2DStls(const double &y) const {
   double xmy = (x - y) / (x * M_PI);
   double xpy = (x + y) / (x * M_PI);
   double argElli = 2 * sqrt(x * y) / (x + y);
-  return - (ssf(y) - 1.0) * (xmy * Integrator1D::ellipticK(argElli) + xpy * Integrator1D::ellipticE(argElli));
+  if (x > 0.0) {
+  return - (ssf(y) - 1.0) * (xmy * Integrator1D::ellipticK(argElli) + xpy * Integrator1D::ellipticE(argElli));}
+  else {
+    return 0;
+  }
 }
 
 // Get result of integration
@@ -259,4 +279,41 @@ double Integrator1D::ellipticE(const double &k) {
     throw std::runtime_error("GSL error in ellipticE");
   }
   return result.val;
+}
+
+// -----------------------------------------------------------------
+// SSF HF 2D
+// -----------------------------------------------------------------
+
+inline double coth(double x) {
+  return 1.0 / tanh(x);
+}
+
+// Outer integrand
+double SSFHF2D::integrandOut(const double y) const {
+  const double y2 = y * y;
+  return 1.0 / (exp(y2 / Theta - mu) * M_PI + M_PI);
+}
+
+// Inner integrand
+double SSFHF2D::integrandIn(const double p) const {
+  const double y = itg2.getX();
+  double x2 = x * x;
+  return coth(x2 / (2 * Theta) - x * y / Theta * cos(p));
+}
+
+// Get total QAdder
+double SSFHF2D::get() const {
+  auto func1 = [&](const double &y) -> double {
+    return integrandOut(y);
+  };
+  auto func2 = [&](const double &p) -> double {
+    return integrandIn(p);
+  };
+  itg2.compute(
+      func1,
+      func2,
+      Itg2DParam(limits.first, limits.second, 0, 2 * M_PI),
+      itgGrid);
+  return itg2.getSolution();
 }
