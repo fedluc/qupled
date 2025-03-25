@@ -25,8 +25,6 @@ class QstlsIet(base.QuantumIterativeScheme):
     """
 
     # Compute
-    @util.MPI.record_time
-    @util.MPI.synchronize_ranks
     def compute(self, inputs: QstlsIet.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -35,11 +33,9 @@ class QstlsIet(base.QuantumIterativeScheme):
             inputs: Input parameters.
         """
         self._unpack_fixed_adr_files(inputs)
-        scheme = native.Qstls(inputs.to_native())
-        self._compute(scheme)
-        self._save(scheme)
+        super().compute(inputs, native.Qstls, native.QstlsInput(), self.Result())
         self._zip_fixed_adr_files(inputs)
-        self._clean_fixed_adr_files(scheme.inputs)
+        self._clean_fixed_adr_files(inputs)
 
     # Unpack zip folder with fixed component of the auxiliary density response
     @util.MPI.run_only_on_root
@@ -50,12 +46,6 @@ class QstlsIet(base.QuantumIterativeScheme):
         if fixed_iet_source_file != "":
             with zipfile.ZipFile(fixed_iet_source_file, "r") as zip_file:
                 zip_file.extractall(inputs.fixed_iet)
-
-    # Save results to disk
-    @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
-        super()._save(scheme)
-        pd.DataFrame(scheme.bf).to_hdf(self.hdf_file_name, key="bf")
 
     # Zip all files for the fixed component of the auxiliary density response
     @util.MPI.run_only_on_root
@@ -89,7 +79,7 @@ class QstlsIet(base.QuantumIterativeScheme):
             stlsiet.StlsIet.Input.__init__(self, coupling, degeneracy, "STLS-HNC")
             qstls.Qstls.Input.__init__(self, coupling, degeneracy)
             if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
-                sys.exit("Invalid dielectric theory")
+                raise ValueError("Invalid dielectric theory")
             self.theory = theory
             self.fixed_iet = ""
             """
@@ -97,11 +87,7 @@ class QstlsIet(base.QuantumIterativeScheme):
             of the auxiliary density response. Default = ``""``
             """
 
-        def to_native(self) -> native.QstlsInput:
-            native_input = native.QstlsInput()
-            for attr, value in self.__dict__.items():
-                if attr == "guess":
-                    setattr(native_input, attr, value.to_native())
-                else:
-                    setattr(native_input, attr, value)
-            return native_input
+    class Result(stlsiet.StlsIet.Result, qstls.Qstls.Result):
+
+        def __init__(self):
+            super().__init__()
