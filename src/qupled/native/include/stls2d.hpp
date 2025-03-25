@@ -11,7 +11,7 @@
 // Solver for the STLS scheme
 // -----------------------------------------------------------------
 
-class Stls2D : public Rpa {
+class Stls2D : public Stls {
 
 public:
 
@@ -41,22 +41,13 @@ protected:
   // Initialize basic properties
   void init();
   // Compute static local field correction
-  void computeSlfc();
-  void computeSlfcStls();
-  void computeSlfcIet();
-  // Compute bridge function
-  void computeBf();
+  void computeSlfc2D();
+  void computeSlfcStls2D();
+  void computeChemicalPotential2D();
+  void computeIdr2D();
+  void computeSsfHF2D();
   // Iterations to solve the stls scheme
   void doIterations();
-  void initialGuess();
-  bool initialGuessFromRecovery();
-  bool initialGuessFromInput();
-  double computeError() const;
-  void updateSolution();
-  // Write recovery files
-  void writeRecovery();
-  void readRecovery(std::vector<double> &wvgFile,
-                    std::vector<double> &slfcFile) const;
 };
 
 // -----------------------------------------------------------------

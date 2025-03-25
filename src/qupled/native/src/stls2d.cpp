@@ -1,4 +1,5 @@
 #include "stls2d.hpp"
+#include "stls.hpp"
 #include "bin_util.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
@@ -19,12 +20,9 @@ using ItgType = Integrator1D::Type;
 // -----------------------------------------------------------------
 
 Stls2D::Stls2D(const StlsInput &in_, const bool verbose_, const bool writeFiles_)
-    : Rpa(in_, verbose_),
+    : Stls(in_, verbose_, writeFiles_),
       in(in_),
       writeFiles(writeFiles_ && isRoot()) {
-  // Check if iet scheme should be solved
-  useIet = in.getTheory() == "STLS-HNC" || in.getTheory() == "STLS-IOI"
-           || in.getTheory() == "STLS-LCT";
   // Set name of recovery files
   recoveryFileName = fmt::format("recovery_rs{:.3f}_theta{:.3f}_{}.bin",
                                  in.getCoupling(),
@@ -36,7 +34,7 @@ Stls2D::Stls2D(const StlsInput &in_, const bool verbose_, const bool writeFiles_
   if (useIet) { bf.resize(nx); }
 }
 
-int Stls::compute() {
+int Stls2D::compute() {
   try {
     init();
     println("Structural properties calculation ...");
@@ -50,24 +48,37 @@ int Stls::compute() {
 }
 
 // Initialize basic properties
-void Stls::init() {
-  Rpa::init();
-  if (useIet) {
-    print("Computing bridge function adder: ");
-    computeBf();
-    println("Done");
-  }
+void Stls2D::init() {
+  print("Computing 2D chemical potential: ");
+  computeChemicalPotential2D();
+  println("Done");
+  print("Computing 2D ideal density response: ");
+  computeIdr2D();
+  println("Done");
+  print("Computing 2D Hartree-Fock static structure factor: ");
+  computeSsfHF2D();
+  println("Done");
+}
+void Stls2D::computeChemicalPotential2D() {
+  // placeholder
+}
+
+void Stls2D::computeIdr2D() {
+  // placeholder
+}
+
+void Stls2D::computeSsfHF2D() {
+  // placeholder
 }
 
 // Compute static local field correction
-void Stls::computeSlfc() {
+void Stls2D::computeSlfc2D() {
   assert(ssf.size() == wvg.size());
   assert(slfc.size() == wvg.size());
-  computeSlfcStls();
-  if (useIet) computeSlfcIet();
+  computeSlfcStls2D();
 }
 
-void Stls::computeSlfcStls() {
+void Stls2D::computeSlfcStls2D() {
   const int nx = wvg.size();
   const Interpolator1D itp(wvg, ssf);
   for (int i = 0; i < nx; ++i) {
@@ -77,7 +88,7 @@ void Stls::computeSlfcStls() {
 }
 
 // stls iterations
-void Stls::doIterations() {
+void Stls2D::doIterations() {
   const int maxIter = in.getNIter();
   const int outIter = in.getOutIter();
   const double minErr = in.getErrMin();
@@ -109,93 +120,6 @@ void Stls::doIterations() {
   }
 }
 
-// Initial guess for stls iterations
-void Stls::initialGuess() {
-  // From recovery file
-  if (initialGuessFromRecovery()) { return; }
-  // From guess in input
-  if (initialGuessFromInput()) { return; }
-  // Default
-  fill(slfc.begin(), slfc.end(), 0.0);
-}
-
-bool Stls::initialGuessFromRecovery() {
-  vector<double> wvgFile;
-  vector<double> slfcFile;
-  readRecovery(wvgFile, slfcFile);
-  const Interpolator1D slfci(wvgFile, slfcFile);
-  if (!slfci.isValid()) { return false; }
-  const double xmaxi = wvgFile.back();
-  for (size_t i = 0; i < wvg.size(); ++i) {
-    const double x = wvg[i];
-    if (x <= xmaxi) {
-      slfc[i] = slfci.eval(x);
-    } else {
-      slfc[i] = 1.0;
-    }
-  }
-  return true;
-}
-
-bool Stls::initialGuessFromInput() {
-  const Interpolator1D slfci(in.getGuess().wvg, in.getGuess().slfc);
-  if (!slfci.isValid()) { return false; }
-  const double xmaxi = in.getGuess().wvg.back();
-  for (size_t i = 0; i < wvg.size(); ++i) {
-    const double x = wvg[i];
-    if (x <= xmaxi) {
-      slfc[i] = slfci.eval(x);
-    } else {
-      slfc[i] = 1.0;
-    }
-  }
-  return true;
-}
-
-// Compute residual error for the stls iterations
-double Stls::computeError() const { return rms(slfc, slfcNew, false); }
-
-// Update solution during stls iterations
-void Stls::updateSolution() {
-  const double aMix = in.getMixingParameter();
-  slfc = linearCombination(slfcNew, aMix, slfc, 1 - aMix);
-}
-
-// Recovery files
-void Stls::writeRecovery() {
-  ofstream file;
-  file.open(recoveryFileName, ios::binary);
-  if (!file.is_open()) {
-    throwError("Recovery file " + recoveryFileName + " could not be created.");
-  }
-  int nx = wvg.size();
-  writeDataToBinary<int>(file, nx);
-  writeDataToBinary<decltype(wvg)>(file, wvg);
-  writeDataToBinary<decltype(slfc)>(file, slfc);
-  file.close();
-  if (!file) {
-    throwError("Error in writing the recovery file " + recoveryFileName);
-  }
-}
-
-void Stls::readRecovery(vector<double> &wvgFile,
-                        vector<double> &slfcFile) const {
-  const string fileName = in.getRecoveryFileName();
-  if (fileName.empty()) { return; }
-  ifstream file;
-  file.open(fileName, ios::binary);
-  if (!file.is_open()) {
-    throwError("Output file " + fileName + " could not be opened.");
-  }
-  int nx;
-  readDataFromBinary<int>(file, nx);
-  wvgFile.resize(nx);
-  slfcFile.resize(nx);
-  readDataFromBinary<decltype(wvgFile)>(file, wvgFile);
-  readDataFromBinary<decltype(slfcFile)>(file, slfcFile);
-  file.close();
-  if (!file) { throwError("Error in reading from file " + fileName); }
-}
 
 // -----------------------------------------------------------------
 // SlfcBase class
