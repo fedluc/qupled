@@ -100,6 +100,8 @@ public:
         itg(itg_) {}
   // Get result of integration
   std::vector<double> get() const;
+  // Get result of integration for 2D Stls
+  std::vector<double> get2DStls() const;
 
 private:
 
@@ -118,6 +120,10 @@ private:
   double integrand(const double &y, const int &l) const;
   // Idr integrand for frequency = 0 and wave-vector x
   double integrand(const double &y) const;
+  // 2D Stls Idr integrand for frequency = l and wave-vector x
+  double integrand2DStls(const double &y, const int &l) const;
+  // 2D Stls Idr integrand for frequency = 0 and wave-vector x
+  double integrand2DStls(const double &y) const;
   // Integrator object
   Integrator1D &itg;
 };

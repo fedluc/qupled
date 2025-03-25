@@ -60,11 +60,19 @@ void Stls2D::init() {
   println("Done");
 }
 void Stls2D::computeChemicalPotential2D() {
-  // placeholder
+  mu = log(exp(1/in.getDegeneracy())-1);
 }
 
 void Stls2D::computeIdr2D() {
-  // placeholder
+  if (in.getDegeneracy() == 0.0) return;
+  const size_t nx = wvg.size();
+  const size_t nl = in.getNMatsubara();
+  assert(idr.size(0) == nx && idr.size(1) == nl);
+  for (size_t i = 0; i < nx; ++i) {
+    Idr idrTmp(
+        nl, wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
+    idr.fill(i, idrTmp.get());
+  }
 }
 
 void Stls2D::computeSsfHF2D() {
@@ -102,7 +110,7 @@ void Stls2D::doIterations() {
     // Update static structure factor
     computeSsf();
     // Update static local field correction
-    computeSlfc();
+    computeSlfc2D();
     // Update diagnostic
     counter++;
     err = computeError();
@@ -151,4 +159,62 @@ double Slfc::integrand(const double &y) const {
   }
   return -(3.0 / 4.0) * y2 * (ssf(y) - 1.0)
          * (1 + (x2 - y2) / (2 * x * y) * log((x + y) / (y - x)));
+}
+
+// -----------------------------------------------------------------
+// Idr 2D class
+// -----------------------------------------------------------------
+
+vector<double> Idr::get2DStls() const {
+  assert(Theta > 0.0);
+  vector<double> res(nl);
+  for (int l = 0; l < nl; ++l) {
+    auto func = [&](const double &y) -> double {
+      return (l == 0) ? integrand2DStls(y) : integrand2DStls(y, l);
+    };
+    double upperLimit = (l == 0) ? yMax / 2.0 : yMax;
+    const auto itgParam = ItgParam(yMin, upperLimit);
+    itg.compute(func, itgParam);
+    if (l == 0) {
+      res[l] = 1.0 - std::exp(-1.0 / Theta) - itg.getSolution();
+    } else {
+      res[l] = itg.getSolution();
+    }
+  }
+  return res;
+}
+
+// Integrand for frequency = l and wave-vector = x
+double Idr::integrand2DStls(const double &y, const int &l) const {
+  double tphi;
+  double y2 = y * y;
+  double x2 = x * x;
+  double x4 = x2 * x2;
+  double txy = 2 * x * y;
+  double plT = M_PI * l * Theta;
+  double plT2 = plT * plT;
+  double exp1 = x4 / 4.0 - x2 * y2 - plT2;
+  if (exp1 < 0.0) {
+    tphi = atan(x2 * plT / exp1);
+  } else {
+    tphi = M_PI - atan(x2 * plT / exp1);
+  }
+  if (x > 0.0) {
+    return y / (exp(y2 / Theta - mu) + 1.0)
+           * 2.0 * abs(cos(tphi))/ pow((exp1 * exp1 + x4 * plT2), 0.25);
+  } else {
+    return 0;
+  }
+}
+
+// Integrand for frequency = 0 and vector = x
+double Idr::integrand2DStls(const double &y) const {
+  double y2 = y * y;
+  double x2 = x * x;
+  double xy = x * y;
+  if (x > 0.0) {
+    - 1.0 / (Theta * x * pow(cosh(y2 / (2 * Theta) - mu/2), 2) * y * sqrt(x2 / 4.0 - y2));
+  } else {
+    return 0; // placeholder 
+  }
 }

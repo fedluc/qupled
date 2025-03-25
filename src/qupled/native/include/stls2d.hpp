@@ -24,7 +24,6 @@ public:
   // Getters
   const StlsInput &getInput() const { return in; }
   double getError() const { return computeError(); }
-  const std::vector<double> &getBf() const { return bf; }
 
 protected:
 
@@ -32,12 +31,8 @@ protected:
   StlsInput in;
   // Flag to write the recovery files
   const bool writeFiles;
-  // iet schemes
-  bool useIet;
   // Static local field correction to use during the iterations
   std::vector<double> slfcNew;
-  // Bridge function (for iet schemes)
-  std::vector<double> bf;
   // Initialize basic properties
   void init();
   // Compute static local field correction
