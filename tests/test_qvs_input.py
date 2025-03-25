@@ -1,40 +1,39 @@
-import os
 import pytest
 import numpy as np
-from qupled import native
+from qupled.native import QVSStlsInput, VSInput, FreeEnergyIntegrand
 
 
 @pytest.fixture
 def qvsstls_input_instance():
-    return native.QVSStlsInput()
+    return QVSStlsInput()
 
 
 def test_init(qvsstls_input_instance):
-    assert issubclass(native.QVSStlsInput, native.VSInput)
-    assert hasattr(qvsstls_input_instance, "errorAlpha")
-    assert hasattr(qvsstls_input_instance, "iterationsAlpha")
+    assert issubclass(QVSStlsInput, VSInput)
+    assert hasattr(qvsstls_input_instance, "error_alpha")
+    assert hasattr(qvsstls_input_instance, "iterations_alpha")
     assert hasattr(qvsstls_input_instance, "alpha")
-    assert hasattr(qvsstls_input_instance, "couplingResolution")
-    assert hasattr(qvsstls_input_instance, "degeneracyResolution")
-    assert hasattr(qvsstls_input_instance, "freeEnergyIntegrand")
+    assert hasattr(qvsstls_input_instance, "coupling_resolution")
+    assert hasattr(qvsstls_input_instance, "degeneracy_resolution")
+    assert hasattr(qvsstls_input_instance, "free_energy_integrand")
     assert hasattr(qvsstls_input_instance, "guess")
     assert hasattr(qvsstls_input_instance.guess, "wvg")
     assert hasattr(qvsstls_input_instance.guess, "ssf")
     assert hasattr(qvsstls_input_instance.guess, "adr")
     assert hasattr(qvsstls_input_instance.guess, "matsubara")
     assert hasattr(qvsstls_input_instance, "fixed")
-    assert hasattr(qvsstls_input_instance.freeEnergyIntegrand, "grid")
-    assert hasattr(qvsstls_input_instance.freeEnergyIntegrand, "integrand")
+    assert hasattr(qvsstls_input_instance.free_energy_integrand, "grid")
+    assert hasattr(qvsstls_input_instance.free_energy_integrand, "integrand")
 
 
 def test_defaults(qvsstls_input_instance):
-    assert np.isnan(qvsstls_input_instance.errorAlpha)
-    assert qvsstls_input_instance.iterationsAlpha == 0
+    assert np.isnan(qvsstls_input_instance.error_alpha)
+    assert qvsstls_input_instance.iterations_alpha == 0
     assert qvsstls_input_instance.alpha.size == 0
-    assert np.isnan(qvsstls_input_instance.couplingResolution)
-    assert np.isnan(qvsstls_input_instance.degeneracyResolution)
-    assert qvsstls_input_instance.freeEnergyIntegrand.grid.size == 0
-    assert qvsstls_input_instance.freeEnergyIntegrand.integrand.size == 0
+    assert np.isnan(qvsstls_input_instance.coupling_resolution)
+    assert np.isnan(qvsstls_input_instance.degeneracy_resolution)
+    assert qvsstls_input_instance.free_energy_integrand.grid.size == 0
+    assert qvsstls_input_instance.free_energy_integrand.integrand.size == 0
     assert qvsstls_input_instance.guess.wvg.size == 0
     assert qvsstls_input_instance.guess.ssf.size == 0
     assert qvsstls_input_instance.guess.adr.size == 0
@@ -48,24 +47,24 @@ def test_fixed(qvsstls_input_instance):
     assert fixed == "fixedFile"
 
 
-def test_errorAlpha(qvsstls_input_instance):
-    qvsstls_input_instance.errorAlpha = 0.001
-    errorAlpha = qvsstls_input_instance.errorAlpha
-    assert errorAlpha == 0.001
+def test_error_alpha(qvsstls_input_instance):
+    qvsstls_input_instance.error_alpha = 0.001
+    error_alpha = qvsstls_input_instance.error_alpha
+    assert error_alpha == 0.001
     with pytest.raises(RuntimeError) as excinfo:
-        qvsstls_input_instance.errorAlpha = -0.1
+        qvsstls_input_instance.error_alpha = -0.1
     assert (
         excinfo.value.args[0]
         == "The minimum error for convergence must be larger than zero"
     )
 
 
-def test_iterationsAlpha(qvsstls_input_instance):
-    qvsstls_input_instance.iterationsAlpha = 1
-    iterationsAlpha = qvsstls_input_instance.iterationsAlpha
-    assert iterationsAlpha == 1
+def test_iterations_alpha(qvsstls_input_instance):
+    qvsstls_input_instance.iterations_alpha = 1
+    iterations_alpha = qvsstls_input_instance.iterations_alpha
+    assert iterations_alpha == 1
     with pytest.raises(RuntimeError) as excinfo:
-        qvsstls_input_instance.iterationsAlpha = -2
+        qvsstls_input_instance.iterations_alpha = -2
     assert excinfo.value.args[0] == "The maximum number of iterations can't be negative"
 
 
@@ -79,74 +78,74 @@ def test_alpha(qvsstls_input_instance):
         assert excinfo.value.args[0] == "Invalid guess for free parameter calculation"
 
 
-def test_couplingResolution(qvsstls_input_instance):
-    qvsstls_input_instance.couplingResolution = 0.01
-    couplingResolution = qvsstls_input_instance.couplingResolution
-    assert couplingResolution == 0.01
+def test_coupling_resolution(qvsstls_input_instance):
+    qvsstls_input_instance.coupling_resolution = 0.01
+    coupling_resolution = qvsstls_input_instance.coupling_resolution
+    assert coupling_resolution == 0.01
     with pytest.raises(RuntimeError) as excinfo:
-        qvsstls_input_instance.couplingResolution = -0.1
+        qvsstls_input_instance.coupling_resolution = -0.1
     assert (
         excinfo.value.args[0]
         == "The coupling parameter resolution must be larger than zero"
     )
 
 
-def test_degeneracyResolution(qvsstls_input_instance):
-    qvsstls_input_instance.degeneracyResolution = 0.01
-    degeneracyResolution = qvsstls_input_instance.degeneracyResolution
-    assert degeneracyResolution == 0.01
+def test_degeneracy_resolution(qvsstls_input_instance):
+    qvsstls_input_instance.degeneracy_resolution = 0.01
+    degeneracy_resolution = qvsstls_input_instance.degeneracy_resolution
+    assert degeneracy_resolution == 0.01
     with pytest.raises(RuntimeError) as excinfo:
-        qvsstls_input_instance.degeneracyResolution = -0.1
+        qvsstls_input_instance.degeneracy_resolution = -0.1
     assert (
         excinfo.value.args[0]
         == "The degeneracy parameter resolution must be larger than zero"
     )
 
 
-def test_freeEnergyIntegrand(qvsstls_input_instance):
+def test_free_energy_integrand(qvsstls_input_instance):
     arr1 = np.zeros(10)
     arr2 = np.zeros((3, 10))
-    fxc = native.FreeEnergyIntegrand()
+    fxc = FreeEnergyIntegrand()
     fxc.grid = arr1
     fxc.integrand = arr2
-    qvsstls_input_instance.freeEnergyIntegrand = fxc
-    assert np.array_equal(arr1, qvsstls_input_instance.freeEnergyIntegrand.grid)
-    assert np.array_equal(arr2, qvsstls_input_instance.freeEnergyIntegrand.integrand)
+    qvsstls_input_instance.free_energy_integrand = fxc
+    assert np.array_equal(arr1, qvsstls_input_instance.free_energy_integrand.grid)
+    assert np.array_equal(arr2, qvsstls_input_instance.free_energy_integrand.integrand)
 
 
-def test_freeEnergyIntegrand_Inconsistent(qvsstls_input_instance):
+def test_free_energy_integrand_inconsistent(qvsstls_input_instance):
     with pytest.raises(RuntimeError) as excinfo:
         arr1 = np.zeros(10)
         arr2 = np.zeros((3, 11))
-        fxc = native.FreeEnergyIntegrand()
+        fxc = FreeEnergyIntegrand()
         fxc.grid = arr1
         fxc.integrand = arr2
-        qvsstls_input_instance.freeEnergyIntegrand = fxc
+        qvsstls_input_instance.free_energy_integrand = fxc
     assert excinfo.value.args[0] == "The free energy integrand is inconsistent"
 
 
-def test_isEqual_default(qvsstls_input_instance):
-    assert not qvsstls_input_instance.isEqual(qvsstls_input_instance)
+def test_is_equal_default(qvsstls_input_instance):
+    assert not qvsstls_input_instance.is_equal(qvsstls_input_instance)
 
 
-def test_isEqual(qvsstls_input_instance):
-    thisQVSStls = native.QVSStlsInput()
-    thisQVSStls.coupling = 2.0
-    thisQVSStls.degeneracy = 1.0
-    thisQVSStls.intError = 0.1
-    thisQVSStls.threads = 1
-    thisQVSStls.theory = "STLS"
-    thisQVSStls.matsubara = 1
-    thisQVSStls.resolution = 0.1
-    thisQVSStls.cutoff = 1.0
-    thisQVSStls.error = 0.1
-    thisQVSStls.mixing = 1.0
-    thisQVSStls.outputFrequency = 1
-    thisQVSStls.couplingResolution = 0.1
-    thisQVSStls.degeneracyResolution = 0.1
-    thisQVSStls.errorAlpha = 0.1
-    thisQVSStls.iterationsAlpha = 1
-    assert thisQVSStls.isEqual(thisQVSStls)
+def test_is_equal(qvsstls_input_instance):
+    this_qvsstls = QVSStlsInput()
+    this_qvsstls.coupling = 2.0
+    this_qvsstls.degeneracy = 1.0
+    this_qvsstls.integral_error = 0.1
+    this_qvsstls.threads = 1
+    this_qvsstls.theory = "STLS"
+    this_qvsstls.matsubara = 1
+    this_qvsstls.resolution = 0.1
+    this_qvsstls.cutoff = 1.0
+    this_qvsstls.error = 0.1
+    this_qvsstls.mixing = 1.0
+    this_qvsstls.output_frequency = 1
+    this_qvsstls.coupling_resolution = 0.1
+    this_qvsstls.degeneracy_resolution = 0.1
+    this_qvsstls.error_alpha = 0.1
+    this_qvsstls.iterations_alpha = 1
+    assert this_qvsstls.is_equal(this_qvsstls)
 
 
 def test_print(qvsstls_input_instance, capfd):

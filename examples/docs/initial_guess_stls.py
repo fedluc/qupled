@@ -11,7 +11,7 @@ inputs.mixing = 0.2
 stls.compute(inputs)
 
 # Create a custom initial guess from the output files of the previous run
-inputs.guess = Stls.getInitialGuess("rs10.000_theta1.000_STLS.h5")
+inputs.guess = Stls.get_initial_guess("rs10.000_theta1.000_STLS.h5")
 
 # Solve the scheme again with the new initial guess and coupling parameter
 stls.compute(inputs)

@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import colormaps as cm
-from qupled.util import Hdf
+from qupled.util import HDF
 from qupled.quantum import Qstls
 
 
@@ -81,7 +81,7 @@ def solve_qstls():
     )
     inputs.fixed = adr_file if os.path.exists(adr_file) else inputs.fixed
     qstls.compute(inputs)
-    results = Hdf().read(qstls.hdfFileName, ["wvg", "adr", "ssf", "idr", "error"])
+    results = HDF().read(qstls.hdf_file_name, ["wvg", "adr", "ssf", "idr", "error"])
     return QStlsData(
         results["wvg"], results["adr"], results["idr"], results["ssf"], results["error"]
     )
