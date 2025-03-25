@@ -6,10 +6,7 @@ from __future__ import annotations
 import glob
 import os
 import shutil
-import sys
 import zipfile
-
-import pandas as pd
 
 from . import native
 from . import util
@@ -87,6 +84,7 @@ class QstlsIet(base.QuantumIterativeScheme):
             of the auxiliary density response. Default = ``""``
             """
 
+    # Result class
     class Result(stlsiet.StlsIet.Result, qstls.Qstls.Result):
 
         def __init__(self):

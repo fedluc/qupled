@@ -8,8 +8,6 @@ import os
 import shutil
 import zipfile
 
-import pandas as pd
-
 from . import native
 from . import util
 from . import base
@@ -20,8 +18,6 @@ from . import vsstls
 class QVSStls(base.QuantumIterativeScheme):
 
     # Compute
-    @util.MPI.record_time
-    @util.MPI.synchronize_ranks
     def compute(self, inputs: QVSStls.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -30,11 +26,9 @@ class QVSStls(base.QuantumIterativeScheme):
             inputs: Input parameters.
         """
         self._unpack_fixed_adr_files(inputs)
-        scheme = native.QVSStls(inputs.to_native())
-        self._compute(scheme)
-        self._save(scheme)
+        super().compute(inputs, native.QVSStls, native.QVSStlsInput(), self.Result())
         self._zip_fixed_adr_files(inputs)
-        self._clean_fixed_adr_files(scheme.inputs)
+        self._clean_fixed_adr_files(inputs)
 
     # Unpack zip folder with fixed component of the auxiliary density response
     @util.MPI.run_only_on_root
@@ -45,20 +39,6 @@ class QVSStls(base.QuantumIterativeScheme):
         if fixed_source_file != "":
             with zipfile.ZipFile(fixed_source_file, "r") as zip_file:
                 zip_file.extractall(inputs.fixed)
-
-    # Save results to disk
-    @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
-        super()._save(scheme)
-        pd.DataFrame(scheme.free_energy_grid).to_hdf(
-            self.hdf_file_name, key=util.HDF.ResultNames.FXC_GRID.value
-        )
-        pd.DataFrame(scheme.free_energy_integrand).to_hdf(
-            self.hdf_file_name, key=util.HDF.ResultNames.FXC_INT.value
-        )
-        pd.DataFrame(scheme.alpha).to_hdf(
-            self.hdf_file_name, key=util.HDF.ResultNames.ALPHA.value
-        )
 
     # Zip all files for the fixed component of the auxiliary density response
     @util.MPI.run_only_on_root
@@ -99,11 +79,8 @@ class QVSStls(base.QuantumIterativeScheme):
             # Undocumented default values
             self.theory: str = "QVSSTLS"
 
-        def to_native(self) -> native.QVSStlsInput:
-            native_input = native.QVSStlsInput()
-            for attr, value in self.__dict__.items():
-                if attr == "guess":
-                    setattr(native_input, attr, value.to_native())
-                else:
-                    setattr(native_input, attr, value)
-            return native_input
+    # Result
+    class Result(vsstls.VSStls.Result, qstls.Qstls.Result):
+
+        def __init__(self):
+            super().__init__()
