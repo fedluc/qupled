@@ -83,7 +83,8 @@ def clean():
 def install():
     wheel_file = get_wheel_file()
     if wheel_file is not None:
-        subprocess.run(["pip", "install", "--force-reinstall", wheel_file], check=True)
+        subprocess.run(["pip", "uninstall", "-y", wheel_file], check=True)
+        subprocess.run(["pip", "install", wheel_file], check=True)
 
 
 def install_dependencies():
