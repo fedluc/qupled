@@ -118,12 +118,16 @@ class ClassicScheme:
     # Compute the scheme
     @util.MPI.record_time
     @util.MPI.synchronize_ranks
-    def compute(self, inputs: Input, native_cls, result_cls: Result) -> None:
+    def compute(
+        self, inputs: Input, native_scheme_cls: any, native_input: any, result: Result
+    ) -> None:
         self.inputs = inputs
-        scheme = native_cls(self.inputs.to_native())
+        native_inputs = self.inputs.to_native(native_input)
+        scheme = native_scheme_cls(native_inputs)
         status = scheme.compute()
         self._check_status_and_clean(status, scheme.recovery)
-        self.results = result_cls(scheme)
+        self.results = result
+        self.results.from_native(scheme)
         self._save()
 
     # Check that the dielectric scheme was solved without errors

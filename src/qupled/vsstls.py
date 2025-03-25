@@ -21,7 +21,7 @@ class VSStls(base.IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        super().compute(inputs, native.VSStls, self.Result)
+        super().compute(inputs, native.VSStls, native.VSStlsInput(), self.Result())
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
@@ -72,16 +72,13 @@ class VSStls(base.IterativeScheme):
             # Undocumented default values
             self.theory: str = "VSSTLS"
 
-        def to_native(self) -> native.VSStlsInput:
-            return base.Input.to_native(self, native.VSStlsInput())
-
     # Results class
     class Result(base.Result):
         """
         Class used to store the results for the :obj:`qupled.classic.VSStls` class.
         """
 
-        def __init__(self, scheme):
+        def __init__(self):
             super().__init__()
             self.free_energy_grid = None
             """Free energy grid"""
@@ -89,4 +86,3 @@ class VSStls(base.IterativeScheme):
             """Free energy integrand"""
             self.alpha = None
             """Free parameter"""
-            super().from_native(scheme)

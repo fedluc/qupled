@@ -37,7 +37,9 @@ class DataBaseHandler:
             database_name if database_name is not None else self.DEFAULT_DATABASE_NAME
         )
         self.engine = sql.create_engine(f"sqlite:///{self.database_name}")
-        DataBaseHandler._set_sqlite_pragma(self.engine) # Enforce foreign keys in sqlite
+        DataBaseHandler._set_sqlite_pragma(
+            self.engine
+        )  # Enforce foreign keys in sqlite
         self.table_metadata = sql.MetaData()
         self.run_table = self._build_run_table()
         self.input_table = self._build_inputs_table()
@@ -67,16 +69,16 @@ class DataBaseHandler:
             self.run_table.c[self.TableKeys.PRIMARY_KEY.value] == run_id
         )
         result = self._execute(statement).mappings().first()
-        if result is not None: 
+        if result is not None:
             run_data = {key: result[key] for key in result.keys()}
             inputs = self.get_inputs(run_id, names=None)
             results = self.get_results(run_id, names=None)
             return {
                 self.RUNS_TABLE_NAME: run_data,
                 self.INPUTS_TABLE_NAME: inputs,
-                self.RESULTS_TABLE_NAME: results
+                self.RESULTS_TABLE_NAME: results,
             }
-        else: 
+        else:
             return {}
 
     def get_inputs(self, run_id: int, names: list[str] | None) -> dict:
@@ -146,7 +148,7 @@ class DataBaseHandler:
                 sql.Integer,
                 sql.ForeignKey(
                     f"{self.RUNS_TABLE_NAME}.{self.TableKeys.PRIMARY_KEY.value}",
-                    ondelete="CASCADE"
+                    ondelete="CASCADE",
                 ),
                 nullable=False,
             ),

@@ -18,7 +18,7 @@ class ESA(base.ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        super().compute(inputs, native.ESA, rpa.Rpa.Result)
+        super().compute(inputs, native.ESA, native.RpaInput(), base.Result())
 
     # Input class
     class Input(rpa.Rpa.Input):

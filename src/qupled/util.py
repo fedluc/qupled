@@ -75,7 +75,7 @@ class HDF:
         """
         db_handler = database.DataBaseHandler(database_name)
         return db_handler.inspect_runs()
-    
+
     # Read runs in the database
     @staticmethod
     def read_run(database_name: str | None = None) -> dict:

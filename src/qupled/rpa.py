@@ -18,7 +18,7 @@ class Rpa(base.ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        super().compute(inputs, native.Rpa, self.Result)
+        super().compute(inputs, native.Rpa, native.RpaInput(), base.Result())
 
     # Input class
     class Input(base.Input):
@@ -29,16 +29,3 @@ class Rpa(base.ClassicScheme):
         def __init__(self, coupling: float, degeneracy: float):
             super().__init__(coupling, degeneracy)
             self.theory: str = "RPA"
-
-        def to_native(self) -> native.RpaInput:
-            return super().to_native(native.RpaInput())
-
-    # Results class
-    class Result(base.Result):
-        """
-        Class used to store the results for the :obj:`qupled.classic.Rpa` class.
-        """
-
-        def __init__(self, scheme):
-            super().__init__()
-            super().from_native(scheme)

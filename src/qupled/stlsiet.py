@@ -21,7 +21,7 @@ class StlsIet(base.IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        super().compute(inputs, native.Stls, self.Result)
+        super().compute(inputs, native.Stls, native.StlsInput(), self.Result())
 
     # Input class
     class Input(stls.Stls.Input):
@@ -58,7 +58,7 @@ class StlsIet(base.IterativeScheme):
         Class used to store the results for the :obj:`qupled.classic.StlsIet` class.
         """
 
-        def __init__(self, scheme):
+        def __init__(self):
             super().__init__()
             self.bf: np.ndarray = None
-            super().from_native(scheme)
+            """Bridge function adder"""

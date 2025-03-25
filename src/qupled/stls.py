@@ -5,7 +5,6 @@
 from __future__ import annotations
 from . import native
 from . import base
-from . import rpa
 
 
 class Stls(base.IterativeScheme):
@@ -18,7 +17,7 @@ class Stls(base.IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        super().compute(inputs, native.Stls, rpa.Rpa.Result)
+        super().compute(inputs, native.Stls, native.StlsInput(), base.Result())
 
     # Input class
     class Input(base.Input):
@@ -42,6 +41,3 @@ class Stls(base.IterativeScheme):
             """Initial guess. Default = ``Stls.Guess()``"""
             # Undocumented default values
             self.theory: str = "STLS"
-
-        def to_native(self) -> native.StlsInput:
-            return super().to_native(native.StlsInput())
