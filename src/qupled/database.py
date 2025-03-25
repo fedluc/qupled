@@ -64,15 +64,17 @@ class DataBaseHandler:
         rows = self._execute(statement).mappings().all()
         return [{key: row[key] for key in row.keys()} for row in rows]
 
-    def get_run(self, run_id: int) -> dict:
+    def get_run(
+        self, run_id: int, input_names: list[str] | None, result_names: list[str] | None
+    ) -> dict:
         statement = sql.select(self.run_table).where(
             self.run_table.c[self.TableKeys.PRIMARY_KEY.value] == run_id
         )
         result = self._execute(statement).mappings().first()
         if result is not None:
             run_data = {key: result[key] for key in result.keys()}
-            inputs = self.get_inputs(run_id, names=None)
-            results = self.get_results(run_id, names=None)
+            inputs = self.get_inputs(run_id, names=input_names)
+            results = self.get_results(run_id, names=result_names)
             return {
                 self.RUNS_TABLE_NAME: run_data,
                 self.INPUTS_TABLE_NAME: inputs,

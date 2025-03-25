@@ -12,8 +12,6 @@ from . import stls
 class Qstls(base.QuantumIterativeScheme):
 
     # Compute
-    @util.MPI.record_time
-    @util.MPI.synchronize_ranks
     def compute(self, inputs: Qstls.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -21,9 +19,7 @@ class Qstls(base.QuantumIterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        scheme = native.Qstls(inputs.to_native())
-        self._compute(scheme)
-        self._save(scheme)
+        super().compute(inputs, native.Qstls, native.QstlsInput(), self.Result())
 
     # Input class
     class Input(stls.Stls.Input):
@@ -35,17 +31,19 @@ class Qstls(base.QuantumIterativeScheme):
             super().__init__(coupling, degeneracy)
             self.fixed: str = ""
             """ Name of the file storing the fixed component of the auxiliary density 
-        response in the QSTLS scheme. """
+            response in the QSTLS scheme. """
             self.guess: Qstls.Guess = Qstls.Guess()
             """Initial guess. Default = ``Qstls.Guess()``"""
             # Undocumented default values
             self.theory = "QSTLS"
 
-        def to_native(self) -> native.QstlsInput:
-            native_input = native.QstlsInput()
-            for attr, value in self.__dict__.items():
-                if attr == "guess":
-                    setattr(native_input, attr, value.to_native())
-                else:
-                    setattr(native_input, attr, value)
-            return native_input
+    # Results class
+    class Result(base.Result):
+        """
+        Class used to store the results for the :obj:`qupled.classic.VSStls` class.
+        """
+
+        def __init__(self):
+            super().__init__()
+            self.adr = None
+            """Auxiliary density response"""

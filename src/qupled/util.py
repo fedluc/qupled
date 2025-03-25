@@ -78,7 +78,12 @@ class HDF:
 
     # Read runs in the database
     @staticmethod
-    def read_run(database_name: str | None = None) -> dict:
+    def read_run(
+        run_id: int,
+        database_name: str | None = None,
+        input_names: list[str] | None = None,
+        result_names: list[str] | None = None,
+    ) -> dict:
         """Reads runs from the database and returns the content in the form of a dictionary.
 
         Args:
@@ -88,7 +93,7 @@ class HDF:
             A dictionary whose keys are the run ids and values are the corresponding runs information.
         """
         db_handler = database.DataBaseHandler(database_name)
-        return db_handler.get_run()
+        return db_handler.get_run(run_id, input_names, result_names)
 
     # Read inputs in the database
     @staticmethod

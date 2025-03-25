@@ -249,37 +249,29 @@ class QuantumIterativeScheme(IterativeScheme):
 
     # Set the initial guess from a dataframe produced in output
     @staticmethod
-    def get_initial_guess(file_name: str) -> QuantumIterativeScheme.Guess:
+    def get_initial_guess(
+        run_id: str, database_name: str | None = None
+    ) -> QuantumIterativeScheme.Guess:
         """Constructs an initial guess object by extracting the information from an output file.
 
         Args:
             file_name : name of the file used to extract the information for the initial guess.
         """
-        hdf_data = util.HDF.read(
-            file_name,
-            [
-                util.HDF.ResultNames.WVG.value,
-                util.HDF.ResultNames.SSF.value,
-                util.HDF.ResultNames.ADR.value,
-                util.HDF.ResultNames.MATSUBARA.value,
-            ],
-        )
+        result_names = [
+            util.HDF.ResultNames.WVG.value,
+            util.HDF.ResultNames.SSF.value,
+            util.HDF.ResultNames.ADR.value,
+        ]
+        input_names = ["matsubara"]
+        data = util.HDF.read_run(run_id, database_name, input_names, result_names)
+        inputs = data[DataBaseHandler.INPUTS_TABLE_NAME]
+        results = data[DataBaseHandler.RESULTS_TABLE_NAME]
         return QuantumIterativeScheme.Guess(
-            hdf_data[util.HDF.ResultNames.WVG.value],
-            hdf_data[util.HDF.ResultNames.SSF.value],
-            np.ascontiguousarray(hdf_data[util.HDF.ResultNames.ADR.value]),
-            hdf_data[util.HDF.ResultNames.MATSUBARA.value],
+            results[result_names[0]],
+            results[result_names[1]],
+            results[result_names[2]],
+            inputs[input_names[0]],
         )
-
-    # Save results to disk
-    @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
-        """Stores the results obtained by solving the scheme."""
-        super()._save(scheme)
-        if scheme.inputs.degeneracy > 0:
-            pd.DataFrame(scheme.adr).to_hdf(
-                self.hdf_file_name, key=util.HDF.ResultNames.ADR.value
-            )
 
     # Initial guess
     class Guess:
