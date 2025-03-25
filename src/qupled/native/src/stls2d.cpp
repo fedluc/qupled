@@ -6,6 +6,7 @@
 #include "numerics.hpp"
 #include "vector_util.hpp"
 #include <fmt/core.h>
+#include <gsl/gsl_sf_ellint.h>
 
 using namespace std;
 using namespace vecUtil;
@@ -176,7 +177,7 @@ vector<double> Idr::get2DStls() const {
     const auto itgParam = ItgParam(yMin, upperLimit);
     itg.compute(func, itgParam);
     if (l == 0) {
-      res[l] = 1.0 - std::exp(-1.0 / Theta) - itg.getSolution();
+      res[l] = 1.0 - exp(-1.0 / Theta) - itg.getSolution();
     } else {
       res[l] = itg.getSolution();
     }
@@ -190,7 +191,6 @@ double Idr::integrand2DStls(const double &y, const int &l) const {
   double y2 = y * y;
   double x2 = x * x;
   double x4 = x2 * x2;
-  double txy = 2 * x * y;
   double plT = M_PI * l * Theta;
   double plT2 = plT * plT;
   double exp1 = x4 / 4.0 - x2 * y2 - plT2;
@@ -211,10 +211,52 @@ double Idr::integrand2DStls(const double &y, const int &l) const {
 double Idr::integrand2DStls(const double &y) const {
   double y2 = y * y;
   double x2 = x * x;
-  double xy = x * y;
   if (x > 0.0) {
     - 1.0 / (Theta * x * pow(cosh(y2 / (2 * Theta) - mu/2), 2) * y * sqrt(x2 / 4.0 - y2));
   } else {
     return 0; // placeholder 
   }
+}
+
+// -----------------------------------------------------------------
+// SLFC 2D STLS class
+// -----------------------------------------------------------------
+
+// Integrand 2D STLS
+double Slfc::integrand2DStls(const double &y) const {
+  double y2 = y * y;
+  double x2 = x * x;
+  double xmy = (x - y) / (x * M_PI);
+  double xpy = (x + y) / (x * M_PI);
+  double argElli = 2 * sqrt(x * y) / (x + y);
+  return - (ssf(y) - 1.0) * (xmy * Integrator1D::ellipticK(argElli) + xpy * Integrator1D::ellipticE(argElli));
+}
+
+// Get result of integration
+double Slfc::get2DStls() const {
+  auto func = [&](const double &y) -> double { return integrand2DStls(y); };
+  itg.compute(func, ItgParam(yMin, yMax));
+  return itg.getSolution();
+}
+
+// -----------------------------------------------------------------
+// Elliptic function integrators
+// -----------------------------------------------------------------
+
+double Integrator1D::ellipticK(const double &k) {
+  gsl_sf_result result;
+  int status = gsl_sf_ellint_Kcomp_e(k, GSL_PREC_DOUBLE, &result);
+  if (status != GSL_SUCCESS) {
+    throw std::runtime_error("GSL error in ellipticK");
+  }
+  return result.val;
+}
+
+double Integrator1D::ellipticE(const double &k) {
+  gsl_sf_result result;
+  int status = gsl_sf_ellint_Ecomp_e(k, GSL_PREC_DOUBLE, &result);
+  if (status != GSL_SUCCESS) {
+    throw std::runtime_error("GSL error in ellipticE");
+  }
+  return result.val;
 }

@@ -101,6 +101,7 @@ public:
         itg(itg_) {}
   // Get result of integration
   double get() const;
+  double get2DStls() const;
 
 private:
 
@@ -108,6 +109,7 @@ private:
   Integrator1D &itg;
   // Integrand
   double integrand(const double &y) const;
+  double integrand2DStls(const double &y) const;
 };
 
 class SlfcIet : public SlfcBase {

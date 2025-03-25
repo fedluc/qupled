@@ -244,6 +244,9 @@ public:
   double getAccuracy() const { return gslIntegrator->getAccuracy(); }
   Type getType() const { return gslIntegrator->getType(); }
 
+   // === Special Functions ===
+   static double ellipticK(const double &k);
+   static double ellipticE(const double &k);
 private:
 
   // Base class for all integrators derived from GSL
