@@ -17,9 +17,9 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 class DataBaseHandler:
 
     DEFAULT_DATABASE_NAME = "scheme_results.db"
-    RUNS_TABLE_NAME = "Runs"
-    INPUTS_TABLE_NAME = "Inputs"
-    RESULTS_TABLE_NAME = "Results"
+    RUNS_TABLE_NAME = "runs"
+    INPUTS_TABLE_NAME = "inputs"
+    RESULTS_TABLE_NAME = "results"
 
     class TableKeys(Enum):
         COUPLING = "coupling"
@@ -37,16 +37,60 @@ class DataBaseHandler:
             database_name if database_name is not None else self.DEFAULT_DATABASE_NAME
         )
         self.engine = sql.create_engine(f"sqlite:///{self.database_name}")
+        DataBaseHandler._set_sqlite_pragma(self.engine) # Enforce foreign keys in sqlite
         self.table_metadata = sql.MetaData()
         self.run_table = self._build_run_table()
-        self.inputs_table = self._build_inputs_table()
-        self.results_table = self._build_results_table()
+        self.input_table = self._build_inputs_table()
+        self.result_table = self._build_results_table()
         self.run_id: int | None = None
 
     def insert_run(self, inputs, results):
-        self.insert_run_data(inputs)
-        self.insert_inputs_data(inputs.__dict__)
-        self.insert_results_data(results.__dict__)
+        self._insert_run(inputs)
+        self.insert_inputs(inputs.__dict__)
+        self.insert_results(results.__dict__)
+
+    def insert_inputs(self, inputs: dict[str, any]):
+        sql_mapping = lambda value: (self._to_json(value))
+        self._insert_from_dict(self.input_table, inputs, sql_mapping)
+
+    def insert_results(self, results: dict[str, any]):
+        sql_mapping = lambda value: (self._to_bytes(value))
+        self._insert_from_dict(self.result_table, results, sql_mapping)
+
+    def inspect_runs(self) -> list[dict[str, any]]:
+        statement = sql.select(self.run_table)
+        rows = self._execute(statement).mappings().all()
+        return [{key: row[key] for key in row.keys()} for row in rows]
+
+    def get_run(self, run_id: int) -> dict:
+        statement = sql.select(self.run_table).where(
+            self.run_table.c[self.TableKeys.PRIMARY_KEY.value] == run_id
+        )
+        result = self._execute(statement).mappings().first()
+        if result is not None: 
+            run_data = {key: result[key] for key in result.keys()}
+            inputs = self.get_inputs(run_id, names=None)
+            results = self.get_results(run_id, names=None)
+            return {
+                self.RUNS_TABLE_NAME: run_data,
+                self.INPUTS_TABLE_NAME: inputs,
+                self.RESULTS_TABLE_NAME: results
+            }
+        else: 
+            return {}
+
+    def get_inputs(self, run_id: int, names: list[str] | None) -> dict:
+        sql_mapping = lambda value: (self._from_json(value))
+        return self._get(self.input_table, run_id, names, sql_mapping)
+
+    def get_results(self, run_id: int, names: list[str] | None) -> dict:
+        sql_mapping = lambda value: (self._from_bytes(value))
+        return self._get(self.result_table, run_id, names, sql_mapping)
+
+    def delete_run(self, run_id: int) -> None:
+        condition = self.run_table.c[self.TableKeys.PRIMARY_KEY.value] == run_id
+        statement = sql.delete(self.run_table).where(condition)
+        self._execute(statement)
 
     def _build_run_table(self):
         table = sql.Table(
@@ -101,7 +145,8 @@ class DataBaseHandler:
                 self.TableKeys.RUN_ID.value,
                 sql.Integer,
                 sql.ForeignKey(
-                    f"{self.RUNS_TABLE_NAME}.{self.TableKeys.PRIMARY_KEY.value}"
+                    f"{self.RUNS_TABLE_NAME}.{self.TableKeys.PRIMARY_KEY.value}",
+                    ondelete="CASCADE"
                 ),
                 nullable=False,
             ),
@@ -122,7 +167,7 @@ class DataBaseHandler:
         table.create(self.engine, checkfirst=True)
         return table
 
-    def insert_run_data(self, inputs: any):
+    def _insert_run(self, inputs: any):
         now = datetime.now()
         data = {
             self.TableKeys.THEORY.value: self._to_json(inputs.theory),
@@ -136,42 +181,22 @@ class DataBaseHandler:
         if run_id := result.inserted_primary_key:
             self.run_id = run_id[0]
 
-    def insert_inputs_data(self, inputs: dict[str, any]):
-        sql_mapping = lambda value: (self._to_json(value))
-        self._insert_data_from_dict(self.inputs_table, inputs, sql_mapping)
+    @staticmethod
+    def _set_sqlite_pragma(engine):
+        @sql.event.listens_for(engine, "connect")
+        def _set_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
 
-    def insert_results_data(self, results: dict[str, any]):
-        sql_mapping = lambda value: (self._to_bytes(value))
-        self._insert_data_from_dict(self.results_table, results, sql_mapping)
-
-    def get_runs(self) -> list[dict[str, any]]:
-        statement = sql.select(self.run_table)
-        rows = self._execute(statement).mappings().all()
-        return [{key: row[key] for key in row.keys()} for row in rows]
-
-    def get_run_data(self, run_id: int) -> dict:
-        statement = sql.select(self.run_table).where(
-            self.run_table.c[self.TableKeys.PRIMARY_KEY.value] == run_id
-        )
-        result = self._execute(statement).mappings().first()
-        return {key: result[key] for key in result.keys()} if result is not None else {}
-
-    def get_inputs_data(self, run_id: int, names: list[str] | None) -> dict:
-        sql_mapping = lambda value: (self._from_json(value))
-        return self._get_data(self.inputs_table, run_id, names, sql_mapping)
-
-    def get_results_data(self, run_id: int, names: list[str] | None) -> dict:
-        sql_mapping = lambda value: (self._from_bytes(value))
-        return self._get_data(self.results_table, run_id, names, sql_mapping)
-
-    def _insert_data_from_dict(
+    def _insert_from_dict(
         self, table, data: dict[str, any], sql_mapping: Callable[[any], any]
     ) -> None:
         for name, value in data.items():
             if mapped_value := sql_mapping(value):
-                self._insert_data(table, name, mapped_value)
+                self._insert(table, name, mapped_value)
 
-    def _insert_data(self, table: sql.Table, name: str, value: any):
+    def _insert(self, table: sql.Table, name: str, value: any):
         data = {
             self.TableKeys.RUN_ID.value: self.run_id,
             self.TableKeys.NAME.value: name,
@@ -190,7 +215,7 @@ class DataBaseHandler:
         )
         self._execute(statement)
 
-    def _get_data(
+    def _get(
         self,
         table: sql.Table,
         run_id: int,

@@ -64,7 +64,7 @@ class HDF:
 
     # Read runs in the database
     @staticmethod
-    def read_runs(database_name: str | None = None) -> dict:
+    def inspect_runs(database_name: str | None = None) -> dict:
         """Reads runs from the database and returns the content in the form of a dictionary.
 
         Args:
@@ -74,7 +74,21 @@ class HDF:
             A dictionary whose keys are the run ids and values are the corresponding runs information.
         """
         db_handler = database.DataBaseHandler(database_name)
-        return db_handler.get_runs()
+        return db_handler.inspect_runs()
+    
+    # Read runs in the database
+    @staticmethod
+    def read_run(database_name: str | None = None) -> dict:
+        """Reads runs from the database and returns the content in the form of a dictionary.
+
+        Args:
+            database_name (str, optional): Name of the database to read from. Defaults to None.
+
+        Returns:
+            A dictionary whose keys are the run ids and values are the corresponding runs information.
+        """
+        db_handler = database.DataBaseHandler(database_name)
+        return db_handler.get_run()
 
     # Read inputs in the database
     @staticmethod
@@ -92,7 +106,7 @@ class HDF:
             A dictionary whose keys are the quantities listed in names and values are the corresponding inputs.
         """
         db_handler = database.DataBaseHandler(database_name)
-        return db_handler.get_inputs_data(run_id, names if names is not None else [])
+        return db_handler.get_inputs(run_id, names if names is not None else [])
 
     # Read results in the database
     @staticmethod
@@ -110,7 +124,7 @@ class HDF:
             A dictionary whose keys are the quantities listed in names and values are the corresponding results.
         """
         db_handler = database.DataBaseHandler(database_name)
-        return db_handler.get_results_data(run_id, names)
+        return db_handler.get_results(run_id, names)
 
     # Plot from data in hdf file
     @staticmethod

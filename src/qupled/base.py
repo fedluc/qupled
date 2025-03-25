@@ -160,7 +160,7 @@ class ClassicScheme:
         """
         if self.results is not None:
             self.results.compute_rdf(rdf_grid)
-            self.db_handler.insert_results_data(
+            self.db_handler.insert_results(
                 {
                     util.HDF.ResultNames.RDF.value: self.results.rdf,
                     util.HDF.ResultNames.RDF_GRID.value: self.results.rdf_grid,
