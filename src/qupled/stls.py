@@ -12,8 +12,6 @@ from . import rpa
 class Stls(base.IterativeScheme):
 
     # Compute
-    @util.MPI.record_time
-    @util.MPI.synchronize_ranks
     def compute(self, inputs: Stls.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -21,11 +19,7 @@ class Stls(base.IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        self.inputs = inputs
-        scheme = native.Stls(self.inputs.to_native())
-        self._compute(scheme)
-        self.results = rpa.Rpa.Result(scheme)
-        self._save(scheme)
+        super().compute(inputs, native.Stls, rpa.Rpa.Result)
 
     # Input class
     class Input(base.Input):

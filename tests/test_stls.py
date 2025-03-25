@@ -44,20 +44,20 @@ def test_save(stls, stls_input, mocker):
         assert os.path.isfile(stls.hdf_file_name)
         inspect_data = HDF().inspect(stls.hdf_file_name)
         expected_entries = [
-            HDF.EntryKeys.COUPLING.value,
-            HDF.EntryKeys.DEGENERACY.value,
-            HDF.EntryKeys.THEORY.value,
-            HDF.EntryKeys.ERROR.value,
-            HDF.EntryKeys.RESOLUTION.value,
-            HDF.EntryKeys.CUTOFF.value,
-            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
-            HDF.EntryKeys.MATSUBARA.value,
-            HDF.EntryKeys.IDR.value,
-            HDF.EntryKeys.SDR.value,
-            HDF.EntryKeys.SLFC.value,
-            HDF.EntryKeys.SSF.value,
-            HDF.EntryKeys.SSF_HF.value,
-            HDF.EntryKeys.WVG.value,
+            HDF.ResultNames.COUPLING.value,
+            HDF.ResultNames.DEGENERACY.value,
+            HDF.ResultNames.THEORY.value,
+            HDF.ResultNames.ERROR.value,
+            HDF.ResultNames.RESOLUTION.value,
+            HDF.ResultNames.CUTOFF.value,
+            HDF.ResultNames.FREQUENCY_CUTOFF.value,
+            HDF.ResultNames.MATSUBARA.value,
+            HDF.ResultNames.IDR.value,
+            HDF.ResultNames.SDR.value,
+            HDF.ResultNames.SLFC.value,
+            HDF.ResultNames.SSF.value,
+            HDF.ResultNames.SSF_HF.value,
+            HDF.ResultNames.WVG.value,
         ]
         for entry in expected_entries:
             assert entry in inspect_data
@@ -70,7 +70,7 @@ def test_get_initial_guess(mocker):
     mocker.patch.object(
         HDF,
         HDF.read.__name__,
-        return_value={HDF.EntryKeys.WVG.value: arr, HDF.EntryKeys.SLFC.value: arr},
+        return_value={HDF.ResultNames.WVG.value: arr, HDF.ResultNames.SLFC.value: arr},
     )
     guess = Stls.get_initial_guess("dummy_file_name")
     assert np.array_equal(guess.wvg, arr)

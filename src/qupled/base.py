@@ -111,16 +111,20 @@ class ClassicScheme:
 
     def __init__(self):
         # File to store output on disk
-        self.hdf_file_name: str = None  #: Name of the output file.
         self.db_handler = DataBaseHandler()
+        self.inputs: Input | None = None
         self.results: Result | None = None
-        self.inputs: Result | None = None
 
     # Compute the scheme
-    def _compute(self, scheme) -> None:
-        self.hdf_file_name = self._get_hdf_file(scheme.inputs)
+    @util.MPI.record_time
+    @util.MPI.synchronize_ranks
+    def compute(self, inputs: Input, native_cls, result_cls: Result) -> None:
+        self.inputs = inputs
+        scheme = native_cls(self.inputs.to_native())
         status = scheme.compute()
         self._check_status_and_clean(status, scheme.recovery)
+        self.results = result_cls(scheme)
+        self._save()
 
     # Check that the dielectric scheme was solved without errors
     @util.MPI.run_only_on_root
@@ -138,53 +142,8 @@ class ClassicScheme:
         else:
             sys.exit("Error while solving the dielectric theory")
 
-    # Save results to disk
-    def _get_hdf_file(self, inputs) -> str:
-        """Sets the name of the hdf file used to store the output
-
-        Args:
-            inputs: input parameters
-        """
-        coupling = inputs.coupling
-        degeneracy = inputs.degeneracy
-        theory = inputs.theory
-        return f"rs{coupling:5.3f}_theta{degeneracy:5.3f}_{theory}.h5"
-
     @util.MPI.run_only_on_root
-    def _save(self, scheme, inputs_db=None, results=None) -> None:
-        inputs = scheme.inputs
-        """Stores the results obtained by solving the scheme."""
-        pd.DataFrame(
-            {
-                util.HDF.EntryKeys.COUPLING.value: inputs.coupling,
-                util.HDF.EntryKeys.DEGENERACY.value: inputs.degeneracy,
-                util.HDF.EntryKeys.THEORY.value: inputs.theory,
-                util.HDF.EntryKeys.RESOLUTION.value: inputs.resolution,
-                util.HDF.EntryKeys.CUTOFF.value: inputs.cutoff,
-                util.HDF.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequency_cutoff,
-                util.HDF.EntryKeys.MATSUBARA.value: inputs.matsubara,
-            },
-            index=[util.HDF.EntryKeys.INFO.value],
-        ).to_hdf(self.hdf_file_name, key=util.HDF.EntryKeys.INFO.value, mode="w")
-        if inputs.degeneracy > 0:
-            pd.DataFrame(scheme.idr).to_hdf(
-                self.hdf_file_name, key=util.HDF.EntryKeys.IDR.value
-            )
-            pd.DataFrame(scheme.sdr).to_hdf(
-                self.hdf_file_name, key=util.HDF.EntryKeys.SDR.value
-            )
-            pd.DataFrame(scheme.slfc).to_hdf(
-                self.hdf_file_name, key=util.HDF.EntryKeys.SLFC.value
-            )
-        pd.DataFrame(scheme.ssf).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.SSF.value
-        )
-        pd.DataFrame(scheme.ssf_HF).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.SSF_HF.value
-        )
-        pd.DataFrame(scheme.wvg).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.WVG.value
-        )
+    def _save(self) -> None:
         if self.results is not None:
             self.db_handler.insert_run(self.inputs, self.results)
 
@@ -202,13 +161,10 @@ class ClassicScheme:
         if self.results is not None:
             self.results.compute_rdf(rdf_grid)
             self.db_handler.insert_results_data(
-                {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid}
-            )
-            pd.DataFrame(self.results.rdf_grid).to_hdf(
-                self.hdf_file_name, key=util.HDF.EntryKeys.RDF_GRID.value, mode="r+"
-            )
-            pd.DataFrame(self.results.rdf).to_hdf(
-                self.hdf_file_name, key=util.HDF.EntryKeys.RDF.value, mode="r+"
+                {
+                    util.HDF.ResultNames.RDF.value: self.results.rdf,
+                    util.HDF.ResultNames.RDF_GRID.value: self.results.rdf_grid,
+                }
             )
 
     # Plot results
@@ -231,9 +187,9 @@ class ClassicScheme:
                 distribution function is plotted. Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`).
 
         """
-        if util.HDF.EntryKeys.RDF.value in to_plot:
+        if util.HDF.ResultNames.RDF.value in to_plot:
             self.compute_rdf(rdf_grid)
-        util.HDF().plot(
+        util.HDF.plot(
             to_plot, self.db_handler.run_id, self.db_handler.database_name, matsubara
         )
 
@@ -259,29 +215,9 @@ class IterativeScheme(ClassicScheme):
         Returns:
             An instance of IterativeScheme.Guess containing the initial guess data.
         """
-        names = [util.HDF.EntryKeys.WVG.value, util.HDF.EntryKeys.SLFC.value]
-        data = util.HDF().read_results(run_id, database_name, names)
+        names = [util.HDF.ResultNames.WVG.value, util.HDF.ResultNames.SLFC.value]
+        data = util.HDF.read_results(run_id, database_name, names)
         return IterativeScheme.Guess(data[names[0]], data[names[1]])
-
-    # Save results to disk
-    @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
-        """Stores the results obtained by solving the scheme."""
-        super()._save(scheme)
-        inputs = scheme.inputs
-        pd.DataFrame(
-            {
-                util.HDF.EntryKeys.COUPLING.value: inputs.coupling,
-                util.HDF.EntryKeys.DEGENERACY.value: inputs.degeneracy,
-                util.HDF.EntryKeys.ERROR.value: scheme.error,
-                util.HDF.EntryKeys.THEORY.value: inputs.theory,
-                util.HDF.EntryKeys.RESOLUTION.value: inputs.resolution,
-                util.HDF.EntryKeys.CUTOFF.value: inputs.cutoff,
-                util.HDF.EntryKeys.FREQUENCY_CUTOFF.value: inputs.frequency_cutoff,
-                util.HDF.EntryKeys.MATSUBARA.value: inputs.matsubara,
-            },
-            index=[util.HDF.EntryKeys.INFO.value],
-        ).to_hdf(self.hdf_file_name, key=util.HDF.EntryKeys.INFO.value)
 
     # Initial guess
     class Guess:
@@ -315,20 +251,20 @@ class QuantumIterativeScheme(IterativeScheme):
         Args:
             file_name : name of the file used to extract the information for the initial guess.
         """
-        hdf_data = util.HDF().read(
+        hdf_data = util.HDF.read(
             file_name,
             [
-                util.HDF.EntryKeys.WVG.value,
-                util.HDF.EntryKeys.SSF.value,
-                util.HDF.EntryKeys.ADR.value,
-                util.HDF.EntryKeys.MATSUBARA.value,
+                util.HDF.ResultNames.WVG.value,
+                util.HDF.ResultNames.SSF.value,
+                util.HDF.ResultNames.ADR.value,
+                util.HDF.ResultNames.MATSUBARA.value,
             ],
         )
         return QuantumIterativeScheme.Guess(
-            hdf_data[util.HDF.EntryKeys.WVG.value],
-            hdf_data[util.HDF.EntryKeys.SSF.value],
-            np.ascontiguousarray(hdf_data[util.HDF.EntryKeys.ADR.value]),
-            hdf_data[util.HDF.EntryKeys.MATSUBARA.value],
+            hdf_data[util.HDF.ResultNames.WVG.value],
+            hdf_data[util.HDF.ResultNames.SSF.value],
+            np.ascontiguousarray(hdf_data[util.HDF.ResultNames.ADR.value]),
+            hdf_data[util.HDF.ResultNames.MATSUBARA.value],
         )
 
     # Save results to disk
@@ -338,7 +274,7 @@ class QuantumIterativeScheme(IterativeScheme):
         super()._save(scheme)
         if scheme.inputs.degeneracy > 0:
             pd.DataFrame(scheme.adr).to_hdf(
-                self.hdf_file_name, key=util.HDF.EntryKeys.ADR.value
+                self.hdf_file_name, key=util.HDF.ResultNames.ADR.value
             )
 
     # Initial guess

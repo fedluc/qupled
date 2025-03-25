@@ -12,8 +12,6 @@ from . import base
 class ESA(base.ClassicScheme):
 
     # Compute
-    @util.MPI.record_time
-    @util.MPI.synchronize_ranks
     def compute(self, inputs: ESA.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -21,11 +19,7 @@ class ESA(base.ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        self.inputs = inputs
-        scheme = native.ESA(self.inputs.to_native())
-        self._compute(scheme)
-        self.results = rpa.Rpa.Result(scheme)
-        self._save(scheme)
+        super().compute(inputs, native.ESA, rpa.Rpa.Result)
 
     # Input class
     class Input(rpa.Rpa.Input):

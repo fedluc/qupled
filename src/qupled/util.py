@@ -17,120 +17,55 @@ from . import database
 class HDF:
     """Class to manipulate the output hdf files produced when a scheme is solved."""
 
-    class EntryKeys(Enum):
+    class ResultNames(Enum):
         ALPHA = "alpha"
         ADR = "adr"
         BF = "bf"
-        COUPLING = "coupling"
-        CUTOFF = "cutoff"
-        FREQUENCY_CUTOFF = "frequency_cutoff"
-        DEGENERACY = "degeneracy"
-        ERROR = "error"
-        FXC_GRID = "fxc_grid"
-        FXC_INT = "fxc_int"
-        MATSUBARA = "matsubara"
+        FXC_GRID = "free_energy_grid"
+        FXC_INT = "free_energy_integrand"
         IDR = "idr"
-        INFO = "info"
-        RESOLUTION = "resolution"
         RDF = "rdf"
         RDF_GRID = "rdf_grid"
         SDR = "sdr"
         SLFC = "slfc"
         SSF = "ssf"
         SSF_HF = "ssf_HF"
-        THEORY = "theory"
         WVG = "wvg"
 
-    class EntryType(Enum):
-        NUMPY = "numpy"
-        NUMPY2D = "numpy2D"
-        NUMBER = "number"
-        STRING = "string"
+    PLOT_X_AXIS = {
+        ResultNames.ALPHA.value: ResultNames.FXC_GRID.value,
+        ResultNames.ADR.value: ResultNames.WVG.value,
+        ResultNames.BF.value: ResultNames.WVG.value,
+        ResultNames.IDR.value: ResultNames.WVG.value,
+        ResultNames.RDF.value: ResultNames.RDF_GRID.value,
+        ResultNames.SDR.value: ResultNames.WVG.value,
+        ResultNames.SLFC.value: ResultNames.WVG.value,
+        ResultNames.SSF.value: ResultNames.WVG.value,
+        ResultNames.SSF_HF.value: ResultNames.WVG.value,
+    }
 
-    # Construct
-    def __init__(self):
-        self.entries = {
-            HDF.EntryKeys.ALPHA.value: self.Entries(
-                "Free Parameter for VS schemes", HDF.EntryType.NUMPY.value
-            ),
-            HDF.EntryKeys.ADR.value: self.Entries(
-                "Auxiliary density response", HDF.EntryType.NUMPY2D.value
-            ),
-            HDF.EntryKeys.BF.value: self.Entries(
-                "Bridge function adder", HDF.EntryType.NUMPY.value
-            ),
-            HDF.EntryKeys.COUPLING.value: self.Entries(
-                "Coupling parameter", HDF.EntryType.NUMBER.value
-            ),
-            HDF.EntryKeys.CUTOFF.value: self.Entries(
-                "Cutoff for the wave-vector grid", HDF.EntryType.NUMBER.value
-            ),
-            HDF.EntryKeys.FREQUENCY_CUTOFF.value: self.Entries(
-                "Cutoff for the frequency", HDF.EntryType.NUMBER.value
-            ),
-            HDF.EntryKeys.DEGENERACY.value: self.Entries(
-                "Degeneracy parameter", HDF.EntryType.NUMBER.value
-            ),
-            HDF.EntryKeys.ERROR.value: self.Entries(
-                "Residual error in the solution", HDF.EntryType.NUMBER.value
-            ),
-            HDF.EntryKeys.FXC_GRID.value: self.Entries(
-                "Coupling parameter", HDF.EntryType.NUMPY.value
-            ),
-            HDF.EntryKeys.FXC_INT.value: self.Entries(
-                "Free Energy integrand", HDF.EntryType.NUMPY2D.value
-            ),
-            HDF.EntryKeys.MATSUBARA.value: self.Entries(
-                "Number of matsubara frequencies", HDF.EntryType.NUMBER.value
-            ),
-            HDF.EntryKeys.IDR.value: self.Entries(
-                "Ideal density response", HDF.EntryType.NUMPY2D.value
-            ),
-            HDF.EntryKeys.RESOLUTION.value: self.Entries(
-                "Resolution for the wave-vector grid", HDF.EntryType.NUMBER.value
-            ),
-            HDF.EntryKeys.RDF.value: self.Entries(
-                "Radial distribution function", HDF.EntryType.NUMPY.value
-            ),
-            HDF.EntryKeys.RDF_GRID.value: self.Entries(
-                "Inter-particle distance", HDF.EntryType.NUMPY.value
-            ),
-            HDF.EntryKeys.SDR.value: self.Entries(
-                "Static density response", HDF.EntryType.NUMPY.value
-            ),
-            HDF.EntryKeys.SLFC.value: self.Entries(
-                "Static local field correction", HDF.EntryType.NUMPY.value
-            ),
-            HDF.EntryKeys.SSF.value: self.Entries(
-                "Static structure factor", HDF.EntryType.NUMPY.value
-            ),
-            HDF.EntryKeys.SSF_HF.value: self.Entries(
-                "Hartree-Fock static structure factor", HDF.EntryType.NUMPY.value
-            ),
-            HDF.EntryKeys.THEORY.value: self.Entries(
-                "Theory that is being solved", HDF.EntryType.STRING.value
-            ),
-            HDF.EntryKeys.WVG.value: self.Entries(
-                "Wave-vector", HDF.EntryType.NUMPY.value
-            ),
-        }
+    PLOT_X_LABEL = {
+        ResultNames.FXC_GRID.value: "Coupling parameter",
+        ResultNames.RDF_GRID.value: "Inter-particle distance",
+        ResultNames.WVG.value: "Wave-vector",
+    }
 
-    # Structure used to categorize the entries stored in the hdf file
-    class Entries:
-        def __init__(self, description, entry_type):
-            self.description = description  # Descriptive string of the entry
-            self.entry_type = (
-                entry_type  # Type of entry (numpy, numpy2, number or string)
-            )
-            assert (
-                self.entry_type == HDF.EntryType.NUMPY.value
-                or self.entry_type == HDF.EntryType.NUMPY2D.value
-                or self.entry_type == HDF.EntryType.NUMBER.value
-                or self.entry_type == HDF.EntryType.STRING.value
-            )
+    PLOT_Y_LABEL = {
+        ResultNames.ALPHA.value: "Free Parameter for VS schemes",
+        ResultNames.ADR.value: "Auxiliary density response",
+        ResultNames.BF.value: "Bridge function adder",
+        ResultNames.FXC_INT.value: "Free Energy integrand",
+        ResultNames.IDR.value: "Ideal density response",
+        ResultNames.RDF.value: "Radial distribution function",
+        ResultNames.SDR.value: "Static density response",
+        ResultNames.SLFC.value: "Static local field correction",
+        ResultNames.SSF.value: "Static structure factor",
+        ResultNames.SSF_HF.value: "Hartree-Fock static structure factor",
+    }
 
     # Read runs in the database
-    def read_runs(self, database_name: str | None = None) -> dict:
+    @staticmethod
+    def read_runs(database_name: str | None = None) -> dict:
         """Reads runs from the database and returns the content in the form of a dictionary.
 
         Args:
@@ -143,11 +78,9 @@ class HDF:
         return db_handler.get_runs()
 
     # Read inputs in the database
+    @staticmethod
     def read_inputs(
-        self,
-        run_id: int,
-        database_name: str | None = None,
-        names: list[str] | None = None,
+        run_id: int, database_name: str | None = None, names: list[str] | None = None
     ) -> dict:
         """Reads inputs from the database and returns the content in the form of a dictionary.
 
@@ -163,11 +96,9 @@ class HDF:
         return db_handler.get_inputs_data(run_id, names if names is not None else [])
 
     # Read results in the database
+    @staticmethod
     def read_results(
-        self,
-        run_id: int,
-        database_name: str | None = None,
-        names: list[str] | None = None,
+        run_id: int, database_name: str | None = None, names: list[str] | None = None
     ) -> dict:
         """Reads results from the database and returns the content in the form of a dictionary.
 
@@ -183,8 +114,8 @@ class HDF:
         return db_handler.get_results_data(run_id, names)
 
     # Plot from data in hdf file
+    @staticmethod
     def plot(
-        self,
         to_plot: list[str],
         run_id: id,
         database_name: str | None = None,
@@ -203,73 +134,41 @@ class HDF:
                 (Defaults to  None, all matsubara frequencies are plotted)
 
         """
-        for name in to_plot:
-            description = (
-                self.entries[name].description if name in self.entries.keys() else ""
-            )
-            if name == HDF.EntryKeys.RDF.value:
-                x = self.read_results(
-                    run_id, database_name, [name, HDF.EntryKeys.RDF_GRID.value]
-                )
-                Plot.plot_1D(
-                    x[HDF.EntryKeys.RDF_GRID.value],
-                    x[name],
-                    self.entries[HDF.EntryKeys.RDF_GRID.value].description,
-                    description,
-                )
-            elif name in [HDF.EntryKeys.ADR.value, HDF.EntryKeys.IDR.value]:
-                x = self.read_results(
-                    run_id,
-                    database_name,
-                    [name, HDF.EntryKeys.WVG.value, HDF.EntryKeys.MATSUBARA.value],
-                )
+        for y_name in to_plot:
+            if y_name not in HDF.PLOT_Y_LABEL.keys():
+                raise ValueError(f"Unknown quantity to plot: {y_name}")
+            x_name = HDF.PLOT_X_AXIS[y_name]
+            if y_name in [HDF.ResultNames.ADR.value, HDF.ResultNames.IDR.value]:
                 if matsubara is None:
-                    matsubara = np.arange(x[HDF.EntryKeys.MATSUBARA.value])
-                Plot.plot_1D_parametric(
-                    x[HDF.EntryKeys.WVG.value],
-                    x[name],
-                    self.entries[HDF.EntryKeys.WVG.value].description,
-                    description,
-                    matsubara,
-                )
-            elif name == HDF.EntryKeys.FXC_INT.value:
-                x = self.read_results(
-                    run_id, database_name, [name, HDF.EntryKeys.FXC_GRID.value]
-                )
-                Plot.plot_1D(
-                    x[HDF.EntryKeys.FXC_GRID.value],
-                    x[name][1, :],
-                    self.entries[HDF.EntryKeys.FXC_GRID.value].description,
-                    description,
-                )
-            elif name in [
-                HDF.EntryKeys.BF.value,
-                HDF.EntryKeys.SDR.value,
-                HDF.EntryKeys.SLFC.value,
-                HDF.EntryKeys.SSF.value,
-                HDF.EntryKeys.SSF_HF.value,
-            ]:
-                x = self.read_results(
-                    run_id, database_name, [name, HDF.EntryKeys.WVG.value]
-                )
-                Plot.plot_1D(
-                    x[HDF.EntryKeys.WVG.value],
-                    x[name],
-                    self.entries[HDF.EntryKeys.WVG.value].description,
-                    self.entries[name].description,
-                )
-            elif name == HDF.EntryKeys.ALPHA.value:
-                x = self.read_results(
-                    run_id, database_name, [name, HDF.EntryKeys.FXC_GRID.value]
-                )
-                Plot.plot_1D(
-                    x[HDF.EntryKeys.FXC_GRID.value][::2],
-                    x[name][::2],
-                    self.entries[HDF.EntryKeys.FXC_GRID.value].description,
-                    self.entries[name].description,
+                    matsubara = HDF.read_inputs(run_id, database_name, "matsubara")
+                HDF._plot_1D_parametric(
+                    x_name, y_name, matsubara, run_id, database_name
                 )
             else:
-                raise ValueError(f"Unknown quantity to plot: {name}")
+                HDF._plot_1D(x_name, y_name, run_id, database_name)
+
+    @staticmethod
+    def _plot_1D(x_name: str, y_name: str, run_id: id, database_name: str | None):
+        data = HDF.read_results(run_id, database_name, [x_name, y_name])
+        Plot.plot_1D(
+            data[x_name],
+            data[y_name],
+            HDF.PLOT_X_LABEL.get(x_name, ""),
+            HDF.PLOT_Y_LABEL.get(y_name, ""),
+        )
+
+    @staticmethod
+    def _plot_1D_parametric(
+        x_name: str, y_name: str, parameters, run_id: id, database_name: str | None
+    ):
+        data = HDF.read_results(run_id, database_name, [x_name, y_name])
+        Plot.plot_1D_parametric(
+            data[x_name],
+            data[y_name],
+            HDF.PLOT_X_LABEL.get(x_name, ""),
+            HDF.PLOT_Y_LABEL.get(y_name, ""),
+            parameters,
+        )
 
 
 # -----------------------------------------------------------------------

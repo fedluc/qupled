@@ -60,19 +60,19 @@ def test_save(rpa, rpa_input, mocker):
         assert os.path.isfile(rpa.hdf_file_name)
         inspect_data = HDF().inspect(rpa.hdf_file_name)
         expected_entries = [
-            HDF.EntryKeys.COUPLING.value,
-            HDF.EntryKeys.DEGENERACY.value,
-            HDF.EntryKeys.THEORY.value,
-            HDF.EntryKeys.RESOLUTION.value,
-            HDF.EntryKeys.CUTOFF.value,
-            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
-            HDF.EntryKeys.MATSUBARA.value,
-            HDF.EntryKeys.IDR.value,
-            HDF.EntryKeys.SDR.value,
-            HDF.EntryKeys.SLFC.value,
-            HDF.EntryKeys.SSF.value,
-            HDF.EntryKeys.SSF_HF.value,
-            HDF.EntryKeys.WVG.value,
+            HDF.ResultNames.COUPLING.value,
+            HDF.ResultNames.DEGENERACY.value,
+            HDF.ResultNames.THEORY.value,
+            HDF.ResultNames.RESOLUTION.value,
+            HDF.ResultNames.CUTOFF.value,
+            HDF.ResultNames.FREQUENCY_CUTOFF.value,
+            HDF.ResultNames.MATSUBARA.value,
+            HDF.ResultNames.IDR.value,
+            HDF.ResultNames.SDR.value,
+            HDF.ResultNames.SLFC.value,
+            HDF.ResultNames.SSF.value,
+            HDF.ResultNames.SSF_HF.value,
+            HDF.ResultNames.WVG.value,
         ]
         for entry in expected_entries:
             assert entry in inspect_data
@@ -100,11 +100,11 @@ def test_plot(rpa, mocker):
     mock_mpi_is_root = mocker.patch.object(MPI, MPI.is_root.__name__)
     mock_compute_rdf = mocker.patch.object(HDF, HDF.compute_rdf.__name__)
     mock_plot = mocker.patch.object(HDF, HDF.plot.__name__)
-    rpa.plot([HDF.EntryKeys.SSF.value, HDF.EntryKeys.IDR.value])
+    rpa.plot([HDF.ResultNames.SSF.value, HDF.ResultNames.IDR.value])
     assert mock_mpi_is_root.call_count == 1
     assert mock_compute_rdf.call_count == 0
     assert mock_plot.call_count == 1
-    rpa.plot([HDF.EntryKeys.SSF.value, HDF.EntryKeys.RDF.value])
+    rpa.plot([HDF.ResultNames.SSF.value, HDF.ResultNames.RDF.value])
     assert mock_mpi_is_root.call_count == 2
     assert mock_compute_rdf.call_count == 1
     assert mock_plot.call_count == 2

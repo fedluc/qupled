@@ -12,8 +12,6 @@ from . import base
 class Rpa(base.ClassicScheme):
 
     # Compute
-    @util.MPI.record_time
-    @util.MPI.synchronize_ranks
     def compute(self, inputs: Rpa.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -21,11 +19,7 @@ class Rpa(base.ClassicScheme):
         Args:
             inputs: Input parameters.
         """
-        self.inputs = inputs
-        scheme = native.Rpa(self.inputs.to_native())
-        self._compute(scheme)
-        self.results = self.Result(scheme)
-        self._save(scheme)
+        super().compute(inputs, native.Rpa, self.Result)
 
     # Input class
     class Input(base.Input):

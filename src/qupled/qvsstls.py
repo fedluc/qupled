@@ -51,13 +51,13 @@ class QVSStls(base.QuantumIterativeScheme):
     def _save(self, scheme) -> None:
         super()._save(scheme)
         pd.DataFrame(scheme.free_energy_grid).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.FXC_GRID.value
+            self.hdf_file_name, key=util.HDF.ResultNames.FXC_GRID.value
         )
         pd.DataFrame(scheme.free_energy_integrand).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.FXC_INT.value
+            self.hdf_file_name, key=util.HDF.ResultNames.FXC_INT.value
         )
         pd.DataFrame(scheme.alpha).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.ALPHA.value
+            self.hdf_file_name, key=util.HDF.ResultNames.ALPHA.value
         )
 
     # Zip all files for the fixed component of the auxiliary density response

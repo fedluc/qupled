@@ -14,8 +14,6 @@ from . import base as base
 class VSStls(base.IterativeScheme):
 
     # Compute
-    @util.MPI.record_time
-    @util.MPI.synchronize_ranks
     def compute(self, inputs: VSStls.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -23,26 +21,7 @@ class VSStls(base.IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        self.inputs = inputs
-        scheme = native.VSStls(self.inputs.to_native())
-        self._compute(scheme)
-        self.results = self.Result(scheme)
-        self._save(scheme)
-
-    # Save results
-    @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
-        """Stores the results obtained by solving the scheme."""
-        super()._save(scheme)
-        pd.DataFrame(scheme.free_energy_grid).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.FXC_GRID.value
-        )
-        pd.DataFrame(scheme.free_energy_integrand).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.FXC_INT.value
-        )
-        pd.DataFrame(scheme.alpha).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.ALPHA.value
-        )
+        super().compute(inputs, native.VSStls, self.Result)
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
@@ -56,16 +35,16 @@ class VSStls(base.IterativeScheme):
         hdf_data = util.HDF().read(
             file_name,
             [
-                util.HDF.EntryKeys.FXC_GRID.value,
-                util.HDF.EntryKeys.FXC_INT.value,
-                util.HDF.EntryKeys.ALPHA.value,
+                util.HDF.ResultNames.FXC_GRID.value,
+                util.HDF.ResultNames.FXC_INT.value,
+                util.HDF.ResultNames.ALPHA.value,
             ],
         )
-        fxci.grid = hdf_data[util.HDF.EntryKeys.FXC_GRID.value]
+        fxci.grid = hdf_data[util.HDF.ResultNames.FXC_GRID.value]
         fxci.integrand = np.ascontiguousarray(
-            hdf_data[util.HDF.EntryKeys.FXC_INT.value]
+            hdf_data[util.HDF.ResultNames.FXC_INT.value]
         )
-        fxci.alpha = hdf_data[util.HDF.EntryKeys.ALPHA.value]
+        fxci.alpha = hdf_data[util.HDF.ResultNames.ALPHA.value]
         return fxci
 
     # Input class
@@ -96,7 +75,7 @@ class VSStls(base.IterativeScheme):
             self.theory: str = "VSSTLS"
 
         def to_native(self) -> native.VSStlsInput:
-            return super().to_native(self, native.VSStlsInput())
+            return base.Input.to_native(self, native.VSStlsInput())
 
     # Results class
     class Result(base.Result):
@@ -112,4 +91,4 @@ class VSStls(base.IterativeScheme):
             """Free energy integrand"""
             self.alpha = None
             """Free parameter"""
-            super().from_native(self, scheme)
+            super().from_native(scheme)

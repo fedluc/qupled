@@ -15,8 +15,6 @@ from . import base
 class StlsIet(base.IterativeScheme):
 
     # Compute
-    @util.MPI.record_time
-    @util.MPI.synchronize_ranks
     def compute(self, inputs: StlsIet.Input) -> None:
         """
         Solves the scheme and saves the results.
@@ -24,11 +22,7 @@ class StlsIet(base.IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        self.inputs = inputs
-        scheme = native.Stls(self.inputs.to_native())
-        self._compute(scheme)
-        self.results = self.Result(scheme)
-        self._save(scheme)
+        super().compute(inputs, native.Stls, self.Result)
 
     # Save results to disk
     @util.MPI.run_only_on_root
