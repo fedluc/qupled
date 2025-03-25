@@ -33,9 +33,10 @@ class DataBaseHandler:
         VALUE = "value"
 
     def __init__(self, database_name: str | None = None):
-        if database_name is None:
-            database_name = self.DEFAULT_DATABASE_NAME
-        self.engine = sql.create_engine(f"sqlite:///{database_name}")
+        self.database_name = (
+            database_name if database_name is not None else self.DEFAULT_DATABASE_NAME
+        )
+        self.engine = sql.create_engine(f"sqlite:///{self.database_name}")
         self.table_metadata = sql.MetaData()
         self.run_table = self._build_run_table()
         self.inputs_table = self._build_inputs_table()
@@ -46,7 +47,6 @@ class DataBaseHandler:
         self.insert_run_data(inputs)
         self.insert_inputs_data(inputs.__dict__)
         self.insert_results_data(results.__dict__)
-        return self.run_id
 
     def _build_run_table(self):
         table = sql.Table(
@@ -156,11 +156,11 @@ class DataBaseHandler:
         result = self._execute(statement).mappings().first()
         return {key: result[key] for key in result.keys()} if result is not None else {}
 
-    def get_inputs_data(self, run_id: int, names: list[str]) -> dict:
+    def get_inputs_data(self, run_id: int, names: list[str] | None) -> dict:
         sql_mapping = lambda value: (self._from_json(value))
         return self._get_data(self.inputs_table, run_id, names, sql_mapping)
 
-    def get_results_data(self, run_id: int, names: list[str]) -> dict:
+    def get_results_data(self, run_id: int, names: list[str] | None) -> dict:
         sql_mapping = lambda value: (self._from_bytes(value))
         return self._get_data(self.results_table, run_id, names, sql_mapping)
 
@@ -194,11 +194,11 @@ class DataBaseHandler:
         self,
         table: sql.Table,
         run_id: int,
-        names: list[str],
+        names: list[str] | None,
         sql_mapping: Callable[[any], any],
     ) -> dict:
         conditions = [table.c[self.TableKeys.RUN_ID.value] == run_id]
-        if names:
+        if names is not None:
             conditions.append(table.c[self.TableKeys.NAME.value].in_(names))
         statement = sql.select(table).where(*conditions)
         rows = self._execute(statement).mappings().all()

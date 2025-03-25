@@ -145,7 +145,7 @@ class HDF:
     # Read inputs in the database
     def read_inputs(
         self,
-        run_id: str,
+        run_id: int,
         database_name: str | None = None,
         names: list[str] | None = None,
     ) -> dict:
@@ -165,7 +165,7 @@ class HDF:
     # Read results in the database
     def read_results(
         self,
-        run_id: str,
+        run_id: int,
         database_name: str | None = None,
         names: list[str] | None = None,
     ) -> dict:
@@ -180,35 +180,16 @@ class HDF:
             A dictionary whose keys are the quantities listed in names and values are the corresponding results.
         """
         db_handler = database.DataBaseHandler(database_name)
-        return db_handler.get_results_data(run_id, names if names is not None else [])
-
-    # Get all quantities stored in an hdf file
-    def inspect(self, hdf: str) -> dict:
-        """Allows to obtain a summary of the quantities stored in an hdf file
-
-        Args:
-            hdf: Name of the hdf file to inspect
-
-        Returns:
-            A dictionary containing all the quantities stored in the hdf file and a brief description for
-            each quantity
-
-        """
-        with pd.HDFStore(hdf, mode="r") as store:
-            dataset_names = [
-                name[1:] if name.startswith("/") else name for name in store.keys()
-            ]
-            if HDF.EntryKeys.INFO.value in dataset_names:
-                dataset_names.remove(HDF.EntryKeys.INFO.value)
-                for name in store[HDF.EntryKeys.INFO.value].keys():
-                    dataset_names.append(name)
-        output = dict.fromkeys(dataset_names)
-        for key in output.keys():
-            output[key] = self.entries[key].description
-        return output
+        return db_handler.get_results_data(run_id, names)
 
     # Plot from data in hdf file
-    def plot(self, hdf: str, to_plot: list[str], matsubara: np.array = None) -> None:
+    def plot(
+        self,
+        to_plot: list[str],
+        run_id: id,
+        database_name: str | None = None,
+        matsubara: np.array = None,
+    ) -> None:
         """Plots the results stored in an hdf file.
 
         Args:
@@ -227,7 +208,9 @@ class HDF:
                 self.entries[name].description if name in self.entries.keys() else ""
             )
             if name == HDF.EntryKeys.RDF.value:
-                x = self.read(hdf, [name, HDF.EntryKeys.RDF_GRID.value])
+                x = self.read_results(
+                    run_id, database_name, [name, HDF.EntryKeys.RDF_GRID.value]
+                )
                 Plot.plot_1D(
                     x[HDF.EntryKeys.RDF_GRID.value],
                     x[name],
@@ -235,8 +218,10 @@ class HDF:
                     description,
                 )
             elif name in [HDF.EntryKeys.ADR.value, HDF.EntryKeys.IDR.value]:
-                x = self.read(
-                    hdf, [name, HDF.EntryKeys.WVG.value, HDF.EntryKeys.MATSUBARA.value]
+                x = self.read_results(
+                    run_id,
+                    database_name,
+                    [name, HDF.EntryKeys.WVG.value, HDF.EntryKeys.MATSUBARA.value],
                 )
                 if matsubara is None:
                     matsubara = np.arange(x[HDF.EntryKeys.MATSUBARA.value])
@@ -248,7 +233,9 @@ class HDF:
                     matsubara,
                 )
             elif name == HDF.EntryKeys.FXC_INT.value:
-                x = self.read(hdf, [name, HDF.EntryKeys.FXC_GRID.value])
+                x = self.read_results(
+                    run_id, database_name, [name, HDF.EntryKeys.FXC_GRID.value]
+                )
                 Plot.plot_1D(
                     x[HDF.EntryKeys.FXC_GRID.value],
                     x[name][1, :],
@@ -262,7 +249,9 @@ class HDF:
                 HDF.EntryKeys.SSF.value,
                 HDF.EntryKeys.SSF_HF.value,
             ]:
-                x = self.read(hdf, [name, HDF.EntryKeys.WVG.value])
+                x = self.read_results(
+                    run_id, database_name, [name, HDF.EntryKeys.WVG.value]
+                )
                 Plot.plot_1D(
                     x[HDF.EntryKeys.WVG.value],
                     x[name],
@@ -270,7 +259,9 @@ class HDF:
                     self.entries[name].description,
                 )
             elif name == HDF.EntryKeys.ALPHA.value:
-                x = self.read(hdf, [name, HDF.EntryKeys.FXC_GRID.value])
+                x = self.read_results(
+                    run_id, database_name, [name, HDF.EntryKeys.FXC_GRID.value]
+                )
                 Plot.plot_1D(
                     x[HDF.EntryKeys.FXC_GRID.value][::2],
                     x[name][::2],
@@ -279,59 +270,6 @@ class HDF:
                 )
             else:
                 raise ValueError(f"Unknown quantity to plot: {name}")
-
-    def compute_rdf(
-        self, hdf: str, rdf_grid: np.array = None, save_rdf: bool = True
-    ) -> None:
-        """Computes the radial distribution function and returns it as a numpy array.
-
-        Args:
-            hdf: Name of the hdf file to load the structural properties from
-            rdf_grid: A numpy array specifying the grid used to compute the radial distribution function
-                (default = None, i.e. rdf_grid = np.arange(0.0, 10.0, 0.01))
-            save_rdf: Flag marking whether the rdf data should be added to the hdf file (default = True)
-
-        Returns:
-            The radial distribution function
-
-        """
-        hdf_data = self.read(hdf, [HDF.EntryKeys.WVG.value, HDF.EntryKeys.SSF.value])
-        if rdf_grid is None:
-            rdf_grid = np.arange(0.0, 10.0, 0.01)
-        rdf = native.compute_rdf(
-            rdf_grid,
-            hdf_data[HDF.EntryKeys.WVG.value],
-            hdf_data[HDF.EntryKeys.SSF.value],
-        )
-        if save_rdf:
-            pd.DataFrame(rdf_grid).to_hdf(
-                hdf, key=HDF.EntryKeys.RDF_GRID.value, mode="r+"
-            )
-            pd.DataFrame(rdf).to_hdf(hdf, key=HDF.EntryKeys.RDF.value, mode="r+")
-        return rdf
-
-    def compute_internal_energy(self, hdf: str) -> float:
-        """Computes the internal energy and returns it to output.
-
-        Args:
-            hdf: Name of the hdf file to load the structural properties from
-
-        Returns:
-            The internal energy
-        """
-        hdf_data = self.read(
-            hdf,
-            [
-                HDF.EntryKeys.WVG.value,
-                HDF.EntryKeys.SSF.value,
-                HDF.EntryKeys.COUPLING.value,
-            ],
-        )
-        return native.compute_internal_energy(
-            hdf_data[HDF.EntryKeys.WVG.value],
-            hdf_data[HDF.EntryKeys.SSF.value],
-            hdf_data[HDF.EntryKeys.COUPLING.value],
-        )
 
 
 # -----------------------------------------------------------------------

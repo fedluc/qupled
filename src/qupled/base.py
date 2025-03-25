@@ -113,9 +113,8 @@ class ClassicScheme:
         # File to store output on disk
         self.hdf_file_name: str = None  #: Name of the output file.
         self.db_handler = DataBaseHandler()
-        self.run_id = None
-        self.results = None
-        self.inputs = None
+        self.results: Result | None = None
+        self.inputs: Result | None = None
 
     # Compute the scheme
     def _compute(self, scheme) -> None:
@@ -187,7 +186,7 @@ class ClassicScheme:
             self.hdf_file_name, key=util.HDF.EntryKeys.WVG.value
         )
         if self.results is not None:
-            self.run_id = self.db_handler.insert_run(self.inputs, self.results)
+            self.db_handler.insert_run(self.inputs, self.results)
 
     # Compute radial distribution function
     @util.MPI.run_only_on_root
@@ -212,16 +211,6 @@ class ClassicScheme:
                 self.hdf_file_name, key=util.HDF.EntryKeys.RDF.value, mode="r+"
             )
 
-    # Compute the internal energy
-    def compute_internal_energy(self) -> float:
-        """Computes the internal energy from the data stored in the output file.
-
-        Returns:
-            The internal energy
-
-        """
-        return util.HDF().compute_internal_energy(self.hdf_file_name)
-
     # Plot results
     @util.MPI.run_only_on_root
     def plot(
@@ -244,7 +233,9 @@ class ClassicScheme:
         """
         if util.HDF.EntryKeys.RDF.value in to_plot:
             self.compute_rdf(rdf_grid)
-        util.HDF().plot(self.hdf_file_name, to_plot, matsubara)
+        util.HDF().plot(
+            to_plot, self.db_handler.run_id, self.db_handler.database_name, matsubara
+        )
 
 
 # -----------------------------------------------------------------------
@@ -269,7 +260,7 @@ class IterativeScheme(ClassicScheme):
             An instance of IterativeScheme.Guess containing the initial guess data.
         """
         names = [util.HDF.EntryKeys.WVG.value, util.HDF.EntryKeys.SLFC.value]
-        data = util.HDF.read(run_id, database_name, names)
+        data = util.HDF().read_results(run_id, database_name, names)
         return IterativeScheme.Guess(data[names[0]], data[names[1]])
 
     # Save results to disk
