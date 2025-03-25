@@ -25,26 +25,24 @@ class VSStls(base.IterativeScheme):
 
     # Set the free energy integrand from a dataframe produced in output
     @staticmethod
-    def get_free_energy_integrand(file_name: str) -> native.FreeEnergyIntegrand:
+    def get_free_energy_integrand(
+        run_id: str, database_name: str | None = None
+    ) -> native.FreeEnergyIntegrand:
         """Constructs the free energy integrand by extracting the information from an output file.
 
         Args:
             file_name : name of the file used to extract the information for the free energy integrand.
         """
+        names = [
+            util.HDF.ResultNames.FXC_GRID.value,
+            util.HDF.ResultNames.FXC_INT.value,
+            util.HDF.ResultNames.ALPHA.value,
+        ]
+        data = util.HDF.read_results(run_id, database_name, names)
         fxci = native.FreeEnergyIntegrand()
-        hdf_data = util.HDF().read(
-            file_name,
-            [
-                util.HDF.ResultNames.FXC_GRID.value,
-                util.HDF.ResultNames.FXC_INT.value,
-                util.HDF.ResultNames.ALPHA.value,
-            ],
-        )
-        fxci.grid = hdf_data[util.HDF.ResultNames.FXC_GRID.value]
-        fxci.integrand = np.ascontiguousarray(
-            hdf_data[util.HDF.ResultNames.FXC_INT.value]
-        )
-        fxci.alpha = hdf_data[util.HDF.ResultNames.ALPHA.value]
+        fxci.grid = data[names[0]]
+        fxci.integrand = data[names[1]]
+        fxci.alpha = data[names[2]]
         return fxci
 
     # Input class

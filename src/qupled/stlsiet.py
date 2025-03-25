@@ -7,7 +7,6 @@ import sys
 import pandas as pd
 import numpy as np
 from . import native
-from . import util
 from . import stls
 from . import base
 
@@ -23,13 +22,6 @@ class StlsIet(base.IterativeScheme):
             inputs: Input parameters.
         """
         super().compute(inputs, native.Stls, self.Result)
-
-    # Save results to disk
-    @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
-        """Stores the results obtained by solving the scheme."""
-        super()._save(scheme)
-        pd.DataFrame(scheme.bf).to_hdf(self.hdf_file_name, key="bf")
 
     # Input class
     class Input(stls.Stls.Input):

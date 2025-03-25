@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 from . import native
-from . import util
 from . import rpa
 from . import base
 

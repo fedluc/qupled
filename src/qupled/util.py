@@ -54,7 +54,6 @@ class HDF:
         ResultNames.ALPHA.value: "Free Parameter for VS schemes",
         ResultNames.ADR.value: "Auxiliary density response",
         ResultNames.BF.value: "Bridge function adder",
-        ResultNames.FXC_INT.value: "Free Energy integrand",
         ResultNames.IDR.value: "Ideal density response",
         ResultNames.RDF.value: "Radial distribution function",
         ResultNames.SDR.value: "Static density response",

@@ -5,7 +5,6 @@
 from __future__ import annotations
 import numpy as np
 from . import native
-from . import util
 from . import base
 
 
