@@ -5,7 +5,7 @@ import pytest
 
 from qupled.stls import Stls
 from qupled.native import Stls as NativeStls
-from qupled.util import HDF, MPI
+from qupled.util import DataBase, MPI
 
 
 @pytest.fixture
@@ -42,22 +42,22 @@ def test_save(stls, stls_input, mocker):
         stls._save(scheme)
         assert mock_mpi_is_root.call_count == 2
         assert os.path.isfile(stls.hdf_file_name)
-        inspect_data = HDF().inspect(stls.hdf_file_name)
+        inspect_data = DataBase().inspect(stls.hdf_file_name)
         expected_entries = [
-            HDF.ResultNames.COUPLING.value,
-            HDF.ResultNames.DEGENERACY.value,
-            HDF.ResultNames.THEORY.value,
-            HDF.ResultNames.ERROR.value,
-            HDF.ResultNames.RESOLUTION.value,
-            HDF.ResultNames.CUTOFF.value,
-            HDF.ResultNames.FREQUENCY_CUTOFF.value,
-            HDF.ResultNames.MATSUBARA.value,
-            HDF.ResultNames.IDR.value,
-            HDF.ResultNames.SDR.value,
-            HDF.ResultNames.SLFC.value,
-            HDF.ResultNames.SSF.value,
-            HDF.ResultNames.SSF_HF.value,
-            HDF.ResultNames.WVG.value,
+            DataBase.ResultNames.COUPLING.value,
+            DataBase.ResultNames.DEGENERACY.value,
+            DataBase.ResultNames.THEORY.value,
+            DataBase.ResultNames.ERROR.value,
+            DataBase.ResultNames.RESOLUTION.value,
+            DataBase.ResultNames.CUTOFF.value,
+            DataBase.ResultNames.FREQUENCY_CUTOFF.value,
+            DataBase.ResultNames.MATSUBARA.value,
+            DataBase.ResultNames.IDR.value,
+            DataBase.ResultNames.SDR.value,
+            DataBase.ResultNames.SLFC.value,
+            DataBase.ResultNames.SSF.value,
+            DataBase.ResultNames.SSF_HF.value,
+            DataBase.ResultNames.WVG.value,
         ]
         for entry in expected_entries:
             assert entry in inspect_data
@@ -68,9 +68,9 @@ def test_save(stls, stls_input, mocker):
 def test_get_initial_guess(mocker):
     arr = np.ones(10)
     mocker.patch.object(
-        HDF,
-        HDF.read.__name__,
-        return_value={HDF.ResultNames.WVG.value: arr, HDF.ResultNames.SLFC.value: arr},
+        DataBase,
+        DataBase.read.__name__,
+        return_value={DataBase.ResultNames.WVG.value: arr, DataBase.ResultNames.SLFC.value: arr},
     )
     guess = Stls.get_initial_guess("dummy_file_name")
     assert np.array_equal(guess.wvg, arr)

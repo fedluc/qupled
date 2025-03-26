@@ -4,7 +4,7 @@ import pytest
 
 from qupled.rpa import Rpa
 from qupled.native import Rpa as NativeRpa
-from qupled.util import HDF, MPI
+from qupled.util import DataBase, MPI
 
 
 @pytest.fixture
@@ -58,21 +58,21 @@ def test_save(rpa, rpa_input, mocker):
         rpa._save(scheme)
         assert mock_mpi_is_root.call_count == 1
         assert os.path.isfile(rpa.hdf_file_name)
-        inspect_data = HDF().inspect(rpa.hdf_file_name)
+        inspect_data = DataBase().inspect(rpa.hdf_file_name)
         expected_entries = [
-            HDF.ResultNames.COUPLING.value,
-            HDF.ResultNames.DEGENERACY.value,
-            HDF.ResultNames.THEORY.value,
-            HDF.ResultNames.RESOLUTION.value,
-            HDF.ResultNames.CUTOFF.value,
-            HDF.ResultNames.FREQUENCY_CUTOFF.value,
-            HDF.ResultNames.MATSUBARA.value,
-            HDF.ResultNames.IDR.value,
-            HDF.ResultNames.SDR.value,
-            HDF.ResultNames.SLFC.value,
-            HDF.ResultNames.SSF.value,
-            HDF.ResultNames.SSF_HF.value,
-            HDF.ResultNames.WVG.value,
+            DataBase.ResultNames.COUPLING.value,
+            DataBase.ResultNames.DEGENERACY.value,
+            DataBase.ResultNames.THEORY.value,
+            DataBase.ResultNames.RESOLUTION.value,
+            DataBase.ResultNames.CUTOFF.value,
+            DataBase.ResultNames.FREQUENCY_CUTOFF.value,
+            DataBase.ResultNames.MATSUBARA.value,
+            DataBase.ResultNames.IDR.value,
+            DataBase.ResultNames.SDR.value,
+            DataBase.ResultNames.SLFC.value,
+            DataBase.ResultNames.SSF.value,
+            DataBase.ResultNames.SSF_HF.value,
+            DataBase.ResultNames.WVG.value,
         ]
         for entry in expected_entries:
             assert entry in inspect_data
@@ -82,7 +82,7 @@ def test_save(rpa, rpa_input, mocker):
 
 def test_compute_rdf(rpa, mocker):
     mock_mpi_get_rank = mocker.patch.object(MPI, MPI.rank.__name__, return_value=0)
-    mock_compute_rdf = mocker.patch.object(HDF, HDF.compute_rdf.__name__)
+    mock_compute_rdf = mocker.patch.object(DataBase, DataBase.compute_rdf.__name__)
     rpa.compute_rdf()
     assert mock_mpi_get_rank.call_count == 1
     assert mock_compute_rdf.call_count == 1
@@ -90,7 +90,7 @@ def test_compute_rdf(rpa, mocker):
 
 def test_compute_internal_energy(rpa, mocker):
     mock_compute_internal_energy = mocker.patch.object(
-        HDF, HDF.compute_internal_energy.__name__
+        DataBase, DataBase.compute_internal_energy.__name__
     )
     rpa.compute_internal_energy()
     assert mock_compute_internal_energy.call_count == 1
@@ -98,13 +98,13 @@ def test_compute_internal_energy(rpa, mocker):
 
 def test_plot(rpa, mocker):
     mock_mpi_is_root = mocker.patch.object(MPI, MPI.is_root.__name__)
-    mock_compute_rdf = mocker.patch.object(HDF, HDF.compute_rdf.__name__)
-    mock_plot = mocker.patch.object(HDF, HDF.plot.__name__)
-    rpa.plot([HDF.ResultNames.SSF.value, HDF.ResultNames.IDR.value])
+    mock_compute_rdf = mocker.patch.object(DataBase, DataBase.compute_rdf.__name__)
+    mock_plot = mocker.patch.object(DataBase, DataBase.plot.__name__)
+    rpa.plot([DataBase.ResultNames.SSF.value, DataBase.ResultNames.IDR.value])
     assert mock_mpi_is_root.call_count == 1
     assert mock_compute_rdf.call_count == 0
     assert mock_plot.call_count == 1
-    rpa.plot([HDF.ResultNames.SSF.value, HDF.ResultNames.RDF.value])
+    rpa.plot([DataBase.ResultNames.SSF.value, DataBase.ResultNames.RDF.value])
     assert mock_mpi_is_root.call_count == 2
     assert mock_compute_rdf.call_count == 1
     assert mock_plot.call_count == 2

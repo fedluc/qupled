@@ -38,7 +38,7 @@ class Qstls(base.QuantumIterativeScheme):
             self.theory = "QSTLS"
 
     # Results class
-    class Result(base.Result):
+    class Result(stls.Stls.Result):
         """
         Class used to store the results for the :obj:`qupled.classic.VSStls` class.
         """

@@ -5,7 +5,7 @@ import pytest
 
 from qupled import native
 from qupled.vsstls import VSStls
-from qupled.util import HDF, MPI
+from qupled.util import DataBase, MPI
 
 
 @pytest.fixture
@@ -42,25 +42,25 @@ def test_save(vsstls, vsstls_input, mocker):
         vsstls._save(scheme)
         assert mock_mpi_is_root.call_count == 3
         assert os.path.isfile(vsstls.hdf_file_name)
-        inspect_data = HDF().inspect(vsstls.hdf_file_name)
+        inspect_data = DataBase().inspect(vsstls.hdf_file_name)
         expected_entries = [
-            HDF.ResultNames.COUPLING.value,
-            HDF.ResultNames.DEGENERACY.value,
-            HDF.ResultNames.THEORY.value,
-            HDF.ResultNames.ERROR.value,
-            HDF.ResultNames.RESOLUTION.value,
-            HDF.ResultNames.CUTOFF.value,
-            HDF.ResultNames.FREQUENCY_CUTOFF.value,
-            HDF.ResultNames.MATSUBARA.value,
-            HDF.ResultNames.IDR.value,
-            HDF.ResultNames.SDR.value,
-            HDF.ResultNames.SLFC.value,
-            HDF.ResultNames.SSF.value,
-            HDF.ResultNames.SSF_HF.value,
-            HDF.ResultNames.WVG.value,
-            HDF.ResultNames.FXC_GRID.value,
-            HDF.ResultNames.FXC_INT.value,
-            HDF.ResultNames.ALPHA.value,
+            DataBase.ResultNames.COUPLING.value,
+            DataBase.ResultNames.DEGENERACY.value,
+            DataBase.ResultNames.THEORY.value,
+            DataBase.ResultNames.ERROR.value,
+            DataBase.ResultNames.RESOLUTION.value,
+            DataBase.ResultNames.CUTOFF.value,
+            DataBase.ResultNames.FREQUENCY_CUTOFF.value,
+            DataBase.ResultNames.MATSUBARA.value,
+            DataBase.ResultNames.IDR.value,
+            DataBase.ResultNames.SDR.value,
+            DataBase.ResultNames.SLFC.value,
+            DataBase.ResultNames.SSF.value,
+            DataBase.ResultNames.SSF_HF.value,
+            DataBase.ResultNames.WVG.value,
+            DataBase.ResultNames.FXC_GRID.value,
+            DataBase.ResultNames.FXC_INT.value,
+            DataBase.ResultNames.ALPHA.value,
         ]
         for entry in expected_entries:
             assert entry in inspect_data
@@ -72,12 +72,12 @@ def test_get_free_energy_integrand(vsstls, mocker):
     arr_1d = np.ones(10)
     arr_2d = np.ones((3, 10))
     mocker.patch.object(
-        HDF,
-        HDF.read.__name__,
+        DataBase,
+        DataBase.read.__name__,
         return_value={
-            HDF.ResultNames.FXC_GRID.value: arr_1d,
-            HDF.ResultNames.FXC_INT.value: arr_2d,
-            HDF.ResultNames.ALPHA.value: arr_1d,
+            DataBase.ResultNames.FXC_GRID.value: arr_1d,
+            DataBase.ResultNames.FXC_INT.value: arr_2d,
+            DataBase.ResultNames.ALPHA.value: arr_1d,
         },
     )
     fxci = vsstls.get_free_energy_integrand("dummy_file_name")

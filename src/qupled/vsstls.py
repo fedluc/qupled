@@ -33,12 +33,8 @@ class VSStls(base.IterativeScheme):
         Args:
             file_name : name of the file used to extract the information for the free energy integrand.
         """
-        names = [
-            util.HDF.ResultNames.FXC_GRID.value,
-            util.HDF.ResultNames.FXC_INT.value,
-            util.HDF.ResultNames.ALPHA.value,
-        ]
-        data = util.HDF.read_results(run_id, database_name, names)
+        names = ["free_energy_grid", "free_energy_integrand", "alpha"]
+        data = util.DataBase.read_results(run_id, database_name, names)
         fxci = native.FreeEnergyIntegrand()
         fxci.grid = data[names[0]]
         fxci.integrand = data[names[1]]
@@ -73,7 +69,7 @@ class VSStls(base.IterativeScheme):
             self.theory: str = "VSSTLS"
 
     # Results class
-    class Result(base.Result):
+    class Result(stls.Stls.Result):
         """
         Class used to store the results for the :obj:`qupled.classic.VSStls` class.
         """

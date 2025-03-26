@@ -17,7 +17,7 @@ class Stls(base.IterativeScheme):
         Args:
             inputs: Input parameters.
         """
-        super().compute(inputs, native.Stls, native.StlsInput(), base.Result())
+        super().compute(inputs, native.Stls, native.StlsInput(), self.Result())
 
     # Input class
     class Input(base.Input):
@@ -41,3 +41,14 @@ class Stls(base.IterativeScheme):
             """Initial guess. Default = ``Stls.Guess()``"""
             # Undocumented default values
             self.theory: str = "STLS"
+
+    # Results class
+    class Result(base.Result):
+        """
+        Class used to store the results for the :obj:`qupled.classic.Stls` class.
+        """
+
+        def __init__(self):
+            super().__init__()
+            self.error: float = None
+            """Residual error in the solution"""

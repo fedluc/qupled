@@ -53,7 +53,7 @@ class StlsIet(base.IterativeScheme):
             """
 
     # Results class
-    class Result(base.Result):
+    class Result(stls.Stls.Result):
         """
         Class used to store the results for the :obj:`qupled.classic.StlsIet` class.
         """

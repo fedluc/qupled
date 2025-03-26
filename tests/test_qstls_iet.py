@@ -4,7 +4,7 @@ import zipfile
 import glob
 import shutil
 from qupled.native import Qstls as NativeQstls
-from qupled.util import HDF, MPI
+from qupled.util import DataBase, MPI
 from qupled.qstlsiet import QstlsIet
 
 
@@ -117,24 +117,24 @@ def test_save(qstls_iet, qstls_iet_input, mocker):
         qstls_iet._save(scheme)
         assert mock_mpi_is_root.call_count == 4
         assert os.path.isfile(qstls_iet.hdf_file_name)
-        inspect_data = HDF().inspect(qstls_iet.hdf_file_name)
+        inspect_data = DataBase().inspect(qstls_iet.hdf_file_name)
         expected_entries = [
-            HDF.ResultNames.COUPLING.value,
-            HDF.ResultNames.DEGENERACY.value,
-            HDF.ResultNames.THEORY.value,
-            HDF.ResultNames.ERROR.value,
-            HDF.ResultNames.RESOLUTION.value,
-            HDF.ResultNames.CUTOFF.value,
-            HDF.ResultNames.FREQUENCY_CUTOFF.value,
-            HDF.ResultNames.MATSUBARA.value,
-            HDF.ResultNames.ADR.value,
-            HDF.ResultNames.IDR.value,
-            HDF.ResultNames.SDR.value,
-            HDF.ResultNames.SLFC.value,
-            HDF.ResultNames.BF.value,
-            HDF.ResultNames.SSF.value,
-            HDF.ResultNames.SSF_HF.value,
-            HDF.ResultNames.WVG.value,
+            DataBase.ResultNames.COUPLING.value,
+            DataBase.ResultNames.DEGENERACY.value,
+            DataBase.ResultNames.THEORY.value,
+            DataBase.ResultNames.ERROR.value,
+            DataBase.ResultNames.RESOLUTION.value,
+            DataBase.ResultNames.CUTOFF.value,
+            DataBase.ResultNames.FREQUENCY_CUTOFF.value,
+            DataBase.ResultNames.MATSUBARA.value,
+            DataBase.ResultNames.ADR.value,
+            DataBase.ResultNames.IDR.value,
+            DataBase.ResultNames.SDR.value,
+            DataBase.ResultNames.SLFC.value,
+            DataBase.ResultNames.BF.value,
+            DataBase.ResultNames.SSF.value,
+            DataBase.ResultNames.SSF_HF.value,
+            DataBase.ResultNames.WVG.value,
         ]
         for entry in expected_entries:
             assert entry in inspect_data

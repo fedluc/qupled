@@ -115,6 +115,16 @@ class ClassicScheme:
         self.inputs: Input | None = None
         self.results: Result | None = None
 
+    @property
+    def run_id(self):
+        """
+        Property that retrieves the run ID from the database handler.
+
+        Returns:
+            str: The run ID associated with the current database handler.
+        """
+        return self.db_handler.run_id
+
     # Compute the scheme
     @util.MPI.record_time
     @util.MPI.synchronize_ranks
@@ -165,37 +175,8 @@ class ClassicScheme:
         if self.results is not None:
             self.results.compute_rdf(rdf_grid)
             self.db_handler.insert_results(
-                {
-                    util.HDF.ResultNames.RDF.value: self.results.rdf,
-                    util.HDF.ResultNames.RDF_GRID.value: self.results.rdf_grid,
-                }
+                {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid}
             )
-
-    # Plot results
-    @util.MPI.run_only_on_root
-    def plot(
-        self,
-        to_plot: list[str],
-        matsubara: np.ndarray = None,
-        rdf_grid: np.ndarray = None,
-    ) -> None:
-        """Plots the results stored in the output file.
-
-        Args:
-            to_plot: A list of quantities to plot. This list can include all the values written to the
-                 output hdf file. The radial distribution function is computed and added to the output
-                 file if necessary
-            matsubara: A list of matsubara frequencies to plot. Applies only when the idr is plotted.
-                (Default = None, all matsubara frequencies are plotted)
-            rdf_grid: The grid used to compute the radial distribution function. Applies only when the radial
-                distribution function is plotted. Default = ``None`` (see :func:`qupled.util.Hdf.computeRdf`).
-
-        """
-        if util.HDF.ResultNames.RDF.value in to_plot:
-            self.compute_rdf(rdf_grid)
-        util.HDF.plot(
-            to_plot, self.db_handler.run_id, self.db_handler.database_name, matsubara
-        )
 
 
 # -----------------------------------------------------------------------
@@ -219,8 +200,8 @@ class IterativeScheme(ClassicScheme):
         Returns:
             An instance of IterativeScheme.Guess containing the initial guess data.
         """
-        names = [util.HDF.ResultNames.WVG.value, util.HDF.ResultNames.SLFC.value]
-        data = util.HDF.read_results(run_id, database_name, names)
+        names = ["wvg", "slfc"]
+        data = util.DataBase.read_results(run_id, database_name, names)
         return IterativeScheme.Guess(data[names[0]], data[names[1]])
 
     # Initial guess
@@ -257,13 +238,9 @@ class QuantumIterativeScheme(IterativeScheme):
         Args:
             file_name : name of the file used to extract the information for the initial guess.
         """
-        result_names = [
-            util.HDF.ResultNames.WVG.value,
-            util.HDF.ResultNames.SSF.value,
-            util.HDF.ResultNames.ADR.value,
-        ]
+        result_names = ["wvg", "ssf", "adr"]
         input_names = ["matsubara"]
-        data = util.HDF.read_run(run_id, database_name, input_names, result_names)
+        data = util.DataBase.read_run(run_id, database_name, input_names, result_names)
         inputs = data[DataBaseHandler.INPUTS_TABLE_NAME]
         results = data[DataBaseHandler.RESULTS_TABLE_NAME]
         return QuantumIterativeScheme.Guess(

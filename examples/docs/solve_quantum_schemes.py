@@ -1,4 +1,3 @@
-import numpy as np
 from qupled.quantum import Qstls, QstlsIet
 
 # Define a Qstls object to solve the QSTLS scheme
@@ -12,9 +11,6 @@ inputs.threads = 16
 
 # Solve the QSTLS scheme
 qstls.compute(inputs)
-
-# Plot the density responses and the static local field correction
-qstls.plot(["idr", "adr", "slfc"], matsubara=np.arange(1, 10, 2))
 
 # Define a QstlsIet object to solve the QSTLS-IET scheme
 qstls = QstlsIet()

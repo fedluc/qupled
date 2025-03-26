@@ -2,7 +2,7 @@ import os
 import pytest
 import numpy as np
 from qupled.native import Qstls as NativeQstls
-from qupled.util import HDF, MPI
+from qupled.util import DataBase, MPI
 from qupled.qstls import Qstls
 
 
@@ -40,23 +40,23 @@ def test_save(qstls, qstls_input, mocker):
         qstls._save(scheme)
         assert mock_mpi_is_root.call_count == 3
         assert os.path.isfile(qstls.hdf_file_name)
-        inspect_data = HDF().inspect(qstls.hdf_file_name)
+        inspect_data = DataBase().inspect(qstls.hdf_file_name)
         expected_entries = [
-            HDF.ResultNames.COUPLING.value,
-            HDF.ResultNames.DEGENERACY.value,
-            HDF.ResultNames.THEORY.value,
-            HDF.ResultNames.ERROR.value,
-            HDF.ResultNames.RESOLUTION.value,
-            HDF.ResultNames.CUTOFF.value,
-            HDF.ResultNames.FREQUENCY_CUTOFF.value,
-            HDF.ResultNames.MATSUBARA.value,
-            HDF.ResultNames.ADR.value,
-            HDF.ResultNames.IDR.value,
-            HDF.ResultNames.SDR.value,
-            HDF.ResultNames.SLFC.value,
-            HDF.ResultNames.SSF.value,
-            HDF.ResultNames.SSF_HF.value,
-            HDF.ResultNames.WVG.value,
+            DataBase.ResultNames.COUPLING.value,
+            DataBase.ResultNames.DEGENERACY.value,
+            DataBase.ResultNames.THEORY.value,
+            DataBase.ResultNames.ERROR.value,
+            DataBase.ResultNames.RESOLUTION.value,
+            DataBase.ResultNames.CUTOFF.value,
+            DataBase.ResultNames.FREQUENCY_CUTOFF.value,
+            DataBase.ResultNames.MATSUBARA.value,
+            DataBase.ResultNames.ADR.value,
+            DataBase.ResultNames.IDR.value,
+            DataBase.ResultNames.SDR.value,
+            DataBase.ResultNames.SLFC.value,
+            DataBase.ResultNames.SSF.value,
+            DataBase.ResultNames.SSF_HF.value,
+            DataBase.ResultNames.WVG.value,
         ]
         for entry in expected_entries:
             assert entry in inspect_data
@@ -67,13 +67,13 @@ def test_save(qstls, qstls_input, mocker):
 def test_get_initial_guess(mocker):
     arr = np.ones(10)
     mocker.patch.object(
-        HDF,
-        HDF.read.__name__,
+        DataBase,
+        DataBase.read.__name__,
         return_value={
-            HDF.ResultNames.WVG.value: arr,
-            HDF.ResultNames.SSF.value: arr,
-            HDF.ResultNames.ADR.value: arr,
-            HDF.ResultNames.MATSUBARA.value: 10,
+            DataBase.ResultNames.WVG.value: arr,
+            DataBase.ResultNames.SSF.value: arr,
+            DataBase.ResultNames.ADR.value: arr,
+            DataBase.ResultNames.MATSUBARA.value: 10,
         },
     )
     guess = Qstls.get_initial_guess("dummyFileName")
