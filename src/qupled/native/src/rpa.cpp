@@ -139,7 +139,7 @@ void Rpa::computeSsfFinite() {
   assert(slfc.size() == nx);
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
-    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], nl, &idr(i));
+    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], nl, &idr(i), SsfType::Rpa);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -153,7 +153,7 @@ void Rpa::computeSsfGround() {
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], OmegaMax, itg);
+    SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], OmegaMax, itg, SsfType::Rpa);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -326,6 +326,7 @@ double Ssf::get() const {
   assert(Theta > 0.0);
   if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
+  double ip = computeIp();
   double fact2 = 0.0;
   for (int l = 0; l < nl; ++l) {
     const double fact3 = 1.0 + ip * (1 - slfc) * idr[l];
@@ -350,5 +351,6 @@ double SsfGround::get() {
 
 double SsfGround::integrand(const double &Omega) const {
   const double idr = IdrGround(x, Omega).get();
+  double ip = computeIp();
   return idr / (1.0 + ip * idr * (1.0 - slfc)) - idr;
 }

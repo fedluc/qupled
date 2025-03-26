@@ -111,7 +111,16 @@ void Stls2D::computeIdr2D() {
 }
 
 void Stls2D::computeSsf2D() {
-  // placeholder;
+  const double Theta = in.getDegeneracy();
+  const double rs = in.getCoupling();
+  const size_t nx = wvg.size();
+  const size_t nl = idr.size(1);
+  assert(slfc.size() == nx);
+  assert(ssf.size() == nx);
+  for (size_t i = 0; i < nx; ++i) {
+    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], nl, &idr(i), SsfType::Stls2D);
+    ssf[i] = ssfTmp.get();
+  }
 }
 
 void Stls2D::computeSsfHF2D() {

@@ -210,6 +210,11 @@ private:
 // Classes for the static structure factor
 // -----------------------------------------------------------------
 
+enum class SsfType {
+  Rpa,
+  Stls2D
+};
+
 class SsfBase {
 
 protected:
@@ -227,18 +232,31 @@ protected:
   // Constant for unit conversion
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
   // Normalized interaction potential
-  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
+  const SsfType ssfType;
   // Constructor
-  SsfBase(const double &x_,
-          const double &Theta_,
-          const double &rs_,
-          const double &ssfHF_,
-          const double &slfc_)
-      : x(x_),
-        Theta(Theta_),
-        rs(rs_),
-        ssfHF(ssfHF_),
-        slfc(slfc_) {}
+  SsfBase(const double& x_,
+    const double& Theta_,
+    const double& rs_,
+    const double& ssfHF_,
+    const double& slfc_,
+    SsfType ssfType_)
+  : x(x_),
+    Theta(Theta_),
+    rs(rs_),
+    ssfHF(ssfHF_),
+    slfc(slfc_),
+    ssfType(ssfType_) {}
+
+  double computeIp() const {
+    switch (ssfType) {
+    case SsfType::Rpa:
+      return 4.0 * lambda * rs / (M_PI * x * x);
+    case SsfType::Stls2D:
+      return sqrt(2.0) * rs / x;
+    default:
+      throw std::runtime_error("Unknown SsfType");
+    }
+  }
 };
 
 class Ssf : public SsfBase {
@@ -246,16 +264,17 @@ class Ssf : public SsfBase {
 public:
 
   // Constructor
-  Ssf(const double &x_,
-      const double &Theta_,
-      const double &rs_,
-      const double &ssfHF_,
-      const double &slfc_,
-      const int nl_,
-      const double *idr_)
-      : SsfBase(x_, Theta_, rs_, ssfHF_, slfc_),
-        nl(nl_),
-        idr(idr_) {}
+  Ssf(const double& x_,
+    const double& Theta_,
+    const double& rs_,
+    const double& ssfHF_,
+    const double& slfc_,
+    const int nl_,
+    const double* idr_,
+    SsfType ssfType_)  
+    : SsfBase(x_, Theta_, rs_, ssfHF_, slfc_, ssfType_),  
+      nl(nl_),
+      idr(idr_) {}
   // Get static structore factor
   double get() const;
 
@@ -272,15 +291,16 @@ class SsfGround : public SsfBase {
 public:
 
   // Constructor for zero temperature calculations
-  SsfGround(const double &x_,
-            const double &rs_,
-            const double &ssfHF_,
-            const double &slfc_,
-            const double &OmegaMax_,
-            Integrator1D &itg_)
-      : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
-        OmegaMax(OmegaMax_),
-        itg(itg_) {}
+  SsfGround(const double& x_,
+    const double& rs_,
+    const double& ssfHF_,
+    const double& slfc_,
+    const double& OmegaMax_,
+    Integrator1D& itg_,
+    SsfType ssfType_)  // <- new arg
+    : SsfBase(x_, 0, rs_, ssfHF_, slfc_, ssfType_),  // <- pass it up
+    OmegaMax(OmegaMax_),
+    itg(itg_) {}
   // Get result of integration
   double get();
 
