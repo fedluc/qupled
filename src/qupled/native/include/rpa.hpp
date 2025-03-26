@@ -297,8 +297,8 @@ public:
     const double& slfc_,
     const double& OmegaMax_,
     Integrator1D& itg_,
-    SsfType ssfType_)  // <- new arg
-    : SsfBase(x_, 0, rs_, ssfHF_, slfc_, ssfType_),  // <- pass it up
+    SsfType ssfType_)  
+    : SsfBase(x_, 0, rs_, ssfHF_, slfc_, ssfType_),  
     OmegaMax(OmegaMax_),
     itg(itg_) {}
   // Get result of integration

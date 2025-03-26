@@ -1,52 +1,66 @@
 # -----------------------------------------------------------------------
-# Stls class
+# StlsIet class
 # -----------------------------------------------------------------------
 
 from __future__ import annotations
+import sys
+import pandas as pd
 from . import native
 from . import util
-from . import base
 from . import stls
+from . import base
 
 
-class Stls2d(base.IterativeScheme):
+class Stls2D(base.IterativeScheme):
 
     # Compute
     @util.MPI.record_time
     @util.MPI.synchronize_ranks
-    def compute(self, inputs: Stls2d.Input) -> None:
+    def compute(self, inputs: Stls2D.Input) -> None:
         """
         Solves the scheme and saves the results.
 
         Args:
             inputs: Input parameters.
         """
-        scheme = native.Stls2d(inputs.to_native())
+        scheme = native.Stls(inputs.to_native())
         self._compute(scheme)
         self._save(scheme)
+
+    # Save results to disk
+    @util.MPI.run_only_on_root
+    def _save(self, scheme) -> None:
+        """Stores the results obtained by solving the scheme."""
+        super()._save(scheme)
 
     # Input class
     class Input(stls.Stls.Input):
         """
-        Class used to manage the input for the :obj:`qupled.classic.Stls2d` class.
+        Class used to manage the input for the :obj:`qupled.classic.StlsIet` class.
+        Accepted theories: ``STLS-HNC``, ``STLS-IOI`` and ``STLS-LCT``.
         """
 
-        def __init__(self, coupling: float, degeneracy: float):
+        def __init__(self, coupling: float, degeneracy: float, theory: str):
             super().__init__(coupling, degeneracy)
-            self.error: float = 1.0e-5
-            """Minimum error for convergence. Default = ``1.0e-5``"""
-            self.mixing: float = 1.0
-            """Mixing parameter. Default = ``1.0``"""
-            self.iterations: int = 1000
-            """Maximum number of iterations. Default = ``1000``"""
-            self.output_frequency: int = 10
-            """Output frequency to write the recovery file. Default = ``10``"""
-            self.recovery_file: str = ""
-            """Name of the recovery file. Default = ``""``"""
-            self.guess: Stls2d.Guess = Stls2d.Guess()
-            """Initial guess. Default = ``Stls.Guess()``"""
-            # Undocumented default values
-            self.theory: str = "STLS2D"
+            if theory not in {"STLS-HNC", "STLS-IOI", "STLS-LCT", "STLS-2D"}:
+                sys.exit("Invalid dielectric theory")
+            self.theory = theory
+            self.mapping = "standard"
+            r"""
+            Mapping for the classical-to-quantum coupling parameter
+            :math:`\Gamma` used in the iet schemes. Allowed options include:
+
+            - standard: :math:`\Gamma \propto \Theta^{-1}`
+
+            - sqrt: :math:`\Gamma \propto (1 + \Theta)^{-1/2}`
+
+            - linear: :math:`\Gamma \propto (1 + \Theta)^{-1}`
+
+            where :math:`\Theta` is the degeneracy parameter. Far from the ground state
+            (i.e. :math:`\Theta\gg1`) all mappings lead identical results, but at
+            the ground state they can differ significantly (the standard
+            mapping diverges). Default = ``standard``.
+            """
 
         def to_native(self) -> native.StlsInput:
             native_input = native.StlsInput()

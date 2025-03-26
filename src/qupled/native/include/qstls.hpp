@@ -344,7 +344,7 @@ public:
        const double *idr_,
        const double *adr_,
        const double &bf_)
-      : Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_),
+      : Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_, SsfType::Rpa),
         adr(adr_),
         bf(bf_) {}
   // Get static structure factor
@@ -356,6 +356,7 @@ private:
   const double *adr;
   // Bridge function
   const double bf;
+  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
 };
 
 class QssfGround : public SsfGround {
@@ -370,7 +371,7 @@ public:
              const double &OmegaMax_,
              const Interpolator1D &ssfi_,
              Integrator1D &itg_)
-      : SsfGround(x_, rs_, ssfHF_, 0.0, OmegaMax_, itg_),
+      : SsfGround(x_, rs_, ssfHF_, 0.0, OmegaMax_, itg_, SsfType::Rpa),
         xMax(xMax_),
         ssfi(ssfi_) {}
   // Get result of integration

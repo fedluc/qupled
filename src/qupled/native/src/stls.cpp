@@ -5,6 +5,7 @@
 #include "numerics.hpp"
 #include "vector_util.hpp"
 #include <fmt/core.h>
+#include <gsl/gsl_sf_ellint.h>
 
 using namespace std;
 using namespace vecUtil;
@@ -25,6 +26,7 @@ Stls::Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_)
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "STLS-HNC" || in.getTheory() == "STLS-IOI"
            || in.getTheory() == "STLS-LCT";
+  use2D = in.getTheory() == "STLS-2D";
   // Set name of recovery files
   recoveryFileName = fmt::format("recovery_rs{:.3f}_theta{:.3f}_{}.bin",
                                  in.getCoupling(),
@@ -52,6 +54,9 @@ int Stls::compute() {
 // Initialize basic properties
 void Stls::init() {
   Rpa::init();
+  if (use2D) {
+    init2D();
+  }
   if (useIet) {
     print("Computing bridge function adder: ");
     computeBf();
@@ -59,11 +64,25 @@ void Stls::init() {
   }
 }
 
+// Initialize basic properties
+void Stls::init2D() {
+  print("Computing 2D chemical potential: ");
+  computeChemicalPotential2D();
+  println("Done");
+  print("Computing 2D ideal density response: ");
+  computeIdr2D();
+  println("Done");
+  print("Computing 2D Hartree-Fock static structure factor: ");
+  computeSsfHF2D();
+  println("Done");
+}
+
 // Compute static local field correction
 void Stls::computeSlfc() {
   assert(ssf.size() == wvg.size());
   assert(slfc.size() == wvg.size());
   computeSlfcStls();
+  if (use2D) computeSlfc2D();
   if (useIet) computeSlfcIet();
 }
 
@@ -119,6 +138,8 @@ void Stls::doIterations() {
     // Start timing
     double tic = timer();
     // Update static structure factor
+    if (use2D) { print("Computing 2D Hartree-Fock static structure factor: ");
+      computeSsf2D(); }
     computeSsf();
     // Update static local field correction
     computeSlfc();
@@ -444,4 +465,211 @@ double BridgeFunction::lctIntegrand(const double &r,
                      * (cos(c2 * rshift) + c3 * exp(-3.5 * rshift));
   const double sf = 0.5 * (1.0 + erf(5.0 * (r - 1.50)));
   return r * ((1 - sf) * bsr + sf * blr);
+}
+
+// -----------------------------------------------------------------
+// 2D STLS methods
+// -----------------------------------------------------------------
+
+void Stls::computeChemicalPotential2D() {
+  mu = log(exp(1/in.getDegeneracy())-1);
+}
+
+void Stls::computeIdr2D() {
+  if (in.getDegeneracy() == 0.0) return;
+  const size_t nx = wvg.size();
+  const size_t nl = in.getNMatsubara();
+  assert(idr.size(0) == nx && idr.size(1) == nl);
+  for (size_t i = 0; i < nx; ++i) {
+    Idr idrTmp(
+        nl, wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
+    idr.fill(i, idrTmp.get2DStls());
+  }
+}
+
+void Stls::computeSsf2D() {
+  const double Theta = in.getDegeneracy();
+  const double rs = in.getCoupling();
+  const size_t nx = wvg.size();
+  const size_t nl = idr.size(1);
+  assert(slfc.size() == nx);
+  assert(ssf.size() == nx);
+  for (size_t i = 0; i < nx; ++i) {
+    Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], nl, &idr(i), SsfType::Stls2D);
+    ssf[i] = ssfTmp.get();
+  }
+}
+
+void Stls::computeSsfHF2D() {
+  Integrator2D itg2(ItgType::DEFAULT, ItgType::DEFAULT, in.getIntError());
+  const bool segregatedItg = in.getInt2DScheme() == "segregated";
+  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  for (size_t i = 0; i < wvg.size(); ++i) {
+    SSFHF2D ssfHF2DTmp(in.getDegeneracy(),
+                        wvg[i],
+                        mu,
+                        wvg.front(),
+                        wvg.back(),
+                        itgGrid,
+                        itg2);
+    ssfHF[i] = ssfHF2DTmp.get();
+  }
+}
+
+// Compute static local field correction
+void Stls::computeSlfc2D() {
+  assert(ssf.size() == wvg.size());
+  assert(slfc.size() == wvg.size());
+  computeSlfcStls2D();
+}
+
+void Stls::computeSlfcStls2D() {
+  const int nx = wvg.size();
+  const Interpolator1D itp(wvg, ssf);
+  for (int i = 0; i < nx; ++i) {
+    Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
+    slfcNew[i] = slfcTmp.get();
+  }
+}
+
+// -----------------------------------------------------------------
+// SSF HF 2D
+// -----------------------------------------------------------------
+
+inline double coth(double x) {
+  return 1.0 / tanh(x);
+}
+
+// Outer integrand
+double SSFHF2D::integrandOut(const double y) const {
+  const double y2 = y * y;
+  return 1.0 / (exp(y2 / Theta - mu) * M_PI + M_PI);
+}
+
+// Inner integrand
+double SSFHF2D::integrandIn(const double p) const {
+  const double y = itg2.getX();
+  double x2 = x * x;
+  return coth(x2 / (2 * Theta) - x * y / Theta * cos(p));
+}
+
+// Get total QAdder
+double SSFHF2D::get() const {
+  auto func1 = [&](const double &y) -> double {
+    return integrandOut(y);
+  };
+  auto func2 = [&](const double &p) -> double {
+    return integrandIn(p);
+  };
+  itg2.compute(
+      func1,
+      func2,
+      Itg2DParam(limits.first, limits.second, 0, 2 * M_PI),
+      itgGrid);
+  return itg2.getSolution();
+}
+
+
+// -----------------------------------------------------------------
+// Idr 2D class
+// -----------------------------------------------------------------
+
+vector<double> Idr::get2DStls() const {
+  assert(Theta > 0.0);
+  printf("Computing Idr for x = %f\n", x);
+  vector<double> res(nl);
+  for (int l = 0; l < nl; ++l) {
+    auto func = [&](const double &y) -> double {
+      return (l == 0) ? integrand2DStls(y) : integrand2DStls(y, l);
+    };
+    double upperLimit = (l == 0) ? yMax / 2.0 : yMax;
+    const auto itgParam = ItgParam(yMin, upperLimit);
+    itg.compute(func, itgParam);
+    if (l == 0) {
+      res[l] = 1.0 - exp(-1.0 / Theta) - itg.getSolution();
+    } else {
+      res[l] = itg.getSolution();
+    }
+  }
+  return res;
+}
+
+// Integrand for frequency = l and wave-vector = x
+double Idr::integrand2DStls(const double &y, const int &l) const {
+  double tphi;
+  double y2 = y * y;
+  double x2 = x * x;
+  double x4 = x2 * x2;
+  double plT = M_PI * l * Theta;
+  double plT2 = plT * plT;
+  double exp1 = x4 / 4.0 - x2 * y2 - plT2;
+  if (exp1 < 0.0) {
+    tphi = atan(x2 * plT / exp1);
+  } else {
+    tphi = M_PI - atan(x2 * plT / exp1);
+  }
+  if (x > 0.0) {
+    return y / (exp(y2 / Theta - mu) + 1.0)
+           * 2.0 * abs(cos(tphi))/ pow((exp1 * exp1 + x4 * plT2), 0.25);
+  } else {
+    return 0;
+  }
+}
+
+// Integrand for frequency = 0 and vector = x
+double Idr::integrand2DStls(const double &y) const {
+  double y2 = y * y;
+  double x2 = x * x;
+  if (x > 0.0) {
+    - 1.0 / (Theta * x * pow(cosh(y2 / (2 * Theta) - mu/2), 2) * y * sqrt(x2 / 4.0 - y2));
+  } else {
+    return 0; 
+  }
+}
+
+// -----------------------------------------------------------------
+// SLFC 2D STLS class
+// -----------------------------------------------------------------
+
+// Integrand 2D STLS
+double Slfc::integrand2DStls(const double &y) const {
+  double y2 = y * y;
+  double x2 = x * x;
+  double xmy = (x - y) / (x * M_PI);
+  double xpy = (x + y) / (x * M_PI);
+  double argElli = 2 * sqrt(x * y) / (x + y);
+  if (x > 0.0) {
+  return - (ssf(y) - 1.0) * (xmy * Integrator1D::ellipticK(argElli) + xpy * Integrator1D::ellipticE(argElli));}
+  else {
+    return 0;
+  }
+}
+
+// Get result of integration
+double Slfc::get2DStls() const {
+  auto func = [&](const double &y) -> double { return integrand2DStls(y); };
+  itg.compute(func, ItgParam(yMin, yMax));
+  return itg.getSolution();
+}
+
+// -----------------------------------------------------------------
+// Elliptic function integrators
+// -----------------------------------------------------------------
+
+double Integrator1D::ellipticK(const double &k) {
+  gsl_sf_result result;
+  int status = gsl_sf_ellint_Kcomp_e(k, GSL_PREC_DOUBLE, &result);
+  if (status != GSL_SUCCESS) {
+    throw std::runtime_error("GSL error in ellipticK");
+  }
+  return result.val;
+}
+
+double Integrator1D::ellipticE(const double &k) {
+  gsl_sf_result result;
+  int status = gsl_sf_ellint_Ecomp_e(k, GSL_PREC_DOUBLE, &result);
+  if (status != GSL_SUCCESS) {
+    throw std::runtime_error("GSL error in ellipticE");
+  }
+  return result.val;
 }

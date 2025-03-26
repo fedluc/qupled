@@ -34,12 +34,23 @@ protected:
   const bool writeFiles;
   // iet schemes
   bool useIet;
+  // 2D scheme
+  bool use2D;
   // Static local field correction to use during the iterations
   std::vector<double> slfcNew;
   // Bridge function (for iet schemes)
   std::vector<double> bf;
   // Initialize basic properties
   void init();
+  void init2D();
+  // Compute 2D chemical potential
+  void computeChemicalPotential2D();
+  // Compute 2D ideal density response
+  void computeIdr2D();
+  void computeSsf2D();
+  void computeSsfHF2D();
+  void computeSlfc2D();
+  void computeSlfcStls2D();
   // Compute static local field correction
   void computeSlfc();
   void computeSlfcStls();
@@ -198,5 +209,49 @@ private:
   // Coupling parameter to compute the bridge function
   double couplingParameter() const;
 };
+
+// -----------------------------------------------------------------
+// Class to handle the 2D HF SSF 
+// -----------------------------------------------------------------
+
+class SSFHF2D {
+
+  public:
+  
+    // Constructor
+    SSFHF2D(const double &Theta_,
+           const double &x_,
+           const double &mu_,
+           const double &limitMin,
+           const double &limitMax,
+           const std::vector<double> &itgGrid_,
+           Integrator2D &itg2_)
+        : Theta(Theta_),
+          x(x_),
+          mu(mu_),
+          limits(limitMin, limitMax),
+          itgGrid(itgGrid_),
+          itg2(itg2_) {}
+    // Get Q-adder
+    double get() const;
+  
+  private:
+  
+    // Degeneracy parameter
+    const double Theta;
+    const double x;
+    // Chemical potential
+    const double mu;
+    // Integration limits
+    const std::pair<double, double> limits;
+    // Grid for 2D integration
+    const std::vector<double> &itgGrid;
+    // Integrator objects
+    Integrator2D &itg2;
+
+    // Integrands
+    double integrandOut(const double q) const;
+    double integrandIn(const double w) const;
+  };
 
 #endif
