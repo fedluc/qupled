@@ -8,6 +8,7 @@ from matplotlib import colormaps as cm
 from qupled.util import DataBase
 from qupled.quantum import Qstls
 
+
 class PlotSettings:
     def __init__(self, darkmode):
         self.labelsz = 16
@@ -21,6 +22,7 @@ class PlotSettings:
         self.figure_name = (
             "qupled_animation_dark.svg" if darkmode else "qupled_animation_light.svg"
         )
+
 
 def main():
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -48,7 +50,7 @@ def create_svg_files():
 def get_plot_data():
     scheme: Qstls = None
     error: list[float] = []
-    while (scheme is None or scheme.results.error > 1e-5):
+    while scheme is None or scheme.results.error > 1e-5:
         scheme = solve_qstls(scheme.run_id if scheme is not None else scheme)
         error.append(scheme.results.error)
     return scheme, error
@@ -58,7 +60,7 @@ def create_one_svg_file(darkmode: bool, scheme: Qstls, error: np.array):
     # Get plot settings
     settings = PlotSettings(darkmode)
     # Set style
-    plt.rcdefaults() 
+    plt.rcdefaults()
     plt.style.use(settings.theme)
     # Create figure
     plt.figure(figsize=settings.figure_size)
@@ -129,9 +131,7 @@ def plot_density_response(plt: plt, scheme: Qstls, settings: PlotSettings):
 def plot_ssf(plt: plt, scheme: Qstls, settings: PlotSettings):
     results = scheme.results
     plt.subplot(2, 2, 4)
-    plt.plot(
-        results.wvg, results.ssf, color=settings.color, linewidth=settings.width
-    )
+    plt.plot(results.wvg, results.ssf, color=settings.color, linewidth=settings.width)
     plt.xlim(0, settings.xlim)
     plt.xlabel("Wave-vector", fontsize=settings.labelsz)
     plt.title("Static structure factor", fontsize=settings.labelsz, fontweight="bold")

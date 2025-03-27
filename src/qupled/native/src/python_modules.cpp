@@ -198,9 +198,13 @@ BOOST_PYTHON_MODULE(native) {
   // MPI class
   bp::class_<PyMPI>("MPI")
       .def("rank", &PyMPI::rank)
+      .staticmethod("rank")
       .def("is_root", &PyMPI::isRoot)
+      .staticmethod("is_root")
       .def("barrier", &PyMPI::barrier)
-      .def("timer", &PyMPI::timer);
+      .staticmethod("barrier")
+      .def("timer", &PyMPI::timer)
+      .staticmethod("timer");
 
   // Post-process methods
   bp::def("compute_rdf", &PyThermo::computeRdf);

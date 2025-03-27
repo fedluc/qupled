@@ -1,10 +1,4 @@
 import functools
-from enum import Enum
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from matplotlib import colormaps as cm
 
 from . import native
 from . import database
@@ -100,7 +94,7 @@ class MPI:
     """Class to handle the calls to the MPI API"""
 
     def __init__(self):
-        self.qp_mpi = native.MPI
+        self.qp_mpi = native.MPI()
 
     def rank(self):
         """Get rank of the process"""

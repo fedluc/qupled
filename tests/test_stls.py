@@ -70,7 +70,10 @@ def test_get_initial_guess(mocker):
     mocker.patch.object(
         DataBase,
         DataBase.read.__name__,
-        return_value={DataBase.ResultNames.WVG.value: arr, DataBase.ResultNames.SLFC.value: arr},
+        return_value={
+            DataBase.ResultNames.WVG.value: arr,
+            DataBase.ResultNames.SLFC.value: arr,
+        },
     )
     guess = Stls.get_initial_guess("dummy_file_name")
     assert np.array_equal(guess.wvg, arr)

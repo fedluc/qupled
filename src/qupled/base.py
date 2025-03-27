@@ -97,8 +97,7 @@ class Result:
                 setattr(self, attr, value) if value is not None else None
 
     def compute_rdf(self, rdf_grid: np.ndarray | None = None):
-        if rdf_grid is None:
-            self.rdf_grid = np.arange(0.0, 10.0, 0.01)
+        self.rdf_grid = rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
         self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)
 
 
@@ -150,7 +149,7 @@ class ClassicScheme:
             recovery: name of the recovery file.
         """
         if status == 0:
-            if os.path.isfile(recovery):
+            if os.path.exists(recovery):
                 os.remove(recovery)
             print("Dielectric theory solved successfully!")
         else:
