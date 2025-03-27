@@ -11,7 +11,7 @@ def test_esa_inheritance():
 @mock.patch("qupled.base.ClassicScheme.compute")
 @mock.patch("qupled.base.Result")
 @mock.patch("qupled.native.RpaInput")
-def test_esa_compute(RpaInput, Result, super_compute):
+def test_esa_compute(RpaInput, Result, super_compute, esa_input):
     esa_input = ESA.Input(coupling=1.0, degeneracy=2.0)
     native_input = mock.MagicMock()
     result = mock.MagicMock()
