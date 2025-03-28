@@ -1,12 +1,10 @@
 import pytest
-from unittest import mock
 from qupled.util import DataBase, MPI
 
 
 @pytest.fixture
-def db_handler():
-    with mock.patch("qupled.util.database.DataBaseHandler") as MockDBHandler:
-        yield MockDBHandler
+def db_handler(mocker):
+    yield mocker.patch("qupled.util.database.DataBaseHandler")
 
 
 def test_inspect_runs(db_handler):
@@ -41,9 +39,8 @@ def test_read_results(db_handler):
 
 
 @pytest.fixture
-def mpi_native():
-    with mock.patch("qupled.util.native.MPI") as MockMPI:
-        yield MockMPI
+def mpi_native(mocker):
+    yield mocker.patch("qupled.util.native.MPI")
 
 
 def test_mpi_rank(mpi_native):
@@ -89,13 +86,13 @@ def test_synchronize_ranks_decorator(mpi_native):
     mpi_native.return_value.barrier.assert_called_once()
 
 
-def test_record_time_decorator(mpi_native):
+def test_record_time_decorator(mpi_native, mocker):
     mpi_native.return_value.timer.side_effect = [0, 3600]
 
     @MPI.record_time
     def test_func():
         pass
 
-    with mock.patch("builtins.print") as mock_print:
-        test_func()
-        mock_print.assert_called_once_with("Elapsed time: 1 h, 0 m, 0 s.")
+    mock_print = mocker.patch("builtins.print")
+    test_func()
+    mock_print.assert_called_once_with("Elapsed time: 1 h, 0 m, 0 s.")

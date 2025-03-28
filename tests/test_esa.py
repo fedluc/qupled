@@ -1,5 +1,3 @@
-import pytest
-from unittest import mock
 from qupled.esa import ESA
 from qupled.native import ESA as NativeESA
 from qupled.base import ClassicScheme
@@ -10,13 +8,13 @@ def test_esa_inheritance():
     assert issubclass(ESA, ClassicScheme)
 
 
-@mock.patch("qupled.base.ClassicScheme.compute")
-@mock.patch("qupled.base.Result")
-@mock.patch("qupled.native.RpaInput")
-def test_esa_compute(RpaInput, Result, super_compute):
+def test_esa_compute(mocker):
+    super_compute = mocker.patch("qupled.base.ClassicScheme.compute")
+    Result = mocker.patch("qupled.base.Result")
+    RpaInput = mocker.patch("qupled.native.RpaInput")
     esa_input = ESA.Input(coupling=1.0, degeneracy=2.0)
-    native_input = mock.MagicMock()
-    result = mock.MagicMock()
+    native_input = mocker.MagicMock()
+    result = mocker.MagicMock()
     RpaInput.return_value = native_input
     Result.return_value = result
     esa = ESA()
@@ -28,8 +26,8 @@ def test_esa_input_inheritance():
     assert issubclass(ESA.Input, Rpa.Input)
 
 
-@mock.patch("qupled.rpa.Rpa.Input.__init__")
-def test_esa_input_initialization(super_init):
+def test_esa_input_initialization(mocker):
+    super_init = mocker.patch("qupled.rpa.Rpa.Input.__init__")
     coupling = 1.5
     degeneracy = 3.0
     esa_input = ESA.Input(coupling, degeneracy)
