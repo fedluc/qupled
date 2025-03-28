@@ -5,8 +5,10 @@ from qupled.native import ESA as NativeESA
 from qupled.base import ClassicScheme
 from qupled.rpa import Rpa
 
+
 def test_esa_inheritance():
     assert issubclass(ESA, ClassicScheme)
+
 
 @mock.patch("qupled.base.ClassicScheme.compute")
 @mock.patch("qupled.base.Result")
@@ -25,6 +27,7 @@ def test_esa_compute(RpaInput, Result, super_compute, esa_input):
 def test_esa_input_inheritance():
     assert issubclass(ESA.Input, Rpa.Input)
 
+
 @mock.patch("qupled.rpa.Rpa.Input.__init__")
 def test_esa_input_initialization(super_init):
     coupling = 1.5
@@ -32,4 +35,3 @@ def test_esa_input_initialization(super_init):
     esa_input = ESA.Input(coupling, degeneracy)
     super_init.assert_called_once_with(coupling, degeneracy)
     assert esa_input.theory == "ESA"
-

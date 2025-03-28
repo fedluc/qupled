@@ -54,7 +54,7 @@ def test_mpi_rank(mpi_native):
 
 def test_mpi_is_root(mpi_native):
     mpi_native.return_value.is_root.return_value = True
-    mpi= MPI()
+    mpi = MPI()
     assert mpi.is_root() is True
 
 

@@ -37,9 +37,8 @@ class DataBaseHandler:
             database_name if database_name is not None else self.DEFAULT_DATABASE_NAME
         )
         self.engine = sql.create_engine(f"sqlite:///{self.database_name}")
-        DataBaseHandler._set_sqlite_pragma(
-            self.engine
-        )  # Enforce foreign keys in sqlite
+        # Enforce foreign keys in sqlite
+        DataBaseHandler._set_sqlite_pragma(self.engine)
         self.table_metadata = sql.MetaData()
         self.run_table = self._build_run_table()
         self.input_table = self._build_inputs_table()

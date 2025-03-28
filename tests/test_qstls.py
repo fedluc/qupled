@@ -4,8 +4,10 @@ from qupled.native import Qstls as NativeQstls
 from qupled.qstls import Qstls
 from qupled.stls import Stls
 
+
 def test_qstls_inheritance():
     assert issubclass(Qstls, QuantumIterativeScheme)
+
 
 @mock.patch("qupled.base.ClassicScheme.compute")
 @mock.patch("qupled.native.QstlsInput")
@@ -17,24 +19,30 @@ def test_qstls_compute(QstlsInput, super_compute, mocker):
     result = mock.MagicMock()
     mocker.patch.object(qstls, "Result", return_value=result)
     qstls.compute(qstls_input)
-    super_compute.assert_called_once_with(qstls_input, NativeQstls, native_input, result)
+    super_compute.assert_called_once_with(
+        qstls_input, NativeQstls, native_input, result
+    )
+
 
 def test_qstls_input_inheritance():
     assert issubclass(Qstls.Input, Stls.Input)
+
 
 @mock.patch("qupled.stls.Stls.Input.__init__")
 def test_qstls_input_initialization(super_init):
     coupling = 1.5
     degeneracy = 3.0
-    esa_input = Qstls.Input(coupling, degeneracy)
+    qstls_input = Qstls.Input(coupling, degeneracy)
     super_init.assert_called_once_with(coupling, degeneracy)
-    assert esa_input.theory == "QSTLS"
+    assert qstls_input.theory == "QSTLS"
+
 
 def test_qstls_result_inheritance():
     assert issubclass(Qstls.Result, Stls.Result)
 
+
 @mock.patch("qupled.stls.Stls.Result.__init__")
 def test_qstls_result_initialization(super_init):
-    esa_input = Qstls.Result()
+    qstls_input = Qstls.Result()
     super_init.assert_called_once()
-    assert esa_input.adr is None
+    assert qstls_input.adr is None

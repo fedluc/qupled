@@ -15,6 +15,7 @@ import pytest
 def input_obj():
     return Input(coupling=1.0, degeneracy=2.0)
 
+
 def test_initialization(input_obj):
     assert input_obj.coupling == 1.0
     assert input_obj.degeneracy == 2.0
@@ -27,6 +28,7 @@ def test_initialization(input_obj):
     assert input_obj.resolution == 0.1
     assert input_obj.threads == 1
 
+
 def test_to_native(input_obj):
     native_input = mock.MagicMock()
     input_obj.to_native(native_input)
@@ -38,6 +40,7 @@ def test_to_native(input_obj):
 def result_obj():
     return Result()
 
+
 def test_result_initialization(result_obj):
     assert result_obj.idr is None
     assert result_obj.rdf is None
@@ -48,11 +51,13 @@ def test_result_initialization(result_obj):
     assert result_obj.uint is None
     assert result_obj.wvg is None
 
+
 def test_result_from_native(result_obj):
     native_scheme = mock.MagicMock()
     native_scheme.idr = np.array([1, 2, 3])
     result_obj.from_native(native_scheme)
     assert np.array_equal(result_obj.idr, np.array([1, 2, 3]))
+
 
 @mock.patch("qupled.base.native.compute_rdf")
 def test_result_compute_rdf_with_default_grid(compute_rdf, result_obj):
@@ -65,6 +70,7 @@ def test_result_compute_rdf_with_default_grid(compute_rdf, result_obj):
     compute_rdf.assert_called_once()
     assert np.array_equal(result_obj.rdf, np.array([7, 8, 9]))
     assert np.array_equal(result_obj.rdf_grid, np.arange(0.0, 10.0, 0.01))
+
 
 @mock.patch("qupled.base.native.compute_rdf")
 def test_result_compute_rdf_with_custom_grid(compute_rdf, result_obj):
@@ -262,6 +268,7 @@ class TestQuantumIterativeSchemeGetInitialGuess(TestCase):
         read_run.assert_called_once_with(
             run_id, database_name, ["matsubara"], ["wvg", "ssf", "adr"]
         )
+
 
 class TestQuantumIterativeSchemeGuess(TestCase):
 
