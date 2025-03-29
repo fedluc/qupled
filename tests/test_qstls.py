@@ -9,18 +9,11 @@ def test_qstls_inheritance():
 
 
 def test_qstls_compute(mocker):
-    super_compute = mocker.patch("qupled.base.QuantumIterativeScheme.compute")
-    QstlsInput = mocker.patch("qupled.native.QstlsInput")
-    qstls_input = Qstls.Input(coupling=1.0, degeneracy=2.0)
-    native_input = mocker.ANY
-    QstlsInput.return_value = native_input
-    qstls = Qstls()
-    result = mocker.ANY
-    mocker.patch.object(qstls, "Result", return_value=result)
-    qstls.compute(qstls_input)
-    super_compute.assert_called_once_with(
-        qstls_input, NativeQstls, native_input, result
-    )
+    super_compute = mocker.patch("qupled.base.ClassicScheme.compute")
+    input = mocker.ANY
+    scheme = Qstls()
+    scheme.compute(input)
+    super_compute.assert_called_once_with(input, NativeQstls, mocker.ANY, mocker.ANY)
 
 
 def test_qstls_input_inheritance():
@@ -31,9 +24,9 @@ def test_qstls_input_initialization(mocker):
     super_init = mocker.patch("qupled.stls.Stls.Input.__init__")
     coupling = 1.5
     degeneracy = 3.0
-    qstls_input = Qstls.Input(coupling, degeneracy)
+    input = Qstls.Input(coupling, degeneracy)
     super_init.assert_called_once_with(coupling, degeneracy)
-    assert qstls_input.theory == "QSTLS"
+    assert input.theory == "QSTLS"
 
 
 def test_qstls_result_inheritance():
@@ -42,6 +35,6 @@ def test_qstls_result_inheritance():
 
 def test_qstls_result_initialization(mocker):
     super_init = mocker.patch("qupled.stls.Stls.Result.__init__")
-    qstls_result = Qstls.Result()
+    result = Qstls.Result()
     super_init.assert_called_once()
-    assert qstls_result.adr is None
+    assert result.adr is None

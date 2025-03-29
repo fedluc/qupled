@@ -90,11 +90,13 @@ def test_insert_inputs(mocker, db_handler):
     assert called_mapper("value1") == "json(value1)"
     assert called_mapper(123) == "json(123)"
 
+
 def test_insert_inputs_without_run_id(mocker, db_handler):
     insert_from_dict = mocker.patch.object(db_handler, "_insert_from_dict")
     mocker.patch.object(db_handler, "_to_json", side_effect=lambda x: f"json({x})")
     db_handler.insert_inputs(mocker.ANY)
     insert_from_dict.assert_not_called()
+
 
 def test_insert_results(mocker, db_handler):
     db_handler.run_id = mocker.ANY
@@ -110,11 +112,13 @@ def test_insert_results(mocker, db_handler):
     assert called_mapper("value1") == "bytes(value1)"
     assert called_mapper(123) == "bytes(123)"
 
+
 def test_insert_results_without_run_id(mocker, db_handler):
     insert_from_dict = mocker.patch.object(db_handler, "_insert_from_dict")
     mocker.patch.object(db_handler, "_to_json", side_effect=lambda x: f"json({x})")
     db_handler.insert_results(mocker.ANY)
     insert_from_dict.assert_not_called()
+
 
 def test_inspect_runs(mocker, db_handler):
     sql_select = mocker.patch("sqlalchemy.select")
