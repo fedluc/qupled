@@ -11,7 +11,7 @@ from . import base
 class Rpa(base.ClassicScheme):
 
     # Compute
-    def compute(self, inputs: Rpa.Input) -> None:
+    def compute(self, inputs: Rpa.Input):
         """
         Solves the scheme and saves the results.
 

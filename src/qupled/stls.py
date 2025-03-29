@@ -10,7 +10,7 @@ from . import base
 class Stls(base.IterativeScheme):
 
     # Compute
-    def compute(self, inputs: Stls.Input) -> None:
+    def compute(self, inputs: Stls.Input):
         """
         Solves the scheme and saves the results.
 

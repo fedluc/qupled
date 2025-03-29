@@ -40,7 +40,7 @@ class Qstls(base.QuantumIterativeScheme):
     # Results class
     class Result(stls.Stls.Result):
         """
-        Class used to store the results for the :obj:`qupled.classic.VSStls` class.
+        Class used to store the results for the :obj:`qupled.quantum.Qstls` class.
         """
 
         def __init__(self):

@@ -96,6 +96,17 @@ def test_clean_fixed_adr_files_no_directory(mocker, scheme, input):
     mock_rmtree.assert_not_called()
 
 
+def test_get_free_energy_integrand(mocker):
+    run_id = mocker.ANY
+    database_name = mocker.ANY
+    get_free_energy_integrand = mocker.patch(
+        "qupled.vsstls.VSStls.get_free_energy_integrand"
+    )
+    result = QVSStls.get_free_energy_integrand(run_id, database_name)
+    get_free_energy_integrand.assert_called_once_with(run_id, database_name)
+    assert result == get_free_energy_integrand.return_value
+
+
 def test_qvsstls_input_inheritance():
     assert issubclass(QVSStls.Input, (Qstls.Input, VSStls.Input))
 

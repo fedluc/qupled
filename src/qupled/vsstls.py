@@ -28,10 +28,17 @@ class VSStls(base.IterativeScheme):
     def get_free_energy_integrand(
         run_id: str, database_name: str | None = None
     ) -> native.FreeEnergyIntegrand:
-        """Constructs the free energy integrand by extracting the information from an output file.
+        """
+        Retrieve the free energy integrand for a given run ID from the database.
 
         Args:
-            file_name : name of the file used to extract the information for the free energy integrand.
+            run_id (str): The unique identifier for the run whose data is to be retrieved.
+            database_name (str | None, optional): The name of the database to query.
+                If None, the default database will be used.
+
+        Returns:
+            native.FreeEnergyIntegrand: An object containing the free energy grid,
+            integrand, and alpha values retrieved from the database.
         """
         names = ["free_energy_grid", "free_energy_integrand", "alpha"]
         data = util.DataBase.read_results(run_id, database_name, names)
