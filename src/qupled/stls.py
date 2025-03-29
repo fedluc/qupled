@@ -5,6 +5,7 @@
 from __future__ import annotations
 from . import native
 from . import base
+from . import rpa
 
 
 class Stls(base.IterativeScheme):
@@ -20,7 +21,7 @@ class Stls(base.IterativeScheme):
         super().compute(inputs, native.Stls, native.StlsInput(), self.Result())
 
     # Input class
-    class Input(base.Input):
+    class Input(rpa.Rpa.Input):
         """
         Class used to manage the input for the :obj:`qupled.classic.Stls` class.
         """
@@ -43,7 +44,7 @@ class Stls(base.IterativeScheme):
             self.theory: str = "STLS"
 
     # Results class
-    class Result(base.Result):
+    class Result(rpa.Rpa.Result):
         """
         Class used to store the results for the :obj:`qupled.classic.Stls` class.
         """

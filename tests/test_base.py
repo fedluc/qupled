@@ -119,20 +119,17 @@ class TestClassicScheme:
     def test_check_status_and_clean_success(self, classic_scheme, mocker):
         exists = mocker.patch("os.path.exists")
         remove = mocker.patch("os.remove")
-        exit = mocker.patch("sys.exit")
         exists.return_value = True
         classic_scheme._check_status_and_clean(0, "recovery_file")
         exists.assert_called_once_with("recovery_file")
         remove.assert_called_once_with("recovery_file")
-        exit.assert_not_called()
 
     def test_check_status_and_clean_failure(self, classic_scheme, mocker):
         exists = mocker.patch("os.path.exists")
-        exit = mocker.patch("sys.exit")
         exists.return_value = False
-        classic_scheme._check_status_and_clean(1, "recovery_file")
-        exists.assert_not_called()
-        exit.assert_called_once_with("Error while solving the dielectric theory")
+        with pytest.raises(RuntimeError):
+            classic_scheme._check_status_and_clean(1, "recovery_file")
+            exists.assert_not_called()
 
     def test_save(self, classic_scheme):
         classic_scheme.results = Result()

@@ -33,6 +33,7 @@ and written to the output database.
 
 .. autoclass:: qupled.classic.Rpa.Result
     :inherited-members:
+    :members:
     :exclude-members: compute_rdf, from_native
 
 
@@ -51,10 +52,36 @@ and written to the output database.
     :exclude-members: Input, Result
 
 .. autoclass:: qupled.classic.Stls.Input	       
+    :show-inheritance:
     :members:
-    :inherited-members:
     :exclude-members: print, isEqual, to_native
       
 .. autoclass:: qupled.classic.Stls.Result
+    :show-inheritance:
+    :members:
+    :exclude-members: compute_rdf, from_native
+
+
+Stls-IET schemes
+~~~~~~~~~~~~~~~~	      
+
+The :obj:`qupled.classic.StlsIet` class is used to setup and perform all the necessary calculations
+for the solution of the `Stls-IET schemes <https://journals.jps.jp/doi/abs/10.1143/JPSJ.55.2278>`_.
+The solution parameters are specified with a dedicated class called :obj:`qupled.classic.StlsIet.Input`.
+After the solution is completed the results are stored in an object :obj:`qupled.classic.StlsIet.Results` 
+and written to the output database.
+    
+.. autoclass:: qupled.classic.StlsIet
+    :members:
     :inherited-members:
+    :exclude-members: Input, Result
+
+.. autoclass:: qupled.classic.StlsIet.Input 
+    :show-inheritance:
+    :members:
+    :exclude-members: print, isEqual, to_native
+
+.. autoclass:: qupled.classic.StlsIet.Result
+    :show-inheritance:
+    :members:
     :exclude-members: compute_rdf, from_native

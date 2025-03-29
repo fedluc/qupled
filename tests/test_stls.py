@@ -1,6 +1,7 @@
+from qupled.rpa import Rpa
 from qupled.stls import Stls
 from qupled.native import Stls as NativeStls
-from qupled.base import IterativeScheme, Input, Result
+from qupled.base import IterativeScheme, Result
 
 
 def test_stls_inheritance():
@@ -16,7 +17,7 @@ def test_stls_compute(mocker):
 
 
 def test_stls_input_inheritance():
-    assert issubclass(Stls.Input, Input)
+    assert issubclass(Stls.Input, Rpa.Input)
 
 
 def test_stls_input_initialization(mocker):
@@ -36,7 +37,7 @@ def test_stls_input_initialization(mocker):
 
 
 def test_stls_result_inheritance():
-    assert issubclass(Stls.Result, Result)
+    assert issubclass(Stls.Result, Rpa.Result)
 
 
 def test_stls_result_initialization(mocker):

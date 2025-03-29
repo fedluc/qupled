@@ -270,9 +270,7 @@ class IterativeScheme(ClassicScheme):
 
     # Set the initial guess from a dataframe produced in output
     @staticmethod
-    def get_initial_guess(
-        run_id: str, database_name: str | None = None
-    ) -> IterativeScheme.Guess:
+    def get_initial_guess(run_id: str, database_name: str | None = None) -> Guess:
         """Constructs an initial guess object by extracting the information from a database.
 
         Args:
@@ -280,7 +278,7 @@ class IterativeScheme(ClassicScheme):
             database_name: Name of the database file. Default is None.
 
         Returns:
-            An instance of IterativeScheme.Guess containing the initial guess data.
+            An instance of Guess containing the initial guess data.
         """
         names = ["wvg", "slfc"]
         data = util.DataBase.read_results(run_id, database_name, names)
@@ -323,9 +321,7 @@ class QuantumIterativeScheme(IterativeScheme):
 
     # Set the initial guess from a dataframe produced in output
     @staticmethod
-    def get_initial_guess(
-        run_id: str, database_name: str | None = None
-    ) -> QuantumIterativeScheme.Guess:
+    def get_initial_guess(run_id: str, database_name: str | None = None) -> Guess:
         """
         Generates an initial guess for a quantum iterative scheme based on data
         retrieved from a database.
