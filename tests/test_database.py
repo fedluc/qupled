@@ -1,3 +1,4 @@
+import datetime
 import os
 import pytest
 import sqlalchemy as sql
@@ -75,7 +76,7 @@ def test_insert_inputs(mocker, db_handler):
     db_handler.insert_inputs(inputs)
     insert_from_dict.assert_called_once()
     called_table, called_inputs, called_mapper = insert_from_dict.call_args[0]
-    assert called_table == db_handler.result_table
+    assert called_table == db_handler.input_table
     assert called_inputs == inputs
     assert callable(called_mapper)
     assert called_mapper("value1") == "json(value1)"
@@ -197,7 +198,7 @@ def test_get_results(mocker, db_handler):
     assert results == expected_results
 
 
-def test_delete_run_with_existing_run(mocker, db_handler):
+def test_delete_run(mocker, db_handler):
     run_id = 1
     db_handler.run_table = mocker.MagicMock()
     db_handler.run_table.result_value.c = mocker.MagicMock()
@@ -208,3 +209,93 @@ def test_delete_run_with_existing_run(mocker, db_handler):
     db_handler.delete_run(run_id)
     sql_delete.assert_called_once_with(db_handler.run_table)
     execute.assert_called_once_with(statement)
+
+
+def test_build_run_table_columns(db_handler):
+    table = db_handler.run_table
+    columns = {col.name for col in table.columns}
+    expected_columns = {
+        DataBaseHandler.TableKeys.PRIMARY_KEY.value,
+        DataBaseHandler.TableKeys.THEORY.value,
+        DataBaseHandler.TableKeys.COUPLING.value,
+        DataBaseHandler.TableKeys.DEGENERACY.value,
+        DataBaseHandler.TableKeys.DATE.value,
+        DataBaseHandler.TableKeys.TIME.value,
+    }
+    assert columns == expected_columns
+
+
+def test_build_run_table_primary_key(db_handler):
+    table = db_handler.run_table
+    primary_key_columns = {col.name for col in table.primary_key.columns}
+    assert primary_key_columns == {DataBaseHandler.TableKeys.PRIMARY_KEY.value}
+
+
+def test_build_run_table_column_types(db_handler):
+    table = db_handler.run_table
+    assert isinstance(
+        table.c[DataBaseHandler.TableKeys.PRIMARY_KEY.value].type, sql.Integer
+    )
+    assert isinstance(table.c[DataBaseHandler.TableKeys.THEORY.value].type, sql.JSON)
+    assert isinstance(table.c[DataBaseHandler.TableKeys.COUPLING.value].type, sql.JSON)
+    assert isinstance(
+        table.c[DataBaseHandler.TableKeys.DEGENERACY.value].type, sql.JSON
+    )
+    assert isinstance(table.c[DataBaseHandler.TableKeys.DATE.value].type, sql.JSON)
+    assert isinstance(table.c[DataBaseHandler.TableKeys.TIME.value].type, sql.JSON)
+
+
+def test_build_inputs_table_columns(db_handler):
+    table = db_handler.input_table
+    columns = {col.name for col in table.columns}
+    expected_columns = {
+        DataBaseHandler.TableKeys.RUN_ID.value,
+        DataBaseHandler.TableKeys.NAME.value,
+        DataBaseHandler.TableKeys.VALUE.value,
+    }
+    assert columns == expected_columns
+
+
+def test_build_inputs_table_primary_key(db_handler):
+    table = db_handler.input_table
+    primary_key_columns = {col.name for col in table.primary_key.columns}
+    assert primary_key_columns == {
+        DataBaseHandler.TableKeys.RUN_ID.value,
+        DataBaseHandler.TableKeys.NAME.value,
+    }
+
+
+def test_build_inputs_table_column_types(db_handler):
+    table = db_handler.input_table
+    assert isinstance(table.c[DataBaseHandler.TableKeys.RUN_ID.value].type, sql.Integer)
+    assert isinstance(table.c[DataBaseHandler.TableKeys.NAME.value].type, sql.String)
+    assert isinstance(table.c[DataBaseHandler.TableKeys.VALUE.value].type, sql.JSON)
+
+
+def test_build_results_table_columns(db_handler):
+    table = db_handler.result_table
+    columns = {col.name for col in table.columns}
+    expected_columns = {
+        DataBaseHandler.TableKeys.RUN_ID.value,
+        DataBaseHandler.TableKeys.NAME.value,
+        DataBaseHandler.TableKeys.VALUE.value,
+    }
+    assert columns == expected_columns
+
+
+def test_build_results_table_primary_key(db_handler):
+    table = db_handler.result_table
+    primary_key_columns = {col.name for col in table.primary_key.columns}
+    assert primary_key_columns == {
+        DataBaseHandler.TableKeys.RUN_ID.value,
+        DataBaseHandler.TableKeys.NAME.value,
+    }
+
+
+def test_build_results_table_column_types(db_handler):
+    table = db_handler.result_table
+    assert isinstance(table.c[DataBaseHandler.TableKeys.RUN_ID.value].type, sql.Integer)
+    assert isinstance(table.c[DataBaseHandler.TableKeys.NAME.value].type, sql.String)
+    assert isinstance(
+        table.c[DataBaseHandler.TableKeys.VALUE.value].type, sql.LargeBinary
+    )
