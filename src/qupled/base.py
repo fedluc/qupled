@@ -46,11 +46,9 @@ class Input:
         Scheme used to solve two-dimensional integrals
         allowed options include:
 
-        - full: the inner integral is evaluated at arbitrary points
-            selected automatically by the quadrature rule
+        - full: the inner integral is evaluated at arbitrary points selected automatically by the quadrature rule
 
-        - segregated: the inner integral is evaluated on a fixed
-            grid that depends on the integrand that is being processed
+        - segregated: the inner integral is evaluated on a fixed grid that depends on the integrand that is being processed
 
         Segregated is usually faster than full but it could become
         less accurate if the fixed points are not chosen correctly. Default =  ``'full'``
@@ -140,14 +138,10 @@ class Result:
         """
         Compute the radial distribution function (RDF) for the system.
 
-        Parameters:
+        Args:
             rdf_grid (np.ndarray | None, optional): A 1D array specifying the grid points
                 at which the RDF is computed. If None, a default grid ranging from 0.0
                 to 10.0 with a step size of 0.01 is used.
-
-        Attributes:
-            self.rdf_grid (np.ndarray): The grid points used for the RDF computation.
-            self.rdf (np.ndarray): The computed RDF values corresponding to the grid points.
 
         Returns:
             None: The computed RDF is stored in the `self.rdf` attribute.
@@ -166,8 +160,10 @@ class ClassicScheme:
     def __init__(self):
         # File to store output on disk
         self.db_handler = DataBaseHandler()
-        self.inputs: Input | None = None
-        self.results: Result | None = None
+        self.inputs: Input = None
+        """An object representing the inputs. Default = ``None``"""
+        self.results: Result = None
+        """An object representing the results. Default = ``None``"""
 
     @property
     def run_id(self):
@@ -253,9 +249,10 @@ class ClassicScheme:
         Computes the radial distribution function (RDF) using the provided RDF grid.
         If results are available, this method computes the RDF and stores the results
         in the database.
+
         Args:
-            rdf_grid (np.ndarray, optional): A numpy array representing the RDF grid.
-                                             If not provided, a default grid will be used.
+            rdf_grid: A numpy array representing the RDF grid.
+                If not provided, a default grid will be used.
         """
         if self.results is not None:
             self.results.compute_rdf(rdf_grid)

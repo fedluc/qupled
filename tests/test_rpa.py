@@ -1,6 +1,5 @@
-import pytest
 from qupled.native import Rpa as NativeRpa
-from qupled.base import ClassicScheme, Input
+from qupled.base import ClassicScheme, Input, Result
 from qupled.rpa import Rpa
 
 
@@ -27,3 +26,12 @@ def test_rpa_input_initialization(mocker):
     rpa_input = Rpa.Input(coupling, degeneracy)
     super_init.assert_called_once_with(coupling, degeneracy)
     assert rpa_input.theory == "RPA"
+
+
+def test_rpa_result_inheritance():
+    assert issubclass(Rpa.Result, Result)
+
+
+def test_rpa_result_initialization():
+    result = Rpa.Result()
+    assert isinstance(result, Rpa.Result)
