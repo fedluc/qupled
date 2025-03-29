@@ -12,10 +12,10 @@ def test_qstls_compute(mocker):
     super_compute = mocker.patch("qupled.base.QuantumIterativeScheme.compute")
     QstlsInput = mocker.patch("qupled.native.QstlsInput")
     qstls_input = Qstls.Input(coupling=1.0, degeneracy=2.0)
-    native_input = mocker.MagicMock()
+    native_input = mocker.ANY
     QstlsInput.return_value = native_input
     qstls = Qstls()
-    result = mocker.MagicMock()
+    result = mocker.ANY
     mocker.patch.object(qstls, "Result", return_value=result)
     qstls.compute(qstls_input)
     super_compute.assert_called_once_with(

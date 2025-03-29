@@ -23,13 +23,13 @@ def test_qstls_iet_inheritance():
 
 
 def test_compute_with_valid_input(mocker, qstls_iet_instance, qstls_iet_input):
-    native_input = mocker.MagicMock()
-    result = mocker.MagicMock()
+    native_input = mocker.ANY
+    result = mocker.ANY
     unpack = mocker.patch.object(qstls_iet_instance, "_unpack_fixed_adr_files")
     zip = mocker.patch.object(qstls_iet_instance, "_zip_fixed_adr_files")
     clean = mocker.patch.object(qstls_iet_instance, "_clean_fixed_adr_files")
     mocker.patch.object(qstls_iet_instance, "Result", return_value=result)
-    QstlsInput = mocker.patch("qupled.native.QstlsInput", return_value=native_input)
+    mocker.patch("qupled.native.QstlsInput", return_value=native_input)
     super_compute = mocker.patch("qupled.base.QuantumIterativeScheme.compute")
     qstls_iet_instance.compute(qstls_iet_input)
     unpack.assert_called_once_with(qstls_iet_input)
@@ -41,8 +41,8 @@ def test_compute_with_valid_input(mocker, qstls_iet_instance, qstls_iet_input):
 
 
 def test_compute_handles_exceptions(mocker, qstls_iet_instance, qstls_iet_input):
-    native_input = mocker.MagicMock()
-    result = mocker.MagicMock()
+    native_input = mocker.ANY
+    result = mocker.ANY
     unpack = mocker.patch.object(qstls_iet_instance, "_unpack_fixed_adr_files")
     zip = mocker.patch.object(qstls_iet_instance, "_zip_fixed_adr_files")
     clean = mocker.patch.object(qstls_iet_instance, "_clean_fixed_adr_files")

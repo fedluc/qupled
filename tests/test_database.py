@@ -68,8 +68,8 @@ def test_insert_run(mocker, db_handler):
     insert_run = mocker.patch.object(db_handler, "_insert_run")
     insert_inputs = mocker.patch.object(db_handler, "insert_inputs")
     insert_results = mocker.patch.object(db_handler, "insert_results")
-    inputs = mocker.MagicMock()
-    results = mocker.MagicMock()
+    inputs = mocker.ANY
+    results = mocker.ANY
     db_handler.insert_run(inputs, results)
     insert_run.assert_called_once_with(inputs)
     insert_inputs.assert_called_once_with(inputs.__dict__)
@@ -77,10 +77,10 @@ def test_insert_run(mocker, db_handler):
 
 
 def test_insert_inputs(mocker, db_handler):
-    db_handler.input_table = mocker.MagicMock()
+    db_handler.run_id = mocker.ANY
     insert_from_dict = mocker.patch.object(db_handler, "_insert_from_dict")
     mocker.patch.object(db_handler, "_to_json", side_effect=lambda x: f"json({x})")
-    inputs = mocker.MagicMock()
+    inputs = mocker.ANY
     db_handler.insert_inputs(inputs)
     insert_from_dict.assert_called_once()
     called_table, called_inputs, called_mapper = insert_from_dict.call_args[0]
@@ -90,28 +90,37 @@ def test_insert_inputs(mocker, db_handler):
     assert called_mapper("value1") == "json(value1)"
     assert called_mapper(123) == "json(123)"
 
+def test_insert_inputs_without_run_id(mocker, db_handler):
+    insert_from_dict = mocker.patch.object(db_handler, "_insert_from_dict")
+    mocker.patch.object(db_handler, "_to_json", side_effect=lambda x: f"json({x})")
+    db_handler.insert_inputs(mocker.ANY)
+    insert_from_dict.assert_not_called()
 
 def test_insert_results(mocker, db_handler):
-    db_handler.result_table = mocker.MagicMock()
+    db_handler.run_id = mocker.ANY
     insert_from_dict = mocker.patch.object(db_handler, "_insert_from_dict")
     mocker.patch.object(db_handler, "_to_bytes", side_effect=lambda x: f"bytes({x})")
-    results = mocker.MagicMock()
+    results = mocker.ANY
     db_handler.insert_results(results)
     insert_from_dict.assert_called_once()
-    called_table, called_inputs, called_mapper = insert_from_dict.call_args[0]
+    called_table, called_results, called_mapper = insert_from_dict.call_args[0]
     assert called_table == db_handler.result_table
-    assert called_inputs == results
+    assert called_results == results
     assert callable(called_mapper)
     assert called_mapper("value1") == "bytes(value1)"
     assert called_mapper(123) == "bytes(123)"
 
+def test_insert_results_without_run_id(mocker, db_handler):
+    insert_from_dict = mocker.patch.object(db_handler, "_insert_from_dict")
+    mocker.patch.object(db_handler, "_to_json", side_effect=lambda x: f"json({x})")
+    db_handler.insert_results(mocker.ANY)
+    insert_from_dict.assert_not_called()
 
 def test_inspect_runs(mocker, db_handler):
     sql_select = mocker.patch("sqlalchemy.select")
     mock_runs = [{"id": 1, "status": "done"}, {"id": 2, "status": "failed"}]
-    db_handler.run_table = mocker.MagicMock()
     execute = mocker.patch.object(db_handler, "_execute")
-    mock_result = mocker.MagicMock()
+    mock_result = mocker.Mock()
     mock_result.mappings.return_value.all.return_value = mock_runs
     execute.return_value = mock_result
     runs = db_handler.inspect_runs()
@@ -124,14 +133,13 @@ def test_get_run_with_existing_run(mocker, db_handler):
     run_id = 1
     sql_select = mocker.patch("sqlalchemy.select")
     execute = mocker.patch.object(db_handler, "_execute")
-    db_handler.run_table = mocker.MagicMock()
     statement = sql_select.return_value.where.return_value
-    mock_result = mocker.MagicMock()
+    mock_result = mocker.Mock()
     mock_result.mappings.return_value.first.return_value = {"key": "value"}
     execute.return_value = mock_result
-    inputs = mocker.MagicMock()
+    inputs = mocker.ANY
     get_inputs = mocker.patch.object(db_handler, "get_inputs", return_value=inputs)
-    results = mocker.MagicMock()
+    results = mocker.ANY
     get_results = mocker.patch.object(db_handler, "get_results", return_value=results)
     run = db_handler.get_run(run_id, None, None)
     sql_select.assert_called_once_with(db_handler.run_table)
@@ -149,10 +157,9 @@ def test_get_run_with_existing_run(mocker, db_handler):
 def test_get_run_with_non_existing_run(mocker, db_handler):
     run_id = 1
     sql_select = mocker.patch("sqlalchemy.select")
-    db_handler.run_table = mocker.MagicMock()
     statement = sql_select.return_value.where.return_value
     execute = mocker.patch.object(db_handler, "_execute")
-    mock_result = mocker.MagicMock()
+    mock_result = mocker.Mock()
     mock_result.mappings.return_value.first.return_value = None
     execute.return_value = mock_result
     run = db_handler.get_run(run_id, None, None)
@@ -165,7 +172,6 @@ def test_get_run_with_non_existing_run(mocker, db_handler):
 def test_get_inputs(mocker, db_handler):
     run_id = 1
     names = ["name"]
-    db_handler.input_table = mocker.MagicMock()
     expected_inputs = {"key": "value"}
     get = mocker.patch.object(db_handler, "_get", return_value=expected_inputs)
     mocker.patch.object(
@@ -186,7 +192,6 @@ def test_get_inputs(mocker, db_handler):
 def test_get_results(mocker, db_handler):
     run_id = 1
     names = ["name"]
-    db_handler.result_table = mocker.MagicMock()
     expected_results = {"key": "value"}
     get = mocker.patch.object(db_handler, "_get", return_value=expected_results)
     mocker.patch.object(
@@ -207,7 +212,7 @@ def test_get_results(mocker, db_handler):
 def test_delete_run(mocker, db_handler):
     run_id = 1
     db_handler.run_table = mocker.MagicMock()
-    db_handler.run_table.result_value.c = mocker.MagicMock()
+    db_handler.run_table.result_value.c = mocker.ANY
     sql_delete = mocker.patch("sqlalchemy.delete")
     statement = sql_delete.return_value.where.return_value
     execute = mocker.patch.object(db_handler, "_execute")
@@ -343,7 +348,7 @@ def test_insert_run(mocker, db_handler):
 
 
 def test_insert_from_dict_with_valid_data(mocker, db_handler):
-    table = mocker.Mock()
+    table = mocker.ANY
     data = {"key1": "value1", "key2": "value2"}
     sql_mapping = mocker.Mock(side_effect=lambda x: f"mapped({x})")
     insert = mocker.patch.object(db_handler, "_insert")
@@ -359,17 +364,16 @@ def test_insert_from_dict_with_valid_data(mocker, db_handler):
 
 
 def test_insert_from_dict_with_empty_data(mocker, db_handler):
-    table = mocker.Mock()
     data = {}
     sql_mapping = mocker.Mock()
     insert = mocker.patch.object(db_handler, "_insert")
-    db_handler._insert_from_dict(table, data, sql_mapping)
+    db_handler._insert_from_dict(mocker.ANY, data, sql_mapping)
     sql_mapping.assert_not_called()
     insert.assert_not_called()
 
 
 def test_insert_with_new_entry(mocker, db_handler):
-    table = mocker.Mock()
+    table = mocker.ANY
     name = "test_name"
     value = "test_value"
     run_id = 1
@@ -401,7 +405,7 @@ def test_insert_with_new_entry(mocker, db_handler):
 def test_get(mocker, db_handler):
     run_id = 1
     names = ["a", "b"]
-    table = mocker.Mock()
+    table = mocker.MagicMock()
     table.c = mocker.MagicMock()
     select = mocker.patch("sqlalchemy.select")
     statement = select.return_value.where.return_value
@@ -413,21 +417,21 @@ def test_get(mocker, db_handler):
     result.mappings.return_value.all.return_value = db_rows
     mocker.patch.object(db_handler, "_execute", return_value=result)
     sql_mapping = lambda x: x * 2
-    result = db_handler._get(table, run_id, names, sql_mapping)
+    actual = db_handler._get(table, run_id, names, sql_mapping)
     expected = {
         row[db_handler.TableKeys.NAME.value]: sql_mapping(
             row[db_handler.TableKeys.VALUE.value]
         )
         for row in db_rows
     }
-    assert result == expected
+    assert actual == expected
     select.assert_called_once_with(table)
     select.return_value.where.assert_called_once()
     db_handler._execute.assert_called_once_with(statement)
 
 
 def test_execute(mocker, db_handler):
-    statement = mocker.Mock()
+    statement = mocker.ANY
     connection = mocker.Mock()
     result = connection.execute.return_value
     engine = mocker.patch.object(db_handler.engine, "begin")

@@ -30,7 +30,7 @@ def test_input_initialization(input_obj):
 
 
 def test_input_to_native(mocker, input_obj):
-    native_input = mocker.MagicMock()
+    native_input = mocker.Mock()
     input_obj.to_native(native_input)
     assert native_input.coupling == 1.0
     assert native_input.degeneracy == 2.0
@@ -53,7 +53,7 @@ def test_result_initialization(result_obj):
 
 
 def test_result_from_native(mocker, result_obj):
-    native_scheme = mocker.MagicMock()
+    native_scheme = mocker.Mock()
     native_scheme.idr = np.array([1, 2, 3])
     result_obj.from_native(native_scheme)
     assert np.array_equal(result_obj.idr, np.array([1, 2, 3]))
@@ -89,7 +89,7 @@ def test_result_compute_rdf_with_custom_grid(mocker, result_obj):
 @pytest.fixture
 def classic_scheme(mocker):
     scheme = ClassicScheme()
-    scheme.db_handler = mocker.MagicMock()
+    scheme.db_handler = mocker.Mock()
     return scheme
 
 
@@ -102,8 +102,8 @@ class TestClassicScheme:
 
     def test_compute(self, classic_scheme, mocker):
         inputs = Input(coupling=1.0, degeneracy=2.0)
-        native_input = mocker.MagicMock()
-        native_scheme = mocker.MagicMock()
+        native_input = mocker.ANY
+        native_scheme = mocker.Mock()
         native_scheme.compute.return_value = 0
         native_scheme.recovery = "recovery_data"
         native_scheme_cls = mocker.MagicMock(return_value=native_scheme)
@@ -225,7 +225,7 @@ class TestIterativeSchemeGuess:
 
     def test_to_native(self, mocker):
         StlsGuess = mocker.patch("qupled.base.native.StlsGuess")
-        native_guess = mocker.MagicMock()
+        native_guess = mocker.ANY
         StlsGuess.return_value = native_guess
         guess = IterativeScheme.Guess(wvg=np.array([1, 2, 3]), slfc=np.array([4, 5, 6]))
         result = guess.to_native()
@@ -301,7 +301,7 @@ class TestQuantumIterativeSchemeGuess:
 
     def test_to_native(self, mocker):
         QstlsGuess = mocker.patch("qupled.base.native.QstlsGuess")
-        native_guess = mocker.MagicMock()
+        native_guess = mocker.ANY
         QstlsGuess.return_value = native_guess
         guess = QuantumIterativeScheme.Guess(
             wvg=np.array([1, 2, 3]),

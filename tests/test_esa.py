@@ -13,8 +13,8 @@ def test_esa_compute(mocker):
     Result = mocker.patch("qupled.base.Result")
     RpaInput = mocker.patch("qupled.native.RpaInput")
     esa_input = ESA.Input(coupling=1.0, degeneracy=2.0)
-    native_input = mocker.MagicMock()
-    result = mocker.MagicMock()
+    native_input = mocker.ANY
+    result = mocker.ANY
     RpaInput.return_value = native_input
     Result.return_value = result
     esa = ESA()
