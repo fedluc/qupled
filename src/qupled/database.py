@@ -51,12 +51,14 @@ class DataBaseHandler:
         self.insert_results(results.__dict__)
 
     def insert_inputs(self, inputs: dict[str, any]):
-        sql_mapping = lambda value: (self._to_json(value))
-        self._insert_from_dict(self.input_table, inputs, sql_mapping)
+        if self.run_id is not None:
+            sql_mapping = lambda value: (self._to_json(value))
+            self._insert_from_dict(self.input_table, inputs, sql_mapping)
 
     def insert_results(self, results: dict[str, any]):
-        sql_mapping = lambda value: (self._to_bytes(value))
-        self._insert_from_dict(self.result_table, results, sql_mapping)
+        if self.run_id is not None:
+            sql_mapping = lambda value: (self._to_bytes(value))
+            self._insert_from_dict(self.result_table, results, sql_mapping)
 
     def inspect_runs(self) -> list[dict[str, any]]:
         statement = sql.select(self.run_table)
