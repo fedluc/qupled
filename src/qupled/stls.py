@@ -87,6 +87,6 @@ class Guess:
         """
         native_guess = native.StlsGuess()
         for attr, value in self.__dict__.items():
-            native_value = value if value is not None else np.empty(0)
-            setattr(native_guess, attr, native_value)
+            if value is not None:
+                setattr(native_guess, attr, value)
         return native_guess

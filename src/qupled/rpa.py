@@ -96,8 +96,7 @@ class Rpa:
         it uses the `db_handler` to insert the current run's `inputs` and `results`
         into the database.
         """
-        if self.results is not None:
-            self.db_handler.insert_run(self.inputs, self.results)
+        self.db_handler.insert_run(self.inputs, self.results)
 
 
 class Input:
@@ -223,5 +222,8 @@ class Result:
         Returns:
             None: The computed RDF is stored in the `self.rdf` attribute.
         """
-        self.rdf_grid = rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
-        self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)
+        if self.wvg is not None and self.ssf is not None:
+            self.rdf_grid = (
+                rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
+            )
+            self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)

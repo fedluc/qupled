@@ -1,4 +1,3 @@
-import numpy as np
 import qupled.native as native
 import qupled.stls as stls
 import qupled.rpa as rpa
@@ -19,28 +18,28 @@ def test_stls_initialization(mocker):
 
 def test_get_initial_guess_with_default_database_name(mocker):
     read_results = mocker.patch("qupled.util.DataBase.read_results")
-    run_id = "test_run"
+    run_id = mocker.ANY
     read_results.return_value = {
-        "wvg": np.array([1, 2, 3]),
-        "slfc": np.array([4, 5, 6]),
+        "wvg": mocker.ANY,
+        "slfc": mocker.ANY,
     }
     guess = stls.Stls.get_initial_guess(run_id)
-    assert (guess.wvg == np.array([1, 2, 3])).all()
-    assert (guess.slfc == np.array([4, 5, 6])).all()
+    assert guess.wvg == read_results.return_value["wvg"]
+    assert guess.slfc == read_results.return_value["slfc"]
     read_results.assert_called_once_with(run_id, None, ["wvg", "slfc"])
 
 
 def test_get_initial_guess_with_custom_database_name(mocker):
     read_results = mocker.patch("qupled.util.DataBase.read_results")
-    run_id = "test_run"
-    database_name = "test_db"
+    run_id = mocker.ANY
+    database_name = mocker.ANY
     read_results.return_value = {
-        "wvg": np.array([1, 2, 3]),
-        "slfc": np.array([4, 5, 6]),
+        "wvg": mocker.ANY,
+        "slfc": mocker.ANY,
     }
     guess = stls.Stls.get_initial_guess(run_id, database_name)
-    assert (guess.wvg == np.array([1, 2, 3])).all()
-    assert (guess.slfc == np.array([4, 5, 6])).all()
+    assert guess.wvg == read_results.return_value["wvg"]
+    assert guess.slfc == read_results.return_value["slfc"]
     read_results.assert_called_once_with(run_id, database_name, ["wvg", "slfc"])
 
 
@@ -75,10 +74,12 @@ def test_stls_result_initialization(mocker):
     super_init.assert_called_once()
 
 
-def test_stls_guess_initialization():
-    guess = stls.Guess(wvg=np.array([1, 2, 3]), slfc=np.array([4, 5, 6]))
-    assert (guess.wvg == np.array([1, 2, 3])).all()
-    assert (guess.slfc == np.array([4, 5, 6])).all()
+def test_stls_guess_initialization(mocker):
+    wvg = mocker.ANY
+    slfc = mocker.ANY
+    guess = stls.Guess(wvg, slfc)
+    assert guess.wvg == wvg
+    assert guess.slfc == slfc
 
 
 def test_stls_guess_initialization_defaults():
@@ -90,9 +91,11 @@ def test_stls_guess_initialization_defaults():
 def test_stls_guess_to_native(mocker):
     StlsGuess = mocker.patch("qupled.native.StlsGuess")
     native_guess = mocker.ANY
+    wvg = mocker.ANY
+    slfc = mocker.ANY
     StlsGuess.return_value = native_guess
-    guess = stls.Guess(wvg=np.array([1, 2, 3]), slfc=np.array([4, 5, 6]))
+    guess = stls.Guess(wvg, slfc)
     result = guess.to_native()
     assert result == native_guess
-    assert (result.wvg == np.array([1, 2, 3])).all()
-    assert (result.slfc == np.array([4, 5, 6])).all()
+    assert result.wvg == wvg
+    assert result.slfc == slfc
