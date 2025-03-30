@@ -1,31 +1,59 @@
-from qupled.rpa import Rpa
-from qupled.stls import Stls
-from qupled.native import Stls as NativeStls
-from qupled.base import IterativeScheme, Result
+import numpy as np
+import qupled.native as native
+import qupled.stls as stls
+import qupled.rpa as rpa
 
 
 def test_stls_inheritance():
-    assert issubclass(Stls, IterativeScheme)
+    assert issubclass(stls.Stls, rpa.Rpa)
 
 
-def test_stls_compute(mocker):
-    super_compute = mocker.patch("qupled.base.ClassicScheme.compute")
-    input = mocker.ANY
-    scheme = Stls()
-    scheme.compute(input)
-    super_compute.assert_called_once_with(input, NativeStls, mocker.ANY, mocker.ANY)
+def test_stls_initialization(mocker):
+    super_init = mocker.patch("qupled.rpa.Rpa.__init__")
+    scheme = stls.Stls()
+    super_init.assert_called_once()
+    assert isinstance(scheme.results, stls.Result)
+    assert scheme.native_scheme_cls == native.Stls
+    assert isinstance(scheme.native_inputs, native.StlsInput)
+
+
+def test_get_initial_guess_with_default_database_name(mocker):
+    read_results = mocker.patch("qupled.util.DataBase.read_results")
+    run_id = "test_run"
+    read_results.return_value = {
+        "wvg": np.array([1, 2, 3]),
+        "slfc": np.array([4, 5, 6]),
+    }
+    guess = stls.Stls.get_initial_guess(run_id)
+    assert (guess.wvg == np.array([1, 2, 3])).all()
+    assert (guess.slfc == np.array([4, 5, 6])).all()
+    read_results.assert_called_once_with(run_id, None, ["wvg", "slfc"])
+
+
+def test_get_initial_guess_with_custom_database_name(mocker):
+    read_results = mocker.patch("qupled.util.DataBase.read_results")
+    run_id = "test_run"
+    database_name = "test_db"
+    read_results.return_value = {
+        "wvg": np.array([1, 2, 3]),
+        "slfc": np.array([4, 5, 6]),
+    }
+    guess = stls.Stls.get_initial_guess(run_id, database_name)
+    assert (guess.wvg == np.array([1, 2, 3])).all()
+    assert (guess.slfc == np.array([4, 5, 6])).all()
+    read_results.assert_called_once_with(run_id, database_name, ["wvg", "slfc"])
 
 
 def test_stls_input_inheritance():
-    assert issubclass(Stls.Input, Rpa.Input)
+    assert issubclass(stls.Input, rpa.Input)
 
 
 def test_stls_input_initialization(mocker):
-    super_init = mocker.patch("qupled.base.Input.__init__")
-    guess = mocker.patch("qupled.stls.Stls.Guess")
+    super_init = mocker.patch("qupled.rpa.Input.__init__")
+    guess = mocker.patch("qupled.stls.Guess")
     coupling = 1.5
     degeneracy = 3.0
-    input = Stls.Input(coupling, degeneracy)
+    input = stls.Input(coupling, degeneracy)
     assert input.error == 1.0e-5
     assert input.mixing == 1.0
     assert input.iterations == 1000
@@ -37,11 +65,34 @@ def test_stls_input_initialization(mocker):
 
 
 def test_stls_result_inheritance():
-    assert issubclass(Stls.Result, Rpa.Result)
+    assert issubclass(stls.Result, rpa.Result)
 
 
 def test_stls_result_initialization(mocker):
-    super_init = mocker.patch("qupled.base.Result.__init__")
-    results = Stls.Result()
+    super_init = mocker.patch("qupled.rpa.Result.__init__")
+    results = stls.Result()
     assert results.error is None
     super_init.assert_called_once()
+
+
+def test_stls_guess_initialization():
+    guess = stls.Guess(wvg=np.array([1, 2, 3]), slfc=np.array([4, 5, 6]))
+    assert (guess.wvg == np.array([1, 2, 3])).all()
+    assert (guess.slfc == np.array([4, 5, 6])).all()
+
+
+def test_stls_guess_initialization_defaults():
+    guess = stls.Guess()
+    assert guess.wvg is None
+    assert guess.slfc is None
+
+
+def test_stls_guess_to_native(mocker):
+    StlsGuess = mocker.patch("qupled.native.StlsGuess")
+    native_guess = mocker.ANY
+    StlsGuess.return_value = native_guess
+    guess = stls.Guess(wvg=np.array([1, 2, 3]), slfc=np.array([4, 5, 6]))
+    result = guess.to_native()
+    assert result == native_guess
+    assert (result.wvg == np.array([1, 2, 3])).all()
+    assert (result.slfc == np.array([4, 5, 6])).all()

@@ -1,20 +1,21 @@
 import matplotlib.pyplot as plt
-from qupled.classic import Rpa, ESA
+import qupled.rpa as rpa
+import qupled.esa as esa
 from qupled.util import DataBase
 
 # Define an Rpa object to solve the RPA scheme
 print("######### Solving the RPA scheme #########")
-rpa = Rpa()
-rpa.compute(Rpa.Input(10.0, 1.0))
+rpa_scheme = rpa.Rpa()
+rpa_scheme.compute(rpa.Input(10.0, 1.0))
 
 # Define an ESA object to solve the ESA scheme
 print("######### Solving the ESA scheme #########")
-esa = ESA()
-esa.compute(ESA.Input(10.0, 1.0))
+esa_scheme = esa.ESA()
+esa_scheme.compute(esa.Input(10.0, 1.0))
 
 # Retrieve information from the output files
-rpa_data = DataBase.read_run(rpa.run_id)
-esa_data = DataBase.read_run(esa.run_id)
+rpa_data = DataBase.read_run(rpa_scheme.run_id)
+esa_data = DataBase.read_run(esa_scheme.run_id)
 rpa_results = rpa_data["results"]
 rpa_inputs = rpa_data["inputs"]
 esa_results = esa_data["results"]

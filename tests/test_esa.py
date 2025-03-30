@@ -1,29 +1,27 @@
-from qupled.esa import ESA
-from qupled.native import ESA as NativeESA
-from qupled.base import ClassicScheme
-from qupled.rpa import Rpa
+import qupled.native as native
+import qupled.esa as esa
+import qupled.rpa as rpa
 
 
 def test_esa_inheritance():
-    assert issubclass(ESA, ClassicScheme)
+    assert issubclass(esa.ESA, rpa.Rpa)
 
 
-def test_esa_compute(mocker):
-    super_compute = mocker.patch("qupled.base.ClassicScheme.compute")
-    input = mocker.ANY
-    scheme = ESA()
-    scheme.compute(input)
-    super_compute.assert_called_once_with(input, NativeESA, mocker.ANY, mocker.ANY)
+def test_esa_initialization(mocker):
+    super_init = mocker.patch("qupled.rpa.Rpa.__init__")
+    scheme = esa.ESA()
+    super_init.assert_called_once()
+    assert scheme.native_scheme_cls == native.ESA
 
 
 def test_esa_input_inheritance():
-    assert issubclass(ESA.Input, Rpa.Input)
+    assert issubclass(esa.Input, rpa.Input)
 
 
 def test_esa_input_initialization(mocker):
-    super_init = mocker.patch("qupled.rpa.Rpa.Input.__init__")
+    super_init = mocker.patch("qupled.rpa.Input.__init__")
     coupling = 1.5
     degeneracy = 3.0
-    input = ESA.Input(coupling, degeneracy)
+    input = esa.Input(coupling, degeneracy)
     super_init.assert_called_once_with(coupling, degeneracy)
     assert input.theory == "ESA"

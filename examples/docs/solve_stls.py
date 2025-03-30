@@ -1,21 +1,21 @@
-from qupled.classic import Stls
+import qupled.stls as stls
 from qupled.util import DataBase
 
 # Define the object used to solve the scheme
-stls = Stls()
+scheme = stls.Stls()
 
 # Define the input parameters
-inputs = Stls.Input(10.0, 1.0)
+inputs = stls.Input(10.0, 1.0)
 inputs.mixing = 0.5
 
 # Solve scheme
-stls.compute(inputs)
+scheme.compute(inputs)
 
 # Access the internal energy from the output file
-results = DataBase().read_results(stls.run_id, names=["uint"])
+results = DataBase().read_results(scheme.run_id, names=["uint"])
 print("Internal energy from the output file: ")
 print(results["uint"])
 
 # Compute the internal energy
 print("Internal energy from the result class: ")
-print(stls.results.uint)
+print(scheme.results.uint)
