@@ -8,6 +8,10 @@ from . import stls
 
 class VSStls(stls.Stls):
 
+    """
+    Class used to solve the VSStls scheme.
+    """
+        
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
@@ -40,7 +44,7 @@ class VSStls(stls.Stls):
 # Input class
 class Input(stls.Input):
     """
-    Class used to manage the input for the :obj:`qupled.classic.VSStls` class.
+    Class used to manage the input for the :obj:`qupled.vsstls.VSStls` class.
     """
 
     def __init__(self, coupling: float, degeneracy: float):
@@ -65,7 +69,7 @@ class Input(stls.Input):
 
 class Result(stls.Result):
     """
-    Class used to store the results for the :obj:`qupled.classic.VSStls` class.
+    Class used to store the results for the :obj:`qupled.vsstls.VSStls` class.
     """
 
     def __init__(self):

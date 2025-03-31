@@ -5,6 +5,10 @@ from . import stls
 
 class StlsIet(stls.Stls):
 
+    """
+    Class used to solve the StlsIet schemes.
+    """
+
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
@@ -12,7 +16,7 @@ class StlsIet(stls.Stls):
 
 class Input(stls.Input):
     """
-    Class used to manage the input for the :obj:`qupled.classic.StlsIet` class.
+    Class used to manage the input for the :obj:`qupled.stlsiet.StlsIet` class.
     Accepted theories: ``STLS-HNC``, ``STLS-IOI`` and ``STLS-LCT``.
     """
 
@@ -41,7 +45,7 @@ class Input(stls.Input):
 
 class Result(stls.Result):
     """
-    Class used to store the results for the :obj:`qupled.classic.StlsIet` class.
+    Class used to store the results for the :obj:`qupled.stlsiet.StlsIet` class.
     """
 
     def __init__(self):

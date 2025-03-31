@@ -8,16 +8,15 @@ import os
 import shutil
 import zipfile
 
-from . import native
 from . import util
 from . import qstls
 from . import stlsiet
 
 
 class QstlsIet(qstls.Qstls):
+
     """
-    Args:
-        inputs: Input parameters.
+    Class used to solve the Qstls-IET schemes.
     """
 
     def __init__(self):
@@ -36,7 +35,7 @@ class QstlsIet(qstls.Qstls):
         super().compute(inputs)
         self._zip_fixed_adr_files(inputs)
         self._clean_fixed_adr_files(inputs)
-
+    
     # Unpack zip folder with fixed component of the auxiliary density response
     @util.MPI.run_only_on_root
     def _unpack_fixed_adr_files(self, inputs):
@@ -113,7 +112,7 @@ class QstlsIet(qstls.Qstls):
 # Input class
 class Input(stlsiet.Input, qstls.Input):
     """
-    Class used to manage the input for the :obj:`qupled.classic.QStlsIet` class.
+    Class used to manage the input for the :obj:`qupled.qstlsiet.QStlsIet` class.
     Accepted theories: ``QSTLS-HNC``, ``QSTLS-IOI`` and ``QSTLS-LCT``.
     """
 
@@ -133,7 +132,7 @@ class Input(stlsiet.Input, qstls.Input):
 # Result class
 class Result(stlsiet.Result, qstls.Result):
     """
-    Class used to store the results for the :obj:`qupled.quantum.QstlsIet` class.
+    Class used to store the results for the :obj:`qupled.qstlsiet.QstlsIet` class.
     """
 
     def __init__(self):

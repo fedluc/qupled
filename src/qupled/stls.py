@@ -7,6 +7,10 @@ from . import rpa
 
 class Stls(rpa.Rpa):
 
+    """
+    Class used to solve the Stls scheme.
+    """
+
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
@@ -33,7 +37,7 @@ class Stls(rpa.Rpa):
 
 class Input(rpa.Input):
     """
-    Class used to manage the input for the :obj:`qupled.classic.Stls` class.
+    Class used to manage the input for the :obj:`qupled.stls.Stls` class.
     """
 
     def __init__(self, coupling: float, degeneracy: float):
@@ -56,7 +60,7 @@ class Input(rpa.Input):
 
 class Result(rpa.Result):
     """
-    Class used to store the results for the :obj:`qupled.classic.Stls` class.
+    Class used to store the results for the :obj:`qupled.stls.Stls` class.
     """
 
     def __init__(self):

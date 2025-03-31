@@ -8,6 +8,10 @@ from . import util
 
 class Qstls(stls.Stls):
 
+    """
+    Class used to solve the Qstls scheme.
+    """
+        
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
@@ -46,7 +50,7 @@ class Qstls(stls.Stls):
 # Input class
 class Input(stls.Input):
     """
-    Class used to manage the input for the :obj:`qupled.quantum.Qstls` class.
+    Class used to manage the input for the :obj:`qupled.qstls.Qstls` class.
     """
 
     def __init__(self, coupling: float, degeneracy: float):
@@ -62,7 +66,7 @@ class Input(stls.Input):
 
 class Result(stls.Result):
     """
-    Class used to store the results for the :obj:`qupled.quantum.Qstls` class.
+    Class used to store the results for the :obj:`qupled.qstls.Qstls` class.
     """
 
     def __init__(self):

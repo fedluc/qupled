@@ -16,6 +16,10 @@ from . import vsstls
 
 class QVSStls(vsstls.VSStls):
 
+    """
+    Class used to solve the QVStls scheme.
+    """
+    
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
@@ -35,6 +39,10 @@ class QVSStls(vsstls.VSStls):
         super().compute(inputs)
         self._zip_fixed_adr_files(inputs)
         self._clean_fixed_adr_files(inputs)
+
+    @staticmethod
+    def get_initial_guess(run_id: int, database_name: str | None = None) -> qstls.Guess:
+        return qstls.Qstls.get_initial_guess(run_id, database_name)
 
     # Unpack zip folder with fixed component of the auxiliary density response
     @util.MPI.run_only_on_root
@@ -121,7 +129,7 @@ class QVSStls(vsstls.VSStls):
 # Input class
 class Input(vsstls.Input, qstls.Input):
     """
-    Class used to manage the input for the :obj:`qupled.classic.QVSStls` class.
+    Class used to manage the input for the :obj:`qupled.qvsstls.QVSStls` class.
     """
 
     def __init__(self, coupling: float, degeneracy: float):
@@ -134,7 +142,7 @@ class Input(vsstls.Input, qstls.Input):
 # Result
 class Result(vsstls.Result, qstls.Result):
     """
-    Class used to manage the results for the :obj:`qupled.classic.QVSStls` class.
+    Class used to manage the results for the :obj:`qupled.qvsstls.QVSStls` class.
     """
 
     def __init__(self):

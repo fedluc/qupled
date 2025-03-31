@@ -8,11 +8,15 @@ from . import database
 
 class Rpa:
 
+    """
+    Class used to solve the RPA scheme.
+    """
+        
     def __init__(self):
         self.inputs: Input = None
-        """An object representing the inputs. Default = ``None``"""
+        """The inputs used to solve the scheme. Default = ``None``"""
         self.results: Result = Result()
-        """An object representing the results"""
+        """The results obtained by solving the scheme"""
         # Undocumented properties
         self.db_handler = database.DataBaseHandler()
         self.native_scheme_cls = native.Rpa
@@ -101,7 +105,7 @@ class Rpa:
 
 class Input:
     """
-    Class used to store the inputs for the :obj:`qupled.classic.Rpa` class.
+    Class used to store the inputs for the :obj:`qupled.rpa.Rpa` class.
     """
 
     def __init__(self, coupling: float, degeneracy: float):
@@ -173,7 +177,7 @@ class Input:
 
 class Result:
     """
-    Class representing the results for a computational model.
+    Class used to store the results for the :obj:`qupled.rpa.Rpa` class.
     """
 
     def __init__(self):
