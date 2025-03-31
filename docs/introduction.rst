@@ -43,8 +43,9 @@ External dependencies
 The installation of qupled may require compiling some C++ code, depending on the platform and installation method.
 Therefore, ensure the following dependencies are met before attempting to install or run qupled:
 
-  - `CMake <https://cmake.org/download/>`_
   - `Boost <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
+  - `CMake <https://cmake.org/download/>`_
+  - `fmt <https://github.com/fmtlib/fmt>`_
   - `GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
   - `OpenMP <https://en.wikipedia.org/wiki/OpenMP>`_
   - `Open-MPI <https://www.open-mpi.org/software/ompi/v5.0/>`_

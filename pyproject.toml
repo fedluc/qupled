@@ -20,9 +20,7 @@ classifiers = [
 dependencies = [
     "matplotlib~=3.7",
     "numpy<2.0",
-    "pandas~=2.0",
     "SQLAlchemy~=2.0",
-    "tables~=3.10",
 ]
 
 [project.optional-dependencies]

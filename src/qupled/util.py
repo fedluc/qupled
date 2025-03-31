@@ -17,7 +17,7 @@ class DataBase:
         """Reads runs from the database and returns the content in the form of a dictionary.
 
         Args:
-            database_name (str, optional): Name of the database to read from. Defaults to None.
+            database_name: Name of the database to read from. Defaults to None.
 
         Returns:
             A dictionary whose keys are the run ids and values are the corresponding runs information.
@@ -37,10 +37,10 @@ class DataBase:
         Reads a run from the database.
 
         Args:
-            run_id (int): The ID of the run to read.
-            database_name (str | None, optional): The name of the database. Defaults to None.
-            input_names (list[str] | None, optional): A list of input names to retrieve. Defaults to None.
-            result_names (list[str] | None, optional): A list of result names to retrieve. Defaults to None.
+            run_id: The ID of the run to read.
+            database_name: The name of the database. Defaults to None.
+            input_names: A list of input names to retrieve. Defaults to None.
+            result_names: A list of result names to retrieve. Defaults to None.
 
         Returns:
             dict: A dictionary containing the run data.

@@ -1,4 +1,0 @@
-matplotlib~=3.7.1
-numpy<2
-pandas~=2.0.0
-sphinx-rtd-theme~=1.1.1
