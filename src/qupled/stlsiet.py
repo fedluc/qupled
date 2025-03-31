@@ -4,7 +4,6 @@ from . import stls
 
 
 class StlsIet(stls.Stls):
-
     """
     Class used to solve the StlsIet schemes.
     """

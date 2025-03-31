@@ -7,11 +7,10 @@ from . import util
 
 
 class Qstls(stls.Stls):
-
     """
     Class used to solve the Qstls scheme.
     """
-        
+
     def __init__(self):
         super().__init__()
         self.results: Result = Result()

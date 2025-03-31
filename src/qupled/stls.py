@@ -6,7 +6,6 @@ from . import rpa
 
 
 class Stls(rpa.Rpa):
-
     """
     Class used to solve the Stls scheme.
     """

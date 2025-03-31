@@ -7,11 +7,10 @@ from . import database
 
 
 class Rpa:
-
     """
     Class used to solve the RPA scheme.
     """
-        
+
     def __init__(self):
         self.inputs: Input = None
         """The inputs used to solve the scheme. Default = ``None``"""

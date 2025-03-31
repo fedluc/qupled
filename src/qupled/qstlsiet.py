@@ -14,7 +14,6 @@ from . import stlsiet
 
 
 class QstlsIet(qstls.Qstls):
-
     """
     Class used to solve the Qstls-IET schemes.
     """
@@ -35,7 +34,7 @@ class QstlsIet(qstls.Qstls):
         super().compute(inputs)
         self._zip_fixed_adr_files(inputs)
         self._clean_fixed_adr_files(inputs)
-    
+
     # Unpack zip folder with fixed component of the auxiliary density response
     @util.MPI.run_only_on_root
     def _unpack_fixed_adr_files(self, inputs):

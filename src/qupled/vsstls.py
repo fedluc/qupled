@@ -7,11 +7,10 @@ from . import stls
 
 
 class VSStls(stls.Stls):
-
     """
     Class used to solve the VSStls scheme.
     """
-        
+
     def __init__(self):
         super().__init__()
         self.results: Result = Result()

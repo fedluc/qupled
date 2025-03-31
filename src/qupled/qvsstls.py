@@ -15,11 +15,10 @@ from . import vsstls
 
 
 class QVSStls(vsstls.VSStls):
-
     """
     Class used to solve the QVStls scheme.
     """
-    
+
     def __init__(self):
         super().__init__()
         self.results: Result = Result()

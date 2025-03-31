@@ -4,11 +4,10 @@ from . import rpa
 
 
 class ESA(rpa.Rpa):
-
     """
     Class used to solve the ESA scheme.
     """
-        
+
     def __init__(self):
         super().__init__()
         self.results: rpa.Result = rpa.Result()

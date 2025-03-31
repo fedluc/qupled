@@ -21,7 +21,7 @@ class DataBaseHandler:
     and deleting data, as well as managing the database schema."
     """
 
-    DEFAULT_DATABASE_NAME = "scheme_results.db"
+    DEFAULT_DATABASE_NAME = "qupled.db"
     RUNS_TABLE_NAME = "runs"
     INPUTS_TABLE_NAME = "inputs"
     RESULTS_TABLE_NAME = "results"
