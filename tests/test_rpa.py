@@ -1,110 +1,181 @@
-import os
-
 import pytest
-
-from qupled.rpa import Rpa
-from qupled.native import Rpa as NativeRpa
-from qupled.util import HDF, MPI
-
-
-@pytest.fixture
-def rpa():
-    return Rpa()
+import numpy as np
+from qupled.database import DataBaseHandler
+import qupled.rpa as rpa
+import qupled.native as native
 
 
 @pytest.fixture
-def rpa_input():
-    return Rpa.Input(1.0, 1.0)
+def inputs():
+    return rpa.Input(coupling=1.0, degeneracy=2.0)
 
 
-def test_default(rpa):
-    assert rpa.hdf_file_name is None
+@pytest.fixture
+def results():
+    return rpa.Result()
 
 
-def test_compute(rpa, rpa_input, mocker):
-    mock_mpi_time = mocker.patch.object(MPI, MPI.timer.__name__, return_value=0)
-    mock_mpi_barrier = mocker.patch.object(MPI, MPI.barrier.__name__)
-    mock_compute = mocker.patch.object(Rpa, Rpa._compute.__name__)
-    mock_save = mocker.patch.object(Rpa, Rpa._save.__name__)
-    rpa.compute(rpa_input)
-    assert mock_mpi_time.call_count == 2
-    assert mock_mpi_barrier.call_count == 1
-    assert mock_compute.call_count == 1
-    assert mock_save.call_count == 1
+@pytest.fixture
+def scheme(mocker):
+    scheme = rpa.Rpa()
+    scheme.db_handler = mocker.Mock()
+    return scheme
 
 
-def test_check_status_and_clean(rpa, mocker, capsys):
-    mock_mpi_is_root = mocker.patch.object(MPI, MPI.is_root.__name__)
-    mocker.patch.object(os, os.remove.__name__)
-    rpa._check_status_and_clean(0, "")
-    captured = capsys.readouterr()
-    assert mock_mpi_is_root.call_count == 1
-    assert "Dielectric theory solved successfully!\n" in captured.out
-    with pytest.raises(SystemExit) as excinfo:
-        rpa._check_status_and_clean(1, "")
-    assert excinfo.value.code == "Error while solving the dielectric theory"
+def test_rpa_initialization():
+    scheme = rpa.Rpa()
+    assert scheme.inputs is None
+    assert isinstance(scheme.results, rpa.Result)
+    assert isinstance(scheme.db_handler, DataBaseHandler)
+    assert scheme.native_scheme_cls == native.Rpa
+    assert isinstance(scheme.native_inputs, native.RpaInput)
 
 
-def test_get_hdf_file(rpa, rpa_input):
-    filename = rpa._get_hdf_file(rpa_input)
-    assert filename == "rs1.000_theta1.000_RPA.h5"
+def test_run_id(scheme):
+    run_id = "run_id"
+    scheme.db_handler.run_id = run_id
+    assert scheme.run_id == run_id
 
 
-def test_save(rpa, rpa_input, mocker):
-    mock_mpi_is_root = mocker.patch.object(MPI, MPI.is_root.__name__)
-    try:
-        scheme = NativeRpa(rpa_input.to_native())
-        rpa.hdf_file_name = rpa._get_hdf_file(scheme.inputs)
-        rpa._save(scheme)
-        assert mock_mpi_is_root.call_count == 1
-        assert os.path.isfile(rpa.hdf_file_name)
-        inspect_data = HDF().inspect(rpa.hdf_file_name)
-        expected_entries = [
-            HDF.EntryKeys.COUPLING.value,
-            HDF.EntryKeys.DEGENERACY.value,
-            HDF.EntryKeys.THEORY.value,
-            HDF.EntryKeys.RESOLUTION.value,
-            HDF.EntryKeys.CUTOFF.value,
-            HDF.EntryKeys.FREQUENCY_CUTOFF.value,
-            HDF.EntryKeys.MATSUBARA.value,
-            HDF.EntryKeys.IDR.value,
-            HDF.EntryKeys.SDR.value,
-            HDF.EntryKeys.SLFC.value,
-            HDF.EntryKeys.SSF.value,
-            HDF.EntryKeys.SSF_HF.value,
-            HDF.EntryKeys.WVG.value,
-        ]
-        for entry in expected_entries:
-            assert entry in inspect_data
-    finally:
-        os.remove(rpa.hdf_file_name)
-
-
-def test_compute_rdf(rpa, mocker):
-    mock_mpi_get_rank = mocker.patch.object(MPI, MPI.rank.__name__, return_value=0)
-    mock_compute_rdf = mocker.patch.object(HDF, HDF.compute_rdf.__name__)
-    rpa.compute_rdf()
-    assert mock_mpi_get_rank.call_count == 1
-    assert mock_compute_rdf.call_count == 1
-
-
-def test_compute_internal_energy(rpa, mocker):
-    mock_compute_internal_energy = mocker.patch.object(
-        HDF, HDF.compute_internal_energy.__name__
+def test_compute(scheme, inputs, mocker):
+    native_scheme = mocker.Mock()
+    native_scheme.recovery = "recovery_file"
+    native_scheme_cls = mocker.patch.object(
+        scheme, "native_scheme_cls", return_value=native_scheme
     )
-    rpa.compute_internal_energy()
-    assert mock_compute_internal_energy.call_count == 1
+    check_status_and_clean = mocker.patch.object(scheme, "_check_status_and_clean")
+    to_native = mocker.patch("qupled.rpa.Input.to_native")
+    from_native = mocker.patch("qupled.rpa.Result.from_native")
+    save = mocker.patch.object(scheme, "_save")
+    scheme.compute(inputs)
+    assert scheme.inputs is not None
+    to_native.assert_called_once_with(scheme.native_inputs)
+    native_scheme_cls.assert_called_once()
+    check_status_and_clean.assert_called_once_with(
+        native_scheme.compute.return_value, native_scheme.recovery
+    )
+    from_native.assert_called_once_with(native_scheme)
+    save.assert_called_once()
 
 
-def test_plot(rpa, mocker):
-    mock_mpi_is_root = mocker.patch.object(MPI, MPI.is_root.__name__)
-    mock_compute_rdf = mocker.patch.object(HDF, HDF.compute_rdf.__name__)
-    mock_plot = mocker.patch.object(HDF, HDF.plot.__name__)
-    rpa.plot([HDF.EntryKeys.SSF.value, HDF.EntryKeys.IDR.value])
-    assert mock_mpi_is_root.call_count == 1
-    assert mock_compute_rdf.call_count == 0
-    assert mock_plot.call_count == 1
-    rpa.plot([HDF.EntryKeys.SSF.value, HDF.EntryKeys.RDF.value])
-    assert mock_mpi_is_root.call_count == 2
-    assert mock_compute_rdf.call_count == 1
-    assert mock_plot.call_count == 2
+def test_check_status_and_clean_success(scheme, mocker):
+    exists = mocker.patch("os.path.exists")
+    remove = mocker.patch("os.remove")
+    exists.return_value = True
+    scheme._check_status_and_clean(0, "recovery_file")
+    exists.assert_called_once_with("recovery_file")
+    remove.assert_called_once_with("recovery_file")
+
+
+def test_check_status_and_clean_failure(scheme, mocker):
+    exists = mocker.patch("os.path.exists")
+    exists.return_value = False
+    with pytest.raises(RuntimeError):
+        scheme._check_status_and_clean(1, "recovery_file")
+        exists.assert_not_called()
+
+
+def test_save_with_results(scheme, results):
+    scheme.results = results
+    scheme.inputs = inputs
+    scheme._save()
+    scheme.db_handler.insert_run.assert_called_once_with(scheme.inputs, scheme.results)
+
+
+def test_compute_rdf_with_default_grid(scheme, results, mocker):
+    compute_rdf = mocker.patch("qupled.rpa.Result.compute_rdf")
+    scheme.results = results
+    scheme.compute_rdf()
+    compute_rdf.assert_called_once_with(None)
+    scheme.db_handler.insert_results.assert_called_once_with(
+        {
+            "rdf": scheme.results.rdf,
+            "rdf_grid": scheme.results.rdf_grid,
+        }
+    )
+
+
+def test_compute_rdf_with_custom_grid(scheme, results, mocker):
+    compute_rdf = mocker.patch("qupled.rpa.Result.compute_rdf")
+    scheme.results = results
+    rdf_grid = np.array([1, 2, 3])
+    scheme.compute_rdf(rdf_grid)
+    compute_rdf.assert_called_once_with(rdf_grid)
+    scheme.db_handler.insert_results.assert_called_once_with(
+        {
+            "rdf": scheme.results.rdf,
+            "rdf_grid": scheme.results.rdf_grid,
+        }
+    )
+
+
+def test_compute_rdf_without_results(scheme):
+    scheme.results = None
+    scheme.compute_rdf()
+    scheme.db_handler.insert_results.assert_not_called()
+
+
+def test_input_initialization(inputs):
+    assert inputs.coupling == 1.0
+    assert inputs.degeneracy == 2.0
+    assert inputs.chemical_potential == [-10.0, 10.0]
+    assert inputs.cutoff == 10.0
+    assert inputs.frequency_cutoff == 10.0
+    assert inputs.integral_error == 1.0e-5
+    assert inputs.integral_strategy == "full"
+    assert inputs.matsubara == 128
+    assert inputs.resolution == 0.1
+    assert inputs.threads == 1
+    assert inputs.theory == "RPA"
+
+
+def test_input_to_native(mocker, inputs):
+    native_input = mocker.Mock()
+    inputs.to_native(native_input)
+    assert native_input.coupling == 1.0
+    assert native_input.degeneracy == 2.0
+
+
+def test_result_initialization(results):
+    assert results.idr is None
+    assert results.rdf is None
+    assert results.rdf_grid is None
+    assert results.sdr is None
+    assert results.slfc is None
+    assert results.ssf is None
+    assert results.uint is None
+    assert results.wvg is None
+
+
+def test_result_from_native(mocker, results):
+    native_scheme = mocker.Mock()
+    native_scheme.idr = np.array([1, 2, 3])
+    results.from_native(native_scheme)
+    assert np.array_equal(results.idr, np.array([1, 2, 3]))
+
+
+def test_result_compute_rdf_with_default_grid(mocker, results):
+    native_compute_rdf = mocker.patch("qupled.native.compute_rdf")
+    results.wvg = np.array([1, 2, 3])
+    results.ssf = np.array([4, 5, 6])
+    native_compute_rdf.return_value = np.array([7, 8, 9])
+    results.compute_rdf()
+    assert results.rdf is not None
+    assert results.rdf_grid is not None
+    native_compute_rdf.assert_called_once()
+    assert np.array_equal(results.rdf, np.array([7, 8, 9]))
+    assert np.array_equal(results.rdf_grid, np.arange(0.0, 10.0, 0.01))
+
+
+def test_result_compute_rdf_with_custom_grid(mocker, results):
+    native_compute_rdf = mocker.patch("qupled.native.compute_rdf")
+    rdf_grid = np.array([0, 1, 2])
+    results.wvg = np.array([1, 2, 3])
+    results.ssf = np.array([4, 5, 6])
+    native_compute_rdf.return_value = np.array([7, 8, 9])
+    results.compute_rdf(rdf_grid)
+    assert results.rdf is not None
+    assert results.rdf_grid is not None
+    native_compute_rdf.assert_called_once()
+    assert np.array_equal(results.rdf, np.array([7, 8, 9]))
+    assert np.array_equal(results.rdf_grid, rdf_grid)

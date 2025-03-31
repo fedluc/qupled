@@ -1,17 +1,17 @@
-from qupled.classic import Stls
+import qupled.stls as stls
 
 # Define the object used to solve the scheme
-stls = Stls()
+scheme = stls.Stls()
 
 # Define the input parameters
-inputs = Stls.Input(10.0, 1.0)
+inputs = stls.Input(10.0, 1.0)
 inputs.mixing = 0.2
 
 # Solve scheme
-stls.compute(inputs)
+scheme.compute(inputs)
 
 # Create a custom initial guess from the output files of the previous run
-inputs.guess = Stls.get_initial_guess("rs10.000_theta1.000_STLS.h5")
+inputs.guess = scheme.get_initial_guess(scheme.run_id)
 
 # Solve the scheme again with the new initial guess and coupling parameter
-stls.compute(inputs)
+scheme.compute(inputs)

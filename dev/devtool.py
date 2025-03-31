@@ -5,9 +5,9 @@ import shutil
 from pathlib import Path
 
 
-def build(nompi, native_only):
+def build(no_mpi, native_only):
     # Build without MPI
-    if nompi:
+    if no_mpi:
         os.environ["USE_MPI"] = "OFF"
     # Set environment variable for OpenMP on macOS
     if os.name == "posix" and shutil.which("brew"):
@@ -46,8 +46,11 @@ def run_tox(environment):
         subprocess.run(["tox", "-e", environment], check=True)
 
 
-def test():
-    run_tox("test")
+def test(no_native):
+    if no_native:
+        run_tox("no_native")
+    else:
+        run_tox("test")
 
 
 def examples():
@@ -155,7 +158,7 @@ def run():
     # Build command
     build_parser = subparsers.add_parser("build", help="Build the qupled package")
     build_parser.add_argument(
-        "--nompi",
+        "--no_mpi",
         action="store_true",
         help="Build without MPI support (default: False).",
     )
@@ -163,6 +166,14 @@ def run():
         "--native-only",
         action="store_true",
         help="Build only native code in C++ (default: False).",
+    )
+
+    # Test command
+    test_parser = subparsers.add_parser("test", help="Run tests")
+    test_parser.add_argument(
+        "--no-native",
+        action="store_true",
+        help="Exclude the tests for the native classes (default: False).",
     )
 
     # Update version command
@@ -178,12 +189,11 @@ def run():
     subparsers.add_parser("format", help="Format the source code")
     subparsers.add_parser("install", help="Install the qupled package")
     subparsers.add_parser("install-deps", help="Install system dependencies")
-    subparsers.add_parser("test", help="Run tests")
 
     args = parser.parse_args()
 
     if args.command == "build":
-        build(args.nompi, args.native_only)
+        build(args.no_mpi, args.native_only)
     elif args.command == "clean":
         clean()
     elif args.command == "docs":
@@ -195,7 +205,7 @@ def run():
     elif args.command == "install":
         install()
     elif args.command == "test":
-        test()
+        test(args.no_native)
     elif args.command == "install-deps":
         install_dependencies()
     elif args.command == "update-version":

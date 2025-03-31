@@ -74,28 +74,14 @@ the pre-compute values of the free energy integrand.
 Define an initial guess
 -----------------------
 
-The following three examples show how to define an initial guess for the classical 
-schemes (STLS and STLS-IET) and for the quantum schemes (QSTLS and QSTLS-IET). If 
+The following example shows how to define an initial guess for the STLS scheme. If 
 an initial guess is not specified the code will use the default, namely zero static 
-local field correction for the classical schemes and STLS static structure factor 
-for the quantum schemes.
+local field correction.
 
 .. literalinclude:: ../examples/docs/initial_guess_stls.py
    :language: python
 
-In the following example we solve the QSTLS scheme twice and the second time we
-specify the initial guess as the solution obtained from the first solution. Having
-provided a nearly exact initial guess the scheme converges in a single iteration.
-         
-.. literalinclude:: ../examples/docs/initial_guess_qstls.py
-   :language: python
-
-The QSTLS-IET scheme requires to specify an initial guess for the auxiliary density
-response and the number of matsubara frequencies corresponding to such initial guess.
-These specifications can be skipped in all other schemes.
-
-.. literalinclude:: ../examples/docs/initial_guess_qstls_iet.py
-   :language: python
+For other schemes the initial guess can be specified in a similar manner.
          
 Speed-up the quantum schemes
 ----------------------------

@@ -1,29 +1,27 @@
-import pytest
-from qupled.esa import ESA
-from qupled.util import MPI
+import qupled.native as native
+import qupled.esa as esa
+import qupled.rpa as rpa
 
 
-@pytest.fixture
-def esa():
-    return ESA()
+def test_esa_inheritance():
+    assert issubclass(esa.ESA, rpa.Rpa)
 
 
-@pytest.fixture
-def esa_input():
-    return ESA.Input(1.0, 1.0)
+def test_esa_initialization(mocker):
+    super_init = mocker.patch("qupled.rpa.Rpa.__init__")
+    scheme = esa.ESA()
+    super_init.assert_called_once()
+    assert scheme.native_scheme_cls == native.ESA
 
 
-def test_default(esa):
-    assert esa.hdf_file_name is None
+def test_esa_input_inheritance():
+    assert issubclass(esa.Input, rpa.Input)
 
 
-def test_compute(esa, esa_input, mocker):
-    mock_mpi_time = mocker.patch.object(MPI, MPI.timer.__name__, return_value=0)
-    mock_mpi_barrier = mocker.patch.object(MPI, MPI.barrier.__name__)
-    mock_compute = mocker.patch.object(ESA, ESA._compute.__name__)
-    mock_save = mocker.patch.object(ESA, ESA._save.__name__)
-    esa.compute(esa_input)
-    assert mock_mpi_time.call_count == 2
-    assert mock_mpi_barrier.call_count == 1
-    assert mock_compute.call_count == 1
-    assert mock_save.call_count == 1
+def test_esa_input_initialization(mocker):
+    super_init = mocker.patch("qupled.rpa.Input.__init__")
+    coupling = 1.5
+    degeneracy = 3.0
+    input = esa.Input(coupling, degeneracy)
+    super_init.assert_called_once_with(coupling, degeneracy)
+    assert input.theory == "ESA"

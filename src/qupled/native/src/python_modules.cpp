@@ -154,7 +154,7 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("slfc", &PyRpa::getSlfc)
       .add_property("ssf", &PyRpa::getSsf)
       .add_property("ssf_HF", &PyRpa::getSsfHF)
-      .add_property("internal_energy", &PyRpa::getUInt)
+      .add_property("uint", &PyRpa::getUInt)
       .add_property("wvg", &PyRpa::getWvg)
       .add_property("recovery", &PyRpa::getRecoveryFileName);
 
@@ -198,9 +198,13 @@ BOOST_PYTHON_MODULE(native) {
   // MPI class
   bp::class_<PyMPI>("MPI")
       .def("rank", &PyMPI::rank)
+      .staticmethod("rank")
       .def("is_root", &PyMPI::isRoot)
+      .staticmethod("is_root")
       .def("barrier", &PyMPI::barrier)
-      .def("timer", &PyMPI::timer);
+      .staticmethod("barrier")
+      .def("timer", &PyMPI::timer)
+      .staticmethod("timer");
 
   // Post-process methods
   bp::def("compute_rdf", &PyThermo::computeRdf);

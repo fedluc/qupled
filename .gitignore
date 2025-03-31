@@ -9,3 +9,4 @@ docs/_build
 dist
 dist-native-only
 qupled.egg-info
+*.db

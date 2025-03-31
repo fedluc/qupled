@@ -8,21 +8,26 @@ import os
 import shutil
 import zipfile
 
-import pandas as pd
-
 from . import native
 from . import util
-from . import base
 from . import qstls
 from . import vsstls
 
 
-class QVSStls(base.QuantumIterativeScheme):
+class QVSStls(vsstls.VSStls):
+    """
+    Class used to solve the QVStls scheme.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.results: Result = Result()
+        # Undocumented properties
+        self.native_scheme_cls = native.QVSStls
+        self.native_inputs = native.QVSStlsInput()
 
     # Compute
-    @util.MPI.record_time
-    @util.MPI.synchronize_ranks
-    def compute(self, inputs: QVSStls.Input) -> None:
+    def compute(self, inputs: Input):
         """
         Solves the scheme and saves the results.
 
@@ -30,15 +35,35 @@ class QVSStls(base.QuantumIterativeScheme):
             inputs: Input parameters.
         """
         self._unpack_fixed_adr_files(inputs)
-        scheme = native.QVSStls(inputs.to_native())
-        self._compute(scheme)
-        self._save(scheme)
+        super().compute(inputs)
         self._zip_fixed_adr_files(inputs)
-        self._clean_fixed_adr_files(scheme.inputs)
+        self._clean_fixed_adr_files(inputs)
+
+    @staticmethod
+    def get_initial_guess(run_id: int, database_name: str | None = None) -> qstls.Guess:
+        return qstls.Qstls.get_initial_guess(run_id, database_name)
 
     # Unpack zip folder with fixed component of the auxiliary density response
     @util.MPI.run_only_on_root
-    def _unpack_fixed_adr_files(self, inputs) -> None:
+    def _unpack_fixed_adr_files(self, inputs):
+        """
+        Unpacks a fixed adr file into a temporary directory.
+
+        This method extracts the contents of a fixed source file (if provided)
+        into a temporary directory named "qupled_tmp_run_directory". If the
+        `inputs.fixed` attribute is not an empty string, it is updated to point
+        to the temporary directory.
+
+        Args:
+            inputs: An object containing the `fixed` attribute, which represents
+                    the path to the fixed source file. If `inputs.fixed` is an
+                    empty string, no action is taken.
+
+        Raises:
+            zipfile.BadZipFile: If the provided fixed source file is not a valid
+                                ZIP file.
+            FileNotFoundError: If the fixed source file does not exist.
+        """
         fixed_source_file = inputs.fixed
         if inputs.fixed != "":
             inputs.fixed = "qupled_tmp_run_directory"
@@ -46,23 +71,26 @@ class QVSStls(base.QuantumIterativeScheme):
             with zipfile.ZipFile(fixed_source_file, "r") as zip_file:
                 zip_file.extractall(inputs.fixed)
 
-    # Save results to disk
-    @util.MPI.run_only_on_root
-    def _save(self, scheme) -> None:
-        super()._save(scheme)
-        pd.DataFrame(scheme.free_energy_grid).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.FXC_GRID.value
-        )
-        pd.DataFrame(scheme.free_energy_integrand).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.FXC_INT.value
-        )
-        pd.DataFrame(scheme.alpha).to_hdf(
-            self.hdf_file_name, key=util.HDF.EntryKeys.ALPHA.value
-        )
-
     # Zip all files for the fixed component of the auxiliary density response
     @util.MPI.run_only_on_root
-    def _zip_fixed_adr_files(self, inputs) -> None:
+    def _zip_fixed_adr_files(self, inputs):
+        """
+        Compresses and removes binary files matching a specific pattern into a ZIP archive.
+
+        This method creates a ZIP file containing binary files with names matching the
+        pattern "THETA*.bin". The name of the ZIP file is generated based on the
+        `degeneracy`, `matsubara`, and `theory` attributes of the `inputs` object.
+        After adding the binary files to the ZIP archive, the original binary files
+        are deleted from the filesystem.
+
+        Args:
+            inputs: An object containing the following attributes:
+                - fixed (str): A string that determines if the operation should proceed.
+                  If empty, the method executes; otherwise, it does nothing.
+                - degeneracy (float): A value used to format the ZIP file name.
+                - matsubara (int): A value used to format the ZIP file name.
+                - theory (str): A string used to format the ZIP file name.
+        """
         if inputs.fixed == "":
             degeneracy = inputs.degeneracy
             matsubara = inputs.matsubara
@@ -78,32 +106,43 @@ class QVSStls(base.QuantumIterativeScheme):
 
     # Remove the temporary run directory
     @util.MPI.run_only_on_root
-    def _clean_fixed_adr_files(self, inputs) -> None:
+    def _clean_fixed_adr_files(self, inputs):
+        """
+        Removes the directory specified by the `fixed` attribute of the `inputs` object.
+
+        This method checks if the path provided in `inputs.fixed` is a directory.
+        If it is, the directory and all its contents are deleted.
+
+        Args:
+            inputs: An object that contains a `fixed` attribute, which is the path
+                    to the directory to be removed.
+
+        Raises:
+            OSError: If the directory cannot be removed due to permission issues
+                     or if the path is invalid.
+        """
         if os.path.isdir(inputs.fixed):
             shutil.rmtree(inputs.fixed)
 
-    # Set the free energy integrand from a dataframe produced in output
-    @staticmethod
-    def get_free_energy_integrand(file_name: str) -> native.FreeEnergyIntegrand:
-        return vsstls.VSStls.get_free_energy_integrand(file_name)
 
-    # Input class
-    class Input(vsstls.VSStls.Input, qstls.Qstls.Input):
-        """
-        Class used to manage the input for the :obj:`qupled.classic.QVSStls` class.
-        """
+# Input class
+class Input(vsstls.Input, qstls.Input):
+    """
+    Class used to manage the input for the :obj:`qupled.qvsstls.QVSStls` class.
+    """
 
-        def __init__(self, coupling: float, degeneracy: float):
-            vsstls.VSStls.Input.__init__(self, coupling, degeneracy)
-            qstls.Qstls.Input.__init__(self, coupling, degeneracy)
-            # Undocumented default values
-            self.theory: str = "QVSSTLS"
+    def __init__(self, coupling: float, degeneracy: float):
+        vsstls.Input.__init__(self, coupling, degeneracy)
+        qstls.Input.__init__(self, coupling, degeneracy)
+        # Undocumented default values
+        self.theory: str = "QVSSTLS"
 
-        def to_native(self) -> native.QVSStlsInput:
-            native_input = native.QVSStlsInput()
-            for attr, value in self.__dict__.items():
-                if attr == "guess":
-                    setattr(native_input, attr, value.to_native())
-                else:
-                    setattr(native_input, attr, value)
-            return native_input
+
+# Result
+class Result(vsstls.Result, qstls.Result):
+    """
+    Class used to manage the results for the :obj:`qupled.qvsstls.QVSStls` class.
+    """
+
+    def __init__(self):
+        super().__init__()

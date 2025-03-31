@@ -1,17 +1,17 @@
-from qupled.classic import StlsIet
+import qupled.stlsiet as stlsiet
 
 # Define the object used to solve the scheme
-stls = StlsIet()
+scheme = stlsiet.StlsIet()
 
 # Define the input parameters
-inputs = StlsIet.Input(10.0, 1.0, "STLS-HNC")
+inputs = stlsiet.Input(10.0, 1.0, "STLS-HNC")
 inputs.mixing = 0.5
 
 # Solve scheme with HNC bridge function
-stls.compute(inputs)
+scheme.compute(inputs)
 
 # Change to a dielectric scheme with a different bridge function
 inputs.theory = "STLS-LCT"
 
 # Solve again with an LCT bridge function
-stls.compute(inputs)
+scheme.compute(inputs)
