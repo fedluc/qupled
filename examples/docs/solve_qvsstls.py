@@ -1,10 +1,10 @@
-from qupled.quantum import QVSStls
+import qupled.qvsstls as qvsstls
 
 # Define the object used to solve the scheme
-qvsstls = QVSStls()
+scheme = qvsstls.QVSStls()
 
 # Define the input parameters
-inputs = QVSStls.Input(1.0, 1.0)
+inputs = qvsstls.Input(1.0, 1.0)
 inputs.mixing = 0.5
 inputs.matsubara = 16
 inputs.alpha = [-0.2, 0.4]
@@ -12,10 +12,10 @@ inputs.iterations = 100
 inputs.threads = 16
 
 # Solve scheme for rs = 1.0
-qvsstls.compute(inputs)
+scheme.compute(inputs)
 
 # Load the free energy integrand computed for rs = 1.0
-fxci = QVSStls.get_free_energy_integrand(qvsstls.run_id)
+fxci = scheme.get_free_energy_integrand(scheme.run_id)
 
 # Setup a new  simulation for rs=2.0
 inputs.coupling = 2.0
@@ -23,4 +23,4 @@ inputs.alpha = [0.1, 0.5]
 inputs.free_energy_integrand = fxci
 
 # Solve scheme for rs = 2.0
-qvsstls.compute(inputs)
+scheme.compute(inputs)

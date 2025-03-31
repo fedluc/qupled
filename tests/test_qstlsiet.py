@@ -1,11 +1,9 @@
 import pytest
 import os
 import zipfile
-from qupled.base import QuantumIterativeScheme
-from qupled.native import Qstls as NativeQstls
-from qupled.qstls import Qstls
-from qupled.qstlsiet import QstlsIet
-from qupled.stlsiet import StlsIet
+import qupled.qstls as qstls
+import qupled.qstlsiet as qstlsiet
+import qupled.stlsiet as stlsiet
 
 
 @pytest.fixture
@@ -15,11 +13,18 @@ def input(mocker):
 
 @pytest.fixture
 def scheme():
-    return QstlsIet()
+    return qstlsiet.QstlsIet()
 
 
 def test_qstls_iet_inheritance():
-    assert issubclass(QstlsIet, QuantumIterativeScheme)
+    assert issubclass(qstlsiet.QstlsIet, qstls.Qstls)
+
+
+def test_qstls_iet_initialization(mocker):
+    super_init = mocker.patch("qupled.qstls.Qstls.__init__")
+    scheme = qstlsiet.QstlsIet()
+    super_init.assert_called_once()
+    assert isinstance(scheme.results, qstlsiet.Result)
 
 
 def test_compute_with_valid_input(mocker, scheme):
@@ -27,10 +32,10 @@ def test_compute_with_valid_input(mocker, scheme):
     unpack = mocker.patch.object(scheme, "_unpack_fixed_adr_files")
     zip = mocker.patch.object(scheme, "_zip_fixed_adr_files")
     clean = mocker.patch.object(scheme, "_clean_fixed_adr_files")
-    super_compute = mocker.patch("qupled.base.QuantumIterativeScheme.compute")
+    super_compute = mocker.patch("qupled.qstls.Qstls.compute")
     scheme.compute(input)
     unpack.assert_called_once_with(input)
-    super_compute.assert_called_once_with(input, NativeQstls, mocker.ANY, mocker.ANY)
+    super_compute.assert_called_once_with(input)
     zip.assert_called_once_with(input)
     clean.assert_called_once_with(input)
 
@@ -40,13 +45,13 @@ def test_compute_handles_exceptions(mocker, scheme, input):
     zip = mocker.patch.object(scheme, "_zip_fixed_adr_files")
     clean = mocker.patch.object(scheme, "_clean_fixed_adr_files")
     super_compute = mocker.patch(
-        "qupled.base.QuantumIterativeScheme.compute",
+        "qupled.qstls.Qstls.compute",
         side_effect=RuntimeError("Test exception"),
     )
     with pytest.raises(RuntimeError, match="Test exception"):
         scheme.compute(input)
     unpack.assert_called_once_with(input)
-    super_compute.assert_called_once_with(input, mocker.ANY, mocker.ANY, mocker.ANY)
+    super_compute.assert_called_once_with(input)
     zip.assert_not_called()
     clean.assert_not_called()
 
@@ -96,16 +101,16 @@ def test_clean_fixed_adr_files_no_directory(mocker, scheme, input):
 
 
 def test_qstls_iet_input_inheritance():
-    assert issubclass(QstlsIet.Input, (StlsIet.Input, Qstls.Input))
+    assert issubclass(qstlsiet.Input, (stlsiet.Input, qstls.Input))
 
 
 def test_qstls_iet_input_initialization_valid_theory(mocker):
-    qstls_init = mocker.patch("qupled.qstls.Qstls.Input.__init__")
-    stls_iet_init = mocker.patch("qupled.stlsiet.StlsIet.Input.__init__")
+    qstls_init = mocker.patch("qupled.qstls.Input.__init__")
+    stls_iet_init = mocker.patch("qupled.stlsiet.Input.__init__")
     coupling = 1.0
     degeneracy = 1.0
     theory = "QSTLS-HNC"
-    input = QstlsIet.Input(coupling, degeneracy, theory)
+    input = qstlsiet.Input(coupling, degeneracy, theory)
     qstls_init.assert_called_once_with(input, coupling, degeneracy)
     stls_iet_init.assert_called_once_with(input, coupling, degeneracy, "STLS-HNC")
     assert input.theory == theory
@@ -114,13 +119,13 @@ def test_qstls_iet_input_initialization_valid_theory(mocker):
 
 def test_qstls_iet_input_initialization_invalid_theory():
     with pytest.raises(ValueError):
-        QstlsIet.Input(1.0, 1.0, "INVALID-THEORY")
+        qstlsiet.Input(1.0, 1.0, "INVALID-THEORY")
 
 
 def test_qstls_iet_result_inheritance():
-    assert issubclass(QstlsIet.Result, (StlsIet.Result, Qstls.Result))
+    assert issubclass(qstlsiet.Result, (stlsiet.Result, qstls.Result))
 
 
 def test_qstls_iet_result_initialization():
-    result = QstlsIet.Result()
-    assert isinstance(result, QstlsIet.Result)
+    result = qstlsiet.Result()
+    assert isinstance(result, qstlsiet.Result)

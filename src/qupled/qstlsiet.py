@@ -10,19 +10,22 @@ import zipfile
 
 from . import native
 from . import util
-from . import base
 from . import qstls
 from . import stlsiet
 
 
-class QstlsIet(base.QuantumIterativeScheme):
+class QstlsIet(qstls.Qstls):
     """
     Args:
         inputs: Input parameters.
     """
 
+    def __init__(self):
+        super().__init__()
+        self.results: Result = Result()
+
     # Compute
-    def compute(self, inputs: QstlsIet.Input):
+    def compute(self, inputs: Input):
         """
         Solves the scheme and saves the results.
 
@@ -30,7 +33,7 @@ class QstlsIet(base.QuantumIterativeScheme):
             inputs: Input parameters.
         """
         self._unpack_fixed_adr_files(inputs)
-        super().compute(inputs, native.Qstls, native.QstlsInput(), self.Result())
+        super().compute(inputs)
         self._zip_fixed_adr_files(inputs)
         self._clean_fixed_adr_files(inputs)
 
@@ -106,30 +109,32 @@ class QstlsIet(base.QuantumIterativeScheme):
         if os.path.isdir(inputs.fixed_iet):
             shutil.rmtree(inputs.fixed_iet)
 
-    # Input class
-    class Input(stlsiet.StlsIet.Input, qstls.Qstls.Input):
+
+# Input class
+class Input(stlsiet.Input, qstls.Input):
+    """
+    Class used to manage the input for the :obj:`qupled.classic.QStlsIet` class.
+    Accepted theories: ``QSTLS-HNC``, ``QSTLS-IOI`` and ``QSTLS-LCT``.
+    """
+
+    def __init__(self, coupling: float, degeneracy: float, theory: str):
+        stlsiet.Input.__init__(self, coupling, degeneracy, "STLS-HNC")
+        qstls.Input.__init__(self, coupling, degeneracy)
+        if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
+            raise ValueError("Invalid dielectric theory")
+        self.theory = theory
+        self.fixed_iet = ""
         """
-        Class used to manage the input for the :obj:`qupled.classic.QStlsIet` class.
-        Accepted theories: ``QSTLS-HNC``, ``QSTLS-IOI`` and ``QSTLS-LCT``.
+        Name of the zip file storing the iet part of the fixed components
+        of the auxiliary density response. Default = ``""``
         """
 
-        def __init__(self, coupling: float, degeneracy: float, theory: str):
-            stlsiet.StlsIet.Input.__init__(self, coupling, degeneracy, "STLS-HNC")
-            qstls.Qstls.Input.__init__(self, coupling, degeneracy)
-            if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
-                raise ValueError("Invalid dielectric theory")
-            self.theory = theory
-            self.fixed_iet = ""
-            """
-            Name of the zip file storing the iet part of the fixed components
-            of the auxiliary density response. Default = ``""``
-            """
 
-    # Result class
-    class Result(stlsiet.StlsIet.Result, qstls.Qstls.Result):
-        """
-        Class used to store the results for the :obj:`qupled.quantum.QstlsIet` class.
-        """
+# Result class
+class Result(stlsiet.Result, qstls.Result):
+    """
+    Class used to store the results for the :obj:`qupled.quantum.QstlsIet` class.
+    """
 
-        def __init__(self):
-            super().__init__()
+    def __init__(self):
+        super().__init__()

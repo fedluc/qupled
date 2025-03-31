@@ -82,12 +82,6 @@ def test_save_with_results(scheme, results):
     scheme.db_handler.insert_run.assert_called_once_with(scheme.inputs, scheme.results)
 
 
-def test_save_without_results(scheme):
-    scheme.results = None
-    scheme._save()
-    scheme.db_handler.insert_run.assert_not_called()
-
-
 def test_compute_rdf_with_default_grid(scheme, results, mocker):
     compute_rdf = mocker.patch("qupled.rpa.Result.compute_rdf")
     scheme.results = results

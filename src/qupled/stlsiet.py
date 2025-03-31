@@ -10,7 +10,6 @@ class StlsIet(stls.Stls):
         self.results: Result = Result()
 
 
-# Input class
 class Input(stls.Input):
     """
     Class used to manage the input for the :obj:`qupled.classic.StlsIet` class.
@@ -40,7 +39,6 @@ class Input(stls.Input):
         """
 
 
-# Results class
 class Result(stls.Result):
     """
     Class used to store the results for the :obj:`qupled.classic.StlsIet` class.

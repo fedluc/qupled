@@ -15,12 +15,13 @@ class Stls(rpa.Rpa):
         self.native_inputs = native.StlsInput()
 
     @staticmethod
-    def get_initial_guess(run_id: str, database_name: str | None = None) -> Guess:
+    def get_initial_guess(run_id: int, database_name: str | None = None) -> Guess:
         """Constructs an initial guess object by extracting the information from a database.
 
         Args:
-            run_id: ID of the run used to extract the information for the initial guess.
-            database_name: Name of the database file. Default is None.
+            run_id: The unique identifier for the run whose data is to be retrieved.
+            database_name: The name of the database to query.
+                If None, the default database will be used.
 
         Returns:
             An instance of Guess containing the initial guess data.
@@ -30,7 +31,6 @@ class Stls(rpa.Rpa):
         return Guess(data[names[0]], data[names[1]])
 
 
-# Input class
 class Input(rpa.Input):
     """
     Class used to manage the input for the :obj:`qupled.classic.Stls` class.

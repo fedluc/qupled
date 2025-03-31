@@ -1,7 +1,3 @@
-# -----------------------------------------------------------------------
-# VSStls class
-# -----------------------------------------------------------------------
-
 from __future__ import annotations
 import pandas as pd
 import numpy as np
@@ -22,14 +18,14 @@ class VSStls(stls.Stls):
     # Get the free energy integrand from database
     @staticmethod
     def get_free_energy_integrand(
-        run_id: str, database_name: str | None = None
+        run_id: int, database_name: str | None = None
     ) -> FreeEnergyIntegrand:
         """
         Retrieve the free energy integrand for a given run ID from the database.
 
         Args:
-            run_id (str): The unique identifier for the run whose data is to be retrieved.
-            database_name (str | None, optional): The name of the database to query.
+            run_id: The unique identifier for the run whose data is to be retrieved.
+            database_name: The name of the database to query.
                 If None, the default database will be used.
 
         Returns:
@@ -67,7 +63,6 @@ class Input(stls.Input):
         self.theory: str = "VSSTLS"
 
 
-# Results class
 class Result(stls.Result):
     """
     Class used to store the results for the :obj:`qupled.classic.VSStls` class.
@@ -75,9 +70,9 @@ class Result(stls.Result):
 
     def __init__(self):
         super().__init__()
-        self.fxci_grid = None
+        self.free_energy_grid = None
         """Free energy grid"""
-        self.fxci_integrand = None
+        self.free_energy_integrand = None
         """Free energy integrand"""
         self.alpha = None
         """Free parameter"""

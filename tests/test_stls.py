@@ -1,3 +1,4 @@
+import numpy as np
 import qupled.native as native
 import qupled.stls as stls
 import qupled.rpa as rpa
@@ -20,12 +21,12 @@ def test_get_initial_guess_with_default_database_name(mocker):
     read_results = mocker.patch("qupled.util.DataBase.read_results")
     run_id = mocker.ANY
     read_results.return_value = {
-        "wvg": mocker.ANY,
-        "slfc": mocker.ANY,
+        "wvg": np.array([1.0, 2.0, 3.0]),
+        "slfc": np.array([0.1, 0.2, 0.3]),
     }
     guess = stls.Stls.get_initial_guess(run_id)
-    assert guess.wvg == read_results.return_value["wvg"]
-    assert guess.slfc == read_results.return_value["slfc"]
+    assert np.array_equal(guess.wvg, read_results.return_value["wvg"])
+    assert np.array_equal(guess.slfc, read_results.return_value["slfc"])
     read_results.assert_called_once_with(run_id, None, ["wvg", "slfc"])
 
 
@@ -34,12 +35,12 @@ def test_get_initial_guess_with_custom_database_name(mocker):
     run_id = mocker.ANY
     database_name = mocker.ANY
     read_results.return_value = {
-        "wvg": mocker.ANY,
-        "slfc": mocker.ANY,
+        "wvg": np.array([1.0, 2.0, 3.0]),
+        "slfc": np.array([0.1, 0.2, 0.3]),
     }
     guess = stls.Stls.get_initial_guess(run_id, database_name)
-    assert guess.wvg == read_results.return_value["wvg"]
-    assert guess.slfc == read_results.return_value["slfc"]
+    assert np.array_equal(guess.wvg, read_results.return_value["wvg"])
+    assert np.array_equal(guess.slfc, read_results.return_value["slfc"])
     read_results.assert_called_once_with(run_id, database_name, ["wvg", "slfc"])
 
 

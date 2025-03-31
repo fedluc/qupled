@@ -10,15 +10,21 @@ import zipfile
 
 from . import native
 from . import util
-from . import base
 from . import qstls
 from . import vsstls
 
 
-class QVSStls(base.QuantumIterativeScheme):
+class QVSStls(vsstls.VSStls):
+
+    def __init__(self):
+        super().__init__()
+        self.results: Result = Result()
+        # Undocumented properties
+        self.native_scheme_cls = native.QVSStls
+        self.native_inputs = native.QVSStlsInput()
 
     # Compute
-    def compute(self, inputs: QVSStls.Input):
+    def compute(self, inputs: Input):
         """
         Solves the scheme and saves the results.
 
@@ -26,7 +32,7 @@ class QVSStls(base.QuantumIterativeScheme):
             inputs: Input parameters.
         """
         self._unpack_fixed_adr_files(inputs)
-        super().compute(inputs, native.QVSStls, native.QVSStlsInput(), self.Result())
+        super().compute(inputs)
         self._zip_fixed_adr_files(inputs)
         self._clean_fixed_adr_files(inputs)
 
@@ -111,42 +117,25 @@ class QVSStls(base.QuantumIterativeScheme):
         if os.path.isdir(inputs.fixed):
             shutil.rmtree(inputs.fixed)
 
-    # Set the free energy integrand from a dataframe produced in output
-    @staticmethod
-    def get_free_energy_integrand(
-        run_id: str, database_name: str | None = None
-    ) -> native.FreeEnergyIntegrand:
-        """
-        Retrieve the free energy integrand for a given run ID from the database.
 
-        Args:
-            run_id (str): The unique identifier for the run whose data is to be retrieved.
-            database_name (str | None, optional): The name of the database to query.
-                If None, the default database will be used.
+# Input class
+class Input(vsstls.Input, qstls.Input):
+    """
+    Class used to manage the input for the :obj:`qupled.classic.QVSStls` class.
+    """
 
-        Returns:
-            native.FreeEnergyIntegrand: An object containing the free energy grid,
-            integrand, and alpha values retrieved from the database.
-        """
-        return vsstls.VSStls.get_free_energy_integrand(run_id, database_name)
+    def __init__(self, coupling: float, degeneracy: float):
+        vsstls.Input.__init__(self, coupling, degeneracy)
+        qstls.Input.__init__(self, coupling, degeneracy)
+        # Undocumented default values
+        self.theory: str = "QVSSTLS"
 
-    # Input class
-    class Input(vsstls.VSStls.Input, qstls.Qstls.Input):
-        """
-        Class used to manage the input for the :obj:`qupled.classic.QVSStls` class.
-        """
 
-        def __init__(self, coupling: float, degeneracy: float):
-            vsstls.VSStls.Input.__init__(self, coupling, degeneracy)
-            qstls.Qstls.Input.__init__(self, coupling, degeneracy)
-            # Undocumented default values
-            self.theory: str = "QVSSTLS"
+# Result
+class Result(vsstls.Result, qstls.Result):
+    """
+    Class used to manage the results for the :obj:`qupled.classic.QVSStls` class.
+    """
 
-    # Result
-    class Result(vsstls.VSStls.Result, qstls.Qstls.Result):
-        """
-        Class used to manage the results for the :obj:`qupled.classic.QVSStls` class.
-        """
-
-        def __init__(self):
-            super().__init__()
+    def __init__(self):
+        super().__init__()

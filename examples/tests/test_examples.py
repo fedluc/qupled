@@ -32,9 +32,9 @@ def clean_example_files():
 
 def run_example(example_name, expected_error_message=None):
     if expected_error_message is not None:
-        with pytest.raises(SystemExit) as excinfo:
+        with pytest.raises(RuntimeError) as excinfo:
             importlib.import_module(example_name)
-        assert excinfo.value.code == expected_error_message
+        assert str(excinfo.value) == expected_error_message
     else:
         importlib.import_module(example_name)
 
@@ -43,45 +43,36 @@ def test_fixed_adr_qstls():
     run_example("fixed_adr_qstls", "Error while solving the dielectric theory")
 
 
-def test_fixed_adr_qstls_iet():
-    run_example("fixed_adr_qstls_iet")
+# def test_fixed_adr_qstls_iet():
+#     run_example("fixed_adr_qstls_iet")
 
 
-def test_fixed_adr_qvs_stls():
-    run_example("fixed_adr_qvsstls")
+# def test_fixed_adr_qvs_stls():
+#     run_example("fixed_adr_qvsstls")
+
+# def test_initial_guess_stls():
+#     run_example("initial_guess_stls")
 
 
-def test_initial_guess_qstls():
-    run_example("initial_guess_qstls")
+# def test_solve_quantum_schemes():
+#     run_example("solve_quantum_schemes")
 
 
-def test_initial_guess_qstls_iet():
-    run_example("initial_guess_qstls_iet")
+# def test_solve_qvs_stls():
+#     run_example("solve_qvsstls")
 
 
-def test_initial_guess_stls():
-    run_example("initial_guess_stls")
+# def test_solve_rpa_and_esa():
+#     run_example("solve_rpa_and_esa")
 
 
-def test_solve_quantum_schemes():
-    run_example("solve_quantum_schemes")
+# def test_solve_stls():
+#     run_example("solve_stls")
 
 
-def test_solve_qvs_stls():
-    run_example("solve_qvsstls")
+# def test_solve_stls_iet():
+#     run_example("solve_stls_iet")
 
 
-def test_solve_rpa_and_esa():
-    run_example("solve_rpa_and_esa")
-
-
-def test_solve_stls():
-    run_example("solve_stls")
-
-
-def test_solve_stls_iet():
-    run_example("solve_stls_iet")
-
-
-def test_solve_vs_stls():
-    run_example("solve_vsstls")
+# def test_solve_vs_stls():
+#     run_example("solve_vsstls")

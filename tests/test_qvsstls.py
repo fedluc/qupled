@@ -1,11 +1,9 @@
 import pytest
 import os
 import zipfile
-from qupled.base import QuantumIterativeScheme
-from qupled.native import QVSStls as NativeQVSStls
-from qupled.qstls import Qstls
-from qupled.qvsstls import QVSStls
-from qupled.vsstls import VSStls
+import qupled.qstls as qstls
+import qupled.qvsstls as qvsstls
+import qupled.vsstls as vsstls
 
 
 @pytest.fixture
@@ -15,11 +13,11 @@ def input(mocker):
 
 @pytest.fixture
 def scheme():
-    return QVSStls()
+    return qvsstls.QVSStls()
 
 
 def test_qvsstls_inheritance():
-    assert issubclass(QVSStls, QuantumIterativeScheme)
+    assert issubclass(qvsstls.QVSStls, vsstls.VSStls)
 
 
 def test_compute_with_valid_input(mocker, scheme):
@@ -27,10 +25,10 @@ def test_compute_with_valid_input(mocker, scheme):
     unpack = mocker.patch.object(scheme, "_unpack_fixed_adr_files")
     zip = mocker.patch.object(scheme, "_zip_fixed_adr_files")
     clean = mocker.patch.object(scheme, "_clean_fixed_adr_files")
-    super_compute = mocker.patch("qupled.base.QuantumIterativeScheme.compute")
+    super_compute = mocker.patch("qupled.vsstls.VSStls.compute")
     scheme.compute(input)
     unpack.assert_called_once_with(input)
-    super_compute.assert_called_once_with(input, NativeQVSStls, mocker.ANY, mocker.ANY)
+    super_compute.assert_called_once_with(input)
     zip.assert_called_once_with(input)
     clean.assert_called_once_with(input)
 
@@ -40,13 +38,13 @@ def test_compute_handles_exceptions(mocker, scheme, input):
     zip = mocker.patch.object(scheme, "_zip_fixed_adr_files")
     clean = mocker.patch.object(scheme, "_clean_fixed_adr_files")
     super_compute = mocker.patch(
-        "qupled.base.QuantumIterativeScheme.compute",
+        "qupled.vsstls.VSStls.compute",
         side_effect=RuntimeError("Test exception"),
     )
     with pytest.raises(RuntimeError, match="Test exception"):
         scheme.compute(input)
     unpack.assert_called_once_with(input)
-    super_compute.assert_called_once_with(input, NativeQVSStls, mocker.ANY, mocker.ANY)
+    super_compute.assert_called_once_with(input)
     zip.assert_not_called()
     clean.assert_not_called()
 
@@ -102,30 +100,30 @@ def test_get_free_energy_integrand(mocker):
     get_free_energy_integrand = mocker.patch(
         "qupled.vsstls.VSStls.get_free_energy_integrand"
     )
-    result = QVSStls.get_free_energy_integrand(run_id, database_name)
+    result = qvsstls.QVSStls.get_free_energy_integrand(run_id, database_name)
     get_free_energy_integrand.assert_called_once_with(run_id, database_name)
     assert result == get_free_energy_integrand.return_value
 
 
 def test_qvsstls_input_inheritance():
-    assert issubclass(QVSStls.Input, (Qstls.Input, VSStls.Input))
+    assert issubclass(qvsstls.Input, (qstls.Input, vsstls.Input))
 
 
 def test_qvsstls_input_initialization_valid_theory(mocker):
-    qstls_init = mocker.patch("qupled.qstls.Qstls.Input.__init__")
-    vsstls_init = mocker.patch("qupled.vsstls.VSStls.Input.__init__")
+    qstls_init = mocker.patch("qupled.qstls.Input.__init__")
+    vsstls_init = mocker.patch("qupled.vsstls.Input.__init__")
     coupling = 1.0
     degeneracy = 1.0
-    input = QVSStls.Input(coupling, degeneracy)
+    input = qvsstls.Input(coupling, degeneracy)
     qstls_init.assert_called_once_with(input, coupling, degeneracy)
     vsstls_init.assert_called_once_with(input, coupling, degeneracy)
     assert input.theory == "QVSSTLS"
 
 
 def test_qvsstls_result_inheritance():
-    assert issubclass(QVSStls.Result, (Qstls.Result, VSStls.Result))
+    assert issubclass(qvsstls.Result, (qstls.Result, vsstls.Result))
 
 
 def test_qvsstls_result_initialization():
-    result = QVSStls.Result()
-    assert isinstance(result, QVSStls.Result)
+    result = qvsstls.Result()
+    assert isinstance(result, qvsstls.Result)

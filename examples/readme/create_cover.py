@@ -5,8 +5,7 @@ import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import colormaps as cm
-from qupled.util import DataBase
-from qupled.quantum import Qstls
+import qupled.qstls as qstls
 
 
 class PlotSettings:
@@ -48,7 +47,7 @@ def create_svg_files():
 
 
 def get_plot_data():
-    scheme: Qstls = None
+    scheme: qstls.Qstls = None
     error: list[float] = []
     while scheme is None or scheme.results.error > 1e-5:
         scheme = solve_qstls(scheme.run_id if scheme is not None else scheme)
@@ -56,7 +55,7 @@ def get_plot_data():
     return scheme, error
 
 
-def create_one_svg_file(darkmode: bool, scheme: Qstls, error: np.array):
+def create_one_svg_file(darkmode: bool, scheme: qstls.Qstls, error: np.array):
     # Get plot settings
     settings = PlotSettings(darkmode)
     # Set style
@@ -79,10 +78,10 @@ def create_one_svg_file(darkmode: bool, scheme: Qstls, error: np.array):
 
 
 def solve_qstls(guess_run_id: int):
-    qstls = Qstls()
+    scheme = qstls.Qstls()
     rs = 15.0
     theta = 1.0
-    inputs = Qstls.Input(rs, theta)
+    inputs = qstls.Input(rs, theta)
     inputs.mixing = 0.3
     inputs.resolution = 0.1
     inputs.cutoff = 10
@@ -91,16 +90,16 @@ def solve_qstls(guess_run_id: int):
     inputs.iterations = 0
     adr_file = f"adr_fixed_theta{theta:.3f}_matsubara{inputs.matsubara}_QSTLS.bin"
     inputs.guess = (
-        Qstls.get_initial_guess(guess_run_id)
+        scheme.get_initial_guess(guess_run_id)
         if guess_run_id is not None
         else inputs.guess
     )
     inputs.fixed = adr_file if os.path.exists(adr_file) else inputs.fixed
-    qstls.compute(inputs)
-    return qstls
+    scheme.compute(inputs)
+    return scheme
 
 
-def plot_density_response(plt: plt, scheme: Qstls, settings: PlotSettings):
+def plot_density_response(plt: plt, scheme: qstls.Qstls, settings: PlotSettings):
     results = scheme.results
     results.idr[results.idr == 0.0] = 1.0
     dr = np.divide(results.adr, results.idr)
@@ -128,7 +127,7 @@ def plot_density_response(plt: plt, scheme: Qstls, settings: PlotSettings):
     plt.yticks(fontsize=settings.ticksz)
 
 
-def plot_ssf(plt: plt, scheme: Qstls, settings: PlotSettings):
+def plot_ssf(plt: plt, scheme: qstls.Qstls, settings: PlotSettings):
     results = scheme.results
     plt.subplot(2, 2, 4)
     plt.plot(results.wvg, results.ssf, color=settings.color, linewidth=settings.width)
