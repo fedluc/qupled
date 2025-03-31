@@ -138,10 +138,10 @@ void Stls::doIterations() {
     // Start timing
     double tic = timer();
     // Update static structure factor
-    if (use2D) { print("Computing 2D Hartree-Fock static structure factor: ");
-      computeSsf2D(); }
+    if (use2D) { computeSsf2D(); }
     computeSsf();
     // Update static local field correction
+    if (use2D) { computeSlfc2D(); }
     computeSlfc();
     // Update diagnostic
     counter++;
@@ -484,6 +484,7 @@ void Stls::computeIdr2D() {
     Idr idrTmp(
         nl, wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
     idr.fill(i, idrTmp.get2DStls());
+    //printf("idr[%d] = %e\n", i, idr(i, 0));
   }
 }
 
@@ -496,6 +497,7 @@ void Stls::computeSsf2D() {
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], nl, &idr(i), SsfType::Stls2D);
+    printf("ssf[%d] = %e\n", i, ssfTmp.get());
     ssf[i] = ssfTmp.get();
   }
 }
@@ -512,7 +514,8 @@ void Stls::computeSsfHF2D() {
                         wvg.back(),
                         itgGrid,
                         itg2);
-    ssfHF[i] = ssfHF2DTmp.get();
+    ssfHF[i] = ssfHF2DTmp.get() + in.getDegeneracy() * idr(i, 0);
+    printf("ssfHF[%d] = %e\n", i, ssfHF[i]);
   }
 }
 
@@ -528,7 +531,8 @@ void Stls::computeSlfcStls2D() {
   const Interpolator1D itp(wvg, ssf);
   for (int i = 0; i < nx; ++i) {
     Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
-    slfcNew[i] = slfcTmp.get();
+    //printf("slfc[%d] = %e\n", i, slfc[i]);
+    slfcNew[i] = slfcTmp.get2DStls();
   }
 }
 
@@ -543,17 +547,18 @@ inline double coth(double x) {
 // Outer integrand
 double SSFHF2D::integrandOut(const double y) const {
   const double y2 = y * y;
-  return 1.0 / (exp(y2 / Theta - mu) * M_PI + M_PI);
+  return 2.0 * y / (exp(y2 / Theta - mu) * M_PI + M_PI);
 }
 
 // Inner integrand
 double SSFHF2D::integrandIn(const double p) const {
   const double y = itg2.getX();
-  double x2 = x * x;
-  return coth(x2 / (2 * Theta) - x * y / Theta * cos(p));
+  const double x2 = x * x;
+  const double arg = x2 / (2 * Theta) + x * y / Theta * cos(p);
+  return coth(arg) - (1.0 / arg); 
 }
 
-// Get total QAdder
+// Get total SSFHF2D
 double SSFHF2D::get() const {
   auto func1 = [&](const double &y) -> double {
     return integrandOut(y);
@@ -564,7 +569,7 @@ double SSFHF2D::get() const {
   itg2.compute(
       func1,
       func2,
-      Itg2DParam(limits.first, limits.second, 0, 2 * M_PI),
+      Itg2DParam(limits.first, limits.second, 0, M_PI),
       itgGrid);
   return itg2.getSolution();
 }
@@ -576,7 +581,6 @@ double SSFHF2D::get() const {
 
 vector<double> Idr::get2DStls() const {
   assert(Theta > 0.0);
-  printf("Computing Idr for x = %f\n", x);
   vector<double> res(nl);
   for (int l = 0; l < nl; ++l) {
     auto func = [&](const double &y) -> double {
@@ -596,21 +600,21 @@ vector<double> Idr::get2DStls() const {
 
 // Integrand for frequency = l and wave-vector = x
 double Idr::integrand2DStls(const double &y, const int &l) const {
-  double tphi;
+  double phi;
   double y2 = y * y;
   double x2 = x * x;
   double x4 = x2 * x2;
   double plT = M_PI * l * Theta;
   double plT2 = plT * plT;
   double exp1 = x4 / 4.0 - x2 * y2 - plT2;
-  if (exp1 < 0.0) {
-    tphi = atan(x2 * plT / exp1);
+  if (exp1 > 0.0) {
+    phi = atan(x2 * plT / exp1)/2.0;
   } else {
-    tphi = M_PI - atan(x2 * plT / exp1);
+    phi = M_PI/2.0 - atan(x2 * plT / exp1)/2.0;
   }
   if (x > 0.0) {
     return y / (exp(y2 / Theta - mu) + 1.0)
-           * 2.0 * abs(cos(tphi))/ pow((exp1 * exp1 + x4 * plT2), 0.25);
+           * 2.0 * abs(cos(phi))/ pow((exp1 * exp1 + x4 * plT2), 0.25);
   } else {
     return 0;
   }
@@ -621,7 +625,7 @@ double Idr::integrand2DStls(const double &y) const {
   double y2 = y * y;
   double x2 = x * x;
   if (x > 0.0) {
-    - 1.0 / (Theta * x * pow(cosh(y2 / (2 * Theta) - mu/2), 2) * y * sqrt(x2 / 4.0 - y2));
+    return 1.0 / (Theta * x * pow(cosh(y2 / (2 * Theta) - mu/2), 2) ) * y * sqrt(x2 / 4.0 - y2);
   } else {
     return 0; 
   }
@@ -633,16 +637,18 @@ double Idr::integrand2DStls(const double &y) const {
 
 // Integrand 2D STLS
 double Slfc::integrand2DStls(const double &y) const {
-  double y2 = y * y;
-  double x2 = x * x;
-  double xmy = (x - y) / (x * M_PI);
-  double xpy = (x + y) / (x * M_PI);
-  double argElli = 2 * sqrt(x * y) / (x + y);
-  if (x > 0.0) {
-  return - (ssf(y) - 1.0) * (xmy * Integrator1D::ellipticK(argElli) + xpy * Integrator1D::ellipticE(argElli));}
-  else {
-    return 0;
-  }
+  const double xmy = (x - y) / (x * M_PI);
+  const double xpy = (x + y) / (x * M_PI);
+  //double argElli = 2 * sqrt(x * y) / (x + y);
+  double argElli = (x + y < 1e-10) ? 0.0 : 2 * sqrt(x * y) / (x + y);
+//   if (argElli >= 1.0 || argElli < 0.0) {
+//     printf("argElli = %e\n", argElli);
+//     throw std::range_error("argElli out of bounds");
+// }
+  argElli = min(max(argElli, 0.0), 1.0 - 1e-15);
+
+  return - y * (ssf(y) - 1.0) * (xmy * Integrator1D::ellipticK(argElli) + 
+                            xpy * Integrator1D::ellipticE(argElli));
 }
 
 // Get result of integration
@@ -652,6 +658,37 @@ double Slfc::get2DStls() const {
   return itg.getSolution();
 }
 
+// // Outer integrand
+// double Slfc::integrandOut(const double y) const {
+//   const double y2 = y * y;
+//   return 2.0 * y / (exp(y2 / Theta - mu) * M_PI + M_PI);
+// }
+
+// // Inner integrand
+// double Slfc::integrandIn(const double p) const {
+//   const double y = itg2.getX();
+//   const double x2 = x * x;
+//   const double arg = x2 / (2 * Theta) + x * y / Theta * cos(p);
+//   return coth(arg) - (1.0 / arg); 
+// }
+
+// // Get total SSFHF2D
+// double Slfc::get2DStlsN() const {
+//   auto func1 = [&](const double &y) -> double {
+//     return integrandOut(y);
+//   };
+//   auto func2 = [&](const double &p) -> double {
+//     return integrandIn(p);
+//   };
+//   itg2.compute(
+//       func1,
+//       func2,
+//       Itg2DParam(limits.first, limits.second, 0, M_PI),
+//       itgGrid);
+//   return itg2.getSolution();
+// }
+
+
 // -----------------------------------------------------------------
 // Elliptic function integrators
 // -----------------------------------------------------------------
@@ -659,17 +696,17 @@ double Slfc::get2DStls() const {
 double Integrator1D::ellipticK(const double &k) {
   gsl_sf_result result;
   int status = gsl_sf_ellint_Kcomp_e(k, GSL_PREC_DOUBLE, &result);
-  if (status != GSL_SUCCESS) {
-    throw std::runtime_error("GSL error in ellipticK");
-  }
+  // if (status != GSL_SUCCESS) {
+  //   throw runtime_error("GSL error in ellipticK");
+  // }
   return result.val;
 }
 
 double Integrator1D::ellipticE(const double &k) {
   gsl_sf_result result;
   int status = gsl_sf_ellint_Ecomp_e(k, GSL_PREC_DOUBLE, &result);
-  if (status != GSL_SUCCESS) {
-    throw std::runtime_error("GSL error in ellipticE");
-  }
+  // if (status != GSL_SUCCESS) {
+  //   throw runtime_error("GSL error in ellipticE");
+  // }
   return result.val;
 }
