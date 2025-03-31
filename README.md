@@ -16,9 +16,9 @@ After [installation](https://qupled.readthedocs.io/en/latest/introduction.html#i
 
 ```python
 # Solve the stls dielectric scheme for coupling = 10 and degeneracy 1.0
-from qupled.classic import Stls
-inputs = Stls.Input(10.0, 1.0)
-Stls().compute(inputs)
+import qupled.stls as stls
+inputs = stls.Input(10.0, 1.0)
+stls.Stls().compute(inputs)
 ```
 
 ## Documentation
