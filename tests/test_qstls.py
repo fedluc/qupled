@@ -19,7 +19,7 @@ def test_qstls_initialization(mocker):
 
 
 def test_get_initial_guess_with_default_database_name(mocker):
-    read_run = mocker.patch("qupled.util.DataBase.read_run")
+    read_run = mocker.patch("qupled.output.DataBase.read_run")
     run_id = mocker.ANY
     read_run.return_value = {
         DataBaseHandler.INPUTS_TABLE_NAME: {"matsubara": 128},
@@ -38,7 +38,7 @@ def test_get_initial_guess_with_default_database_name(mocker):
 
 
 def test_get_initial_guess_with_custom_database_name(mocker):
-    read_run = mocker.patch("qupled.util.DataBase.read_run")
+    read_run = mocker.patch("qupled.output.DataBase.read_run")
     run_id = mocker.ANY
     database_name = mocker.ANY
     read_run.return_value = {

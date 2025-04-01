@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy as np
 from . import native
-from . import util
+from . import output
 from . import stls
 
 
@@ -35,7 +35,7 @@ class VSStls(stls.Stls):
             integrand, and alpha values retrieved from the database.
         """
         names = ["free_energy_grid", "free_energy_integrand", "alpha"]
-        data = util.DataBase.read_results(run_id, database_name, names)
+        data = output.DataBase.read_results(run_id, database_name, names)
         return FreeEnergyIntegrand(data[names[0]], data[names[1]], data[names[2]])
 
 
