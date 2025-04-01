@@ -42,7 +42,7 @@ protected:
   // Name of the recovery files
   std::string recoveryFileName;
   // Integrator
-  Integrator1D itg;
+  const std::shared_ptr<Integrator1D> itg;
   // Wave vector grid
   std::vector<double> wvg;
   // Ideal density response
@@ -90,7 +90,7 @@ public:
       const double &mu_,
       const double &yMin_,
       const double &yMax_,
-      Integrator1D &itg_)
+      const std::shared_ptr<Integrator1D> itg_)
       : nl(nl_),
         x(x_),
         Theta(Theta_),
@@ -119,7 +119,7 @@ private:
   // Idr integrand for frequency = 0 and wave-vector x
   double integrand(const double &y) const;
   // Integrator object
-  Integrator1D &itg;
+  const std::shared_ptr<Integrator1D> itg;
 };
 
 class IdrGround {
@@ -155,7 +155,7 @@ public:
         const double &mu_,
         const double &yMin_,
         const double &yMax_,
-        Integrator1D &itg_)
+        const std::shared_ptr<Integrator1D> itg_)
       : x(x_),
         Theta(Theta_),
         mu(mu_),
@@ -177,7 +177,7 @@ private:
   const double yMin;
   const double yMax;
   // Integrator object
-  Integrator1D &itg;
+  const std::shared_ptr<Integrator1D> itg;
   // Get integrand
   double integrand(const double &y) const;
   // Get at zero temperature
@@ -271,7 +271,7 @@ public:
             const double &ssfHF_,
             const double &slfc_,
             const double &OmegaMax_,
-            Integrator1D &itg_)
+            const std::shared_ptr<Integrator1D> itg_)
       : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
         OmegaMax(OmegaMax_),
         itg(itg_) {}
@@ -283,7 +283,7 @@ protected:
   // Integration limit
   const double OmegaMax;
   // Integrator object
-  Integrator1D &itg;
+  const std::shared_ptr<Integrator1D> itg;
   // Integrand for zero temperature calculations
   double integrand(const double &Omega) const;
 };

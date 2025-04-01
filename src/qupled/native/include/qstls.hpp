@@ -103,7 +103,7 @@ public:
           const double &yMin_,
           const double &yMax_,
           const double &x_,
-          const Interpolator1D &ssfi_)
+          const std::shared_ptr<Interpolator1D> ssfi_)
       : Theta(Theta_),
         yMin(yMin_),
         yMax(yMax_),
@@ -122,7 +122,7 @@ protected:
   // Wave-vector
   const double x;
   // Interpolator for the static structure factor
-  const Interpolator1D &ssfi;
+  const std::shared_ptr<Interpolator1D> ssfi;
   // Integrand scaling constants
   const double isc;
   const double isc0;
@@ -168,8 +168,8 @@ public:
       const double &yMin_,
       const double &yMax_,
       const double &x_,
-      const Interpolator1D &ssfi_,
-      Integrator1D &itg_)
+      const std::shared_ptr<Interpolator1D> ssfi_,
+      const std::shared_ptr<Integrator1D> itg_)
       : AdrBase(Theta_, yMin_, yMax_, x_, ssfi_),
         itg(itg_) {}
 
@@ -186,7 +186,7 @@ private:
   // Interpolator for the fixed component
   Interpolator1D fixi;
   // Integrator object
-  Integrator1D &itg;
+  const std::shared_ptr<Integrator1D> itg;
 };
 
 class AdrFixed : public AdrFixedBase {
@@ -200,7 +200,7 @@ public:
            const double &x_,
            const double &mu_,
            const std::vector<double> &itgGrid_,
-           Integrator2D &itg_)
+           const std::shared_ptr<Integrator2D> itg_)
       : AdrFixedBase(Theta_, qMin_, qMax_, x_, mu_),
         itg(itg_),
         itgGrid(itgGrid_) {}
@@ -214,7 +214,7 @@ private:
   double integrand1(const double &q, const double &l) const;
   double integrand2(const double &t, const double &y, const double &l) const;
   // Integrator object
-  Integrator2D &itg;
+  const std::shared_ptr<Integrator2D> itg;
   // Grid for 2D integration
   const std::vector<double> &itgGrid;
 };
@@ -228,11 +228,11 @@ public:
          const double &qMin_,
          const double &qMax_,
          const double &x_,
-         const Interpolator1D &ssfi_,
-         const std::vector<Interpolator1D> &dlfci_,
-         const Interpolator1D &bfi_,
+         const std::shared_ptr<Interpolator1D> ssfi_,
+         const std::vector<std::shared_ptr<Interpolator1D>> dlfci_,
+         const std::shared_ptr<Interpolator1D> bfi_,
          const std::vector<double> &itgGrid_,
-         Integrator2D &itg_)
+         const std::shared_ptr<Integrator2D> itg_)
       : AdrBase(Theta_, qMin_, qMax_, x_, ssfi_),
         itg(itg_),
         itgGrid(itgGrid_),
@@ -252,13 +252,13 @@ private:
   double integrand1(const double &q, const int &l) const;
   double integrand2(const double &y) const;
   // Integrator object
-  Integrator2D &itg;
+  const std::shared_ptr<Integrator2D> itg;
   // Grid for 2D integration
   const std::vector<double> &itgGrid;
   // Interpolator for the dynamic local field correction
-  const std::vector<Interpolator1D> &dlfci;
+  const std::vector<std::shared_ptr<Interpolator1D>> dlfci;
   // Interpolator for the bridge function contribution
-  const Interpolator1D &bfi;
+  const std::shared_ptr<Interpolator1D> bfi;
   // Interpolator for the fixed component
   Interpolator2D fixi;
   // Compute dynamic local field correction
@@ -279,7 +279,7 @@ public:
               const double &qMax_,
               const double &x_,
               const double &mu_,
-              Integrator1D &itg_)
+              const std::shared_ptr<Integrator1D> itg_)
       : AdrFixedBase(Theta_, qMin_, qMax_, x_, mu_),
         itg(itg_) {}
 
@@ -297,7 +297,7 @@ private:
                    const double &q,
                    const double &l) const;
   // Integrator object
-  Integrator1D &itg;
+  const std::shared_ptr<Integrator1D> itg;
 };
 
 class AdrGround : public AdrBase {
@@ -307,9 +307,9 @@ public:
   // Constructor for zero temperature calculations
   AdrGround(const double &x_,
             const double &Omega_,
-            const Interpolator1D &ssfi_,
+            const std::shared_ptr<Interpolator1D> ssfi_,
             const double &yMax_,
-            Integrator2D &itg_)
+            const std::shared_ptr<Integrator2D> itg_)
       : AdrBase(0.0, 0.0, yMax_, x_, ssfi_),
         Omega(Omega_),
         itg(itg_) {}
@@ -321,7 +321,7 @@ private:
   // Frequency
   const double Omega;
   // Integrator object
-  Integrator2D &itg;
+  const std::shared_ptr<Integrator2D> itg;
   // Integrands
   double integrand1(const double &y) const;
   double integrand2(const double &t) const;
@@ -368,8 +368,8 @@ public:
              const double &ssfHF_,
              const double &xMax_,
              const double &OmegaMax_,
-             const Interpolator1D &ssfi_,
-             Integrator1D &itg_)
+             const std::shared_ptr<Interpolator1D> ssfi_,
+             const std::shared_ptr<Integrator1D> itg_)
       : SsfGround(x_, rs_, ssfHF_, 0.0, OmegaMax_, itg_),
         xMax(xMax_),
         ssfi(ssfi_) {}
@@ -381,7 +381,7 @@ private:
   // Integration limit for the wave-vector integral
   const double xMax;
   // Interpolator
-  const Interpolator1D &ssfi;
+  const std::shared_ptr<Interpolator1D> ssfi;
   // Integrand for zero temperature calculations
   double integrand(const double &Omega) const;
 };

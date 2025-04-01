@@ -200,7 +200,8 @@ bool Qstls::initialGuessAdrFixed(const vector<double> &wvg_,
 void Qstls::computeAdr() {
   if (in.getDegeneracy() == 0.0) { return; }
   const int nx = wvg.size();
-  const Interpolator1D ssfi(wvg, ssfOld);
+  const shared_ptr<Interpolator1D> ssfi =
+      make_shared<Interpolator1D>(wvg, ssfOld);
   for (int i = 0; i < nx; ++i) {
     Adr adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], ssfi, itg);
     adrTmp.get(wvg, adrFixed, adr);
@@ -241,13 +242,14 @@ void Qstls::computeSsfFinite() {
 
 // Compute static structure factor at zero temperature
 void Qstls::computeSsfGround() {
-  const Interpolator1D ssfi(wvg, ssfOld);
+  const shared_ptr<Interpolator1D> ssfi =
+      make_shared<Interpolator1D>(wvg, ssfOld);
   const double rs = in.getCoupling();
   const double OmegaMax = in.getFrequencyCutoff();
   const size_t nx = wvg.size();
   const double xMax = wvg.back();
   auto loopFunc = [&](int i) -> void {
-    Integrator1D itgTmp(itg);
+    shared_ptr<Integrator1D> itgTmp = make_shared<Integrator1D>(*itg);
     QssfGround ssfTmp(wvg[i], rs, ssfHF[i], xMax, OmegaMax, ssfi, itgTmp);
     ssfNew[i] = ssfTmp.get();
   };
@@ -284,7 +286,7 @@ void Qstls::computeAdrFixed() {
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   // Parallel for loop (Hybrid MPI and OpenMP)
   auto loopFunc = [&](int i) -> void {
-    Integrator2D itg2(in.getIntError());
+    shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in.getIntError());
     AdrFixed adrTmp(
         in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], mu, itgGrid, itg2);
     adrTmp.get(wvg, adrFixed);
@@ -377,22 +379,24 @@ void Qstls::computeAdrIet() {
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   assert(adrOld.size() > 0);
   // Setup interpolators
-  const Interpolator1D ssfi(wvg, ssfOld);
-  const Interpolator1D bfi(wvg, bf);
-  vector<Interpolator1D> dlfci(nl);
-  Interpolator1D tmp(wvg, ssfOld);
+  const shared_ptr<Interpolator1D> ssfi =
+      make_shared<Interpolator1D>(wvg, ssfOld);
+  const shared_ptr<Interpolator1D> bfi = make_shared<Interpolator1D>(wvg, bf);
+  vector<shared_ptr<Interpolator1D>> dlfci(nl);
+  shared_ptr<Interpolator1D> tmp = make_shared<Interpolator1D>(wvg, ssfOld);
   for (int l = 0; l < nl; ++l) {
     vector<double> dlfc(nx);
     for (int i = 0; i < nx; ++i) {
       dlfc[i] = (idr(i, l) > 0.0) ? adrOld(i, l) / idr(i, l) : 0;
     }
-    dlfci[l].reset(wvg[0], dlfc[0], nx);
+    dlfci[l]->reset(wvg[0], dlfc[0], nx);
   }
   // Compute qstls-iet contribution to the adr
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   Vector2D adrIet(nx, nl);
   auto loopFunc = [&](int i) -> void {
-    Integrator2D itgPrivate(in.getIntError());
+    shared_ptr<Integrator2D> itgPrivate =
+        make_shared<Integrator2D>(in.getIntError());
     Vector3D adrFixedPrivate;
     readAdrFixedFile(adrFixedPrivate, adrFixedIetFileInfo.at(i).first, true);
     AdrIet adrTmp(in.getDegeneracy(),
@@ -433,7 +437,7 @@ void Qstls::computeAdrFixedIet() {
   barrier();
   // Write necessary files
   auto loopFunc = [&](int i) -> void {
-    Integrator1D itgPrivate(in.getIntError());
+    auto itgPrivate = make_shared<Integrator1D>(in.getIntError());
     Vector3D res(nl, nx, nx);
     AdrFixedIet adrTmp(in.getDegeneracy(),
                        wvg.front(),
@@ -532,7 +536,7 @@ void Qstls::readRecovery(vector<double> &wvg_,
 // -----------------------------------------------------------------
 
 // Compute static structure factor
-double AdrBase::ssf(const double &y) const { return ssfi.eval(y); }
+double AdrBase::ssf(const double &y) const { return ssfi->eval(y); }
 
 // -----------------------------------------------------------------
 // Adr class
@@ -559,8 +563,8 @@ void Adr::get(const vector<double> &wvg, const Vector3D &fixed, Vector2D &res) {
   for (int l = 0; l < nl; ++l) {
     fixi.reset(wvg[0], fixed(ix, l), nx);
     auto func = [&](const double &y) -> double { return integrand(y); };
-    itg.compute(func, itgParam);
-    res(ix, l) = itg.getSolution();
+    itg->compute(func, itgParam);
+    res(ix, l) = itg->getSolution();
     res(ix, l) *= (l == 0) ? isc0 : isc;
   }
 }
@@ -587,8 +591,8 @@ void AdrFixed::get(vector<double> &wvg, Vector3D &res) const {
       auto func2 = [&](const double &t) -> double {
         return integrand2(t, wvg[i], l);
       };
-      itg.compute(func1, func2, Itg2DParam(qMin, qMax, tMin, tMax), itgGrid);
-      res(ix, l, i) = itg.getSolution();
+      itg->compute(func1, func2, Itg2DParam(qMin, qMax, tMin, tMax), itgGrid);
+      res(ix, l, i) = itg->getSolution();
     }
   }
 }
@@ -602,7 +606,7 @@ double AdrFixed::integrand1(const double &q, const double &l) const {
 
 double
 AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
-  const double q = itg.getX();
+  const double q = itg->getX();
   if (y == 0) { return 0.0; };
   const double x2 = x * x;
   const double y2 = y * y;
@@ -634,11 +638,11 @@ AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
 
 // Compute dynamic local field correction
 double AdrIet::dlfc(const double &y, const int &l) const {
-  return dlfci[l].eval(y);
+  return dlfci[l]->eval(y);
 }
 
 // Compute auxiliary density response
-double AdrIet::bf(const double &y) const { return bfi.eval(y); }
+double AdrIet::bf(const double &y) const { return bfi->eval(y); }
 
 // Compute fixed component
 double AdrIet::fix(const double &x, const double &y) const {
@@ -654,7 +658,7 @@ double AdrIet::integrand1(const double &q, const int &l) const {
 }
 
 double AdrIet::integrand2(const double &y) const {
-  const double q = itg.getX();
+  const double q = itg->getX();
   return y * fix(q, y) * (ssf(y) - 1.0);
 }
 
@@ -679,8 +683,8 @@ void AdrIet::get(const vector<double> &wvg,
     auto yMax = [&](const double &q) -> double { return min(qMax, q + x); };
     auto func1 = [&](const double &q) -> double { return integrand1(q, l); };
     auto func2 = [&](const double &y) -> double { return integrand2(y); };
-    itg.compute(func1, func2, Itg2DParam(qMin, qMax, yMin, yMax), itgGrid);
-    res(ix, l) = itg.getSolution();
+    itg->compute(func1, func2, Itg2DParam(qMin, qMax, yMin, yMax), itgGrid);
+    res(ix, l) = itg->getSolution();
     res(ix, l) *= (l == 0) ? isc0 : isc;
   }
 }
@@ -708,8 +712,8 @@ void AdrFixedIet::get(vector<double> &wvg, Vector3D &res) const {
         auto func = [&](const double &t) -> double {
           return integrand(t, wvg[j], wvg[i], l);
         };
-        itg.compute(func, itgParam);
-        res(l, i, j) = itg.getSolution();
+        itg->compute(func, itgParam);
+        res(l, i, j) = itg->getSolution();
       }
     }
   }
@@ -750,17 +754,17 @@ double AdrGround::get() {
   auto tMax = [&](const double &y) -> double { return x * (x - y); };
   auto func1 = [&](const double &y) -> double { return integrand1(y); };
   auto func2 = [&](const double &t) -> double { return integrand2(t); };
-  itg.compute(func1, func2, Itg2DParam(0, yMax, tMin, tMax), {});
-  return -(3.0 / 8.0) * itg.getSolution();
+  itg->compute(func1, func2, Itg2DParam(0, yMax, tMin, tMax), {});
+  return -(3.0 / 8.0) * itg->getSolution();
 }
 
 double AdrGround::integrand1(const double &y) const {
-  return y * (ssfi.eval(y) - 1.0);
+  return y * (ssfi->eval(y) - 1.0);
 }
 
 double AdrGround::integrand2(const double &t) const {
   if (x == 0.0) { return 0.0; }
-  const double y = itg.getX();
+  const double y = itg->getX();
   const double x2 = x * x;
   const double Omega2 = Omega * Omega;
   const double t2 = t * t;
@@ -805,12 +809,12 @@ double QssfGround::get() {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
-  itg.compute(func, ItgParam(0, OmegaMax));
-  return 1.5 / (M_PI)*itg.getSolution() + ssfHF;
+  itg->compute(func, ItgParam(0, OmegaMax));
+  return 1.5 / (M_PI)*itg->getSolution() + ssfHF;
 }
 
 double QssfGround::integrand(const double &Omega) const {
-  Integrator2D itg2 = Integrator2D(itg.getAccuracy());
+  shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(itg->getAccuracy());
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   const double idr = IdrGround(x, Omega).get();
   const double adr = AdrGround(x, Omega, ssfi, xMax, itg2).get();

@@ -69,7 +69,7 @@ void Stls::computeSlfc() {
 
 void Stls::computeSlfcStls() {
   const int nx = wvg.size();
-  const Interpolator1D itp(wvg, ssf);
+  const shared_ptr<Interpolator1D> itp = make_shared<Interpolator1D>(wvg, ssf);
   for (int i = 0; i < nx; ++i) {
     Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
     slfcNew[i] = slfcTmp.get();
@@ -77,12 +77,15 @@ void Stls::computeSlfcStls() {
 }
 
 void Stls::computeSlfcIet() {
-  Integrator2D itg2(in.getIntError());
+  const std::shared_ptr<Integrator2D> itg2 =
+      make_shared<Integrator2D>(in.getIntError());
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
-  const Interpolator1D ssfItp(wvg, ssf);
-  const Interpolator1D slfcItp(wvg, slfc);
-  const Interpolator1D bfItp(wvg, bf);
+  const shared_ptr<Interpolator1D> ssfItp =
+      make_shared<Interpolator1D>(wvg, ssf);
+  const shared_ptr<Interpolator1D> slfcItp =
+      make_shared<Interpolator1D>(wvg, slfc);
+  const shared_ptr<Interpolator1D> bfItp = make_shared<Interpolator1D>(wvg, bf);
   for (size_t i = 0; i < wvg.size(); ++i) {
     SlfcIet slfcTmp(
         wvg[i], wvg.front(), wvg.back(), ssfItp, slfcItp, bfItp, itgGrid, itg2);
@@ -93,7 +96,8 @@ void Stls::computeSlfcIet() {
 // Compute bridge function
 void Stls::computeBf() {
   const size_t nx = wvg.size();
-  Integrator1D itgF(ItgType::FOURIER, 1e-10);
+  const shared_ptr<Integrator1D> itgF =
+      make_shared<Integrator1D>(ItgType::FOURIER, 1e-10);
   assert(bf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     BridgeFunction bfTmp(in.getTheory(),
@@ -232,7 +236,7 @@ void Stls::readRecovery(vector<double> &wvgFile,
 // -----------------------------------------------------------------
 
 // Compute static structure factor from interpolator
-double SlfcBase::ssf(const double &y) const { return ssfi.eval(y); }
+double SlfcBase::ssf(const double &y) const { return ssfi->eval(y); }
 
 // -----------------------------------------------------------------
 // Slfc class
@@ -241,8 +245,8 @@ double SlfcBase::ssf(const double &y) const { return ssfi.eval(y); }
 // Get result of integration
 double Slfc::get() const {
   auto func = [&](const double &y) -> double { return integrand(y); };
-  itg.compute(func, ItgParam(yMin, yMax));
-  return itg.getSolution();
+  itg->compute(func, ItgParam(yMin, yMax));
+  return itg->getSolution();
 }
 
 // Integrand
@@ -264,10 +268,10 @@ double Slfc::integrand(const double &y) const {
 // -----------------------------------------------------------------
 
 // Compute static local field correction from interpolator
-double SlfcIet::slfc(const double &y) const { return slfci.eval(y); }
+double SlfcIet::slfc(const double &y) const { return slfci->eval(y); }
 
 // Compute bridge function from interpolator
-double SlfcIet::bf(const double &y) const { return bfi.eval(y); }
+double SlfcIet::bf(const double &y) const { return bfi->eval(y); }
 
 // Get at finite temperature
 double SlfcIet::get() const {
@@ -278,8 +282,8 @@ double SlfcIet::get() const {
   auto wMax = [&](const double &y) -> double { return min(yMax, x + y); };
   auto func1 = [&](const double &y) -> double { return integrand1(y); };
   auto func2 = [&](const double &w) -> double { return integrand2(w); };
-  itg.compute(func1, func2, Itg2DParam(yMin, yMax, wMin, wMax), itgGrid);
-  return 3.0 / (8.0 * x) * itg.getSolution() + bf(x);
+  itg->compute(func1, func2, Itg2DParam(yMin, yMax, wMin, wMax), itgGrid);
+  return 3.0 / (8.0 * x) * itg->getSolution() + bf(x);
 }
 
 // Level 1 integrand
@@ -290,7 +294,7 @@ double SlfcIet::integrand1(const double &y) const {
 
 // Level 2 integrand
 double SlfcIet::integrand2(const double &w) const {
-  const double y = itg.getX();
+  const double y = itg->getX();
   const double y2 = y * y;
   const double w2 = w * w;
   const double x2 = x * x;
@@ -392,8 +396,8 @@ double BridgeFunction::ioi() const {
 double BridgeFunction::lct() const {
   const double Gamma = couplingParameter();
   auto func = [&](const double &r) -> double { return lctIntegrand(r, Gamma); };
-  itg.compute(func, ItgParam(x / lambda));
-  return itg.getSolution() * (x / lambda) / Gamma;
+  itg->compute(func, ItgParam(x / lambda));
+  return itg->getSolution() * (x / lambda) / Gamma;
   return 0.0;
 }
 
