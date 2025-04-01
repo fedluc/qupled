@@ -12,6 +12,7 @@ from collections.abc import Callable
 import numpy as np
 import sqlalchemy as sql
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from . import mpi
 
 
 class DataBaseHandler:
@@ -66,6 +67,7 @@ class DataBaseHandler:
         self.result_table = self._build_results_table()
         self.run_id: int | None = None
 
+    @mpi.MPI.run_only_on_root
     def insert_run(self, inputs, results):
         """
         Inserts a new run into the database by storing the provided inputs and results.
@@ -81,6 +83,7 @@ class DataBaseHandler:
         self.insert_inputs(inputs.__dict__)
         self.insert_results(results.__dict__)
 
+    @mpi.MPI.run_only_on_root
     def insert_inputs(self, inputs: dict[str, any]):
         """
         Inserts input data into the database for the current run.
@@ -103,6 +106,7 @@ class DataBaseHandler:
             sql_mapping = lambda value: (self._to_json(value))
             self._insert_from_dict(self.input_table, inputs, sql_mapping)
 
+    @mpi.MPI.run_only_on_root
     def insert_results(self, results: dict[str, any]):
         """
         Inserts the given results into the database table associated with this instance.
@@ -204,6 +208,8 @@ class DataBaseHandler:
         sql_mapping = lambda value: (self._from_bytes(value))
         return self._get(self.result_table, run_id, names, sql_mapping)
 
+    @mpi.MPI.run_only_on_root
+    @mpi.MPI.synchronize_ranks
     def delete_run(self, run_id: int) -> None:
         """
         Deletes a run entry from the database based on the provided run ID.
@@ -272,7 +278,7 @@ class DataBaseHandler:
                 nullable=False,
             ),
         )
-        table.create(self.engine, checkfirst=True)
+        self._create_table(table)
         return table
 
     def _build_inputs_table(self) -> sql.Table:
@@ -349,9 +355,15 @@ class DataBaseHandler:
                 self.TableKeys.RUN_ID.value, self.TableKeys.NAME.value
             ),
         )
-        table.create(self.engine, checkfirst=True)
+        self._create_table(table)
         return table
 
+    @mpi.MPI.run_only_on_root
+    @mpi.MPI.synchronize_ranks
+    def _create_table(self, table):
+        table.create(self.engine, checkfirst=True)
+
+    @mpi.MPI.run_only_on_root
     def _insert_run(self, inputs: any):
         """
         Inserts a new run entry into the database.
@@ -407,6 +419,7 @@ class DataBaseHandler:
             cursor.execute("PRAGMA foreign_keys=ON")
             cursor.close()
 
+    @mpi.MPI.run_only_on_root
     def _insert_from_dict(
         self, table, data: dict[str, any], sql_mapping: Callable[[any], any]
     ) -> None:
@@ -425,6 +438,7 @@ class DataBaseHandler:
             if mapped_value := sql_mapping(value):
                 self._insert(table, name, mapped_value)
 
+    @mpi.MPI.run_only_on_root
     def _insert(self, table: sql.Table, name: str, value: any):
         """
         Inserts a record into the specified SQL table or updates it if a conflict occurs.

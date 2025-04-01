@@ -3,7 +3,7 @@ import numpy as np
 from . import database
 from . import native
 from . import stls
-from . import util
+from . import output
 
 
 class Qstls(stls.Stls):
@@ -35,7 +35,7 @@ class Qstls(stls.Stls):
         """
         result_names = ["wvg", "ssf", "adr"]
         input_names = ["matsubara"]
-        data = util.DataBase.read_run(run_id, database_name, input_names, result_names)
+        data = output.DataBase.read_run(run_id, database_name, input_names, result_names)
         inputs = data[database.DataBaseHandler.INPUTS_TABLE_NAME]
         results = data[database.DataBaseHandler.RESULTS_TABLE_NAME]
         return Guess(

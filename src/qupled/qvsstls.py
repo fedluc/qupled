@@ -9,7 +9,7 @@ import shutil
 import zipfile
 
 from . import native
-from . import util
+from . import mpi
 from . import qstls
 from . import vsstls
 
@@ -44,7 +44,7 @@ class QVSStls(vsstls.VSStls):
         return qstls.Qstls.get_initial_guess(run_id, database_name)
 
     # Unpack zip folder with fixed component of the auxiliary density response
-    @util.MPI.run_only_on_root
+    @mpi.MPI.run_only_on_root
     def _unpack_fixed_adr_files(self, inputs):
         """
         Unpacks a fixed adr file into a temporary directory.
@@ -72,7 +72,7 @@ class QVSStls(vsstls.VSStls):
                 zip_file.extractall(inputs.fixed)
 
     # Zip all files for the fixed component of the auxiliary density response
-    @util.MPI.run_only_on_root
+    @mpi.MPI.run_only_on_root
     def _zip_fixed_adr_files(self, inputs):
         """
         Compresses and removes binary files matching a specific pattern into a ZIP archive.
@@ -105,7 +105,7 @@ class QVSStls(vsstls.VSStls):
                     os.remove(bin_file)
 
     # Remove the temporary run directory
-    @util.MPI.run_only_on_root
+    @mpi.MPI.run_only_on_root
     def _clean_fixed_adr_files(self, inputs):
         """
         Removes the directory specified by the `fixed` attribute of the `inputs` object.

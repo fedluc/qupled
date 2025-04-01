@@ -8,7 +8,7 @@ import os
 import shutil
 import zipfile
 
-from . import util
+from . import mpi
 from . import qstls
 from . import stlsiet
 
@@ -36,7 +36,7 @@ class QstlsIet(qstls.Qstls):
         self._clean_fixed_adr_files(inputs)
 
     # Unpack zip folder with fixed component of the auxiliary density response
-    @util.MPI.run_only_on_root
+    @mpi.MPI.run_only_on_root
     def _unpack_fixed_adr_files(self, inputs):
         """
         Unpacks a fixed IET source file into a temporary directory.
@@ -57,7 +57,7 @@ class QstlsIet(qstls.Qstls):
                 zip_file.extractall(inputs.fixed_iet)
 
     # Zip all files for the fixed component of the auxiliary density response
-    @util.MPI.run_only_on_root
+    @mpi.MPI.run_only_on_root
     def _zip_fixed_adr_files(self, inputs):
         """
         Compresses and removes binary files matching a specific naming pattern into a ZIP archive.
@@ -92,7 +92,7 @@ class QstlsIet(qstls.Qstls):
                     os.remove(bin_file)
 
     # Remove temporary run directory
-    @util.MPI.run_only_on_root
+    @mpi.MPI.run_only_on_root
     def _clean_fixed_adr_files(self, inputs):
         """
         Removes the directory specified by `inputs.fixed_iet` if it exists.

@@ -1,5 +1,5 @@
 import qupled.stls as stls
-from qupled.util import DataBase
+from qupled.output import DataBase
 
 # Define the object used to solve the scheme
 scheme = stls.Stls()
