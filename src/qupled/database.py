@@ -208,8 +208,8 @@ class DataBaseHandler:
         sql_mapping = lambda value: (self._from_bytes(value))
         return self._get(self.result_table, run_id, names, sql_mapping)
 
-    @mpi.MPI.run_only_on_root
     @mpi.MPI.synchronize_ranks
+    @mpi.MPI.run_only_on_root
     def delete_run(self, run_id: int) -> None:
         """
         Deletes a run entry from the database based on the provided run ID.
@@ -358,8 +358,8 @@ class DataBaseHandler:
         self._create_table(table)
         return table
 
-    @mpi.MPI.run_only_on_root
     @mpi.MPI.synchronize_ranks
+    @mpi.MPI.run_only_on_root
     def _create_table(self, table):
         table.create(self.engine, checkfirst=True)
 

@@ -32,6 +32,8 @@ class Rpa:
         return self.db_handler.run_id
 
     # Compute
+    @mpi.MPI.record_time
+    @mpi.MPI.synchronize_ranks
     def compute(self, inputs: Input):
         """
         Solves the scheme and saves the results.

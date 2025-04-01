@@ -36,6 +36,7 @@ class QstlsIet(qstls.Qstls):
         self._clean_fixed_adr_files(inputs)
 
     # Unpack zip folder with fixed component of the auxiliary density response
+    @mpi.MPI.synchronize_ranks
     @mpi.MPI.run_only_on_root
     def _unpack_fixed_adr_files(self, inputs):
         """
