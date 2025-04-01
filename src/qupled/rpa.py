@@ -2,7 +2,7 @@ from __future__ import annotations
 import os
 import numpy as np
 from . import native
-from . import util
+from . import mpi
 from . import database
 
 
@@ -32,6 +32,8 @@ class Rpa:
         return self.db_handler.run_id
 
     # Compute
+    @mpi.MPI.record_time
+    @mpi.MPI.synchronize_ranks
     def compute(self, inputs: Input):
         """
         Solves the scheme and saves the results.
@@ -48,7 +50,7 @@ class Rpa:
         self._save()
 
     # Compute radial distribution function
-    @util.MPI.run_only_on_root
+    @mpi.MPI.run_only_on_root
     def compute_rdf(self, rdf_grid: np.ndarray = None):
         """
         Computes the radial distribution function (RDF) using the provided RDF grid.
@@ -66,7 +68,7 @@ class Rpa:
             )
 
     # Check that the dielectric scheme was solved without errors
-    @util.MPI.run_only_on_root
+    @mpi.MPI.run_only_on_root
     def _check_status_and_clean(self, status: bool, recovery: str):
         """
         Checks the status of a process and performs cleanup if successful.
@@ -90,7 +92,7 @@ class Rpa:
         else:
             raise RuntimeError("Error while solving the dielectric theory")
 
-    @util.MPI.run_only_on_root
+    @mpi.MPI.run_only_on_root
     def _save(self):
         """
         Saves the current run's inputs and results to the database.

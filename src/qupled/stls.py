@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy as np
 from . import native
-from . import util
+from . import output
 from . import rpa
 
 
@@ -30,7 +30,7 @@ class Stls(rpa.Rpa):
             An instance of Guess containing the initial guess data.
         """
         names = ["wvg", "slfc"]
-        data = util.DataBase.read_results(run_id, database_name, names)
+        data = output.DataBase.read_results(run_id, database_name, names)
         return Guess(data[names[0]], data[names[1]])
 
 

@@ -18,7 +18,7 @@ def test_stls_initialization(mocker):
 
 
 def test_get_initial_guess_with_default_database_name(mocker):
-    read_results = mocker.patch("qupled.util.DataBase.read_results")
+    read_results = mocker.patch("qupled.output.DataBase.read_results")
     run_id = mocker.ANY
     read_results.return_value = {
         "wvg": np.array([1.0, 2.0, 3.0]),
@@ -31,7 +31,7 @@ def test_get_initial_guess_with_default_database_name(mocker):
 
 
 def test_get_initial_guess_with_custom_database_name(mocker):
-    read_results = mocker.patch("qupled.util.DataBase.read_results")
+    read_results = mocker.patch("qupled.output.DataBase.read_results")
     run_id = mocker.ANY
     database_name = mocker.ANY
     read_results.return_value = {
