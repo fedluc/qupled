@@ -250,7 +250,7 @@ protected:
   double computeIp() const {
     switch (ssfType) {
     case SsfType::Rpa:
-      return 4.0 * lambda * rs / (M_PI * x * x);
+      return 6.0 * lambda * rs / (M_PI * x * x);
     case SsfType::Stls2D:
       return sqrt(2.0) * rs / x;
     default:

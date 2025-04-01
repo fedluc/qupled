@@ -484,7 +484,7 @@ void Stls::computeIdr2D() {
     Idr idrTmp(
         nl, wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
     idr.fill(i, idrTmp.get2DStls());
-    //printf("idr[%d] = %e\n", i, idr(i, 0));
+    printf("idr[%d] = %e\n", i, idr(i, 0));
   }
 }
 
@@ -586,7 +586,7 @@ vector<double> Idr::get2DStls() const {
     auto func = [&](const double &y) -> double {
       return (l == 0) ? integrand2DStls(y) : integrand2DStls(y, l);
     };
-    double upperLimit = (l == 0) ? yMax / 2.0 : yMax;
+    double upperLimit = (l == 0) ? x / 2.0 : yMax;
     const auto itgParam = ItgParam(yMin, upperLimit);
     itg.compute(func, itgParam);
     if (l == 0) {
@@ -625,7 +625,7 @@ double Idr::integrand2DStls(const double &y) const {
   double y2 = y * y;
   double x2 = x * x;
   if (x > 0.0) {
-    return 1.0 / (Theta * x * pow(cosh(y2 / (2 * Theta) - mu/2), 2) ) * y * sqrt(x2 / 4.0 - y2);
+    return 1.0 / (Theta * x * pow(cosh(y2 / (2 * Theta) - mu/2), 2)) * y * sqrt(x2 / 4.0 - y2);
   } else {
     return 0; 
   }

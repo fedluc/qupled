@@ -334,7 +334,7 @@ double Ssf::get() const {
     if (l > 0) fact4 *= 2;
     fact2 += fact4;
   }
-  return ssfHF - 1.5 * ip * Theta * (1 - slfc) * fact2;
+  return ssfHF - ip * Theta * (1 - slfc) * fact2;
 }
 
 // -----------------------------------------------------------------
