@@ -23,7 +23,7 @@ extensions = ["sphinx.ext.napoleon", "sphinx.ext.autodoc", "sphinx.ext.mathjax"]
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 autodoc_member_order = "bysource"
-autodoc_mock_imports = ["qupled.native"]
+autodoc_mock_imports = ["qupled.native", "sqlalchemy"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
