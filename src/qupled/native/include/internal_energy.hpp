@@ -16,8 +16,8 @@ public:
   InternalEnergy(const double &rs_,
                  const double &yMin_,
                  const double &yMax_,
-                 const std::shared_ptr<Interpolator1D> ssfi_,
-                 const std::shared_ptr<Integrator1D> itg_)
+                 std::shared_ptr<Interpolator1D> ssfi_,
+                 std::shared_ptr<Integrator1D> itg_)
       : rs(rs_),
         yMin(yMin_),
         yMax(yMax_),

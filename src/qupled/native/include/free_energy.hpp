@@ -13,7 +13,7 @@ public:
 
   // Constructor
   FreeEnergy(const double &rs_,
-             const std::shared_ptr<Interpolator1D> rsui_,
+             std::shared_ptr<Interpolator1D> rsui_,
              std::shared_ptr<Integrator1D> itg_,
              const bool normalize_)
       : rs(rs_),
