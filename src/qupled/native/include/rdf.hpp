@@ -14,9 +14,9 @@ public:
   // Constructor
   Rdf(const double &r_,
       const double &cutoff_,
-      const Interpolator1D &ssfi_,
-      Integrator1D &itg_,
-      Integrator1D &itgf_)
+      std::shared_ptr<Interpolator1D> ssfi_,
+      std::shared_ptr<Integrator1D> itg_,
+      std::shared_ptr<Integrator1D> itgf_)
       : r(r_),
         cutoff(cutoff_),
         itgf(itgf_),
@@ -35,13 +35,13 @@ private:
   const double cutoff;
 
   // Fourier Integrator object
-  Integrator1D &itgf;
+  const std::shared_ptr<Integrator1D> itgf;
 
   // Integrator object
-  Integrator1D &itg;
+  const std::shared_ptr<Integrator1D> itg;
 
   // Static structure factor interpolator
-  const Interpolator1D &ssfi;
+  const std::shared_ptr<Interpolator1D> ssfi;
 
   // Integrand
   double integrand(const double &y) const;

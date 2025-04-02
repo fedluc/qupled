@@ -67,24 +67,24 @@ class SlfcBase {
 
 protected:
 
+  // Constructor
+  SlfcBase(const double &x_,
+           const double &yMin_,
+           const double &yMax_,
+           std::shared_ptr<Interpolator1D> ssfi_)
+      : x(x_),
+        yMin(yMin_),
+        yMax(yMax_),
+        ssfi(ssfi_) {}
   // Wave-vector
   const double x;
   // Integration limits
   const double yMin;
   const double yMax;
   // Static structure factor interpolator
-  const Interpolator1D &ssfi;
+  const std::shared_ptr<Interpolator1D> ssfi;
   // Compute static structure factor
   double ssf(const double &y) const;
-  // Constructor
-  SlfcBase(const double &x_,
-           const double &yMin_,
-           const double &yMax_,
-           const Interpolator1D &ssfi_)
-      : x(x_),
-        yMin(yMin_),
-        yMax(yMax_),
-        ssfi(ssfi_) {}
 };
 
 class Slfc : public SlfcBase {
@@ -95,8 +95,8 @@ public:
   Slfc(const double &x_,
        const double &yMin_,
        const double &yMax_,
-       const Interpolator1D &ssfi_,
-       Integrator1D &itg_)
+       std::shared_ptr<Interpolator1D> ssfi_,
+       std::shared_ptr<Integrator1D> itg_)
       : SlfcBase(x_, yMin_, yMax_, ssfi_),
         itg(itg_) {}
   // Get result of integration
@@ -105,7 +105,7 @@ public:
 private:
 
   // Integrator object
-  Integrator1D &itg;
+  const std::shared_ptr<Integrator1D> itg;
   // Integrand
   double integrand(const double &y) const;
 };
@@ -118,11 +118,11 @@ public:
   SlfcIet(const double &x_,
           const double &yMin_,
           const double &yMax_,
-          const Interpolator1D &ssfi_,
-          const Interpolator1D &slfci_,
-          const Interpolator1D &bfi_,
+          std::shared_ptr<Interpolator1D> ssfi_,
+          std::shared_ptr<Interpolator1D> slfci_,
+          std::shared_ptr<Interpolator1D> bfi_,
           const std::vector<double> &itgGrid_,
-          Integrator2D &itg_)
+          std::shared_ptr<Integrator2D> itg_)
       : SlfcBase(x_, yMin_, yMax_, ssfi_),
         itg(itg_),
         itgGrid(itgGrid_),
@@ -134,16 +134,16 @@ public:
 private:
 
   // Integrator object
-  Integrator2D &itg;
+  const std::shared_ptr<Integrator2D> itg;
   // Grid for 2D integration
-  const std::vector<double> &itgGrid;
+  const std::vector<double> itgGrid;
   // Integrands
   double integrand1(const double &y) const;
   double integrand2(const double &w) const;
   // Static local field correction interpolator
-  const Interpolator1D &slfci;
+  const std::shared_ptr<Interpolator1D> slfci;
   // Bridge function interpolator
-  const Interpolator1D &bfi;
+  const std::shared_ptr<Interpolator1D> bfi;
   // Compute static local field correction
   double slfc(const double &x) const;
   // Compute bridge function
@@ -160,7 +160,7 @@ public:
                  const double &rs_,
                  const double &Theta_,
                  const double &x_,
-                 Integrator1D &itg_)
+                 std::shared_ptr<Integrator1D> itg_)
       : theory(theory_),
         mapping(mapping_),
         rs(rs_),
@@ -183,7 +183,7 @@ private:
   // Wave vector
   const double x;
   // Integrator object
-  Integrator1D &itg;
+  const std::shared_ptr<Integrator1D> itg;
   // Constant for unit conversion
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
   // Hypernetted-chain bridge function

@@ -16,7 +16,7 @@ using ItgType = Integrator1D::Type;
 Rpa::Rpa(const RpaInput &in_, const bool verbose_)
     : Logger(verbose_ && isRoot()),
       in(in_),
-      itg(ItgType::DEFAULT, in_.getIntError()) {
+      itg(std::make_shared<Integrator1D>(ItgType::DEFAULT, in_.getIntError())) {
   // Assemble the wave-vector grid
   buildWvGrid();
   // Allocate arrays to the correct size
@@ -250,8 +250,8 @@ vector<double> Idr::get() const {
     auto func = [&](const double &y) -> double {
       return (l == 0) ? integrand(y) : integrand(y, l);
     };
-    itg.compute(func, itgParam);
-    res[l] = itg.getSolution();
+    itg->compute(func, itgParam);
+    res[l] = itg->getSolution();
   }
   return res;
 }
@@ -300,8 +300,8 @@ double SsfHF::integrand(const double &y) const {
 double SsfHF::get() const {
   assert(Theta > 0.0);
   auto func = [&](const double &y) -> double { return integrand(y); };
-  itg.compute(func, ItgParam(yMin, yMax));
-  return 1.0 + itg.getSolution();
+  itg->compute(func, ItgParam(yMin, yMax));
+  return 1.0 + itg->getSolution();
 }
 
 // -----------------------------------------------------------------
@@ -344,8 +344,8 @@ double SsfGround::get() {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
-  itg.compute(func, ItgParam(0, OmegaMax));
-  return 1.5 / (M_PI)*itg.getSolution() + ssfHF;
+  itg->compute(func, ItgParam(0, OmegaMax));
+  return 1.5 / (M_PI)*itg->getSolution() + ssfHF;
 }
 
 double SsfGround::integrand(const double &Omega) const {

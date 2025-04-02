@@ -147,9 +147,9 @@ public:
          const double &limitMin,
          const double &limitMax,
          const std::vector<double> &itgGrid_,
-         Integrator1D &itg1_,
-         Integrator2D &itg2_,
-         const Interpolator1D &interp_)
+         std::shared_ptr<Integrator1D> itg1_,
+         std::shared_ptr<Integrator2D> itg2_,
+         std::shared_ptr<Interpolator1D> interp_)
       : Theta(Theta_),
         mu(mu_),
         limits(limitMin, limitMax),
@@ -172,10 +172,10 @@ private:
   // Grid for 2D integration
   const std::vector<double> &itgGrid;
   // Integrator objects
-  Integrator1D &itg1;
-  Integrator2D &itg2;
+  const std::shared_ptr<Integrator1D> itg1;
+  const std::shared_ptr<Integrator2D> itg2;
   // Interpolator 1D class instance
-  const Interpolator1D &interp;
+  const std::shared_ptr<Interpolator1D> interp;
 
   // SSF interpolation
   double ssf(const double &y) const;

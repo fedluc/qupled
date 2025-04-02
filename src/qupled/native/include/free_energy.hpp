@@ -13,8 +13,8 @@ public:
 
   // Constructor
   FreeEnergy(const double &rs_,
-             const Interpolator1D &rsui_,
-             Integrator1D &itg_,
+             std::shared_ptr<Interpolator1D> rsui_,
+             std::shared_ptr<Integrator1D> itg_,
              const bool normalize_)
       : rs(rs_),
         itg(itg_),
@@ -30,10 +30,10 @@ private:
   const double rs;
 
   // Integrator object
-  Integrator1D &itg;
+  const std::shared_ptr<Integrator1D> itg;
 
   // Integrand interpolator (the integrand is given by rs * u)
-  const Interpolator1D &rsui;
+  const std::shared_ptr<Interpolator1D> rsui;
 
   // Integrand
   double integrand(const double y) const;

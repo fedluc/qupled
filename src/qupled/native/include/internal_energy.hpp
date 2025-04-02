@@ -16,8 +16,8 @@ public:
   InternalEnergy(const double &rs_,
                  const double &yMin_,
                  const double &yMax_,
-                 const Interpolator1D &ssfi_,
-                 Integrator1D &itg_)
+                 std::shared_ptr<Interpolator1D> ssfi_,
+                 std::shared_ptr<Integrator1D> itg_)
       : rs(rs_),
         yMin(yMin_),
         yMax(yMax_),
@@ -37,10 +37,10 @@ private:
   const double yMax;
 
   // Integrator object
-  Integrator1D &itg;
+  const std::shared_ptr<Integrator1D> itg;
 
   // Static structure factor interpolator
-  const Interpolator1D &ssfi;
+  const std::shared_ptr<Interpolator1D> ssfi;
 
   // Integrand
   double integrand(const double &y) const;
