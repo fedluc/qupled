@@ -67,6 +67,15 @@ class SlfcBase {
 
 protected:
 
+  // Constructor
+  SlfcBase(const double &x_,
+           const double &yMin_,
+           const double &yMax_,
+           std::shared_ptr<Interpolator1D> ssfi_)
+      : x(x_),
+        yMin(yMin_),
+        yMax(yMax_),
+        ssfi(ssfi_) {}
   // Wave-vector
   const double x;
   // Integration limits
@@ -76,15 +85,6 @@ protected:
   const std::shared_ptr<Interpolator1D> ssfi;
   // Compute static structure factor
   double ssf(const double &y) const;
-  // Constructor
-  SlfcBase(const double &x_,
-           const double &yMin_,
-           const double &yMax_,
-           const std::shared_ptr<Interpolator1D> ssfi_)
-      : x(x_),
-        yMin(yMin_),
-        yMax(yMax_),
-        ssfi(ssfi_) {}
 };
 
 class Slfc : public SlfcBase {
@@ -95,8 +95,8 @@ public:
   Slfc(const double &x_,
        const double &yMin_,
        const double &yMax_,
-       const std::shared_ptr<Interpolator1D> ssfi_,
-       const std::shared_ptr<Integrator1D> itg_)
+       std::shared_ptr<Interpolator1D> ssfi_,
+       std::shared_ptr<Integrator1D> itg_)
       : SlfcBase(x_, yMin_, yMax_, ssfi_),
         itg(itg_) {}
   // Get result of integration
@@ -118,11 +118,11 @@ public:
   SlfcIet(const double &x_,
           const double &yMin_,
           const double &yMax_,
-          const std::shared_ptr<Interpolator1D> ssfi_,
-          const std::shared_ptr<Interpolator1D> slfci_,
-          const std::shared_ptr<Interpolator1D> bfi_,
+          std::shared_ptr<Interpolator1D> ssfi_,
+          std::shared_ptr<Interpolator1D> slfci_,
+          std::shared_ptr<Interpolator1D> bfi_,
           const std::vector<double> &itgGrid_,
-          const std::shared_ptr<Integrator2D> &itg_)
+          std::shared_ptr<Integrator2D> itg_)
       : SlfcBase(x_, yMin_, yMax_, ssfi_),
         itg(itg_),
         itgGrid(itgGrid_),
@@ -160,7 +160,7 @@ public:
                  const double &rs_,
                  const double &Theta_,
                  const double &x_,
-                 const std::shared_ptr<Integrator1D> itg_)
+                 std::shared_ptr<Integrator1D> itg_)
       : theory(theory_),
         mapping(mapping_),
         rs(rs_),

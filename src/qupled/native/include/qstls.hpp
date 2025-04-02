@@ -103,7 +103,7 @@ public:
           const double &yMin_,
           const double &yMax_,
           const double &x_,
-          const std::shared_ptr<Interpolator1D> ssfi_)
+          std::shared_ptr<Interpolator1D> ssfi_)
       : Theta(Theta_),
         yMin(yMin_),
         yMax(yMax_),
@@ -168,8 +168,8 @@ public:
       const double &yMin_,
       const double &yMax_,
       const double &x_,
-      const std::shared_ptr<Interpolator1D> ssfi_,
-      const std::shared_ptr<Integrator1D> itg_)
+      std::shared_ptr<Interpolator1D> ssfi_,
+      std::shared_ptr<Integrator1D> itg_)
       : AdrBase(Theta_, yMin_, yMax_, x_, ssfi_),
         itg(itg_) {}
 
@@ -200,7 +200,7 @@ public:
            const double &x_,
            const double &mu_,
            const std::vector<double> &itgGrid_,
-           const std::shared_ptr<Integrator2D> itg_)
+           std::shared_ptr<Integrator2D> itg_)
       : AdrFixedBase(Theta_, qMin_, qMax_, x_, mu_),
         itg(itg_),
         itgGrid(itgGrid_) {}
@@ -228,11 +228,11 @@ public:
          const double &qMin_,
          const double &qMax_,
          const double &x_,
-         const std::shared_ptr<Interpolator1D> ssfi_,
-         const std::vector<std::shared_ptr<Interpolator1D>> dlfci_,
-         const std::shared_ptr<Interpolator1D> bfi_,
+         std::shared_ptr<Interpolator1D> ssfi_,
+         std::vector<std::shared_ptr<Interpolator1D>> dlfci_,
+         std::shared_ptr<Interpolator1D> bfi_,
          const std::vector<double> &itgGrid_,
-         const std::shared_ptr<Integrator2D> itg_)
+         std::shared_ptr<Integrator2D> itg_)
       : AdrBase(Theta_, qMin_, qMax_, x_, ssfi_),
         itg(itg_),
         itgGrid(itgGrid_),
@@ -279,7 +279,7 @@ public:
               const double &qMax_,
               const double &x_,
               const double &mu_,
-              const std::shared_ptr<Integrator1D> itg_)
+              std::shared_ptr<Integrator1D> itg_)
       : AdrFixedBase(Theta_, qMin_, qMax_, x_, mu_),
         itg(itg_) {}
 
@@ -307,9 +307,9 @@ public:
   // Constructor for zero temperature calculations
   AdrGround(const double &x_,
             const double &Omega_,
-            const std::shared_ptr<Interpolator1D> ssfi_,
+            std::shared_ptr<Interpolator1D> ssfi_,
             const double &yMax_,
-            const std::shared_ptr<Integrator2D> itg_)
+            std::shared_ptr<Integrator2D> itg_)
       : AdrBase(0.0, 0.0, yMax_, x_, ssfi_),
         Omega(Omega_),
         itg(itg_) {}
@@ -368,8 +368,8 @@ public:
              const double &ssfHF_,
              const double &xMax_,
              const double &OmegaMax_,
-             const std::shared_ptr<Interpolator1D> ssfi_,
-             const std::shared_ptr<Integrator1D> itg_)
+             std::shared_ptr<Interpolator1D> ssfi_,
+             std::shared_ptr<Integrator1D> itg_)
       : SsfGround(x_, rs_, ssfHF_, 0.0, OmegaMax_, itg_),
         xMax(xMax_),
         ssfi(ssfi_) {}

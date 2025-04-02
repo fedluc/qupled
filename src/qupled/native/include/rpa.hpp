@@ -90,7 +90,7 @@ public:
       const double &mu_,
       const double &yMin_,
       const double &yMax_,
-      const std::shared_ptr<Integrator1D> itg_)
+      std::shared_ptr<Integrator1D> itg_)
       : nl(nl_),
         x(x_),
         Theta(Theta_),
@@ -155,7 +155,7 @@ public:
         const double &mu_,
         const double &yMin_,
         const double &yMax_,
-        const std::shared_ptr<Integrator1D> itg_)
+        std::shared_ptr<Integrator1D> itg_)
       : x(x_),
         Theta(Theta_),
         mu(mu_),
@@ -271,7 +271,7 @@ public:
             const double &ssfHF_,
             const double &slfc_,
             const double &OmegaMax_,
-            const std::shared_ptr<Integrator1D> itg_)
+            std::shared_ptr<Integrator1D> itg_)
       : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
         OmegaMax(OmegaMax_),
         itg(itg_) {}

@@ -277,11 +277,14 @@ void QstlsCSR::computeAdr() {
 }
 
 double QstlsCSR::getQAdder() const {
-  Integrator1D itg1(ItgType::DEFAULT, in.getIntError());
-  Integrator2D itg2(ItgType::DEFAULT, ItgType::DEFAULT, in.getIntError());
+  const shared_ptr<Integrator1D> itg1 =
+      make_shared<Integrator1D>(ItgType::DEFAULT, in.getIntError());
+  const shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(
+      ItgType::DEFAULT, ItgType::DEFAULT, in.getIntError());
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
-  const Interpolator1D ssfItp(wvg, ssf);
+  const shared_ptr<Interpolator1D> ssfItp =
+      make_shared<Interpolator1D>(wvg, ssf);
   QAdder QTmp(in.getDegeneracy(),
               mu,
               wvg.front(),
@@ -298,7 +301,7 @@ double QstlsCSR::getQAdder() const {
 // -----------------------------------------------------------------
 
 // SSF interpolation
-double QAdder::ssf(const double &y) const { return interp.eval(y); }
+double QAdder::ssf(const double &y) const { return interp->eval(y); }
 
 // Denominator integrand
 double QAdder::integrandDenominator(const double y) const {
@@ -308,7 +311,7 @@ double QAdder::integrandDenominator(const double y) const {
 
 // Numerator integrand1
 double QAdder::integrandNumerator1(const double q) const {
-  const double w = itg2.getX();
+  const double w = itg2->getX();
   if (q == 0.0) { return 0.0; };
   double w2 = w * w;
   double q2 = q * q;
@@ -326,8 +329,8 @@ double QAdder::integrandNumerator2(const double w) const {
 // Denominator integral
 void QAdder::getIntDenominator(double &res) const {
   auto func = [&](double y) -> double { return integrandDenominator(y); };
-  itg1.compute(func, ItgParam(limits.first, limits.second));
-  res = itg1.getSolution();
+  itg1->compute(func, ItgParam(limits.first, limits.second));
+  res = itg1->getSolution();
 }
 
 // Get total QAdder
@@ -340,10 +343,10 @@ double QAdder::get() const {
   auto func2 = [&](const double &q) -> double {
     return integrandNumerator1(q);
   };
-  itg2.compute(
+  itg2->compute(
       func1,
       func2,
       Itg2DParam(limits.first, limits.second, limits.first, limits.second),
       itgGrid);
-  return 12.0 / (M_PI * lambda) * itg2.getSolution() / Denominator;
+  return 12.0 / (M_PI * lambda) * itg2->getSolution() / Denominator;
 }
