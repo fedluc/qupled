@@ -389,7 +389,7 @@ void Qstls::computeAdrIet() {
     for (int i = 0; i < nx; ++i) {
       dlfc[i] = (idr(i, l) > 0.0) ? adrOld(i, l) / idr(i, l) : 0;
     }
-    dlfci[l]->reset(wvg[0], dlfc[0], nx);
+    dlfci[l] = std::make_shared<Interpolator1D>(wvg, dlfc);
   }
   // Compute qstls-iet contribution to the adr
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();

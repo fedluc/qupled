@@ -31,7 +31,7 @@ void ESA::computeSlfc() {
   computeSlfcCoefficients();
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double &x = wvg[i];
-    const double AF = activationFunction(x);
+    const double &AF = activationFunction(x);
     slfc[i] = slfcNN(x) * (1.0 - AF) + slfcCoeff.lwl * AF;
   }
 }
