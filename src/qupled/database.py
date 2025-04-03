@@ -5,6 +5,7 @@
 import io
 import json
 import struct
+import blosc2
 from datetime import datetime
 from enum import Enum
 from collections.abc import Callable
@@ -539,7 +540,8 @@ class DataBaseHandler:
         elif isinstance(data, np.ndarray):
             arr_bytes = io.BytesIO()
             np.save(arr_bytes, data)
-            return arr_bytes.getvalue()
+            compressed_arr_bytes = blosc2.compress(arr_bytes.getvalue())
+            return compressed_arr_bytes
         else:
             return None
 
@@ -563,7 +565,8 @@ class DataBaseHandler:
             if len(data) == 8:
                 return struct.unpack("d", data)[0]
             else:
-                arr_bytes = io.BytesIO(data)
+                decompressed_data = blosc2.decompress(data)
+                arr_bytes = io.BytesIO(decompressed_data)
                 return np.load(arr_bytes, allow_pickle=False)
         except Exception:
             return None
