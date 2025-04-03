@@ -42,10 +42,11 @@ class Rpa:
             inputs: Input parameters.
         """
         self.inputs = inputs
+        self.db_handler.insert_run(self.inputs)
         self.inputs.to_native(self.native_inputs)
         scheme = self.native_scheme_cls(self.native_inputs)
         status = scheme.compute()
-        self._check_status_and_clean(status, scheme.recovery)
+        self.db_handler.update_run_status(status)
         self.results.from_native(scheme)
         self._save()
 
@@ -67,31 +68,6 @@ class Rpa:
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid}
             )
 
-    # Check that the dielectric scheme was solved without errors
-    @mpi.MPI.run_only_on_root
-    def _check_status_and_clean(self, status: bool, recovery: str):
-        """
-        Checks the status of a process and performs cleanup if successful.
-
-        Args:
-            status (bool): The status of the process. A value of 0 indicates success.
-            recovery (str): The file path to a recovery file that should be removed
-                            if the process is successful.
-
-        Raises:
-            RuntimeError: If the status is not 0, indicating an error in the process.
-
-        Side Effects:
-            - Removes the recovery file if it exists and the status is 0.
-            - Prints a success message if the status is 0.
-        """
-        if status == 0:
-            if os.path.exists(recovery):
-                os.remove(recovery)
-            print("Dielectric theory solved successfully!")
-        else:
-            raise RuntimeError("Error while solving the dielectric theory")
-
     @mpi.MPI.run_only_on_root
     def _save(self):
         """
@@ -101,7 +77,7 @@ class Rpa:
         it uses the `db_handler` to insert the current run's `inputs` and `results`
         into the database.
         """
-        self.db_handler.insert_run(self.inputs, self.results)
+        self.db_handler.insert_results(self.results.__dict__)
 
 
 class Input:

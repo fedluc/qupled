@@ -22,8 +22,8 @@ def test_get_initial_guess_with_default_database_name(mocker):
     read_run = mocker.patch("qupled.output.DataBase.read_run")
     run_id = mocker.ANY
     read_run.return_value = {
-        DataBaseHandler.INPUTS_TABLE_NAME: {"matsubara": 128},
-        DataBaseHandler.RESULTS_TABLE_NAME: {
+        DataBaseHandler.INPUT_TABLE_NAME: {"matsubara": 128},
+        DataBaseHandler.RESULT_TABLE_NAME: {
             "wvg": np.array([1, 2, 3]),
             "ssf": np.array([4, 5, 6]),
             "adr": np.array([7, 8, 9]),
@@ -42,8 +42,8 @@ def test_get_initial_guess_with_custom_database_name(mocker):
     run_id = mocker.ANY
     database_name = mocker.ANY
     read_run.return_value = {
-        DataBaseHandler.INPUTS_TABLE_NAME: {"matsubara": 128},
-        DataBaseHandler.RESULTS_TABLE_NAME: {
+        DataBaseHandler.INPUT_TABLE_NAME: {"matsubara": 128},
+        DataBaseHandler.RESULT_TABLE_NAME: {
             "wvg": np.array([1, 2, 3]),
             "ssf": np.array([4, 5, 6]),
             "adr": np.array([7, 8, 9]),

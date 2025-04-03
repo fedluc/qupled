@@ -40,46 +40,27 @@ def test_run_id(scheme):
 def test_compute(scheme, inputs, mocker):
     native_scheme = mocker.Mock()
     native_scheme.recovery = "recovery_file"
+    status = native_scheme.compute.return_value
     native_scheme_cls = mocker.patch.object(
         scheme, "native_scheme_cls", return_value=native_scheme
     )
-    check_status_and_clean = mocker.patch.object(scheme, "_check_status_and_clean")
     to_native = mocker.patch("qupled.rpa.Input.to_native")
     from_native = mocker.patch("qupled.rpa.Result.from_native")
     save = mocker.patch.object(scheme, "_save")
     scheme.compute(inputs)
     assert scheme.inputs is not None
+    scheme.db_handler.insert_run.assert_called_once_with(scheme.inputs)
     to_native.assert_called_once_with(scheme.native_inputs)
+    scheme.db_handler.update_run_status.assert_called_once_with(status)
     native_scheme_cls.assert_called_once()
-    check_status_and_clean.assert_called_once_with(
-        native_scheme.compute.return_value, native_scheme.recovery
-    )
     from_native.assert_called_once_with(native_scheme)
     save.assert_called_once()
 
 
-def test_check_status_and_clean_success(scheme, mocker):
-    exists = mocker.patch("os.path.exists")
-    remove = mocker.patch("os.remove")
-    exists.return_value = True
-    scheme._check_status_and_clean(0, "recovery_file")
-    exists.assert_called_once_with("recovery_file")
-    remove.assert_called_once_with("recovery_file")
-
-
-def test_check_status_and_clean_failure(scheme, mocker):
-    exists = mocker.patch("os.path.exists")
-    exists.return_value = False
-    with pytest.raises(RuntimeError):
-        scheme._check_status_and_clean(1, "recovery_file")
-        exists.assert_not_called()
-
-
 def test_save_with_results(scheme, results):
     scheme.results = results
-    scheme.inputs = inputs
     scheme._save()
-    scheme.db_handler.insert_run.assert_called_once_with(scheme.inputs, scheme.results)
+    scheme.db_handler.insert_results.assert_called_once_with(scheme.results.__dict__)
 
 
 def test_compute_rdf_with_default_grid(scheme, results, mocker):

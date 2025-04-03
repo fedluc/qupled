@@ -24,9 +24,9 @@ class DataBaseHandler:
     """
 
     DEFAULT_DATABASE_NAME = "qupled.db"
-    RUNS_TABLE_NAME = "runs"
-    INPUTS_TABLE_NAME = "inputs"
-    RESULTS_TABLE_NAME = "results"
+    RUN_TABLE_NAME = "runs"
+    INPUT_TABLE_NAME = "inputs"
+    RESULT_TABLE_NAME = "results"
 
     class TableKeys(Enum):
         COUPLING = "coupling"
@@ -35,9 +35,20 @@ class DataBaseHandler:
         NAME = "name"
         PRIMARY_KEY = "id"
         RUN_ID = "run_id"
+        STATUS = "status"
         THEORY = "theory"
         TIME = "time"
         VALUE = "value"
+
+    class RunStatus(Enum):
+        RUNNING = "STARTED"
+        SUCCESS = "SUCCESS"
+        FAILED = "FAILED"
+
+    INT_TO_RUN_STATUS = {
+        0: RunStatus.SUCCESS,
+        1: RunStatus.FAILED,
+    }
 
     def __init__(self, database_name: str | None = None):
         """
@@ -69,7 +80,7 @@ class DataBaseHandler:
         self.run_id: int | None = None
 
     @mpi.MPI.run_only_on_root
-    def insert_run(self, inputs, results):
+    def insert_run(self, inputs):
         """
         Inserts a new run into the database by storing the provided inputs and results.
 
@@ -80,9 +91,8 @@ class DataBaseHandler:
                               The attributes of this object will be converted to a dictionary.
 
         """
-        self._insert_run(inputs)
+        self._insert_run(inputs, self.RunStatus.RUNNING)
         self.insert_inputs(inputs.__dict__)
-        self.insert_results(results.__dict__)
 
     @mpi.MPI.run_only_on_root
     def insert_inputs(self, inputs: dict[str, any]):
@@ -142,6 +152,29 @@ class DataBaseHandler:
         rows = self._execute(statement).mappings().all()
         return [{key: row[key] for key in row.keys()} for row in rows]
 
+    def update_run_status(self, status: int) -> None:
+        """
+        Updates the status of a run in the database.
+
+        Args:
+            status (int): The new status code to update the run with. If the status
+                          code is not found in the INT_TO_RUN_STATUS mapping, the
+                          status will default to RunStatus.FAILED.
+
+        Returns:
+            None
+        """
+        if self.run_id is not None:
+            new_status = self.INT_TO_RUN_STATUS.get(status, self.RunStatus.FAILED)
+            statement = (
+                sql.update(self.run_table)
+                .where(
+                    self.run_table.c[self.TableKeys.PRIMARY_KEY.value] == self.run_id
+                )
+                .values({self.TableKeys.STATUS.value: new_status.value})
+            )
+            self._execute(statement)
+
     def get_run(
         self, run_id: int, input_names: list[str] | None, result_names: list[str] | None
     ) -> dict:
@@ -150,18 +183,17 @@ class DataBaseHandler:
 
         Args:
             run_id (int): The unique identifier of the run to retrieve.
-            input_names (list[str] | None): A list of input names to filter the inputs.
-                If None, all inputs associated with the run will be retrieved.
-            result_names (list[str] | None): A list of result names to filter the results.
-                If None, all results associated with the run will be retrieved.
+            input_names (list[str] | None): A list of input names to filter the inputs
+                associated with the run. If None, all inputs are retrieved.
+            result_names (list[str] | None): A list of result names to filter the results
+                associated with the run. If None, all results are retrieved.
 
         Returns:
-            dict: A dictionary containing the run's data, inputs, and results.
-                The structure of the returned dictionary is as follows:
+            dict: A dictionary containing the run's data, inputs, and results. The structure is:
                 {
-                    "runs_table_name": {<run_data>},
-                    "inputs_table_name": [<input_data>],
-                    "results_table_name": [<result_data>]
+                    "RUN_TABLE_NAME": {<run_data>},
+                    "INPUT_TABLE_NAME": [<inputs>],
+                    "RESULT_TABLE_NAME": [<results>]
                 If the run is not found, an empty dictionary is returned.
         """
         statement = sql.select(self.run_table).where(
@@ -173,9 +205,9 @@ class DataBaseHandler:
             inputs = self.get_inputs(run_id, names=input_names)
             results = self.get_results(run_id, names=result_names)
             return {
-                self.RUNS_TABLE_NAME: run_data,
-                self.INPUTS_TABLE_NAME: inputs,
-                self.RESULTS_TABLE_NAME: results,
+                self.RUN_TABLE_NAME: run_data,
+                self.INPUT_TABLE_NAME: inputs,
+                self.RESULT_TABLE_NAME: results,
             }
         else:
             return {}
@@ -227,25 +259,27 @@ class DataBaseHandler:
 
     def _build_run_table(self):
         """
-        Constructs and creates the "runs" table in the database.
+        Builds the SQLAlchemy table object for the "runs" table in the database.
 
-        This method defines the structure of the "runs" table using SQLAlchemy's
-        Table and Column objects. The table includes the following columns:
-            - PRIMARY_KEY: An auto-incrementing integer that serves as the primary key.
-            - THEORY: A JSON column to store theory-related data (non-nullable).
-            - COUPLING: A JSON column to store coupling-related data (non-nullable).
-            - DEGENERACY: A JSON column to store degeneracy-related data (non-nullable).
-            - DATE: A JSON column to store date-related data (non-nullable).
-            - TIME: A JSON column to store time-related data (non-nullable).
+        This method defines the schema for the "runs" table, including its columns,
+        data types, constraints, and metadata. The table includes the following columns:
 
-        After defining the table structure, it is created in the database engine
-        if it does not already exist.
+        - PRIMARY_KEY: An auto-incrementing integer that serves as the primary key.
+        - THEORY: A string representing the theory associated with the run (non-nullable).
+        - COUPLING: A float representing the coupling value (non-nullable).
+        - DEGENERACY: A float representing the degeneracy value (non-nullable).
+        - DATE: A string representing the date of the run (non-nullable).
+        - TIME: A string representing the time of the run (non-nullable).
+        - STATUS: A string representing the status of the run (non-nullable).
+
+        After defining the table schema, the method creates the table in the database
+        using the `_create_table` method.
 
         Returns:
-            sqlalchemy.Table: The constructed "runs" table object.
+            sqlalchemy.Table: The constructed SQLAlchemy table object for the "runs" table.
         """
         table = sql.Table(
-            self.RUNS_TABLE_NAME,
+            self.RUN_TABLE_NAME,
             self.table_metadata,
             sql.Column(
                 self.TableKeys.PRIMARY_KEY.value,
@@ -255,29 +289,30 @@ class DataBaseHandler:
             ),
             sql.Column(
                 self.TableKeys.THEORY.value,
-                sql.JSON,
+                sql.String,
                 nullable=False,
             ),
             sql.Column(
                 self.TableKeys.COUPLING.value,
-                sql.JSON,
+                sql.Float,
                 nullable=False,
             ),
             sql.Column(
                 self.TableKeys.DEGENERACY.value,
-                sql.JSON,
+                sql.Float,
                 nullable=False,
             ),
             sql.Column(
                 self.TableKeys.DATE.value,
-                sql.JSON,
+                sql.String,
                 nullable=False,
             ),
             sql.Column(
                 self.TableKeys.TIME.value,
-                sql.JSON,
+                sql.String,
                 nullable=False,
             ),
+            sql.Column(self.TableKeys.STATUS.value, sql.String, nullable=False),
         )
         self._create_table(table)
         return table
@@ -292,7 +327,7 @@ class DataBaseHandler:
         Returns:
             sql.Table: The SQLAlchemy Table object representing the inputs table.
         """
-        return self._build_data_table(self.INPUTS_TABLE_NAME, sql.JSON)
+        return self._build_data_table(self.INPUT_TABLE_NAME, sql.JSON)
 
     def _build_results_table(self) -> sql.Table:
         """
@@ -305,7 +340,7 @@ class DataBaseHandler:
         Returns:
             sql.Table: The constructed results table.
         """
-        return self._build_data_table(self.RESULTS_TABLE_NAME, sql.LargeBinary)
+        return self._build_data_table(self.RESULT_TABLE_NAME, sql.LargeBinary)
 
     def _build_data_table(self, table_name, sql_data_type) -> sql.Table:
         """
@@ -337,7 +372,7 @@ class DataBaseHandler:
                 self.TableKeys.RUN_ID.value,
                 sql.Integer,
                 sql.ForeignKey(
-                    f"{self.RUNS_TABLE_NAME}.{self.TableKeys.PRIMARY_KEY.value}",
+                    f"{self.RUN_TABLE_NAME}.{self.TableKeys.PRIMARY_KEY.value}",
                     ondelete="CASCADE",
                 ),
                 nullable=False,
@@ -365,7 +400,7 @@ class DataBaseHandler:
         table.create(self.engine, checkfirst=True)
 
     @mpi.MPI.run_only_on_root
-    def _insert_run(self, inputs: any):
+    def _insert_run(self, inputs: any, status: RunStatus):
         """
         Inserts a new run entry into the database.
 
@@ -385,11 +420,12 @@ class DataBaseHandler:
         """
         now = datetime.now()
         data = {
-            self.TableKeys.THEORY.value: self._to_json(inputs.theory),
-            self.TableKeys.COUPLING.value: self._to_json(inputs.coupling),
-            self.TableKeys.DEGENERACY.value: self._to_json(inputs.degeneracy),
+            self.TableKeys.THEORY.value: inputs.theory,
+            self.TableKeys.COUPLING.value: inputs.coupling,
+            self.TableKeys.DEGENERACY.value: inputs.degeneracy,
             self.TableKeys.DATE.value: now.date().isoformat(),
             self.TableKeys.TIME.value: now.time().isoformat(),
+            self.TableKeys.STATUS.value: status.value,
         }
         statement = sql.insert(self.run_table).values(data)
         result = self._execute(statement)

@@ -4,6 +4,7 @@ import json
 import os
 import struct
 
+import blosc2
 import numpy as np
 import pytest
 import sqlalchemy as sql
@@ -28,9 +29,9 @@ def test_database_handler_initialization_with_default_name(db_handler):
     assert db_handler.run_id is None
     inspector = inspect(db_handler.engine)
     assert set(inspector.get_table_names()) == {
-        DataBaseHandler.RUNS_TABLE_NAME,
-        DataBaseHandler.INPUTS_TABLE_NAME,
-        DataBaseHandler.RESULTS_TABLE_NAME,
+        DataBaseHandler.RUN_TABLE_NAME,
+        DataBaseHandler.INPUT_TABLE_NAME,
+        DataBaseHandler.RESULT_TABLE_NAME,
     }
 
 
@@ -42,13 +43,17 @@ def test_database_handler_initialization_with_custom_name():
     assert db_handler.run_id is None
     inspector = inspect(db_handler.engine)
     assert set(inspector.get_table_names()) == {
-        DataBaseHandler.RUNS_TABLE_NAME,
-        DataBaseHandler.INPUTS_TABLE_NAME,
-        DataBaseHandler.RESULTS_TABLE_NAME,
+        DataBaseHandler.RUN_TABLE_NAME,
+        DataBaseHandler.INPUT_TABLE_NAME,
+        DataBaseHandler.RESULT_TABLE_NAME,
     }
     if os.path.exists(db_handler.database_name):
         os.remove(db_handler.database_name)
 
+def test_int_to_run_status_mapping():
+    assert DataBaseHandler.INT_TO_RUN_STATUS[0] == DataBaseHandler.RunStatus.SUCCESS
+    assert DataBaseHandler.INT_TO_RUN_STATUS[1] == DataBaseHandler.RunStatus.FAILED
+    assert len(DataBaseHandler.INT_TO_RUN_STATUS) == 2
 
 def test_set_sqlite_pragma_valid_engine():
     engine = sql.create_engine("sqlite:///:memory:")
@@ -67,13 +72,10 @@ def test_set_sqlite_pragma_invalid_engine():
 def test_insert_run(mocker, db_handler):
     insert_run = mocker.patch.object(db_handler, "_insert_run")
     insert_inputs = mocker.patch.object(db_handler, "insert_inputs")
-    insert_results = mocker.patch.object(db_handler, "insert_results")
     inputs = mocker.ANY
-    results = mocker.ANY
-    db_handler.insert_run(inputs, results)
-    insert_run.assert_called_once_with(inputs)
+    db_handler.insert_run(inputs)
+    insert_run.assert_called_once_with(inputs, DataBaseHandler.RunStatus.RUNNING)
     insert_inputs.assert_called_once_with(inputs.__dict__)
-    insert_results.assert_called_once_with(results.__dict__)
 
 
 def test_insert_inputs(mocker, db_handler):
@@ -132,6 +134,44 @@ def test_inspect_runs(mocker, db_handler):
     mock_result.mappings.return_value.all.assert_called_once()
     assert runs == mock_runs
 
+def test_update_run_status_with_valid_status(mocker, db_handler):
+    db_handler.run_id = 1
+    status = 0
+    new_status = DataBaseHandler.RunStatus.SUCCESS
+    sql_update = mocker.patch("sqlalchemy.update")
+    statement = sql_update.return_value.where.return_value.values.return_value
+    execute = mocker.patch.object(db_handler, "_execute")
+    db_handler.update_run_status(status)
+    sql_update.assert_called_once_with(db_handler.run_table)
+    sql_update.return_value.where.return_value.values.assert_called_once_with(
+        {DataBaseHandler.TableKeys.STATUS.value: new_status.value}
+    )
+    execute.assert_called_once_with(statement)
+
+
+def test_update_run_status_with_invalid_status(mocker, db_handler):
+    db_handler.run_id = 1
+    status = 999
+    new_status = DataBaseHandler.RunStatus.FAILED
+    sql_update = mocker.patch("sqlalchemy.update")
+    statement = sql_update.return_value.where.return_value.values.return_value
+    execute = mocker.patch.object(db_handler, "_execute")
+    db_handler.update_run_status(status)
+    sql_update.assert_called_once_with(db_handler.run_table)
+    sql_update.return_value.where.return_value.values.assert_called_once_with(
+        {DataBaseHandler.TableKeys.STATUS.value: new_status.value}
+    )
+    execute.assert_called_once_with(statement)
+
+
+def test_update_run_status_without_run_id(mocker, db_handler):
+    db_handler.run_id = None
+    status = 0
+    sql_update = mocker.patch("sqlalchemy.update")
+    execute = mocker.patch.object(db_handler, "_execute")
+    db_handler.update_run_status(status)
+    sql_update.assert_not_called()
+    execute.assert_not_called()
 
 def test_get_run_with_existing_run(mocker, db_handler):
     run_id = 1
@@ -152,9 +192,9 @@ def test_get_run_with_existing_run(mocker, db_handler):
     execute.assert_called_once_with(statement)
     mock_result.mappings.return_value.first.assert_called_once()
     assert run == {
-        DataBaseHandler.RUNS_TABLE_NAME: {"key": "value"},
-        DataBaseHandler.INPUTS_TABLE_NAME: inputs,
-        DataBaseHandler.RESULTS_TABLE_NAME: results,
+        DataBaseHandler.RUN_TABLE_NAME: {"key": "value"},
+        DataBaseHandler.INPUT_TABLE_NAME: inputs,
+        DataBaseHandler.RESULT_TABLE_NAME: results,
     }
 
 
@@ -235,6 +275,7 @@ def test_build_run_table_columns(db_handler):
         DataBaseHandler.TableKeys.DEGENERACY.value,
         DataBaseHandler.TableKeys.DATE.value,
         DataBaseHandler.TableKeys.TIME.value,
+        DataBaseHandler.TableKeys.STATUS.value,
     }
     assert columns == expected_columns
 
@@ -250,13 +291,14 @@ def test_build_run_table_column_types(db_handler):
     assert isinstance(
         table.c[DataBaseHandler.TableKeys.PRIMARY_KEY.value].type, sql.Integer
     )
-    assert isinstance(table.c[DataBaseHandler.TableKeys.THEORY.value].type, sql.JSON)
-    assert isinstance(table.c[DataBaseHandler.TableKeys.COUPLING.value].type, sql.JSON)
+    assert isinstance(table.c[DataBaseHandler.TableKeys.THEORY.value].type, sql.String)
+    assert isinstance(table.c[DataBaseHandler.TableKeys.COUPLING.value].type, sql.Float)
     assert isinstance(
-        table.c[DataBaseHandler.TableKeys.DEGENERACY.value].type, sql.JSON
+        table.c[DataBaseHandler.TableKeys.DEGENERACY.value].type, sql.Float
     )
-    assert isinstance(table.c[DataBaseHandler.TableKeys.DATE.value].type, sql.JSON)
-    assert isinstance(table.c[DataBaseHandler.TableKeys.TIME.value].type, sql.JSON)
+    assert isinstance(table.c[DataBaseHandler.TableKeys.DATE.value].type, sql.String)
+    assert isinstance(table.c[DataBaseHandler.TableKeys.TIME.value].type, sql.String)
+    assert isinstance(table.c[DataBaseHandler.TableKeys.STATUS.value].type, sql.String)
 
 
 def test_build_inputs_table_columns(db_handler):
@@ -318,32 +360,20 @@ def test_build_results_table_column_types(db_handler):
 def test_insert_run(mocker, db_handler):
     run_id = 42
     fixed_now = datetime.datetime(2023, 1, 1, 12, 0, 0)
-    theory = "theory"
-    coupling = 1.0
-    degeneracy = 1.0
     mock_datetime = mocker.patch("qupled.database.datetime")
     mock_datetime.now.return_value = fixed_now
     mock_datetime.side_effect = lambda *args, **kwargs: datetime.datetime(
         *args, **kwargs
     )
-    mocker.patch.object(db_handler, "_to_json", side_effect=lambda x: f"to_json({x})")
     inputs = mocker.Mock()
-    inputs.theory = theory
-    inputs.coupling = coupling
-    inputs.degeneracy = degeneracy
-    data = {
-        db_handler.TableKeys.THEORY.value: f"to_json({theory})",
-        db_handler.TableKeys.COUPLING.value: f"to_json({coupling})",
-        db_handler.TableKeys.DEGENERACY.value: f"to_json({degeneracy})",
-        db_handler.TableKeys.DATE.value: fixed_now.date().isoformat(),
-        db_handler.TableKeys.TIME.value: fixed_now.time().isoformat(),
-    }
+    status = mocker.Mock()
+    data = mocker.ANY
     sql_insert = mocker.patch("sqlalchemy.insert")
     statement = sql_insert.return_value.values.return_value
     result = mocker.Mock()
     execute = mocker.patch.object(db_handler, "_execute", return_value=result)
     result.inserted_primary_key = [run_id]
-    db_handler._insert_run(inputs)
+    db_handler._insert_run(inputs, status)
     mock_datetime.now.assert_called_once()
     sql_insert.assert_called_once_with(db_handler.run_table)
     sql_insert.return_value.values.assert_called_once_with(data)
@@ -456,8 +486,9 @@ def test_to_bytes_with_numpy_array(db_handler):
     array = np.array([1.0, 2.0, 3.0])
     result = db_handler._to_bytes(array)
     assert isinstance(result, bytes)
-    loaded = np.load(io.BytesIO(result), allow_pickle=False)
-    np.testing.assert_array_equal(loaded, array)
+    decompressed_result = blosc2.decompress(result)
+    loaded = np.load(io.BytesIO(decompressed_result), allow_pickle=False)
+    assert np.array_equal(loaded, array)
 
 
 def test_to_bytes_with_invalid_type(db_handler):
@@ -474,7 +505,8 @@ def test_from_bytes_with_numpy_bytes(db_handler):
     array = np.array([[1, 2], [3, 4]])
     arr_bytes = io.BytesIO()
     np.save(arr_bytes, array)
-    result = db_handler._from_bytes(arr_bytes.getvalue())
+    compressed_arr_bytes = blosc2.compress(arr_bytes.getvalue())
+    result = db_handler._from_bytes(compressed_arr_bytes)
     np.testing.assert_array_equal(result, array)
 
 
@@ -528,25 +560,44 @@ def db_results():
     yield results
 
 
-def test_insert_run_and_get_run(db_handler, db_inputs, db_results):
-    db_handler.insert_run(db_inputs, db_results)
+def test_insert_run_and_get_run_without_results(db_handler, db_inputs, db_results):
+    db_handler.insert_run(db_inputs)
     run_data = db_handler.get_run(db_handler.run_id, None, None)
-    run = run_data[DataBaseHandler.RUNS_TABLE_NAME]
-    inputs = run_data[DataBaseHandler.INPUTS_TABLE_NAME]
-    results = run_data[DataBaseHandler.RESULTS_TABLE_NAME]
-    assert json.loads(run["theory"]) == db_inputs.theory
-    assert json.loads(run["coupling"]) == db_inputs.coupling
-    assert json.loads(run["degeneracy"]) == db_inputs.degeneracy
+    run = run_data[DataBaseHandler.RUN_TABLE_NAME]
+    inputs = run_data[DataBaseHandler.INPUT_TABLE_NAME]
+    results = run_data[DataBaseHandler.RESULT_TABLE_NAME]
+    assert run["theory"] == db_inputs.theory
+    assert run["coupling"] == db_inputs.coupling
+    assert run["degeneracy"] == db_inputs.degeneracy
     assert isinstance(run["date"], str)
     assert isinstance(run["time"], str)
+    assert inputs["theory"] == db_inputs.theory
+    assert inputs["coupling"] == db_inputs.coupling
+    assert inputs["degeneracy"] == db_inputs.degeneracy
+    assert results == {}
+
+
+def test_insert_run_and_get_run_with_results(db_handler, db_inputs, db_results):
+    db_handler.insert_run(db_inputs)
+    db_handler.insert_results(db_results.__dict__)
+    run_data = db_handler.get_run(db_handler.run_id, None, None)
+    run = run_data[DataBaseHandler.RUN_TABLE_NAME]
+    inputs = run_data[DataBaseHandler.INPUT_TABLE_NAME]
+    results = run_data[DataBaseHandler.RESULT_TABLE_NAME]
+    assert run["theory"] == db_inputs.theory
+    assert run["coupling"] == db_inputs.coupling
+    assert run["degeneracy"] == db_inputs.degeneracy
+    assert isinstance(run["date"], str)
+    assert isinstance(run["time"], str)
+    assert run["status"] == DataBaseHandler.RunStatus.RUNNING.value
     assert inputs["theory"] == db_inputs.theory
     assert inputs["coupling"] == db_inputs.coupling
     assert inputs["degeneracy"] == db_inputs.degeneracy
     assert (results["data"] == db_results.data).all()
 
 
-def test_insert_run_and_get_inputs(db_handler, db_inputs, db_results):
-    db_handler.insert_run(db_inputs, db_results)
+def test_insert_run_and_get_inputs(db_handler, db_inputs):
+    db_handler.insert_run(db_inputs)
     inputs = db_handler.get_inputs(db_handler.run_id, None)
     assert inputs["theory"] == db_inputs.theory
     assert inputs["coupling"] == db_inputs.coupling
@@ -554,7 +605,8 @@ def test_insert_run_and_get_inputs(db_handler, db_inputs, db_results):
 
 
 def test_insert_run_and_get_results(db_handler, db_inputs, db_results):
-    db_handler.insert_run(db_inputs, db_results)
+    db_handler.insert_run(db_inputs)
+    db_handler.insert_results(db_results.__dict__)
     results = db_handler.get_results(db_handler.run_id, None)
     assert (results["data"] == db_results.data).all()
 
@@ -571,8 +623,8 @@ def test_insert_results_without_run(db_handler, db_results):
     assert results == {}
 
 
-def test_update_inputs(db_handler, db_inputs, db_results):
-    db_handler.insert_run(db_inputs, db_results)
+def test_update_inputs(db_handler, db_inputs):
+    db_handler.insert_run(db_inputs)
     new_theory = "new_theory"
     db_inputs.theory = new_theory
     db_handler.insert_inputs(db_inputs.__dict__)
@@ -581,7 +633,7 @@ def test_update_inputs(db_handler, db_inputs, db_results):
 
 
 def test_update_results(db_handler, db_inputs, db_results):
-    db_handler.insert_run(db_inputs, db_results)
+    db_handler.insert_run(db_inputs)
     new_data = db_results.data + np.ones(db_results.data.shape)
     db_results.data = new_data
     db_handler.insert_results(db_results.__dict__)
@@ -589,26 +641,27 @@ def test_update_results(db_handler, db_inputs, db_results):
     assert (results["data"] == new_data).all()
 
 
-def test_get_non_existing_run(db_handler, db_inputs, db_results):
-    db_handler.insert_run(db_inputs, db_results)
+def test_get_non_existing_run(db_handler, db_inputs):
+    db_handler.insert_run(db_inputs)
     run_data = db_handler.get_run(db_handler.run_id + 1, None, None)
     assert run_data == {}
 
 
-def test_get_non_existing_inputs(db_handler, db_inputs, db_results):
-    db_handler.insert_run(db_inputs, db_results)
+def test_get_non_existing_inputs(db_handler, db_inputs):
+    db_handler.insert_run(db_inputs)
     inputs = db_handler.get_inputs(db_handler.run_id + 1, None)
     assert inputs == {}
 
 
-def test_get_non_existing_results(db_handler, db_inputs, db_results):
-    db_handler.insert_run(db_inputs, db_results)
+def test_get_non_existing_results(db_handler, db_inputs):
+    db_handler.insert_run(db_inputs)
     results = db_handler.get_results(db_handler.run_id + 1, None)
     assert results == {}
 
 
-def test_insert_run_and_delete_run(db_handler, db_inputs, db_results):
-    db_handler.insert_run(db_inputs, db_results)
+def test_insert_run_with_results_and_delete_run(db_handler, db_inputs, db_results):
+    db_handler.insert_run(db_inputs)
+    db_handler.insert_results(db_results.__dict__)
     run_data = db_handler.get_run(db_handler.run_id, None, None)
     assert run_data != {}
     db_handler.delete_run(db_handler.run_id)

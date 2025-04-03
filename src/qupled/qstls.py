@@ -38,8 +38,8 @@ class Qstls(stls.Stls):
         data = output.DataBase.read_run(
             run_id, database_name, input_names, result_names
         )
-        inputs = data[database.DataBaseHandler.INPUTS_TABLE_NAME]
-        results = data[database.DataBaseHandler.RESULTS_TABLE_NAME]
+        inputs = data[database.DataBaseHandler.INPUT_TABLE_NAME]
+        results = data[database.DataBaseHandler.RESULT_TABLE_NAME]
         return Guess(
             results[result_names[0]],
             results[result_names[1]],
