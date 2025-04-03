@@ -50,10 +50,12 @@ def test_database_handler_initialization_with_custom_name():
     if os.path.exists(db_handler.database_name):
         os.remove(db_handler.database_name)
 
+
 def test_int_to_run_status_mapping():
     assert DataBaseHandler.INT_TO_RUN_STATUS[0] == DataBaseHandler.RunStatus.SUCCESS
     assert DataBaseHandler.INT_TO_RUN_STATUS[1] == DataBaseHandler.RunStatus.FAILED
     assert len(DataBaseHandler.INT_TO_RUN_STATUS) == 2
+
 
 def test_set_sqlite_pragma_valid_engine():
     engine = sql.create_engine("sqlite:///:memory:")
@@ -134,6 +136,7 @@ def test_inspect_runs(mocker, db_handler):
     mock_result.mappings.return_value.all.assert_called_once()
     assert runs == mock_runs
 
+
 def test_update_run_status_with_valid_status(mocker, db_handler):
     db_handler.run_id = 1
     status = 0
@@ -172,6 +175,7 @@ def test_update_run_status_without_run_id(mocker, db_handler):
     db_handler.update_run_status(status)
     sql_update.assert_not_called()
     execute.assert_not_called()
+
 
 def test_get_run_with_existing_run(mocker, db_handler):
     run_id = 1
