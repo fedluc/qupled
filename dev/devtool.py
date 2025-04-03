@@ -123,6 +123,8 @@ def install_dependencies():
                     "openmpi",
                     "fmt",
                     "boost-python3",
+                    "sqlite",
+                    "sqlitecpp",
                 ],
                 check=True,
             )

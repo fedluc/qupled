@@ -230,7 +230,7 @@ void RpaInput::print() const {
   Input::print();
   string muString;
   if (!muGuess.empty()) {
-    muString = fmt::format("{%.3f}, {%.3f}", muGuess.at(0), muGuess.at(1));
+    muString = fmt::format("{:.3f}, {:.3f}", muGuess.at(0), muGuess.at(1));
   }
   cout << "Guess for chemical potential = " << muString << endl;
   cout << "Number of Matsubara frequencies = " << nl << endl;
@@ -333,7 +333,7 @@ void VSInput::print() const {
   string alphaString;
   if (!alphaGuess.empty()) {
     alphaString =
-        fmt::format("{%.3f}, {%.3f}", alphaGuess.at(0), alphaGuess.at(1));
+        fmt::format("{:.3f}, {:.3f}", alphaGuess.at(0), alphaGuess.at(1));
   }
   cout << "Guess for the free parameter = " << alphaString << endl;
   cout << "Resolution for the coupling parameter grid = " << drs << endl;

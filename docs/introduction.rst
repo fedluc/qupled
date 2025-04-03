@@ -60,7 +60,7 @@ For macOS they can be installed directly from homebrew
 
 .. code-block:: console
 
-   brew install cmake gsl libomp openmpi fmt boost-python3
+   brew install cmake gsl libomp openmpi fmt boost-python3 sqlite sqlitecpp
 
 Install with pip
 ~~~~~~~~~~~~~~~~

@@ -7,8 +7,8 @@ project(native LANGUAGES CXX)
 # Setup python environment
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(Boost
-	     COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
-	     COMPONENTS numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED)
+		COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
+		COMPONENTS numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED)
 
 
 # Setup MPI environment
@@ -25,38 +25,39 @@ endif()
 find_package(OpenMP REQUIRED)
 find_package(GSL REQUIRED)
 find_package(fmt REQUIRED)
-
+find_package(SQLite3 REQUIRED)
+find_package(SQLiteCpp REQUIRED)
 
 # Set compiler flags
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 
 # Source code
 Python3_add_library(native MODULE
-		    logger.cpp
-		    numerics.cpp
-		    vector2D.cpp
-		    vector3D.cpp
-		    internal_energy.cpp
-		    free_energy.cpp
-		    rdf.cpp
-		    mpi_util.cpp
-		    num_util.cpp
-		    vector_util.cpp
-		    thermo_util.cpp	
-		    input.cpp
-		    chemical_potential.cpp
-		    rpa.cpp
-		    esa.cpp
-		    stls.cpp
-		    qstls.cpp
-		    vsbase.cpp
-		    vsstls.cpp
-		    qvs.cpp
-		    python_util.cpp
-		    python_wrappers.cpp
-		    python_modules.cpp)
+		logger.cpp
+		numerics.cpp
+		vector2D.cpp
+		vector3D.cpp
+		internal_energy.cpp
+		free_energy.cpp
+		rdf.cpp
+		mpi_util.cpp
+		num_util.cpp
+		vector_util.cpp
+		thermo_util.cpp	
+		input.cpp
+		chemical_potential.cpp
+		rpa.cpp
+		esa.cpp
+		stls.cpp
+		qstls.cpp
+		vsbase.cpp
+		vsstls.cpp
+		qvs.cpp
+		python_util.cpp
+		python_wrappers.cpp
+		python_modules.cpp)
 
 
 # Include directories
@@ -66,17 +67,18 @@ target_include_directories(native PUBLIC
 
 # Link external libraries
 if(USE_MPI)
-    target_link_libraries(native PUBLIC
-			  MPI::MPI_CXX)
+    target_link_libraries(native PUBLIC MPI::MPI_CXX)
 endif()
 target_link_libraries(native PUBLIC
-		      OpenMP::OpenMP_CXX
-		      Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}
-		      Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}
-		      GSL::gsl
-		      GSL::gslcblas
-		      fmt::fmt)
+		OpenMP::OpenMP_CXX
+		Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}
+		Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}
+		GSL::gsl
+		GSL::gslcblas
+		fmt::fmt
+		SQLiteCpp 
+		SQLite::SQLite3)
 
 # Install
 install(TARGETS native
-	DESTINATION .)
+		DESTINATION .)
