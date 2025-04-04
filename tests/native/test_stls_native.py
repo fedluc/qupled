@@ -36,21 +36,15 @@ def test_stls_compute():
     inputs.output_frequency = 10
     scheme = Stls(inputs)
     scheme.compute()
-    try:
-        nx = scheme.wvg.size
-        assert nx >= 3
-        assert scheme.idr.shape[0] == nx
-        assert scheme.idr.shape[1] == inputs.matsubara
-        assert scheme.sdr.size == nx
-        assert scheme.slfc.size == nx
-        assert scheme.ssf.size == nx
-        assert scheme.ssf_HF.size == nx
-        assert scheme.recovery == "recovery_rs1.000_theta1.000_STLS.bin"
-        assert os.path.isfile(scheme.recovery)
-        assert scheme.rdf(scheme.wvg).size == nx
-    finally:
-        if os.path.isfile(scheme.recovery):
-            os.remove(scheme.recovery)
+    nx = scheme.wvg.size
+    assert nx >= 3
+    assert scheme.idr.shape[0] == nx
+    assert scheme.idr.shape[1] == inputs.matsubara
+    assert scheme.sdr.size == nx
+    assert scheme.slfc.size == nx
+    assert scheme.ssf.size == nx
+    assert scheme.ssf_HF.size == nx
+    assert scheme.rdf(scheme.wvg).size == nx
 
 
 def test_stls_iet_compute():
@@ -72,19 +66,12 @@ def test_stls_iet_compute():
         inputs.output_frequency = 2
         scheme = Stls(inputs)
         scheme.compute()
-        try:
-            nx = scheme.wvg.size
-            assert nx >= 3
-            assert scheme.idr.shape[0] == nx
-            assert scheme.idr.shape[1] == inputs.matsubara
-            assert scheme.sdr.size == nx
-            assert scheme.slfc.size == nx
-            assert scheme.ssf.size == nx
-            assert scheme.ssf_HF.size == nx
-            recovery = "recovery_rs10.000_theta1.000_" + scheme_name + ".bin"
-            assert scheme.recovery == recovery
-            assert os.path.isfile(scheme.recovery)
-            assert scheme.rdf(scheme.wvg).size == nx
-        finally:
-            if os.path.isfile(scheme.recovery):
-                os.remove(scheme.recovery)
+        nx = scheme.wvg.size
+        assert nx >= 3
+        assert scheme.idr.shape[0] == nx
+        assert scheme.idr.shape[1] == inputs.matsubara
+        assert scheme.sdr.size == nx
+        assert scheme.slfc.size == nx
+        assert scheme.ssf.size == nx
+        assert scheme.ssf_HF.size == nx
+        assert scheme.rdf(scheme.wvg).size == nx

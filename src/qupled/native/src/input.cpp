@@ -70,25 +70,6 @@ void Input::setNThreads(const int &nThreads) {
   this->nThreads = nThreads;
 }
 
-void Input::print() const {
-  if (!isRoot()) { return; }
-  cout << "Coupling parameter = " << rs << endl;
-  cout << "Degeneracy parameter = " << Theta << endl;
-  cout << "Number of OMP threads = " << nThreads << endl;
-  cout << "Scheme for 2D integrals = " << int2DScheme << endl;
-  cout << "Integral relative error = " << intError << endl;
-  cout << "Theory to be solved = " << theory << endl;
-  cout << "Database name = " << databaseName << endl;
-  cout << "Database run id = " << databaseRunId << endl;
-}
-
-bool Input::isEqual(const Input &in) const {
-  return (int2DScheme == in.int2DScheme && nThreads == in.nThreads
-          && rs == in.rs && theory == in.theory && Theta == in.Theta
-          && intError == in.intError && databaseName == in.databaseName
-          && databaseRunId == in.databaseRunId);
-}
-
 // -----------------------------------------------------------------
 // IterationInput class
 // -----------------------------------------------------------------
@@ -119,19 +100,6 @@ void IterationInput::setOutIter(const int &outIter) {
   this->outIter = outIter;
 }
 
-void IterationInput::print() const {
-  if (!isRoot()) { return; }
-  cout << "Maximum number of iterations = " << nIter << endl;
-  cout << "Minimum error for convergence = " << errMin << endl;
-  cout << "Mixing parameter = " << aMix << endl;
-  cout << "Output frequency = " << outIter << endl;
-}
-
-bool IterationInput::isEqual(const IterationInput &in) const {
-  return (aMix == in.aMix && errMin == in.errMin && nIter == in.nIter
-          && outIter == in.outIter);
-}
-
 // -----------------------------------------------------------------
 // ClassicInput class
 // -----------------------------------------------------------------
@@ -149,15 +117,6 @@ void ClassicInput::setGuess(const Guess &guess) {
     throwError("The initial guess is inconsistent");
   }
   this->guess = guess;
-}
-
-void ClassicInput::print() const {
-  if (!isRoot()) { return; }
-  cout << "Iet mapping scheme = " << IETMapping << endl;
-}
-
-bool ClassicInput::isEqual(const ClassicInput &in) const {
-  return (IETMapping == in.IETMapping && guess == in.guess);
 }
 
 // -----------------------------------------------------------------
@@ -180,16 +139,6 @@ void QuantumInput::setGuess(const Guess &guess) {
                                && guess.adr.size(1) == adrCols;
   if (!consistentGuess) { throwError("The initial guess is inconsistent"); }
   this->guess = guess;
-}
-
-void QuantumInput::print() const {
-  if (!isRoot()) { return; }
-  cout << "File with fixed adr component = " << fixed << endl;
-  cout << "File with fixed adr component (iet) = " << fixedIet << endl;
-}
-
-bool QuantumInput::isEqual(const QuantumInput &in) const {
-  return (fixed == in.fixed && fixedIet == in.fixedIet && guess == in.guess);
 }
 
 // -----------------------------------------------------------------
@@ -229,56 +178,6 @@ void RpaInput::setFrequencyCutoff(const double &OmegaMax) {
     throwError("The frequency cutoff must be larger than zero");
   }
   this->OmegaMax = OmegaMax;
-}
-
-void RpaInput::print() const {
-  if (!isRoot()) { return; }
-  Input::print();
-  string muString;
-  if (!muGuess.empty()) {
-    muString = fmt::format("{:.3f}, {:.3f}", muGuess.at(0), muGuess.at(1));
-  }
-  cout << "Guess for chemical potential = " << muString << endl;
-  cout << "Number of Matsubara frequencies = " << nl << endl;
-  cout << "Wave-vector resolution = " << dx << endl;
-  cout << "Wave-vector cutoff = " << xmax << endl;
-  cout << "Frequency cutoff = " << OmegaMax << endl;
-}
-
-bool RpaInput::isEqual(const RpaInput &in) const {
-  const bool OmegaMaxIsEqual = (Theta == 0.0) ? OmegaMax == in.OmegaMax : true;
-  return (Input::isEqual(in) && dx == in.dx && muGuess == in.muGuess
-          && nl == in.nl && xmax == in.xmax && OmegaMaxIsEqual);
-}
-
-// -----------------------------------------------------------------
-// StlsInput class
-// -----------------------------------------------------------------
-
-void StlsInput::print() const {
-  if (!isRoot()) { return; }
-  RpaInput::print();
-  IterationInput::print();
-  ClassicInput::print();
-}
-
-bool StlsInput::isEqual(const StlsInput &in) const {
-  return (RpaInput::isEqual(in) && IterationInput::isEqual(in)
-          && ClassicInput::isEqual(in));
-}
-
-// -----------------------------------------------------------------
-// QStlsInput class
-// -----------------------------------------------------------------
-
-void QstlsInput::print() const {
-  if (!isRoot()) { return; }
-  StlsInput::print();
-  QuantumInput::print();
-}
-
-bool QstlsInput::isEqual(const QstlsInput &in) const {
-  return (StlsInput::isEqual(in) && QuantumInput::isEqual(in));
 }
 
 // -----------------------------------------------------------------
@@ -332,52 +231,4 @@ void VSInput::setFreeEnergyIntegrand(const FreeEnergyIntegrand &fxcIntegrand) {
     throwError("The free energy integrand is inconsistent");
   }
   this->fxcIntegrand = fxcIntegrand;
-}
-
-void VSInput::print() const {
-  if (!isRoot()) { return; }
-  string alphaString;
-  if (!alphaGuess.empty()) {
-    alphaString =
-        fmt::format("{:.3f}, {:.3f}", alphaGuess.at(0), alphaGuess.at(1));
-  }
-  cout << "Guess for the free parameter = " << alphaString << endl;
-  cout << "Resolution for the coupling parameter grid = " << drs << endl;
-  cout << "Resolution for the degeneracy parameter grid = " << dTheta << endl;
-  cout << "Minimum error for convergence (alpha) = " << errMinAlpha << endl;
-  cout << "Maximum number of iterations (alpha) = " << nIterAlpha << endl;
-}
-
-bool VSInput::isEqual(const VSInput &in) const {
-  return (alphaGuess == in.alphaGuess && drs == in.drs && dTheta == in.dTheta
-          && errMinAlpha == in.errMinAlpha && nIterAlpha == in.nIterAlpha
-          && fxcIntegrand == in.fxcIntegrand);
-}
-
-// -----------------------------------------------------------------
-// VSStlsInput class
-// -----------------------------------------------------------------
-
-void VSStlsInput::print() const {
-  if (!isRoot()) { return; }
-  StlsInput::print();
-  VSInput::print();
-}
-
-bool VSStlsInput::isEqual(const VSStlsInput &in) const {
-  return (VSInput::isEqual(in) && StlsInput::isEqual(in));
-}
-
-// -----------------------------------------------------------------
-// QVSStlsInput class
-// -----------------------------------------------------------------
-
-void QVSStlsInput::print() const {
-  if (!isRoot()) { return; }
-  QstlsInput::print();
-  VSInput::print();
-}
-
-bool QVSStlsInput::isEqual(const QVSStlsInput &in) const {
-  return (VSInput::isEqual(in) && QstlsInput::isEqual(in));
 }

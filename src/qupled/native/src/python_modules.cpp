@@ -57,9 +57,7 @@ BOOST_PYTHON_MODULE(native) {
                     &RpaInput::setWaveVectorGridCutoff)
       .add_property("frequency_cutoff",
                     &RpaInput::getFrequencyCutoff,
-                    &RpaInput::setFrequencyCutoff)
-      .def("print", &RpaInput::print)
-      .def("is_equal", &RpaInput::isEqual);
+                    &RpaInput::setFrequencyCutoff);
 
   // Class for the input of the Stls scheme
   bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
@@ -78,9 +76,7 @@ BOOST_PYTHON_MODULE(native) {
                     &StlsInput::setDatabaseName)
       .add_property("database_run_id",
                     &StlsInput::getDatabaseRunId,
-                    &StlsInput::setDatabaseRunId)
-      .def("print", &StlsInput::print)
-      .def("is_equal", &StlsInput::isEqual);
+                    &StlsInput::setDatabaseRunId);
 
   // Class for the input of the VSStls scheme
   bp::class_<VSInput>("VSInput")
@@ -98,28 +94,17 @@ BOOST_PYTHON_MODULE(native) {
                     &VSInput::setDegeneracyResolution)
       .add_property("free_energy_integrand",
                     &VSInput::getFreeEnergyIntegrand,
-                    &VSInput::setFreeEnergyIntegrand)
-      .def("print", &VSInput::print)
-      .def("is_equal", &VSInput::isEqual);
-
-  // Class for the input of the VSStls scheme
-  bp::class_<VSStlsInput, bp::bases<VSInput, StlsInput>>("VSStlsInput")
-      .def("print", &VSStlsInput::print)
-      .def("is_equal", &VSStlsInput::isEqual);
+                    &VSInput::setFreeEnergyIntegrand);
 
   // Class for the input of the Qstls scheme
   bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
       .add_property("guess", &QstlsInput::getGuess, &QstlsInput::setGuess)
       .add_property("fixed", &QstlsInput::getFixed, &QstlsInput::setFixed)
       .add_property(
-          "fixed_iet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet)
-      .def("print", &QstlsInput::print)
-      .def("is_equal", &QstlsInput::isEqual);
+          "fixed_iet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet);
 
   // Class for the input of the QVSStls scheme
-  bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput")
-      .def("print", &QVSStlsInput::print)
-      .def("is_equal", &QVSStlsInput::isEqual);
+  bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput");
 
   // Class for the initial guess of the Stls scheme
   bp::class_<StlsInput::Guess>("StlsGuess")
