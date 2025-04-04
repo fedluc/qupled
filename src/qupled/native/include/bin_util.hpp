@@ -2,6 +2,7 @@
 #define BIN_UTIL_HPP
 
 #include <fstream>
+#include <sstream>
 
 // -----------------------------------------------------------------
 // Utility functions to manipulate binary files
@@ -55,4 +56,29 @@ namespace binUtil {
 
 } // namespace binUtil
 
+namespace binUtilMemory {
+
+  template <typename T>
+  void writeNum(std::ostringstream &file, const T &num) {
+    file.write(reinterpret_cast<const char *>(&num), sizeof(num));
+  }
+
+  template <typename T>
+  void writeDataToBinary(std::ostringstream &file, const double &data) {
+    writeNum<double>(file, data);
+  }
+
+  template <typename T>
+  void writeDataToBinary(std::ostringstream &file, const int &data) {
+    writeNum<int>(file, data);
+  }
+
+  template <typename T>
+  void writeDataToBinary(std::ostringstream &file, const T &data) {
+    for (auto &el : data) {
+      writeDataToBinary<decltype(el)>(file, el);
+    }
+  }
+
+} // namespace binUtilMemory
 #endif

@@ -31,9 +31,12 @@ public:
         Theta(DEFAULT_DOUBLE),
         nThreads(DEFAULT_INT),
         isClassicTheory(DEFAULT_BOOL),
-        isQuantumTheory(DEFAULT_BOOL) {}
+        isQuantumTheory(DEFAULT_BOOL),
+        databaseRunId(DEFAULT_INT) {}
   // Setters
   void setCoupling(const double &rs);
+  void setDatabaseName(const std::string &databaseName);
+  void setDatabaseRunId(const int &databaseRunId);
   void setDegeneracy(const double &Theta);
   void setInt2DScheme(const std::string &int2DScheme);
   void setIntError(const double &intError);
@@ -41,6 +44,8 @@ public:
   void setTheory(const std::string &theory);
   // Getters
   double getCoupling() const { return rs; }
+  std::string getDatabaseName() const { return databaseName; }
+  int getDatabaseRunId() const { return databaseRunId; }
   double getDegeneracy() const { return Theta; }
   std::string getInt2DScheme() const { return int2DScheme; }
   double getIntError() const { return intError; }
@@ -69,6 +74,10 @@ protected:
   std::string int2DScheme;
   // theory to be solved
   std::string theory;
+  // Name of the database file used to store the results
+  std::string databaseName;
+  // Run id in the database
+  int databaseRunId;
 };
 
 // -----------------------------------------------------------------
@@ -90,13 +99,11 @@ public:
   void setMixingParameter(const double &aMix);
   void setNIter(const int &nIter);
   void setOutIter(const int &outIter);
-  void setRecoveryFileName(const std::string &recoveryFileName);
   // Getters
   double getErrMin() const { return errMin; }
   double getMixingParameter() const { return aMix; }
   int getNIter() const { return nIter; }
   int getOutIter() const { return outIter; }
-  std::string getRecoveryFileName() const { return recoveryFileName; }
   // Print content of the data structure
   void print() const;
   // Compare two StlsInput objects
@@ -112,8 +119,6 @@ protected:
   int nIter;
   // Output frequency
   int outIter;
-  // Name of the file used to store the recovery data
-  std::string recoveryFileName;
 };
 
 // -----------------------------------------------------------------

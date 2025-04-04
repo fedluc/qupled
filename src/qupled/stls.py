@@ -48,8 +48,6 @@ class Input(rpa.Input):
         self.iterations: int = 1000
         """Maximum number of iterations. Default = ``1000``"""
         self.output_frequency: int = 10
-        """Output frequency to write the recovery file. Default = ``10``"""
-        self.recovery_file: str = ""
         """Name of the recovery file. Default = ``""``"""
         self.guess: Guess = Guess()
         """Initial guess. Default = ``stls.Guess()``"""

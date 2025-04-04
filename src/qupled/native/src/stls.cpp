@@ -4,7 +4,9 @@
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "vector_util.hpp"
+#include <SQLiteCpp/SQLiteCpp.h>
 #include <fmt/core.h>
+#include <sstream>
 
 using namespace std;
 using namespace vecUtil;
@@ -197,38 +199,53 @@ void Stls::updateSolution() {
 
 // Recovery files
 void Stls::writeRecovery() {
-  ofstream file;
-  file.open(recoveryFileName, ios::binary);
-  if (!file.is_open()) {
-    throwError("Recovery file " + recoveryFileName + " could not be created.");
-  }
+  ostringstream oss(ios::binary);
   int nx = wvg.size();
-  writeDataToBinary<int>(file, nx);
-  writeDataToBinary<decltype(wvg)>(file, wvg);
-  writeDataToBinary<decltype(slfc)>(file, slfc);
-  file.close();
-  if (!file) {
-    throwError("Error in writing the recovery file " + recoveryFileName);
-  }
+  binUtilMemory::writeDataToBinary<int>(oss, nx);
+  binUtilMemory::writeDataToBinary<decltype(wvg)>(oss, wvg);
+  binUtilMemory::writeDataToBinary<decltype(slfc)>(oss, slfc);
+  string binaryData = oss.str();
+  const string tableName = "recovery";
+  const string runTableName = "runs";
+  SQLite::Database db(in.getDatabaseName(),
+                      SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
+  string create_table_statement = fmt::format(R"(
+                                                CREATE TABLE IF NOT EXISTS {} (
+                                                    run_id INTEGER NOT NULL,
+                                                    name TEXT NOT NULL,
+                                                    value BLOB,
+                                                    PRIMARY KEY (run_id, name),
+                                                    FOREIGN KEY (run_id) REFERENCES {}(id) ON DELETE CASCADE
+                                                );
+                                              )",
+                                              tableName,
+                                              runTableName);
+  db.exec(create_table_statement);
+  string insert_statement = fmt::format(
+      "INSERT INTO {} (run_id, name, value) VALUES (?, ?, ?);", tableName);
+  SQLite::Statement insert(db, insert_statement);
+  insert.bind(1, in.getDatabaseRunId());
+  insert.bind(2, binaryData.data(), static_cast<int>(binaryData.size()));
+  insert.exec();
 }
 
 void Stls::readRecovery(vector<double> &wvgFile,
                         vector<double> &slfcFile) const {
-  const string fileName = in.getRecoveryFileName();
-  if (fileName.empty()) { return; }
-  ifstream file;
-  file.open(fileName, ios::binary);
-  if (!file.is_open()) {
-    throwError("Output file " + fileName + " could not be opened.");
-  }
-  int nx;
-  readDataFromBinary<int>(file, nx);
-  wvgFile.resize(nx);
-  slfcFile.resize(nx);
-  readDataFromBinary<decltype(wvgFile)>(file, wvgFile);
-  readDataFromBinary<decltype(slfcFile)>(file, slfcFile);
-  file.close();
-  if (!file) { throwError("Error in reading from file " + fileName); }
+  // const string fileName = in.getRecoveryFileName();
+  // if (fileName.empty()) { return; }
+  // ifstream file;
+  // file.open(fileName, ios::binary);
+  // if (!file.is_open()) {
+  //   throwError("Output file " + fileName + " could not be opened.");
+  // }
+  // int nx;
+  // readDataFromBinary<int>(file, nx);
+  // wvgFile.resize(nx);
+  // slfcFile.resize(nx);
+  // readDataFromBinary<decltype(wvgFile)>(file, wvgFile);
+  // readDataFromBinary<decltype(slfcFile)>(file, slfcFile);
+  // file.close();
+  // if (!file) { throwError("Error in reading from file " + fileName); }
 }
 
 // -----------------------------------------------------------------

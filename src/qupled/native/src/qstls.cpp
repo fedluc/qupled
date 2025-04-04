@@ -508,27 +508,27 @@ void Qstls::readRecovery(vector<double> &wvg_,
                          Vector3D &adrFixed_,
                          double &Theta,
                          int &nl) const {
-  const string &fileName = in.getRecoveryFileName();
-  if (fileName.empty()) { return; }
-  ifstream file;
-  file.open(fileName, ios::binary);
-  if (!file.is_open()) {
-    throwError("Input file " + fileName + " could not be opened.");
-  }
-  int nx;
-  readDataFromBinary<int>(file, nx);
-  readDataFromBinary<int>(file, nl);
-  readDataFromBinary<double>(file, Theta);
-  wvg_.resize(nx);
-  ssf_.resize(nx);
-  adr_.resize(nx, nl);
-  adrFixed_.resize(nx, nl, nx);
-  readDataFromBinary<vector<double>>(file, wvg_);
-  readDataFromBinary<vector<double>>(file, ssf_);
-  readDataFromBinary<Vector2D>(file, adr_);
-  readDataFromBinary<Vector3D>(file, adrFixed_);
-  file.close();
-  if (!file) { throwError("Error in reading the file " + fileName); }
+  // const string &fileName = in.getRecoveryFileName();
+  // if (fileName.empty()) { return; }
+  // ifstream file;
+  // file.open(fileName, ios::binary);
+  // if (!file.is_open()) {
+  //   throwError("Input file " + fileName + " could not be opened.");
+  // }
+  // int nx;
+  // readDataFromBinary<int>(file, nx);
+  // readDataFromBinary<int>(file, nl);
+  // readDataFromBinary<double>(file, Theta);
+  // wvg_.resize(nx);
+  // ssf_.resize(nx);
+  // adr_.resize(nx, nl);
+  // adrFixed_.resize(nx, nl, nx);
+  // readDataFromBinary<vector<double>>(file, wvg_);
+  // readDataFromBinary<vector<double>>(file, ssf_);
+  // readDataFromBinary<Vector2D>(file, adr_);
+  // readDataFromBinary<Vector3D>(file, adrFixed_);
+  // file.close();
+  // if (!file) { throwError("Error in reading the file " + fileName); }
 }
 
 // -----------------------------------------------------------------

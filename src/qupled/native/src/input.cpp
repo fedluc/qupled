@@ -17,6 +17,14 @@ void Input::setCoupling(const double &rs_) {
   this->rs = rs_;
 }
 
+void Input::setDatabaseName(const string &databaseName) {
+  this->databaseName = databaseName;
+}
+
+void Input::setDatabaseRunId(const int &databaseRunId) {
+  this->databaseRunId = databaseRunId;
+}
+
 void Input::setDegeneracy(const double &Theta_) {
   if (Theta_ < 0.0) {
     throwError("The quantum degeneracy parameter can't be negative");
@@ -70,12 +78,15 @@ void Input::print() const {
   cout << "Scheme for 2D integrals = " << int2DScheme << endl;
   cout << "Integral relative error = " << intError << endl;
   cout << "Theory to be solved = " << theory << endl;
+  cout << "Database name = " << databaseName << endl;
+  cout << "Database run id = " << databaseRunId << endl;
 }
 
 bool Input::isEqual(const Input &in) const {
   return (int2DScheme == in.int2DScheme && nThreads == in.nThreads
           && rs == in.rs && theory == in.theory && Theta == in.Theta
-          && intError == in.intError);
+          && intError == in.intError && databaseName == in.databaseName
+          && databaseRunId == in.databaseRunId);
 }
 
 // -----------------------------------------------------------------
@@ -108,22 +119,17 @@ void IterationInput::setOutIter(const int &outIter) {
   this->outIter = outIter;
 }
 
-void IterationInput::setRecoveryFileName(const string &recoveryFileName) {
-  this->recoveryFileName = recoveryFileName;
-}
-
 void IterationInput::print() const {
   if (!isRoot()) { return; }
   cout << "Maximum number of iterations = " << nIter << endl;
   cout << "Minimum error for convergence = " << errMin << endl;
   cout << "Mixing parameter = " << aMix << endl;
   cout << "Output frequency = " << outIter << endl;
-  cout << "File with recovery data = " << recoveryFileName << endl;
 }
 
 bool IterationInput::isEqual(const IterationInput &in) const {
   return (aMix == in.aMix && errMin == in.errMin && nIter == in.nIter
-          && outIter == in.outIter && recoveryFileName == in.recoveryFileName);
+          && outIter == in.outIter);
 }
 
 // -----------------------------------------------------------------

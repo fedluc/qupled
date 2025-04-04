@@ -73,9 +73,12 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter)
       .add_property(
           "output_frequency", &StlsInput::getOutIter, &StlsInput::setOutIter)
-      .add_property("recovery_file",
-                    &StlsInput::getRecoveryFileName,
-                    &StlsInput::setRecoveryFileName)
+      .add_property("database_name",
+                    &StlsInput::getDatabaseName,
+                    &StlsInput::setDatabaseName)
+      .add_property("database_run_id",
+                    &StlsInput::getDatabaseRunId,
+                    &StlsInput::setDatabaseRunId)
       .def("print", &StlsInput::print)
       .def("is_equal", &StlsInput::isEqual);
 

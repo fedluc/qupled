@@ -43,6 +43,8 @@ class Rpa:
         """
         self.inputs = inputs
         self.db_handler.insert_run(self.inputs)
+        self.inputs.database_name = self.db_handler.database_name
+        self.inputs.database_run_id = self.run_id
         self.inputs.to_native(self.native_inputs)
         scheme = self.native_scheme_cls(self.native_inputs)
         status = scheme.compute()
@@ -125,6 +127,8 @@ class Input:
         """Number of OMP threads for parallel calculations. Default =  ``1``"""
         # Undocumented default values
         self.theory: str = "RPA"
+        self.database_name = None
+        self.database_run_id = None
 
     def to_native(self, native_input: any):
         """
