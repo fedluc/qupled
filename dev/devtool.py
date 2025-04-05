@@ -108,6 +108,8 @@ def install_dependencies():
                     "libomp-dev",
                     "libfmt-dev",
                     "python3-dev",
+                    "libsqlite3-dev",
+                    "libsqlitecpp-dev",
                 ],
                 check=True,
             )
