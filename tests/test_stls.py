@@ -58,6 +58,7 @@ def test_stls_input_initialization(mocker):
     assert input.mixing == 1.0
     assert input.iterations == 1000
     assert input.output_frequency == 10
+    assert input.recovery_run_id is None
     assert input.guess == guess.return_value
     super_init.assert_called_once_with(coupling, degeneracy)
     assert input.theory == "STLS"

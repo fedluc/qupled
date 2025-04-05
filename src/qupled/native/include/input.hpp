@@ -1,6 +1,7 @@
 #ifndef INPUT_HPP
 #define INPUT_HPP
 
+#include "database.hpp"
 #include "num_util.hpp"
 #include "vector2D.hpp"
 #include <cassert>
@@ -31,12 +32,10 @@ public:
         Theta(DEFAULT_DOUBLE),
         nThreads(DEFAULT_INT),
         isClassicTheory(DEFAULT_BOOL),
-        isQuantumTheory(DEFAULT_BOOL),
-        databaseRunId(DEFAULT_INT) {}
+        isQuantumTheory(DEFAULT_BOOL) {}
   // Setters
   void setCoupling(const double &rs);
-  void setDatabaseName(const std::string &databaseName);
-  void setDatabaseRunId(const int &databaseRunId);
+  void setDatabaseInfo(const DatabaseInfo &dbInfo);
   void setDegeneracy(const double &Theta);
   void setInt2DScheme(const std::string &int2DScheme);
   void setIntError(const double &intError);
@@ -44,8 +43,7 @@ public:
   void setTheory(const std::string &theory);
   // Getters
   double getCoupling() const { return rs; }
-  std::string getDatabaseName() const { return databaseName; }
-  int getDatabaseRunId() const { return databaseRunId; }
+  DatabaseInfo getDatabaseInfo() const { return dbInfo; }
   double getDegeneracy() const { return Theta; }
   std::string getInt2DScheme() const { return int2DScheme; }
   double getIntError() const { return intError; }
@@ -70,10 +68,8 @@ protected:
   std::string int2DScheme;
   // theory to be solved
   std::string theory;
-  // Name of the database file used to store the results
-  std::string databaseName;
-  // Run id in the database
-  int databaseRunId;
+  // Database information
+  DatabaseInfo dbInfo;
 };
 
 // -----------------------------------------------------------------
@@ -89,17 +85,20 @@ public:
       : aMix(DEFAULT_DOUBLE),
         errMin(DEFAULT_DOUBLE),
         nIter(DEFAULT_INT),
-        outIter(DEFAULT_INT) {}
+        outIter(DEFAULT_INT),
+        recoveryRunId(DEFAULT_INT) {}
   // Setters
   void setErrMin(const double &errMin);
   void setMixingParameter(const double &aMix);
   void setNIter(const int &nIter);
   void setOutIter(const int &outIter);
+  void setRecoveryRunId(const int &recoveryRunId);
   // Getters
   double getErrMin() const { return errMin; }
   double getMixingParameter() const { return aMix; }
   int getNIter() const { return nIter; }
   int getOutIter() const { return outIter; }
+  int getRecoveryRunId() const { return recoveryRunId; }
 
 protected:
 
@@ -111,6 +110,8 @@ protected:
   int nIter;
   // Output frequency
   int outIter;
+  // Name of the file used to store the recovery data
+  int recoveryRunId;
 };
 
 // -----------------------------------------------------------------

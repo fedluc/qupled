@@ -17,12 +17,8 @@ void Input::setCoupling(const double &rs_) {
   this->rs = rs_;
 }
 
-void Input::setDatabaseName(const string &databaseName) {
-  this->databaseName = databaseName;
-}
-
-void Input::setDatabaseRunId(const int &databaseRunId) {
-  this->databaseRunId = databaseRunId;
+void Input::setDatabaseInfo(const DatabaseInfo &dbInfo) {
+  this->dbInfo = dbInfo;
 }
 
 void Input::setDegeneracy(const double &Theta_) {
@@ -98,6 +94,10 @@ void IterationInput::setNIter(const int &nIter) {
 void IterationInput::setOutIter(const int &outIter) {
   if (outIter < 0) { throwError("The output frequency can't be negative"); }
   this->outIter = outIter;
+}
+
+void IterationInput::setRecoveryRunId(const int &recoveryRunId) {
+  this->recoveryRunId = recoveryRunId;
 }
 
 // -----------------------------------------------------------------

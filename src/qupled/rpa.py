@@ -43,8 +43,7 @@ class Rpa:
         """
         self.inputs = inputs
         self.db_handler.insert_run(self.inputs)
-        self.inputs.database_name = self.db_handler.database_name
-        self.inputs.database_run_id = self.run_id
+        self.inputs.database_info.run_id = self.run_id
         self.inputs.to_native(self.native_inputs)
         scheme = self.native_scheme_cls(self.native_inputs)
         status = scheme.compute()
@@ -127,8 +126,7 @@ class Input:
         """Number of OMP threads for parallel calculations. Default =  ``1``"""
         # Undocumented default values
         self.theory: str = "RPA"
-        self.database_name = None
-        self.database_run_id = None
+        self.database_info: DatabaseInfo = DatabaseInfo()
 
     def to_native(self, native_input: any):
         """
@@ -212,3 +210,33 @@ class Result:
                 rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
             )
             self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)
+
+
+class DatabaseInfo:
+    """
+    Class used to store the database information passed to the native code.
+    """
+
+    def __init__(self):
+        self.name: str = database.DataBaseHandler.DEFAULT_DATABASE_NAME
+        """Database name"""
+        self.run_id: int = None
+        """ID of the run in the database"""
+        self.run_table_name: str = database.DataBaseHandler.RUN_TABLE_NAME
+        """Name of the table used to store the runs in the database"""
+
+    def to_native(self) -> native.DatabaseInfo:
+        """
+        Converts the current object to a native `DatabaseInfo` instance.
+        This method creates a new instance of `native.DatabaseInfo` and copies
+        all non-None attributes from the current object to the new instance.
+        Returns:
+            native.DatabaseInfo: A new instance of `native.DatabaseInfo` with
+            attributes copied from the current object.
+        """
+        native_database_info = native.DatabaseInfo()
+        for attr, value in self.__dict__.items():
+            print(f"{attr}, {value}")
+            if value is not None:
+                setattr(native_database_info, attr, value)
+        return native_database_info

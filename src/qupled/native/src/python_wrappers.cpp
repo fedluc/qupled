@@ -157,10 +157,6 @@ bn::ndarray PyRpa::getWvg(const Rpa &rpa) {
 
 double PyRpa::getUInt(const Rpa &rpa) { return rpa.getUInt(); }
 
-string PyRpa::getRecoveryFileName(const Rpa &rpa) {
-  return rpa.getRecoveryFileName();
-}
-
 // -----------------------------------------------------------------
 // PyStls
 // -----------------------------------------------------------------
@@ -278,4 +274,29 @@ double PyThermo::computeFreeEnergy(const bn::ndarray &gridIn,
   const vector<double> &grid = pythonUtil::toVector(gridIn);
   const vector<double> &rsu = pythonUtil::toVector(rsuIn);
   return thermoUtil::computeFreeEnergy(grid, rsu, coupling);
+}
+
+// -----------------------------------------------------------------
+// PyDatabaseInfo
+// -----------------------------------------------------------------
+
+string PyDatabaseInfo::getName(const DatabaseInfo &db) { return db.name; }
+
+string PyDatabaseInfo::getRunTableName(const DatabaseInfo &db) {
+  return db.runTableName;
+}
+
+int PyDatabaseInfo::getRunId(const DatabaseInfo &db) { return db.runId; }
+
+void PyDatabaseInfo::setName(DatabaseInfo &db, const string &name) {
+  db.name = name;
+}
+
+void PyDatabaseInfo::setRunTableName(DatabaseInfo &db,
+                                     const string &runTableName) {
+  db.runTableName = runTableName;
+}
+
+void PyDatabaseInfo::setRunId(DatabaseInfo &db, const int runId) {
+  db.runId = runId;
 }

@@ -48,7 +48,9 @@ class Input(rpa.Input):
         self.iterations: int = 1000
         """Maximum number of iterations. Default = ``1000``"""
         self.output_frequency: int = 10
-        """Name of the recovery file. Default = ``""``"""
+        """Output frequency to write the recovery file. Default = ``10``"""
+        self.recovery_run_id: int = None
+        """Run ID to load the recovery file from. Default = ``None``"""
         self.guess: Guess = Guess()
         """Initial guess. Default = ``stls.Guess()``"""
         # Undocumented default values

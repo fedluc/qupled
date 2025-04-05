@@ -15,7 +15,6 @@ def test_stls_properties():
         hasattr(scheme, "uint")
     assert excinfo.value.args[0] == "No data to compute the internal energy"
     assert hasattr(scheme, "wvg")
-    assert hasattr(scheme, "recovery")
     assert hasattr(scheme, "bf")
 
 

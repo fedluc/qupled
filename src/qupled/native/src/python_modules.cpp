@@ -1,4 +1,3 @@
-#include "mpi_util.hpp"
 #include "python_wrappers.hpp"
 
 namespace bp = boost::python;
@@ -47,6 +46,9 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("chemical_potential",
                     &PyRpaInput::getChemicalPotentialGuess,
                     &PyRpaInput::setChemicalPotentialGuess)
+      .add_property("database_info",
+                    &RpaInput::getDatabaseInfo,
+                    &RpaInput::setDatabaseInfo)
       .add_property(
           "matsubara", &RpaInput::getNMatsubara, &RpaInput::setNMatsubara)
       .add_property("resolution",
@@ -71,12 +73,9 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter)
       .add_property(
           "output_frequency", &StlsInput::getOutIter, &StlsInput::setOutIter)
-      .add_property("database_name",
-                    &StlsInput::getDatabaseName,
-                    &StlsInput::setDatabaseName)
-      .add_property("database_run_id",
-                    &StlsInput::getDatabaseRunId,
-                    &StlsInput::setDatabaseRunId);
+      .add_property("recovery_run_id",
+                    &StlsInput::getRecoveryRunId,
+                    &StlsInput::setRecoveryRunId);
 
   // Class for the input of the VSStls scheme
   bp::class_<VSInput>("VSInput")
@@ -96,6 +95,9 @@ BOOST_PYTHON_MODULE(native) {
                     &VSInput::getFreeEnergyIntegrand,
                     &VSInput::setFreeEnergyIntegrand);
 
+  // Class for the input of the QVSStls scheme
+  bp::class_<VSStlsInput, bp::bases<VSInput, StlsInput>>("VSStlsInput");
+
   // Class for the input of the Qstls scheme
   bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
       .add_property("guess", &QstlsInput::getGuess, &QstlsInput::setGuess)
@@ -105,6 +107,15 @@ BOOST_PYTHON_MODULE(native) {
 
   // Class for the input of the QVSStls scheme
   bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput");
+
+  // Class for the database information
+  bp::class_<DatabaseInfo>("DatabaseInfo")
+      .add_property("name", PyDatabaseInfo::getName, &PyDatabaseInfo::setName)
+      .add_property(
+          "run_id", PyDatabaseInfo::getRunId, &PyDatabaseInfo::setRunId)
+      .add_property("run_table_name",
+                    PyDatabaseInfo::getRunTableName,
+                    &PyDatabaseInfo::setRunTableName);
 
   // Class for the initial guess of the Stls scheme
   bp::class_<StlsInput::Guess>("StlsGuess")
@@ -143,8 +154,7 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("ssf", &PyRpa::getSsf)
       .add_property("ssf_HF", &PyRpa::getSsfHF)
       .add_property("uint", &PyRpa::getUInt)
-      .add_property("wvg", &PyRpa::getWvg)
-      .add_property("recovery", &PyRpa::getRecoveryFileName);
+      .add_property("wvg", &PyRpa::getWvg);
 
   // Class to solve the classical ESA scheme
   bp::class_<ESA, bp::bases<Rpa>>("ESA", bp::init<const RpaInput>())

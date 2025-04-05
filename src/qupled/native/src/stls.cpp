@@ -27,11 +27,6 @@ Stls::Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_)
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "STLS-HNC" || in.getTheory() == "STLS-IOI"
            || in.getTheory() == "STLS-LCT";
-  // Set name of recovery files
-  recoveryFileName = fmt::format("recovery_rs{:.3f}_theta{:.3f}_{}.bin",
-                                 in.getCoupling(),
-                                 in.getDegeneracy(),
-                                 in.getTheory());
   // Allocate arrays
   const size_t nx = wvg.size();
   slfcNew.resize(nx);
@@ -205,33 +200,33 @@ void Stls::writeRecovery() {
   binUtilMemory::writeDataToBinary<decltype(wvg)>(oss, wvg);
   binUtilMemory::writeDataToBinary<decltype(slfc)>(oss, slfc);
   string binaryData = oss.str();
+  const DatabaseInfo &dbInfo = in.getDatabaseInfo();
   const string tableName = "recovery";
-  const string runTableName = "runs";
-  SQLite::Database db(in.getDatabaseName(),
+  const string runTableName = dbInfo.runTableName;
+  SQLite::Database db(dbInfo.name,
                       SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
   string create_table_statement = fmt::format(R"(
                                                 CREATE TABLE IF NOT EXISTS {} (
                                                     run_id INTEGER NOT NULL,
-                                                    name TEXT NOT NULL,
                                                     value BLOB,
-                                                    PRIMARY KEY (run_id, name),
+                                                    PRIMARY KEY (run_id),
                                                     FOREIGN KEY (run_id) REFERENCES {}(id) ON DELETE CASCADE
                                                 );
                                               )",
                                               tableName,
                                               runTableName);
   db.exec(create_table_statement);
-  string insert_statement = fmt::format(
-      "INSERT INTO {} (run_id, name, value) VALUES (?, ?, ?);", tableName);
+  string insert_statement =
+      fmt::format("INSERT INTO {} (run_id, value) VALUES (?, ?);", tableName);
   SQLite::Statement insert(db, insert_statement);
-  insert.bind(1, in.getDatabaseRunId());
+  insert.bind(1, dbInfo.runId);
   insert.bind(2, binaryData.data(), static_cast<int>(binaryData.size()));
   insert.exec();
 }
 
 void Stls::readRecovery(vector<double> &wvgFile,
                         vector<double> &slfcFile) const {
-  // const string fileName = in.getRecoveryFileName();
+  // const string fileName = in.getRecoveryRunId();
   // if (fileName.empty()) { return; }
   // ifstream file;
   // file.open(fileName, ios::binary);

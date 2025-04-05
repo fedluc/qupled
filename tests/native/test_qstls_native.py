@@ -37,13 +37,9 @@ def test_qstls_compute():
         assert scheme.slfc.size == nx
         assert scheme.ssf.size == nx
         assert scheme.ssf_HF.size == nx
-        assert scheme.recovery == "recovery_rs1.000_theta1.000_QSTLS.bin"
-        assert os.path.isfile(scheme.recovery)
         assert scheme.rdf(scheme.wvg).size == nx
     finally:
         fixed_file = "adr_fixed_theta1.000_matsubara32.bin"
-        if os.path.isfile(scheme.recovery):
-            os.remove(scheme.recovery)
         if os.path.isfile(fixed_file):
             os.remove(fixed_file)
 
@@ -76,13 +72,8 @@ def test_qstls_iet_compute():
             assert scheme.slfc.size == nx
             assert scheme.ssf.size == nx
             assert scheme.ssf_HF.size == nx
-            recovery = "recovery_rs10.000_theta1.000_" + scheme_name + ".bin"
-            assert scheme.recovery == recovery
-            assert os.path.isfile(scheme.recovery)
             assert scheme.rdf(scheme.wvg).size == nx
         finally:
-            if os.path.isfile(scheme.recovery):
-                os.remove(scheme.recovery)
             file_names = glob.glob("adr_fixed*.bin")
             for file_name in file_names:
                 os.remove(file_name)

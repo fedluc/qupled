@@ -481,25 +481,25 @@ void Qstls::getAdrFixedIetFileInfo() {
 
 // Recovery files
 void Qstls::writeRecovery() {
-  if (!isRoot()) { return; }
-  ofstream file;
-  file.open(recoveryFileName, ios::binary);
-  if (!file.is_open()) {
-    throwError("Recovery file " + recoveryFileName + " could not be created.");
-  }
-  int nx = wvg.size();
-  int nl = in.getNMatsubara();
-  writeDataToBinary<int>(file, nx);
-  writeDataToBinary<int>(file, nl);
-  writeDataToBinary<double>(file, in.getDegeneracy());
-  writeDataToBinary<vector<double>>(file, wvg);
-  writeDataToBinary<vector<double>>(file, ssf);
-  writeDataToBinary<Vector2D>(file, adr);
-  writeDataToBinary<Vector3D>(file, adrFixed);
-  file.close();
-  if (!file) {
-    throwError("Error in writing the recovery file " + recoveryFileName);
-  }
+  // if (!isRoot()) { return; }
+  // ofstream file;
+  // file.open(recoveryRunId, ios::binary);
+  // if (!file.is_open()) {
+  //   throwError("Recovery file " + recoveryRunId + " could not be created.");
+  // }
+  // int nx = wvg.size();
+  // int nl = in.getNMatsubara();
+  // writeDataToBinary<int>(file, nx);
+  // writeDataToBinary<int>(file, nl);
+  // writeDataToBinary<double>(file, in.getDegeneracy());
+  // writeDataToBinary<vector<double>>(file, wvg);
+  // writeDataToBinary<vector<double>>(file, ssf);
+  // writeDataToBinary<Vector2D>(file, adr);
+  // writeDataToBinary<Vector3D>(file, adrFixed);
+  // file.close();
+  // if (!file) {
+  //   throwError("Error in writing the recovery file " + recoveryRunId);
+  // }
 }
 
 void Qstls::readRecovery(vector<double> &wvg_,
@@ -508,7 +508,7 @@ void Qstls::readRecovery(vector<double> &wvg_,
                          Vector3D &adrFixed_,
                          double &Theta,
                          int &nl) const {
-  // const string &fileName = in.getRecoveryFileName();
+  // const string &fileName = in.getRecoveryRunId();
   // if (fileName.empty()) { return; }
   // ifstream file;
   // file.open(fileName, ios::binary);
