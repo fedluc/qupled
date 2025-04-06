@@ -20,6 +20,7 @@ class Rpa:
         self.db_handler = database.DataBaseHandler()
         self.native_scheme_cls = native.Rpa
         self.native_inputs = native.RpaInput()
+        self.native_scheme_status = None
 
     @property
     def run_id(self):
@@ -31,7 +32,6 @@ class Rpa:
         """
         return self.db_handler.run_id
 
-    # Compute
     @mpi.MPI.record_time
     @mpi.MPI.synchronize_ranks
     def compute(self, inputs: Input):
@@ -42,16 +42,10 @@ class Rpa:
             inputs: Input parameters.
         """
         self.inputs = inputs
-        self.db_handler.insert_run(self.inputs)
-        self.inputs.database_info.run_id = self.run_id
-        self.inputs.to_native(self.native_inputs)
-        scheme = self.native_scheme_cls(self.native_inputs)
-        status = scheme.compute()
-        self.db_handler.update_run_status(status)
-        self.results.from_native(scheme)
+        self._add_run_to_database()
+        self._compute_native()
         self._save()
 
-    # Compute radial distribution function
     @mpi.MPI.run_only_on_root
     def compute_rdf(self, rdf_grid: np.ndarray = None):
         """
@@ -69,15 +63,41 @@ class Rpa:
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid}
             )
 
+    def _add_run_to_database(self):
+        """
+        Adds the current run information to the database.
+
+        This method inserts the run details stored in `self.inputs` into the database
+        using the `db_handler`. It also updates the `database_info` attribute of
+        `self.inputs` with the current `run_id`.
+        """
+        self.db_handler.insert_run(self.inputs)
+        self.inputs.database_info.run_id = self.run_id
+
+    def _compute_native(self):
+        """
+        Computes the native representation of the inputs and processes the results.
+
+        This method performs the following steps:
+        1. Converts the current inputs to their native representation.
+        2. Initializes a native scheme object using the native inputs.
+        3. Computes the native scheme and stores its status.
+        4. Converts the results from the native scheme back to the desired format.
+        """
+        self.inputs.to_native(self.native_inputs)
+        scheme = self.native_scheme_cls(self.native_inputs)
+        self.native_scheme_status = scheme.compute()
+        self.results.from_native(scheme)
+
     @mpi.MPI.run_only_on_root
     def _save(self):
         """
-        Saves the current run's inputs and results to the database.
+        Saves the current state and results to the database.
 
-        This method checks if the `results` attribute is not None, and if so,
-        it uses the `db_handler` to insert the current run's `inputs` and `results`
-        into the database.
+        This method updates the run status in the database using the current
+        native scheme status and inserts the results into the database.
         """
+        self.db_handler.update_run_status(self.native_scheme_status)
         self.db_handler.insert_results(self.results.__dict__)
 
 

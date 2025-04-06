@@ -1,3 +1,4 @@
+from unittest.mock import PropertyMock
 import pytest
 import numpy as np
 from qupled.database import DataBaseHandler
@@ -29,6 +30,7 @@ def test_rpa_initialization():
     assert isinstance(scheme.db_handler, DataBaseHandler)
     assert scheme.native_scheme_cls == native.Rpa
     assert isinstance(scheme.native_inputs, native.RpaInput)
+    assert scheme.native_scheme_status is None
 
 
 def test_run_id(scheme):
@@ -38,28 +40,50 @@ def test_run_id(scheme):
 
 
 def test_compute(scheme, inputs, mocker):
-    native_scheme = mocker.Mock()
-    native_scheme.recovery = "recovery_file"
-    status = native_scheme.compute.return_value
-    native_scheme_cls = mocker.patch.object(
-        scheme, "native_scheme_cls", return_value=native_scheme
-    )
-    to_native = mocker.patch("qupled.rpa.Input.to_native")
-    from_native = mocker.patch("qupled.rpa.Result.from_native")
+    add_run_to_database = mocker.patch.object(scheme, "_add_run_to_database")
+    compute_native = mocker.patch.object(scheme, "_compute_native")
     save = mocker.patch.object(scheme, "_save")
     scheme.compute(inputs)
     assert scheme.inputs is not None
-    scheme.db_handler.insert_run.assert_called_once_with(scheme.inputs)
-    to_native.assert_called_once_with(scheme.native_inputs)
-    scheme.db_handler.update_run_status.assert_called_once_with(status)
-    native_scheme_cls.assert_called_once()
-    from_native.assert_called_once_with(native_scheme)
+    add_run_to_database.assert_called_once()
+    compute_native.assert_called_once()
     save.assert_called_once()
 
 
-def test_save_with_results(scheme, results):
+def test_add_run_to_database(scheme, mocker):
+    mocker.patch.object(rpa.Rpa, "run_id", new_callable=PropertyMock).return_value = (
+        "mocked-run-id"
+    )
+    scheme.inputs = mocker.Mock()
+    scheme._add_run_to_database()
+    scheme.db_handler.insert_run.assert_called_once_with(scheme.inputs)
+    assert scheme.inputs.database_info.run_id == scheme.run_id
+
+
+def test_compute_native(scheme, inputs, mocker):
+    to_native = mocker.patch("qupled.rpa.Input.to_native")
+    native_scheme = mocker.Mock()
+    native_scheme_cls = mocker.patch.object(
+        scheme, "native_scheme_cls", return_value=native_scheme
+    )
+    from_native = mocker.patch("qupled.rpa.Result.from_native")
+    native_scheme.compute.return_value = "mocked-status"
+    scheme.inputs = inputs
+    scheme._compute_native()
+    to_native.assert_called_once_with(scheme.native_inputs)
+    native_scheme_cls.assert_called_once_with(scheme.native_inputs)
+    native_scheme.compute.assert_called_once()
+    assert scheme.native_scheme_status == "mocked-status"
+    from_native.assert_called_once_with(native_scheme)
+
+
+def test_save(scheme, results, mocker):
     scheme.results = results
+    scheme.native_scheme_status = mocker.Mock()
     scheme._save()
+    scheme.db_handler.update_run_status.assert_called_once_with(
+        scheme.native_scheme_status
+    )
     scheme.db_handler.insert_results.assert_called_once_with(scheme.results.__dict__)
 
 
