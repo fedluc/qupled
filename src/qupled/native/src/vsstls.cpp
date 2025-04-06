@@ -13,7 +13,7 @@ using namespace std;
 
 VSStls::VSStls(const VSStlsInput &in_)
     : VSBase(in_),
-      Stls(in_, false, false),
+      Stls(in_, false),
       in(in_),
       thermoProp(make_shared<ThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
@@ -21,7 +21,7 @@ VSStls::VSStls(const VSStlsInput &in_)
 
 VSStls::VSStls(const VSStlsInput &in_, const ThermoProp &thermoProp_)
     : VSBase(in_, false),
-      Stls(in_, false, false),
+      Stls(in_, false),
       in(in_),
       thermoProp(make_shared<ThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;

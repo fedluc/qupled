@@ -80,5 +80,28 @@ namespace binUtilMemory {
     }
   }
 
+  template <typename T>
+  void readNum(std::istringstream &file, T &num) {
+    file.read((char *)&num, sizeof(T));
+  }
+
+  template <typename T>
+  void readDataFromBinary(std::istringstream &file, double &data) {
+    readNum<double>(file, data);
+  }
+
+  template <typename T>
+  void readDataFromBinary(std::istringstream &file, int &data) {
+    readNum<int>(file, data);
+  }
+
+  template <typename T>
+  void readDataFromBinary(std::istringstream &file, T &data) {
+    for (auto &el : data) {
+      readDataFromBinary<decltype(el)>(file, el);
+    }
+  }
+
 } // namespace binUtilMemory
+
 #endif

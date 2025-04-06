@@ -84,21 +84,15 @@ public:
   explicit IterationInput()
       : aMix(DEFAULT_DOUBLE),
         errMin(DEFAULT_DOUBLE),
-        nIter(DEFAULT_INT),
-        outIter(DEFAULT_INT),
-        recoveryRunId(DEFAULT_INT) {}
+        nIter(DEFAULT_INT) {}
   // Setters
   void setErrMin(const double &errMin);
   void setMixingParameter(const double &aMix);
   void setNIter(const int &nIter);
-  void setOutIter(const int &outIter);
-  void setRecoveryRunId(const int &recoveryRunId);
   // Getters
   double getErrMin() const { return errMin; }
   double getMixingParameter() const { return aMix; }
   int getNIter() const { return nIter; }
-  int getOutIter() const { return outIter; }
-  int getRecoveryRunId() const { return recoveryRunId; }
 
 protected:
 
@@ -108,10 +102,6 @@ protected:
   double errMin;
   // Maximum number of iterations
   int nIter;
-  // Output frequency
-  int outIter;
-  // Name of the file used to store the recovery data
-  int recoveryRunId;
 };
 
 // -----------------------------------------------------------------

@@ -18,9 +18,9 @@ class Qstls : public Stls {
 public:
 
   // Constructor
-  Qstls(const QstlsInput &in_, const bool verbose_, const bool writeFiles_);
+  Qstls(const QstlsInput &in_, const bool verbose_);
   explicit Qstls(const QstlsInput &in_)
-      : Qstls(in_, true, true) {}
+      : Qstls(in_, true) {}
   // Compute qstls scheme
   int compute();
   // Getters
@@ -69,7 +69,6 @@ protected:
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
-  bool initialGuessFromRecovery();
   bool initialGuessFromInput();
   bool initialGuessSsf(const std::vector<double> &wvg_,
                        const std::vector<double> &adr_);
@@ -80,14 +79,6 @@ protected:
                             const Vector3D &adrFixed_);
   double computeError() const;
   void updateSolution();
-  // Recovery files
-  void writeRecovery();
-  void readRecovery(std::vector<double> &wvg_,
-                    std::vector<double> &ssf_,
-                    Vector2D &adr_,
-                    Vector3D &adrFixed_,
-                    double &Theta,
-                    int &nl) const;
 };
 
 // -----------------------------------------------------------------

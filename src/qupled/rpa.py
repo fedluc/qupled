@@ -145,7 +145,7 @@ class Input:
         """
         name = Input.to_native.__name__
         for attr, value in self.__dict__.items():
-            if hasattr(native_input, attr):
+            if hasattr(native_input, attr) and value is not None:
                 value_to_set = (
                     tonative()
                     if callable(tonative := getattr(value, name, None))
@@ -236,7 +236,6 @@ class DatabaseInfo:
         """
         native_database_info = native.DatabaseInfo()
         for attr, value in self.__dict__.items():
-            print(f"{attr}, {value}")
             if value is not None:
                 setattr(native_database_info, attr, value)
         return native_database_info

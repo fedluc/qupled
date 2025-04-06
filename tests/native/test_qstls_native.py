@@ -23,7 +23,6 @@ def test_qstls_compute():
     inputs.error = 1.0e-5
     inputs.mixing = 1.0
     inputs.iterations = 1000
-    inputs.output_frequency = 2
     scheme = Qstls(inputs)
     scheme.compute()
     try:
@@ -60,7 +59,6 @@ def test_qstls_iet_compute():
         inputs.error = 1.0e-5
         inputs.mixing = 0.5
         inputs.iterations = 1000
-        inputs.output_frequency = 2
         scheme = Qstls(inputs)
         scheme.compute()
         try:

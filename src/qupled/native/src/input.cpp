@@ -91,15 +91,6 @@ void IterationInput::setNIter(const int &nIter) {
   this->nIter = nIter;
 }
 
-void IterationInput::setOutIter(const int &outIter) {
-  if (outIter < 0) { throwError("The output frequency can't be negative"); }
-  this->outIter = outIter;
-}
-
-void IterationInput::setRecoveryRunId(const int &recoveryRunId) {
-  this->recoveryRunId = recoveryRunId;
-}
-
 // -----------------------------------------------------------------
 // ClassicInput class
 // -----------------------------------------------------------------

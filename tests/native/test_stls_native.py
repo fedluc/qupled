@@ -32,7 +32,6 @@ def test_stls_compute():
     inputs.error = 1.0e-5
     inputs.mixing = 1.0
     inputs.iterations = 1000
-    inputs.output_frequency = 10
     scheme = Stls(inputs)
     scheme.compute()
     nx = scheme.wvg.size
@@ -62,7 +61,6 @@ def test_stls_iet_compute():
         inputs.error = 1.0e-5
         inputs.mixing = 0.5
         inputs.iterations = 1000
-        inputs.output_frequency = 2
         scheme = Stls(inputs)
         scheme.compute()
         nx = scheme.wvg.size

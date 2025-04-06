@@ -70,12 +70,7 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("mixing",
                     &StlsInput::getMixingParameter,
                     &StlsInput::setMixingParameter)
-      .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter)
-      .add_property(
-          "output_frequency", &StlsInput::getOutIter, &StlsInput::setOutIter)
-      .add_property("recovery_run_id",
-                    &StlsInput::getRecoveryRunId,
-                    &StlsInput::setRecoveryRunId);
+      .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter);
 
   // Class for the input of the VSStls scheme
   bp::class_<VSInput>("VSInput")

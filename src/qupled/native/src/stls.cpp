@@ -20,10 +20,9 @@ using ItgType = Integrator1D::Type;
 // STLS class
 // -----------------------------------------------------------------
 
-Stls::Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_)
+Stls::Stls(const StlsInput &in_, const bool verbose_)
     : Rpa(in_, verbose_),
-      in(in_),
-      writeFiles(writeFiles_ && isRoot()) {
+      in(in_) {
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "STLS-HNC" || in.getTheory() == "STLS-IOI"
            || in.getTheory() == "STLS-LCT";
@@ -110,7 +109,6 @@ void Stls::computeBf() {
 // stls iterations
 void Stls::doIterations() {
   const int maxIter = in.getNIter();
-  const int outIter = in.getOutIter();
   const double minErr = in.getErrMin();
   double err = 1.0;
   int counter = 0;
@@ -128,8 +126,6 @@ void Stls::doIterations() {
     err = computeError();
     // Update solution
     updateSolution();
-    // Write output
-    if (counter % outIter == 0 && writeFiles) { writeRecovery(); }
     // End timing
     double toc = timer();
     // Print diagnostic
@@ -142,30 +138,10 @@ void Stls::doIterations() {
 
 // Initial guess for stls iterations
 void Stls::initialGuess() {
-  // From recovery file
-  if (initialGuessFromRecovery()) { return; }
   // From guess in input
   if (initialGuessFromInput()) { return; }
   // Default
   fill(slfc.begin(), slfc.end(), 0.0);
-}
-
-bool Stls::initialGuessFromRecovery() {
-  vector<double> wvgFile;
-  vector<double> slfcFile;
-  readRecovery(wvgFile, slfcFile);
-  const Interpolator1D slfci(wvgFile, slfcFile);
-  if (!slfci.isValid()) { return false; }
-  const double xmaxi = wvgFile.back();
-  for (size_t i = 0; i < wvg.size(); ++i) {
-    const double x = wvg[i];
-    if (x <= xmaxi) {
-      slfc[i] = slfci.eval(x);
-    } else {
-      slfc[i] = 1.0;
-    }
-  }
-  return true;
 }
 
 bool Stls::initialGuessFromInput() {
@@ -190,57 +166,6 @@ double Stls::computeError() const { return rms(slfc, slfcNew, false); }
 void Stls::updateSolution() {
   const double aMix = in.getMixingParameter();
   slfc = linearCombination(slfcNew, aMix, slfc, 1 - aMix);
-}
-
-// Recovery files
-void Stls::writeRecovery() {
-  ostringstream oss(ios::binary);
-  int nx = wvg.size();
-  binUtilMemory::writeDataToBinary<int>(oss, nx);
-  binUtilMemory::writeDataToBinary<decltype(wvg)>(oss, wvg);
-  binUtilMemory::writeDataToBinary<decltype(slfc)>(oss, slfc);
-  string binaryData = oss.str();
-  const DatabaseInfo &dbInfo = in.getDatabaseInfo();
-  const string tableName = "recovery";
-  const string runTableName = dbInfo.runTableName;
-  SQLite::Database db(dbInfo.name,
-                      SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
-  string create_table_statement = fmt::format(R"(
-                                                CREATE TABLE IF NOT EXISTS {} (
-                                                    run_id INTEGER NOT NULL,
-                                                    value BLOB,
-                                                    PRIMARY KEY (run_id),
-                                                    FOREIGN KEY (run_id) REFERENCES {}(id) ON DELETE CASCADE
-                                                );
-                                              )",
-                                              tableName,
-                                              runTableName);
-  db.exec(create_table_statement);
-  string insert_statement =
-      fmt::format("INSERT INTO {} (run_id, value) VALUES (?, ?);", tableName);
-  SQLite::Statement insert(db, insert_statement);
-  insert.bind(1, dbInfo.runId);
-  insert.bind(2, binaryData.data(), static_cast<int>(binaryData.size()));
-  insert.exec();
-}
-
-void Stls::readRecovery(vector<double> &wvgFile,
-                        vector<double> &slfcFile) const {
-  // const string fileName = in.getRecoveryRunId();
-  // if (fileName.empty()) { return; }
-  // ifstream file;
-  // file.open(fileName, ios::binary);
-  // if (!file.is_open()) {
-  //   throwError("Output file " + fileName + " could not be opened.");
-  // }
-  // int nx;
-  // readDataFromBinary<int>(file, nx);
-  // wvgFile.resize(nx);
-  // slfcFile.resize(nx);
-  // readDataFromBinary<decltype(wvgFile)>(file, wvgFile);
-  // readDataFromBinary<decltype(slfcFile)>(file, slfcFile);
-  // file.close();
-  // if (!file) { throwError("Error in reading from file " + fileName); }
 }
 
 // -----------------------------------------------------------------

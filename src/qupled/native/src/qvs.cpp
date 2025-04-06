@@ -20,7 +20,7 @@ using ItgType = Integrator1D::Type;
 
 QVSStls::QVSStls(const QVSStlsInput &in_)
     : VSBase(in_),
-      Qstls(in_, false, false),
+      Qstls(in_, false),
       in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
@@ -28,7 +28,7 @@ QVSStls::QVSStls(const QVSStlsInput &in_)
 
 QVSStls::QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_)
     : VSBase(in_, false),
-      Qstls(in_, false, false),
+      Qstls(in_, false),
       in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
@@ -231,7 +231,7 @@ vector<double> QStructProp::getQ() const {
 
 QstlsCSR::QstlsCSR(const QVSStlsInput &in_)
     : CSR(in_, in_),
-      Qstls(in_, false, false),
+      Qstls(in_, false),
       in(in_) {
   if (in.getDegeneracy() == 0.0) {
     throwError("Ground state calculations are not available "

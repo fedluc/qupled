@@ -27,7 +27,6 @@ def test_qvsstls_compute():
     inputs.error = 1.0e-5
     inputs.mixing = 1.0
     inputs.iterations = 1000
-    inputs.output_frequency = 10
     inputs.coupling_resolution = 0.1
     inputs.degeneracy_resolution = 0.1
     inputs.error_alpha = 1.0e-3
