@@ -31,7 +31,6 @@ public:
   std::vector<double> getRdf(const std::vector<double> &r) const;
   std::vector<double> getSdr() const;
   double getUInt() const;
-  const std::string &getRecoveryFileName() const { return recoveryFileName; }
 
 protected:
 
@@ -39,8 +38,6 @@ protected:
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
   // Input data
   const RpaInput in;
-  // Name of the recovery files
-  std::string recoveryFileName;
   // Integrator
   const std::shared_ptr<Integrator1D> itg;
   // Wave vector grid

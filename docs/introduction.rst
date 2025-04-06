@@ -54,13 +54,13 @@ For linux distributions all these dependencies can be installed with
 
 .. code-block:: console
 
-   sudo apt-get install -y cmake libboost-all-dev libopenmpi-dev libgsl-dev libomp-dev libfmt-dev python3-dev
+   sudo apt-get install -y cmake libboost-all-dev libopenmpi-dev libgsl-dev libomp-dev libfmt-dev python3-dev libsqlite3-dev libsqlitecpp-dev
 
 For macOS they can be installed directly from homebrew
 
 .. code-block:: console
 
-   brew install cmake gsl libomp openmpi fmt boost-python3
+   brew install cmake gsl libomp openmpi fmt boost-python3 sqlite sqlitecpp
 
 Install with pip
 ~~~~~~~~~~~~~~~~

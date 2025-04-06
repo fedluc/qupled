@@ -1,6 +1,7 @@
 #ifndef PYTHON_WRAPPERS_HPP
 #define PYTHON_WRAPPERS_HPP
 
+#include "database.hpp"
 #include "esa.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
@@ -102,7 +103,6 @@ public:
   static bn::ndarray getSsfHF(const Rpa &rpa);
   static bn::ndarray getWvg(const Rpa &rpa);
   static double getUInt(const Rpa &rpa);
-  static std::string getRecoveryFileName(const Rpa &rpa);
 };
 
 // -----------------------------------------------------------------
@@ -190,6 +190,22 @@ public:
   static bool isRoot() { return MPIUtil::isRoot(); }
   static void barrier() { return MPIUtil::barrier(); }
   static double timer() { return MPIUtil::timer(); }
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing MPI methods to Python
+// -----------------------------------------------------------------
+
+class PyDatabaseInfo {
+public:
+
+  static std::string getName(const DatabaseInfo &dbInfo);
+  static int getRunId(const DatabaseInfo &dbInfo);
+  static std::string getRunTableName(const DatabaseInfo &dbInfo);
+  static void setName(DatabaseInfo &dbInfo, const std::string &name);
+  static void setRunId(DatabaseInfo &dbInfo, const int runId);
+  static void setRunTableName(DatabaseInfo &dbInfo,
+                              const std::string &runTableName);
 };
 
 #endif

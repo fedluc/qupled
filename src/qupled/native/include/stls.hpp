@@ -16,9 +16,9 @@ class Stls : public Rpa {
 public:
 
   // Constructors
-  Stls(const StlsInput &in_, const bool verbose_, const bool writeFiles_);
+  Stls(const StlsInput &in_, const bool verbose_);
   explicit Stls(const StlsInput &in_)
-      : Stls(in_, true, true) {}
+      : Stls(in_, true) {}
   // Compute stls scheme
   int compute();
   // Getters
@@ -30,8 +30,6 @@ protected:
 
   // Input parameters
   StlsInput in;
-  // Flag to write the recovery files
-  const bool writeFiles;
   // iet schemes
   bool useIet;
   // Static local field correction to use during the iterations
@@ -49,14 +47,9 @@ protected:
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
-  bool initialGuessFromRecovery();
   bool initialGuessFromInput();
   double computeError() const;
   void updateSolution();
-  // Write recovery files
-  void writeRecovery();
-  void readRecovery(std::vector<double> &wvgFile,
-                    std::vector<double> &slfcFile) const;
 };
 
 // -----------------------------------------------------------------

@@ -1,4 +1,3 @@
-#include "mpi_util.hpp"
 #include "python_wrappers.hpp"
 
 namespace bp = boost::python;
@@ -47,6 +46,9 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("chemical_potential",
                     &PyRpaInput::getChemicalPotentialGuess,
                     &PyRpaInput::setChemicalPotentialGuess)
+      .add_property("database_info",
+                    &RpaInput::getDatabaseInfo,
+                    &RpaInput::setDatabaseInfo)
       .add_property(
           "matsubara", &RpaInput::getNMatsubara, &RpaInput::setNMatsubara)
       .add_property("resolution",
@@ -57,9 +59,7 @@ BOOST_PYTHON_MODULE(native) {
                     &RpaInput::setWaveVectorGridCutoff)
       .add_property("frequency_cutoff",
                     &RpaInput::getFrequencyCutoff,
-                    &RpaInput::setFrequencyCutoff)
-      .def("print", &RpaInput::print)
-      .def("is_equal", &RpaInput::isEqual);
+                    &RpaInput::setFrequencyCutoff);
 
   // Class for the input of the Stls scheme
   bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
@@ -70,14 +70,7 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("mixing",
                     &StlsInput::getMixingParameter,
                     &StlsInput::setMixingParameter)
-      .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter)
-      .add_property(
-          "output_frequency", &StlsInput::getOutIter, &StlsInput::setOutIter)
-      .add_property("recovery_file",
-                    &StlsInput::getRecoveryFileName,
-                    &StlsInput::setRecoveryFileName)
-      .def("print", &StlsInput::print)
-      .def("is_equal", &StlsInput::isEqual);
+      .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter);
 
   // Class for the input of the VSStls scheme
   bp::class_<VSInput>("VSInput")
@@ -95,28 +88,29 @@ BOOST_PYTHON_MODULE(native) {
                     &VSInput::setDegeneracyResolution)
       .add_property("free_energy_integrand",
                     &VSInput::getFreeEnergyIntegrand,
-                    &VSInput::setFreeEnergyIntegrand)
-      .def("print", &VSInput::print)
-      .def("is_equal", &VSInput::isEqual);
+                    &VSInput::setFreeEnergyIntegrand);
 
-  // Class for the input of the VSStls scheme
-  bp::class_<VSStlsInput, bp::bases<VSInput, StlsInput>>("VSStlsInput")
-      .def("print", &VSStlsInput::print)
-      .def("is_equal", &VSStlsInput::isEqual);
+  // Class for the input of the QVSStls scheme
+  bp::class_<VSStlsInput, bp::bases<VSInput, StlsInput>>("VSStlsInput");
 
   // Class for the input of the Qstls scheme
   bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
       .add_property("guess", &QstlsInput::getGuess, &QstlsInput::setGuess)
       .add_property("fixed", &QstlsInput::getFixed, &QstlsInput::setFixed)
       .add_property(
-          "fixed_iet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet)
-      .def("print", &QstlsInput::print)
-      .def("is_equal", &QstlsInput::isEqual);
+          "fixed_iet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet);
 
   // Class for the input of the QVSStls scheme
-  bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput")
-      .def("print", &QVSStlsInput::print)
-      .def("is_equal", &QVSStlsInput::isEqual);
+  bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput");
+
+  // Class for the database information
+  bp::class_<DatabaseInfo>("DatabaseInfo")
+      .add_property("name", PyDatabaseInfo::getName, &PyDatabaseInfo::setName)
+      .add_property(
+          "run_id", PyDatabaseInfo::getRunId, &PyDatabaseInfo::setRunId)
+      .add_property("run_table_name",
+                    PyDatabaseInfo::getRunTableName,
+                    &PyDatabaseInfo::setRunTableName);
 
   // Class for the initial guess of the Stls scheme
   bp::class_<StlsInput::Guess>("StlsGuess")
@@ -155,8 +149,7 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("ssf", &PyRpa::getSsf)
       .add_property("ssf_HF", &PyRpa::getSsfHF)
       .add_property("uint", &PyRpa::getUInt)
-      .add_property("wvg", &PyRpa::getWvg)
-      .add_property("recovery", &PyRpa::getRecoveryFileName);
+      .add_property("wvg", &PyRpa::getWvg);
 
   // Class to solve the classical ESA scheme
   bp::class_<ESA, bp::bases<Rpa>>("ESA", bp::init<const RpaInput>())

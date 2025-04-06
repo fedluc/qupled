@@ -13,7 +13,6 @@ def test_rpa_properties():
         hasattr(scheme, "uint")
     assert excinfo.value.args[0] == "No data to compute the internal energy"
     assert hasattr(scheme, "wvg")
-    assert hasattr(scheme, "recovery")
 
 
 def test_rpa_compute():
@@ -37,5 +36,4 @@ def test_rpa_compute():
     assert scheme.slfc.size == nx
     assert scheme.ssf.size == nx
     assert scheme.ssf_HF.size == nx
-    assert scheme.recovery == ""
     assert scheme.rdf(scheme.wvg).size == nx

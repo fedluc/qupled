@@ -40,7 +40,7 @@ def run_example(example_name, expected_error_message=None):
 
 
 def test_fixed_adr_qstls():
-    run_example("fixed_adr_qstls", "Error while solving the dielectric theory")
+    run_example("fixed_adr_qstls")
 
 
 def test_fixed_adr_qstls_iet():

@@ -1,6 +1,7 @@
 #ifndef INPUT_HPP
 #define INPUT_HPP
 
+#include "database.hpp"
 #include "num_util.hpp"
 #include "vector2D.hpp"
 #include <cassert>
@@ -34,6 +35,7 @@ public:
         isQuantumTheory(DEFAULT_BOOL) {}
   // Setters
   void setCoupling(const double &rs);
+  void setDatabaseInfo(const DatabaseInfo &dbInfo);
   void setDegeneracy(const double &Theta);
   void setInt2DScheme(const std::string &int2DScheme);
   void setIntError(const double &intError);
@@ -41,16 +43,13 @@ public:
   void setTheory(const std::string &theory);
   // Getters
   double getCoupling() const { return rs; }
+  DatabaseInfo getDatabaseInfo() const { return dbInfo; }
   double getDegeneracy() const { return Theta; }
   std::string getInt2DScheme() const { return int2DScheme; }
   double getIntError() const { return intError; }
   int getNThreads() const { return nThreads; }
   std::string getTheory() const { return theory; }
   bool isClassic() const { return isClassicTheory; }
-  // Print content of the data structure
-  void print() const;
-  // Compare two Input objects
-  bool isEqual(const Input &in) const;
 
 protected:
 
@@ -69,6 +68,8 @@ protected:
   std::string int2DScheme;
   // theory to be solved
   std::string theory;
+  // Database information
+  DatabaseInfo dbInfo;
 };
 
 // -----------------------------------------------------------------
@@ -83,24 +84,15 @@ public:
   explicit IterationInput()
       : aMix(DEFAULT_DOUBLE),
         errMin(DEFAULT_DOUBLE),
-        nIter(DEFAULT_INT),
-        outIter(DEFAULT_INT) {}
+        nIter(DEFAULT_INT) {}
   // Setters
   void setErrMin(const double &errMin);
   void setMixingParameter(const double &aMix);
   void setNIter(const int &nIter);
-  void setOutIter(const int &outIter);
-  void setRecoveryFileName(const std::string &recoveryFileName);
   // Getters
   double getErrMin() const { return errMin; }
   double getMixingParameter() const { return aMix; }
   int getNIter() const { return nIter; }
-  int getOutIter() const { return outIter; }
-  std::string getRecoveryFileName() const { return recoveryFileName; }
-  // Print content of the data structure
-  void print() const;
-  // Compare two StlsInput objects
-  bool isEqual(const IterationInput &in) const;
 
 protected:
 
@@ -110,10 +102,6 @@ protected:
   double errMin;
   // Maximum number of iterations
   int nIter;
-  // Output frequency
-  int outIter;
-  // Name of the file used to store the recovery data
-  std::string recoveryFileName;
 };
 
 // -----------------------------------------------------------------
@@ -128,9 +116,6 @@ public:
   struct Guess {
     std::vector<double> wvg;
     std::vector<double> slfc;
-    bool operator==(const Guess &other) const {
-      return wvg == other.wvg && slfc == other.slfc;
-    }
   };
   // Setters
   void setGuess(const Guess &guess);
@@ -138,10 +123,6 @@ public:
   // Getters
   Guess getGuess() const { return guess; }
   std::string getIETMapping() const { return IETMapping; }
-  // Print content of the data structure
-  void print() const;
-  // Compare two StlsInput objects
-  bool isEqual(const ClassicInput &in) const;
 
 protected:
 
@@ -166,10 +147,6 @@ public:
     std::vector<double> ssf;
     Vector2D adr;
     int matsubara = DEFAULT_INT;
-    bool operator==(const Guess &other) const {
-      return wvg == other.wvg && ssf == other.ssf && adr == other.adr
-             && matsubara == other.matsubara;
-    }
   };
   // Setters
   void setFixed(const std::string &fixed);
@@ -179,10 +156,6 @@ public:
   std::string getFixed() const { return fixed; }
   std::string getFixedIet() const { return fixedIet; }
   Guess getGuess() const { return guess; }
-  // Print content of the data structure
-  void print() const;
-  // Compare two QstlsInput objects
-  bool isEqual(const QuantumInput &in) const;
 
 protected:
 
@@ -221,10 +194,6 @@ public:
   double getWaveVectorGridRes() const { return dx; }
   double getWaveVectorGridCutoff() const { return xmax; }
   double getFrequencyCutoff() const { return OmegaMax; }
-  // Print content of the data structure
-  void print() const;
-  // Compare two StlsInput objects
-  bool isEqual(const RpaInput &in) const;
 
 protected:
 
@@ -248,13 +217,8 @@ class StlsInput : public RpaInput, public IterationInput, public ClassicInput {
 
 public:
 
-  //
   // Constructors
   explicit StlsInput() = default;
-  // Print content of the data structure
-  void print() const;
-  // Compare two QstlsInput objects
-  bool isEqual(const StlsInput &in) const;
 };
 
 // -----------------------------------------------------------------
@@ -273,10 +237,6 @@ public:
   using QuantumInput::setGuess;
   // Getters
   using QuantumInput::getGuess;
-  // Print content of the data structure
-  void print() const;
-  // Compare two QstlsInput objects
-  bool isEqual(const QstlsInput &in) const;
 
 private:
 
@@ -296,10 +256,6 @@ public:
     std::vector<double> grid;
     std::vector<double> alpha;
     std::vector<std::vector<double>> integrand;
-    bool operator==(const FreeEnergyIntegrand &other) const {
-      return grid == other.grid && integrand == other.integrand
-             && alpha == other.alpha;
-    }
   };
   // Contructor
   explicit VSInput()
@@ -321,10 +277,6 @@ public:
   double getErrMinAlpha() const { return errMinAlpha; }
   double getNIterAlpha() const { return nIterAlpha; }
   FreeEnergyIntegrand getFreeEnergyIntegrand() const { return fxcIntegrand; }
-  // Print content of the data structure
-  void print() const;
-  // Compare two VSStls objects
-  bool isEqual(const VSInput &in) const;
 
 private:
 
@@ -350,10 +302,8 @@ class VSStlsInput : public VSInput, public StlsInput {
 
 public:
 
-  // Print content of the data structure
-  void print() const;
-  // Compare two VSStls objects
-  bool isEqual(const VSStlsInput &in) const;
+  // Constructors
+  explicit VSStlsInput() = default;
 };
 
 // -----------------------------------------------------------------
@@ -364,10 +314,8 @@ class QVSStlsInput : public VSInput, public QstlsInput {
 
 public:
 
-  // Print content of the data structure
-  void print() const;
-  // Compare two VSStls objects
-  bool isEqual(const QVSStlsInput &in) const;
+  // Constructors
+  explicit QVSStlsInput() = default;
 };
 
 #endif

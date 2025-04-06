@@ -20,6 +20,7 @@ class Rpa:
         self.db_handler = database.DataBaseHandler()
         self.native_scheme_cls = native.Rpa
         self.native_inputs = native.RpaInput()
+        self.native_scheme_status = None
 
     @property
     def run_id(self):
@@ -31,7 +32,6 @@ class Rpa:
         """
         return self.db_handler.run_id
 
-    # Compute
     @mpi.MPI.record_time
     @mpi.MPI.synchronize_ranks
     def compute(self, inputs: Input):
@@ -42,14 +42,10 @@ class Rpa:
             inputs: Input parameters.
         """
         self.inputs = inputs
-        self.inputs.to_native(self.native_inputs)
-        scheme = self.native_scheme_cls(self.native_inputs)
-        status = scheme.compute()
-        self._check_status_and_clean(status, scheme.recovery)
-        self.results.from_native(scheme)
+        self._add_run_to_database()
+        self._compute_native()
         self._save()
 
-    # Compute radial distribution function
     @mpi.MPI.run_only_on_root
     def compute_rdf(self, rdf_grid: np.ndarray = None):
         """
@@ -67,41 +63,42 @@ class Rpa:
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid}
             )
 
-    # Check that the dielectric scheme was solved without errors
-    @mpi.MPI.run_only_on_root
-    def _check_status_and_clean(self, status: bool, recovery: str):
+    def _add_run_to_database(self):
         """
-        Checks the status of a process and performs cleanup if successful.
+        Adds the current run information to the database.
 
-        Args:
-            status (bool): The status of the process. A value of 0 indicates success.
-            recovery (str): The file path to a recovery file that should be removed
-                            if the process is successful.
-
-        Raises:
-            RuntimeError: If the status is not 0, indicating an error in the process.
-
-        Side Effects:
-            - Removes the recovery file if it exists and the status is 0.
-            - Prints a success message if the status is 0.
+        This method inserts the run details stored in `self.inputs` into the database
+        using the `db_handler`. It also updates the `database_info` attribute of
+        `self.inputs` with the current `run_id`.
         """
-        if status == 0:
-            if os.path.exists(recovery):
-                os.remove(recovery)
-            print("Dielectric theory solved successfully!")
-        else:
-            raise RuntimeError("Error while solving the dielectric theory")
+        self.db_handler.insert_run(self.inputs)
+        self.inputs.database_info.run_id = self.run_id
+
+    def _compute_native(self):
+        """
+        Computes the native representation of the inputs and processes the results.
+
+        This method performs the following steps:
+        1. Converts the current inputs to their native representation.
+        2. Initializes a native scheme object using the native inputs.
+        3. Computes the native scheme and stores its status.
+        4. Converts the results from the native scheme back to the desired format.
+        """
+        self.inputs.to_native(self.native_inputs)
+        scheme = self.native_scheme_cls(self.native_inputs)
+        self.native_scheme_status = scheme.compute()
+        self.results.from_native(scheme)
 
     @mpi.MPI.run_only_on_root
     def _save(self):
         """
-        Saves the current run's inputs and results to the database.
+        Saves the current state and results to the database.
 
-        This method checks if the `results` attribute is not None, and if so,
-        it uses the `db_handler` to insert the current run's `inputs` and `results`
-        into the database.
+        This method updates the run status in the database using the current
+        native scheme status and inserts the results into the database.
         """
-        self.db_handler.insert_run(self.inputs, self.results)
+        self.db_handler.update_run_status(self.native_scheme_status)
+        self.db_handler.insert_results(self.results.__dict__)
 
 
 class Input:
@@ -149,6 +146,7 @@ class Input:
         """Number of OMP threads for parallel calculations. Default =  ``1``"""
         # Undocumented default values
         self.theory: str = "RPA"
+        self.database_info: DatabaseInfo = DatabaseInfo()
 
     def to_native(self, native_input: any):
         """
@@ -167,7 +165,7 @@ class Input:
         """
         name = Input.to_native.__name__
         for attr, value in self.__dict__.items():
-            if hasattr(native_input, attr):
+            if hasattr(native_input, attr) and value is not None:
                 value_to_set = (
                     tonative()
                     if callable(tonative := getattr(value, name, None))
@@ -232,3 +230,32 @@ class Result:
                 rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
             )
             self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)
+
+
+class DatabaseInfo:
+    """
+    Class used to store the database information passed to the native code.
+    """
+
+    def __init__(self):
+        self.name: str = database.DataBaseHandler.DEFAULT_DATABASE_NAME
+        """Database name"""
+        self.run_id: int = None
+        """ID of the run in the database"""
+        self.run_table_name: str = database.DataBaseHandler.RUN_TABLE_NAME
+        """Name of the table used to store the runs in the database"""
+
+    def to_native(self) -> native.DatabaseInfo:
+        """
+        Converts the current object to a native `DatabaseInfo` instance.
+        This method creates a new instance of `native.DatabaseInfo` and copies
+        all non-None attributes from the current object to the new instance.
+        Returns:
+            native.DatabaseInfo: A new instance of `native.DatabaseInfo` with
+            attributes copied from the current object.
+        """
+        native_database_info = native.DatabaseInfo()
+        for attr, value in self.__dict__.items():
+            if value is not None:
+                setattr(native_database_info, attr, value)
+        return native_database_info

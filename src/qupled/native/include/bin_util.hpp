@@ -2,6 +2,7 @@
 #define BIN_UTIL_HPP
 
 #include <fstream>
+#include <sstream>
 
 // -----------------------------------------------------------------
 // Utility functions to manipulate binary files

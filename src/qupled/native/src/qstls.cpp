@@ -19,8 +19,8 @@ using Itg2DParam = Integrator2D::Param;
 // QSTLS class
 // -----------------------------------------------------------------
 
-Qstls::Qstls(const QstlsInput &in_, const bool verbose_, const bool writeFiles_)
-    : Stls(in_, verbose_, writeFiles_),
+Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
+    : Stls(in_, verbose_),
       in(in_) {
   // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0 && useIet) {
@@ -73,7 +73,6 @@ void Qstls::init() {
 // qstls iterations
 void Qstls::doIterations() {
   const int maxIter = in.getNIter();
-  const int outIter = in.getOutIter();
   const double minErr = in.getErrMin();
   double err = 1.0;
   int counter = 0;
@@ -91,8 +90,6 @@ void Qstls::doIterations() {
     err = computeError();
     // Update solution
     updateSolution();
-    // Write output
-    if (counter % outIter == 0 && writeFiles) { writeRecovery(); };
     // End timing
     double toc = timer();
     // Print diagnostic
@@ -111,8 +108,6 @@ void Qstls::initialGuess() {
   assert(!ssfOld.empty());
   assert(!adr.empty());
   assert(!useIet || !adrOld.empty());
-  // From recovery file
-  if (initialGuessFromRecovery()) { return; }
   // From guess in input
   if (initialGuessFromInput()) { return; }
   // Default
@@ -123,20 +118,6 @@ void Qstls::initialGuess() {
   }
   ssfOld = rpa.getSsf();
   if (useIet) { adrOld.fill(0.0); }
-}
-
-bool Qstls::initialGuessFromRecovery() {
-  vector<double> wvg_;
-  vector<double> ssf_;
-  Vector2D adr_;
-  Vector3D adrFixed_;
-  double Theta;
-  int nl_;
-  readRecovery(wvg_, ssf_, adr_, adrFixed_, Theta, nl_);
-  const bool ssfIsSet = initialGuessSsf(wvg_, ssf_);
-  const bool adrIsSet = (useIet) ? initialGuessAdr(wvg_, adr_) : true;
-  const bool adrFixedIsSet = initialGuessAdrFixed(wvg_, Theta, nl_, adrFixed_);
-  return ssfIsSet && adrIsSet && adrFixedIsSet;
 }
 
 bool Qstls::initialGuessFromInput() {
@@ -477,58 +458,6 @@ void Qstls::getAdrFixedIetFileInfo() {
                  " of the auxiliary density response.");
     }
   }
-}
-
-// Recovery files
-void Qstls::writeRecovery() {
-  if (!isRoot()) { return; }
-  ofstream file;
-  file.open(recoveryFileName, ios::binary);
-  if (!file.is_open()) {
-    throwError("Recovery file " + recoveryFileName + " could not be created.");
-  }
-  int nx = wvg.size();
-  int nl = in.getNMatsubara();
-  writeDataToBinary<int>(file, nx);
-  writeDataToBinary<int>(file, nl);
-  writeDataToBinary<double>(file, in.getDegeneracy());
-  writeDataToBinary<vector<double>>(file, wvg);
-  writeDataToBinary<vector<double>>(file, ssf);
-  writeDataToBinary<Vector2D>(file, adr);
-  writeDataToBinary<Vector3D>(file, adrFixed);
-  file.close();
-  if (!file) {
-    throwError("Error in writing the recovery file " + recoveryFileName);
-  }
-}
-
-void Qstls::readRecovery(vector<double> &wvg_,
-                         vector<double> &ssf_,
-                         Vector2D &adr_,
-                         Vector3D &adrFixed_,
-                         double &Theta,
-                         int &nl) const {
-  const string &fileName = in.getRecoveryFileName();
-  if (fileName.empty()) { return; }
-  ifstream file;
-  file.open(fileName, ios::binary);
-  if (!file.is_open()) {
-    throwError("Input file " + fileName + " could not be opened.");
-  }
-  int nx;
-  readDataFromBinary<int>(file, nx);
-  readDataFromBinary<int>(file, nl);
-  readDataFromBinary<double>(file, Theta);
-  wvg_.resize(nx);
-  ssf_.resize(nx);
-  adr_.resize(nx, nl);
-  adrFixed_.resize(nx, nl, nx);
-  readDataFromBinary<vector<double>>(file, wvg_);
-  readDataFromBinary<vector<double>>(file, ssf_);
-  readDataFromBinary<Vector2D>(file, adr_);
-  readDataFromBinary<Vector3D>(file, adrFixed_);
-  file.close();
-  if (!file) { throwError("Error in reading the file " + fileName); }
 }
 
 // -----------------------------------------------------------------
