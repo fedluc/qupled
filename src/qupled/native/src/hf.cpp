@@ -4,7 +4,6 @@
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "thermo_util.hpp"
-#include <cmath>
 
 using namespace std;
 using namespace thermoUtil;
