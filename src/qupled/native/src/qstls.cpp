@@ -27,6 +27,11 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
     throwError("Ground state calculations are not available "
                "for the quantum IET schemes");
   }
+  // Set name for the fixed adr output file
+  adrFixedFileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}_{}.bin",
+                                 in.getDegeneracy(),
+                                 in.getNMatsubara(),
+                                 in.getTheory());
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "QSTLS-HNC" || in.getTheory() == "QSTLS-IOI"
            || in.getTheory() == "QSTLS-LCT";

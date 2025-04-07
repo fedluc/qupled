@@ -30,22 +30,16 @@ private:
 
   // Spatial position
   const double r;
-
   // Cutoff in the wave-vector grid
   const double cutoff;
-
   // Fourier Integrator object
   const std::shared_ptr<Integrator1D> itgf;
-
   // Integrator object
   const std::shared_ptr<Integrator1D> itg;
-
   // Static structure factor interpolator
   const std::shared_ptr<Interpolator1D> ssfi;
-
   // Integrand
   double integrand(const double &y) const;
-
   // Compute static structure factor
   double ssf(const double &y) const;
 };

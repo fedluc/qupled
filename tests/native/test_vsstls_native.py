@@ -40,5 +40,4 @@ def test_vsstls_compute():
     assert scheme.sdr.size == nx
     assert scheme.slfc.size == nx
     assert scheme.ssf.size == nx
-    assert scheme.ssf_HF.size == nx
     assert scheme.rdf(scheme.wvg).size == nx

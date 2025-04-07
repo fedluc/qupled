@@ -31,18 +31,11 @@ public:
 
 protected:
 
-  // Input data
-  const QstlsInput in;
   // Auxiliary density response
   Vector2D adr;
   Vector2D adrOld;
   Vector3D adrFixed;
-  std::string adrFixedFileName =
-      fmt::format("adr_fixed_theta{:.3f}_matsubara{:}_{}.bin",
-                  in.getDegeneracy(),
-                  in.getNMatsubara(),
-                  in.getTheory());
-  std::map<int, std::pair<std::string, bool>> adrFixedIetFileInfo;
+  std::string adrFixedFileName;
   // Static structure factor (for iterations)
   std::vector<double> ssfNew;
   std::vector<double> ssfOld;
@@ -50,12 +43,27 @@ protected:
   void init();
   // Compute auxiliary density response
   void computeAdr();
-  void computeAdrFixed();
-  void writeAdrFixedFile(const Vector3D &res,
-                         const std::string &fileName) const;
   void readAdrFixedFile(Vector3D &res,
                         const std::string &fileName,
                         const bool iet) const;
+  // Compute static structure factor at finite temperature
+  void computeSsf();
+  // Iterations to solve the stls scheme
+  void doIterations();
+  void initialGuess();
+  double computeError() const;
+  void updateSolution();
+
+private:
+
+  // Input data
+  const QstlsInput in;
+  // Auxiliary density response
+  std::map<int, std::pair<std::string, bool>> adrFixedIetFileInfo;
+  // Compute auxiliary density response
+  void computeAdrFixed();
+  void writeAdrFixedFile(const Vector3D &res,
+                         const std::string &fileName) const;
   bool checkAdrFixed(const std::vector<double> &wvg_,
                      const double Theta_,
                      const int nl_) const;
@@ -63,12 +71,9 @@ protected:
   void computeAdrFixedIet();
   void getAdrFixedIetFileInfo();
   // Compute static structure factor at finite temperature
-  void computeSsf();
   void computeSsfFinite();
   void computeSsfGround();
   // Iterations to solve the stls scheme
-  void doIterations();
-  void initialGuess();
   bool initialGuessFromInput();
   bool initialGuessSsf(const std::vector<double> &wvg_,
                        const std::vector<double> &adr_);
@@ -77,8 +82,6 @@ protected:
                             const double &Theta,
                             const int &nl_,
                             const Vector3D &adrFixed_);
-  double computeError() const;
-  void updateSolution();
 };
 
 namespace QstlsUtil {

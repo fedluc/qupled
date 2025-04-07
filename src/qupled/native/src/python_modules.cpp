@@ -142,7 +142,6 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("sdr", &PyRpa::getSdr)
       .add_property("slfc", &PyRpa::getSlfc)
       .add_property("ssf", &PyRpa::getSsf)
-      .add_property("ssf_HF", &PyRpa::getSsfHF)
       .add_property("uint", &PyRpa::getUInt)
       .add_property("wvg", &PyRpa::getWvg);
 

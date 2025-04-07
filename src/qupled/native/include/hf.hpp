@@ -50,8 +50,6 @@ protected:
   double mu;
   // Initialize basic properties
   void init();
-  // Compute the static structure factor
-  void computeSsf();
 
 private:
 
@@ -63,7 +61,8 @@ private:
   void computeIdr();
   void computeIdrFinite();
   void computeIdrGround();
-  // Compute static structure
+  // Compute static structure factor
+  void computeSsf();
   void computeSsfFinite();
   void computeSsfGround();
   // Compute static local field correction

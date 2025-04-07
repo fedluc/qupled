@@ -29,10 +29,14 @@ protected:
   std::vector<double> ssfHF;
   // Initialize basic properties
   void init();
+  // Compute static structure factor
+  void computeSsf();
+
+private:
+
   // Compute Hartree-Fock static structure factor
   void computeSsfHF();
   // Compute static structure factor at finite temperature
-  void computeSsf();
   void computeSsfFinite();
   void computeSsfGround();
   // Compute static local field correction

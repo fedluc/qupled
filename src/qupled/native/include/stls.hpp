@@ -28,28 +28,32 @@ public:
 
 protected:
 
-  // Input parameters
-  StlsInput in;
-  // iet schemes
+  // Flag marking wheter iet schemes are solved or not
   bool useIet;
-  // Static local field correction to use during the iterations
-  std::vector<double> slfcNew;
   // Bridge function (for iet schemes)
   std::vector<double> bf;
+  // Static local field correction to use during the iterations
+  std::vector<double> slfcNew;
   // Initialize basic properties
   void init();
   // Compute static local field correction
   void computeSlfc();
-  void computeSlfcStls();
-  void computeSlfcIet();
-  // Compute bridge function
-  void computeBf();
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
   bool initialGuessFromInput();
   double computeError() const;
   void updateSolution();
+
+private:
+
+  // Input parameters
+  StlsInput in;
+  // Compute static local field correction
+  void computeSlfcStls();
+  void computeSlfcIet();
+  // Compute bridge function
+  void computeBf();
 };
 
 namespace StlsUtil {

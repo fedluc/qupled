@@ -100,7 +100,6 @@ public:
   static bn::ndarray getSdr(const Rpa &rpa);
   static bn::ndarray getSlfc(const Rpa &rpa);
   static bn::ndarray getSsf(const Rpa &rpa);
-  static bn::ndarray getSsfHF(const Rpa &rpa);
   static bn::ndarray getWvg(const Rpa &rpa);
   static double getUInt(const Rpa &rpa);
 };

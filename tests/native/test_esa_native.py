@@ -9,7 +9,6 @@ def test_esa_properties():
     assert hasattr(scheme, "sdr")
     assert hasattr(scheme, "slfc")
     assert hasattr(scheme, "ssf")
-    assert hasattr(scheme, "ssf_HF")
     with pytest.raises(RuntimeError) as excinfo:
         hasattr(scheme, "uint")
     assert excinfo.value.args[0] == "No data to compute the internal energy"
@@ -36,5 +35,4 @@ def test_esa_compute():
     assert scheme.sdr.size == nx
     assert scheme.slfc.size == nx
     assert scheme.ssf.size == nx
-    assert scheme.ssf_HF.size == nx
     assert scheme.rdf(scheme.wvg).size == nx
