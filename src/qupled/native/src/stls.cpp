@@ -67,7 +67,7 @@ void Stls::computeSlfcStls() {
   const int nx = wvg.size();
   const shared_ptr<Interpolator1D> itp = make_shared<Interpolator1D>(wvg, ssf);
   for (int i = 0; i < nx; ++i) {
-    Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
+    StlsUtil::Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
     slfcNew[i] = slfcTmp.get();
   }
 }
@@ -83,7 +83,7 @@ void Stls::computeSlfcIet() {
       make_shared<Interpolator1D>(wvg, slfc);
   const shared_ptr<Interpolator1D> bfItp = make_shared<Interpolator1D>(wvg, bf);
   for (size_t i = 0; i < wvg.size(); ++i) {
-    SlfcIet slfcTmp(
+    StlsUtil::SlfcIet slfcTmp(
         wvg[i], wvg.front(), wvg.back(), ssfItp, slfcItp, bfItp, itgGrid, itg2);
     slfcNew[i] += slfcTmp.get();
   }
@@ -96,12 +96,12 @@ void Stls::computeBf() {
       make_shared<Integrator1D>(ItgType::FOURIER, 1e-10);
   assert(bf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
-    BridgeFunction bfTmp(in.getTheory(),
-                         in.getIETMapping(),
-                         in.getCoupling(),
-                         in.getDegeneracy(),
-                         wvg[i],
-                         itgF);
+    StlsUtil::BridgeFunction bfTmp(in.getTheory(),
+                                   in.getIETMapping(),
+                                   in.getCoupling(),
+                                   in.getDegeneracy(),
+                                   wvg[i],
+                                   itgF);
     bf[i] = bfTmp.get();
   }
 }
@@ -173,21 +173,21 @@ void Stls::updateSolution() {
 // -----------------------------------------------------------------
 
 // Compute static structure factor from interpolator
-double SlfcBase::ssf(const double &y) const { return ssfi->eval(y); }
+double StlsUtil::SlfcBase::ssf(const double &y) const { return ssfi->eval(y); }
 
 // -----------------------------------------------------------------
 // Slfc class
 // -----------------------------------------------------------------
 
 // Get result of integration
-double Slfc::get() const {
+double StlsUtil::Slfc::get() const {
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(yMin, yMax));
   return itg->getSolution();
 }
 
 // Integrand
-double Slfc::integrand(const double &y) const {
+double StlsUtil::Slfc::integrand(const double &y) const {
   double y2 = y * y;
   double x2 = x * x;
   if (x == 0.0 || y == 0.0) { return 0.0; }
@@ -205,13 +205,13 @@ double Slfc::integrand(const double &y) const {
 // -----------------------------------------------------------------
 
 // Compute static local field correction from interpolator
-double SlfcIet::slfc(const double &y) const { return slfci->eval(y); }
+double StlsUtil::SlfcIet::slfc(const double &y) const { return slfci->eval(y); }
 
 // Compute bridge function from interpolator
-double SlfcIet::bf(const double &y) const { return bfi->eval(y); }
+double StlsUtil::SlfcIet::bf(const double &y) const { return bfi->eval(y); }
 
 // Get at finite temperature
-double SlfcIet::get() const {
+double StlsUtil::SlfcIet::get() const {
   if (x == 0.0) return 0.0;
   auto wMin = [&](const double &y) -> double {
     return (y > x) ? y - x : x - y;
@@ -224,13 +224,13 @@ double SlfcIet::get() const {
 }
 
 // Level 1 integrand
-double SlfcIet::integrand1(const double &y) const {
+double StlsUtil::SlfcIet::integrand1(const double &y) const {
   if (y == 0.0) return 0.0;
   return (-bf(y) - (ssf(y) - 1.0) * (slfc(y) - 1.0)) / y;
 }
 
 // Level 2 integrand
-double SlfcIet::integrand2(const double &w) const {
+double StlsUtil::SlfcIet::integrand2(const double &w) const {
   const double y = itg->getX();
   const double y2 = y * y;
   const double w2 = w * w;
@@ -242,7 +242,7 @@ double SlfcIet::integrand2(const double &w) const {
 // BridgeFunction class
 // -----------------------------------------------------------------
 
-double BridgeFunction::get() const {
+double StlsUtil::BridgeFunction::get() const {
   if (theory == "STLS-HNC" || theory == "QSTLS-HNC") { return hnc(); }
   if (theory == "STLS-IOI" || theory == "QSTLS-IOI") { return ioi(); }
   if (theory == "STLS-LCT" || theory == "QSTLS-LCT") { return lct(); }
@@ -250,7 +250,7 @@ double BridgeFunction::get() const {
   return numUtil::Inf;
 }
 
-double BridgeFunction::couplingParameter() const {
+double StlsUtil::BridgeFunction::couplingParameter() const {
   const double fact = 2 * lambda * lambda * rs;
   if (mapping == "sqrt") { return fact / sqrt(1 + Theta * Theta); }
   if (mapping == "linear") { return fact / (1 + Theta); }
@@ -260,9 +260,9 @@ double BridgeFunction::couplingParameter() const {
   return numUtil::Inf;
 }
 
-double BridgeFunction::hnc() const { return 0.0; }
+double StlsUtil::BridgeFunction::hnc() const { return 0.0; }
 
-double BridgeFunction::ioi() const {
+double StlsUtil::BridgeFunction::ioi() const {
   const double l2 = lambda * lambda;
   const double l3 = l2 * lambda;
   const double l4 = l3 * lambda;
@@ -330,7 +330,7 @@ double BridgeFunction::ioi() const {
   return fact * q2 * (bf1 + bf2 + bf3) * exp(-b0 * q2 / (4.0 * b1 * l2));
 }
 
-double BridgeFunction::lct() const {
+double StlsUtil::BridgeFunction::lct() const {
   const double Gamma = couplingParameter();
   auto func = [&](const double &r) -> double { return lctIntegrand(r, Gamma); };
   itg->compute(func, ItgParam(x / lambda));
@@ -338,8 +338,8 @@ double BridgeFunction::lct() const {
   return 0.0;
 }
 
-double BridgeFunction::lctIntegrand(const double &r,
-                                    const double &Gamma) const {
+double StlsUtil::BridgeFunction::lctIntegrand(const double &r,
+                                              const double &Gamma) const {
   if (Gamma < 5.0) {
     const string msg = fmt::format("The IET schemes cannot be applied "
                                    "to this state point because Gamma = {:.8f} "

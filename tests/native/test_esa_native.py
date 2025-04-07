@@ -1,10 +1,10 @@
 import pytest
-from qupled.native import ESA, Rpa, RpaInput
+from qupled.native import ESA, Rpa, Input
 
 
 def test_esa_properties():
     assert issubclass(ESA, Rpa)
-    scheme = ESA(RpaInput())
+    scheme = ESA(Input())
     assert hasattr(scheme, "idr")
     assert hasattr(scheme, "sdr")
     assert hasattr(scheme, "slfc")
@@ -17,7 +17,7 @@ def test_esa_properties():
 
 
 def test_esa_compute():
-    inputs = RpaInput()
+    inputs = Input()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
     inputs.theory = "RPA"

@@ -29,7 +29,7 @@ def test_rpa_initialization():
     assert isinstance(scheme.results, rpa.Result)
     assert isinstance(scheme.db_handler, DataBaseHandler)
     assert scheme.native_scheme_cls == native.Rpa
-    assert isinstance(scheme.native_inputs, native.RpaInput)
+    assert isinstance(scheme.native_inputs, native.Input)
     assert scheme.native_scheme_status is None
 
 

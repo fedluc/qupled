@@ -48,6 +48,7 @@ Python3_add_library(native MODULE
 		thermo_util.cpp	
 		input.cpp
 		chemical_potential.cpp
+		hf.cpp
 		rpa.cpp
 		esa.cpp
 		stls.cpp

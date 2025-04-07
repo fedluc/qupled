@@ -52,142 +52,146 @@ protected:
   void updateSolution();
 };
 
-// -----------------------------------------------------------------
-// Classes for the static local field correction
-// -----------------------------------------------------------------
+namespace StlsUtil {
 
-class SlfcBase {
+  // -----------------------------------------------------------------
+  // Classes for the static local field correction
+  // -----------------------------------------------------------------
 
-protected:
+  class SlfcBase {
 
-  // Constructor
-  SlfcBase(const double &x_,
-           const double &yMin_,
-           const double &yMax_,
-           std::shared_ptr<Interpolator1D> ssfi_)
-      : x(x_),
-        yMin(yMin_),
-        yMax(yMax_),
-        ssfi(ssfi_) {}
-  // Wave-vector
-  const double x;
-  // Integration limits
-  const double yMin;
-  const double yMax;
-  // Static structure factor interpolator
-  const std::shared_ptr<Interpolator1D> ssfi;
-  // Compute static structure factor
-  double ssf(const double &y) const;
-};
+  protected:
 
-class Slfc : public SlfcBase {
+    // Constructor
+    SlfcBase(const double &x_,
+             const double &yMin_,
+             const double &yMax_,
+             std::shared_ptr<Interpolator1D> ssfi_)
+        : x(x_),
+          yMin(yMin_),
+          yMax(yMax_),
+          ssfi(ssfi_) {}
+    // Wave-vector
+    const double x;
+    // Integration limits
+    const double yMin;
+    const double yMax;
+    // Static structure factor interpolator
+    const std::shared_ptr<Interpolator1D> ssfi;
+    // Compute static structure factor
+    double ssf(const double &y) const;
+  };
 
-public:
+  class Slfc : public SlfcBase {
 
-  // Constructor
-  Slfc(const double &x_,
-       const double &yMin_,
-       const double &yMax_,
-       std::shared_ptr<Interpolator1D> ssfi_,
-       std::shared_ptr<Integrator1D> itg_)
-      : SlfcBase(x_, yMin_, yMax_, ssfi_),
-        itg(itg_) {}
-  // Get result of integration
-  double get() const;
+  public:
 
-private:
+    // Constructor
+    Slfc(const double &x_,
+         const double &yMin_,
+         const double &yMax_,
+         std::shared_ptr<Interpolator1D> ssfi_,
+         std::shared_ptr<Integrator1D> itg_)
+        : SlfcBase(x_, yMin_, yMax_, ssfi_),
+          itg(itg_) {}
+    // Get result of integration
+    double get() const;
 
-  // Integrator object
-  const std::shared_ptr<Integrator1D> itg;
-  // Integrand
-  double integrand(const double &y) const;
-};
+  private:
 
-class SlfcIet : public SlfcBase {
+    // Integrator object
+    const std::shared_ptr<Integrator1D> itg;
+    // Integrand
+    double integrand(const double &y) const;
+  };
 
-public:
+  class SlfcIet : public SlfcBase {
 
-  // Constructor
-  SlfcIet(const double &x_,
-          const double &yMin_,
-          const double &yMax_,
-          std::shared_ptr<Interpolator1D> ssfi_,
-          std::shared_ptr<Interpolator1D> slfci_,
-          std::shared_ptr<Interpolator1D> bfi_,
-          const std::vector<double> &itgGrid_,
-          std::shared_ptr<Integrator2D> itg_)
-      : SlfcBase(x_, yMin_, yMax_, ssfi_),
-        itg(itg_),
-        itgGrid(itgGrid_),
-        slfci(slfci_),
-        bfi(bfi_) {}
-  // Get result of integration
-  double get() const;
+  public:
 
-private:
+    // Constructor
+    SlfcIet(const double &x_,
+            const double &yMin_,
+            const double &yMax_,
+            std::shared_ptr<Interpolator1D> ssfi_,
+            std::shared_ptr<Interpolator1D> slfci_,
+            std::shared_ptr<Interpolator1D> bfi_,
+            const std::vector<double> &itgGrid_,
+            std::shared_ptr<Integrator2D> itg_)
+        : SlfcBase(x_, yMin_, yMax_, ssfi_),
+          itg(itg_),
+          itgGrid(itgGrid_),
+          slfci(slfci_),
+          bfi(bfi_) {}
+    // Get result of integration
+    double get() const;
 
-  // Integrator object
-  const std::shared_ptr<Integrator2D> itg;
-  // Grid for 2D integration
-  const std::vector<double> itgGrid;
-  // Integrands
-  double integrand1(const double &y) const;
-  double integrand2(const double &w) const;
-  // Static local field correction interpolator
-  const std::shared_ptr<Interpolator1D> slfci;
-  // Bridge function interpolator
-  const std::shared_ptr<Interpolator1D> bfi;
-  // Compute static local field correction
-  double slfc(const double &x) const;
-  // Compute bridge function
-  double bf(const double &x_) const;
-};
+  private:
 
-class BridgeFunction {
+    // Integrator object
+    const std::shared_ptr<Integrator2D> itg;
+    // Grid for 2D integration
+    const std::vector<double> itgGrid;
+    // Integrands
+    double integrand1(const double &y) const;
+    double integrand2(const double &w) const;
+    // Static local field correction interpolator
+    const std::shared_ptr<Interpolator1D> slfci;
+    // Bridge function interpolator
+    const std::shared_ptr<Interpolator1D> bfi;
+    // Compute static local field correction
+    double slfc(const double &x) const;
+    // Compute bridge function
+    double bf(const double &x_) const;
+  };
 
-public:
+  class BridgeFunction {
 
-  // Constructor
-  BridgeFunction(const std::string &theory_,
-                 const std::string &mapping_,
-                 const double &rs_,
-                 const double &Theta_,
-                 const double &x_,
-                 std::shared_ptr<Integrator1D> itg_)
-      : theory(theory_),
-        mapping(mapping_),
-        rs(rs_),
-        Theta(Theta_),
-        x(x_),
-        itg(itg_) {}
-  // Get result of the integration
-  double get() const;
+  public:
 
-private:
+    // Constructor
+    BridgeFunction(const std::string &theory_,
+                   const std::string &mapping_,
+                   const double &rs_,
+                   const double &Theta_,
+                   const double &x_,
+                   std::shared_ptr<Integrator1D> itg_)
+        : theory(theory_),
+          mapping(mapping_),
+          rs(rs_),
+          Theta(Theta_),
+          x(x_),
+          itg(itg_) {}
+    // Get result of the integration
+    double get() const;
 
-  // Theory to be solved
-  const std::string theory;
-  // Iet mapping
-  const std::string mapping;
-  // Coupling parameter
-  const double rs;
-  // Degeneracy parameter
-  const double Theta;
-  // Wave vector
-  const double x;
-  // Integrator object
-  const std::shared_ptr<Integrator1D> itg;
-  // Constant for unit conversion
-  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
-  // Hypernetted-chain bridge function
-  double hnc() const;
-  // Ichimaru bridge function
-  double ioi() const;
-  // Lucco Castello and Tolias bridge function
-  double lct() const;
-  double lctIntegrand(const double &r, const double &Gamma) const;
-  // Coupling parameter to compute the bridge function
-  double couplingParameter() const;
-};
+  private:
+
+    // Theory to be solved
+    const std::string theory;
+    // Iet mapping
+    const std::string mapping;
+    // Coupling parameter
+    const double rs;
+    // Degeneracy parameter
+    const double Theta;
+    // Wave vector
+    const double x;
+    // Integrator object
+    const std::shared_ptr<Integrator1D> itg;
+    // Constant for unit conversion
+    const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
+    // Hypernetted-chain bridge function
+    double hnc() const;
+    // Ichimaru bridge function
+    double ioi() const;
+    // Lucco Castello and Tolias bridge function
+    double lct() const;
+    double lctIntegrand(const double &r, const double &Gamma) const;
+    // Coupling parameter to compute the bridge function
+    double couplingParameter() const;
+  };
+
+} // namespace StlsUtil
 
 #endif

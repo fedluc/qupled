@@ -4,15 +4,14 @@
 using namespace std;
 
 // -----------------------------------------------------------------
-// PyRpaInput
+// PyInput
 // -----------------------------------------------------------------
 
-bn::ndarray PyRpaInput::getChemicalPotentialGuess(RpaInput &in) {
+bn::ndarray PyInput::getChemicalPotentialGuess(Input &in) {
   return pythonUtil::toNdArray(in.getChemicalPotentialGuess());
 }
 
-void PyRpaInput::setChemicalPotentialGuess(RpaInput &in,
-                                           const bp::list &muGuess) {
+void PyInput::setChemicalPotentialGuess(Input &in, const bp::list &muGuess) {
   in.setChemicalPotentialGuess(pythonUtil::toVector(muGuess));
 }
 
@@ -125,7 +124,7 @@ void PyQstlsGuess::setMatsubara(QstlsInput::Guess &guess, const int matsubara) {
 
 int PyRpa::compute(Rpa &rpa) { return rpa.compute(); }
 
-RpaInput PyRpa::getInput(const Rpa &rpa) { return rpa.getInput(); }
+Input PyRpa::getInput(const Rpa &rpa) { return rpa.getInput(); }
 
 bn::ndarray PyRpa::getIdr(const Rpa &rpa) {
   return pythonUtil::toNdArray2D(rpa.getIdr());
@@ -145,10 +144,6 @@ bn::ndarray PyRpa::getSlfc(const Rpa &rpa) {
 
 bn::ndarray PyRpa::getSsf(const Rpa &rpa) {
   return pythonUtil::toNdArray(rpa.getSsf());
-}
-
-bn::ndarray PyRpa::getSsfHF(const Rpa &rpa) {
-  return pythonUtil::toNdArray(rpa.getSsfHF());
 }
 
 bn::ndarray PyRpa::getWvg(const Rpa &rpa) {

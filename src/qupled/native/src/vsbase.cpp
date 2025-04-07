@@ -67,7 +67,7 @@ double VSBase::alphaDifference(const double &alphaTmp) {
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-ThermoPropBase::ThermoPropBase(const VSInput &inVS, const RpaInput &inRpa) {
+ThermoPropBase::ThermoPropBase(const VSInput &inVS, const Input &inRpa) {
   // Check if we are solving for particular state points
   isZeroCoupling = (inRpa.getCoupling() == 0.0);
   isZeroDegeneracy = (inRpa.getDegeneracy() == 0.0);
@@ -79,7 +79,7 @@ ThermoPropBase::ThermoPropBase(const VSInput &inVS, const RpaInput &inRpa) {
   setFxcIdxUnsolvedStatePoint();
 }
 
-void ThermoPropBase::setRsGrid(const VSInput &inVS, const RpaInput &inRpa) {
+void ThermoPropBase::setRsGrid(const VSInput &inVS, const Input &inRpa) {
   const double &rs = inRpa.getCoupling();
   const double &drs = inVS.getCouplingResolution();
   if (!numUtil::isZero(remainder(rs, drs))) {
@@ -133,7 +133,7 @@ void ThermoPropBase::setAlpha(const VSInput &in) {
   }
 }
 
-void ThermoPropBase::setFxcIdxTargetStatePoint(const RpaInput &in) {
+void ThermoPropBase::setFxcIdxTargetStatePoint(const Input &in) {
   auto isTarget = [&](const double &rs) {
     return numUtil::equalTol(rs, in.getCoupling());
   };

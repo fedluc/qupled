@@ -32,37 +32,32 @@ BOOST_PYTHON_MODULE(native) {
   std::atexit(qupledCleanUp);
 
   // Class for the input of the Rpa scheme
-  bp::class_<RpaInput>("RpaInput")
-      .add_property("coupling", &RpaInput::getCoupling, &RpaInput::setCoupling)
+  bp::class_<Input>("Input")
+      .add_property("coupling", &Input::getCoupling, &Input::setCoupling)
+      .add_property("degeneracy", &Input::getDegeneracy, &Input::setDegeneracy)
       .add_property(
-          "degeneracy", &RpaInput::getDegeneracy, &RpaInput::setDegeneracy)
-      .add_property("integral_strategy",
-                    &RpaInput::getInt2DScheme,
-                    &RpaInput::setInt2DScheme)
-      .add_property(
-          "integral_error", &RpaInput::getIntError, &RpaInput::setIntError)
-      .add_property("threads", &RpaInput::getNThreads, &RpaInput::setNThreads)
-      .add_property("theory", &RpaInput::getTheory, &RpaInput::setTheory)
+          "integral_strategy", &Input::getInt2DScheme, &Input::setInt2DScheme)
+      .add_property("integral_error", &Input::getIntError, &Input::setIntError)
+      .add_property("threads", &Input::getNThreads, &Input::setNThreads)
+      .add_property("theory", &Input::getTheory, &Input::setTheory)
       .add_property("chemical_potential",
-                    &PyRpaInput::getChemicalPotentialGuess,
-                    &PyRpaInput::setChemicalPotentialGuess)
-      .add_property("database_info",
-                    &RpaInput::getDatabaseInfo,
-                    &RpaInput::setDatabaseInfo)
+                    &PyInput::getChemicalPotentialGuess,
+                    &PyInput::setChemicalPotentialGuess)
       .add_property(
-          "matsubara", &RpaInput::getNMatsubara, &RpaInput::setNMatsubara)
+          "database_info", &Input::getDatabaseInfo, &Input::setDatabaseInfo)
+      .add_property("matsubara", &Input::getNMatsubara, &Input::setNMatsubara)
       .add_property("resolution",
-                    &RpaInput::getWaveVectorGridRes,
-                    &RpaInput::setWaveVectorGridRes)
+                    &Input::getWaveVectorGridRes,
+                    &Input::setWaveVectorGridRes)
       .add_property("cutoff",
-                    &RpaInput::getWaveVectorGridCutoff,
-                    &RpaInput::setWaveVectorGridCutoff)
+                    &Input::getWaveVectorGridCutoff,
+                    &Input::setWaveVectorGridCutoff)
       .add_property("frequency_cutoff",
-                    &RpaInput::getFrequencyCutoff,
-                    &RpaInput::setFrequencyCutoff);
+                    &Input::getFrequencyCutoff,
+                    &Input::setFrequencyCutoff);
 
   // Class for the input of the Stls scheme
-  bp::class_<StlsInput, bp::bases<RpaInput>>("StlsInput")
+  bp::class_<StlsInput, bp::bases<Input>>("StlsInput")
       .add_property("error", &StlsInput::getErrMin, &StlsInput::setErrMin)
       .add_property("guess", &StlsInput::getGuess, &StlsInput::setGuess)
       .add_property(
@@ -139,7 +134,7 @@ BOOST_PYTHON_MODULE(native) {
                     &PyFreeEnergyIntegrand::setAlpha);
 
   // Class to solve the classical RPA scheme
-  bp::class_<Rpa>("Rpa", bp::init<const RpaInput>())
+  bp::class_<Rpa>("Rpa", bp::init<const Input>())
       .def("compute", &PyRpa::compute)
       .def("rdf", &PyRpa::getRdf)
       .add_property("inputs", &PyRpa::getInput)
@@ -152,7 +147,7 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("wvg", &PyRpa::getWvg);
 
   // Class to solve the classical ESA scheme
-  bp::class_<ESA, bp::bases<Rpa>>("ESA", bp::init<const RpaInput>())
+  bp::class_<ESA, bp::bases<Rpa>>("ESA", bp::init<const Input>())
       .def("compute", &ESA::compute);
 
   // Class to solve classical schemes

@@ -20,11 +20,11 @@ namespace bn = boost::python::numpy;
 // Wrapper for exposing the Input class to Python
 // -----------------------------------------------------------------
 
-class PyRpaInput {
+class PyInput {
 public:
 
-  static bn::ndarray getChemicalPotentialGuess(RpaInput &in);
-  static void setChemicalPotentialGuess(RpaInput &in, const bp::list &muGuess);
+  static bn::ndarray getChemicalPotentialGuess(Input &in);
+  static void setChemicalPotentialGuess(Input &in, const bp::list &muGuess);
 };
 
 // -----------------------------------------------------------------
@@ -94,7 +94,7 @@ class PyRpa {
 public:
 
   static int compute(Rpa &rpa);
-  static RpaInput getInput(const Rpa &rpa);
+  static Input getInput(const Rpa &rpa);
   static bn::ndarray getIdr(const Rpa &rpa);
   static bn::ndarray getRdf(const Rpa &rpa, const bn::ndarray &r);
   static bn::ndarray getSdr(const Rpa &rpa);

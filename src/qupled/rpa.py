@@ -19,7 +19,7 @@ class Rpa:
         # Undocumented properties
         self.db_handler = database.DataBaseHandler()
         self.native_scheme_cls = native.Rpa
-        self.native_inputs = native.RpaInput()
+        self.native_inputs = native.Input()
         self.native_scheme_status = None
 
     @property

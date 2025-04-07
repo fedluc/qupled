@@ -133,38 +133,38 @@ void QuantumInput::setGuess(const Guess &guess) {
 }
 
 // -----------------------------------------------------------------
-// RpaInput class
+// Input class
 // -----------------------------------------------------------------
 
-void RpaInput::setChemicalPotentialGuess(const vector<double> &muGuess) {
+void Input::setChemicalPotentialGuess(const vector<double> &muGuess) {
   if (muGuess.size() != 2 || muGuess[0] >= muGuess[1]) {
     throwError("Invalid guess for chemical potential calculation");
   }
   this->muGuess = muGuess;
 }
 
-void RpaInput::setNMatsubara(const int &nl) {
+void Input::setNMatsubara(const int &nl) {
   if (nl < 0) {
     throwError("The number of matsubara frequencies can't be negative");
   }
   this->nl = nl;
 }
 
-void RpaInput::setWaveVectorGridRes(const double &dx) {
+void Input::setWaveVectorGridRes(const double &dx) {
   if (dx <= 0.0) {
     throwError("The wave-vector grid resolution must be larger than zero");
   }
   this->dx = dx;
 }
 
-void RpaInput::setWaveVectorGridCutoff(const double &xmax) {
+void Input::setWaveVectorGridCutoff(const double &xmax) {
   if (xmax <= 0.0) {
     throwError("The wave-vector grid cutoff must be larger than zero");
   }
   this->xmax = xmax;
 }
 
-void RpaInput::setFrequencyCutoff(const double &OmegaMax) {
+void Input::setFrequencyCutoff(const double &OmegaMax) {
   if (OmegaMax <= 0.0) {
     throwError("The frequency cutoff must be larger than zero");
   }

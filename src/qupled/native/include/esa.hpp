@@ -15,7 +15,7 @@ class ESA : public Rpa {
 public:
 
   // ESA constructor
-  explicit ESA(const RpaInput &in_)
+  explicit ESA(const Input &in_)
       : Rpa(in_) {}
   // Compute the scheme
   int compute();
