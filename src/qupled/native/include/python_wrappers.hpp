@@ -3,6 +3,7 @@
 
 #include "database.hpp"
 #include "esa.hpp"
+#include "hf.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "qstls.hpp"
@@ -90,18 +91,17 @@ public:
 // Wrapper for exposing the class Rpa class to Python
 // -----------------------------------------------------------------
 
-class PyRpa {
+class pyHF {
 public:
 
-  static int compute(Rpa &rpa);
-  static Input getInput(const Rpa &rpa);
-  static bn::ndarray getIdr(const Rpa &rpa);
-  static bn::ndarray getRdf(const Rpa &rpa, const bn::ndarray &r);
-  static bn::ndarray getSdr(const Rpa &rpa);
-  static bn::ndarray getSlfc(const Rpa &rpa);
-  static bn::ndarray getSsf(const Rpa &rpa);
-  static bn::ndarray getWvg(const Rpa &rpa);
-  static double getUInt(const Rpa &rpa);
+  static Input getInput(const HF &hf);
+  static bn::ndarray getIdr(const HF &hf);
+  static bn::ndarray getRdf(const HF &hf, const bn::ndarray &r);
+  static bn::ndarray getSdr(const HF &hf);
+  static bn::ndarray getSlfc(const HF &hf);
+  static bn::ndarray getSsf(const HF &hf);
+  static bn::ndarray getWvg(const HF &hf);
+  static double getUInt(const HF &hf);
 };
 
 // -----------------------------------------------------------------

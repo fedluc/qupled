@@ -54,7 +54,7 @@ private:
   // Constant for unit conversion
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
   // Construct wave vector grid
-  void buildWvGrid();
+  void buildWaveVectorGrid();
   // Compute chemical potential
   void computeChemicalPotential();
   // Compute the ideal density response

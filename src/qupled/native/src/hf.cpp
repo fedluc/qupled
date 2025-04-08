@@ -17,7 +17,7 @@ HF::HF(const Input &in_, const bool verbose_)
       in(in_),
       itg(std::make_shared<Integrator1D>(ItgType::DEFAULT, in_.getIntError())) {
   // Assemble the wave-vector grid
-  buildWvGrid();
+  buildWaveVectorGrid();
   // Allocate arrays to the correct size
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
@@ -56,7 +56,7 @@ void HF::init() {
 }
 
 // Set up wave-vector grid
-void HF::buildWvGrid() {
+void HF::buildWaveVectorGrid() {
   wvg.push_back(0.0);
   const double dx = in.getWaveVectorGridRes();
   const double xmax = in.getWaveVectorGridCutoff();

@@ -134,16 +134,20 @@ BOOST_PYTHON_MODULE(native) {
                     &PyFreeEnergyIntegrand::setAlpha);
 
   // Class to solve the classical RPA scheme
-  bp::class_<Rpa>("Rpa", bp::init<const Input>())
-      .def("compute", &PyRpa::compute)
-      .def("rdf", &PyRpa::getRdf)
-      .add_property("inputs", &PyRpa::getInput)
-      .add_property("idr", &PyRpa::getIdr)
-      .add_property("sdr", &PyRpa::getSdr)
-      .add_property("slfc", &PyRpa::getSlfc)
-      .add_property("ssf", &PyRpa::getSsf)
-      .add_property("uint", &PyRpa::getUInt)
-      .add_property("wvg", &PyRpa::getWvg);
+  bp::class_<HF>("HF", bp::init<const Input>())
+      .def("compute", &HF::compute)
+      .def("rdf", &pyHF::getRdf)
+      .add_property("inputs", &pyHF::getInput)
+      .add_property("idr", &pyHF::getIdr)
+      .add_property("sdr", &pyHF::getSdr)
+      .add_property("slfc", &pyHF::getSlfc)
+      .add_property("ssf", &pyHF::getSsf)
+      .add_property("uint", &pyHF::getUInt)
+      .add_property("wvg", &pyHF::getWvg);
+
+  // Class to solve the classical RPA scheme
+  bp::class_<Rpa, bp::bases<HF>>("Rpa", bp::init<const Input>())
+      .def("compute", &Rpa::compute);
 
   // Class to solve the classical ESA scheme
   bp::class_<ESA, bp::bases<Rpa>>("ESA", bp::init<const Input>())

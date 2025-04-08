@@ -62,7 +62,6 @@ double ESAUtil::Slfc::activationFunction(const double &x) const {
 
 void ESAUtil::Slfc::computeCoefficients() {
   if (coeff.valid) { return; }
-  std::cerr << "COMPUTING THE COEFFICIENTS!!!!" << std::endl;
   // Long wave-lenght limit
   coeff.lwl = 1.0 - onTop();
   // Activation function
