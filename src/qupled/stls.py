@@ -1,5 +1,6 @@
 from __future__ import annotations
 import numpy as np
+from . import hf
 from . import native
 from . import output
 from . import rpa
@@ -53,7 +54,7 @@ class Input(rpa.Input):
         self.theory: str = "STLS"
 
 
-class Result(rpa.Result):
+class Result(hf.Result):
     """
     Class used to store the results for the :obj:`qupled.stls.Stls` class.
     """

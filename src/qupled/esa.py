@@ -1,21 +1,21 @@
 from __future__ import annotations
 from . import native
-from . import rpa
+from . import hf
 
 
-class ESA(rpa.Rpa):
+class ESA(hf.HF):
     """
     Class used to solve the ESA scheme.
     """
 
     def __init__(self):
         super().__init__()
-        self.results: rpa.Result = rpa.Result()
+        self.results: hf.Result = hf.Result()
         # Undocumented properties
         self.native_scheme_cls = native.ESA
 
 
-class Input(rpa.Input):
+class Input(hf.Input):
     """
     Class used to manage the input for the :obj:`qupled.esa.ESA` class.
     """
