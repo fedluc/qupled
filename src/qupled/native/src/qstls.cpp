@@ -27,6 +27,11 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
     throwError("Ground state calculations are not available "
                "for the quantum IET schemes");
   }
+  // Set name for the fixed adr output file
+  adrFixedFileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}_{}.bin",
+                                 in.getDegeneracy(),
+                                 in.getNMatsubara(),
+                                 in.getTheory());
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "QSTLS-HNC" || in.getTheory() == "QSTLS-IOI"
            || in.getTheory() == "QSTLS-LCT";
@@ -184,7 +189,8 @@ void Qstls::computeAdr() {
   const shared_ptr<Interpolator1D> ssfi =
       make_shared<Interpolator1D>(wvg, ssfOld);
   for (int i = 0; i < nx; ++i) {
-    Adr adrTmp(in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], ssfi, itg);
+    QstlsUtil::Adr adrTmp(
+        in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], ssfi, itg);
     adrTmp.get(wvg, adrFixed, adr);
   }
   if (useIet) computeAdrIet();
@@ -216,7 +222,8 @@ void Qstls::computeSsfFinite() {
   const int nl = idr.size(1);
   for (int i = 0; i < nx; ++i) {
     const double bfi = (useIet) ? bf[i] : 0;
-    Qssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i), bfi);
+    QstlsUtil::Ssf ssfTmp(
+        wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i), bfi);
     ssfNew[i] = ssfTmp.get();
   }
 }
@@ -231,7 +238,8 @@ void Qstls::computeSsfGround() {
   const double xMax = wvg.back();
   auto loopFunc = [&](int i) -> void {
     shared_ptr<Integrator1D> itgTmp = make_shared<Integrator1D>(*itg);
-    QssfGround ssfTmp(wvg[i], rs, ssfHF[i], xMax, OmegaMax, ssfi, itgTmp);
+    QstlsUtil::SsfGround ssfTmp(
+        wvg[i], rs, ssfHF[i], xMax, OmegaMax, ssfi, itgTmp);
     ssfNew[i] = ssfTmp.get();
   };
   const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
@@ -268,7 +276,7 @@ void Qstls::computeAdrFixed() {
   // Parallel for loop (Hybrid MPI and OpenMP)
   auto loopFunc = [&](int i) -> void {
     shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in.getIntError());
-    AdrFixed adrTmp(
+    QstlsUtil::AdrFixed adrTmp(
         in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], mu, itgGrid, itg2);
     adrTmp.get(wvg, adrFixed);
   };
@@ -380,15 +388,15 @@ void Qstls::computeAdrIet() {
         make_shared<Integrator2D>(in.getIntError());
     Vector3D adrFixedPrivate;
     readAdrFixedFile(adrFixedPrivate, adrFixedIetFileInfo.at(i).first, true);
-    AdrIet adrTmp(in.getDegeneracy(),
-                  wvg.front(),
-                  wvg.back(),
-                  wvg[i],
-                  ssfi,
-                  dlfci,
-                  bfi,
-                  itgGrid,
-                  itgPrivate);
+    QstlsUtil::AdrIet adrTmp(in.getDegeneracy(),
+                             wvg.front(),
+                             wvg.back(),
+                             wvg[i],
+                             ssfi,
+                             dlfci,
+                             bfi,
+                             itgGrid,
+                             itgPrivate);
     adrTmp.get(wvg, adrFixedPrivate, adrIet);
   };
   const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
@@ -420,12 +428,12 @@ void Qstls::computeAdrFixedIet() {
   auto loopFunc = [&](int i) -> void {
     auto itgPrivate = make_shared<Integrator1D>(in.getIntError());
     Vector3D res(nl, nx, nx);
-    AdrFixedIet adrTmp(in.getDegeneracy(),
-                       wvg.front(),
-                       wvg.back(),
-                       wvg[idx[i]],
-                       mu,
-                       itgPrivate);
+    QstlsUtil::AdrFixedIet adrTmp(in.getDegeneracy(),
+                                  wvg.front(),
+                                  wvg.back(),
+                                  wvg[idx[i]],
+                                  mu,
+                                  itgPrivate);
     adrTmp.get(wvg, res);
     writeAdrFixedFile(res, adrFixedIetFileInfo.at(idx[i]).first);
   };
@@ -465,20 +473,24 @@ void Qstls::getAdrFixedIetFileInfo() {
 // -----------------------------------------------------------------
 
 // Compute static structure factor
-double AdrBase::ssf(const double &y) const { return ssfi->eval(y); }
+double QstlsUtil::AdrBase::ssf(const double &y) const { return ssfi->eval(y); }
 
 // -----------------------------------------------------------------
 // Adr class
 // -----------------------------------------------------------------
 
 // Compute fixed component
-double Adr::fix(const double &y) const { return fixi.eval(y); }
+double QstlsUtil::Adr::fix(const double &y) const { return fixi.eval(y); }
 
 // Integrand
-double Adr::integrand(const double &y) const { return fix(y) * (ssf(y) - 1.0); }
+double QstlsUtil::Adr::integrand(const double &y) const {
+  return fix(y) * (ssf(y) - 1.0);
+}
 
 // Get result of integration
-void Adr::get(const vector<double> &wvg, const Vector3D &fixed, Vector2D &res) {
+void QstlsUtil::Adr::get(const vector<double> &wvg,
+                         const Vector3D &fixed,
+                         Vector2D &res) {
   const int nx = wvg.size();
   const int nl = fixed.size(1);
   auto it = lower_bound(wvg.begin(), wvg.end(), x);
@@ -503,7 +515,7 @@ void Adr::get(const vector<double> &wvg, const Vector3D &fixed, Vector2D &res) {
 // -----------------------------------------------------------------
 
 // Get fixed component
-void AdrFixed::get(vector<double> &wvg, Vector3D &res) const {
+void QstlsUtil::AdrFixed::get(vector<double> &wvg, Vector3D &res) const {
   const int nx = wvg.size();
   const int nl = res.size(1);
   if (x == 0.0) { res.fill(0, 0.0); };
@@ -527,14 +539,15 @@ void AdrFixed::get(vector<double> &wvg, Vector3D &res) const {
 }
 
 // Integrands for the fixed component
-double AdrFixed::integrand1(const double &q, const double &l) const {
+double QstlsUtil::AdrFixed::integrand1(const double &q, const double &l) const {
   if (l == 0)
     return q / (exp(q * q / Theta - mu) + exp(-q * q / Theta + mu) + 2.0);
   return q / (exp(q * q / Theta - mu) + 1.0);
 }
 
-double
-AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
+double QstlsUtil::AdrFixed::integrand2(const double &t,
+                                       const double &y,
+                                       const double &l) const {
   const double q = itg->getX();
   if (y == 0) { return 0.0; };
   const double x2 = x * x;
@@ -566,35 +579,35 @@ AdrFixed::integrand2(const double &t, const double &y, const double &l) const {
 // -----------------------------------------------------------------
 
 // Compute dynamic local field correction
-double AdrIet::dlfc(const double &y, const int &l) const {
+double QstlsUtil::AdrIet::dlfc(const double &y, const int &l) const {
   return dlfci[l]->eval(y);
 }
 
 // Compute auxiliary density response
-double AdrIet::bf(const double &y) const { return bfi->eval(y); }
+double QstlsUtil::AdrIet::bf(const double &y) const { return bfi->eval(y); }
 
 // Compute fixed component
-double AdrIet::fix(const double &x, const double &y) const {
+double QstlsUtil::AdrIet::fix(const double &x, const double &y) const {
   return fixi.eval(x, y);
 }
 
 // Integrands
-double AdrIet::integrand1(const double &q, const int &l) const {
+double QstlsUtil::AdrIet::integrand1(const double &q, const int &l) const {
   if (q == 0.0) { return 0.0; }
   const double p1 = (1 - bf(q)) * ssf(q);
   const double p2 = dlfc(q, l) * (ssf(q) - 1.0);
   return (p1 - p2 - 1.0) / q;
 }
 
-double AdrIet::integrand2(const double &y) const {
+double QstlsUtil::AdrIet::integrand2(const double &y) const {
   const double q = itg->getX();
   return y * fix(q, y) * (ssf(y) - 1.0);
 }
 
 // Get result of integration
-void AdrIet::get(const vector<double> &wvg,
-                 const Vector3D &fixed,
-                 Vector2D &res) {
+void QstlsUtil::AdrIet::get(const vector<double> &wvg,
+                            const Vector3D &fixed,
+                            Vector2D &res) {
   const int nx = wvg.size();
   const int nl = fixed.size(0);
   auto it = lower_bound(wvg.begin(), wvg.end(), x);
@@ -623,7 +636,7 @@ void AdrIet::get(const vector<double> &wvg,
 // -----------------------------------------------------------------
 
 // get fixed component
-void AdrFixedIet::get(vector<double> &wvg, Vector3D &res) const {
+void QstlsUtil::AdrFixedIet::get(vector<double> &wvg, Vector3D &res) const {
   if (x == 0) {
     res.fill(0.0);
     return;
@@ -649,10 +662,10 @@ void AdrFixedIet::get(vector<double> &wvg, Vector3D &res) const {
 }
 
 // Integrand for the fixed component
-double AdrFixedIet::integrand(const double &t,
-                              const double &y,
-                              const double &q,
-                              const double &l) const {
+double QstlsUtil::AdrFixedIet::integrand(const double &t,
+                                         const double &y,
+                                         const double &q,
+                                         const double &l) const {
   const double x2 = x * x;
   const double q2 = q * q;
   const double y2 = y * y;
@@ -678,7 +691,7 @@ double AdrFixedIet::integrand(const double &t,
 // -----------------------------------------------------------------
 
 // Get
-double AdrGround::get() {
+double QstlsUtil::AdrGround::get() {
   auto tMin = [&](const double &y) -> double { return x * (x + y); };
   auto tMax = [&](const double &y) -> double { return x * (x - y); };
   auto func1 = [&](const double &y) -> double { return integrand1(y); };
@@ -687,11 +700,11 @@ double AdrGround::get() {
   return -(3.0 / 8.0) * itg->getSolution();
 }
 
-double AdrGround::integrand1(const double &y) const {
+double QstlsUtil::AdrGround::integrand1(const double &y) const {
   return y * (ssfi->eval(y) - 1.0);
 }
 
-double AdrGround::integrand2(const double &t) const {
+double QstlsUtil::AdrGround::integrand2(const double &t) const {
   if (x == 0.0) { return 0.0; }
   const double y = itg->getX();
   const double x2 = x * x;
@@ -716,7 +729,7 @@ double AdrGround::integrand2(const double &t) const {
 // Qssf class
 // -----------------------------------------------------------------
 
-double Qssf::get() const {
+double QstlsUtil::Ssf::get() const {
   if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
   const double f2 = 1 - bf;
@@ -734,7 +747,7 @@ double Qssf::get() const {
 // QssfGround class
 // -----------------------------------------------------------------
 
-double QssfGround::get() {
+double QstlsUtil::SsfGround::get() {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
@@ -742,10 +755,10 @@ double QssfGround::get() {
   return 1.5 / (M_PI)*itg->getSolution() + ssfHF;
 }
 
-double QssfGround::integrand(const double &Omega) const {
+double QstlsUtil::SsfGround::integrand(const double &Omega) const {
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(itg->getAccuracy());
   const double ip = 4.0 * lambda * rs / (M_PI * x * x);
-  const double idr = IdrGround(x, Omega).get();
-  const double adr = AdrGround(x, Omega, ssfi, xMax, itg2).get();
+  const double idr = HFUtil::IdrGround(x, Omega).get();
+  const double adr = QstlsUtil::AdrGround(x, Omega, ssfi, xMax, itg2).get();
   return idr / (1.0 + ip * (idr - adr)) - idr;
 }

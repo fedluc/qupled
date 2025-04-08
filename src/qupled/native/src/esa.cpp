@@ -1,9 +1,11 @@
 #include "esa.hpp"
 #include "dual.hpp"
 #include "input.hpp"
+#include "num_util.hpp"
 #include "numerics.hpp"
 
 using namespace std;
+using namespace numUtil;
 
 // -----------------------------------------------------------------
 // ESA class
@@ -28,47 +30,52 @@ int ESA::compute() {
 }
 
 void ESA::computeSlfc() {
-  computeSlfcCoefficients();
+  ESAUtil::Slfc slfcTmp(in.getCoupling(), in.getDegeneracy());
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double &x = wvg[i];
-    const double &AF = activationFunction(x);
-    slfc[i] = slfcNN(x) * (1.0 - AF) + slfcCoeff.lwl * AF;
+    slfc[i] = slfcTmp.get(x);
   }
 }
 
-double ESA::slfcNN(const double &x) const {
+double ESAUtil::Slfc::get(const double &x) {
+  computeCoefficients();
+  const double &AF = activationFunction(x);
+  return nn(x) * (1.0 - AF) + coeff.lwl * AF;
+}
+
+double ESAUtil::Slfc::nn(const double &x) const {
   const double sqrtX = sqrt(x);
   const double xp125 = pow(x, 1.25);
-  const double &a = slfcCoeff.nna;
-  const double &b = slfcCoeff.nnb;
-  const double &c = slfcCoeff.nnc;
-  const double &d = slfcCoeff.nnd;
-  const double csr = slfcCSR(x);
-  return csr * (1.0 + a * x + b * sqrtX) / (1.0 + c * x + d * xp125 + csr);
+  const double &a = coeff.nna;
+  const double &b = coeff.nnb;
+  const double &c = coeff.nnc;
+  const double &d = coeff.nnd;
+  const double csrx = csr(x);
+  return csrx * (1.0 + a * x + b * sqrtX) / (1.0 + c * x + d * xp125 + csrx);
 }
 
-double ESA::slfcCSR(const double &x) const { return x * x * slfcCoeff.csr; }
+double ESAUtil::Slfc::csr(const double &x) const { return x * x * coeff.csr; }
 
-double ESA::activationFunction(const double &x) const {
-  return 0.5 * (1.0 + tanh(slfcCoeff.afEta * (x - slfcCoeff.afxm)));
+double ESAUtil::Slfc::activationFunction(const double &x) const {
+  return 0.5 * (1.0 + tanh(coeff.afEta * (x - coeff.afxm)));
 }
 
-void ESA::computeSlfcCoefficients() {
+void ESAUtil::Slfc::computeCoefficients() {
+  if (coeff.valid) { return; }
   // Long wave-lenght limit
-  slfcCoeff.lwl = 1.0 - onTop();
+  coeff.lwl = 1.0 - onTop();
   // Activation function
-  const double &theta = in.getDegeneracy();
-  slfcCoeff.afEta = 3.0;
-  slfcCoeff.afxm = 2.64 + theta * (0.31 + 0.08 * theta);
+  coeff.afEta = 3.0;
+  coeff.afxm = 2.64 + theta * (0.31 + 0.08 * theta);
   // Neural network parametrization
-  computeSlfcNNCoefficients();
+  computeNNCoefficients();
   // Compressibility sum-rule
-  computeSlfcCSRCoefficients();
+  computeCSRCoefficients();
+  // Mark that the coefficients are valid and don't need to be recomputed
+  coeff.valid = true;
 }
 
-double ESA::onTop() const {
-  const double theta = in.getDegeneracy();
-  const double rs = in.getCoupling();
+double ESAUtil::Slfc::onTop() const {
   const double theta3_2 = pow(theta, 1.5);
   const double theta2 = theta * theta;
   const double theta3 = theta * theta2;
@@ -104,9 +111,7 @@ double ESA::onTop() const {
   return 0.5 * (1.0 + g0a * sqrtRs + g0b * rs) / (1.0 + g0c * rs + g0d * rs3);
 }
 
-void ESA::computeSlfcNNCoefficients() {
-  const double theta = in.getDegeneracy();
-  const double rs = in.getCoupling();
+void ESAUtil::Slfc::computeNNCoefficients() {
   const double theta3_2 = pow(theta, 1.5);
   constexpr double aa1 = 0.66477593;
   constexpr double aa2 = -4.59280227;
@@ -156,30 +161,28 @@ void ESA::computeSlfcNNCoefficients() {
   const double ad = ad1 + ad2 * theta + ad3 * theta3_2;
   const double bd = bd1 + bd2 * theta + bd3 * theta3_2;
   const double cd = cd1 + cd2 * theta + cd3 * theta3_2;
-  slfcCoeff.nna = (aa + ba * rs) / (1.0 + ca * rs);
-  slfcCoeff.nnb = (ab + bb * rs) / (1.0 + cb * rs);
-  slfcCoeff.nnc = (ac + bc * rs) / (1.0 + cc * rs);
-  slfcCoeff.nnd = (ad + bd * rs) / (1.0 + cd * rs);
+  coeff.nna = (aa + ba * rs) / (1.0 + ca * rs);
+  coeff.nnb = (ab + bb * rs) / (1.0 + cb * rs);
+  coeff.nnc = (ac + bc * rs) / (1.0 + cc * rs);
+  coeff.nnd = (ad + bd * rs) / (1.0 + cd * rs);
 }
 
-void ESA::computeSlfcCSRCoefficients() {
-  const double theta = in.getDegeneracy();
-  const double rs = in.getCoupling();
-  const Dual22 fxc = freeEnergy(rs, theta);
-  slfcCoeff.csr =
+void ESAUtil::Slfc::computeCSRCoefficients() {
+  const Dual22 fxc = freeEnergy();
+  coeff.csr =
       rs * (rs * fxc.dxx() - 2.0 * fxc.dx())
       + theta
             * (4.0 * theta * fxc.dyy() + 4.0 * rs * fxc.dxy() - 2.0 * fxc.dy());
-  slfcCoeff.csr *= -(M_PI / 12.0) * lambda * rs;
+  coeff.csr *= -(M_PI / 12.0) * lambda * rs;
 }
 
-Dual22 ESA::freeEnergy(const double &rs, const double &theta) const {
+Dual22 ESAUtil::Slfc::freeEnergy() const {
   Dual22 drs(rs, 0);
   Dual22 dtheta(theta, 1);
   return freeEnergy(drs, dtheta);
 }
 
-Dual22 ESA::freeEnergy(const Dual22 &rs, const Dual22 &theta) const {
+Dual22 ESAUtil::Slfc::freeEnergy(const Dual22 &rs, const Dual22 &theta) const {
   const bool isGroundState = theta.val() == 0.0;
   const Dual22 thetaInv = 1.0 / theta;
   const Dual22 theta2 = theta * theta;

@@ -4,15 +4,14 @@
 using namespace std;
 
 // -----------------------------------------------------------------
-// PyRpaInput
+// PyInput
 // -----------------------------------------------------------------
 
-bn::ndarray PyRpaInput::getChemicalPotentialGuess(RpaInput &in) {
+bn::ndarray PyInput::getChemicalPotentialGuess(Input &in) {
   return pythonUtil::toNdArray(in.getChemicalPotentialGuess());
 }
 
-void PyRpaInput::setChemicalPotentialGuess(RpaInput &in,
-                                           const bp::list &muGuess) {
+void PyInput::setChemicalPotentialGuess(Input &in, const bp::list &muGuess) {
   in.setChemicalPotentialGuess(pythonUtil::toVector(muGuess));
 }
 
@@ -123,39 +122,33 @@ void PyQstlsGuess::setMatsubara(QstlsInput::Guess &guess, const int matsubara) {
 // PyRpa
 // -----------------------------------------------------------------
 
-int PyRpa::compute(Rpa &rpa) { return rpa.compute(); }
+Input pyHF::getInput(const HF &hf) { return hf.getInput(); }
 
-RpaInput PyRpa::getInput(const Rpa &rpa) { return rpa.getInput(); }
-
-bn::ndarray PyRpa::getIdr(const Rpa &rpa) {
-  return pythonUtil::toNdArray2D(rpa.getIdr());
+bn::ndarray pyHF::getIdr(const HF &hf) {
+  return pythonUtil::toNdArray2D(hf.getIdr());
 }
 
-bn::ndarray PyRpa::getRdf(const Rpa &rpa, const bn::ndarray &r) {
-  return pythonUtil::toNdArray(rpa.getRdf(pythonUtil::toVector(r)));
+bn::ndarray pyHF::getRdf(const HF &hf, const bn::ndarray &r) {
+  return pythonUtil::toNdArray(hf.getRdf(pythonUtil::toVector(r)));
 }
 
-bn::ndarray PyRpa::getSdr(const Rpa &rpa) {
-  return pythonUtil::toNdArray(rpa.getSdr());
+bn::ndarray pyHF::getSdr(const HF &hf) {
+  return pythonUtil::toNdArray(hf.getSdr());
 }
 
-bn::ndarray PyRpa::getSlfc(const Rpa &rpa) {
-  return pythonUtil::toNdArray(rpa.getSlfc());
+bn::ndarray pyHF::getSlfc(const HF &hf) {
+  return pythonUtil::toNdArray(hf.getSlfc());
 }
 
-bn::ndarray PyRpa::getSsf(const Rpa &rpa) {
-  return pythonUtil::toNdArray(rpa.getSsf());
+bn::ndarray pyHF::getSsf(const HF &hf) {
+  return pythonUtil::toNdArray(hf.getSsf());
 }
 
-bn::ndarray PyRpa::getSsfHF(const Rpa &rpa) {
-  return pythonUtil::toNdArray(rpa.getSsfHF());
+bn::ndarray pyHF::getWvg(const HF &hf) {
+  return pythonUtil::toNdArray(hf.getWvg());
 }
 
-bn::ndarray PyRpa::getWvg(const Rpa &rpa) {
-  return pythonUtil::toNdArray(rpa.getWvg());
-}
-
-double PyRpa::getUInt(const Rpa &rpa) { return rpa.getUInt(); }
+double pyHF::getUInt(const HF &hf) { return hf.getUInt(); }
 
 // -----------------------------------------------------------------
 // PyStls

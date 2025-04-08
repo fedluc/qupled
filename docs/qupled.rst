@@ -12,26 +12,42 @@ and quantum schemes, as well as those for managing inputs, initial guesses, and 
 Classic schemes
 ---------------
 
+HF scheme
+~~~~~~~~~~
+
+The :obj:`qupled.hf` module is used to setup and perform all the necessary calculations
+for the solution of the `Hartree-Fock approximation <https://arxiv.org/abs/2411.04904>`_.
+The solution parameters are specified with a dedicated class called :obj:`qupled.hf.Input`.
+After the solution is completed the results are stored in an object :obj:`qupled.hf.Result` 
+and written to the output database.
+
+.. autoclass:: qupled.hf.HF
+    :members:
+
+.. autoclass:: qupled.hf.Input
+    :members:
+    :exclude-members: to_native
+
+.. autoclass:: qupled.hf.Result
+    :members:
+    :exclude-members: compute_rdf, from_native
+
 Rpa scheme
 ~~~~~~~~~~
 
 The :obj:`qupled.rpa` module is used to setup and perform all the necessary calculations
 for the solution of the `Random-Phase Approximation <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
 The solution parameters are specified with a dedicated class called :obj:`qupled.rpa.Input`.
-After the solution is completed the results are stored in an object :obj:`qupled.rpa.Result` 
+After the solution is completed the results are stored in an object :obj:`qupled.hf.Result` 
 and written to the output database.
 
 .. autoclass:: qupled.rpa.Rpa
+    :inherited-members:
     :members:
 
-.. autoclass:: qupled.rpa.Input
+.. autoclass:: qupled.rpa.Input	       
+    :show-inheritance:
     :members:
-    :exclude-members: to_native
-
-.. autoclass:: qupled.rpa.Result
-    :members:
-    :exclude-members: compute_rdf, from_native
-
 
 Stls scheme
 ~~~~~~~~~~~		      
@@ -113,7 +129,7 @@ ESA scheme
 The :obj:`qupled.esa` module is used to setup and perform all the necessary calculations
 for the solution of the `Effective Static Approximation <https://journals.aps.org/pr/abstract/10.1103/PhysRev.92.609>`_.
 The solution parameters are specified with a dedicated class called :obj:`qupled.esa.Input`.
-After the solution is completed the results are stored in an object :obj:`qupled.rpa.Result` 
+After the solution is completed the results are stored in an object :obj:`qupled.hf.Result` 
 and written to the output database.
 
 .. autoclass:: qupled.esa.ESA

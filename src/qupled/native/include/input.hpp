@@ -20,7 +20,6 @@ constexpr bool DEFAULT_BOOL = false;
 // -----------------------------------------------------------------
 // Base class to handle input for the dielectric schemes
 // -----------------------------------------------------------------
-
 class Input {
 
 public:
@@ -32,7 +31,12 @@ public:
         Theta(DEFAULT_DOUBLE),
         nThreads(DEFAULT_INT),
         isClassicTheory(DEFAULT_BOOL),
-        isQuantumTheory(DEFAULT_BOOL) {}
+        isQuantumTheory(DEFAULT_BOOL),
+        dx(DEFAULT_DOUBLE),
+        xmax(DEFAULT_DOUBLE),
+        OmegaMax(DEFAULT_DOUBLE),
+        nl(DEFAULT_INT) {}
+
   // Setters
   void setCoupling(const double &rs);
   void setDatabaseInfo(const DatabaseInfo &dbInfo);
@@ -41,6 +45,12 @@ public:
   void setIntError(const double &intError);
   void setNThreads(const int &nThreads);
   void setTheory(const std::string &theory);
+  void setChemicalPotentialGuess(const std::vector<double> &muGuess);
+  void setNMatsubara(const int &nMatsubara);
+  void setWaveVectorGridRes(const double &dx);
+  void setWaveVectorGridCutoff(const double &xmax);
+  void setFrequencyCutoff(const double &OmegaMax);
+
   // Getters
   double getCoupling() const { return rs; }
   DatabaseInfo getDatabaseInfo() const { return dbInfo; }
@@ -50,26 +60,41 @@ public:
   int getNThreads() const { return nThreads; }
   std::string getTheory() const { return theory; }
   bool isClassic() const { return isClassicTheory; }
+  std::vector<double> getChemicalPotentialGuess() const { return muGuess; }
+  int getNMatsubara() const { return nl; }
+  double getWaveVectorGridRes() const { return dx; }
+  double getWaveVectorGridCutoff() const { return xmax; }
+  double getFrequencyCutoff() const { return OmegaMax; }
 
 protected:
 
   // Accuracy for the integrals
   double intError;
-  // quantum coupling parameter
+  // Quantum coupling parameter
   double rs;
-  // degeneracy parameter
+  // Degeneracy parameter
   double Theta;
-  // number of threads for parallel calculations
+  // Number of threads for parallel calculations
   int nThreads;
-  // type of theory
+  // Type of theory
   bool isClassicTheory;
   bool isQuantumTheory;
-  // scheme for 2D integrals
+  // Scheme for 2D integrals
   std::string int2DScheme;
-  // theory to be solved
+  // Theory to be solved
   std::string theory;
   // Database information
   DatabaseInfo dbInfo;
+  // Wave-vector grid resolution
+  double dx;
+  // Cutoff for the wave-vector grid
+  double xmax;
+  // Cutoff for the frequency (only relevant in the ground state)
+  double OmegaMax;
+  // Number of Matsubara frequencies
+  int nl;
+  // Initial guess for the chemical potential calculation
+  std::vector<double> muGuess;
 };
 
 // -----------------------------------------------------------------
@@ -169,51 +194,10 @@ protected:
 };
 
 // -----------------------------------------------------------------
-// Class to handle input for the random phase approximation
-// -----------------------------------------------------------------
-
-class RpaInput : public Input {
-
-public:
-
-  // Constructor
-  explicit RpaInput()
-      : dx(DEFAULT_DOUBLE),
-        xmax(DEFAULT_DOUBLE),
-        OmegaMax(DEFAULT_DOUBLE),
-        nl(DEFAULT_INT) {}
-  // Setters
-  void setChemicalPotentialGuess(const std::vector<double> &muGuess);
-  void setNMatsubara(const int &nMatsubara);
-  void setWaveVectorGridRes(const double &dx);
-  void setWaveVectorGridCutoff(const double &xmax);
-  void setFrequencyCutoff(const double &OmegaMax);
-  // Getters
-  std::vector<double> getChemicalPotentialGuess() const { return muGuess; }
-  int getNMatsubara() const { return nl; }
-  double getWaveVectorGridRes() const { return dx; }
-  double getWaveVectorGridCutoff() const { return xmax; }
-  double getFrequencyCutoff() const { return OmegaMax; }
-
-protected:
-
-  // Wave-vector grid resolution
-  double dx;
-  // Cutoff for the wave-vector grid
-  double xmax;
-  // Cutoff for the frequency (only relevant in the ground state)
-  double OmegaMax;
-  // Number of matsubara frequencies
-  int nl;
-  // Initial guess for the chemical potential calculation
-  std::vector<double> muGuess;
-};
-
-// -----------------------------------------------------------------
 // Class to handle input for the STLS and STLS-IET schemes
 // -----------------------------------------------------------------
 
-class StlsInput : public RpaInput, public IterationInput, public ClassicInput {
+class StlsInput : public Input, public IterationInput, public ClassicInput {
 
 public:
 

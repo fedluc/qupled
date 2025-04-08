@@ -1,10 +1,9 @@
 import pytest
-from qupled.native import ESA, Rpa, Input
+from qupled.native import HF, Input
 
 
-def test_esa_properties():
-    assert issubclass(ESA, Rpa)
-    scheme = ESA(Input())
+def test_hf_properties():
+    scheme = HF(Input())
     assert hasattr(scheme, "idr")
     assert hasattr(scheme, "sdr")
     assert hasattr(scheme, "slfc")
@@ -15,18 +14,18 @@ def test_esa_properties():
     assert hasattr(scheme, "wvg")
 
 
-def test_esa_compute():
+def test_hf_compute():
     inputs = Input()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
-    inputs.theory = "RPA"
+    inputs.theory = "HF"
     inputs.chemical_potential = [-10, 10]
     inputs.cutoff = 10.0
     inputs.matsubara = 128
     inputs.resolution = 0.1
     inputs.integral_error = 1.0e-5
     inputs.threads = 1
-    scheme = ESA(inputs)
+    scheme = HF(inputs)
     scheme.compute()
     nx = scheme.wvg.size
     assert nx >= 3

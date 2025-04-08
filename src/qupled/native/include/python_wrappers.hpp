@@ -3,6 +3,7 @@
 
 #include "database.hpp"
 #include "esa.hpp"
+#include "hf.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "qstls.hpp"
@@ -20,11 +21,11 @@ namespace bn = boost::python::numpy;
 // Wrapper for exposing the Input class to Python
 // -----------------------------------------------------------------
 
-class PyRpaInput {
+class PyInput {
 public:
 
-  static bn::ndarray getChemicalPotentialGuess(RpaInput &in);
-  static void setChemicalPotentialGuess(RpaInput &in, const bp::list &muGuess);
+  static bn::ndarray getChemicalPotentialGuess(Input &in);
+  static void setChemicalPotentialGuess(Input &in, const bp::list &muGuess);
 };
 
 // -----------------------------------------------------------------
@@ -90,19 +91,17 @@ public:
 // Wrapper for exposing the class Rpa class to Python
 // -----------------------------------------------------------------
 
-class PyRpa {
+class pyHF {
 public:
 
-  static int compute(Rpa &rpa);
-  static RpaInput getInput(const Rpa &rpa);
-  static bn::ndarray getIdr(const Rpa &rpa);
-  static bn::ndarray getRdf(const Rpa &rpa, const bn::ndarray &r);
-  static bn::ndarray getSdr(const Rpa &rpa);
-  static bn::ndarray getSlfc(const Rpa &rpa);
-  static bn::ndarray getSsf(const Rpa &rpa);
-  static bn::ndarray getSsfHF(const Rpa &rpa);
-  static bn::ndarray getWvg(const Rpa &rpa);
-  static double getUInt(const Rpa &rpa);
+  static Input getInput(const HF &hf);
+  static bn::ndarray getIdr(const HF &hf);
+  static bn::ndarray getRdf(const HF &hf, const bn::ndarray &r);
+  static bn::ndarray getSdr(const HF &hf);
+  static bn::ndarray getSlfc(const HF &hf);
+  static bn::ndarray getSsf(const HF &hf);
+  static bn::ndarray getWvg(const HF &hf);
+  static double getUInt(const HF &hf);
 };
 
 // -----------------------------------------------------------------

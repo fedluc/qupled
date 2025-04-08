@@ -1,5 +1,6 @@
 import numpy as np
 import qupled.native as native
+import qupled.hf as hf
 import qupled.stls as stls
 import qupled.rpa as rpa
 
@@ -63,11 +64,11 @@ def test_stls_input_initialization(mocker):
 
 
 def test_stls_result_inheritance():
-    assert issubclass(stls.Result, rpa.Result)
+    assert issubclass(stls.Result, hf.Result)
 
 
 def test_stls_result_initialization(mocker):
-    super_init = mocker.patch("qupled.rpa.Result.__init__")
+    super_init = mocker.patch("qupled.hf.Result.__init__")
     results = stls.Result()
     assert results.error is None
     super_init.assert_called_once()

@@ -35,7 +35,6 @@ def test_qstls_compute():
         assert scheme.sdr.size == nx
         assert scheme.slfc.size == nx
         assert scheme.ssf.size == nx
-        assert scheme.ssf_HF.size == nx
         assert scheme.rdf(scheme.wvg).size == nx
     finally:
         fixed_file = "adr_fixed_theta1.000_matsubara32.bin"
@@ -69,7 +68,6 @@ def test_qstls_iet_compute():
             assert scheme.sdr.size == nx
             assert scheme.slfc.size == nx
             assert scheme.ssf.size == nx
-            assert scheme.ssf_HF.size == nx
             assert scheme.rdf(scheme.wvg).size == nx
         finally:
             file_names = glob.glob("adr_fixed*.bin")
