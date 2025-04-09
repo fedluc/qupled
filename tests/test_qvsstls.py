@@ -1,6 +1,8 @@
-import pytest
 import os
 import zipfile
+
+import pytest
+
 import qupled.qstls as qstls
 import qupled.qvsstls as qvsstls
 import qupled.vsstls as vsstls

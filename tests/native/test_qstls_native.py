@@ -1,6 +1,7 @@
-import os
 import glob
-from qupled.native import Qstls, Stls, QstlsInput
+import os
+
+from qupled.native import Qstls, QstlsInput, Stls
 
 
 def test_qstls_properties():

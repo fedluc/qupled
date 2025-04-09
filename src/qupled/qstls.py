@@ -1,9 +1,11 @@
 from __future__ import annotations
+
 import numpy as np
+
 from . import database
 from . import native
-from . import stls
 from . import output
+from . import stls
 
 
 class Qstls(stls.Stls):
@@ -60,7 +62,7 @@ class Input(stls.Input):
         """ Name of the file storing the fixed component of the auxiliary density 
         response in the QSTLS scheme. """
         self.guess: Guess = Guess()
-        """Initial guess. Default = ``Qstls.Guess()``"""
+        """Initial guess. Default = ``qstls.Guess()``"""
         # Undocumented default values
         self.theory = "QSTLS"
 

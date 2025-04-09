@@ -1,12 +1,26 @@
 The package
 ===========
 
-The qupled package is implemented using both Python and C++. Python is responsible for setting up, 
-running, and storing the results of a chosen dielectric scheme in an SQL database. C++ handles 
-the computational tasks required to solve the schemes. Communication between Python and C++ is 
-facilitated through the `Boost <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_ 
-library. The following sections provide an overview of the classes used for solving classical 
-and quantum schemes, as well as those for managing inputs, initial guesses, and outputs.
+**qupled** is a hybrid Python/C++ package designed to simulate and analyze dielectric response 
+schemes, both classical and quantum. **Python** orchestrates the workflow: setting up simulations, 
+managing input/output, and storing results in an SQLite database. **C++** performs the heavy 
+numerical computations, accessed via the 
+`Boost.Python <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_ bindings.
+
+To run a simulation, users configure input parameters through Python classes 
+(e.g., :obj:`qupled.hf.Input`) and launch the computation using the corresponding solver 
+class (e.g., :obj:`qupled.hf.HF`). Results are returned in dedicated result objects 
+(e.g., :obj:`qupled.hf.Result`) and automatically written to an SQLite database for 
+post-processing or analysis.
+
+The database is implemented in standard SQLite format and can be accessed using any 
+compatible external tool (e.g., `sqlite3`, DB Browser for SQLite). For convenience, 
+the package provides a dedicated Python interface in the :obj:`qupled.output.Database` 
+class, which includes helper methods to query, inspect, and extract stored simulation 
+data programmatically.
+
+The sections below describe the supported schemes in more detail, including their 
+respective input, solver, and result classes.
 
 
 Classic schemes

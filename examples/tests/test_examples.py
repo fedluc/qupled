@@ -1,7 +1,8 @@
-import os
-import sys
 import glob
 import importlib
+import os
+import sys
+
 import matplotlib.pyplot as plt
 import pytest
 

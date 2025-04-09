@@ -1,6 +1,7 @@
 import pytest
-import qupled.stlsiet as stlsiet
+
 import qupled.stls as stls
+import qupled.stlsiet as stlsiet
 
 
 def test_stls_iet_inheritance():

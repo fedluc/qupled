@@ -1,5 +1,5 @@
-import os
 import pytest
+
 from qupled.native import Stls, Rpa, StlsInput
 
 

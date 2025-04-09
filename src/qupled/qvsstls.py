@@ -1,6 +1,3 @@
-# -----------------------------------------------------------------------
-# QVSStls class
-# -----------------------------------------------------------------------
 from __future__ import annotations
 
 import glob
@@ -8,8 +5,8 @@ import os
 import shutil
 import zipfile
 
-from . import native
 from . import mpi
+from . import native
 from . import qstls
 from . import vsstls
 

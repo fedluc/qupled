@@ -1,4 +1,5 @@
 import pytest
+
 from qupled.mpi import MPI
 
 

@@ -1,10 +1,12 @@
 import os
-import tempfile
 import shutil
-import numpy as np
+import tempfile
+
 import matplotlib as mpl
-from matplotlib import pyplot as plt
+import numpy as np
 from matplotlib import colormaps as cm
+from matplotlib import pyplot as plt
+
 import qupled.qstls as qstls
 
 

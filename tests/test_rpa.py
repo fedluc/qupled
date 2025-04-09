@@ -1,10 +1,8 @@
-from unittest.mock import PropertyMock
 import pytest
-import numpy as np
-from qupled.database import DataBaseHandler
+
 import qupled.hf as hf
-import qupled.rpa as rpa
 import qupled.native as native
+import qupled.rpa as rpa
 
 
 @pytest.fixture

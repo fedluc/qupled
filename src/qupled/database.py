@@ -1,11 +1,6 @@
-# -----------------------------------------------------------------------
-# DataBaseHandler class
-# -----------------------------------------------------------------------
-
 import io
 import json
 import struct
-import blosc2
 from datetime import datetime
 from enum import Enum
 from collections.abc import Callable
@@ -13,6 +8,8 @@ from collections.abc import Callable
 import numpy as np
 import sqlalchemy as sql
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+import blosc2
+
 from . import mpi
 
 

@@ -1,6 +1,6 @@
-import qupled.native as native
 import qupled.esa as esa
 import qupled.hf as hf
+import qupled.native as native
 
 
 def test_esa_inheritance():

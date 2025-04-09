@@ -1,7 +1,6 @@
-from qupled import native
-
-
 import functools
+
+from qupled import native
 
 
 class MPI:

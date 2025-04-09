@@ -1,8 +1,9 @@
 import numpy as np
-from qupled.database import DataBaseHandler
+
 import qupled.native as native
 import qupled.qstls as qstls
 import qupled.stls as stls
+from qupled.database import DataBaseHandler
 
 
 def test_qstls_inheritance():

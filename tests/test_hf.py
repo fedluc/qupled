@@ -1,6 +1,7 @@
-from unittest.mock import PropertyMock
 import pytest
 import numpy as np
+from unittest.mock import PropertyMock
+
 from qupled.database import DataBaseHandler
 import qupled.hf as hf
 import qupled.native as native

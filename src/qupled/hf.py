@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 import numpy as np
-from . import native
-from . import mpi
+
 from . import database
+from . import mpi
+from . import native
 
 
 class HF:
