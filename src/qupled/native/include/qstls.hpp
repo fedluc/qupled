@@ -46,6 +46,7 @@ protected:
   void readAdrFixedFile(Vector3D &res,
                         const std::string &fileName,
                         const bool iet) const;
+  void readAdrFixedFromDatabase() const;
   // Compute static structure factor at finite temperature
   void computeSsf();
   // Iterations to solve the stls scheme
@@ -64,6 +65,7 @@ private:
   void computeAdrFixed();
   void writeAdrFixedFile(const Vector3D &res,
                          const std::string &fileName) const;
+  void writeAdrFixedToDatabase(const Vector3D &res) const;
   bool checkAdrFixed(const std::vector<double> &wvg_,
                      const double Theta_,
                      const int nl_) const;

@@ -4,6 +4,7 @@
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "vector_util.hpp"
+#include <SQLiteCpp/SQLiteCpp.h>
 #include <filesystem>
 #include <fmt/core.h>
 #include <numeric>
@@ -286,6 +287,8 @@ void Qstls::computeAdrFixed() {
   if (isRoot()) {
     try {
       writeAdrFixedFile(adrFixed, adrFixedFileName);
+      writeAdrFixedToDatabase(adrFixed);
+      readAdrFixedFromDatabase();
     } catch (...) {
       throwError("Error in the output file for the fixed component"
                  " of the auxiliary density response.");
@@ -310,6 +313,43 @@ void Qstls::writeAdrFixedFile(const Vector3D &res,
   writeDataToBinary<Vector3D>(file, res);
   file.close();
   if (!file) { throwError("Error in writing to file " + fileName); }
+}
+
+void Qstls::writeAdrFixedToDatabase(const Vector3D &res) const {
+  try {
+    DatabaseInfo dbInfo = in.getDatabaseInfo();
+    const string tableName = "fixed";
+    SQLite::Database db(dbInfo.name,
+                        SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
+    // Create table if it doesn't exist
+    const std::string createTableQuery = fmt::format(R"(
+      CREATE TABLE IF NOT EXISTS {} (
+          run_id INTEGER NOT NULL PRIMARY KEY,
+          wvg BLOB NOT NULL,
+          adr BLOB NOT NULL,
+          FOREIGN KEY(run_id) REFERENCES run_table(id) ON DELETE CASCADE
+      );
+    )",
+                                                     tableName);
+    db.exec(createTableQuery);
+    // Prepare binary data
+    const void *wvgData = static_cast<const void *>(wvg.data());
+    const int wvgSize = static_cast<int>(wvg.size() * sizeof(double));
+    const void *adrData = static_cast<const void *>(res.data());
+    const int adrSize = static_cast<int>(res.size() * sizeof(double));
+    // Insert data
+    const std::string insertQuery = fmt::format(
+        "INSERT OR REPLACE INTO {} (run_id, wvg, adr) VALUES (?, ?, ?);",
+        tableName);
+    SQLite::Statement query(db, insertQuery);
+    query.bind(1, dbInfo.runId);
+    query.bind(2, wvgData, wvgSize);
+    query.bind(3, adrData, adrSize);
+    query.exec();
+  } catch (const std::exception &e) {
+    throw std::runtime_error("Failed to write to database: "
+                             + string(e.what()));
+  }
 }
 
 void Qstls::readAdrFixedFile(Vector3D &res,
@@ -343,6 +383,44 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   if (!checkAdrFixed(wvg_, Theta_, nl_)) {
     throwError("Fixed component of the auxiliary density response"
                " loaded from file is incompatible with input");
+  }
+}
+
+void Qstls::readAdrFixedFromDatabase() const {
+  try {
+    const int nx = wvg.size();
+    const int nl = in.getNMatsubara();
+    DatabaseInfo dbInfo = in.getDatabaseInfo();
+    const string tableName = "fixed";
+    SQLite::Database db(dbInfo.name, SQLite::OPEN_READONLY);
+    const std::string selectQuery =
+        fmt::format("SELECT wvg, adr FROM {} WHERE run_id = ?;", tableName);
+    SQLite::Statement query(db, selectQuery);
+    query.bind(1, dbInfo.runId);
+    std::vector<double> wvgLocal;
+    std::vector<double> adrLocal;
+    if (query.executeStep()) {
+      // Read wvg
+      const void *wvgData = query.getColumn(0).getBlob();
+      int wvgBytes = query.getColumn(0).getBytes();
+      int wvgCount = wvgBytes / sizeof(double);
+      wvgLocal.resize(wvgCount);
+      std::memcpy(wvgLocal.data(), wvgData, wvgBytes);
+      // Read adr
+      const void *adrData = query.getColumn(1).getBlob();
+      int adrBytes = query.getColumn(1).getBytes();
+      int adrCount = adrBytes / sizeof(double);
+      adrLocal.resize(adrCount);
+      std::memcpy(adrLocal.data(), adrData, adrBytes);
+    } else {
+      throw std::runtime_error(fmt::format(
+          "No entry found in '{}' for run_id = {}", tableName, dbInfo.runId));
+    }
+    std::cerr << wvg.size() << " " << wvgLocal.size() << std::endl;
+    std::cerr << adrFixed.size() << " " << adrLocal.size() << std::endl;
+  } catch (const std::exception &e) {
+    throw std::runtime_error("Failed to read from database: "
+                             + string(e.what()));
   }
 }
 
