@@ -89,6 +89,25 @@ private:
 namespace QstlsUtil {
 
   // -----------------------------------------------------------------
+  // SQL queries
+  // -----------------------------------------------------------------
+
+  const std::string SQL_TABLE_NAME = "fixed";
+
+  const std::string SQL_CREATE_TABLE = R"(
+      CREATE TABLE IF NOT EXISTS {} (
+          run_id INTEGER NOT NULL PRIMARY KEY,
+          wvg BLOB NOT NULL,
+          adr BLOB NOT NULL,
+          FOREIGN KEY(run_id) REFERENCES run_table(id) ON DELETE CASCADE
+      );
+    )";
+
+  const std::string SQL_INSERT =
+      "INSERT OR REPLACE INTO {} (run_id, wvg, adr) VALUES (?, ?, ?);";
+
+  const std::string SQL_SELECT = "SELECT wvg, adr FROM {} WHERE run_id = ?;";
+  // -----------------------------------------------------------------
   // Classes for the auxiliary density response
   // -----------------------------------------------------------------
 
