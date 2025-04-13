@@ -114,7 +114,9 @@ void ClassicInput::setGuess(const Guess &guess) {
 // QuantumInput class
 // -----------------------------------------------------------------
 
-void QuantumInput::setFixed(const string &fixed) { this->fixed = fixed; }
+void QuantumInput::setFixedRunId(const int &fixedRunId) {
+  this->fixedRunId = fixedRunId;
+}
 
 void QuantumInput::setFixedIet(const string &fixedIet) {
   this->fixedIet = fixedIet;

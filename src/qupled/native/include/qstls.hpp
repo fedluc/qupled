@@ -46,7 +46,7 @@ protected:
   void readAdrFixedFile(Vector3D &res,
                         const std::string &fileName,
                         const bool iet) const;
-  void readAdrFixedFromDatabase() const;
+  void readAdrFixedFromDatabase();
   // Compute static structure factor at finite temperature
   void computeSsf();
   // Iterations to solve the stls scheme
@@ -92,21 +92,20 @@ namespace QstlsUtil {
   // SQL queries
   // -----------------------------------------------------------------
 
-  const std::string SQL_TABLE_NAME = "fixed";
+  constexpr const char *SQL_TABLE_NAME = "fixed";
 
-  const std::string SQL_CREATE_TABLE = R"(
+  constexpr const char *SQL_CREATE_TABLE = R"(
       CREATE TABLE IF NOT EXISTS {} (
           run_id INTEGER NOT NULL PRIMARY KEY,
-          wvg BLOB NOT NULL,
           adr BLOB NOT NULL,
           FOREIGN KEY(run_id) REFERENCES run_table(id) ON DELETE CASCADE
       );
     )";
 
-  const std::string SQL_INSERT =
-      "INSERT OR REPLACE INTO {} (run_id, wvg, adr) VALUES (?, ?, ?);";
+  constexpr const char *SQL_INSERT =
+      "INSERT OR REPLACE INTO {} (run_id, adr) VALUES (?, ?, ?);";
 
-  const std::string SQL_SELECT = "SELECT wvg, adr FROM {} WHERE run_id = ?;";
+  constexpr const char *SQL_SELECT = "SELECT adr FROM {} WHERE run_id = ?;";
   // -----------------------------------------------------------------
   // Classes for the auxiliary density response
   // -----------------------------------------------------------------

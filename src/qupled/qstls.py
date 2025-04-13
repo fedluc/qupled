@@ -58,9 +58,9 @@ class Input(stls.Input):
 
     def __init__(self, coupling: float, degeneracy: float):
         super().__init__(coupling, degeneracy)
-        self.fixed: str = ""
-        """ Name of the file storing the fixed component of the auxiliary density 
-        response in the QSTLS scheme. """
+        self.fixed_run_id: int = None
+        """ Run id for the fixed component of the auxiliary density 
+        response in the QSTLS scheme. Default = ``None``"""
         self.guess: Guess = Guess()
         """Initial guess. Default = ``qstls.Guess()``"""
         # Undocumented default values

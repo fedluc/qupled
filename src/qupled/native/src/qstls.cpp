@@ -263,8 +263,8 @@ void Qstls::updateSolution() {
 void Qstls::computeAdrFixed() {
   if (in.getDegeneracy() == 0.0) { return; }
   // Check if it adrFixed can be loaded from input
-  if (!in.getFixed().empty()) {
-    readAdrFixedFile(adrFixed, in.getFixed(), false);
+  if (in.getFixedRunId() != DEFAULT_INT) {
+    readAdrFixedFromDatabase();
     return;
   }
   // Compute from scratch
@@ -288,7 +288,6 @@ void Qstls::computeAdrFixed() {
     try {
       writeAdrFixedFile(adrFixed, adrFixedFileName);
       writeAdrFixedToDatabase(adrFixed);
-      readAdrFixedFromDatabase();
     } catch (...) {
       throwError("Error in the output file for the fixed component"
                  " of the auxiliary density response.");
@@ -325,8 +324,6 @@ void Qstls::writeAdrFixedToDatabase(const Vector3D &res) const {
         fmt::format(QstlsUtil::SQL_CREATE_TABLE, QstlsUtil::SQL_TABLE_NAME);
     db.exec(createTable);
     // Prepare binary data
-    const void *wvgData = static_cast<const void *>(wvg.data());
-    const int wvgSize = static_cast<int>(wvg.size() * sizeof(double));
     const void *adrData = static_cast<const void *>(res.data());
     const int adrSize = static_cast<int>(res.size() * sizeof(double));
     // Insert data
@@ -334,8 +331,7 @@ void Qstls::writeAdrFixedToDatabase(const Vector3D &res) const {
         fmt::format(QstlsUtil::SQL_INSERT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, insert);
     statement.bind(1, dbInfo.runId);
-    statement.bind(2, wvgData, wvgSize);
-    statement.bind(3, adrData, adrSize);
+    statement.bind(2, adrData, adrSize);
     statement.exec();
   } catch (const std::exception &e) {
     throw std::runtime_error("Failed to write to database: "
@@ -377,7 +373,7 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   }
 }
 
-void Qstls::readAdrFixedFromDatabase() const {
+void Qstls::readAdrFixedFromDatabase() {
   try {
     const int nx = wvg.size();
     const int nl = in.getNMatsubara();
@@ -386,25 +382,15 @@ void Qstls::readAdrFixedFromDatabase() const {
     const string select =
         fmt::format(QstlsUtil::SQL_SELECT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, select);
-    statement.bind(1, dbInfo.runId);
-    std::vector<double> wvgLocal;
-    std::vector<double> adrLocal;
+    statement.bind(1, in.getFixedRunId());
     if (statement.executeStep()) {
-      // Read wvg
-      const void *wvgData = statement.getColumn(0).getBlob();
-      int wvgBytes = statement.getColumn(0).getBytes();
-      int wvgCount = wvgBytes / sizeof(double);
-      wvgLocal.resize(wvgCount);
-      std::memcpy(wvgLocal.data(), wvgData, wvgBytes);
-      // Read adr
       const void *adrData = statement.getColumn(1).getBlob();
       int adrBytes = statement.getColumn(1).getBytes();
       int adrCount = adrBytes / sizeof(double);
-      adrLocal.resize(adrCount);
-      std::memcpy(adrLocal.data(), adrData, adrBytes);
+      // Add a check on the size of the data before copying
+      adrFixed.resize(nx, nl, nx);
+      std::memcpy(adrFixed.data(), adrData, adrBytes);
     }
-    std::cerr << wvg.size() << " " << wvgLocal.size() << std::endl;
-    std::cerr << adrFixed.size() << " " << adrLocal.size() << std::endl;
   } catch (const std::exception &e) {
     throw std::runtime_error("Failed to read from database: "
                              + string(e.what()));

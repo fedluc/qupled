@@ -245,17 +245,17 @@ void QstlsCSR::init() {
   case FORWARD: adrFixedFileName = "THETA_DOWN.bin"; break;
   case BACKWARD: adrFixedFileName = "THETA_UP.bin"; break;
   }
-  if (!in.getFixed().empty()) {
-    std::filesystem::path fullPath = in.getFixed();
-    fullPath /= adrFixedFileName;
-    adrFixedFileName = fullPath.string();
-  }
-  if (std::filesystem::exists(adrFixedFileName)) {
-    Stls::init();
-    readAdrFixedFile(adrFixed, adrFixedFileName, false);
-  } else {
-    Qstls::init();
-  }
+  // if (!in.getFixedRunId().empty()) {
+  //   std::filesystem::path fullPath = in.getFixedRunId();
+  //   fullPath /= adrFixedFileName;
+  //   adrFixedFileName = fullPath.string();
+  // }
+  // if (std::filesystem::exists(adrFixedFileName)) {
+  //   Stls::init();
+  //   readAdrFixedFile(adrFixed, adrFixedFileName, false);
+  // } else {
+  Qstls::init();
+  // }
   // MPI barrier to make sure that all processes see the same files
   MPIUtil::barrier();
 }
