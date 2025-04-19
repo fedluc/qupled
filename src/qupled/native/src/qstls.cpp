@@ -263,14 +263,15 @@ void Qstls::updateSolution() {
 void Qstls::computeAdrFixed() {
   if (in.getDegeneracy() == 0.0) { return; }
   // Check if it adrFixed can be loaded from input
+  const int nx = wvg.size();
+  const int nl = in.getNMatsubara();
   if (in.getFixedRunId() != DEFAULT_INT) {
-    readAdrFixedFromDatabase();
+    adrFixed.resize(nx, nl, nx);
+    readAdrFixedFromDatabase(adrFixed, adrFixedFileName);
     return;
   }
   // Compute from scratch
   fflush(stdout);
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
   const int nxnl = nx * nl;
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
@@ -284,15 +285,7 @@ void Qstls::computeAdrFixed() {
   const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
   gatherLoopData(adrFixed.data(), loopData, nxnl);
   // Write result to output file
-  if (isRoot()) {
-    try {
-      writeAdrFixedFile(adrFixed, adrFixedFileName);
-      writeAdrFixedToDatabase(adrFixed);
-    } catch (...) {
-      throwError("Error in the output file for the fixed component"
-                 " of the auxiliary density response.");
-    }
-  }
+  if (isRoot()) { writeAdrFixedToDatabase(adrFixed, adrFixedFileName); }
 }
 
 void Qstls::writeAdrFixedFile(const Vector3D &res,
@@ -314,7 +307,8 @@ void Qstls::writeAdrFixedFile(const Vector3D &res,
   if (!file) { throwError("Error in writing to file " + fileName); }
 }
 
-void Qstls::writeAdrFixedToDatabase(const Vector3D &res) const {
+void Qstls::writeAdrFixedToDatabase(const Vector3D &res,
+                                    const string &name) const {
   try {
     DatabaseInfo dbInfo = in.getDatabaseInfo();
     SQLite::Database db(dbInfo.name,
@@ -331,11 +325,11 @@ void Qstls::writeAdrFixedToDatabase(const Vector3D &res) const {
         fmt::format(QstlsUtil::SQL_INSERT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, insert);
     statement.bind(1, dbInfo.runId);
-    statement.bind(2, adrData, adrSize);
+    statement.bind(2, name);
+    statement.bind(3, adrData, adrSize);
     statement.exec();
   } catch (const std::exception &e) {
-    throw std::runtime_error("Failed to write to database: "
-                             + string(e.what()));
+    throwError("Failed to write to database: " + string(e.what()));
   }
 }
 
@@ -373,27 +367,23 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   }
 }
 
-void Qstls::readAdrFixedFromDatabase() {
+void Qstls::readAdrFixedFromDatabase(Vector3D &res, const string &name) {
   try {
-    const int nx = wvg.size();
-    const int nl = in.getNMatsubara();
     DatabaseInfo dbInfo = in.getDatabaseInfo();
     SQLite::Database db(dbInfo.name, SQLite::OPEN_READONLY);
     const string select =
         fmt::format(QstlsUtil::SQL_SELECT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, select);
     statement.bind(1, in.getFixedRunId());
+    statement.bind(2, name);
     if (statement.executeStep()) {
-      const void *adrData = statement.getColumn(1).getBlob();
-      int adrBytes = statement.getColumn(1).getBytes();
-      int adrCount = adrBytes / sizeof(double);
-      // Add a check on the size of the data before copying
-      adrFixed.resize(nx, nl, nx);
-      std::memcpy(adrFixed.data(), adrData, adrBytes);
+      const void *adrData = statement.getColumn(0).getBlob();
+      int adrBytes = statement.getColumn(0).getBytes();
+      // TODO: Check that res.data() has indeed the same size as adrBytes
+      std::memcpy(res.data(), adrData, adrBytes);
     }
   } catch (const std::exception &e) {
-    throw std::runtime_error("Failed to read from database: "
-                             + string(e.what()));
+    throwError("Failed to read from database: " + string(e.what()));
   }
 }
 

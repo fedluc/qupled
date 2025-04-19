@@ -46,7 +46,7 @@ protected:
   void readAdrFixedFile(Vector3D &res,
                         const std::string &fileName,
                         const bool iet) const;
-  void readAdrFixedFromDatabase();
+  void readAdrFixedFromDatabase(Vector3D &res, const std::string &name);
   // Compute static structure factor at finite temperature
   void computeSsf();
   // Iterations to solve the stls scheme
@@ -65,7 +65,8 @@ private:
   void computeAdrFixed();
   void writeAdrFixedFile(const Vector3D &res,
                          const std::string &fileName) const;
-  void writeAdrFixedToDatabase(const Vector3D &res) const;
+  void writeAdrFixedToDatabase(const Vector3D &res,
+                               const std::string &name) const;
   bool checkAdrFixed(const std::vector<double> &wvg_,
                      const double Theta_,
                      const int nl_) const;
@@ -96,16 +97,19 @@ namespace QstlsUtil {
 
   constexpr const char *SQL_CREATE_TABLE = R"(
       CREATE TABLE IF NOT EXISTS {} (
-          run_id INTEGER NOT NULL PRIMARY KEY,
+          run_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
           adr BLOB NOT NULL,
+          PRIMARY KEY (run_id, name),
           FOREIGN KEY(run_id) REFERENCES run_table(id) ON DELETE CASCADE
       );
     )";
 
   constexpr const char *SQL_INSERT =
-      "INSERT OR REPLACE INTO {} (run_id, adr) VALUES (?, ?, ?);";
+      "INSERT OR REPLACE INTO {} (run_id, name, adr) VALUES (?, ?, ?);";
 
-  constexpr const char *SQL_SELECT = "SELECT adr FROM {} WHERE run_id = ?;";
+  constexpr const char *SQL_SELECT =
+      "SELECT adr FROM {} WHERE run_id = ? AND name = ?;";
   // -----------------------------------------------------------------
   // Classes for the auxiliary density response
   // -----------------------------------------------------------------
