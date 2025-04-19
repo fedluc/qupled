@@ -26,15 +26,6 @@ QVSStls::QVSStls(const QVSStlsInput &in_)
   VSBase::thermoProp = thermoProp;
 }
 
-QVSStls::QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_)
-    : VSBase(in_, false),
-      Qstls(in_, false),
-      in(in_),
-      thermoProp(make_shared<QThermoProp>(in_)) {
-  VSBase::thermoProp = thermoProp;
-  thermoProp->copyFreeEnergyIntegrand(thermoProp_);
-}
-
 double QVSStls::computeAlpha() {
   //  Compute the free energy integrand
   thermoProp->compute();
@@ -67,28 +58,7 @@ void QVSStls::updateSolution() {
   slfc = thermoProp->getSlfc();
 }
 
-void QVSStls::initScheme() { Rpa::init(); }
-
-void QVSStls::initFreeEnergyIntegrand() {
-  if (!thermoProp->isFreeEnergyIntegrandIncomplete()) { return; }
-  println("Missing points in the free energy integrand: subcalls will be "
-          "performed to collect the necessary data");
-  println("-----------------------------------------------------------------"
-          "----------");
-  QVSStlsInput inTmp = in;
-  while (thermoProp->isFreeEnergyIntegrandIncomplete()) {
-    const double rs = thermoProp->getFirstUnsolvedStatePoint();
-    println(fmt::format("Subcall: solving qVS scheme for rs = {:.5f}", rs));
-    inTmp.setCoupling(rs);
-    QVSStls scheme(inTmp, *thermoProp);
-    scheme.compute();
-    thermoProp->copyFreeEnergyIntegrand(*(scheme.thermoProp));
-    println("Done");
-    println("-----------------------------------------------------------------"
-            "----------");
-  }
-  println("Subcalls completed");
-}
+void QVSStls::init() { Rpa::init(); }
 
 // -----------------------------------------------------------------
 // QThermoProp class

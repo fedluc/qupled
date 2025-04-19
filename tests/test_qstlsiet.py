@@ -27,6 +27,7 @@ def test_qstls_iet_initialization(mocker):
     super_init.assert_called_once()
     assert isinstance(scheme.results, qstlsiet.Result)
 
+
 def test_qstls_iet_input_inheritance():
     assert issubclass(qstlsiet.Input, (stlsiet.Input, qstls.Input))
 

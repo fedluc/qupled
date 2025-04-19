@@ -24,11 +24,9 @@ class VSBase : public Logger {
 
 public:
 
-  // Constructor from initial data
+  // Constructor
   explicit VSBase(const VSInput &in_)
-      : VSBase(in_, MPIUtil::isRoot()) {}
-  VSBase(const VSInput &in_, const bool &verbose_)
-      : Logger(verbose_),
+      : Logger(MPIUtil::isRoot()),
         in(in_) {}
   // Destructor
   virtual ~VSBase() = default;
@@ -50,9 +48,7 @@ protected:
   // Compute free parameter
   virtual double computeAlpha() = 0;
   // Initialize
-  void init();
-  virtual void initScheme() = 0;
-  virtual void initFreeEnergyIntegrand() = 0;
+  virtual void init() = 0;
   // Iterations to solve the vs scheme
   void doIterations();
   // Object function used in the secant solver

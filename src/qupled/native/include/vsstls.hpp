@@ -21,8 +21,6 @@ public:
 
   // Constructor from initial data
   explicit VSStls(const VSStlsInput &in_);
-  // Constructor for recursive calculations
-  VSStls(const VSStlsInput &in_, const ThermoProp &thermoProp_);
   // Solve the scheme
   using VSBase::compute;
   // Getters
@@ -35,8 +33,7 @@ private:
   // Thermodynamic properties
   std::shared_ptr<ThermoProp> thermoProp;
   // Initialize
-  void initScheme();
-  void initFreeEnergyIntegrand();
+  void init();
   // Compute free parameter
   double computeAlpha();
   // Iterations to solve the vs-stls scheme

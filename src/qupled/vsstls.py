@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import copy
 import numpy as np
 
+from . import mpi
 from . import native
 from . import output
 from . import stls
@@ -18,6 +20,46 @@ class VSStls(stls.Stls):
         # Undocumented properties
         self.native_scheme_cls = native.VSStls
         self.native_inputs = native.VSStlsInput()
+
+    def compute(self, inputs: Input):
+        """
+        Solves the scheme and saves the results.
+
+        Args:
+            inputs: Input parameters.
+        """
+        self.fill_free_energy_integrand(inputs)
+        super().compute(inputs)
+
+    def fill_free_energy_integrand(self, inputs: Input):
+        target_coupling = inputs.coupling
+        for coupling in self.get_missing_state_points(inputs):
+            print("---------------------------------------------------")
+            print(f"Subcall: solving VS scheme for rs = {coupling}")
+            inputs.coupling = coupling
+            self.compute(inputs)
+            free_energy_integrand = FreeEnergyIntegrand(
+                self.results.free_energy_grid,
+                self.results.free_energy_integrand,
+                self.results.alpha,
+            )
+            inputs.free_energy_integrand = free_energy_integrand
+        inputs.coupling = target_coupling
+
+    @staticmethod
+    def get_missing_state_points(inputs: Input) -> np.ndarray:
+        rs = inputs.coupling
+        drs = inputs.coupling_resolution
+        expected_grid = np.arange(drs, rs - 0.1 * drs, 3 * drs)
+        actual_grid = inputs.free_energy_integrand.grid
+        precision = int(np.abs(np.log10(drs)))
+        return (
+            np.setdiff1d(
+                np.round(expected_grid, precision), np.round(actual_grid, precision)
+            )
+            if actual_grid is not None
+            else expected_grid
+        )
 
     # Get the free energy integrand from database
     @staticmethod
@@ -86,9 +128,9 @@ class FreeEnergyIntegrand:
 
     def __init__(
         self,
-        grid: np.ndarray = None,
-        integrand: np.ndarray = None,
-        alpha: np.ndarray = None,
+        grid: np.ndarray | None = None,
+        integrand: np.ndarray | None = None,
+        alpha: np.ndarray | None = None,
     ):
         self.grid = grid
         """ Coupling parameter grid. Default = ``None``"""

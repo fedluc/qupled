@@ -24,11 +24,6 @@ int VSBase::compute() {
   }
 }
 
-void VSBase::init() {
-  initScheme();
-  initFreeEnergyIntegrand();
-}
-
 const vector<vector<double>> &VSBase::getFreeEnergyIntegrand() const {
   assert(thermoProp);
   return thermoProp->getFreeEnergyIntegrand();
