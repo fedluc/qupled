@@ -43,9 +43,6 @@ protected:
   void init();
   // Compute auxiliary density response
   void computeAdr();
-  void readAdrFixedFile(Vector3D &res,
-                        const std::string &fileName,
-                        const bool iet) const;
   void readAdrFixedFromDatabase(Vector3D &res,
                                 const std::string &name,
                                 int runId) const;
@@ -63,13 +60,8 @@ private:
   const QstlsInput in;
   // Compute auxiliary density response
   void computeAdrFixed();
-  void writeAdrFixedFile(const Vector3D &res,
-                         const std::string &fileName) const;
   void writeAdrFixedToDatabase(const Vector3D &res,
                                const std::string &name) const;
-  bool checkAdrFixed(const std::vector<double> &wvg_,
-                     const double Theta_,
-                     const int nl_) const;
   void computeAdrIet();
   void computeAdrFixedIet();
   // Compute static structure factor at finite temperature
@@ -80,10 +72,6 @@ private:
   bool initialGuessSsf(const std::vector<double> &wvg_,
                        const std::vector<double> &adr_);
   bool initialGuessAdr(const std::vector<double> &wvg_, const Vector2D &adr_);
-  bool initialGuessAdrFixed(const std::vector<double> &wvg_,
-                            const double &Theta,
-                            const int &nl_,
-                            const Vector3D &adrFixed_);
 };
 
 namespace QstlsUtil {

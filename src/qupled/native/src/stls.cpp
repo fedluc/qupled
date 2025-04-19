@@ -1,5 +1,4 @@
 #include "stls.hpp"
-#include "bin_util.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
@@ -10,7 +9,6 @@
 
 using namespace std;
 using namespace vecUtil;
-using namespace binUtil;
 using namespace MPIUtil;
 using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;

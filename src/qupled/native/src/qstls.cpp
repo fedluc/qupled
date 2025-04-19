@@ -1,5 +1,4 @@
 #include "qstls.hpp"
-#include "bin_util.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
@@ -11,7 +10,6 @@
 
 using namespace std;
 using namespace vecUtil;
-using namespace binUtil;
 using namespace MPIUtil;
 using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
@@ -174,15 +172,6 @@ bool Qstls::initialGuessAdr(const vector<double> &wvg_, const Vector2D &adr_) {
   return true;
 }
 
-bool Qstls::initialGuessAdrFixed(const vector<double> &wvg_,
-                                 const double &Theta,
-                                 const int &nl_,
-                                 const Vector3D &adrFixed_) {
-  if (!checkAdrFixed(wvg_, Theta, nl_)) { return false; }
-  adrFixed = adrFixed_;
-  return true;
-}
-
 // Compute auxiliary density response
 void Qstls::computeAdr() {
   if (in.getDegeneracy() == 0.0) { return; }
@@ -288,25 +277,6 @@ void Qstls::computeAdrFixed() {
   if (isRoot()) { writeAdrFixedToDatabase(adrFixed, adrFixedFileName); }
 }
 
-void Qstls::writeAdrFixedFile(const Vector3D &res,
-                              const string &fileName) const {
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  const double Theta = in.getDegeneracy();
-  ofstream file;
-  file.open(fileName, ios::binary);
-  if (!file.is_open()) {
-    throwError("Output file " + fileName + " could not be created.");
-  }
-  writeDataToBinary<int>(file, nx);
-  writeDataToBinary<int>(file, nl);
-  writeDataToBinary<double>(file, Theta);
-  writeDataToBinary<vector<double>>(file, wvg);
-  writeDataToBinary<Vector3D>(file, res);
-  file.close();
-  if (!file) { throwError("Error in writing to file " + fileName); }
-}
-
 void Qstls::writeAdrFixedToDatabase(const Vector3D &res,
                                     const string &name) const {
   try {
@@ -333,40 +303,6 @@ void Qstls::writeAdrFixedToDatabase(const Vector3D &res,
   }
 }
 
-void Qstls::readAdrFixedFile(Vector3D &res,
-                             const string &fileName,
-                             const bool iet) const {
-  if (fileName.empty()) { return; }
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  ifstream file;
-  file.open(fileName, ios::binary);
-  if (!file.is_open()) {
-    throwError("Input file " + fileName + " could not be opened.");
-  }
-  int nx_;
-  int nl_;
-  vector<double> wvg_;
-  double Theta_;
-  readDataFromBinary<int>(file, nx_);
-  readDataFromBinary<int>(file, nl_);
-  readDataFromBinary<double>(file, Theta_);
-  wvg_.resize(nx);
-  readDataFromBinary<vector<double>>(file, wvg_);
-  if (iet) {
-    res.resize(nl, nx, nx);
-  } else {
-    res.resize(nx, nl, nx);
-  }
-  readDataFromBinary<Vector3D>(file, res);
-  file.close();
-  if (!file) { throwError("Error in reading from file " + fileName); }
-  if (!checkAdrFixed(wvg_, Theta_, nl_)) {
-    throwError("Fixed component of the auxiliary density response"
-               " loaded from file is incompatible with input");
-  }
-}
-
 void Qstls::readAdrFixedFromDatabase(Vector3D &res,
                                      const string &name,
                                      int runId) const {
@@ -387,22 +323,6 @@ void Qstls::readAdrFixedFromDatabase(Vector3D &res,
   } catch (const std::exception &e) {
     throwError("Failed to read from database: " + string(e.what()));
   }
-}
-
-bool Qstls::checkAdrFixed(const vector<double> &wvg_,
-                          const double Theta_,
-                          const int nl_) const {
-  constexpr double tol = 1e-15;
-  bool consistentGrid = wvg_.size() == wvg.size();
-  if (consistentGrid) {
-    const vector<double> wvgDiff = diff(wvg_, wvg);
-    const double &wvgMaxDiff =
-        abs(*max_element(wvgDiff.begin(), wvgDiff.end()));
-    consistentGrid = consistentGrid && wvgMaxDiff <= tol;
-  }
-  const bool consistentMatsubara = nl_ == in.getNMatsubara();
-  const bool consistentTheta = abs(Theta_ - in.getDegeneracy()) <= tol;
-  return consistentMatsubara && consistentTheta && consistentGrid;
 }
 
 void Qstls::computeAdrIet() {
