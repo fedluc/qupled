@@ -46,7 +46,9 @@ protected:
   void readAdrFixedFile(Vector3D &res,
                         const std::string &fileName,
                         const bool iet) const;
-  void readAdrFixedFromDatabase(Vector3D &res, const std::string &name);
+  void readAdrFixedFromDatabase(Vector3D &res,
+                                const std::string &name,
+                                int runId) const;
   // Compute static structure factor at finite temperature
   void computeSsf();
   // Iterations to solve the stls scheme
@@ -59,8 +61,6 @@ private:
 
   // Input data
   const QstlsInput in;
-  // Auxiliary density response
-  std::map<int, std::pair<std::string, bool>> adrFixedIetFileInfo;
   // Compute auxiliary density response
   void computeAdrFixed();
   void writeAdrFixedFile(const Vector3D &res,
@@ -72,7 +72,6 @@ private:
                      const int nl_) const;
   void computeAdrIet();
   void computeAdrFixedIet();
-  void getAdrFixedIetFileInfo();
   // Compute static structure factor at finite temperature
   void computeSsfFinite();
   void computeSsfGround();

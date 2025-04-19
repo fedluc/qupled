@@ -267,7 +267,7 @@ void Qstls::computeAdrFixed() {
   const int nl = in.getNMatsubara();
   if (in.getFixedRunId() != DEFAULT_INT) {
     adrFixed.resize(nx, nl, nx);
-    readAdrFixedFromDatabase(adrFixed, adrFixedFileName);
+    readAdrFixedFromDatabase(adrFixed, adrFixedFileName, in.getFixedRunId());
     return;
   }
   // Compute from scratch
@@ -367,14 +367,16 @@ void Qstls::readAdrFixedFile(Vector3D &res,
   }
 }
 
-void Qstls::readAdrFixedFromDatabase(Vector3D &res, const string &name) {
+void Qstls::readAdrFixedFromDatabase(Vector3D &res,
+                                     const string &name,
+                                     int runId) const {
   try {
     DatabaseInfo dbInfo = in.getDatabaseInfo();
     SQLite::Database db(dbInfo.name, SQLite::OPEN_READONLY);
     const string select =
         fmt::format(QstlsUtil::SQL_SELECT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, select);
-    statement.bind(1, in.getFixedRunId());
+    statement.bind(1, runId);
     statement.bind(2, name);
     if (statement.executeStep()) {
       const void *adrData = statement.getColumn(0).getBlob();
@@ -427,8 +429,12 @@ void Qstls::computeAdrIet() {
   auto loopFunc = [&](int i) -> void {
     shared_ptr<Integrator2D> itgPrivate =
         make_shared<Integrator2D>(in.getIntError());
-    Vector3D adrFixedPrivate;
-    readAdrFixedFile(adrFixedPrivate, adrFixedIetFileInfo.at(i).first, true);
+    Vector3D adrFixedPrivate(nl, nx, nx);
+    const string name = fmt::format("{}_{:d}", in.getTheory(), i);
+    const int runId = (in.getFixedRunId() != DEFAULT_INT)
+                          ? in.getFixedRunId()
+                          : in.getDatabaseInfo().runId;
+    readAdrFixedFromDatabase(adrFixedPrivate, name, runId);
     QstlsUtil::AdrIet adrTmp(in.getDegeneracy(),
                              wvg.front(),
                              wvg.back(),
@@ -447,71 +453,29 @@ void Qstls::computeAdrIet() {
 }
 
 void Qstls::computeAdrFixedIet() {
+  if (in.getFixedRunId() != DEFAULT_INT) { return; }
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
-  vector<int> idx;
-  // Check which files have to be created
-  getAdrFixedIetFileInfo();
-  for (const auto &member : adrFixedIetFileInfo) {
-    if (!member.second.second) { idx.push_back(member.first); };
-  }
-  // Check that all ranks found the same number of files
-  int nFilesToWrite = idx.size();
-  if (!isEqualOnAllRanks(idx.size())) {
-    throwError("Not all ranks can access the files with the fixed "
-               " component of the auxiliary density response");
-  }
-  if (nFilesToWrite == 0) { return; }
-  // Barrier to ensure that all ranks have identified all the files that have to
-  // be written
-  barrier();
-  // Write necessary files
-  for (size_t i = 0; i < nFilesToWrite; ++i) {
+  const double &xStart = wvg.front();
+  const double &xEnd = wvg.back();
+  const double &theta = in.getDegeneracy();
+  for (const auto &x : wvg) {
     Vector3D res(nl, nx, nx);
     auto loopFunc = [&](int l) -> void {
       auto itgPrivate = make_shared<Integrator1D>(in.getIntError());
-      QstlsUtil::AdrFixedIet adrTmp(in.getDegeneracy(),
-                                    wvg.front(),
-                                    wvg.back(),
-                                    wvg[idx[i]],
-                                    mu,
-                                    itgPrivate);
+      QstlsUtil::AdrFixedIet adrTmp(theta, xStart, xEnd, x, mu, itgPrivate);
       adrTmp.get(l, wvg, res);
     };
     const auto &loopData = parallelFor(loopFunc, nl, in.getNThreads());
     gatherLoopData(res.data(), loopData, nx * nx);
     if (isRoot()) {
-      writeAdrFixedFile(res, adrFixedIetFileInfo.at(idx[i]).first);
+      const size_t idx = distance(wvg.begin(), find(wvg.begin(), wvg.end(), x));
+      const string name = fmt::format("{}_{:d}", in.getTheory(), idx);
+      writeAdrFixedToDatabase(res, name);
     }
   }
-  // Update content of adrFixedIetFileInfo
-  getAdrFixedIetFileInfo();
-}
-
-void Qstls::getAdrFixedIetFileInfo() {
-  const int nx = wvg.size();
-  adrFixedIetFileInfo.clear();
-  for (int i = 0; i < nx; ++i) {
-    try {
-      string name =
-          fmt::format("adr_fixed_theta{:.3f}_matsubara{:}_{}_wv{:.5f}.bin",
-                      in.getDegeneracy(),
-                      in.getNMatsubara(),
-                      in.getTheory(),
-                      wvg[i]);
-      if (!in.getFixedIet().empty()) {
-        std::filesystem::path fullPath = in.getFixedIet();
-        fullPath /= name;
-        name = fullPath.string();
-      }
-      const bool found = std::filesystem::exists(name);
-      const pair<string, bool> filePair = pair<string, bool>(name, found);
-      adrFixedIetFileInfo.insert(pair<int, decltype(filePair)>(i, filePair));
-    } catch (...) {
-      throwError("Error in the output file for the fixed component"
-                 " of the auxiliary density response.");
-    }
-  }
+  // TODO: Check that all ranks can access the database
+  barrier();
 }
 
 // -----------------------------------------------------------------
