@@ -7,7 +7,7 @@
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "qstls.hpp"
-#include "qvs.hpp"
+#include "qvsstls.hpp"
 #include "rpa.hpp"
 #include "stls.hpp"
 #include "vsstls.hpp"

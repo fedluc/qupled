@@ -58,7 +58,7 @@ class Input(stls.Input):
 
     def __init__(self, coupling: float, degeneracy: float):
         super().__init__(coupling, degeneracy)
-        self.fixed_run_id: int = None
+        self.fixed_run_id: int | None = None
         """ Run id for the fixed component of the auxiliary density 
         response in the QSTLS scheme. Default = ``None``"""
         self.guess: Guess = Guess()

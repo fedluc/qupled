@@ -1,4 +1,4 @@
-#include "qvs.hpp"
+#include "qvsstls.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
@@ -143,6 +143,18 @@ std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
       out.push_back(inTmp);
     }
   }
+  if (in.getFixedRunId() == DEFAULT_INT) {
+    // Avoid recomputing the fixed component for the state points with perturbed
+    // coupling parameter
+    for (const int idx : {RS_THETA_DOWN,
+                          RS_UP_THETA_DOWN,
+                          RS_THETA,
+                          RS_UP_THETA,
+                          RS_THETA_UP,
+                          RS_UP_THETA_UP}) {
+      out[idx].setFixedRunId(in.getDatabaseInfo().runId);
+    }
+  }
   return out;
 }
 
@@ -215,19 +227,7 @@ void QstlsCSR::init() {
   case FORWARD: adrFixedFileName = "THETA_DOWN.bin"; break;
   case BACKWARD: adrFixedFileName = "THETA_UP.bin"; break;
   }
-  // if (!in.getFixedRunId().empty()) {
-  //   std::filesystem::path fullPath = in.getFixedRunId();
-  //   fullPath /= adrFixedFileName;
-  //   adrFixedFileName = fullPath.string();
-  // }
-  // if (std::filesystem::exists(adrFixedFileName)) {
-  //   Stls::init();
-  //   readAdrFixedFile(adrFixed, adrFixedFileName, false);
-  // } else {
   Qstls::init();
-  //}
-  // MPI barrier to make sure that all processes see the same files
-  MPIUtil::barrier();
 }
 
 void QstlsCSR::computeAdrQStls() {
