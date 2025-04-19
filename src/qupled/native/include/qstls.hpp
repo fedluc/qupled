@@ -88,7 +88,7 @@ namespace QstlsUtil {
           name TEXT NOT NULL,
           adr BLOB NOT NULL,
           PRIMARY KEY (run_id, name),
-          FOREIGN KEY(run_id) REFERENCES run_table(id) ON DELETE CASCADE
+          FOREIGN KEY(run_id) REFERENCES {}(id) ON DELETE CASCADE
       );
     )";
 

@@ -284,8 +284,9 @@ void Qstls::writeAdrFixedToDatabase(const Vector3D &res,
     SQLite::Database db(dbInfo.name,
                         SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
     // Create table if it doesn't exist
-    const string createTable =
-        fmt::format(QstlsUtil::SQL_CREATE_TABLE, QstlsUtil::SQL_TABLE_NAME);
+    const string createTable = fmt::format(QstlsUtil::SQL_CREATE_TABLE,
+                                           QstlsUtil::SQL_TABLE_NAME,
+                                           dbInfo.runTableName);
     db.exec(createTable);
     // Prepare binary data
     const void *adrData = static_cast<const void *>(res.data());
