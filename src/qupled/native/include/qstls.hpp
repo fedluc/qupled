@@ -226,7 +226,7 @@ namespace QstlsUtil {
           itgGrid(itgGrid_) {}
 
     // Get integration result
-    void get(std::vector<double> &wvg, Vector3D &res) const;
+    void get(const std::vector<double> &wvg, Vector3D &res) const;
 
   private:
 
@@ -304,7 +304,7 @@ namespace QstlsUtil {
           itg(itg_) {}
 
     // Get integration result
-    void get(std::vector<double> &wvg, Vector3D &res) const;
+    void get(int l, const std::vector<double> &wvg, Vector3D &res) const;
 
   private:
 

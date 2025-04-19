@@ -466,19 +466,24 @@ void Qstls::computeAdrFixedIet() {
   // be written
   barrier();
   // Write necessary files
-  auto loopFunc = [&](int i) -> void {
-    auto itgPrivate = make_shared<Integrator1D>(in.getIntError());
+  for (size_t i = 0; i < nFilesToWrite; ++i) {
     Vector3D res(nl, nx, nx);
-    QstlsUtil::AdrFixedIet adrTmp(in.getDegeneracy(),
-                                  wvg.front(),
-                                  wvg.back(),
-                                  wvg[idx[i]],
-                                  mu,
-                                  itgPrivate);
-    adrTmp.get(wvg, res);
-    writeAdrFixedFile(res, adrFixedIetFileInfo.at(idx[i]).first);
-  };
-  parallelFor(loopFunc, nFilesToWrite, in.getNThreads());
+    auto loopFunc = [&](int l) -> void {
+      auto itgPrivate = make_shared<Integrator1D>(in.getIntError());
+      QstlsUtil::AdrFixedIet adrTmp(in.getDegeneracy(),
+                                    wvg.front(),
+                                    wvg.back(),
+                                    wvg[idx[i]],
+                                    mu,
+                                    itgPrivate);
+      adrTmp.get(l, wvg, res);
+    };
+    const auto &loopData = parallelFor(loopFunc, nl, in.getNThreads());
+    gatherLoopData(res.data(), loopData, nx * nx);
+    if (isRoot()) {
+      writeAdrFixedFile(res, adrFixedIetFileInfo.at(idx[i]).first);
+    }
+  }
   // Update content of adrFixedIetFileInfo
   getAdrFixedIetFileInfo();
 }
@@ -556,7 +561,7 @@ void QstlsUtil::Adr::get(const vector<double> &wvg,
 // -----------------------------------------------------------------
 
 // Get fixed component
-void QstlsUtil::AdrFixed::get(vector<double> &wvg, Vector3D &res) const {
+void QstlsUtil::AdrFixed::get(const vector<double> &wvg, Vector3D &res) const {
   const int nx = wvg.size();
   const int nl = res.size(1);
   if (x == 0.0) { res.fill(0, 0.0); };
@@ -677,27 +682,26 @@ void QstlsUtil::AdrIet::get(const vector<double> &wvg,
 // -----------------------------------------------------------------
 
 // get fixed component
-void QstlsUtil::AdrFixedIet::get(vector<double> &wvg, Vector3D &res) const {
-  if (x == 0) {
-    res.fill(0.0);
+void QstlsUtil::AdrFixedIet::get(int l,
+                                 const vector<double> &wvg,
+                                 Vector3D &res) const {
+  if (x == 0.0) {
+    res.fill(l, 0.0);
     return;
   }
   const int nx = wvg.size();
-  const int nl = res.size(0);
   const auto itgParam = ItgParam(tMin, tMax);
-  for (int l = 0; l < nl; ++l) {
-    for (int i = 0; i < nx; ++i) {
-      if (wvg[i] == 0.0) {
-        res.fill(l, i, 0.0);
-        continue;
-      }
-      for (int j = 0; j < nx; ++j) {
-        auto func = [&](const double &t) -> double {
-          return integrand(t, wvg[j], wvg[i], l);
-        };
-        itg->compute(func, itgParam);
-        res(l, i, j) = itg->getSolution();
-      }
+  for (int i = 0; i < nx; ++i) {
+    if (wvg[i] == 0.0) {
+      res.fill(l, i, 0.0);
+      continue;
+    }
+    for (int j = 0; j < nx; ++j) {
+      auto func = [&](const double &t) -> double {
+        return integrand(t, wvg[j], wvg[i], l);
+      };
+      itg->compute(func, itgParam);
+      res(l, i, j) = itg->getSolution();
     }
   }
 }
