@@ -24,11 +24,6 @@ int VSBase::compute() {
   }
 }
 
-void VSBase::init() {
-  initScheme();
-  initFreeEnergyIntegrand();
-}
-
 const vector<vector<double>> &VSBase::getFreeEnergyIntegrand() const {
   assert(thermoProp);
   return thermoProp->getFreeEnergyIntegrand();
@@ -37,11 +32,6 @@ const vector<vector<double>> &VSBase::getFreeEnergyIntegrand() const {
 const vector<double> &VSBase::getFreeEnergyGrid() const {
   assert(thermoProp);
   return thermoProp->getFreeEnergyGrid();
-}
-
-const vector<double> &VSBase::getAlpha() const {
-  assert(thermoProp);
-  return thermoProp->getAlpha();
 }
 
 void VSBase::doIterations() {
@@ -74,7 +64,6 @@ ThermoPropBase::ThermoPropBase(const VSInput &inVS, const Input &inRpa) {
   // Set variables related to the free energy calculation
   setRsGrid(inVS, inRpa);
   setFxcIntegrand(inVS);
-  setAlpha(inVS);
   setFxcIdxTargetStatePoint(inRpa);
   setFxcIdxUnsolvedStatePoint();
 }
@@ -114,21 +103,6 @@ void ThermoPropBase::setFxcIntegrand(const VSInput &in) {
           if (rs <= rsMaxi) { fxcIntegrand[theta][i] = itp.eval(rs); }
         }
       }
-    }
-  }
-}
-
-void ThermoPropBase::setAlpha(const VSInput &in) {
-  // Initialize
-  const size_t nrs = rsGrid.size();
-  alpha.resize(nrs);
-  // Set free parameter if passed in input
-  const auto &fxciData = in.getFreeEnergyIntegrand();
-  if (!fxciData.grid.empty()) {
-    const double rsMaxi = fxciData.grid.back();
-    for (size_t i = 0; i < nrs; ++i) {
-      const double &rs = rsGrid[i];
-      if (rs <= rsMaxi) { alpha[i] = fxciData.alpha[i]; }
     }
   }
 }
@@ -190,7 +164,7 @@ void ThermoPropBase::compute() {
   assert(structProp);
   structProp->compute();
   const vector<double> fxciTmp = structProp->getFreeEnergyIntegrand();
-  const double alphaTmp = structProp->getAlpha();
+  alpha = structProp->getAlpha();
   const size_t &idx = fxcIdxTargetStatePoint;
   fxcIntegrand[THETA_DOWN][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
   fxcIntegrand[THETA_DOWN][idx] = fxciTmp[SIdx::RS_THETA_DOWN];
@@ -201,9 +175,6 @@ void ThermoPropBase::compute() {
   fxcIntegrand[THETA_UP][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_UP];
   fxcIntegrand[THETA_UP][idx] = fxciTmp[SIdx::RS_THETA_UP];
   fxcIntegrand[THETA_UP][idx + 1] = fxciTmp[SIdx::RS_UP_THETA_UP];
-  alpha[idx - 1] = alphaTmp;
-  alpha[idx] = alphaTmp;
-  alpha[idx + 1] = alphaTmp;
 }
 
 const vector<double> &ThermoPropBase::getSsf() {

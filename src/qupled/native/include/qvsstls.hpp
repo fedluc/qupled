@@ -24,8 +24,6 @@ public:
 
   // Constructor from initial data
   explicit QVSStls(const QVSStlsInput &in_);
-  // Constructor for recursive calculations
-  QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_);
   // Solve the scheme
   using VSBase::compute;
   // Getters
@@ -38,8 +36,7 @@ private:
   // Thermodyanmic properties
   std::shared_ptr<QThermoProp> thermoProp;
   // Initialize
-  void initScheme();
-  void initFreeEnergyIntegrand();
+  void init();
   // Compute free parameter
   double computeAlpha();
   // Iterations to solve the qvsstls-scheme

@@ -43,9 +43,7 @@ protected:
   void init();
   // Compute auxiliary density response
   void computeAdr();
-  void readAdrFixedFile(Vector3D &res,
-                        const std::string &fileName,
-                        const bool iet) const;
+  void readAdrFixed(Vector3D &res, const std::string &name, int runId) const;
   // Compute static structure factor at finite temperature
   void computeSsf();
   // Iterations to solve the stls scheme
@@ -58,18 +56,11 @@ private:
 
   // Input data
   const QstlsInput in;
-  // Auxiliary density response
-  std::map<int, std::pair<std::string, bool>> adrFixedIetFileInfo;
   // Compute auxiliary density response
   void computeAdrFixed();
-  void writeAdrFixedFile(const Vector3D &res,
-                         const std::string &fileName) const;
-  bool checkAdrFixed(const std::vector<double> &wvg_,
-                     const double Theta_,
-                     const int nl_) const;
+  void writeAdrFixed(const Vector3D &res, const std::string &name) const;
   void computeAdrIet();
   void computeAdrFixedIet();
-  void getAdrFixedIetFileInfo();
   // Compute static structure factor at finite temperature
   void computeSsfFinite();
   void computeSsfGround();
@@ -78,14 +69,31 @@ private:
   bool initialGuessSsf(const std::vector<double> &wvg_,
                        const std::vector<double> &adr_);
   bool initialGuessAdr(const std::vector<double> &wvg_, const Vector2D &adr_);
-  bool initialGuessAdrFixed(const std::vector<double> &wvg_,
-                            const double &Theta,
-                            const int &nl_,
-                            const Vector3D &adrFixed_);
 };
 
 namespace QstlsUtil {
 
+  // -----------------------------------------------------------------
+  // SQL queries
+  // -----------------------------------------------------------------
+
+  constexpr const char *SQL_TABLE_NAME = "fixed";
+
+  constexpr const char *SQL_CREATE_TABLE = R"(
+      CREATE TABLE IF NOT EXISTS {} (
+          run_id INTEGER NOT NULL,
+          name TEXT NOT NULL,
+          adr BLOB NOT NULL,
+          PRIMARY KEY (run_id, name),
+          FOREIGN KEY(run_id) REFERENCES {}(id) ON DELETE CASCADE
+      );
+    )";
+
+  constexpr const char *SQL_INSERT =
+      "INSERT OR REPLACE INTO {} (run_id, name, adr) VALUES (?, ?, ?);";
+
+  constexpr const char *SQL_SELECT =
+      "SELECT adr FROM {} WHERE run_id = ? AND name = ?;";
   // -----------------------------------------------------------------
   // Classes for the auxiliary density response
   // -----------------------------------------------------------------
@@ -202,7 +210,7 @@ namespace QstlsUtil {
           itgGrid(itgGrid_) {}
 
     // Get integration result
-    void get(std::vector<double> &wvg, Vector3D &res) const;
+    void get(const std::vector<double> &wvg, Vector3D &res) const;
 
   private:
 
@@ -280,7 +288,7 @@ namespace QstlsUtil {
           itg(itg_) {}
 
     // Get integration result
-    void get(std::vector<double> &wvg, Vector3D &res) const;
+    void get(int l, const std::vector<double> &wvg, Vector3D &res) const;
 
   private:
 

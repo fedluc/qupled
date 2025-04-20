@@ -13,9 +13,6 @@ inputs.threads = 16
 scheme.compute(inputs)
 uInt1 = scheme.results.uint
 
-# Pass in input the fixed component of the auxiliary density response
-inputs.fixed = "adr_fixed_theta1.000_matsubara16_QSTLS.bin"
-
 # Repeat the calculation and recompute the internal energy (v2 calculation)
 scheme.compute(inputs)
 uInt2 = scheme.results.uint
@@ -33,5 +30,5 @@ scheme.compute(inputs)
 # Change the degeneracy parameter
 inputs.degeneracy = 2.0
 
-# Compute with the update degeneracy parameter (this throws a RunTimeError)
+# Compute with the update degeneracy parameter (this will recompute the fixed component)
 scheme.compute(inputs)

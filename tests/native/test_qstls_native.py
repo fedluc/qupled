@@ -1,7 +1,14 @@
-import glob
-import os
+import pytest
 
+from qupled.hf import DatabaseInfo
 from qupled.native import Qstls, QstlsInput, Stls
+
+
+@pytest.fixture
+def database_info():
+    dbInfo = DatabaseInfo()
+    dbInfo.run_id = 1
+    return dbInfo.to_native()
 
 
 def test_qstls_properties():
@@ -10,7 +17,7 @@ def test_qstls_properties():
     assert hasattr(scheme, "adr")
 
 
-def test_qstls_compute():
+def test_qstls_compute(database_info):
     inputs = QstlsInput()
     inputs.coupling = 1.0
     inputs.degeneracy = 1.0
@@ -24,26 +31,22 @@ def test_qstls_compute():
     inputs.error = 1.0e-5
     inputs.mixing = 1.0
     inputs.iterations = 1000
+    inputs.database_info = database_info
     scheme = Qstls(inputs)
     scheme.compute()
-    try:
-        nx = scheme.wvg.size
-        assert nx >= 3
-        assert scheme.adr.shape[0] == nx
-        assert scheme.adr.shape[1] == inputs.matsubara
-        assert scheme.idr.shape[0] == nx
-        assert scheme.idr.shape[1] == inputs.matsubara
-        assert scheme.sdr.size == nx
-        assert scheme.slfc.size == nx
-        assert scheme.ssf.size == nx
-        assert scheme.rdf(scheme.wvg).size == nx
-    finally:
-        fixed_file = "adr_fixed_theta1.000_matsubara32.bin"
-        if os.path.isfile(fixed_file):
-            os.remove(fixed_file)
+    nx = scheme.wvg.size
+    assert nx >= 3
+    assert scheme.adr.shape[0] == nx
+    assert scheme.adr.shape[1] == inputs.matsubara
+    assert scheme.idr.shape[0] == nx
+    assert scheme.idr.shape[1] == inputs.matsubara
+    assert scheme.sdr.size == nx
+    assert scheme.slfc.size == nx
+    assert scheme.ssf.size == nx
+    assert scheme.rdf(scheme.wvg).size == nx
 
 
-def test_qstls_iet_compute():
+def test_qstls_iet_compute(database_info):
     iet_schemes = {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}
     for scheme_name in iet_schemes:
         inputs = QstlsInput()
@@ -59,18 +62,14 @@ def test_qstls_iet_compute():
         inputs.error = 1.0e-5
         inputs.mixing = 0.5
         inputs.iterations = 1000
+        inputs.database_info = database_info
         scheme = Qstls(inputs)
         scheme.compute()
-        try:
-            nx = scheme.wvg.size
-            assert nx >= 3
-            assert scheme.idr.shape[0] == nx
-            assert scheme.idr.shape[1] == inputs.matsubara
-            assert scheme.sdr.size == nx
-            assert scheme.slfc.size == nx
-            assert scheme.ssf.size == nx
-            assert scheme.rdf(scheme.wvg).size == nx
-        finally:
-            file_names = glob.glob("adr_fixed*.bin")
-            for file_name in file_names:
-                os.remove(file_name)
+        nx = scheme.wvg.size
+        assert nx >= 3
+        assert scheme.idr.shape[0] == nx
+        assert scheme.idr.shape[1] == inputs.matsubara
+        assert scheme.sdr.size == nx
+        assert scheme.slfc.size == nx
+        assert scheme.ssf.size == nx
+        assert scheme.rdf(scheme.wvg).size == nx

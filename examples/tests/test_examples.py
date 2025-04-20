@@ -6,6 +6,8 @@ import sys
 import matplotlib.pyplot as plt
 import pytest
 
+from qupled.database import DataBaseHandler
+
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_examples_dir():
@@ -18,17 +20,16 @@ def setup_examples_dir():
 
 
 @pytest.fixture(autouse=True)
-def mock_plt_show(mocker):
-    mocker.patch.object(plt, plt.show.__name__)
+def run_after_each_test():
+    yield
+    database_name = DataBaseHandler.DEFAULT_DATABASE_NAME
+    if os.path.exists(database_name):
+        os.remove(database_name)
 
 
 @pytest.fixture(autouse=True)
-def clean_example_files():
-    yield
-    for file_extension in ["h5", "bin", "zip"]:
-        file_names = glob.glob(f"*.{file_extension}")
-        for file_name in file_names:
-            os.remove(file_name)
+def mock_plt_show(mocker):
+    mocker.patch.object(plt, plt.show.__name__)
 
 
 def run_example(example_name, expected_error_message=None):

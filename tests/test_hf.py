@@ -30,7 +30,7 @@ def test_hf_initialization():
     assert isinstance(scheme.results, hf.Result)
     assert isinstance(scheme.db_handler, DataBaseHandler)
     assert scheme.native_scheme_cls == native.HF
-    assert isinstance(scheme.native_inputs, native.Input)
+    assert scheme.native_inputs_cls, native.Input
     assert scheme.native_scheme_status is None
 
 
@@ -62,6 +62,10 @@ def test_add_run_to_database(scheme, mocker):
 
 
 def test_compute_native(scheme, inputs, mocker):
+    native_input = mocker.Mock()
+    native_inputs_cls = mocker.patch.object(
+        scheme, "native_inputs_cls", return_value=native_input
+    )
     to_native = mocker.patch("qupled.hf.Input.to_native")
     native_scheme = mocker.Mock()
     native_scheme_cls = mocker.patch.object(
@@ -71,8 +75,9 @@ def test_compute_native(scheme, inputs, mocker):
     native_scheme.compute.return_value = "mocked-status"
     scheme.inputs = inputs
     scheme._compute_native()
-    to_native.assert_called_once_with(scheme.native_inputs)
-    native_scheme_cls.assert_called_once_with(scheme.native_inputs)
+    native_inputs_cls.assert_called_once()
+    to_native.assert_called_once_with(native_input)
+    native_scheme_cls.assert_called_once_with(native_input)
     native_scheme.compute.assert_called_once()
     assert scheme.native_scheme_status == "mocked-status"
     from_native.assert_called_once_with(native_scheme)
@@ -121,9 +126,13 @@ def test_compute_rdf_without_results(scheme):
     scheme.db_handler.insert_results.assert_not_called()
 
 
-def test_input_initialization(inputs):
-    assert inputs.coupling == 1.0
-    assert inputs.degeneracy == 2.0
+def test_input_initialization(mocker):
+    dbInfo = mocker.patch("qupled.hf.DatabaseInfo")
+    coupling = 1.0
+    degeneracy = 2.0
+    inputs = hf.Input(coupling, degeneracy)
+    assert inputs.coupling == coupling
+    assert inputs.degeneracy == degeneracy
     assert inputs.chemical_potential == [-10.0, 10.0]
     assert inputs.cutoff == 10.0
     assert inputs.frequency_cutoff == 10.0
@@ -133,6 +142,7 @@ def test_input_initialization(inputs):
     assert inputs.resolution == 0.1
     assert inputs.threads == 1
     assert inputs.theory == "HF"
+    assert inputs.database_info == dbInfo.return_value
 
 
 def test_input_to_native(mocker, inputs):
@@ -185,3 +195,23 @@ def test_result_compute_rdf_with_custom_grid(mocker, results):
     native_compute_rdf.assert_called_once()
     assert np.array_equal(results.rdf, np.array([7, 8, 9]))
     assert np.array_equal(results.rdf_grid, rdf_grid)
+
+
+def test_database_info_initialization():
+    db_info = hf.DatabaseInfo()
+    assert db_info.name == hf.database.DataBaseHandler.DEFAULT_DATABASE_NAME
+    assert db_info.run_id is None
+    assert db_info.run_table_name == hf.database.DataBaseHandler.RUN_TABLE_NAME
+
+
+def test_database_info_to_native(mocker):
+    native_db_info = mocker.patch("qupled.native.DatabaseInfo")
+    db_info = hf.DatabaseInfo()
+    db_info.name = "test_db"
+    db_info.run_id = 123
+    db_info.run_table_name = "test_table"
+    native_instance = db_info.to_native()
+    assert native_instance == native_db_info.return_value
+    assert native_instance.name == "test_db"
+    assert native_instance.run_id == 123
+    assert native_instance.run_table_name == "test_table"

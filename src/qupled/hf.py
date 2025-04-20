@@ -20,7 +20,7 @@ class HF:
         # Undocumented properties
         self.db_handler = database.DataBaseHandler()
         self.native_scheme_cls = native.HF
-        self.native_inputs = native.Input()
+        self.native_inputs_cls = native.Input
         self.native_scheme_status = None
 
     @property
@@ -85,8 +85,9 @@ class HF:
         3. Computes the native scheme and stores its status.
         4. Converts the results from the native scheme back to the desired format.
         """
-        self.inputs.to_native(self.native_inputs)
-        scheme = self.native_scheme_cls(self.native_inputs)
+        native_inputs = self.native_inputs_cls()
+        self.inputs.to_native(native_inputs)
+        scheme = self.native_scheme_cls(native_inputs)
         self.native_scheme_status = scheme.compute()
         self.results.from_native(scheme)
 

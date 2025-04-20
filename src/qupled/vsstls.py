@@ -17,7 +17,96 @@ class VSStls(stls.Stls):
         self.results: Result = Result()
         # Undocumented properties
         self.native_scheme_cls = native.VSStls
-        self.native_inputs = native.VSStlsInput()
+        self.native_inputs_cls = native.VSStlsInput
+
+    def compute(self, inputs: Input):
+        """
+        Solves the scheme and saves the results.
+
+        Args:
+            inputs: Input parameters.
+        """
+        self._fill_free_energy_integrand(inputs)
+        super().compute(inputs)
+
+    def _fill_free_energy_integrand(self, inputs: Input):
+        """
+        Fills the free energy integrand by computing missing state points for a given input.
+
+        This method iterates over the missing state points (coupling values) for the given input,
+        computes the required data for each coupling value, and updates the input data accordingly.
+        After processing, it restores the original coupling value in the input.
+
+        Args:
+            inputs: Input parameters.
+
+        Behavior:
+            - Identifies the missing state points (coupling values) that need to be computed.
+            - For each missing coupling value:
+                - Prints a message indicating the current computation.
+                - Updates the input coupling value to the current coupling.
+                - Performs the computation using the `compute` method.
+                - Updates the input data with the results of the computation.
+            - Restores the original target coupling value in the input after processing.
+        """
+        target_coupling = inputs.coupling
+        missing_state_points = self._get_missing_state_points(inputs)
+        do_subcall = len(missing_state_points) > 0
+        for coupling in missing_state_points:
+            print("---------------------------------------------------------------")
+            print(f"Subcall: solving {inputs.theory} scheme for rs = {coupling:.5f}")
+            inputs.coupling = coupling
+            self.compute(inputs)
+            self._update_input_data(inputs)
+        if do_subcall:
+            print("---------------------------------------------------------------")
+            print("Subcalls completed.")
+        inputs.coupling = target_coupling
+
+    @staticmethod
+    def _get_missing_state_points(inputs: Input) -> np.ndarray:
+        """
+        Calculate the missing state points in a grid based on the expected and actual values.
+
+        This function determines the points in the expected grid that are not present
+        in the actual grid of the free energy integrand. The precision of the comparison
+        is determined by the resolution of the coupling parameter.
+
+        Args:
+            inputs (Input): The input parameters.
+
+        Returns:
+            np.ndarray: An array of missing state points in the grid. If the actual grid
+            is `None`, the function returns the entire expected grid.
+        """
+        rs = inputs.coupling
+        drs = inputs.coupling_resolution
+        expected_grid = np.arange(drs, rs - 0.1 * drs, 3 * drs)
+        actual_grid = inputs.free_energy_integrand.grid
+        precision = int(np.abs(np.log10(drs)))
+        return (
+            np.setdiff1d(
+                np.round(expected_grid, precision), np.round(actual_grid, precision)
+            )
+            if actual_grid is not None
+            else expected_grid
+        )
+
+    def _update_input_data(self, inputs: Input):
+        """
+        Updates the input data with a free energy integrand object.
+
+        This method creates a `FreeEnergyIntegrand` instance using the results
+        stored in the current object and assigns it to the `free_energy_integrand`
+        attribute of the provided `inputs` object.
+
+        Args:
+            inputs: Input parameters.
+        """
+        free_energy_integrand = FreeEnergyIntegrand(
+            self.results.free_energy_grid, self.results.free_energy_integrand
+        )
+        inputs.free_energy_integrand = free_energy_integrand
 
     # Get the free energy integrand from database
     @staticmethod
@@ -34,11 +123,11 @@ class VSStls(stls.Stls):
 
         Returns:
             native.FreeEnergyIntegrand: An object containing the free energy grid,
-            integrand, and alpha values retrieved from the database.
+            and integrand values retrieved from the database.
         """
-        names = ["free_energy_grid", "free_energy_integrand", "alpha"]
+        names = ["free_energy_grid", "free_energy_integrand"]
         data = output.DataBase.read_results(run_id, database_name, names)
-        return FreeEnergyIntegrand(data[names[0]], data[names[1]], data[names[2]])
+        return FreeEnergyIntegrand(data[names[0]], data[names[1]])
 
 
 # Input class
@@ -86,16 +175,13 @@ class FreeEnergyIntegrand:
 
     def __init__(
         self,
-        grid: np.ndarray = None,
-        integrand: np.ndarray = None,
-        alpha: np.ndarray = None,
+        grid: np.ndarray | None = None,
+        integrand: np.ndarray | None = None,
     ):
         self.grid = grid
         """ Coupling parameter grid. Default = ``None``"""
         self.integrand = integrand
         """ Free energy integrand. Default = ``None``"""
-        self.alpha = alpha
-        """ Free parameter. Default = ``None``"""
 
     def to_native(self) -> native.FreeEnergyIntegrand:
         """

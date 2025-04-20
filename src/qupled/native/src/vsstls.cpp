@@ -19,15 +19,6 @@ VSStls::VSStls(const VSStlsInput &in_)
   VSBase::thermoProp = thermoProp;
 }
 
-VSStls::VSStls(const VSStlsInput &in_, const ThermoProp &thermoProp_)
-    : VSBase(in_, false),
-      Stls(in_, false),
-      in(in_),
-      thermoProp(make_shared<ThermoProp>(in_)) {
-  VSBase::thermoProp = thermoProp;
-  thermoProp->copyFreeEnergyIntegrand(thermoProp_);
-}
-
 double VSStls::computeAlpha() {
   // Compute the free energy integrand
   thermoProp->compute();
@@ -60,28 +51,7 @@ void VSStls::updateSolution() {
   ssf = thermoProp->getSsf();
 }
 
-void VSStls::initScheme() { Rpa::init(); }
-
-void VSStls::initFreeEnergyIntegrand() {
-  if (!thermoProp->isFreeEnergyIntegrandIncomplete()) { return; }
-  println("Missing points in the free energy integrand: subcalls will be "
-          "performed to collect the necessary data");
-  println("-----------------------------------------------------------------"
-          "----------");
-  VSStlsInput inTmp = in;
-  while (thermoProp->isFreeEnergyIntegrandIncomplete()) {
-    const double rs = thermoProp->getFirstUnsolvedStatePoint();
-    println(fmt::format("Subcall: solving VS scheme for rs = {:.5f}", rs));
-    inTmp.setCoupling(rs);
-    VSStls scheme(inTmp, *thermoProp);
-    scheme.compute();
-    thermoProp->copyFreeEnergyIntegrand(*scheme.thermoProp);
-    println("Done");
-    println("-----------------------------------------------------------------"
-            "----------");
-  }
-  println("Subcalls completed");
-}
+void VSStls::init() { Rpa::init(); }
 
 // -----------------------------------------------------------------
 // ThermoPropBase class

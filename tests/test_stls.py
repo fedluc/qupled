@@ -15,7 +15,7 @@ def test_stls_initialization(mocker):
     super_init.assert_called_once()
     assert isinstance(scheme.results, stls.Result)
     assert scheme.native_scheme_cls == native.Stls
-    assert isinstance(scheme.native_inputs, native.StlsInput)
+    assert scheme.native_inputs_cls == native.StlsInput
 
 
 def test_get_initial_guess_with_default_database_name(mocker):

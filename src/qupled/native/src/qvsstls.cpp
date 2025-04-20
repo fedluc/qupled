@@ -1,4 +1,4 @@
-#include "qvs.hpp"
+#include "qvsstls.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
@@ -24,15 +24,6 @@ QVSStls::QVSStls(const QVSStlsInput &in_)
       in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
-}
-
-QVSStls::QVSStls(const QVSStlsInput &in_, const QThermoProp &thermoProp_)
-    : VSBase(in_, false),
-      Qstls(in_, false),
-      in(in_),
-      thermoProp(make_shared<QThermoProp>(in_)) {
-  VSBase::thermoProp = thermoProp;
-  thermoProp->copyFreeEnergyIntegrand(thermoProp_);
 }
 
 double QVSStls::computeAlpha() {
@@ -67,28 +58,7 @@ void QVSStls::updateSolution() {
   slfc = thermoProp->getSlfc();
 }
 
-void QVSStls::initScheme() { Rpa::init(); }
-
-void QVSStls::initFreeEnergyIntegrand() {
-  if (!thermoProp->isFreeEnergyIntegrandIncomplete()) { return; }
-  println("Missing points in the free energy integrand: subcalls will be "
-          "performed to collect the necessary data");
-  println("-----------------------------------------------------------------"
-          "----------");
-  QVSStlsInput inTmp = in;
-  while (thermoProp->isFreeEnergyIntegrandIncomplete()) {
-    const double rs = thermoProp->getFirstUnsolvedStatePoint();
-    println(fmt::format("Subcall: solving qVS scheme for rs = {:.5f}", rs));
-    inTmp.setCoupling(rs);
-    QVSStls scheme(inTmp, *thermoProp);
-    scheme.compute();
-    thermoProp->copyFreeEnergyIntegrand(*(scheme.thermoProp));
-    println("Done");
-    println("-----------------------------------------------------------------"
-            "----------");
-  }
-  println("Subcalls completed");
-}
+void QVSStls::init() { Rpa::init(); }
 
 // -----------------------------------------------------------------
 // QThermoProp class
@@ -173,6 +143,18 @@ std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
       out.push_back(inTmp);
     }
   }
+  if (in.getFixedRunId() == DEFAULT_INT) {
+    // Avoid recomputing the fixed component for the state points with perturbed
+    // coupling parameter
+    for (const int idx : {RS_THETA_DOWN,
+                          RS_UP_THETA_DOWN,
+                          RS_THETA,
+                          RS_UP_THETA,
+                          RS_THETA_UP,
+                          RS_UP_THETA_UP}) {
+      out[idx].setFixedRunId(in.getDatabaseInfo().runId);
+    }
+  }
   return out;
 }
 
@@ -241,23 +223,17 @@ QstlsCSR::QstlsCSR(const QVSStlsInput &in_)
 
 void QstlsCSR::init() {
   switch (lfcTheta.type) {
-  case CENTERED: adrFixedFileName = "THETA.bin"; break;
-  case FORWARD: adrFixedFileName = "THETA_DOWN.bin"; break;
-  case BACKWARD: adrFixedFileName = "THETA_UP.bin"; break;
+  case CENTERED:
+    adrFixedFileName = fmt::format("{}_THETA", in.getTheory());
+    break;
+  case FORWARD:
+    adrFixedFileName = fmt::format("{}_THETA_DOWN", in.getTheory());
+    break;
+  case BACKWARD:
+    adrFixedFileName = fmt::format("{}_THETA_UP", in.getTheory());
+    break;
   }
-  if (!in.getFixed().empty()) {
-    std::filesystem::path fullPath = in.getFixed();
-    fullPath /= adrFixedFileName;
-    adrFixedFileName = fullPath.string();
-  }
-  if (std::filesystem::exists(adrFixedFileName)) {
-    Stls::init();
-    readAdrFixedFile(adrFixed, adrFixedFileName, false);
-  } else {
-    Qstls::init();
-  }
-  // MPI barrier to make sure that all processes see the same files
-  MPIUtil::barrier();
+  Qstls::init();
 }
 
 void QstlsCSR::computeAdrQStls() {

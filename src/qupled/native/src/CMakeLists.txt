@@ -55,7 +55,7 @@ Python3_add_library(native MODULE
 		qstls.cpp
 		vsbase.cpp
 		vsstls.cpp
-		qvs.cpp
+		qvsstls.cpp
 		python_util.cpp
 		python_wrappers.cpp
 		python_modules.cpp)

@@ -91,7 +91,9 @@ BOOST_PYTHON_MODULE(native) {
   // Class for the input of the Qstls scheme
   bp::class_<QstlsInput, bp::bases<StlsInput>>("QstlsInput")
       .add_property("guess", &QstlsInput::getGuess, &QstlsInput::setGuess)
-      .add_property("fixed", &QstlsInput::getFixed, &QstlsInput::setFixed)
+      .add_property("fixed_run_id",
+                    &QstlsInput::getFixedRunId,
+                    &QstlsInput::setFixedRunId)
       .add_property(
           "fixed_iet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet);
 
@@ -128,10 +130,7 @@ BOOST_PYTHON_MODULE(native) {
                     &PyFreeEnergyIntegrand::setGrid)
       .add_property("integrand",
                     &PyFreeEnergyIntegrand::getIntegrand,
-                    &PyFreeEnergyIntegrand::setIntegrand)
-      .add_property("alpha",
-                    &PyFreeEnergyIntegrand::getAlpha,
-                    &PyFreeEnergyIntegrand::setAlpha);
+                    &PyFreeEnergyIntegrand::setIntegrand);
 
   // Class to solve the classical RPA scheme
   bp::class_<HF>("HF", bp::init<const Input>())

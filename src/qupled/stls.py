@@ -18,7 +18,7 @@ class Stls(rpa.Rpa):
         self.results: Result = Result()
         # Undocumented properties
         self.native_scheme_cls = native.Stls
-        self.native_inputs = native.StlsInput()
+        self.native_inputs_cls = native.StlsInput
 
     @staticmethod
     def get_initial_guess(run_id: int, database_name: str | None = None) -> Guess:

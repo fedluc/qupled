@@ -174,11 +174,11 @@ public:
     int matsubara = DEFAULT_INT;
   };
   // Setters
-  void setFixed(const std::string &fixed);
+  void setFixedRunId(const int &fixedRunId);
   void setFixedIet(const std::string &fixedIet);
   void setGuess(const Guess &guess);
   // Getters
-  std::string getFixed() const { return fixed; }
+  int getFixedRunId() const { return fixedRunId; }
   std::string getFixedIet() const { return fixedIet; }
   Guess getGuess() const { return guess; }
 
@@ -186,7 +186,7 @@ protected:
 
   // Name of the file with the fixed component of the auxiliary density response
   // (adr)
-  std::string fixed;
+  int fixedRunId;
   // Name of the file with the fixed component of the adr for iet schemes
   std::string fixedIet;
   // Initial guess
@@ -238,7 +238,6 @@ public:
   // Typdef
   struct FreeEnergyIntegrand {
     std::vector<double> grid;
-    std::vector<double> alpha;
     std::vector<std::vector<double>> integrand;
   };
   // Contructor
