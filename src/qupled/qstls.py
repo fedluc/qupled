@@ -25,6 +25,19 @@ class Qstls(stls.Stls):
         super().compute(inputs)
 
     def find_fixed_adr_in_database(self, inputs: Input):
+        """
+        Searches the database for a run with matching parameters and assigns its ID to the input object.
+
+        This method iterates through all runs in the database and checks if a run matches the given
+        input parameters (degeneracy, theory, cutoff, matsubara, and resolution). If a match is found,
+        the `fixed_run_id` attribute of the input object is updated with the corresponding run ID.
+
+        Args:
+            inputs (Input): The input parameters.
+
+        Returns:
+            None: The method updates the `fixed_run_id` attribute of the `inputs` object if a match is found.
+        """
         runs = self.db_handler.inspect_runs()
         for run in runs:
             database_keys = database.DataBaseHandler.TableKeys

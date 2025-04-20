@@ -19,6 +19,18 @@ def test_qvsstls_inheritance():
     assert issubclass(qvsstls.QVSStls, vsstls.VSStls)
 
 
+def test_compute(mocker):
+    find_fixed_adr_in_database = mocker.patch(
+        "qupled.qstls.Qstls.find_fixed_adr_in_database"
+    )
+    super_compute = mocker.patch("qupled.vsstls.VSStls.compute")
+    inputs = mocker.ANY
+    scheme = qvsstls.QVSStls()
+    scheme.compute(inputs)
+    find_fixed_adr_in_database.assert_called_once_with(scheme, inputs)
+    super_compute.assert_called_once_with(inputs)
+
+
 def test_get_free_energy_integrand(mocker):
     run_id = mocker.ANY
     database_name = mocker.ANY
