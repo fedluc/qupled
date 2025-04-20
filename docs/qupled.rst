@@ -121,6 +121,7 @@ and written to the output database.
 .. autoclass:: qupled.vsstls.VSStls
     :inherited-members:
     :members:
+    :exclude-members: get_free_energy_integrand
 
 .. autoclass:: qupled.vsstls.Input	       
     :show-inheritance:
@@ -169,6 +170,7 @@ and written to the output database.
 .. autoclass:: qupled.qstls.Qstls
     :inherited-members:
     :members:
+    :exclude-members: find_fixed_adr_in_database
 
 .. autoclass:: qupled.qstls.Input	       
     :show-inheritance:
@@ -195,6 +197,7 @@ and written to the output database.
 .. autoclass:: qupled.qstlsiet.QstlsIet
     :inherited-members:
     :members:
+    :exclude-members: find_fixed_adr_in_database
 
 .. autoclass:: qupled.qstlsiet.Input	       
     :show-inheritance:
@@ -215,6 +218,7 @@ object :obj:`qupled.qvsstls.Result` and written to the output database.
 .. autoclass:: qupled.qvsstls.QVSStls
     :inherited-members:
     :members:
+    :exclude-members: get_free_energy_integrand
 
 .. autoclass:: qupled.qvsstls.Input	       
     :show-inheritance:

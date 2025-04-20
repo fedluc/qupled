@@ -98,37 +98,13 @@ that can be employed to speed up the calculations:
  
 * *Pre-computation*: The calculations for the quantum schemes can be made significantly
   faster if part of the calculation of the auxiliary density response can be skipped.
-  This can usually be done by passing in input the so-called 'fixed' component of the
-  auxiliary density response. The fixed component of the auxiliary density response depends
-  only on the degeneracy parameter and is printed to specific ouput files when a quantum
-  scheme is solved. These output files can be used in successive calculations to avoid
-  recomputing the fixed component and to speed-up the solution of the quantum schemes.
-  The following two examples illustrate how this can be done for both the QSTLS and
-  the QSTLS-IET schemes.
+  Qupled will look into the database used to store the results to try to find the 
+  necessary data to skip the full calculation of the auxiliary density response.
 
-For the QSTLS scheme it is sufficient to pass the name of binary file containing the fixed component. 
-This allows to obtain identical results (compare the internal energies printed at the end of 
-the example) in a fraction of the time. We can also recycle the same fixed component for 
-different coupling parameters provided that the degeneracy parameter stays the same. On the 
-other hand, when changing the degeneracy parameter the fixed component must also be updated 
-otherwise the calculation fails as shown at the end of the example.
+The following example shows the effect of pre-computation. The example first
+computes the auxiliary density response for a given set of parameters and then
+it uses the pre-computed data to speed up the calculation of the auxiliary density
+response for a different set of parameters.
 
-.. literalinclude:: ../examples/docs/fixed_adr_qstls.py
-   :language: python
-
-For the QSTLS-IET schemes we must pass the name of two files: the binary file with the 
-fixed auxiliary density response from the QSTLS scheme and a zip file containing a collection 
-of binary files representing the fixed component for the QSTLS-IET scheme. Here the fixed 
-component depends only on the degeneracy parameter but not on the coupling 
-parameter and not on the theory used for the bridge function.
-
-.. literalinclude:: ../examples/docs/fixed_adr_qstls_iet.py
-   :language: python
-
-For the QVS-STLS scheme we must pass the name of one zip file containing the data for the
-fixed auxiliary density response. The same fixed component can be re-used for different
-coupling parameters provided that the degeneracy parameter and the degeneracy parameter
-resolution remain the same.
-
-.. literalinclude:: ../examples/docs/fixed_adr_qvsstls.py
+.. literalinclude:: ../examples/docs/fixed_adr.py
    :language: python
