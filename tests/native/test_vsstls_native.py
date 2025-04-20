@@ -13,7 +13,7 @@ def test_vsstls_properties():
 
 def test_vsstls_compute():
     inputs = VSStlsInput()
-    inputs.coupling = 1.0
+    inputs.coupling = 0.1
     inputs.degeneracy = 1.0
     inputs.theory = "VSSTLS"
     inputs.chemical_potential = [-10, 10]

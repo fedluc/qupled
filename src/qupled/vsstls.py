@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import copy
 import numpy as np
 
-from . import mpi
 from . import native
 from . import output
 from . import stls
@@ -58,6 +56,8 @@ class VSStls(stls.Stls):
             inputs.coupling = coupling
             self.compute(inputs)
             self._update_input_data(inputs)
+        print("---------------------------------------------------------------")
+        print("Subcalls completed.")
         inputs.coupling = target_coupling
 
     @staticmethod

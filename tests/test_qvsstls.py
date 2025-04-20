@@ -1,6 +1,3 @@
-import os
-import zipfile
-
 import pytest
 
 import qupled.qstls as qstls

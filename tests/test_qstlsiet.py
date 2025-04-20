@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 import qupled.qstls as qstls
