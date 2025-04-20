@@ -23,7 +23,7 @@ def test_vsstls_initialization(mocker):
     super_init.assert_called_once()
     assert isinstance(scheme.results, vsstls.Result)
     assert scheme.native_scheme_cls == native.VSStls
-    assert isinstance(scheme.native_inputs, native.VSStlsInput)
+    assert scheme.native_inputs_cls == native.VSStlsInput
 
 
 def test_compute(mocker, scheme):

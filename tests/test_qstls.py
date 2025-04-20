@@ -23,7 +23,7 @@ def test_qstls_initialization(mocker, scheme):
     super_init.assert_called_once()
     assert isinstance(scheme.results, qstls.Result)
     assert scheme.native_scheme_cls == native.Qstls
-    assert isinstance(scheme.native_inputs, native.QstlsInput)
+    assert scheme.native_inputs_cls == native.QstlsInput
 
 
 def test_compute(mocker, scheme):

@@ -30,7 +30,7 @@ def test_hf_initialization():
     assert isinstance(scheme.results, hf.Result)
     assert isinstance(scheme.db_handler, DataBaseHandler)
     assert scheme.native_scheme_cls == native.HF
-    assert isinstance(scheme.native_inputs, native.Input)
+    assert scheme.native_inputs_cls, native.Input
     assert scheme.native_scheme_status is None
 
 

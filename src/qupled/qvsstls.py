@@ -15,7 +15,7 @@ class QVSStls(vsstls.VSStls):
         self.results: Result = Result()
         # Undocumented properties
         self.native_scheme_cls = native.QVSStls
-        self.native_inputs = native.QVSStlsInput()
+        self.native_inputs_cls = native.QVSStlsInput
 
     def compute(self, inputs: Input):
         """

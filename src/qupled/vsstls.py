@@ -17,7 +17,7 @@ class VSStls(stls.Stls):
         self.results: Result = Result()
         # Undocumented properties
         self.native_scheme_cls = native.VSStls
-        self.native_inputs = native.VSStlsInput()
+        self.native_inputs_cls = native.VSStlsInput
 
     def compute(self, inputs: Input):
         """
@@ -123,7 +123,7 @@ class VSStls(stls.Stls):
 
         Returns:
             native.FreeEnergyIntegrand: An object containing the free energy grid,
-            integrand, and alpha values retrieved from the database.
+            and integrand values retrieved from the database.
         """
         names = ["free_energy_grid", "free_energy_integrand"]
         data = output.DataBase.read_results(run_id, database_name, names)

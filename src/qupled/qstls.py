@@ -18,7 +18,7 @@ class Qstls(stls.Stls):
         self.results: Result = Result()
         # Undocumented properties
         self.native_scheme_cls = native.Qstls
-        self.native_inputs = native.QstlsInput()
+        self.native_inputs_cls = native.QstlsInput
 
     def compute(self, inputs: Input):
         self.find_fixed_adr_in_database(inputs)
@@ -39,6 +39,7 @@ class Qstls(stls.Stls):
             None: The method updates the `fixed_run_id` attribute of the `inputs` object if a match is found.
         """
         runs = self.db_handler.inspect_runs()
+        inputs.fixed_run_id = None
         for run in runs:
             database_keys = database.DataBaseHandler.TableKeys
             same_degeneracy = run[database_keys.DEGENERACY.value] == inputs.degeneracy
@@ -52,6 +53,7 @@ class Qstls(stls.Stls):
                 and run_inputs["matsubara"] == inputs.matsubara
                 and run_inputs["resolution"] == inputs.resolution
             ):
+                print(f"Loading fixed ADR from database for run_id = {run_id}")
                 inputs.fixed_run_id = run_id
                 return
 
