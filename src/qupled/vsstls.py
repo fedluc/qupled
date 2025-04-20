@@ -125,9 +125,9 @@ class VSStls(stls.Stls):
             native.FreeEnergyIntegrand: An object containing the free energy grid,
             integrand, and alpha values retrieved from the database.
         """
-        names = ["free_energy_grid", "free_energy_integrand", "alpha"]
+        names = ["free_energy_grid", "free_energy_integrand"]
         data = output.DataBase.read_results(run_id, database_name, names)
-        return FreeEnergyIntegrand(data[names[0]], data[names[1]], data[names[2]])
+        return FreeEnergyIntegrand(data[names[0]], data[names[1]])
 
 
 # Input class

@@ -102,12 +102,10 @@ def test_update_input_data(mocker, scheme):
     inputs = mocker.Mock()
     scheme.results.free_energy_grid = mocker.ANY
     scheme.results.free_energy_integrand = mocker.ANY
-    scheme.results.alpha = mocker.ANY
     scheme._update_input_data(inputs)
     free_energy_integrand_mock.assert_called_once_with(
         scheme.results.free_energy_grid,
         scheme.results.free_energy_integrand,
-        scheme.results.alpha,
     )
     assert inputs.free_energy_integrand == free_energy_integrand_mock.return_value
 
@@ -118,14 +116,12 @@ def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
     read_results.return_value = {
         "free_energy_grid": mocker.ANY,
         "free_energy_integrand": mocker.ANY,
-        "alpha": mocker.ANY,
     }
     fxci = vsstls.VSStls.get_free_energy_integrand(run_id)
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
-    assert fxci.alpha == read_results.return_value["alpha"]
     read_results.assert_called_once_with(
-        run_id, None, ["free_energy_grid", "free_energy_integrand", "alpha"]
+        run_id, None, ["free_energy_grid", "free_energy_integrand"]
     )
 
 
@@ -136,14 +132,12 @@ def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
     read_results.return_value = {
         "free_energy_grid": mocker.ANY,
         "free_energy_integrand": mocker.ANY,
-        "alpha": mocker.ANY,
     }
     fxci = vsstls.VSStls.get_free_energy_integrand(run_id, database_name)
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
-    assert fxci.alpha == read_results.return_value["alpha"]
     read_results.assert_called_once_with(
-        run_id, None, ["free_energy_grid", "free_energy_integrand", "alpha"]
+        run_id, None, ["free_energy_grid", "free_energy_integrand"]
     )
 
 

@@ -40,7 +40,6 @@ def test_qstls_iet_input_initialization_valid_theory(mocker):
     qstls_init.assert_called_once_with(input, coupling, degeneracy)
     stls_iet_init.assert_called_once_with(input, coupling, degeneracy, "STLS-HNC")
     assert input.theory == theory
-    assert input.fixed_iet == ""
 
 
 def test_qstls_iet_input_initialization_invalid_theory():
