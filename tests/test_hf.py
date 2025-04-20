@@ -62,6 +62,10 @@ def test_add_run_to_database(scheme, mocker):
 
 
 def test_compute_native(scheme, inputs, mocker):
+    native_input = mocker.Mock()
+    native_inputs_cls = mocker.patch.object(
+        scheme, "native_inputs_cls", return_value=native_input
+    )
     to_native = mocker.patch("qupled.hf.Input.to_native")
     native_scheme = mocker.Mock()
     native_scheme_cls = mocker.patch.object(
@@ -71,8 +75,9 @@ def test_compute_native(scheme, inputs, mocker):
     native_scheme.compute.return_value = "mocked-status"
     scheme.inputs = inputs
     scheme._compute_native()
-    to_native.assert_called_once_with(scheme.native_inputs)
-    native_scheme_cls.assert_called_once_with(scheme.native_inputs)
+    native_inputs_cls.assert_called_once()
+    to_native.assert_called_once_with(native_input)
+    native_scheme_cls.assert_called_once_with(native_input)
     native_scheme.compute.assert_called_once()
     assert scheme.native_scheme_status == "mocked-status"
     from_native.assert_called_once_with(native_scheme)
