@@ -50,14 +50,17 @@ class VSStls(stls.Stls):
             - Restores the original target coupling value in the input after processing.
         """
         target_coupling = inputs.coupling
-        for coupling in self._get_missing_state_points(inputs):
+        missing_state_points = self._get_missing_state_points(inputs)
+        do_subcall = len(missing_state_points) > 0
+        for coupling in missing_state_points:
             print("---------------------------------------------------------------")
             print(f"Subcall: solving {inputs.theory} scheme for rs = {coupling:.5f}")
             inputs.coupling = coupling
             self.compute(inputs)
             self._update_input_data(inputs)
-        print("---------------------------------------------------------------")
-        print("Subcalls completed.")
+        if do_subcall:
+            print("---------------------------------------------------------------")
+            print("Subcalls completed.")
         inputs.coupling = target_coupling
 
     @staticmethod

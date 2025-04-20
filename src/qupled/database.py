@@ -173,7 +173,10 @@ class DataBaseHandler:
             self._execute(statement)
 
     def get_run(
-        self, run_id: int, input_names: list[str] | None, result_names: list[str] | None
+        self,
+        run_id: int,
+        input_names: list[str] | None = None,
+        result_names: list[str] | None = None,
     ) -> dict:
         """
         Retrieve a run's data, including its inputs and results, from the database.
@@ -209,7 +212,7 @@ class DataBaseHandler:
         else:
             return {}
 
-    def get_inputs(self, run_id: int, names: list[str] | None) -> dict:
+    def get_inputs(self, run_id: int, names: list[str] | None = None) -> dict:
         """
         Retrieve input data for a specific run ID from the input table.
 
@@ -223,7 +226,7 @@ class DataBaseHandler:
         sql_mapping = lambda value: (self._from_json(value))
         return self._get(self.input_table, run_id, names, sql_mapping)
 
-    def get_results(self, run_id: int, names: list[str] | None) -> dict:
+    def get_results(self, run_id: int, names: list[str] | None = None) -> dict:
         """
         Retrieve results from the database for a specific run ID and optional list of names.
 

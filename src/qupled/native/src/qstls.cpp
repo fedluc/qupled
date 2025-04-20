@@ -27,10 +27,7 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
                "for the quantum IET schemes");
   }
   // Set name for the fixed adr output file
-  adrFixedFileName = fmt::format("adr_fixed_theta{:.3f}_matsubara{:}_{}.bin",
-                                 in.getDegeneracy(),
-                                 in.getNMatsubara(),
-                                 in.getTheory());
+  adrFixedFileName = fmt::format("{}", in.getTheory());
   // Check if iet scheme should be solved
   useIet = in.getTheory() == "QSTLS-HNC" || in.getTheory() == "QSTLS-IOI"
            || in.getTheory() == "QSTLS-LCT";
@@ -256,7 +253,7 @@ void Qstls::computeAdrFixed() {
   const int nl = in.getNMatsubara();
   if (in.getFixedRunId() != DEFAULT_INT) {
     adrFixed.resize(nx, nl, nx);
-    readAdrFixedFromDatabase(adrFixed, adrFixedFileName, in.getFixedRunId());
+    readAdrFixed(adrFixed, adrFixedFileName, in.getFixedRunId());
     return;
   }
   // Compute from scratch
@@ -274,11 +271,10 @@ void Qstls::computeAdrFixed() {
   const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
   gatherLoopData(adrFixed.data(), loopData, nxnl);
   // Write result to output file
-  if (isRoot()) { writeAdrFixedToDatabase(adrFixed, adrFixedFileName); }
+  if (isRoot()) { writeAdrFixed(adrFixed, adrFixedFileName); }
 }
 
-void Qstls::writeAdrFixedToDatabase(const Vector3D &res,
-                                    const string &name) const {
+void Qstls::writeAdrFixed(const Vector3D &res, const string &name) const {
   try {
     DatabaseInfo dbInfo = in.getDatabaseInfo();
     SQLite::Database db(dbInfo.name,
@@ -304,9 +300,7 @@ void Qstls::writeAdrFixedToDatabase(const Vector3D &res,
   }
 }
 
-void Qstls::readAdrFixedFromDatabase(Vector3D &res,
-                                     const string &name,
-                                     int runId) const {
+void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
   try {
     DatabaseInfo dbInfo = in.getDatabaseInfo();
     SQLite::Database db(dbInfo.name, SQLite::OPEN_READONLY);
@@ -318,7 +312,11 @@ void Qstls::readAdrFixedFromDatabase(Vector3D &res,
     if (statement.executeStep()) {
       const void *adrData = statement.getColumn(0).getBlob();
       int adrBytes = statement.getColumn(0).getBytes();
-      // TODO: Check that res.data() has indeed the same size as adrBytes
+      if (static_cast<size_t>(adrBytes) != res.size() * sizeof(double)) {
+        throwError(fmt::format("Size mismatch: expected {} bytes, got {} bytes",
+                               res.size() * sizeof(double),
+                               adrBytes));
+      }
       std::memcpy(res.data(), adrData, adrBytes);
     }
   } catch (const std::exception &e) {
@@ -355,7 +353,7 @@ void Qstls::computeAdrIet() {
     const int runId = (in.getFixedRunId() != DEFAULT_INT)
                           ? in.getFixedRunId()
                           : in.getDatabaseInfo().runId;
-    readAdrFixedFromDatabase(adrFixedPrivate, name, runId);
+    readAdrFixed(adrFixedPrivate, name, runId);
     QstlsUtil::AdrIet adrTmp(in.getDegeneracy(),
                              wvg.front(),
                              wvg.back(),
@@ -392,7 +390,7 @@ void Qstls::computeAdrFixedIet() {
     if (isRoot()) {
       const size_t idx = distance(wvg.begin(), find(wvg.begin(), wvg.end(), x));
       const string name = fmt::format("{}_{:d}", in.getTheory(), idx);
-      writeAdrFixedToDatabase(res, name);
+      writeAdrFixed(res, name);
     }
   }
   // TODO: Check that all ranks can access the database

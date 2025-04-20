@@ -17,6 +17,16 @@ class QVSStls(vsstls.VSStls):
         self.native_scheme_cls = native.QVSStls
         self.native_inputs = native.QVSStlsInput()
 
+    def compute(self, inputs: Input):
+        """
+        Solves the scheme and saves the results.
+
+        Args:
+            inputs: Input parameters.
+        """
+        qstls.Qstls.find_fixed_adr_in_database(self, inputs)
+        super().compute(inputs)
+
     def _update_input_data(self, inputs: Input):
         """
         Updates the input data with additional attributes specific to the current instance.

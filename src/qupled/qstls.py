@@ -20,6 +20,28 @@ class Qstls(stls.Stls):
         self.native_scheme_cls = native.Qstls
         self.native_inputs = native.QstlsInput()
 
+    def compute(self, inputs: Input):
+        self.find_fixed_adr_in_database(inputs)
+        super().compute(inputs)
+
+    def find_fixed_adr_in_database(self, inputs: Input):
+        runs = self.db_handler.inspect_runs()
+        for run in runs:
+            database_keys = database.DataBaseHandler.TableKeys
+            same_degeneracy = run[database_keys.DEGENERACY.value] == inputs.degeneracy
+            same_theory = run[database_keys.THEORY.value] == inputs.theory
+            if not same_theory or not same_degeneracy:
+                continue
+            run_id = run[database_keys.PRIMARY_KEY.value]
+            run_inputs = self.db_handler.get_inputs(run_id)
+            if (
+                run_inputs["cutoff"] == inputs.cutoff
+                and run_inputs["matsubara"] == inputs.matsubara
+                and run_inputs["resolution"] == inputs.resolution
+            ):
+                inputs.fixed_run_id = run_id
+                return
+
     @staticmethod
     def get_initial_guess(run_id: str, database_name: str | None = None) -> Guess:
         """
@@ -58,12 +80,10 @@ class Input(stls.Input):
 
     def __init__(self, coupling: float, degeneracy: float):
         super().__init__(coupling, degeneracy)
-        self.fixed_run_id: int | None = None
-        """ Run id for the fixed component of the auxiliary density 
-        response in the QSTLS scheme. Default = ``None``"""
         self.guess: Guess = Guess()
         """Initial guess. Default = ``qstls.Guess()``"""
         # Undocumented default values
+        self.fixed_run_id: int | None = None
         self.theory = "QSTLS"
 
 

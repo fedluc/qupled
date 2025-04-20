@@ -27,11 +27,6 @@ class Input(stlsiet.Input, qstls.Input):
         if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
             raise ValueError("Invalid dielectric theory")
         self.theory = theory
-        self.fixed_iet = ""
-        """
-        Name of the zip file storing the iet part of the fixed components
-        of the auxiliary density response. Default = ``""``
-        """
 
 
 # Result class
