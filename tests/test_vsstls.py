@@ -183,18 +183,15 @@ def test_vsstls_result_initialization(mocker):
 def test_free_energy_integrand_initialization(mocker):
     grid = mocker.ANY
     integrand = mocker.ANY
-    alpha = mocker.ANY
-    fxci = vsstls.FreeEnergyIntegrand(grid, integrand, alpha)
+    fxci = vsstls.FreeEnergyIntegrand(grid, integrand)
     assert fxci.grid == grid
     assert fxci.integrand == integrand
-    assert fxci.alpha == alpha
 
 
 def test_free_energy_integrand_initialization_defaults():
     fxci = vsstls.FreeEnergyIntegrand()
     assert fxci.grid is None
     assert fxci.integrand is None
-    assert fxci.alpha is None
 
 
 def test_free_energy_integrand_to_native(mocker):
@@ -202,11 +199,9 @@ def test_free_energy_integrand_to_native(mocker):
     native_fxci = mocker.ANY
     grid = mocker.ANY
     integrand = mocker.ANY
-    alpha = mocker.ANY
     FreeEnergyIntegrand.return_value = native_fxci
-    guess = vsstls.FreeEnergyIntegrand(grid, integrand, alpha)
+    guess = vsstls.FreeEnergyIntegrand(grid, integrand)
     result = guess.to_native()
     assert result == native_fxci
     assert result.grid == grid
     assert result.integrand == integrand
-    assert result.alpha == alpha

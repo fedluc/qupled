@@ -104,9 +104,7 @@ class VSStls(stls.Stls):
             inputs: Input parameters.
         """
         free_energy_integrand = FreeEnergyIntegrand(
-            self.results.free_energy_grid,
-            self.results.free_energy_integrand,
-            self.results.alpha,
+            self.results.free_energy_grid, self.results.free_energy_integrand
         )
         inputs.free_energy_integrand = free_energy_integrand
 
@@ -179,14 +177,11 @@ class FreeEnergyIntegrand:
         self,
         grid: np.ndarray | None = None,
         integrand: np.ndarray | None = None,
-        alpha: np.ndarray | None = None,
     ):
         self.grid = grid
         """ Coupling parameter grid. Default = ``None``"""
         self.integrand = integrand
         """ Free energy integrand. Default = ``None``"""
-        self.alpha = alpha
-        """ Free parameter. Default = ``None``"""
 
     def to_native(self) -> native.FreeEnergyIntegrand:
         """

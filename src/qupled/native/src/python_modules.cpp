@@ -130,10 +130,7 @@ BOOST_PYTHON_MODULE(native) {
                     &PyFreeEnergyIntegrand::setGrid)
       .add_property("integrand",
                     &PyFreeEnergyIntegrand::getIntegrand,
-                    &PyFreeEnergyIntegrand::setIntegrand)
-      .add_property("alpha",
-                    &PyFreeEnergyIntegrand::getAlpha,
-                    &PyFreeEnergyIntegrand::setAlpha);
+                    &PyFreeEnergyIntegrand::setIntegrand);
 
   // Class to solve the classical RPA scheme
   bp::class_<HF>("HF", bp::init<const Input>())

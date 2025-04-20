@@ -238,7 +238,6 @@ public:
   // Typdef
   struct FreeEnergyIntegrand {
     std::vector<double> grid;
-    std::vector<double> alpha;
     std::vector<std::vector<double>> integrand;
   };
   // Contructor

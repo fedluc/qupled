@@ -35,7 +35,7 @@ public:
   // Getters
   const std::vector<std::vector<double>> &getFreeEnergyIntegrand() const;
   const std::vector<double> &getFreeEnergyGrid() const;
-  const std::vector<double> &getAlpha() const;
+  const double &getAlpha() const { return alpha; }
 
 protected:
 
@@ -111,7 +111,7 @@ public:
   // Get free energy grid
   const std::vector<double> &getFreeEnergyGrid() const { return rsGrid; }
   // Get free parameter values except the last one
-  const std::vector<double> &getAlpha() const { return alpha; }
+  const double &getAlpha() const { return alpha; }
 
 protected:
 
@@ -123,10 +123,10 @@ protected:
   std::shared_ptr<StructPropBase> structProp;
   // Grid for thermodyamic integration
   std::vector<double> rsGrid;
-  // Free parameter values for all the coupling parameters stored in rsGrid
-  std::vector<double> alpha;
   // Free energy integrand for NPOINTS state points
   std::vector<std::vector<double>> fxcIntegrand;
+  // Free parameter
+  double alpha;
   // Flags marking particular state points
   bool isZeroCoupling;
   bool isZeroDegeneracy;
@@ -141,8 +141,6 @@ protected:
   void setRsGrid(const VSInput &inVS, const Input &inRpa);
   // Build the free energy integrand
   void setFxcIntegrand(const VSInput &in);
-  // Build the free parameter vector
-  void setAlpha(const VSInput &in);
   // Set the index of the target state point in the free energy integrand
   void setFxcIdxTargetStatePoint(const Input &in);
   // Set the index of the first unsolved state point in the free energy

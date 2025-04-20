@@ -61,13 +61,10 @@ public:
 
   static bn::ndarray getGrid(const VSStlsInput::FreeEnergyIntegrand &fxc);
   static bn::ndarray getIntegrand(const VSStlsInput::FreeEnergyIntegrand &fxc);
-  static bn::ndarray getAlpha(const VSStlsInput::FreeEnergyIntegrand &fxc);
   static void setGrid(VSStlsInput::FreeEnergyIntegrand &fxc,
                       const bn::ndarray &grid);
   static void setIntegrand(VSStlsInput::FreeEnergyIntegrand &fxc,
                            const bn::ndarray &integrand);
-  static void setAlpha(VSStlsInput::FreeEnergyIntegrand &fxc,
-                       const bn::ndarray &alpha);
 };
 
 // -----------------------------------------------------------------
@@ -127,7 +124,7 @@ public:
   static int compute(VSStls &vsstls);
   static VSStlsInput getInput(const VSStls &vsstls);
   static double getError(const VSStls &vsstls);
-  static bn::ndarray getAlpha(const VSStls &vsstls);
+  static double getAlpha(const VSStls &vsstls);
   static bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls);
   static bn::ndarray getFreeEnergyGrid(const VSStls &vsstls);
 };
@@ -155,7 +152,7 @@ public:
   static int compute(QVSStls &qvsstls);
   static QVSStlsInput getInput(const QVSStls &qvsstls);
   static double getError(const QVSStls &qvsstls);
-  static bn::ndarray getAlpha(const QVSStls &qvsstls);
+  static double getAlpha(const QVSStls &qvsstls);
   static bn::ndarray getAdr(const QVSStls &qvsstls);
   static bn::ndarray getFreeEnergyIntegrand(const QVSStls &qvsstls);
   static bn::ndarray getFreeEnergyGrid(const QVSStls &qvsstls);
