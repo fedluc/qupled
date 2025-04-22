@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from . import native
 from . import stls
 
 
@@ -13,6 +14,8 @@ class StlsIet(stls.Stls):
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
+        self.native_scheme_cls = native.StlsIet
+        self.native_inputs_cls = native.StlsIetInput
 
 
 class Input(stls.Input):

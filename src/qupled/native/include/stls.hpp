@@ -37,6 +37,9 @@ protected:
   bool initialGuessFromInput();
   double computeError() const;
   void updateSolution();
+
+private:
+
   // Input parameters
   StlsInput in;
 };

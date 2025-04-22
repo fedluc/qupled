@@ -12,6 +12,14 @@ using ItgType = Integrator1D::Type;
 // STLS class
 // -----------------------------------------------------------------
 
+StlsIet::StlsIet(const StlsIetInput &in_)
+    : Stls(in_, true),
+      in(in_) {
+  // Allocate arrays
+  const size_t nx = wvg.size();
+  bf.resize(nx);
+}
+
 int StlsIet::compute() {
   try {
     init();
@@ -60,7 +68,7 @@ void StlsIet::computeBf() {
   assert(bf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     StlsIetUtil::BridgeFunction bfTmp(in.getTheory(),
-                                      in.getIETMapping(),
+                                      in.getMapping(),
                                       in.getCoupling(),
                                       in.getDegeneracy(),
                                       wvg[i],

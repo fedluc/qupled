@@ -31,6 +31,8 @@ public:
 
 protected:
 
+  // Flag marking wheter to solve iet schemes (TEMPORARY)
+  bool useIet = false;
   // Auxiliary density response
   Vector2D adr;
   Vector2D adrOld;

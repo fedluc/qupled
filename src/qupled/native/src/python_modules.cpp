@@ -60,14 +60,19 @@ BOOST_PYTHON_MODULE(native) {
   bp::class_<StlsInput, bp::bases<Input>>("StlsInput")
       .add_property("error", &StlsInput::getErrMin, &StlsInput::setErrMin)
       .add_property("guess", &StlsInput::getGuess, &StlsInput::setGuess)
-      .add_property(
-          "mapping", &StlsInput::getIETMapping, &StlsInput::setIETMapping)
       .add_property("mixing",
                     &StlsInput::getMixingParameter,
                     &StlsInput::setMixingParameter)
       .add_property("iterations", &StlsInput::getNIter, &StlsInput::setNIter);
 
-  // Class for the input of the VSStls scheme
+  // Class for the input of the IET schemes
+  bp::class_<IetInput>("IetInput")
+      .add_property("mapping", &IetInput::getMapping, &IetInput::setMapping);
+
+  // Class for the input of the StlsIet scheme
+  bp::class_<StlsIetInput, bp::bases<IetInput, StlsInput>>("StlsIetInput");
+
+  // Class for the input of the VS scheme
   bp::class_<VSInput>("VSInput")
       .add_property(
           "error_alpha", &VSInput::getErrMinAlpha, &VSInput::setErrMinAlpha)
@@ -85,7 +90,7 @@ BOOST_PYTHON_MODULE(native) {
                     &VSInput::getFreeEnergyIntegrand,
                     &VSInput::setFreeEnergyIntegrand);
 
-  // Class for the input of the QVSStls scheme
+  // Class for the input of the VSStls scheme
   bp::class_<VSStlsInput, bp::bases<VSInput, StlsInput>>("VSStlsInput");
 
   // Class for the input of the Qstls scheme
@@ -156,8 +161,13 @@ BOOST_PYTHON_MODULE(native) {
   bp::class_<Stls, bp::bases<Rpa>>("Stls", bp::init<const StlsInput>())
       .def("compute", &PyStls::compute)
       .add_property("inputs", &PyStls::getInput)
-      .add_property("error", &PyStls::getError)
-      .add_property("bf", &PyStls::getBf);
+      .add_property("error", &PyStls::getError);
+
+  // Class to solve classical schemes
+  bp::class_<StlsIet, bp::bases<Stls>>("StlsIet",
+                                       bp::init<const StlsIetInput>())
+      .def("compute", &PyStlsIet::compute)
+      .add_property("bf", &PyStlsIet::getBf);
 
   // Class to solve the classical VS scheme
   bp::class_<VSStls, bp::bases<Rpa>>("VSStls", bp::init<const VSStlsInput>())

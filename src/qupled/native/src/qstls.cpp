@@ -38,10 +38,10 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
   ssfNew.resize(nx);
   ssfOld.resize(nx);
   adrFixed.resize(nx, nl, nx);
-  if (useIet) {
-    bf.resize(nx);
-    adrOld.resize(nx, nl);
-  }
+  // if (useIet) {
+  //   bf.resize(nx);
+  //   adrOld.resize(nx, nl);
+  // }
   // Deallocate arrays that are inherited but not used
   vector<double>().swap(slfcNew);
 }
@@ -201,14 +201,14 @@ void Qstls::computeSsfFinite() {
     assert(ssfNew.size() > 0);
     assert(adr.size() > 0);
     assert(idr.size() > 0);
-    if (useIet) assert(bf.size() > 0);
+    // if (useIet) assert(bf.size() > 0);
   }
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const int nx = wvg.size();
   const int nl = idr.size(1);
   for (int i = 0; i < nx; ++i) {
-    const double bfi = (useIet) ? bf[i] : 0;
+    const double bfi = 0; // (useIet) ? bf[i] : 0;
     QstlsUtil::Ssf ssfTmp(
         wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i), bfi);
     ssfNew[i] = ssfTmp.get();
@@ -332,6 +332,7 @@ void Qstls::computeAdrIet() {
   // Setup interpolators
   const shared_ptr<Interpolator1D> ssfi =
       make_shared<Interpolator1D>(wvg, ssfOld);
+  const vector<double> bf(wvg.size());
   const shared_ptr<Interpolator1D> bfi = make_shared<Interpolator1D>(wvg, bf);
   vector<shared_ptr<Interpolator1D>> dlfci(nl);
   shared_ptr<Interpolator1D> tmp = make_shared<Interpolator1D>(wvg, ssfOld);

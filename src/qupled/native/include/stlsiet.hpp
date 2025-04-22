@@ -12,8 +12,7 @@ class StlsIet : public Stls {
 public:
 
   // Constructors
-  explicit StlsIet(const StlsInput &in_)
-      : Stls(in_, true) {}
+  explicit StlsIet(const StlsIetInput &in_);
   // Compute scheme
   int compute();
   // Getters
@@ -21,6 +20,8 @@ public:
 
 private:
 
+  // Input parameters
+  StlsIetInput in;
   // Bridge function (for iet schemes)
   std::vector<double> bf;
   void init();

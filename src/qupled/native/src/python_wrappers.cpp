@@ -150,8 +150,14 @@ StlsInput PyStls::getInput(const Stls &stls) { return stls.getInput(); }
 
 double PyStls::getError(const Stls &stls) { return stls.getError(); }
 
-bn::ndarray PyStls::getBf(const Stls &stls) {
-  return pythonUtil::toNdArray(stls.getBf());
+// -----------------------------------------------------------------
+// PyStlsIet
+// -----------------------------------------------------------------
+
+int PyStlsIet::compute(StlsIet &stlsiet) { return stlsiet.compute(); }
+
+bn::ndarray PyStlsIet::getBf(const StlsIet &stlsiet) {
+  return pythonUtil::toNdArray(stlsiet.getBf());
 }
 
 // -----------------------------------------------------------------

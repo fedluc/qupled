@@ -10,6 +10,7 @@
 #include "qvsstls.hpp"
 #include "rpa.hpp"
 #include "stls.hpp"
+#include "stlsiet.hpp"
 #include "vsstls.hpp"
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
@@ -111,7 +112,17 @@ public:
   static int compute(Stls &stls);
   static StlsInput getInput(const Stls &stls);
   static double getError(const Stls &stls);
-  static bn::ndarray getBf(const Stls &stls);
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the StlsIet class to Python
+// -----------------------------------------------------------------
+
+class PyStlsIet {
+public:
+
+  static int compute(StlsIet &stlsiet);
+  static bn::ndarray getBf(const StlsIet &stlsiet);
 };
 
 // -----------------------------------------------------------------
