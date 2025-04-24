@@ -21,16 +21,8 @@ using Itg2DParam = Integrator2D::Param;
 Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
     : Stls(in_, verbose_),
       in(in_) {
-  // Throw error message for ground state calculations
-  if (in.getDegeneracy() == 0.0 && useIet) {
-    throwError("Ground state calculations are not available "
-               "for the quantum IET schemes");
-  }
   // Set name for the fixed adr output file
-  adrFixedFileName = fmt::format("{}", in.getTheory());
-  // Check if iet scheme should be solved
-  useIet = in.getTheory() == "QSTLS-HNC" || in.getTheory() == "QSTLS-IOI"
-           || in.getTheory() == "QSTLS-LCT";
+  adrFixedDatabaseName = fmt::format("{}", in.getTheory());
   // Allocate arrays
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
@@ -38,10 +30,6 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
   ssfNew.resize(nx);
   ssfOld.resize(nx);
   adrFixed.resize(nx, nl, nx);
-  // if (useIet) {
-  //   bf.resize(nx);
-  //   adrOld.resize(nx, nl);
-  // }
   // Deallocate arrays that are inherited but not used
   vector<double>().swap(slfcNew);
 }
@@ -64,11 +52,6 @@ void Qstls::init() {
   print("Computing fixed component of the auxiliary density response: ");
   computeAdrFixed();
   println("Done");
-  if (useIet) {
-    print("Computing fixed component of the iet auxiliary density response: ");
-    computeAdrFixedIet();
-    println("Done");
-  }
 }
 
 // qstls iterations
@@ -108,7 +91,6 @@ void Qstls::initialGuess() {
   assert(!ssfNew.empty());
   assert(!ssfOld.empty());
   assert(!adr.empty());
-  assert(!useIet || !adrOld.empty());
   // From guess in input
   if (initialGuessFromInput()) { return; }
   // Default
@@ -118,53 +100,17 @@ void Qstls::initialGuess() {
     throwError("Failed to compute the default initial guess");
   }
   ssfOld = rpa.getSsf();
-  if (useIet) { adrOld.fill(0.0); }
 }
 
 bool Qstls::initialGuessFromInput() {
   const auto &guess = in.getGuess();
-  const bool ssfIsSet = initialGuessSsf(guess.wvg, guess.ssf);
-  const bool adrIsSet = (useIet) ? initialGuessAdr(guess.wvg, guess.adr) : true;
-  return ssfIsSet && adrIsSet;
-}
-
-bool Qstls::initialGuessSsf(const vector<double> &wvg_,
-                            const vector<double> &ssf_) {
   const int nx = wvg.size();
-  const Interpolator1D ssfi(wvg_, ssf_);
+  const Interpolator1D ssfi(guess.wvg, guess.ssf);
   if (!ssfi.isValid()) { return false; }
-  const double xMax = wvg_.back();
+  const double xMax = guess.wvg.back();
   for (int i = 0; i < nx; ++i) {
     const double &x = wvg[i];
     ssfOld[i] = (x <= xMax) ? ssfi.eval(x) : 1.0;
-  }
-  return true;
-}
-
-bool Qstls::initialGuessAdr(const vector<double> &wvg_, const Vector2D &adr_) {
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  const int nx_ = adr_.size(0);
-  const int nl_ = adr_.size(1);
-  const double xMax = (wvg_.empty()) ? 0.0 : wvg_.back();
-  vector<Interpolator1D> itp(nl_);
-  for (int l = 0; l < nl_; ++l) {
-    vector<double> tmp(nx_);
-    for (int i = 0; i < nx_; ++i) {
-      tmp[i] = adr_(i, l);
-    }
-    itp[l].reset(wvg_[0], tmp[0], nx_);
-    if (!itp[l].isValid()) { return false; }
-  }
-  for (int i = 0; i < nx; ++i) {
-    const double &x = wvg[i];
-    if (x > xMax) {
-      adrOld.fill(i, 0.0);
-      continue;
-    }
-    for (int l = 0; l < nl; ++l) {
-      adrOld(i, l) = (l < nl_) ? itp[l].eval(x) : 0.0;
-    }
   }
   return true;
 }
@@ -180,7 +126,6 @@ void Qstls::computeAdr() {
         in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], ssfi, itg);
     adrTmp.get(wvg, adrFixed, adr);
   }
-  if (useIet) computeAdrIet();
   for (int i = 0; i < nx; ++i) {
     slfc[i] = adr(i, 0) / idr(i, 0);
   };
@@ -201,16 +146,13 @@ void Qstls::computeSsfFinite() {
     assert(ssfNew.size() > 0);
     assert(adr.size() > 0);
     assert(idr.size() > 0);
-    // if (useIet) assert(bf.size() > 0);
   }
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const int nx = wvg.size();
   const int nl = idr.size(1);
   for (int i = 0; i < nx; ++i) {
-    const double bfi = 0; // (useIet) ? bf[i] : 0;
-    QstlsUtil::Ssf ssfTmp(
-        wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i), bfi);
+    QstlsUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i));
     ssfNew[i] = ssfTmp.get();
   }
 }
@@ -240,10 +182,6 @@ double Qstls::computeError() const { return rms(ssfNew, ssfOld, false); }
 void Qstls::updateSolution() {
   const double aMix = in.getMixingParameter();
   ssfOld = linearCombination(ssfNew, aMix, ssfOld, 1 - aMix);
-  if (useIet) {
-    adrOld.mult(1 - aMix);
-    adrOld.linearCombination(adr, aMix);
-  }
 }
 
 void Qstls::computeAdrFixed() {
@@ -253,7 +191,7 @@ void Qstls::computeAdrFixed() {
   const int nl = in.getNMatsubara();
   if (in.getFixedRunId() != DEFAULT_INT) {
     adrFixed.resize(nx, nl, nx);
-    readAdrFixed(adrFixed, adrFixedFileName, in.getFixedRunId());
+    readAdrFixed(adrFixed, adrFixedDatabaseName, in.getFixedRunId());
     return;
   }
   // Compute from scratch
@@ -271,7 +209,7 @@ void Qstls::computeAdrFixed() {
   const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
   gatherLoopData(adrFixed.data(), loopData, nxnl);
   // Write result to output file
-  if (isRoot()) { writeAdrFixed(adrFixed, adrFixedFileName); }
+  if (isRoot()) { writeAdrFixed(adrFixed, adrFixedDatabaseName); }
 }
 
 void Qstls::writeAdrFixed(const Vector3D &res, const string &name) const {
@@ -322,80 +260,6 @@ void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
   } catch (const std::exception &e) {
     throwError("Failed to read from database: " + string(e.what()));
   }
-}
-
-void Qstls::computeAdrIet() {
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  const bool segregatedItg = in.getInt2DScheme() == "segregated";
-  assert(adrOld.size() > 0);
-  // Setup interpolators
-  const shared_ptr<Interpolator1D> ssfi =
-      make_shared<Interpolator1D>(wvg, ssfOld);
-  const vector<double> bf(wvg.size());
-  const shared_ptr<Interpolator1D> bfi = make_shared<Interpolator1D>(wvg, bf);
-  vector<shared_ptr<Interpolator1D>> dlfci(nl);
-  shared_ptr<Interpolator1D> tmp = make_shared<Interpolator1D>(wvg, ssfOld);
-  for (int l = 0; l < nl; ++l) {
-    vector<double> dlfc(nx);
-    for (int i = 0; i < nx; ++i) {
-      dlfc[i] = (idr(i, l) > 0.0) ? adrOld(i, l) / idr(i, l) : 0;
-    }
-    dlfci[l] = std::make_shared<Interpolator1D>(wvg, dlfc);
-  }
-  // Compute qstls-iet contribution to the adr
-  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
-  Vector2D adrIet(nx, nl);
-  auto loopFunc = [&](int i) -> void {
-    shared_ptr<Integrator2D> itgPrivate =
-        make_shared<Integrator2D>(in.getIntError());
-    Vector3D adrFixedPrivate(nl, nx, nx);
-    const string name = fmt::format("{}_{:d}", in.getTheory(), i);
-    const int runId = (in.getFixedRunId() != DEFAULT_INT)
-                          ? in.getFixedRunId()
-                          : in.getDatabaseInfo().runId;
-    readAdrFixed(adrFixedPrivate, name, runId);
-    QstlsUtil::AdrIet adrTmp(in.getDegeneracy(),
-                             wvg.front(),
-                             wvg.back(),
-                             wvg[i],
-                             ssfi,
-                             dlfci,
-                             bfi,
-                             itgGrid,
-                             itgPrivate);
-    adrTmp.get(wvg, adrFixedPrivate, adrIet);
-  };
-  const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
-  gatherLoopData(adrIet.data(), loopData, nl);
-  // Sum qstls and qstls-iet contributions to adr
-  adr.sum(adrIet);
-}
-
-void Qstls::computeAdrFixedIet() {
-  if (in.getFixedRunId() != DEFAULT_INT) { return; }
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  const double &xStart = wvg.front();
-  const double &xEnd = wvg.back();
-  const double &theta = in.getDegeneracy();
-  for (const auto &x : wvg) {
-    Vector3D res(nl, nx, nx);
-    auto loopFunc = [&](int l) -> void {
-      auto itgPrivate = make_shared<Integrator1D>(in.getIntError());
-      QstlsUtil::AdrFixedIet adrTmp(theta, xStart, xEnd, x, mu, itgPrivate);
-      adrTmp.get(l, wvg, res);
-    };
-    const auto &loopData = parallelFor(loopFunc, nl, in.getNThreads());
-    gatherLoopData(res.data(), loopData, nx * nx);
-    if (isRoot()) {
-      const size_t idx = distance(wvg.begin(), find(wvg.begin(), wvg.end(), x));
-      const string name = fmt::format("{}_{:d}", in.getTheory(), idx);
-      writeAdrFixed(res, name);
-    }
-  }
-  // TODO: Check that all ranks can access the database
-  barrier();
 }
 
 // -----------------------------------------------------------------
@@ -505,117 +369,6 @@ double QstlsUtil::AdrFixed::integrand2(const double &t,
 }
 
 // -----------------------------------------------------------------
-// AdrIet class
-// -----------------------------------------------------------------
-
-// Compute dynamic local field correction
-double QstlsUtil::AdrIet::dlfc(const double &y, const int &l) const {
-  return dlfci[l]->eval(y);
-}
-
-// Compute auxiliary density response
-double QstlsUtil::AdrIet::bf(const double &y) const { return bfi->eval(y); }
-
-// Compute fixed component
-double QstlsUtil::AdrIet::fix(const double &x, const double &y) const {
-  return fixi.eval(x, y);
-}
-
-// Integrands
-double QstlsUtil::AdrIet::integrand1(const double &q, const int &l) const {
-  if (q == 0.0) { return 0.0; }
-  const double p1 = (1 - bf(q)) * ssf(q);
-  const double p2 = dlfc(q, l) * (ssf(q) - 1.0);
-  return (p1 - p2 - 1.0) / q;
-}
-
-double QstlsUtil::AdrIet::integrand2(const double &y) const {
-  const double q = itg->getX();
-  return y * fix(q, y) * (ssf(y) - 1.0);
-}
-
-// Get result of integration
-void QstlsUtil::AdrIet::get(const vector<double> &wvg,
-                            const Vector3D &fixed,
-                            Vector2D &res) {
-  const int nx = wvg.size();
-  const int nl = fixed.size(0);
-  auto it = lower_bound(wvg.begin(), wvg.end(), x);
-  assert(it != wvg.end());
-  size_t ix = distance(wvg.begin(), it);
-  if (x == 0.0) {
-    res.fill(ix, 0.0);
-    return;
-  }
-  for (int l = 0; l < nl; ++l) {
-    fixi.reset(wvg[0], wvg[0], fixed(l), nx, nx);
-    auto yMin = [&](const double &q) -> double {
-      return (q > x) ? q - x : x - q;
-    };
-    auto yMax = [&](const double &q) -> double { return min(qMax, q + x); };
-    auto func1 = [&](const double &q) -> double { return integrand1(q, l); };
-    auto func2 = [&](const double &y) -> double { return integrand2(y); };
-    itg->compute(func1, func2, Itg2DParam(qMin, qMax, yMin, yMax), itgGrid);
-    res(ix, l) = itg->getSolution();
-    res(ix, l) *= (l == 0) ? isc0 : isc;
-  }
-}
-
-// -----------------------------------------------------------------
-// AdrFixedIet class
-// -----------------------------------------------------------------
-
-// get fixed component
-void QstlsUtil::AdrFixedIet::get(int l,
-                                 const vector<double> &wvg,
-                                 Vector3D &res) const {
-  if (x == 0.0) {
-    res.fill(l, 0.0);
-    return;
-  }
-  const int nx = wvg.size();
-  const auto itgParam = ItgParam(tMin, tMax);
-  for (int i = 0; i < nx; ++i) {
-    if (wvg[i] == 0.0) {
-      res.fill(l, i, 0.0);
-      continue;
-    }
-    for (int j = 0; j < nx; ++j) {
-      auto func = [&](const double &t) -> double {
-        return integrand(t, wvg[j], wvg[i], l);
-      };
-      itg->compute(func, itgParam);
-      res(l, i, j) = itg->getSolution();
-    }
-  }
-}
-
-// Integrand for the fixed component
-double QstlsUtil::AdrFixedIet::integrand(const double &t,
-                                         const double &y,
-                                         const double &q,
-                                         const double &l) const {
-  const double x2 = x * x;
-  const double q2 = q * q;
-  const double y2 = y * y;
-  const double t2 = t * t;
-  const double fxt = 4.0 * x * t;
-  const double qmypx = q2 - y2 + x2;
-  if (l == 0) {
-    double logarg = (qmypx + fxt) / (qmypx - fxt);
-    if (logarg < 0.0) logarg = -logarg;
-    return t / (exp(t2 / Theta - mu) + exp(-t2 / Theta + mu) + 2.0)
-           * ((t2 - qmypx * qmypx / (16.0 * x2)) * log(logarg)
-              + (t / x) * qmypx / 2.0);
-  }
-  const double fplT = 4.0 * M_PI * l * Theta;
-  const double fplT2 = fplT * fplT;
-  const double logarg = ((qmypx + fxt) * (qmypx + fxt) + fplT2)
-                        / ((qmypx - fxt) * (qmypx - fxt) + fplT2);
-  return t / (exp(t2 / Theta - mu) + 1.0) * log(logarg);
-}
-
-// -----------------------------------------------------------------
 // AdrGround class
 // -----------------------------------------------------------------
 
@@ -661,15 +414,15 @@ double QstlsUtil::AdrGround::integrand2(const double &t) const {
 double QstlsUtil::Ssf::get() const {
   if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
-  const double f2 = 1 - bf;
-  double f3 = 0.0;
+  double suml = 0.0;
   for (int l = 0; l < nl; ++l) {
-    const double f4 = f2 * idr[l];
-    const double f5 = 1.0 + ip * (f4 - adr[l]);
-    const double f6 = idr[l] * (f4 - adr[l]) / f5;
-    f3 += (l == 0) ? f6 : 2 * f6;
+    const double idrl = idr[l];
+    const double adrl = adr[l];
+    const double denom = 1.0 + ip * (idrl - adrl);
+    const double f = idrl * (idrl - adrl) / denom;
+    suml += (l == 0) ? f : 2 * f;
   }
-  return ssfHF - 1.5 * ip * Theta * f3;
+  return ssfHF - 1.5 * ip * Theta * suml;
 }
 
 // -----------------------------------------------------------------

@@ -257,6 +257,18 @@ private:
 };
 
 // -----------------------------------------------------------------
+// Class to handle input for the QSTLS-IET schemes
+// -----------------------------------------------------------------
+
+class QstlsIetInput : public QstlsInput, public IetInput {
+
+public:
+
+  // Constructors
+  explicit QstlsIetInput() = default;
+};
+
+// -----------------------------------------------------------------
 // Class to handle input for the VS schemes
 // -----------------------------------------------------------------
 

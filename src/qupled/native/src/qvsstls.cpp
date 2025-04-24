@@ -224,13 +224,13 @@ QstlsCSR::QstlsCSR(const QVSStlsInput &in_)
 void QstlsCSR::init() {
   switch (lfcTheta.type) {
   case CENTERED:
-    adrFixedFileName = fmt::format("{}_THETA", in.getTheory());
+    adrFixedDatabaseName = fmt::format("{}_THETA", in.getTheory());
     break;
   case FORWARD:
-    adrFixedFileName = fmt::format("{}_THETA_DOWN", in.getTheory());
+    adrFixedDatabaseName = fmt::format("{}_THETA_DOWN", in.getTheory());
     break;
   case BACKWARD:
-    adrFixedFileName = fmt::format("{}_THETA_UP", in.getTheory());
+    adrFixedDatabaseName = fmt::format("{}_THETA_UP", in.getTheory());
     break;
   }
   Qstls::init();
