@@ -17,10 +17,9 @@ public:
   // Compute qstls scheme
   int compute();
   // Getters
-  const QstlsInput &getInput() const { return in; }
-  double getError() const { return computeError(); }
-  const Vector2D &getAdr() const { return adr; }
-  const Vector3D &getAdrFixed() const { return adrFixed; }
+  const QstlsIetInput &getInput() const { return in; }
+  // Getters
+  const std::vector<double> &getBf() const { return bf; }
 
 private:
 
@@ -36,15 +35,14 @@ private:
   void computeAdr();
   // Compute static structure factor at finite temperature
   void computeSsf();
+  // Compute bridge function
+  void computeBf();
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();
-  double computeError() const;
   void updateSolution();
   // Compute auxiliary density response
   void computeAdrFixed();
-  // Compute static structure factor at finite temperature
-  void computeSsfFinite();
   // Iterations to solve the stls scheme
   bool initialGuessFromInput();
 };

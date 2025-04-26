@@ -7,6 +7,7 @@
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "qstls.hpp"
+#include "qstlsiet.hpp"
 #include "qvsstls.hpp"
 #include "rpa.hpp"
 #include "stls.hpp"
@@ -151,6 +152,17 @@ public:
   static QstlsInput getInput(const Qstls &qstls);
   static double getError(const Qstls &qstls);
   static bn::ndarray getAdr(const Qstls &qstls);
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the QstlsIet class to Python
+// -----------------------------------------------------------------
+
+class PyQstlsIet {
+public:
+
+  static int compute(QstlsIet &qstlsiet);
+  static bn::ndarray getBf(const QstlsIet &qstlsiet);
 };
 
 // -----------------------------------------------------------------

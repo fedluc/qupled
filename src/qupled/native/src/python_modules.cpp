@@ -102,6 +102,9 @@ BOOST_PYTHON_MODULE(native) {
       .add_property(
           "fixed_iet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet);
 
+  // Class for the input of the StlsIet scheme
+  bp::class_<QstlsIetInput, bp::bases<IetInput, QstlsInput>>("QstlsIetInput");
+
   // Class for the input of the QVSStls scheme
   bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput");
 
@@ -184,6 +187,12 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("inputs", &PyQstls::getInput)
       .add_property("error", &PyQstls::getError)
       .add_property("adr", &PyQstls::getAdr);
+
+  // Class to solve classical schemes
+  bp::class_<QstlsIet, bp::bases<Qstls>>("QstlsIet",
+                                         bp::init<const QstlsIetInput>())
+      .def("compute", &PyQstlsIet::compute)
+      .add_property("bf", &PyQstlsIet::getBf);
 
   // Class to solve the quantum VS scheme
   bp::class_<QVSStls, bp::bases<Rpa>>("QVSStls", bp::init<const QVSStlsInput>())

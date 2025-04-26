@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from . import native
 from . import qstls
 from . import stlsiet
 
@@ -12,6 +13,8 @@ class QstlsIet(qstls.Qstls):
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
+        self.native_scheme_cls = native.QstlsIet
+        self.native_inputs_cls = native.QstlsIetInput
 
 
 # Input class

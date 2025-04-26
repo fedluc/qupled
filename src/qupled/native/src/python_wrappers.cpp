@@ -202,6 +202,16 @@ bn::ndarray PyQstls::getAdr(const Qstls &qstls) {
 }
 
 // -----------------------------------------------------------------
+// PyQstlsIet
+// -----------------------------------------------------------------
+
+int PyQstlsIet::compute(QstlsIet &qstlsiet) { return qstlsiet.compute(); }
+
+bn::ndarray PyQstlsIet::getBf(const QstlsIet &qstlsiet) {
+  return pythonUtil::toNdArray(qstlsiet.getBf());
+}
+
+// -----------------------------------------------------------------
 // PyQVSStls
 // -----------------------------------------------------------------
 

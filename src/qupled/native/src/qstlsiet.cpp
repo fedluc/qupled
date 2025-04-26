@@ -2,6 +2,7 @@
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
+#include "stlsiet.hpp"
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <filesystem>
@@ -13,6 +14,7 @@ using namespace vecUtil;
 using namespace MPIUtil;
 using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
+using ItgType = Integrator1D::Type;
 
 // -----------------------------------------------------------------
 // QSTLS-IET class
@@ -51,9 +53,27 @@ void QstlsIet::init() {
   print("Computing fixed component of the iet auxiliary density response: ");
   computeAdrFixed();
   println("Done");
+  print("Computing bridge function adder: ");
+  computeBf();
+  println("Done");
 }
 
-// qstls iterations
+void QstlsIet::computeBf() {
+  const size_t nx = wvg.size();
+  const shared_ptr<Integrator1D> itgF =
+      make_shared<Integrator1D>(ItgType::FOURIER, 1e-10);
+  assert(bf.size() == nx);
+  for (size_t i = 0; i < nx; ++i) {
+    StlsIetUtil::BridgeFunction bfTmp(in.getTheory(),
+                                      in.getMapping(),
+                                      in.getCoupling(),
+                                      in.getDegeneracy(),
+                                      wvg[i],
+                                      itgF);
+    bf[i] = bfTmp.get();
+  }
+}
+
 void QstlsIet::doIterations() {
   const int maxIter = in.getNIter();
   const double minErr = in.getErrMin();
