@@ -42,7 +42,9 @@ protected:
   void init();
   // Compute auxiliary density response
   void computeAdr();
+  // Read and write auxiliary density response to database
   void readAdrFixed(Vector3D &res, const std::string &name, int runId) const;
+  void writeAdrFixed(const Vector3D &res, const std::string &name) const;
   // Compute static structure factor at finite temperature
   void computeSsf();
   // Iterations to solve the stls scheme
@@ -57,7 +59,6 @@ private:
   const QstlsInput in;
   // Compute auxiliary density response
   void computeAdrFixed();
-  void writeAdrFixed(const Vector3D &res, const std::string &name) const;
   // Compute static structure factor at finite temperature
   void computeSsfFinite();
   void computeSsfGround();
@@ -265,7 +266,7 @@ namespace QstlsUtil {
     // Get static structure factor
     double get() const;
 
-  private:
+  protected:
 
     // Auxiliary density response
     const double *adr;

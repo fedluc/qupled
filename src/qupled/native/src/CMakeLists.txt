@@ -54,6 +54,7 @@ Python3_add_library(native MODULE
 		stls.cpp
 		stlsiet.cpp
 		qstls.cpp
+		qstlsiet.cpp
 		vsbase.cpp
 		vsstls.cpp
 		qvsstls.cpp

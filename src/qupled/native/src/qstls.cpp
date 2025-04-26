@@ -1,12 +1,8 @@
 #include "qstls.hpp"
-#include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
-#include <filesystem>
-#include <fmt/core.h>
-#include <numeric>
 
 using namespace std;
 using namespace vecUtil;
