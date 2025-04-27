@@ -1,6 +1,7 @@
 #ifndef QSTLSIET_HPP
 #define QSTLSIET_HPP
 
+#include "iet.hpp"
 #include "input.hpp"
 #include "qstls.hpp"
 
@@ -8,7 +9,7 @@
 // Solver for the qSTLS-based schemes
 // -----------------------------------------------------------------
 
-class QstlsIet : public Qstls {
+class QstlsIet : public Qstls, public Iet {
 
 public:
 
@@ -18,25 +19,21 @@ public:
   int compute();
   // Getters
   const QstlsIetInput &getInput() const { return in; }
-  // Getters
-  const std::vector<double> &getBf() const { return bf; }
 
 private:
 
+  // Resolve ambiguities
+  using Qstls::wvg;
   // Input data
   const QstlsIetInput in;
   // Auxiliary density response
   Vector2D adrOld;
-  // Brige function
-  std::vector<double> bf;
   // Initialize basic properties
   void init();
   // Compute auxiliary density response
   void computeAdr();
   // Compute static structure factor at finite temperature
   void computeSsf();
-  // Compute bridge function
-  void computeBf();
   // Iterations to solve the stls scheme
   void doIterations();
   void initialGuess();

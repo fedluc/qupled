@@ -22,6 +22,7 @@ using ItgType = Integrator1D::Type;
 
 QstlsIet::QstlsIet(const QstlsIetInput &in_)
     : Qstls(in_, true),
+      Iet(in_, in_, wvg, true),
       in(in_) {
   // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
@@ -31,16 +32,15 @@ QstlsIet::QstlsIet(const QstlsIetInput &in_)
   // Allocate arrays
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
-  bf.resize(nx);
   adrOld.resize(nx, nl);
 }
 
 int QstlsIet::compute() {
   try {
     init();
-    println("Structural properties calculation ...");
+    Qstls::println("Structural properties calculation ...");
     doIterations();
-    println("Done");
+    Qstls::println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;
@@ -50,28 +50,11 @@ int QstlsIet::compute() {
 
 void QstlsIet::init() {
   Qstls::init();
-  print("Computing fixed component of the iet auxiliary density response: ");
+  Iet::init();
+  Qstls::print(
+      "Computing fixed component of the iet auxiliary density response: ");
   computeAdrFixed();
-  println("Done");
-  print("Computing bridge function adder: ");
-  computeBf();
-  println("Done");
-}
-
-void QstlsIet::computeBf() {
-  const size_t nx = wvg.size();
-  const shared_ptr<Integrator1D> itgF =
-      make_shared<Integrator1D>(ItgType::FOURIER, 1e-10);
-  assert(bf.size() == nx);
-  for (size_t i = 0; i < nx; ++i) {
-    StlsIetUtil::BridgeFunction bfTmp(in.getTheory(),
-                                      in.getMapping(),
-                                      in.getCoupling(),
-                                      in.getDegeneracy(),
-                                      wvg[i],
-                                      itgF);
-    bf[i] = bfTmp.get();
-  }
+  Qstls::println("Done");
 }
 
 void QstlsIet::doIterations() {
@@ -96,9 +79,9 @@ void QstlsIet::doIterations() {
     // End timing
     double toc = timer();
     // Print diagnostic
-    println(fmt::format("--- iteration {:d} ---", counter));
-    println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
-    println(fmt::format("Residual error: {:.5e}", err));
+    Qstls::println(fmt::format("--- iteration {:d} ---", counter));
+    Qstls::println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
+    Qstls::println(fmt::format("Residual error: {:.5e}", err));
     fflush(stdout);
   }
   // Set static structure factor for output
@@ -142,11 +125,11 @@ bool QstlsIet::initialGuessFromInput() {
 }
 
 void QstlsIet::computeSsf() {
-  assert(bf.size() > 0);
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const int nx = wvg.size();
   const int nl = idr.size(1);
+  const vector<double> &bf = getBf();
   for (int i = 0; i < nx; ++i) {
     const double bfi = bf[i];
     QstlsIetUtil::Ssf ssfTmp(
@@ -171,7 +154,8 @@ void QstlsIet::computeAdr() {
   // Setup interpolators
   const shared_ptr<Interpolator1D> ssfi =
       make_shared<Interpolator1D>(wvg, ssfOld);
-  const shared_ptr<Interpolator1D> bfi = make_shared<Interpolator1D>(wvg, bf);
+  const shared_ptr<Interpolator1D> bfi =
+      make_shared<Interpolator1D>(wvg, getBf());
   vector<shared_ptr<Interpolator1D>> dlfci(nl);
   shared_ptr<Interpolator1D> tmp = make_shared<Interpolator1D>(wvg, ssfOld);
   for (int l = 0; l < nl; ++l) {

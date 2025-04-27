@@ -1,36 +1,36 @@
 #ifndef STLSIET_HPP
 #define STLSIET_HPP
 
+#include "iet.hpp"
 #include "stls.hpp"
 
 // -----------------------------------------------------------------
-// Solver for the STLS scheme
+// Solver for the STLS-IET scheme
 // -----------------------------------------------------------------
 
-class StlsIet : public Stls {
+class StlsIet : public Stls, public Iet {
 
 public:
 
   // Constructors
-  explicit StlsIet(const StlsIetInput &in_);
+  explicit StlsIet(const StlsIetInput &in_)
+      : Stls(in_, true),
+        Iet(in_, in_, wvg, true),
+        in(in_){};
   // Compute scheme
   int compute();
-  // Getters
-  const std::vector<double> &getBf() const { return bf; }
 
 private:
 
+  // Resolve ambiguities
+  using Stls::wvg;
   // Input parameters
   StlsIetInput in;
-  // Bridge function (for iet schemes)
-  std::vector<double> bf;
   void init();
   // Compute static local field correction
   void computeSlfc();
   // Iterations to solve the stls scheme
   void doIterations();
-  // Compute bridge function
-  void computeBf();
 };
 
 namespace StlsIetUtil {
@@ -77,53 +77,6 @@ namespace StlsIetUtil {
     double slfc(const double &x) const;
     // Compute bridge function
     double bf(const double &x_) const;
-  };
-
-  class BridgeFunction {
-
-  public:
-
-    // Constructor
-    BridgeFunction(const std::string &theory_,
-                   const std::string &mapping_,
-                   const double &rs_,
-                   const double &Theta_,
-                   const double &x_,
-                   std::shared_ptr<Integrator1D> itg_)
-        : theory(theory_),
-          mapping(mapping_),
-          rs(rs_),
-          Theta(Theta_),
-          x(x_),
-          itg(itg_) {}
-    // Get result of the integration
-    double get() const;
-
-  private:
-
-    // Theory to be solved
-    const std::string theory;
-    // Iet mapping
-    const std::string mapping;
-    // Coupling parameter
-    const double rs;
-    // Degeneracy parameter
-    const double Theta;
-    // Wave vector
-    const double x;
-    // Integrator object
-    const std::shared_ptr<Integrator1D> itg;
-    // Constant for unit conversion
-    const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
-    // Hypernetted-chain bridge function
-    double hnc() const;
-    // Ichimaru bridge function
-    double ioi() const;
-    // Lucco Castello and Tolias bridge function
-    double lct() const;
-    double lctIntegrand(const double &r, const double &Gamma) const;
-    // Coupling parameter to compute the bridge function
-    double couplingParameter() const;
   };
 
 } // namespace StlsIetUtil
