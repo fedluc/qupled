@@ -22,8 +22,6 @@ public:
 
 private:
 
-  // Resolve ambiguities
-  using Qstls::wvg;
   // Input data
   const QstlsIetInput in;
   // Auxiliary density response

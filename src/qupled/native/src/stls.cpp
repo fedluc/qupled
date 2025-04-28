@@ -21,8 +21,7 @@ Stls::Stls(const StlsInput &in_, const bool verbose_)
     : Rpa(in_, verbose_),
       in(in_) {
   // Allocate arrays
-  const size_t nx = wvg.size();
-  slfcNew.resize(nx);
+  slfcNew.resize(slfc.size());
 }
 
 int Stls::compute() {
@@ -40,6 +39,7 @@ int Stls::compute() {
 
 // Compute static local field correction
 void Stls::computeSlfc() {
+  const vector<double> &wvg = in.getWaveVectorGrid();
   assert(ssf.size() == wvg.size());
   assert(slfc.size() == wvg.size());
   const int nx = wvg.size();
@@ -91,6 +91,7 @@ void Stls::initialGuess() {
 bool Stls::initialGuessFromInput() {
   const Interpolator1D slfci(in.getGuess().wvg, in.getGuess().slfc);
   if (!slfci.isValid()) { return false; }
+  const vector<double> &wvg = in.getWaveVectorGrid();
   const double xmaxi = in.getGuess().wvg.back();
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double x = wvg[i];

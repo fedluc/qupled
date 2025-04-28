@@ -32,9 +32,7 @@ public:
         nThreads(DEFAULT_INT),
         isClassicTheory(DEFAULT_BOOL),
         isQuantumTheory(DEFAULT_BOOL),
-        dx(DEFAULT_DOUBLE),
-        xmax(DEFAULT_DOUBLE),
-        OmegaMax(DEFAULT_DOUBLE),
+        OmegaCutoff(DEFAULT_DOUBLE),
         nl(DEFAULT_INT) {}
 
   // Setters
@@ -47,9 +45,8 @@ public:
   void setTheory(const std::string &theory);
   void setChemicalPotentialGuess(const std::vector<double> &muGuess);
   void setNMatsubara(const int &nMatsubara);
-  void setWaveVectorGridRes(const double &dx);
-  void setWaveVectorGridCutoff(const double &xmax);
-  void setFrequencyCutoff(const double &OmegaMax);
+  void setWaveVectorGrid(const std::vector<double> &wvg);
+  void setFrequencyCutoff(const double &OmegaCutoff);
 
   // Getters
   double getCoupling() const { return rs; }
@@ -62,9 +59,8 @@ public:
   bool isClassic() const { return isClassicTheory; }
   std::vector<double> getChemicalPotentialGuess() const { return muGuess; }
   int getNMatsubara() const { return nl; }
-  double getWaveVectorGridRes() const { return dx; }
-  double getWaveVectorGridCutoff() const { return xmax; }
-  double getFrequencyCutoff() const { return OmegaMax; }
+  std::vector<double> getWaveVectorGrid() const { return wvg; }
+  double getFrequencyCutoff() const { return OmegaCutoff; }
 
 protected:
 
@@ -85,12 +81,10 @@ protected:
   std::string theory;
   // Database information
   DatabaseInfo dbInfo;
-  // Wave-vector grid resolution
-  double dx;
-  // Cutoff for the wave-vector grid
-  double xmax;
+  // Wave-vector grid
+  std::vector<double> wvg;
   // Cutoff for the frequency (only relevant in the ground state)
-  double OmegaMax;
+  double OmegaCutoff;
   // Number of Matsubara frequencies
   int nl;
   // Initial guess for the chemical potential calculation

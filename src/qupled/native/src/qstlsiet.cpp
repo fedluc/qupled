@@ -22,7 +22,7 @@ using ItgType = Integrator1D::Type;
 
 QstlsIet::QstlsIet(const QstlsIetInput &in_)
     : Qstls(in_, true),
-      Iet(in_, in_, wvg, true),
+      Iet(in_, in_, true),
       in(in_) {
   // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
@@ -30,9 +30,7 @@ QstlsIet::QstlsIet(const QstlsIetInput &in_)
                "for the quantum IET schemes");
   }
   // Allocate arrays
-  const size_t nx = wvg.size();
-  const size_t nl = in.getNMatsubara();
-  adrOld.resize(nx, nl);
+  adrOld.resize(adr.size(0), adr.size(1));
 }
 
 int QstlsIet::compute() {
@@ -97,6 +95,7 @@ void QstlsIet::initialGuess() {
 
 bool QstlsIet::initialGuessFromInput() {
   const auto &guess = in.getGuess();
+  const vector<double> &wvg = in.getWaveVectorGrid();
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
   const int nx_ = guess.adr.size(0);
@@ -127,6 +126,7 @@ bool QstlsIet::initialGuessFromInput() {
 void QstlsIet::computeSsf() {
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
+  const vector<double> &wvg = in.getWaveVectorGrid();
   const int nx = wvg.size();
   const int nl = idr.size(1);
   const vector<double> &bf = getBf();
@@ -147,6 +147,7 @@ void QstlsIet::updateSolution() {
 
 void QstlsIet::computeAdr() {
   Qstls::computeAdr();
+  const vector<double> &wvg = in.getWaveVectorGrid();
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
@@ -200,6 +201,7 @@ void QstlsIet::computeAdr() {
 
 void QstlsIet::computeAdrFixed() {
   if (in.getFixedRunId() != DEFAULT_INT) { return; }
+  const vector<double> &wvg = in.getWaveVectorGrid();
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
   const double &xStart = wvg.front();

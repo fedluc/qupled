@@ -28,6 +28,8 @@ public:
 
   static bn::ndarray getChemicalPotentialGuess(Input &in);
   static void setChemicalPotentialGuess(Input &in, const bp::list &muGuess);
+  static bn::ndarray getWaveVectorGrid(Input &in);
+  static void setWaveVectorGrid(Input &in, const bn::ndarray &muGuess);
 };
 
 // -----------------------------------------------------------------
@@ -99,7 +101,6 @@ public:
   static bn::ndarray getSdr(const HF &hf);
   static bn::ndarray getSlfc(const HF &hf);
   static bn::ndarray getSsf(const HF &hf);
-  static bn::ndarray getWvg(const HF &hf);
   static double getUInt(const HF &hf);
 };
 

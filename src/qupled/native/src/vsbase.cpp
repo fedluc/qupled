@@ -418,11 +418,13 @@ void CSR::setDThetaData(CSR &csrThetaUp,
 
 double CSR::getInternalEnergy() const {
   const double rs = inRpa.getCoupling();
-  return thermoUtil::computeInternalEnergy(getWvg(), getSsf(), rs);
+  return thermoUtil::computeInternalEnergy(
+      inRpa.getWaveVectorGrid(), getSsf(), rs);
 }
 
 double CSR::getFreeEnergyIntegrand() const {
-  return thermoUtil::computeInternalEnergy(getWvg(), getSsf(), 1.0);
+  return thermoUtil::computeInternalEnergy(
+      inRpa.getWaveVectorGrid(), getSsf(), 1.0);
 }
 
 Vector2D CSR::getDerivativeContribution() const {
@@ -431,7 +433,9 @@ Vector2D CSR::getDerivativeContribution() const {
   // Derivative contributions
   const double &rs = inRpa.getCoupling();
   const double &theta = inRpa.getDegeneracy();
-  const double &dx = inRpa.getWaveVectorGridRes();
+  const vector<double> &wvg = inRpa.getWaveVectorGrid();
+  const double &dx =
+      wvg[1] - wvg[0]; // TODO: allow for non-constant grid resolution
   const double &drs = inVS.getCouplingResolution();
   const double &dTheta = inVS.getDegeneracyResolution();
   const Vector2D &lfcData = *lfc;
@@ -442,7 +446,6 @@ Vector2D CSR::getDerivativeContribution() const {
   const double a_drs = alpha * rs / (6.0 * drs);
   const double a_dx = alpha / (6.0 * dx);
   const double a_dt = alpha * theta / (3.0 * dTheta);
-  const vector<double> &wvg = getWvg();
   const double nx = wvg.size();
   Vector2D out(lfc->size(0), lfc->size(1));
   for (size_t l = 0; l < lfc->size(1); ++l) {

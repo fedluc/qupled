@@ -15,6 +15,14 @@ void PyInput::setChemicalPotentialGuess(Input &in, const bp::list &muGuess) {
   in.setChemicalPotentialGuess(pythonUtil::toVector(muGuess));
 }
 
+bn::ndarray PyInput::getWaveVectorGrid(Input &in) {
+  return pythonUtil::toNdArray(in.getWaveVectorGrid());
+}
+
+void PyInput::setWaveVectorGrid(Input &in, const bn::ndarray &wvg) {
+  in.setWaveVectorGrid(pythonUtil::toVector(wvg));
+}
+
 // -----------------------------------------------------------------
 // PyStlsGuess
 // -----------------------------------------------------------------
@@ -132,10 +140,6 @@ bn::ndarray pyHF::getSlfc(const HF &hf) {
 
 bn::ndarray pyHF::getSsf(const HF &hf) {
   return pythonUtil::toNdArray(hf.getSsf());
-}
-
-bn::ndarray pyHF::getWvg(const HF &hf) {
-  return pythonUtil::toNdArray(hf.getWvg());
 }
 
 double pyHF::getUInt(const HF &hf) { return hf.getUInt(); }

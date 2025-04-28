@@ -25,7 +25,6 @@ public:
   const Vector2D &getIdr() const { return idr; }
   const std::vector<double> &getSlfc() const { return slfc; }
   const std::vector<double> &getSsf() const { return ssf; }
-  const std::vector<double> &getWvg() const { return wvg; }
   std::vector<double> getRdf(const std::vector<double> &r) const;
   std::vector<double> getSdr() const;
   double getUInt() const;
@@ -36,8 +35,6 @@ protected:
   const Input in;
   // Integrator
   const std::shared_ptr<Integrator1D> itg;
-  // Wave vector grid
-  std::vector<double> wvg;
   // Ideal density response
   Vector2D idr;
   // Static local field correction
@@ -53,8 +50,6 @@ private:
 
   // Constant for unit conversion
   const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
-  // Construct wave vector grid
-  void buildWaveVectorGrid();
   // Compute chemical potential
   void computeChemicalPotential();
   // Compute the ideal density response

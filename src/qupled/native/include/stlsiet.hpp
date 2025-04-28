@@ -15,15 +15,13 @@ public:
   // Constructors
   explicit StlsIet(const StlsIetInput &in_)
       : Stls(in_, true),
-        Iet(in_, in_, wvg, true),
+        Iet(in_, in_, true),
         in(in_){};
   // Compute scheme
   int compute();
 
 private:
 
-  // Resolve ambiguities
-  using Stls::wvg;
   // Input parameters
   StlsIetInput in;
   void init();

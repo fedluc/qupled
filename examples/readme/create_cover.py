@@ -85,8 +85,6 @@ def solve_qstls(guess_run_id: int):
     theta = 1.0
     inputs = qstls.Input(rs, theta)
     inputs.mixing = 0.3
-    inputs.resolution = 0.1
-    inputs.cutoff = 10
     inputs.matsubara = 16
     inputs.threads = 16
     inputs.iterations = 0

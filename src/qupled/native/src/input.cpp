@@ -66,6 +66,36 @@ void Input::setNThreads(const int &nThreads) {
   this->nThreads = nThreads;
 }
 
+void Input::setChemicalPotentialGuess(const vector<double> &muGuess) {
+  if (muGuess.size() != 2 || muGuess[0] >= muGuess[1]) {
+    throwError("Invalid guess for chemical potential calculation");
+  }
+  this->muGuess = muGuess;
+}
+
+void Input::setNMatsubara(const int &nl) {
+  if (nl < 0) {
+    throwError("The number of matsubara frequencies can't be negative");
+  }
+  this->nl = nl;
+}
+
+void Input::setWaveVectorGrid(const std::vector<double> &wvg) {
+  constexpr const char *errMsg = "Invalid wave-vector grid";
+  if (wvg.size() < 2 || wvg.front() != 0.0) { throwError(errMsg); }
+  for (size_t i = 1; i < wvg.size(); ++i) {
+    if (wvg[i] <= wvg[i - 1]) { throwError(errMsg); }
+  }
+  this->wvg = wvg;
+}
+
+void Input::setFrequencyCutoff(const double &OmegaCutoff) {
+  if (OmegaCutoff <= 0.0) {
+    throwError("The frequency cutoff must be larger than zero");
+  }
+  this->OmegaCutoff = OmegaCutoff;
+}
+
 // -----------------------------------------------------------------
 // IterationInput class
 // -----------------------------------------------------------------
@@ -136,45 +166,6 @@ void IetInput::setMapping(const string &mapping) {
     throwError("Unknown IET mapping: " + mapping);
   }
   this->mapping = mapping;
-}
-
-// -----------------------------------------------------------------
-// Input class
-// -----------------------------------------------------------------
-
-void Input::setChemicalPotentialGuess(const vector<double> &muGuess) {
-  if (muGuess.size() != 2 || muGuess[0] >= muGuess[1]) {
-    throwError("Invalid guess for chemical potential calculation");
-  }
-  this->muGuess = muGuess;
-}
-
-void Input::setNMatsubara(const int &nl) {
-  if (nl < 0) {
-    throwError("The number of matsubara frequencies can't be negative");
-  }
-  this->nl = nl;
-}
-
-void Input::setWaveVectorGridRes(const double &dx) {
-  if (dx <= 0.0) {
-    throwError("The wave-vector grid resolution must be larger than zero");
-  }
-  this->dx = dx;
-}
-
-void Input::setWaveVectorGridCutoff(const double &xmax) {
-  if (xmax <= 0.0) {
-    throwError("The wave-vector grid cutoff must be larger than zero");
-  }
-  this->xmax = xmax;
-}
-
-void Input::setFrequencyCutoff(const double &OmegaMax) {
-  if (OmegaMax <= 0.0) {
-    throwError("The frequency cutoff must be larger than zero");
-  }
-  this->OmegaMax = OmegaMax;
 }
 
 // -----------------------------------------------------------------

@@ -255,7 +255,6 @@ public:
   virtual void updateSolution() = 0;
   virtual const std::vector<double> &getSsf() const = 0;
   virtual const std::vector<double> &getSlfc() const = 0;
-  virtual const std::vector<double> &getWvg() const = 0;
 
 protected:
 
