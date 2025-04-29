@@ -1,0 +1,22 @@
+{
+  "name": "Development Container",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    }
+  },
+  "postCreateCommand": "./devtool install-deps && python3 -m venv /workspaces/${localWorkspaceFolderBasename}/.venv",
+  "customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ]
+    }
+  },
+  "remoteEnv": {
+    "PYTHON_VENV_ROOT": "/workspaces/${localWorkspaceFolderBasename}/.venv"
+  }
+}
