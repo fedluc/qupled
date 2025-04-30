@@ -95,7 +95,7 @@ def install_dependencies():
     script_dir = Path(__file__).resolve().parent
     pip_requirements = script_dir / "requirements-pip.txt"
     if os.name == "posix":
-        if shutil.which("apt"):
+        if shutil.which("apt-get"):
             _install_with_apt(script_dir / "requirements-apt.txt")
         elif shutil.which("brew"):
             _install_with_brew(script_dir / "requirements-brew.txt")
