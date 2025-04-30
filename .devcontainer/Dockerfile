@@ -6,8 +6,9 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # Set up Python environment
-ENV PYTHON_VENV_ROOT=/qupled_venv
-RUN python3 -m venv $PYTHON_VENV_ROOT
+ENV PYTHON_VENV_ROOT=/workspaces/qupled_venv
+RUN python3 -m venv $PYTHON_VENV_ROOT && \
+    chown -R vscode:vscode $PYTHON_VENV_ROOT
 
 # Copy project files, set permissions, and install dependencies
 ENV SETUP_DIR=/setup_dir
