@@ -134,6 +134,7 @@ def install_dependencies():
             print("Unsupported package manager. Please install dependencies manually.")
     else:
         print("Unsupported operating system. Please install dependencies manually.")
+    subprocess.run(["pip", "install", "-r", "dev/requirements.txt"], check=True)
 
 
 def update_version(build_version):
