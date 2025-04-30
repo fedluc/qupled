@@ -6,13 +6,19 @@ RUN apt-get update && apt-get install -y \
     rm -rf /var/lib/apt/lists/*
 
 # Set up Python environment
-ENV PYTHON_VENV_ROOT=/workspaces/venv
-RUN python3 -m venv $PYTHON_VENV_ROOT && \
-    . $PYTHON_VENV_ROOT/bin/activate
+ENV PYTHON_VENV_ROOT=/qupled_venv
+RUN python3 -m venv $PYTHON_VENV_ROOT
 
-# Copy project files and set permissions
-COPY dev /workspaces/devtool/dev/
-COPY devtool /workspaces/devtool/devtool
-WORKDIR /workspaces/devtool
-RUN chmod +x devtool
-RUN . $PYTHON_VENV_ROOT/bin/activate && ./devtool install-deps
+# Copy project files, set permissions, and install dependencies
+ENV SETUP_DIR=/setup_dir
+COPY dev $SETUP_DIR/dev/
+COPY devtool $SETUP_DIR/devtool
+WORKDIR $SETUP_DIR
+RUN chmod +x devtool && \
+    . $PYTHON_VENV_ROOT/bin/activate && \
+    ./devtool install-deps
+WORKDIR /
+RUN rm -rf $SETUP_DIR
+
+# Automatically activate the Python environment on container start
+RUN echo "source $PYTHON_VENV_ROOT/bin/activate" >> /etc/bash.bashrc
