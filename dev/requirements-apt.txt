@@ -1,0 +1,10 @@
+clang-format
+cmake
+libboost-all-dev
+libopenmpi-dev
+libgsl-dev
+libomp-dev
+libfmt-dev
+python3-dev
+libsqlite3-dev
+libsqlitecpp-dev

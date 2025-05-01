@@ -1,5 +1,5 @@
 # Set cmake version
-cmake_minimum_required (VERSION 3.30)
+cmake_minimum_required (VERSION 3.28)
 
 # Define project name
 project(native LANGUAGES CXX)

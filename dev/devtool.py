@@ -92,48 +92,33 @@ def install():
 
 def install_dependencies():
     print("Installing dependencies...")
+    script_dir = Path(__file__).resolve().parent
+    pip_requirements = script_dir / "requirements-pip.txt"
     if os.name == "posix":
         if shutil.which("apt-get"):
-            subprocess.run(["sudo", "apt-get", "update"], check=True)
-            subprocess.run(
-                [
-                    "sudo",
-                    "apt-get",
-                    "install",
-                    "-y",
-                    "cmake",
-                    "libboost-all-dev",
-                    "libopenmpi-dev",
-                    "libgsl-dev",
-                    "libomp-dev",
-                    "libfmt-dev",
-                    "python3-dev",
-                    "libsqlite3-dev",
-                    "libsqlitecpp-dev",
-                ],
-                check=True,
-            )
+            _install_with_apt(script_dir / "requirements-apt.txt")
         elif shutil.which("brew"):
-            subprocess.run(["brew", "update"], check=True)
-            subprocess.run(
-                [
-                    "brew",
-                    "install",
-                    "cmake",
-                    "gsl",
-                    "libomp",
-                    "openmpi",
-                    "fmt",
-                    "boost-python3",
-                    "sqlite",
-                    "sqlitecpp",
-                ],
-                check=True,
-            )
+            _install_with_brew(script_dir / "requirements-brew.txt")
         else:
             print("Unsupported package manager. Please install dependencies manually.")
     else:
         print("Unsupported operating system. Please install dependencies manually.")
+    subprocess.run(["pip", "install", "-r", str(pip_requirements)], check=True)
+
+
+def _install_with_apt(apt_requirements):
+    subprocess.run(["sudo", "apt-get", "update"], check=True)
+    with apt_requirements.open("r") as apt_file:
+        subprocess.run(
+            ["xargs", "sudo", "apt-get", "install", "-y"],
+            stdin=apt_file,
+            check=True,
+        )
+
+
+def _install_with_brew(brew_requirements):
+    subprocess.run(["brew", "update"], check=True)
+    subprocess.run(["brew", "bundle", f"--file={brew_requirements}"], check=True)
 
 
 def update_version(build_version):
