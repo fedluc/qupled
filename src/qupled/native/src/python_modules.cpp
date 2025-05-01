@@ -152,22 +152,18 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("wvg", &pyHF::getWvg);
 
   // Class to solve the classical RPA scheme
-  bp::class_<Rpa, bp::bases<HF>>("Rpa", bp::init<const Input>())
-      .def("compute", &Rpa::compute);
+  bp::class_<Rpa, bp::bases<HF>>("Rpa", bp::init<const Input>());
 
   // Class to solve the classical ESA scheme
-  bp::class_<ESA, bp::bases<Rpa>>("ESA", bp::init<const Input>())
-      .def("compute", &ESA::compute);
+  bp::class_<ESA, bp::bases<Rpa>>("ESA", bp::init<const Input>());
 
   // Class to solve classical schemes
   bp::class_<Stls, bp::bases<Rpa>>("Stls", bp::init<const StlsInput>())
-      .def("compute", &PyStls::compute)
       .add_property("error", &PyStls::getError);
 
   // Class to solve classical schemes
   bp::class_<StlsIet, bp::bases<Stls>>("StlsIet",
                                        bp::init<const StlsIetInput>())
-      .def("compute", &PyStlsIet::compute)
       .add_property("bf", &PyStlsIet::getBf);
 
   // Class to solve the classical VS scheme

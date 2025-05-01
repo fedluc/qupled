@@ -25,19 +25,6 @@ Stls::Stls(const StlsInput &in_, const bool verbose_)
   slfcNew.resize(nx);
 }
 
-int Stls::compute() {
-  try {
-    init();
-    println("Structural properties calculation ...");
-    doIterations();
-    println("Done");
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
-}
-
 // Compute static local field correction
 void Stls::computeSlfc() {
   assert(ssf.size() == wvg.size());
@@ -51,7 +38,7 @@ void Stls::computeSlfc() {
 }
 
 // stls iterations
-void Stls::doIterations() {
+void Stls::computeStructuralProperties() {
   const int maxIter = in.getNIter();
   const double minErr = in.getErrMin();
   double err = 1.0;

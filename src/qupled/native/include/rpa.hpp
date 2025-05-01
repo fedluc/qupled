@@ -20,17 +20,15 @@ public:
   Rpa(const Input &in_, const bool verbose_);
   explicit Rpa(const Input &in_)
       : Rpa(in_, true) {}
-  // Compute the scheme
-  int compute();
 
 protected:
 
   // Hartree-Fock Static structure factor
   std::vector<double> ssfHF;
   // Initialize basic properties
-  void init();
+  void init() override;
   // Compute static structure factor
-  void computeSsf();
+  void computeSsf() override;
 
 private:
 
@@ -40,7 +38,7 @@ private:
   void computeSsfFinite();
   void computeSsfGround();
   // Compute static local field correction
-  void computeSlfc();
+  void computeSlfc() override;
 };
 
 namespace RpaUtil {

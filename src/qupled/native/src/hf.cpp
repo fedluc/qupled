@@ -31,18 +31,23 @@ int HF::compute() {
   try {
     init();
     println("Structural properties calculation ...");
-    print("Computing static local field correction: ");
-    computeSlfc();
-    println("Done");
-    print("Computing static structure factor: ");
-    computeSsf();
-    println("Done");
+    computeStructuralProperties();
     println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;
     return 1;
   }
+}
+
+// Compute the structural properties
+void HF::computeStructuralProperties() {
+  print("Computing static local field correction: ");
+  computeSlfc();
+  println("Done");
+  print("Computing static structure factor: ");
+  computeSsf();
+  println("Done");
 }
 
 // Initialize basic properties

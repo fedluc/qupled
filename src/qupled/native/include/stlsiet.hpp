@@ -17,8 +17,6 @@ public:
       : Stls(in_, true),
         Iet(in_, in_, wvg, true),
         in(in_){};
-  // Compute scheme
-  int compute();
 
 private:
 
@@ -26,11 +24,9 @@ private:
   using Stls::wvg;
   // Input parameters
   StlsIetInput in;
-  void init();
+  void init() override;
   // Compute static local field correction
-  void computeSlfc();
-  // Iterations to solve the stls scheme
-  void doIterations();
+  void computeSlfc() override;
 };
 
 namespace StlsIetUtil {

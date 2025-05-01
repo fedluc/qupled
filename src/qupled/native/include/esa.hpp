@@ -18,13 +18,11 @@ public:
   // ESA constructor
   explicit ESA(const Input &in_)
       : Rpa(in_) {}
-  // Compute the scheme
-  int compute();
 
 private:
 
   // Static local field correction
-  void computeSlfc();
+  void computeSlfc() override;
 };
 
 namespace ESAUtil {

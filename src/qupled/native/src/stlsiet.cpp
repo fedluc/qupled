@@ -12,19 +12,6 @@ using ItgType = Integrator1D::Type;
 // STLS class
 // -----------------------------------------------------------------
 
-int StlsIet::compute() {
-  try {
-    init();
-    Stls::println("Structural properties calculation ...");
-    doIterations();
-    Stls::println("Done");
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
-}
-
 // Initialize basic properties
 void StlsIet::init() {
   Stls::init();
@@ -48,36 +35,6 @@ void StlsIet::computeSlfc() {
     StlsIetUtil::Slfc slfcTmp(
         wvg[i], wvg.front(), wvg.back(), ssfItp, slfcItp, bfItp, itgGrid, itg2);
     slfcNew[i] += slfcTmp.get();
-  }
-}
-
-// stls iterations
-void StlsIet::doIterations() {
-  const int maxIter = in.getNIter();
-  const double minErr = in.getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
-  initialGuess();
-  while (counter < maxIter + 1 && err > minErr) {
-    // Start timing
-    double tic = timer();
-    // Update static structure factor
-    computeSsf();
-    // Update static local field correction
-    computeSlfc();
-    // Update diagnostic
-    counter++;
-    err = computeError();
-    // Update solution
-    updateSolution();
-    // End timing
-    double toc = timer();
-    // Print diagnostic
-    Stls::println(format("--- iteration {:d} ---", counter));
-    Stls::println(format("Elapsed time: {:.3f} seconds", toc - tic));
-    Stls::println(format("Residual error: {:.5e}", err));
-    fflush(stdout);
   }
 }
 

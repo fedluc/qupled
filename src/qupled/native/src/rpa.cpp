@@ -22,25 +22,6 @@ Rpa::Rpa(const Input &in_, const bool verbose_)
   ssfHF.resize(nx);
 }
 
-// Compute scheme
-int Rpa::compute() {
-  try {
-    init();
-    println("Structural properties calculation ...");
-    print("Computing static local field correction: ");
-    computeSlfc();
-    println("Done");
-    print("Computing static structure factor: ");
-    computeSsf();
-    println("Done");
-    println("Done");
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
-}
-
 // Initialize basic properties
 void Rpa::init() {
   HF::init();

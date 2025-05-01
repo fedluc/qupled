@@ -46,7 +46,13 @@ protected:
   // Chemical potential
   double mu;
   // Initialize basic properties
-  void init();
+  virtual void init();
+  // Calculations to compute the structural properties
+  virtual void computeStructuralProperties();
+  // Compute static local field correction
+  virtual void computeSlfc();
+  // Compute static structure factor
+  virtual void computeSsf();
 
 private:
 
@@ -58,12 +64,9 @@ private:
   void computeIdr();
   void computeIdrFinite();
   void computeIdrGround();
-  // Compute static structure factor
-  void computeSsf();
+  // Compute the static structure factor
   void computeSsfFinite();
   void computeSsfGround();
-  // Compute static local field correction
-  void computeSlfc();
 };
 
 namespace HFUtil {
