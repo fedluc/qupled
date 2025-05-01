@@ -95,14 +95,6 @@ void IterationInput::setNIter(const int &nIter) {
 // ClassicInput class
 // -----------------------------------------------------------------
 
-void ClassicInput::setIETMapping(const string &IETMapping) {
-  const vector<string> mappings = {"standard", "sqrt", "linear"};
-  if (count(mappings.begin(), mappings.end(), IETMapping) == 0) {
-    throwError("Unknown IET mapping: " + IETMapping);
-  }
-  this->IETMapping = IETMapping;
-}
-
 void ClassicInput::setGuess(const Guess &guess) {
   if (guess.wvg.size() != guess.slfc.size()) {
     throwError("The initial guess is inconsistent");
@@ -132,6 +124,18 @@ void QuantumInput::setGuess(const Guess &guess) {
                                && guess.adr.size(1) == adrCols;
   if (!consistentGuess) { throwError("The initial guess is inconsistent"); }
   this->guess = guess;
+}
+
+// -----------------------------------------------------------------
+// IetInput class
+// -----------------------------------------------------------------
+
+void IetInput::setMapping(const string &mapping) {
+  const vector<string> mappings = {"standard", "sqrt", "linear"};
+  if (count(mappings.begin(), mappings.end(), mapping) == 0) {
+    throwError("Unknown IET mapping: " + mapping);
+  }
+  this->mapping = mapping;
 }
 
 // -----------------------------------------------------------------

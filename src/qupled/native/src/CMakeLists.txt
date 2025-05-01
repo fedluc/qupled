@@ -52,7 +52,10 @@ Python3_add_library(native MODULE
 		rpa.cpp
 		esa.cpp
 		stls.cpp
+		iet.cpp
+		stlsiet.cpp
 		qstls.cpp
+		qstlsiet.cpp
 		vsbase.cpp
 		vsstls.cpp
 		qvsstls.cpp

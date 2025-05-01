@@ -63,10 +63,8 @@ namespace RpaUtil {
     const double ssfHF;
     // Static local field correction
     const double slfc;
-    // Constant for unit conversion
-    const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
     // Normalized interaction potential
-    const double ip = 4.0 * lambda * rs / (M_PI * x * x);
+    const double ip = 4.0 * numUtil::lambda * rs / (M_PI * x * x);
     // Constructor
     SsfBase(const double &x_,
             const double &Theta_,

@@ -144,10 +144,8 @@ public:
   };
   // Setters
   void setGuess(const Guess &guess);
-  void setIETMapping(const std::string &IETMapping);
   // Getters
   Guess getGuess() const { return guess; }
-  std::string getIETMapping() const { return IETMapping; }
 
 protected:
 
@@ -155,7 +153,7 @@ protected:
   Guess guess;
   // Mapping between the quantum and classical state points for the IET-based
   // schemes
-  std::string IETMapping;
+  std::string mapping;
 };
 
 // -----------------------------------------------------------------
@@ -194,6 +192,25 @@ protected:
 };
 
 // -----------------------------------------------------------------
+// Class to handle input for the iet schemes
+// -----------------------------------------------------------------
+
+class IetInput {
+
+public:
+
+  void setMapping(const std::string &mapping);
+  // Getters
+  std::string getMapping() const { return mapping; }
+
+protected:
+
+  // Mapping between the quantum and classical state points for the IET-based
+  // schemes
+  std::string mapping;
+};
+
+// -----------------------------------------------------------------
 // Class to handle input for the STLS and STLS-IET schemes
 // -----------------------------------------------------------------
 
@@ -203,6 +220,18 @@ public:
 
   // Constructors
   explicit StlsInput() = default;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the STLS-IET schemes
+// -----------------------------------------------------------------
+
+class StlsIetInput : public StlsInput, public IetInput {
+
+public:
+
+  // Constructors
+  explicit StlsIetInput() = default;
 };
 
 // -----------------------------------------------------------------
@@ -225,6 +254,18 @@ public:
 private:
 
   using QuantumInput::guess;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the QSTLS-IET schemes
+// -----------------------------------------------------------------
+
+class QstlsIetInput : public QstlsInput, public IetInput {
+
+public:
+
+  // Constructors
+  explicit QstlsIetInput() = default;
 };
 
 // -----------------------------------------------------------------

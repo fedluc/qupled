@@ -224,13 +224,13 @@ QstlsCSR::QstlsCSR(const QVSStlsInput &in_)
 void QstlsCSR::init() {
   switch (lfcTheta.type) {
   case CENTERED:
-    adrFixedFileName = fmt::format("{}_THETA", in.getTheory());
+    adrFixedDatabaseName = fmt::format("{}_THETA", in.getTheory());
     break;
   case FORWARD:
-    adrFixedFileName = fmt::format("{}_THETA_DOWN", in.getTheory());
+    adrFixedDatabaseName = fmt::format("{}_THETA_DOWN", in.getTheory());
     break;
   case BACKWARD:
-    adrFixedFileName = fmt::format("{}_THETA_UP", in.getTheory());
+    adrFixedDatabaseName = fmt::format("{}_THETA_UP", in.getTheory());
     break;
   }
   Qstls::init();
@@ -324,5 +324,5 @@ double QAdder::get() const {
       func2,
       Itg2DParam(limits.first, limits.second, limits.first, limits.second),
       itgGrid);
-  return 12.0 / (M_PI * lambda) * itg2->getSolution() / Denominator;
+  return 12.0 / (M_PI * numUtil::lambda) * itg2->getSolution() / Denominator;
 }

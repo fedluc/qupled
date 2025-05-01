@@ -7,9 +7,11 @@
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "qstls.hpp"
+#include "qstlsiet.hpp"
 #include "qvsstls.hpp"
 #include "rpa.hpp"
 #include "stls.hpp"
+#include "stlsiet.hpp"
 #include "vsstls.hpp"
 #include <boost/python.hpp>
 #include <boost/python/numpy.hpp>
@@ -111,7 +113,17 @@ public:
   static int compute(Stls &stls);
   static StlsInput getInput(const Stls &stls);
   static double getError(const Stls &stls);
-  static bn::ndarray getBf(const Stls &stls);
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the StlsIet class to Python
+// -----------------------------------------------------------------
+
+class PyStlsIet {
+public:
+
+  static int compute(StlsIet &stlsiet);
+  static bn::ndarray getBf(const StlsIet &stlsiet);
 };
 
 // -----------------------------------------------------------------
@@ -140,6 +152,17 @@ public:
   static QstlsInput getInput(const Qstls &qstls);
   static double getError(const Qstls &qstls);
   static bn::ndarray getAdr(const Qstls &qstls);
+};
+
+// -----------------------------------------------------------------
+// Wrapper for exposing the QstlsIet class to Python
+// -----------------------------------------------------------------
+
+class PyQstlsIet {
+public:
+
+  static int compute(QstlsIet &qstlsiet);
+  static bn::ndarray getBf(const QstlsIet &qstlsiet);
 };
 
 // -----------------------------------------------------------------

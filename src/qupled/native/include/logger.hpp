@@ -15,11 +15,14 @@ protected:
   // Constructor
   Logger(const bool &verbose_)
       : verbose(verbose_) {}
-  // Output verbosity
-  const bool verbose;
   // Print info on screen
   void print(const std::string &msg) const;
   void println(const std::string &msg) const;
+
+private:
+
+  // Output verbosity
+  const bool verbose;
 };
 
 #endif

@@ -33,9 +33,8 @@ protected:
 
   // Auxiliary density response
   Vector2D adr;
-  Vector2D adrOld;
   Vector3D adrFixed;
-  std::string adrFixedFileName;
+  std::string adrFixedDatabaseName;
   // Static structure factor (for iterations)
   std::vector<double> ssfNew;
   std::vector<double> ssfOld;
@@ -43,7 +42,9 @@ protected:
   void init();
   // Compute auxiliary density response
   void computeAdr();
+  // Read and write auxiliary density response to database
   void readAdrFixed(Vector3D &res, const std::string &name, int runId) const;
+  void writeAdrFixed(const Vector3D &res, const std::string &name) const;
   // Compute static structure factor at finite temperature
   void computeSsf();
   // Iterations to solve the stls scheme
@@ -58,17 +59,11 @@ private:
   const QstlsInput in;
   // Compute auxiliary density response
   void computeAdrFixed();
-  void writeAdrFixed(const Vector3D &res, const std::string &name) const;
-  void computeAdrIet();
-  void computeAdrFixedIet();
   // Compute static structure factor at finite temperature
   void computeSsfFinite();
   void computeSsfGround();
   // Iterations to solve the stls scheme
   bool initialGuessFromInput();
-  bool initialGuessSsf(const std::vector<double> &wvg_,
-                       const std::vector<double> &adr_);
-  bool initialGuessAdr(const std::vector<double> &wvg_, const Vector2D &adr_);
 };
 
 namespace QstlsUtil {
@@ -223,87 +218,6 @@ namespace QstlsUtil {
     const std::vector<double> &itgGrid;
   };
 
-  class AdrIet : public AdrBase {
-
-  public:
-
-    // Constructor for finite temperature calculations
-    AdrIet(const double &Theta_,
-           const double &qMin_,
-           const double &qMax_,
-           const double &x_,
-           std::shared_ptr<Interpolator1D> ssfi_,
-           std::vector<std::shared_ptr<Interpolator1D>> dlfci_,
-           std::shared_ptr<Interpolator1D> bfi_,
-           const std::vector<double> &itgGrid_,
-           std::shared_ptr<Integrator2D> itg_)
-        : AdrBase(Theta_, qMin_, qMax_, x_, ssfi_),
-          itg(itg_),
-          itgGrid(itgGrid_),
-          dlfci(dlfci_),
-          bfi(bfi_) {}
-
-    // Get integration result
-    void
-    get(const std::vector<double> &wvg, const Vector3D &fixed, Vector2D &res);
-
-  private:
-
-    // Integration limits
-    const double &qMin = yMin;
-    const double &qMax = yMax;
-    // Integrands
-    double integrand1(const double &q, const int &l) const;
-    double integrand2(const double &y) const;
-    // Integrator object
-    const std::shared_ptr<Integrator2D> itg;
-    // Grid for 2D integration
-    const std::vector<double> &itgGrid;
-    // Interpolator for the dynamic local field correction
-    const std::vector<std::shared_ptr<Interpolator1D>> dlfci;
-    // Interpolator for the bridge function contribution
-    const std::shared_ptr<Interpolator1D> bfi;
-    // Interpolator for the fixed component
-    Interpolator2D fixi;
-    // Compute dynamic local field correction
-    double dlfc(const double &y, const int &l) const;
-    // Compute bridge function contribution
-    double bf(const double &y) const;
-    // Compute fixed component
-    double fix(const double &x, const double &y) const;
-  };
-
-  class AdrFixedIet : public AdrFixedBase {
-
-  public:
-
-    // Constructor for finite temperature calculations
-    AdrFixedIet(const double &Theta_,
-                const double &qMin_,
-                const double &qMax_,
-                const double &x_,
-                const double &mu_,
-                std::shared_ptr<Integrator1D> itg_)
-        : AdrFixedBase(Theta_, qMin_, qMax_, x_, mu_),
-          itg(itg_) {}
-
-    // Get integration result
-    void get(int l, const std::vector<double> &wvg, Vector3D &res) const;
-
-  private:
-
-    // Integration limits
-    const double &tMin = qMin;
-    const double &tMax = qMax;
-    // Integrands
-    double integrand(const double &t,
-                     const double &y,
-                     const double &q,
-                     const double &l) const;
-    // Integrator object
-    const std::shared_ptr<Integrator1D> itg;
-  };
-
   class AdrGround : public AdrBase {
 
   public:
@@ -346,20 +260,16 @@ namespace QstlsUtil {
         const double &ssfHF_,
         const int &nl_,
         const double *idr_,
-        const double *adr_,
-        const double &bf_)
+        const double *adr_)
         : RpaUtil::Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_),
-          adr(adr_),
-          bf(bf_) {}
+          adr(adr_) {}
     // Get static structure factor
     double get() const;
 
-  private:
+  protected:
 
     // Auxiliary density response
     const double *adr;
-    // Bridge function
-    const double bf;
   };
 
   class SsfGround : public RpaUtil::SsfGround {

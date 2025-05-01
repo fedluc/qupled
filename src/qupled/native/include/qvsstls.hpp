@@ -159,7 +159,6 @@ public:
 
 private:
 
-  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
   // Degeneracy parameter
   const double Theta;
   // Chemical potential
