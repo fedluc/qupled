@@ -35,7 +35,7 @@ private:
   const Input in;
   // Wave-vector grid
   std::vector<double> wvg;
-  // Bridge function (for iet schemes)
+  // Bridge function
   std::vector<double> bf;
   // Compute bridge function
   void computeBf();

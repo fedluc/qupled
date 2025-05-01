@@ -324,5 +324,5 @@ double QAdder::get() const {
       func2,
       Itg2DParam(limits.first, limits.second, limits.first, limits.second),
       itgGrid);
-  return 12.0 / (M_PI * lambda) * itg2->getSolution() / Denominator;
+  return 12.0 / (M_PI * numUtil::lambda) * itg2->getSolution() / Denominator;
 }

@@ -435,7 +435,6 @@ double QstlsUtil::SsfGround::get() {
 
 double QstlsUtil::SsfGround::integrand(const double &Omega) const {
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(itg->getAccuracy());
-  const double ip = 4.0 * lambda * rs / (M_PI * x * x);
   const double idr = HFUtil::IdrGround(x, Omega).get();
   const double adr = QstlsUtil::AdrGround(x, Omega, ssfi, xMax, itg2).get();
   return idr / (1.0 + ip * (idr - adr)) - idr;

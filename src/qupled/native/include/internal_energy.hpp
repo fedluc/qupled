@@ -47,9 +47,6 @@ private:
 
   // Compute static structure factor
   double ssf(const double &y) const;
-
-  // Constant for unit conversion
-  const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
 };
 
 #endif

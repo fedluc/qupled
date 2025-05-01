@@ -145,7 +145,7 @@ vector<double> HF::getSdr() const {
   const double theta = in.getDegeneracy();
   if (isnan(theta) || theta == 0.0) { return vector<double>(); }
   vector<double> sdr(wvg.size(), -1.5 * theta);
-  const double fact = 4 * lambda * in.getCoupling() / M_PI;
+  const double fact = 4 * numUtil::lambda * in.getCoupling() / M_PI;
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double x2 = wvg[i] * wvg[i];
     const double phi0 = idr(i, 0);
