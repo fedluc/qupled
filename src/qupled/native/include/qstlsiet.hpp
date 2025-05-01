@@ -17,8 +17,6 @@ public:
   explicit QstlsIet(const QstlsIetInput &in_);
   // Compute qstls scheme
   int compute();
-  // Getters
-  const QstlsIetInput &getInput() const { return in; }
 
 private:
 

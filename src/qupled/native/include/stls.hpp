@@ -22,7 +22,6 @@ public:
   // Compute stls scheme
   int compute();
   // Getters
-  const StlsInput &getInput() const { return in; }
   double getError() const { return computeError(); }
 
 protected:

@@ -23,8 +23,6 @@ public:
   explicit VSStls(const VSStlsInput &in_);
   // Solve the scheme
   using VSBase::compute;
-  // Getters
-  const VSStlsInput &getInput() const { return in; }
 
 private:
 
