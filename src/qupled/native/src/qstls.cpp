@@ -20,7 +20,7 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
   // Set name for the fixed adr output file
   adrFixedDatabaseName = fmt::format("{}", in.getTheory());
   // Allocate arrays
-  const size_t nx = in.getWaveVectorGrid().size();
+  const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
   adr.resize(nx, nl);
   ssfNew.resize(nx);
@@ -100,7 +100,6 @@ void Qstls::initialGuess() {
 
 bool Qstls::initialGuessFromInput() {
   const auto &guess = in.getGuess();
-  const std::vector<double> &wvg = in.getWaveVectorGrid();
   const int nx = wvg.size();
   const Interpolator1D ssfi(guess.wvg, guess.ssf);
   if (!ssfi.isValid()) { return false; }
@@ -115,10 +114,9 @@ bool Qstls::initialGuessFromInput() {
 // Compute auxiliary density response
 void Qstls::computeAdr() {
   if (in.getDegeneracy() == 0.0) { return; }
-  const vector<double> wvg = in.getWaveVectorGrid();
   const int nx = wvg.size();
   const shared_ptr<Interpolator1D> ssfi =
-      make_shared<Interpolator1D>(in.getWaveVectorGrid(), ssfOld);
+      make_shared<Interpolator1D>(wvg, ssfOld);
   for (int i = 0; i < nx; ++i) {
     QstlsUtil::Adr adrTmp(
         in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], ssfi, itg);
@@ -147,7 +145,6 @@ void Qstls::computeSsfFinite() {
   }
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
-  const vector<double> wvg = in.getWaveVectorGrid();
   const int nx = wvg.size();
   const int nl = idr.size(1);
   for (int i = 0; i < nx; ++i) {
@@ -158,17 +155,16 @@ void Qstls::computeSsfFinite() {
 
 // Compute static structure factor at zero temperature
 void Qstls::computeSsfGround() {
-  const vector<double> wvg = in.getWaveVectorGrid();
   const shared_ptr<Interpolator1D> ssfi =
       make_shared<Interpolator1D>(wvg, ssfOld);
   const double rs = in.getCoupling();
-  const double OmegaCutoff = in.getFrequencyCutoff();
+  const double OmegaMax = in.getFrequencyCutoff();
   const size_t nx = wvg.size();
   const double xMax = wvg.back();
   auto loopFunc = [&](int i) -> void {
     shared_ptr<Integrator1D> itgTmp = make_shared<Integrator1D>(*itg);
     QstlsUtil::SsfGround ssfTmp(
-        wvg[i], rs, ssfHF[i], xMax, OmegaCutoff, ssfi, itgTmp);
+        wvg[i], rs, ssfHF[i], xMax, OmegaMax, ssfi, itgTmp);
     ssfNew[i] = ssfTmp.get();
   };
   const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
@@ -187,7 +183,7 @@ void Qstls::updateSolution() {
 void Qstls::computeAdrFixed() {
   if (in.getDegeneracy() == 0.0) { return; }
   // Check if it adrFixed can be loaded from input
-  const int nx = in.getWaveVectorGrid().size();
+  const int nx = wvg.size();
   const int nl = in.getNMatsubara();
   if (in.getFixedRunId() != DEFAULT_INT) {
     adrFixed.resize(nx, nl, nx);
@@ -198,7 +194,6 @@ void Qstls::computeAdrFixed() {
   fflush(stdout);
   const int nxnl = nx * nl;
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
-  const vector<double> wvg = in.getWaveVectorGrid();
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   // Parallel for loop (Hybrid MPI and OpenMP)
   auto loopFunc = [&](int i) -> void {
@@ -434,7 +429,7 @@ double QstlsUtil::SsfGround::get() {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
-  itg->compute(func, ItgParam(0, OmegaCutoff));
+  itg->compute(func, ItgParam(0, OmegaMax));
   return 1.5 / (M_PI)*itg->getSolution() + ssfHF;
 }
 

@@ -31,7 +31,6 @@ int ESA::compute() {
 
 void ESA::computeSlfc() {
   ESAUtil::Slfc slfcTmp(in.getCoupling(), in.getDegeneracy());
-  const vector<double> wvg = in.getWaveVectorGrid();
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double &x = wvg[i];
     slfc[i] = slfcTmp.get(x);

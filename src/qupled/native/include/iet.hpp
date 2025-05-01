@@ -14,11 +14,15 @@ class Iet : public Logger {
 public:
 
   // Constructors
-  explicit Iet(const IetInput &inIet_, const Input &in_, const bool verbose)
+  explicit Iet(const IetInput &inIet_,
+               const Input &in_,
+               const std::vector<double> &wvg_,
+               const bool verbose)
       : Logger(verbose),
         inIet(inIet_),
         in(in_),
-        bf(in.getWaveVectorGrid().size()) {}
+        wvg(wvg_),
+        bf(wvg.size()) {}
   // Compute the bridge function
   void init();
   // Getters
@@ -29,6 +33,8 @@ private:
   // Input parameters
   const IetInput inIet;
   const Input in;
+  // Wave-vector grid
+  std::vector<double> wvg;
   // Bridge function (for iet schemes)
   std::vector<double> bf;
   // Compute bridge function

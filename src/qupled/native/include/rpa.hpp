@@ -118,7 +118,7 @@ namespace RpaUtil {
               const double &OmegaMax_,
               std::shared_ptr<Integrator1D> itg_)
         : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
-          OmegaCutoff(OmegaMax_),
+          OmegaMax(OmegaMax_),
           itg(itg_) {}
     // Get result of integration
     double get();
@@ -126,7 +126,7 @@ namespace RpaUtil {
   protected:
 
     // Integration limit
-    const double OmegaCutoff;
+    const double OmegaMax;
     // Integrator object
     const std::shared_ptr<Integrator1D> itg;
     // Integrand for zero temperature calculations

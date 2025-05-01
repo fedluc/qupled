@@ -16,7 +16,9 @@ using ItgType = Integrator1D::Type;
 Rpa::Rpa(const Input &in_, const bool verbose_)
     : HF(in_, verbose_) {
   // Allocate arrays to the correct size
-  const size_t nx = in.getWaveVectorGrid().size();
+  const size_t nx = wvg.size();
+  const size_t nl = in.getNMatsubara();
+  idr.resize(nx, nl);
   ssfHF.resize(nx);
 }
 
@@ -56,6 +58,7 @@ void Rpa::computeSsfHF() {
 
 // Compute static structure factor
 void Rpa::computeSsf() {
+  assert(ssf.size() == wvg.size());
   if (in.getDegeneracy() == 0.0) {
     computeSsfGround();
   } else {
@@ -67,7 +70,6 @@ void Rpa::computeSsf() {
 void Rpa::computeSsfFinite() {
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
-  const vector<double> wvg = in.getWaveVectorGrid();
   const size_t nx = wvg.size();
   const size_t nl = idr.size(1);
   assert(slfc.size() == nx);
@@ -81,20 +83,20 @@ void Rpa::computeSsfFinite() {
 // Compute static structure factor at zero temperature
 void Rpa::computeSsfGround() {
   const double rs = in.getCoupling();
-  const double OmegaCutoff = in.getFrequencyCutoff();
-  const vector<double> wvg = in.getWaveVectorGrid();
+  const double OmegaMax = in.getFrequencyCutoff();
   const size_t nx = wvg.size();
   assert(slfc.size() == nx);
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    RpaUtil::SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], OmegaCutoff, itg);
+    RpaUtil::SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], OmegaMax, itg);
     ssf[i] = ssfTmp.get();
   }
 }
 
 // Compute static local field correction
 void Rpa::computeSlfc() {
+  assert(slfc.size() == wvg.size());
   for (auto &s : slfc) {
     s = 0;
   }
@@ -127,7 +129,7 @@ double RpaUtil::SsfGround::get() {
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
-  itg->compute(func, ItgParam(0, OmegaCutoff));
+  itg->compute(func, ItgParam(0, OmegaMax));
   return 1.5 / (M_PI)*itg->getSolution() + ssfHF;
 }
 

@@ -46,9 +46,12 @@ BOOST_PYTHON_MODULE(native) {
       .add_property(
           "database_info", &Input::getDatabaseInfo, &Input::setDatabaseInfo)
       .add_property("matsubara", &Input::getNMatsubara, &Input::setNMatsubara)
-      .add_property("wave_vector_grid",
-                    &PyInput::getWaveVectorGrid,
-                    &PyInput::setWaveVectorGrid)
+      .add_property("resolution",
+                    &Input::getWaveVectorGridRes,
+                    &Input::setWaveVectorGridRes)
+      .add_property("cutoff",
+                    &Input::getWaveVectorGridCutoff,
+                    &Input::setWaveVectorGridCutoff)
       .add_property("frequency_cutoff",
                     &Input::getFrequencyCutoff,
                     &Input::setFrequencyCutoff);
@@ -146,7 +149,8 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("sdr", &pyHF::getSdr)
       .add_property("slfc", &pyHF::getSlfc)
       .add_property("ssf", &pyHF::getSsf)
-      .add_property("uint", &pyHF::getUInt);
+      .add_property("uint", &pyHF::getUInt)
+      .add_property("wvg", &pyHF::getWvg);
 
   // Class to solve the classical RPA scheme
   bp::class_<Rpa, bp::bases<HF>>("Rpa", bp::init<const Input>())

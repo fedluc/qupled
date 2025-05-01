@@ -21,8 +21,7 @@ void Iet::init() {
 
 // Compute bridge function
 void Iet::computeBf() {
-  const vector<double> &wvg = in.getWaveVectorGrid();
-  const size_t nx = wvg.size();
+  const size_t nx = bf.size();
   const shared_ptr<Integrator1D> itgF =
       make_shared<Integrator1D>(ItgType::FOURIER, 1e-10);
   assert(bf.size() == nx);

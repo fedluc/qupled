@@ -134,13 +134,14 @@ def test_input_initialization(mocker):
     assert inputs.coupling == coupling
     assert inputs.degeneracy == degeneracy
     assert inputs.chemical_potential == [-10.0, 10.0]
+    assert inputs.cutoff == 10.0
     assert inputs.frequency_cutoff == 10.0
     assert inputs.integral_error == 1.0e-5
     assert inputs.integral_strategy == "full"
     assert inputs.matsubara == 128
+    assert inputs.resolution == 0.1
     assert inputs.threads == 1
     assert inputs.theory == "HF"
-    assert np.array_equal(inputs.wave_vector_grid, np.linspace(0.0, 10.0, 100))
     assert inputs.database_info == dbInfo.return_value
 
 
@@ -159,6 +160,7 @@ def test_result_initialization(results):
     assert results.slfc is None
     assert results.ssf is None
     assert results.uint is None
+    assert results.wvg is None
 
 
 def test_result_from_native(mocker, results):

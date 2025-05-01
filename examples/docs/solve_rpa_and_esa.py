@@ -22,18 +22,8 @@ esa_results = esa_data["results"]
 esa_inputs = esa_data["inputs"]
 
 # Compare the results for the from the two schemes in a plot
-plt.plot(
-    rpa_inputs["wave_vector_grid"],
-    rpa_results["ssf"],
-    color="b",
-    label=rpa_inputs["theory"],
-)
-plt.plot(
-    esa_inputs["wave_vector_grid"],
-    esa_results["ssf"],
-    color="r",
-    label=esa_inputs["theory"],
-)
+plt.plot(rpa_results["wvg"], rpa_results["ssf"], color="b", label=rpa_inputs["theory"])
+plt.plot(esa_results["wvg"], esa_results["ssf"], color="r", label=esa_inputs["theory"])
 plt.legend(loc="lower right")
 plt.xlabel("Wave vector")
 plt.ylabel("Static structure factor")

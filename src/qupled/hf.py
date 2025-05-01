@@ -120,6 +120,8 @@ class Input:
         """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
         self.coupling: float = coupling
         """Coupling parameter."""
+        self.cutoff: float = 10.0
+        """Cutoff for the wave-vector grid. Default =  ``10.0``"""
         self.degeneracy: float = degeneracy
         """Degeneracy parameter."""
         self.frequency_cutoff: float = 10.0
@@ -140,8 +142,8 @@ class Input:
         """
         self.matsubara: int = 128
         """Number of Matsubara frequencies. Default = ``128``"""
-        self.wave_vector_grid: np.ndarray = np.linspace(0.0, 10.0, 100)
-        """The wave-vector grid. Default =  ``np.linspace(0.0, 10.0, 100)``"""
+        self.resolution: float = 0.1
+        """Resolution of the wave-vector grid. Default =  ``0.1``"""
         self.threads: int = 1
         """Number of OMP threads for parallel calculations. Default =  ``1``"""
         # Undocumented default values
@@ -194,6 +196,8 @@ class Result:
         """Static structure factor"""
         self.uint: float = None
         """Internal energy"""
+        self.wvg: np.ndarray = None
+        """Wave-vector grid"""
 
     def from_native(self, native_scheme: any):
         """

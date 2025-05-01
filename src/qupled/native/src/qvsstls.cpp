@@ -253,7 +253,6 @@ void QstlsCSR::computeAdr() {
 }
 
 double QstlsCSR::getQAdder() const {
-  const vector<double> &wvg = in.getWaveVectorGrid();
   const shared_ptr<Integrator1D> itg1 =
       make_shared<Integrator1D>(ItgType::DEFAULT, in.getIntError());
   const shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(

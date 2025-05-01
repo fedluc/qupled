@@ -16,8 +16,10 @@ HF::HF(const Input &in_, const bool verbose_)
     : Logger(verbose_ && isRoot()),
       in(in_),
       itg(std::make_shared<Integrator1D>(ItgType::DEFAULT, in_.getIntError())) {
+  // Assemble the wave-vector grid
+  buildWaveVectorGrid();
   // Allocate arrays to the correct size
-  const size_t nx = in.getWaveVectorGrid().size();
+  const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
   idr.resize(nx, nl);
   slfc.resize(nx);
@@ -53,6 +55,20 @@ void HF::init() {
   println("Done");
 }
 
+// Set up wave-vector grid
+void HF::buildWaveVectorGrid() {
+  wvg.push_back(0.0);
+  const double dx = in.getWaveVectorGridRes();
+  const double xmax = in.getWaveVectorGridCutoff();
+  if (xmax < dx) {
+    throwError(
+        "The wave-vector grid cutoff must be larger than the resolution");
+  }
+  while (wvg.back() < xmax) {
+    wvg.push_back(wvg.back() + dx);
+  }
+}
+
 // Compute chemical potential
 void HF::computeChemicalPotential() {
   if (in.getDegeneracy() == 0.0) return;
@@ -70,7 +86,6 @@ void HF::computeIdr() {
 void HF::computeIdrFinite() {
   const size_t nx = idr.size(0);
   const size_t nl = idr.size(1);
-  const vector<double> &wvg = in.getWaveVectorGrid();
   for (size_t i = 0; i < nx; ++i) {
     HFUtil::Idr idrTmp(
         nl, wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
@@ -81,7 +96,6 @@ void HF::computeIdrFinite() {
 void HF::computeIdrGround() {
   const size_t nx = idr.size(0);
   const size_t nl = idr.size(1);
-  const vector<double> &wvg = in.getWaveVectorGrid();
   for (size_t i = 0; i < nx; ++i) {
     for (size_t l = 0; l < nl; ++l) {
       HFUtil::IdrGround idrTmp(wvg[i], l);
@@ -96,7 +110,6 @@ void HF::computeSsf() {
 }
 
 void HF::computeSsfFinite() {
-  const vector<double> &wvg = in.getWaveVectorGrid();
   for (size_t i = 0; i < wvg.size(); ++i) {
     HFUtil::Ssf ssfTmp(
         wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
@@ -105,7 +118,6 @@ void HF::computeSsfFinite() {
 }
 
 void HF::computeSsfGround() {
-  const vector<double> &wvg = in.getWaveVectorGrid();
   for (size_t i = 0; i < wvg.size(); ++i) {
     HFUtil::SsfGround ssfTmp(wvg[i]);
     ssf[i] = ssfTmp.get();
@@ -114,7 +126,7 @@ void HF::computeSsfGround() {
 
 // Compute static local field correction
 void HF::computeSlfc() {
-  assert(slfc.size() == in.getWaveVectorGrid().size());
+  assert(slfc.size() == wvg.size());
   for (auto &s : slfc) {
     s = 1;
   }
@@ -122,7 +134,6 @@ void HF::computeSlfc() {
 
 // Getters
 vector<double> HF::getRdf(const vector<double> &r) const {
-  const vector<double> &wvg = in.getWaveVectorGrid();
   if (wvg.size() < 3 || ssf.size() < 3) {
     throwError("No data to compute the radial distribution function");
     return vector<double>();
@@ -133,7 +144,6 @@ vector<double> HF::getRdf(const vector<double> &r) const {
 vector<double> HF::getSdr() const {
   const double theta = in.getDegeneracy();
   if (isnan(theta) || theta == 0.0) { return vector<double>(); }
-  const vector<double> &wvg = in.getWaveVectorGrid();
   vector<double> sdr(wvg.size(), -1.5 * theta);
   const double fact = 4 * lambda * in.getCoupling() / M_PI;
   for (size_t i = 0; i < wvg.size(); ++i) {
@@ -145,7 +155,6 @@ vector<double> HF::getSdr() const {
 }
 
 double HF::getUInt() const {
-  const vector<double> &wvg = in.getWaveVectorGrid();
   if (wvg.size() < 3 || ssf.size() < 3) {
     throwError("No data to compute the internal energy");
     return numUtil::Inf;
