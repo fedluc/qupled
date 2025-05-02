@@ -28,8 +28,6 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
   ssfNew.resize(nx);
   ssfOld.resize(nx);
   adrFixed.resize(nx, nl, nx);
-  // Deallocate arrays that are inherited but not used
-  vector<double>().swap(slfcNew);
 }
 
 int Qstls::compute() {

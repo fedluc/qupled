@@ -123,13 +123,13 @@ void StructProp::doIterations() {
     {
 #pragma omp for
       for (auto &c : csr) {
-        c->computeSsf();
         c->computeLfcStls();
       }
 #pragma omp for
       for (size_t i = 0; i < csr.size(); ++i) {
         auto &c = csr[i];
         c->computeLfc();
+        c->computeSsf();
         if (i == RS_THETA) { err = c->computeError(); }
         c->updateSolution();
       }
@@ -148,12 +148,12 @@ void StructProp::doIterations() {
 
 void StlsCSR::computeLfcStls() {
   Stls::computeLfc();
-  *lfc = Vector2D(slfcNew);
+  *lfc = Vector2D(slfc);
 }
 
 void StlsCSR::computeLfc() {
   Vector2D slfcDerivative = getDerivativeContribution();
-  for (size_t i = 0; i < slfcNew.size(); ++i) {
-    slfcNew[i] -= slfcDerivative(i, 0);
+  for (size_t i = 0; i < slfc.size(); ++i) {
+    slfc[i] -= slfcDerivative(i, 0);
   }
 }

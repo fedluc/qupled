@@ -25,9 +25,11 @@ public:
 protected:
 
   // Static local field correction to use during the iterations
-  std::vector<double> slfcNew;
+  std::vector<double> ssfOld;
   // Compute structural properties
   void computeStructuralProperties() override;
+  // Compute static structure factor
+  void computeSsf() override;
   // Compute static local field correction
   void computeLfc() override;
   // Iterations to solve the stls scheme
