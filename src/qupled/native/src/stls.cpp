@@ -26,7 +26,7 @@ Stls::Stls(const StlsInput &in_, const bool verbose_)
 }
 
 // Compute static local field correction
-void Stls::computeSlfc() {
+void Stls::computeLfc() {
   assert(ssf.size() == wvg.size());
   assert(slfc.size() == wvg.size());
   const int nx = wvg.size();
@@ -51,7 +51,7 @@ void Stls::computeStructuralProperties() {
     // Update static structure factor
     computeSsf();
     // Update static local field correction
-    computeSlfc();
+    computeLfc();
     // Update diagnostic
     counter++;
     err = computeError();

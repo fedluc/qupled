@@ -19,8 +19,8 @@ void StlsIet::init() {
 }
 
 // Compute static local field correction
-void StlsIet::computeSlfc() {
-  Stls::computeSlfc();
+void StlsIet::computeLfc() {
+  Stls::computeLfc();
   const std::shared_ptr<Integrator2D> itg2 =
       make_shared<Integrator2D>(in.getIntError());
   const bool segregatedItg = in.getInt2DScheme() == "segregated";

@@ -75,7 +75,7 @@ void Rpa::computeSsfGround() {
 }
 
 // Compute static local field correction
-void Rpa::computeSlfc() {
+void Rpa::computeLfc() {
   assert(slfc.size() == wvg.size());
   for (auto &s : slfc) {
     s = 0;

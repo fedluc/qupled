@@ -26,7 +26,7 @@ private:
   StlsIetInput in;
   void init() override;
   // Compute static local field correction
-  void computeSlfc() override;
+  void computeLfc() override;
 };
 
 namespace StlsIetUtil {

@@ -37,8 +37,8 @@ private:
   // Compute static structure factor at finite temperature
   void computeSsfFinite();
   void computeSsfGround();
-  // Compute static local field correction
-  void computeSlfc() override;
+  // Compute local field correction
+  void computeLfc() override;
 };
 
 namespace RpaUtil {

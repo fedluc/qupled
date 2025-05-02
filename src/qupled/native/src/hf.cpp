@@ -43,7 +43,7 @@ int HF::compute() {
 // Compute the structural properties
 void HF::computeStructuralProperties() {
   print("Computing static local field correction: ");
-  computeSlfc();
+  computeLfc();
   println("Done");
   print("Computing static structure factor: ");
   computeSsf();
@@ -109,7 +109,6 @@ void HF::computeIdrGround() {
   }
 }
 
-// Compute Static structure factor
 void HF::computeSsf() {
   (in.getDegeneracy() == 0.0) ? computeSsfGround() : computeSsfFinite();
 }
@@ -129,8 +128,7 @@ void HF::computeSsfGround() {
   }
 }
 
-// Compute static local field correction
-void HF::computeSlfc() {
+void HF::computeLfc() {
   assert(slfc.size() == wvg.size());
   for (auto &s : slfc) {
     s = 1;

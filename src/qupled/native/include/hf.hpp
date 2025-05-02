@@ -49,10 +49,10 @@ protected:
   virtual void init();
   // Calculations to compute the structural properties
   virtual void computeStructuralProperties();
-  // Compute static local field correction
-  virtual void computeSlfc();
   // Compute static structure factor
   virtual void computeSsf();
+  // Compute local field correction
+  virtual void computeLfc();
 
 private:
 

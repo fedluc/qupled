@@ -29,7 +29,7 @@ protected:
   // Compute structural properties
   void computeStructuralProperties() override;
   // Compute static local field correction
-  void computeSlfc() override;
+  void computeLfc() override;
   // Iterations to solve the stls scheme
   void initialGuess();
   bool initialGuessFromInput();

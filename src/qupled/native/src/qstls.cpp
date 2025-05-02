@@ -64,9 +64,9 @@ void Qstls::doIterations() {
     // Start timing
     double tic = timer();
     // Update auxiliary density response
-    computeAdr();
-    // Update static structure factor
     computeSsf();
+    // Update static structure factor
+    computeAdr();
     // Update diagnostic
     counter++;
     err = computeError();

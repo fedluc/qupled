@@ -96,8 +96,8 @@ public:
         in(in_) {}
 
   // Compute static local field correction
-  void computeSlfcStls();
-  void computeSlfc();
+  void computeLfcStls();
+  void computeLfc();
 
   // Publicly esposed private stls methods
   void init() { Stls::init(); }

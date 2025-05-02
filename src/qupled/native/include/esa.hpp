@@ -21,8 +21,8 @@ public:
 
 private:
 
-  // Static local field correction
-  void computeSlfc() override;
+  // Local field correction
+  void computeLfc() override;
 };
 
 namespace ESAUtil {
