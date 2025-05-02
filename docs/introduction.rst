@@ -37,6 +37,8 @@ is the Fermi energy and :math:`h` is Planck's constant.
 Installing qupled
 -----------------
 
+.. _external_dependencies:
+
 External dependencies
 ~~~~~~~~~~~~~~~~~~~~~
 
