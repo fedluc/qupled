@@ -66,19 +66,18 @@ void Stls::initialGuess() {
 }
 
 bool Stls::initialGuessFromInput() {
-  // const Interpolator1D slfci(in.getGuess().wvg, in.getGuess().slfc);
-  // if (!slfci.isValid()) { return false; }
-  // const double xmaxi = in.getGuess().wvg.back();
-  // for (size_t i = 0; i < wvg.size(); ++i) {
-  //   const double x = wvg[i];
-  //   if (x <= xmaxi) {
-  //     slfc[i] = slfci.eval(x);
-  //   } else {
-  //     slfc[i] = 1.0;
-  //   }
-  // }
-  // return true;
-  return false;
+  const Interpolator1D ssfi(in.getGuess().wvg, in.getGuess().ssf);
+  if (!ssfi.isValid()) { return false; }
+  const double xmaxi = in.getGuess().wvg.back();
+  for (size_t i = 0; i < wvg.size(); ++i) {
+    const double x = wvg[i];
+    if (x <= xmaxi) {
+      ssf[i] = ssfi.eval(x);
+    } else {
+      ssf[i] = 1.0;
+    }
+  }
+  return true;
 }
 
 // Compute static local field correction

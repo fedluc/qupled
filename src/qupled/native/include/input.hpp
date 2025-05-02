@@ -140,7 +140,7 @@ public:
   // Typedef
   struct Guess {
     std::vector<double> wvg;
-    std::vector<double> slfc;
+    std::vector<double> ssf;
   };
   // Setters
   void setGuess(const Guess &guess);
@@ -165,9 +165,7 @@ class QuantumInput {
 public:
 
   // Typdef
-  struct Guess {
-    std::vector<double> wvg;
-    std::vector<double> ssf;
+  struct Guess : ClassicInput::Guess {
     Vector2D adr;
     int matsubara = DEFAULT_INT;
   };

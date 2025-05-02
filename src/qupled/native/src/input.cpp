@@ -96,7 +96,7 @@ void IterationInput::setNIter(const int &nIter) {
 // -----------------------------------------------------------------
 
 void ClassicInput::setGuess(const Guess &guess) {
-  if (guess.wvg.size() != guess.slfc.size()) {
+  if (guess.wvg.size() != guess.ssf.size()) {
     throwError("The initial guess is inconsistent");
   }
   this->guess = guess;

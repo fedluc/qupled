@@ -35,7 +35,6 @@ protected:
   std::string adrFixedDatabaseName;
   // Static structure factor (for iterations)
   std::vector<double> ssfNew;
-  std::vector<double> ssfOld;
   // Initialize basic properties
   void init();
   // Compute auxiliary density response

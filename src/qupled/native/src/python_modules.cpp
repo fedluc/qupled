@@ -120,12 +120,10 @@ BOOST_PYTHON_MODULE(native) {
   // Class for the initial guess of the Stls scheme
   bp::class_<StlsInput::Guess>("StlsGuess")
       .add_property("wvg", &PyStlsGuess::getWvg, &PyStlsGuess::setWvg)
-      .add_property("slfc", &PyStlsGuess::getSlfc, &PyStlsGuess::setSlfc);
+      .add_property("ssf", &PyStlsGuess::getSsf, &PyStlsGuess::setSsf);
 
   // Class for the initial guess of the Qstls scheme
-  bp::class_<QstlsInput::Guess>("QstlsGuess")
-      .add_property("wvg", &PyQstlsGuess::getWvg, &PyQstlsGuess::setWvg)
-      .add_property("ssf", &PyQstlsGuess::getSsf, &PyQstlsGuess::setSsf)
+  bp::class_<QstlsInput::Guess, bp::bases<StlsInput::Guess>>("QstlsGuess")
       .add_property("adr", &PyQstlsGuess::getAdr, &PyQstlsGuess::setAdr)
       .add_property("matsubara",
                     &PyQstlsGuess::getMatsubara,

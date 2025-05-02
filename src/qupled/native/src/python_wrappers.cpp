@@ -23,16 +23,16 @@ bn::ndarray PyStlsGuess::getWvg(const StlsInput::Guess &guess) {
   return pythonUtil::toNdArray(guess.wvg);
 }
 
-bn::ndarray PyStlsGuess::getSlfc(const StlsInput::Guess &guess) {
-  return pythonUtil::toNdArray(guess.slfc);
+bn::ndarray PyStlsGuess::getSsf(const StlsInput::Guess &guess) {
+  return pythonUtil::toNdArray(guess.ssf);
 }
 
 void PyStlsGuess::setWvg(StlsInput::Guess &guess, const bn::ndarray &wvg) {
   guess.wvg = pythonUtil::toVector(wvg);
 }
 
-void PyStlsGuess::setSlfc(StlsInput::Guess &guess, const bn::ndarray &slfc) {
-  guess.slfc = pythonUtil::toVector(slfc);
+void PyStlsGuess::setSsf(StlsInput::Guess &guess, const bn::ndarray &ssf) {
+  guess.ssf = pythonUtil::toVector(ssf);
 }
 
 // -----------------------------------------------------------------
@@ -75,28 +75,12 @@ void PyFreeEnergyIntegrand::setIntegrand(VSStlsInput::FreeEnergyIntegrand &fxc,
 // PyQstlsGuess
 // -----------------------------------------------------------------
 
-bn::ndarray PyQstlsGuess::getWvg(const QstlsInput::Guess &guess) {
-  return pythonUtil::toNdArray(guess.wvg);
-}
-
-bn::ndarray PyQstlsGuess::getSsf(const QstlsInput::Guess &guess) {
-  return pythonUtil::toNdArray(guess.ssf);
-}
-
 bn::ndarray PyQstlsGuess::getAdr(const QstlsInput::Guess &guess) {
   return pythonUtil::toNdArray2D(guess.adr);
 }
 
 int PyQstlsGuess::getMatsubara(const QstlsInput::Guess &guess) {
   return guess.matsubara;
-}
-
-void PyQstlsGuess::setWvg(QstlsInput::Guess &guess, const bn::ndarray &wvg) {
-  guess.wvg = pythonUtil::toVector(wvg);
-}
-
-void PyQstlsGuess::setSsf(QstlsInput::Guess &guess, const bn::ndarray &ssf) {
-  guess.ssf = pythonUtil::toVector(ssf);
 }
 
 void PyQstlsGuess::setAdr(QstlsInput::Guess &guess, const bn::ndarray &adr) {
