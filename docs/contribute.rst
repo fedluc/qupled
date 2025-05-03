@@ -32,7 +32,7 @@ There are two options for setting up your development environment:
 
       pip install -r dev/requirements.txt
 
-   Additionally, ensure that you have all the necessary :ref:`external dependenceis <external_dependencies>` 
+   Additionally, ensure that you have all the necessary :ref:`external dependencies <external_dependencies>` 
    installed.
 
 Formatting

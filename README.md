@@ -12,7 +12,7 @@ Qupled is a Python package designed for calculating the properties of quantum pl
  
 ## Running 
 
-After [installation](https://qupled.readthedocs.io/en/latest/introduction.html#installing-qupled) qupled can be used as a regular Python package
+After [installation](https://qupled.readthedocs.io/en/latest/introduction.html#installing-qupled) qupled can be used as a regular Python package.
 
 ```python
 # Solve the stls dielectric scheme for coupling = 10 and degeneracy 1.0
@@ -23,7 +23,7 @@ stls.Stls().compute(inputs)
 
 ## Documentation
 
-More detailed information on the package together with a list of examples is available in the [documentation](http://qupled.readthedocs.io/)
+More detailed information on the package together with a list of examples is available in the [documentation](http://qupled.readthedocs.io/).
 
 ## Publications
 
