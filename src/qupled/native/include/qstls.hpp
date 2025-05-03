@@ -20,10 +20,7 @@ public:
   Qstls(const QstlsInput &in_, const bool verbose_);
   explicit Qstls(const QstlsInput &in_)
       : Qstls(in_, true) {}
-  // Compute qstls scheme
-  int compute();
   // Getters
-  double getError() const { return computeError(); }
   const Vector2D &getAdr() const { return adr; }
   const Vector3D &getAdrFixed() const { return adrFixed; }
 
@@ -33,22 +30,15 @@ protected:
   Vector2D adr;
   Vector3D adrFixed;
   std::string adrFixedDatabaseName;
-  // Static structure factor (for iterations)
-  std::vector<double> ssfNew;
   // Initialize basic properties
   void init();
   // Compute auxiliary density response
-  void computeAdr();
+  void computeLfc();
   // Read and write auxiliary density response to database
   void readAdrFixed(Vector3D &res, const std::string &name, int runId) const;
   void writeAdrFixed(const Vector3D &res, const std::string &name) const;
   // Compute static structure factor at finite temperature
-  void computeSsf();
-  // Iterations to solve the stls scheme
-  void doIterations();
-  void initialGuess();
-  double computeError() const;
-  void updateSolution();
+  void computeSsf() override;
 
 private:
 
@@ -60,7 +50,7 @@ private:
   void computeSsfFinite();
   void computeSsfGround();
   // Iterations to solve the stls scheme
-  bool initialGuessFromInput();
+  bool initialGuessFromInput() override;
 };
 
 namespace QstlsUtil {

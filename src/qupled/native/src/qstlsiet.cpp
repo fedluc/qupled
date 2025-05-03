@@ -35,19 +35,6 @@ QstlsIet::QstlsIet(const QstlsIetInput &in_)
   adrOld.resize(nx, nl);
 }
 
-int QstlsIet::compute() {
-  try {
-    init();
-    Qstls::println("Structural properties calculation ...");
-    doIterations();
-    Qstls::println("Done");
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
-}
-
 void QstlsIet::init() {
   Qstls::init();
   Iet::init();
@@ -55,37 +42,6 @@ void QstlsIet::init() {
       "Computing fixed component of the iet auxiliary density response: ");
   computeAdrFixed();
   Qstls::println("Done");
-}
-
-void QstlsIet::doIterations() {
-  const int maxIter = in.getNIter();
-  const double minErr = in.getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
-  initialGuess();
-  while (counter < maxIter + 1 && err > minErr) {
-    // Start timing
-    double tic = timer();
-    // Update auxiliary density response
-    computeAdr();
-    // Update static structure factor
-    computeSsf();
-    // Update diagnostic
-    counter++;
-    err = computeError();
-    // Update solution
-    updateSolution();
-    // End timing
-    double toc = timer();
-    // Print diagnostic
-    Qstls::println(format("--- iteration {:d} ---", counter));
-    Qstls::println(format("Elapsed time: {:.3f} seconds", toc - tic));
-    Qstls::println(format("Residual error: {:.5e}", err));
-    fflush(stdout);
-  }
-  // Set static structure factor for output
-  ssf = ssfOld;
 }
 
 void QstlsIet::initialGuess() {
@@ -131,8 +87,9 @@ void QstlsIet::computeSsf() {
   const vector<double> &bf = getBf();
   for (int i = 0; i < nx; ++i) {
     const double bfi = bf[i];
-    QstlsIetUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i], bfi);
-    ssfNew[i] = ssfTmp.get();
+    QstlsIetUtil::Ssf ssfTmp(
+        wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i], bfi);
+    ssf[i] = ssfTmp.get();
   }
 }
 
@@ -143,8 +100,8 @@ void QstlsIet::updateSolution() {
   adrOld.linearCombination(adr, aMix);
 }
 
-void QstlsIet::computeAdr() {
-  Qstls::computeAdr();
+void QstlsIet::computeLfc() {
+  Qstls::computeLfc();
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
   const bool segregatedItg = in.getInt2DScheme() == "segregated";

@@ -103,8 +103,8 @@ public:
   // Constructor
   explicit QstlsCSR(const QVSStlsInput &in_);
   // Compute auxiliary density response
-  void computeAdrQStls();
-  void computeAdr();
+  void computeLfcQstls();
+  void computeLfc();
   // Publicly esposed private stls methods
   void init();
   void initialGuess() { Qstls::initialGuess(); }

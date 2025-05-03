@@ -126,15 +126,11 @@ double pyHF::getUInt(const HF &hf) { return hf.getUInt(); }
 // PyStls
 // -----------------------------------------------------------------
 
-int PyStls::compute(Stls &stls) { return stls.compute(); }
-
 double PyStls::getError(const Stls &stls) { return stls.getError(); }
 
 // -----------------------------------------------------------------
 // PyStlsIet
 // -----------------------------------------------------------------
-
-int PyStlsIet::compute(StlsIet &stlsiet) { return stlsiet.compute(); }
 
 bn::ndarray PyStlsIet::getBf(const StlsIet &stlsiet) {
   return pythonUtil::toNdArray(stlsiet.getBf());
@@ -167,10 +163,6 @@ bn::ndarray PyVSStls::getFreeEnergyGrid(const VSStls &vsstls) {
 // PyQstls
 // -----------------------------------------------------------------
 
-int PyQstls::compute(Qstls &qstls) { return qstls.compute(); }
-
-double PyQstls::getError(const Qstls &qstls) { return qstls.getError(); }
-
 bn::ndarray PyQstls::getAdr(const Qstls &qstls) {
   return pythonUtil::toNdArray2D(qstls.getAdr());
 }
@@ -178,8 +170,6 @@ bn::ndarray PyQstls::getAdr(const Qstls &qstls) {
 // -----------------------------------------------------------------
 // PyQstlsIet
 // -----------------------------------------------------------------
-
-int PyQstlsIet::compute(QstlsIet &qstlsiet) { return qstlsiet.compute(); }
 
 bn::ndarray PyQstlsIet::getBf(const QstlsIet &qstlsiet) {
   return pythonUtil::toNdArray(qstlsiet.getBf());

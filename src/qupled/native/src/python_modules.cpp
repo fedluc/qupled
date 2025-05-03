@@ -174,14 +174,11 @@ BOOST_PYTHON_MODULE(native) {
 
   // Class to solve quantum schemes
   bp::class_<Qstls, bp::bases<Stls>>("Qstls", bp::init<const QstlsInput>())
-      .def("compute", &PyQstls::compute)
-      .add_property("error", &PyQstls::getError)
       .add_property("adr", &PyQstls::getAdr);
 
   // Class to solve classical schemes
   bp::class_<QstlsIet, bp::bases<Qstls>>("QstlsIet",
                                          bp::init<const QstlsIetInput>())
-      .def("compute", &PyQstlsIet::compute)
       .add_property("bf", &PyQstlsIet::getBf);
 
   // Class to solve the quantum VS scheme

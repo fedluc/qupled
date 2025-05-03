@@ -61,21 +61,21 @@ void Stls::initialGuess() {
   if (initialGuessFromInput()) { return; }
   // Default
   Rpa rpa(in, false);
-  rpa.compute();
+  int status = rpa.compute();
+  if (status != 0) {
+    throwError("Failed to compute the default initial guess");
+  }
   ssf = rpa.getSsf();
 }
 
 bool Stls::initialGuessFromInput() {
-  const Interpolator1D ssfi(in.getGuess().wvg, in.getGuess().ssf);
+  const auto &guess = in.getGuess();
+  const Interpolator1D ssfi(guess.wvg, guess.ssf);
   if (!ssfi.isValid()) { return false; }
-  const double xmaxi = in.getGuess().wvg.back();
+  const double xMax = guess.wvg.back();
   for (size_t i = 0; i < wvg.size(); ++i) {
-    const double x = wvg[i];
-    if (x <= xmaxi) {
-      ssf[i] = ssfi.eval(x);
-    } else {
-      ssf[i] = 1.0;
-    }
+    const double &x = wvg[i];
+    ssf[i] = (x <= xMax) ? ssfi.eval(x) : 1.0;
   }
   return true;
 }

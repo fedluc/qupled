@@ -177,12 +177,12 @@ void QStructProp::doIterations() {
     {
 #pragma omp for
       for (auto &c : csr) {
-        c->computeAdrQStls();
+        c->computeLfcQstls();
       }
 #pragma omp for
       for (size_t i = 0; i < csr.size(); ++i) {
         auto &c = csr[i];
-        c->computeAdr();
+        c->computeLfc();
         c->computeSsf();
         if (i == RS_THETA) { err = c->computeError(); }
         c->updateSolution();
@@ -194,10 +194,6 @@ void QStructProp::doIterations() {
                  "(structural properties) = {:.5e}",
                  csr[RS_THETA]->getAlpha(),
                  err));
-  // Set static structure factor for output
-  for (auto &c : csr) {
-    c->updateSsf();
-  }
 }
 
 vector<double> QStructProp::getQ() const {
@@ -236,8 +232,8 @@ void QstlsCSR::init() {
   Qstls::init();
 }
 
-void QstlsCSR::computeAdrQStls() {
-  Qstls::computeAdr();
+void QstlsCSR::computeLfcQstls() {
+  Qstls::computeLfc();
   *lfc = adr;
 }
 
@@ -247,7 +243,7 @@ Vector2D QstlsCSR::getDerivativeContribution() const {
   return out;
 }
 
-void QstlsCSR::computeAdr() {
+void QstlsCSR::computeLfc() {
   Vector2D adrDerivative = getDerivativeContribution();
   adr.diff(adrDerivative);
 }

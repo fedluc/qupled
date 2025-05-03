@@ -34,9 +34,9 @@ protected:
   void computeLfc() override;
   // Iterations to solve the stls scheme
   void initialGuess();
-  bool initialGuessFromInput();
+  virtual bool initialGuessFromInput();
   double computeError() const;
-  void updateSolution();
+  virtual void updateSolution();
 
 private:
 

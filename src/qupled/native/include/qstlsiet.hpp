@@ -15,8 +15,6 @@ public:
 
   // Constructor
   explicit QstlsIet(const QstlsIetInput &in_);
-  // Compute qstls scheme
-  int compute();
 
 private:
 
@@ -29,13 +27,12 @@ private:
   // Initialize basic properties
   void init();
   // Compute auxiliary density response
-  void computeAdr();
+  void computeLfc();
   // Compute static structure factor at finite temperature
   void computeSsf();
   // Iterations to solve the stls scheme
-  void doIterations();
   void initialGuess();
-  void updateSolution();
+  void updateSolution() override;
   // Compute auxiliary density response
   void computeAdrFixed();
   // Iterations to solve the stls scheme
