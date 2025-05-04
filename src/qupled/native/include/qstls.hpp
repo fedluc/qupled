@@ -31,14 +31,16 @@ protected:
   Vector3D adrFixed;
   std::string adrFixedDatabaseName;
   // Initialize basic properties
-  void init();
+  void init() override;
   // Compute auxiliary density response
-  void computeLfc();
+  void computeLfc() override;
+  // Compute static structure factor at finite temperature
+  void computeSsf() override;
+  // Read the initial guess from input
+  bool initialGuessFromInput() override;
   // Read and write auxiliary density response to database
   void readAdrFixed(Vector3D &res, const std::string &name, int runId) const;
   void writeAdrFixed(const Vector3D &res, const std::string &name) const;
-  // Compute static structure factor at finite temperature
-  void computeSsf() override;
 
 private:
 
@@ -49,8 +51,6 @@ private:
   // Compute static structure factor at finite temperature
   void computeSsfFinite();
   void computeSsfGround();
-  // Iterations to solve the stls scheme
-  bool initialGuessFromInput() override;
 };
 
 namespace QstlsUtil {

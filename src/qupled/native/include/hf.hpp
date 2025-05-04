@@ -18,6 +18,8 @@ public:
   HF(const Input &in_, const bool verbose_);
   explicit HF(const Input &in_)
       : HF(in_, true) {}
+  // Destructor
+  virtual ~HF() = default;
   // Compute the scheme
   int compute();
   // Getters

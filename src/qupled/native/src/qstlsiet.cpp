@@ -44,14 +44,9 @@ void QstlsIet::init() {
   Qstls::println("Done");
 }
 
-void QstlsIet::initialGuess() {
-  Qstls::initialGuess();
-  assert(!adrOld.empty());
-  if (initialGuessFromInput()) { return; }
-  adrOld.fill(0.0);
-}
-
 bool QstlsIet::initialGuessFromInput() {
+  const bool ssfIsSetFromInput = Qstls::initialGuessFromInput();
+  if (!ssfIsSetFromInput) { return false; }
   const auto &guess = in.getGuess();
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
@@ -81,6 +76,7 @@ bool QstlsIet::initialGuessFromInput() {
 }
 
 void QstlsIet::computeSsf() {
+  ssfOld = ssf;
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const int nx = wvg.size();
@@ -107,8 +103,7 @@ void QstlsIet::computeLfc() {
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   assert(adrOld.size() > 0);
   // Setup interpolators
-  const shared_ptr<Interpolator1D> ssfi =
-      make_shared<Interpolator1D>(wvg, ssfOld);
+  const shared_ptr<Interpolator1D> ssfi = make_shared<Interpolator1D>(wvg, ssf);
   const shared_ptr<Interpolator1D> bfi =
       make_shared<Interpolator1D>(wvg, getBf());
   vector<shared_ptr<Interpolator1D>> dlfci(nl);

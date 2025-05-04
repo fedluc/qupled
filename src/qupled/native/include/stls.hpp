@@ -19,6 +19,8 @@ public:
   Stls(const StlsInput &in_, const bool verbose_);
   explicit Stls(const StlsInput &in_)
       : Stls(in_, true) {}
+  // Destructor
+  ~Stls() override = default;
   // Getters
   double getError() const { return computeError(); }
 

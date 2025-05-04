@@ -34,6 +34,7 @@ void Qstls::init() {
   computeAdrFixed();
   println("Done");
 }
+
 bool Qstls::initialGuessFromInput() {
   const auto &guess = in.getGuess();
   const Interpolator1D ssfi(guess.wvg, guess.ssf);
@@ -45,6 +46,7 @@ bool Qstls::initialGuessFromInput() {
   }
   return true;
 }
+
 // Compute auxiliary density response
 void Qstls::computeLfc() {
   if (in.getDegeneracy() == 0.0) { return; }

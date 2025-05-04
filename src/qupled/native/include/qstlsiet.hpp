@@ -25,18 +25,17 @@ private:
   // Auxiliary density response
   Vector2D adrOld;
   // Initialize basic properties
-  void init();
+  void init() override;
   // Compute auxiliary density response
-  void computeLfc();
+  void computeLfc() override;
   // Compute static structure factor at finite temperature
-  void computeSsf();
+  void computeSsf() override;
   // Iterations to solve the stls scheme
-  void initialGuess();
   void updateSolution() override;
   // Compute auxiliary density response
   void computeAdrFixed();
   // Iterations to solve the stls scheme
-  bool initialGuessFromInput();
+  bool initialGuessFromInput() override;
 };
 
 namespace QstlsIetUtil {
