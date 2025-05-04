@@ -52,10 +52,10 @@ void Rpa::computeSsfFinite() {
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const size_t nx = wvg.size();
-  assert(slfc.size() == nx);
+  assert(lfc.size() == nx);
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
-    RpaUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], idr[i]);
+    RpaUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], lfc[i], idr[i]);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -65,19 +65,19 @@ void Rpa::computeSsfGround() {
   const double rs = in.getCoupling();
   const double OmegaMax = in.getFrequencyCutoff();
   const size_t nx = wvg.size();
-  assert(slfc.size() == nx);
+  assert(lfc.size() == nx);
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    RpaUtil::SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], OmegaMax, itg);
+    RpaUtil::SsfGround ssfTmp(x, rs, ssfHF[i], lfc[i], OmegaMax, itg);
     ssf[i] = ssfTmp.get();
   }
 }
 
 // Compute static local field correction
 void Rpa::computeLfc() {
-  assert(slfc.size() == wvg.size());
-  for (auto &s : slfc) {
+  assert(lfc.size() == wvg.size());
+  for (auto &s : lfc) {
     s = 0;
   }
 }
@@ -94,12 +94,12 @@ double RpaUtil::Ssf::get() const {
   double fact2 = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {
     const double &idrl = idr[l];
-    const double fact3 = 1.0 + ip * (1 - slfc) * idrl;
+    const double fact3 = 1.0 + ip * (1 - lfc) * idrl;
     double fact4 = idrl * idrl / fact3;
     if (l > 0) fact4 *= 2;
     fact2 += fact4;
   }
-  return ssfHF - 1.5 * ip * Theta * (1 - slfc) * fact2;
+  return ssfHF - 1.5 * ip * Theta * (1 - lfc) * fact2;
 }
 
 // -----------------------------------------------------------------
@@ -116,5 +116,5 @@ double RpaUtil::SsfGround::get() {
 
 double RpaUtil::SsfGround::integrand(const double &Omega) const {
   const double idr = HFUtil::IdrGround(x, Omega).get();
-  return idr / (1.0 + ip * idr * (1.0 - slfc)) - idr;
+  return idr / (1.0 + ip * idr * (1.0 - lfc)) - idr;
 }

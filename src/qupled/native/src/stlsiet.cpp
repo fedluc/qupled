@@ -20,7 +20,7 @@ void StlsIet::init() {
 
 // Compute static local field correction
 void StlsIet::computeLfc() {
-  vector<double> slfcOld = slfc;
+  vector<double> lfcOld = lfc;
   Stls::computeLfc();
   const std::shared_ptr<Integrator2D> itg2 =
       make_shared<Integrator2D>(in.getIntError());
@@ -28,14 +28,14 @@ void StlsIet::computeLfc() {
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const shared_ptr<Interpolator1D> ssfItp =
       make_shared<Interpolator1D>(wvg, ssf);
-  const shared_ptr<Interpolator1D> slfcItp =
-      make_shared<Interpolator1D>(wvg, slfcOld);
+  const shared_ptr<Interpolator1D> lfcItp =
+      make_shared<Interpolator1D>(wvg, lfcOld);
   const shared_ptr<Interpolator1D> bfItp =
       make_shared<Interpolator1D>(wvg, getBf());
   for (size_t i = 0; i < wvg.size(); ++i) {
-    StlsIetUtil::Slfc slfcTmp(
-        wvg[i], wvg.front(), wvg.back(), ssfItp, slfcItp, bfItp, itgGrid, itg2);
-    slfc[i] += slfcTmp.get();
+    StlsIetUtil::Slfc lfcTmp(
+        wvg[i], wvg.front(), wvg.back(), ssfItp, lfcItp, bfItp, itgGrid, itg2);
+    lfc[i] += lfcTmp.get();
   }
 }
 
@@ -44,7 +44,7 @@ void StlsIet::computeLfc() {
 // -----------------------------------------------------------------
 
 // Compute static local field correction from interpolator
-double StlsIetUtil::Slfc::slfc(const double &y) const { return slfci->eval(y); }
+double StlsIetUtil::Slfc::lfc(const double &y) const { return lfci->eval(y); }
 
 // Compute bridge function from interpolator
 double StlsIetUtil::Slfc::bf(const double &y) const { return bfi->eval(y); }
@@ -65,7 +65,7 @@ double StlsIetUtil::Slfc::get() const {
 // Level 1 integrand
 double StlsIetUtil::Slfc::integrand1(const double &y) const {
   if (y == 0.0) return 0.0;
-  return (-bf(y) - (ssf(y) - 1.0) * (slfc(y) - 1.0)) / y;
+  return (-bf(y) - (ssf(y) - 1.0) * (lfc(y) - 1.0)) / y;
 }
 
 // Level 2 integrand

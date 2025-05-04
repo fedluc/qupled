@@ -14,15 +14,15 @@ inputs.threads = 16
 scheme.compute(inputs)
 print(scheme.results.uint)
 
-# # Define a QstlsIet object to solve the QSTLS-IET scheme
-# scheme = qstlsiet.QstlsIet()
+# Define a QstlsIet object to solve the QSTLS-IET scheme
+scheme = qstlsiet.QstlsIet()
 
-# # Define the input parameters for one of the QSTLS-IET schemes
-# inputs = qstlsiet.Input(10.0, 1.0, "QSTLS-LCT")
-# inputs.mixing = 0.5
-# inputs.matsubara = 16
-# inputs.threads = 16
-# inputs.integral_strategy = "segregated"
+# Define the input parameters for one of the QSTLS-IET schemes
+inputs = qstlsiet.Input(10.0, 1.0, "QSTLS-LCT")
+inputs.mixing = 0.5
+inputs.matsubara = 16
+inputs.threads = 16
+inputs.integral_strategy = "segregated"
 
-# # solve the QSTLS-IET scheme
-# scheme.compute(inputs)
+# solve the QSTLS-IET scheme
+scheme.compute(inputs)

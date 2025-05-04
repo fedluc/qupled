@@ -60,7 +60,7 @@ namespace RpaUtil {
     // Hartree-Fock contribution
     const double ssfHF;
     // Static local field correction
-    const double slfc;
+    const double lfc;
     // Normalized interaction potential
     const double ip = 4.0 * numUtil::lambda * rs / (M_PI * x * x);
     // Constructor
@@ -68,12 +68,12 @@ namespace RpaUtil {
             const double &Theta_,
             const double &rs_,
             const double &ssfHF_,
-            const double &slfc_)
+            const double &lfc_)
         : x(x_),
           Theta(Theta_),
           rs(rs_),
           ssfHF(ssfHF_),
-          slfc(slfc_) {}
+          lfc(lfc_) {}
   };
 
   class Ssf : public SsfBase {
@@ -85,9 +85,9 @@ namespace RpaUtil {
         const double &Theta_,
         const double &rs_,
         const double &ssfHF_,
-        const double &slfc_,
+        const double &lfc_,
         std::span<const double> idr_)
-        : SsfBase(x_, Theta_, rs_, ssfHF_, slfc_),
+        : SsfBase(x_, Theta_, rs_, ssfHF_, lfc_),
           idr(idr_) {}
     // Get static structore factor
     double get() const;
@@ -106,10 +106,10 @@ namespace RpaUtil {
     SsfGround(const double &x_,
               const double &rs_,
               const double &ssfHF_,
-              const double &slfc_,
+              const double &lfc_,
               const double &OmegaMax_,
               std::shared_ptr<Integrator1D> itg_)
-        : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
+        : SsfBase(x_, 0, rs_, ssfHF_, lfc_),
           OmegaMax(OmegaMax_),
           itg(itg_) {}
     // Get result of integration

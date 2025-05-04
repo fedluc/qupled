@@ -98,4 +98,4 @@ def test_stls_guess_to_native(mocker):
     result = guess.to_native()
     assert result == native_guess
     assert result.wvg == wvg
-    assert result.slfc == ssf
+    assert result.ssf == ssf

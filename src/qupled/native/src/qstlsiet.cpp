@@ -144,7 +144,7 @@ void QstlsIet::computeLfc() {
   adr.sum(adrIet);
   // Compute static local field correction
   for (int i = 0; i < nx; ++i) {
-    slfc[i] = adr(i, 0) / idr(i, 0);
+    lfc[i] = adr(i, 0) / idr(i, 0);
   };
 }
 

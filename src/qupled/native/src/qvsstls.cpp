@@ -55,7 +55,7 @@ void QVSStls::updateSolution() {
   // Update the structural properties used for output
   adr = thermoProp->getAdr();
   ssf = thermoProp->getSsf();
-  slfc = thermoProp->getSlfc();
+  lfc = thermoProp->getLfc();
 }
 
 void QVSStls::init() { Rpa::init(); }
@@ -234,12 +234,12 @@ void QstlsCSR::init() {
 
 void QstlsCSR::computeLfcQstls() {
   Qstls::computeLfc();
-  *lfc = adr;
+  *CSR::lfc = adr;
 }
 
 Vector2D QstlsCSR::getDerivativeContribution() const {
   Vector2D out = CSR::getDerivativeContribution();
-  out.linearCombination(*lfc, -alpha / 3.0);
+  out.linearCombination(*CSR::lfc, -alpha / 3.0);
   return out;
 }
 

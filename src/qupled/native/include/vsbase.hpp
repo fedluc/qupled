@@ -99,7 +99,7 @@ public:
   void compute();
   // Get structural properties
   const std::vector<double> &getSsf();
-  const std::vector<double> &getSlfc();
+  const std::vector<double> &getLfc();
   // Get free energy and free energy derivatives
   std::vector<double> getFreeEnergyData() const;
   // Get internal energy and internal energy derivatives
@@ -254,7 +254,7 @@ public:
   virtual double computeError() = 0;
   virtual void updateSolution() = 0;
   virtual const std::vector<double> &getSsf() const = 0;
-  virtual const std::vector<double> &getSlfc() const = 0;
+  virtual const std::vector<double> &getLfc() const = 0;
   virtual const std::vector<double> &getWvg() const = 0;
 
 protected:

@@ -144,7 +144,7 @@ BOOST_PYTHON_MODULE(native) {
       .def("rdf", &pyHF::getRdf)
       .add_property("idr", &pyHF::getIdr)
       .add_property("sdr", &pyHF::getSdr)
-      .add_property("slfc", &pyHF::getSlfc)
+      .add_property("lfc", &pyHF::getLfc)
       .add_property("ssf", &pyHF::getSsf)
       .add_property("uint", &pyHF::getUInt)
       .add_property("wvg", &pyHF::getWvg);

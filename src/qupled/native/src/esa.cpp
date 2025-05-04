@@ -12,10 +12,10 @@ using namespace numUtil;
 // -----------------------------------------------------------------
 
 void ESA::computeLfc() {
-  ESAUtil::Slfc slfcTmp(in.getCoupling(), in.getDegeneracy());
+  ESAUtil::Slfc lfcTmp(in.getCoupling(), in.getDegeneracy());
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double &x = wvg[i];
-    slfc[i] = slfcTmp.get(x);
+    lfc[i] = lfcTmp.get(x);
   }
 }
 

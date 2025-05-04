@@ -40,7 +40,7 @@ public:
   static bn::ndarray getWvg(const StlsInput::Guess &guess);
   static bn::ndarray getSsf(const StlsInput::Guess &guess);
   static void setWvg(StlsInput::Guess &guess, const bn::ndarray &wvg);
-  static void setSsf(StlsInput::Guess &guess, const bn::ndarray &slfc);
+  static void setSsf(StlsInput::Guess &guess, const bn::ndarray &lfc);
 };
 
 // -----------------------------------------------------------------
@@ -92,7 +92,7 @@ public:
   static bn::ndarray getIdr(const HF &hf);
   static bn::ndarray getRdf(const HF &hf, const bn::ndarray &r);
   static bn::ndarray getSdr(const HF &hf);
-  static bn::ndarray getSlfc(const HF &hf);
+  static bn::ndarray getLfc(const HF &hf);
   static bn::ndarray getSsf(const HF &hf);
   static bn::ndarray getWvg(const HF &hf);
   static double getUInt(const HF &hf);

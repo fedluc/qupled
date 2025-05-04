@@ -47,7 +47,7 @@ double VSStls::computeAlpha() {
 
 void VSStls::updateSolution() {
   // Update the structural properties used for output
-  slfc = thermoProp->getSlfc();
+  lfc = thermoProp->getLfc();
   ssf = thermoProp->getSsf();
 }
 
@@ -148,12 +148,12 @@ void StructProp::doIterations() {
 
 void StlsCSR::computeLfcStls() {
   Stls::computeLfc();
-  *lfc = Vector2D(slfc);
+  *CSR::lfc = Vector2D(Stls::lfc);
 }
 
 void StlsCSR::computeLfc() {
-  Vector2D slfcDerivative = getDerivativeContribution();
-  for (size_t i = 0; i < slfc.size(); ++i) {
-    slfc[i] -= slfcDerivative(i, 0);
+  Vector2D lfcDerivative = getDerivativeContribution();
+  for (size_t i = 0; i < Stls::lfc.size(); ++i) {
+    Stls::lfc[i] -= lfcDerivative(i, 0);
   }
 }

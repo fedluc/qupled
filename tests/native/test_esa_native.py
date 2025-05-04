@@ -8,7 +8,7 @@ def test_esa_properties():
     scheme = ESA(Input())
     assert hasattr(scheme, "idr")
     assert hasattr(scheme, "sdr")
-    assert hasattr(scheme, "slfc")
+    assert hasattr(scheme, "lfc")
     assert hasattr(scheme, "ssf")
     with pytest.raises(RuntimeError) as excinfo:
         hasattr(scheme, "uint")
@@ -34,6 +34,6 @@ def test_esa_compute():
     assert scheme.idr.shape[0] == nx
     assert scheme.idr.shape[1] == inputs.matsubara
     assert scheme.sdr.size == nx
-    assert scheme.slfc.size == nx
+    assert scheme.lfc.size == nx
     assert scheme.ssf.size == nx
     assert scheme.rdf(scheme.wvg).size == nx

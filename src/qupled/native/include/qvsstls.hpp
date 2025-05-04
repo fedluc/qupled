@@ -117,7 +117,7 @@ public:
   double getQAdder() const;
   // Getters
   const std::vector<double> &getSsf() const { return Qstls::getSsf(); }
-  const std::vector<double> &getSlfc() const { return Qstls::getSlfc(); }
+  const std::vector<double> &getLfc() const { return Qstls::getLfc(); }
   const std::vector<double> &getWvg() const { return Qstls::getWvg(); }
 
 private:

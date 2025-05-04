@@ -44,14 +44,14 @@ namespace StlsIetUtil {
          const double &yMin_,
          const double &yMax_,
          std::shared_ptr<Interpolator1D> ssfi_,
-         std::shared_ptr<Interpolator1D> slfci_,
+         std::shared_ptr<Interpolator1D> lfci_,
          std::shared_ptr<Interpolator1D> bfi_,
          const std::vector<double> &itgGrid_,
          std::shared_ptr<Integrator2D> itg_)
         : SlfcBase(x_, yMin_, yMax_, ssfi_),
           itg(itg_),
           itgGrid(itgGrid_),
-          slfci(slfci_),
+          lfci(lfci_),
           bfi(bfi_) {}
     // Get result of integration
     double get() const;
@@ -66,11 +66,11 @@ namespace StlsIetUtil {
     double integrand1(const double &y) const;
     double integrand2(const double &w) const;
     // Static local field correction interpolator
-    const std::shared_ptr<Interpolator1D> slfci;
+    const std::shared_ptr<Interpolator1D> lfci;
     // Bridge function interpolator
     const std::shared_ptr<Interpolator1D> bfi;
     // Compute static local field correction
-    double slfc(const double &x) const;
+    double lfc(const double &x) const;
     // Compute bridge function
     double bf(const double &x_) const;
   };

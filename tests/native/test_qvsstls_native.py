@@ -51,6 +51,6 @@ def test_qvsstls_compute(database_info):
     assert scheme.idr.shape[0] == nx
     assert scheme.idr.shape[1] == inputs.matsubara
     assert scheme.sdr.size == nx
-    assert scheme.slfc.size == nx
+    assert scheme.lfc.size == nx
     assert scheme.ssf.size == nx
     assert scheme.rdf(scheme.wvg).size == nx

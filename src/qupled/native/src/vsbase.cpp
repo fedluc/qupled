@@ -183,10 +183,10 @@ const vector<double> &ThermoPropBase::getSsf() {
   return structProp->getCsr(getStructPropIdx()).getSsf();
 }
 
-const vector<double> &ThermoPropBase::getSlfc() {
+const vector<double> &ThermoPropBase::getLfc() {
   assert(structProp);
   if (!structProp->isComputed()) { structProp->compute(); }
-  return structProp->getCsr(getStructPropIdx()).getSlfc();
+  return structProp->getCsr(getStructPropIdx()).getLfc();
 }
 
 vector<double> ThermoPropBase::getFreeEnergyData() const {
