@@ -24,7 +24,7 @@ public:
   int compute();
   // Getters
   const Vector2D &getIdr() const { return idr; }
-  const std::vector<double> &getLfc() const { return lfc; }
+  const Vector2D &getLfc() const { return lfc; }
   const std::vector<double> &getSsf() const { return ssf; }
   const std::vector<double> &getWvg() const { return wvg; }
   std::vector<double> getRdf(const std::vector<double> &r) const;
@@ -42,7 +42,7 @@ protected:
   // Ideal density response
   Vector2D idr;
   // Static local field correction
-  std::vector<double> lfc;
+  Vector2D lfc;
   // Static structure factor
   std::vector<double> ssf;
   // Chemical potential

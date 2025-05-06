@@ -82,13 +82,11 @@ bool Stls::initialGuessFromInput() {
 
 // Compute static local field correction
 void Stls::computeLfc() {
-  assert(ssf.size() == wvg.size());
-  assert(lfc.size() == wvg.size());
   const int nx = wvg.size();
   const shared_ptr<Interpolator1D> itp = make_shared<Interpolator1D>(wvg, ssf);
   for (int i = 0; i < nx; ++i) {
     StlsUtil::Slfc lfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
-    lfc[i] = lfcTmp.get();
+    lfc(i, 0) = lfcTmp.get();
   }
 }
 

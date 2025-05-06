@@ -20,7 +20,7 @@ void StlsIet::init() {
 
 // Compute static local field correction
 void StlsIet::computeLfc() {
-  vector<double> lfcOld = lfc;
+  const Vector2D lfcOld = lfc;
   Stls::computeLfc();
   const std::shared_ptr<Integrator2D> itg2 =
       make_shared<Integrator2D>(in.getIntError());
@@ -29,13 +29,13 @@ void StlsIet::computeLfc() {
   const shared_ptr<Interpolator1D> ssfItp =
       make_shared<Interpolator1D>(wvg, ssf);
   const shared_ptr<Interpolator1D> lfcItp =
-      make_shared<Interpolator1D>(wvg, lfcOld);
+      make_shared<Interpolator1D>(wvg[0], lfcOld(0, 0), wvg.size());
   const shared_ptr<Interpolator1D> bfItp =
       make_shared<Interpolator1D>(wvg, getBf());
   for (size_t i = 0; i < wvg.size(); ++i) {
     StlsIetUtil::Slfc lfcTmp(
         wvg[i], wvg.front(), wvg.back(), ssfItp, lfcItp, bfItp, itgGrid, itg2);
-    lfc[i] += lfcTmp.get();
+    lfc(i, 0) += lfcTmp.get();
   }
 }
 

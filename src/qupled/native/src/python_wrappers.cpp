@@ -109,7 +109,7 @@ bn::ndarray pyHF::getSdr(const HF &hf) {
 }
 
 bn::ndarray pyHF::getLfc(const HF &hf) {
-  return pythonUtil::toNdArray(hf.getLfc());
+  return pythonUtil::toNdArray2D(hf.getLfc());
 }
 
 bn::ndarray pyHF::getSsf(const HF &hf) {

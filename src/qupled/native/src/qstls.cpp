@@ -58,7 +58,7 @@ void Qstls::computeLfc() {
     adrTmp.get(wvg, adrFixed, adr);
   }
   for (int i = 0; i < nx; ++i) {
-    lfc[i] = adr(i, 0) / idr(i, 0);
+    lfc(i, 0) = adr(i, 0) / idr(i, 0);
   };
 }
 

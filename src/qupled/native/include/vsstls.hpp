@@ -108,8 +108,8 @@ public:
 
   // Getters
   const std::vector<double> &getSsf() const { return Stls::getSsf(); }
-  const std::vector<double> &getLfc() const { return Stls::getLfc(); }
   const std::vector<double> &getWvg() const { return Stls::getWvg(); }
+  const Vector2D &getLfc() const { return Stls::getLfc(); }
 
 private:
 

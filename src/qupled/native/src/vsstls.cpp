@@ -148,12 +148,12 @@ void StructProp::doIterations() {
 
 void StlsCSR::computeLfcStls() {
   Stls::computeLfc();
-  *CSR::lfc = Vector2D(Stls::lfc);
+  *CSR::lfc = Stls::lfc;
 }
 
 void StlsCSR::computeLfc() {
   Vector2D lfcDerivative = getDerivativeContribution();
   for (size_t i = 0; i < Stls::lfc.size(); ++i) {
-    Stls::lfc[i] -= lfcDerivative(i, 0);
+    Stls::lfc(i, 0) -= lfcDerivative(i, 0);
   }
 }
