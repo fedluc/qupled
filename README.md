@@ -31,6 +31,9 @@ Qupled has been used in the following publications:
 
 <ol>
   <li>
+   <a href="https://onlinelibrary.wiley.com/doi/10.1002/ctpp.70014">Tolias, P., Kalkavouras, F., Dornheim, T.  &#38; Lucco Castello, F. (2025). Dynamic Properties of the Warm Dense Uniform Electron Gas With the qSTLS Dielectric Scheme. <i>Contributions to Plasma Physics</i>, 0:e70014</a>
+  </li>
+  <li>
     <a href="https://journals.aps.org/prb/abstract/10.1103/PhysRevB.109.125134">Tolias, P., Lucco Castello, F., Kalkavouras, F., &#38; Dornheim, T. (2024). Revisiting the Vashishta-Singwi dielectric scheme for the warm dense uniform electron fluid. <i>Physical Review B</i>, <i>109</i>(12)</a>
   </li>
   <li>
