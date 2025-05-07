@@ -146,9 +146,8 @@ void Qstls::computeSsfFinite() {
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const int nx = wvg.size();
-  const int nl = idr.size(1);
   for (int i = 0; i < nx; ++i) {
-    QstlsUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i));
+    QstlsUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i]);
     ssfNew[i] = ssfTmp.get();
   }
 }
@@ -411,9 +410,9 @@ double QstlsUtil::Ssf::get() const {
   if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
   double suml = 0.0;
-  for (int l = 0; l < nl; ++l) {
-    const double idrl = idr[l];
-    const double adrl = adr[l];
+  for (size_t l = 0; l < idr.size(); ++l) {
+    const double &idrl = idr[l];
+    const double &adrl = adr[l];
     const double denom = 1.0 + ip * (idrl - adrl);
     const double f = idrl * (idrl - adrl) / denom;
     suml += (l == 0) ? f : 2 * f;

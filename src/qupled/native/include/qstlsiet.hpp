@@ -140,11 +140,10 @@ namespace QstlsIetUtil {
         const double &Theta_,
         const double &rs_,
         const double &ssfHF_,
-        const int &nl_,
-        const double *idr_,
-        const double *adr_,
+        std::span<const double> idr_,
+        std::span<const double> adr_,
         const double &bf_)
-        : QstlsUtil::Ssf(x_, Theta_, rs_, ssfHF_, nl_, idr_, adr_),
+        : QstlsUtil::Ssf(x_, Theta_, rs_, ssfHF_, idr_, adr_),
           bf(bf_) {}
     // Get static structure factor
     double get() const;

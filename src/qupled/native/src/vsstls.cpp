@@ -154,6 +154,6 @@ void StlsCSR::computeSlfcStls() {
 void StlsCSR::computeSlfc() {
   Vector2D slfcDerivative = getDerivativeContribution();
   for (size_t i = 0; i < slfcNew.size(); ++i) {
-    slfcNew[i] -= slfcDerivative(i);
+    slfcNew[i] -= slfcDerivative(i, 0);
   }
 }

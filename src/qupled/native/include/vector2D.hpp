@@ -2,6 +2,7 @@
 #define VECTOR2D_HPP
 
 #include <cstddef>
+#include <span>
 #include <vector>
 
 // -----------------------------------------------------------------
@@ -34,10 +35,12 @@ public:
   // Resize the array to new sizes s1_ and s2_
   void resize(const size_t s1_, const size_t s2_);
 
-  // Access operator
+  // Element access operator
   double &operator()(const size_t i, const size_t j);
   const double &operator()(const size_t i, const size_t j) const;
-  const double &operator()(const size_t i) const;
+
+  // Row access operator
+  std::span<const double> operator[](const size_t i) const;
 
   // Equality operator
   bool operator==(const Vector2D &other) const;

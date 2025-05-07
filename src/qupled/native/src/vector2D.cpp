@@ -47,8 +47,8 @@ const double &Vector2D::operator()(const size_t i, const size_t j) const {
   return v[j + i * s2];
 }
 
-const double &Vector2D::operator()(const size_t i) const {
-  return operator()(i, 0);
+span<const double> Vector2D::operator[](const size_t i) const {
+  return span<const double>(&operator()(i, 0), s2);
 }
 
 bool Vector2D::operator==(const Vector2D &other) const {

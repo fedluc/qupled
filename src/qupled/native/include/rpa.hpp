@@ -88,20 +88,16 @@ namespace RpaUtil {
         const double &rs_,
         const double &ssfHF_,
         const double &slfc_,
-        const int nl_,
-        const double *idr_)
+        std::span<const double> idr_)
         : SsfBase(x_, Theta_, rs_, ssfHF_, slfc_),
-          nl(nl_),
           idr(idr_) {}
     // Get static structore factor
     double get() const;
 
   protected:
 
-    // Number of Matsubara frequencies
-    const int nl;
     // Ideal density response
-    const double *idr;
+    const std::span<const double> idr;
   };
 
   class SsfGround : public SsfBase {

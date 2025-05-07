@@ -128,12 +128,10 @@ void QstlsIet::computeSsf() {
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const int nx = wvg.size();
-  const int nl = idr.size(1);
   const vector<double> &bf = getBf();
   for (int i = 0; i < nx; ++i) {
     const double bfi = bf[i];
-    QstlsIetUtil::Ssf ssfTmp(
-        wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i), bfi);
+    QstlsIetUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i], bfi);
     ssfNew[i] = ssfTmp.get();
   }
 }
@@ -344,7 +342,7 @@ double QstlsIetUtil::Ssf::get() const {
   if (x == 0.0) return 0.0;
   const double f2 = 1 - bf;
   double f3 = 0.0;
-  for (int l = 0; l < nl; ++l) {
+  for (size_t l = 0; l < idr.size(); ++l) {
     const double f4 = f2 * idr[l];
     const double f5 = 1.0 + ip * (f4 - adr[l]);
     const double f6 = idr[l] * (f4 - adr[l]) / f5;
