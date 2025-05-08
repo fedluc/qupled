@@ -5,7 +5,7 @@
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
 #include <filesystem>
-#include <fmt/core.h>
+#include <format>
 
 using namespace std;
 using namespace vecUtil;
@@ -190,10 +190,10 @@ void QStructProp::doIterations() {
     }
     counter++;
   }
-  println(fmt::format("Alpha = {:.5e}, Residual error "
-                      "(structural properties) = {:.5e}",
-                      csr[RS_THETA]->getAlpha(),
-                      err));
+  println(format("Alpha = {:.5e}, Residual error "
+                 "(structural properties) = {:.5e}",
+                 csr[RS_THETA]->getAlpha(),
+                 err));
   // Set static structure factor for output
   for (auto &c : csr) {
     c->updateSsf();
@@ -224,13 +224,13 @@ QstlsCSR::QstlsCSR(const QVSStlsInput &in_)
 void QstlsCSR::init() {
   switch (lfcTheta.type) {
   case CENTERED:
-    adrFixedDatabaseName = fmt::format("{}_THETA", in.getTheory());
+    adrFixedDatabaseName = format("{}_THETA", in.getTheory());
     break;
   case FORWARD:
-    adrFixedDatabaseName = fmt::format("{}_THETA_DOWN", in.getTheory());
+    adrFixedDatabaseName = format("{}_THETA_DOWN", in.getTheory());
     break;
   case BACKWARD:
-    adrFixedDatabaseName = fmt::format("{}_THETA_UP", in.getTheory());
+    adrFixedDatabaseName = format("{}_THETA_UP", in.getTheory());
     break;
   }
   Qstls::init();

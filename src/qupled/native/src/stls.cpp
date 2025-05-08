@@ -4,7 +4,7 @@
 #include "numerics.hpp"
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
-#include <fmt/core.h>
+#include <format>
 #include <sstream>
 
 using namespace std;
@@ -73,9 +73,9 @@ void Stls::doIterations() {
     // End timing
     double toc = timer();
     // Print diagnostic
-    println(fmt::format("--- iteration {:d} ---", counter));
-    println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
-    println(fmt::format("Residual error: {:.5e}", err));
+    println(format("--- iteration {:d} ---", counter));
+    println(format("Elapsed time: {:.3f} seconds", toc - tic));
+    println(format("Residual error: {:.5e}", err));
     fflush(stdout);
   }
 }

@@ -33,14 +33,6 @@ Vector3D::operator()(const size_t i, const size_t j, const size_t k) const {
   return v[k + j * s3 + i * s2 * s3];
 }
 
-const double &Vector3D::operator()(const size_t i, const size_t j) const {
-  return operator()(i, j, 0);
-}
-
-const double &Vector3D::operator()(const size_t i) const {
-  return operator()(i, 0);
-}
-
 bool Vector3D::operator==(const Vector3D &other) const {
   return v == other.v && s1 == other.s1 && s2 == other.s2 && s3 == other.s3;
 }

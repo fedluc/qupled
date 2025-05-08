@@ -71,11 +71,10 @@ void Rpa::computeSsfFinite() {
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const size_t nx = wvg.size();
-  const size_t nl = idr.size(1);
   assert(slfc.size() == nx);
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
-    RpaUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], nl, &idr(i));
+    RpaUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], idr[i]);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -112,9 +111,10 @@ double RpaUtil::Ssf::get() const {
   if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
   double fact2 = 0.0;
-  for (int l = 0; l < nl; ++l) {
-    const double fact3 = 1.0 + ip * (1 - slfc) * idr[l];
-    double fact4 = idr[l] * idr[l] / fact3;
+  for (size_t l = 0; l < idr.size(); ++l) {
+    const double &idrl = idr[l];
+    const double fact3 = 1.0 + ip * (1 - slfc) * idrl;
+    double fact4 = idrl * idrl / fact3;
     if (l > 0) fact4 *= 2;
     fact2 += fact4;
   }

@@ -6,7 +6,6 @@
 #include "stls.hpp"
 #include "vector2D.hpp"
 #include "vector3D.hpp"
-#include <fmt/core.h>
 #include <map>
 
 // -----------------------------------------------------------------
@@ -258,10 +257,9 @@ namespace QstlsUtil {
         const double &Theta_,
         const double &rs_,
         const double &ssfHF_,
-        const int &nl_,
-        const double *idr_,
-        const double *adr_)
-        : RpaUtil::Ssf(x_, Theta_, rs_, ssfHF_, 0, nl_, idr_),
+        std::span<const double> idr_,
+        std::span<const double> adr_)
+        : RpaUtil::Ssf(x_, Theta_, rs_, ssfHF_, 0, idr_),
           adr(adr_) {}
     // Get static structure factor
     double get() const;
@@ -269,7 +267,7 @@ namespace QstlsUtil {
   protected:
 
     // Auxiliary density response
-    const double *adr;
+    const std::span<const double> adr;
   };
 
   class SsfGround : public RpaUtil::SsfGround {

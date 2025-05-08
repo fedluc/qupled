@@ -24,7 +24,6 @@ endif()
 # Additional external libraries
 find_package(OpenMP REQUIRED)
 find_package(GSL REQUIRED)
-find_package(fmt REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(SQLiteCpp REQUIRED)
 
@@ -79,7 +78,6 @@ target_link_libraries(native PUBLIC
 		Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}
 		GSL::gsl
 		GSL::gslcblas
-		fmt::fmt
 		SQLiteCpp 
 		SQLite::SQLite3)
 

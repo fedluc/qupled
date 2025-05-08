@@ -3,6 +3,8 @@
 #include "numerics.hpp"
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
+#include <cstring>
+#include <format>
 
 using namespace std;
 using namespace vecUtil;
@@ -18,7 +20,7 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
     : Stls(in_, verbose_),
       in(in_) {
   // Set name for the fixed adr output file
-  adrFixedDatabaseName = fmt::format("{}", in.getTheory());
+  adrFixedDatabaseName = format("{}", in.getTheory());
   // Allocate arrays
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
@@ -73,9 +75,9 @@ void Qstls::doIterations() {
     // End timing
     double toc = timer();
     // Print diagnostic
-    println(fmt::format("--- iteration {:d} ---", counter));
-    println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
-    println(fmt::format("Residual error: {:.5e}", err));
+    println(format("--- iteration {:d} ---", counter));
+    println(format("Elapsed time: {:.3f} seconds", toc - tic));
+    println(format("Residual error: {:.5e}", err));
     fflush(stdout);
   }
   // Set static structure factor for output
@@ -146,9 +148,8 @@ void Qstls::computeSsfFinite() {
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const int nx = wvg.size();
-  const int nl = idr.size(1);
   for (int i = 0; i < nx; ++i) {
-    QstlsUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i));
+    QstlsUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i]);
     ssfNew[i] = ssfTmp.get();
   }
 }
@@ -214,16 +215,16 @@ void Qstls::writeAdrFixed(const Vector3D &res, const string &name) const {
     SQLite::Database db(dbInfo.name,
                         SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
     // Create table if it doesn't exist
-    const string createTable = fmt::format(QstlsUtil::SQL_CREATE_TABLE,
-                                           QstlsUtil::SQL_TABLE_NAME,
-                                           dbInfo.runTableName);
+    const string createTable = format(QstlsUtil::SQL_CREATE_TABLE,
+                                      QstlsUtil::SQL_TABLE_NAME,
+                                      dbInfo.runTableName);
     db.exec(createTable);
     // Prepare binary data
     const void *adrData = static_cast<const void *>(res.data());
     const int adrSize = static_cast<int>(res.size() * sizeof(double));
     // Insert data
     const string insert =
-        fmt::format(QstlsUtil::SQL_INSERT, QstlsUtil::SQL_TABLE_NAME);
+        format(QstlsUtil::SQL_INSERT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, insert);
     statement.bind(1, dbInfo.runId);
     statement.bind(2, name);
@@ -239,7 +240,7 @@ void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
     DatabaseInfo dbInfo = in.getDatabaseInfo();
     SQLite::Database db(dbInfo.name, SQLite::OPEN_READONLY);
     const string select =
-        fmt::format(QstlsUtil::SQL_SELECT, QstlsUtil::SQL_TABLE_NAME);
+        format(QstlsUtil::SQL_SELECT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, select);
     statement.bind(1, runId);
     statement.bind(2, name);
@@ -247,11 +248,11 @@ void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
       const void *adrData = statement.getColumn(0).getBlob();
       int adrBytes = statement.getColumn(0).getBytes();
       if (static_cast<size_t>(adrBytes) != res.size() * sizeof(double)) {
-        throwError(fmt::format("Size mismatch: expected {} bytes, got {} bytes",
-                               res.size() * sizeof(double),
-                               adrBytes));
+        throwError(format("Size mismatch: expected {} bytes, got {} bytes",
+                          res.size() * sizeof(double),
+                          adrBytes));
       }
-      std::memcpy(res.data(), adrData, adrBytes);
+      memcpy(res.data(), adrData, adrBytes);
     }
   } catch (const std::exception &e) {
     throwError("Failed to read from database: " + string(e.what()));
@@ -292,7 +293,7 @@ void QstlsUtil::Adr::get(const vector<double> &wvg,
   }
   const auto itgParam = ItgParam(yMin, yMax);
   for (int l = 0; l < nl; ++l) {
-    fixi.reset(wvg[0], fixed(ix, l), nx);
+    fixi.reset(wvg[0], fixed(ix, l, 0), nx);
     auto func = [&](const double &y) -> double { return integrand(y); };
     itg->compute(func, itgParam);
     res(ix, l) = itg->getSolution();
@@ -411,9 +412,9 @@ double QstlsUtil::Ssf::get() const {
   if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
   double suml = 0.0;
-  for (int l = 0; l < nl; ++l) {
-    const double idrl = idr[l];
-    const double adrl = adr[l];
+  for (size_t l = 0; l < idr.size(); ++l) {
+    const double &idrl = idr[l];
+    const double &adrl = adr[l];
     const double denom = 1.0 + ip * (idrl - adrl);
     const double f = idrl * (idrl - adrl) / denom;
     suml += (l == 0) ? f : 2 * f;

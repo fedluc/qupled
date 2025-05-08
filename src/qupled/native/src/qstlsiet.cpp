@@ -6,7 +6,7 @@
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <filesystem>
-#include <fmt/core.h>
+#include <format>
 #include <numeric>
 
 using namespace std;
@@ -79,9 +79,9 @@ void QstlsIet::doIterations() {
     // End timing
     double toc = timer();
     // Print diagnostic
-    Qstls::println(fmt::format("--- iteration {:d} ---", counter));
-    Qstls::println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
-    Qstls::println(fmt::format("Residual error: {:.5e}", err));
+    Qstls::println(format("--- iteration {:d} ---", counter));
+    Qstls::println(format("Elapsed time: {:.3f} seconds", toc - tic));
+    Qstls::println(format("Residual error: {:.5e}", err));
     fflush(stdout);
   }
   // Set static structure factor for output
@@ -128,12 +128,10 @@ void QstlsIet::computeSsf() {
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const int nx = wvg.size();
-  const int nl = idr.size(1);
   const vector<double> &bf = getBf();
   for (int i = 0; i < nx; ++i) {
     const double bfi = bf[i];
-    QstlsIetUtil::Ssf ssfTmp(
-        wvg[i], Theta, rs, ssfHF[i], nl, &idr(i), &adr(i), bfi);
+    QstlsIetUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i], bfi);
     ssfNew[i] = ssfTmp.get();
   }
 }
@@ -172,7 +170,7 @@ void QstlsIet::computeAdr() {
     shared_ptr<Integrator2D> itgPrivate =
         make_shared<Integrator2D>(in.getIntError());
     Vector3D adrFixedPrivate(nl, nx, nx);
-    const string name = fmt::format("{}_{:d}", in.getTheory(), i);
+    const string name = format("{}_{:d}", in.getTheory(), i);
     const int runId = (in.getFixedRunId() != DEFAULT_INT)
                           ? in.getFixedRunId()
                           : in.getDatabaseInfo().runId;
@@ -216,7 +214,7 @@ void QstlsIet::computeAdrFixed() {
     gatherLoopData(res.data(), loopData, nx * nx);
     if (isRoot()) {
       const size_t idx = distance(wvg.begin(), find(wvg.begin(), wvg.end(), x));
-      const string name = fmt::format("{}_{:d}", in.getTheory(), idx);
+      const string name = format("{}_{:d}", in.getTheory(), idx);
       writeAdrFixed(res, name);
     }
   }
@@ -268,7 +266,7 @@ void QstlsIetUtil::AdrIet::get(const vector<double> &wvg,
     return;
   }
   for (int l = 0; l < nl; ++l) {
-    fixi.reset(wvg[0], wvg[0], fixed(l), nx, nx);
+    fixi.reset(wvg[0], wvg[0], fixed(l, 0, 0), nx, nx);
     auto yMin = [&](const double &q) -> double {
       return (q > x) ? q - x : x - q;
     };
@@ -344,7 +342,7 @@ double QstlsIetUtil::Ssf::get() const {
   if (x == 0.0) return 0.0;
   const double f2 = 1 - bf;
   double f3 = 0.0;
-  for (int l = 0; l < nl; ++l) {
+  for (size_t l = 0; l < idr.size(); ++l) {
     const double f4 = f2 * idr[l];
     const double f5 = 1.0 + ip * (f4 - adr[l]);
     const double f6 = idr[l] * (f4 - adr[l]) / f5;
