@@ -40,6 +40,7 @@ public:
   const double &operator()(const size_t i, const size_t j) const;
 
   // Row access operator
+  std::span<double> operator[](const size_t i);
   std::span<const double> operator[](const size_t i) const;
 
   // Equality operator

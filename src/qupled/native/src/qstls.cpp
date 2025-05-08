@@ -291,7 +291,7 @@ void QstlsUtil::Adr::get(const vector<double> &wvg,
   }
   const auto itgParam = ItgParam(yMin, yMax);
   for (int l = 0; l < nl; ++l) {
-    fixi.reset(wvg[0], fixed(ix, l), nx);
+    fixi.reset(wvg[0], fixed(ix, l, 0), nx);
     auto func = [&](const double &y) -> double { return integrand(y); };
     itg->compute(func, itgParam);
     res(ix, l) = itg->getSolution();

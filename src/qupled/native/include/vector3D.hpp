@@ -2,6 +2,7 @@
 #define VECTOR3D_HPP
 
 #include <cstddef>
+#include <span>
 #include <vector>
 
 // -----------------------------------------------------------------
@@ -33,12 +34,10 @@ public:
   // Resize the array to new sizes s1_, s2_, s3_
   void resize(const size_t s1_, const size_t s2_, const size_t s3_);
 
-  // Access operator
+  // Element access operator
   double &operator()(const size_t i, const size_t j, const size_t k);
   const double &
   operator()(const size_t i, const size_t j, const size_t k) const;
-  const double &operator()(const size_t i, const size_t j) const;
-  const double &operator()(const size_t i) const;
 
   // Equality operator
   bool operator==(const Vector3D &other) const;

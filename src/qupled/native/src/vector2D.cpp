@@ -47,6 +47,10 @@ const double &Vector2D::operator()(const size_t i, const size_t j) const {
   return v[j + i * s2];
 }
 
+span<double> Vector2D::operator[](const size_t i) {
+  return span<double>(&operator()(i, 0), s2);
+}
+
 span<const double> Vector2D::operator[](const size_t i) const {
   return span<const double>(&operator()(i, 0), s2);
 }

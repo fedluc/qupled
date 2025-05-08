@@ -266,7 +266,7 @@ void QstlsIetUtil::AdrIet::get(const vector<double> &wvg,
     return;
   }
   for (int l = 0; l < nl; ++l) {
-    fixi.reset(wvg[0], wvg[0], fixed(l), nx, nx);
+    fixi.reset(wvg[0], wvg[0], fixed(l, 0, 0), nx, nx);
     auto yMin = [&](const double &q) -> double {
       return (q > x) ? q - x : x - q;
     };
