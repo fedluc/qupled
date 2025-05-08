@@ -1,7 +1,7 @@
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include <cmath>
-#include <fmt/core.h>
+#include <format>
 
 using namespace std;
 using namespace MPIUtil;

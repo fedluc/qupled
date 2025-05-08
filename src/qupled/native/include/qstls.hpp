@@ -6,7 +6,6 @@
 #include "stls.hpp"
 #include "vector2D.hpp"
 #include "vector3D.hpp"
-#include <fmt/core.h>
 #include <map>
 
 // -----------------------------------------------------------------

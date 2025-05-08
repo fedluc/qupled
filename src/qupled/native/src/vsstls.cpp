@@ -3,7 +3,7 @@
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
-#include <fmt/core.h>
+#include <format>
 
 using namespace std;
 
@@ -136,10 +136,10 @@ void StructProp::doIterations() {
     }
     counter++;
   }
-  println(fmt::format("Alpha = {:.5e}, Residual error "
-                      "(structural properties) = {:.5e}",
-                      csr[RS_THETA]->getAlpha(),
-                      err));
+  println(format("Alpha = {:.5e}, Residual error "
+                 "(structural properties) = {:.5e}",
+                 csr[RS_THETA]->getAlpha(),
+                 err));
 }
 
 // -----------------------------------------------------------------

@@ -1,6 +1,6 @@
 #include "stlsiet.hpp"
 #include "mpi_util.hpp"
-#include <fmt/core.h>
+#include <format>
 
 using namespace std;
 using namespace MPIUtil;
@@ -74,9 +74,9 @@ void StlsIet::doIterations() {
     // End timing
     double toc = timer();
     // Print diagnostic
-    Stls::println(fmt::format("--- iteration {:d} ---", counter));
-    Stls::println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
-    Stls::println(fmt::format("Residual error: {:.5e}", err));
+    Stls::println(format("--- iteration {:d} ---", counter));
+    Stls::println(format("Elapsed time: {:.3f} seconds", toc - tic));
+    Stls::println(format("Residual error: {:.5e}", err));
     fflush(stdout);
   }
 }

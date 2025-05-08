@@ -6,7 +6,7 @@
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <filesystem>
-#include <fmt/core.h>
+#include <format>
 #include <numeric>
 
 using namespace std;
@@ -79,9 +79,9 @@ void QstlsIet::doIterations() {
     // End timing
     double toc = timer();
     // Print diagnostic
-    Qstls::println(fmt::format("--- iteration {:d} ---", counter));
-    Qstls::println(fmt::format("Elapsed time: {:.3f} seconds", toc - tic));
-    Qstls::println(fmt::format("Residual error: {:.5e}", err));
+    Qstls::println(format("--- iteration {:d} ---", counter));
+    Qstls::println(format("Elapsed time: {:.3f} seconds", toc - tic));
+    Qstls::println(format("Residual error: {:.5e}", err));
     fflush(stdout);
   }
   // Set static structure factor for output
@@ -170,7 +170,7 @@ void QstlsIet::computeAdr() {
     shared_ptr<Integrator2D> itgPrivate =
         make_shared<Integrator2D>(in.getIntError());
     Vector3D adrFixedPrivate(nl, nx, nx);
-    const string name = fmt::format("{}_{:d}", in.getTheory(), i);
+    const string name = format("{}_{:d}", in.getTheory(), i);
     const int runId = (in.getFixedRunId() != DEFAULT_INT)
                           ? in.getFixedRunId()
                           : in.getDatabaseInfo().runId;
@@ -214,7 +214,7 @@ void QstlsIet::computeAdrFixed() {
     gatherLoopData(res.data(), loopData, nx * nx);
     if (isRoot()) {
       const size_t idx = distance(wvg.begin(), find(wvg.begin(), wvg.end(), x));
-      const string name = fmt::format("{}_{:d}", in.getTheory(), idx);
+      const string name = format("{}_{:d}", in.getTheory(), idx);
       writeAdrFixed(res, name);
     }
   }
