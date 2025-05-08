@@ -3,6 +3,7 @@
 #include "numerics.hpp"
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
+#include <cstring>
 #include <format>
 
 using namespace std;
@@ -251,7 +252,7 @@ void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
                           res.size() * sizeof(double),
                           adrBytes));
       }
-      std::memcpy(res.data(), adrData, adrBytes);
+      memcpy(res.data(), adrData, adrBytes);
     }
   } catch (const std::exception &e) {
     throwError("Failed to read from database: " + string(e.what()));
