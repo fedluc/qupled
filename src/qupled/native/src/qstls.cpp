@@ -24,6 +24,7 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
   // Allocate arrays
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
+  lfc.resize(nx, nl);
   adr.resize(nx, nl);
   adrFixed.resize(nx, nl, nx);
 }
@@ -55,36 +56,10 @@ void Qstls::computeLfc() {
   for (int i = 0; i < nx; ++i) {
     QstlsUtil::Adr adrTmp(
         in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], ssfi, itg);
-    adrTmp.get(wvg, adrFixed, adr);
+    adrTmp.get(wvg, adrFixed, lfc);
   }
-  for (int i = 0; i < nx; ++i) {
-    lfc(i, 0) = adr(i, 0) / idr(i, 0);
-  };
-}
-
-// Compute static structure factor
-void Qstls::computeSsf() {
-  ssfOld = ssf;
-  if (in.getDegeneracy() == 0.0) {
-    computeSsfGround();
-  } else {
-    computeSsfFinite();
-  }
-}
-
-// Compute static structure factor at finite temperature
-void Qstls::computeSsfFinite() {
-  if (in.getCoupling() > 0.0) {
-    assert(adr.size() > 0);
-    assert(idr.size() > 0);
-  }
-  const double Theta = in.getDegeneracy();
-  const double rs = in.getCoupling();
-  const int nx = wvg.size();
-  for (int i = 0; i < nx; ++i) {
-    QstlsUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i]);
-    ssf[i] = ssfTmp.get();
-  }
+  lfc.div(idr);
+  lfc.fill(0, 0.0);
 }
 
 // Compute static structure factor at zero temperature

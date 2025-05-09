@@ -83,8 +83,7 @@ void QstlsIet::computeSsf() {
   const vector<double> &bf = getBf();
   for (int i = 0; i < nx; ++i) {
     const double bfi = bf[i];
-    QstlsIetUtil::Ssf ssfTmp(
-        wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i], bfi);
+    QstlsIetUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i], bfi);
     ssf[i] = ssfTmp.get();
   }
 }

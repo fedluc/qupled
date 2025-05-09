@@ -53,6 +53,8 @@ protected:
   virtual void computeStructuralProperties();
   // Compute static structure factor
   virtual void computeSsf();
+  virtual void computeSsfFinite();
+  virtual void computeSsfGround();
   // Compute local field correction
   virtual void computeLfc();
 
@@ -66,9 +68,6 @@ private:
   void computeIdr();
   void computeIdrFinite();
   void computeIdrGround();
-  // Compute the static structure factor
-  void computeSsfFinite();
-  void computeSsfGround();
 };
 
 namespace HFUtil {

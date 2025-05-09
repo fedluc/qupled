@@ -34,8 +34,6 @@ protected:
   void init() override;
   // Compute auxiliary density response
   void computeLfc() override;
-  // Compute static structure factor at finite temperature
-  void computeSsf() override;
   // Read the initial guess from input
   bool initialGuessFromInput() override;
   // Read and write auxiliary density response to database
@@ -49,8 +47,7 @@ private:
   // Compute auxiliary density response
   void computeAdrFixed();
   // Compute static structure factor at finite temperature
-  void computeSsfFinite();
-  void computeSsfGround();
+  void computeSsfGround() override;
 };
 
 namespace QstlsUtil {
@@ -247,7 +244,8 @@ namespace QstlsUtil {
         const double &ssfHF_,
         std::span<const double> idr_,
         std::span<const double> adr_)
-        : RpaUtil::Ssf(x_, Theta_, rs_, ssfHF_, 0, idr_),
+        : RpaUtil::Ssf(
+              x_, Theta_, rs_, ssfHF_, std::span<const double>(), idr_),
           adr(adr_) {}
     // Get static structure factor
     double get() const;
@@ -270,7 +268,8 @@ namespace QstlsUtil {
               const double &OmegaMax_,
               std::shared_ptr<Interpolator1D> ssfi_,
               std::shared_ptr<Integrator1D> itg_)
-        : RpaUtil::SsfGround(x_, rs_, ssfHF_, 0.0, OmegaMax_, itg_),
+        : RpaUtil::SsfGround(
+              x_, rs_, ssfHF_, std::span<const double>(), OmegaMax_, itg_),
           xMax(xMax_),
           ssfi(ssfi_) {}
     // Get result of integration

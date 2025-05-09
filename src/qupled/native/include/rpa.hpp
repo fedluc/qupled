@@ -28,15 +28,13 @@ protected:
   // Initialize basic properties
   void init() override;
   // Compute static structure factor
-  void computeSsf() override;
+  void computeSsfFinite() override;
+  void computeSsfGround() override;
 
 private:
 
   // Compute Hartree-Fock static structure factor
   void computeSsfHF();
-  // Compute static structure factor at finite temperature
-  void computeSsfFinite();
-  void computeSsfGround();
   // Compute local field correction
   void computeLfc() override;
 };
@@ -51,6 +49,17 @@ namespace RpaUtil {
 
   protected:
 
+    // Constructor
+    SsfBase(const double &x_,
+            const double &Theta_,
+            const double &rs_,
+            const double &ssfHF_,
+            std::span<const double> lfc_)
+        : x(x_),
+          Theta(Theta_),
+          rs(rs_),
+          ssfHF(ssfHF_),
+          lfc(lfc_) {}
     // Wave-vector
     const double x;
     // Degeneracy parameter
@@ -59,21 +68,10 @@ namespace RpaUtil {
     const double rs;
     // Hartree-Fock contribution
     const double ssfHF;
-    // Static local field correction
-    const double lfc;
+    // Local field correction
+    std::span<const double> lfc;
     // Normalized interaction potential
     const double ip = 4.0 * numUtil::lambda * rs / (M_PI * x * x);
-    // Constructor
-    SsfBase(const double &x_,
-            const double &Theta_,
-            const double &rs_,
-            const double &ssfHF_,
-            const double &lfc_)
-        : x(x_),
-          Theta(Theta_),
-          rs(rs_),
-          ssfHF(ssfHF_),
-          lfc(lfc_) {}
   };
 
   class Ssf : public SsfBase {
@@ -85,7 +83,7 @@ namespace RpaUtil {
         const double &Theta_,
         const double &rs_,
         const double &ssfHF_,
-        const double &lfc_,
+        std::span<const double> lfc_,
         std::span<const double> idr_)
         : SsfBase(x_, Theta_, rs_, ssfHF_, lfc_),
           idr(idr_) {}
@@ -106,7 +104,7 @@ namespace RpaUtil {
     SsfGround(const double &x_,
               const double &rs_,
               const double &ssfHF_,
-              const double &lfc_,
+              std::span<const double> lfc_,
               const double &OmegaMax_,
               std::shared_ptr<Integrator1D> itg_)
         : SsfBase(x_, 0, rs_, ssfHF_, lfc_),
