@@ -58,6 +58,7 @@ void Qstls::computeLfc() {
         in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], ssfi, itg);
     adrTmp.get(wvg, adrFixed, lfc);
   }
+  // adr = lfc;
   lfc.div(idr);
   lfc.fill(0, 0.0);
 }
@@ -301,24 +302,6 @@ double QstlsUtil::AdrGround::integrand2(const double &t) const {
       0.5 * Omega * t / x2 * (atan(tptx / Omega) - atan(tmtx / Omega));
   const double part3 = part1 - part2 + t / x;
   return part3 / (2.0 * t + y2 - x2);
-}
-
-// -----------------------------------------------------------------
-// Qssf class
-// -----------------------------------------------------------------
-
-double QstlsUtil::Ssf::get() const {
-  if (rs == 0.0) return ssfHF;
-  if (x == 0.0) return 0.0;
-  double suml = 0.0;
-  for (size_t l = 0; l < idr.size(); ++l) {
-    const double &idrl = idr[l];
-    const double &adrl = adr[l];
-    const double denom = 1.0 + ip * (idrl - adrl);
-    const double f = idrl * (idrl - adrl) / denom;
-    suml += (l == 0) ? f : 2 * f;
-  }
-  return ssfHF - 1.5 * ip * Theta * suml;
 }
 
 // -----------------------------------------------------------------

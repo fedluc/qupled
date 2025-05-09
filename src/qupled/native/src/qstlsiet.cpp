@@ -32,7 +32,7 @@ QstlsIet::QstlsIet(const QstlsIetInput &in_)
   // Allocate arrays
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
-  adrOld.resize(nx, nl);
+  lfcIet.resize(nx, nl);
 }
 
 void QstlsIet::init() {
@@ -65,58 +65,36 @@ bool QstlsIet::initialGuessFromInput() {
   for (int i = 0; i < nx; ++i) {
     const double &x = wvg[i];
     if (x > xMax) {
-      adrOld.fill(i, 0.0);
+      lfc.fill(i, 0.0);
       continue;
     }
     for (int l = 0; l < nl; ++l) {
-      adrOld(i, l) = (l < nl_) ? itp[l].eval(x) : 0.0;
+      lfc(i, l) = (l < nl_) ? itp[l].eval(x) : 0.0;
     }
   }
   return true;
 }
 
-void QstlsIet::computeSsf() {
-  ssfOld = ssf;
-  const double Theta = in.getDegeneracy();
-  const double rs = in.getCoupling();
-  const int nx = wvg.size();
-  const vector<double> &bf = getBf();
-  for (int i = 0; i < nx; ++i) {
-    const double bfi = bf[i];
-    QstlsIetUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i], bfi);
-    ssf[i] = ssfTmp.get();
-  }
-}
-
-void QstlsIet::updateSolution() {
-  Qstls::updateSolution();
-  const double aMix = in.getMixingParameter();
-  adrOld.mult(1 - aMix);
-  adrOld.linearCombination(adr, aMix);
-}
-
 void QstlsIet::computeLfc() {
-  Qstls::computeLfc();
   const int nx = wvg.size();
   const int nl = in.getNMatsubara();
-  const bool segregatedItg = in.getInt2DScheme() == "segregated";
-  assert(adrOld.size() > 0);
   // Setup interpolators
   const shared_ptr<Interpolator1D> ssfi = make_shared<Interpolator1D>(wvg, ssf);
   const shared_ptr<Interpolator1D> bfi =
       make_shared<Interpolator1D>(wvg, getBf());
-  vector<shared_ptr<Interpolator1D>> dlfci(nl);
-  shared_ptr<Interpolator1D> tmp = make_shared<Interpolator1D>(wvg, ssfOld);
+  vector<shared_ptr<Interpolator1D>> lfci(nl);
   for (int l = 0; l < nl; ++l) {
-    vector<double> dlfc(nx);
+    vector<double> lfcColumn(nx);
     for (int i = 0; i < nx; ++i) {
-      dlfc[i] = (idr(i, l) > 0.0) ? adrOld(i, l) / idr(i, l) : 0;
+      lfcColumn[i] = lfc(i, l);
     }
-    dlfci[l] = std::make_shared<Interpolator1D>(wvg, dlfc);
+    lfci[l] = std::make_shared<Interpolator1D>(wvg, lfcColumn);
   }
+  // Compute the qstls contribution to the adr
+  Qstls::computeLfc();
   // Compute qstls-iet contribution to the adr
+  const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
-  Vector2D adrIet(nx, nl);
   auto loopFunc = [&](int i) -> void {
     shared_ptr<Integrator2D> itgPrivate =
         make_shared<Integrator2D>(in.getIntError());
@@ -131,20 +109,25 @@ void QstlsIet::computeLfc() {
                                 wvg.back(),
                                 wvg[i],
                                 ssfi,
-                                dlfci,
+                                lfci,
                                 bfi,
                                 itgGrid,
                                 itgPrivate);
-    adrTmp.get(wvg, adrFixedPrivate, adrIet);
+    adrTmp.get(wvg, adrFixedPrivate, lfcIet);
   };
   const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
-  gatherLoopData(adrIet.data(), loopData, nl);
-  // Sum qstls and qstls-iet contributions to adr
-  adr.sum(adrIet);
-  // Compute static local field correction
+  gatherLoopData(lfcIet.data(), loopData, nl);
+  // Sum qstls and qstls-iet contributions to the local field correction
+  lfcIet.div(idr);
+  lfcIet.fill(0, 0.0);
+  lfc.sum(lfcIet);
+  // Add the bridge function contribution
+  const vector<double> &bf = getBf();
   for (int i = 0; i < nx; ++i) {
-    lfc(i, 0) = adr(i, 0) / idr(i, 0);
-  };
+    span<double> lfcRow = lfc[i];
+    std::for_each(
+        lfcRow.begin(), lfcRow.end(), [&](double &vi) { vi += bf[i]; });
+  }
 }
 
 void QstlsIet::computeAdrFixed() {
@@ -178,8 +161,8 @@ void QstlsIet::computeAdrFixed() {
 // -----------------------------------------------------------------
 
 // Compute dynamic local field correction
-double QstlsIetUtil::AdrIet::dlfc(const double &y, const int &l) const {
-  return dlfci[l]->eval(y);
+double QstlsIetUtil::AdrIet::lfc(const double &y, const int &l) const {
+  return lfci[l]->eval(y);
 }
 
 // Compute auxiliary density response
@@ -193,8 +176,10 @@ double QstlsIetUtil::AdrIet::fix(const double &x, const double &y) const {
 // Integrands
 double QstlsIetUtil::AdrIet::integrand1(const double &q, const int &l) const {
   if (q == 0.0) { return 0.0; }
-  const double p1 = (1 - bf(q)) * ssf(q);
-  const double p2 = dlfc(q, l) * (ssf(q) - 1.0);
+  const double lfcql = lfc(q, l);
+  const double ssfq = ssf(q);
+  const double p1 = (1 - lfcql) * ssfq;
+  const double p2 = -lfcql + bf(q);
   return (p1 - p2 - 1.0) / q;
 }
 
@@ -282,22 +267,4 @@ double QstlsIetUtil::AdrFixedIet::integrand(const double &t,
   const double logarg = ((qmypx + fxt) * (qmypx + fxt) + fplT2)
                         / ((qmypx - fxt) * (qmypx - fxt) + fplT2);
   return t / (exp(t2 / Theta - mu) + 1.0) * log(logarg);
-}
-
-// -----------------------------------------------------------------
-// Ssf class
-// -----------------------------------------------------------------
-
-double QstlsIetUtil::Ssf::get() const {
-  if (rs == 0.0) return ssfHF;
-  if (x == 0.0) return 0.0;
-  const double f2 = 1 - bf;
-  double f3 = 0.0;
-  for (size_t l = 0; l < idr.size(); ++l) {
-    const double f4 = f2 * idr[l];
-    const double f5 = 1.0 + ip * (f4 - adr[l]);
-    const double f6 = idr[l] * (f4 - adr[l]) / f5;
-    f3 += (l == 0) ? f6 : 2 * f6;
-  }
-  return ssfHF - 1.5 * ip * Theta * f3;
 }

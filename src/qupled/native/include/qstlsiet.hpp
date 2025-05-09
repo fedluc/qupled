@@ -22,16 +22,12 @@ private:
   using Qstls::wvg;
   // Input data
   const QstlsIetInput in;
-  // Auxiliary density response
-  Vector2D adrOld;
+  // Iet contribution to the local field correction
+  Vector2D lfcIet;
   // Initialize basic properties
   void init() override;
   // Compute auxiliary density response
   void computeLfc() override;
-  // Compute static structure factor at finite temperature
-  void computeSsf() override;
-  // Iterations to solve the stls scheme
-  void updateSolution() override;
   // Compute auxiliary density response
   void computeAdrFixed();
   // Iterations to solve the stls scheme
@@ -50,14 +46,14 @@ namespace QstlsIetUtil {
            const double &qMax_,
            const double &x_,
            std::shared_ptr<Interpolator1D> ssfi_,
-           std::vector<std::shared_ptr<Interpolator1D>> dlfci_,
+           std::vector<std::shared_ptr<Interpolator1D>> lfci_,
            std::shared_ptr<Interpolator1D> bfi_,
            const std::vector<double> &itgGrid_,
            std::shared_ptr<Integrator2D> itg_)
         : QstlsUtil::AdrBase(Theta_, qMin_, qMax_, x_, ssfi_),
           itg(itg_),
           itgGrid(itgGrid_),
-          dlfci(dlfci_),
+          lfci(lfci_),
           bfi(bfi_) {}
 
     // Get integration result
@@ -77,13 +73,13 @@ namespace QstlsIetUtil {
     // Grid for 2D integration
     const std::vector<double> &itgGrid;
     // Interpolator for the dynamic local field correction
-    const std::vector<std::shared_ptr<Interpolator1D>> dlfci;
+    const std::vector<std::shared_ptr<Interpolator1D>> lfci;
     // Interpolator for the bridge function contribution
     const std::shared_ptr<Interpolator1D> bfi;
     // Interpolator for the fixed component
     Interpolator2D fixi;
     // Compute dynamic local field correction
-    double dlfc(const double &y, const int &l) const;
+    double lfc(const double &y, const int &l) const;
     // Compute bridge function contribution
     double bf(const double &y) const;
     // Compute fixed component
@@ -119,33 +115,6 @@ namespace QstlsIetUtil {
                      const double &l) const;
     // Integrator object
     const std::shared_ptr<Integrator1D> itg;
-  };
-
-  // -----------------------------------------------------------------
-  // Class for the static structure factor
-  // -----------------------------------------------------------------
-
-  class Ssf : public QstlsUtil::Ssf {
-
-  public:
-
-    // Constructor for quantum schemes
-    Ssf(const double &x_,
-        const double &Theta_,
-        const double &rs_,
-        const double &ssfHF_,
-        std::span<const double> idr_,
-        std::span<const double> adr_,
-        const double &bf_)
-        : QstlsUtil::Ssf(x_, Theta_, rs_, ssfHF_, idr_, adr_),
-          bf(bf_) {}
-    // Get static structure factor
-    double get() const;
-
-  private:
-
-    // Bridge function
-    const double bf;
   };
 
 } // namespace QstlsIetUtil

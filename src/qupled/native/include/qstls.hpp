@@ -233,29 +233,6 @@ namespace QstlsUtil {
   // Class for the static structure factor
   // -----------------------------------------------------------------
 
-  class Ssf : public RpaUtil::Ssf {
-
-  public:
-
-    // Constructor for quantum schemes
-    Ssf(const double &x_,
-        const double &Theta_,
-        const double &rs_,
-        const double &ssfHF_,
-        std::span<const double> idr_,
-        std::span<const double> adr_)
-        : RpaUtil::Ssf(
-              x_, Theta_, rs_, ssfHF_, std::span<const double>(), idr_),
-          adr(adr_) {}
-    // Get static structure factor
-    double get() const;
-
-  protected:
-
-    // Auxiliary density response
-    const std::span<const double> adr;
-  };
-
   class SsfGround : public RpaUtil::SsfGround {
 
   public:
