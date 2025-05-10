@@ -25,8 +25,7 @@ class Input(stlsiet.Input, qstls.Input):
     """
 
     def __init__(self, coupling: float, degeneracy: float, theory: str):
-        stlsiet.Input.__init__(self, coupling, degeneracy, "STLS-HNC")
-        qstls.Input.__init__(self, coupling, degeneracy)
+        super().__init__(coupling, degeneracy, "STLS-HNC")
         if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
             raise ValueError("Invalid dielectric theory")
         self.theory = theory

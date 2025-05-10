@@ -45,10 +45,6 @@ class QVSStls(vsstls.VSStls):
         if inputs.fixed_run_id is None:
             inputs.fixed_run_id = self.run_id
 
-    @staticmethod
-    def get_initial_guess(run_id: int, database_name: str | None = None) -> qstls.Guess:
-        return qstls.Qstls.get_initial_guess(run_id, database_name)
-
 
 # Input class
 class Input(vsstls.Input, qstls.Input):

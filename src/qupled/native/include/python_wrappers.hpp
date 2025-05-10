@@ -73,13 +73,11 @@ public:
 // Wrapper for exposing the QstlsGuess class to Python
 // -----------------------------------------------------------------
 
-class PyQstlsGuess {
+class PyIetGuess {
 public:
 
-  static bn::ndarray getAdr(const QstlsInput::Guess &guess);
-  static int getMatsubara(const QstlsInput::Guess &guess);
-  static void setAdr(QstlsInput::Guess &guess, const bn::ndarray &ssf);
-  static void setMatsubara(QstlsInput::Guess &guess, const int matsubara);
+  static bn::ndarray getLfc(const IetInput::Guess &guess);
+  static void setLfc(IetInput::Guess &guess, const bn::ndarray &lfc);
 };
 
 // -----------------------------------------------------------------

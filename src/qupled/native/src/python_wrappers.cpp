@@ -36,6 +36,19 @@ void PyStlsGuess::setSsf(StlsInput::Guess &guess, const bn::ndarray &ssf) {
 }
 
 // -----------------------------------------------------------------
+// PyIetGuess
+// -----------------------------------------------------------------
+
+bn::ndarray PyIetGuess::getLfc(const IetInput::Guess &guess) {
+  return pythonUtil::toNdArray2D(guess.lfc);
+}
+
+void PyIetGuess::setLfc(IetInput::Guess &guess, const bn::ndarray &lfc) {
+  if (lfc.shape(0) == 0) { return; }
+  guess.lfc = pythonUtil::toVector2D(lfc);
+}
+
+// -----------------------------------------------------------------
 // PyVSInput
 // -----------------------------------------------------------------
 
@@ -69,27 +82,6 @@ void PyFreeEnergyIntegrand::setGrid(VSStlsInput::FreeEnergyIntegrand &fxc,
 void PyFreeEnergyIntegrand::setIntegrand(VSStlsInput::FreeEnergyIntegrand &fxc,
                                          const bn::ndarray &integrand) {
   fxc.integrand = pythonUtil::toDoubleVector(integrand);
-}
-
-// -----------------------------------------------------------------
-// PyQstlsGuess
-// -----------------------------------------------------------------
-
-bn::ndarray PyQstlsGuess::getAdr(const QstlsInput::Guess &guess) {
-  return pythonUtil::toNdArray2D(guess.adr);
-}
-
-int PyQstlsGuess::getMatsubara(const QstlsInput::Guess &guess) {
-  return guess.matsubara;
-}
-
-void PyQstlsGuess::setAdr(QstlsInput::Guess &guess, const bn::ndarray &adr) {
-  if (adr.shape(0) == 0) { return; }
-  guess.adr = pythonUtil::toVector2D(adr);
-}
-
-void PyQstlsGuess::setMatsubara(QstlsInput::Guess &guess, const int matsubara) {
-  guess.matsubara = matsubara;
 }
 
 // -----------------------------------------------------------------

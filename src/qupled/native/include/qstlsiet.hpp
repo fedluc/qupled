@@ -30,7 +30,7 @@ private:
   void computeLfc() override;
   // Compute auxiliary density response
   void computeAdrFixed();
-  // Iterations to solve the stls scheme
+  // Read initital guess from input
   bool initialGuessFromInput() override;
 };
 

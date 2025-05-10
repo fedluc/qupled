@@ -27,6 +27,8 @@ private:
   void init() override;
   // Compute static local field correction
   void computeLfc() override;
+  // Read initital guess from input
+  bool initialGuessFromInput() override;
 };
 
 namespace StlsIetUtil {

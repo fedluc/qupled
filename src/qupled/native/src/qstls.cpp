@@ -35,18 +35,6 @@ void Qstls::init() {
   println("Done");
 }
 
-bool Qstls::initialGuessFromInput() {
-  const auto &guess = in.getGuess();
-  const Interpolator1D ssfi(guess.wvg, guess.ssf);
-  if (!ssfi.isValid()) { return false; }
-  const double xMax = guess.wvg.back();
-  for (size_t i = 0; i < wvg.size(); ++i) {
-    const double &x = wvg[i];
-    ssf[i] = (x <= xMax) ? ssfi.eval(x) : 1.0;
-  }
-  return true;
-}
-
 // Compute auxiliary density response
 void Qstls::computeLfc() {
   if (in.getDegeneracy() == 0.0) { return; }

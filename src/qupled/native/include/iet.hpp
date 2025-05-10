@@ -27,6 +27,8 @@ public:
   void init();
   // Getters
   const std::vector<double> &getBf() const { return bf; }
+  // Read initial guess from input
+  bool initialGuessFromInput(Vector2D &lfc);
 
 private:
 

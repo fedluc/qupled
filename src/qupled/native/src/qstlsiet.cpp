@@ -47,31 +47,8 @@ void QstlsIet::init() {
 bool QstlsIet::initialGuessFromInput() {
   const bool ssfIsSetFromInput = Qstls::initialGuessFromInput();
   if (!ssfIsSetFromInput) { return false; }
-  const auto &guess = in.getGuess();
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  const int nx_ = guess.adr.size(0);
-  const int nl_ = guess.adr.size(1);
-  const double xMax = (guess.wvg.empty()) ? 0.0 : guess.wvg.back();
-  vector<Interpolator1D> itp(nl_);
-  for (int l = 0; l < nl_; ++l) {
-    vector<double> tmp(nx_);
-    for (int i = 0; i < nx_; ++i) {
-      tmp[i] = guess.adr(i, l);
-    }
-    itp[l].reset(guess.wvg[0], tmp[0], nx_);
-    if (!itp[l].isValid()) { return false; }
-  }
-  for (int i = 0; i < nx; ++i) {
-    const double &x = wvg[i];
-    if (x > xMax) {
-      lfc.fill(i, 0.0);
-      continue;
-    }
-    for (int l = 0; l < nl; ++l) {
-      lfc(i, l) = (l < nl_) ? itp[l].eval(x) : 0.0;
-    }
-  }
+  const bool lfcIsSetFromInput = Iet::initialGuessFromInput(lfc);
+  if (!lfcIsSetFromInput) { return false; }
   return true;
 }
 

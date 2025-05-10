@@ -123,11 +123,8 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("ssf", &PyStlsGuess::getSsf, &PyStlsGuess::setSsf);
 
   // Class for the initial guess of the Qstls scheme
-  bp::class_<QstlsInput::Guess, bp::bases<StlsInput::Guess>>("QstlsGuess")
-      .add_property("adr", &PyQstlsGuess::getAdr, &PyQstlsGuess::setAdr)
-      .add_property("matsubara",
-                    &PyQstlsGuess::getMatsubara,
-                    &PyQstlsGuess::setMatsubara);
+  bp::class_<IetInput::Guess, bp::bases<StlsInput::Guess>>("IetGuess")
+      .add_property("lfc", &PyIetGuess::getLfc, &PyIetGuess::setLfc);
 
   // Class for the free energy integrand of the VSStls scheme
   bp::class_<VSStlsInput::FreeEnergyIntegrand>("FreeEnergyIntegrand")

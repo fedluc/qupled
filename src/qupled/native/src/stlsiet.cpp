@@ -39,6 +39,14 @@ void StlsIet::computeLfc() {
   }
 }
 
+bool StlsIet::initialGuessFromInput() {
+  const bool ssfIsSetFromInput = Stls::initialGuessFromInput();
+  if (!ssfIsSetFromInput) { return false; }
+  const bool lfcIsSetFromInput = Iet::initialGuessFromInput(lfc);
+  if (!lfcIsSetFromInput) { return false; }
+  return true;
+}
+
 // -----------------------------------------------------------------
 // Slfc class
 // -----------------------------------------------------------------

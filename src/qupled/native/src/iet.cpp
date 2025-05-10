@@ -36,6 +36,36 @@ void Iet::computeBf() {
   }
 }
 
+// Read initial guess from input
+bool Iet::initialGuessFromInput(Vector2D &lfc) {
+  const auto &guess = inIet.getGuess();
+  const int nx = wvg.size();
+  const int nl = in.getNMatsubara();
+  const int nx_ = guess.lfc.size(0);
+  const int nl_ = guess.lfc.size(1);
+  const double xMax = (guess.wvg.empty()) ? 0.0 : guess.wvg.back();
+  vector<Interpolator1D> itp(nl_);
+  for (int l = 0; l < nl_; ++l) {
+    vector<double> tmp(nx_);
+    for (int i = 0; i < nx_; ++i) {
+      tmp[i] = guess.lfc(i, l);
+    }
+    itp[l].reset(guess.wvg[0], tmp[0], nx_);
+    if (!itp[l].isValid()) { return false; }
+  }
+  for (int i = 0; i < nx; ++i) {
+    const double &x = wvg[i];
+    if (x > xMax) {
+      lfc.fill(i, 0.0);
+      continue;
+    }
+    for (int l = 0; l < nl; ++l) {
+      lfc(i, l) = (l < nl_) ? itp[l].eval(x) : 0.0;
+    }
+  }
+  return true;
+}
+
 // -----------------------------------------------------------------
 // BridgeFunction class
 // -----------------------------------------------------------------

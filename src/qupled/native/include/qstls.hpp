@@ -32,8 +32,6 @@ protected:
   void init() override;
   // Compute auxiliary density response
   void computeLfc() override;
-  // Read the initial guess from input
-  bool initialGuessFromInput() override;
   // Read and write auxiliary density response to database
   void readAdrFixed(Vector3D &res, const std::string &name, int runId) const;
   void writeAdrFixed(const Vector3D &res, const std::string &name) const;
