@@ -60,12 +60,7 @@ void Stls::initialGuess() {
   // From guess in input
   if (initialGuessFromInput()) { return; }
   // Default
-  Rpa rpa(in, false);
-  int status = rpa.compute();
-  if (status != 0) {
-    throwError("Failed to compute the default initial guess");
-  }
-  ssf = rpa.getSsf();
+  ssf = ssfHF;
 }
 
 bool Stls::initialGuessFromInput() {
