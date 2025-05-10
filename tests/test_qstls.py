@@ -21,7 +21,7 @@ def test_qstls_initialization(mocker, scheme):
     super_init = mocker.patch("qupled.stls.Stls.__init__")
     scheme = qstls.Qstls()
     super_init.assert_called_once()
-    assert isinstance(scheme.results, qstls.Result)
+    assert isinstance(scheme.results, stls.Result)
     assert scheme.native_scheme_cls == native.Qstls
     assert scheme.native_inputs_cls == native.QstlsInput
 
@@ -136,14 +136,3 @@ def test_qstls_input_initialization(mocker):
     input = qstls.Input(coupling, degeneracy)
     super_init.assert_called_once_with(coupling, degeneracy)
     assert input.theory == "QSTLS"
-
-
-def test_qstls_result_inheritance():
-    assert issubclass(qstls.Result, stls.Result)
-
-
-def test_qstls_result_initialization(mocker):
-    super_init = mocker.patch("qupled.stls.Result.__init__")
-    result = qstls.Result()
-    super_init.assert_called_once()
-    assert result.adr is None

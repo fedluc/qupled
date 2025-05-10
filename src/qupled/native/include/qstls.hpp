@@ -21,13 +21,11 @@ public:
   explicit Qstls(const QstlsInput &in_)
       : Qstls(in_, true) {}
   // Getters
-  const Vector2D &getAdr() const { return adr; }
   const Vector3D &getAdrFixed() const { return adrFixed; }
 
 protected:
 
   // Auxiliary density response
-  Vector2D adr;
   Vector3D adrFixed;
   std::string adrFixedDatabaseName;
   // Initialize basic properties

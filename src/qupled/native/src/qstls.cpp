@@ -25,7 +25,6 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
   lfc.resize(nx, nl);
-  adr.resize(nx, nl);
   adrFixed.resize(nx, nl, nx);
 }
 

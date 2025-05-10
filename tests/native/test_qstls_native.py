@@ -13,8 +13,6 @@ def database_info():
 
 def test_qstls_properties():
     assert issubclass(Qstls, Stls)
-    scheme = Qstls(QstlsInput())
-    assert hasattr(scheme, "adr")
 
 
 def test_qstls_compute(database_info):
@@ -36,11 +34,10 @@ def test_qstls_compute(database_info):
     scheme.compute()
     nx = scheme.wvg.size
     assert nx >= 3
-    assert scheme.adr.shape[0] == nx
-    assert scheme.adr.shape[1] == inputs.matsubara
+    assert scheme.lfc.shape[0] == nx
+    assert scheme.lfc.shape[1] == inputs.matsubara
     assert scheme.idr.shape[0] == nx
     assert scheme.idr.shape[1] == inputs.matsubara
     assert scheme.sdr.size == nx
-    assert scheme.lfc.size == nx
     assert scheme.ssf.size == nx
     assert scheme.rdf(scheme.wvg).size == nx

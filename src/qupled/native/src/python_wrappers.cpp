@@ -160,14 +160,6 @@ bn::ndarray PyVSStls::getFreeEnergyGrid(const VSStls &vsstls) {
 }
 
 // -----------------------------------------------------------------
-// PyQstls
-// -----------------------------------------------------------------
-
-bn::ndarray PyQstls::getAdr(const Qstls &qstls) {
-  return pythonUtil::toNdArray2D(qstls.getAdr());
-}
-
-// -----------------------------------------------------------------
 // PyQstlsIet
 // -----------------------------------------------------------------
 
@@ -190,10 +182,6 @@ double PyQVSStls::getError(const QVSStls &qvsstls) {
 
 double PyQVSStls::getAlpha(const QVSStls &qvsstls) {
   return qvsstls.getAlpha();
-}
-
-bn::ndarray PyQVSStls::getAdr(const QVSStls &qvsstls) {
-  return pythonUtil::toNdArray2D(qvsstls.getAdr());
 }
 
 bn::ndarray PyQVSStls::getFreeEnergyIntegrand(const QVSStls &qvsstls) {

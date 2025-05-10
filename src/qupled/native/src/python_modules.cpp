@@ -173,8 +173,7 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("free_energy_grid", &PyVSStls::getFreeEnergyGrid);
 
   // Class to solve quantum schemes
-  bp::class_<Qstls, bp::bases<Stls>>("Qstls", bp::init<const QstlsInput>())
-      .add_property("adr", &PyQstls::getAdr);
+  bp::class_<Qstls, bp::bases<Stls>>("Qstls", bp::init<const QstlsInput>());
 
   // Class to solve classical schemes
   bp::class_<QstlsIet, bp::bases<Qstls>>("QstlsIet",
@@ -187,7 +186,6 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("error", &PyQVSStls::getError)
       .add_property("free_energy_integrand", &PyQVSStls::getFreeEnergyIntegrand)
       .add_property("free_energy_grid", &PyQVSStls::getFreeEnergyGrid)
-      .add_property("adr", &PyQVSStls::getAdr)
       .add_property("alpha", &PyQVSStls::getAlpha);
 
   // MPI class

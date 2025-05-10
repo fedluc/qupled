@@ -12,7 +12,7 @@ class QstlsIet(qstls.Qstls):
 
     def __init__(self):
         super().__init__()
-        self.results: Result = Result()
+        self.results: stlsiet.Result = stlsiet.Result()
         self.native_scheme_cls = native.QstlsIet
         self.native_inputs_cls = native.QstlsIetInput
 
@@ -30,13 +30,3 @@ class Input(stlsiet.Input, qstls.Input):
         if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
             raise ValueError("Invalid dielectric theory")
         self.theory = theory
-
-
-# Result class
-class Result(stlsiet.Result, qstls.Result):
-    """
-    Class used to store the results for the :obj:`qupled.qstlsiet.QstlsIet` class.
-    """
-
-    def __init__(self):
-        super().__init__()

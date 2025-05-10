@@ -15,7 +15,7 @@ class Qstls(stls.Stls):
 
     def __init__(self):
         super().__init__()
-        self.results: Result = Result()
+        self.results: stls.Result = stls.Result()
         # Undocumented properties
         self.native_scheme_cls = native.Qstls
         self.native_inputs_cls = native.QstlsInput
@@ -100,17 +100,6 @@ class Input(stls.Input):
         # Undocumented default values
         self.fixed_run_id: int | None = None
         self.theory = "QSTLS"
-
-
-class Result(stls.Result):
-    """
-    Class used to store the results for the :obj:`qupled.qstls.Qstls` class.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.adr = None
-        """Auxiliary density response"""
 
 
 class Guess:
