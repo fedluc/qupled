@@ -56,8 +56,6 @@ public:
   explicit QThermoProp(const QVSStlsInput &in_);
   // Get internal energy and internal energy derivatives
   std::vector<double> getQData() const;
-  // Get structural properties
-  const Vector2D &getAdr();
 
 private:
 
@@ -111,8 +109,6 @@ public:
   void computeSsf() { Qstls::computeSsf(); }
   double computeError() { return Qstls::computeError(); }
   void updateSolution() { Qstls::updateSolution(); }
-  // Update the static structure factor
-  void updateSsf() { ssf = ssfOld; };
   // Compute Q
   double getQAdder() const;
   // Getters
@@ -124,8 +120,6 @@ private:
 
   // Input
   QVSStlsInput in;
-  // Compute derivative contribution to the auxiliary density response
-  Vector2D getDerivativeContribution() const;
 };
 
 // -----------------------------------------------------------------

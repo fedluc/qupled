@@ -153,7 +153,5 @@ void StlsCSR::computeLfcStls() {
 
 void StlsCSR::computeLfc() {
   Vector2D lfcDerivative = getDerivativeContribution();
-  for (size_t i = 0; i < Stls::lfc.size(); ++i) {
-    Stls::lfc(i, 0) -= lfcDerivative(i, 0);
-  }
+  Stls::lfc.diff(lfcDerivative);
 }

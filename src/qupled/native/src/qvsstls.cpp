@@ -53,7 +53,6 @@ double QVSStls::computeAlpha() {
 
 void QVSStls::updateSolution() {
   // Update the structural properties used for output
-  adr = thermoProp->getAdr();
   ssf = thermoProp->getSsf();
   lfc = thermoProp->getLfc();
 }
@@ -97,11 +96,6 @@ vector<double> QThermoProp::getQData() const {
     qt = theta[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
   }
   return vector<double>({q, qr, qt});
-}
-
-const Vector2D &QThermoProp::getAdr() {
-  if (!structProp->isComputed()) { structProp->compute(); }
-  return structProp->getCsr(getStructPropIdx()).getAdr();
 }
 
 // -----------------------------------------------------------------
@@ -234,18 +228,12 @@ void QstlsCSR::init() {
 
 void QstlsCSR::computeLfcQstls() {
   Qstls::computeLfc();
-  *CSR::lfc = adr;
-}
-
-Vector2D QstlsCSR::getDerivativeContribution() const {
-  Vector2D out = CSR::getDerivativeContribution();
-  out.linearCombination(*CSR::lfc, -alpha / 3.0);
-  return out;
+  *CSR::lfc = Qstls::lfc;
 }
 
 void QstlsCSR::computeLfc() {
-  Vector2D adrDerivative = getDerivativeContribution();
-  adr.diff(adrDerivative);
+  Vector2D lfcDerivative = getDerivativeContribution();
+  Qstls::lfc.diff(lfcDerivative);
 }
 
 double QstlsCSR::getQAdder() const {
