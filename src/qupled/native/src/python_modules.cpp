@@ -70,7 +70,8 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("mapping", &IetInput::getMapping, &IetInput::setMapping);
 
   // Class for the input of the StlsIet scheme
-  bp::class_<StlsIetInput, bp::bases<IetInput, StlsInput>>("StlsIetInput");
+  bp::class_<StlsIetInput, bp::bases<IetInput, StlsInput>>("StlsIetInput")
+      .add_property("guess", &IetInput::getGuess, &IetInput::setGuess);
 
   // Class for the input of the VS scheme
   bp::class_<VSInput>("VSInput")
@@ -103,7 +104,8 @@ BOOST_PYTHON_MODULE(native) {
           "fixed_iet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet);
 
   // Class for the input of the StlsIet scheme
-  bp::class_<QstlsIetInput, bp::bases<IetInput, QstlsInput>>("QstlsIetInput");
+  bp::class_<QstlsIetInput, bp::bases<IetInput, QstlsInput>>("QstlsIetInput")
+      .add_property("guess", &IetInput::getGuess, &IetInput::setGuess);
 
   // Class for the input of the QVSStls scheme
   bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput");

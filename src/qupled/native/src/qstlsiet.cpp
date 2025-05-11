@@ -22,8 +22,8 @@ using ItgType = Integrator1D::Type;
 
 QstlsIet::QstlsIet(const QstlsIetInput &in_)
     : Qstls(in_, true),
-      Iet(in_, in_, wvg, true),
-      in(in_) {
+      in(in_),
+      iet(in_, in_, wvg, true) {
   // Throw error message for ground state calculations
   if (in.getDegeneracy() == 0.0) {
     throwError("Ground state calculations are not available "
@@ -37,17 +37,16 @@ QstlsIet::QstlsIet(const QstlsIetInput &in_)
 
 void QstlsIet::init() {
   Qstls::init();
-  Iet::init();
-  Qstls::print(
-      "Computing fixed component of the iet auxiliary density response: ");
+  print("Computing fixed component of the iet auxiliary density response: ");
   computeAdrFixed();
-  Qstls::println("Done");
+  println("Done");
+  iet.init();
 }
 
 bool QstlsIet::initialGuessFromInput() {
-  const bool ssfIsSetFromInput = Qstls::initialGuessFromInput();
+  const bool ssfIsSetFromInput = Qstls::ssfGuessFromInput(in.getGuess());
   if (!ssfIsSetFromInput) { return false; }
-  const bool lfcIsSetFromInput = Iet::initialGuessFromInput(lfc);
+  const bool lfcIsSetFromInput = iet.initialGuessFromInput(lfc);
   if (!lfcIsSetFromInput) { return false; }
   return true;
 }

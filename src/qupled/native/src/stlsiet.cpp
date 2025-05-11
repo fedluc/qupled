@@ -15,7 +15,7 @@ using ItgType = Integrator1D::Type;
 // Initialize basic properties
 void StlsIet::init() {
   Stls::init();
-  Iet::init();
+  iet.init();
 }
 
 // Compute static local field correction
@@ -40,9 +40,9 @@ void StlsIet::computeLfc() {
 }
 
 bool StlsIet::initialGuessFromInput() {
-  const bool ssfIsSetFromInput = Stls::initialGuessFromInput();
+  const bool ssfIsSetFromInput = Stls::ssfGuessFromInput(in.getGuess());
   if (!ssfIsSetFromInput) { return false; }
-  const bool lfcIsSetFromInput = Iet::initialGuessFromInput(lfc);
+  const bool lfcIsSetFromInput = iet.initialGuessFromInput(lfc);
   if (!lfcIsSetFromInput) { return false; }
   return true;
 }

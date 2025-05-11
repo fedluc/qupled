@@ -63,8 +63,9 @@ void Stls::initialGuess() {
   ssf = ssfHF;
 }
 
-bool Stls::initialGuessFromInput() {
-  const auto &guess = in.getGuess();
+bool Stls::initialGuessFromInput() { return ssfGuessFromInput(in.getGuess()); }
+
+bool Stls::ssfGuessFromInput(const StlsInput::Guess &guess) {
   const Interpolator1D ssfi(guess.wvg, guess.ssf);
   if (!ssfi.isValid()) { return false; }
   const double xMax = guess.wvg.back();

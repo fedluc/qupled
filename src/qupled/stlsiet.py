@@ -112,7 +112,7 @@ class Guess:
             native.IetGuess: A new instance of `native.IetGuess` with attributes
             populated from the current object.
         """
-        native_guess = native.QstlsGuess()
+        native_guess = native.IetGuess()
         for attr, value in self.__dict__.items():
             if value is not None:
                 setattr(native_guess, attr, value)

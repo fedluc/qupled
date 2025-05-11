@@ -16,6 +16,12 @@ class QstlsIet(qstls.Qstls):
         self.native_scheme_cls = native.QstlsIet
         self.native_inputs_cls = native.QstlsIetInput
 
+    @staticmethod
+    def get_initial_guess(
+        run_id: str, database_name: str | None = None
+    ) -> stlsiet.Guess:
+        return stlsiet.StlsIet.get_initial_guess(run_id, database_name)
+
 
 # Input class
 class Input(stlsiet.Input, qstls.Input):

@@ -39,8 +39,8 @@ void Iet::computeBf() {
 // Read initial guess from input
 bool Iet::initialGuessFromInput(Vector2D &lfc) {
   const auto &guess = inIet.getGuess();
-  const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
+  const int nx = lfc.size(0);
+  const int nl = lfc.size(1);
   const int nx_ = guess.lfc.size(0);
   const int nl_ = guess.lfc.size(1);
   const double xMax = (guess.wvg.empty()) ? 0.0 : guess.wvg.back();

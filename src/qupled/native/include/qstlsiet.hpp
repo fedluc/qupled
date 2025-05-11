@@ -9,19 +9,21 @@
 // Solver for the qSTLS-based schemes
 // -----------------------------------------------------------------
 
-class QstlsIet : public Qstls, public Iet {
+class QstlsIet : public Qstls {
 
 public:
 
   // Constructor
   explicit QstlsIet(const QstlsIetInput &in_);
+  // Getters
+  const std::vector<double> &getBf() const { return iet.getBf(); }
 
 private:
 
-  // Resolve ambiguities
-  using Qstls::wvg;
   // Input data
   const QstlsIetInput in;
+  // Iet extension
+  Iet iet;
   // Iet contribution to the local field correction
   Vector2D lfcIet;
   // Initialize basic properties

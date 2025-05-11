@@ -8,22 +8,25 @@
 // Solver for the STLS-IET scheme
 // -----------------------------------------------------------------
 
-class StlsIet : public Stls, public Iet {
+class StlsIet : public Stls {
 
 public:
 
   // Constructors
   explicit StlsIet(const StlsIetInput &in_)
       : Stls(in_, true),
-        Iet(in_, in_, wvg, true),
-        in(in_){};
+        in(in_),
+        iet(in, in_, wvg, true) {};
+  // Getters
+  const std::vector<double> &getBf() const { return iet.getBf(); }
 
 private:
 
-  // Resolve ambiguities
-  using Stls::wvg;
   // Input parameters
   StlsIetInput in;
+  // Iet extension
+  Iet iet;
+  // Initialize basic properties
   void init() override;
   // Compute static local field correction
   void computeLfc() override;
