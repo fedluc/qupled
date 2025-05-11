@@ -24,25 +24,8 @@ Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
   // Allocate arrays
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
-  adr.resize(nx, nl);
-  ssfNew.resize(nx);
-  ssfOld.resize(nx);
+  lfc.resize(nx, nl);
   adrFixed.resize(nx, nl, nx);
-  // Deallocate arrays that are inherited but not used
-  vector<double>().swap(slfcNew);
-}
-
-int Qstls::compute() {
-  try {
-    init();
-    println("Structural properties calculation ...");
-    doIterations();
-    println("Done");
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
 }
 
 void Qstls::init() {
@@ -52,106 +35,19 @@ void Qstls::init() {
   println("Done");
 }
 
-// qstls iterations
-void Qstls::doIterations() {
-  const int maxIter = in.getNIter();
-  const double minErr = in.getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
-  initialGuess();
-  while (counter < maxIter + 1 && err > minErr) {
-    // Start timing
-    double tic = timer();
-    // Update auxiliary density response
-    computeAdr();
-    // Update static structure factor
-    computeSsf();
-    // Update diagnostic
-    counter++;
-    err = computeError();
-    // Update solution
-    updateSolution();
-    // End timing
-    double toc = timer();
-    // Print diagnostic
-    println(format("--- iteration {:d} ---", counter));
-    println(format("Elapsed time: {:.3f} seconds", toc - tic));
-    println(format("Residual error: {:.5e}", err));
-    fflush(stdout);
-  }
-  // Set static structure factor for output
-  ssf = ssfOld;
-}
-
-// Initial guess for qstls iterations
-void Qstls::initialGuess() {
-  assert(!ssfNew.empty());
-  assert(!ssfOld.empty());
-  assert(!adr.empty());
-  // From guess in input
-  if (initialGuessFromInput()) { return; }
-  // Default
-  Rpa rpa(in, false);
-  int status = rpa.compute();
-  if (status != 0) {
-    throwError("Failed to compute the default initial guess");
-  }
-  ssfOld = rpa.getSsf();
-}
-
-bool Qstls::initialGuessFromInput() {
-  const auto &guess = in.getGuess();
-  const int nx = wvg.size();
-  const Interpolator1D ssfi(guess.wvg, guess.ssf);
-  if (!ssfi.isValid()) { return false; }
-  const double xMax = guess.wvg.back();
-  for (int i = 0; i < nx; ++i) {
-    const double &x = wvg[i];
-    ssfOld[i] = (x <= xMax) ? ssfi.eval(x) : 1.0;
-  }
-  return true;
-}
-
 // Compute auxiliary density response
-void Qstls::computeAdr() {
+void Qstls::computeLfc() {
   if (in.getDegeneracy() == 0.0) { return; }
   const int nx = wvg.size();
-  const shared_ptr<Interpolator1D> ssfi =
-      make_shared<Interpolator1D>(wvg, ssfOld);
+  const shared_ptr<Interpolator1D> ssfi = make_shared<Interpolator1D>(wvg, ssf);
   for (int i = 0; i < nx; ++i) {
     QstlsUtil::Adr adrTmp(
         in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], ssfi, itg);
-    adrTmp.get(wvg, adrFixed, adr);
+    adrTmp.get(wvg, adrFixed, lfc);
   }
-  for (int i = 0; i < nx; ++i) {
-    slfc[i] = adr(i, 0) / idr(i, 0);
-  };
-}
-
-// Compute static structure factor
-void Qstls::computeSsf() {
-  if (in.getDegeneracy() == 0.0) {
-    computeSsfGround();
-  } else {
-    computeSsfFinite();
-  }
-}
-
-// Compute static structure factor at finite temperature
-void Qstls::computeSsfFinite() {
-  if (in.getCoupling() > 0.0) {
-    assert(ssfNew.size() > 0);
-    assert(adr.size() > 0);
-    assert(idr.size() > 0);
-  }
-  const double Theta = in.getDegeneracy();
-  const double rs = in.getCoupling();
-  const int nx = wvg.size();
-  for (int i = 0; i < nx; ++i) {
-    QstlsUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], idr[i], adr[i]);
-    ssfNew[i] = ssfTmp.get();
-  }
+  // adr = lfc;
+  lfc.div(idr);
+  lfc.fill(0, 0.0);
 }
 
 // Compute static structure factor at zero temperature
@@ -166,19 +62,10 @@ void Qstls::computeSsfGround() {
     shared_ptr<Integrator1D> itgTmp = make_shared<Integrator1D>(*itg);
     QstlsUtil::SsfGround ssfTmp(
         wvg[i], rs, ssfHF[i], xMax, OmegaMax, ssfi, itgTmp);
-    ssfNew[i] = ssfTmp.get();
+    ssf[i] = ssfTmp.get();
   };
   const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
-  gatherLoopData(ssfNew.data(), loopData, nx);
-}
-
-// Compute residual error for the qstls iterations
-double Qstls::computeError() const { return rms(ssfNew, ssfOld, false); }
-
-// Update solution during qstls iterations
-void Qstls::updateSolution() {
-  const double aMix = in.getMixingParameter();
-  ssfOld = linearCombination(ssfNew, aMix, ssfOld, 1 - aMix);
+  gatherLoopData(ssf.data(), loopData, nx);
 }
 
 void Qstls::computeAdrFixed() {
@@ -402,24 +289,6 @@ double QstlsUtil::AdrGround::integrand2(const double &t) const {
       0.5 * Omega * t / x2 * (atan(tptx / Omega) - atan(tmtx / Omega));
   const double part3 = part1 - part2 + t / x;
   return part3 / (2.0 * t + y2 - x2);
-}
-
-// -----------------------------------------------------------------
-// Qssf class
-// -----------------------------------------------------------------
-
-double QstlsUtil::Ssf::get() const {
-  if (rs == 0.0) return ssfHF;
-  if (x == 0.0) return 0.0;
-  double suml = 0.0;
-  for (size_t l = 0; l < idr.size(); ++l) {
-    const double &idrl = idr[l];
-    const double &adrl = adr[l];
-    const double denom = 1.0 + ip * (idrl - adrl);
-    const double f = idrl * (idrl - adrl) / denom;
-    suml += (l == 0) ? f : 2 * f;
-  }
-  return ssfHF - 1.5 * ip * Theta * suml;
 }
 
 // -----------------------------------------------------------------

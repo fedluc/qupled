@@ -20,27 +20,23 @@ public:
   Rpa(const Input &in_, const bool verbose_);
   explicit Rpa(const Input &in_)
       : Rpa(in_, true) {}
-  // Compute the scheme
-  int compute();
 
 protected:
 
   // Hartree-Fock Static structure factor
   std::vector<double> ssfHF;
   // Initialize basic properties
-  void init();
+  void init() override;
   // Compute static structure factor
-  void computeSsf();
+  void computeSsfFinite() override;
+  void computeSsfGround() override;
 
 private:
 
   // Compute Hartree-Fock static structure factor
   void computeSsfHF();
-  // Compute static structure factor at finite temperature
-  void computeSsfFinite();
-  void computeSsfGround();
-  // Compute static local field correction
-  void computeSlfc();
+  // Compute local field correction
+  void computeLfc() override;
 };
 
 namespace RpaUtil {
@@ -53,6 +49,17 @@ namespace RpaUtil {
 
   protected:
 
+    // Constructor
+    SsfBase(const double &x_,
+            const double &Theta_,
+            const double &rs_,
+            const double &ssfHF_,
+            std::span<const double> lfc_)
+        : x(x_),
+          Theta(Theta_),
+          rs(rs_),
+          ssfHF(ssfHF_),
+          lfc(lfc_) {}
     // Wave-vector
     const double x;
     // Degeneracy parameter
@@ -61,21 +68,10 @@ namespace RpaUtil {
     const double rs;
     // Hartree-Fock contribution
     const double ssfHF;
-    // Static local field correction
-    const double slfc;
+    // Local field correction
+    std::span<const double> lfc;
     // Normalized interaction potential
     const double ip = 4.0 * numUtil::lambda * rs / (M_PI * x * x);
-    // Constructor
-    SsfBase(const double &x_,
-            const double &Theta_,
-            const double &rs_,
-            const double &ssfHF_,
-            const double &slfc_)
-        : x(x_),
-          Theta(Theta_),
-          rs(rs_),
-          ssfHF(ssfHF_),
-          slfc(slfc_) {}
   };
 
   class Ssf : public SsfBase {
@@ -87,9 +83,9 @@ namespace RpaUtil {
         const double &Theta_,
         const double &rs_,
         const double &ssfHF_,
-        const double &slfc_,
+        std::span<const double> lfc_,
         std::span<const double> idr_)
-        : SsfBase(x_, Theta_, rs_, ssfHF_, slfc_),
+        : SsfBase(x_, Theta_, rs_, ssfHF_, lfc_),
           idr(idr_) {}
     // Get static structore factor
     double get() const;
@@ -108,10 +104,10 @@ namespace RpaUtil {
     SsfGround(const double &x_,
               const double &rs_,
               const double &ssfHF_,
-              const double &slfc_,
+              std::span<const double> lfc_,
               const double &OmegaMax_,
               std::shared_ptr<Integrator1D> itg_)
-        : SsfBase(x_, 0, rs_, ssfHF_, slfc_),
+        : SsfBase(x_, 0, rs_, ssfHF_, lfc_),
           OmegaMax(OmegaMax_),
           itg(itg_) {}
     // Get result of integration

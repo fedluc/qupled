@@ -56,7 +56,7 @@ After the solution is completed the results are stored in an object :obj:`qupled
 and written to the output database.
 
 .. autoclass:: qupled.rpa.Rpa
-    :inherited-members:
+    :show-inheritance:
     :members:
 
 .. autoclass:: qupled.rpa.Input	       
@@ -73,7 +73,7 @@ After the solution is completed the results are stored in an object :obj:`qupled
 and written to the output database.
 
 .. autoclass:: qupled.stls.Stls
-    :inherited-members:
+    :show-inheritance:
     :members:
 
 .. autoclass:: qupled.stls.Input	       
@@ -98,7 +98,7 @@ After the solution is completed the results are stored in an object :obj:`qupled
 and written to the output database.
 
 .. autoclass:: qupled.stlsiet.StlsIet
-    :inherited-members:
+    :show-inheritance:
     :members:
 
 .. autoclass:: qupled.stlsiet.Input	       
@@ -108,6 +108,10 @@ and written to the output database.
 .. autoclass:: qupled.stlsiet.Result
     :show-inheritance:
     :members:
+
+.. autoclass:: qupled.stlsiet.Guess
+    :members:
+    :exclude-members: to_native
 
 VSStls scheme
 ~~~~~~~~~~~~~
@@ -119,7 +123,7 @@ After the solution is completed the results are stored in an object :obj:`qupled
 and written to the output database.
 
 .. autoclass:: qupled.vsstls.VSStls
-    :inherited-members:
+    :show-inheritance:
     :members:
     :exclude-members: get_free_energy_integrand
 
@@ -148,7 +152,7 @@ After the solution is completed the results are stored in an object :obj:`qupled
 and written to the output database.
 
 .. autoclass:: qupled.esa.ESA
-    :inherited-members:
+    :show-inheritance:
     :members:
 
 .. autoclass:: qupled.esa.Input	       
@@ -168,21 +172,13 @@ After the solution is completed the results are stored in an object :obj:`qupled
 and written to the output database.
 
 .. autoclass:: qupled.qstls.Qstls
-    :inherited-members:
+    :show-inheritance:
     :members:
     :exclude-members: find_fixed_adr_in_database
 
 .. autoclass:: qupled.qstls.Input	       
     :show-inheritance:
     :members:
-      
-.. autoclass:: qupled.qstls.Result
-    :show-inheritance:
-    :members:
-       
-.. autoclass:: qupled.qstls.Guess
-    :members:
-    :exclude-members: to_native
 
 Qstls-IET scheme
 ~~~~~~~~~~~~~~~~
@@ -195,15 +191,11 @@ After the solution is completed the results are stored in an object :obj:`qupled
 and written to the output database.
 
 .. autoclass:: qupled.qstlsiet.QstlsIet
-    :inherited-members:
+    :show-inheritance:
     :members:
     :exclude-members: find_fixed_adr_in_database
 
 .. autoclass:: qupled.qstlsiet.Input	       
-    :show-inheritance:
-    :members:
-      
-.. autoclass:: qupled.qstlsiet.Result
     :show-inheritance:
     :members:
 
@@ -216,15 +208,11 @@ called :obj:`qupled.qvsstls.Input`. After the solution is completed the results 
 object :obj:`qupled.qvsstls.Result` and written to the output database.
 
 .. autoclass:: qupled.qvsstls.QVSStls
-    :inherited-members:
+    :show-inheritance:
     :members:
     :exclude-members: get_free_energy_integrand
 
 .. autoclass:: qupled.qvsstls.Input	       
-    :show-inheritance:
-    :members:
-      
-.. autoclass:: qupled.qvsstls.Result
     :show-inheritance:
     :members:
 

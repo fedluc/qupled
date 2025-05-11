@@ -22,25 +22,6 @@ Rpa::Rpa(const Input &in_, const bool verbose_)
   ssfHF.resize(nx);
 }
 
-// Compute scheme
-int Rpa::compute() {
-  try {
-    init();
-    println("Structural properties calculation ...");
-    print("Computing static local field correction: ");
-    computeSlfc();
-    println("Done");
-    print("Computing static structure factor: ");
-    computeSsf();
-    println("Done");
-    println("Done");
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
-}
-
 // Initialize basic properties
 void Rpa::init() {
   HF::init();
@@ -56,25 +37,13 @@ void Rpa::computeSsfHF() {
   ssfHF = hf.getSsf();
 }
 
-// Compute static structure factor
-void Rpa::computeSsf() {
-  assert(ssf.size() == wvg.size());
-  if (in.getDegeneracy() == 0.0) {
-    computeSsfGround();
-  } else {
-    computeSsfFinite();
-  }
-}
-
 // Compute static structure factor at finite temperature
 void Rpa::computeSsfFinite() {
   const double Theta = in.getDegeneracy();
   const double rs = in.getCoupling();
   const size_t nx = wvg.size();
-  assert(slfc.size() == nx);
-  assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
-    RpaUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], idr[i]);
+    RpaUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], lfc[i], idr[i]);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -84,19 +53,17 @@ void Rpa::computeSsfGround() {
   const double rs = in.getCoupling();
   const double OmegaMax = in.getFrequencyCutoff();
   const size_t nx = wvg.size();
-  assert(slfc.size() == nx);
-  assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    RpaUtil::SsfGround ssfTmp(x, rs, ssfHF[i], slfc[i], OmegaMax, itg);
+    RpaUtil::SsfGround ssfTmp(x, rs, ssfHF[i], lfc[i], OmegaMax, itg);
     ssf[i] = ssfTmp.get();
   }
 }
 
 // Compute static local field correction
-void Rpa::computeSlfc() {
-  assert(slfc.size() == wvg.size());
-  for (auto &s : slfc) {
+void Rpa::computeLfc() {
+  assert(lfc.size() == wvg.size());
+  for (auto &s : lfc) {
     s = 0;
   }
 }
@@ -107,18 +74,18 @@ void Rpa::computeSlfc() {
 
 // Get at finite temperature for any scheme
 double RpaUtil::Ssf::get() const {
-  assert(Theta > 0.0);
   if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
-  double fact2 = 0.0;
+  const double isStatic = lfc.size() == 1;
+  double suml = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {
     const double &idrl = idr[l];
-    const double fact3 = 1.0 + ip * (1 - slfc) * idrl;
-    double fact4 = idrl * idrl / fact3;
-    if (l > 0) fact4 *= 2;
-    fact2 += fact4;
+    const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
+    const double denom = 1.0 + ip * idrl * (1 - lfcl);
+    const double f = idrl * idrl * (1 - lfcl) / denom;
+    suml += (l == 0) ? f : 2 * f;
   }
-  return ssfHF - 1.5 * ip * Theta * (1 - slfc) * fact2;
+  return ssfHF - 1.5 * ip * Theta * suml;
 }
 
 // -----------------------------------------------------------------
@@ -135,5 +102,5 @@ double RpaUtil::SsfGround::get() {
 
 double RpaUtil::SsfGround::integrand(const double &Omega) const {
   const double idr = HFUtil::IdrGround(x, Omega).get();
-  return idr / (1.0 + ip * idr * (1.0 - slfc)) - idr;
+  return idr / (1.0 + ip * idr * (1.0 - lfc[0])) - idr;
 }

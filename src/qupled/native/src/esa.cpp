@@ -11,29 +11,11 @@ using namespace numUtil;
 // ESA class
 // -----------------------------------------------------------------
 
-int ESA::compute() {
-  try {
-    init();
-    println("Structural properties calculation ...");
-    print("Computing static local field correction: ");
-    computeSlfc();
-    println("Done");
-    print("Computing static structure factor: ");
-    computeSsf();
-    println("Done");
-    println("Done");
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
-}
-
-void ESA::computeSlfc() {
-  ESAUtil::Slfc slfcTmp(in.getCoupling(), in.getDegeneracy());
+void ESA::computeLfc() {
+  ESAUtil::Slfc lfcTmp(in.getCoupling(), in.getDegeneracy());
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double &x = wvg[i];
-    slfc[i] = slfcTmp.get(x);
+    lfc(i, 0) = lfcTmp.get(x);
   }
 }
 

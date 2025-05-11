@@ -18,12 +18,13 @@ public:
   HF(const Input &in_, const bool verbose_);
   explicit HF(const Input &in_)
       : HF(in_, true) {}
+  // Destructor
+  virtual ~HF() = default;
   // Compute the scheme
   int compute();
   // Getters
-  const Input &getInput() const { return in; }
   const Vector2D &getIdr() const { return idr; }
-  const std::vector<double> &getSlfc() const { return slfc; }
+  const Vector2D &getLfc() const { return lfc; }
   const std::vector<double> &getSsf() const { return ssf; }
   const std::vector<double> &getWvg() const { return wvg; }
   std::vector<double> getRdf(const std::vector<double> &r) const;
@@ -41,13 +42,21 @@ protected:
   // Ideal density response
   Vector2D idr;
   // Static local field correction
-  std::vector<double> slfc;
+  Vector2D lfc;
   // Static structure factor
   std::vector<double> ssf;
   // Chemical potential
   double mu;
   // Initialize basic properties
-  void init();
+  virtual void init();
+  // Calculations to compute the structural properties
+  virtual void computeStructuralProperties();
+  // Compute static structure factor
+  virtual void computeSsf();
+  virtual void computeSsfFinite();
+  virtual void computeSsfGround();
+  // Compute local field correction
+  virtual void computeLfc();
 
 private:
 
@@ -59,12 +68,6 @@ private:
   void computeIdr();
   void computeIdrFinite();
   void computeIdrGround();
-  // Compute static structure factor
-  void computeSsf();
-  void computeSsfFinite();
-  void computeSsfGround();
-  // Compute static local field correction
-  void computeSlfc();
 };
 
 namespace HFUtil {

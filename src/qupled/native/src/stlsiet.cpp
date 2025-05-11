@@ -12,73 +12,39 @@ using ItgType = Integrator1D::Type;
 // STLS class
 // -----------------------------------------------------------------
 
-int StlsIet::compute() {
-  try {
-    init();
-    Stls::println("Structural properties calculation ...");
-    doIterations();
-    Stls::println("Done");
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
-}
-
 // Initialize basic properties
 void StlsIet::init() {
   Stls::init();
-  Iet::init();
+  iet.init();
 }
 
 // Compute static local field correction
-void StlsIet::computeSlfc() {
-  Stls::computeSlfc();
+void StlsIet::computeLfc() {
+  const Vector2D lfcOld = lfc;
+  Stls::computeLfc();
   const std::shared_ptr<Integrator2D> itg2 =
       make_shared<Integrator2D>(in.getIntError());
   const bool segregatedItg = in.getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const shared_ptr<Interpolator1D> ssfItp =
       make_shared<Interpolator1D>(wvg, ssf);
-  const shared_ptr<Interpolator1D> slfcItp =
-      make_shared<Interpolator1D>(wvg, slfc);
+  const shared_ptr<Interpolator1D> lfcItp =
+      make_shared<Interpolator1D>(wvg[0], lfcOld(0, 0), wvg.size());
   const shared_ptr<Interpolator1D> bfItp =
       make_shared<Interpolator1D>(wvg, getBf());
   for (size_t i = 0; i < wvg.size(); ++i) {
-    StlsIetUtil::Slfc slfcTmp(
-        wvg[i], wvg.front(), wvg.back(), ssfItp, slfcItp, bfItp, itgGrid, itg2);
-    slfcNew[i] += slfcTmp.get();
+    StlsIetUtil::Slfc lfcTmp(
+        wvg[i], wvg.front(), wvg.back(), ssfItp, lfcItp, bfItp, itgGrid, itg2);
+    lfc(i, 0) += lfcTmp.get();
   }
 }
 
-// stls iterations
-void StlsIet::doIterations() {
-  const int maxIter = in.getNIter();
-  const double minErr = in.getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
-  initialGuess();
-  while (counter < maxIter + 1 && err > minErr) {
-    // Start timing
-    double tic = timer();
-    // Update static structure factor
-    computeSsf();
-    // Update static local field correction
-    computeSlfc();
-    // Update diagnostic
-    counter++;
-    err = computeError();
-    // Update solution
-    updateSolution();
-    // End timing
-    double toc = timer();
-    // Print diagnostic
-    Stls::println(format("--- iteration {:d} ---", counter));
-    Stls::println(format("Elapsed time: {:.3f} seconds", toc - tic));
-    Stls::println(format("Residual error: {:.5e}", err));
-    fflush(stdout);
-  }
+bool StlsIet::initialGuessFromInput() {
+  const bool ssfIsSetFromInput = Stls::ssfGuessFromInput(in.getGuess());
+  if (!ssfIsSetFromInput) { return false; }
+  const bool lfcIsSetFromInput = iet.initialGuessFromInput(lfc);
+  if (!lfcIsSetFromInput) { return false; }
+  return true;
 }
 
 // -----------------------------------------------------------------
@@ -86,7 +52,7 @@ void StlsIet::doIterations() {
 // -----------------------------------------------------------------
 
 // Compute static local field correction from interpolator
-double StlsIetUtil::Slfc::slfc(const double &y) const { return slfci->eval(y); }
+double StlsIetUtil::Slfc::lfc(const double &y) const { return lfci->eval(y); }
 
 // Compute bridge function from interpolator
 double StlsIetUtil::Slfc::bf(const double &y) const { return bfi->eval(y); }
@@ -107,7 +73,7 @@ double StlsIetUtil::Slfc::get() const {
 // Level 1 integrand
 double StlsIetUtil::Slfc::integrand1(const double &y) const {
   if (y == 0.0) return 0.0;
-  return (-bf(y) - (ssf(y) - 1.0) * (slfc(y) - 1.0)) / y;
+  return (-bf(y) - (ssf(y) - 1.0) * (lfc(y) - 1.0)) / y;
 }
 
 // Level 2 integrand

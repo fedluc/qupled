@@ -23,8 +23,6 @@ public:
   explicit VSStls(const VSStlsInput &in_);
   // Solve the scheme
   using VSBase::compute;
-  // Getters
-  const VSStlsInput &getInput() const { return in; }
 
 private:
 
@@ -98,8 +96,8 @@ public:
         in(in_) {}
 
   // Compute static local field correction
-  void computeSlfcStls();
-  void computeSlfc();
+  void computeLfcStls();
+  void computeLfc();
 
   // Publicly esposed private stls methods
   void init() { Stls::init(); }
@@ -110,8 +108,8 @@ public:
 
   // Getters
   const std::vector<double> &getSsf() const { return Stls::getSsf(); }
-  const std::vector<double> &getSlfc() const { return Stls::getSlfc(); }
   const std::vector<double> &getWvg() const { return Stls::getWvg(); }
+  const Vector2D &getLfc() const { return Stls::getLfc(); }
 
 private:
 

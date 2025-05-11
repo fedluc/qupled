@@ -8,29 +8,30 @@
 // Solver for the STLS-IET scheme
 // -----------------------------------------------------------------
 
-class StlsIet : public Stls, public Iet {
+class StlsIet : public Stls {
 
 public:
 
   // Constructors
   explicit StlsIet(const StlsIetInput &in_)
       : Stls(in_, true),
-        Iet(in_, in_, wvg, true),
-        in(in_){};
-  // Compute scheme
-  int compute();
+        in(in_),
+        iet(in, in_, wvg, true){};
+  // Getters
+  const std::vector<double> &getBf() const { return iet.getBf(); }
 
 private:
 
-  // Resolve ambiguities
-  using Stls::wvg;
   // Input parameters
   StlsIetInput in;
-  void init();
+  // Iet extension
+  Iet iet;
+  // Initialize basic properties
+  void init() override;
   // Compute static local field correction
-  void computeSlfc();
-  // Iterations to solve the stls scheme
-  void doIterations();
+  void computeLfc() override;
+  // Read initital guess from input
+  bool initialGuessFromInput() override;
 };
 
 namespace StlsIetUtil {
@@ -48,14 +49,14 @@ namespace StlsIetUtil {
          const double &yMin_,
          const double &yMax_,
          std::shared_ptr<Interpolator1D> ssfi_,
-         std::shared_ptr<Interpolator1D> slfci_,
+         std::shared_ptr<Interpolator1D> lfci_,
          std::shared_ptr<Interpolator1D> bfi_,
          const std::vector<double> &itgGrid_,
          std::shared_ptr<Integrator2D> itg_)
         : SlfcBase(x_, yMin_, yMax_, ssfi_),
           itg(itg_),
           itgGrid(itgGrid_),
-          slfci(slfci_),
+          lfci(lfci_),
           bfi(bfi_) {}
     // Get result of integration
     double get() const;
@@ -70,11 +71,11 @@ namespace StlsIetUtil {
     double integrand1(const double &y) const;
     double integrand2(const double &w) const;
     // Static local field correction interpolator
-    const std::shared_ptr<Interpolator1D> slfci;
+    const std::shared_ptr<Interpolator1D> lfci;
     // Bridge function interpolator
     const std::shared_ptr<Interpolator1D> bfi;
     // Compute static local field correction
-    double slfc(const double &x) const;
+    double lfc(const double &x) const;
     // Compute bridge function
     double bf(const double &x_) const;
   };

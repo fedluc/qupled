@@ -81,30 +81,28 @@ def create_one_svg_file(darkmode: bool, scheme: qstls.Qstls, error: np.array):
 
 def solve_qstls(guess_run_id: int):
     scheme = qstls.Qstls()
-    rs = 15.0
-    theta = 1.0
-    inputs = qstls.Input(rs, theta)
+    inputs = qstls.Input(coupling=15.0, degeneracy=1.0)
     inputs.mixing = 0.3
     inputs.resolution = 0.1
     inputs.cutoff = 10
     inputs.matsubara = 16
     inputs.threads = 16
     inputs.iterations = 0
-    adr_file = f"adr_fixed_theta{theta:.3f}_matsubara{inputs.matsubara}_QSTLS.bin"
     inputs.guess = (
         scheme.get_initial_guess(guess_run_id)
         if guess_run_id is not None
         else inputs.guess
     )
-    inputs.fixed = adr_file if os.path.exists(adr_file) else inputs.fixed
     scheme.compute(inputs)
     return scheme
 
 
 def plot_density_response(plt: plt, scheme: qstls.Qstls, settings: PlotSettings):
     results = scheme.results
-    results.idr[results.idr == 0.0] = 1.0
-    dr = np.divide(results.adr, results.idr)
+    inputs = scheme.inputs
+    wvg_squared = results.wvg[:, np.newaxis] ** 2
+    denominator = wvg_squared + inputs.coupling * (results.idr - results.adr)
+    dr = results.idr * wvg_squared / denominator
     plt.subplot(2, 2, 3)
     parameters = np.array([0, 1, 2, 3, 4])
     numParameters = parameters.size
@@ -124,7 +122,7 @@ def plot_density_response(plt: plt, scheme: qstls.Qstls, settings: PlotSettings)
     plt.xlim(0, settings.xlim)
     plt.xlabel("Wave-vector", fontsize=settings.labelsz)
     plt.title("Density response", fontsize=settings.labelsz, fontweight="bold")
-    plt.legend(fontsize=settings.ticksz, loc="lower right")
+    plt.legend(fontsize=settings.ticksz, loc="upper right")
     plt.xticks(fontsize=settings.ticksz)
     plt.yticks(fontsize=settings.ticksz)
 

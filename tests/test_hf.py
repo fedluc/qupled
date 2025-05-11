@@ -157,7 +157,7 @@ def test_result_initialization(results):
     assert results.rdf is None
     assert results.rdf_grid is None
     assert results.sdr is None
-    assert results.slfc is None
+    assert results.lfc is None
     assert results.ssf is None
     assert results.uint is None
     assert results.wvg is None

@@ -20,37 +20,21 @@ public:
   Qstls(const QstlsInput &in_, const bool verbose_);
   explicit Qstls(const QstlsInput &in_)
       : Qstls(in_, true) {}
-  // Compute qstls scheme
-  int compute();
   // Getters
-  const QstlsInput &getInput() const { return in; }
-  double getError() const { return computeError(); }
-  const Vector2D &getAdr() const { return adr; }
   const Vector3D &getAdrFixed() const { return adrFixed; }
 
 protected:
 
   // Auxiliary density response
-  Vector2D adr;
   Vector3D adrFixed;
   std::string adrFixedDatabaseName;
-  // Static structure factor (for iterations)
-  std::vector<double> ssfNew;
-  std::vector<double> ssfOld;
   // Initialize basic properties
-  void init();
+  void init() override;
   // Compute auxiliary density response
-  void computeAdr();
+  void computeLfc() override;
   // Read and write auxiliary density response to database
   void readAdrFixed(Vector3D &res, const std::string &name, int runId) const;
   void writeAdrFixed(const Vector3D &res, const std::string &name) const;
-  // Compute static structure factor at finite temperature
-  void computeSsf();
-  // Iterations to solve the stls scheme
-  void doIterations();
-  void initialGuess();
-  double computeError() const;
-  void updateSolution();
 
 private:
 
@@ -59,10 +43,7 @@ private:
   // Compute auxiliary density response
   void computeAdrFixed();
   // Compute static structure factor at finite temperature
-  void computeSsfFinite();
-  void computeSsfGround();
-  // Iterations to solve the stls scheme
-  bool initialGuessFromInput();
+  void computeSsfGround() override;
 };
 
 namespace QstlsUtil {
@@ -248,28 +229,6 @@ namespace QstlsUtil {
   // Class for the static structure factor
   // -----------------------------------------------------------------
 
-  class Ssf : public RpaUtil::Ssf {
-
-  public:
-
-    // Constructor for quantum schemes
-    Ssf(const double &x_,
-        const double &Theta_,
-        const double &rs_,
-        const double &ssfHF_,
-        std::span<const double> idr_,
-        std::span<const double> adr_)
-        : RpaUtil::Ssf(x_, Theta_, rs_, ssfHF_, 0, idr_),
-          adr(adr_) {}
-    // Get static structure factor
-    double get() const;
-
-  protected:
-
-    // Auxiliary density response
-    const std::span<const double> adr;
-  };
-
   class SsfGround : public RpaUtil::SsfGround {
 
   public:
@@ -282,7 +241,8 @@ namespace QstlsUtil {
               const double &OmegaMax_,
               std::shared_ptr<Interpolator1D> ssfi_,
               std::shared_ptr<Integrator1D> itg_)
-        : RpaUtil::SsfGround(x_, rs_, ssfHF_, 0.0, OmegaMax_, itg_),
+        : RpaUtil::SsfGround(
+              x_, rs_, ssfHF_, std::span<const double>(), OmegaMax_, itg_),
           xMax(xMax_),
           ssfi(ssfi_) {}
     // Get result of integration

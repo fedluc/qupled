@@ -19,7 +19,6 @@ def test_qvsstls_properties():
     scheme = QVSStls(inputs)
     assert hasattr(scheme, "free_energy_integrand")
     assert hasattr(scheme, "free_energy_grid")
-    assert hasattr(scheme, "adr")
 
 
 def test_qvsstls_compute(database_info):
@@ -46,11 +45,10 @@ def test_qvsstls_compute(database_info):
     scheme.compute()
     nx = scheme.wvg.size
     assert nx >= 3
-    assert scheme.adr.shape[0] == nx
-    assert scheme.adr.shape[1] == inputs.matsubara
+    assert scheme.lfc.shape[0] == nx
+    assert scheme.lfc.shape[1] == inputs.matsubara
     assert scheme.idr.shape[0] == nx
     assert scheme.idr.shape[1] == inputs.matsubara
     assert scheme.sdr.size == nx
-    assert scheme.slfc.size == nx
     assert scheme.ssf.size == nx
     assert scheme.rdf(scheme.wvg).size == nx

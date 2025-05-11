@@ -184,14 +184,14 @@ class Result:
     def __init__(self):
         self.idr: np.ndarray = None
         """Ideal density response"""
+        self.lfc: np.ndarray = None
+        """Local field correction"""
         self.rdf: np.ndarray = None
         """Radial distribution function"""
         self.rdf_grid: np.ndarray = None
         """Radial distribution function grid"""
         self.sdr: np.ndarray = None
         """Static density response"""
-        self.slfc: np.ndarray = None
-        """Static local field correction"""
         self.ssf: np.ndarray = None
         """Static structure factor"""
         self.uint: float = None

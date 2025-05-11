@@ -38,9 +38,9 @@ class PyStlsGuess {
 public:
 
   static bn::ndarray getWvg(const StlsInput::Guess &guess);
-  static bn::ndarray getSlfc(const StlsInput::Guess &guess);
+  static bn::ndarray getSsf(const StlsInput::Guess &guess);
   static void setWvg(StlsInput::Guess &guess, const bn::ndarray &wvg);
-  static void setSlfc(StlsInput::Guess &guess, const bn::ndarray &slfc);
+  static void setSsf(StlsInput::Guess &guess, const bn::ndarray &lfc);
 };
 
 // -----------------------------------------------------------------
@@ -73,17 +73,11 @@ public:
 // Wrapper for exposing the QstlsGuess class to Python
 // -----------------------------------------------------------------
 
-class PyQstlsGuess {
+class PyIetGuess {
 public:
 
-  static bn::ndarray getWvg(const QstlsInput::Guess &guess);
-  static bn::ndarray getSsf(const QstlsInput::Guess &guess);
-  static bn::ndarray getAdr(const QstlsInput::Guess &guess);
-  static int getMatsubara(const QstlsInput::Guess &guess);
-  static void setWvg(QstlsInput::Guess &guess, const bn::ndarray &wvg);
-  static void setSsf(QstlsInput::Guess &guess, const bn::ndarray &ssf);
-  static void setAdr(QstlsInput::Guess &guess, const bn::ndarray &ssf);
-  static void setMatsubara(QstlsInput::Guess &guess, const int matsubara);
+  static bn::ndarray getLfc(const IetInput::Guess &guess);
+  static void setLfc(IetInput::Guess &guess, const bn::ndarray &lfc);
 };
 
 // -----------------------------------------------------------------
@@ -93,11 +87,10 @@ public:
 class pyHF {
 public:
 
-  static Input getInput(const HF &hf);
   static bn::ndarray getIdr(const HF &hf);
   static bn::ndarray getRdf(const HF &hf, const bn::ndarray &r);
   static bn::ndarray getSdr(const HF &hf);
-  static bn::ndarray getSlfc(const HF &hf);
+  static bn::ndarray getLfc(const HF &hf);
   static bn::ndarray getSsf(const HF &hf);
   static bn::ndarray getWvg(const HF &hf);
   static double getUInt(const HF &hf);
@@ -110,8 +103,6 @@ public:
 class PyStls {
 public:
 
-  static int compute(Stls &stls);
-  static StlsInput getInput(const Stls &stls);
   static double getError(const Stls &stls);
 };
 
@@ -122,7 +113,6 @@ public:
 class PyStlsIet {
 public:
 
-  static int compute(StlsIet &stlsiet);
   static bn::ndarray getBf(const StlsIet &stlsiet);
 };
 
@@ -134,24 +124,10 @@ class PyVSStls {
 public:
 
   static int compute(VSStls &vsstls);
-  static VSStlsInput getInput(const VSStls &vsstls);
   static double getError(const VSStls &vsstls);
   static double getAlpha(const VSStls &vsstls);
   static bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls);
   static bn::ndarray getFreeEnergyGrid(const VSStls &vsstls);
-};
-
-// -----------------------------------------------------------------
-// Wrapper for exposing the Qstls class to Python
-// -----------------------------------------------------------------
-
-class PyQstls {
-public:
-
-  static int compute(Qstls &qstls);
-  static QstlsInput getInput(const Qstls &qstls);
-  static double getError(const Qstls &qstls);
-  static bn::ndarray getAdr(const Qstls &qstls);
 };
 
 // -----------------------------------------------------------------
@@ -161,7 +137,6 @@ public:
 class PyQstlsIet {
 public:
 
-  static int compute(QstlsIet &qstlsiet);
   static bn::ndarray getBf(const QstlsIet &qstlsiet);
 };
 
@@ -173,10 +148,8 @@ class PyQVSStls {
 public:
 
   static int compute(QVSStls &qvsstls);
-  static QVSStlsInput getInput(const QVSStls &qvsstls);
   static double getError(const QVSStls &qvsstls);
   static double getAlpha(const QVSStls &qvsstls);
-  static bn::ndarray getAdr(const QVSStls &qvsstls);
   static bn::ndarray getFreeEnergyIntegrand(const QVSStls &qvsstls);
   static bn::ndarray getFreeEnergyGrid(const QVSStls &qvsstls);
 };

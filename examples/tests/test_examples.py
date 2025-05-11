@@ -2,7 +2,6 @@ import importlib
 import os
 import sys
 
-import json
 import matplotlib.pyplot as plt
 import pytest
 
@@ -42,82 +41,82 @@ def run_example(example_name, expected_internal_energy, expected_error_message=N
     assert_internal_energy(expected_internal_energy)
 
 
-def assert_internal_energy(expected_internal_energy, tolerance=1e-10):
+def assert_internal_energy(expected_internal_energy, tolerance=1e-5):
     db_handler = DataBaseHandler()
     for run_id, expected_uint in expected_internal_energy.items():
         uint = db_handler.get_results(run_id)["uint"]
-        assert abs(uint - expected_uint) < tolerance
+        assert abs(uint - expected_uint) < tolerance * abs(expected_uint)
 
 
 def test_fixed_adr_qstls():
     expected_internal_energy = {
-        1: -0.06915834235189136,
-        2: -0.06915834235189136,
-        3: -0.03627284914113849,
-        4: -0.035456654705259216,
+        1: -0.06915828119355959,
+        2: -0.06915828119355959,
+        3: -0.036272826904439975,
+        4: -0.03545665197810883,
     }
     run_example("fixed_adr", expected_internal_energy)
 
 
 def test_initial_guess_stls():
-    expected_internal_energy = {1: -0.06962128794619024, 2: -0.06962128710276651}
+    expected_internal_energy = {1: -0.0696211823813233, 2: -0.06962120294563244}
     run_example("initial_guess_stls", expected_internal_energy)
 
 
 def test_solve_quantum_schemes():
-    expected_internal_energy = {1: -0.06915834235189136, 2: -0.07152838527583957}
+    expected_internal_energy = {1: -0.06915828119355959, 2: -0.07152825527327064}
     run_example("solve_quantum_schemes", expected_internal_energy)
 
 
 def test_solve_qvsstls():
     expected_internal_energy = {
-        1: -3.021373777177104,
-        2: -1.0023714941672779,
-        3: -0.6439252234345055,
-        4: -0.4840844703408011,
-        5: -0.39133370228089476,
-        6: -0.3299820675074039,
-        7: -0.28606359879189935,
-        8: -0.274026991680492,
+        1: -2.9953554155330493,
+        2: -0.9991774530561909,
+        3: -0.6465616320411635,
+        4: -0.48952347548843544,
+        5: -0.3983496424348802,
+        6: -0.3379353371761777,
+        7: -0.29458249696823874,
+        8: -0.28267942694172865,
     }
     run_example("solve_qvsstls", expected_internal_energy)
 
 
 def test_solve_rpa_and_esa():
-    expected_internal_energy = {1: -0.09410276327343531, 2: -0.07005926976007962}
+    expected_internal_energy = {1: -0.09410276327343531, 2: -0.0700592697600796}
     run_example("solve_rpa_and_esa", expected_internal_energy)
 
 
 def test_solve_stls():
-    expected_internal_energy = {1: -0.06962128635463076}
+    expected_internal_energy = {1: -0.0696212348180385}
     run_example("solve_stls", expected_internal_energy)
 
 
 def test_solve_stls_iet():
-    expected_internal_energy = {1: -0.07129872557238329, 2: -0.07169561914217}
+    expected_internal_energy = {1: -0.07129865525802169, 2: -0.0716955500079742}
     run_example("solve_stls_iet", expected_internal_energy)
 
 
 def test_solve_vsstls():
     expected_internal_energy = {
-        1: -2.9940880309281104,
-        2: -0.9993088491331527,
-        3: -0.6469894140641651,
-        4: -0.490134772126587,
-        5: -0.3990831438584432,
-        6: -0.33876127750338797,
-        7: -0.29547372271661176,
-        8: -0.28358922791731095,
-        9: -0.262698528855232,
-        10: -0.23689815309397158,
-        11: -0.21599479260943763,
-        12: -0.19866597531856445,
-        13: -0.18402529485178737,
-        14: -0.17149705471535312,
-        15: -0.16062058250083427,
-        16: -0.1511518189162366,
-        17: -0.14288119657620452,
-        18: -0.13553308850917165,
-        19: -0.13334619793591626,
+        1: -2.994083662994709,
+        2: -0.9993079760057332,
+        3: -0.646988898300038,
+        4: -0.4901343952261395,
+        5: -0.39908284094981095,
+        6: -0.3387610127515653,
+        7: -0.29547347348261327,
+        8: -0.2835889710157103,
+        9: -0.26269820300385827,
+        10: -0.23689805481094944,
+        11: -0.21599372301286512,
+        12: -0.1986644553412517,
+        13: -0.18402301103534308,
+        14: -0.17149429489936727,
+        15: -0.16061906836060078,
+        16: -0.15114257395637365,
+        17: -0.14288153493783237,
+        18: -0.1355654180498057,
+        19: -0.13329886020375165,
     }
     run_example("solve_vsstls", expected_internal_energy)

@@ -1,18 +1,10 @@
 import pytest
 
-from qupled.native import Rpa, Input
+from qupled.native import HF, Rpa, Input
 
 
 def test_rpa_properties():
-    scheme = Rpa(Input())
-    assert hasattr(scheme, "idr")
-    assert hasattr(scheme, "sdr")
-    assert hasattr(scheme, "slfc")
-    assert hasattr(scheme, "ssf")
-    with pytest.raises(RuntimeError) as excinfo:
-        hasattr(scheme, "uint")
-    assert excinfo.value.args[0] == "No data to compute the internal energy"
-    assert hasattr(scheme, "wvg")
+    assert issubclass(Rpa, HF)
 
 
 def test_rpa_compute():
@@ -33,6 +25,6 @@ def test_rpa_compute():
     assert scheme.idr.shape[0] == nx
     assert scheme.idr.shape[1] == inputs.matsubara
     assert scheme.sdr.size == nx
-    assert scheme.slfc.size == nx
+    assert scheme.lfc.size == nx
     assert scheme.ssf.size == nx
     assert scheme.rdf(scheme.wvg).size == nx

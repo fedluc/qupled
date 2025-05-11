@@ -55,12 +55,3 @@ def test_qvsstls_input_initialization_valid_theory(mocker):
     qstls_init.assert_called_once_with(input, coupling, degeneracy)
     vsstls_init.assert_called_once_with(input, coupling, degeneracy)
     assert input.theory == "QVSSTLS"
-
-
-def test_qvsstls_result_inheritance():
-    assert issubclass(qvsstls.Result, (qstls.Result, vsstls.Result))
-
-
-def test_qvsstls_result_initialization():
-    result = qvsstls.Result()
-    assert isinstance(result, qvsstls.Result)

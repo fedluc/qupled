@@ -47,7 +47,7 @@ double VSStls::computeAlpha() {
 
 void VSStls::updateSolution() {
   // Update the structural properties used for output
-  slfc = thermoProp->getSlfc();
+  lfc = thermoProp->getLfc();
   ssf = thermoProp->getSsf();
 }
 
@@ -123,13 +123,13 @@ void StructProp::doIterations() {
     {
 #pragma omp for
       for (auto &c : csr) {
-        c->computeSsf();
-        c->computeSlfcStls();
+        c->computeLfcStls();
       }
 #pragma omp for
       for (size_t i = 0; i < csr.size(); ++i) {
         auto &c = csr[i];
-        c->computeSlfc();
+        c->computeLfc();
+        c->computeSsf();
         if (i == RS_THETA) { err = c->computeError(); }
         c->updateSolution();
       }
@@ -146,14 +146,12 @@ void StructProp::doIterations() {
 // StlsCSR class
 // -----------------------------------------------------------------
 
-void StlsCSR::computeSlfcStls() {
-  Stls::computeSlfc();
-  *lfc = Vector2D(slfcNew);
+void StlsCSR::computeLfcStls() {
+  Stls::computeLfc();
+  *CSR::lfc = Stls::lfc;
 }
 
-void StlsCSR::computeSlfc() {
-  Vector2D slfcDerivative = getDerivativeContribution();
-  for (size_t i = 0; i < slfcNew.size(); ++i) {
-    slfcNew[i] -= slfcDerivative(i, 0);
-  }
+void StlsCSR::computeLfc() {
+  Vector2D lfcDerivative = getDerivativeContribution();
+  Stls::lfc.diff(lfcDerivative);
 }

@@ -140,7 +140,7 @@ public:
   // Typedef
   struct Guess {
     std::vector<double> wvg;
-    std::vector<double> slfc;
+    std::vector<double> ssf;
   };
   // Setters
   void setGuess(const Guess &guess);
@@ -164,21 +164,12 @@ class QuantumInput {
 
 public:
 
-  // Typdef
-  struct Guess {
-    std::vector<double> wvg;
-    std::vector<double> ssf;
-    Vector2D adr;
-    int matsubara = DEFAULT_INT;
-  };
   // Setters
   void setFixedRunId(const int &fixedRunId);
   void setFixedIet(const std::string &fixedIet);
-  void setGuess(const Guess &guess);
   // Getters
   int getFixedRunId() const { return fixedRunId; }
   std::string getFixedIet() const { return fixedIet; }
-  Guess getGuess() const { return guess; }
 
 protected:
 
@@ -187,8 +178,6 @@ protected:
   int fixedRunId;
   // Name of the file with the fixed component of the adr for iet schemes
   std::string fixedIet;
-  // Initial guess
-  Guess guess;
 };
 
 // -----------------------------------------------------------------
@@ -199,8 +188,14 @@ class IetInput {
 
 public:
 
+  // Tyepdef
+  struct Guess : ClassicInput::Guess {
+    Vector2D lfc;
+  };
+  void setGuess(const Guess &guess);
   void setMapping(const std::string &mapping);
   // Getters
+  Guess getGuess() const { return guess; }
   std::string getMapping() const { return mapping; }
 
 protected:
@@ -208,6 +203,8 @@ protected:
   // Mapping between the quantum and classical state points for the IET-based
   // schemes
   std::string mapping;
+  // Initial guess
+  Guess guess;
 };
 
 // -----------------------------------------------------------------
@@ -232,6 +229,15 @@ public:
 
   // Constructors
   explicit StlsIetInput() = default;
+  // Setters
+  using IetInput::setGuess;
+  // Getters
+  using IetInput::getGuess;
+
+private:
+
+  // Initial guess
+  using IetInput::guess;
 };
 
 // -----------------------------------------------------------------
@@ -242,18 +248,8 @@ class QstlsInput : public StlsInput, public QuantumInput {
 
 public:
 
-  // Typedef
-  using Guess = QuantumInput::Guess;
   // Constructors
   explicit QstlsInput() = default;
-  // Setters
-  using QuantumInput::setGuess;
-  // Getters
-  using QuantumInput::getGuess;
-
-private:
-
-  using QuantumInput::guess;
 };
 
 // -----------------------------------------------------------------
@@ -266,6 +262,15 @@ public:
 
   // Constructors
   explicit QstlsIetInput() = default;
+  // Setters
+  using IetInput::setGuess;
+  // Getters
+  using IetInput::getGuess;
+
+private:
+
+  // Initial guess
+  using IetInput::guess;
 };
 
 // -----------------------------------------------------------------

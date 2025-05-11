@@ -32,7 +32,7 @@ class Stls(rpa.Rpa):
         Returns:
             An instance of Guess containing the initial guess data.
         """
-        names = ["wvg", "slfc"]
+        names = ["wvg", "ssf"]
         data = output.DataBase.read_results(run_id, database_name, names)
         return Guess(data[names[0]], data[names[1]])
 
@@ -69,11 +69,11 @@ class Result(hf.Result):
 
 class Guess:
 
-    def __init__(self, wvg: np.ndarray = None, slfc: np.ndarray = None):
+    def __init__(self, wvg: np.ndarray = None, ssf: np.ndarray = None):
         self.wvg = wvg
         """ Wave-vector grid. Default = ``None``"""
-        self.slfc = slfc
-        """ Static local field correction. Default = ``None``"""
+        self.ssf = ssf
+        """ Static structure factor. Default = ``None``"""
 
     def to_native(self) -> native.StlsGuess:
         """

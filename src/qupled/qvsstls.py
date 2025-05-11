@@ -12,7 +12,7 @@ class QVSStls(vsstls.VSStls):
 
     def __init__(self):
         super().__init__()
-        self.results: Result = Result()
+        self.results: vsstls.Result = vsstls.Result()
         # Undocumented properties
         self.native_scheme_cls = native.QVSStls
         self.native_inputs_cls = native.QVSStlsInput
@@ -45,10 +45,6 @@ class QVSStls(vsstls.VSStls):
         if inputs.fixed_run_id is None:
             inputs.fixed_run_id = self.run_id
 
-    @staticmethod
-    def get_initial_guess(run_id: int, database_name: str | None = None) -> qstls.Guess:
-        return qstls.Qstls.get_initial_guess(run_id, database_name)
-
 
 # Input class
 class Input(vsstls.Input, qstls.Input):
@@ -61,13 +57,3 @@ class Input(vsstls.Input, qstls.Input):
         qstls.Input.__init__(self, coupling, degeneracy)
         # Undocumented default values
         self.theory: str = "QVSSTLS"
-
-
-# Result
-class Result(vsstls.Result, qstls.Result):
-    """
-    Class used to manage the results for the :obj:`qupled.qvsstls.QVSStls` class.
-    """
-
-    def __init__(self):
-        super().__init__()

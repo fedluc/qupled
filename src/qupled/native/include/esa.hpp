@@ -18,13 +18,11 @@ public:
   // ESA constructor
   explicit ESA(const Input &in_)
       : Rpa(in_) {}
-  // Compute the scheme
-  int compute();
 
 private:
 
-  // Static local field correction
-  void computeSlfc();
+  // Local field correction
+  void computeLfc() override;
 };
 
 namespace ESAUtil {
@@ -65,9 +63,9 @@ namespace ESAUtil {
     };
     // Coefficients
     Coefficients coeff;
-    // Parametrization of the slfc obtained from neural networks
+    // Parametrization of the lfc obtained from neural networks
     double nn(const double &x) const;
-    // slfc from the compressibility sum rule
+    // lfc from the compressibility sum rule
     double csr(const double &x) const;
     // Compute coefficients
     void computeCoefficients();
@@ -75,7 +73,7 @@ namespace ESAUtil {
     void computeCSRCoefficients();
     // On top value of the radial distribution function
     double onTop() const;
-    // Activation function for the asymptotic limit of slfc
+    // Activation function for the asymptotic limit of lfc
     double activationFunction(const double &x) const;
     // Parametrization of the free energy
     Dual22 freeEnergy() const;

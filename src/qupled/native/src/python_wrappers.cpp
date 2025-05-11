@@ -23,16 +23,29 @@ bn::ndarray PyStlsGuess::getWvg(const StlsInput::Guess &guess) {
   return pythonUtil::toNdArray(guess.wvg);
 }
 
-bn::ndarray PyStlsGuess::getSlfc(const StlsInput::Guess &guess) {
-  return pythonUtil::toNdArray(guess.slfc);
+bn::ndarray PyStlsGuess::getSsf(const StlsInput::Guess &guess) {
+  return pythonUtil::toNdArray(guess.ssf);
 }
 
 void PyStlsGuess::setWvg(StlsInput::Guess &guess, const bn::ndarray &wvg) {
   guess.wvg = pythonUtil::toVector(wvg);
 }
 
-void PyStlsGuess::setSlfc(StlsInput::Guess &guess, const bn::ndarray &slfc) {
-  guess.slfc = pythonUtil::toVector(slfc);
+void PyStlsGuess::setSsf(StlsInput::Guess &guess, const bn::ndarray &ssf) {
+  guess.ssf = pythonUtil::toVector(ssf);
+}
+
+// -----------------------------------------------------------------
+// PyIetGuess
+// -----------------------------------------------------------------
+
+bn::ndarray PyIetGuess::getLfc(const IetInput::Guess &guess) {
+  return pythonUtil::toNdArray2D(guess.lfc);
+}
+
+void PyIetGuess::setLfc(IetInput::Guess &guess, const bn::ndarray &lfc) {
+  if (lfc.shape(0) == 0) { return; }
+  guess.lfc = pythonUtil::toVector2D(lfc);
 }
 
 // -----------------------------------------------------------------
@@ -72,47 +85,8 @@ void PyFreeEnergyIntegrand::setIntegrand(VSStlsInput::FreeEnergyIntegrand &fxc,
 }
 
 // -----------------------------------------------------------------
-// PyQstlsGuess
-// -----------------------------------------------------------------
-
-bn::ndarray PyQstlsGuess::getWvg(const QstlsInput::Guess &guess) {
-  return pythonUtil::toNdArray(guess.wvg);
-}
-
-bn::ndarray PyQstlsGuess::getSsf(const QstlsInput::Guess &guess) {
-  return pythonUtil::toNdArray(guess.ssf);
-}
-
-bn::ndarray PyQstlsGuess::getAdr(const QstlsInput::Guess &guess) {
-  return pythonUtil::toNdArray2D(guess.adr);
-}
-
-int PyQstlsGuess::getMatsubara(const QstlsInput::Guess &guess) {
-  return guess.matsubara;
-}
-
-void PyQstlsGuess::setWvg(QstlsInput::Guess &guess, const bn::ndarray &wvg) {
-  guess.wvg = pythonUtil::toVector(wvg);
-}
-
-void PyQstlsGuess::setSsf(QstlsInput::Guess &guess, const bn::ndarray &ssf) {
-  guess.ssf = pythonUtil::toVector(ssf);
-}
-
-void PyQstlsGuess::setAdr(QstlsInput::Guess &guess, const bn::ndarray &adr) {
-  if (adr.shape(0) == 0) { return; }
-  guess.adr = pythonUtil::toVector2D(adr);
-}
-
-void PyQstlsGuess::setMatsubara(QstlsInput::Guess &guess, const int matsubara) {
-  guess.matsubara = matsubara;
-}
-
-// -----------------------------------------------------------------
 // PyRpa
 // -----------------------------------------------------------------
-
-Input pyHF::getInput(const HF &hf) { return hf.getInput(); }
 
 bn::ndarray pyHF::getIdr(const HF &hf) {
   return pythonUtil::toNdArray2D(hf.getIdr());
@@ -126,8 +100,8 @@ bn::ndarray pyHF::getSdr(const HF &hf) {
   return pythonUtil::toNdArray(hf.getSdr());
 }
 
-bn::ndarray pyHF::getSlfc(const HF &hf) {
-  return pythonUtil::toNdArray(hf.getSlfc());
+bn::ndarray pyHF::getLfc(const HF &hf) {
+  return pythonUtil::toNdArray2D(hf.getLfc());
 }
 
 bn::ndarray pyHF::getSsf(const HF &hf) {
@@ -144,17 +118,11 @@ double pyHF::getUInt(const HF &hf) { return hf.getUInt(); }
 // PyStls
 // -----------------------------------------------------------------
 
-int PyStls::compute(Stls &stls) { return stls.compute(); }
-
-StlsInput PyStls::getInput(const Stls &stls) { return stls.getInput(); }
-
 double PyStls::getError(const Stls &stls) { return stls.getError(); }
 
 // -----------------------------------------------------------------
 // PyStlsIet
 // -----------------------------------------------------------------
-
-int PyStlsIet::compute(StlsIet &stlsiet) { return stlsiet.compute(); }
 
 bn::ndarray PyStlsIet::getBf(const StlsIet &stlsiet) {
   return pythonUtil::toNdArray(stlsiet.getBf());
@@ -165,10 +133,6 @@ bn::ndarray PyStlsIet::getBf(const StlsIet &stlsiet) {
 // -----------------------------------------------------------------
 
 int PyVSStls::compute(VSStls &vsstls) { return vsstls.compute(); }
-
-VSStlsInput PyVSStls::getInput(const VSStls &vsstls) {
-  return vsstls.getInput();
-}
 
 double PyVSStls::getError(const VSStls &vsstls) {
   // NOTE: This is just a place-holder, getError is not yet implemented in
@@ -188,24 +152,8 @@ bn::ndarray PyVSStls::getFreeEnergyGrid(const VSStls &vsstls) {
 }
 
 // -----------------------------------------------------------------
-// PyQstls
-// -----------------------------------------------------------------
-
-int PyQstls::compute(Qstls &qstls) { return qstls.compute(); }
-
-QstlsInput PyQstls::getInput(const Qstls &qstls) { return qstls.getInput(); }
-
-double PyQstls::getError(const Qstls &qstls) { return qstls.getError(); }
-
-bn::ndarray PyQstls::getAdr(const Qstls &qstls) {
-  return pythonUtil::toNdArray2D(qstls.getAdr());
-}
-
-// -----------------------------------------------------------------
 // PyQstlsIet
 // -----------------------------------------------------------------
-
-int PyQstlsIet::compute(QstlsIet &qstlsiet) { return qstlsiet.compute(); }
 
 bn::ndarray PyQstlsIet::getBf(const QstlsIet &qstlsiet) {
   return pythonUtil::toNdArray(qstlsiet.getBf());
@@ -217,10 +165,6 @@ bn::ndarray PyQstlsIet::getBf(const QstlsIet &qstlsiet) {
 
 int PyQVSStls::compute(QVSStls &qvsstls) { return qvsstls.compute(); }
 
-QVSStlsInput PyQVSStls::getInput(const QVSStls &qvsstls) {
-  return qvsstls.getInput();
-}
-
 double PyQVSStls::getError(const QVSStls &qvsstls) {
   // NOTE: This is just a place-holder, getError is not yet implemented in
   // QVSStls
@@ -230,10 +174,6 @@ double PyQVSStls::getError(const QVSStls &qvsstls) {
 
 double PyQVSStls::getAlpha(const QVSStls &qvsstls) {
   return qvsstls.getAlpha();
-}
-
-bn::ndarray PyQVSStls::getAdr(const QVSStls &qvsstls) {
-  return pythonUtil::toNdArray2D(qvsstls.getAdr());
 }
 
 bn::ndarray PyQVSStls::getFreeEnergyIntegrand(const QVSStls &qvsstls) {

@@ -70,7 +70,8 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("mapping", &IetInput::getMapping, &IetInput::setMapping);
 
   // Class for the input of the StlsIet scheme
-  bp::class_<StlsIetInput, bp::bases<IetInput, StlsInput>>("StlsIetInput");
+  bp::class_<StlsIetInput, bp::bases<IetInput, StlsInput>>("StlsIetInput")
+      .add_property("guess", &IetInput::getGuess, &IetInput::setGuess);
 
   // Class for the input of the VS scheme
   bp::class_<VSInput>("VSInput")
@@ -103,7 +104,8 @@ BOOST_PYTHON_MODULE(native) {
           "fixed_iet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet);
 
   // Class for the input of the StlsIet scheme
-  bp::class_<QstlsIetInput, bp::bases<IetInput, QstlsInput>>("QstlsIetInput");
+  bp::class_<QstlsIetInput, bp::bases<IetInput, QstlsInput>>("QstlsIetInput")
+      .add_property("guess", &IetInput::getGuess, &IetInput::setGuess);
 
   // Class for the input of the QVSStls scheme
   bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput");
@@ -120,16 +122,11 @@ BOOST_PYTHON_MODULE(native) {
   // Class for the initial guess of the Stls scheme
   bp::class_<StlsInput::Guess>("StlsGuess")
       .add_property("wvg", &PyStlsGuess::getWvg, &PyStlsGuess::setWvg)
-      .add_property("slfc", &PyStlsGuess::getSlfc, &PyStlsGuess::setSlfc);
+      .add_property("ssf", &PyStlsGuess::getSsf, &PyStlsGuess::setSsf);
 
   // Class for the initial guess of the Qstls scheme
-  bp::class_<QstlsInput::Guess>("QstlsGuess")
-      .add_property("wvg", &PyQstlsGuess::getWvg, &PyQstlsGuess::setWvg)
-      .add_property("ssf", &PyQstlsGuess::getSsf, &PyQstlsGuess::setSsf)
-      .add_property("adr", &PyQstlsGuess::getAdr, &PyQstlsGuess::setAdr)
-      .add_property("matsubara",
-                    &PyQstlsGuess::getMatsubara,
-                    &PyQstlsGuess::setMatsubara);
+  bp::class_<IetInput::Guess, bp::bases<StlsInput::Guess>>("IetGuess")
+      .add_property("lfc", &PyIetGuess::getLfc, &PyIetGuess::setLfc);
 
   // Class for the free energy integrand of the VSStls scheme
   bp::class_<VSStlsInput::FreeEnergyIntegrand>("FreeEnergyIntegrand")
@@ -144,64 +141,50 @@ BOOST_PYTHON_MODULE(native) {
   bp::class_<HF>("HF", bp::init<const Input>())
       .def("compute", &HF::compute)
       .def("rdf", &pyHF::getRdf)
-      .add_property("inputs", &pyHF::getInput)
       .add_property("idr", &pyHF::getIdr)
       .add_property("sdr", &pyHF::getSdr)
-      .add_property("slfc", &pyHF::getSlfc)
+      .add_property("lfc", &pyHF::getLfc)
       .add_property("ssf", &pyHF::getSsf)
       .add_property("uint", &pyHF::getUInt)
       .add_property("wvg", &pyHF::getWvg);
 
   // Class to solve the classical RPA scheme
-  bp::class_<Rpa, bp::bases<HF>>("Rpa", bp::init<const Input>())
-      .def("compute", &Rpa::compute);
+  bp::class_<Rpa, bp::bases<HF>>("Rpa", bp::init<const Input>());
 
   // Class to solve the classical ESA scheme
-  bp::class_<ESA, bp::bases<Rpa>>("ESA", bp::init<const Input>())
-      .def("compute", &ESA::compute);
+  bp::class_<ESA, bp::bases<Rpa>>("ESA", bp::init<const Input>());
 
   // Class to solve classical schemes
   bp::class_<Stls, bp::bases<Rpa>>("Stls", bp::init<const StlsInput>())
-      .def("compute", &PyStls::compute)
-      .add_property("inputs", &PyStls::getInput)
       .add_property("error", &PyStls::getError);
 
   // Class to solve classical schemes
   bp::class_<StlsIet, bp::bases<Stls>>("StlsIet",
                                        bp::init<const StlsIetInput>())
-      .def("compute", &PyStlsIet::compute)
       .add_property("bf", &PyStlsIet::getBf);
 
   // Class to solve the classical VS scheme
   bp::class_<VSStls, bp::bases<Rpa>>("VSStls", bp::init<const VSStlsInput>())
       .def("compute", &PyVSStls::compute)
-      .add_property("inputs", &PyVSStls::getInput)
       .add_property("error", &PyVSStls::getError)
       .add_property("alpha", &PyVSStls::getAlpha)
       .add_property("free_energy_integrand", &PyVSStls::getFreeEnergyIntegrand)
       .add_property("free_energy_grid", &PyVSStls::getFreeEnergyGrid);
 
   // Class to solve quantum schemes
-  bp::class_<Qstls, bp::bases<Stls>>("Qstls", bp::init<const QstlsInput>())
-      .def("compute", &PyQstls::compute)
-      .add_property("inputs", &PyQstls::getInput)
-      .add_property("error", &PyQstls::getError)
-      .add_property("adr", &PyQstls::getAdr);
+  bp::class_<Qstls, bp::bases<Stls>>("Qstls", bp::init<const QstlsInput>());
 
   // Class to solve classical schemes
   bp::class_<QstlsIet, bp::bases<Qstls>>("QstlsIet",
                                          bp::init<const QstlsIetInput>())
-      .def("compute", &PyQstlsIet::compute)
       .add_property("bf", &PyQstlsIet::getBf);
 
   // Class to solve the quantum VS scheme
   bp::class_<QVSStls, bp::bases<Rpa>>("QVSStls", bp::init<const QVSStlsInput>())
       .def("compute", &PyQVSStls::compute)
-      .add_property("inputs", &PyQVSStls::getInput)
       .add_property("error", &PyQVSStls::getError)
       .add_property("free_energy_integrand", &PyQVSStls::getFreeEnergyIntegrand)
       .add_property("free_energy_grid", &PyQVSStls::getFreeEnergyGrid)
-      .add_property("adr", &PyQVSStls::getAdr)
       .add_property("alpha", &PyQVSStls::getAlpha);
 
   // MPI class

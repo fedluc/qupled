@@ -19,24 +19,27 @@ public:
   Stls(const StlsInput &in_, const bool verbose_);
   explicit Stls(const StlsInput &in_)
       : Stls(in_, true) {}
-  // Compute stls scheme
-  int compute();
+  // Destructor
+  ~Stls() override = default;
   // Getters
-  const StlsInput &getInput() const { return in; }
   double getError() const { return computeError(); }
 
 protected:
 
   // Static local field correction to use during the iterations
-  std::vector<double> slfcNew;
+  std::vector<double> ssfOld;
+  // Compute structural properties
+  void computeStructuralProperties() override;
+  // Compute static structure factor
+  void computeSsf() override;
   // Compute static local field correction
-  void computeSlfc();
+  void computeLfc() override;
   // Iterations to solve the stls scheme
-  void doIterations();
   void initialGuess();
-  bool initialGuessFromInput();
+  virtual bool initialGuessFromInput();
+  bool ssfGuessFromInput(const StlsInput::Guess &guess);
   double computeError() const;
-  void updateSolution();
+  virtual void updateSolution();
 
 private:
 

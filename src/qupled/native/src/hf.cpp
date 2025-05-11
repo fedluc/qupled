@@ -22,7 +22,7 @@ HF::HF(const Input &in_, const bool verbose_)
   const size_t nx = wvg.size();
   const size_t nl = in.getNMatsubara();
   idr.resize(nx, nl);
-  slfc.resize(nx);
+  lfc.resize(nx, 1);
   ssf.resize(nx);
 }
 
@@ -31,18 +31,23 @@ int HF::compute() {
   try {
     init();
     println("Structural properties calculation ...");
-    print("Computing static local field correction: ");
-    computeSlfc();
-    println("Done");
-    print("Computing static structure factor: ");
-    computeSsf();
-    println("Done");
+    computeStructuralProperties();
     println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;
     return 1;
   }
+}
+
+// Compute the structural properties
+void HF::computeStructuralProperties() {
+  print("Computing static local field correction: ");
+  computeLfc();
+  println("Done");
+  print("Computing static structure factor: ");
+  computeSsf();
+  println("Done");
 }
 
 // Initialize basic properties
@@ -104,7 +109,6 @@ void HF::computeIdrGround() {
   }
 }
 
-// Compute Static structure factor
 void HF::computeSsf() {
   (in.getDegeneracy() == 0.0) ? computeSsfGround() : computeSsfFinite();
 }
@@ -124,10 +128,9 @@ void HF::computeSsfGround() {
   }
 }
 
-// Compute static local field correction
-void HF::computeSlfc() {
-  assert(slfc.size() == wvg.size());
-  for (auto &s : slfc) {
+void HF::computeLfc() {
+  assert(lfc.size() == wvg.size());
+  for (auto &s : lfc) {
     s = 1;
   }
 }
@@ -149,7 +152,7 @@ vector<double> HF::getSdr() const {
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double x2 = wvg[i] * wvg[i];
     const double phi0 = idr(i, 0);
-    sdr[i] *= phi0 / (1.0 + fact / x2 * (1.0 - slfc[i]) * phi0);
+    sdr[i] *= phi0 / (1.0 + fact / x2 * (1.0 - lfc(i, 0)) * phi0);
   }
   return sdr;
 }

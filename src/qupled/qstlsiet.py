@@ -12,9 +12,15 @@ class QstlsIet(qstls.Qstls):
 
     def __init__(self):
         super().__init__()
-        self.results: Result = Result()
+        self.results: stlsiet.Result = stlsiet.Result()
         self.native_scheme_cls = native.QstlsIet
         self.native_inputs_cls = native.QstlsIetInput
+
+    @staticmethod
+    def get_initial_guess(
+        run_id: str, database_name: str | None = None
+    ) -> stlsiet.Guess:
+        return stlsiet.StlsIet.get_initial_guess(run_id, database_name)
 
 
 # Input class
@@ -25,18 +31,7 @@ class Input(stlsiet.Input, qstls.Input):
     """
 
     def __init__(self, coupling: float, degeneracy: float, theory: str):
-        stlsiet.Input.__init__(self, coupling, degeneracy, "STLS-HNC")
-        qstls.Input.__init__(self, coupling, degeneracy)
+        super().__init__(coupling, degeneracy, "STLS-HNC")
         if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
             raise ValueError("Invalid dielectric theory")
         self.theory = theory
-
-
-# Result class
-class Result(stlsiet.Result, qstls.Result):
-    """
-    Class used to store the results for the :obj:`qupled.qstlsiet.QstlsIet` class.
-    """
-
-    def __init__(self):
-        super().__init__()

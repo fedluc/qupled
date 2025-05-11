@@ -26,8 +26,6 @@ public:
   explicit QVSStls(const QVSStlsInput &in_);
   // Solve the scheme
   using VSBase::compute;
-  // Getters
-  const QVSStlsInput &getInput() const { return in; }
 
 private:
 
@@ -58,8 +56,6 @@ public:
   explicit QThermoProp(const QVSStlsInput &in_);
   // Get internal energy and internal energy derivatives
   std::vector<double> getQData() const;
-  // Get structural properties
-  const Vector2D &getAdr();
 
 private:
 
@@ -105,29 +101,25 @@ public:
   // Constructor
   explicit QstlsCSR(const QVSStlsInput &in_);
   // Compute auxiliary density response
-  void computeAdrQStls();
-  void computeAdr();
+  void computeLfcQstls();
+  void computeLfc();
   // Publicly esposed private stls methods
   void init();
   void initialGuess() { Qstls::initialGuess(); }
   void computeSsf() { Qstls::computeSsf(); }
   double computeError() { return Qstls::computeError(); }
   void updateSolution() { Qstls::updateSolution(); }
-  // Update the static structure factor
-  void updateSsf() { ssf = ssfOld; };
   // Compute Q
   double getQAdder() const;
   // Getters
   const std::vector<double> &getSsf() const { return Qstls::getSsf(); }
-  const std::vector<double> &getSlfc() const { return Qstls::getSlfc(); }
   const std::vector<double> &getWvg() const { return Qstls::getWvg(); }
+  const Vector2D &getLfc() const { return Qstls::getLfc(); }
 
 private:
 
   // Input
   QVSStlsInput in;
-  // Compute derivative contribution to the auxiliary density response
-  Vector2D getDerivativeContribution() const;
 };
 
 // -----------------------------------------------------------------

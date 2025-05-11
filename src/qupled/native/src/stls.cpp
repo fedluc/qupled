@@ -22,36 +22,11 @@ Stls::Stls(const StlsInput &in_, const bool verbose_)
       in(in_) {
   // Allocate arrays
   const size_t nx = wvg.size();
-  slfcNew.resize(nx);
-}
-
-int Stls::compute() {
-  try {
-    init();
-    println("Structural properties calculation ...");
-    doIterations();
-    println("Done");
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
-}
-
-// Compute static local field correction
-void Stls::computeSlfc() {
-  assert(ssf.size() == wvg.size());
-  assert(slfc.size() == wvg.size());
-  const int nx = wvg.size();
-  const shared_ptr<Interpolator1D> itp = make_shared<Interpolator1D>(wvg, ssf);
-  for (int i = 0; i < nx; ++i) {
-    StlsUtil::Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
-    slfcNew[i] = slfcTmp.get();
-  }
+  ssfOld.resize(nx);
 }
 
 // stls iterations
-void Stls::doIterations() {
+void Stls::computeStructuralProperties() {
   const int maxIter = in.getNIter();
   const double minErr = in.getErrMin();
   double err = 1.0;
@@ -62,9 +37,9 @@ void Stls::doIterations() {
     // Start timing
     double tic = timer();
     // Update static structure factor
-    computeSsf();
+    computeLfc();
     // Update static local field correction
-    computeSlfc();
+    computeSsf();
     // Update diagnostic
     counter++;
     err = computeError();
@@ -85,31 +60,45 @@ void Stls::initialGuess() {
   // From guess in input
   if (initialGuessFromInput()) { return; }
   // Default
-  fill(slfc.begin(), slfc.end(), 0.0);
+  ssf = ssfHF;
 }
 
-bool Stls::initialGuessFromInput() {
-  const Interpolator1D slfci(in.getGuess().wvg, in.getGuess().slfc);
-  if (!slfci.isValid()) { return false; }
-  const double xmaxi = in.getGuess().wvg.back();
+bool Stls::initialGuessFromInput() { return ssfGuessFromInput(in.getGuess()); }
+
+bool Stls::ssfGuessFromInput(const StlsInput::Guess &guess) {
+  const Interpolator1D ssfi(guess.wvg, guess.ssf);
+  if (!ssfi.isValid()) { return false; }
+  const double xMax = guess.wvg.back();
   for (size_t i = 0; i < wvg.size(); ++i) {
-    const double x = wvg[i];
-    if (x <= xmaxi) {
-      slfc[i] = slfci.eval(x);
-    } else {
-      slfc[i] = 1.0;
-    }
+    const double &x = wvg[i];
+    ssf[i] = (x <= xMax) ? ssfi.eval(x) : 1.0;
   }
   return true;
 }
 
+// Compute static local field correction
+void Stls::computeLfc() {
+  const int nx = wvg.size();
+  const shared_ptr<Interpolator1D> itp = make_shared<Interpolator1D>(wvg, ssf);
+  for (int i = 0; i < nx; ++i) {
+    StlsUtil::Slfc lfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
+    lfc(i, 0) = lfcTmp.get();
+  }
+}
+
+// Compute static structure factor
+void Stls::computeSsf() {
+  ssfOld = ssf;
+  Rpa::computeSsf();
+}
+
 // Compute residual error for the stls iterations
-double Stls::computeError() const { return rms(slfc, slfcNew, false); }
+double Stls::computeError() const { return rms(ssfOld, ssf, false); }
 
 // Update solution during stls iterations
 void Stls::updateSolution() {
   const double aMix = in.getMixingParameter();
-  slfc = linearCombination(slfcNew, aMix, slfc, 1 - aMix);
+  ssf = linearCombination(ssf, aMix, ssfOld, 1 - aMix);
 }
 
 // -----------------------------------------------------------------
