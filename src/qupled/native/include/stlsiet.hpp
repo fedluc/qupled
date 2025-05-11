@@ -16,7 +16,7 @@ public:
   explicit StlsIet(const StlsIetInput &in_)
       : Stls(in_, true),
         in(in_),
-        iet(in, in_, wvg, true) {};
+        iet(in, in_, wvg, true){};
   // Getters
   const std::vector<double> &getBf() const { return iet.getBf(); }
 
