@@ -15,7 +15,8 @@ using ItgType = Integrator1D::Type;
 HF::HF(const std::shared_ptr<const Input> &in_, const bool verbose_)
     : Logger(verbose_ && isRoot()),
       inPtr(std::move(in_)),
-      itg(std::make_shared<Integrator1D>(ItgType::DEFAULT, in_->getIntError())) {
+      itg(std::make_shared<Integrator1D>(ItgType::DEFAULT,
+                                         in_->getIntError())) {
   // Assemble the wave-vector grid
   buildWaveVectorGrid();
   // Allocate arrays to the correct size

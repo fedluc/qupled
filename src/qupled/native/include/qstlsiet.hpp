@@ -14,18 +14,22 @@ class QstlsIet : public Qstls {
 public:
 
   // Constructor
-  explicit QstlsIet(const QstlsIetInput &in_);
+  explicit QstlsIet(const std::shared_ptr<const QstlsIetInput> &in_);
+  explicit QstlsIet(const QstlsIetInput &in_)
+      : QstlsIet(std::make_shared<const QstlsIetInput>(in_)) {};
   // Getters
   const std::vector<double> &getBf() const { return iet.getBf(); }
 
 private:
 
-  // Input data
-  const QstlsIetInput in;
   // Iet extension
   Iet iet;
   // Iet contribution to the local field correction
   Vector2D lfcIet;
+  // Input parameters
+  const QstlsIetInput &in() const {
+    return static_cast<const QstlsIetInput &>(*inPtr);
+  }
   // Initialize basic properties
   void init() override;
   // Compute auxiliary density response

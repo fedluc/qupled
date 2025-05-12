@@ -62,7 +62,9 @@ void Stls::initialGuess() {
   ssf = ssfHF;
 }
 
-bool Stls::initialGuessFromInput() { return ssfGuessFromInput(in().getGuess()); }
+bool Stls::initialGuessFromInput() {
+  return ssfGuessFromInput(in().getGuess());
+}
 
 bool Stls::ssfGuessFromInput(const StlsInput::Guess &guess) {
   const Interpolator1D ssfi(guess.wvg, guess.ssf);

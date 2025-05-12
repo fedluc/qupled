@@ -16,14 +16,13 @@ using Itg2DParam = Integrator2D::Param;
 // QSTLS class
 // -----------------------------------------------------------------
 
-Qstls::Qstls(const QstlsInput &in_, const bool verbose_)
-    : Stls(in_, verbose_),
-      in(in_) {
+Qstls::Qstls(const std::shared_ptr<const QstlsInput> &in_, const bool verbose_)
+    : Stls(in_, verbose_) {
   // Set name for the fixed adr output file
-  adrFixedDatabaseName = format("{}", in.getTheory());
+  adrFixedDatabaseName = format("{}", in().getTheory());
   // Allocate arrays
   const size_t nx = wvg.size();
-  const size_t nl = in.getNMatsubara();
+  const size_t nl = in().getNMatsubara();
   lfc.resize(nx, nl);
   adrFixed.resize(nx, nl, nx);
 }
@@ -37,12 +36,12 @@ void Qstls::init() {
 
 // Compute auxiliary density response
 void Qstls::computeLfc() {
-  if (in.getDegeneracy() == 0.0) { return; }
+  if (in().getDegeneracy() == 0.0) { return; }
   const int nx = wvg.size();
   const shared_ptr<Interpolator1D> ssfi = make_shared<Interpolator1D>(wvg, ssf);
   for (int i = 0; i < nx; ++i) {
     QstlsUtil::Adr adrTmp(
-        in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], ssfi, itg);
+        in().getDegeneracy(), wvg.front(), wvg.back(), wvg[i], ssfi, itg);
     adrTmp.get(wvg, adrFixed, lfc);
   }
   // adr = lfc;
@@ -54,8 +53,8 @@ void Qstls::computeLfc() {
 void Qstls::computeSsfGround() {
   const shared_ptr<Interpolator1D> ssfi =
       make_shared<Interpolator1D>(wvg, ssfOld);
-  const double rs = in.getCoupling();
-  const double OmegaMax = in.getFrequencyCutoff();
+  const double rs = in().getCoupling();
+  const double OmegaMax = in().getFrequencyCutoff();
   const size_t nx = wvg.size();
   const double xMax = wvg.back();
   auto loopFunc = [&](int i) -> void {
@@ -64,33 +63,39 @@ void Qstls::computeSsfGround() {
         wvg[i], rs, ssfHF[i], xMax, OmegaMax, ssfi, itgTmp);
     ssf[i] = ssfTmp.get();
   };
-  const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
+  const auto &loopData = parallelFor(loopFunc, nx, in().getNThreads());
   gatherLoopData(ssf.data(), loopData, nx);
 }
 
 void Qstls::computeAdrFixed() {
-  if (in.getDegeneracy() == 0.0) { return; }
+  if (in().getDegeneracy() == 0.0) { return; }
   // Check if it adrFixed can be loaded from input
   const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
-  if (in.getFixedRunId() != DEFAULT_INT) {
+  const int nl = in().getNMatsubara();
+  if (in().getFixedRunId() != DEFAULT_INT) {
     adrFixed.resize(nx, nl, nx);
-    readAdrFixed(adrFixed, adrFixedDatabaseName, in.getFixedRunId());
+    readAdrFixed(adrFixed, adrFixedDatabaseName, in().getFixedRunId());
     return;
   }
   // Compute from scratch
   fflush(stdout);
   const int nxnl = nx * nl;
-  const bool segregatedItg = in.getInt2DScheme() == "segregated";
+  const bool segregatedItg = in().getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   // Parallel for loop (Hybrid MPI and OpenMP)
   auto loopFunc = [&](int i) -> void {
-    shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in.getIntError());
-    QstlsUtil::AdrFixed adrTmp(
-        in.getDegeneracy(), wvg.front(), wvg.back(), wvg[i], mu, itgGrid, itg2);
+    shared_ptr<Integrator2D> itg2 =
+        make_shared<Integrator2D>(in().getIntError());
+    QstlsUtil::AdrFixed adrTmp(in().getDegeneracy(),
+                               wvg.front(),
+                               wvg.back(),
+                               wvg[i],
+                               mu,
+                               itgGrid,
+                               itg2);
     adrTmp.get(wvg, adrFixed);
   };
-  const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
+  const auto &loopData = parallelFor(loopFunc, nx, in().getNThreads());
   gatherLoopData(adrFixed.data(), loopData, nxnl);
   // Write result to output file
   if (isRoot()) { writeAdrFixed(adrFixed, adrFixedDatabaseName); }
@@ -98,7 +103,7 @@ void Qstls::computeAdrFixed() {
 
 void Qstls::writeAdrFixed(const Vector3D &res, const string &name) const {
   try {
-    DatabaseInfo dbInfo = in.getDatabaseInfo();
+    DatabaseInfo dbInfo = in().getDatabaseInfo();
     SQLite::Database db(dbInfo.name,
                         SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
     // Create table if it doesn't exist
@@ -124,7 +129,7 @@ void Qstls::writeAdrFixed(const Vector3D &res, const string &name) const {
 
 void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
   try {
-    DatabaseInfo dbInfo = in.getDatabaseInfo();
+    DatabaseInfo dbInfo = in().getDatabaseInfo();
     SQLite::Database db(dbInfo.name, SQLite::OPEN_READONLY);
     const string select =
         format(QstlsUtil::SQL_SELECT, QstlsUtil::SQL_TABLE_NAME);

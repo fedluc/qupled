@@ -20,18 +20,17 @@ using ItgType = Integrator1D::Type;
 // QSTLS-IET class
 // -----------------------------------------------------------------
 
-QstlsIet::QstlsIet(const QstlsIetInput &in_)
+QstlsIet::QstlsIet(const std::shared_ptr<const QstlsIetInput> &in_)
     : Qstls(in_, true),
-      in(in_),
-      iet(in_, in_, wvg, true) {
+      iet(*in_, *in_, wvg, true) {
   // Throw error message for ground state calculations
-  if (in.getDegeneracy() == 0.0) {
+  if (in().getDegeneracy() == 0.0) {
     throwError("Ground state calculations are not available "
                "for the quantum IET schemes");
   }
   // Allocate arrays
   const size_t nx = wvg.size();
-  const size_t nl = in.getNMatsubara();
+  const size_t nl = in().getNMatsubara();
   lfcIet.resize(nx, nl);
 }
 
@@ -44,7 +43,7 @@ void QstlsIet::init() {
 }
 
 bool QstlsIet::initialGuessFromInput() {
-  const bool ssfIsSetFromInput = Qstls::ssfGuessFromInput(in.getGuess());
+  const bool ssfIsSetFromInput = Qstls::ssfGuessFromInput(in().getGuess());
   if (!ssfIsSetFromInput) { return false; }
   const bool lfcIsSetFromInput = iet.initialGuessFromInput(lfc);
   if (!lfcIsSetFromInput) { return false; }
@@ -53,7 +52,7 @@ bool QstlsIet::initialGuessFromInput() {
 
 void QstlsIet::computeLfc() {
   const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
+  const int nl = in().getNMatsubara();
   // Setup interpolators
   const shared_ptr<Interpolator1D> ssfi = make_shared<Interpolator1D>(wvg, ssf);
   const shared_ptr<Interpolator1D> bfi =
@@ -69,18 +68,18 @@ void QstlsIet::computeLfc() {
   // Compute the qstls contribution to the adr
   Qstls::computeLfc();
   // Compute qstls-iet contribution to the adr
-  const bool segregatedItg = in.getInt2DScheme() == "segregated";
+  const bool segregatedItg = in().getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   auto loopFunc = [&](int i) -> void {
     shared_ptr<Integrator2D> itgPrivate =
-        make_shared<Integrator2D>(in.getIntError());
+        make_shared<Integrator2D>(in().getIntError());
     Vector3D adrFixedPrivate(nl, nx, nx);
-    const string name = format("{}_{:d}", in.getTheory(), i);
-    const int runId = (in.getFixedRunId() != DEFAULT_INT)
-                          ? in.getFixedRunId()
-                          : in.getDatabaseInfo().runId;
+    const string name = format("{}_{:d}", in().getTheory(), i);
+    const int runId = (in().getFixedRunId() != DEFAULT_INT)
+                          ? in().getFixedRunId()
+                          : in().getDatabaseInfo().runId;
     readAdrFixed(adrFixedPrivate, name, runId);
-    QstlsIetUtil::AdrIet adrTmp(in.getDegeneracy(),
+    QstlsIetUtil::AdrIet adrTmp(in().getDegeneracy(),
                                 wvg.front(),
                                 wvg.back(),
                                 wvg[i],
@@ -91,7 +90,7 @@ void QstlsIet::computeLfc() {
                                 itgPrivate);
     adrTmp.get(wvg, adrFixedPrivate, lfcIet);
   };
-  const auto &loopData = parallelFor(loopFunc, nx, in.getNThreads());
+  const auto &loopData = parallelFor(loopFunc, nx, in().getNThreads());
   gatherLoopData(lfcIet.data(), loopData, nl);
   // Sum qstls and qstls-iet contributions to the local field correction
   lfcIet.div(idr);
@@ -107,24 +106,24 @@ void QstlsIet::computeLfc() {
 }
 
 void QstlsIet::computeAdrFixed() {
-  if (in.getFixedRunId() != DEFAULT_INT) { return; }
+  if (in().getFixedRunId() != DEFAULT_INT) { return; }
   const int nx = wvg.size();
-  const int nl = in.getNMatsubara();
+  const int nl = in().getNMatsubara();
   const double &xStart = wvg.front();
   const double &xEnd = wvg.back();
-  const double &theta = in.getDegeneracy();
+  const double &theta = in().getDegeneracy();
   for (const auto &x : wvg) {
     Vector3D res(nl, nx, nx);
     auto loopFunc = [&](int l) -> void {
-      auto itgPrivate = make_shared<Integrator1D>(in.getIntError());
+      auto itgPrivate = make_shared<Integrator1D>(in().getIntError());
       QstlsIetUtil::AdrFixedIet adrTmp(theta, xStart, xEnd, x, mu, itgPrivate);
       adrTmp.get(l, wvg, res);
     };
-    const auto &loopData = parallelFor(loopFunc, nl, in.getNThreads());
+    const auto &loopData = parallelFor(loopFunc, nl, in().getNThreads());
     gatherLoopData(res.data(), loopData, nx * nx);
     if (isRoot()) {
       const size_t idx = distance(wvg.begin(), find(wvg.begin(), wvg.end(), x));
-      const string name = format("{}_{:d}", in.getTheory(), idx);
+      const string name = format("{}_{:d}", in().getTheory(), idx);
       writeAdrFixed(res, name);
     }
   }
