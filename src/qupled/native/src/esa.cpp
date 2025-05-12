@@ -12,7 +12,7 @@ using namespace numUtil;
 // -----------------------------------------------------------------
 
 void ESA::computeLfc() {
-  ESAUtil::Slfc lfcTmp(in.getCoupling(), in.getDegeneracy());
+  ESAUtil::Slfc lfcTmp(in().getCoupling(), in().getDegeneracy());
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double &x = wvg[i];
     lfc(i, 0) = lfcTmp.get(x);

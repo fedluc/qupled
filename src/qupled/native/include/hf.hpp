@@ -15,7 +15,9 @@ class HF : public Logger {
 public:
 
   // Constructor
-  HF(const Input &in_, const bool verbose_);
+  HF(const std::shared_ptr<const Input> &in_, const bool verbose_);
+  HF(const Input &in_, const bool verbose_)
+      : HF(std::make_shared<const Input>(in_), verbose_) {}
   explicit HF(const Input &in_)
       : HF(in_, true) {}
   // Destructor
@@ -34,7 +36,7 @@ public:
 protected:
 
   // Input data
-  const Input in;
+  const std::shared_ptr<const Input> inPtr;
   // Integrator
   const std::shared_ptr<Integrator1D> itg;
   // Wave vector grid
@@ -47,6 +49,8 @@ protected:
   std::vector<double> ssf;
   // Chemical potential
   double mu;
+  // Access input pointer
+  const Input &in() const { return *inPtr; }
   // Initialize basic properties
   virtual void init();
   // Calculations to compute the structural properties

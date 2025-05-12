@@ -13,11 +13,11 @@ using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
 
 // Constructor
-Rpa::Rpa(const Input &in_, const bool verbose_)
+Rpa::Rpa(const std::shared_ptr<const Input> &in_, const bool verbose_)
     : HF(in_, verbose_) {
   // Allocate arrays to the correct size
   const size_t nx = wvg.size();
-  const size_t nl = in.getNMatsubara();
+  const size_t nl = in().getNMatsubara();
   idr.resize(nx, nl);
   ssfHF.resize(nx);
 }
@@ -32,15 +32,15 @@ void Rpa::init() {
 
 // Compute Hartree-Fock static structure factor
 void Rpa::computeSsfHF() {
-  HF hf(in, false);
+  HF hf(inPtr, false);
   hf.compute();
   ssfHF = hf.getSsf();
 }
 
 // Compute static structure factor at finite temperature
 void Rpa::computeSsfFinite() {
-  const double Theta = in.getDegeneracy();
-  const double rs = in.getCoupling();
+  const double Theta = in().getDegeneracy();
+  const double rs = in().getCoupling();
   const size_t nx = wvg.size();
   for (size_t i = 0; i < nx; ++i) {
     RpaUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], lfc[i], idr[i]);
@@ -50,8 +50,8 @@ void Rpa::computeSsfFinite() {
 
 // Compute static structure factor at zero temperature
 void Rpa::computeSsfGround() {
-  const double rs = in.getCoupling();
-  const double OmegaMax = in.getFrequencyCutoff();
+  const double rs = in().getCoupling();
+  const double OmegaMax = in().getFrequencyCutoff();
   const size_t nx = wvg.size();
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];

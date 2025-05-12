@@ -16,7 +16,9 @@ class Stls : public Rpa {
 public:
 
   // Constructors
-  Stls(const StlsInput &in_, const bool verbose_);
+  Stls(const std::shared_ptr<const StlsInput> &in_, const bool verbose_);
+  Stls(const StlsInput &in_, const bool verbose_)
+      : Stls(std::make_shared<const StlsInput>(in_), verbose_) {}
   explicit Stls(const StlsInput &in_)
       : Stls(in_, true) {}
   // Destructor
@@ -44,7 +46,7 @@ protected:
 private:
 
   // Input parameters
-  StlsInput in;
+  const StlsInput &in() const { return static_cast<const StlsInput &>(*inPtr); }
 };
 
 namespace StlsUtil {
