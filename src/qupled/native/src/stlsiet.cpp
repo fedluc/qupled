@@ -40,7 +40,7 @@ void StlsIet::computeLfc() {
 }
 
 bool StlsIet::initialGuessFromInput() {
-  const bool ssfIsSetFromInput = Stls::ssfGuessFromInput(in().getGuess());
+  const bool ssfIsSetFromInput = Stls::initialGuessFromInput();
   if (!ssfIsSetFromInput) { return false; }
   const bool lfcIsSetFromInput = iet.initialGuessFromInput(lfc);
   if (!lfcIsSetFromInput) { return false; }

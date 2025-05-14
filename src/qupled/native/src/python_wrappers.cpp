@@ -16,34 +16,30 @@ void PyInput::setChemicalPotentialGuess(Input &in, const bp::list &muGuess) {
 }
 
 // -----------------------------------------------------------------
-// PyStlsGuess
+// PyGuess
 // -----------------------------------------------------------------
 
-bn::ndarray PyStlsGuess::getWvg(const StlsInput::Guess &guess) {
+bn::ndarray PyGuess::getWvg(const Guess &guess) {
   return pythonUtil::toNdArray(guess.wvg);
 }
 
-bn::ndarray PyStlsGuess::getSsf(const StlsInput::Guess &guess) {
+bn::ndarray PyGuess::getSsf(const Guess &guess) {
   return pythonUtil::toNdArray(guess.ssf);
 }
 
-void PyStlsGuess::setWvg(StlsInput::Guess &guess, const bn::ndarray &wvg) {
-  guess.wvg = pythonUtil::toVector(wvg);
-}
-
-void PyStlsGuess::setSsf(StlsInput::Guess &guess, const bn::ndarray &ssf) {
-  guess.ssf = pythonUtil::toVector(ssf);
-}
-
-// -----------------------------------------------------------------
-// PyIetGuess
-// -----------------------------------------------------------------
-
-bn::ndarray PyIetGuess::getLfc(const IetInput::Guess &guess) {
+bn::ndarray PyGuess::getLfc(const Guess &guess) {
   return pythonUtil::toNdArray2D(guess.lfc);
 }
 
-void PyIetGuess::setLfc(IetInput::Guess &guess, const bn::ndarray &lfc) {
+void PyGuess::setWvg(Guess &guess, const bn::ndarray &wvg) {
+  guess.wvg = pythonUtil::toVector(wvg);
+}
+
+void PyGuess::setSsf(Guess &guess, const bn::ndarray &ssf) {
+  guess.ssf = pythonUtil::toVector(ssf);
+}
+
+void PyGuess::setLfc(Guess &guess, const bn::ndarray &lfc) {
   if (lfc.shape(0) == 0) { return; }
   guess.lfc = pythonUtil::toVector2D(lfc);
 }

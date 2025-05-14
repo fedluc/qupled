@@ -38,7 +38,7 @@ void Iet::computeBf() {
 
 // Read initial guess from input
 bool Iet::initialGuessFromInput(Vector2D &lfc) {
-  const auto &guess = inIet.getGuess();
+  const auto &guess = in.getGuess();
   const int nx = lfc.size(0);
   const int nl = lfc.size(1);
   const int nx_ = guess.lfc.size(0);

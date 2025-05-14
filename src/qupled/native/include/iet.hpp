@@ -15,7 +15,7 @@ public:
 
   // Constructors
   explicit Iet(const IetInput &inIet_,
-               const Input &in_,
+               const IterationInput &in_,
                const std::vector<double> &wvg_,
                const bool verbose)
       : Logger(verbose),
@@ -34,7 +34,7 @@ private:
 
   // Input parameters
   const IetInput inIet;
-  const Input in;
+  const IterationInput in;
   // Wave-vector grid
   std::vector<double> wvg;
   // Bridge function

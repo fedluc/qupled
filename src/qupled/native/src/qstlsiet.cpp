@@ -43,7 +43,7 @@ void QstlsIet::init() {
 }
 
 bool QstlsIet::initialGuessFromInput() {
-  const bool ssfIsSetFromInput = Qstls::ssfGuessFromInput(in().getGuess());
+  const bool ssfIsSetFromInput = Qstls::initialGuessFromInput();
   if (!ssfIsSetFromInput) { return false; }
   const bool lfcIsSetFromInput = iet.initialGuessFromInput(lfc);
   if (!lfcIsSetFromInput) { return false; }

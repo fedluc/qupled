@@ -39,7 +39,6 @@ protected:
   // Iterations to solve the stls scheme
   void initialGuess();
   virtual bool initialGuessFromInput();
-  bool ssfGuessFromInput(const StlsInput::Guess &guess);
   double computeError() const;
   virtual void updateSolution();
 
