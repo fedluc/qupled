@@ -16,16 +16,18 @@ public:
   // Constructor
   explicit QstlsIet(const std::shared_ptr<const QstlsIetInput> &in_);
   explicit QstlsIet(const QstlsIetInput &in_)
-      : QstlsIet(std::make_shared<const QstlsIetInput>(in_)){};
+      : QstlsIet(std::make_shared<const QstlsIetInput>(in_)) {};
   // Getters
   const std::vector<double> &getBf() const { return iet.getBf(); }
 
 private:
 
   // Iet extension
-  Iet iet;
+  Iet<QstlsIetInput> iet;
   // Iet contribution to the local field correction
   Vector2D lfcIet;
+  // Integrator for 2D integrals
+  std::vector<double> itgGrid;
   // Input parameters
   const QstlsIetInput &in() const {
     return static_cast<const QstlsIetInput &>(*inPtr);

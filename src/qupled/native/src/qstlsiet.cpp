@@ -22,12 +22,15 @@ using ItgType = Integrator1D::Type;
 
 QstlsIet::QstlsIet(const std::shared_ptr<const QstlsIetInput> &in_)
     : Qstls(in_, true),
-      iet(*in_, *in_, wvg, true) {
+      iet(in_, wvg) {
   // Throw error message for ground state calculations
   if (in().getDegeneracy() == 0.0) {
     throwError("Ground state calculations are not available "
                "for the quantum IET schemes");
   }
+  // Allocate grid for the 2D integrator
+  const bool segregatedItg = in().getInt2DScheme() == "segregated";
+  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   // Allocate arrays
   const size_t nx = wvg.size();
   const size_t nl = in().getNMatsubara();
@@ -68,8 +71,6 @@ void QstlsIet::computeLfc() {
   // Compute the qstls contribution to the adr
   Qstls::computeLfc();
   // Compute qstls-iet contribution to the adr
-  const bool segregatedItg = in().getInt2DScheme() == "segregated";
-  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   auto loopFunc = [&](int i) -> void {
     shared_ptr<Integrator2D> itgPrivate =
         make_shared<Integrator2D>(in().getIntError());

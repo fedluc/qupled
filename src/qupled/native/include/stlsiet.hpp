@@ -13,18 +13,19 @@ class StlsIet : public Stls {
 public:
 
   // Constructors
-  explicit StlsIet(const std::shared_ptr<const StlsIetInput> &in_)
-      : Stls(in_, true),
-        iet(*in_, *in_, wvg, true){};
+  explicit StlsIet(const std::shared_ptr<const StlsIetInput> &in_);
   explicit StlsIet(const StlsIetInput &in_)
-      : StlsIet(std::make_shared<const StlsIetInput>(in_)){};
+      : StlsIet(std::make_shared<const StlsIetInput>(in_)) {};
   // Getters
   const std::vector<double> &getBf() const { return iet.getBf(); }
 
 private:
 
   // Iet extension
-  Iet iet;
+  Iet<StlsIetInput> iet;
+  // Integrator for 2D integrals
+  const std::shared_ptr<Integrator2D> itg2D;
+  std::vector<double> itgGrid;
   // Initialize basic properties
   void init() override;
   // Compute static local field correction

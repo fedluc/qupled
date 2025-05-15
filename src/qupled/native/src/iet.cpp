@@ -1,4 +1,5 @@
 #include "iet.hpp"
+#include "input.hpp"
 #include "mpi_util.hpp"
 #include <format>
 
@@ -13,23 +14,25 @@ using ItgType = Integrator1D::Type;
 // -----------------------------------------------------------------
 
 // Initialize basic properties
-void Iet::init() {
+template <typename IetInput>
+void Iet<IetInput>::init() {
   print("Computing bridge function adder: ");
   computeBf();
   println("Done");
 }
 
 // Compute bridge function
-void Iet::computeBf() {
+template <typename IetInput>
+void Iet<IetInput>::computeBf() {
   const size_t nx = bf.size();
   const shared_ptr<Integrator1D> itgF =
       make_shared<Integrator1D>(ItgType::FOURIER, 1e-10);
   assert(bf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
-    IetUtil::BridgeFunction bfTmp(in.getTheory(),
-                                  inIet.getMapping(),
-                                  in.getCoupling(),
-                                  in.getDegeneracy(),
+    IetUtil::BridgeFunction bfTmp(in->getTheory(),
+                                  in->getMapping(),
+                                  in->getCoupling(),
+                                  in->getDegeneracy(),
                                   wvg[i],
                                   itgF);
     bf[i] = bfTmp.get();
@@ -37,8 +40,9 @@ void Iet::computeBf() {
 }
 
 // Read initial guess from input
-bool Iet::initialGuessFromInput(Vector2D &lfc) {
-  const auto &guess = in.getGuess();
+template <typename IetInput>
+bool Iet<IetInput>::initialGuessFromInput(Vector2D &lfc) {
+  const auto &guess = in->getGuess();
   const int nx = lfc.size(0);
   const int nl = lfc.size(1);
   const int nx_ = guess.lfc.size(0);
@@ -65,6 +69,10 @@ bool Iet::initialGuessFromInput(Vector2D &lfc) {
   }
   return true;
 }
+
+// Explicit instantiation
+template class Iet<StlsIetInput>;
+template class Iet<QstlsIetInput>;
 
 // -----------------------------------------------------------------
 // BridgeFunction class
