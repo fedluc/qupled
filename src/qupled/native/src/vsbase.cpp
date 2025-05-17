@@ -38,8 +38,8 @@ void VSBase::doIterations() {
   auto func = [this](const double &alphaTmp) -> double {
     return alphaDifference(alphaTmp);
   };
-  SecantSolver rsol(in.getErrMinAlpha(), in.getNIterAlpha());
-  rsol.solve(func, in.getAlphaGuess());
+  SecantSolver rsol(in().getErrMinAlpha(), in().getNIterAlpha());
+  rsol.solve(func, in().getAlphaGuess());
   alpha = rsol.getSolution();
   println(format("Free parameter = {:.5f}", alpha));
   updateSolution();

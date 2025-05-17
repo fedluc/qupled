@@ -25,9 +25,8 @@ class VSBase : public Logger {
 public:
 
   // Constructor
-  explicit VSBase(const VSInput &in_)
-      : Logger(MPIUtil::isRoot()),
-        in(in_) {}
+  explicit VSBase()
+      : Logger(MPIUtil::isRoot()) {}
   // Destructor
   virtual ~VSBase() = default;
   // Compute vs-stls scheme
@@ -39,12 +38,12 @@ public:
 
 protected:
 
-  // Input data
-  VSInput in;
   // Free parameter
   double alpha;
   // Thermodynamic properties (this must be set from the derived classes)
   std::shared_ptr<ThermoPropBase> thermoProp;
+  // Input parameters
+  virtual const VSInput &in() const = 0;
   // Compute free parameter
   virtual double computeAlpha() = 0;
   // Initialize

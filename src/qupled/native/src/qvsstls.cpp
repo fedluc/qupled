@@ -18,11 +18,10 @@ using ItgType = Integrator1D::Type;
 // QVSStls class
 // -----------------------------------------------------------------
 
-QVSStls::QVSStls(const QVSStlsInput &in_)
-    : VSBase(in_),
+QVSStls::QVSStls(const std::shared_ptr<const QVSStlsInput> &in_)
+    : VSBase(),
       Qstls(in_, false),
-      in(in_),
-      thermoProp(make_shared<QThermoProp>(in_)) {
+      thermoProp(make_shared<QThermoProp>(*in_)) {
   VSBase::thermoProp = thermoProp;
 }
 
@@ -42,12 +41,9 @@ double QVSStls::computeAlpha() {
   const double &Qr = QData[1];
   const double &Qt = QData[2];
   // Alpha
-  double numer = Q - (1.0 / 6.0) * fxcrr + (1.0 / 3.0) * fxcr;
-  double denom = Q + (1.0 / 3.0) * Qr;
-  if (in.getDegeneracy() > 0.0) {
-    numer += -(2.0 / 3.0) * fxctt - (2.0 / 3.0) * fxcrt + (1.0 / 3.0) * fxct;
-    denom += (2.0 / 3.0) * Qt;
-  }
+  double numer = Q - (1.0 / 6.0) * fxcrr + (1.0 / 3.0) * fxcr
+                 - (2.0 / 3.0) * (fxctt + fxcrt) + (1.0 / 3.0) * fxct;
+  double denom = Q + (1.0 / 3.0) * Qr + (2.0 / 3.0) * Qt;
   return numer / denom;
 }
 

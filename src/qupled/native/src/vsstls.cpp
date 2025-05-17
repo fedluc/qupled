@@ -11,11 +11,10 @@ using namespace std;
 // VSStls class
 // -----------------------------------------------------------------
 
-VSStls::VSStls(const VSStlsInput &in_)
-    : VSBase(in_),
+VSStls::VSStls(const std::shared_ptr<const VSStlsInput> &in_)
+    : VSBase(),
       Stls(in_, false),
-      in(in_),
-      thermoProp(make_shared<ThermoProp>(in_)) {
+      thermoProp(make_shared<ThermoProp>(*in_)) {
   VSBase::thermoProp = thermoProp;
 }
 
@@ -36,12 +35,9 @@ double VSStls::computeAlpha() {
   const double &uintr = internalEnergyData[1];
   const double &uintt = internalEnergyData[2];
   // Alpha
-  double numer = 2 * fxc - (1.0 / 6.0) * fxcrr + (4.0 / 3.0) * fxcr;
-  double denom = uint + (1.0 / 3.0) * uintr;
-  if (in.getDegeneracy() > 0.0) {
-    numer += -(2.0 / 3.0) * fxctt - (2.0 / 3.0) * fxcrt + (1.0 / 3.0) * fxct;
-    denom += (2.0 / 3.0) * uintt;
-  }
+  double numer = 2.0 * fxc + (4.0 / 3.0) * fxcr - (1.0 / 6.0) * fxcrr
+                 - (2.0 / 3.0) * (fxctt + fxcrt) + (1.0 / 3.0) * fxct;
+  double denom = uint + (1.0 / 3.0) * uintr + (2.0 / 3.0) * uintt;
   return numer / denom;
 }
 

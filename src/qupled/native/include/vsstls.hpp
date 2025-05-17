@@ -20,22 +20,26 @@ class VSStls : public VSBase, public Stls {
 public:
 
   // Constructor from initial data
-  explicit VSStls(const VSStlsInput &in_);
+  explicit VSStls(const std::shared_ptr<const VSStlsInput> &in_);
+  explicit VSStls(const VSStlsInput &in_)
+      : VSStls(std::make_shared<const VSStlsInput>(in_)){};
   // Solve the scheme
   using VSBase::compute;
 
 private:
 
-  // Input
-  VSStlsInput in;
   // Thermodynamic properties
   std::shared_ptr<ThermoProp> thermoProp;
+  // Input parameters
+  const VSInput &in() const override {
+    return dynamic_cast<const VSInput &>(*inPtr);
+  }
   // Initialize
-  void init();
+  void init() override;
   // Compute free parameter
-  double computeAlpha();
+  double computeAlpha() override;
   // Iterations to solve the vs-stls scheme
-  void updateSolution();
+  void updateSolution() override;
   // Print info
   void print(const std::string &msg) { VSBase::print(msg); }
   void println(const std::string &msg) { VSBase::println(msg); }

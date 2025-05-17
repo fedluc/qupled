@@ -23,22 +23,27 @@ class QVSStls : public VSBase, public Qstls {
 public:
 
   // Constructor from initial data
-  explicit QVSStls(const QVSStlsInput &in_);
+  explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in_);
+  explicit QVSStls(const QVSStlsInput &in_)
+      : QVSStls(std::make_shared<const QVSStlsInput>(in_)){};
+
   // Solve the scheme
   using VSBase::compute;
 
 private:
 
-  // Input
-  QVSStlsInput in;
   // Thermodyanmic properties
   std::shared_ptr<QThermoProp> thermoProp;
+  // Input parameters
+  const VSInput &in() const override {
+    return dynamic_cast<const VSInput &>(*inPtr);
+  }
   // Initialize
-  void init();
+  void init() override;
   // Compute free parameter
-  double computeAlpha();
+  double computeAlpha() override;
   // Iterations to solve the qvsstls-scheme
-  void updateSolution();
+  void updateSolution() override;
   // Print info
   void print(const std::string &msg) { VSBase::print(msg); }
   void println(const std::string &msg) { VSBase::println(msg); }

@@ -36,7 +36,8 @@ public:
         xmax(DEFAULT_DOUBLE),
         OmegaMax(DEFAULT_DOUBLE),
         nl(DEFAULT_INT) {}
-
+  // Destructor
+  virtual ~Input() = default;
   // Setters
   void setCoupling(const double &rs);
   void setDatabaseInfo(const DatabaseInfo &dbInfo);
