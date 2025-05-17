@@ -15,7 +15,7 @@ public:
   // Constructors
   explicit StlsIet(const std::shared_ptr<const StlsIetInput> &in_);
   explicit StlsIet(const StlsIetInput &in_)
-      : StlsIet(std::make_shared<const StlsIetInput>(in_)) {};
+      : StlsIet(std::make_shared<const StlsIetInput>(in_)){};
   // Getters
   const std::vector<double> &getBf() const { return iet.getBf(); }
 
