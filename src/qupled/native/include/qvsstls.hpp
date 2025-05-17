@@ -25,7 +25,7 @@ public:
   // Constructor from initial data
   explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in_);
   explicit QVSStls(const QVSStlsInput &in_)
-      : QVSStls(std::make_shared<const QVSStlsInput>(in_)){};
+      : QVSStls(std::make_shared<const QVSStlsInput>(in_)) {};
 
   // Solve the scheme
   using VSBase::compute;
@@ -58,7 +58,7 @@ class QThermoProp : public ThermoPropBase {
 public:
 
   // Constructors
-  explicit QThermoProp(const QVSStlsInput &in_);
+  explicit QThermoProp(const std::shared_ptr<const QVSStlsInput> &in_);
   // Get internal energy and internal energy derivatives
   std::vector<double> getQData() const;
 
@@ -76,7 +76,7 @@ class QStructProp : public Logger, public StructPropBase {
 public:
 
   // Constructor
-  explicit QStructProp(const QVSStlsInput &in_);
+  explicit QStructProp(const std::shared_ptr<const QVSStlsInput> &in_);
   // Get structural properties for output
   const QstlsCSR &getCsr(const Idx &idx) const;
   // Get Q term
@@ -85,7 +85,7 @@ public:
 private:
 
   // Inputs
-  const QVSStlsInput in;
+  const std::shared_ptr<const QVSStlsInput> &in;
   // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<std::shared_ptr<QstlsCSR>> csr;
   // Setup dependencies in the CSR objects

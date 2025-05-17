@@ -22,7 +22,7 @@ public:
   // Constructor from initial data
   explicit VSStls(const std::shared_ptr<const VSStlsInput> &in_);
   explicit VSStls(const VSStlsInput &in_)
-      : VSStls(std::make_shared<const VSStlsInput>(in_)){};
+      : VSStls(std::make_shared<const VSStlsInput>(in_)) {};
   // Solve the scheme
   using VSBase::compute;
 
@@ -54,7 +54,7 @@ class ThermoProp : public ThermoPropBase {
 public:
 
   // Constructor
-  explicit ThermoProp(const VSStlsInput &in_);
+  explicit ThermoProp(const std::shared_ptr<const VSStlsInput> &in_);
 
 private:
 
@@ -70,12 +70,12 @@ class StructProp : public Logger, public StructPropBase {
 
 public:
 
-  explicit StructProp(const VSStlsInput &in_);
+  explicit StructProp(const std::shared_ptr<const VSStlsInput> &in_);
 
 private:
 
   // Input
-  const VSStlsInput in;
+  const std::shared_ptr<const VSStlsInput> in;
   // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<std::shared_ptr<StlsCSR>> csr;
   // setup the csr vector

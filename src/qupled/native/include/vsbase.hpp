@@ -83,7 +83,7 @@ class ThermoPropBase {
 public:
 
   // Constructor
-  explicit ThermoPropBase(const VSInput &inVS, const Input &inRpa);
+  explicit ThermoPropBase(const std::shared_ptr<const VSInput> &in_);
   // Destructor
   virtual ~ThermoPropBase() = default;
   // Set the value of the free parameter in the structural properties
@@ -116,6 +116,8 @@ protected:
 
   using SIdx = StructIdx;
   using Idx = ThermoIdx;
+  // Input parameters
+  const std::shared_ptr<const VSInput> in;
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
   // Structural properties (this must be set from the derived classes)
@@ -133,15 +135,17 @@ protected:
   size_t fxcIdxTargetStatePoint;
   // Index of the first unsolved state point in the free energy integrand
   size_t fxcIdxUnsolvedStatePoint;
+  // Cast the input member to an Input type
+  const Input &inRpa() const { return dynamic_cast<const Input &>(*in); };
   // Compute the free energy
   double computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
                            const bool normalize) const;
   // Build the integration grid
-  void setRsGrid(const VSInput &inVS, const Input &inRpa);
+  void setRsGrid();
   // Build the free energy integrand
-  void setFxcIntegrand(const VSInput &in);
+  void setFxcIntegrand();
   // Set the index of the target state point in the free energy integrand
-  void setFxcIdxTargetStatePoint(const Input &in);
+  void setFxcIdxTargetStatePoint();
   // Set the index of the first unsolved state point in the free energy
   // integrand
   void setFxcIdxUnsolvedStatePoint();

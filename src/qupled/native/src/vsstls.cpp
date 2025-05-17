@@ -14,7 +14,7 @@ using namespace std;
 VSStls::VSStls(const std::shared_ptr<const VSStlsInput> &in_)
     : VSBase(),
       Stls(in_, false),
-      thermoProp(make_shared<ThermoProp>(*in_)) {
+      thermoProp(make_shared<ThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
 }
 
@@ -53,8 +53,8 @@ void VSStls::init() { Rpa::init(); }
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-ThermoProp::ThermoProp(const VSStlsInput &in_)
-    : ThermoPropBase(in_, in_),
+ThermoProp::ThermoProp(const std::shared_ptr<const VSStlsInput> &in_)
+    : ThermoPropBase(in_),
       structProp(make_shared<StructProp>(in_)) {
   ThermoPropBase::structProp = structProp;
 }
@@ -63,7 +63,7 @@ ThermoProp::ThermoProp(const VSStlsInput &in_)
 // StructProp class
 // -----------------------------------------------------------------
 
-StructProp::StructProp(const VSStlsInput &in_)
+StructProp::StructProp(const std::shared_ptr<const VSStlsInput> &in_)
     : Logger(MPIUtil::isRoot()),
       StructPropBase(),
       in(in_) {
@@ -82,17 +82,17 @@ void StructProp::setupCSR() {
 }
 
 std::vector<VSStlsInput> StructProp::setupCSRInput() {
-  const double &drs = in.getCouplingResolution();
-  const double &dTheta = in.getDegeneracyResolution();
+  const double &drs = in->getCouplingResolution();
+  const double &dTheta = in->getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
   // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  const double rs = std::max(in.getCoupling(), drs);
-  const double theta = std::max(in.getDegeneracy(), dTheta);
+  const double rs = std::max(in->getCoupling(), drs);
+  const double theta = std::max(in->getDegeneracy(), dTheta);
   // Setup objects
   std::vector<VSStlsInput> out;
   for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
     for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
-      VSStlsInput inTmp = in;
+      VSStlsInput inTmp = *in;
       inTmp.setDegeneracy(thetaTmp);
       inTmp.setCoupling(rsTmp);
       out.push_back(inTmp);
@@ -102,9 +102,9 @@ std::vector<VSStlsInput> StructProp::setupCSRInput() {
 }
 
 void StructProp::doIterations() {
-  const int maxIter = in.getNIter();
-  const int ompThreads = in.getNThreads();
-  const double minErr = in.getErrMin();
+  const int maxIter = in->getNIter();
+  const int ompThreads = in->getNThreads();
+  const double minErr = in->getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess

@@ -21,7 +21,7 @@ using ItgType = Integrator1D::Type;
 QVSStls::QVSStls(const std::shared_ptr<const QVSStlsInput> &in_)
     : VSBase(),
       Qstls(in_, false),
-      thermoProp(make_shared<QThermoProp>(*in_)) {
+      thermoProp(make_shared<QThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
 }
 
@@ -59,8 +59,8 @@ void QVSStls::init() { Rpa::init(); }
 // QThermoProp class
 // -----------------------------------------------------------------
 
-QThermoProp::QThermoProp(const QVSStlsInput &in_)
-    : ThermoPropBase(in_, in_),
+QThermoProp::QThermoProp(const std::shared_ptr<const QVSStlsInput> &in_)
+    : ThermoPropBase(in_),
       structProp(make_shared<QStructProp>(in_)) {
   if (isZeroDegeneracy) {
     throwError("Ground state calculations are not available "
@@ -98,7 +98,7 @@ vector<double> QThermoProp::getQData() const {
 // QStructProp class
 // -----------------------------------------------------------------
 
-QStructProp::QStructProp(const QVSStlsInput &in_)
+QStructProp::QStructProp(const std::shared_ptr<const QVSStlsInput> &in_)
     : Logger(MPIUtil::isRoot()),
       StructPropBase(),
       in(in_) {
@@ -117,32 +117,32 @@ void QStructProp::setupCSR() {
 }
 
 std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
-  const double &drs = in.getCouplingResolution();
-  const double &dTheta = in.getDegeneracyResolution();
+  const double &drs = in->getCouplingResolution();
+  const double &dTheta = in->getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
   // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  const double rs = std::max(in.getCoupling(), drs);
-  const double theta = std::max(in.getDegeneracy(), dTheta);
+  const double rs = std::max(in->getCoupling(), drs);
+  const double theta = std::max(in->getDegeneracy(), dTheta);
   // Setup objects
   std::vector<QVSStlsInput> out;
   for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
     for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
-      QVSStlsInput inTmp = in;
+      QVSStlsInput inTmp = *in;
       inTmp.setDegeneracy(thetaTmp);
       inTmp.setCoupling(rsTmp);
       out.push_back(inTmp);
     }
   }
-  if (in.getFixedRunId() == DEFAULT_INT) {
-    // Avoid recomputing the fixed component for the state points with perturbed
-    // coupling parameter
+  // Avoid recomputing the fixed component for the state points with perturbed
+  // coupling parameter
+  if (in->getFixedRunId() == DEFAULT_INT) {
     for (const int idx : {RS_THETA_DOWN,
                           RS_UP_THETA_DOWN,
                           RS_THETA,
                           RS_UP_THETA,
                           RS_THETA_UP,
                           RS_UP_THETA_UP}) {
-      out[idx].setFixedRunId(in.getDatabaseInfo().runId);
+      out[idx].setFixedRunId(in->getDatabaseInfo().runId);
     }
   }
   return out;
@@ -151,9 +151,9 @@ std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
 const QstlsCSR &QStructProp::getCsr(const Idx &idx) const { return *csr[idx]; }
 
 void QStructProp::doIterations() {
-  const int maxIter = in.getNIter();
-  const int ompThreads = in.getNThreads();
-  const double minErr = in.getErrMin();
+  const int maxIter = in->getNIter();
+  const int ompThreads = in->getNThreads();
+  const double minErr = in->getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess

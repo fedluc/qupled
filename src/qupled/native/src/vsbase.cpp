@@ -57,20 +57,21 @@ double VSBase::alphaDifference(const double &alphaTmp) {
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-ThermoPropBase::ThermoPropBase(const VSInput &inVS, const Input &inRpa) {
+ThermoPropBase::ThermoPropBase(const std::shared_ptr<const VSInput> &in_)
+    : in(in_) {
   // Check if we are solving for particular state points
-  isZeroCoupling = (inRpa.getCoupling() == 0.0);
-  isZeroDegeneracy = (inRpa.getDegeneracy() == 0.0);
+  isZeroCoupling = (inRpa().getCoupling() == 0.0);
+  isZeroDegeneracy = (inRpa().getDegeneracy() == 0.0);
   // Set variables related to the free energy calculation
-  setRsGrid(inVS, inRpa);
-  setFxcIntegrand(inVS);
-  setFxcIdxTargetStatePoint(inRpa);
+  setRsGrid();
+  setFxcIntegrand();
+  setFxcIdxTargetStatePoint();
   setFxcIdxUnsolvedStatePoint();
 }
 
-void ThermoPropBase::setRsGrid(const VSInput &inVS, const Input &inRpa) {
-  const double &rs = inRpa.getCoupling();
-  const double &drs = inVS.getCouplingResolution();
+void ThermoPropBase::setRsGrid() {
+  const double &rs = inRpa().getCoupling();
+  const double &drs = in->getCouplingResolution();
   if (!numUtil::isZero(remainder(rs, drs))) {
     MPIUtil::throwError(
         "Inconsistent input parameters: the coupling parameter must be a "
@@ -83,7 +84,7 @@ void ThermoPropBase::setRsGrid(const VSInput &inVS, const Input &inRpa) {
   }
 }
 
-void ThermoPropBase::setFxcIntegrand(const VSInput &in) {
+void ThermoPropBase::setFxcIntegrand() {
   const size_t nrs = rsGrid.size();
   // Initialize the free energy integrand
   fxcIntegrand.resize(NPOINTS);
@@ -92,7 +93,7 @@ void ThermoPropBase::setFxcIntegrand(const VSInput &in) {
     vecUtil::fill(f, numUtil::Inf);
   }
   // Fill the free energy integrand and the free parameter if passed in input
-  const auto &fxciData = in.getFreeEnergyIntegrand();
+  const auto &fxciData = in->getFreeEnergyIntegrand();
   if (!fxciData.grid.empty()) {
     for (const auto &theta : {Idx::THETA_DOWN, Idx::THETA, Idx::THETA_UP}) {
       const double rsMaxi = fxciData.grid.back();
@@ -107,9 +108,9 @@ void ThermoPropBase::setFxcIntegrand(const VSInput &in) {
   }
 }
 
-void ThermoPropBase::setFxcIdxTargetStatePoint(const Input &in) {
+void ThermoPropBase::setFxcIdxTargetStatePoint() {
   auto isTarget = [&](const double &rs) {
-    return numUtil::equalTol(rs, in.getCoupling());
+    return numUtil::equalTol(rs, inRpa().getCoupling());
   };
   const auto it = find_if(rsGrid.begin(), rsGrid.end(), isTarget);
   if (it == rsGrid.end()) {

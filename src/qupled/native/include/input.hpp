@@ -251,6 +251,8 @@ public:
         dTheta(DEFAULT_DOUBLE),
         errMinAlpha(DEFAULT_DOUBLE),
         nIterAlpha(DEFAULT_INT) {}
+  // Destructor
+  virtual ~VSInput() = default;
   // Setters
   void setAlphaGuess(const std::vector<double> &alphaGuess);
   void setCouplingResolution(const double &drs);
