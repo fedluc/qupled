@@ -418,7 +418,7 @@ void CSR::setDThetaData(CSR &csrThetaUp,
 }
 
 double CSR::getInternalEnergy() const {
-  const double rs = inRpa.getCoupling();
+  const double rs = inRpa().getCoupling();
   return thermoUtil::computeInternalEnergy(getWvg(), getSsf(), rs);
 }
 
@@ -430,11 +430,11 @@ Vector2D CSR::getDerivativeContribution() const {
   // Check that alpha has been set to a value that is not the default
   assert(alpha != DEFAULT_ALPHA);
   // Derivative contributions
-  const double &rs = inRpa.getCoupling();
-  const double &theta = inRpa.getDegeneracy();
-  const double &dx = inRpa.getWaveVectorGridRes();
-  const double &drs = inVS.getCouplingResolution();
-  const double &dTheta = inVS.getDegeneracyResolution();
+  const double &rs = inRpa().getCoupling();
+  const double &theta = inRpa().getDegeneracy();
+  const double &dx = inRpa().getWaveVectorGridRes();
+  const double &drs = inVS().getCouplingResolution();
+  const double &dTheta = inVS().getDegeneracyResolution();
   const Vector2D &lfcData = *lfc;
   const Vector2D &rsUp = *lfcRs.up;
   const Vector2D &rsDown = *lfcRs.down;

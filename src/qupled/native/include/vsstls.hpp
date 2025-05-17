@@ -94,31 +94,32 @@ class StlsCSR : public CSR, public Stls {
 public:
 
   // Constructor
-  explicit StlsCSR(const VSStlsInput &in_)
-      : CSR(in_, in_),
-        Stls(in_, false),
-        in(in_) {}
-
+  explicit StlsCSR(const std::shared_ptr<const VSStlsInput> &in_)
+      : CSR(),
+        Stls(in_, false) {}
   // Compute static local field correction
   void computeLfcStls();
-  void computeLfc();
-
+  void computeLfc() override;
   // Publicly esposed private stls methods
-  void init() { Stls::init(); }
-  void initialGuess() { Stls::initialGuess(); }
-  void computeSsf() { Stls::computeSsf(); }
-  double computeError() { return Stls::computeError(); }
-  void updateSolution() { Stls::updateSolution(); }
-
+  void init() override { Stls::init(); }
+  void initialGuess() override { Stls::initialGuess(); }
+  void computeSsf() override { Stls::computeSsf(); }
+  double computeError() override { return Stls::computeError(); }
+  void updateSolution() override { Stls::updateSolution(); }
   // Getters
-  const std::vector<double> &getSsf() const { return Stls::getSsf(); }
-  const std::vector<double> &getWvg() const { return Stls::getWvg(); }
-  const Vector2D &getLfc() const { return Stls::getLfc(); }
+  const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
+  const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
+  const Vector2D &getLfc() const override { return Stls::getLfc(); }
 
 private:
 
   // Input parameters
-  VSStlsInput in;
+  const VSInput &inVS() const override {
+    return dynamic_cast<const VSInput &>(*inPtr);
+  }
+  const Input &inRpa() const override {
+    return dynamic_cast<const Input &>(*inPtr);
+  }
 };
 
 #endif

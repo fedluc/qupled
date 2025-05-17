@@ -109,7 +109,8 @@ QStructProp::QStructProp(const std::shared_ptr<const QVSStlsInput> &in_)
 void QStructProp::setupCSR() {
   std::vector<QVSStlsInput> inVector = setupCSRInput();
   for (const auto &inTmp : inVector) {
-    csr.push_back(make_shared<QstlsCSR>(inTmp));
+    csr.push_back(
+        make_shared<QstlsCSR>(make_shared<const QVSStlsInput>(inTmp)));
   }
   for (const auto &c : csr) {
     StructPropBase::csr.push_back(c);
@@ -197,27 +198,25 @@ vector<double> QStructProp::getQ() const {
 // QstlsCSR class
 // -----------------------------------------------------------------
 
-QstlsCSR::QstlsCSR(const QVSStlsInput &in_)
-    : CSR(in_, in_),
+QstlsCSR::QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_)
+    : CSR(),
       Qstls(in_, false),
-      in(in_) {
-  if (in.getDegeneracy() == 0.0) {
+      itg2D(std::make_shared<Integrator2D>(ItgType::DEFAULT,
+                                           in_->getIntError())) {
+  if (inRpa().getDegeneracy() == 0.0) {
     throwError("Ground state calculations are not available "
                "for the quantum VS scheme");
   }
+  const bool segregatedItg = inRpa().getInt2DScheme() == "segregated";
+  if (segregatedItg) { itgGrid = wvg; }
 }
 
 void QstlsCSR::init() {
+  const string &theory = inRpa().getTheory();
   switch (lfcTheta.type) {
-  case CENTERED:
-    adrFixedDatabaseName = format("{}_THETA", in.getTheory());
-    break;
-  case FORWARD:
-    adrFixedDatabaseName = format("{}_THETA_DOWN", in.getTheory());
-    break;
-  case BACKWARD:
-    adrFixedDatabaseName = format("{}_THETA_UP", in.getTheory());
-    break;
+  case CENTERED: adrFixedDatabaseName = format("{}_THETA", theory); break;
+  case FORWARD: adrFixedDatabaseName = format("{}_THETA_DOWN", theory); break;
+  case BACKWARD: adrFixedDatabaseName = format("{}_THETA_UP", theory); break;
   }
   Qstls::init();
 }
@@ -233,21 +232,15 @@ void QstlsCSR::computeLfc() {
 }
 
 double QstlsCSR::getQAdder() const {
-  const shared_ptr<Integrator1D> itg1 =
-      make_shared<Integrator1D>(ItgType::DEFAULT, in.getIntError());
-  const shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(
-      ItgType::DEFAULT, ItgType::DEFAULT, in.getIntError());
-  const bool segregatedItg = in.getInt2DScheme() == "segregated";
-  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const shared_ptr<Interpolator1D> ssfItp =
       make_shared<Interpolator1D>(wvg, ssf);
-  QAdder QTmp(in.getDegeneracy(),
+  QAdder QTmp(inRpa().getDegeneracy(),
               mu,
               wvg.front(),
               wvg.back(),
               itgGrid,
-              itg1,
-              itg2,
+              itg,
+              itg2D,
               ssfItp);
   return QTmp.get();
 }

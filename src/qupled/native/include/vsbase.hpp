@@ -226,10 +226,8 @@ public:
     std::shared_ptr<Vector2D> down;
   };
   // Constructor
-  CSR(const VSInput &inVS_, const Input &inRpa_)
-      : inVS(inVS_),
-        inRpa(inRpa_),
-        lfc(std::make_shared<Vector2D>()),
+  CSR()
+      : lfc(std::make_shared<Vector2D>()),
         alpha(DEFAULT_ALPHA) {}
   // Destructor
   virtual ~CSR() = default;
@@ -244,8 +242,8 @@ public:
   // Get the free parameter
   double getAlpha() const { return alpha; }
   // Get input
-  double getCoupling() const { return inRpa.getCoupling(); }
-  double getDegeneracy() const { return inRpa.getDegeneracy(); }
+  double getCoupling() const { return inRpa().getCoupling(); }
+  double getDegeneracy() const { return inRpa().getDegeneracy(); }
   // Compute the internal energy
   double getInternalEnergy() const;
   // Compute the free energy integrand
@@ -264,9 +262,6 @@ protected:
 
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
-  // Input data
-  const VSInput inVS;
-  const Input inRpa;
   // local field correction (static or dynamic)
   std::shared_ptr<Vector2D> lfc;
   // Free parameter
@@ -275,6 +270,9 @@ protected:
   DerivativeData lfcRs;
   // Data for the local field correction with modified degeneracy parameter
   DerivativeData lfcTheta;
+  // Input data
+  virtual const VSInput &inVS() const = 0;
+  virtual const Input &inRpa() const = 0;
   // Compute the local field correction with the derivatives contribution
   Vector2D getDerivativeContribution() const;
   // Helper methods to compute the derivatives

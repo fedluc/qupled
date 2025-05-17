@@ -74,7 +74,7 @@ StructProp::StructProp(const std::shared_ptr<const VSStlsInput> &in_)
 void StructProp::setupCSR() {
   std::vector<VSStlsInput> inVector = setupCSRInput();
   for (const auto &inTmp : inVector) {
-    csr.push_back(make_shared<StlsCSR>(inTmp));
+    csr.push_back(make_shared<StlsCSR>(make_shared<const VSStlsInput>(inTmp)));
   }
   for (const auto &c : csr) {
     StructPropBase::csr.push_back(c);

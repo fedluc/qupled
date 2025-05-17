@@ -85,7 +85,7 @@ public:
 private:
 
   // Inputs
-  const std::shared_ptr<const QVSStlsInput> &in;
+  const std::shared_ptr<const QVSStlsInput> in;
   // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<std::shared_ptr<QstlsCSR>> csr;
   // Setup dependencies in the CSR objects
@@ -104,27 +104,35 @@ class QstlsCSR : public CSR, public Qstls {
 public:
 
   // Constructor
-  explicit QstlsCSR(const QVSStlsInput &in_);
+  explicit QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_);
   // Compute auxiliary density response
   void computeLfcQstls();
-  void computeLfc();
+  void computeLfc() override;
   // Publicly esposed private stls methods
-  void init();
-  void initialGuess() { Qstls::initialGuess(); }
-  void computeSsf() { Qstls::computeSsf(); }
-  double computeError() { return Qstls::computeError(); }
-  void updateSolution() { Qstls::updateSolution(); }
+  void init() override;
+  void initialGuess() override { Qstls::initialGuess(); }
+  void computeSsf() override { Qstls::computeSsf(); }
+  double computeError() override { return Qstls::computeError(); }
+  void updateSolution() override { Qstls::updateSolution(); }
   // Compute Q
   double getQAdder() const;
   // Getters
-  const std::vector<double> &getSsf() const { return Qstls::getSsf(); }
-  const std::vector<double> &getWvg() const { return Qstls::getWvg(); }
-  const Vector2D &getLfc() const { return Qstls::getLfc(); }
+  const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
+  const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
+  const Vector2D &getLfc() const override { return Qstls::getLfc(); }
 
 private:
 
-  // Input
-  QVSStlsInput in;
+  // Integrator for 2D integrals
+  const std::shared_ptr<Integrator2D> itg2D;
+  std::vector<double> itgGrid;
+  // Input parameters
+  const VSInput &inVS() const override {
+    return dynamic_cast<const VSInput &>(*inPtr);
+  }
+  const Input &inRpa() const override {
+    return dynamic_cast<const Input &>(*inPtr);
+  }
 };
 
 // -----------------------------------------------------------------
