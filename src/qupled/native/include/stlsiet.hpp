@@ -26,16 +26,16 @@ private:
   // Integrator for 2D integrals
   const std::shared_ptr<Integrator2D> itg2D;
   std::vector<double> itgGrid;
+  // Input parameters
+  const StlsIetInput &in() const {
+    return *StlsUtil::castInput<Input, StlsIetInput>(inPtr);
+  }
   // Initialize basic properties
   void init() override;
   // Compute static local field correction
   void computeLfc() override;
   // Read initital guess from input
   bool initialGuessFromInput() override;
-  // Input parameters
-  const StlsIetInput &in() const {
-    return static_cast<const StlsIetInput &>(*inPtr);
-  }
 };
 
 namespace StlsIetUtil {

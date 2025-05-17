@@ -2,6 +2,7 @@
 #define STLS_HPP
 
 #include "input.hpp"
+#include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "rpa.hpp"
 #include <cmath>
@@ -45,10 +46,22 @@ protected:
 private:
 
   // Input parameters
-  const StlsInput &in() const { return static_cast<const StlsInput &>(*inPtr); }
+  const StlsInput &in() const;
 };
 
 namespace StlsUtil {
+
+  // -----------------------------------------------------------------
+  // Method to cast the input parameters
+  // -----------------------------------------------------------------
+  template <typename TIn, typename TOut>
+  std::shared_ptr<const TOut> castInput(const std::shared_ptr<const TIn> &in) {
+    std::shared_ptr<const TOut> out = dynamic_pointer_cast<const TOut>(in);
+    if (out == nullptr) {
+      MPIUtil::throwError("Unable to cast input parameters");
+    }
+    return out;
+  }
 
   // -----------------------------------------------------------------
   // Classes for the static local field correction

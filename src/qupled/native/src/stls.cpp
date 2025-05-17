@@ -24,6 +24,11 @@ Stls::Stls(const std::shared_ptr<const StlsInput> &in_, const bool verbose_)
   ssfOld.resize(nx);
 }
 
+// Cast input parameter from base class
+const StlsInput &Stls::in() const {
+  return *StlsUtil::castInput<Input, StlsInput>(inPtr);
+}
+
 // stls iterations
 void Stls::computeStructuralProperties() {
   const int maxIter = in().getNIter();

@@ -36,7 +36,7 @@ private:
   std::shared_ptr<QThermoProp> thermoProp;
   // Input parameters
   const VSInput &in() const override {
-    return dynamic_cast<const VSInput &>(*inPtr);
+    return *StlsUtil::castInput<Input, VSInput>(inPtr);
   }
   // Initialize
   void init() override;
@@ -128,10 +128,10 @@ private:
   std::vector<double> itgGrid;
   // Input parameters
   const VSInput &inVS() const override {
-    return dynamic_cast<const VSInput &>(*inPtr);
+    return *StlsUtil::castInput<Input, VSInput>(inPtr);
   }
   const Input &inRpa() const override {
-    return dynamic_cast<const Input &>(*inPtr);
+    return *StlsUtil::castInput<Input, Input>(inPtr);
   }
 };
 

@@ -41,14 +41,14 @@ protected:
 
 private:
 
+  // Input parameters
+  const QstlsInput &in() const {
+    return *StlsUtil::castInput<Input, QstlsInput>(inPtr);
+  }
   // Compute auxiliary density response
   void computeAdrFixed();
   // Compute static structure factor at finite temperature
   void computeSsfGround() override;
-  // Input parameters
-  const QstlsInput &in() const {
-    return static_cast<const QstlsInput &>(*inPtr);
-  }
 };
 
 namespace QstlsUtil {

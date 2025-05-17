@@ -30,7 +30,7 @@ private:
   std::vector<double> itgGrid;
   // Input parameters
   const QstlsIetInput &in() const {
-    return static_cast<const QstlsIetInput &>(*inPtr);
+    return *StlsUtil::castInput<Input, QstlsIetInput>(inPtr);
   }
   // Initialize basic properties
   void init() override;

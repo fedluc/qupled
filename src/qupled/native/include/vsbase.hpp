@@ -5,6 +5,7 @@
 #include "logger.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
+#include "stls.hpp"
 #include "thermo_util.hpp"
 #include "vector2D.hpp"
 #include "vector_util.hpp"
@@ -137,6 +138,9 @@ protected:
   size_t fxcIdxUnsolvedStatePoint;
   // Cast the input member to an Input type
   const Input &inRpa() const { return dynamic_cast<const Input &>(*in); };
+  // const Input &inRpa() const {
+  //   return *StlsUtil::castInput<VSInput, Input>(in);
+  // }
   // Compute the free energy
   double computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
                            const bool normalize) const;
