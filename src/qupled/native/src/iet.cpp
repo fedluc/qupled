@@ -14,25 +14,23 @@ using ItgType = Integrator1D::Type;
 // -----------------------------------------------------------------
 
 // Initialize basic properties
-template <typename IetInput>
-void Iet<IetInput>::init() {
+void Iet::init() {
   print("Computing bridge function adder: ");
   computeBf();
   println("Done");
 }
 
 // Compute bridge function
-template <typename IetInput>
-void Iet<IetInput>::computeBf() {
+void Iet::computeBf() {
   const size_t nx = bf.size();
   const shared_ptr<Integrator1D> itgF =
       make_shared<Integrator1D>(ItgType::FOURIER, 1e-10);
   assert(bf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
-    IetUtil::BridgeFunction bfTmp(in->getTheory(),
-                                  in->getMapping(),
-                                  in->getCoupling(),
-                                  in->getDegeneracy(),
+    IetUtil::BridgeFunction bfTmp(inRpa().getTheory(),
+                                  in().getMapping(),
+                                  inRpa().getCoupling(),
+                                  inRpa().getDegeneracy(),
                                   wvg[i],
                                   itgF);
     bf[i] = bfTmp.get();
@@ -40,9 +38,8 @@ void Iet<IetInput>::computeBf() {
 }
 
 // Read initial guess from input
-template <typename IetInput>
-bool Iet<IetInput>::initialGuessFromInput(Vector2D &lfc) {
-  const auto &guess = in->getGuess();
+bool Iet::initialGuessFromInput(Vector2D &lfc) {
+  const auto &guess = inRpa().getGuess();
   const int nx = lfc.size(0);
   const int nl = lfc.size(1);
   const int nx_ = guess.lfc.size(0);
@@ -69,10 +66,6 @@ bool Iet<IetInput>::initialGuessFromInput(Vector2D &lfc) {
   }
   return true;
 }
-
-// Explicit instantiation
-template class Iet<StlsIetInput>;
-template class Iet<QstlsIetInput>;
 
 // -----------------------------------------------------------------
 // BridgeFunction class

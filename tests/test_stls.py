@@ -88,12 +88,12 @@ def test_stls_guess_initialization_defaults():
     assert guess.ssf is None
 
 
-def test_stls_guess_to_native(mocker):
-    StlsGuess = mocker.patch("qupled.native.StlsGuess")
+def test_guess_to_native(mocker):
+    guess = mocker.patch("qupled.native.Guess")
     native_guess = mocker.ANY
     wvg = mocker.ANY
     ssf = mocker.ANY
-    StlsGuess.return_value = native_guess
+    guess.return_value = native_guess
     guess = stls.Guess(wvg, ssf)
     result = guess.to_native()
     assert result == native_guess

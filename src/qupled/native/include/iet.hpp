@@ -1,15 +1,16 @@
 #ifndef IET_HPP
 #define IET_HPP
 
+#include "input.hpp"
 #include "logger.hpp"
 #include "numerics.hpp"
+#include "stls.hpp"
 #include "vector2D.hpp"
 
 // -----------------------------------------------------------------
 // Solver for the STLS scheme
 // -----------------------------------------------------------------
 
-template <typename IetInput>
 class Iet : public Logger {
 
 public:
@@ -18,7 +19,7 @@ public:
   explicit Iet(const std::shared_ptr<const IetInput> &in_,
                const std::vector<double> &wvg_)
       : Logger(true),
-        in(in_),
+        inPtr(in_),
         wvg(wvg_),
         bf(wvg_.size()) {}
   // Initialize the iet object
@@ -31,7 +32,13 @@ public:
 private:
 
   // Input parameters
-  const std::shared_ptr<const IetInput> in;
+  const std::shared_ptr<const IetInput> inPtr;
+  // Access input pointer
+  const IetInput &in() const { return *inPtr; }
+  // Cast the input member to an IterationInput type
+  const IterationInput &inRpa() const {
+    return *StlsUtil::dynamic_pointer_cast<IetInput, IterationInput>(inPtr);
+  }
   // Wave vector grid
   const std::vector<double> wvg;
   // Bridge function

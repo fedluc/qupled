@@ -99,9 +99,7 @@ vector<double> QThermoProp::getQData() const {
 // -----------------------------------------------------------------
 
 QStructProp::QStructProp(const std::shared_ptr<const QVSStlsInput> &in_)
-    : Logger(MPIUtil::isRoot()),
-      StructPropBase(),
-      in(in_) {
+    : StructPropBase(in_) {
   setupCSR();
   setupCSRDependencies();
 }
@@ -115,17 +113,17 @@ void QStructProp::setupCSR() {
 }
 
 std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
-  const double &drs = in->getCouplingResolution();
-  const double &dTheta = in->getDegeneracyResolution();
+  const double &drs = in().getCouplingResolution();
+  const double &dTheta = in().getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
   // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  const double rs = std::max(in->getCoupling(), drs);
-  const double theta = std::max(in->getDegeneracy(), dTheta);
+  const double rs = std::max(in().getCoupling(), drs);
+  const double theta = std::max(in().getDegeneracy(), dTheta);
   // Setup objects
   std::vector<QVSStlsInput> out;
   for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
     for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
-      QVSStlsInput inTmp = *in;
+      QVSStlsInput inTmp = in();
       inTmp.setDegeneracy(thetaTmp);
       inTmp.setCoupling(rsTmp);
       out.push_back(inTmp);
@@ -133,53 +131,17 @@ std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
   }
   // Avoid recomputing the fixed component for the state points with perturbed
   // coupling parameter
-  if (in->getFixedRunId() == DEFAULT_INT) {
+  if (in().getFixedRunId() == DEFAULT_INT) {
     for (const int idx : {RS_THETA_DOWN,
                           RS_UP_THETA_DOWN,
                           RS_THETA,
                           RS_UP_THETA,
                           RS_THETA_UP,
                           RS_UP_THETA_UP}) {
-      out[idx].setFixedRunId(in->getDatabaseInfo().runId);
+      out[idx].setFixedRunId(in().getDatabaseInfo().runId);
     }
   }
   return out;
-}
-
-void QStructProp::doIterations() {
-  const int maxIter = in->getNIter();
-  const int ompThreads = in->getNThreads();
-  const double minErr = in->getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
-  for (auto &c : csr) {
-    c->initialGuess();
-  }
-  // Iteration to solve for the structural properties
-  const bool useOMP = ompThreads > 1;
-  while (counter < maxIter + 1 && err > minErr) {
-#pragma omp parallel num_threads(ompThreads) if (useOMP)
-    {
-#pragma omp for
-      for (auto &c : csr) {
-        c->computeLfcStls();
-      }
-#pragma omp for
-      for (size_t i = 0; i < csr.size(); ++i) {
-        auto &c = csr[i];
-        c->computeLfc();
-        c->computeSsf();
-        if (i == RS_THETA) { err = c->computeError(); }
-        c->updateSolution();
-      }
-    }
-    counter++;
-  }
-  println(format("Alpha = {:.5e}, Residual error "
-                 "(structural properties) = {:.5e}",
-                 csr[RS_THETA]->getAlpha(),
-                 err));
 }
 
 vector<double> QStructProp::getQ() const {

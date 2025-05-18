@@ -15,14 +15,14 @@ public:
   // Constructors
   explicit StlsIet(const std::shared_ptr<const StlsIetInput> &in_);
   explicit StlsIet(const StlsIetInput &in_)
-      : StlsIet(std::make_shared<const StlsIetInput>(in_)) {};
+      : StlsIet(std::make_shared<const StlsIetInput>(in_)){};
   // Getters
   const std::vector<double> &getBf() const { return iet.getBf(); }
 
 private:
 
   // Iet extension
-  Iet<StlsIetInput> iet;
+  Iet iet;
   // Integrator for 2D integrals
   const std::shared_ptr<Integrator2D> itg2D;
   std::vector<double> itgGrid;

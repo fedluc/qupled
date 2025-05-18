@@ -84,7 +84,7 @@ class ThermoPropBase {
 public:
 
   // Constructor
-  explicit ThermoPropBase(const std::shared_ptr<const VSInput> &in_);
+  explicit ThermoPropBase(const std::shared_ptr<const VSInput> &inPtr_);
   // Destructor
   virtual ~ThermoPropBase() = default;
   // Set the value of the free parameter in the structural properties
@@ -118,7 +118,7 @@ protected:
   using SIdx = StructIdx;
   using Idx = ThermoIdx;
   // Input parameters
-  const std::shared_ptr<const VSInput> in;
+  const std::shared_ptr<const VSInput> inPtr;
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
   // Structural properties (this must be set from the derived classes)
@@ -136,9 +136,11 @@ protected:
   size_t fxcIdxTargetStatePoint;
   // Index of the first unsolved state point in the free energy integrand
   size_t fxcIdxUnsolvedStatePoint;
+  // Access input pointer
+  const VSInput &in() const { return *inPtr; }
   // Cast the input member to an Input type
   const Input &inRpa() const {
-    return *StlsUtil::dynamic_pointer_cast<VSInput, Input>(in);
+    return *StlsUtil::dynamic_pointer_cast<VSInput, Input>(inPtr);
   }
   // Compute the free energy
   double computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
@@ -160,7 +162,7 @@ protected:
 // StructPropBase class
 // -----------------------------------------------------------------
 
-class StructPropBase {
+class StructPropBase : public Logger {
 
 public:
 
@@ -170,7 +172,7 @@ public:
   static constexpr int NTHETA = 3;
   static constexpr int NPOINTS = NRS * NTHETA;
   // Constructor
-  explicit StructPropBase();
+  explicit StructPropBase(const std::shared_ptr<const IterationInput> &in_);
   // Destructor
   virtual ~StructPropBase() = default;
   // Compute structural properties
@@ -194,8 +196,9 @@ public:
 
 protected:
 
-  // Vector containing NPOINTS state points to be solved simultaneously (this
-  // must be defined in the derived class)
+  // Input parameters
+  const std::shared_ptr<const IterationInput> inPtr;
+  // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<std::shared_ptr<CSR>> csr;
   // Flag marking whether the initialization for the stls data is done
   bool csrIsInitialized;
@@ -203,6 +206,8 @@ protected:
   bool computed;
   // Vector used as output parameter in the getters functions
   mutable std::vector<double> outVector;
+  // Access input pointer
+  const IterationInput &in() const { return *inPtr; }
   // Setup dependencies for CSR objects
   void setupCSRDependencies();
   // Perform iterations to compute structural properties

@@ -173,6 +173,9 @@ class IetInput {
 
 public:
 
+  // Destructor
+  virtual ~IetInput() = default;
+  // Setters
   void setMapping(const std::string &mapping);
   // Getters
   std::string getMapping() const { return mapping; }

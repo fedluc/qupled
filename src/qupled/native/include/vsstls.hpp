@@ -22,7 +22,7 @@ public:
   // Constructor from initial data
   explicit VSStls(const std::shared_ptr<const VSStlsInput> &in_);
   explicit VSStls(const VSStlsInput &in_)
-      : VSStls(std::make_shared<const VSStlsInput>(in_)) {};
+      : VSStls(std::make_shared<const VSStlsInput>(in_)){};
   // Solve the scheme
   using VSBase::compute;
 
@@ -66,7 +66,7 @@ private:
 // StructProp class
 // -----------------------------------------------------------------
 
-class StructProp : public Logger, public StructPropBase {
+class StructProp : public StructPropBase {
 
 public:
 
@@ -74,8 +74,10 @@ public:
 
 private:
 
-  // Input
-  const std::shared_ptr<const VSStlsInput> in;
+  // Input parameters
+  const VSStlsInput &in() const {
+    return *StlsUtil::dynamic_pointer_cast<IterationInput, VSStlsInput>(inPtr);
+  }
   // setup the csr vector
   std::vector<VSStlsInput> setupCSRInput();
   void setupCSR();

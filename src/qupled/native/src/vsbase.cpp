@@ -57,8 +57,8 @@ double VSBase::alphaDifference(const double &alphaTmp) {
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-ThermoPropBase::ThermoPropBase(const std::shared_ptr<const VSInput> &in_)
-    : in(in_) {
+ThermoPropBase::ThermoPropBase(const std::shared_ptr<const VSInput> &inPtr_)
+    : inPtr(inPtr_) {
   // Check if we are solving for particular state points
   isZeroCoupling = (inRpa().getCoupling() == 0.0);
   isZeroDegeneracy = (inRpa().getDegeneracy() == 0.0);
@@ -71,7 +71,7 @@ ThermoPropBase::ThermoPropBase(const std::shared_ptr<const VSInput> &in_)
 
 void ThermoPropBase::setRsGrid() {
   const double &rs = inRpa().getCoupling();
-  const double &drs = in->getCouplingResolution();
+  const double &drs = in().getCouplingResolution();
   if (!numUtil::isZero(remainder(rs, drs))) {
     MPIUtil::throwError(
         "Inconsistent input parameters: the coupling parameter must be a "
@@ -93,7 +93,7 @@ void ThermoPropBase::setFxcIntegrand() {
     vecUtil::fill(f, numUtil::Inf);
   }
   // Fill the free energy integrand and the free parameter if passed in input
-  const auto &fxciData = in->getFreeEnergyIntegrand();
+  const auto &fxciData = in().getFreeEnergyIntegrand();
   if (!fxciData.grid.empty()) {
     for (const auto &theta : {Idx::THETA_DOWN, Idx::THETA, Idx::THETA_UP}) {
       const double rsMaxi = fxciData.grid.back();
@@ -297,8 +297,11 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
 // StructPropBase class
 // -----------------------------------------------------------------
 
-StructPropBase::StructPropBase()
-    : csrIsInitialized(false),
+StructPropBase::StructPropBase(
+    const std::shared_ptr<const IterationInput> &inPtr_)
+    : Logger(MPIUtil::isRoot()),
+      inPtr(inPtr_),
+      csrIsInitialized(false),
       computed(false),
       outVector(NPOINTS) {}
 
@@ -362,6 +365,43 @@ int StructPropBase::compute() {
     cerr << err.what() << endl;
     return 1;
   }
+}
+
+void StructPropBase::doIterations() {
+  const int maxIter = in().getNIter();
+  const int ompThreads = in().getNThreads();
+  const double minErr = in().getErrMin();
+  double err = 1.0;
+  int counter = 0;
+  // Define initial guess
+  for (auto &c : csr) {
+    c->initialGuess();
+  }
+  // Iteration to solve for the structural properties
+  const bool useOMP = ompThreads > 1;
+  while (counter < maxIter + 1 && err > minErr) {
+// Compute new solution and error
+#pragma omp parallel num_threads(ompThreads) if (useOMP)
+    {
+#pragma omp for
+      for (auto &c : csr) {
+        c->computeLfcStls();
+      }
+#pragma omp for
+      for (size_t i = 0; i < csr.size(); ++i) {
+        auto &c = csr[i];
+        c->computeLfc();
+        c->computeSsf();
+        if (i == RS_THETA) { err = c->computeError(); }
+        c->updateSolution();
+      }
+    }
+    counter++;
+  }
+  println(format("Alpha = {:.5e}, Residual error "
+                 "(structural properties) = {:.5e}",
+                 csr[RS_THETA]->getAlpha(),
+                 err));
 }
 
 void StructPropBase::setAlpha(const double &alpha) {

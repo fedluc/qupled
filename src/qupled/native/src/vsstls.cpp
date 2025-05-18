@@ -64,9 +64,7 @@ ThermoProp::ThermoProp(const std::shared_ptr<const VSStlsInput> &in_)
 // -----------------------------------------------------------------
 
 StructProp::StructProp(const std::shared_ptr<const VSStlsInput> &in_)
-    : Logger(MPIUtil::isRoot()),
-      StructPropBase(),
-      in(in_) {
+    : StructPropBase(in_) {
   setupCSR();
   setupCSRDependencies();
 }
@@ -80,60 +78,23 @@ void StructProp::setupCSR() {
 }
 
 std::vector<VSStlsInput> StructProp::setupCSRInput() {
-  const double &drs = in->getCouplingResolution();
-  const double &dTheta = in->getDegeneracyResolution();
+  const double &drs = in().getCouplingResolution();
+  const double &dTheta = in().getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
   // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  const double rs = std::max(in->getCoupling(), drs);
-  const double theta = std::max(in->getDegeneracy(), dTheta);
+  const double rs = std::max(in().getCoupling(), drs);
+  const double theta = std::max(in().getDegeneracy(), dTheta);
   // Setup objects
   std::vector<VSStlsInput> out;
   for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
     for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
-      VSStlsInput inTmp = *in;
+      VSStlsInput inTmp = in();
       inTmp.setDegeneracy(thetaTmp);
       inTmp.setCoupling(rsTmp);
       out.push_back(inTmp);
     }
   }
   return out;
-}
-
-void StructProp::doIterations() {
-  const int maxIter = in->getNIter();
-  const int ompThreads = in->getNThreads();
-  const double minErr = in->getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
-  for (auto &c : csr) {
-    c->initialGuess();
-  }
-  // Iteration to solve for the structural properties
-  const bool useOMP = ompThreads > 1;
-  while (counter < maxIter + 1 && err > minErr) {
-// Compute new solution and error
-#pragma omp parallel num_threads(ompThreads) if (useOMP)
-    {
-#pragma omp for
-      for (auto &c : csr) {
-        c->computeLfcStls();
-      }
-#pragma omp for
-      for (size_t i = 0; i < csr.size(); ++i) {
-        auto &c = csr[i];
-        c->computeLfc();
-        c->computeSsf();
-        if (i == RS_THETA) { err = c->computeError(); }
-        c->updateSolution();
-      }
-    }
-    counter++;
-  }
-  println(format("Alpha = {:.5e}, Residual error "
-                 "(structural properties) = {:.5e}",
-                 csr[RS_THETA]->getAlpha(),
-                 err));
 }
 
 // -----------------------------------------------------------------

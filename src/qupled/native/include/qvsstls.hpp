@@ -25,7 +25,7 @@ public:
   // Constructor from initial data
   explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in_);
   explicit QVSStls(const QVSStlsInput &in_)
-      : QVSStls(std::make_shared<const QVSStlsInput>(in_)) {};
+      : QVSStls(std::make_shared<const QVSStlsInput>(in_)){};
 
   // Solve the scheme
   using VSBase::compute;
@@ -71,7 +71,7 @@ private:
 // Class to handle the structural properties
 // -----------------------------------------------------------------
 
-class QStructProp : public Logger, public StructPropBase {
+class QStructProp : public StructPropBase {
 
 public:
 
@@ -82,13 +82,13 @@ public:
 
 private:
 
-  // Inputs
-  const std::shared_ptr<const QVSStlsInput> in;
+  // Input parameters
+  const QVSStlsInput &in() const {
+    return *StlsUtil::dynamic_pointer_cast<IterationInput, QVSStlsInput>(inPtr);
+  }
   // Setup dependencies in the CSR objects
   std::vector<QVSStlsInput> setupCSRInput();
   void setupCSR();
-  // Perform iterations to compute structural properties
-  void doIterations();
 };
 
 // -----------------------------------------------------------------
