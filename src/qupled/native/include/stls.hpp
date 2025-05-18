@@ -51,16 +51,25 @@ private:
 
 namespace StlsUtil {
 
-  // -----------------------------------------------------------------
-  // Method to cast the input parameters
-  // -----------------------------------------------------------------
+  // --------------------------------------------------------
+  // Method to dyanmic cast between different shared pointers
+  // --------------------------------------------------------
+
+  template <typename T>
+  T check_dynamic_cast_result(T ptr) {
+    if (!ptr) { MPIUtil::throwError("Unable to perform dynamic cast"); }
+    return ptr;
+  }
+
   template <typename TIn, typename TOut>
-  std::shared_ptr<const TOut> castInput(const std::shared_ptr<const TIn> &in) {
-    std::shared_ptr<const TOut> out = dynamic_pointer_cast<const TOut>(in);
-    if (out == nullptr) {
-      MPIUtil::throwError("Unable to cast input parameters");
-    }
-    return out;
+  std::shared_ptr<const TOut>
+  dynamic_pointer_cast(const std::shared_ptr<const TIn> &in) {
+    return check_dynamic_cast_result(std::dynamic_pointer_cast<const TOut>(in));
+  }
+
+  template <typename TIn, typename TOut>
+  std::shared_ptr<TOut> dynamic_pointer_cast(const std::shared_ptr<TIn> &in) {
+    return check_dynamic_cast_result(std::dynamic_pointer_cast<TOut>(in));
   }
 
   // -----------------------------------------------------------------

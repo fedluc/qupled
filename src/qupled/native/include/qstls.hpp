@@ -43,7 +43,7 @@ private:
 
   // Input parameters
   const QstlsInput &in() const {
-    return *StlsUtil::castInput<Input, QstlsInput>(inPtr);
+    return *StlsUtil::dynamic_pointer_cast<Input, QstlsInput>(inPtr);
   }
   // Compute auxiliary density response
   void computeAdrFixed();

@@ -22,7 +22,7 @@ public:
   // Constructor from initial data
   explicit VSStls(const std::shared_ptr<const VSStlsInput> &in_);
   explicit VSStls(const VSStlsInput &in_)
-      : VSStls(std::make_shared<const VSStlsInput>(in_)){};
+      : VSStls(std::make_shared<const VSStlsInput>(in_)) {};
   // Solve the scheme
   using VSBase::compute;
 
@@ -32,7 +32,7 @@ private:
   std::shared_ptr<ThermoProp> thermoProp;
   // Input parameters
   const VSInput &in() const override {
-    return *StlsUtil::castInput<Input, VSInput>(inPtr);
+    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
   }
   // Initialize
   void init() override;
@@ -76,8 +76,6 @@ private:
 
   // Input
   const std::shared_ptr<const VSStlsInput> in;
-  // Vector containing NPOINTS state points to be solved simultaneously
-  std::vector<std::shared_ptr<StlsCSR>> csr;
   // setup the csr vector
   std::vector<VSStlsInput> setupCSRInput();
   void setupCSR();
@@ -98,7 +96,7 @@ public:
       : CSR(),
         Stls(in_, false) {}
   // Compute static local field correction
-  void computeLfcStls();
+  void computeLfcStls() override;
   void computeLfc() override;
   // Publicly esposed private stls methods
   void init() override { Stls::init(); }
@@ -115,10 +113,10 @@ private:
 
   // Input parameters
   const VSInput &inVS() const override {
-    return *StlsUtil::castInput<Input, VSInput>(inPtr);
+    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
   }
   const Input &inRpa() const override {
-    return *StlsUtil::castInput<Input, Input>(inPtr);
+    return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
   }
 };
 

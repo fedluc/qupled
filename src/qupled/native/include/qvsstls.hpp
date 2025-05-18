@@ -25,7 +25,7 @@ public:
   // Constructor from initial data
   explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in_);
   explicit QVSStls(const QVSStlsInput &in_)
-      : QVSStls(std::make_shared<const QVSStlsInput>(in_)){};
+      : QVSStls(std::make_shared<const QVSStlsInput>(in_)) {};
 
   // Solve the scheme
   using VSBase::compute;
@@ -36,7 +36,7 @@ private:
   std::shared_ptr<QThermoProp> thermoProp;
   // Input parameters
   const VSInput &in() const override {
-    return *StlsUtil::castInput<Input, VSInput>(inPtr);
+    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
   }
   // Initialize
   void init() override;
@@ -77,8 +77,6 @@ public:
 
   // Constructor
   explicit QStructProp(const std::shared_ptr<const QVSStlsInput> &in_);
-  // Get structural properties for output
-  const QstlsCSR &getCsr(const Idx &idx) const;
   // Get Q term
   std::vector<double> getQ() const;
 
@@ -86,8 +84,6 @@ private:
 
   // Inputs
   const std::shared_ptr<const QVSStlsInput> in;
-  // Vector containing NPOINTS state points to be solved simultaneously
-  std::vector<std::shared_ptr<QstlsCSR>> csr;
   // Setup dependencies in the CSR objects
   std::vector<QVSStlsInput> setupCSRInput();
   void setupCSR();
@@ -106,7 +102,7 @@ public:
   // Constructor
   explicit QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_);
   // Compute auxiliary density response
-  void computeLfcQstls();
+  void computeLfcStls() override;
   void computeLfc() override;
   // Publicly esposed private stls methods
   void init() override;
@@ -128,10 +124,10 @@ private:
   std::vector<double> itgGrid;
   // Input parameters
   const VSInput &inVS() const override {
-    return *StlsUtil::castInput<Input, VSInput>(inPtr);
+    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
   }
   const Input &inRpa() const override {
-    return *StlsUtil::castInput<Input, Input>(inPtr);
+    return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
   }
 };
 

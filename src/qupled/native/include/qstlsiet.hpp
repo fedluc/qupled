@@ -16,7 +16,7 @@ public:
   // Constructor
   explicit QstlsIet(const std::shared_ptr<const QstlsIetInput> &in_);
   explicit QstlsIet(const QstlsIetInput &in_)
-      : QstlsIet(std::make_shared<const QstlsIetInput>(in_)){};
+      : QstlsIet(std::make_shared<const QstlsIetInput>(in_)) {};
   // Getters
   const std::vector<double> &getBf() const { return iet.getBf(); }
 
@@ -30,7 +30,7 @@ private:
   std::vector<double> itgGrid;
   // Input parameters
   const QstlsIetInput &in() const {
-    return *StlsUtil::castInput<Input, QstlsIetInput>(inPtr);
+    return *StlsUtil::dynamic_pointer_cast<Input, QstlsIetInput>(inPtr);
   }
   // Initialize basic properties
   void init() override;

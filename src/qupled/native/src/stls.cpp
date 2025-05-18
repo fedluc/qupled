@@ -26,7 +26,7 @@ Stls::Stls(const std::shared_ptr<const StlsInput> &in_, const bool verbose_)
 
 // Cast input parameter from base class
 const StlsInput &Stls::in() const {
-  return *StlsUtil::castInput<Input, StlsInput>(inPtr);
+  return *StlsUtil::dynamic_pointer_cast<Input, StlsInput>(inPtr);
 }
 
 // stls iterations

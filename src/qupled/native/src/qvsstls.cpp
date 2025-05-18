@@ -112,9 +112,6 @@ void QStructProp::setupCSR() {
     csr.push_back(
         make_shared<QstlsCSR>(make_shared<const QVSStlsInput>(inTmp)));
   }
-  for (const auto &c : csr) {
-    StructPropBase::csr.push_back(c);
-  }
 }
 
 std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
@@ -149,8 +146,6 @@ std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
   return out;
 }
 
-const QstlsCSR &QStructProp::getCsr(const Idx &idx) const { return *csr[idx]; }
-
 void QStructProp::doIterations() {
   const int maxIter = in->getNIter();
   const int ompThreads = in->getNThreads();
@@ -168,7 +163,7 @@ void QStructProp::doIterations() {
     {
 #pragma omp for
       for (auto &c : csr) {
-        c->computeLfcQstls();
+        c->computeLfcStls();
       }
 #pragma omp for
       for (size_t i = 0; i < csr.size(); ++i) {
@@ -189,7 +184,9 @@ void QStructProp::doIterations() {
 
 vector<double> QStructProp::getQ() const {
   for (size_t i = 0; i < csr.size(); ++i) {
-    outVector[i] = csr[i]->getQAdder();
+    const shared_ptr<QstlsCSR> c =
+        std::dynamic_pointer_cast<QstlsCSR, CSR>(csr[i]);
+    outVector[i] = c->getQAdder();
   }
   return outVector;
 }
@@ -221,7 +218,7 @@ void QstlsCSR::init() {
   Qstls::init();
 }
 
-void QstlsCSR::computeLfcQstls() {
+void QstlsCSR::computeLfcStls() {
   Qstls::computeLfc();
   *CSR::lfc = Qstls::lfc;
 }

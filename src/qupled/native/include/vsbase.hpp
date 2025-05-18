@@ -137,10 +137,9 @@ protected:
   // Index of the first unsolved state point in the free energy integrand
   size_t fxcIdxUnsolvedStatePoint;
   // Cast the input member to an Input type
-  const Input &inRpa() const { return dynamic_cast<const Input &>(*in); };
-  // const Input &inRpa() const {
-  //   return *StlsUtil::castInput<VSInput, Input>(in);
-  // }
+  const Input &inRpa() const {
+    return *StlsUtil::dynamic_pointer_cast<VSInput, Input>(in);
+  }
   // Compute the free energy
   double computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
                            const bool normalize) const;
@@ -207,7 +206,7 @@ protected:
   // Setup dependencies for CSR objects
   void setupCSRDependencies();
   // Perform iterations to compute structural properties
-  virtual void doIterations() = 0;
+  void doIterations();
   // Generic getter function to return vector data
   const std::vector<double> &
   getBase(std::function<double(const CSR &)> f) const;
@@ -255,6 +254,8 @@ public:
   // Publicly esposed private scheme methods
   virtual void init() = 0;
   virtual void initialGuess() = 0;
+  virtual void computeLfcStls() = 0;
+  virtual void computeLfc() = 0;
   virtual void computeSsf() = 0;
   virtual double computeError() = 0;
   virtual void updateSolution() = 0;
