@@ -20,22 +20,26 @@ class VSStls : public VSBase, public Stls {
 public:
 
   // Constructor from initial data
-  explicit VSStls(const VSStlsInput &in_);
+  explicit VSStls(const std::shared_ptr<const VSStlsInput> &in_);
+  explicit VSStls(const VSStlsInput &in_)
+      : VSStls(std::make_shared<const VSStlsInput>(in_)){};
   // Solve the scheme
   using VSBase::compute;
 
 private:
 
-  // Input
-  VSStlsInput in;
   // Thermodynamic properties
   std::shared_ptr<ThermoProp> thermoProp;
+  // Input parameters
+  const VSInput &in() const override {
+    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
+  }
   // Initialize
-  void init();
+  void init() override;
   // Compute free parameter
-  double computeAlpha();
+  double computeAlpha() override;
   // Iterations to solve the vs-stls scheme
-  void updateSolution();
+  void updateSolution() override;
   // Print info
   void print(const std::string &msg) { VSBase::print(msg); }
   void println(const std::string &msg) { VSBase::println(msg); }
@@ -50,7 +54,7 @@ class ThermoProp : public ThermoPropBase {
 public:
 
   // Constructor
-  explicit ThermoProp(const VSStlsInput &in_);
+  explicit ThermoProp(const std::shared_ptr<const VSStlsInput> &in_);
 
 private:
 
@@ -62,18 +66,18 @@ private:
 // StructProp class
 // -----------------------------------------------------------------
 
-class StructProp : public Logger, public StructPropBase {
+class StructProp : public StructPropBase {
 
 public:
 
-  explicit StructProp(const VSStlsInput &in_);
+  explicit StructProp(const std::shared_ptr<const VSStlsInput> &in_);
 
 private:
 
-  // Input
-  const VSStlsInput in;
-  // Vector containing NPOINTS state points to be solved simultaneously
-  std::vector<std::shared_ptr<StlsCSR>> csr;
+  // Input parameters
+  const VSStlsInput &in() const {
+    return *StlsUtil::dynamic_pointer_cast<IterationInput, VSStlsInput>(inPtr);
+  }
   // setup the csr vector
   std::vector<VSStlsInput> setupCSRInput();
   void setupCSR();
@@ -90,31 +94,32 @@ class StlsCSR : public CSR, public Stls {
 public:
 
   // Constructor
-  explicit StlsCSR(const VSStlsInput &in_)
-      : CSR(in_, in_),
-        Stls(in_, false),
-        in(in_) {}
-
+  explicit StlsCSR(const std::shared_ptr<const VSStlsInput> &in_)
+      : CSR(),
+        Stls(in_, false) {}
   // Compute static local field correction
-  void computeLfcStls();
-  void computeLfc();
-
+  void computeLfcStls() override;
+  void computeLfc() override;
   // Publicly esposed private stls methods
-  void init() { Stls::init(); }
-  void initialGuess() { Stls::initialGuess(); }
-  void computeSsf() { Stls::computeSsf(); }
-  double computeError() { return Stls::computeError(); }
-  void updateSolution() { Stls::updateSolution(); }
-
+  void init() override { Stls::init(); }
+  void initialGuess() override { Stls::initialGuess(); }
+  void computeSsf() override { Stls::computeSsf(); }
+  double computeError() override { return Stls::computeError(); }
+  void updateSolution() override { Stls::updateSolution(); }
   // Getters
-  const std::vector<double> &getSsf() const { return Stls::getSsf(); }
-  const std::vector<double> &getWvg() const { return Stls::getWvg(); }
-  const Vector2D &getLfc() const { return Stls::getLfc(); }
+  const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
+  const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
+  const Vector2D &getLfc() const override { return Stls::getLfc(); }
 
 private:
 
   // Input parameters
-  VSStlsInput in;
+  const VSInput &inVS() const override {
+    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
+  }
+  const Input &inRpa() const override {
+    return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
+  }
 };
 
 #endif

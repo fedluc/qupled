@@ -70,8 +70,7 @@ BOOST_PYTHON_MODULE(native) {
       .add_property("mapping", &IetInput::getMapping, &IetInput::setMapping);
 
   // Class for the input of the StlsIet scheme
-  bp::class_<StlsIetInput, bp::bases<IetInput, StlsInput>>("StlsIetInput")
-      .add_property("guess", &IetInput::getGuess, &IetInput::setGuess);
+  bp::class_<StlsIetInput, bp::bases<IetInput, StlsInput>>("StlsIetInput");
 
   // Class for the input of the VS scheme
   bp::class_<VSInput>("VSInput")
@@ -104,8 +103,7 @@ BOOST_PYTHON_MODULE(native) {
           "fixed_iet", &QstlsInput::getFixedIet, &QstlsInput::setFixedIet);
 
   // Class for the input of the StlsIet scheme
-  bp::class_<QstlsIetInput, bp::bases<IetInput, QstlsInput>>("QstlsIetInput")
-      .add_property("guess", &IetInput::getGuess, &IetInput::setGuess);
+  bp::class_<QstlsIetInput, bp::bases<IetInput, QstlsInput>>("QstlsIetInput");
 
   // Class for the input of the QVSStls scheme
   bp::class_<QVSStlsInput, bp::bases<VSInput, QstlsInput>>("QVSStlsInput");
@@ -120,13 +118,10 @@ BOOST_PYTHON_MODULE(native) {
                     &PyDatabaseInfo::setRunTableName);
 
   // Class for the initial guess of the Stls scheme
-  bp::class_<StlsInput::Guess>("StlsGuess")
-      .add_property("wvg", &PyStlsGuess::getWvg, &PyStlsGuess::setWvg)
-      .add_property("ssf", &PyStlsGuess::getSsf, &PyStlsGuess::setSsf);
-
-  // Class for the initial guess of the Qstls scheme
-  bp::class_<IetInput::Guess, bp::bases<StlsInput::Guess>>("IetGuess")
-      .add_property("lfc", &PyIetGuess::getLfc, &PyIetGuess::setLfc);
+  bp::class_<Guess>("Guess")
+      .add_property("wvg", &PyGuess::getWvg, &PyGuess::setWvg)
+      .add_property("ssf", &PyGuess::getSsf, &PyGuess::setSsf)
+      .add_property("lfc", &PyGuess::getLfc, &PyGuess::setLfc);
 
   // Class for the free energy integrand of the VSStls scheme
   bp::class_<VSStlsInput::FreeEnergyIntegrand>("FreeEnergyIntegrand")

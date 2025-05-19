@@ -17,9 +17,12 @@ class Qstls : public Stls {
 public:
 
   // Constructor
-  Qstls(const QstlsInput &in_, const bool verbose_);
+  Qstls(const std::shared_ptr<const QstlsInput> &in_, const bool verbose_);
+  Qstls(const QstlsInput &in_, const bool verbose_)
+      : Qstls(std::make_shared<const QstlsInput>(in_), verbose_) {}
   explicit Qstls(const QstlsInput &in_)
       : Qstls(in_, true) {}
+
   // Getters
   const Vector3D &getAdrFixed() const { return adrFixed; }
 
@@ -38,8 +41,10 @@ protected:
 
 private:
 
-  // Input data
-  const QstlsInput in;
+  // Input parameters
+  const QstlsInput &in() const {
+    return *StlsUtil::dynamic_pointer_cast<Input, QstlsInput>(inPtr);
+  }
   // Compute auxiliary density response
   void computeAdrFixed();
   // Compute static structure factor at finite temperature

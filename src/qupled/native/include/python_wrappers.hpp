@@ -31,16 +31,18 @@ public:
 };
 
 // -----------------------------------------------------------------
-// Wrapper for exposing the StlsGuess class to Python
+// Wrapper for exposing the Guess class to Python
 // -----------------------------------------------------------------
 
-class PyStlsGuess {
+class PyGuess {
 public:
 
-  static bn::ndarray getWvg(const StlsInput::Guess &guess);
-  static bn::ndarray getSsf(const StlsInput::Guess &guess);
-  static void setWvg(StlsInput::Guess &guess, const bn::ndarray &wvg);
-  static void setSsf(StlsInput::Guess &guess, const bn::ndarray &lfc);
+  static bn::ndarray getWvg(const Guess &guess);
+  static bn::ndarray getSsf(const Guess &guess);
+  static bn::ndarray getLfc(const Guess &guess);
+  static void setWvg(Guess &guess, const bn::ndarray &wvg);
+  static void setSsf(Guess &guess, const bn::ndarray &lfc);
+  static void setLfc(Guess &guess, const bn::ndarray &lfc);
 };
 
 // -----------------------------------------------------------------
@@ -75,9 +77,6 @@ public:
 
 class PyIetGuess {
 public:
-
-  static bn::ndarray getLfc(const IetInput::Guess &guess);
-  static void setLfc(IetInput::Guess &guess, const bn::ndarray &lfc);
 };
 
 // -----------------------------------------------------------------

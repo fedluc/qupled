@@ -12,35 +12,40 @@ using ItgType = Integrator1D::Type;
 // STLS class
 // -----------------------------------------------------------------
 
-// Initialize basic properties
+StlsIet::StlsIet(const std::shared_ptr<const StlsIetInput> &in_)
+    : Stls(in_, true),
+      iet(in_, wvg),
+      itg2D(std::make_shared<Integrator2D>(ItgType::DEFAULT,
+                                           in_->getIntError())) {
+  const bool segregatedItg = in().getInt2DScheme() == "segregated";
+  if (segregatedItg) { itgGrid = wvg; }
+}
+
 void StlsIet::init() {
   Stls::init();
   iet.init();
 }
 
-// Compute static local field correction
 void StlsIet::computeLfc() {
-  const Vector2D lfcOld = lfc;
-  Stls::computeLfc();
-  const std::shared_ptr<Integrator2D> itg2 =
-      make_shared<Integrator2D>(in.getIntError());
-  const bool segregatedItg = in.getInt2DScheme() == "segregated";
-  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  // Setup interpolators
   const shared_ptr<Interpolator1D> ssfItp =
       make_shared<Interpolator1D>(wvg, ssf);
   const shared_ptr<Interpolator1D> lfcItp =
-      make_shared<Interpolator1D>(wvg[0], lfcOld(0, 0), wvg.size());
+      make_shared<Interpolator1D>(wvg[0], lfc(0, 0), wvg.size());
   const shared_ptr<Interpolator1D> bfItp =
       make_shared<Interpolator1D>(wvg, getBf());
+  // Compute the stls constribution to the local field correction
+  Stls::computeLfc();
+  // Compute the iet contribution to the local field correction
   for (size_t i = 0; i < wvg.size(); ++i) {
     StlsIetUtil::Slfc lfcTmp(
-        wvg[i], wvg.front(), wvg.back(), ssfItp, lfcItp, bfItp, itgGrid, itg2);
+        wvg[i], wvg.front(), wvg.back(), ssfItp, lfcItp, bfItp, itgGrid, itg2D);
     lfc(i, 0) += lfcTmp.get();
   }
 }
 
 bool StlsIet::initialGuessFromInput() {
-  const bool ssfIsSetFromInput = Stls::ssfGuessFromInput(in.getGuess());
+  const bool ssfIsSetFromInput = Stls::initialGuessFromInput();
   if (!ssfIsSetFromInput) { return false; }
   const bool lfcIsSetFromInput = iet.initialGuessFromInput(lfc);
   if (!lfcIsSetFromInput) { return false; }

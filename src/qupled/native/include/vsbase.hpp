@@ -5,6 +5,7 @@
 #include "logger.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
+#include "stls.hpp"
 #include "thermo_util.hpp"
 #include "vector2D.hpp"
 #include "vector_util.hpp"
@@ -25,9 +26,8 @@ class VSBase : public Logger {
 public:
 
   // Constructor
-  explicit VSBase(const VSInput &in_)
-      : Logger(MPIUtil::isRoot()),
-        in(in_) {}
+  explicit VSBase()
+      : Logger(MPIUtil::isRoot()) {}
   // Destructor
   virtual ~VSBase() = default;
   // Compute vs-stls scheme
@@ -39,12 +39,12 @@ public:
 
 protected:
 
-  // Input data
-  VSInput in;
   // Free parameter
   double alpha;
   // Thermodynamic properties (this must be set from the derived classes)
   std::shared_ptr<ThermoPropBase> thermoProp;
+  // Input parameters
+  virtual const VSInput &in() const = 0;
   // Compute free parameter
   virtual double computeAlpha() = 0;
   // Initialize
@@ -84,7 +84,7 @@ class ThermoPropBase {
 public:
 
   // Constructor
-  explicit ThermoPropBase(const VSInput &inVS, const Input &inRpa);
+  explicit ThermoPropBase(const std::shared_ptr<const VSInput> &inPtr_);
   // Destructor
   virtual ~ThermoPropBase() = default;
   // Set the value of the free parameter in the structural properties
@@ -117,6 +117,8 @@ protected:
 
   using SIdx = StructIdx;
   using Idx = ThermoIdx;
+  // Input parameters
+  const std::shared_ptr<const VSInput> inPtr;
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
   // Structural properties (this must be set from the derived classes)
@@ -134,15 +136,21 @@ protected:
   size_t fxcIdxTargetStatePoint;
   // Index of the first unsolved state point in the free energy integrand
   size_t fxcIdxUnsolvedStatePoint;
+  // Access input pointer
+  const VSInput &in() const { return *inPtr; }
+  // Cast the input member to an Input type
+  const Input &inRpa() const {
+    return *StlsUtil::dynamic_pointer_cast<VSInput, Input>(inPtr);
+  }
   // Compute the free energy
   double computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
                            const bool normalize) const;
   // Build the integration grid
-  void setRsGrid(const VSInput &inVS, const Input &inRpa);
+  void setRsGrid();
   // Build the free energy integrand
-  void setFxcIntegrand(const VSInput &in);
+  void setFxcIntegrand();
   // Set the index of the target state point in the free energy integrand
-  void setFxcIdxTargetStatePoint(const Input &in);
+  void setFxcIdxTargetStatePoint();
   // Set the index of the first unsolved state point in the free energy
   // integrand
   void setFxcIdxUnsolvedStatePoint();
@@ -154,7 +162,7 @@ protected:
 // StructPropBase class
 // -----------------------------------------------------------------
 
-class StructPropBase {
+class StructPropBase : public Logger {
 
 public:
 
@@ -164,7 +172,7 @@ public:
   static constexpr int NTHETA = 3;
   static constexpr int NPOINTS = NRS * NTHETA;
   // Constructor
-  explicit StructPropBase();
+  explicit StructPropBase(const std::shared_ptr<const IterationInput> &in_);
   // Destructor
   virtual ~StructPropBase() = default;
   // Compute structural properties
@@ -188,8 +196,9 @@ public:
 
 protected:
 
-  // Vector containing NPOINTS state points to be solved simultaneously (this
-  // must be defined in the derived class)
+  // Input parameters
+  const std::shared_ptr<const IterationInput> inPtr;
+  // Vector containing NPOINTS state points to be solved simultaneously
   std::vector<std::shared_ptr<CSR>> csr;
   // Flag marking whether the initialization for the stls data is done
   bool csrIsInitialized;
@@ -197,10 +206,12 @@ protected:
   bool computed;
   // Vector used as output parameter in the getters functions
   mutable std::vector<double> outVector;
+  // Access input pointer
+  const IterationInput &in() const { return *inPtr; }
   // Setup dependencies for CSR objects
   void setupCSRDependencies();
   // Perform iterations to compute structural properties
-  virtual void doIterations() = 0;
+  void doIterations();
   // Generic getter function to return vector data
   const std::vector<double> &
   getBase(std::function<double(const CSR &)> f) const;
@@ -223,10 +234,8 @@ public:
     std::shared_ptr<Vector2D> down;
   };
   // Constructor
-  CSR(const VSInput &inVS_, const Input &inRpa_)
-      : inVS(inVS_),
-        inRpa(inRpa_),
-        lfc(std::make_shared<Vector2D>()),
+  CSR()
+      : lfc(std::make_shared<Vector2D>()),
         alpha(DEFAULT_ALPHA) {}
   // Destructor
   virtual ~CSR() = default;
@@ -241,8 +250,8 @@ public:
   // Get the free parameter
   double getAlpha() const { return alpha; }
   // Get input
-  double getCoupling() const { return inRpa.getCoupling(); }
-  double getDegeneracy() const { return inRpa.getDegeneracy(); }
+  double getCoupling() const { return inRpa().getCoupling(); }
+  double getDegeneracy() const { return inRpa().getDegeneracy(); }
   // Compute the internal energy
   double getInternalEnergy() const;
   // Compute the free energy integrand
@@ -250,6 +259,8 @@ public:
   // Publicly esposed private scheme methods
   virtual void init() = 0;
   virtual void initialGuess() = 0;
+  virtual void computeLfcStls() = 0;
+  virtual void computeLfc() = 0;
   virtual void computeSsf() = 0;
   virtual double computeError() = 0;
   virtual void updateSolution() = 0;
@@ -261,9 +272,6 @@ protected:
 
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
-  // Input data
-  const VSInput inVS;
-  const Input inRpa;
   // local field correction (static or dynamic)
   std::shared_ptr<Vector2D> lfc;
   // Free parameter
@@ -272,6 +280,9 @@ protected:
   DerivativeData lfcRs;
   // Data for the local field correction with modified degeneracy parameter
   DerivativeData lfcTheta;
+  // Input data
+  virtual const VSInput &inVS() const = 0;
+  virtual const Input &inRpa() const = 0;
   // Compute the local field correction with the derivatives contribution
   Vector2D getDerivativeContribution() const;
   // Helper methods to compute the derivatives

@@ -1,4 +1,5 @@
 #include "iet.hpp"
+#include "input.hpp"
 #include "mpi_util.hpp"
 #include <format>
 
@@ -26,10 +27,10 @@ void Iet::computeBf() {
       make_shared<Integrator1D>(ItgType::FOURIER, 1e-10);
   assert(bf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
-    IetUtil::BridgeFunction bfTmp(in.getTheory(),
-                                  inIet.getMapping(),
-                                  in.getCoupling(),
-                                  in.getDegeneracy(),
+    IetUtil::BridgeFunction bfTmp(inRpa().getTheory(),
+                                  in().getMapping(),
+                                  inRpa().getCoupling(),
+                                  inRpa().getDegeneracy(),
                                   wvg[i],
                                   itgF);
     bf[i] = bfTmp.get();
@@ -38,7 +39,7 @@ void Iet::computeBf() {
 
 // Read initial guess from input
 bool Iet::initialGuessFromInput(Vector2D &lfc) {
-  const auto &guess = inIet.getGuess();
+  const auto &guess = inRpa().getGuess();
   const int nx = lfc.size(0);
   const int nl = lfc.size(1);
   const int nx_ = guess.lfc.size(0);

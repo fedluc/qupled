@@ -91,11 +91,7 @@ void IterationInput::setNIter(const int &nIter) {
   this->nIter = nIter;
 }
 
-// -----------------------------------------------------------------
-// ClassicInput class
-// -----------------------------------------------------------------
-
-void ClassicInput::setGuess(const Guess &guess) {
+void IterationInput::setGuess(const Guess &guess) {
   if (guess.wvg.size() != guess.ssf.size()) {
     throwError("The initial guess is inconsistent");
   }
@@ -124,14 +120,6 @@ void IetInput::setMapping(const string &mapping) {
     throwError("Unknown IET mapping: " + mapping);
   }
   this->mapping = mapping;
-}
-
-void IetInput::setGuess(const Guess &guess) {
-  const size_t nx = guess.wvg.size();
-  const bool consistentGuess =
-      guess.ssf.size() == nx && guess.lfc.size(0) == nx;
-  if (!consistentGuess) { throwError("The initial guess is inconsistent"); }
-  this->guess = guess;
 }
 
 // -----------------------------------------------------------------

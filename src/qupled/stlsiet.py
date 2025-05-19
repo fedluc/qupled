@@ -84,7 +84,7 @@ class Result(stls.Result):
         """Bridge function adder"""
 
 
-class Guess:
+class Guess(stls.Guess):
 
     def __init__(
         self,
@@ -92,28 +92,6 @@ class Guess:
         ssf: np.ndarray = None,
         lfc: np.ndarray = None,
     ):
-        self.wvg = wvg
-        """ Wave-vector grid. Default = ``None``"""
-        self.ssf = ssf
-        """ Static structure factor. Default = ``None``"""
+        super().__init__(wvg, ssf)
         self.lfc = lfc
         """ Local field correction. Default = ``None``"""
-
-    def to_native(self) -> native.IetGuess:
-        """
-        Converts the current object to a native `IetGuess` object.
-
-        This method creates an instance of `native.IetGuess` and populates its
-        attributes with the corresponding values from the current object's
-        attributes. If an attribute's value is `None`, it is replaced with an
-        empty NumPy array.
-
-        Returns:
-            native.IetGuess: A new instance of `native.IetGuess` with attributes
-            populated from the current object.
-        """
-        native_guess = native.IetGuess()
-        for attr, value in self.__dict__.items():
-            if value is not None:
-                setattr(native_guess, attr, value)
-        return native_guess

@@ -23,22 +23,27 @@ class QVSStls : public VSBase, public Qstls {
 public:
 
   // Constructor from initial data
-  explicit QVSStls(const QVSStlsInput &in_);
+  explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in_);
+  explicit QVSStls(const QVSStlsInput &in_)
+      : QVSStls(std::make_shared<const QVSStlsInput>(in_)){};
+
   // Solve the scheme
   using VSBase::compute;
 
 private:
 
-  // Input
-  QVSStlsInput in;
   // Thermodyanmic properties
   std::shared_ptr<QThermoProp> thermoProp;
+  // Input parameters
+  const VSInput &in() const override {
+    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
+  }
   // Initialize
-  void init();
+  void init() override;
   // Compute free parameter
-  double computeAlpha();
+  double computeAlpha() override;
   // Iterations to solve the qvsstls-scheme
-  void updateSolution();
+  void updateSolution() override;
   // Print info
   void print(const std::string &msg) { VSBase::print(msg); }
   void println(const std::string &msg) { VSBase::println(msg); }
@@ -53,7 +58,7 @@ class QThermoProp : public ThermoPropBase {
 public:
 
   // Constructors
-  explicit QThermoProp(const QVSStlsInput &in_);
+  explicit QThermoProp(const std::shared_ptr<const QVSStlsInput> &in_);
   // Get internal energy and internal energy derivatives
   std::vector<double> getQData() const;
 
@@ -66,28 +71,24 @@ private:
 // Class to handle the structural properties
 // -----------------------------------------------------------------
 
-class QStructProp : public Logger, public StructPropBase {
+class QStructProp : public StructPropBase {
 
 public:
 
   // Constructor
-  explicit QStructProp(const QVSStlsInput &in_);
-  // Get structural properties for output
-  const QstlsCSR &getCsr(const Idx &idx) const;
+  explicit QStructProp(const std::shared_ptr<const QVSStlsInput> &in_);
   // Get Q term
   std::vector<double> getQ() const;
 
 private:
 
-  // Inputs
-  const QVSStlsInput in;
-  // Vector containing NPOINTS state points to be solved simultaneously
-  std::vector<std::shared_ptr<QstlsCSR>> csr;
+  // Input parameters
+  const QVSStlsInput &in() const {
+    return *StlsUtil::dynamic_pointer_cast<IterationInput, QVSStlsInput>(inPtr);
+  }
   // Setup dependencies in the CSR objects
   std::vector<QVSStlsInput> setupCSRInput();
   void setupCSR();
-  // Perform iterations to compute structural properties
-  void doIterations();
 };
 
 // -----------------------------------------------------------------
@@ -99,27 +100,35 @@ class QstlsCSR : public CSR, public Qstls {
 public:
 
   // Constructor
-  explicit QstlsCSR(const QVSStlsInput &in_);
+  explicit QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_);
   // Compute auxiliary density response
-  void computeLfcQstls();
-  void computeLfc();
+  void computeLfcStls() override;
+  void computeLfc() override;
   // Publicly esposed private stls methods
-  void init();
-  void initialGuess() { Qstls::initialGuess(); }
-  void computeSsf() { Qstls::computeSsf(); }
-  double computeError() { return Qstls::computeError(); }
-  void updateSolution() { Qstls::updateSolution(); }
+  void init() override;
+  void initialGuess() override { Qstls::initialGuess(); }
+  void computeSsf() override { Qstls::computeSsf(); }
+  double computeError() override { return Qstls::computeError(); }
+  void updateSolution() override { Qstls::updateSolution(); }
   // Compute Q
   double getQAdder() const;
   // Getters
-  const std::vector<double> &getSsf() const { return Qstls::getSsf(); }
-  const std::vector<double> &getWvg() const { return Qstls::getWvg(); }
-  const Vector2D &getLfc() const { return Qstls::getLfc(); }
+  const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
+  const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
+  const Vector2D &getLfc() const override { return Qstls::getLfc(); }
 
 private:
 
-  // Input
-  QVSStlsInput in;
+  // Integrator for 2D integrals
+  const std::shared_ptr<Integrator2D> itg2D;
+  std::vector<double> itgGrid;
+  // Input parameters
+  const VSInput &inVS() const override {
+    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
+  }
+  const Input &inRpa() const override {
+    return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
+  }
 };
 
 // -----------------------------------------------------------------

@@ -36,7 +36,8 @@ public:
         xmax(DEFAULT_DOUBLE),
         OmegaMax(DEFAULT_DOUBLE),
         nl(DEFAULT_INT) {}
-
+  // Destructor
+  virtual ~Input() = default;
   // Setters
   void setCoupling(const double &rs);
   void setDatabaseInfo(const DatabaseInfo &dbInfo);
@@ -101,7 +102,14 @@ protected:
 // Class to handle input for the schemes that are solved iteratively
 // -----------------------------------------------------------------
 
-class IterationInput {
+// Typedef
+struct Guess {
+  std::vector<double> wvg;
+  std::vector<double> ssf;
+  Vector2D lfc;
+};
+
+class IterationInput : public Input {
 
 public:
 
@@ -112,10 +120,12 @@ public:
         nIter(DEFAULT_INT) {}
   // Setters
   void setErrMin(const double &errMin);
+  void setGuess(const Guess &guess);
   void setMixingParameter(const double &aMix);
   void setNIter(const int &nIter);
   // Getters
   double getErrMin() const { return errMin; }
+  Guess getGuess() const { return guess; }
   double getMixingParameter() const { return aMix; }
   int getNIter() const { return nIter; }
 
@@ -127,33 +137,8 @@ protected:
   double errMin;
   // Maximum number of iterations
   int nIter;
-};
-
-// -----------------------------------------------------------------
-// Class to handle input for the classical schemes
-// -----------------------------------------------------------------
-
-class ClassicInput {
-
-public:
-
-  // Typedef
-  struct Guess {
-    std::vector<double> wvg;
-    std::vector<double> ssf;
-  };
-  // Setters
-  void setGuess(const Guess &guess);
-  // Getters
-  Guess getGuess() const { return guess; }
-
-protected:
-
   // Initial guess
   Guess guess;
-  // Mapping between the quantum and classical state points for the IET-based
-  // schemes
-  std::string mapping;
 };
 
 // -----------------------------------------------------------------
@@ -188,14 +173,11 @@ class IetInput {
 
 public:
 
-  // Tyepdef
-  struct Guess : ClassicInput::Guess {
-    Vector2D lfc;
-  };
-  void setGuess(const Guess &guess);
+  // Destructor
+  virtual ~IetInput() = default;
+  // Setters
   void setMapping(const std::string &mapping);
   // Getters
-  Guess getGuess() const { return guess; }
   std::string getMapping() const { return mapping; }
 
 protected:
@@ -203,15 +185,13 @@ protected:
   // Mapping between the quantum and classical state points for the IET-based
   // schemes
   std::string mapping;
-  // Initial guess
-  Guess guess;
 };
 
 // -----------------------------------------------------------------
 // Class to handle input for the STLS and STLS-IET schemes
 // -----------------------------------------------------------------
 
-class StlsInput : public Input, public IterationInput, public ClassicInput {
+class StlsInput : public IterationInput {
 
 public:
 
@@ -229,15 +209,6 @@ public:
 
   // Constructors
   explicit StlsIetInput() = default;
-  // Setters
-  using IetInput::setGuess;
-  // Getters
-  using IetInput::getGuess;
-
-private:
-
-  // Initial guess
-  using IetInput::guess;
 };
 
 // -----------------------------------------------------------------
@@ -262,15 +233,6 @@ public:
 
   // Constructors
   explicit QstlsIetInput() = default;
-  // Setters
-  using IetInput::setGuess;
-  // Getters
-  using IetInput::getGuess;
-
-private:
-
-  // Initial guess
-  using IetInput::guess;
 };
 
 // -----------------------------------------------------------------
@@ -292,6 +254,8 @@ public:
         dTheta(DEFAULT_DOUBLE),
         errMinAlpha(DEFAULT_DOUBLE),
         nIterAlpha(DEFAULT_INT) {}
+  // Destructor
+  virtual ~VSInput() = default;
   // Setters
   void setAlphaGuess(const std::vector<double> &alphaGuess);
   void setCouplingResolution(const double &drs);

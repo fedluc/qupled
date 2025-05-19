@@ -2,6 +2,7 @@
 #define STLS_HPP
 
 #include "input.hpp"
+#include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "rpa.hpp"
 #include <cmath>
@@ -16,7 +17,9 @@ class Stls : public Rpa {
 public:
 
   // Constructors
-  Stls(const StlsInput &in_, const bool verbose_);
+  Stls(const std::shared_ptr<const StlsInput> &in_, const bool verbose_);
+  Stls(const StlsInput &in_, const bool verbose_)
+      : Stls(std::make_shared<const StlsInput>(in_), verbose_) {}
   explicit Stls(const StlsInput &in_)
       : Stls(in_, true) {}
   // Destructor
@@ -37,17 +40,37 @@ protected:
   // Iterations to solve the stls scheme
   void initialGuess();
   virtual bool initialGuessFromInput();
-  bool ssfGuessFromInput(const StlsInput::Guess &guess);
   double computeError() const;
   virtual void updateSolution();
 
 private:
 
   // Input parameters
-  StlsInput in;
+  const StlsInput &in() const;
 };
 
 namespace StlsUtil {
+
+  // --------------------------------------------------------
+  // Method to dyanmic cast between different shared pointers
+  // --------------------------------------------------------
+
+  template <typename T>
+  T check_dynamic_cast_result(T ptr) {
+    if (!ptr) { MPIUtil::throwError("Unable to perform dynamic cast"); }
+    return ptr;
+  }
+
+  template <typename TIn, typename TOut>
+  std::shared_ptr<const TOut>
+  dynamic_pointer_cast(const std::shared_ptr<const TIn> &in) {
+    return check_dynamic_cast_result(std::dynamic_pointer_cast<const TOut>(in));
+  }
+
+  template <typename TIn, typename TOut>
+  std::shared_ptr<TOut> dynamic_pointer_cast(const std::shared_ptr<TIn> &in) {
+    return check_dynamic_cast_result(std::dynamic_pointer_cast<TOut>(in));
+  }
 
   // -----------------------------------------------------------------
   // Classes for the static local field correction

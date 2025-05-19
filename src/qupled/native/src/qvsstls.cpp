@@ -18,10 +18,9 @@ using ItgType = Integrator1D::Type;
 // QVSStls class
 // -----------------------------------------------------------------
 
-QVSStls::QVSStls(const QVSStlsInput &in_)
-    : VSBase(in_),
+QVSStls::QVSStls(const std::shared_ptr<const QVSStlsInput> &in_)
+    : VSBase(),
       Qstls(in_, false),
-      in(in_),
       thermoProp(make_shared<QThermoProp>(in_)) {
   VSBase::thermoProp = thermoProp;
 }
@@ -42,12 +41,9 @@ double QVSStls::computeAlpha() {
   const double &Qr = QData[1];
   const double &Qt = QData[2];
   // Alpha
-  double numer = Q - (1.0 / 6.0) * fxcrr + (1.0 / 3.0) * fxcr;
-  double denom = Q + (1.0 / 3.0) * Qr;
-  if (in.getDegeneracy() > 0.0) {
-    numer += -(2.0 / 3.0) * fxctt - (2.0 / 3.0) * fxcrt + (1.0 / 3.0) * fxct;
-    denom += (2.0 / 3.0) * Qt;
-  }
+  double numer = Q - (1.0 / 6.0) * fxcrr + (1.0 / 3.0) * fxcr
+                 - (2.0 / 3.0) * (fxctt + fxcrt) + (1.0 / 3.0) * fxct;
+  double denom = Q + (1.0 / 3.0) * Qr + (2.0 / 3.0) * Qt;
   return numer / denom;
 }
 
@@ -63,8 +59,8 @@ void QVSStls::init() { Rpa::init(); }
 // QThermoProp class
 // -----------------------------------------------------------------
 
-QThermoProp::QThermoProp(const QVSStlsInput &in_)
-    : ThermoPropBase(in_, in_),
+QThermoProp::QThermoProp(const std::shared_ptr<const QVSStlsInput> &in_)
+    : ThermoPropBase(in_),
       structProp(make_shared<QStructProp>(in_)) {
   if (isZeroDegeneracy) {
     throwError("Ground state calculations are not available "
@@ -102,10 +98,8 @@ vector<double> QThermoProp::getQData() const {
 // QStructProp class
 // -----------------------------------------------------------------
 
-QStructProp::QStructProp(const QVSStlsInput &in_)
-    : Logger(MPIUtil::isRoot()),
-      StructPropBase(),
-      in(in_) {
+QStructProp::QStructProp(const std::shared_ptr<const QVSStlsInput> &in_)
+    : StructPropBase(in_) {
   setupCSR();
   setupCSRDependencies();
 }
@@ -113,86 +107,48 @@ QStructProp::QStructProp(const QVSStlsInput &in_)
 void QStructProp::setupCSR() {
   std::vector<QVSStlsInput> inVector = setupCSRInput();
   for (const auto &inTmp : inVector) {
-    csr.push_back(make_shared<QstlsCSR>(inTmp));
-  }
-  for (const auto &c : csr) {
-    StructPropBase::csr.push_back(c);
+    csr.push_back(
+        make_shared<QstlsCSR>(make_shared<const QVSStlsInput>(inTmp)));
   }
 }
 
 std::vector<QVSStlsInput> QStructProp::setupCSRInput() {
-  const double &drs = in.getCouplingResolution();
-  const double &dTheta = in.getDegeneracyResolution();
+  const double &drs = in().getCouplingResolution();
+  const double &dTheta = in().getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
   // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  const double rs = std::max(in.getCoupling(), drs);
-  const double theta = std::max(in.getDegeneracy(), dTheta);
+  const double rs = std::max(in().getCoupling(), drs);
+  const double theta = std::max(in().getDegeneracy(), dTheta);
   // Setup objects
   std::vector<QVSStlsInput> out;
   for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
     for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
-      QVSStlsInput inTmp = in;
+      QVSStlsInput inTmp = in();
       inTmp.setDegeneracy(thetaTmp);
       inTmp.setCoupling(rsTmp);
       out.push_back(inTmp);
     }
   }
-  if (in.getFixedRunId() == DEFAULT_INT) {
-    // Avoid recomputing the fixed component for the state points with perturbed
-    // coupling parameter
+  // Avoid recomputing the fixed component for the state points with perturbed
+  // coupling parameter
+  if (in().getFixedRunId() == DEFAULT_INT) {
     for (const int idx : {RS_THETA_DOWN,
                           RS_UP_THETA_DOWN,
                           RS_THETA,
                           RS_UP_THETA,
                           RS_THETA_UP,
                           RS_UP_THETA_UP}) {
-      out[idx].setFixedRunId(in.getDatabaseInfo().runId);
+      out[idx].setFixedRunId(in().getDatabaseInfo().runId);
     }
   }
   return out;
 }
 
-const QstlsCSR &QStructProp::getCsr(const Idx &idx) const { return *csr[idx]; }
-
-void QStructProp::doIterations() {
-  const int maxIter = in.getNIter();
-  const int ompThreads = in.getNThreads();
-  const double minErr = in.getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
-  for (auto &c : csr) {
-    c->initialGuess();
-  }
-  // Iteration to solve for the structural properties
-  const bool useOMP = ompThreads > 1;
-  while (counter < maxIter + 1 && err > minErr) {
-#pragma omp parallel num_threads(ompThreads) if (useOMP)
-    {
-#pragma omp for
-      for (auto &c : csr) {
-        c->computeLfcQstls();
-      }
-#pragma omp for
-      for (size_t i = 0; i < csr.size(); ++i) {
-        auto &c = csr[i];
-        c->computeLfc();
-        c->computeSsf();
-        if (i == RS_THETA) { err = c->computeError(); }
-        c->updateSolution();
-      }
-    }
-    counter++;
-  }
-  println(format("Alpha = {:.5e}, Residual error "
-                 "(structural properties) = {:.5e}",
-                 csr[RS_THETA]->getAlpha(),
-                 err));
-}
-
 vector<double> QStructProp::getQ() const {
   for (size_t i = 0; i < csr.size(); ++i) {
-    outVector[i] = csr[i]->getQAdder();
+    const shared_ptr<QstlsCSR> c =
+        std::dynamic_pointer_cast<QstlsCSR, CSR>(csr[i]);
+    outVector[i] = c->getQAdder();
   }
   return outVector;
 }
@@ -201,32 +157,30 @@ vector<double> QStructProp::getQ() const {
 // QstlsCSR class
 // -----------------------------------------------------------------
 
-QstlsCSR::QstlsCSR(const QVSStlsInput &in_)
-    : CSR(in_, in_),
+QstlsCSR::QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_)
+    : CSR(),
       Qstls(in_, false),
-      in(in_) {
-  if (in.getDegeneracy() == 0.0) {
+      itg2D(std::make_shared<Integrator2D>(ItgType::DEFAULT,
+                                           in_->getIntError())) {
+  if (inRpa().getDegeneracy() == 0.0) {
     throwError("Ground state calculations are not available "
                "for the quantum VS scheme");
   }
+  const bool segregatedItg = inRpa().getInt2DScheme() == "segregated";
+  if (segregatedItg) { itgGrid = wvg; }
 }
 
 void QstlsCSR::init() {
+  const string &theory = inRpa().getTheory();
   switch (lfcTheta.type) {
-  case CENTERED:
-    adrFixedDatabaseName = format("{}_THETA", in.getTheory());
-    break;
-  case FORWARD:
-    adrFixedDatabaseName = format("{}_THETA_DOWN", in.getTheory());
-    break;
-  case BACKWARD:
-    adrFixedDatabaseName = format("{}_THETA_UP", in.getTheory());
-    break;
+  case CENTERED: adrFixedDatabaseName = format("{}_THETA", theory); break;
+  case FORWARD: adrFixedDatabaseName = format("{}_THETA_DOWN", theory); break;
+  case BACKWARD: adrFixedDatabaseName = format("{}_THETA_UP", theory); break;
   }
   Qstls::init();
 }
 
-void QstlsCSR::computeLfcQstls() {
+void QstlsCSR::computeLfcStls() {
   Qstls::computeLfc();
   *CSR::lfc = Qstls::lfc;
 }
@@ -237,21 +191,15 @@ void QstlsCSR::computeLfc() {
 }
 
 double QstlsCSR::getQAdder() const {
-  const shared_ptr<Integrator1D> itg1 =
-      make_shared<Integrator1D>(ItgType::DEFAULT, in.getIntError());
-  const shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(
-      ItgType::DEFAULT, ItgType::DEFAULT, in.getIntError());
-  const bool segregatedItg = in.getInt2DScheme() == "segregated";
-  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   const shared_ptr<Interpolator1D> ssfItp =
       make_shared<Interpolator1D>(wvg, ssf);
-  QAdder QTmp(in.getDegeneracy(),
+  QAdder QTmp(inRpa().getDegeneracy(),
               mu,
               wvg.front(),
               wvg.back(),
               itgGrid,
-              itg1,
-              itg2,
+              itg,
+              itg2D,
               ssfItp);
   return QTmp.get();
 }

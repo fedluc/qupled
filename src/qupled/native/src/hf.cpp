@@ -12,15 +12,16 @@ using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
 
 // Constructor
-HF::HF(const Input &in_, const bool verbose_)
+HF::HF(const std::shared_ptr<const Input> &in_, const bool verbose_)
     : Logger(verbose_ && isRoot()),
-      in(in_),
-      itg(std::make_shared<Integrator1D>(ItgType::DEFAULT, in_.getIntError())) {
+      inPtr(std::move(in_)),
+      itg(std::make_shared<Integrator1D>(ItgType::DEFAULT,
+                                         in_->getIntError())) {
   // Assemble the wave-vector grid
   buildWaveVectorGrid();
   // Allocate arrays to the correct size
   const size_t nx = wvg.size();
-  const size_t nl = in.getNMatsubara();
+  const size_t nl = in().getNMatsubara();
   idr.resize(nx, nl);
   lfc.resize(nx, 1);
   ssf.resize(nx);
@@ -63,8 +64,8 @@ void HF::init() {
 // Set up wave-vector grid
 void HF::buildWaveVectorGrid() {
   wvg.push_back(0.0);
-  const double dx = in.getWaveVectorGridRes();
-  const double xmax = in.getWaveVectorGridCutoff();
+  const double dx = in().getWaveVectorGridRes();
+  const double xmax = in().getWaveVectorGridCutoff();
   if (xmax < dx) {
     throwError(
         "The wave-vector grid cutoff must be larger than the resolution");
@@ -76,16 +77,16 @@ void HF::buildWaveVectorGrid() {
 
 // Compute chemical potential
 void HF::computeChemicalPotential() {
-  if (in.getDegeneracy() == 0.0) return;
-  const vector<double> &guess = in.getChemicalPotentialGuess();
-  ChemicalPotential mu_(in.getDegeneracy());
+  if (in().getDegeneracy() == 0.0) return;
+  const vector<double> &guess = in().getChemicalPotentialGuess();
+  ChemicalPotential mu_(in().getDegeneracy());
   mu_.compute(guess);
   mu = mu_.get();
 }
 
 // Compute ideal density response
 void HF::computeIdr() {
-  (in.getDegeneracy() == 0.0) ? computeIdrGround() : computeIdrFinite();
+  (in().getDegeneracy() == 0.0) ? computeIdrGround() : computeIdrFinite();
 }
 
 void HF::computeIdrFinite() {
@@ -93,7 +94,7 @@ void HF::computeIdrFinite() {
   const size_t nl = idr.size(1);
   for (size_t i = 0; i < nx; ++i) {
     HFUtil::Idr idrTmp(
-        nl, wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
+        nl, wvg[i], in().getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
     idr.fill(i, idrTmp.get());
   }
 }
@@ -110,13 +111,13 @@ void HF::computeIdrGround() {
 }
 
 void HF::computeSsf() {
-  (in.getDegeneracy() == 0.0) ? computeSsfGround() : computeSsfFinite();
+  (in().getDegeneracy() == 0.0) ? computeSsfGround() : computeSsfFinite();
 }
 
 void HF::computeSsfFinite() {
   for (size_t i = 0; i < wvg.size(); ++i) {
     HFUtil::Ssf ssfTmp(
-        wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
+        wvg[i], in().getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -145,10 +146,10 @@ vector<double> HF::getRdf(const vector<double> &r) const {
 }
 
 vector<double> HF::getSdr() const {
-  const double theta = in.getDegeneracy();
+  const double theta = in().getDegeneracy();
   if (isnan(theta) || theta == 0.0) { return vector<double>(); }
   vector<double> sdr(wvg.size(), -1.5 * theta);
-  const double fact = 4 * numUtil::lambda * in.getCoupling() / M_PI;
+  const double fact = 4 * numUtil::lambda * in().getCoupling() / M_PI;
   for (size_t i = 0; i < wvg.size(); ++i) {
     const double x2 = wvg[i] * wvg[i];
     const double phi0 = idr(i, 0);
@@ -162,7 +163,7 @@ double HF::getUInt() const {
     throwError("No data to compute the internal energy");
     return numUtil::Inf;
   }
-  return computeInternalEnergy(wvg, ssf, in.getCoupling());
+  return computeInternalEnergy(wvg, ssf, in().getCoupling());
 }
 
 // -----------------------------------------------------------------

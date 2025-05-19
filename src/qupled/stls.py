@@ -75,19 +75,19 @@ class Guess:
         self.ssf = ssf
         """ Static structure factor. Default = ``None``"""
 
-    def to_native(self) -> native.StlsGuess:
+    def to_native(self) -> native.Guess:
         """
-        Converts the current object to a native `StlsGuess` object.
+        Converts the current object to a native `Guess` object.
 
         This method iterates over the attributes of the current object and
-        assigns their values to a new `StlsGuess` object. If an attribute's
+        assigns their values to a new `Guess` object. If an attribute's
         value is `None`, it is replaced with an empty NumPy array.
 
         Returns:
-            native.StlsGuess: A new instance of `StlsGuess` with attributes
+            native.StlsGuess: A new instance of `Guess` with attributes
             copied from the current object.
         """
-        native_guess = native.StlsGuess()
+        native_guess = native.Guess()
         for attr, value in self.__dict__.items():
             if value is not None:
                 setattr(native_guess, attr, value)

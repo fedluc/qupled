@@ -17,18 +17,22 @@ using Itg2DParam = Integrator2D::Param;
 // STLS class
 // -----------------------------------------------------------------
 
-Stls::Stls(const StlsInput &in_, const bool verbose_)
-    : Rpa(in_, verbose_),
-      in(in_) {
+Stls::Stls(const std::shared_ptr<const StlsInput> &in_, const bool verbose_)
+    : Rpa(in_, verbose_) {
   // Allocate arrays
   const size_t nx = wvg.size();
   ssfOld.resize(nx);
 }
 
+// Cast input parameter from base class
+const StlsInput &Stls::in() const {
+  return *StlsUtil::dynamic_pointer_cast<Input, StlsInput>(inPtr);
+}
+
 // stls iterations
 void Stls::computeStructuralProperties() {
-  const int maxIter = in.getNIter();
-  const double minErr = in.getErrMin();
+  const int maxIter = in().getNIter();
+  const double minErr = in().getErrMin();
   double err = 1.0;
   int counter = 0;
   // Define initial guess
@@ -63,9 +67,8 @@ void Stls::initialGuess() {
   ssf = ssfHF;
 }
 
-bool Stls::initialGuessFromInput() { return ssfGuessFromInput(in.getGuess()); }
-
-bool Stls::ssfGuessFromInput(const StlsInput::Guess &guess) {
+bool Stls::initialGuessFromInput() {
+  const Guess &guess = in().getGuess();
   const Interpolator1D ssfi(guess.wvg, guess.ssf);
   if (!ssfi.isValid()) { return false; }
   const double xMax = guess.wvg.back();
@@ -97,7 +100,7 @@ double Stls::computeError() const { return rms(ssfOld, ssf, false); }
 
 // Update solution during stls iterations
 void Stls::updateSolution() {
-  const double aMix = in.getMixingParameter();
+  const double aMix = in().getMixingParameter();
   ssf = linearCombination(ssf, aMix, ssfOld, 1 - aMix);
 }
 
