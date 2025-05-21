@@ -18,6 +18,8 @@ public:
 
   // Constructor
   Rpa(const std::shared_ptr<const Input> &in_, const bool verbose_);
+  Rpa(const std::shared_ptr<const Input> &in_)
+      : Rpa(in_, true) {}
   Rpa(const Input &in_, const bool verbose_)
       : Rpa(std::make_shared<const Input>(in_), verbose_) {}
   explicit Rpa(const Input &in_)

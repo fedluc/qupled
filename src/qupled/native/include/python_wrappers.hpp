@@ -72,14 +72,6 @@ public:
 };
 
 // -----------------------------------------------------------------
-// Wrapper for exposing the QstlsGuess class to Python
-// -----------------------------------------------------------------
-
-class PyIetGuess {
-public:
-};
-
-// -----------------------------------------------------------------
 // Wrapper for exposing the class Rpa class to Python
 // -----------------------------------------------------------------
 
@@ -151,6 +143,71 @@ public:
   static double getAlpha(const QVSStls &qvsstls);
   static bn::ndarray getFreeEnergyIntegrand(const QVSStls &qvsstls);
   static bn::ndarray getFreeEnergyGrid(const QVSStls &qvsstls);
+};
+
+// -----------------------------------------------------------------
+// New wrappers
+// -----------------------------------------------------------------
+
+class pyHFNew : public HF {
+public:
+
+  explicit pyHFNew(const Input &in)
+      : HF(std::make_shared<Input>(in)) {}
+};
+class pyRpaNew : public Rpa {
+public:
+
+  explicit pyRpaNew(const Input &in)
+      : Rpa(std::make_shared<Input>(in)) {}
+};
+
+class pyESANew : public ESA {
+public:
+
+  explicit pyESANew(const Input &in)
+      : ESA(std::make_shared<Input>(in)) {}
+};
+
+class pyStlsNew : public Stls {
+public:
+
+  explicit pyStlsNew(const StlsInput &in)
+      : Stls(std::make_shared<StlsInput>(in)) {}
+};
+
+class pyStlsIetNew : public StlsIet {
+public:
+
+  explicit pyStlsIetNew(const StlsIetInput &in)
+      : StlsIet(std::make_shared<StlsIetInput>(in)) {}
+};
+
+class pyVSStlsNew : public VSStls {
+public:
+
+  explicit pyVSStlsNew(const VSStlsInput &in)
+      : VSStls(std::make_shared<VSStlsInput>(in)) {}
+};
+class pyQstlsNew : public Qstls {
+public:
+
+  explicit pyQstlsNew(const QstlsInput &in)
+      : Qstls(std::make_shared<QstlsInput>(in)) {}
+};
+
+class pyQstlsIetNew : public QstlsIet {
+public:
+
+  explicit pyQstlsIetNew(const QstlsIetInput &in)
+      : QstlsIet(std::make_shared<QstlsIetInput>(in)) {}
+};
+
+class pyQVSStlsNew : public QVSStls {
+public:
+
+  explicit pyQVSStlsNew(const QVSStlsInput &in)
+      : QVSStls(std::make_shared<QVSStlsInput>(in)) {}
 };
 
 // -----------------------------------------------------------------

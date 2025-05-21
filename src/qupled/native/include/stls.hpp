@@ -18,6 +18,8 @@ public:
 
   // Constructors
   Stls(const std::shared_ptr<const StlsInput> &in_, const bool verbose_);
+  Stls(const std::shared_ptr<const StlsInput> &in_)
+      : Stls(in_, true) {}
   Stls(const StlsInput &in_, const bool verbose_)
       : Stls(std::make_shared<const StlsInput>(in_), verbose_) {}
   explicit Stls(const StlsInput &in_)

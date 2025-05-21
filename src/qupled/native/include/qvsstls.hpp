@@ -25,7 +25,7 @@ public:
   // Constructor from initial data
   explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in_);
   explicit QVSStls(const QVSStlsInput &in_)
-      : QVSStls(std::make_shared<const QVSStlsInput>(in_)){};
+      : QVSStls(std::make_shared<const QVSStlsInput>(in_)) {};
 
   // Solve the scheme
   using VSBase::compute;
