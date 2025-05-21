@@ -1,16 +1,19 @@
+# -------------------------------------
+# Project Setup
+# -------------------------------------
 # Set cmake version
 cmake_minimum_required (VERSION 3.28)
-
 # Define project name
 project(native LANGUAGES CXX)
 
+# -------------------------------------
+# Dependencies
+# -------------------------------------
 # Setup python environment
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(Boost
 			 COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
 			 COMPONENTS numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED)
-
-
 # Setup MPI environment
 option(USE_MPI "Compile with MPI support" ON)
 if(USE_MPI)
@@ -19,19 +22,26 @@ if(USE_MPI)
     add_compile_definitions(USE_MPI)
     set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})	
 endif()
-
-
 # Additional external libraries
 find_package(OpenMP REQUIRED)
 find_package(GSL REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(SQLiteCpp REQUIRED)
 
-# Set compiler flags
+# -------------------------------------
+# Compiler Flags
+# -------------------------------------
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
+# -------------------------------------
+# Subdirectories (object libs, etc.)
+# -------------------------------------
+add_subdirectory(python_interface)
 
+# -------------------------------------
+# Target Definition
+# -------------------------------------
 # Source code
 Python3_add_library(native MODULE
 		logger.cpp
@@ -58,16 +68,11 @@ Python3_add_library(native MODULE
 		vsbase.cpp
 		vsstls.cpp
 		qvsstls.cpp
-		python_interface/python_util.cpp
-		python_interface/python_wrappers.cpp
-		python_interface/python_modules.cpp)
-
+		$<TARGET_OBJECTS:native_python_interface>)
 
 # Include directories
 target_include_directories(native PUBLIC
-			   ../include
-			   ../include/python_interface)
-
+			   ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 # Link external libraries
 if(USE_MPI)
