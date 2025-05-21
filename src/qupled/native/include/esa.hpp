@@ -18,8 +18,6 @@ public:
   // ESA constructor
   explicit ESA(const std::shared_ptr<const Input> &in_)
       : Rpa(in_) {}
-  explicit ESA(const Input &in_)
-      : ESA(std::make_shared<const Input>(in_)) {}
 
 private:
 

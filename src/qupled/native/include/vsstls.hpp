@@ -21,8 +21,6 @@ public:
 
   // Constructor from initial data
   explicit VSStls(const std::shared_ptr<const VSStlsInput> &in_);
-  explicit VSStls(const VSStlsInput &in_)
-      : VSStls(std::make_shared<const VSStlsInput>(in_)) {};
   // Solve the scheme
   using VSBase::compute;
 

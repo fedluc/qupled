@@ -72,141 +72,67 @@ public:
 };
 
 // -----------------------------------------------------------------
-// Wrapper for exposing the class Rpa class to Python
+// Scheme wrappers
 // -----------------------------------------------------------------
 
-class pyHF {
+class PyHF : public HF {
 public:
 
-  static bn::ndarray getIdr(const HF &hf);
-  static bn::ndarray getRdf(const HF &hf, const bn::ndarray &r);
-  static bn::ndarray getSdr(const HF &hf);
-  static bn::ndarray getLfc(const HF &hf);
-  static bn::ndarray getSsf(const HF &hf);
-  static bn::ndarray getWvg(const HF &hf);
-  static double getUInt(const HF &hf);
-};
-
-// -----------------------------------------------------------------
-// Wrapper for exposing the Stls class to Python
-// -----------------------------------------------------------------
-
-class PyStls {
-public:
-
-  static double getError(const Stls &stls);
-};
-
-// -----------------------------------------------------------------
-// Wrapper for exposing the StlsIet class to Python
-// -----------------------------------------------------------------
-
-class PyStlsIet {
-public:
-
-  static bn::ndarray getBf(const StlsIet &stlsiet);
-};
-
-// -----------------------------------------------------------------
-// Wrapper for exposing the VSStls class to Python
-// -----------------------------------------------------------------
-
-class PyVSStls {
-public:
-
-  static int compute(VSStls &vsstls);
-  static double getError(const VSStls &vsstls);
-  static double getAlpha(const VSStls &vsstls);
-  static bn::ndarray getFreeEnergyIntegrand(const VSStls &vsstls);
-  static bn::ndarray getFreeEnergyGrid(const VSStls &vsstls);
-};
-
-// -----------------------------------------------------------------
-// Wrapper for exposing the QstlsIet class to Python
-// -----------------------------------------------------------------
-
-class PyQstlsIet {
-public:
-
-  static bn::ndarray getBf(const QstlsIet &qstlsiet);
-};
-
-// -----------------------------------------------------------------
-// Wrapper for exposing the QVSStls class to Python
-// -----------------------------------------------------------------
-
-class PyQVSStls {
-public:
-
-  static int compute(QVSStls &qvsstls);
-  static double getError(const QVSStls &qvsstls);
-  static double getAlpha(const QVSStls &qvsstls);
-  static bn::ndarray getFreeEnergyIntegrand(const QVSStls &qvsstls);
-  static bn::ndarray getFreeEnergyGrid(const QVSStls &qvsstls);
-};
-
-// -----------------------------------------------------------------
-// New wrappers
-// -----------------------------------------------------------------
-
-class pyHFNew : public HF {
-public:
-
-  explicit pyHFNew(const Input &in)
+  explicit PyHF(const Input &in)
       : HF(std::make_shared<Input>(in)) {}
 };
-class pyRpaNew : public Rpa {
+class PyRpa : public Rpa {
 public:
 
-  explicit pyRpaNew(const Input &in)
+  explicit PyRpa(const Input &in)
       : Rpa(std::make_shared<Input>(in)) {}
 };
 
-class pyESANew : public ESA {
+class PyESA : public ESA {
 public:
 
-  explicit pyESANew(const Input &in)
+  explicit PyESA(const Input &in)
       : ESA(std::make_shared<Input>(in)) {}
 };
 
-class pyStlsNew : public Stls {
+class PyStls : public Stls {
 public:
 
-  explicit pyStlsNew(const StlsInput &in)
+  explicit PyStls(const StlsInput &in)
       : Stls(std::make_shared<StlsInput>(in)) {}
 };
 
-class pyStlsIetNew : public StlsIet {
+class PyStlsIet : public StlsIet {
 public:
 
-  explicit pyStlsIetNew(const StlsIetInput &in)
+  explicit PyStlsIet(const StlsIetInput &in)
       : StlsIet(std::make_shared<StlsIetInput>(in)) {}
 };
 
-class pyVSStlsNew : public VSStls {
+class PyVSStls : public VSStls {
 public:
 
-  explicit pyVSStlsNew(const VSStlsInput &in)
+  explicit PyVSStls(const VSStlsInput &in)
       : VSStls(std::make_shared<VSStlsInput>(in)) {}
 };
-class pyQstlsNew : public Qstls {
+class PyQstls : public Qstls {
 public:
 
-  explicit pyQstlsNew(const QstlsInput &in)
+  explicit PyQstls(const QstlsInput &in)
       : Qstls(std::make_shared<QstlsInput>(in)) {}
 };
 
-class pyQstlsIetNew : public QstlsIet {
+class PyQstlsIet : public QstlsIet {
 public:
 
-  explicit pyQstlsIetNew(const QstlsIetInput &in)
+  explicit PyQstlsIet(const QstlsIetInput &in)
       : QstlsIet(std::make_shared<QstlsIetInput>(in)) {}
 };
 
-class pyQVSStlsNew : public QVSStls {
+class PyQVSStls : public QVSStls {
 public:
 
-  explicit pyQVSStlsNew(const QVSStlsInput &in)
+  explicit PyQVSStls(const QVSStlsInput &in)
       : QVSStls(std::make_shared<QVSStlsInput>(in)) {}
 };
 

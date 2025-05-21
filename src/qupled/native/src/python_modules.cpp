@@ -236,15 +236,16 @@ BOOST_PYTHON_MODULE(native) {
                     &PyFreeEnergyIntegrand::getIntegrand,
                     &PyFreeEnergyIntegrand::setIntegrand);
 
-  newPythonWrappers::exposeBaseSchemeClass<HF, Input>("HF");
-  newPythonWrappers::exposeBaseSchemeClass<Rpa, Input>("Rpa");
-  newPythonWrappers::exposeBaseSchemeClass<ESA, Input>("ESA");
-  newPythonWrappers::exposeIterativeSchemeClass<Stls, StlsInput>("Stls");
-  newPythonWrappers::exposeIterativeSchemeClass<Qstls, QstlsInput>("Qstls");
-  newPythonWrappers::exposeIetSchemeClass<StlsIet, StlsIetInput>("StlsIet");
-  newPythonWrappers::exposeIetSchemeClass<QstlsIet, QstlsIetInput>("QstlsIet");
-  newPythonWrappers::exposeVSSchemeClass<VSStls, VSStlsInput>("VSStls");
-  newPythonWrappers::exposeVSSchemeClass<QVSStls, QVSStlsInput>("QVSStlsIet");
+  newPythonWrappers::exposeBaseSchemeClass<PyHF, Input>("HF");
+  newPythonWrappers::exposeBaseSchemeClass<PyRpa, Input>("Rpa");
+  newPythonWrappers::exposeBaseSchemeClass<PyESA, Input>("ESA");
+  newPythonWrappers::exposeIterativeSchemeClass<PyStls, StlsInput>("Stls");
+  newPythonWrappers::exposeIterativeSchemeClass<PyQstls, QstlsInput>("Qstls");
+  newPythonWrappers::exposeIetSchemeClass<PyStlsIet, StlsIetInput>("StlsIet");
+  newPythonWrappers::exposeIetSchemeClass<PyQstlsIet, QstlsIetInput>(
+      "QstlsIet");
+  newPythonWrappers::exposeVSSchemeClass<PyVSStls, VSStlsInput>("VSStls");
+  newPythonWrappers::exposeVSSchemeClass<PyQVSStls, QVSStlsInput>("QVSStlsIet");
 
   // MPI class
   bp::class_<PyMPI>("MPI")

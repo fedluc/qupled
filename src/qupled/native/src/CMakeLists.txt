@@ -7,8 +7,8 @@ project(native LANGUAGES CXX)
 # Setup python environment
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(Boost
-		COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
-		COMPONENTS numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED)
+			 COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
+			 COMPONENTS numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED)
 
 
 # Setup MPI environment
