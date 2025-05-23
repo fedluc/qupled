@@ -60,6 +60,7 @@ Python3_add_library(native MODULE
 		qvsstls.cpp
 		python_interface/python_util.cpp
 		python_interface/python_wrappers.cpp
+		python_interface/python_schemes.cpp
 		python_interface/python_modules.cpp)
 
 

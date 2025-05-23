@@ -1,3 +1,4 @@
+#include "python_schemes.hpp"
 #include "python_util.hpp"
 #include "python_wrappers.hpp"
 
@@ -14,109 +15,6 @@ void qupledInitialization() {
 
 // Clean up code to call when the python interpreter exists
 void qupledCleanUp() { MPIUtil::finalize(); }
-
-// -----------------------------------------------------------------
-// WORK IN PROGRESS: Start
-// -----------------------------------------------------------------
-
-namespace newPythonWrappers {
-
-  template <typename T>
-  bn::ndarray getIdr(const T &scheme) {
-    return pythonUtil::toNdArray2D(scheme.getIdr());
-  }
-
-  template <typename T>
-  bn::ndarray getRdf(const T &scheme, const bn::ndarray &r) {
-    return pythonUtil::toNdArray(scheme.getRdf(pythonUtil::toVector(r)));
-  }
-
-  template <typename T>
-  bn::ndarray getSdr(const T &scheme) {
-    return pythonUtil::toNdArray(scheme.getSdr());
-  }
-
-  template <typename T>
-  bn::ndarray getLfc(const T &scheme) {
-    return pythonUtil::toNdArray2D(scheme.getLfc());
-  }
-
-  template <typename T>
-  bn::ndarray getSsf(const T &scheme) {
-    return pythonUtil::toNdArray(scheme.getSsf());
-  }
-
-  template <typename T>
-  bn::ndarray getWvg(const T &scheme) {
-    return pythonUtil::toNdArray(scheme.getWvg());
-  }
-
-  template <typename T>
-  bn::ndarray getBf(const T &scheme) {
-    return pythonUtil::toNdArray(scheme.getBf());
-  }
-
-  template <typename T>
-  bn::ndarray getFreeEnergyIntegrand(const T &scheme) {
-    return pythonUtil::toNdArray2D(scheme.getFreeEnergyIntegrand());
-  }
-
-  template <typename T>
-  bn::ndarray getFreeEnergyGrid(const T &scheme) {
-    return pythonUtil::toNdArray(scheme.getFreeEnergyGrid());
-  }
-
-  template <typename Scheme>
-  void exposeBaseSchemeProperties(bp::class_<Scheme> &cls) {
-    cls.def("compute", &Scheme::compute)
-        .def("rdf", &getRdf<Scheme>)
-        .add_property("idr", &getIdr<Scheme>)
-        .add_property("sdr", &getSdr<Scheme>)
-        .add_property("lfc", &getLfc<Scheme>)
-        .add_property("ssf", &getSsf<Scheme>)
-        .add_property("uint", &Scheme::getUInt)
-        .add_property("wvg", &getWvg<Scheme>);
-  }
-
-  template <typename Scheme>
-  void exposeIterativeSchemeProperties(bp::class_<Scheme> &cls) {
-    exposeBaseSchemeProperties(cls);
-    cls.add_property("error", &Scheme::getError);
-  }
-
-  template <typename Scheme, typename Input>
-  void exposeBaseSchemeClass(const std::string &className) {
-    bp::class_<Scheme> cls(className.c_str(), bp::init<const Input>());
-    exposeBaseSchemeProperties(cls);
-  }
-
-  template <typename Scheme, typename Input>
-  void exposeIterativeSchemeClass(const std::string &className) {
-    bp::class_<Scheme> cls(className.c_str(), bp::init<const Input>());
-    exposeIterativeSchemeProperties(cls);
-  }
-
-  template <typename Scheme, typename Input>
-  void exposeIetSchemeClass(const std::string &className) {
-    bp::class_<Scheme> cls(className.c_str(), bp::init<const Input>());
-    exposeIterativeSchemeProperties(cls);
-    cls.add_property("bf", &getBf<Scheme>);
-  }
-
-  template <typename Scheme, typename Input>
-  void exposeVSSchemeClass(const std::string &className) {
-    bp::class_<Scheme> cls(className.c_str(), bp::init<const Input>());
-    exposeIterativeSchemeProperties(cls);
-    cls.add_property("alpha", &Scheme::getAlpha);
-    cls.add_property("free_energy_integrand", &getFreeEnergyIntegrand<Scheme>);
-    cls.add_property("free_energy_grid", &getFreeEnergyGrid<Scheme>);
-  }
-
-} // namespace newPythonWrappers
-
-// -----------------------------------------------------------------
-// WORK IN PROGRESS: End
-// -----------------------------------------------------------------
 
 // Classes exposed to Python
 BOOST_PYTHON_MODULE(native) {
@@ -236,16 +134,8 @@ BOOST_PYTHON_MODULE(native) {
                     &PyFreeEnergyIntegrand::getIntegrand,
                     &PyFreeEnergyIntegrand::setIntegrand);
 
-  newPythonWrappers::exposeBaseSchemeClass<PyHF, Input>("HF");
-  newPythonWrappers::exposeBaseSchemeClass<PyRpa, Input>("Rpa");
-  newPythonWrappers::exposeBaseSchemeClass<PyESA, Input>("ESA");
-  newPythonWrappers::exposeIterativeSchemeClass<PyStls, StlsInput>("Stls");
-  newPythonWrappers::exposeIterativeSchemeClass<PyQstls, QstlsInput>("Qstls");
-  newPythonWrappers::exposeIetSchemeClass<PyStlsIet, StlsIetInput>("StlsIet");
-  newPythonWrappers::exposeIetSchemeClass<PyQstlsIet, QstlsIetInput>(
-      "QstlsIet");
-  newPythonWrappers::exposeVSSchemeClass<PyVSStls, VSStlsInput>("VSStls");
-  newPythonWrappers::exposeVSSchemeClass<PyQVSStls, QVSStlsInput>("QVSStlsIet");
+  // Exposes the schemes
+  exposeSchemes();
 
   // MPI class
   bp::class_<PyMPI>("MPI")
