@@ -18,7 +18,7 @@ namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 
 // -----------------------------------------------------------------
-// Class schemes exposed to Python
+// Template class for Python wrapper
 // -----------------------------------------------------------------
 
 template <typename Scheme, typename Input>
@@ -30,7 +30,7 @@ public:
 };
 
 // -----------------------------------------------------------------
-// WORK IN PROGRESS: Start
+// Template functions to expose scheme properties to Python
 // -----------------------------------------------------------------
 
 template <typename T>
@@ -80,14 +80,14 @@ bn::ndarray getFreeEnergyGrid(const T &scheme) {
 
 template <typename Scheme>
 void exposeBaseSchemeProperties(bp::class_<Scheme> &cls) {
-  cls.def("compute", &Scheme::compute)
-      .def("rdf", &getRdf<Scheme>)
-      .add_property("idr", &getIdr<Scheme>)
-      .add_property("sdr", &getSdr<Scheme>)
-      .add_property("lfc", &getLfc<Scheme>)
-      .add_property("ssf", &getSsf<Scheme>)
-      .add_property("uint", &Scheme::getUInt)
-      .add_property("wvg", &getWvg<Scheme>);
+  cls.def("compute", &Scheme::compute);
+  cls.def("rdf", &getRdf<Scheme>);
+  cls.add_property("idr", &getIdr<Scheme>);
+  cls.add_property("sdr", &getSdr<Scheme>);
+  cls.add_property("lfc", &getLfc<Scheme>);
+  cls.add_property("ssf", &getSsf<Scheme>);
+  cls.add_property("uint", &Scheme::getUInt);
+  cls.add_property("wvg", &getWvg<Scheme>);
 }
 
 template <typename Scheme>
@@ -127,6 +127,10 @@ void exposeVSSchemeClass(const std::string &className) {
   cls.add_property("free_energy_integrand", &getFreeEnergyIntegrand<Scheme>);
   cls.add_property("free_energy_grid", &getFreeEnergyGrid<Scheme>);
 }
+
+// -----------------------------------------------------------------
+// All schemes classes exposed to Python
+// -----------------------------------------------------------------
 
 void exposeSchemes() {
   exposeBaseSchemeClass<HF, Input>("HF");
