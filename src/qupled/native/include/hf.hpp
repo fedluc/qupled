@@ -17,7 +17,7 @@ public:
   // Constructor
   HF(const std::shared_ptr<const Input> &in_, const bool verbose_);
   explicit HF(const std::shared_ptr<const Input> &in_)
-      : HF(in_, true) {};
+      : HF(in_, true) {}
   // Destructor
   virtual ~HF() = default;
   // Compute the scheme
