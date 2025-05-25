@@ -115,13 +115,13 @@ void exposeQstlsInputClass() {
 
 void exposeQstlsIetInputClass() {
   bp::class_<QstlsIetInput> cls("QstlsIetInput");
-  exposeIterativeInputProperties(cls);
+  exposeQuantumInputProperties(cls);
   exposeIetInputProperties(cls);
 }
 
 void exposeQVSStlsInputClass() {
   bp::class_<QVSStlsInput> cls("QVSStlsInput");
-  exposeIterativeInputProperties(cls);
+  exposeQuantumInputProperties(cls);
   exposeVSInputProperties(cls);
 }
 
