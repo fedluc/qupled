@@ -4,7 +4,6 @@ from qupled.native import ESA, Rpa, Input
 
 
 def test_esa_properties():
-    assert issubclass(ESA, Rpa)
     scheme = ESA(Input())
     assert hasattr(scheme, "idr")
     assert hasattr(scheme, "sdr")

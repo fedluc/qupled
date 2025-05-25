@@ -4,7 +4,15 @@ from qupled.native import HF, Rpa, Input
 
 
 def test_rpa_properties():
-    assert issubclass(Rpa, HF)
+    scheme = Rpa(Input())
+    assert hasattr(scheme, "idr")
+    assert hasattr(scheme, "sdr")
+    assert hasattr(scheme, "lfc")
+    assert hasattr(scheme, "ssf")
+    with pytest.raises(RuntimeError) as excinfo:
+        hasattr(scheme, "uint")
+    assert excinfo.value.args[0] == "No data to compute the internal energy"
+    assert hasattr(scheme, "wvg")
 
 
 def test_rpa_compute():

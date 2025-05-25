@@ -4,7 +4,16 @@ from qupled.native import Stls, Rpa, StlsInput
 
 
 def test_stls_properties():
-    assert issubclass(Stls, Rpa)
+    scheme = Stls(StlsInput())
+    assert hasattr(scheme, "idr")
+    assert hasattr(scheme, "sdr")
+    assert hasattr(scheme, "lfc")
+    assert hasattr(scheme, "ssf")
+    with pytest.raises(RuntimeError) as excinfo:
+        hasattr(scheme, "uint")
+    assert excinfo.value.args[0] == "No data to compute the internal energy"
+    assert hasattr(scheme, "wvg")
+    assert hasattr(scheme, "error")
 
 
 def test_stls_compute():
