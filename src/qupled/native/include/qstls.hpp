@@ -18,9 +18,7 @@ public:
 
   // Constructor
   Qstls(const std::shared_ptr<const QstlsInput> &in_, const bool verbose_);
-  Qstls(const QstlsInput &in_, const bool verbose_)
-      : Qstls(std::make_shared<const QstlsInput>(in_), verbose_) {}
-  explicit Qstls(const QstlsInput &in_)
+  explicit Qstls(const std::shared_ptr<const QstlsInput> &in_)
       : Qstls(in_, true) {}
 
   // Getters

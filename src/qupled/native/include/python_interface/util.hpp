@@ -1,5 +1,5 @@
-#ifndef PYTHON_UTIL_HPP
-#define PYTHON_UTIL_HPP
+#ifndef PYTHON_INTERFACE_UTIL_HPP
+#define PYTHON_INTERFACE_UTIL_HPP
 
 #include "vector2D.hpp"
 #include "vector3D.hpp"

@@ -35,7 +35,7 @@ public:
   // Getters
   const std::vector<std::vector<double>> &getFreeEnergyIntegrand() const;
   const std::vector<double> &getFreeEnergyGrid() const;
-  const double &getAlpha() const { return alpha; }
+  double getAlpha() const { return alpha; }
 
 protected:
 

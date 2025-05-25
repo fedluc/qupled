@@ -151,18 +151,14 @@ public:
 
   // Setters
   void setFixedRunId(const int &fixedRunId);
-  void setFixedIet(const std::string &fixedIet);
   // Getters
   int getFixedRunId() const { return fixedRunId; }
-  std::string getFixedIet() const { return fixedIet; }
 
 protected:
 
   // Name of the file with the fixed component of the auxiliary density response
   // (adr)
   int fixedRunId;
-  // Name of the file with the fixed component of the adr for iet schemes
-  std::string fixedIet;
 };
 
 // -----------------------------------------------------------------

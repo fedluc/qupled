@@ -16,7 +16,7 @@ class ESA : public Rpa {
 public:
 
   // ESA constructor
-  explicit ESA(const Input &in_)
+  explicit ESA(const std::shared_ptr<const Input> &in_)
       : Rpa(in_) {}
 
 private:

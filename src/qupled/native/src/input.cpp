@@ -106,10 +106,6 @@ void QuantumInput::setFixedRunId(const int &fixedRunId) {
   this->fixedRunId = fixedRunId;
 }
 
-void QuantumInput::setFixedIet(const string &fixedIet) {
-  this->fixedIet = fixedIet;
-}
-
 // -----------------------------------------------------------------
 // IetInput class
 // -----------------------------------------------------------------

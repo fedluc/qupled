@@ -12,11 +12,19 @@ def database_info():
 
 
 def test_qvsstls_properties():
-    assert issubclass(QVSStls, Rpa)
     inputs = QVSStlsInput()
     inputs.coupling = 1.0
     inputs.coupling_resolution = 0.1
     scheme = QVSStls(inputs)
+    assert hasattr(scheme, "idr")
+    assert hasattr(scheme, "sdr")
+    assert hasattr(scheme, "lfc")
+    assert hasattr(scheme, "ssf")
+    with pytest.raises(RuntimeError) as excinfo:
+        hasattr(scheme, "uint")
+    assert excinfo.value.args[0] == "No data to compute the internal energy"
+    assert hasattr(scheme, "wvg")
+    assert hasattr(scheme, "error")
     assert hasattr(scheme, "free_energy_integrand")
     assert hasattr(scheme, "free_energy_grid")
 

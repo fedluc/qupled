@@ -7,8 +7,8 @@ project(native LANGUAGES CXX)
 # Setup python environment
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(Boost
-		COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
-		COMPONENTS numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED)
+			 COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
+			 COMPONENTS numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED)
 
 
 # Setup MPI environment
@@ -58,9 +58,11 @@ Python3_add_library(native MODULE
 		vsbase.cpp
 		vsstls.cpp
 		qvsstls.cpp
-		python_util.cpp
-		python_wrappers.cpp
-		python_modules.cpp)
+		python_interface/util.cpp
+		python_interface/inputs.cpp
+		python_interface/schemes.cpp
+		python_interface/utilities.cpp
+		python_interface/native.cpp)
 
 
 # Include directories

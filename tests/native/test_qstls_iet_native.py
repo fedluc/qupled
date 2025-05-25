@@ -12,8 +12,16 @@ def database_info():
 
 
 def test_qstls_properties():
-    assert issubclass(QstlsIet, Qstls)
     scheme = QstlsIet(QstlsIetInput())
+    assert hasattr(scheme, "idr")
+    assert hasattr(scheme, "sdr")
+    assert hasattr(scheme, "lfc")
+    assert hasattr(scheme, "ssf")
+    with pytest.raises(RuntimeError) as excinfo:
+        hasattr(scheme, "uint")
+    assert excinfo.value.args[0] == "No data to compute the internal energy"
+    assert hasattr(scheme, "wvg")
+    assert hasattr(scheme, "error")
     assert hasattr(scheme, "bf")
 
 

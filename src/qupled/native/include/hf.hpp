@@ -16,9 +16,7 @@ public:
 
   // Constructor
   HF(const std::shared_ptr<const Input> &in_, const bool verbose_);
-  HF(const Input &in_, const bool verbose_)
-      : HF(std::make_shared<const Input>(in_), verbose_) {}
-  explicit HF(const Input &in_)
+  explicit HF(const std::shared_ptr<const Input> &in_)
       : HF(in_, true) {}
   // Destructor
   virtual ~HF() = default;
