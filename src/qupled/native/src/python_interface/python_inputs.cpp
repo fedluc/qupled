@@ -21,7 +21,7 @@ bn::ndarray getChemicalPotentialGuess(const T &in) {
 }
 
 template <typename T>
-void setChemicalPotentialGuess(Input &in, const bp::list &muGuess) {
+void setChemicalPotentialGuess(T &in, const bp::list &muGuess) {
   in.setChemicalPotentialGuess(toVector(muGuess));
 }
 
@@ -30,69 +30,61 @@ void setAlphaGuess(T &in, const bp::list &alphaGuess) {
   in.setAlphaGuess(toVector(alphaGuess));
 }
 
-template <typename Input>
-void exposeBaseInputProperties(bp::class_<Input> &cls) {
-  cls.add_property("coupling", &Input::getCoupling, &Input::setCoupling);
-  cls.add_property("degeneracy", &Input::getDegeneracy, &Input::setDegeneracy);
-  cls.add_property(
-      "integral_strategy", &Input::getInt2DScheme, &Input::setInt2DScheme);
-  cls.add_property("integral_error", &Input::getIntError, &Input::setIntError);
-  cls.add_property("threads", &Input::getNThreads, &Input::setNThreads);
-  cls.add_property("theory", &Input::getTheory, &Input::setTheory);
+template <typename T>
+void exposeBaseInputProperties(bp::class_<T> &cls) {
+  cls.add_property("coupling", &T::getCoupling, &T::setCoupling);
+  cls.add_property("degeneracy", &T::getDegeneracy, &T::setDegeneracy);
+  cls.add_property("integral_strategy", &T::getInt2DScheme, &T::setInt2DScheme);
+  cls.add_property("integral_error", &T::getIntError, &T::setIntError);
+  cls.add_property("threads", &T::getNThreads, &T::setNThreads);
+  cls.add_property("theory", &T::getTheory, &T::setTheory);
   cls.add_property("chemical_potential",
-                   &getChemicalPotentialGuess<Input>,
-                   &setChemicalPotentialGuess<Input>);
+                   &getChemicalPotentialGuess<T>,
+                   &setChemicalPotentialGuess<T>);
+  cls.add_property("database_info", &T::getDatabaseInfo, &T::setDatabaseInfo);
+  cls.add_property("matsubara", &T::getNMatsubara, &T::setNMatsubara);
   cls.add_property(
-      "database_info", &Input::getDatabaseInfo, &Input::setDatabaseInfo);
-  cls.add_property("matsubara", &Input::getNMatsubara, &Input::setNMatsubara);
+      "resolution", &T::getWaveVectorGridRes, &T::setWaveVectorGridRes);
   cls.add_property(
-      "resolution", &Input::getWaveVectorGridRes, &Input::setWaveVectorGridRes);
-  cls.add_property("cutoff",
-                   &Input::getWaveVectorGridCutoff,
-                   &Input::setWaveVectorGridCutoff);
-  cls.add_property("frequency_cutoff",
-                   &Input::getFrequencyCutoff,
-                   &Input::setFrequencyCutoff);
+      "cutoff", &T::getWaveVectorGridCutoff, &T::setWaveVectorGridCutoff);
+  cls.add_property(
+      "frequency_cutoff", &T::getFrequencyCutoff, &T::setFrequencyCutoff);
 }
 
-template <typename Input>
-void exposeIterativeInputProperties(bp::class_<Input> &cls) {
+template <typename T>
+void exposeIterativeInputProperties(bp::class_<T> &cls) {
   exposeBaseInputProperties(cls);
-  cls.add_property("error", &Input::getErrMin, &Input::setErrMin);
-  cls.add_property("guess", &Input::getGuess, &Input::setGuess);
-  cls.add_property(
-      "mixing", &Input::getMixingParameter, &Input::setMixingParameter);
-  cls.add_property("iterations", &Input::getNIter, &Input::setNIter);
+  cls.add_property("error", &T::getErrMin, &T::setErrMin);
+  cls.add_property("guess", &T::getGuess, &T::setGuess);
+  cls.add_property("mixing", &T::getMixingParameter, &T::setMixingParameter);
+  cls.add_property("iterations", &T::getNIter, &T::setNIter);
 }
 
-template <typename Input>
-void exposeQuantumInputProperties(bp::class_<Input> &cls) {
+template <typename T>
+void exposeQuantumInputProperties(bp::class_<T> &cls) {
   exposeIterativeInputProperties(cls);
-  cls.add_property(
-      "fixed_run_id", &Input::getFixedRunId, &Input::setFixedRunId);
+  cls.add_property("fixed_run_id", &T::getFixedRunId, &T::setFixedRunId);
 }
 
-template <typename Input>
-void exposeIetInputProperties(bp::class_<Input> &cls) {
-  cls.add_property("mapping", &Input::getMapping, &Input::setMapping);
+template <typename T>
+void exposeIetInputProperties(bp::class_<T> &cls) {
+  cls.add_property("mapping", &T::getMapping, &T::setMapping);
 }
 
-template <typename Input>
-void exposeVSInputProperties(bp::class_<Input> &cls) {
-  cls.add_property(
-      "error_alpha", &Input::getErrMinAlpha, &Input::setErrMinAlpha);
-  cls.add_property(
-      "iterations_alpha", &Input::getNIterAlpha, &Input::setNIterAlpha);
-  cls.add_property("alpha", &getAlphaGuess<Input>, &setAlphaGuess<Input>);
+template <typename T>
+void exposeVSInputProperties(bp::class_<T> &cls) {
+  cls.add_property("error_alpha", &T::getErrMinAlpha, &T::setErrMinAlpha);
+  cls.add_property("iterations_alpha", &T::getNIterAlpha, &T::setNIterAlpha);
+  cls.add_property("alpha", &getAlphaGuess<T>, &setAlphaGuess<T>);
   cls.add_property("coupling_resolution",
-                   &Input::getCouplingResolution,
-                   &Input::setCouplingResolution);
+                   &T::getCouplingResolution,
+                   &T::setCouplingResolution);
   cls.add_property("degeneracy_resolution",
-                   &Input::getDegeneracyResolution,
-                   &Input::setDegeneracyResolution);
+                   &T::getDegeneracyResolution,
+                   &T::setDegeneracyResolution);
   cls.add_property("free_energy_integrand",
-                   &Input::getFreeEnergyIntegrand,
-                   &Input::setFreeEnergyIntegrand);
+                   &T::getFreeEnergyIntegrand,
+                   &T::setFreeEnergyIntegrand);
 }
 
 void exposeInputClass() {
