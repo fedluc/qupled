@@ -19,13 +19,23 @@ namespace bn = boost::python::numpy;
 // Template class for Python wrapper
 // -----------------------------------------------------------------
 
-template <typename Scheme, typename Input>
-class PyScheme : public Scheme {
+template <typename TScheme, typename TInput>
+class PyScheme : public TScheme {
 public:
 
-  explicit PyScheme(const Input &in)
-      : Scheme(std::make_shared<Input>(in)) {}
+  explicit PyScheme(const TInput &in)
+      : TScheme(std::make_shared<TInput>(in)) {}
 };
+
+using PyHF = PyScheme<HF, Input>;
+using PyRpa = PyScheme<Rpa, Input>;
+using PyESA = PyScheme<ESA, Input>;
+using PyStls = PyScheme<Stls, StlsInput>;
+using PyQstls = PyScheme<Qstls, QstlsInput>;
+using PyStlsIet = PyScheme<StlsIet, StlsIetInput>;
+using PyQstlsIet = PyScheme<QstlsIet, QstlsIetInput>;
+using PyVSStls = PyScheme<VSStls, VSStlsInput>;
+using PyQVSStls = PyScheme<QVSStls, QVSStlsInput>;
 
 // -----------------------------------------------------------------
 // Template functions to expose scheme properties to Python
@@ -76,54 +86,50 @@ bn::ndarray getFreeEnergyGrid(const T &scheme) {
   return toNdArray(scheme.getFreeEnergyGrid());
 }
 
-template <typename Scheme>
-void exposeBaseSchemeProperties(bp::class_<Scheme> &cls) {
-  cls.def("compute", &Scheme::compute);
-  cls.def("rdf", &getRdf<Scheme>);
-  cls.add_property("idr", &getIdr<Scheme>);
-  cls.add_property("sdr", &getSdr<Scheme>);
-  cls.add_property("lfc", &getLfc<Scheme>);
-  cls.add_property("ssf", &getSsf<Scheme>);
-  cls.add_property("uint", &Scheme::getUInt);
-  cls.add_property("wvg", &getWvg<Scheme>);
+template <typename T>
+void exposeBaseSchemeProperties(bp::class_<T> &cls) {
+  cls.def("compute", &T::compute);
+  cls.def("rdf", &getRdf<T>);
+  cls.add_property("idr", &getIdr<T>);
+  cls.add_property("sdr", &getSdr<T>);
+  cls.add_property("lfc", &getLfc<T>);
+  cls.add_property("ssf", &getSsf<T>);
+  cls.add_property("uint", &T::getUInt);
+  cls.add_property("wvg", &getWvg<T>);
 }
 
-template <typename Scheme>
-void exposeIterativeSchemeProperties(bp::class_<Scheme> &cls) {
+template <typename T>
+void exposeIterativeSchemeProperties(bp::class_<T> &cls) {
   exposeBaseSchemeProperties(cls);
-  cls.add_property("error", &Scheme::getError);
+  cls.add_property("error", &T::getError);
 }
 
-template <typename Scheme, typename Input>
+template <typename TScheme, typename TInput>
 void exposeBaseSchemeClass(const std::string &className) {
-  bp::class_<PyScheme<Scheme, Input>> cls(className.c_str(),
-                                          bp::init<const Input>());
+  bp::class_<TScheme> cls(className.c_str(), bp::init<const TInput>());
   exposeBaseSchemeProperties(cls);
 }
 
-template <typename Scheme, typename Input>
+template <typename TScheme, typename TInput>
 void exposeIterativeSchemeClass(const std::string &className) {
-  bp::class_<PyScheme<Scheme, Input>> cls(className.c_str(),
-                                          bp::init<const Input>());
+  bp::class_<TScheme> cls(className.c_str(), bp::init<const TInput>());
   exposeIterativeSchemeProperties(cls);
 }
 
-template <typename Scheme, typename Input>
+template <typename TScheme, typename TInput>
 void exposeIetSchemeClass(const std::string &className) {
-  bp::class_<PyScheme<Scheme, Input>> cls(className.c_str(),
-                                          bp::init<const Input>());
+  bp::class_<TScheme> cls(className.c_str(), bp::init<const TInput>());
   exposeIterativeSchemeProperties(cls);
-  cls.add_property("bf", &getBf<Scheme>);
+  cls.add_property("bf", &getBf<TScheme>);
 }
 
-template <typename Scheme, typename Input>
+template <typename TScheme, typename TInput>
 void exposeVSSchemeClass(const std::string &className) {
-  bp::class_<PyScheme<Scheme, Input>> cls(className.c_str(),
-                                          bp::init<const Input>());
+  bp::class_<TScheme> cls(className.c_str(), bp::init<const TInput>());
   exposeIterativeSchemeProperties(cls);
-  cls.add_property("alpha", &Scheme::getAlpha);
-  cls.add_property("free_energy_integrand", &getFreeEnergyIntegrand<Scheme>);
-  cls.add_property("free_energy_grid", &getFreeEnergyGrid<Scheme>);
+  cls.add_property("alpha", &TScheme::getAlpha);
+  cls.add_property("free_energy_integrand", &getFreeEnergyIntegrand<TScheme>);
+  cls.add_property("free_energy_grid", &getFreeEnergyGrid<TScheme>);
 }
 
 // -----------------------------------------------------------------
@@ -132,14 +138,14 @@ void exposeVSSchemeClass(const std::string &className) {
 
 namespace pythonWrappers {
   void exposeSchemes() {
-    exposeBaseSchemeClass<HF, Input>("HF");
-    exposeBaseSchemeClass<Rpa, Input>("Rpa");
-    exposeBaseSchemeClass<ESA, Input>("ESA");
-    exposeIterativeSchemeClass<Stls, StlsInput>("Stls");
-    exposeIterativeSchemeClass<Qstls, QstlsInput>("Qstls");
-    exposeIetSchemeClass<StlsIet, StlsIetInput>("StlsIet");
-    exposeIetSchemeClass<QstlsIet, QstlsIetInput>("QstlsIet");
-    exposeVSSchemeClass<VSStls, VSStlsInput>("VSStls");
-    exposeVSSchemeClass<QVSStls, QVSStlsInput>("QVSStls");
+    exposeBaseSchemeClass<PyHF, Input>("HF");
+    exposeBaseSchemeClass<PyRpa, Input>("Rpa");
+    exposeBaseSchemeClass<PyESA, Input>("ESA");
+    exposeIterativeSchemeClass<PyStls, StlsInput>("Stls");
+    exposeIterativeSchemeClass<PyQstls, QstlsInput>("Qstls");
+    exposeIetSchemeClass<PyStlsIet, StlsIetInput>("StlsIet");
+    exposeIetSchemeClass<PyQstlsIet, QstlsIetInput>("QstlsIet");
+    exposeVSSchemeClass<PyVSStls, VSStlsInput>("VSStls");
+    exposeVSSchemeClass<PyQVSStls, QVSStlsInput>("QVSStls");
   }
 } // namespace pythonWrappers
