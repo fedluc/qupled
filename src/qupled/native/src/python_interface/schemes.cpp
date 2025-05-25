@@ -1,8 +1,8 @@
-#include "python_schemes.hpp"
+#include "python_interface/schemes.hpp"
 #include "esa.hpp"
 #include "hf.hpp"
 #include "input.hpp"
-#include "python_util.hpp"
+#include "python_interface/util.hpp"
 #include "qstls.hpp"
 #include "qstlsiet.hpp"
 #include "qvsstls.hpp"
@@ -10,8 +10,6 @@
 #include "stls.hpp"
 #include "stlsiet.hpp"
 #include "vsstls.hpp"
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
 
 using namespace pythonUtil;
 namespace bp = boost::python;
@@ -132,14 +130,16 @@ void exposeVSSchemeClass(const std::string &className) {
 // All schemes classes exposed to Python
 // -----------------------------------------------------------------
 
-void exposeSchemes() {
-  exposeBaseSchemeClass<HF, Input>("HF");
-  exposeBaseSchemeClass<Rpa, Input>("Rpa");
-  exposeBaseSchemeClass<ESA, Input>("ESA");
-  exposeIterativeSchemeClass<Stls, StlsInput>("Stls");
-  exposeIterativeSchemeClass<Qstls, QstlsInput>("Qstls");
-  exposeIetSchemeClass<StlsIet, StlsIetInput>("StlsIet");
-  exposeIetSchemeClass<QstlsIet, QstlsIetInput>("QstlsIet");
-  exposeVSSchemeClass<VSStls, VSStlsInput>("VSStls");
-  exposeVSSchemeClass<QVSStls, QVSStlsInput>("QVSStls");
-}
+namespace pythonWrappers {
+  void exposeSchemes() {
+    exposeBaseSchemeClass<HF, Input>("HF");
+    exposeBaseSchemeClass<Rpa, Input>("Rpa");
+    exposeBaseSchemeClass<ESA, Input>("ESA");
+    exposeIterativeSchemeClass<Stls, StlsInput>("Stls");
+    exposeIterativeSchemeClass<Qstls, QstlsInput>("Qstls");
+    exposeIetSchemeClass<StlsIet, StlsIetInput>("StlsIet");
+    exposeIetSchemeClass<QstlsIet, QstlsIetInput>("QstlsIet");
+    exposeVSSchemeClass<VSStls, VSStlsInput>("VSStls");
+    exposeVSSchemeClass<QVSStls, QVSStlsInput>("QVSStls");
+  }
+} // namespace pythonWrappers

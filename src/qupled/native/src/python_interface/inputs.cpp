@@ -1,6 +1,5 @@
-#include "python_schemes.hpp"
-#include "python_util.hpp"
-#include "python_wrappers.hpp"
+#include "input.hpp"
+#include "python_interface/util.hpp"
 
 using namespace pythonUtil;
 namespace bp = boost::python;
@@ -225,15 +224,17 @@ void exposeFreeEnergyIntegrandClass() {
 // All inputs classes exposed to Python
 // -----------------------------------------------------------------
 
-void exposeInputs() {
-  exposeInputClass();
-  exposeStlsInputClass();
-  exposeStlsIetInputClass();
-  exposeVSStlsInputClass();
-  exposeQstlsInputClass();
-  exposeQstlsIetInputClass();
-  exposeQVSStlsInputClass();
-  exposeDatabaseInfoClass();
-  exposeGuessClass();
-  exposeFreeEnergyIntegrandClass();
-}
+namespace pythonWrappers {
+  void exposeInputs() {
+    exposeInputClass();
+    exposeStlsInputClass();
+    exposeStlsIetInputClass();
+    exposeVSStlsInputClass();
+    exposeQstlsInputClass();
+    exposeQstlsIetInputClass();
+    exposeQVSStlsInputClass();
+    exposeDatabaseInfoClass();
+    exposeGuessClass();
+    exposeFreeEnergyIntegrandClass();
+  }
+} // namespace pythonWrappers

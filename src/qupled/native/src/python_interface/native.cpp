@@ -1,7 +1,10 @@
-#include "python_inputs.hpp"
-#include "python_schemes.hpp"
-#include "python_util.hpp"
-#include "python_wrappers.hpp"
+#include "mpi_util.hpp"
+#include "python_interface/inputs.hpp"
+#include "python_interface/schemes.hpp"
+#include "python_interface/utilities.hpp"
+#include <boost/python.hpp>
+#include <boost/python/numpy.hpp>
+#include <gsl/gsl_errno.h>
 
 namespace bp = boost::python;
 namespace bn = boost::python::numpy;
@@ -19,38 +22,18 @@ void qupledCleanUp() { MPIUtil::finalize(); }
 
 // Classes exposed to Python
 BOOST_PYTHON_MODULE(native) {
-
   // Docstring formatting
   bp::docstring_options docopt;
   docopt.enable_all();
   docopt.disable_cpp_signatures();
-
   // Numpy library initialization
   bn::initialize();
-
   // Module initialization
   qupledInitialization();
-
   // Register cleanup function
   std::atexit(qupledCleanUp);
-
-  // Exposes the schemes
-  exposeInputs();
-  exposeSchemes();
-
-  // MPI class
-  bp::class_<PyMPI>("MPI")
-      .def("rank", &PyMPI::rank)
-      .staticmethod("rank")
-      .def("is_root", &PyMPI::isRoot)
-      .staticmethod("is_root")
-      .def("barrier", &PyMPI::barrier)
-      .staticmethod("barrier")
-      .def("timer", &PyMPI::timer)
-      .staticmethod("timer");
-
-  // Post-process methods
-  bp::def("compute_rdf", &PyThermo::computeRdf);
-  bp::def("compute_internal_energy", &PyThermo::computeInternalEnergy);
-  bp::def("compute_free_energy", &PyThermo::computeFreeEnergy);
+  // Exposed classes and methods
+  pythonWrappers::exposeInputs();
+  pythonWrappers::exposeSchemes();
+  pythonWrappers::exposeUtilities();
 }

@@ -58,17 +58,16 @@ Python3_add_library(native MODULE
 		vsbase.cpp
 		vsstls.cpp
 		qvsstls.cpp
-		python_interface/python_util.cpp
-		python_interface/python_wrappers.cpp
-		python_interface/python_inputs.cpp
-		python_interface/python_schemes.cpp
-		python_interface/python_modules.cpp)
+		python_interface/util.cpp
+		python_interface/inputs.cpp
+		python_interface/schemes.cpp
+		python_interface/utilities.cpp
+		python_interface/native.cpp)
 
 
 # Include directories
 target_include_directories(native PUBLIC
-			   ../include
-			   ../include/python_interface)
+			   ../include)
 
 
 # Link external libraries
