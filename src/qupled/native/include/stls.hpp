@@ -123,6 +123,34 @@ private:
   double integrand2DStls(const double &y) const;
 };
 
+class Slfc2D : public Slfc{
+
+  public:
+  
+    // Constructor
+    Slfc2D(const double &x_,
+         const double &yMin_,
+         const double &yMax_,
+         const Interpolator1D &ssfi_,
+         Integrator1D &itg_,
+         Integrator2D &itg2_,
+         const std::vector<double> &itgGrid_)
+        : Slfc(x_, yMin_, yMax_, ssfi_, itg_),
+          itg2(itg2_),
+          itgGrid(itgGrid_) {}
+    // Get result of integration
+    double get2DStlsN() const;
+  
+  private:
+  
+    // Integrator object
+    Integrator2D &itg2;
+    const std::vector<double> &itgGrid;
+    // Integrand
+    double integrandOutS(const double y) const;
+    double integrandInS(const double y) const;
+  };
+
 class SlfcIet : public SlfcBase {
 
 public:

@@ -138,11 +138,17 @@ void Stls::doIterations() {
     // Start timing
     double tic = timer();
     // Update static structure factor
-    if (use2D) { computeSsf2D(); }
+    if (use2D) {
+    computeSsf2D();
+    } else {
     computeSsf();
+    }
     // Update static local field correction
-    if (use2D) { computeSlfc2D(); }
+    if (use2D) {
+    computeSlfc2D();
+    } else {
     computeSlfc();
+    }
     // Update diagnostic
     counter++;
     err = computeError();
@@ -484,7 +490,7 @@ void Stls::computeIdr2D() {
     Idr idrTmp(
         nl, wvg[i], in.getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
     idr.fill(i, idrTmp.get2DStls());
-    printf("idr[%d] = %e\n", i, idr(i, 0));
+    //printf("idr[%d] = %e\n", i, idr(i, 0));
   }
 }
 
@@ -497,7 +503,6 @@ void Stls::computeSsf2D() {
   assert(ssf.size() == nx);
   for (size_t i = 0; i < nx; ++i) {
     Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], slfc[i], nl, &idr(i), SsfType::Stls2D);
-    printf("ssf[%d] = %e\n", i, ssfTmp.get());
     ssf[i] = ssfTmp.get();
   }
 }
@@ -515,7 +520,7 @@ void Stls::computeSsfHF2D() {
                         itgGrid,
                         itg2);
     ssfHF[i] = ssfHF2DTmp.get() + in.getDegeneracy() * idr(i, 0);
-    printf("ssfHF[%d] = %e\n", i, ssfHF[i]);
+    //printf("ssfHF[%d] = %e\n", i, ssfHF[i]);
   }
 }
 
@@ -529,10 +534,15 @@ void Stls::computeSlfc2D() {
 void Stls::computeSlfcStls2D() {
   const int nx = wvg.size();
   const Interpolator1D itp(wvg, ssf);
+  const bool segregatedItg = in.getInt2DScheme() == "segregated";
+  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  Integrator2D itg2(ItgType::DEFAULT, ItgType::DEFAULT, in.getIntError());
   for (int i = 0; i < nx; ++i) {
-    Slfc slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
+    //Slfc2D slfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg, itg2, itgGrid);
+    Slfc slfcTmp2(wvg[i], wvg.front(), wvg.back(), itp, itg);
     //printf("slfc[%d] = %e\n", i, slfc[i]);
-    slfcNew[i] = slfcTmp.get2DStls();
+    //slfcNew[i] = slfcTmp.get2DStlsN();
+    slfcNew[i] = slfcTmp2.get2DStls();
   }
 }
 
@@ -645,7 +655,7 @@ double Slfc::integrand2DStls(const double &y) const {
 //     printf("argElli = %e\n", argElli);
 //     throw std::range_error("argElli out of bounds");
 // }
-  argElli = min(max(argElli, 0.0), 1.0 - 1e-15);
+  //argElli = min(max(argElli, 0.0), 1.0 - 1e-15);
 
   return - y * (ssf(y) - 1.0) * (xmy * Integrator1D::ellipticK(argElli) + 
                             xpy * Integrator1D::ellipticE(argElli));
@@ -658,35 +668,33 @@ double Slfc::get2DStls() const {
   return itg.getSolution();
 }
 
-// // Outer integrand
-// double Slfc::integrandOut(const double y) const {
-//   const double y2 = y * y;
-//   return 2.0 * y / (exp(y2 / Theta - mu) * M_PI + M_PI);
-// }
+// Outer integrand
+double Slfc2D::integrandOutS(const double y) const {
+  return - 1/(2*M_PI) * y * (ssf(y) - 1.0);
+}
 
-// // Inner integrand
-// double Slfc::integrandIn(const double p) const {
-//   const double y = itg2.getX();
-//   const double x2 = x * x;
-//   const double arg = x2 / (2 * Theta) + x * y / Theta * cos(p);
-//   return coth(arg) - (1.0 / arg); 
-// }
+// Inner integrand
+double Slfc2D::integrandInS(const double p) const {
+  const double y = itg2.getX();
+  //return (x - y + 2 * y * cos(p) * cos(p) ) / (sqrt((x-y)*(x-y) + 4*x*y*cos(p)*cos(p))); 
+  return (x - y * cos(p)) / sqrt(x*x + y*y - 2*x*y*cos(p)); 
+}
 
-// // Get total SSFHF2D
-// double Slfc::get2DStlsN() const {
-//   auto func1 = [&](const double &y) -> double {
-//     return integrandOut(y);
-//   };
-//   auto func2 = [&](const double &p) -> double {
-//     return integrandIn(p);
-//   };
-//   itg2.compute(
-//       func1,
-//       func2,
-//       Itg2DParam(limits.first, limits.second, 0, M_PI),
-//       itgGrid);
-//   return itg2.getSolution();
-// }
+// Get total SSFHF2D
+double Slfc2D::get2DStlsN() const {
+  auto func1 = [&](const double &y) -> double {
+    return integrandOutS(y);
+  };
+  auto func2 = [&](const double &p) -> double {
+    return integrandInS(p);
+  };
+  itg2.compute(
+      func1,
+      func2,
+      Itg2DParam(yMin, yMax, 0, 2 * M_PI),
+      itgGrid);
+  return itg2.getSolution();
+}
 
 
 // -----------------------------------------------------------------

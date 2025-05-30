@@ -326,15 +326,15 @@ double Ssf::get() const {
   assert(Theta > 0.0);
   if (rs == 0.0) return ssfHF;
   if (x == 0.0) return 0.0;
-  double ip = computeIp();
+  auto [ip1,ip2] = computeIp();
   double fact2 = 0.0;
   for (int l = 0; l < nl; ++l) {
-    const double fact3 = 1.0 + ip * (1 - slfc) * idr[l];
+    const double fact3 = 1.0 + ip1 * (1 - slfc) * idr[l];
     double fact4 = idr[l] * idr[l] / fact3;
     if (l > 0) fact4 *= 2;
     fact2 += fact4;
   }
-  return ssfHF - ip * Theta * (1 - slfc) * fact2;
+  return ssfHF - ip2 * ip1 * Theta * (1 - slfc) * fact2;
 }
 
 // -----------------------------------------------------------------
@@ -351,6 +351,6 @@ double SsfGround::get() {
 
 double SsfGround::integrand(const double &Omega) const {
   const double idr = IdrGround(x, Omega).get();
-  double ip = computeIp();
-  return idr / (1.0 + ip * idr * (1.0 - slfc)) - idr;
+  auto [ip1,ip2] = computeIp();
+  return idr / (1.0 + ip1 * idr * (1.0 - slfc)) - idr;
 }

@@ -247,14 +247,14 @@ protected:
     slfc(slfc_),
     ssfType(ssfType_) {}
 
-  double computeIp() const {
+    std::pair<double, double> computeIp() const {
     switch (ssfType) {
     case SsfType::Rpa:
-      return 6.0 * lambda * rs / (M_PI * x * x);
+        return {4.0 * lambda * rs / (M_PI * x * x), 1.5}; 
     case SsfType::Stls2D:
-      return sqrt(2.0) * rs / x;
+        return {sqrt(2.0) * rs / x, 1.0};
     default:
-      throw std::runtime_error("Unknown SsfType");
+        throw std::runtime_error("Unknown SsfType");
     }
   }
 };
