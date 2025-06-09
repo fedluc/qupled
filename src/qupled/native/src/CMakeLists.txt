@@ -9,6 +9,7 @@ find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 find_package(Boost
 			 COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
 			 COMPONENTS numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
 
 
 # Setup MPI environment
@@ -62,7 +63,12 @@ Python3_add_library(native MODULE
 		python_interface/inputs.cpp
 		python_interface/schemes.cpp
 		python_interface/utilities.cpp
-		python_interface/native.cpp)
+		python_interface/native.cpp
+		new_python_interface/util.cpp
+		new_python_interface/inputs.cpp
+		new_python_interface/utilities.cpp
+		new_python_interface/schemes.cpp
+		new_python_interface/native.cpp)
 
 
 # Include directories

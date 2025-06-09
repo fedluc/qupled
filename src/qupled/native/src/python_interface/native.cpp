@@ -10,18 +10,18 @@ namespace bp = boost::python;
 namespace bn = boost::python::numpy;
 
 // Initialization code for the qupled module
-void qupledInitialization() {
-  // Initialize MPI if necessary
-  if (!MPIUtil::isInitialized()) { MPIUtil::init(); }
-  // Deactivate default GSL error handler
-  gsl_set_error_handler_off();
-}
+// void qupledInitialization() {
+//   // Initialize MPI if necessary
+//   if (!MPIUtil::isInitialized()) { MPIUtil::init(); }
+//   // Deactivate default GSL error handler
+//   gsl_set_error_handler_off();
+// }
 
 // Clean up code to call when the python interpreter exists
-void qupledCleanUp() { MPIUtil::finalize(); }
+// void qupledCleanUp() { MPIUtil::finalize(); }
 
 // Classes exposed to Python
-BOOST_PYTHON_MODULE(native) {
+BOOST_PYTHON_MODULE(native_old) {
   // Docstring formatting
   bp::docstring_options docopt;
   docopt.enable_all();
@@ -29,9 +29,9 @@ BOOST_PYTHON_MODULE(native) {
   // Numpy library initialization
   bn::initialize();
   // Module initialization
-  qupledInitialization();
+  // qupledInitialization();
   // Register cleanup function
-  std::atexit(qupledCleanUp);
+  // std::atexit(qupledCleanUp);
   // Exposed classes and methods
   pythonWrappers::exposeInputs();
   pythonWrappers::exposeSchemes();
