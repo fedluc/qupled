@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.28)
 project(native LANGUAGES CXX)
 
 # Setup python environment
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(Python3 REQUIRED COMPONENTS Development.Module)
 
 # Setup pybind11
 include(FetchContent)
