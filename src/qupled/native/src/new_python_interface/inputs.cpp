@@ -232,6 +232,9 @@ namespace NewPythonWrappers {
     exposeQstlsInputClass(m);
     exposeQstlsIetInputClass(m);
     exposeQVSStlsInputClass(m);
+    exposeDatabaseInfoClass(m);
+    exposeGuessClass(m);
+    exposeFreeEnergyIntegrandClass(m);
   }
 
 } // namespace NewPythonWrappers
