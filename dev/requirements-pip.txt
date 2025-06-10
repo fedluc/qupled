@@ -1,6 +1,5 @@
 black
 build
-pybind11
 pytest
 pytest-mock
 setuptools

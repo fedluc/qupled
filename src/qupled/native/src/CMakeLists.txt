@@ -6,7 +6,15 @@ project(native LANGUAGES CXX)
 
 # Setup python environment
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
-find_package(pybind11 CONFIG REQUIRED)
+
+# Setup pybind11
+include(FetchContent)
+FetchContent_Declare(
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11.git
+  GIT_TAG v2.13.6
+)
+FetchContent_MakeAvailable(pybind11)
 
 # Setup MPI environment
 option(USE_MPI "Compile with MPI support" ON)
@@ -28,7 +36,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 # Source code
-Python3_add_library(native MODULE
+pybind11_add_module(native
 	logger.cpp
 	numerics.cpp
 	vector2D.cpp
