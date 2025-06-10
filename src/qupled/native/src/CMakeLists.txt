@@ -1,26 +1,21 @@
 # Set cmake version
-cmake_minimum_required (VERSION 3.28)
+cmake_minimum_required(VERSION 3.28)
 
 # Define project name
 project(native LANGUAGES CXX)
 
 # Setup python environment
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-find_package(Boost
-			 COMPONENTS python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED
-			 COMPONENTS numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
-
 
 # Setup MPI environment
 option(USE_MPI "Compile with MPI support" ON)
 if(USE_MPI)
-    set(MPI_CXX_SKIP_MPICXX TRUE)
-    find_package(MPI REQUIRED)
-    add_compile_definitions(USE_MPI)
-    set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})	
+	set(MPI_CXX_SKIP_MPICXX TRUE)
+	find_package(MPI REQUIRED)
+	add_compile_definitions(USE_MPI)
+	set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
 endif()
-
 
 # Additional external libraries
 find_package(OpenMP REQUIRED)
@@ -32,63 +27,57 @@ find_package(SQLiteCpp REQUIRED)
 set(CMAKE_CXX_STANDARD 20)
 add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
-
 # Source code
 Python3_add_library(native MODULE
-		logger.cpp
-		numerics.cpp
-		vector2D.cpp
-		vector3D.cpp
-		internal_energy.cpp
-		free_energy.cpp
-		rdf.cpp
-		mpi_util.cpp
-		num_util.cpp
-		vector_util.cpp
-		thermo_util.cpp	
-		input.cpp
-		chemical_potential.cpp
-		hf.cpp
-		rpa.cpp
-		esa.cpp
-		stls.cpp
-		iet.cpp
-		stlsiet.cpp
-		qstls.cpp
-		qstlsiet.cpp
-		vsbase.cpp
-		vsstls.cpp
-		qvsstls.cpp
-		python_interface/util.cpp
-		python_interface/inputs.cpp
-		python_interface/schemes.cpp
-		python_interface/utilities.cpp
-		python_interface/native.cpp
-		new_python_interface/util.cpp
-		new_python_interface/inputs.cpp
-		new_python_interface/utilities.cpp
-		new_python_interface/schemes.cpp
-		new_python_interface/native.cpp)
-
+	logger.cpp
+	numerics.cpp
+	vector2D.cpp
+	vector3D.cpp
+	internal_energy.cpp
+	free_energy.cpp
+	rdf.cpp
+	mpi_util.cpp
+	num_util.cpp
+	vector_util.cpp
+	thermo_util.cpp
+	input.cpp
+	chemical_potential.cpp
+	hf.cpp
+	rpa.cpp
+	esa.cpp
+	stls.cpp
+	iet.cpp
+	stlsiet.cpp
+	qstls.cpp
+	qstlsiet.cpp
+	vsbase.cpp
+	vsstls.cpp
+	qvsstls.cpp
+	python_interface/util.cpp
+	python_interface/inputs.cpp
+	python_interface/schemes.cpp
+	python_interface/utilities.cpp
+	python_interface/native.cpp
+)
 
 # Include directories
 target_include_directories(native PUBLIC
-			   ../include)
-
+	../include
+)
 
 # Link external libraries
 if(USE_MPI)
-    target_link_libraries(native PUBLIC MPI::MPI_CXX)
+	target_link_libraries(native PUBLIC MPI::MPI_CXX)
 endif()
 target_link_libraries(native PUBLIC
-		OpenMP::OpenMP_CXX
-		Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}
-		Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}
-		GSL::gsl
-		GSL::gslcblas
-		SQLiteCpp 
-		SQLite::SQLite3)
+	OpenMP::OpenMP_CXX
+	GSL::gsl
+	GSL::gslcblas
+	SQLiteCpp
+	SQLite::SQLite3
+)
 
 # Install
 install(TARGETS native
-		DESTINATION .)
+	DESTINATION .
+)

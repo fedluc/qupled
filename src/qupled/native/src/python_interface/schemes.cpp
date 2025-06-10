@@ -11,12 +11,14 @@
 #include "stlsiet.hpp"
 #include "vsstls.hpp"
 
-using namespace pythonUtil;
-namespace bp = boost::python;
-namespace bn = boost::python::numpy;
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+
+namespace py = pybind11;
+using namespace PythonUtil;
 
 // -----------------------------------------------------------------
-// Template class for Python wrapper
+// Template wrapper class for Python construction
 // -----------------------------------------------------------------
 
 template <typename TScheme, typename TInput>
@@ -27,6 +29,7 @@ public:
       : TScheme(std::make_shared<TInput>(in)) {}
 };
 
+// Type aliases
 using PyHF = PyScheme<HF, Input>;
 using PyRpa = PyScheme<Rpa, Input>;
 using PyESA = PyScheme<ESA, Input>;
@@ -38,114 +41,121 @@ using PyVSStls = PyScheme<VSStls, VSStlsInput>;
 using PyQVSStls = PyScheme<QVSStls, QVSStlsInput>;
 
 // -----------------------------------------------------------------
-// Template functions to expose scheme properties to Python
+// Python exposure helpers
 // -----------------------------------------------------------------
 
 template <typename T>
-bn::ndarray getIdr(const T &scheme) {
+py::array getIdr(const T &scheme) {
   return toNdArray2D(scheme.getIdr());
 }
 
 template <typename T>
-bn::ndarray getRdf(const T &scheme, const bn::ndarray &r) {
+py::array getRdf(const T &scheme, const py::array_t<double> &r) {
   return toNdArray(scheme.getRdf(toVector(r)));
 }
 
 template <typename T>
-bn::ndarray getSdr(const T &scheme) {
+py::array getSdr(const T &scheme) {
   return toNdArray(scheme.getSdr());
 }
 
 template <typename T>
-bn::ndarray getLfc(const T &scheme) {
+py::array getLfc(const T &scheme) {
   return toNdArray2D(scheme.getLfc());
 }
 
 template <typename T>
-bn::ndarray getSsf(const T &scheme) {
+py::array getSsf(const T &scheme) {
   return toNdArray(scheme.getSsf());
 }
 
 template <typename T>
-bn::ndarray getWvg(const T &scheme) {
+py::array getWvg(const T &scheme) {
   return toNdArray(scheme.getWvg());
 }
 
 template <typename T>
-bn::ndarray getBf(const T &scheme) {
+py::array getBf(const T &scheme) {
   return toNdArray(scheme.getBf());
 }
 
 template <typename T>
-bn::ndarray getFreeEnergyIntegrand(const T &scheme) {
+py::array getFreeEnergyIntegrand(const T &scheme) {
   return toNdArray2D(scheme.getFreeEnergyIntegrand());
 }
 
 template <typename T>
-bn::ndarray getFreeEnergyGrid(const T &scheme) {
+py::array getFreeEnergyGrid(const T &scheme) {
   return toNdArray(scheme.getFreeEnergyGrid());
 }
 
 template <typename T>
-void exposeBaseSchemeProperties(bp::class_<T> &cls) {
-  cls.def("compute", &T::compute);
-  cls.def("rdf", &getRdf<T>);
-  cls.add_property("idr", &getIdr<T>);
-  cls.add_property("sdr", &getSdr<T>);
-  cls.add_property("lfc", &getLfc<T>);
-  cls.add_property("ssf", &getSsf<T>);
-  cls.add_property("uint", &T::getUInt);
-  cls.add_property("wvg", &getWvg<T>);
+void exposeBaseSchemeProperties(py::class_<T> &cls) {
+  cls.def("compute", &T::compute)
+      .def("rdf", &getRdf<T>)
+      .def_property_readonly("idr", &getIdr<T>)
+      .def_property_readonly("sdr", &getSdr<T>)
+      .def_property_readonly("lfc", &getLfc<T>)
+      .def_property_readonly("ssf", &getSsf<T>)
+      .def_property_readonly("uint", &T::getUInt)
+      .def_property_readonly("wvg", &getWvg<T>);
 }
 
 template <typename T>
-void exposeIterativeSchemeProperties(bp::class_<T> &cls) {
+void exposeIterativeSchemeProperties(py::class_<T> &cls) {
   exposeBaseSchemeProperties(cls);
-  cls.add_property("error", &T::getError);
+  cls.def_property_readonly("error", &T::getError);
 }
 
 template <typename TScheme, typename TInput>
-void exposeBaseSchemeClass(const std::string &className) {
-  bp::class_<TScheme> cls(className.c_str(), bp::init<const TInput>());
+void exposeBaseSchemeClass(py::module_ &m, const std::string &className) {
+  auto cls =
+      py::class_<TScheme>(m, className.c_str()).def(py::init<const TInput &>());
   exposeBaseSchemeProperties(cls);
 }
 
 template <typename TScheme, typename TInput>
-void exposeIterativeSchemeClass(const std::string &className) {
-  bp::class_<TScheme> cls(className.c_str(), bp::init<const TInput>());
+void exposeIterativeSchemeClass(py::module_ &m, const std::string &className) {
+  auto cls =
+      py::class_<TScheme>(m, className.c_str()).def(py::init<const TInput &>());
   exposeIterativeSchemeProperties(cls);
 }
 
 template <typename TScheme, typename TInput>
-void exposeIetSchemeClass(const std::string &className) {
-  bp::class_<TScheme> cls(className.c_str(), bp::init<const TInput>());
+void exposeIetSchemeClass(py::module_ &m, const std::string &className) {
+  auto cls =
+      py::class_<TScheme>(m, className.c_str()).def(py::init<const TInput &>());
   exposeIterativeSchemeProperties(cls);
-  cls.add_property("bf", &getBf<TScheme>);
+  cls.def_property_readonly("bf", &getBf<TScheme>);
 }
 
 template <typename TScheme, typename TInput>
-void exposeVSSchemeClass(const std::string &className) {
-  bp::class_<TScheme> cls(className.c_str(), bp::init<const TInput>());
+void exposeVSSchemeClass(py::module_ &m, const std::string &className) {
+  auto cls =
+      py::class_<TScheme>(m, className.c_str()).def(py::init<const TInput &>());
   exposeIterativeSchemeProperties(cls);
-  cls.add_property("alpha", &TScheme::getAlpha);
-  cls.add_property("free_energy_integrand", &getFreeEnergyIntegrand<TScheme>);
-  cls.add_property("free_energy_grid", &getFreeEnergyGrid<TScheme>);
+  cls.def_property_readonly("alpha", &TScheme::getAlpha)
+      .def_property_readonly("free_energy_integrand",
+                             &getFreeEnergyIntegrand<TScheme>)
+      .def_property_readonly("free_energy_grid", &getFreeEnergyGrid<TScheme>);
 }
 
 // -----------------------------------------------------------------
-// All schemes classes exposed to Python
+// Entry point
 // -----------------------------------------------------------------
 
-namespace pythonWrappers {
-  void exposeSchemes() {
-    exposeBaseSchemeClass<PyHF, Input>("HF");
-    exposeBaseSchemeClass<PyRpa, Input>("Rpa");
-    exposeBaseSchemeClass<PyESA, Input>("ESA");
-    exposeIterativeSchemeClass<PyStls, StlsInput>("Stls");
-    exposeIterativeSchemeClass<PyQstls, QstlsInput>("Qstls");
-    exposeIetSchemeClass<PyStlsIet, StlsIetInput>("StlsIet");
-    exposeIetSchemeClass<PyQstlsIet, QstlsIetInput>("QstlsIet");
-    exposeVSSchemeClass<PyVSStls, VSStlsInput>("VSStls");
-    exposeVSSchemeClass<PyQVSStls, QVSStlsInput>("QVSStls");
+namespace PythonWrappers {
+
+  void exposeSchemes(py::module_ &m) {
+    exposeBaseSchemeClass<PyHF, Input>(m, "HF");
+    exposeBaseSchemeClass<PyRpa, Input>(m, "Rpa");
+    exposeBaseSchemeClass<PyESA, Input>(m, "ESA");
+    exposeIterativeSchemeClass<PyStls, StlsInput>(m, "Stls");
+    exposeIterativeSchemeClass<PyQstls, QstlsInput>(m, "Qstls");
+    exposeIetSchemeClass<PyStlsIet, StlsIetInput>(m, "StlsIet");
+    exposeIetSchemeClass<PyQstlsIet, QstlsIetInput>(m, "QstlsIet");
+    exposeVSSchemeClass<PyVSStls, VSStlsInput>(m, "VSStls");
+    exposeVSSchemeClass<PyQVSStls, QVSStlsInput>(m, "QVSStls");
   }
-} // namespace pythonWrappers
+
+} // namespace PythonWrappers

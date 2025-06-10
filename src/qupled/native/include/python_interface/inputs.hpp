@@ -1,9 +1,11 @@
 #ifndef PYTHON_INTERFACE_INPUTS_HPP
 #define PYTHON_INTERFACE_INPUTS_HPP
 
-namespace pythonWrappers {
+#include <pybind11/pybind11.h>
 
-  void exposeInputs();
+namespace PythonWrappers {
+
+  void exposeInputs(pybind11::module_ &m);
 
 }
 

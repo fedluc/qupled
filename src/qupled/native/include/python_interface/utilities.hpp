@@ -1,11 +1,13 @@
-#ifndef PYTHON_INTERFACE_UTILITIES_HPP
-#define PYTHON_INTERFACE_UTILITIES_HPP
+#ifndef NEW_PYTHON_INTERFACE_UTILITIES_HPP
+#define NEW_PYTHON_INTERFACE_UTILITIES_HPP
 
-namespace pythonWrappers {
+#include <pybind11/pybind11.h>
+
+namespace PythonWrappers {
 
   // Function to expose utility functions to Python
-  void exposeUtilities();
+  void exposeUtilities(pybind11::module_ &m);
 
-} // namespace pythonWrappers
+} // namespace PythonWrappers
 
 #endif

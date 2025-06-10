@@ -2,38 +2,43 @@
 #include "python_interface/inputs.hpp"
 #include "python_interface/schemes.hpp"
 #include "python_interface/utilities.hpp"
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+
+#include <cstdlib>
 #include <gsl/gsl_errno.h>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <iostream>
 
-namespace bp = boost::python;
-namespace bn = boost::python::numpy;
+namespace py = pybind11;
 
-// Initialization code for the qupled module
-// void qupledInitialization() {
-//   // Initialize MPI if necessary
-//   if (!MPIUtil::isInitialized()) { MPIUtil::init(); }
-//   // Deactivate default GSL error handler
-//   gsl_set_error_handler_off();
-// }
+// --------------------------------------------------------------------
+// Initialization and Finalization
+// --------------------------------------------------------------------
 
-// Clean up code to call when the python interpreter exists
-// void qupledCleanUp() { MPIUtil::finalize(); }
+void qupledInitialization() {
+  // Initialize MPI if necessary
+  if (!MPIUtil::isInitialized()) { MPIUtil::init(); }
+  // Deactivate default GSL error handler
+  gsl_set_error_handler_off();
+}
 
-// Classes exposed to Python
-BOOST_PYTHON_MODULE(native_old) {
-  // Docstring formatting
-  bp::docstring_options docopt;
-  docopt.enable_all();
-  docopt.disable_cpp_signatures();
-  // Numpy library initialization
-  bn::initialize();
-  // Module initialization
-  // qupledInitialization();
-  // Register cleanup function
-  // std::atexit(qupledCleanUp);
-  // Exposed classes and methods
-  pythonWrappers::exposeInputs();
-  pythonWrappers::exposeSchemes();
-  pythonWrappers::exposeUtilities();
+void qupledCleanUp() { MPIUtil::finalize(); }
+
+// --------------------------------------------------------------------
+// Pybind11 Module Definition
+// --------------------------------------------------------------------
+
+PYBIND11_MODULE(native, m) {
+  m.doc() = "qupled native Python bindings via pybind11";
+
+  // Initialization
+  qupledInitialization();
+
+  // Register finalization
+  m.add_object("_cleanup", py::capsule([]() { qupledCleanUp(); }));
+
+  // Bind submodules and classes
+  PythonWrappers::exposeInputs(m);
+  PythonWrappers::exposeSchemes(m);
+  PythonWrappers::exposeUtilities(m);
 }

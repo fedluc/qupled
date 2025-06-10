@@ -3,50 +3,35 @@
 
 #include "vector2D.hpp"
 #include "vector3D.hpp"
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <vector>
 
-// -----------------------------------------------------------------
-// Utility functions to convert between Python and C++ arrays
-// -----------------------------------------------------------------
+namespace PythonUtil {
 
-namespace pythonUtil {
+  namespace py = pybind11;
+  using py::array;
+  using py::array_t;
+  using py::list;
 
-  namespace bp = boost::python;
-  namespace bn = boost::python::numpy;
+  // Check if a numpy array is stored in row-major order
+  void CheckRowMajor(const py::array &arr);
 
-  // Check if numpy array is stored in row-major order
-  void CheckRowMajor(const bn::ndarray &nda);
+  // Convert Python list or 1D array to std::vector<double>
+  std::vector<double> toVector(const py::array_t<double> &arr);
+  std::vector<double> toVector(const py::list &list);
 
-  // Convert a numpy array to std::vector<double>
-  std::vector<double> toVector(const bn::ndarray &nda);
+  // Convert 2D array to Vector2D or std::vector<std::vector<double>>
+  Vector2D toVector2D(const py::array_t<double> &arr);
+  std::vector<std::vector<double>>
+  toDoubleVector(const py::array_t<double> &arr);
 
-  // Convert a python list to a std::vector<double>
-  std::vector<double> toVector(const bp::list &list);
+  // Convert native C++ containers to numpy arrays
+  py::array toNdArray(const std::vector<double> &v);
+  py::array toNdArray2D(const Vector2D &v);
+  py::array toNdArray2D(const std::vector<std::vector<double>> &v);
+  py::array toNdArray3D(const Vector3D &v);
 
-  // Convert a numpy array to Vector2D
-  Vector2D toVector2D(const bn::ndarray &nda);
+} // namespace PythonUtil
 
-  // Convery a numpy array to std::vector<std::vector<double>>
-  std::vector<std::vector<double>> toDoubleVector(const bn::ndarray &nda);
-
-  // Generic converter from vector type to numpy array
-  template <typename T>
-  bn::ndarray toNdArrayT(const T &v);
-
-  // Convert std::vector<double> to numpy array
-  bn::ndarray toNdArray(const std::vector<double> &v);
-
-  // Convert Vector2D to numpy array
-  bn::ndarray toNdArray2D(const Vector2D &v);
-
-  // Convert std::vector<std::vector<double>> to numpy array
-  bn::ndarray toNdArray2D(const std::vector<std::vector<double>> &v);
-
-  // Convert Vector3D to numpy array
-  bn::ndarray toNdArray3D(const Vector3D &v);
-
-} // namespace pythonUtil
-
-#endif
+#endif // PYTHON_INTERFACE_UTIL_HPP
