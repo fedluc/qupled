@@ -1,5 +1,6 @@
 clang-format
 cmake
+libboost-all-dev
 libopenmpi-dev
 libgsl-dev
 libomp-dev
