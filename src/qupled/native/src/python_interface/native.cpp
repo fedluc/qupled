@@ -7,7 +7,6 @@
 #include <gsl/gsl_errno.h>
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
-#include <iostream>
 
 namespace py = pybind11;
 

@@ -154,8 +154,7 @@ namespace PyDatabaseInfo {
 void exposeDatabaseInfoClass(py::module_ &m) {
   py::class_<DatabaseInfo>(m, "DatabaseInfo")
       .def(py::init<>())
-      .def_property(
-          "name", PyDatabaseInfo::getName, PyDatabaseInfo::setName)
+      .def_property("name", PyDatabaseInfo::getName, PyDatabaseInfo::setName)
       .def_property(
           "run_id", PyDatabaseInfo::getRunId, PyDatabaseInfo::setRunId)
       .def_property("run_table_name",
