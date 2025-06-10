@@ -3,7 +3,7 @@
 
 #include <pybind11/pybind11.h>
 
-namespace PythonWrappers {
+namespace pythonWrappers {
 
   void exposeInputs(pybind11::module_ &m);
 

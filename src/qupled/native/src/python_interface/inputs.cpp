@@ -4,7 +4,7 @@
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
-using namespace PythonUtil;
+using namespace pythonUtil;
 
 // -----------------------------------------------------------------
 // Template helper functions
@@ -137,7 +137,7 @@ void exposeQVSStlsInputClass(py::module_ &m) {
 // Classes
 // -----------------------------------------------------------------
 
-namespace PyDatabaseInfo {
+namespace pythonDatabaseInfo {
   std::string getName(const DatabaseInfo &db) { return db.name; }
   std::string getRunTableName(const DatabaseInfo &db) {
     return db.runTableName;
@@ -149,20 +149,21 @@ namespace PyDatabaseInfo {
     db.runTableName = runTableName;
   }
   void setRunId(DatabaseInfo &db, int runId) { db.runId = runId; }
-} // namespace PyDatabaseInfo
+} // namespace pythonDatabaseInfo
 
 void exposeDatabaseInfoClass(py::module_ &m) {
   py::class_<DatabaseInfo>(m, "DatabaseInfo")
       .def(py::init<>())
-      .def_property("name", PyDatabaseInfo::getName, PyDatabaseInfo::setName)
       .def_property(
-          "run_id", PyDatabaseInfo::getRunId, PyDatabaseInfo::setRunId)
+          "name", pythonDatabaseInfo::getName, pythonDatabaseInfo::setName)
+      .def_property(
+          "run_id", pythonDatabaseInfo::getRunId, pythonDatabaseInfo::setRunId)
       .def_property("run_table_name",
-                    PyDatabaseInfo::getRunTableName,
-                    PyDatabaseInfo::setRunTableName);
+                    pythonDatabaseInfo::getRunTableName,
+                    pythonDatabaseInfo::setRunTableName);
 }
 
-namespace PyGuess {
+namespace pythonGuess {
   py::array getWvg(const Guess &guess) { return toNdArray(guess.wvg); }
   py::array getSsf(const Guess &guess) { return toNdArray(guess.ssf); }
   py::array getLfc(const Guess &guess) { return toNdArray2D(guess.lfc); }
@@ -177,17 +178,17 @@ namespace PyGuess {
     if (lfc.shape(0) == 0) return;
     guess.lfc = toVector2D(lfc);
   }
-} // namespace PyGuess
+} // namespace pythonGuess
 
 void exposeGuessClass(py::module_ &m) {
   py::class_<Guess>(m, "Guess")
       .def(py::init<>())
-      .def_property("wvg", PyGuess::getWvg, PyGuess::setWvg)
-      .def_property("ssf", PyGuess::getSsf, PyGuess::setSsf)
-      .def_property("lfc", PyGuess::getLfc, PyGuess::setLfc);
+      .def_property("wvg", pythonGuess::getWvg, pythonGuess::setWvg)
+      .def_property("ssf", pythonGuess::getSsf, pythonGuess::setSsf)
+      .def_property("lfc", pythonGuess::getLfc, pythonGuess::setLfc);
 }
 
-namespace NewPyFreeEnergyIntegrand {
+namespace pythonFreeEnergyIntegrand {
   py::array getGrid(const VSStlsInput::FreeEnergyIntegrand &fxc) {
     return toNdArray(fxc.grid);
   }
@@ -204,24 +205,24 @@ namespace NewPyFreeEnergyIntegrand {
                     const py::array &integrand) {
     fxc.integrand = toDoubleVector(integrand);
   }
-} // namespace NewPyFreeEnergyIntegrand
+} // namespace pythonFreeEnergyIntegrand
 
 void exposeFreeEnergyIntegrandClass(py::module_ &m) {
   py::class_<VSStlsInput::FreeEnergyIntegrand>(m, "FreeEnergyIntegrand")
       .def(py::init<>())
       .def_property("grid",
-                    NewPyFreeEnergyIntegrand::getGrid,
-                    NewPyFreeEnergyIntegrand::setGrid)
+                    pythonFreeEnergyIntegrand::getGrid,
+                    pythonFreeEnergyIntegrand::setGrid)
       .def_property("integrand",
-                    NewPyFreeEnergyIntegrand::getIntegrand,
-                    NewPyFreeEnergyIntegrand::setIntegrand);
+                    pythonFreeEnergyIntegrand::getIntegrand,
+                    pythonFreeEnergyIntegrand::setIntegrand);
 }
 
 // -----------------------------------------------------------------
 // Binding registration
 // -----------------------------------------------------------------
 
-namespace PythonWrappers {
+namespace pythonWrappers {
 
   void exposeInputs(py::module_ &m) {
     exposeInputClass(m);
@@ -236,4 +237,4 @@ namespace PythonWrappers {
     exposeFreeEnergyIntegrandClass(m);
   }
 
-} // namespace PythonWrappers
+} // namespace pythonWrappers

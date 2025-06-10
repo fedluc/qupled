@@ -15,7 +15,7 @@
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
-using namespace PythonUtil;
+using namespace pythonUtil;
 
 // -----------------------------------------------------------------
 // Template wrapper class for Python construction
@@ -144,7 +144,7 @@ void exposeVSSchemeClass(py::module_ &m, const std::string &className) {
 // Entry point
 // -----------------------------------------------------------------
 
-namespace PythonWrappers {
+namespace pythonWrappers {
 
   void exposeSchemes(py::module_ &m) {
     exposeBaseSchemeClass<PyHF, Input>(m, "HF");
@@ -158,4 +158,4 @@ namespace PythonWrappers {
     exposeVSSchemeClass<PyQVSStls, QVSStlsInput>(m, "QVSStls");
   }
 
-} // namespace PythonWrappers
+} // namespace pythonWrappers

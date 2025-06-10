@@ -3,11 +3,11 @@
 
 #include <pybind11/pybind11.h>
 
-namespace PythonWrappers {
+namespace pythonWrappers {
 
   // Function to expose utility functions to Python
   void exposeUtilities(pybind11::module_ &m);
 
-} // namespace PythonWrappers
+} // namespace pythonWrappers
 
 #endif

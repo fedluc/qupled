@@ -7,7 +7,7 @@
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
-using namespace PythonUtil;
+using namespace pythonUtil;
 
 // -----------------------------------------------------------------
 // Thermodynamic Utility Functions
@@ -55,7 +55,7 @@ public:
 // All utilities exposed to Python
 // -----------------------------------------------------------------
 
-namespace PythonWrappers {
+namespace pythonWrappers {
 
   void exposePostProcessingMethods(py::module_ &m) {
     m.def("compute_rdf", &computeRdf, "Compute radial distribution function");
@@ -78,4 +78,4 @@ namespace PythonWrappers {
     exposeMPIClass(m);
   }
 
-} // namespace PythonWrappers
+} // namespace pythonWrappers

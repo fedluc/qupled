@@ -3,11 +3,11 @@
 
 #include <pybind11/pybind11.h>
 
-namespace PythonWrappers {
+namespace pythonWrappers {
 
   // Function to expose schemes to Python
   void exposeSchemes(pybind11::module_ &m);
 
-} // namespace PythonWrappers
+} // namespace pythonWrappers
 
 #endif

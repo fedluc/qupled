@@ -8,7 +8,7 @@
 using namespace std;
 namespace py = pybind11;
 
-namespace PythonUtil {
+namespace pythonUtil {
 
   // ---------------------------------------------------------------------
   // Helper: check C-contiguity
@@ -116,4 +116,4 @@ namespace PythonUtil {
     return result;
   }
 
-} // namespace PythonUtil
+} // namespace pythonUtil

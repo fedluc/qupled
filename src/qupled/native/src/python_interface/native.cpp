@@ -37,7 +37,7 @@ PYBIND11_MODULE(native, m) {
   m.add_object("_cleanup", py::capsule([]() { qupledCleanUp(); }));
 
   // Bind submodules and classes
-  PythonWrappers::exposeInputs(m);
-  PythonWrappers::exposeSchemes(m);
-  PythonWrappers::exposeUtilities(m);
+  pythonWrappers::exposeInputs(m);
+  pythonWrappers::exposeSchemes(m);
+  pythonWrappers::exposeUtilities(m);
 }

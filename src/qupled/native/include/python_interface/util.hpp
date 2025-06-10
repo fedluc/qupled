@@ -7,7 +7,7 @@
 #include <pybind11/pybind11.h>
 #include <vector>
 
-namespace PythonUtil {
+namespace pythonUtil {
 
   namespace py = pybind11;
   using py::array;
@@ -32,6 +32,6 @@ namespace PythonUtil {
   py::array toNdArray2D(const std::vector<std::vector<double>> &v);
   py::array toNdArray3D(const Vector3D &v);
 
-} // namespace PythonUtil
+} // namespace pythonUtil
 
 #endif // PYTHON_INTERFACE_UTIL_HPP
