@@ -1,2 +1,3 @@
 #!/bin/bash
-docker run --rm -it -v "$(pwd)/src/qupled/native/src:/src" manylinux_2_28 /bin/bash
+# docker run --rm -it -v "$(pwd)/src/qupled/native/src:/src" manylinux_2_28 /bin/bash
+docker run --rm -it manylinux_2_28 /bin/bash

@@ -32,8 +32,18 @@ RUN cd /tmp && \
     ldconfig && \
     cd / && rm -rf /tmp/SQLiteCpp
 
-# Set working directory and copy source
-WORKDIR /src
+# Set working directory
+WORKDIR /qupled
+
+# Copy only dependency files first for better layer caching
+COPY pyproject.toml setup.py MANIFEST.in /qupled/
+
+# Copy dev tools and scripts
+COPY devtool /qupled/
+COPY ./dev /qupled/dev
+
+# Copy source code
+COPY ./src /qupled/src
 
 # Set entrypoint to ensure MPI module is loaded
 SHELL ["/bin/bash", "-lc"]
