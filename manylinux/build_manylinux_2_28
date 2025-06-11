@@ -1,0 +1,2 @@
+#!/bin/bash
+docker build -f manylinux/Dockerfile -t manylinux_2_28 . --no-cache
