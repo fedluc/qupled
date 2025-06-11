@@ -1,240 +1,240 @@
 #include "input.hpp"
 #include "python_interface/util.hpp"
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 
+namespace py = pybind11;
 using namespace pythonUtil;
-namespace bp = boost::python;
-namespace bn = boost::python::numpy;
 
 // -----------------------------------------------------------------
-// Template functions to expose scheme properties to Python
+// Template helper functions
 // -----------------------------------------------------------------
 
 template <typename T>
-bn::ndarray getAlphaGuess(T &in) {
+py::array getAlphaGuess(T &in) {
   return toNdArray(in.getAlphaGuess());
 }
 
 template <typename T>
-bn::ndarray getChemicalPotentialGuess(const T &in) {
+py::array getChemicalPotentialGuess(const T &in) {
   return toNdArray(in.getChemicalPotentialGuess());
 }
 
 template <typename T>
-void setChemicalPotentialGuess(T &in, const bp::list &muGuess) {
+void setChemicalPotentialGuess(T &in, const py::list &muGuess) {
   in.setChemicalPotentialGuess(toVector(muGuess));
 }
 
 template <typename T>
-void setAlphaGuess(T &in, const bp::list &alphaGuess) {
+void setAlphaGuess(T &in, const py::list &alphaGuess) {
   in.setAlphaGuess(toVector(alphaGuess));
 }
 
 template <typename T>
-void exposeBaseInputProperties(bp::class_<T> &cls) {
-  cls.add_property("coupling", &T::getCoupling, &T::setCoupling);
-  cls.add_property("degeneracy", &T::getDegeneracy, &T::setDegeneracy);
-  cls.add_property("integral_strategy", &T::getInt2DScheme, &T::setInt2DScheme);
-  cls.add_property("integral_error", &T::getIntError, &T::setIntError);
-  cls.add_property("threads", &T::getNThreads, &T::setNThreads);
-  cls.add_property("theory", &T::getTheory, &T::setTheory);
-  cls.add_property("chemical_potential",
-                   &getChemicalPotentialGuess<T>,
-                   &setChemicalPotentialGuess<T>);
-  cls.add_property("database_info", &T::getDatabaseInfo, &T::setDatabaseInfo);
-  cls.add_property("matsubara", &T::getNMatsubara, &T::setNMatsubara);
-  cls.add_property(
-      "resolution", &T::getWaveVectorGridRes, &T::setWaveVectorGridRes);
-  cls.add_property(
-      "cutoff", &T::getWaveVectorGridCutoff, &T::setWaveVectorGridCutoff);
-  cls.add_property(
-      "frequency_cutoff", &T::getFrequencyCutoff, &T::setFrequencyCutoff);
+void exposeBaseInputProperties(py::class_<T> &cls) {
+  cls.def_property("coupling", &T::getCoupling, &T::setCoupling)
+      .def_property("degeneracy", &T::getDegeneracy, &T::setDegeneracy)
+      .def_property("integral_strategy", &T::getInt2DScheme, &T::setInt2DScheme)
+      .def_property("integral_error", &T::getIntError, &T::setIntError)
+      .def_property("threads", &T::getNThreads, &T::setNThreads)
+      .def_property("theory", &T::getTheory, &T::setTheory)
+      .def_property("chemical_potential",
+                    &getChemicalPotentialGuess<T>,
+                    &setChemicalPotentialGuess<T>)
+      .def_property("database_info", &T::getDatabaseInfo, &T::setDatabaseInfo)
+      .def_property("matsubara", &T::getNMatsubara, &T::setNMatsubara)
+      .def_property(
+          "resolution", &T::getWaveVectorGridRes, &T::setWaveVectorGridRes)
+      .def_property(
+          "cutoff", &T::getWaveVectorGridCutoff, &T::setWaveVectorGridCutoff)
+      .def_property(
+          "frequency_cutoff", &T::getFrequencyCutoff, &T::setFrequencyCutoff);
 }
 
 template <typename T>
-void exposeIterativeInputProperties(bp::class_<T> &cls) {
+void exposeIterativeInputProperties(py::class_<T> &cls) {
   exposeBaseInputProperties(cls);
-  cls.add_property("error", &T::getErrMin, &T::setErrMin);
-  cls.add_property("guess", &T::getGuess, &T::setGuess);
-  cls.add_property("mixing", &T::getMixingParameter, &T::setMixingParameter);
-  cls.add_property("iterations", &T::getNIter, &T::setNIter);
+  cls.def_property("error", &T::getErrMin, &T::setErrMin)
+      .def_property("guess", &T::getGuess, &T::setGuess)
+      .def_property("mixing", &T::getMixingParameter, &T::setMixingParameter)
+      .def_property("iterations", &T::getNIter, &T::setNIter);
 }
 
 template <typename T>
-void exposeQuantumInputProperties(bp::class_<T> &cls) {
+void exposeQuantumInputProperties(py::class_<T> &cls) {
   exposeIterativeInputProperties(cls);
-  cls.add_property("fixed_run_id", &T::getFixedRunId, &T::setFixedRunId);
+  cls.def_property("fixed_run_id", &T::getFixedRunId, &T::setFixedRunId);
 }
 
 template <typename T>
-void exposeIetInputProperties(bp::class_<T> &cls) {
-  cls.add_property("mapping", &T::getMapping, &T::setMapping);
+void exposeIetInputProperties(py::class_<T> &cls) {
+  cls.def_property("mapping", &T::getMapping, &T::setMapping);
 }
 
 template <typename T>
-void exposeVSInputProperties(bp::class_<T> &cls) {
-  cls.add_property("error_alpha", &T::getErrMinAlpha, &T::setErrMinAlpha);
-  cls.add_property("iterations_alpha", &T::getNIterAlpha, &T::setNIterAlpha);
-  cls.add_property("alpha", &getAlphaGuess<T>, &setAlphaGuess<T>);
-  cls.add_property("coupling_resolution",
-                   &T::getCouplingResolution,
-                   &T::setCouplingResolution);
-  cls.add_property("degeneracy_resolution",
-                   &T::getDegeneracyResolution,
-                   &T::setDegeneracyResolution);
-  cls.add_property("free_energy_integrand",
-                   &T::getFreeEnergyIntegrand,
-                   &T::setFreeEnergyIntegrand);
+void exposeVSInputProperties(py::class_<T> &cls) {
+  cls.def_property("error_alpha", &T::getErrMinAlpha, &T::setErrMinAlpha)
+      .def_property("iterations_alpha", &T::getNIterAlpha, &T::setNIterAlpha)
+      .def_property("alpha", &getAlphaGuess<T>, &setAlphaGuess<T>)
+      .def_property("coupling_resolution",
+                    &T::getCouplingResolution,
+                    &T::setCouplingResolution)
+      .def_property("degeneracy_resolution",
+                    &T::getDegeneracyResolution,
+                    &T::setDegeneracyResolution)
+      .def_property("free_energy_integrand",
+                    &T::getFreeEnergyIntegrand,
+                    &T::setFreeEnergyIntegrand);
 }
 
-void exposeInputClass() {
-  bp::class_<Input> cls("Input");
+void exposeInputClass(py::module_ &m) {
+  auto cls = py::class_<Input>(m, "Input");
+  cls.def(py::init<>());
   exposeBaseInputProperties(cls);
 }
 
-void exposeStlsInputClass() {
-  bp::class_<StlsInput> cls("StlsInput");
+void exposeStlsInputClass(py::module_ &m) {
+  auto cls = py::class_<StlsInput>(m, "StlsInput");
+  cls.def(py::init<>());
   exposeIterativeInputProperties(cls);
 }
 
-void exposeStlsIetInputClass() {
-  bp::class_<StlsIetInput> cls("StlsIetInput");
+void exposeStlsIetInputClass(py::module_ &m) {
+  auto cls = py::class_<StlsIetInput>(m, "StlsIetInput");
+  cls.def(py::init<>());
   exposeIterativeInputProperties(cls);
   exposeIetInputProperties(cls);
 }
 
-void exposeVSStlsInputClass() {
-  bp::class_<VSStlsInput> cls("VSStlsInput");
+void exposeVSStlsInputClass(py::module_ &m) {
+  auto cls = py::class_<VSStlsInput>(m, "VSStlsInput");
+  cls.def(py::init<>());
   exposeIterativeInputProperties(cls);
   exposeVSInputProperties(cls);
 }
 
-void exposeQstlsInputClass() {
-  bp::class_<QstlsInput> cls("QstlsInput");
+void exposeQstlsInputClass(py::module_ &m) {
+  auto cls = py::class_<QstlsInput>(m, "QstlsInput");
+  cls.def(py::init<>());
   exposeQuantumInputProperties(cls);
 }
 
-void exposeQstlsIetInputClass() {
-  bp::class_<QstlsIetInput> cls("QstlsIetInput");
+void exposeQstlsIetInputClass(py::module_ &m) {
+  auto cls = py::class_<QstlsIetInput>(m, "QstlsIetInput");
+  cls.def(py::init<>());
   exposeQuantumInputProperties(cls);
   exposeIetInputProperties(cls);
 }
 
-void exposeQVSStlsInputClass() {
-  bp::class_<QVSStlsInput> cls("QVSStlsInput");
+void exposeQVSStlsInputClass(py::module_ &m) {
+  auto cls = py::class_<QVSStlsInput>(m, "QVSStlsInput");
+  cls.def(py::init<>());
   exposeQuantumInputProperties(cls);
   exposeVSInputProperties(cls);
 }
 
-// --------------------------------------------------------------------
-// Namespaces used to collect functions to expose structures to python
-// --------------------------------------------------------------------
+// -----------------------------------------------------------------
+// Classes
+// -----------------------------------------------------------------
 
-namespace PyDatabaseInfo {
+namespace pythonDatabaseInfo {
   std::string getName(const DatabaseInfo &db) { return db.name; }
-
   std::string getRunTableName(const DatabaseInfo &db) {
     return db.runTableName;
   }
-
   int getRunId(const DatabaseInfo &db) { return db.runId; }
 
   void setName(DatabaseInfo &db, const std::string &name) { db.name = name; }
-
   void setRunTableName(DatabaseInfo &db, const std::string &runTableName) {
     db.runTableName = runTableName;
   }
+  void setRunId(DatabaseInfo &db, int runId) { db.runId = runId; }
+} // namespace pythonDatabaseInfo
 
-  void setRunId(DatabaseInfo &db, const int runId) { db.runId = runId; }
-} // namespace PyDatabaseInfo
-
-void exposeDatabaseInfoClass() {
-  bp::class_<DatabaseInfo> cls("DatabaseInfo");
-  cls.add_property("name", PyDatabaseInfo::getName, &PyDatabaseInfo::setName);
-  cls.add_property(
-      "run_id", PyDatabaseInfo::getRunId, &PyDatabaseInfo::setRunId);
-  cls.add_property("run_table_name",
-                   PyDatabaseInfo::getRunTableName,
-                   &PyDatabaseInfo::setRunTableName);
+void exposeDatabaseInfoClass(py::module_ &m) {
+  py::class_<DatabaseInfo>(m, "DatabaseInfo")
+      .def(py::init<>())
+      .def_property(
+          "name", pythonDatabaseInfo::getName, pythonDatabaseInfo::setName)
+      .def_property(
+          "run_id", pythonDatabaseInfo::getRunId, pythonDatabaseInfo::setRunId)
+      .def_property("run_table_name",
+                    pythonDatabaseInfo::getRunTableName,
+                    pythonDatabaseInfo::setRunTableName);
 }
 
-namespace PyGuess {
-  bn::ndarray getWvg(const Guess &guess) {
-    return pythonUtil::toNdArray(guess.wvg);
-  }
+namespace pythonGuess {
+  py::array getWvg(const Guess &guess) { return toNdArray(guess.wvg); }
+  py::array getSsf(const Guess &guess) { return toNdArray(guess.ssf); }
+  py::array getLfc(const Guess &guess) { return toNdArray2D(guess.lfc); }
 
-  bn::ndarray getSsf(const Guess &guess) {
-    return pythonUtil::toNdArray(guess.ssf);
+  void setWvg(Guess &guess, const py::array_t<double> &wvg) {
+    guess.wvg = toVector(wvg);
   }
-
-  bn::ndarray getLfc(const Guess &guess) {
-    return pythonUtil::toNdArray2D(guess.lfc);
+  void setSsf(Guess &guess, const py::array_t<double> &ssf) {
+    guess.ssf = toVector(ssf);
   }
-
-  void setWvg(Guess &guess, const bn::ndarray &wvg) {
-    guess.wvg = pythonUtil::toVector(wvg);
+  void setLfc(Guess &guess, const py::array_t<double> &lfc) {
+    if (lfc.shape(0) == 0) return;
+    guess.lfc = toVector2D(lfc);
   }
+} // namespace pythonGuess
 
-  void setSsf(Guess &guess, const bn::ndarray &ssf) {
-    guess.ssf = pythonUtil::toVector(ssf);
-  }
-
-  void setLfc(Guess &guess, const bn::ndarray &lfc) {
-    if (lfc.shape(0) == 0) { return; }
-    guess.lfc = pythonUtil::toVector2D(lfc);
-  }
-} // namespace PyGuess
-
-void exposeGuessClass() {
-  bp::class_<Guess> cls("Guess");
-  cls.add_property("wvg", &PyGuess::getWvg, &PyGuess::setWvg);
-  cls.add_property("ssf", &PyGuess::getSsf, &PyGuess::setSsf);
-  cls.add_property("lfc", &PyGuess::getLfc, &PyGuess::setLfc);
+void exposeGuessClass(py::module_ &m) {
+  py::class_<Guess>(m, "Guess")
+      .def(py::init<>())
+      .def_property("wvg", pythonGuess::getWvg, pythonGuess::setWvg)
+      .def_property("ssf", pythonGuess::getSsf, pythonGuess::setSsf)
+      .def_property("lfc", pythonGuess::getLfc, pythonGuess::setLfc);
 }
 
-namespace PyFreeEnergyIntegrand {
-  bn::ndarray getGrid(const VSStlsInput::FreeEnergyIntegrand &fxc) {
-    return pythonUtil::toNdArray(fxc.grid);
+namespace pythonFreeEnergyIntegrand {
+  py::array getGrid(const VSStlsInput::FreeEnergyIntegrand &fxc) {
+    return toNdArray(fxc.grid);
+  }
+  py::array getIntegrand(const VSStlsInput::FreeEnergyIntegrand &fxc) {
+    return toNdArray2D(fxc.integrand);
   }
 
-  bn::ndarray getIntegrand(const VSStlsInput::FreeEnergyIntegrand &fxc) {
-    return pythonUtil::toNdArray2D(fxc.integrand);
-  }
-
-  void setGrid(VSStlsInput::FreeEnergyIntegrand &fxc, const bn::ndarray &grid) {
-    fxc.grid = pythonUtil::toVector(grid);
+  void setGrid(VSStlsInput::FreeEnergyIntegrand &fxc,
+               const py::array_t<double> &grid) {
+    fxc.grid = toVector(grid);
   }
 
   void setIntegrand(VSStlsInput::FreeEnergyIntegrand &fxc,
-                    const bn::ndarray &integrand) {
-    fxc.integrand = pythonUtil::toDoubleVector(integrand);
+                    const py::array &integrand) {
+    fxc.integrand = toDoubleVector(integrand);
   }
+} // namespace pythonFreeEnergyIntegrand
 
-} // namespace PyFreeEnergyIntegrand
-
-void exposeFreeEnergyIntegrandClass() {
-  bp::class_<VSStlsInput::FreeEnergyIntegrand> cls("FreeEnergyIntegrand");
-  cls.add_property(
-      "grid", &PyFreeEnergyIntegrand::getGrid, &PyFreeEnergyIntegrand::setGrid);
-  cls.add_property("integrand",
-                   &PyFreeEnergyIntegrand::getIntegrand,
-                   &PyFreeEnergyIntegrand::setIntegrand);
+void exposeFreeEnergyIntegrandClass(py::module_ &m) {
+  py::class_<VSStlsInput::FreeEnergyIntegrand>(m, "FreeEnergyIntegrand")
+      .def(py::init<>())
+      .def_property("grid",
+                    pythonFreeEnergyIntegrand::getGrid,
+                    pythonFreeEnergyIntegrand::setGrid)
+      .def_property("integrand",
+                    pythonFreeEnergyIntegrand::getIntegrand,
+                    pythonFreeEnergyIntegrand::setIntegrand);
 }
 
 // -----------------------------------------------------------------
-// All inputs classes exposed to Python
+// Binding registration
 // -----------------------------------------------------------------
 
 namespace pythonWrappers {
-  void exposeInputs() {
-    exposeInputClass();
-    exposeStlsInputClass();
-    exposeStlsIetInputClass();
-    exposeVSStlsInputClass();
-    exposeQstlsInputClass();
-    exposeQstlsIetInputClass();
-    exposeQVSStlsInputClass();
-    exposeDatabaseInfoClass();
-    exposeGuessClass();
-    exposeFreeEnergyIntegrandClass();
+
+  void exposeInputs(py::module_ &m) {
+    exposeInputClass(m);
+    exposeStlsInputClass(m);
+    exposeStlsIetInputClass(m);
+    exposeVSStlsInputClass(m);
+    exposeQstlsInputClass(m);
+    exposeQstlsIetInputClass(m);
+    exposeQVSStlsInputClass(m);
+    exposeDatabaseInfoClass(m);
+    exposeGuessClass(m);
+    exposeFreeEnergyIntegrandClass(m);
   }
+
 } // namespace pythonWrappers

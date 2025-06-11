@@ -2,14 +2,18 @@
 #include "python_interface/inputs.hpp"
 #include "python_interface/schemes.hpp"
 #include "python_interface/utilities.hpp"
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+
+#include <cstdlib>
 #include <gsl/gsl_errno.h>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 
-namespace bp = boost::python;
-namespace bn = boost::python::numpy;
+namespace py = pybind11;
 
-// Initialization code for the qupled module
+// --------------------------------------------------------------------
+// Initialization and Finalization
+// --------------------------------------------------------------------
+
 void qupledInitialization() {
   // Initialize MPI if necessary
   if (!MPIUtil::isInitialized()) { MPIUtil::init(); }
@@ -17,23 +21,23 @@ void qupledInitialization() {
   gsl_set_error_handler_off();
 }
 
-// Clean up code to call when the python interpreter exists
 void qupledCleanUp() { MPIUtil::finalize(); }
 
-// Classes exposed to Python
-BOOST_PYTHON_MODULE(native) {
-  // Docstring formatting
-  bp::docstring_options docopt;
-  docopt.enable_all();
-  docopt.disable_cpp_signatures();
-  // Numpy library initialization
-  bn::initialize();
-  // Module initialization
+// --------------------------------------------------------------------
+// Pybind11 Module Definition
+// --------------------------------------------------------------------
+
+PYBIND11_MODULE(native, m) {
+  m.doc() = "qupled native Python bindings via pybind11";
+
+  // Initialization
   qupledInitialization();
-  // Register cleanup function
-  std::atexit(qupledCleanUp);
-  // Exposed classes and methods
-  pythonWrappers::exposeInputs();
-  pythonWrappers::exposeSchemes();
-  pythonWrappers::exposeUtilities();
+
+  // Register finalization
+  m.add_object("_cleanup", py::capsule([]() { qupledCleanUp(); }));
+
+  // Bind submodules and classes
+  pythonWrappers::exposeInputs(m);
+  pythonWrappers::exposeSchemes(m);
+  pythonWrappers::exposeUtilities(m);
 }

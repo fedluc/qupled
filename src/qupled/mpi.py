@@ -6,24 +6,21 @@ from qupled import native
 class MPI:
     """Class to handle the calls to the MPI API"""
 
-    def __init__(self):
-        self.qp_mpi = native.MPI()
-
     def rank(self):
         """Get rank of the process"""
-        return self.qp_mpi.rank()
+        return native.MPI.rank()
 
     def is_root(self):
         """Check if the current process is root (rank 0)"""
-        return self.qp_mpi.is_root()
+        return native.MPI.is_root()
 
     def barrier(self):
         """Setup an MPI barrier"""
-        self.qp_mpi.barrier()
+        native.MPI.barrier()
 
     def timer(self):
         """Get wall time"""
-        return self.qp_mpi.timer()
+        return native.MPI.timer()
 
     @staticmethod
     def run_only_on_root(func):
@@ -31,7 +28,7 @@ class MPI:
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if MPI().is_root():
+            if native.MPI.is_root():
                 return func(*args, **kwargs)
 
         return wrapper
@@ -43,7 +40,7 @@ class MPI:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             func(*args, **kwargs)
-            MPI().barrier()
+            native.MPI.barrier()
 
         return wrapper
 
@@ -53,7 +50,7 @@ class MPI:
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            mpi = MPI()
+            mpi = native.MPI
             tic = mpi.timer()
             func(*args, **kwargs)
             toc = mpi.timer()

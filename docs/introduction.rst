@@ -56,13 +56,13 @@ For linux distributions all these dependencies can be installed with
 
 .. code-block:: console
 
-   sudo apt-get install -y cmake libboost-all-dev libopenmpi-dev libgsl-dev libomp-dev python3-dev libsqlite3-dev libsqlitecpp-dev
+   sudo apt-get install -y cmake libopenmpi-dev libgsl-dev libomp-dev python3-dev libsqlite3-dev libsqlitecpp-dev
 
 For macOS they can be installed directly from homebrew
 
 .. code-block:: console
 
-   brew install cmake gsl libomp openmpi boost-python3 sqlite sqlitecpp
+   brew install cmake gsl libomp openmpi sqlite sqlitecpp
 
 Install with pip
 ~~~~~~~~~~~~~~~~
@@ -78,13 +78,13 @@ This will also install all the python packages that are necessary for running th
 Install from source
 ~~~~~~~~~~~~~~~~~~~
 
-Qupled and all its python dependencies can also be installed from source by running
+Qupled and all its dependencies can also be installed from source by running
 
 .. code-block:: console
 
    git clone https://github.com/fedluc/qupled.git
    cd qupled
-   pip install -r dev/requirements.txt
+   ./devtool install-deps
    ./devtool build
    ./devtool test
    ./devtool install
