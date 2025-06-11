@@ -44,3 +44,17 @@ docs = [
 include-package-data = false
 packages = ["qupled", "qupled.native"]
 package-dir = { "" = "src" }
+
+[tool.cibuildwheel]
+manylinux-x86_64-image = "qupled_manylinux"
+build = [
+  "cp310-manylinux_x86_64",
+  "cp311-manylinux_x86_64",
+  "cp312-manylinux_x86_64",
+  "cp313-manylinux_x86_64",
+  # Optional aarch64 targets if supported
+  # "cp310-manylinux_aarch64",
+  # "cp311-manylinux_aarch64",
+  # "cp312-manylinux_aarch64",
+]
+environment = "USE_MPI=ON"

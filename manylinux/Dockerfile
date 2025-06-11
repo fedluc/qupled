@@ -13,13 +13,9 @@ RUN dnf -y update && \
         cmake \
     && dnf clean all
 
-# Initialize environment-modules in login shells
-RUN echo 'module load mpi/openmpi-x86_64' >> /etc/bashrc
-
-# Set Python to 3.10 (or another available version under /opt/python)
-ENV PYTHON_ROOT=/opt/python/cp310-cp310
-ENV PATH="${PYTHON_ROOT}/bin:$PATH"
-ENV LD_LIBRARY_PATH="${PYTHON_ROOT}/lib:$LD_LIBRARY_PATH"
+# Link OpenMPI into PATH and LD_LIBRARY_PATH permanently
+ENV PATH="/usr/lib64/openmpi/bin:$PATH"
+ENV LD_LIBRARY_PATH="/usr/lib64/openmpi/lib:$LD_LIBRARY_PATH"
 
 # Build SQLiteCpp from source
 RUN cd /tmp && \
@@ -31,19 +27,3 @@ RUN cd /tmp && \
     make install && \
     ldconfig && \
     cd / && rm -rf /tmp/SQLiteCpp
-
-# Set working directory
-WORKDIR /qupled
-
-# Copy only dependency files first for better layer caching
-COPY pyproject.toml setup.py MANIFEST.in /qupled/
-
-# Copy dev tools and scripts
-COPY devtool /qupled/
-COPY ./dev /qupled/dev
-
-# Copy source code
-COPY ./src /qupled/src
-
-# Set entrypoint to ensure MPI module is loaded
-SHELL ["/bin/bash", "-lc"]
