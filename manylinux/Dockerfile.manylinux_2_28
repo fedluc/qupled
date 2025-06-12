@@ -5,18 +5,12 @@ FROM quay.io/pypa/manylinux_2_28_${ARCH}
 RUN dnf -y update && \
     dnf -y groupinstall "Development Tools" && \
     dnf -y install \
-        openmpi \
-        openmpi-devel \
         gsl-devel \
         sqlite-devel \
         git \
         wget \
         cmake \
     && dnf clean all
-
-# Link OpenMPI into PATH and LD_LIBRARY_PATH permanently
-ENV PATH="/usr/lib64/openmpi/bin:$PATH"
-ENV LD_LIBRARY_PATH="/usr/lib64/openmpi/lib:$LD_LIBRARY_PATH"
 
 # Build SQLiteCpp from source
 RUN cd /tmp && \
