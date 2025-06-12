@@ -16,6 +16,12 @@ jobs:
       - name: Authenticate with GitHub Container Registry (GHCR)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Pull manylinux_x86_64 image from GHCR
+        run: docker pull ghcr.io/fedluc/qupled_manylinux_x86_64
+
+      - name: Pull manylinux_aarch64 image from GHCR
+        run: docker pull ghcr.io/fedluc/qupled_manylinux_aarch64
+
       - name: Build wheels using cibuildwheel
         uses: pypa/cibuildwheel@v2.16.5
         with:
