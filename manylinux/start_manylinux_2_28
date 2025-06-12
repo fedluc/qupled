@@ -1,4 +1,4 @@
 #!/bin/bash
 # docker run --rm -it -v "$(pwd)/src/qupled/native/src:/src" manylinux_2_28 /bin/bash
 # docker run --rm -it qupled_manylinux /bin/bash
-cibuildwheel --output-dir wheelhouse --platform linux --archs x86_64
+cibuildwheel --output-dir wheelhouse --platform linux --archs x86_64,aarch64
