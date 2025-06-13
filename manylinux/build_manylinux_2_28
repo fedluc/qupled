@@ -1,12 +1,5 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then
-  echo "Usage: $0 <USERNAME>"
-  exit 1
-fi
-
-USERNAME="$1"
-
 docker buildx create --use
 
 ARCH="x86_64"
@@ -15,7 +8,7 @@ docker buildx build \
   -f manylinux/Dockerfile.manylinux_2_28 \
   --build-arg ARCH=${ARCH} \
   --push \
-  -t  "ghcr.io/${USERNAME}/qupled_manylinux_${ARCH}" \
+  -t  "ghcr.io/fedluc/qupled/qupled_manylinux_${ARCH}" \
   .
 
 ARCH="aarch64"
@@ -24,5 +17,5 @@ docker buildx build \
   -f manylinux/Dockerfile.manylinux_2_28 \
   --build-arg ARCH=${ARCH} \
   --push \
-  -t "ghcr.io/${USERNAME}/qupled_manylinux_${ARCH}" \
+  -t "ghcr.io/fedluc/qupled/qupled_manylinux_${ARCH}" \
   .
