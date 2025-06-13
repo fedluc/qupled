@@ -5,25 +5,28 @@ on:
   pull_request:
 
 jobs:
-  build_wheels:
-    name: Build Linux wheels (x86_64 + aarch64)
+  build-wheels:
+    name: Build ${{ matrix.arch }} wheels
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      - name: Set up QEMU (for aarch64 emulation)
+        if: matrix.arch == 'aarch64'
+        uses: docker/setup-qemu-action@v3
+
       - name: Authenticate with GitHub Container Registry (GHCR)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Pull manylinux_x86_64 image from GHCR
-        run: docker pull --platform linux/amd64 ghcr.io/fedluc/qupled/qupled_manylinux_x86_64
-
-      - name: Pull manylinux_aarch64 image from GHCR
-        run: docker pull --platform linux/arm64 ghcr.io/fedluc/qupled/qupled_manylinux_aarch64
-
-      - name: Set up QEMU (for aarch64 emulation)
-        uses: docker/setup-qemu-action@v3
+      - name: Pull correct manylinux image
+        run: |
+          docker pull --platform linux/${{ matrix.arch }} ghcr.io/fedluc/qupled/qupled_manylinux_${{ matrix.arch }}
 
       - name: Build wheels using cibuildwheel
         uses: pypa/cibuildwheel@v2.16.5
@@ -31,10 +34,11 @@ jobs:
           output-dir: wheelhouse
         env:
           CIBW_PLATFORM: linux
-          CIBW_ARCHS: x86_64 aarch64
+          CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_CONTAINER_PLATFORM: linux/${{ matrix.arch }}
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
         with:
-          name: qupled-wheels
+          name: qupled-wheels-${{ matrix.arch }}
           path: wheelhouse/*.whl
