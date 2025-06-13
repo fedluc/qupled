@@ -2,6 +2,10 @@ name: Code Formatting
 
 on:
   push:
+    branches:
+      - '**'
+    tags-ignore:
+      - 'v*'
   pull_request:
 
 jobs:
