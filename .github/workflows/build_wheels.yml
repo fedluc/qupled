@@ -22,6 +22,9 @@ jobs:
       - name: Pull manylinux_aarch64 image from GHCR
         run: docker pull --platform linux/arm64 ghcr.io/fedluc/qupled/qupled_manylinux_aarch64
 
+      - name: Set up QEMU (for aarch64 emulation)
+        uses: docker/setup-qemu-action@v3
+
       - name: Build wheels using cibuildwheel
         uses: pypa/cibuildwheel@v2.16.5
         with:
