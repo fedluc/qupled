@@ -1,13 +1,38 @@
 name: Build & Test
 
 on:
-  push:
   pull_request:
     branches:
       - master
-  
+
+env:
+  PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
+
 jobs:
-  linux-MPI:
-    uses: ./.github/workflows/build-and-test-base.yml
-    with:
-      upload-artifact: false
+  build_and_test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        ./devtool install-deps
+        python3 -m venv ${PYTHON_VENV_ROOT}
+
+    - name: Build
+      run: |
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        pip3 install --upgrade pip
+        pip3 install build setuptools
+        ./devtool build
+
+    - name: Tests
+      run: |
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        pip3 install tox
+        ./devtool test

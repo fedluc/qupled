@@ -1,0 +1,21 @@
+#!/bin/bash
+
+docker buildx create --use
+
+ARCH="x86_64"
+docker buildx build \
+  --platform linux/amd64 \
+  -f manylinux/Dockerfile.manylinux_2_28 \
+  --build-arg ARCH=${ARCH} \
+  --push \
+  -t  "ghcr.io/fedluc/qupled/qupled_manylinux_${ARCH}" \
+  .
+
+ARCH="aarch64"
+docker buildx build \
+  --platform linux/arm64 \
+  -f manylinux/Dockerfile.manylinux_2_28 \
+  --build-arg ARCH=${ARCH} \
+  --push \
+  -t "ghcr.io/fedluc/qupled/qupled_manylinux_${ARCH}" \
+  .
