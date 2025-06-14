@@ -34,35 +34,8 @@ All the calculations are performed in normalized units. The wave vectors are nor
 Fermi wave-vector and the frequencies are normalized to :math:`2\pi E_{\mathrm{f}}/h`. Here :math:`E_{\mathrm{f}}`
 is the Fermi energy and :math:`h` is Planck's constant.
 
-Installing qupled
------------------
-
-.. _external_dependencies:
-
-External dependencies
-~~~~~~~~~~~~~~~~~~~~~
-
-The installation of qupled may require compiling some C++ code, depending on the platform and installation method.
-Therefore, ensure the following dependencies are met before attempting to install or run qupled:
-
-  - `Boost <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_
-  - `CMake <https://cmake.org/download/>`_
-  - `fmt <https://github.com/fmtlib/fmt>`_
-  - `GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
-  - `OpenMP <https://en.wikipedia.org/wiki/OpenMP>`_
-  - `Open-MPI <https://www.open-mpi.org/software/ompi/v5.0/>`_
-
-For linux distributions all these dependencies can be installed with
-
-.. code-block:: console
-
-   sudo apt-get install -y cmake libopenmpi-dev libgsl-dev libomp-dev python3-dev libsqlite3-dev libsqlitecpp-dev
-
-For macOS they can be installed directly from homebrew
-
-.. code-block:: console
-
-   brew install cmake gsl libomp openmpi sqlite sqlitecpp
+Installation
+------------
 
 Install with pip
 ~~~~~~~~~~~~~~~~
@@ -73,12 +46,24 @@ Qupled can be installed as a pip package by running
 
    pip install qupled
 		
-This will also install all the python packages that are necessary for running the package.
+This will also install all the python packages that are necessary for running the package. 
+
+Install with MPI support
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to use qupled with MPI support, install the  :ref:`external_dependencies` and install the
+source distribution with the following command:
+
+.. code-block:: console
+
+   pip install --no-binary=:all: qupled
+
 
 Install from source
 ~~~~~~~~~~~~~~~~~~~
 
-Qupled and all its dependencies can also be installed from source by running
+If you want full control over your qupled installation, you can install it also directly from the source.
+Install the :ref:`external_dependencies` first, then clone the repository and run the following commands:
 
 .. code-block:: console
 
@@ -88,3 +73,44 @@ Qupled and all its dependencies can also be installed from source by running
    ./devtool build
    ./devtool test
    ./devtool install
+
+.. _external_dependencies:
+
+External dependencies
+~~~~~~~~~~~~~~~~~~~~~
+
+Installing qupled may require compiling some C++ code, depending on the platform and installation method.
+The following dependencies must be met before attempting to build the C++ part of qupled:
+
+  - `CMake <https://cmake.org/download/>`_
+  - `fmt <https://github.com/fmtlib/fmt>`_
+  - `GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
+  - `OpenMP <https://en.wikipedia.org/wiki/OpenMP>`_
+  - `Open-MPI <https://www.open-mpi.org/software/ompi/v5.0/>`_
+
+**Ubuntu or Debian-based systems**
+
+.. code-block:: console
+
+   sudo apt-get install -y cmake libopenmpi-dev libgsl-dev libomp-dev python3-dev libsqlite3-dev libsqlitecpp-dev
+
+**Fedora or Red Hat-based system**
+
+.. code-block:: console
+
+   sudo dnf install -y cmake openmpi openmpi-devel gsl-devel sqlite-devel
+   cd /tmp
+   git clone https://github.com/SRombauts/SQLiteCpp.git
+   cd SQLiteCpp
+   mkdir build && cd build 
+   cmake ..
+   make -j$(nproc)
+   make install
+   ldconfig
+   cd / && rm -rf /tmp/SQLiteCpp
+
+**macOS**
+
+.. code-block:: console
+
+   brew install cmake gsl libomp openmpi sqlite sqlitecpp
