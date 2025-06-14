@@ -37,7 +37,7 @@ jobs:
 
     strategy:
       matrix:
-        arch: [x86_64] # add also aarch64
+        arch: [x86_64, aarch64]
 
     steps:
       - name: Checkout source code
@@ -93,11 +93,11 @@ jobs:
           name: wheels-x86_64
           path: temp-wheels-x86_64
 
-      # - name: Download wheels (aarch64)
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: wheels-aarch64
-      #     path: temp-wheels-aarch64
+      - name: Download wheels (aarch64)
+        uses: actions/download-artifact@v4
+        with:
+          name: wheels-aarch64
+          path: temp-wheels-aarch64
 
       - name: Move all files to dist/
         run: |
