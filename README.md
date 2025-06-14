@@ -21,6 +21,12 @@ inputs = stls.Input(10.0, 1.0)
 stls.Stls().compute(inputs)
 ```
 
+## 📘 Run the STLS Example Notebook
+
+You can run the notebook without installing anything locally using Binder:
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/fedluc/qupled/master?filepath=examples/readme/notebook/stls_qupled_example.ipynb)
+
 ## Documentation
 
 More detailed information on the package together with a list of examples is available in the [documentation](http://qupled.readthedocs.io/).
