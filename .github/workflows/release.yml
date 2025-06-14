@@ -2,11 +2,8 @@ name: Release
 
 on:
   push:
-    # tags:
-    #   - 'v*'
-
-env:
-  RELEASE_VERSION: v0.0.0-dev
+    tags:
+      - 'v*'
 
 jobs:
   build-sdist:
@@ -18,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set build version
-        run: ./devtool update-version ${{ env.RELEASE_VERSION }}
+        run: ./devtool update-version ${{ github.ref_name }}
 
       - name: Build sdist
         run: |
@@ -47,7 +44,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set build version
-        run: ./devtool update-version ${{ env.RELEASE_VERSION }}
+        run: ./devtool update-version ${{ github.ref_name }}
 
       - name: Set up QEMU (for aarch64 emulation)
         if: matrix.arch == 'aarch64'
