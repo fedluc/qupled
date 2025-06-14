@@ -85,10 +85,10 @@ jobs:
           name: qupled-sdist
           path: dist
 
-      - name: Download all wheels
-        uses: actions/download-artifact@v4
-        with:
-          path: dist
+      # - name: Download all wheels
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     path: dist
 
       - name: Publish to PyPI
         env:
