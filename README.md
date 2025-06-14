@@ -25,7 +25,7 @@ stls.Stls().compute(inputs)
 
 You can run the notebook without installing anything locally using Binder:
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/fedluc/qupled/master?filepath=examples/readme/notebook/stls_qupled_example.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fedluc/qupled-demo/blob/main/stls_qupled_example.ipynb)
 
 ## Documentation
 
