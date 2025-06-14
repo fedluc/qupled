@@ -11,19 +11,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set build version
+        run: ./devtool update-version ${{ github.ref_name }}
+
       - name: Build sdist
         run: |
+          python3 -m venv .venv
+          source .venv/bin/activate
           pip install build
           python -m build --sdist --outdir dist
+
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
-          name: qupled-sdist
+          name: sdist
           path: dist/*.tar.gz
 
   build-wheels:
@@ -38,6 +42,9 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+
+      - name: Set build version
+        run: ./devtool update-version ${{ github.ref_name }}
 
       - name: Set up QEMU (for aarch64 emulation)
         if: matrix.arch == 'aarch64'
@@ -62,7 +69,7 @@ jobs:
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
         with:
-          name: qupled-wheels-${{ matrix.arch }}
+          name: wheels-${{ matrix.arch }}
           path: wheelhouse/*.whl
 
   publish:
@@ -71,21 +78,40 @@ jobs:
     needs: [build-sdist, build-wheels]
 
     steps:
+      - name: Prepare dist folder
+        run: mkdir -p dist
+
       - name: Download sdist
         uses: actions/download-artifact@v4
         with:
-          name: qupled-sdist
-          path: dist
+          name: sdist
+          path: temp-sdist
 
-      - name: Download all wheels
+      - name: Download wheels (x86_64)
         uses: actions/download-artifact@v4
         with:
-          path: dist
+          name: wheels-x86_64
+          path: temp-wheels-x86_64
+
+      # - name: Download wheels (aarch64)
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: wheels-aarch64
+      #     path: temp-wheels-aarch64
+
+      - name: Move all files to dist/
+        run: |
+          mv temp-sdist/* dist/ || true
+          mv temp-wheels-*/* dist/ || true
 
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          pip install twine
+          python3 -m venv .venv
+          source .venv/bin/activate
+          pip3 install --upgrade pip
+          pip3 install twine
+          twine check dist/*
           twine upload dist/* --non-interactive

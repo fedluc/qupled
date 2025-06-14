@@ -1,17 +1,17 @@
 [build-system]
-requires = ["setuptools>=68,<77", "wheel", "cmake-build-extension"]
+requires = ["setuptools>=42", "wheel", "cmake-build-extension"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "qupled"
-version = "1.2.0"
+version = "0.0.0.dev"
 description = "qupled: a package to investigate quantum plasmas via the dielectric formalism"
 readme = "README.md"
 requires-python = ">=3.10, <3.14"
 authors = [
     { name = "Federico Lucco Castello", email = "federico.luccocastello@gmail.com" }
 ]
-license = { text = "GPL-3.0-or-later" }
+license = "GPL-3.0-or-later"
 classifiers = [
     "Programming Language :: Python :: 3.10",
     "Operating System :: MacOS",
