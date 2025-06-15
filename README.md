@@ -23,7 +23,7 @@ stls.Stls().compute(inputs)
 
 ## 📘 Run the STLS Example Notebook
 
-[Try this branch in Colab](https://colab.research.google.com/github/fedluc/qupled/blob/feature/add_python_notebook/examples/readme/notebook/stls_qupled_example.ipynb)
+[Try this branch in Colab](https://colab.research.google.com/github/fedluc/qupled/blob/add_python_notebook/examples/readme/notebook/stls_qupled_example.ipynb)
 
 ## Documentation
 
