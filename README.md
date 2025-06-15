@@ -23,9 +23,7 @@ stls.Stls().compute(inputs)
 
 ## 📘 Run the STLS Example Notebook
 
-You can run the notebook without installing anything locally using Binder:
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fedluc/qupled/blob/master/examples/readme/notebook/stls_qupled_example.ipynb)
+[Try this branch in Colab](https://colab.research.google.com/github/fedluc/qupled/blob/feature/add_python_notebook/examples/readme/notebook/stls_qupled_example.ipynb)
 
 ## Documentation
 
