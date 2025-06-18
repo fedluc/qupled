@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         arch: [arm64]
-        python-version: [3.13] #['3.10', '3.11', '3.12', '3.13']
+        python-version:  ['3.10', '3.11', '3.12', '3.13']
 
     steps:
       - name: Checkout source code
@@ -42,6 +42,7 @@ jobs:
           CIBW_PLATFORM: macos
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
           MACOSX_DEPLOYMENT_TARGET: "14.0"
+          CIBW_BUILD:  "cp${{ matrix.python-version | replace('.', '') }}-macosx_*"
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
