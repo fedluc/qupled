@@ -28,6 +28,11 @@ jobs:
       - name: Install build dependencies
         run: ./devtool install-deps
 
+      - name: Set OpenMP_ROOT
+        run: |
+          BREW_PREFIX=$(brew --prefix)
+          echo "OPENMP_ROOT=$BREW_PREFIX/opt/libomp" >> $GITHUB_ENV
+
       - name: Install cibuildwheel
         run: python -m pip install --upgrade cibuildwheel
 
