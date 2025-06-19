@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    # tags:
-    #   - 'v*'
+    tags:
+      - 'v*'
 
 jobs:
   build-sdist:
@@ -38,11 +38,11 @@ jobs:
           name: wheels-linux-x86_64
           path: temp-linux-wheels-x86_64
 
-      # - name: Download linux wheels (aarch64)
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: wheels-linux-aarch64
-      #     path: temp-linux-wheels-aarch64
+      - name: Download linux wheels (aarch64)
+        uses: actions/download-artifact@v4
+        with:
+          name: wheels-linux-aarch64
+          path: temp-linux-wheels-aarch64
 
       - name: Download macos wheels (arm64)
         uses: actions/download-artifact@v4
