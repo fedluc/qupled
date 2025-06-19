@@ -12,11 +12,15 @@ jobs:
   build-linux-wheels:
     uses: ./.github/workflows/build-linux-wheels.yml
     needs: build-sdist
+  
+  build-macos-wheels:
+    uses: ./.github/workflows/build-macos-wheels.yml
+    needs: build-sdist
 
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [build-sdist, build-linux-wheels]
+    needs: [build-sdist, build-linux-wheels, build-macos-wheels]
 
     steps:
       - name: Prepare dist folder
@@ -28,22 +32,29 @@ jobs:
           name: sdist
           path: temp-sdist
 
-      - name: Download wheels (x86_64)
+      - name: Download linux wheels (x86_64)
         uses: actions/download-artifact@v4
         with:
-          name: wheels-x86_64
-          path: temp-wheels-x86_64
+          name: wheels-linux-x86_64
+          path: temp-linux-wheels-x86_64
 
-      - name: Download wheels (aarch64)
+      - name: Download linux wheels (aarch64)
         uses: actions/download-artifact@v4
         with:
-          name: wheels-aarch64
-          path: temp-wheels-aarch64
+          name: wheels-linux-aarch64
+          path: temp-linux-wheels-aarch64
+
+      - name: Download macos wheels (arm64)
+        uses: actions/download-artifact@v4
+        with:
+          name: wheels-macos-arm64
+          path: temp-macos-wheels-aarch64
 
       - name: Move all files to dist/
         run: |
           mv temp-sdist/* dist/ || true
-          mv temp-wheels-*/* dist/ || true
+          mv temp-linux-wheels-*/* dist/ || true
+          mv temp-macos-wheels-*/* dist/ || true
 
       - name: Publish to PyPI
         env:
