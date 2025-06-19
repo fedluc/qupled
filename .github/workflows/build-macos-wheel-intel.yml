@@ -44,7 +44,7 @@ jobs:
         env:
           CIBW_PLATFORM: macos
           CIBW_ARCHS_MACOS: x86_64
-          MACOSX_DEPLOYMENT_TARGET: "11.0"
+          MACOSX_DEPLOYMENT_TARGET: "14.0"
           CIBW_BUILD: "${{ env.CPY_TAG }}-macosx_*"
 
       - name: Upload built wheels
