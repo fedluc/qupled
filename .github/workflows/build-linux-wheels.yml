@@ -1,0 +1,48 @@
+name: Build Linux Wheels
+
+on:
+  workflow_call:
+
+jobs:
+
+  build-wheels:
+    name: Build linux ${{ matrix.arch }} wheels
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set build version
+        run: ./devtool update-version ${{ github.ref_name }}
+
+      - name: Set up QEMU (for aarch64 emulation)
+        if: matrix.arch == 'aarch64'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Authenticate with GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Pull correct manylinux image
+        run: |
+          docker pull --platform linux/${{ matrix.arch }} ghcr.io/fedluc/qupled/qupled_manylinux_${{ matrix.arch }}
+
+      - name: Build wheels using cibuildwheel
+        uses: pypa/cibuildwheel@v2.16.5
+        with:
+          output-dir: wheelhouse
+        env:
+          CIBW_PLATFORM: linux
+          CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_CONTAINER_PLATFORM: linux/${{ matrix.arch }}
+          CIBW_BUILD: "cp*-manylinux_${{ matrix.arch }}"
+
+      - name: Upload built wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.arch }}
+          path: wheelhouse/*.whl
