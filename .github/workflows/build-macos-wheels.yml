@@ -12,6 +12,10 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      - name: Set build version
+        run: ./devtool update-version v0.0.0
+        # run: ./devtool update-version ${{ github.ref_name }}
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -38,5 +42,5 @@ jobs:
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-macos-arm64-py${{ matrix.python-version }}
+          name: wheels-macos-arm64
           path: wheelhouse/*.whl
