@@ -1,28 +1,21 @@
-name: Build macOS Wheels (ARM64)
+name: Build macOS Wheels
 
 on:
-  workflow_dispatch:
-  push:
-    # tags:
-    #   - 'v*'
+  workflow_call:
 
 jobs:
   build-macos-wheels-arm64:
-    name: Build macOS arm64 wheels for Python ${{ matrix.python-version }}
+    name: Build macOS arm64 wheels
     runs-on: macos-latest
-
-    strategy:
-      matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13']
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.11'
 
       - name: Install build dependencies
         run: ./devtool install-deps
@@ -35,17 +28,12 @@ jobs:
       - name: Install cibuildwheel
         run: python -m pip install --upgrade cibuildwheel
 
-      - name: Set CPython tag
-        id: set-python-tag
-        run: echo "CPY_TAG=cp${{ matrix.python-version }}" | sed 's/\.//' >> $GITHUB_ENV
-
       - name: Build wheels with cibuildwheel
         run: cibuildwheel --output-dir wheelhouse
         env:
           CIBW_PLATFORM: macos
           CIBW_ARCHS_MACOS: arm64
           MACOSX_DEPLOYMENT_TARGET: "14.0"
-          CIBW_BUILD: "${{ env.CPY_TAG }}-macosx_*"
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
