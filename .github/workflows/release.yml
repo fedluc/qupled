@@ -44,6 +44,12 @@ jobs:
           name: wheels-linux-aarch64
           path: temp-linux-wheels-aarch64
 
+      - name: Download macos wheels (x86_64)
+        uses: actions/download-artifact@v4
+        with:
+          name: wheels-macos-x86_64
+          path: temp-macos-wheels-x86_64
+
       - name: Download macos wheels (arm64)
         uses: actions/download-artifact@v4
         with:
@@ -65,5 +71,5 @@ jobs:
           source .venv/bin/activate
           pip3 install --upgrade pip
           pip3 install twine
-          twine check dist/*
+          twine check dist/*  
           twine upload dist/* --non-interactive

@@ -8,7 +8,7 @@ setup(
             name="qupled.native",
             source_dir="src/qupled/native/src",
             cmake_configure_options=[
-                f"-DUSE_MPI={os.environ.get('USE_MPI', 'ON')}",
+                f"-DUSE_MPI={os.environ.get('USE_MPI', 'OFF')}",
             ],
         )
     ],

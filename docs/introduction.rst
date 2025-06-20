@@ -51,12 +51,11 @@ This will also install all the python packages that are necessary for running th
 Install with MPI support
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you need to use qupled with MPI support, install the  :ref:`external_dependencies` and install the
-source distribution with the following command:
+If you need to use qupled with MPI support, first install the  :ref:`external_dependencies` and then run:
 
 .. code-block:: console
 
-   pip install --no-binary=:all: qupled
+   USE_MPI=ON pip install --no-binary=:all: qupled
 
 
 Install from source

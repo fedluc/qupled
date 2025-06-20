@@ -4,9 +4,19 @@ on:
   workflow_call:
 
 jobs:
-  build-macos-wheels-arm64:
-    name: Build macOS arm64 wheels
-    runs-on: macos-latest
+  build-macos-wheels:
+    name: Build macOS wheels (${{ matrix.arch }})
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-latest
+            deployment_target: "14.0"
+          - arch: x86_64
+            runner: macos-13
+            deployment_target: "13.0"
+
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout source code
@@ -35,11 +45,11 @@ jobs:
         run: cibuildwheel --output-dir wheelhouse
         env:
           CIBW_PLATFORM: macos
-          CIBW_ARCHS_MACOS: arm64
-          MACOSX_DEPLOYMENT_TARGET: "14.0"
+          CIBW_ARCHS_MACOS: ${{ matrix.arch }}
+          MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-macos-arm64
+          name: wheels-macos-${{ matrix.arch }}
           path: wheelhouse/*.whl
