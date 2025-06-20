@@ -1,5 +1,6 @@
 #include "input.hpp"
 #include "mpi_util.hpp"
+#include <algorithm>
 #include <cmath>
 
 using namespace std;
