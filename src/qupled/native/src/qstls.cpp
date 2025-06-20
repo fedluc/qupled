@@ -1,10 +1,10 @@
 #include "qstls.hpp"
+#include "format.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <cstring>
-#include <format>
 
 using namespace std;
 using namespace vecUtil;
@@ -19,7 +19,7 @@ using Itg2DParam = Integrator2D::Param;
 Qstls::Qstls(const std::shared_ptr<const QstlsInput> &in_, const bool verbose_)
     : Stls(in_, verbose_) {
   // Set name for the fixed adr output file
-  adrFixedDatabaseName = format("{}", in().getTheory());
+  adrFixedDatabaseName = formatUtil::format("{}", in().getTheory());
   // Allocate arrays
   const size_t nx = wvg.size();
   const size_t nl = in().getNMatsubara();
@@ -107,16 +107,16 @@ void Qstls::writeAdrFixed(const Vector3D &res, const string &name) const {
     SQLite::Database db(dbInfo.name,
                         SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE);
     // Create table if it doesn't exist
-    const string createTable = format(QstlsUtil::SQL_CREATE_TABLE,
-                                      QstlsUtil::SQL_TABLE_NAME,
-                                      dbInfo.runTableName);
+    const string createTable = formatUtil::format(QstlsUtil::SQL_CREATE_TABLE,
+                                                  QstlsUtil::SQL_TABLE_NAME,
+                                                  dbInfo.runTableName);
     db.exec(createTable);
     // Prepare binary data
     const void *adrData = static_cast<const void *>(res.data());
     const int adrSize = static_cast<int>(res.size() * sizeof(double));
     // Insert data
     const string insert =
-        format(QstlsUtil::SQL_INSERT, QstlsUtil::SQL_TABLE_NAME);
+        formatUtil::format(QstlsUtil::SQL_INSERT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, insert);
     statement.bind(1, dbInfo.runId);
     statement.bind(2, name);
@@ -132,7 +132,7 @@ void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
     DatabaseInfo dbInfo = in().getDatabaseInfo();
     SQLite::Database db(dbInfo.name, SQLite::OPEN_READONLY);
     const string select =
-        format(QstlsUtil::SQL_SELECT, QstlsUtil::SQL_TABLE_NAME);
+        formatUtil::format(QstlsUtil::SQL_SELECT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, select);
     statement.bind(1, runId);
     statement.bind(2, name);
@@ -140,9 +140,10 @@ void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
       const void *adrData = statement.getColumn(0).getBlob();
       int adrBytes = statement.getColumn(0).getBytes();
       if (static_cast<size_t>(adrBytes) != res.size() * sizeof(double)) {
-        throwError(format("Size mismatch: expected {} bytes, got {} bytes",
-                          res.size() * sizeof(double),
-                          adrBytes));
+        throwError(
+            formatUtil::format("Size mismatch: expected {} bytes, got {} bytes",
+                               res.size() * sizeof(double),
+                               adrBytes));
       }
       memcpy(res.data(), adrData, adrBytes);
     }

@@ -1,4 +1,5 @@
 #include "qstlsiet.hpp"
+#include "format.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
@@ -6,7 +7,6 @@
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <filesystem>
-#include <format>
 #include <numeric>
 
 using namespace std;
@@ -75,7 +75,7 @@ void QstlsIet::computeLfc() {
     shared_ptr<Integrator2D> itgPrivate =
         make_shared<Integrator2D>(in().getIntError());
     Vector3D adrFixedPrivate(nl, nx, nx);
-    const string name = format("{}_{:d}", in().getTheory(), i);
+    const string name = formatUtil::format("{}_{:d}", in().getTheory(), i);
     const int runId = (in().getFixedRunId() != DEFAULT_INT)
                           ? in().getFixedRunId()
                           : in().getDatabaseInfo().runId;
@@ -124,7 +124,7 @@ void QstlsIet::computeAdrFixed() {
     gatherLoopData(res.data(), loopData, nx * nx);
     if (isRoot()) {
       const size_t idx = distance(wvg.begin(), find(wvg.begin(), wvg.end(), x));
-      const string name = format("{}_{:d}", in().getTheory(), idx);
+      const string name = formatUtil::format("{}_{:d}", in().getTheory(), idx);
       writeAdrFixed(res, name);
     }
   }

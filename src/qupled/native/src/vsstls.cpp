@@ -3,7 +3,6 @@
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
-#include <format>
 
 using namespace std;
 

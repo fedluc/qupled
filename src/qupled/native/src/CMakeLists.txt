@@ -16,6 +16,17 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(pybind11)
 
+# Setup fmt (only for macOS)
+if(APPLE)
+  message(STATUS "Configuring fmt for macOS")
+  FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 10.2.1
+  )
+  FetchContent_MakeAvailable(fmt)
+endif()
+
 # Setup MPI environment
 option(USE_MPI "Compile with MPI support" ON)
 if(USE_MPI)
@@ -74,9 +85,6 @@ target_include_directories(native PUBLIC
 )
 
 # Link external libraries
-if(USE_MPI)
-	target_link_libraries(native PUBLIC MPI::MPI_CXX)
-endif()
 target_link_libraries(native PUBLIC
 	OpenMP::OpenMP_CXX
 	GSL::gsl
@@ -84,6 +92,12 @@ target_link_libraries(native PUBLIC
 	SQLiteCpp
 	SQLite::SQLite3
 )
+if(USE_MPI)
+	target_link_libraries(native PUBLIC MPI::MPI_CXX)
+endif()
+if(APPLE)
+	target_link_libraries(native PUBLIC fmt::fmt)
+endif()
 
 # Install
 install(TARGETS native

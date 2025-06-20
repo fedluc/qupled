@@ -1,10 +1,10 @@
 #include "stls.hpp"
+#include "format.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
-#include <format>
 #include <sstream>
 
 using namespace std;
@@ -52,9 +52,9 @@ void Stls::computeStructuralProperties() {
     // End timing
     double toc = timer();
     // Print diagnostic
-    println(format("--- iteration {:d} ---", counter));
-    println(format("Elapsed time: {:.3f} seconds", toc - tic));
-    println(format("Residual error: {:.5e}", err));
+    println(formatUtil::format("--- iteration {:d} ---", counter));
+    println(formatUtil::format("Elapsed time: {:.3f} seconds", toc - tic));
+    println(formatUtil::format("Residual error: {:.5e}", err));
     fflush(stdout);
   }
 }

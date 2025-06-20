@@ -1,11 +1,11 @@
 #include "qvsstls.hpp"
+#include "format.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
 #include <filesystem>
-#include <format>
 
 using namespace std;
 using namespace vecUtil;
@@ -173,9 +173,15 @@ QstlsCSR::QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_)
 void QstlsCSR::init() {
   const string &theory = inRpa().getTheory();
   switch (lfcTheta.type) {
-  case CENTERED: adrFixedDatabaseName = format("{}_THETA", theory); break;
-  case FORWARD: adrFixedDatabaseName = format("{}_THETA_DOWN", theory); break;
-  case BACKWARD: adrFixedDatabaseName = format("{}_THETA_UP", theory); break;
+  case CENTERED:
+    adrFixedDatabaseName = formatUtil::format("{}_THETA", theory);
+    break;
+  case FORWARD:
+    adrFixedDatabaseName = formatUtil::format("{}_THETA_DOWN", theory);
+    break;
+  case BACKWARD:
+    adrFixedDatabaseName = formatUtil::format("{}_THETA_UP", theory);
+    break;
   }
   Qstls::init();
 }

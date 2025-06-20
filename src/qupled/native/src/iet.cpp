@@ -1,7 +1,7 @@
 #include "iet.hpp"
+#include "format.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
-#include <format>
 
 using namespace std;
 using namespace MPIUtil;
@@ -105,11 +105,12 @@ double IetUtil::BridgeFunction::ioi() const {
   const double b0 = 0.258 - 0.0612 * lnG + 0.0123 * lnG2 - 1.0 / Gamma;
   const double b1 = 0.0269 + 0.0318 * lnG + 0.00814 * lnG2;
   if (b0 / b1 <= 0.0 || Gamma < 5.25 || Gamma > 171.8) {
-    const string msg = format("The IET schemes cannot be applied "
-                              "to this state point because Gamma = {:.8f} "
-                              "falls outside the range of validty of the "
-                              "bridge function parameterization\n",
-                              Gamma);
+    const string msg =
+        formatUtil::format("The IET schemes cannot be applied "
+                           "to this state point because Gamma = {:.8f} "
+                           "falls outside the range of validty of the "
+                           "bridge function parameterization\n",
+                           Gamma);
     throwError(msg);
   }
   const double c1 = 0.498 - 0.280 * lnG + 0.0294 * lnG2;
@@ -170,11 +171,12 @@ double IetUtil::BridgeFunction::lct() const {
 double IetUtil::BridgeFunction::lctIntegrand(const double &r,
                                              const double &Gamma) const {
   if (Gamma < 5.0) {
-    const string msg = format("The IET schemes cannot be applied "
-                              "to this state point because Gamma = {:.3f} "
-                              "falls outside the range of validty of the "
-                              "bridge function parameterization\n",
-                              Gamma);
+    const string msg =
+        formatUtil::format("The IET schemes cannot be applied "
+                           "to this state point because Gamma = {:.3f} "
+                           "falls outside the range of validty of the "
+                           "bridge function parameterization\n",
+                           Gamma);
     throwError(msg);
   }
   const double Gamma1_6 = pow(Gamma, 1. / 6.);
