@@ -398,10 +398,10 @@ void StructPropBase::doIterations() {
     }
     counter++;
   }
-  println(format("Alpha = {:.5e}, Residual error "
-                 "(structural properties) = {:.5e}",
-                 csr[RS_THETA]->getAlpha(),
-                 err));
+  println(formatUtil::format("Alpha = {:.5e}, Residual error "
+                             "(structural properties) = {:.5e}",
+                             csr[RS_THETA]->getAlpha(),
+                             err));
 }
 
 void StructPropBase::setAlpha(const double &alpha) {
