@@ -9,8 +9,8 @@ jobs:
     strategy:
       matrix:
         include:
-          # - arch: arm64
-          #   runner: macos-latest
+          - arch: arm64
+            runner: macos-latest
           - arch: x86_64
             runner: macos-13
 
@@ -44,7 +44,7 @@ jobs:
         env:
           CIBW_PLATFORM: macos
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}
-          # MACOSX_DEPLOYMENT_TARGET: "14.0"
+          MACOSX_DEPLOYMENT_TARGET: "13.0"
 
       - name: Upload built wheels
         uses: actions/upload-artifact@v4
