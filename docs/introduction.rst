@@ -51,7 +51,7 @@ This will also install all the python packages that are necessary for running th
 Install with MPI support
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you need to use qupled with MPI support, first install the  :ref:`external_dependencies` and then run:
+If you need to use qupled with MPI support, first install the  :ref:`external_dependencies` and then run
 
 .. code-block:: console
 
@@ -62,13 +62,24 @@ Install from source
 ~~~~~~~~~~~~~~~~~~~
 
 If you want full control over your qupled installation, you can install it also directly from the source.
-Install the :ref:`external_dependencies` first, then clone the repository and run the following commands:
+Start by cloning the respository
 
 .. code-block:: console
 
    git clone https://github.com/fedluc/qupled.git
    cd qupled
+
+
+Then Install the :ref:`external_dependencies` with
+
+.. code-block:: console
+
    ./devtool install-deps
+
+and finally build, test and install qupled with 
+
+.. code-block:: console
+
    ./devtool build
    ./devtool test
    ./devtool install
@@ -79,13 +90,16 @@ External dependencies
 ~~~~~~~~~~~~~~~~~~~~~
 
 Installing qupled may require compiling some C++ code, depending on the platform and installation method.
-The following dependencies must be met before attempting to build the C++ part of qupled:
+The following dependencies must be met before attempting to build the C++ part of qupled
 
   - `CMake <https://cmake.org/download/>`_
-  - `fmt <https://github.com/fmtlib/fmt>`_
   - `GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
   - `OpenMP <https://en.wikipedia.org/wiki/OpenMP>`_
-  - `Open-MPI <https://www.open-mpi.org/software/ompi/v5.0/>`_
+  - `SQLiteCpp <https://github.com/SRombauts/SQLiteCpp>`_
+  - `Open-MPI <https://www.open-mpi.org/software/ompi/v5.0/>`_ (only if you want MPI support)
+
+The installation of these dependencies can be done in different ways depending on the platform you are using.
+For example, on Ubuntu, Debian-based and macOS systems, you can use the following commands:
 
 **Ubuntu or Debian-based systems**
 
