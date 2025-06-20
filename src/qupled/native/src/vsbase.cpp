@@ -1,9 +1,9 @@
 #include "vsbase.hpp"
+#include "format.hpp"
 #include "input.hpp"
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
-#include <format>
 
 using namespace std;
 
@@ -41,7 +41,7 @@ void VSBase::doIterations() {
   SecantSolver rsol(in().getErrMinAlpha(), in().getNIterAlpha());
   rsol.solve(func, in().getAlphaGuess());
   alpha = rsol.getSolution();
-  println(format("Free parameter = {:.5f}", alpha));
+  println(formatUtil::format("Free parameter = {:.5f}", alpha));
   updateSolution();
 }
 
