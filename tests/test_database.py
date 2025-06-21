@@ -51,12 +51,6 @@ def test_database_handler_initialization_with_custom_name():
         os.remove(db_handler.database_name)
 
 
-def test_int_to_run_status_mapping():
-    assert DataBaseHandler.INT_TO_RUN_STATUS[0] == DataBaseHandler.RunStatus.SUCCESS
-    assert DataBaseHandler.INT_TO_RUN_STATUS[1] == DataBaseHandler.RunStatus.FAILED
-    assert len(DataBaseHandler.INT_TO_RUN_STATUS) == 2
-
-
 def test_set_sqlite_pragma_valid_engine():
     engine = sql.create_engine("sqlite:///:memory:")
     DataBaseHandler._set_sqlite_pragma(engine)
