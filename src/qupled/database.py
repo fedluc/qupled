@@ -42,11 +42,6 @@ class DataBaseHandler:
         SUCCESS = "SUCCESS"
         FAILED = "FAILED"
 
-    INT_TO_RUN_STATUS = {
-        0: RunStatus.SUCCESS,
-        1: RunStatus.FAILED,
-    }
-
     def __init__(self, database_name: str | None = None):
         """
         Initializes the DataBaseHandler instance.
@@ -149,26 +144,27 @@ class DataBaseHandler:
         rows = self._execute(statement).mappings().all()
         return [{key: row[key] for key in row.keys()} for row in rows]
 
-    def update_run_status(self, status: int) -> None:
+    def update_run_status(self, status: RunStatus) -> None:
         """
-        Updates the status of a run in the database.
+        Update the status of a run in the database.
 
         Args:
-            status (int): The new status code to update the run with. If the status
-                          code is not found in the INT_TO_RUN_STATUS mapping, the
-                          status will default to RunStatus.FAILED.
+            status (RunStatus): The new status to set for the run.
 
         Returns:
             None
+
+        Notes:
+            This method updates the status of the run identified by `self.run_id` in the run table.
+            If `self.run_id` is None, no update is performed.
         """
         if self.run_id is not None:
-            new_status = self.INT_TO_RUN_STATUS.get(status, self.RunStatus.FAILED)
             statement = (
                 sql.update(self.run_table)
                 .where(
                     self.run_table.c[self.TableKeys.PRIMARY_KEY.value] == self.run_id
                 )
-                .values({self.TableKeys.STATUS.value: new_status.value})
+                .values({self.TableKeys.STATUS.value: status.value})
             )
             self._execute(statement)
 

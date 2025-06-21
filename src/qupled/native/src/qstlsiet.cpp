@@ -128,8 +128,14 @@ void QstlsIet::computeAdrFixed() {
       writeAdrFixed(res, name);
     }
   }
-  // TODO: Check that all ranks can access the database
+  // Check that all ranks can access the database
   barrier();
+  DatabaseInfo dbInfo = in().getDatabaseInfo();
+  bool dbExists = std::filesystem::exists(dbInfo.name);
+  if (!dbExists) {
+    throwError(formatUtil::format(
+        "Not all ranks can access the database file {}", dbInfo.name));
+  }
 }
 
 // -----------------------------------------------------------------
