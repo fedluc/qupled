@@ -66,7 +66,8 @@ class HF:
         if self.results is not None:
             self.results.compute_rdf(rdf_grid)
             self.db_handler.insert_results(
-                {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid}
+                {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid},
+                conflict_mode=database.DataBaseHandler.ConflictMode.UPDATE,
             )
 
     def _add_run_to_database(self):

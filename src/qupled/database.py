@@ -42,6 +42,10 @@ class DataBaseHandler:
         SUCCESS = "SUCCESS"
         FAILED = "FAILED"
 
+    class ConflictMode(Enum):
+        FAIL = "FAIL"
+        UPDATE = "UPDATE"
+
     def __init__(self, database_name: str | None = None):
         """
         Initializes the DataBaseHandler instance.
@@ -110,7 +114,11 @@ class DataBaseHandler:
             self._insert_from_dict(self.input_table, inputs, sql_mapping)
 
     @mpi.MPI.run_only_on_root
-    def insert_results(self, results: dict[str, any]):
+    def insert_results(
+        self,
+        results: dict[str, any],
+        conflict_mode: ConflictMode = ConflictMode.FAIL,
+    ):
         """
         Inserts the given results into the database table associated with this instance.
 
@@ -125,7 +133,9 @@ class DataBaseHandler:
         """
         if self.run_id is not None:
             sql_mapping = lambda value: (self._to_bytes(value))
-            self._insert_from_dict(self.result_table, results, sql_mapping)
+            self._insert_from_dict(
+                self.result_table, results, sql_mapping, conflict_mode
+            )
 
     def inspect_runs(self) -> list[dict[str, any]]:
         """
@@ -457,7 +467,11 @@ class DataBaseHandler:
 
     @mpi.MPI.run_only_on_root
     def _insert_from_dict(
-        self, table, data: dict[str, any], sql_mapping: Callable[[any], any]
+        self,
+        table,
+        data: dict[str, any],
+        sql_mapping: Callable[[any], any],
+        conflict_mode: ConflictMode = ConflictMode.FAIL,
     ) -> None:
         """
         Inserts data into a specified table by mapping values through a provided SQL mapping function.
@@ -472,10 +486,48 @@ class DataBaseHandler:
         """
         for name, value in data.items():
             if mapped_value := sql_mapping(value):
-                self._insert(table, name, mapped_value)
+                self._insert(table, name, mapped_value, conflict_mode)
 
     @mpi.MPI.run_only_on_root
-    def _insert(self, table: sql.Table, name: str, value: any):
+    def _insert(
+        self,
+        table: sql.Table,
+        name: str,
+        value: any,
+        conflict_mode: ConflictMode = ConflictMode.FAIL,
+    ):
+        """
+        Inserts a record into the specified SQL table with the given name and value, handling conflicts according to the specified mode.
+        Args:
+            table (sql.Table): The SQLAlchemy table object where the record will be inserted.
+            name (str): The name/key associated with the value to insert.
+            value (any): The value to be inserted into the table.
+            conflict_mode (ConflictMode, optional): Specifies how to handle conflicts on unique constraints.
+                Defaults to ConflictMode.FAIL. If set to ConflictMode.UPDATE, existing records with the same
+                run_id and name will be updated with the new value.
+        Returns:
+            None
+        Raises:
+            Any exceptions raised by the underlying database execution.
+        """
+        data = {
+            self.TableKeys.RUN_ID.value: self.run_id,
+            self.TableKeys.NAME.value: name,
+            self.TableKeys.VALUE.value: value,
+        }
+        statement = sqlite_insert(table).values(data)
+        if conflict_mode == self.ConflictMode.UPDATE:
+            statement = statement.on_conflict_do_update(
+                index_elements=[
+                    self.TableKeys.RUN_ID.value,
+                    self.TableKeys.NAME.value,
+                ],
+                set_={self.TableKeys.VALUE.value: value},
+            )
+        self._execute(statement)
+
+    @mpi.MPI.run_only_on_root
+    def _insert_with_update(self, table: sql.Table, name: str, value: any):
         """
         Inserts a record into the specified SQL table or updates it if a conflict occurs.
 
