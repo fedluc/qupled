@@ -12,6 +12,11 @@ class HF:
     Class used to solve the HF scheme.
     """
 
+    NATIVE_TO_RUN_STATUS = {
+        0: database.DataBaseHandler.RunStatus.SUCCESS,
+        1: database.DataBaseHandler.RunStatus.FAILED,
+    }
+
     def __init__(self):
         self.inputs: Input = None
         """The inputs used to solve the scheme. Default = ``None``"""
@@ -99,7 +104,10 @@ class HF:
         This method updates the run status in the database using the current
         native scheme status and inserts the results into the database.
         """
-        self.db_handler.update_run_status(self.native_scheme_status)
+        run_status = self.NATIVE_TO_RUN_STATUS.get(
+            self.native_scheme_status, database.DataBaseHandler.RunStatus.FAILED
+        )
+        self.db_handler.update_run_status(run_status)
         self.db_handler.insert_results(self.results.__dict__)
 
 

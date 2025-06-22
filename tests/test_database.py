@@ -51,12 +51,6 @@ def test_database_handler_initialization_with_custom_name():
         os.remove(db_handler.database_name)
 
 
-def test_int_to_run_status_mapping():
-    assert DataBaseHandler.INT_TO_RUN_STATUS[0] == DataBaseHandler.RunStatus.SUCCESS
-    assert DataBaseHandler.INT_TO_RUN_STATUS[1] == DataBaseHandler.RunStatus.FAILED
-    assert len(DataBaseHandler.INT_TO_RUN_STATUS) == 2
-
-
 def test_set_sqlite_pragma_valid_engine():
     engine = sql.create_engine("sqlite:///:memory:")
     DataBaseHandler._set_sqlite_pragma(engine)
@@ -137,32 +131,16 @@ def test_inspect_runs(mocker, db_handler):
     assert runs == mock_runs
 
 
-def test_update_run_status_with_valid_status(mocker, db_handler):
+def test_update_run_status_with_run_id(mocker, db_handler):
     db_handler.run_id = 1
-    status = 0
-    new_status = DataBaseHandler.RunStatus.SUCCESS
+    status = DataBaseHandler.RunStatus.SUCCESS
     sql_update = mocker.patch("sqlalchemy.update")
     statement = sql_update.return_value.where.return_value.values.return_value
     execute = mocker.patch.object(db_handler, "_execute")
     db_handler.update_run_status(status)
     sql_update.assert_called_once_with(db_handler.run_table)
     sql_update.return_value.where.return_value.values.assert_called_once_with(
-        {DataBaseHandler.TableKeys.STATUS.value: new_status.value}
-    )
-    execute.assert_called_once_with(statement)
-
-
-def test_update_run_status_with_invalid_status(mocker, db_handler):
-    db_handler.run_id = 1
-    status = 999
-    new_status = DataBaseHandler.RunStatus.FAILED
-    sql_update = mocker.patch("sqlalchemy.update")
-    statement = sql_update.return_value.where.return_value.values.return_value
-    execute = mocker.patch.object(db_handler, "_execute")
-    db_handler.update_run_status(status)
-    sql_update.assert_called_once_with(db_handler.run_table)
-    sql_update.return_value.where.return_value.values.assert_called_once_with(
-        {DataBaseHandler.TableKeys.STATUS.value: new_status.value}
+        {DataBaseHandler.TableKeys.STATUS.value: status.value}
     )
     execute.assert_called_once_with(statement)
 

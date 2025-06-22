@@ -24,6 +24,12 @@ def scheme(mocker):
     return scheme
 
 
+def test_native_to_run_status_mapping():
+    assert hf.HF.NATIVE_TO_RUN_STATUS[0] == DataBaseHandler.RunStatus.SUCCESS
+    assert hf.HF.NATIVE_TO_RUN_STATUS[1] == DataBaseHandler.RunStatus.FAILED
+    assert len(hf.HF.NATIVE_TO_RUN_STATUS) == 2
+
+
 def test_hf_initialization():
     scheme = hf.HF()
     assert scheme.inputs is None
@@ -88,7 +94,9 @@ def test_save(scheme, results, mocker):
     scheme.native_scheme_status = mocker.Mock()
     scheme._save()
     scheme.db_handler.update_run_status.assert_called_once_with(
-        scheme.native_scheme_status
+        hf.HF.NATIVE_TO_RUN_STATUS.get(
+            scheme.native_scheme_status, DataBaseHandler.RunStatus.FAILED
+        )
     )
     scheme.db_handler.insert_results.assert_called_once_with(scheme.results.__dict__)
 
