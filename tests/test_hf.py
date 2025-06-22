@@ -111,7 +111,7 @@ def test_compute_rdf_with_default_grid(scheme, results, mocker):
             "rdf": scheme.results.rdf,
             "rdf_grid": scheme.results.rdf_grid,
         },
-        conflict_mode=DataBaseHandler.ConflictMode.UPDATE
+        conflict_mode=DataBaseHandler.ConflictMode.UPDATE,
     )
 
 
@@ -126,7 +126,7 @@ def test_compute_rdf_with_custom_grid(scheme, results, mocker):
             "rdf": scheme.results.rdf,
             "rdf_grid": scheme.results.rdf_grid,
         },
-        conflict_mode=DataBaseHandler.ConflictMode.UPDATE
+        conflict_mode=DataBaseHandler.ConflictMode.UPDATE,
     )
 
 
