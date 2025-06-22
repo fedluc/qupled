@@ -386,6 +386,8 @@ class DataBaseHandler:
             sql.PrimaryKeyConstraint(
                 self.TableKeys.RUN_ID.value, self.TableKeys.NAME.value
             ),
+            sql.Index(f"idx_{table_name}_run_id", self.TableKeys.RUN_ID.value),
+            sql.Index(f"idx_{table_name}_name", self.TableKeys.NAME.value),
         )
         self._create_table(table)
         return table
@@ -450,6 +452,7 @@ class DataBaseHandler:
         def _set_pragma(dbapi_connection, connection_record):
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.execute("PRAGMA journal_mode=WAL")
             cursor.close()
 
     @mpi.MPI.run_only_on_root
