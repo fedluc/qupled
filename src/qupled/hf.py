@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import json
+import subprocess
+from pathlib import Path
+
 import numpy as np
 
 from . import database
@@ -12,10 +16,15 @@ class HF:
     Class used to solve the HF scheme.
     """
 
+    # Mapping of native scheme status to run status in the database
     NATIVE_TO_RUN_STATUS = {
         0: database.DataBaseHandler.RunStatus.SUCCESS,
         1: database.DataBaseHandler.RunStatus.FAILED,
     }
+
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.HF
+    native_inputs_cls = native.Input
 
     def __init__(self):
         self.inputs: Input = None
@@ -24,8 +33,6 @@ class HF:
         """The results obtained by solving the scheme"""
         # Undocumented properties
         self.db_handler = database.DataBaseHandler()
-        self.native_scheme_cls = native.HF
-        self.native_inputs_cls = native.Input
         self.native_scheme_status = None
 
     @property
@@ -96,6 +103,17 @@ class HF:
         scheme = self.native_scheme_cls(native_inputs)
         self.native_scheme_status = scheme.compute()
         self.results.from_native(scheme)
+
+    def _compute_native_new(self):
+        input_dict = self.inputs.to_dict()
+        input_path = Path("input.json")
+        result_path = Path("results.json")
+        with input_path.open("w") as f:
+            json.dump(input_dict, f)
+        subprocess.run(["mpiexec", "-n", "4", "python", "mpi_worker.py"], check=True)
+        with result_path.open() as f:
+            result_dict = json.load(f)
+        self.results = Result.from_dict(result_dict)
 
     @mpi.MPI.run_only_on_root
     def _save(self):
@@ -311,3 +329,9 @@ class DatabaseInfo(SerializableMixin):
         for key, value in d.items():
             setattr(obj, key, value)
         return obj
+
+
+if __name__ == "__main__":
+    from .mpi_worker import run_mpi_worker
+
+    run_mpi_worker(Input, Result, HF.native_inputs_cls, HF.native_scheme_cls)

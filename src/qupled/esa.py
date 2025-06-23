@@ -9,6 +9,9 @@ class ESA(hf.HF):
     Class used to solve the ESA scheme.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.ESA
+
     def __init__(self):
         super().__init__()
         self.results: hf.Result = hf.Result()
@@ -25,3 +28,9 @@ class Input(hf.Input):
         super().__init__(coupling, degeneracy)
         # Undocumented default values
         self.theory = "ESA"
+
+
+if __name__ == "__main__":
+    from .mpi_worker import run_mpi_worker
+
+    run_mpi_worker(Input, hf.Result, ESA.native_inputs_cls, ESA.native_scheme_cls)

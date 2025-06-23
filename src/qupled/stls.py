@@ -13,12 +13,13 @@ class Stls(rpa.Rpa):
     Class used to solve the Stls scheme.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.Stls
+    native_inputs_cls = native.StlsInput
+
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
-        # Undocumented properties
-        self.native_scheme_cls = native.Stls
-        self.native_inputs_cls = native.StlsInput
 
     @staticmethod
     def get_initial_guess(run_id: int, database_name: str | None = None) -> Guess:
@@ -92,3 +93,9 @@ class Guess:
             if value is not None:
                 setattr(native_guess, attr, value)
         return native_guess
+
+
+if __name__ == "__main__":
+    from .mpi_worker import run_mpi_worker
+
+    run_mpi_worker(Input, Result, Stls.native_inputs_cls, Stls.native_scheme_cls)
