@@ -112,7 +112,20 @@ class HF:
         self.db_handler.insert_results(self.results.__dict__)
 
 
-class Input:
+class SerializableMixin:
+    def to_dict(self):
+        result = {}
+        for key, value in self.__dict__.items():
+            if hasattr(value, "to_dict") and callable(value.to_dict):
+                result[key] = value.to_dict()
+            elif isinstance(value, np.ndarray):
+                result[key] = value.tolist()
+            else:
+                result[key] = value
+        return result
+
+
+class Input(SerializableMixin):
     """
     Class used to store the inputs for the :obj:`qupled.hf.HF` class.
     """
@@ -184,8 +197,19 @@ class Input:
                 )
                 setattr(native_input, attr, value_to_set)
 
+    @classmethod
+    def from_dict(cls, d):
+        obj = cls.__new__(cls)
+        for key, value in d.items():
+            if key == "database_info" and isinstance(value, dict):
+                obj.database_info = DatabaseInfo.from_dict(value)
+            else:
+                setattr(obj, key, value)
 
-class Result:
+        return obj
+
+
+class Result(SerializableMixin):
     """
     Class used to store the results for the :obj:`qupled.hf.HF` class.
     """
@@ -224,6 +248,16 @@ class Result:
                 value = getattr(native_scheme, attr)
                 setattr(self, attr, value) if value is not None else None
 
+    @classmethod
+    def from_dict(cls, d):
+        obj = cls.__new__(cls)
+        for key, value in d.items():
+            if isinstance(value, list):  # assume these were NumPy arrays
+                setattr(obj, key, np.array(value))
+            else:
+                setattr(obj, key, value)
+        return obj
+
     def compute_rdf(self, rdf_grid: np.ndarray | None = None):
         """
         Compute the radial distribution function (RDF) for the system.
@@ -243,7 +277,7 @@ class Result:
             self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)
 
 
-class DatabaseInfo:
+class DatabaseInfo(SerializableMixin):
     """
     Class used to store the database information passed to the native code.
     """
@@ -270,3 +304,10 @@ class DatabaseInfo:
             if value is not None:
                 setattr(native_database_info, attr, value)
         return native_database_info
+
+    @classmethod
+    def from_dict(cls, d):
+        obj = cls.__new__(cls)
+        for key, value in d.items():
+            setattr(obj, key, value)
+        return obj
