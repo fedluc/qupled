@@ -20,6 +20,7 @@ class Stls(rpa.Rpa):
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
+        self.module_name = __name__
 
     @staticmethod
     def get_initial_guess(run_id: int, database_name: str | None = None) -> Guess:
@@ -50,8 +51,8 @@ class Input(rpa.Input):
         self.mixing: float = 1.0
         """Mixing parameter. Default = ``1.0``"""
         self.iterations: int = 1000
-        """Maximum number of iterations. Default = ``1000``"""
-        self.guess: Guess = Guess()
+        # """Maximum number of iterations. Default = ``1000``"""
+        # self.guess: Guess = Guess()
         """Initial guess. Default = ``stls.Guess()``"""
         # Undocumented default values
         self.theory: str = "STLS"
@@ -68,7 +69,7 @@ class Result(hf.Result):
         """Residual error in the solution"""
 
 
-class Guess:
+class Guess(hf.SerializableMixin):
 
     def __init__(self, wvg: np.ndarray = None, ssf: np.ndarray = None):
         self.wvg = wvg
@@ -93,6 +94,16 @@ class Guess:
             if value is not None:
                 setattr(native_guess, attr, value)
         return native_guess
+
+    @classmethod
+    def from_dict(cls, d):
+        obj = cls.__new__(cls)
+        for key, value in d.items():
+            if isinstance(value, list):  # assume these were NumPy arrays
+                setattr(obj, key, np.array(value))
+            else:
+                setattr(obj, key, value)
+        return obj
 
 
 if __name__ == "__main__":

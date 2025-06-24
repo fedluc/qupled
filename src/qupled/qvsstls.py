@@ -10,12 +10,13 @@ class QVSStls(vsstls.VSStls):
     Class used to solve the QVStls scheme.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.QVSStls
+    native_inputs_cls = native.QVSStlsInput
+
     def __init__(self):
         super().__init__()
         self.results: vsstls.Result = vsstls.Result()
-        # Undocumented properties
-        self.native_scheme_cls = native.QVSStls
-        self.native_inputs_cls = native.QVSStlsInput
 
     def compute(self, inputs: Input):
         """
@@ -57,3 +58,11 @@ class Input(vsstls.Input, qstls.Input):
         qstls.Input.__init__(self, coupling, degeneracy)
         # Undocumented default values
         self.theory: str = "QVSSTLS"
+
+
+if __name__ == "__main__":
+    from .mpi_worker import run_mpi_worker
+
+    run_mpi_worker(
+        Input, vsstls.Result, QVSStls.native_inputs_cls, QVSStls.native_scheme_cls
+    )

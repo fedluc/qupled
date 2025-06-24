@@ -10,12 +10,13 @@ class Qstls(stls.Stls):
     Class used to solve the Qstls scheme.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.Qstls
+    native_inputs_cls = native.QstlsInput
+
     def __init__(self):
         super().__init__()
         self.results: stls.Result = stls.Result()
-        # Undocumented properties
-        self.native_scheme_cls = native.Qstls
-        self.native_inputs_cls = native.QstlsInput
 
     def compute(self, inputs: Input):
         self.find_fixed_adr_in_database(inputs)
@@ -66,3 +67,9 @@ class Input(stls.Input):
         # Undocumented default values
         self.fixed_run_id: int | None = None
         self.theory = "QSTLS"
+
+
+if __name__ == "__main__":
+    from .mpi_worker import run_mpi_worker
+
+    run_mpi_worker(Input, stls.Result, Qstls.native_inputs_cls, Qstls.native_scheme_cls)

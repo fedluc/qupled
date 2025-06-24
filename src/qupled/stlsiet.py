@@ -12,11 +12,13 @@ class StlsIet(stls.Stls):
     Class used to solve the StlsIet schemes.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.StlsIet
+    native_inputs_cls = native.StlsIetInput
+
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
-        self.native_scheme_cls = native.StlsIet
-        self.native_inputs_cls = native.StlsIetInput
 
     @staticmethod
     def get_initial_guess(run_id: str, database_name: str | None = None) -> Guess:
@@ -95,3 +97,9 @@ class Guess(stls.Guess):
         super().__init__(wvg, ssf)
         self.lfc = lfc
         """ Local field correction. Default = ``None``"""
+
+
+if __name__ == "__main__":
+    from .mpi_worker import run_mpi_worker
+
+    run_mpi_worker(Input, Result, StlsIet.native_inputs_cls, StlsIet.native_scheme_cls)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from . import hf
 from . import native
 from . import output
 from . import stls
@@ -12,12 +13,13 @@ class VSStls(stls.Stls):
     Class used to solve the VSStls scheme.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.VSStls
+    native_inputs_cls = native.VSStlsInput
+
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
-        # Undocumented properties
-        self.native_scheme_cls = native.VSStls
-        self.native_inputs_cls = native.VSStlsInput
 
     def compute(self, inputs: Input):
         """
@@ -171,7 +173,7 @@ class Result(stls.Result):
         """Free parameter"""
 
 
-class FreeEnergyIntegrand:
+class FreeEnergyIntegrand(hf.SerializableMixin):
 
     def __init__(
         self,
@@ -201,3 +203,19 @@ class FreeEnergyIntegrand:
             if value is not None:
                 setattr(native_guess, attr, value)
         return native_guess
+
+    @classmethod
+    def from_dict(cls, d):
+        obj = cls.__new__(cls)
+        for key, value in d.items():
+            if isinstance(value, list):  # assume these were NumPy arrays
+                setattr(obj, key, np.array(value))
+            else:
+                setattr(obj, key, value)
+        return obj
+
+
+if __name__ == "__main__":
+    from .mpi_worker import run_mpi_worker
+
+    run_mpi_worker(Input, Result, VSStls.native_inputs_cls, VSStls.native_scheme_cls)

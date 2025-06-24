@@ -34,6 +34,7 @@ class HF:
         # Undocumented properties
         self.db_handler = database.DataBaseHandler()
         self.native_scheme_status = None
+        self.module_name = __name__
 
     @property
     def run_id(self):
@@ -56,7 +57,7 @@ class HF:
         """
         self.inputs = inputs
         self._add_run_to_database()
-        self._compute_native()
+        self._compute_native_new()
         self._save()
 
     @mpi.MPI.run_only_on_root
@@ -110,7 +111,9 @@ class HF:
         result_path = Path("results.json")
         with input_path.open("w") as f:
             json.dump(input_dict, f)
-        subprocess.run(["mpiexec", "-n", "4", "python", "mpi_worker.py"], check=True)
+        subprocess.run(
+            ["mpiexec", "-n", "1", "python", "-m", self.module_name], check=True
+        )
         with result_path.open() as f:
             result_dict = json.load(f)
         self.results = Result.from_dict(result_dict)
@@ -237,10 +240,10 @@ class Result(SerializableMixin):
         """Ideal density response"""
         self.lfc: np.ndarray = None
         """Local field correction"""
-        self.rdf: np.ndarray = None
-        """Radial distribution function"""
-        self.rdf_grid: np.ndarray = None
-        """Radial distribution function grid"""
+        # self.rdf: np.ndarray = None
+        # """Radial distribution function"""
+        # self.rdf_grid: np.ndarray = None
+        # """Radial distribution function grid"""
         self.sdr: np.ndarray = None
         """Static density response"""
         self.ssf: np.ndarray = None

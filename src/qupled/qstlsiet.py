@@ -10,11 +10,13 @@ class QstlsIet(qstls.Qstls):
     Class used to solve the Qstls-IET schemes.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.QstlsIet
+    native_inputs_cls = native.QstlsIetInput
+
     def __init__(self):
         super().__init__()
         self.results: stlsiet.Result = stlsiet.Result()
-        self.native_scheme_cls = native.QstlsIet
-        self.native_inputs_cls = native.QstlsIetInput
 
     @staticmethod
     def get_initial_guess(
@@ -35,3 +37,11 @@ class Input(stlsiet.Input, qstls.Input):
         if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
             raise ValueError("Invalid dielectric theory")
         self.theory = theory
+
+
+if __name__ == "__main__":
+    from .mpi_worker import run_mpi_worker
+
+    run_mpi_worker(
+        Input, stlsiet.Result, QstlsIet.native_inputs_cls, QstlsIet.native_scheme_cls
+    )
