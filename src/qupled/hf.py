@@ -34,7 +34,6 @@ class HF:
         # Undocumented properties
         self.db_handler = database.DataBaseHandler()
         self.native_scheme_status = None
-        self.module_name = __name__
 
     @property
     def run_id(self):
@@ -112,7 +111,7 @@ class HF:
         with input_path.open("w") as f:
             json.dump(input_dict, f)
         subprocess.run(
-            ["mpiexec", "-n", "1", "python", "-m", self.module_name], check=True
+            ["mpiexec", "-n", "1", "python", "-m", self.__module__], check=True
         )
         with result_path.open() as f:
             result_dict = json.load(f)
@@ -240,8 +239,8 @@ class Result(SerializableMixin):
         """Ideal density response"""
         self.lfc: np.ndarray = None
         """Local field correction"""
-        # self.rdf: np.ndarray = None
-        # """Radial distribution function"""
+        self.rdf: np.ndarray = None
+        """Radial distribution function"""
         # self.rdf_grid: np.ndarray = None
         # """Radial distribution function grid"""
         self.sdr: np.ndarray = None
@@ -267,7 +266,8 @@ class Result(SerializableMixin):
         for attr in self.__dict__.keys():
             if hasattr(native_scheme, attr):
                 value = getattr(native_scheme, attr)
-                setattr(self, attr, value) if value is not None else None
+                valid_value = value is not None and not callable(value)
+                setattr(self, attr, value) if valid_value else None
 
     @classmethod
     def from_dict(cls, d):

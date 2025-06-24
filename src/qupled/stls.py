@@ -20,7 +20,6 @@ class Stls(rpa.Rpa):
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
-        self.module_name = __name__
 
     @staticmethod
     def get_initial_guess(run_id: int, database_name: str | None = None) -> Guess:
