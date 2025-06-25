@@ -55,6 +55,7 @@ class Input(rpa.Input):
     """Initial guess. Default = ``stls.Guess()``"""
     theory: str = "STLS"
 
+
 @dataclass
 class Result(hf.Result):
     """
