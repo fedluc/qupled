@@ -103,12 +103,15 @@ def test_insert_results(mocker, db_handler):
     results = mocker.ANY
     db_handler.insert_results(results)
     insert_from_dict.assert_called_once()
-    called_table, called_results, called_mapper = insert_from_dict.call_args[0]
+    called_table, called_results, called_mapper, called_conflict_mode = (
+        insert_from_dict.call_args[0]
+    )
     assert called_table == db_handler.result_table
     assert called_results == results
     assert callable(called_mapper)
     assert called_mapper("value1") == "bytes(value1)"
     assert called_mapper(123) == "bytes(123)"
+    assert called_conflict_mode == DataBaseHandler.ConflictMode.FAIL
 
 
 def test_insert_results_without_run_id(mocker, db_handler):
@@ -372,8 +375,8 @@ def test_insert_from_dict_with_valid_data(mocker, db_handler):
     sql_mapping.assert_has_calls([mocker.call("value1"), mocker.call("value2")])
     insert.assert_has_calls(
         [
-            mocker.call(table, "key1", "mapped(value1)"),
-            mocker.call(table, "key2", "mapped(value2)"),
+            mocker.call(table, "key1", "mapped(value1)", mocker.ANY),
+            mocker.call(table, "key2", "mapped(value2)", mocker.ANY),
         ]
     )
     assert insert.call_count == 2
@@ -388,7 +391,29 @@ def test_insert_from_dict_with_empty_data(mocker, db_handler):
     insert.assert_not_called()
 
 
-def test_insert_with_new_entry(mocker, db_handler):
+def test_insert_with_conflict_mode_fail(mocker, db_handler):
+    table = mocker.ANY
+    name = "test_name"
+    value = "test_value"
+    run_id = 1
+    db_handler.run_id = run_id
+    sqlite_insert = mocker.patch("qupled.database.sqlite_insert")
+    statement = sqlite_insert.return_value.values.return_value
+    execute = mocker.patch.object(db_handler, "_execute")
+    db_handler._insert(table, name, value)
+    sqlite_insert.assert_called_once_with(table)
+    sqlite_insert.return_value.values.assert_called_once_with(
+        {
+            db_handler.TableKeys.RUN_ID.value: run_id,
+            db_handler.TableKeys.NAME.value: name,
+            db_handler.TableKeys.VALUE.value: value,
+        }
+    )
+    sqlite_insert.return_value.values.return_value.on_conflict_do_update.assert_not_called()
+    execute.assert_called_once_with(statement)
+
+
+def test_insert_with_conflic_mode_update(mocker, db_handler):
     table = mocker.ANY
     name = "test_name"
     value = "test_value"
@@ -399,7 +424,7 @@ def test_insert_with_new_entry(mocker, db_handler):
         sqlite_insert.return_value.values.return_value.on_conflict_do_update.return_value
     )
     execute = mocker.patch.object(db_handler, "_execute")
-    db_handler._insert(table, name, value)
+    db_handler._insert(table, name, value, DataBaseHandler.ConflictMode.UPDATE)
     sqlite_insert.assert_called_once_with(table)
     sqlite_insert.return_value.values.assert_called_once_with(
         {
@@ -605,20 +630,27 @@ def test_insert_results_without_run(db_handler, db_results):
     assert results == {}
 
 
-def test_update_inputs(db_handler, db_inputs):
+def test_update_inputs_integrity_error(db_handler, db_inputs):
     db_handler.insert_run(db_inputs)
-    new_theory = "new_theory"
-    db_inputs.theory = new_theory
-    db_handler.insert_inputs(db_inputs.__dict__)
-    inputs = db_handler.get_inputs(db_handler.run_id, None)
-    assert inputs["theory"] == new_theory
+    with pytest.raises(sql.exc.IntegrityError):
+        db_handler.insert_inputs(db_inputs.__dict__)
 
 
-def test_update_results(db_handler, db_inputs, db_results):
+def test_update_results_default(db_handler, db_inputs, db_results):
     db_handler.insert_run(db_inputs)
+    db_handler.insert_results(db_results.__dict__)
+    with pytest.raises(sql.exc.IntegrityError):
+        db_handler.insert_results(db_results.__dict__)
+
+
+def test_update_results_allow_update(db_handler, db_inputs, db_results):
+    db_handler.insert_run(db_inputs)
+    db_handler.insert_results(db_results.__dict__)
     new_data = db_results.data + np.ones(db_results.data.shape)
     db_results.data = new_data
-    db_handler.insert_results(db_results.__dict__)
+    db_handler.insert_results(
+        db_results.__dict__, conflict_mode=DataBaseHandler.ConflictMode.UPDATE
+    )
     results = db_handler.get_results(db_handler.run_id, None)
     assert (results["data"] == new_data).all()
 
