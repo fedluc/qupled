@@ -200,16 +200,6 @@ class FreeEnergyIntegrand(hf.SerializableMixin):
                 setattr(native_guess, attr, value)
         return native_guess
 
-    @classmethod
-    def from_dict(cls, d):
-        obj = cls.__new__(cls)
-        for key, value in d.items():
-            if isinstance(value, list):  # assume these were NumPy arrays
-                setattr(obj, key, np.array(value))
-            else:
-                setattr(obj, key, value)
-        return obj
-
 
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker

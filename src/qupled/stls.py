@@ -55,19 +55,6 @@ class Input(rpa.Input):
     """Initial guess. Default = ``stls.Guess()``"""
     theory: str = "STLS"
 
-    @classmethod
-    def from_dict(cls, d):
-        obj = cls.__new__(cls)
-        for key, value in d.items():
-            if key == "database_info" and isinstance(value, dict):
-                setattr(obj, key, hf.DatabaseInfo.from_dict(value))
-            elif key == "guess" and isinstance(value, dict):
-                setattr(obj, key, Guess.from_dict(value))
-            else:
-                setattr(obj, key, value)
-        return obj
-
-
 @dataclass
 class Result(hf.Result):
     """
@@ -101,16 +88,6 @@ class Guess(hf.SerializableMixin):
             if value is not None:
                 setattr(native_guess, attr, value)
         return native_guess
-
-    @classmethod
-    def from_dict(cls, d):
-        obj = cls.__new__(cls)
-        for key, value in d.items():
-            if isinstance(value, list):  # assume these were NumPy arrays
-                setattr(obj, key, np.array(value))
-            else:
-                setattr(obj, key, value)
-        return obj
 
 
 if __name__ == "__main__":

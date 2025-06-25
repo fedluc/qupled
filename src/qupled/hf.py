@@ -4,6 +4,7 @@ import json
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import get_type_hints
 
 import numpy as np
 
@@ -145,6 +146,25 @@ class SerializableMixin:
                 result[key] = value
         return result
 
+    @classmethod
+    def from_dict(cls, d):
+        obj = cls.__new__(cls)
+        annotations = get_type_hints(cls)
+        for key, value in d.items():
+            expected_type = annotations.get(key)
+            from_dict_fn = getattr(expected_type, "from_dict", None)
+            convert_to_np_array = expected_type is np.ndarray and isinstance(
+                value, list
+            )
+            call_from_dict = callable(from_dict_fn) and isinstance(value, dict)
+            if convert_to_np_array:
+                setattr(obj, key, np.array(value))
+            elif call_from_dict:
+                setattr(obj, key, from_dict_fn(value))
+            else:
+                setattr(obj, key, value)
+        return obj
+
 
 @dataclass
 class Input(SerializableMixin):
@@ -210,16 +230,6 @@ class Input(SerializableMixin):
                 )
                 setattr(native_input, attr, value_to_set)
 
-    @classmethod
-    def from_dict(cls, d):
-        obj = cls.__new__(cls)
-        for key, value in d.items():
-            if key == "database_info" and isinstance(value, dict):
-                setattr(obj, key, DatabaseInfo.from_dict(value))
-            else:
-                setattr(obj, key, value)
-        return obj
-
 
 @dataclass
 class Result(SerializableMixin):
@@ -260,16 +270,6 @@ class Result(SerializableMixin):
                 value = getattr(native_scheme, attr)
                 valid_value = value is not None and not callable(value)
                 setattr(self, attr, value) if valid_value else None
-
-    @classmethod
-    def from_dict(cls, d):
-        obj = cls.__new__(cls)
-        for key, value in d.items():
-            if isinstance(value, list):  # assume these were NumPy arrays
-                setattr(obj, key, np.array(value))
-            else:
-                setattr(obj, key, value)
-        return obj
 
     def compute_rdf(self, rdf_grid: np.ndarray | None = None):
         """
