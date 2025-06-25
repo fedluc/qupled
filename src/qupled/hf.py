@@ -215,7 +215,7 @@ class Input(SerializableMixin):
         obj = cls.__new__(cls)
         for key, value in d.items():
             if key == "database_info" and isinstance(value, dict):
-                obj.database_info = DatabaseInfo.from_dict(value)
+                setattr(obj, key, DatabaseInfo.from_dict(value))
             else:
                 setattr(obj, key, value)
         return obj
@@ -295,6 +295,7 @@ class DatabaseInfo(SerializableMixin):
     """
     Class used to store the database information passed to the native code.
     """
+
     name: str = database.DataBaseHandler.DEFAULT_DATABASE_NAME
     """Database name"""
     run_id: int = None
@@ -327,4 +328,5 @@ class DatabaseInfo(SerializableMixin):
 
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
+
     run_mpi_worker(Input, Result, HF.native_inputs_cls, HF.native_scheme_cls)

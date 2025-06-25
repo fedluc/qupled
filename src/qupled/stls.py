@@ -51,9 +51,21 @@ class Input(rpa.Input):
     """Mixing parameter. Default = ``1.0``"""
     iterations: int = 1000
     """Maximum number of iterations. Default = ``1000``"""
-    # guess: Guess = field(default_factory=lambda: Guess())
-    # """Initial guess. Default = ``stls.Guess()``"""
+    guess: Guess = field(default_factory=lambda: Guess())
+    """Initial guess. Default = ``stls.Guess()``"""
     theory: str = "STLS"
+
+    @classmethod
+    def from_dict(cls, d):
+        obj = cls.__new__(cls)
+        for key, value in d.items():
+            if key == "database_info" and isinstance(value, dict):
+                setattr(obj, key, hf.DatabaseInfo.from_dict(value))
+            elif key == "guess" and isinstance(value, dict):
+                setattr(obj, key, Guess.from_dict(value))
+            else:
+                setattr(obj, key, value)
+        return obj
 
 
 @dataclass
