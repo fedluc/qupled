@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 import numpy as np
 
 from . import native
@@ -44,19 +45,15 @@ class StlsIet(stls.Stls):
         )
 
 
+@dataclass
 class Input(stls.Input):
     """
     Class used to manage the input for the :obj:`qupled.stlsiet.StlsIet` class.
     Accepted theories: ``STLS-HNC``, ``STLS-IOI`` and ``STLS-LCT``.
     """
 
-    def __init__(self, coupling: float, degeneracy: float, theory: str):
-        super().__init__(coupling, degeneracy)
-        if theory not in {"STLS-HNC", "STLS-IOI", "STLS-LCT"}:
-            raise ValueError("Invalid dielectric theory")
-        self.theory = theory
-        self.mapping = "standard"
-        r"""
+    mapping: str = "standard"
+    r"""
         Mapping for the classical-to-quantum coupling parameter
         :math:`\Gamma` used in the iet schemes. Allowed options include:
 
@@ -71,32 +68,27 @@ class Input(stls.Input):
         the ground state they can differ significantly (the standard
         mapping diverges). Default = ``standard``.
         """
-        self.guess: Guess = Guess()
-        """Initial guess. Default = ``stlsiet.Guess()``"""
+    guess: Guess = field(default_factory=lambda: Guess())
+
+    def __post_init__(self):
+        if self.theory not in {"STLS-HNC", "STLS-IOI", "STLS-LCT"}:
+            raise ValueError("Invalid dielectric theory")
 
 
+@dataclass
 class Result(stls.Result):
     """
     Class used to store the results for the :obj:`qupled.stlsiet.StlsIet` class.
     """
 
-    def __init__(self):
-        super().__init__()
-        self.bf: np.ndarray = None
-        """Bridge function adder"""
+    bf: np.ndarray = None
+    """Bridge function adder"""
 
 
+@dataclass
 class Guess(stls.Guess):
-
-    def __init__(
-        self,
-        wvg: np.ndarray = None,
-        ssf: np.ndarray = None,
-        lfc: np.ndarray = None,
-    ):
-        super().__init__(wvg, ssf)
-        self.lfc = lfc
-        """ Local field correction. Default = ``None``"""
+    lfc: np.ndarray = None
+    """ Local field correction. Default = ``None``"""
 
 
 if __name__ == "__main__":

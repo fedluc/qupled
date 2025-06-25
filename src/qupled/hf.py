@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -145,52 +146,44 @@ class SerializableMixin:
         return result
 
 
+@dataclass
 class Input(SerializableMixin):
     """
     Class used to store the inputs for the :obj:`qupled.hf.HF` class.
     """
 
-    def __init__(self, coupling: float, degeneracy: float):
-        """
-        Initialize the base class with the given parameters.
+    coupling: float
+    """Coupling parameter."""
+    degeneracy: float
+    """Degeneracy parameter."""
+    chemical_potential: list[float] = field(default_factory=lambda: [-10.0, 10.0])
+    """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
+    cutoff: float = 10.0
+    """Cutoff for the wave-vector grid. Default =  ``10.0``"""
+    frequency_cutoff: float = 10.0
+    """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
+    integral_error: float = 1.0e-5
+    """Accuracy (relative error) in the computation of integrals. Default = ``1.0e-5``"""
+    integral_strategy: str = "full"
+    """
+    Scheme used to solve two-dimensional integrals
+    allowed options include:
 
-        Parameters:
-            coupling (float): Coupling parameter.
-            degeneracy (float): Degeneracy parameter.
-        """
-        self.chemical_potential: list[float] = [-10.0, 10.0]
-        """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
-        self.coupling: float = coupling
-        """Coupling parameter."""
-        self.cutoff: float = 10.0
-        """Cutoff for the wave-vector grid. Default =  ``10.0``"""
-        self.degeneracy: float = degeneracy
-        """Degeneracy parameter."""
-        self.frequency_cutoff: float = 10.0
-        """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
-        self.integral_error: float = 1.0e-5
-        """Accuracy (relative error) in the computation of integrals. Default = ``1.0e-5``"""
-        self.integral_strategy: str = "full"
-        """
-        Scheme used to solve two-dimensional integrals
-        allowed options include:
+    - full: the inner integral is evaluated at arbitrary points selected automatically by the quadrature rule
 
-        - full: the inner integral is evaluated at arbitrary points selected automatically by the quadrature rule
+    - segregated: the inner integral is evaluated on a fixed grid that depends on the integrand that is being processed
 
-        - segregated: the inner integral is evaluated on a fixed grid that depends on the integrand that is being processed
-
-        Segregated is usually faster than full but it could become
-        less accurate if the fixed points are not chosen correctly. Default =  ``'full'``
-        """
-        self.matsubara: int = 128
-        """Number of Matsubara frequencies. Default = ``128``"""
-        self.resolution: float = 0.1
-        """Resolution of the wave-vector grid. Default =  ``0.1``"""
-        self.threads: int = 1
-        """Number of OMP threads for parallel calculations. Default =  ``1``"""
-        # Undocumented default values
-        self.theory: str = "HF"
-        self.database_info: DatabaseInfo = DatabaseInfo()
+    Segregated is usually faster than full but it could become
+    less accurate if the fixed points are not chosen correctly. Default =  ``'full'``
+    """
+    matsubara: int = 128
+    """Number of Matsubara frequencies. Default = ``128``"""
+    resolution: float = 0.1
+    """Resolution of the wave-vector grid. Default =  ``0.1``"""
+    threads: int = 1
+    """Number of OMP threads for parallel calculations. Default =  ``1``"""
+    theory: str = "HF"
+    database_info: DatabaseInfo = field(default_factory=lambda: DatabaseInfo())
 
     def to_native(self, native_input: any):
         """
@@ -225,32 +218,31 @@ class Input(SerializableMixin):
                 obj.database_info = DatabaseInfo.from_dict(value)
             else:
                 setattr(obj, key, value)
-
         return obj
 
 
+@dataclass
 class Result(SerializableMixin):
     """
     Class used to store the results for the :obj:`qupled.hf.HF` class.
     """
 
-    def __init__(self):
-        self.idr: np.ndarray = None
-        """Ideal density response"""
-        self.lfc: np.ndarray = None
-        """Local field correction"""
-        self.rdf: np.ndarray = None
-        """Radial distribution function"""
-        # self.rdf_grid: np.ndarray = None
-        # """Radial distribution function grid"""
-        self.sdr: np.ndarray = None
-        """Static density response"""
-        self.ssf: np.ndarray = None
-        """Static structure factor"""
-        self.uint: float = None
-        """Internal energy"""
-        self.wvg: np.ndarray = None
-        """Wave-vector grid"""
+    idr: np.ndarray = None
+    """Ideal density response"""
+    lfc: np.ndarray = None
+    """Local field correction"""
+    rdf: np.ndarray = None
+    """Radial distribution function"""
+    rdf_grid: np.ndarray = None
+    """Radial distribution function grid"""
+    sdr: np.ndarray = None
+    """Static density response"""
+    ssf: np.ndarray = None
+    """Static structure factor"""
+    uint: float = None
+    """Internal energy"""
+    wvg: np.ndarray = None
+    """Wave-vector grid"""
 
     def from_native(self, native_scheme: any):
         """
@@ -263,7 +255,7 @@ class Result(SerializableMixin):
             - Only attributes that exist in both the current object and the native_scheme object will be updated.
             - Attributes with a value of `None` in the native_scheme object will not overwrite the current object's attributes.
         """
-        for attr in self.__dict__.keys():
+        for attr in self.__dataclass_fields__:
             if hasattr(native_scheme, attr):
                 value = getattr(native_scheme, attr)
                 valid_value = value is not None and not callable(value)
@@ -298,18 +290,17 @@ class Result(SerializableMixin):
             self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)
 
 
+@dataclass
 class DatabaseInfo(SerializableMixin):
     """
     Class used to store the database information passed to the native code.
     """
-
-    def __init__(self):
-        self.name: str = database.DataBaseHandler.DEFAULT_DATABASE_NAME
-        """Database name"""
-        self.run_id: int = None
-        """ID of the run in the database"""
-        self.run_table_name: str = database.DataBaseHandler.RUN_TABLE_NAME
-        """Name of the table used to store the runs in the database"""
+    name: str = database.DataBaseHandler.DEFAULT_DATABASE_NAME
+    """Database name"""
+    run_id: int = None
+    """ID of the run in the database"""
+    run_table_name: str = database.DataBaseHandler.RUN_TABLE_NAME
+    """Name of the table used to store the runs in the database"""
 
     def to_native(self) -> native.DatabaseInfo:
         """
@@ -336,5 +327,4 @@ class DatabaseInfo(SerializableMixin):
 
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
-
     run_mpi_worker(Input, Result, HF.native_inputs_cls, HF.native_scheme_cls)

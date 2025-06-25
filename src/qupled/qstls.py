@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from . import database
 from . import native
 from . import stls
@@ -56,17 +58,14 @@ class Qstls(stls.Stls):
                 return
 
 
-# Input class
+@dataclass
 class Input(stls.Input):
     """
     Class used to manage the input for the :obj:`qupled.qstls.Qstls` class.
     """
 
-    def __init__(self, coupling: float, degeneracy: float):
-        super().__init__(coupling, degeneracy)
-        # Undocumented default values
-        self.fixed_run_id: int | None = None
-        self.theory = "QSTLS"
+    fixed_run_id: int | None = None
+    theory: str = "QSTLS"
 
 
 if __name__ == "__main__":

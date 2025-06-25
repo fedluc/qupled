@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from . import hf
 from . import native
 
@@ -17,15 +19,13 @@ class Rpa(hf.HF):
         self.results: hf.Result = hf.Result()
 
 
+@dataclass
 class Input(hf.Input):
     """
     Class used to manage the input for the :obj:`qupled.rpa.Rpa` class.
     """
 
-    def __init__(self, coupling: float, degeneracy: float):
-        super().__init__(coupling, degeneracy)
-        # Undocumented default values
-        self.theory = "RPA"
+    theory: str = "RPA"
 
 
 if __name__ == "__main__":

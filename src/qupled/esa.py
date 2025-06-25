@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from . import hf
 from . import native
 
@@ -19,15 +21,13 @@ class ESA(hf.HF):
         self.native_scheme_cls = native.ESA
 
 
+@dataclass
 class Input(hf.Input):
     """
     Class used to manage the input for the :obj:`qupled.esa.ESA` class.
     """
 
-    def __init__(self, coupling: float, degeneracy: float):
-        super().__init__(coupling, degeneracy)
-        # Undocumented default values
-        self.theory = "ESA"
+    theory: str = "ESA"
 
 
 if __name__ == "__main__":

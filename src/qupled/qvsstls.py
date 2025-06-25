@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from . import native
 from . import qstls
 from . import vsstls
@@ -47,17 +49,13 @@ class QVSStls(vsstls.VSStls):
             inputs.fixed_run_id = self.run_id
 
 
-# Input class
+@dataclass
 class Input(vsstls.Input, qstls.Input):
     """
     Class used to manage the input for the :obj:`qupled.qvsstls.QVSStls` class.
     """
 
-    def __init__(self, coupling: float, degeneracy: float):
-        vsstls.Input.__init__(self, coupling, degeneracy)
-        qstls.Input.__init__(self, coupling, degeneracy)
-        # Undocumented default values
-        self.theory: str = "QVSSTLS"
+    theory: str = "QVSSTLS"
 
 
 if __name__ == "__main__":

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from . import native
 from . import qstls
 from . import stlsiet
@@ -25,18 +27,16 @@ class QstlsIet(qstls.Qstls):
         return stlsiet.StlsIet.get_initial_guess(run_id, database_name)
 
 
-# Input class
+@dataclass
 class Input(stlsiet.Input, qstls.Input):
     """
     Class used to manage the input for the :obj:`qupled.qstlsiet.QStlsIet` class.
     Accepted theories: ``QSTLS-HNC``, ``QSTLS-IOI`` and ``QSTLS-LCT``.
     """
 
-    def __init__(self, coupling: float, degeneracy: float, theory: str):
-        super().__init__(coupling, degeneracy, "STLS-HNC")
-        if theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
+    def __post_init__(self):
+        if self.theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
             raise ValueError("Invalid dielectric theory")
-        self.theory = theory
 
 
 if __name__ == "__main__":
