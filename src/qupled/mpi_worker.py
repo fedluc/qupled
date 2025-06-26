@@ -2,11 +2,11 @@ import json
 from pathlib import Path
 
 
-def run_mpi_worker(InputCls, ResultCls, NativeInputCls, NativeSchemeCls):
+def run_mpi_worker(SolverCls, InputCls, ResultCls):
     inputs = load_inputs_from_file("input.json", InputCls)
-    native_inputs = NativeInputCls()
+    native_inputs = SolverCls.native_inputs_cls()
     inputs.to_native(native_inputs)
-    scheme = NativeSchemeCls(native_inputs)
+    scheme = SolverCls.native_scheme_cls(native_inputs)
     scheme.compute()
     write_results_to_file("results.json", scheme, ResultCls)
 

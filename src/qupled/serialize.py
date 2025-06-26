@@ -23,8 +23,6 @@ def serializable_dataclass(cls):
     def from_dict(cls, d):
         obj = cls.__new__(cls)
         annotations = get_type_hints(cls)
-        print("Deserializing object of type:", cls.__name__)
-        print(annotations)
         for key, value in d.items():
             expected_type = annotations.get(key)
             from_dict_fn = getattr(expected_type, "from_dict", None)

@@ -64,6 +64,7 @@ class Result(hf.Result):
     """
 
     error: float = None
+    """Final error of the scheme. Default = ``None``"""
 
 
 @serialize.serializable_dataclass
@@ -95,4 +96,4 @@ class Guess:
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
 
-    run_mpi_worker(Input, Result, Solver.native_inputs_cls, Solver.native_scheme_cls)
+    run_mpi_worker(Solver, Input, Result)

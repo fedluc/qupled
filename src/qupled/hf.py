@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 from dataclasses import field
 from pathlib import Path
@@ -23,6 +24,9 @@ class Solver:
         0: database.DataBaseHandler.RunStatus.SUCCESS,
         1: database.DataBaseHandler.RunStatus.FAILED,
     }
+
+    # MPI command
+    MPI_COMMAND = "mpiexec"
 
     # Native classes used to solve the scheme
     native_scheme_cls = native.HF
@@ -58,7 +62,7 @@ class Solver:
         """
         self.inputs = inputs
         self._add_run_to_database()
-        self._compute_native_new()
+        self._compute_native()
         self._save()
 
     @mpi.MPI.run_only_on_root
@@ -92,6 +96,21 @@ class Solver:
 
     def _compute_native(self):
         """
+        Determines whether to execute the native computation in parallel or serial mode.
+
+        Checks if MPI (Message Passing Interface) is available and if the number of requested processes
+        is greater than one. If both conditions are met, runs the computation in parallel; otherwise,
+        runs it in serial mode.
+        """
+        mpi_is_enabled = shutil.which(self.MPI_COMMAND) is not None
+        run_parallel = self.inputs.processes > 1 and mpi_is_enabled
+        if run_parallel:
+            self._compute_native_parallel()
+        else:
+            self._compute_native_serial()
+
+    def _compute_native_serial(self):
+        """
         Computes the native representation of the inputs and processes the results.
 
         This method performs the following steps:
@@ -106,14 +125,22 @@ class Solver:
         self.native_scheme_status = scheme.compute()
         self.results.from_native(scheme)
 
-    def _compute_native_new(self):
+    def _compute_native_parallel(self):
         input_dict = self.inputs.to_dict()
         input_path = Path("input.json")
         result_path = Path("results.json")
         with input_path.open("w") as f:
             json.dump(input_dict, f)
         subprocess.run(
-            ["mpiexec", "-n", "1", "python", "-m", self.__module__], check=True
+            [
+                "mpiexec",
+                "-n",
+                str(self.inputs.processes),
+                "python",
+                "-m",
+                self.__module__,
+            ],
+            check=True,
         )
         with result_path.open() as f:
             result_dict = json.load(f)
@@ -170,6 +197,8 @@ class Input:
     """Resolution of the wave-vector grid. Default =  ``0.1``"""
     threads: int = 1
     """Number of OMP threads for parallel calculations. Default =  ``1``"""
+    processes: int = 1
+    """Number of MPI processes for parallel calculations. Default =  ``1``"""
     theory: str = "HF"
     database_info: DatabaseInfo = field(default_factory=lambda: DatabaseInfo())
 
@@ -297,4 +326,4 @@ class DatabaseInfo:
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
 
-    run_mpi_worker(Input, Result, Solver.native_inputs_cls, Solver.native_scheme_cls)
+    run_mpi_worker(Solver, Input, Result)

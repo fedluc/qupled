@@ -32,4 +32,4 @@ class Input(hf.Input):
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
 
-    run_mpi_worker(Input, hf.Result, Solver.native_inputs_cls, Solver.native_scheme_cls)
+    run_mpi_worker(Solver, Input, hf.Result)

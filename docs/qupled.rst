@@ -35,7 +35,7 @@ The solution parameters are specified with a dedicated class called :obj:`qupled
 After the solution is completed the results are stored in an object :obj:`qupled.hf.Result` 
 and written to the output database.
 
-.. autoclass:: qupled.hf.HF
+.. autoclass:: qupled.hf.Solver
     :members:
 
 .. autoclass:: qupled.hf.Input
@@ -55,7 +55,7 @@ The solution parameters are specified with a dedicated class called :obj:`qupled
 After the solution is completed the results are stored in an object :obj:`qupled.hf.Result` 
 and written to the output database.
 
-.. autoclass:: qupled.rpa.Rpa
+.. autoclass:: qupled.rpa.Solver
     :show-inheritance:
     :members:
 
@@ -72,7 +72,7 @@ The solution parameters are specified with a dedicated class called :obj:`qupled
 After the solution is completed the results are stored in an object :obj:`qupled.stls.Result` 
 and written to the output database.
 
-.. autoclass:: qupled.stls.Stls
+.. autoclass:: qupled.stls.Solver
     :show-inheritance:
     :members:
 
@@ -97,7 +97,7 @@ The solution parameters are specified with a dedicated class called :obj:`qupled
 After the solution is completed the results are stored in an object :obj:`qupled.stlsiet.Result` 
 and written to the output database.
 
-.. autoclass:: qupled.stlsiet.StlsIet
+.. autoclass:: qupled.stlsiet.Solver
     :show-inheritance:
     :members:
 
@@ -122,7 +122,7 @@ The solution parameters are specified with a dedicated class called :obj:`qupled
 After the solution is completed the results are stored in an object :obj:`qupled.vsstls.Result` 
 and written to the output database.
 
-.. autoclass:: qupled.vsstls.VSStls
+.. autoclass:: qupled.vsstls.Solver
     :show-inheritance:
     :members:
     :exclude-members: get_free_energy_integrand
@@ -151,7 +151,7 @@ The solution parameters are specified with a dedicated class called :obj:`qupled
 After the solution is completed the results are stored in an object :obj:`qupled.hf.Result` 
 and written to the output database.
 
-.. autoclass:: qupled.esa.ESA
+.. autoclass:: qupled.esa.Solver
     :show-inheritance:
     :members:
 
@@ -171,7 +171,7 @@ TThe solution parameters are specified with a dedicated class called :obj:`quple
 After the solution is completed the results are stored in an object :obj:`qupled.qstls.Result` 
 and written to the output database.
 
-.. autoclass:: qupled.qstls.Qstls
+.. autoclass:: qupled.qstls.Solver
     :show-inheritance:
     :members:
     :exclude-members: find_fixed_adr_in_database
@@ -190,7 +190,7 @@ The solution parameters are specified with a dedicated class called :obj:`qupled
 After the solution is completed the results are stored in an object :obj:`qupled.qstlsiet.Result` 
 and written to the output database.
 
-.. autoclass:: qupled.qstlsiet.QstlsIet
+.. autoclass:: qupled.qstlsiet.Solver
     :show-inheritance:
     :members:
     :exclude-members: find_fixed_adr_in_database
@@ -207,7 +207,7 @@ for the solution of the QVStls schemes. The solution parameters are specified wi
 called :obj:`qupled.qvsstls.Input`. After the solution is completed the results are stored in an 
 object :obj:`qupled.qvsstls.Result` and written to the output database.
 
-.. autoclass:: qupled.qvsstls.QVSStls
+.. autoclass:: qupled.qvsstls.Solver
     :show-inheritance:
     :members:
     :exclude-members: get_free_energy_integrand
