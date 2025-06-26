@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from . import native
 from . import qstls
 from . import vsstls
+from . import serialize
 
 
 class QVSStls(vsstls.VSStls):
@@ -49,7 +48,7 @@ class QVSStls(vsstls.VSStls):
             inputs.fixed_run_id = self.run_id
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Input(vsstls.Input, qstls.Input):
     """
     Class used to manage the input for the :obj:`qupled.qvsstls.QVSStls` class.

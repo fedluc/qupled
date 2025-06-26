@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import field
 import numpy as np
 
 from . import hf
 from . import native
 from . import output
 from . import rpa
+from . import serialize
 
 
 class Stls(rpa.Rpa):
@@ -39,7 +40,7 @@ class Stls(rpa.Rpa):
         return Guess(data[names[0]], data[names[1]])
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Input(rpa.Input):
     """
     Class used to manage the input for the :obj:`qupled.stls.Stls` class.
@@ -56,7 +57,7 @@ class Input(rpa.Input):
     theory: str = "STLS"
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Result(hf.Result):
     """
     Class used to store the results for the :obj:`qupled.stls.Stls` class.
@@ -65,8 +66,8 @@ class Result(hf.Result):
     error: float = None
 
 
-@dataclass
-class Guess(hf.SerializableMixin):
+@serialize.serializable_dataclass
+class Guess:
     wvg: np.ndarray = None
     """Wave-vector grid. Default = ``None``"""
     ssf: np.ndarray = None

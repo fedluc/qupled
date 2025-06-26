@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import field
 import numpy as np
 
 from . import native
 from . import output
 from . import stls
+from . import serialize
 
 
 class StlsIet(stls.Stls):
@@ -45,7 +46,7 @@ class StlsIet(stls.Stls):
         )
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Input(stls.Input):
     """
     Class used to manage the input for the :obj:`qupled.stlsiet.StlsIet` class.
@@ -75,7 +76,7 @@ class Input(stls.Input):
             raise ValueError("Invalid dielectric theory")
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Result(stls.Result):
     """
     Class used to store the results for the :obj:`qupled.stlsiet.StlsIet` class.
@@ -85,7 +86,7 @@ class Result(stls.Result):
     """Bridge function adder"""
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Guess(stls.Guess):
     lfc: np.ndarray = None
     """ Local field correction. Default = ``None``"""

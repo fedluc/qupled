@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from . import database
 from . import native
+from . import serialize
 from . import stls
 
 
@@ -58,7 +57,7 @@ class Qstls(stls.Stls):
                 return
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Input(stls.Input):
     """
     Class used to manage the input for the :obj:`qupled.qstls.Qstls` class.

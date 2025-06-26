@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import json
 import subprocess
-from dataclasses import dataclass, field
+from dataclasses import field
 from pathlib import Path
-from typing import get_type_hints
 
 import numpy as np
 
 from . import database
 from . import mpi
 from . import native
+from . import serialize
 
 
 class HF:
@@ -117,7 +117,7 @@ class HF:
         )
         with result_path.open() as f:
             result_dict = json.load(f)
-        self.results = Result.from_dict(result_dict)
+        self.results = self.results.from_dict(result_dict)
 
     @mpi.MPI.run_only_on_root
     def _save(self):
@@ -134,40 +134,8 @@ class HF:
         self.db_handler.insert_results(self.results.__dict__)
 
 
-class SerializableMixin:
-    def to_dict(self):
-        result = {}
-        for key, value in self.__dict__.items():
-            if hasattr(value, "to_dict") and callable(value.to_dict):
-                result[key] = value.to_dict()
-            elif isinstance(value, np.ndarray):
-                result[key] = value.tolist()
-            else:
-                result[key] = value
-        return result
-
-    @classmethod
-    def from_dict(cls, d):
-        obj = cls.__new__(cls)
-        annotations = get_type_hints(cls)
-        for key, value in d.items():
-            expected_type = annotations.get(key)
-            from_dict_fn = getattr(expected_type, "from_dict", None)
-            convert_to_np_array = expected_type is np.ndarray and isinstance(
-                value, list
-            )
-            call_from_dict = callable(from_dict_fn) and isinstance(value, dict)
-            if convert_to_np_array:
-                setattr(obj, key, np.array(value))
-            elif call_from_dict:
-                setattr(obj, key, from_dict_fn(value))
-            else:
-                setattr(obj, key, value)
-        return obj
-
-
-@dataclass
-class Input(SerializableMixin):
+@serialize.serializable_dataclass
+class Input:
     """
     Class used to store the inputs for the :obj:`qupled.hf.HF` class.
     """
@@ -231,8 +199,8 @@ class Input(SerializableMixin):
                 setattr(native_input, attr, value_to_set)
 
 
-@dataclass
-class Result(SerializableMixin):
+@serialize.serializable_dataclass
+class Result:
     """
     Class used to store the results for the :obj:`qupled.hf.HF` class.
     """
@@ -290,8 +258,8 @@ class Result(SerializableMixin):
             self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)
 
 
-@dataclass
-class DatabaseInfo(SerializableMixin):
+@serialize.serializable_dataclass
+class DatabaseInfo:
     """
     Class used to store the database information passed to the native code.
     """

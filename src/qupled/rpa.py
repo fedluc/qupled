@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from . import hf
 from . import native
+from . import serialize
 
 
 class Rpa(hf.HF):
@@ -19,7 +18,7 @@ class Rpa(hf.HF):
         self.results: hf.Result = hf.Result()
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Input(hf.Input):
     """
     Class used to manage the input for the :obj:`qupled.rpa.Rpa` class.

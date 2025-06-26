@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from . import hf
 from . import native
+from . import serialize
 
 
 class ESA(hf.HF):
@@ -21,7 +20,7 @@ class ESA(hf.HF):
         self.native_scheme_cls = native.ESA
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Input(hf.Input):
     """
     Class used to manage the input for the :obj:`qupled.esa.ESA` class.

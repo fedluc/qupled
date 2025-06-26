@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from . import native
 from . import qstls
+from . import serialize
 from . import stlsiet
 
 
@@ -27,7 +26,7 @@ class QstlsIet(qstls.Qstls):
         return stlsiet.StlsIet.get_initial_guess(run_id, database_name)
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Input(stlsiet.Input, qstls.Input):
     """
     Class used to manage the input for the :obj:`qupled.qstlsiet.QStlsIet` class.

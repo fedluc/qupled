@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import field
 import numpy as np
 
-from . import hf
 from . import native
 from . import output
+from . import serialize
 from . import stls
 
 
@@ -133,7 +133,7 @@ class VSStls(stls.Stls):
         return FreeEnergyIntegrand(data[names[0]], data[names[1]])
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Input(stls.Input):
     """
     Class used to manage the input for the :obj:`qupled.vsstls.VSStls` class.
@@ -159,7 +159,7 @@ class Input(stls.Input):
     theory: str = "VSSTLS"
 
 
-@dataclass
+@serialize.serializable_dataclass
 class Result(stls.Result):
     """
     Class used to store the results for the :obj:`qupled.vsstls.VSStls` class.
@@ -169,12 +169,12 @@ class Result(stls.Result):
     """Free energy grid"""
     free_energy_integrand: np.ndarray = None
     """Free energy integrand"""
-    alpha: np.ndarray = None
+    alpha: float = None
     """Free parameter"""
 
 
-@dataclass
-class FreeEnergyIntegrand(hf.SerializableMixin):
+@serialize.serializable_dataclass
+class FreeEnergyIntegrand:
 
     grid: np.ndarray = None
     """ Coupling parameter grid. Default = ``None``"""

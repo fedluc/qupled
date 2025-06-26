@@ -34,9 +34,8 @@ def write_results_to_file(file_path: str, scheme, ResultCls):
         results: The results object to be written to the file.
         file_path (str): Path to the JSON file where results will be saved.
     """
-    if not scheme.is_root:
-        return
-    results = ResultCls()
-    results.from_native(scheme)
-    with Path(file_path).open("w") as f:
-        json.dump(results.to_dict(), f)
+    if scheme.is_root:
+        results = ResultCls()
+        results.from_native(scheme)
+        with Path(file_path).open("w") as f:
+            json.dump(results.to_dict(), f)
