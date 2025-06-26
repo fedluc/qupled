@@ -12,11 +12,11 @@ def input(mocker):
 
 @pytest.fixture
 def scheme():
-    return qvsstls.QVSStls()
+    return qvsstls.Solver()
 
 
 def test_qvsstls_inheritance():
-    assert issubclass(qvsstls.QVSStls, vsstls.VSStls)
+    assert issubclass(qvsstls.Solver, vsstls.Solver)
 
 
 def test_compute(mocker):
@@ -25,7 +25,7 @@ def test_compute(mocker):
     )
     super_compute = mocker.patch("qupled.vsstls.VSStls.compute")
     inputs = mocker.ANY
-    scheme = qvsstls.QVSStls()
+    scheme = qvsstls.Solver()
     scheme.compute(inputs)
     find_fixed_adr_in_database.assert_called_once_with(scheme, inputs)
     super_compute.assert_called_once_with(inputs)
@@ -37,7 +37,7 @@ def test_get_free_energy_integrand(mocker):
     get_free_energy_integrand = mocker.patch(
         "qupled.vsstls.VSStls.get_free_energy_integrand"
     )
-    result = qvsstls.QVSStls.get_free_energy_integrand(run_id, database_name)
+    result = qvsstls.Solver.get_free_energy_integrand(run_id, database_name)
     get_free_energy_integrand.assert_called_once_with(run_id, database_name)
     assert result == get_free_energy_integrand.return_value
 

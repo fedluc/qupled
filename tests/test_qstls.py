@@ -8,17 +8,17 @@ from qupled.database import DataBaseHandler
 
 @pytest.fixture
 def scheme():
-    scheme = qstls.Qstls()
+    scheme = qstls.Solver()
     return scheme
 
 
 def test_qstls_inheritance():
-    assert issubclass(qstls.Qstls, stls.Stls)
+    assert issubclass(qstls.Solver, stls.Solver)
 
 
 def test_qstls_initialization(mocker, scheme):
     super_init = mocker.patch("qupled.stls.Stls.__init__")
-    scheme = qstls.Qstls()
+    scheme = qstls.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stls.Result)
     assert scheme.native_scheme_cls == native.Qstls

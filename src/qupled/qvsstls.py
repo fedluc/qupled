@@ -6,7 +6,7 @@ from . import vsstls
 from . import serialize
 
 
-class QVSStls(vsstls.VSStls):
+class Solver(vsstls.Solver):
     """
     Class used to solve the QVStls scheme.
     """
@@ -26,7 +26,7 @@ class QVSStls(vsstls.VSStls):
         Args:
             inputs: Input parameters.
         """
-        qstls.Qstls.find_fixed_adr_in_database(self, inputs)
+        qstls.Solver.find_fixed_adr_in_database(self, inputs)
         super().compute(inputs)
 
     def _update_input_data(self, inputs: Input):
@@ -61,5 +61,5 @@ if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
 
     run_mpi_worker(
-        Input, vsstls.Result, QVSStls.native_inputs_cls, QVSStls.native_scheme_cls
+        Input, vsstls.Result, Solver.native_inputs_cls, Solver.native_scheme_cls
     )

@@ -6,7 +6,7 @@ from . import serialize
 from . import stlsiet
 
 
-class QstlsIet(qstls.Qstls):
+class Solver(qstls.Solver):
     """
     Class used to solve the Qstls-IET schemes.
     """
@@ -23,7 +23,7 @@ class QstlsIet(qstls.Qstls):
     def get_initial_guess(
         run_id: str, database_name: str | None = None
     ) -> stlsiet.Guess:
-        return stlsiet.StlsIet.get_initial_guess(run_id, database_name)
+        return stlsiet.Solver.get_initial_guess(run_id, database_name)
 
 
 @serialize.serializable_dataclass
@@ -42,5 +42,5 @@ if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
 
     run_mpi_worker(
-        Input, stlsiet.Result, QstlsIet.native_inputs_cls, QstlsIet.native_scheme_cls
+        Input, stlsiet.Result, Solver.native_inputs_cls, Solver.native_scheme_cls
     )

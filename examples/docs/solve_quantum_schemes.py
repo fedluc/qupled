@@ -2,7 +2,7 @@ import qupled.qstls as qstls
 import qupled.qstlsiet as qstlsiet
 
 # Define a Qstls object to solve the QSTLS scheme
-scheme = qstls.Qstls()
+scheme = qstls.Solver()
 
 # Define the input parameters
 inputs = qstls.Input(10.0, 1.0)
@@ -15,7 +15,7 @@ scheme.compute(inputs)
 print(scheme.results.uint)
 
 # Define a QstlsIet object to solve the QSTLS-IET scheme
-scheme = qstlsiet.QstlsIet()
+scheme = qstlsiet.Solver()
 
 # Define the input parameters for one of the QSTLS-IET schemes
 inputs = qstlsiet.Input(10.0, 1.0, "QSTLS-LCT")

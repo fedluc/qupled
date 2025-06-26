@@ -13,7 +13,7 @@ from . import native
 from . import serialize
 
 
-class HF:
+class Solver:
     """
     Class used to solve the HF scheme.
     """
@@ -297,4 +297,4 @@ class DatabaseInfo:
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
 
-    run_mpi_worker(Input, Result, HF.native_inputs_cls, HF.native_scheme_cls)
+    run_mpi_worker(Input, Result, Solver.native_inputs_cls, Solver.native_scheme_cls)

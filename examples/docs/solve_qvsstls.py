@@ -1,7 +1,7 @@
 import qupled.qvsstls as qvsstls
 
 # Define the object used to solve the scheme
-scheme = qvsstls.QVSStls()
+scheme = qvsstls.Solver()
 
 # Define the input parameters
 inputs = qvsstls.Input(1.0, 1.0)

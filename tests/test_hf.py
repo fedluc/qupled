@@ -19,19 +19,19 @@ def results():
 
 @pytest.fixture
 def scheme(mocker):
-    scheme = hf.HF()
+    scheme = hf.Solver()
     scheme.db_handler = mocker.Mock()
     return scheme
 
 
 def test_native_to_run_status_mapping():
-    assert hf.HF.NATIVE_TO_RUN_STATUS[0] == DataBaseHandler.RunStatus.SUCCESS
-    assert hf.HF.NATIVE_TO_RUN_STATUS[1] == DataBaseHandler.RunStatus.FAILED
-    assert len(hf.HF.NATIVE_TO_RUN_STATUS) == 2
+    assert hf.Solver.NATIVE_TO_RUN_STATUS[0] == DataBaseHandler.RunStatus.SUCCESS
+    assert hf.Solver.NATIVE_TO_RUN_STATUS[1] == DataBaseHandler.RunStatus.FAILED
+    assert len(hf.Solver.NATIVE_TO_RUN_STATUS) == 2
 
 
 def test_hf_initialization():
-    scheme = hf.HF()
+    scheme = hf.Solver()
     assert scheme.inputs is None
     assert isinstance(scheme.results, hf.Result)
     assert isinstance(scheme.db_handler, DataBaseHandler)
@@ -58,7 +58,7 @@ def test_compute(scheme, inputs, mocker):
 
 
 def test_add_run_to_database(scheme, mocker):
-    mocker.patch.object(hf.HF, "run_id", new_callable=PropertyMock).return_value = (
+    mocker.patch.object(hf.Solver, "run_id", new_callable=PropertyMock).return_value = (
         "mocked-run-id"
     )
     scheme.inputs = mocker.Mock()
@@ -94,7 +94,7 @@ def test_save(scheme, results, mocker):
     scheme.native_scheme_status = mocker.Mock()
     scheme._save()
     scheme.db_handler.update_run_status.assert_called_once_with(
-        hf.HF.NATIVE_TO_RUN_STATUS.get(
+        hf.Solver.NATIVE_TO_RUN_STATUS.get(
             scheme.native_scheme_status, DataBaseHandler.RunStatus.FAILED
         )
     )

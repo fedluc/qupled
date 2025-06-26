@@ -1,7 +1,7 @@
 import qupled.stls as stls
 
 # Define the object used to solve the scheme
-scheme = stls.Stls()
+scheme = stls.Solver()
 
 # Define the input parameters
 inputs = stls.Input(10.0, 1.0)

@@ -4,12 +4,12 @@ import qupled.native as native
 
 
 def test_esa_inheritance():
-    assert issubclass(esa.ESA, hf.HF)
+    assert issubclass(esa.Solver, hf.Solver)
 
 
 def test_esa_initialization(mocker):
     super_init = mocker.patch("qupled.hf.HF.__init__")
-    scheme = esa.ESA()
+    scheme = esa.Solver()
     super_init.assert_called_once()
     assert scheme.native_scheme_cls == native.ESA
 

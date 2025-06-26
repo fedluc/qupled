@@ -9,7 +9,7 @@ from . import stls
 from . import serialize
 
 
-class StlsIet(stls.Stls):
+class Solver(stls.Solver):
     """
     Class used to solve the StlsIet schemes.
     """
@@ -95,4 +95,4 @@ class Guess(stls.Guess):
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
 
-    run_mpi_worker(Input, Result, StlsIet.native_inputs_cls, StlsIet.native_scheme_cls)
+    run_mpi_worker(Input, Result, Solver.native_inputs_cls, Solver.native_scheme_cls)

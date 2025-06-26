@@ -5,7 +5,7 @@ from . import native
 from . import serialize
 
 
-class ESA(hf.HF):
+class Solver(hf.Solver):
     """
     Class used to solve the ESA scheme.
     """
@@ -32,4 +32,4 @@ class Input(hf.Input):
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
 
-    run_mpi_worker(Input, hf.Result, ESA.native_inputs_cls, ESA.native_scheme_cls)
+    run_mpi_worker(Input, hf.Result, Solver.native_inputs_cls, Solver.native_scheme_cls)

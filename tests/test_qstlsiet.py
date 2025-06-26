@@ -12,16 +12,16 @@ def input(mocker):
 
 @pytest.fixture
 def scheme():
-    return qstlsiet.QstlsIet()
+    return qstlsiet.Solver()
 
 
 def test_qstls_iet_inheritance():
-    assert issubclass(qstlsiet.QstlsIet, qstls.Qstls)
+    assert issubclass(qstlsiet.Solver, qstls.Solver)
 
 
 def test_qstls_iet_initialization(mocker):
     super_init = mocker.patch("qupled.qstls.Qstls.__init__")
-    scheme = qstlsiet.QstlsIet()
+    scheme = qstlsiet.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stlsiet.Result)
 

@@ -6,12 +6,12 @@ import qupled.stls as stls
 
 
 def test_stls_inheritance():
-    assert issubclass(stls.Stls, rpa.Rpa)
+    assert issubclass(stls.Solver, rpa.Solver)
 
 
 def test_stls_initialization(mocker):
     super_init = mocker.patch("qupled.rpa.Rpa.__init__")
-    scheme = stls.Stls()
+    scheme = stls.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stls.Result)
     assert scheme.native_scheme_cls == native.Stls
@@ -25,7 +25,7 @@ def test_get_initial_guess_with_default_database_name(mocker):
         "wvg": np.array([1.0, 2.0, 3.0]),
         "ssf": np.array([0.1, 0.2, 0.3]),
     }
-    guess = stls.Stls.get_initial_guess(run_id)
+    guess = stls.Solver.get_initial_guess(run_id)
     assert np.array_equal(guess.wvg, read_results.return_value["wvg"])
     assert np.array_equal(guess.ssf, read_results.return_value["ssf"])
     read_results.assert_called_once_with(run_id, None, ["wvg", "ssf"])
@@ -39,7 +39,7 @@ def test_get_initial_guess_with_custom_database_name(mocker):
         "wvg": np.array([1.0, 2.0, 3.0]),
         "ssf": np.array([0.1, 0.2, 0.3]),
     }
-    guess = stls.Stls.get_initial_guess(run_id, database_name)
+    guess = stls.Solver.get_initial_guess(run_id, database_name)
     assert np.array_equal(guess.wvg, read_results.return_value["wvg"])
     assert np.array_equal(guess.ssf, read_results.return_value["ssf"])
     read_results.assert_called_once_with(run_id, database_name, ["wvg", "ssf"])

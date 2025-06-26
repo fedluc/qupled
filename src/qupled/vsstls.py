@@ -9,7 +9,7 @@ from . import serialize
 from . import stls
 
 
-class VSStls(stls.Stls):
+class Solver(stls.Solver):
     """
     Class used to solve the VSStls scheme.
     """
@@ -204,4 +204,4 @@ class FreeEnergyIntegrand:
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
 
-    run_mpi_worker(Input, Result, VSStls.native_inputs_cls, VSStls.native_scheme_cls)
+    run_mpi_worker(Input, Result, Solver.native_inputs_cls, Solver.native_scheme_cls)

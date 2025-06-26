@@ -6,7 +6,7 @@ from . import serialize
 from . import stls
 
 
-class Qstls(stls.Stls):
+class Solver(stls.Solver):
     """
     Class used to solve the Qstls scheme.
     """
@@ -70,4 +70,6 @@ class Input(stls.Input):
 if __name__ == "__main__":
     from .mpi_worker import run_mpi_worker
 
-    run_mpi_worker(Input, stls.Result, Qstls.native_inputs_cls, Qstls.native_scheme_cls)
+    run_mpi_worker(
+        Input, stls.Result, Solver.native_inputs_cls, Solver.native_scheme_cls
+    )
