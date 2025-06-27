@@ -3,13 +3,13 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import time
 from dataclasses import field
 from pathlib import Path
 
 import numpy as np
 
 from . import database
-from . import mpi
 from . import native
 from . import serialize
 
@@ -51,8 +51,23 @@ class Solver:
         """
         return self.db_handler.run_id
 
-    @mpi.MPI.record_time
-    @mpi.MPI.synchronize_ranks
+    # def timed(func, *args, **kwargs):
+    #     tic = time.perf_counter()
+    #     result = func(*args, **kwargs)
+    #     toc = time.perf_counter()
+    #     dt = toc - tic
+    #     hours = int(dt // 3600)
+    #     minutes = int((dt % 3600) // 60)
+    #     seconds = dt % 60
+    #     if hours > 0:
+    #         print(f"Elapsed time: {hours} h, {minutes} m, {seconds:.1f} s.")
+    #     elif minutes > 0:
+    #         print(f"Elapsed time: {minutes} m, {seconds:.1f} s.")
+    #     else:
+    #         print(f"Elapsed time: {seconds:.1f} s.")
+    #     return result
+
+    # @timed
     def compute(self, inputs: Input):
         """
         Solves the scheme and saves the results.
@@ -65,7 +80,6 @@ class Solver:
         self._compute_native()
         self._save()
 
-    @mpi.MPI.run_only_on_root
     def compute_rdf(self, rdf_grid: np.ndarray = None):
         """
         Computes the radial distribution function (RDF) using the provided RDF grid.
@@ -146,7 +160,6 @@ class Solver:
             result_dict = json.load(f)
         self.results = self.results.from_dict(result_dict)
 
-    @mpi.MPI.run_only_on_root
     def _save(self):
         """
         Saves the current state and results to the database.

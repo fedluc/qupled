@@ -28,12 +28,6 @@ public:
 
   explicit PyScheme(const TInput &in)
       : TScheme(std::make_shared<TInput>(in)) {}
-
-  int compute() {
-    MPIUtil::init();
-    return TScheme::compute();
-    MPIUtil::finalize();
-  }
 };
 
 // Type aliases

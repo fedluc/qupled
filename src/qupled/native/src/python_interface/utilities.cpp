@@ -45,10 +45,8 @@ double computeFreeEnergy(const py::array_t<double> &gridIn,
 class PyMPI {
 public:
 
-  static int rank() { return MPIUtil::rank(); }
-  static bool is_root() { return MPIUtil::isRoot(); }
-  static void barrier() { return MPIUtil::barrier(); }
-  static double timer() { return MPIUtil::timer(); }
+  static void init() { return MPIUtil::init(); }
+  static void finalize() { return MPIUtil::finalize(); }
 };
 
 // -----------------------------------------------------------------
@@ -67,10 +65,8 @@ namespace pythonWrappers {
 
   void exposeMPIClass(py::module_ &m) {
     py::class_<PyMPI>(m, "MPI")
-        .def_static("rank", &PyMPI::rank)
-        .def_static("is_root", &PyMPI::is_root)
-        .def_static("barrier", &PyMPI::barrier)
-        .def_static("timer", &PyMPI::timer);
+        .def_static("init", &PyMPI::init)
+        .def_static("finalize", &PyMPI::finalize);
   }
 
   void exposeUtilities(py::module_ &m) {

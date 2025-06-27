@@ -1,7 +1,20 @@
 import json
 from pathlib import Path
+from . import native
 
 
+def mpi_process(func):
+    def wrapper(*args, **kwargs):
+        native.MPI.init()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            native.MPI.finalize()
+
+    return wrapper
+
+
+@mpi_process
 def run_mpi_worker(SolverCls, InputCls, ResultCls):
     inputs = load_inputs_from_file("input.json", InputCls)
     native_inputs = SolverCls.native_inputs_cls()
