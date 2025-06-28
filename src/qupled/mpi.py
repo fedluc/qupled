@@ -12,21 +12,13 @@ MPI_COMMAND = "mpiexec"
 INPUT_FILE = Path("input.json")
 RESULT_FILE = Path("results.json")
 
-def mpi_process(func):
-    def wrapper(*args, **kwargs):
-        native.MPI.init()
-        try:
-            return func(*args, **kwargs)
-        finally:
-            native.MPI.finalize()
-
-    return wrapper
-
 
 def launch_mpi_execution(module, nproc):
-    call_mpi = shutil.which(MPI_COMMAND) is not None and native.MPI.is_used
+    call_mpi = shutil.which(MPI_COMMAND) is not None and native.uses_mpi
     if call_mpi:
-        subprocess.run([MPI_COMMAND, "-n", str(nproc), "python", "-m", module], check=True)
+        subprocess.run(
+            [MPI_COMMAND, "-n", str(nproc), "python", "-m", module], check=True
+        )
     else:
         print("WARNING: Could not call MPI, defaulting to serial execution.")
         subprocess.run(["python", "-m", module], check=True)
@@ -44,6 +36,7 @@ def write_inputs(inputs):
     """
     with INPUT_FILE.open("w") as f:
         json.dump(inputs.to_dict(), f)
+
 
 def read_inputs(InputCls):
     """
@@ -73,6 +66,7 @@ def write_results(scheme, ResultCls):
         results.from_native(scheme)
         with RESULT_FILE.open("w") as f:
             json.dump(results.to_dict(), f)
+
 
 def read_results(ResultsCls):
     """

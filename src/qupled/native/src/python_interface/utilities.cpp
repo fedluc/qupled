@@ -53,10 +53,7 @@ namespace pythonWrappers {
   }
 
   void exposeMPIClass(py::module_ &m) {
-    auto mpi = m.def_submodule("MPI");
-    mpi.def("init", &MPIUtil::init);
-    mpi.def("finalize", &MPIUtil::finalize);
-    mpi.attr("is_used") = py::bool_(MPIUtil::isUsed);
+    m.attr("uses_mpi") = py::bool_(MPIUtil::isUsed);
   }
 
   void exposeUtilities(py::module_ &m) {

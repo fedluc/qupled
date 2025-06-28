@@ -124,7 +124,6 @@ class Solver:
         mpi.read_results(type(self.results))
 
     @classmethod
-    @mpi.mpi_process
     def run_mpi_worker(cls, InputCls, ResultCls):
         inputs = mpi.read_inputs(InputCls)
         native_inputs = cls.native_inputs_cls()

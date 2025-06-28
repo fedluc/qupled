@@ -1,3 +1,4 @@
+#include "mpi_util.hpp"
 #include "python_interface/inputs.hpp"
 #include "python_interface/schemes.hpp"
 #include "python_interface/utilities.hpp"
@@ -14,9 +15,13 @@ namespace py = pybind11;
 // --------------------------------------------------------------------
 
 void qupledInitialization() {
+  // Initialize MPI if necessary
+  if (!MPIUtil::isInitialized()) { MPIUtil::init(); }
   // Deactivate default GSL error handler
   gsl_set_error_handler_off();
 }
+
+void qupledCleanUp() { MPIUtil::finalize(); }
 
 // --------------------------------------------------------------------
 // Pybind11 Module Definition
@@ -27,6 +32,9 @@ PYBIND11_MODULE(native, m) {
 
   // Initialization
   qupledInitialization();
+
+  // Register finalization
+  m.add_object("_cleanup", py::capsule([]() { qupledCleanUp(); }));
 
   // Bind submodules and classes
   pythonWrappers::exposeInputs(m);
