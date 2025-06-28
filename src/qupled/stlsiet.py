@@ -77,7 +77,7 @@ class Input(stls.Input):
             raise ValueError(
                 f"Missing dielectric theory, choose among {self.allowed_theories} "
             )
-        if self.theory not in {"STLS-HNC", "STLS-IOI", "STLS-LCT"}:
+        if self.theory not in self.allowed_theories:
             raise ValueError(
                 f"Invalid dielectric theory {self.theory}, choose among {self.allowed_theories}"
             )
