@@ -39,17 +39,6 @@ double computeFreeEnergy(const py::array_t<double> &gridIn,
 }
 
 // -----------------------------------------------------------------
-// Static MPI Info Class
-// -----------------------------------------------------------------
-
-class PyMPI {
-public:
-
-  static void init() { return MPIUtil::init(); }
-  static void finalize() { return MPIUtil::finalize(); }
-};
-
-// -----------------------------------------------------------------
 // All utilities exposed to Python
 // -----------------------------------------------------------------
 
@@ -64,9 +53,10 @@ namespace pythonWrappers {
   }
 
   void exposeMPIClass(py::module_ &m) {
-    py::class_<PyMPI>(m, "MPI")
-        .def_static("init", &PyMPI::init)
-        .def_static("finalize", &PyMPI::finalize);
+    auto mpi = m.def_submodule("MPI");
+    mpi.def("init", &MPIUtil::init);
+    mpi.def("finalize", &MPIUtil::finalize);
+    mpi.attr("is_used") = py::bool_(MPIUtil::isUsed);
   }
 
   void exposeUtilities(py::module_ &m) {

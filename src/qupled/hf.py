@@ -1,17 +1,17 @@
 from __future__ import annotations
 
 import json
-import shutil
-import subprocess
-import time
+
 from dataclasses import field
 from pathlib import Path
 
 import numpy as np
 
 from . import database
+from . import mpi
 from . import native
 from . import serialize
+from . import timer
 
 
 class Solver:
@@ -24,9 +24,6 @@ class Solver:
         0: database.DataBaseHandler.RunStatus.SUCCESS,
         1: database.DataBaseHandler.RunStatus.FAILED,
     }
-
-    # MPI command
-    MPI_COMMAND = "mpiexec"
 
     # Native classes used to solve the scheme
     native_scheme_cls = native.HF
@@ -51,23 +48,7 @@ class Solver:
         """
         return self.db_handler.run_id
 
-    # def timed(func, *args, **kwargs):
-    #     tic = time.perf_counter()
-    #     result = func(*args, **kwargs)
-    #     toc = time.perf_counter()
-    #     dt = toc - tic
-    #     hours = int(dt // 3600)
-    #     minutes = int((dt % 3600) // 60)
-    #     seconds = dt % 60
-    #     if hours > 0:
-    #         print(f"Elapsed time: {hours} h, {minutes} m, {seconds:.1f} s.")
-    #     elif minutes > 0:
-    #         print(f"Elapsed time: {minutes} m, {seconds:.1f} s.")
-    #     else:
-    #         print(f"Elapsed time: {seconds:.1f} s.")
-    #     return result
-
-    # @timed
+    @timer.timer
     def compute(self, inputs: Input):
         """
         Solves the scheme and saves the results.
@@ -116,9 +97,7 @@ class Solver:
         is greater than one. If both conditions are met, runs the computation in parallel; otherwise,
         runs it in serial mode.
         """
-        mpi_is_enabled = shutil.which(self.MPI_COMMAND) is not None
-        run_parallel = self.inputs.processes > 1 and mpi_is_enabled
-        if run_parallel:
+        if self.inputs.processes > 1:
             self._compute_native_parallel()
         else:
             self._compute_native_serial()
@@ -140,25 +119,19 @@ class Solver:
         self.results.from_native(scheme)
 
     def _compute_native_parallel(self):
-        input_dict = self.inputs.to_dict()
-        input_path = Path("input.json")
-        result_path = Path("results.json")
-        with input_path.open("w") as f:
-            json.dump(input_dict, f)
-        subprocess.run(
-            [
-                "mpiexec",
-                "-n",
-                str(self.inputs.processes),
-                "python",
-                "-m",
-                self.__module__,
-            ],
-            check=True,
-        )
-        with result_path.open() as f:
-            result_dict = json.load(f)
-        self.results = self.results.from_dict(result_dict)
+        mpi.write_inputs(self.inputs)
+        mpi.launch_mpi_execution(self.__module__, self.inputs.processes)
+        mpi.read_results(type(self.results))
+
+    @classmethod
+    @mpi.mpi_process
+    def run_mpi_worker(cls, InputCls, ResultCls):
+        inputs = mpi.read_inputs(InputCls)
+        native_inputs = cls.native_inputs_cls()
+        inputs.to_native(native_inputs)
+        scheme = cls.native_scheme_cls(native_inputs)
+        scheme.compute()
+        mpi.write_results(scheme, ResultCls)
 
     def _save(self):
         """
@@ -337,6 +310,4 @@ class DatabaseInfo:
 
 
 if __name__ == "__main__":
-    from .mpi_worker import run_mpi_worker
-
-    run_mpi_worker(Solver, Input, Result)
+    Solver.run_mpi_worker(Input, Result)

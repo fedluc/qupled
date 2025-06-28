@@ -68,6 +68,4 @@ class Input(stls.Input):
 
 
 if __name__ == "__main__":
-    from .mpi_worker import run_mpi_worker
-
-    run_mpi_worker(Solver, Input, stls.Result)
+    Solver.run_mpi_worker(Input, stls.Result)
