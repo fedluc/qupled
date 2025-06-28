@@ -11,7 +11,7 @@ def test_stls_iet_inheritance():
 
 
 def test_stls_iet_initialization(mocker):
-    super_init = mocker.patch("qupled.stls.Stls.__init__")
+    super_init = mocker.patch("qupled.stls.Solver.__init__")
     scheme = stlsiet.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stlsiet.Result)
@@ -22,12 +22,8 @@ def test_stls_iet_input_inheritance():
 
 
 def test_stls_iet_input_initialization_valid_theory(mocker):
-    super_init = mocker.patch("qupled.stls.Input.__init__")
-    coupling = 1.0
-    degeneracy = 1.0
     theory = "STLS-HNC"
-    input = stlsiet.Input(coupling, degeneracy, theory)
-    super_init.assert_called_once_with(coupling, degeneracy)
+    input = stlsiet.Input(mocker.ANY, mocker.ANY, theory=theory)
     assert input.theory == theory
 
 
@@ -36,15 +32,18 @@ def test_stls_iet_input_initialization_invalid_theory():
         stlsiet.Input(1.0, 1.0, "INVALID-THEORY")
 
 
+def test_stls_iet_input_initialization_default_theory():
+    with pytest.raises(ValueError):
+        stlsiet.Input(1.0, 1.0)
+
+
 def test_stls_iet_result_inheritance():
     assert issubclass(stlsiet.Result, stls.Result)
 
 
 def test_stls_iet_result_initialization(mocker):
-    super_init = mocker.patch("qupled.stls.Result.__init__")
     results = stlsiet.Result()
     assert results.bf is None
-    super_init.assert_called_once()
 
 
 def test_get_initial_guess_with_default_database_name(mocker):

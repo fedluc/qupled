@@ -10,7 +10,7 @@ def test_stls_inheritance():
 
 
 def test_stls_initialization(mocker):
-    super_init = mocker.patch("qupled.rpa.Rpa.__init__")
+    super_init = mocker.patch("qupled.rpa.Solver.__init__")
     scheme = stls.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stls.Result)
@@ -50,16 +50,12 @@ def test_stls_input_inheritance():
 
 
 def test_stls_input_initialization(mocker):
-    super_init = mocker.patch("qupled.rpa.Input.__init__")
     guess = mocker.patch("qupled.stls.Guess")
-    coupling = 1.5
-    degeneracy = 3.0
-    input = stls.Input(coupling, degeneracy)
+    input = stls.Input(mocker.ANY, mocker.ANY)
     assert input.error == 1.0e-5
     assert input.mixing == 1.0
     assert input.iterations == 1000
     assert input.guess == guess.return_value
-    super_init.assert_called_once_with(coupling, degeneracy)
     assert input.theory == "STLS"
 
 
@@ -68,10 +64,8 @@ def test_stls_result_inheritance():
 
 
 def test_stls_result_initialization(mocker):
-    super_init = mocker.patch("qupled.hf.Result.__init__")
     results = stls.Result()
     assert results.error is None
-    super_init.assert_called_once()
 
 
 def test_stls_guess_initialization(mocker):

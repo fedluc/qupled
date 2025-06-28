@@ -33,9 +33,7 @@ class Input(stlsiet.Input, qstls.Input):
     Accepted theories: ``QSTLS-HNC``, ``QSTLS-IOI`` and ``QSTLS-LCT``.
     """
 
-    def __post_init__(self):
-        if self.theory not in {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}:
-            raise ValueError("Invalid dielectric theory")
+    allowed_theories = {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}
 
 
 if __name__ == "__main__":

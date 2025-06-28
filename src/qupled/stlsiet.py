@@ -70,10 +70,20 @@ class Input(stls.Input):
         mapping diverges). Default = ``standard``.
         """
     guess: Guess = field(default_factory=lambda: Guess())
+    allowed_theories = {"STLS-HNC", "STLS-IOI", "STLS-LCT"}
 
     def __post_init__(self):
+        if self.is_default_theory():
+            raise ValueError(
+                f"Missing dielectric theory, choose among {self.allowed_theories} "
+            )
         if self.theory not in {"STLS-HNC", "STLS-IOI", "STLS-LCT"}:
-            raise ValueError("Invalid dielectric theory")
+            raise ValueError(
+                f"Invalid dielectric theory {self.theory}, choose among {self.allowed_theories}"
+            )
+
+    def is_default_theory(self) -> bool:
+        return self.theory == Input.__dataclass_fields__["theory"].default
 
 
 @serialize.serializable_dataclass

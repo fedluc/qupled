@@ -8,7 +8,7 @@ def test_esa_inheritance():
 
 
 def test_esa_initialization(mocker):
-    super_init = mocker.patch("qupled.hf.HF.__init__")
+    super_init = mocker.patch("qupled.hf.Solver.__init__")
     scheme = esa.Solver()
     super_init.assert_called_once()
     assert scheme.native_scheme_cls == native.ESA
@@ -19,9 +19,5 @@ def test_esa_input_inheritance():
 
 
 def test_esa_input_initialization(mocker):
-    super_init = mocker.patch("qupled.hf.Input.__init__")
-    coupling = 1.5
-    degeneracy = 3.0
-    input = esa.Input(coupling, degeneracy)
-    super_init.assert_called_once_with(coupling, degeneracy)
+    input = esa.Input(mocker.ANY, mocker.ANY)
     assert input.theory == "ESA"
