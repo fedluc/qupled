@@ -62,14 +62,28 @@ namespace MPIUtil {
 
   bool isRoot() {
 #ifdef USE_MPI
-    return rank() == 0;
+    if (isInitialized()) {
+      return rank() == 0;
+    } else {
+      std::cout << "Warning: MPI method isRoot called before MPI was "
+                   "initialized. It will default to true."
+                << std::endl;
+      return true;
+    }
 #endif
     return true;
   }
 
   bool isSingleProcess() {
 #ifdef USE_MPI
-    return numberOfRanks() == 1;
+    if (isInitialized()) {
+      return numberOfRanks() == 1;
+    } else {
+      std::cout << "Warning: MPI method isSingleProcess called before MPI was "
+                   "initialized. It will default to true."
+                << std::endl;
+      return true;
+    }
 #endif
     return true;
   }

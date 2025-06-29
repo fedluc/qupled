@@ -97,8 +97,8 @@ class Solver:
         is greater than one. If both conditions are met, runs the computation in parallel; otherwise,
         runs it in serial mode.
         """
-        if self.inputs.processes > 1 and native.uses_mpi:
-            self._compute_native_parallel()
+        if native.uses_mpi:
+            self._compute_native_mpi()
         else:
             self._compute_native_serial()
 
@@ -118,7 +118,7 @@ class Solver:
         self.native_scheme_status = scheme.compute()
         self.results.from_native(scheme)
 
-    def _compute_native_parallel(self):
+    def _compute_native_mpi(self):
         mpi.write_inputs(self.inputs)
         mpi.launch_mpi_execution(self.__module__, self.inputs.processes)
         self.results = mpi.read_results(type(self.results))

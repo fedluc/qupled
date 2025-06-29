@@ -29,7 +29,6 @@ public:
   const std::vector<double> &getWvg() const { return wvg; }
   std::vector<double> getRdf(const std::vector<double> &r) const;
   std::vector<double> getSdr() const;
-  const bool &isRunningOnRoot() const { return isRunningOnRoot_; }
   double getUInt() const;
 
 protected:
@@ -38,8 +37,6 @@ protected:
   const std::shared_ptr<const Input> inPtr;
   // Integrator
   const std::shared_ptr<Integrator1D> itg;
-  // Flag marking if we are solving on root
-  const bool isRunningOnRoot_;
   // Wave vector grid
   std::vector<double> wvg;
   // Ideal density response
