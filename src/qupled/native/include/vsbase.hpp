@@ -26,8 +26,7 @@ class VSBase : public Logger {
 public:
 
   // Constructor
-  explicit VSBase()
-      : Logger(MPIUtil::isRoot()) {}
+  explicit VSBase() {}
   // Destructor
   virtual ~VSBase() = default;
   // Compute vs-stls scheme

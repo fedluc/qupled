@@ -49,7 +49,7 @@ def create_svg_files():
 
 
 def get_plot_data():
-    scheme: qstls.Qstls = None
+    scheme: qstls.Solver = None
     error: list[float] = []
     while scheme is None or scheme.results.error > 1e-5:
         scheme = solve_qstls(scheme.run_id if scheme is not None else scheme)
@@ -57,7 +57,7 @@ def get_plot_data():
     return scheme, error
 
 
-def create_one_svg_file(darkmode: bool, scheme: qstls.Qstls, error: np.array):
+def create_one_svg_file(darkmode: bool, scheme: qstls.Solver, error: np.array):
     # Get plot settings
     settings = PlotSettings(darkmode)
     # Set style
@@ -80,7 +80,7 @@ def create_one_svg_file(darkmode: bool, scheme: qstls.Qstls, error: np.array):
 
 
 def solve_qstls(guess_run_id: int):
-    scheme = qstls.Qstls()
+    scheme = qstls.Solver()
     inputs = qstls.Input(coupling=15.0, degeneracy=1.0)
     inputs.mixing = 0.3
     inputs.resolution = 0.1
@@ -97,7 +97,7 @@ def solve_qstls(guess_run_id: int):
     return scheme
 
 
-def plot_density_response(plt: plt, scheme: qstls.Qstls, settings: PlotSettings):
+def plot_density_response(plt: plt, scheme: qstls.Solver, settings: PlotSettings):
     results = scheme.results
     inputs = scheme.inputs
     wvg_squared = results.wvg[:, np.newaxis] ** 2
@@ -127,7 +127,7 @@ def plot_density_response(plt: plt, scheme: qstls.Qstls, settings: PlotSettings)
     plt.yticks(fontsize=settings.ticksz)
 
 
-def plot_ssf(plt: plt, scheme: qstls.Qstls, settings: PlotSettings):
+def plot_ssf(plt: plt, scheme: qstls.Solver, settings: PlotSettings):
     results = scheme.results
     plt.subplot(2, 2, 4)
     plt.plot(results.wvg, results.ssf, color=settings.color, linewidth=settings.width)

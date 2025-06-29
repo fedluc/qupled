@@ -8,17 +8,17 @@ from qupled.database import DataBaseHandler
 
 @pytest.fixture
 def scheme():
-    scheme = qstls.Qstls()
+    scheme = qstls.Solver()
     return scheme
 
 
 def test_qstls_inheritance():
-    assert issubclass(qstls.Qstls, stls.Stls)
+    assert issubclass(qstls.Solver, stls.Solver)
 
 
 def test_qstls_initialization(mocker, scheme):
-    super_init = mocker.patch("qupled.stls.Stls.__init__")
-    scheme = qstls.Qstls()
+    super_init = mocker.patch("qupled.stls.Solver.__init__")
+    scheme = qstls.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stls.Result)
     assert scheme.native_scheme_cls == native.Qstls
@@ -27,9 +27,9 @@ def test_qstls_initialization(mocker, scheme):
 
 def test_compute(mocker, scheme):
     find_fixed_adr_in_database = mocker.patch(
-        "qupled.qstls.Qstls.find_fixed_adr_in_database"
+        "qupled.qstls.Solver.find_fixed_adr_in_database"
     )
-    super_compute = mocker.patch("qupled.stls.Stls.compute")
+    super_compute = mocker.patch("qupled.stls.Solver.compute")
     inputs = mocker.ANY
     scheme.compute(inputs)
     find_fixed_adr_in_database.assert_called_once_with(inputs)
@@ -88,9 +88,5 @@ def test_qstls_input_inheritance():
 
 
 def test_qstls_input_initialization(mocker):
-    super_init = mocker.patch("qupled.stls.Input.__init__")
-    coupling = 1.5
-    degeneracy = 3.0
-    input = qstls.Input(coupling, degeneracy)
-    super_init.assert_called_once_with(coupling, degeneracy)
+    input = qstls.Input(mocker.ANY, mocker.ANY)
     assert input.theory == "QSTLS"

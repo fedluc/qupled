@@ -12,6 +12,13 @@
 
 namespace MPIUtil {
 
+// Mark if MPI was enabled or not
+#ifdef USE_MPI
+  constexpr bool isUsed = true;
+#else
+  constexpr bool isUsed = false;
+#endif
+
   // Initialize MPI
   void init();
 

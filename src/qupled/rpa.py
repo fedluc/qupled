@@ -2,26 +2,30 @@ from __future__ import annotations
 
 from . import hf
 from . import native
+from . import serialize
 
 
-class Rpa(hf.HF):
+class Solver(hf.Solver):
     """
     Class used to solve the RPA scheme.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.Rpa
+
     def __init__(self):
         super().__init__()
         self.results: hf.Result = hf.Result()
-        # Undocumented properties
-        self.native_scheme_cls = native.Rpa
 
 
+@serialize.serializable_dataclass
 class Input(hf.Input):
     """
     Class used to manage the input for the :obj:`qupled.rpa.Rpa` class.
     """
 
-    def __init__(self, coupling: float, degeneracy: float):
-        super().__init__(coupling, degeneracy)
-        # Undocumented default values
-        self.theory = "RPA"
+    theory: str = "RPA"
+
+
+if __name__ == "__main__":
+    Solver.run_mpi_worker(Input, hf.Result)

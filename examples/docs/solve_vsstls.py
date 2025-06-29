@@ -1,7 +1,7 @@
 import qupled.vsstls as vsstls
 
 # Define the object used to solve the scheme
-scheme = vsstls.VSStls()
+scheme = vsstls.Solver()
 
 # Define the input parameters
 inputs = vsstls.Input(2.0, 1.0)

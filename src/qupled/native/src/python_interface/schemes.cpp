@@ -2,6 +2,7 @@
 #include "esa.hpp"
 #include "hf.hpp"
 #include "input.hpp"
+#include "mpi_util.hpp"
 #include "python_interface/util.hpp"
 #include "qstls.hpp"
 #include "qstlsiet.hpp"
@@ -27,6 +28,16 @@ public:
 
   explicit PyScheme(const TInput &in)
       : TScheme(std::make_shared<TInput>(in)) {}
+
+  int compute() {
+    MPIUtil::init();
+    const bool status = TScheme::compute();
+    isRoot = MPIUtil::isRoot();
+    MPIUtil::finalize();
+    return status;
+  }
+
+  bool isRoot = true;
 };
 
 // Type aliases
@@ -98,7 +109,8 @@ void exposeBaseSchemeProperties(py::class_<T> &cls) {
       .def_property_readonly("lfc", &getLfc<T>)
       .def_property_readonly("ssf", &getSsf<T>)
       .def_property_readonly("uint", &T::getUInt)
-      .def_property_readonly("wvg", &getWvg<T>);
+      .def_property_readonly("wvg", &getWvg<T>)
+      .def_readonly("is_root", &T::isRoot);
 }
 
 template <typename T>

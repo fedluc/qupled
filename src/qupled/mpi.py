@@ -1,69 +1,88 @@
-import functools
+import json
+import subprocess
+import shutil
 
-from qupled import native
+from pathlib import Path
+from . import native
+
+# MPI command
+MPI_COMMAND = "mpiexec"
+
+# Temporary files used for MPI executions
+INPUT_FILE = Path("input.json")
+RESULT_FILE = Path("results.json")
 
 
-class MPI:
-    """Class to handle the calls to the MPI API"""
+def launch_mpi_execution(module, nproc):
+    call_mpi = shutil.which(MPI_COMMAND) is not None and native.uses_mpi
+    if call_mpi:
+        subprocess.run(
+            [MPI_COMMAND, "-n", str(nproc), "python", "-m", module], check=True
+        )
+    else:
+        print("WARNING: Could not call MPI, defaulting to serial execution.")
+        subprocess.run(["python", "-m", module], check=True)
 
-    def rank(self):
-        """Get rank of the process"""
-        return native.MPI.rank()
 
-    def is_root(self):
-        """Check if the current process is root (rank 0)"""
-        return native.MPI.is_root()
+def write_inputs(inputs):
+    """
+    Writes the provided inputs to a file in JSON format.
 
-    def barrier(self):
-        """Setup an MPI barrier"""
-        native.MPI.barrier()
+    Args:
+        inputs: An object with a `to_dict()` method that returns a dictionary representation of the inputs.
 
-    def timer(self):
-        """Get wall time"""
-        return native.MPI.timer()
+    Raises:
+        IOError: If there is an error opening or writing to the file.
+    """
+    with INPUT_FILE.open("w") as f:
+        json.dump(inputs.to_dict(), f)
 
-    @staticmethod
-    def run_only_on_root(func):
-        """Python decorator for all methods that have to be run only by root"""
 
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            if native.MPI.is_root():
-                return func(*args, **kwargs)
+def read_inputs(InputCls):
+    """
+    Load inputs from a JSON file.
 
-        return wrapper
+    Args:
+        file_path (str): Path to the JSON file containing input data.
 
-    @staticmethod
-    def synchronize_ranks(func):
-        """Python decorator for all methods that need rank synchronization"""
+    Returns:
+        InputCls: An instance of the InputCls class populated with data from the file.
+    """
+    with INPUT_FILE.open() as f:
+        input_dict = json.load(f)
+    return InputCls.from_dict(input_dict)
 
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            func(*args, **kwargs)
-            native.MPI.barrier()
 
-        return wrapper
+def write_results(scheme, ResultCls):
+    """
+    Write results to a JSON file.
 
-    @staticmethod
-    def record_time(func):
-        """Python decorator for all methods that have to be timed"""
+    Args:
+        results: The results object to be written to the file.
+        file_path (str): Path to the JSON file where results will be saved.
+    """
+    if scheme.is_root:
+        results = ResultCls()
+        results.from_native(scheme)
+        with RESULT_FILE.open("w") as f:
+            json.dump(results.to_dict(), f)
 
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            mpi = native.MPI
-            tic = mpi.timer()
-            func(*args, **kwargs)
-            toc = mpi.timer()
-            dt = toc - tic
-            hours = dt // 3600
-            minutes = (dt % 3600) // 60
-            seconds = dt % 60
-            if mpi.is_root():
-                if hours > 0:
-                    print("Elapsed time: %d h, %d m, %d s." % (hours, minutes, seconds))
-                elif minutes > 0:
-                    print("Elapsed time: %d m, %d s." % (minutes, seconds))
-                else:
-                    print("Elapsed time: %.1f s." % seconds)
 
-        return wrapper
+def read_results(ResultsCls):
+    """
+    Loads results from a JSON file and returns an instance of the specified ResultsCls.
+
+    Args:
+        ResultsCls (type): The class with a `from_dict` method to instantiate from the loaded dictionary.
+
+    Returns:
+        An instance of ResultsCls initialized with data loaded from the JSON file.
+
+    Raises:
+        FileNotFoundError: If the result file does not exist.
+        json.JSONDecodeError: If the file content is not valid JSON.
+        AttributeError: If ResultsCls does not have a `from_dict` method.
+    """
+    with RESULT_FILE.open() as f:
+        result_dict = json.load(f)
+    return ResultsCls.from_dict(result_dict)

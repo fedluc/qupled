@@ -1,24 +1,27 @@
 from __future__ import annotations
 
+from dataclasses import field
 import numpy as np
 
 from . import hf
 from . import native
 from . import output
 from . import rpa
+from . import serialize
 
 
-class Stls(rpa.Rpa):
+class Solver(rpa.Solver):
     """
     Class used to solve the Stls scheme.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.Stls
+    native_inputs_cls = native.StlsInput
+
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
-        # Undocumented properties
-        self.native_scheme_cls = native.Stls
-        self.native_inputs_cls = native.StlsInput
 
     @staticmethod
     def get_initial_guess(run_id: int, database_name: str | None = None) -> Guess:
@@ -37,43 +40,39 @@ class Stls(rpa.Rpa):
         return Guess(data[names[0]], data[names[1]])
 
 
+@serialize.serializable_dataclass
 class Input(rpa.Input):
     """
     Class used to manage the input for the :obj:`qupled.stls.Stls` class.
     """
 
-    def __init__(self, coupling: float, degeneracy: float):
-        super().__init__(coupling, degeneracy)
-        self.error: float = 1.0e-5
-        """Minimum error for convergence. Default = ``1.0e-5``"""
-        self.mixing: float = 1.0
-        """Mixing parameter. Default = ``1.0``"""
-        self.iterations: int = 1000
-        """Maximum number of iterations. Default = ``1000``"""
-        self.guess: Guess = Guess()
-        """Initial guess. Default = ``stls.Guess()``"""
-        # Undocumented default values
-        self.theory: str = "STLS"
+    error: float = 1.0e-5
+    """Minimum error for convergence. Default = ``1.0e-5``"""
+    mixing: float = 1.0
+    """Mixing parameter. Default = ``1.0``"""
+    iterations: int = 1000
+    """Maximum number of iterations. Default = ``1000``"""
+    guess: Guess = field(default_factory=lambda: Guess())
+    """Initial guess. Default = ``stls.Guess()``"""
+    theory: str = "STLS"
 
 
+@serialize.serializable_dataclass
 class Result(hf.Result):
     """
     Class used to store the results for the :obj:`qupled.stls.Stls` class.
     """
 
-    def __init__(self):
-        super().__init__()
-        self.error: float = None
-        """Residual error in the solution"""
+    error: float = None
+    """Final error of the scheme. Default = ``None``"""
 
 
+@serialize.serializable_dataclass
 class Guess:
-
-    def __init__(self, wvg: np.ndarray = None, ssf: np.ndarray = None):
-        self.wvg = wvg
-        """ Wave-vector grid. Default = ``None``"""
-        self.ssf = ssf
-        """ Static structure factor. Default = ``None``"""
+    wvg: np.ndarray = None
+    """Wave-vector grid. Default = ``None``"""
+    ssf: np.ndarray = None
+    """Static structure factor. Default = ``None``"""
 
     def to_native(self) -> native.Guess:
         """
@@ -92,3 +91,7 @@ class Guess:
             if value is not None:
                 setattr(native_guess, attr, value)
         return native_guess
+
+
+if __name__ == "__main__":
+    Solver.run_mpi_worker(Input, Result)

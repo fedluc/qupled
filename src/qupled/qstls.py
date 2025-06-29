@@ -2,20 +2,22 @@ from __future__ import annotations
 
 from . import database
 from . import native
+from . import serialize
 from . import stls
 
 
-class Qstls(stls.Stls):
+class Solver(stls.Solver):
     """
     Class used to solve the Qstls scheme.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.Qstls
+    native_inputs_cls = native.QstlsInput
+
     def __init__(self):
         super().__init__()
         self.results: stls.Result = stls.Result()
-        # Undocumented properties
-        self.native_scheme_cls = native.Qstls
-        self.native_inputs_cls = native.QstlsInput
 
     def compute(self, inputs: Input):
         self.find_fixed_adr_in_database(inputs)
@@ -55,14 +57,15 @@ class Qstls(stls.Stls):
                 return
 
 
-# Input class
+@serialize.serializable_dataclass
 class Input(stls.Input):
     """
     Class used to manage the input for the :obj:`qupled.qstls.Qstls` class.
     """
 
-    def __init__(self, coupling: float, degeneracy: float):
-        super().__init__(coupling, degeneracy)
-        # Undocumented default values
-        self.fixed_run_id: int | None = None
-        self.theory = "QSTLS"
+    fixed_run_id: int | None = None
+    theory: str = "QSTLS"
+
+
+if __name__ == "__main__":
+    Solver.run_mpi_worker(Input, stls.Result)
