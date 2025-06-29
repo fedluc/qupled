@@ -18,7 +18,7 @@ print(scheme.results.uint)
 scheme = qstlsiet.Solver()
 
 # Define the input parameters for one of the QSTLS-IET schemes
-inputs = qstlsiet.Input(10.0, 1.0, "QSTLS-LCT")
+inputs = qstlsiet.Input(10.0, 1.0, theory="QSTLS-LCT")
 inputs.mixing = 0.5
 inputs.matsubara = 16
 inputs.threads = 16
