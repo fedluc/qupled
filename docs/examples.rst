@@ -90,11 +90,10 @@ The quantum schemes can have a significant computational cost. There are two str
 that can be employed to speed up the calculations:
 
 * *Parallelization*: qupled supports both multithreaded calculations with OpenMP and
-  multiprocessors computations with MPI. The number of OpenMP threads
-  can be specified in input (as shown in :ref:`this example<solvingQuantumSchemes>`).
-  Multiprocessor computations can be performed by running qupled as an MPI application:
-  ``mpirun -n <number_of_cores> python3 <script_using_qupled>``. OpenMP and MPI can be
-  used concurrently by setting both the number of threads and the number of cores.
+  multiprocessors computations with MPI. OpenMP and MPI can be
+  used concurrently by setting both the number of threads and the number of cores in the 
+  input dataclasses. Use `threads` to set the number of OMP threads and `processes` to
+  set the number of MPI processes.
  
 * *Pre-computation*: The calculations for the quantum schemes can be made significantly
   faster if part of the calculation of the auxiliary density response can be skipped.

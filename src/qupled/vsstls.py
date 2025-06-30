@@ -1,23 +1,26 @@
 from __future__ import annotations
 
+from dataclasses import field
 import numpy as np
 
 from . import native
 from . import output
+from . import serialize
 from . import stls
 
 
-class VSStls(stls.Stls):
+class Solver(stls.Solver):
     """
     Class used to solve the VSStls scheme.
     """
 
+    # Native classes used to solve the scheme
+    native_scheme_cls = native.VSStls
+    native_inputs_cls = native.VSStlsInput
+
     def __init__(self):
         super().__init__()
         self.results: Result = Result()
-        # Undocumented properties
-        self.native_scheme_cls = native.VSStls
-        self.native_inputs_cls = native.VSStlsInput
 
     def compute(self, inputs: Input):
         """
@@ -130,58 +133,53 @@ class VSStls(stls.Stls):
         return FreeEnergyIntegrand(data[names[0]], data[names[1]])
 
 
-# Input class
+@serialize.serializable_dataclass
 class Input(stls.Input):
     """
     Class used to manage the input for the :obj:`qupled.vsstls.VSStls` class.
     """
 
-    def __init__(self, coupling: float, degeneracy: float):
-        super().__init__(coupling, degeneracy)
-        self.alpha: list[float] = [0.5, 1.0]
-        """Initial guess for the free parameter. Default = ``[0.5, 1.0]``"""
-        self.coupling_resolution: float = 0.1
-        """Resolution of the coupling parameter grid. Default = ``0.1``"""
-        self.degeneracy_resolution: float = 0.1
-        """Resolution of the degeneracy parameter grid. Default = ``0.1``"""
-        self.error_alpha: float = 1.0e-3
-        """Minimum error for convergence in the free parameter. Default = ``1.0e-3``"""
-        self.iterations_alpha: int = 50
-        """Maximum number of iterations to determine the free parameter. Default = ``50``"""
-        self.free_energy_integrand: FreeEnergyIntegrand = FreeEnergyIntegrand()
-        """Pre-computed free energy integrand."""
-        self.threads: int = 9
-        """Number of threads. Default = ``9``"""
-        # Undocumented default values
-        self.theory: str = "VSSTLS"
+    alpha: list[float] = field(default_factory=lambda: [0.5, 1.0])
+    """Initial guess for the free parameter. Default = ``[0.5, 1.0]``"""
+    coupling_resolution: float = 0.1
+    """Resolution of the coupling parameter grid. Default = ``0.1``"""
+    degeneracy_resolution: float = 0.1
+    """Resolution of the degeneracy parameter grid. Default = ``0.1``"""
+    error_alpha: float = 1.0e-3
+    """Minimum error for convergence in the free parameter. Default = ``1.0e-3``"""
+    iterations_alpha: int = 50
+    """Maximum number of iterations to determine the free parameter. Default = ``50``"""
+    free_energy_integrand: FreeEnergyIntegrand = field(
+        default_factory=lambda: FreeEnergyIntegrand()
+    )
+    """Pre-computed free energy integrand."""
+    threads: int = 9
+    """Number of threads. Default = ``9``"""
+    # Undocumented default values
+    theory: str = "VSSTLS"
 
 
+@serialize.serializable_dataclass
 class Result(stls.Result):
     """
     Class used to store the results for the :obj:`qupled.vsstls.VSStls` class.
     """
 
-    def __init__(self):
-        super().__init__()
-        self.free_energy_grid = None
-        """Free energy grid"""
-        self.free_energy_integrand = None
-        """Free energy integrand"""
-        self.alpha = None
-        """Free parameter"""
+    free_energy_grid: np.ndarray = None
+    """Free energy grid"""
+    free_energy_integrand: np.ndarray = None
+    """Free energy integrand"""
+    alpha: float = None
+    """Free parameter"""
 
 
+@serialize.serializable_dataclass
 class FreeEnergyIntegrand:
 
-    def __init__(
-        self,
-        grid: np.ndarray | None = None,
-        integrand: np.ndarray | None = None,
-    ):
-        self.grid = grid
-        """ Coupling parameter grid. Default = ``None``"""
-        self.integrand = integrand
-        """ Free energy integrand. Default = ``None``"""
+    grid: np.ndarray = None
+    """ Coupling parameter grid. Default = ``None``"""
+    integrand: np.ndarray = None
+    """ Free energy integrand. Default = ``None``"""
 
     def to_native(self) -> native.FreeEnergyIntegrand:
         """
@@ -201,3 +199,7 @@ class FreeEnergyIntegrand:
             if value is not None:
                 setattr(native_guess, attr, value)
         return native_guess
+
+
+if __name__ == "__main__":
+    Solver.run_mpi_worker(Input, Result)

@@ -299,8 +299,7 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
 
 StructPropBase::StructPropBase(
     const std::shared_ptr<const IterationInput> &inPtr_)
-    : Logger(MPIUtil::isRoot()),
-      inPtr(inPtr_),
+    : inPtr(inPtr_),
       csrIsInitialized(false),
       computed(false),
       outVector(NPOINTS) {}

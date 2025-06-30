@@ -1,13 +1,10 @@
 import qupled.qstls as qstls
 
 # Define the object used to solve the scheme
-scheme = qstls.Qstls()
+scheme = qstls.Solver()
 
 # Define the input parameters
-inputs = qstls.Input(10.0, 1.0)
-inputs.mixing = 0.5
-inputs.matsubara = 16
-inputs.threads = 16
+inputs = qstls.Input(10.0, 1.0, mixing=0.5, matsubara=16, threads=16)
 
 # Solve the QSTLS scheme and store the internal energy (v1 calculation)
 scheme.compute(inputs)

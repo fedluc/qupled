@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from qupled.vsstls import VSStls, Input
+from qupled.vsstls import Solver, Input
 
 import qupled.native as native
 import qupled.stls as stls
@@ -9,17 +9,17 @@ import qupled.vsstls as vsstls
 
 @pytest.fixture
 def scheme():
-    scheme = vsstls.VSStls()
+    scheme = vsstls.Solver()
     return scheme
 
 
 def test_vsstls_inheritance():
-    assert issubclass(vsstls.VSStls, stls.Stls)
+    assert issubclass(vsstls.Solver, stls.Solver)
 
 
 def test_vsstls_initialization(mocker):
-    super_init = mocker.patch("qupled.stls.Stls.__init__")
-    scheme = vsstls.VSStls()
+    super_init = mocker.patch("qupled.stls.Solver.__init__")
+    scheme = vsstls.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, vsstls.Result)
     assert scheme.native_scheme_cls == native.VSStls
@@ -28,9 +28,9 @@ def test_vsstls_initialization(mocker):
 
 def test_compute(mocker, scheme):
     fill_free_energy_integrand = mocker.patch(
-        "qupled.vsstls.VSStls._fill_free_energy_integrand"
+        "qupled.vsstls.Solver._fill_free_energy_integrand"
     )
-    super_compute = mocker.patch("qupled.stls.Stls.compute")
+    super_compute = mocker.patch("qupled.stls.Solver.compute")
     inputs = mocker.ANY
     scheme.compute(inputs)
     fill_free_energy_integrand.assert_called_once_with(inputs)
@@ -39,10 +39,10 @@ def test_compute(mocker, scheme):
 
 def test_fill_free_energy_integrand(mocker, scheme):
     get_missing_state_points = mocker.patch(
-        "qupled.vsstls.VSStls._get_missing_state_points"
+        "qupled.vsstls.Solver._get_missing_state_points"
     )
-    compute = mocker.patch("qupled.vsstls.VSStls.compute")
-    update_input_data = mocker.patch("qupled.vsstls.VSStls._update_input_data")
+    compute = mocker.patch("qupled.vsstls.Solver.compute")
+    update_input_data = mocker.patch("qupled.vsstls.Solver._update_input_data")
     inputs = mocker.Mock()
     inputs.coupling = mocker.ANY
     inputs.theory = mocker.ANY
@@ -71,7 +71,7 @@ def test_get_missing_state_points_with_no_actual_grid(mocker):
         coupling - 0.1 * coupling_resolution,
         3 * coupling_resolution,
     )
-    result = VSStls._get_missing_state_points(inputs)
+    result = Solver._get_missing_state_points(inputs)
     np.testing.assert_array_equal(result, expected_grid)
 
 
@@ -93,7 +93,7 @@ def test_get_missing_state_points_with_actual_grid(mocker):
         np.round(expected_grid, precision),
         np.round(inputs.free_energy_integrand.grid, precision),
     )
-    result = VSStls._get_missing_state_points(inputs)
+    result = Solver._get_missing_state_points(inputs)
     np.testing.assert_array_equal(result, missing_points)
 
 
@@ -117,7 +117,7 @@ def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
         "free_energy_grid": mocker.ANY,
         "free_energy_integrand": mocker.ANY,
     }
-    fxci = vsstls.VSStls.get_free_energy_integrand(run_id)
+    fxci = vsstls.Solver.get_free_energy_integrand(run_id)
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
     read_results.assert_called_once_with(
@@ -133,7 +133,7 @@ def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
         "free_energy_grid": mocker.ANY,
         "free_energy_integrand": mocker.ANY,
     }
-    fxci = vsstls.VSStls.get_free_energy_integrand(run_id, database_name)
+    fxci = vsstls.Solver.get_free_energy_integrand(run_id, database_name)
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
     read_results.assert_called_once_with(
@@ -150,14 +150,13 @@ def test_vsstls_input_initialization(mocker):
     free_energy_integrand = mocker.patch("qupled.vsstls.FreeEnergyIntegrand")
     coupling = mocker.ANY
     degeneracy = mocker.ANY
-    input = vsstls.Input(coupling, degeneracy)
+    input = vsstls.Input(mocker.ANY, mocker.ANY)
     assert input.alpha == [0.5, 1.0]
     assert input.coupling_resolution == 0.1
     assert input.degeneracy_resolution == 0.1
     assert input.error_alpha == 1.0e-3
     assert input.iterations_alpha == 50
     assert input.free_energy_integrand == free_energy_integrand.return_value
-    super_init.assert_called_once_with(coupling, degeneracy)
     assert input.theory == "VSSTLS"
 
 
@@ -166,12 +165,10 @@ def test_vsstls_result_inheritance():
 
 
 def test_vsstls_result_initialization(mocker):
-    super_init = mocker.patch("qupled.stls.Result.__init__")
     stls_results = vsstls.Result()
     assert stls_results.free_energy_grid is None
     assert stls_results.free_energy_integrand is None
     assert stls_results.alpha is None
-    super_init.assert_called_once()
 
 
 def test_free_energy_integrand_initialization(mocker):

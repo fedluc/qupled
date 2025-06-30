@@ -5,12 +5,12 @@ from qupled.output import DataBase
 
 # Define an Rpa object to solve the RPA scheme
 print("######### Solving the RPA scheme #########")
-rpa_scheme = rpa.Rpa()
+rpa_scheme = rpa.Solver()
 rpa_scheme.compute(rpa.Input(10.0, 1.0))
 
 # Define an ESA object to solve the ESA scheme
 print("######### Solving the ESA scheme #########")
-esa_scheme = esa.ESA()
+esa_scheme = esa.Solver()
 esa_scheme.compute(esa.Input(10.0, 1.0))
 
 # Retrieve information from the output files
