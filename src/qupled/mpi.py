@@ -11,6 +11,7 @@ MPI_COMMAND = "mpiexec"
 # Temporary files used for MPI executions
 INPUT_FILE = Path("input.json")
 RESULT_FILE = Path("results.json")
+STATUS_FILE = Path("status.json")
 
 
 def launch_mpi_execution(module, nproc):
@@ -41,13 +42,7 @@ def launch_mpi_execution(module, nproc):
 
 def write_inputs(inputs):
     """
-    Writes the provided inputs to a file in JSON format.
-
-    Args:
-        inputs: An object with a `to_dict()` method that returns a dictionary representation of the inputs.
-
-    Raises:
-        IOError: If there is an error opening or writing to the file.
+    Writes the input data to the INPUT_FILE in JSON format.
     """
     with INPUT_FILE.open("w") as f:
         json.dump(inputs.to_dict(), f)
@@ -55,13 +50,7 @@ def write_inputs(inputs):
 
 def read_inputs(InputCls):
     """
-    Load inputs from a JSON file.
-
-    Args:
-        file_path (str): Path to the JSON file containing input data.
-
-    Returns:
-        InputCls: An instance of the InputCls class populated with data from the file.
+    Reads input data from a predefined input file and constructs an instance of the specified input class.
     """
     with INPUT_FILE.open() as f:
         input_dict = json.load(f)
@@ -70,11 +59,7 @@ def read_inputs(InputCls):
 
 def write_results(scheme, ResultCls):
     """
-    Write results to a JSON file.
-
-    Args:
-        results: The results object to be written to the file.
-        file_path (str): Path to the JSON file where results will be saved.
+    Writes the results of a computation to a JSON file if the current process is the root.
     """
     if scheme.is_root:
         results = ResultCls()
@@ -85,29 +70,35 @@ def write_results(scheme, ResultCls):
 
 def read_results(ResultsCls):
     """
-    Loads results from a JSON file and returns an instance of the specified ResultsCls.
-
-    Args:
-        ResultsCls (type): The class with a `from_dict` method to instantiate from the loaded dictionary.
-
-    Returns:
-        An instance of ResultsCls initialized with data loaded from the JSON file.
-
-    Raises:
-        FileNotFoundError: If the result file does not exist.
-        json.JSONDecodeError: If the file content is not valid JSON.
-        AttributeError: If ResultsCls does not have a `from_dict` method.
+    Reads results from a JSON file and returns an instance of the specified ResultsCls.
     """
     with RESULT_FILE.open() as f:
         result_dict = json.load(f)
     return ResultsCls.from_dict(result_dict)
 
 
+def write_status(scheme, status):
+    """
+    Writes the status of a computation to a JSON file if the current process is the root.
+    """
+    if scheme.is_root:
+        with STATUS_FILE.open("w") as f:
+            json.dump(status, f)
+
+
+def read_status():
+    """
+    Reads status from a JSON file and returns an instance of the specified ResultsCls.
+    """
+    with STATUS_FILE.open() as f:
+        status = json.load(f)
+    return status
+
+
 def clean_files():
     """
     Removes the input and result files if they exist.
     """
-
-    for file in [INPUT_FILE, RESULT_FILE]:
+    for file in [INPUT_FILE, RESULT_FILE, STATUS_FILE]:
         if file.exists():
             file.unlink()

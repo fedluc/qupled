@@ -130,6 +130,7 @@ class Solver:
         """
         mpi.write_inputs(self.inputs)
         mpi.launch_mpi_execution(self.__module__, self.inputs.processes)
+        self.native_scheme_status = mpi.read_status()
         self.results = mpi.read_results(type(self.results))
         mpi.clean_files()
 
@@ -139,8 +140,9 @@ class Solver:
         native_inputs = cls.native_inputs_cls()
         inputs.to_native(native_inputs)
         scheme = cls.native_scheme_cls(native_inputs)
-        scheme.compute()
+        status = scheme.compute()
         mpi.write_results(scheme, ResultCls)
+        mpi.write_status(scheme, status)
 
     def _save(self):
         """
