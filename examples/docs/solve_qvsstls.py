@@ -4,12 +4,9 @@ import qupled.qvsstls as qvsstls
 scheme = qvsstls.Solver()
 
 # Define the input parameters
-inputs = qvsstls.Input(1.0, 1.0)
-inputs.mixing = 0.5
-inputs.matsubara = 16
-inputs.alpha = [-0.2, 0.4]
-inputs.iterations = 100
-inputs.threads = 16
+inputs = qvsstls.Input(
+    1.0, 1.0, mixing=0.5, matsubara=16, alpha=[-0.2, 0.4], iterations=100, threads=16
+)
 
 # Solve scheme for rs = 1.0
 scheme.compute(inputs)

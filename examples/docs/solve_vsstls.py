@@ -4,9 +4,7 @@ import qupled.vsstls as vsstls
 scheme = vsstls.Solver()
 
 # Define the input parameters
-inputs = vsstls.Input(2.0, 1.0)
-inputs.mixing = 0.5
-inputs.alpha = [-0.2, 0.2]
+inputs = vsstls.Input(2.0, 1.0, mixing=0.5, alpha=[-0.2, 0.2])
 
 # Compute
 scheme.compute(inputs)

@@ -5,8 +5,7 @@ from qupled.output import DataBase
 scheme = stls.Solver()
 
 # Define the input parameters
-inputs = stls.Input(10.0, 1.0)
-inputs.mixing = 0.5
+inputs = stls.Input(10.0, 1.0, mixing=0.5)
 
 # Solve scheme
 scheme.compute(inputs)

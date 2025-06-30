@@ -5,10 +5,7 @@ import qupled.qstlsiet as qstlsiet
 scheme = qstls.Solver()
 
 # Define the input parameters
-inputs = qstls.Input(10.0, 1.0)
-inputs.mixing = 0.5
-inputs.matsubara = 16
-inputs.threads = 16
+inputs = qstls.Input(10.0, 1.0, mixing=0.5, matsubara=16, threads=16)
 
 # Solve the QSTLS scheme
 scheme.compute(inputs)
@@ -18,11 +15,15 @@ print(scheme.results.uint)
 scheme = qstlsiet.Solver()
 
 # Define the input parameters for one of the QSTLS-IET schemes
-inputs = qstlsiet.Input(10.0, 1.0, theory="QSTLS-LCT")
-inputs.mixing = 0.5
-inputs.matsubara = 16
-inputs.threads = 16
-inputs.integral_strategy = "segregated"
+inputs = qstlsiet.Input(
+    10.0,
+    1.0,
+    theory="QSTLS-LCT",
+    mixing=0.5,
+    matsubara=16,
+    threads=16,
+    integral_strategy="segregated",
+)
 
 # solve the QSTLS-IET scheme
 scheme.compute(inputs)

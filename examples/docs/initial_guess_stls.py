@@ -4,8 +4,7 @@ import qupled.stls as stls
 scheme = stls.Solver()
 
 # Define the input parameters
-inputs = stls.Input(10.0, 1.0)
-inputs.mixing = 0.2
+inputs = stls.Input(10.0, 1.0, mixing=0.2)
 
 # Solve scheme
 scheme.compute(inputs)
