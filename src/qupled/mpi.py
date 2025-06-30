@@ -14,6 +14,21 @@ RESULT_FILE = Path("results.json")
 
 
 def launch_mpi_execution(module, nproc):
+    """
+    Launches the execution of a Python module using MPI if available, otherwise defaults to serial execution.
+
+    Args:
+        module (str): The name of the Python module to execute (as used with the '-m' flag).
+        nproc (int): The number of processes to use for MPI execution.
+
+    Behavior:
+        - Checks if the MPI command is available and if native MPI usage is enabled.
+        - If MPI is available, runs the module with the specified number of processes using MPI.
+        - If MPI is not available, prints a warning and runs the module in serial mode.
+
+    Raises:
+        subprocess.CalledProcessError: If the subprocess execution fails.
+    """
     call_mpi = shutil.which(MPI_COMMAND) is not None and native.uses_mpi
     if call_mpi:
         subprocess.run(
@@ -86,3 +101,13 @@ def read_results(ResultsCls):
     with RESULT_FILE.open() as f:
         result_dict = json.load(f)
     return ResultsCls.from_dict(result_dict)
+
+
+def clean_files():
+    """
+    Removes the input and result files if they exist.
+    """
+
+    for file in [INPUT_FILE, RESULT_FILE]:
+        if file.exists():
+            file.unlink()

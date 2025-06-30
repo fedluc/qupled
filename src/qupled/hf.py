@@ -119,9 +119,19 @@ class Solver:
         self.results.from_native(scheme)
 
     def _compute_native_mpi(self):
+        """
+        Executes a native MPI computation workflow.
+
+        This method performs the following steps:
+        1. Writes the necessary input files for the MPI computation using `mpi.write_inputs`.
+        2. Launches the MPI execution by calling `mpi.launch_mpi_execution` with the current module and the specified number of processes.
+        3. Reads the computation results using `mpi.read_results` and assigns them to `self.results`.
+        4. Cleans up any temporary files generated during the computation with `mpi.clean_files`.
+        """
         mpi.write_inputs(self.inputs)
         mpi.launch_mpi_execution(self.__module__, self.inputs.processes)
         self.results = mpi.read_results(type(self.results))
+        mpi.clean_files()
 
     @classmethod
     def run_mpi_worker(cls, InputCls, ResultCls):
