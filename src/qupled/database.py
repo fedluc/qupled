@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import struct
 from datetime import datetime
 from enum import Enum
@@ -22,6 +23,7 @@ class DataBaseHandler:
     RUN_TABLE_NAME = "runs"
     INPUT_TABLE_NAME = "inputs"
     RESULT_TABLE_NAME = "results"
+    FIXED_TABLE_NAME = "fixed"
 
     class TableKeys(Enum):
         COUPLING = "coupling"
@@ -252,6 +254,7 @@ class DataBaseHandler:
         Returns:
             None
         """
+        self._delete_blob_data_on_disk(run_id)
         condition = self.run_table.c[self.TableKeys.PRIMARY_KEY.value] == run_id
         statement = sql.delete(self.run_table).where(condition)
         self._execute(statement)
@@ -429,6 +432,24 @@ class DataBaseHandler:
         result = self._execute(statement)
         if run_id := result.inserted_primary_key:
             self.run_id = run_id[0]
+
+    def _delete_blob_data_on_disk(self, run_id: int):
+        try:
+            fixed_table = sql.Table(self.FIXED_TABLE_NAME, self.table_metadata, autoload_with=self.engine)
+        except sql.NoSuchTableError:
+            return
+        stmt_select = sql.select(fixed_table.c.adr).where(
+            fixed_table.c.run_id == run_id
+        )
+        result = self._execute(stmt_select).fetchall()
+        file_paths = [row[0] for row in result]
+        for path in file_paths:
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                print(f"Warning: file not found: {path}")
+            except Exception as e:
+                print(f"Warning: failed to delete {path}: {e}")
 
     @staticmethod
     def _set_sqlite_pragma(engine):
