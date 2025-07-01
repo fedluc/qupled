@@ -8,6 +8,7 @@ from collections.abc import Callable
 
 import numpy as np
 import sqlalchemy as sql
+from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 import blosc2
 
@@ -435,8 +436,10 @@ class DataBaseHandler:
 
     def _delete_blob_data_on_disk(self, run_id: int):
         try:
-            fixed_table = sql.Table(self.FIXED_TABLE_NAME, self.table_metadata, autoload_with=self.engine)
-        except sql.NoSuchTableError:
+            fixed_table = sql.Table(
+                self.FIXED_TABLE_NAME, self.table_metadata, autoload_with=self.engine
+            )
+        except NoSuchTableError:
             return
         stmt_select = sql.select(fixed_table.c.adr).where(
             fixed_table.c.run_id == run_id
