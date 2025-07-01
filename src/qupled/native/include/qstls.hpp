@@ -61,7 +61,7 @@ namespace QstlsUtil {
       CREATE TABLE IF NOT EXISTS {} (
           run_id INTEGER NOT NULL,
           name TEXT NOT NULL,
-          adr BLOB NOT NULL,
+          adr TEXT NOT NULL,
           PRIMARY KEY (run_id, name),
           FOREIGN KEY(run_id) REFERENCES {}(id) ON DELETE CASCADE
       );

@@ -5,6 +5,8 @@
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
 
 using namespace std;
 using namespace vecUtil;
@@ -111,16 +113,22 @@ void Qstls::writeAdrFixed(const Vector3D &res, const string &name) const {
                                                   QstlsUtil::SQL_TABLE_NAME,
                                                   dbInfo.runTableName);
     db.exec(createTable);
-    // Prepare binary data
-    const void *adrData = static_cast<const void *>(res.data());
-    const int adrSize = static_cast<int>(res.size() * sizeof(double));
-    // Insert data
+    // Write to disk
+    filesystem::create_directories("data_blobs");
+    string filename = "data_blobs/run_" + to_string(dbInfo.runId) + "_" + name + ".bin";
+    ofstream out(filename, std::ios::binary);
+    if (!out) { throwError("Failed to open file for writing: " + filename); }
+    out.write(reinterpret_cast<const char *>(res.data()),
+              res.size() * sizeof(double));
+    out.close();
+
+    // Insert path into DB
     const string insert =
         formatUtil::format(QstlsUtil::SQL_INSERT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, insert);
     statement.bind(1, dbInfo.runId);
     statement.bind(2, name);
-    statement.bind(3, adrData, adrSize);
+    statement.bind(3, filename);
     statement.exec();
   } catch (const std::exception &e) {
     throwError("Failed to write to database: " + string(e.what()));
@@ -137,15 +145,19 @@ void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
     statement.bind(1, runId);
     statement.bind(2, name);
     if (statement.executeStep()) {
-      const void *adrData = statement.getColumn(0).getBlob();
-      int adrBytes = statement.getColumn(0).getBytes();
-      if (static_cast<size_t>(adrBytes) != res.size() * sizeof(double)) {
+      const string filename = statement.getColumn(0).getString();
+      ifstream in(filename, std::ios::binary);
+      if (!in) { throwError("Failed to open file for reading: " + filename); }
+      in.read(reinterpret_cast<char *>(res.data()),
+              res.size() * sizeof(double));
+      if (in.gcount()
+          != static_cast<std::streamsize>(res.size() * sizeof(double))) {
         throwError(
             formatUtil::format("Size mismatch: expected {} bytes, got {} bytes",
                                res.size() * sizeof(double),
-                               adrBytes));
+                               in.gcount()));
       }
-      memcpy(res.data(), adrData, adrBytes);
+      in.close();
     }
   } catch (const std::exception &e) {
     throwError("Failed to read from database: " + string(e.what()));
