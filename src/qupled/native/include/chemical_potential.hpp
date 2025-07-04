@@ -10,6 +10,7 @@ public:
   explicit ChemicalPotential(const double &Theta_)
       : Theta(Theta_) {}
   void compute(const std::vector<double> &guess);
+  void compute2D();
   double get() const { return mu; }
 
 private:

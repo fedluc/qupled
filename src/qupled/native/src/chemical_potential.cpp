@@ -15,3 +15,7 @@ void ChemicalPotential::compute(const vector<double> &guess) {
 double ChemicalPotential::normalizationCondition(const double &mu) const {
   return SpecialFunctions::fermiDirac(mu) - 2.0 / (3.0 * pow(Theta, 1.5));
 }
+
+void ChemicalPotential::compute2D() {
+  mu = log(exp(1/Theta) - 1.0);
+}
