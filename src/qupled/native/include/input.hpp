@@ -67,6 +67,15 @@ public:
   double getWaveVectorGridCutoff() const { return xmax; }
   double getFrequencyCutoff() const { return OmegaMax; }
 
+  // Class to handle dimensions
+  enum class Dimension { D3, D2 };
+  
+  void setDimension(Dimension dim) { dimension = dim; }
+  Dimension getDimension() const { return dimension; }
+  
+  // Default dimensions 3D
+  Dimension dimension = Dimension::D3;
+
 protected:
 
   // Accuracy for the integrals

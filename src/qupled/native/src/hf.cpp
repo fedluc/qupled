@@ -30,16 +30,21 @@ HF::HF(const std::shared_ptr<const Input> &in_, const bool verbose_)
 // Compute scheme
 int HF::compute() {
   try {
+    if (in().getDimension() == Input::Dimension::D2) {
+      return compute2D();
+    } else {
     init();
     println("Structural properties calculation ...");
     computeStructuralProperties();
     println("Done");
     return 0;
-  } catch (const runtime_error &err) {
+    } 
+    }catch (const runtime_error &err) {
     cerr << err.what() << endl;
     return 1;
   }
 }
+
 
 // Compute the structural properties
 void HF::computeStructuralProperties() {
