@@ -5,7 +5,6 @@
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <cstring>
-#include <filesystem>
 #include <fstream>
 
 using namespace std;
@@ -114,9 +113,8 @@ void Qstls::writeAdrFixed(const Vector3D &res, const string &name) const {
                                                   dbInfo.runTableName);
     db.exec(createTable);
     // Write to disk
-    filesystem::create_directories("data_blobs");
     string filename =
-        "data_blobs/run_" + to_string(dbInfo.runId) + "_" + name + ".bin";
+        format("{}/run_{}_.bin", dbInfo.blobStorage, dbInfo.runId, name);
     ofstream out(filename, std::ios::binary);
     if (!out) { throwError("Failed to open file for writing: " + filename); }
     out.write(reinterpret_cast<const char *>(res.data()),
