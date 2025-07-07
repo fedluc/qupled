@@ -69,15 +69,13 @@ public:
 
   // Class to handle dimensions
   enum class Dimension { D3, D2 };
-  
   void setDimension(Dimension dim) { dimension = dim; }
   Dimension getDimension() const { return dimension; }
-  
-  // Default dimensions 3D
-  Dimension dimension = Dimension::D3;
 
 protected:
 
+  // Default dimensions 3D
+  Dimension dimension = Dimension::D3;
   // Accuracy for the integrals
   double intError;
   // Quantum coupling parameter

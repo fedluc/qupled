@@ -94,10 +94,12 @@ void HF::computeSsf2D() {
 void HF::computeSsfFinite2D() {
   const bool segregatedItg = in().getInt2DScheme() == "segregated";
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  shared_ptr<Integrator2D> itg2 =
+        make_shared<Integrator2D>(in().getIntError());
   for (size_t i = 0; i < wvg.size(); ++i) {
     HFUtil::Ssf2D ssfTmp2D(
         wvg[i], in().getDegeneracy(), mu, wvg.front(), wvg.back(), itgGrid, itg2);
-    ssf[i] = ssfTmp2D.get2D();
+    ssf[i] = ssfTmp2D.get2D() + in().getDegeneracy() * idr(i, 0);
   }
 }
 

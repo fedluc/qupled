@@ -62,6 +62,7 @@ pybind11_add_module(native
 	input.cpp
 	chemical_potential.cpp
 	hf.cpp
+	hf2d.cpp
 	rpa.cpp
 	esa.cpp
 	stls.cpp

@@ -43,9 +43,9 @@ protected:
   const std::shared_ptr<const Input> inPtr;
   // Integrator
   const std::shared_ptr<Integrator1D> itg;
-  const std::shared_ptr<Integrator2D> itg2;
-  // Grid for 2D integration
-  const std::vector<double> &itgGrid;
+  // const std::shared_ptr<Integrator2D> itg2;
+  // // Grid for 2D integration
+  // const std::vector<double> &itgGrid;
   // Wave vector grid
   std::vector<double> wvg;
   // Ideal density response
@@ -307,10 +307,10 @@ namespace HFUtil {
     // Integration limits for finite temperature calculations
     const double yMin;
     const double yMax;
-    // Integrator object
-    const std::shared_ptr<Integrator2D> itg2;
     // Grid for 2D integration
     const std::vector<double> &itgGrid;
+    // Integrator object
+    const std::shared_ptr<Integrator2D> itg2;
     // Get integrand
     double integrandOut(const double &y) const;
     double integrandIn(const double &p) const;

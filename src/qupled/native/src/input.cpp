@@ -10,11 +10,6 @@ using namespace MPIUtil;
 // Input class
 // -----------------------------------------------------------------
 
-void Input::setDimension(Input::Dimension dim) {
-    // Add any dimension-specific validation here if needed
-    dimension = dim;
-}
-
 void Input::setCoupling(const double &rs_) {
   if (rs_ < 0) {
     throwError("The quantum coupling parameter can't be negative");

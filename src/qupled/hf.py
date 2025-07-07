@@ -163,7 +163,6 @@ class Input:
     """
     Class used to store the inputs for the :obj:`qupled.hf.HF` class.
     """
-
     coupling: float
     """Coupling parameter."""
     degeneracy: float
@@ -197,8 +196,14 @@ class Input:
     processes: int = 1
     """Number of MPI processes for parallel calculations. Default =  ``1``"""
     theory: str = "HF"
+    dimension: str = "3D"
+    """Dimesion of the system."""
     database_info: DatabaseInfo = field(default_factory=lambda: DatabaseInfo())
 
+    def __post_init__(self):
+        if self.dimension not in ["2D", "3D"]:
+            raise ValueError("Dimension must be either '2D' or '3D'")
+        
     def to_native(self, native_input: any):
         """
         Converts the attributes of the current object to their native representations
