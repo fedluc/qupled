@@ -1,4 +1,5 @@
 #include "python_interface/utilities.hpp"
+#include "database.hpp"
 #include "mpi_util.hpp"
 #include "python_interface/util.hpp"
 #include "thermo_util.hpp"
@@ -56,9 +57,16 @@ namespace pythonWrappers {
     m.attr("uses_mpi") = py::bool_(MPIUtil::isUsed);
   }
 
+  void exposeDatabaseMethods(py::module_ &m) {
+    m.def("delete_blob_data_on_disk",
+          &databaseUtil::deleteBlobDataOnDisk,
+          "Delete blob data on disk for a given run ID");
+  }
+
   void exposeUtilities(py::module_ &m) {
     exposePostProcessingMethods(m);
     exposeMPIClass(m);
+    exposeDatabaseMethods(m);
   }
 
 } // namespace pythonWrappers

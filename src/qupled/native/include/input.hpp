@@ -40,7 +40,7 @@ public:
   virtual ~Input() = default;
   // Setters
   void setCoupling(const double &rs);
-  void setDatabaseInfo(const DatabaseInfo &dbInfo);
+  void setDatabaseInfo(const databaseUtil::DatabaseInfo &dbInfo);
   void setDegeneracy(const double &Theta);
   void setInt2DScheme(const std::string &int2DScheme);
   void setIntError(const double &intError);
@@ -54,7 +54,7 @@ public:
 
   // Getters
   double getCoupling() const { return rs; }
-  DatabaseInfo getDatabaseInfo() const { return dbInfo; }
+  databaseUtil::DatabaseInfo getDatabaseInfo() const { return dbInfo; }
   double getDegeneracy() const { return Theta; }
   std::string getInt2DScheme() const { return int2DScheme; }
   double getIntError() const { return intError; }
@@ -85,7 +85,7 @@ protected:
   // Theory to be solved
   std::string theory;
   // Database information
-  DatabaseInfo dbInfo;
+  databaseUtil::DatabaseInfo dbInfo;
   // Wave-vector grid resolution
   double dx;
   // Cutoff for the wave-vector grid
