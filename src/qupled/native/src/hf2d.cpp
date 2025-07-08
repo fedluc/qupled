@@ -12,45 +12,6 @@ using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
 using Itg2DParam = Integrator2D::Param;
 
-// Compute scheme
-int HF::compute2D() {
-  try {
-    init2D();
-    println("Structural properties calculation ...");
-    computeStructuralProperties2D();
-    println("Done");
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
-}
-
-// Compute the structural properties
-void HF::computeStructuralProperties2D() {
-  print("Computing 2D static local field correction: ");
-  computeLfc2D();
-  println("Done");
-  print("Computing 2D static structure factor: ");
-  computeSsf2D();
-  println("Done");
-}
-
-// Initialize basic properties
-void HF::init2D() {
-  if (in().getDegeneracy() == 0.0) {
-    print("Ground state calculations are not supported in 2D");
-  } 
-  else {
-    print("Computing 2D chemical potential: ");
-    computeChemicalPotential2D();
-    println("Done");
-    print("Computing 2D ideal density response: ");
-    computeIdr2D();
-    println("Done");
-  }
-}
-
 // Compute chemical potential
 void HF::computeChemicalPotential2D() {
   if (in().getDegeneracy() == 0.0) return;
@@ -69,7 +30,7 @@ void HF::computeIdrFinite2D() {
   const size_t nx = idr.size(0);
   const size_t nl = idr.size(1);
   for (size_t i = 0; i < nx; ++i) {
-    HFUtil::Idr2D idrTmp2D(
+    HFUtil::Idr idrTmp2D(
         nl, wvg[i], in().getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
     idr.fill(i, idrTmp2D.get2D());
   }
@@ -154,7 +115,7 @@ double HF::getUInt2D() const {
 // -----------------------------------------------------------------
 
 // Integrand for frequency = l and wave-vector = x
-double HFUtil::Idr2D::integrand2D(const double &y, const int &l) const {
+double HFUtil::Idr::integrand2D(const double &y, const int &l) const {
   double phi;
   double y2 = y * y;
   double x2 = x * x;
@@ -168,7 +129,7 @@ double HFUtil::Idr2D::integrand2D(const double &y, const int &l) const {
     phi = M_PI/2.0 - atan(x2 * plT / exp1)/2.0;
   }
   if (x > 0.0) {
-    return y / (exp(y2 / Theta - mu2D) + 1.0)
+    return y / (exp(y2 / Theta - mu) + 1.0)
            * 2.0 * abs(cos(phi))/ pow((exp1 * exp1 + x4 * plT2), 0.25);
   } else {
     return 0;
@@ -176,17 +137,17 @@ double HFUtil::Idr2D::integrand2D(const double &y, const int &l) const {
 }
 
 // Integrand for frequency = 0 and vector = x
-double HFUtil::Idr2D::integrand2D(const double &y) const {
+double HFUtil::Idr::integrand2D(const double &y) const {
   double y2 = y * y;
   double x2 = x * x;
   if (x > 0.0) {
-    return 1.0 / (Theta * x * pow(cosh(y2 / (2 * Theta) - mu2D/2), 2)) * y * sqrt(x2 / 4.0 - y2);
+    return 1.0 / (Theta * x * pow(cosh(y2 / (2 * Theta) - mu/2), 2)) * y * sqrt(x2 / 4.0 - y2);
   } else {
     return 0; 
   }
 }
 // Get result of integration
-vector<double> HFUtil::Idr2D::get2D() const {
+vector<double> HFUtil::Idr::get2D() const {
   assert(Theta > 0.0);
   vector<double> res(nl);
   for (int l = 0; l < nl; ++l) {

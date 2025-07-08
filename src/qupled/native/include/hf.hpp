@@ -66,11 +66,23 @@ protected:
   // Compute local field correction
   virtual void computeLfc();
   // 2D methods
-  virtual void computeStructuralProperties2D();
-  virtual void init2D();
   virtual void computeSsf2D();
   virtual void computeSsfFinite2D();
   virtual void computeLfc2D();
+
+  template<typename Func2D, typename Func3D>
+  void check_dim(Input::Dimension dim, Func2D&& func2D, Func3D&& func3D) {
+      switch (dim) {
+          case Input::Dimension::D2:
+              std::forward<Func2D>(func2D)();
+              break;
+          case Input::Dimension::D3:
+              std::forward<Func3D>(func3D)();
+              break;
+          default:
+              throw std::runtime_error("Unsupported dimension");
+      }
+  }
 
 private:
 
@@ -113,6 +125,7 @@ namespace HFUtil {
           itg(itg_) {}
     // Get result of integration
     std::vector<double> get() const;
+    std::vector<double> get2D() const;
 
   private:
 
@@ -131,6 +144,10 @@ namespace HFUtil {
     double integrand(const double &y, const int &l) const;
     // Idr integrand for frequency = 0 and wave-vector x
     double integrand(const double &y) const;
+    // Idr 2D integrand for frequency = l and wave-vector x
+    double integrand2D(const double &y, const int &l) const;
+    // Idr 2D integrand for frequency = 0 and wave-vector x
+    double integrand2D(const double &y) const;
     // Integrator object
     const std::shared_ptr<Integrator1D> itg;
   };
@@ -209,67 +226,67 @@ namespace HFUtil {
     const double x;
   };
 
-  class Idr2D {
+  // class Idr2D {
 
-  public:
+  // public:
 
-    // Constructor
-    Idr2D(const int nl_,
-        const double &x_,
-        const double &Theta_,
-        const double &mu_,
-        const double &yMin_,
-        const double &yMax_,
-        std::shared_ptr<Integrator1D> itg_)
-        : nl(nl_),
-          x(x_),
-          Theta(Theta_),
-          mu2D(mu_),
-          yMin(yMin_),
-          yMax(yMax_),
-          itg(itg_) {}
-    // Get result of integration
-    std::vector<double> get2D() const;
+  //   // Constructor
+  //   Idr2D(const int nl_,
+  //       const double &x_,
+  //       const double &Theta_,
+  //       const double &mu_,
+  //       const double &yMin_,
+  //       const double &yMax_,
+  //       std::shared_ptr<Integrator1D> itg_)
+  //       : nl(nl_),
+  //         x(x_),
+  //         Theta(Theta_),
+  //         mu2D(mu_),
+  //         yMin(yMin_),
+  //         yMax(yMax_),
+  //         itg(itg_) {}
+  //   // Get result of integration
+  //   std::vector<double> get2D() const;
 
-  private:
+  // private:
 
-    // Number of matsubara frequency
-    const int nl;
-    // Wave-vector
-    const double x;
-    // Degeneracy parameter
-    const double Theta;
-    // Chemical potential
-    const double mu2D;
-    // Integration limits for finite temperature calculations
-    const double yMin;
-    const double yMax;
-    // Idr integrand for frequency = l and wave-vector x
-    double integrand2D(const double &y, const int &l) const;
-    // Idr integrand for frequency = 0 and wave-vector x
-    double integrand2D(const double &y) const;
-    // Integrator object
-    const std::shared_ptr<Integrator1D> itg;
-  };
+  //   // Number of matsubara frequency
+  //   const int nl;
+  //   // Wave-vector
+  //   const double x;
+  //   // Degeneracy parameter
+  //   const double Theta;
+  //   // Chemical potential
+  //   const double mu2D;
+  //   // Integration limits for finite temperature calculations
+  //   const double yMin;
+  //   const double yMax;
+  //   // Idr integrand for frequency = l and wave-vector x
+  //   double integrand2D(const double &y, const int &l) const;
+  //   // Idr integrand for frequency = 0 and wave-vector x
+  //   double integrand2D(const double &y) const;
+  //   // Integrator object
+  //   const std::shared_ptr<Integrator1D> itg;
+  // };
 
-  class IdrGround2D {
+  // class IdrGround2D {
 
-  public:
+  // public:
 
-    // Constructor
-    IdrGround2D(const double &x_, const double &Omega_)
-        : x(x_),
-          Omega(Omega_) {}
-    // Get
-    double get2D() const;
+  //   // Constructor
+  //   IdrGround2D(const double &x_, const double &Omega_)
+  //       : x(x_),
+  //         Omega(Omega_) {}
+  //   // Get
+  //   double get2D() const;
 
-  private:
+  // private:
 
-    // Wave-vector
-    const double x;
-    // Frequency
-    const double Omega;
-  };
+  //   // Wave-vector
+  //   const double x;
+  //   // Frequency
+  //   const double Omega;
+  // };
 
   class Ssf2D {
 

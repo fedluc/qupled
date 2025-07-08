@@ -30,40 +30,47 @@ HF::HF(const std::shared_ptr<const Input> &in_, const bool verbose_)
 // Compute scheme
 int HF::compute() {
   try {
-    if (in().getDimension() == Input::Dimension::D2) {
-      return compute2D();
-    } else {
     init();
     println("Structural properties calculation ...");
     computeStructuralProperties();
     println("Done");
     return 0;
-    } 
-    }catch (const runtime_error &err) {
+    } catch (const runtime_error &err) {
     cerr << err.what() << endl;
     return 1;
   }
 }
 
-
-// Compute the structural properties
 void HF::computeStructuralProperties() {
-  print("Computing static local field correction: ");
-  computeLfc();
-  println("Done");
-  print("Computing static structure factor: ");
-  computeSsf();
-  println("Done");
+    print("Computing static local field correction: ");
+    check_dim(in().getDimension(),
+        [this]() { this->computeLfc2D(); },
+        [this]() { this->computeLfc(); }
+    );
+    println("Done");
+    
+    print("Computing static structure factor: ");
+    check_dim(in().getDimension(),
+        [this]() { this->computeSsf2D(); },
+        [this]() { this->computeSsf(); }
+    );
+    println("Done");
 }
 
-// Initialize basic properties
 void HF::init() {
-  print("Computing chemical potential: ");
-  computeChemicalPotential();
-  println("Done");
-  print("Computing ideal density response: ");
-  computeIdr();
-  println("Done");
+    print("Computing chemical potential: ");
+    check_dim(in().getDimension(),
+        [this]() { this->computeChemicalPotential2D(); },
+        [this]() { this->computeChemicalPotential(); }
+    );
+    println("Done");
+    
+    print("Computing ideal density response: ");
+    check_dim(in().getDimension(),
+        [this]() { this->computeIdr2D(); },
+        [this]() { this->computeIdr(); }
+    );
+    println("Done");
 }
 
 // Set up wave-vector grid
