@@ -115,7 +115,7 @@ void Qstls::writeAdrFixed(const Vector3D &res, const string &name) const {
     db.exec(createTable);
     // Write to disk
     string filename =
-        format("{}/run_{}_.bin", dbInfo.blobStorage, dbInfo.runId, name);
+        format("{}/run_{}_{}.bin", dbInfo.blobStorage, dbInfo.runId, name);
     ofstream out(filename, std::ios::binary);
     if (!out) { throwError("Failed to open file for writing: " + filename); }
     out.write(reinterpret_cast<const char *>(res.data()),
