@@ -61,4 +61,21 @@ namespace thermoUtil {
     return rdf;
   }
 
+    vector<double> computeRdf2D(const vector<double> &r,
+                            const vector<double> &wvg,
+                            const vector<double> &ssf) {
+    assert(ssf.size() > 0 && wvg.size() > 0);
+    const shared_ptr<Interpolator1D> itp =
+        make_shared<Interpolator1D>(wvg, ssf);
+    const int nr = r.size();
+    vector<double> rdf(nr);
+    const shared_ptr<Integrator1D> itg =
+        make_shared<Integrator1D>(Integrator1D::Type::DEFAULT, 1.0e-6);
+    for (int i = 0; i < nr; ++i) {
+      const Rdf2D rdfTmp2D(r[i], wvg.back(), itp, itg);
+      rdf[i] = rdfTmp2D.get2D();
+    }
+    return rdf;
+  }
+
 } // namespace thermoUtil

@@ -12,3 +12,4 @@ dist-native-only
 docs/_build
 qupled.egg-info
 wheelhouse
+snap

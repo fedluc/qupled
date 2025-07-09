@@ -26,6 +26,10 @@ namespace thermoUtil {
                                  const std::vector<double> &wvg,
                                  const std::vector<double> &ssf);
 
+  std::vector<double> computeRdf2D(const std::vector<double> &r,
+                                    const std::vector<double> &wvg,
+                                    const std::vector<double> &ssf);
+
 } // namespace thermoUtil
 
 #endif
