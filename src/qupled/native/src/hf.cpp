@@ -42,6 +42,11 @@ int HF::compute() {
 }
 
 void HF::computeStructuralProperties() {
+      auto dim = in().getDimension();
+    if (dim != Input::Dimension::D2 && dim != Input::Dimension::D3) {
+        throw std::runtime_error("Invalid dimension value: " + std::to_string(static_cast<int>(dim)));
+    }
+    std::cout << "C++ received dimension: " << static_cast<int>(dim) << std::endl;
     print("Computing static local field correction: ");
     check_dim(in().getDimension(),
         [this]() { this->computeLfc2D(); },
@@ -59,17 +64,10 @@ void HF::computeStructuralProperties() {
 
 void HF::init() {
     print("Computing chemical potential: ");
-    check_dim(in().getDimension(),
-        [this]() { this->computeChemicalPotential2D(); },
-        [this]() { this->computeChemicalPotential(); }
-    );
+    computeChemicalPotential();
     println("Done");
-    
     print("Computing ideal density response: ");
-    check_dim(in().getDimension(),
-        [this]() { this->computeIdr2D(); },
-        [this]() { this->computeIdr(); }
-    );
+    computeIdr(); 
     println("Done");
 }
 
@@ -90,28 +88,32 @@ void HF::buildWaveVectorGrid() {
 // Compute chemical potential
 void HF::computeChemicalPotential() {
   if (in().getDegeneracy() == 0.0) return;
-  const vector<double> &guess = in().getChemicalPotentialGuess();
-  ChemicalPotential mu_(in().getDegeneracy());
-  mu_.compute(guess);
+  ChemicalPotential mu_(inPtr);
+  mu_.compute(in().getDimension());
   mu = mu_.get();
 }
 
 // Compute ideal density response
 void HF::computeIdr() {
-  (in().getDegeneracy() == 0.0) ? computeIdrGround() : computeIdrFinite();
+  const size_t nl = idr.size(1);
+  HFUtil::Idr idrTmp_(
+    nl, wvg, in().getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
+  idrTmp_.compute(in().getDimension());
+  idr = idrTmp_.getIdr();
 }
 
-void HF::computeIdrFinite() {
-  const size_t nx = idr.size(0);
-  const size_t nl = idr.size(1);
+void HFUtil::Idr::compute3D() {
+  (Theta == 0.0) ? computeIdrGround() : computeIdrFinite();
+}
+
+void HFUtil::Idr::computeIdrFinite() {
+  const size_t nx = wvg.size();
   for (size_t i = 0; i < nx; ++i) {
-    HFUtil::Idr idrTmp(
-        nl, wvg[i], in().getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
-    idr.fill(i, idrTmp.get());
+    idr.fill(i, get(wvg[i]));
   }
 }
 
-void HF::computeIdrGround() {
+void HFUtil::Idr::computeIdrGround() {
   const size_t nx = idr.size(0);
   const size_t nl = idr.size(1);
   for (size_t i = 0; i < nx; ++i) {
@@ -183,7 +185,7 @@ double HF::getUInt() const {
 // -----------------------------------------------------------------
 
 // Integrand for frequency = l and wave-vector = x
-double HFUtil::Idr::integrand(const double &y, const int &l) const {
+double HFUtil::Idr::integrand(const double &x, const double &y, const int &l) const {
   double y2 = y * y;
   double x2 = x * x;
   double txy = 2 * x * y;
@@ -199,7 +201,7 @@ double HFUtil::Idr::integrand(const double &y, const int &l) const {
 }
 
 // Integrand for frequency = 0 and vector = x
-double HFUtil::Idr::integrand(const double &y) const {
+double HFUtil::Idr::integrand(const double &x, const double &y) const {
   double y2 = y * y;
   double x2 = x * x;
   double xy = x * y;
@@ -224,13 +226,13 @@ double HFUtil::Idr::integrand(const double &y) const {
 }
 
 // Get result of integration
-vector<double> HFUtil::Idr::get() const {
+vector<double> HFUtil::Idr::get(const double &x) const {
   assert(Theta > 0.0);
   vector<double> res(nl);
   const auto itgParam = ItgParam(yMin, yMax);
   for (int l = 0; l < nl; ++l) {
     auto func = [&](const double &y) -> double {
-      return (l == 0) ? integrand(y) : integrand(y, l);
+      return (l == 0) ? integrand(x, y) : integrand(x, y, l);
     };
     itg->compute(func, itgParam);
     res[l] = itg->getSolution();

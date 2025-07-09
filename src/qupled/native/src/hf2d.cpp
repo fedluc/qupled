@@ -12,27 +12,23 @@ using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
 using Itg2DParam = Integrator2D::Param;
 
-// Compute chemical potential
-void HF::computeChemicalPotential2D() {
-  if (in().getDegeneracy() == 0.0) return;
-  ChemicalPotential mu_(in().getDegeneracy());
-  mu_.compute2D();
-  mu = mu_.get();
-}
+// // Compute chemical potential
+// void HF::computeChemicalPotential2D() {
+//   if (in().getDegeneracy() == 0.0) return;
+//   ChemicalPotential mu_(in().getDegeneracy());
+//   mu_.compute2D();
+//   mu = mu_.get();
+// }
 
 // Compute ideal density response
-void HF::computeIdr2D() {
-  // (in().getDegeneracy() == 0.0) ? computeIdrGround2D() : computeIdrFinite2D();
+void HFUtil::Idr::compute2D() {
   computeIdrFinite2D();
 }
 
-void HF::computeIdrFinite2D() {
-  const size_t nx = idr.size(0);
-  const size_t nl = idr.size(1);
+void HFUtil::Idr::computeIdrFinite2D() {
+  const size_t nx = wvg.size();
   for (size_t i = 0; i < nx; ++i) {
-    HFUtil::Idr idrTmp2D(
-        nl, wvg[i], in().getDegeneracy(), mu, wvg.front(), wvg.back(), itg);
-    idr.fill(i, idrTmp2D.get2D());
+    idr.fill(i, get2D(wvg[i]));
   }
 }
 
@@ -115,7 +111,7 @@ double HF::getUInt2D() const {
 // -----------------------------------------------------------------
 
 // Integrand for frequency = l and wave-vector = x
-double HFUtil::Idr::integrand2D(const double &y, const int &l) const {
+double HFUtil::Idr::integrand2D(const double &x, const double &y, const int &l) const {
   double phi;
   double y2 = y * y;
   double x2 = x * x;
@@ -137,7 +133,7 @@ double HFUtil::Idr::integrand2D(const double &y, const int &l) const {
 }
 
 // Integrand for frequency = 0 and vector = x
-double HFUtil::Idr::integrand2D(const double &y) const {
+double HFUtil::Idr::integrand2D(const double &x, const double &y) const {
   double y2 = y * y;
   double x2 = x * x;
   if (x > 0.0) {
@@ -147,12 +143,12 @@ double HFUtil::Idr::integrand2D(const double &y) const {
   }
 }
 // Get result of integration
-vector<double> HFUtil::Idr::get2D() const {
+vector<double> HFUtil::Idr::get2D(const double &x) const {
   assert(Theta > 0.0);
   vector<double> res(nl);
   for (int l = 0; l < nl; ++l) {
     auto func = [&](const double &y) -> double {
-      return (l == 0) ? integrand2D(y) : integrand2D(y, l);
+      return (l == 0) ? integrand2D(x, y) : integrand2D(x, y, l);
     };
     double upperLimit = (l == 0) ? x / 2.0 : yMax;
     const auto itgParam = ItgParam(yMin, upperLimit);

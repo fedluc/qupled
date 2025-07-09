@@ -1,26 +1,30 @@
 #ifndef CHEMICALPOTENTIAL_HPP
 #define CHEMICALPOTENTIAL_HPP
 
+#include "input.hpp"
+#include "dimensions_util.hpp"
+#include <memory>
 #include <vector>
 
-class ChemicalPotential {
-
+class ChemicalPotential : public dimensionsUtil::DimensionAware<ChemicalPotential> {
 public:
-
-  explicit ChemicalPotential(const double &Theta_)
-      : Theta(Theta_) {}
-  void compute(const std::vector<double> &guess);
-  void compute2D();
-  double get() const { return mu; }
+    explicit ChemicalPotential(const std::shared_ptr<const Input> in_)
+        : in(in_) {}
+    
+    double get() const { return mu; }
+    
+    void compute(Input::Dimension dim) {
+        DimensionAware<ChemicalPotential>::compute(dim);
+    }
 
 private:
-
-  // Degeneracy parameter
-  const double Theta;
-  // Chemical potential
-  double mu;
-  // Normalization condition
-  double normalizationCondition(const double &mu) const;
+    const std::shared_ptr<const Input> in;
+    double mu;
+    
+    friend class dimensionsUtil::DimensionAware<ChemicalPotential>;
+    void compute2D();
+    void compute3D();
+    double normalizationCondition(const double &mu) const;
 };
 
 #endif

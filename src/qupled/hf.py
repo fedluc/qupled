@@ -13,6 +13,8 @@ from . import native
 from . import serialize
 from . import timer
 
+from enum import Enum, auto
+
 
 class Solver:
     """

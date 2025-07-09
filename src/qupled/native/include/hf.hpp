@@ -4,6 +4,7 @@
 #include "input.hpp"
 #include "logger.hpp"
 #include "numerics.hpp"
+#include "dimensions_util.hpp"
 #include <vector>
 
 // -----------------------------------------------------------------
@@ -92,64 +93,64 @@ private:
   void computeChemicalPotential();
   // Compute the ideal density response
   void computeIdr();
-  void computeIdrFinite();
-  void computeIdrGround();
-  // Compute chemical potential in 2D
-  void computeChemicalPotential2D();
-  // Compute the ideal density response in 2D
-  void computeIdr2D();
-  void computeIdrFinite2D();
   
 };
 
 namespace HFUtil {
 
-  class Idr {
+  class Idr : public dimensionsUtil::DimensionAware<Idr> {
 
   public:
+      // Constructor remains unchanged
+      Idr(const int nl_,
+          std::vector<double> wvg_,
+          const double &Theta_,
+          const double &mu_,
+          const double &yMin_,
+          const double &yMax_,
+          std::shared_ptr<Integrator1D> itg_)
+          : nl(nl_),
+            wvg(wvg_),
+            Theta(Theta_),
+            mu(mu_),
+            yMin(yMin_),
+            yMax(yMax_),
+            itg(itg_),
+            idr(Vector2D(wvg_.size(), nl_)) {}
 
-    // Constructor
-    Idr(const int nl_,
-        const double &x_,
-        const double &Theta_,
-        const double &mu_,
-        const double &yMin_,
-        const double &yMax_,
-        std::shared_ptr<Integrator1D> itg_)
-        : nl(nl_),
-          x(x_),
-          Theta(Theta_),
-          mu(mu_),
-          yMin(yMin_),
-          yMax(yMax_),
-          itg(itg_) {}
-    // Get result of integration
-    std::vector<double> get() const;
-    std::vector<double> get2D() const;
+      // Get result of integration
+      std::vector<double> get(const double &x) const;
+      std::vector<double> get2D(const double &x) const;
+      const Vector2D &getIdr() const { return idr; }
+      
+      using DimensionAware<Idr>::compute;
+
+      ~Idr() noexcept override = default;
 
   private:
-
-    // Number of matsubara frequency
-    const int nl;
-    // Wave-vector
-    const double x;
-    // Degeneracy parameter
-    const double Theta;
-    // Chemical potential
-    const double mu;
-    // Integration limits for finite temperature calculations
-    const double yMin;
-    const double yMax;
-    // Idr integrand for frequency = l and wave-vector x
-    double integrand(const double &y, const int &l) const;
-    // Idr integrand for frequency = 0 and wave-vector x
-    double integrand(const double &y) const;
-    // Idr 2D integrand for frequency = l and wave-vector x
-    double integrand2D(const double &y, const int &l) const;
-    // Idr 2D integrand for frequency = 0 and wave-vector x
-    double integrand2D(const double &y) const;
-    // Integrator object
-    const std::shared_ptr<Integrator1D> itg;
+    
+      const int nl;
+      std::vector<double> wvg;
+      const double Theta;
+      const double mu;
+      const double yMin;
+      const double yMax;
+      const std::shared_ptr<Integrator1D> itg;
+      // Ideal density response
+      Vector2D idr;
+      
+      // Private methods
+      double integrand(const double &x, const double &y, const int &l) const;
+      double integrand(const double &x, const double &y) const;
+      double integrand2D(const double &x, const double &y, const int &l) const;
+      double integrand2D(const double &x, const double &y) const;
+      
+      friend class dimensionsUtil::DimensionAware<Idr>;
+      void compute2D();
+      void compute3D();
+      void computeIdrFinite();
+      void computeIdrGround();
+      void computeIdrFinite2D();
   };
 
   class IdrGround {
