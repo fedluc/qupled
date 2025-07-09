@@ -165,6 +165,55 @@ void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
 }
 
 // -----------------------------------------------------------------
+// Delete blob data on disk
+// -----------------------------------------------------------------
+
+bool blobDataTableExists(const SQLite::Database &db) {
+  const string select = QstlsUtil::SQL_SELECT_TABLE;
+  SQLite::Statement statement(db, select);
+  statement.bind(1, QstlsUtil::SQL_TABLE_NAME);
+  if (statement.executeStep()) { return statement.getColumn(0).getInt() > 0; }
+  return false;
+}
+
+void QstlsUtil::deleteBlobDataOnDisk(const string &dbName, int runId) {
+  try {
+    // Setup the database connection
+    SQLite::Database db(dbName, SQLite::OPEN_READONLY);
+    // Check if the table exists
+    if (!blobDataTableExists(db)) { return; }
+    // Select the correct run
+    const string select = formatUtil::format(QstlsUtil::SQL_SELECT_RUN_ID,
+                                             QstlsUtil::SQL_TABLE_NAME);
+    SQLite::Statement statement(db, select);
+    statement.bind(1, runId);
+    // Execute and collect file paths
+    std::vector<std::string> filePaths;
+    while (statement.executeStep()) {
+      filePaths.push_back(statement.getColumn(0).getString());
+    }
+    // Delete each file path
+    for (const auto &path : filePaths) {
+      try {
+        if (std::filesystem::remove(path)) {
+          // Successfully deleted
+        } else {
+          std::cerr << "Warning: file not found: " << path << std::endl;
+        }
+      } catch (const std::filesystem::filesystem_error &e) {
+        std::cerr << "Warning: failed to delete " << path << ": " << e.what()
+                  << std::endl;
+      }
+    }
+  } catch (const SQLite::Exception &e) {
+    std::cerr << "SQLite error: " << e.what() << std::endl;
+  } catch (const std::exception &e) {
+    std::cerr << "Unexpected error when deleting database files: " << e.what()
+              << std::endl;
+  }
+}
+
+// -----------------------------------------------------------------
 // AdrBase class
 // -----------------------------------------------------------------
 

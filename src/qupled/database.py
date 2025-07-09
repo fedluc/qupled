@@ -1,6 +1,5 @@
 import io
 import json
-import os
 import struct
 from datetime import datetime
 from enum import Enum
@@ -9,9 +8,10 @@ from pathlib import Path
 
 import numpy as np
 import sqlalchemy as sql
-from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 import blosc2
+
+from . import native
 
 
 class DataBaseHandler:
@@ -449,24 +449,7 @@ class DataBaseHandler:
             self.run_id = run_id[0]
 
     def _delete_blob_data_on_disk(self, run_id: int):
-        try:
-            fixed_table = sql.Table(
-                self.FIXED_TABLE_NAME, self.table_metadata, autoload_with=self.engine
-            )
-        except NoSuchTableError:
-            return
-        stmt_select = sql.select(fixed_table.c.adr).where(
-            fixed_table.c.run_id == run_id
-        )
-        result = self._execute(stmt_select).fetchall()
-        file_paths = [row[0] for row in result]
-        for path in file_paths:
-            try:
-                os.remove(path)
-            except FileNotFoundError:
-                print(f"Warning: file not found: {path}")
-            except Exception as e:
-                print(f"Warning: failed to delete {path}: {e}")
+        native.delete_blob_data_on_disk(self.engine.url.database, run_id)
 
     @staticmethod
     def _set_sqlite_pragma(engine):

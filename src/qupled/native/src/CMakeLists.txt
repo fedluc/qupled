@@ -49,6 +49,7 @@ add_compile_options(-Wall -Wextra -Wpedantic -O3)
 # Source code
 pybind11_add_module(native
 	logger.cpp
+	database.cpp
 	numerics.cpp
 	vector2D.cpp
 	vector3D.cpp

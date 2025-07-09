@@ -19,7 +19,8 @@ namespace databaseUtil {
     std::string runTableName;
   };
 
-  void deleteBlobDataOnDisk();
+  void deleteBlobDataOnDisk(const std::string &dbInfo, int runId);
+  bool blobDataTableExists(const std::string &dbName);
 
 } // namespace databaseUtil
 
