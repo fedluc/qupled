@@ -152,7 +152,7 @@ def test_input_initialization(mocker):
     assert inputs.resolution == 0.1
     assert inputs.threads == 1
     assert inputs.theory == "HF"
-    assert inputs.database_info == dbInfo.return_value
+    assert inputs.database_info is None
 
 
 def test_input_to_native(mocker, inputs):
@@ -209,7 +209,8 @@ def test_result_compute_rdf_with_custom_grid(mocker, results):
 
 def test_database_info_initialization():
     db_info = hf.DatabaseInfo()
-    assert db_info.name == hf.database.DataBaseHandler.DEFAULT_DATABASE_NAME
+    assert db_info.blob_storage is None
+    assert db_info.name is None
     assert db_info.run_id is None
     assert db_info.run_table_name == hf.database.DataBaseHandler.RUN_TABLE_NAME
 
@@ -217,11 +218,13 @@ def test_database_info_initialization():
 def test_database_info_to_native(mocker):
     native_db_info = mocker.patch("qupled.native.DatabaseInfo")
     db_info = hf.DatabaseInfo()
+    db_info.blob_storage = "blob_data"
     db_info.name = "test_db"
     db_info.run_id = 123
     db_info.run_table_name = "test_table"
     native_instance = db_info.to_native()
     assert native_instance == native_db_info.return_value
+    assert native_instance.blob_storage == "blob_data"
     assert native_instance.name == "test_db"
     assert native_instance.run_id == 123
     assert native_instance.run_table_name == "test_table"

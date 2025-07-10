@@ -1,5 +1,6 @@
 import importlib
 import os
+import shutil
 import sys
 
 import matplotlib.pyplot as plt
@@ -21,9 +22,9 @@ def run_before_each_test():
 @pytest.fixture(autouse=True)
 def run_after_each_test():
     yield
-    database_name = DataBaseHandler.DEFAULT_DATABASE_NAME
-    if os.path.exists(database_name):
-        os.remove(database_name)
+    output_dir = DataBaseHandler.DATABASE_DIRECTORY
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
 
 
 @pytest.fixture(autouse=True)

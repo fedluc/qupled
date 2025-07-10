@@ -3,6 +3,7 @@ import io
 import json
 import os
 import struct
+from pathlib import Path
 
 import blosc2
 import numpy as np
@@ -19,13 +20,22 @@ from qupled.database import DataBaseHandler
 def db_handler():
     handler = DataBaseHandler()
     yield handler
-    if os.path.exists(handler.database_name):
-        os.remove(handler.database_name)
+    database_url = handler.engine.url.database
+    if os.path.exists(database_url):
+        os.remove(database_url)
 
 
 def test_database_handler_initialization_with_default_name(db_handler):
-    assert db_handler.database_name == DataBaseHandler.DEFAULT_DATABASE_NAME
-    assert db_handler.engine.url.database == DataBaseHandler.DEFAULT_DATABASE_NAME
+    expected_database_path = (
+        Path(DataBaseHandler.DATABASE_DIRECTORY) / DataBaseHandler.DEFAULT_DATABASE_NAME
+    )
+    expected_blob_storage = (
+        Path(DataBaseHandler.DATABASE_DIRECTORY)
+        / DataBaseHandler.BLOB_STORAGE_DIRECTORY
+        / DataBaseHandler.DEFAULT_DATABASE_NAME
+    )
+    assert db_handler.blob_storage == str(expected_blob_storage)
+    assert db_handler.engine.url.database == str(expected_database_path)
     assert db_handler.run_id is None
     inspector = inspect(db_handler.engine)
     assert set(inspector.get_table_names()) == {
@@ -37,9 +47,15 @@ def test_database_handler_initialization_with_default_name(db_handler):
 
 def test_database_handler_initialization_with_custom_name():
     database_name = "custom.db"
+    expected_database_path = Path(DataBaseHandler.DATABASE_DIRECTORY) / database_name
+    expected_blob_storage = (
+        Path(DataBaseHandler.DATABASE_DIRECTORY)
+        / DataBaseHandler.BLOB_STORAGE_DIRECTORY
+        / database_name
+    )
     db_handler = DataBaseHandler(database_name="custom.db")
-    assert db_handler.database_name == database_name
-    assert db_handler.engine.url.database == database_name
+    assert db_handler.blob_storage == str(expected_blob_storage)
+    assert db_handler.engine.url.database == str(expected_database_path)
     assert db_handler.run_id is None
     inspector = inspect(db_handler.engine)
     assert set(inspector.get_table_names()) == {
@@ -47,8 +63,8 @@ def test_database_handler_initialization_with_custom_name():
         DataBaseHandler.INPUT_TABLE_NAME,
         DataBaseHandler.RESULT_TABLE_NAME,
     }
-    if os.path.exists(db_handler.database_name):
-        os.remove(db_handler.database_name)
+    if os.path.exists(expected_database_path):
+        os.remove(expected_database_path)
 
 
 def test_set_sqlite_pragma_valid_engine():

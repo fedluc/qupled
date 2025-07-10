@@ -4,6 +4,7 @@
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
+using namespace databaseUtil;
 using namespace pythonUtil;
 
 // -----------------------------------------------------------------
@@ -138,12 +139,16 @@ void exposeQVSStlsInputClass(py::module_ &m) {
 // -----------------------------------------------------------------
 
 namespace pythonDatabaseInfo {
+  std::string getBlobStorage(const DatabaseInfo &db) { return db.blobStorage; }
   std::string getName(const DatabaseInfo &db) { return db.name; }
   std::string getRunTableName(const DatabaseInfo &db) {
     return db.runTableName;
   }
   int getRunId(const DatabaseInfo &db) { return db.runId; }
 
+  void setBlobStorage(DatabaseInfo &db, const std::string &blobStorage) {
+    db.blobStorage = blobStorage;
+  }
   void setName(DatabaseInfo &db, const std::string &name) { db.name = name; }
   void setRunTableName(DatabaseInfo &db, const std::string &runTableName) {
     db.runTableName = runTableName;
@@ -154,6 +159,9 @@ namespace pythonDatabaseInfo {
 void exposeDatabaseInfoClass(py::module_ &m) {
   py::class_<DatabaseInfo>(m, "DatabaseInfo")
       .def(py::init<>())
+      .def_property("blob_storage",
+                    pythonDatabaseInfo::getBlobStorage,
+                    pythonDatabaseInfo::setBlobStorage)
       .def_property(
           "name", pythonDatabaseInfo::getName, pythonDatabaseInfo::setName)
       .def_property(

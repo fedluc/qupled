@@ -52,7 +52,7 @@ private:
 namespace QstlsUtil {
 
   // -----------------------------------------------------------------
-  // SQL queries
+  // Utility functions for handling the database
   // -----------------------------------------------------------------
 
   constexpr const char *SQL_TABLE_NAME = "fixed";
@@ -61,17 +61,26 @@ namespace QstlsUtil {
       CREATE TABLE IF NOT EXISTS {} (
           run_id INTEGER NOT NULL,
           name TEXT NOT NULL,
-          adr BLOB NOT NULL,
+          value TEXT NOT NULL,
           PRIMARY KEY (run_id, name),
           FOREIGN KEY(run_id) REFERENCES {}(id) ON DELETE CASCADE
       );
     )";
 
   constexpr const char *SQL_INSERT =
-      "INSERT OR REPLACE INTO {} (run_id, name, adr) VALUES (?, ?, ?);";
+      "INSERT OR REPLACE INTO {} (run_id, name, value) VALUES (?, ?, ?);";
 
   constexpr const char *SQL_SELECT =
-      "SELECT adr FROM {} WHERE run_id = ? AND name = ?;";
+      "SELECT value FROM {} WHERE run_id = ? AND name = ?;";
+
+  constexpr const char *SQL_SELECT_RUN_ID =
+      "SELECT value FROM {} WHERE run_id = ?";
+
+  constexpr const char *SQL_SELECT_TABLE =
+      "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?";
+
+  void deleteBlobDataOnDisk(const std::string &dbName, int runId);
+
   // -----------------------------------------------------------------
   // Classes for the auxiliary density response
   // -----------------------------------------------------------------
