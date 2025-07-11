@@ -256,12 +256,14 @@ def test_get_results(mocker, db_handler):
 
 def test_delete_run(mocker, db_handler):
     run_id = 1
+    delete_blob_data_on_disk = mocker.patch.object(db_handler, "_delete_blob_data_on_disk")
     db_handler.run_table = mocker.MagicMock()
     db_handler.run_table.result_value.c = mocker.ANY
     sql_delete = mocker.patch("sqlalchemy.delete")
     statement = sql_delete.return_value.where.return_value
     execute = mocker.patch.object(db_handler, "_execute")
     db_handler.delete_run(run_id)
+    delete_blob_data_on_disk.assert_called_once_with(run_id)
     sql_delete.assert_called_once_with(db_handler.run_table)
     execute.assert_called_once_with(statement)
 
@@ -381,6 +383,11 @@ def test_insert_run(mocker, db_handler):
     execute.assert_called_once_with(statement)
     assert db_handler.run_id == run_id
 
+def test_delete_blob_data_on_disk(mocker, db_handler):
+    run_id = 1
+    native_delete_blob_data_on_disk = mocker.patch("qupled.native.delete_blob_data_on_disk")
+    db_handler._delete_blob_data_on_disk(run_id)
+    native_delete_blob_data_on_disk.assert_called_once_with(db_handler.engine.url.database, run_id)
 
 def test_insert_from_dict_with_valid_data(mocker, db_handler):
     table = mocker.ANY
