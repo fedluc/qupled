@@ -151,6 +151,7 @@ def test_input_initialization(mocker):
     assert inputs.matsubara == 128
     assert inputs.resolution == 0.1
     assert inputs.threads == 1
+    assert inputs.processes == 1
     assert inputs.theory == "HF"
     assert inputs.database_info is None
 
