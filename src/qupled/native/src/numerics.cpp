@@ -38,6 +38,11 @@ double SpecialFunctions::fermiDirac(const double &x) {
   return gamma.val * fd.val;
 }
 
+double SpecialFunctions::coth(const double &x) {
+  if (x == 0.0) return numUtil::NaN; // Avoid division by zero
+  return 1.0 / tanh(x);
+}
+
 // -----------------------------------------------------------------
 // Interpolator class
 // -----------------------------------------------------------------

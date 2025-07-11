@@ -59,10 +59,10 @@ pybind11_add_module(native
 	num_util.cpp
 	vector_util.cpp
 	thermo_util.cpp
+	dimensions_util.cpp
 	input.cpp
 	chemical_potential.cpp
 	hf.cpp
-	hf2d.cpp
 	rpa.cpp
 	esa.cpp
 	stls.cpp

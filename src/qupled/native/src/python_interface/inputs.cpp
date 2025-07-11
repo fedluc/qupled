@@ -51,10 +51,10 @@ void exposeBaseInputProperties(py::class_<T> &cls) {
       .def_property(
           "frequency_cutoff", &T::getFrequencyCutoff, &T::setFrequencyCutoff)
       .def_property("dimension",
-        [](const T &in) { return in.getDimension() == Input::Dimension::D2 ? "2D" : "3D"; },
+        [](const T &in) { return in.getDimension() == dimensionsUtil::Dimension::D2 ? "2D" : "3D"; },
         [](T &in, const std::string &dim) {
-            if (dim == "2D") in.setDimension(Input::Dimension::D2);
-            else if (dim == "3D") in.setDimension(Input::Dimension::D3);
+            if (dim == "2D") in.setDimension(dimensionsUtil::Dimension::D2);
+            else if (dim == "3D") in.setDimension(dimensionsUtil::Dimension::D3);
             else throw std::invalid_argument("Dimension must be '2D' or '3D'");
         });
 }

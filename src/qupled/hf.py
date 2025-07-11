@@ -165,6 +165,7 @@ class Input:
     """
     Class used to store the inputs for the :obj:`qupled.hf.HF` class.
     """
+
     coupling: float
     """Coupling parameter."""
     degeneracy: float
@@ -205,7 +206,7 @@ class Input:
     def __post_init__(self):
         if self.dimension not in ["2D", "3D"]:
             raise ValueError("Dimension must be either '2D' or '3D'")
-        
+
     def to_native(self, native_input: any):
         """
         Converts the attributes of the current object to their native representations

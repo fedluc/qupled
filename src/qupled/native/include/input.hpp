@@ -2,6 +2,7 @@
 #define INPUT_HPP
 
 #include "database.hpp"
+#include "dimensions_util.hpp"
 #include "num_util.hpp"
 #include "vector2D.hpp"
 #include <cassert>
@@ -68,14 +69,13 @@ public:
   double getFrequencyCutoff() const { return OmegaMax; }
 
   // Class to handle dimensions
-  enum class Dimension { D3, D2 };
-  void setDimension(Dimension dim) { dimension = dim; }
-  Dimension getDimension() const { return dimension; }
+  void setDimension(dimensionsUtil::Dimension dim) { dimension = dim; }
+  dimensionsUtil::Dimension getDimension() const { return dimension; }
 
 protected:
 
   // Default dimensions 3D
-  Dimension dimension = Dimension::D3;
+  dimensionsUtil::Dimension dimension = dimensionsUtil::Dimension::D3;
   // Accuracy for the integrals
   double intError;
   // Quantum coupling parameter

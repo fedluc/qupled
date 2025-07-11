@@ -37,6 +37,7 @@ private:
   void computeSsfHF();
   // Compute local field correction
   void computeLfc() override;
+
 };
 
 namespace RpaUtil {

@@ -56,6 +56,8 @@ namespace SpecialFunctions {
 
   // Fermi-Dirac function
   double fermiDirac(const double &x);
+  // Cotangent hyperbolic function
+  double coth(const double &x);
 
 } // namespace SpecialFunctions
 
