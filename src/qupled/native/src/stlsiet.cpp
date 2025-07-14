@@ -39,7 +39,7 @@ void StlsIet::computeLfc() {
   // Compute the iet contribution to the local field correction
   for (size_t i = 0; i < wvg.size(); ++i) {
     StlsIetUtil::Slfc lfcTmp(
-        wvg[i], wvg.front(), wvg.back(), ssfItp, lfcItp, bfItp, itgGrid, itg2D);
+        wvg[i], wvg.front(), wvg.back(), ssfItp, lfcItp, bfItp, itgGrid, itg2D, inPtr);
     lfc(i, 0) += lfcTmp.get();
   }
 }
@@ -63,8 +63,16 @@ double StlsIetUtil::Slfc::lfc(const double &y) const { return lfci->eval(y); }
 double StlsIetUtil::Slfc::bf(const double &y) const { return bfi->eval(y); }
 
 // Get at finite temperature
-double StlsIetUtil::Slfc::get() const {
-  if (x == 0.0) return 0.0;
+double StlsIetUtil::Slfc::get() {
+  compute(in->getDimension());
+  return res;
+}
+
+void StlsIetUtil::Slfc::compute3D() {
+  if (x == 0.0) {
+    res = 0.0;
+    return;
+  }
   auto wMin = [&](const double &y) -> double {
     return (y > x) ? y - x : x - y;
   };
@@ -72,8 +80,24 @@ double StlsIetUtil::Slfc::get() const {
   auto func1 = [&](const double &y) -> double { return integrand1(y); };
   auto func2 = [&](const double &w) -> double { return integrand2(w); };
   itg->compute(func1, func2, Itg2DParam(yMin, yMax, wMin, wMax), itgGrid);
-  return 3.0 / (8.0 * x) * itg->getSolution() + bf(x);
+  res = 3.0 / (8.0 * x) * itg->getSolution() + bf(x);
 }
+
+void StlsIetUtil::Slfc::compute2D() {
+  if (x == 0.0) {
+    res = 0.0;
+    return;
+  }
+  auto wMin = [&](const double &y) -> double {
+    return (y > x) ? y - x : x - y;
+  };
+  auto wMax = [&](const double &y) -> double { return min(yMax, x + y); };
+  auto func1 = [&](const double &y) -> double { return integrand1_2D(y); };
+  auto func2 = [&](const double &w) -> double { return integrand2_2D(w); };
+  itg->compute(func1, func2, Itg2DParam(yMin, yMax, wMin, wMax), itgGrid);
+  res = 1.0 / (M_PI * x) * itg->getSolution() + bf(x);
+}
+
 
 // Level 1 integrand
 double StlsIetUtil::Slfc::integrand1(const double &y) const {
@@ -88,4 +112,22 @@ double StlsIetUtil::Slfc::integrand2(const double &w) const {
   const double w2 = w * w;
   const double x2 = x * x;
   return (w2 - y2 - x2) * w * (ssf(w) - 1.0);
+}
+
+// Level 1 integrand
+double StlsIetUtil::Slfc::integrand1_2D(const double &y) const {
+  if (y == 0.0) return 0.0;
+  return (-bf(y) - (ssf(y) - 1.0) * (lfc(y) - 1.0));
+}
+
+// Level 2 integrand
+double StlsIetUtil::Slfc::integrand2_2D(const double &w) const {
+  const double y = itg->getX();
+  const double y2 = y * y;
+  const double w2 = w * w;
+  const double x2 = x * x;
+  const double arg = y2 - w2 + x2;
+  const double arg2 = arg * arg;
+  const double sgn = (arg > 0) ? 1.0 : -1.0;
+  return sgn * w * (ssf(w) - 1.0) / sqrt((4 * y2 * x2)/arg2 - 1.0);
 }
