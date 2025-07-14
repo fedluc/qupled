@@ -84,7 +84,7 @@ void Stls::computeLfc() {
   const int nx = wvg.size();
   const shared_ptr<Interpolator1D> itp = make_shared<Interpolator1D>(wvg, ssf);
   for (int i = 0; i < nx; ++i) {
-    StlsUtil::Slfc lfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg);
+    StlsUtil::Slfc lfcTmp(wvg[i], wvg.front(), wvg.back(), itp, itg, inPtr);
     lfc(i, 0) = lfcTmp.get();
   }
 }
@@ -96,7 +96,13 @@ void Stls::computeSsf() {
 }
 
 // Compute residual error for the stls iterations
-double Stls::computeError() const { return rms(ssfOld, ssf, false); }
+double Stls::computeError() const { 
+  // for (size_t i = 0; i < ssf.size(); ++i) {
+  //   println(formatUtil::format("ssf[{}] = {:.5e}", i, ssf[i]));
+  //   println(formatUtil::format("ssfOld[{}] = {:.5e}", i, ssfOld[i]));
+  // }
+
+  return rms(ssfOld, ssf, false); }
 
 // Update solution during stls iterations
 void Stls::updateSolution() {
@@ -116,10 +122,21 @@ double StlsUtil::SlfcBase::ssf(const double &y) const { return ssfi->eval(y); }
 // -----------------------------------------------------------------
 
 // Get result of integration
-double StlsUtil::Slfc::get() const {
+double StlsUtil::Slfc::get() {
+  compute(in->getDimension());
+  return res;
+}
+
+void StlsUtil::Slfc::compute2D() {
+  auto func = [&](const double &y) -> double { return integrand2D(y); };
+  itg->compute(func, ItgParam(yMin, yMax));
+  res = itg->getSolution();
+}
+
+void StlsUtil::Slfc::compute3D() {
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(yMin, yMax));
-  return itg->getSolution();
+  res = itg->getSolution();
 }
 
 // Integrand
@@ -134,4 +151,14 @@ double StlsUtil::Slfc::integrand(const double &y) const {
   }
   return -(3.0 / 4.0) * y2 * (ssf(y) - 1.0)
          * (1 + (x2 - y2) / (2 * x * y) * log((x + y) / (y - x)));
+}
+
+// Integrand 2D
+double StlsUtil::Slfc::integrand2D(const double &y) const {
+  double xmy = (x - y) / (x * M_PI);
+  double xpy = (x + y) / (x * M_PI);
+  double argElli = (x + y < 1e-10) ? 0.0 : 2 * sqrt(x * y) / (x + y);
+  return - y * (ssf(y) - 1.0)
+         * (EllipticIntegral::ellipticK(argElli) * xmy + 
+            EllipticIntegral::ellipticE(argElli) * xpy);
 }

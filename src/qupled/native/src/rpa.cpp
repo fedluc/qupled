@@ -4,6 +4,7 @@
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "thermo_util.hpp"
+#include "format.hpp"
 #include <cmath>
 
 using namespace std;
@@ -96,8 +97,14 @@ void Rpa::computeLfc() {
 // }
 
 void RpaUtil::Ssf::compute3D() {
-  if (rs == 0.0) res = ssfHF;
-  if (x == 0.0) res = 0.0;
+  if (rs == 0.0) { 
+    res = ssfHF; 
+    return;
+  }
+  if (x == 0.0) { 
+    res = 0.0; 
+    return;
+  }
   const double isStatic = lfc.size() == 1;
   double suml = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {
@@ -111,8 +118,14 @@ void RpaUtil::Ssf::compute3D() {
 }
 
 void RpaUtil::Ssf::compute2D() {
-  if (rs == 0.0) res = ssfHF;
-  if (x == 0.0) res = 0.0;
+  if (rs == 0.0) { 
+    res = ssfHF;
+    return; 
+  }
+  if (x == 0.0) { 
+    res = 0.0;
+    return;
+  }
   const double isStatic = lfc.size() == 1;
   double suml = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {

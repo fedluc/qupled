@@ -432,4 +432,14 @@ private:
   double sol;
 };
 
+class EllipticIntegral {
+
+public:
+
+  // Elliptic integrals
+  static double ellipticK(const double &k);
+  static double ellipticE(const double &k);
+
+};
+
 #endif

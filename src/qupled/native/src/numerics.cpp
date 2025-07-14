@@ -3,6 +3,7 @@
 #include <gsl/gsl_sf_dilog.h>
 #include <gsl/gsl_sf_fermi_dirac.h>
 #include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_sf_ellint.h>
 
 using namespace std;
 using namespace GslWrappers;
@@ -427,4 +428,20 @@ void Integrator2D::compute(const function<double(double)> &func1,
   // Level 1 integration
   itg1.compute(func, param);
   sol = itg1.getSolution();
+}
+
+// -----------------------------------------------------------------
+// Elliptic integrals class
+// -----------------------------------------------------------------
+
+double EllipticIntegral::ellipticK(const double &k) {
+  gsl_sf_result result;
+  int status = gsl_sf_ellint_Kcomp_e(k, GSL_PREC_DOUBLE, &result);
+  return result.val;
+}
+
+double EllipticIntegral::ellipticE(const double &k) {
+  gsl_sf_result result;
+  int status = gsl_sf_ellint_Ecomp_e(k, GSL_PREC_DOUBLE, &result);
+  return result.val;
 }
