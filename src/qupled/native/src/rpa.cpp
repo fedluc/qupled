@@ -43,7 +43,7 @@ void Rpa::computeSsfFinite() {
   const double rs = in().getCoupling();
   const size_t nx = wvg.size();
   for (size_t i = 0; i < nx; ++i) {
-    RpaUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], lfc[i], idr[i]);
+    RpaUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], lfc[i], idr[i], inPtr);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -60,6 +60,13 @@ void Rpa::computeSsfGround() {
   }
 }
 
+double RpaUtil::Ssf::get() {
+  assert(Theta > 0.0);
+  compute(in->getDimension());
+  return res;
+}
+
+
 // Compute static local field correction
 void Rpa::computeLfc() {
   assert(lfc.size() == wvg.size());
@@ -72,10 +79,25 @@ void Rpa::computeLfc() {
 // Ssf class
 // -----------------------------------------------------------------
 
-// Get at finite temperature for any scheme
-double RpaUtil::Ssf::get() const {
-  if (rs == 0.0) return ssfHF;
-  if (x == 0.0) return 0.0;
+// // Get at finite temperature for any scheme
+// double RpaUtil::Ssf::get() const {
+//   if (rs == 0.0) return ssfHF;
+//   if (x == 0.0) return 0.0;
+//   const double isStatic = lfc.size() == 1;
+//   double suml = 0.0;
+//   for (size_t l = 0; l < idr.size(); ++l) {
+//     const double &idrl = idr[l];
+//     const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
+//     const double denom = 1.0 + ip * idrl * (1 - lfcl);
+//     const double f = idrl * idrl * (1 - lfcl) / denom;
+//     suml += (l == 0) ? f : 2 * f;
+//   }
+//   return ssfHF - 1.5 * ip * Theta * suml;
+// }
+
+void RpaUtil::Ssf::compute3D() {
+  if (rs == 0.0) res = ssfHF;
+  if (x == 0.0) res = 0.0;
   const double isStatic = lfc.size() == 1;
   double suml = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {
@@ -85,7 +107,22 @@ double RpaUtil::Ssf::get() const {
     const double f = idrl * idrl * (1 - lfcl) / denom;
     suml += (l == 0) ? f : 2 * f;
   }
-  return ssfHF - 1.5 * ip * Theta * suml;
+  res = ssfHF - 1.5 * ip * Theta * suml;
+}
+
+void RpaUtil::Ssf::compute2D() {
+  if (rs == 0.0) res = ssfHF;
+  if (x == 0.0) res = 0.0;
+  const double isStatic = lfc.size() == 1;
+  double suml = 0.0;
+  for (size_t l = 0; l < idr.size(); ++l) {
+    const double &idrl = idr[l];
+    const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
+    const double denom = 1.0 + ip2D * idrl * (1 - lfcl);
+    const double f = idrl * idrl * (1 - lfcl) / denom;
+    suml += (l == 0) ? f : 2 * f;
+  }
+  res = ssfHF - ip2D * Theta * suml;
 }
 
 // -----------------------------------------------------------------

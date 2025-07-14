@@ -73,9 +73,11 @@ namespace RpaUtil {
     std::span<const double> lfc;
     // Normalized interaction potential
     const double ip = 4.0 * numUtil::lambda * rs / (M_PI * x * x);
+    // Normalized 2D interaction potential
+    const double ip2D = sqrt(2.0) * rs / x;
   };
 
-  class Ssf : public SsfBase {
+  class Ssf : public SsfBase, dimensionsUtil::DimensionsHandler {
 
   public:
 
@@ -85,16 +87,25 @@ namespace RpaUtil {
         const double &rs_,
         const double &ssfHF_,
         std::span<const double> lfc_,
-        std::span<const double> idr_)
+        std::span<const double> idr_,
+        const std::shared_ptr<const Input> in_)
         : SsfBase(x_, Theta_, rs_, ssfHF_, lfc_),
-          idr(idr_) {}
+          idr(idr_), in(in_), res(x_) {}
     // Get static structore factor
-    double get() const;
+    double get();
 
   protected:
 
     // Ideal density response
     const std::span<const double> idr;
+    const std::shared_ptr<const Input> in;
+
+  private:
+    
+    double res;
+    void compute2D() override;
+    void compute3D() override;
+
   };
 
   class SsfGround : public SsfBase {
