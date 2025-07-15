@@ -24,7 +24,6 @@ class DataBaseHandler:
     BLOB_STORAGE_DIRECTORY = "blob_data"
     DATABASE_DIRECTORY = "qupled_store"
     DEFAULT_DATABASE_NAME = "qupled.db"
-    FIXED_TABLE_NAME = "fixed"
     INPUT_TABLE_NAME = "inputs"
     RESULT_TABLE_NAME = "results"
     RUN_TABLE_NAME = "runs"
