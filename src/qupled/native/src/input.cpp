@@ -5,6 +5,7 @@
 
 using namespace std;
 using namespace MPIUtil;
+using namespace dimensionsUtil;
 
 // -----------------------------------------------------------------
 // Input class
@@ -19,6 +20,10 @@ void Input::setCoupling(const double &rs_) {
 
 void Input::setDatabaseInfo(const DatabaseInfo &dbInfo) {
   this->dbInfo = dbInfo;
+}
+
+void Input::setDimension(const Dimension &dimension) {
+  this->dimension = dimension;
 }
 
 void Input::setDegeneracy(const double &Theta_) {

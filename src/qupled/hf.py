@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import json
-
 from dataclasses import field
-from pathlib import Path
 
 import numpy as np
 
@@ -12,8 +9,6 @@ from . import mpi
 from . import native
 from . import serialize
 from . import timer
-
-from enum import Enum, auto
 
 
 class Solver:
@@ -174,6 +169,8 @@ class Input:
     """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
     cutoff: float = 10.0
     """Cutoff for the wave-vector grid. Default =  ``10.0``"""
+    dimension: str = "D3"
+    """Dimesion of the system."""
     frequency_cutoff: float = 10.0
     """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
     integral_error: float = 1.0e-5
@@ -199,13 +196,7 @@ class Input:
     processes: int = 1
     """Number of MPI processes for parallel calculations. Default =  ``1``"""
     theory: str = "HF"
-    dimension: str = "3D"
-    """Dimesion of the system."""
     database_info: DatabaseInfo = field(default_factory=lambda: DatabaseInfo())
-
-    def __post_init__(self):
-        if self.dimension not in ["2D", "3D"]:
-            raise ValueError("Dimension must be either '2D' or '3D'")
 
     def to_native(self, native_input: any):
         """
@@ -225,11 +216,12 @@ class Input:
         name = Input.to_native.__name__
         for attr, value in self.__dict__.items():
             if hasattr(native_input, attr) and value is not None:
-                value_to_set = (
-                    tonative()
-                    if callable(tonative := getattr(value, name, None))
-                    else value
-                )
+                if callable(tonative := getattr(value, name, None)):
+                    value_to_set = tonative()
+                elif attr == "dimension":
+                    value_to_set = getattr(native.Dimension, value)
+                else:
+                    value_to_set = value
                 setattr(native_input, attr, value_to_set)
 
 
@@ -319,13 +311,6 @@ class DatabaseInfo:
             if value is not None:
                 setattr(native_database_info, attr, value)
         return native_database_info
-
-    @classmethod
-    def from_dict(cls, d):
-        obj = cls.__new__(cls)
-        for key, value in d.items():
-            setattr(obj, key, value)
-        return obj
 
 
 if __name__ == "__main__":

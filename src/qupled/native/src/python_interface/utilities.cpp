@@ -1,4 +1,5 @@
 #include "python_interface/utilities.hpp"
+#include "dimensions_util.hpp"
 #include "mpi_util.hpp"
 #include "python_interface/util.hpp"
 #include "thermo_util.hpp"
@@ -56,9 +57,16 @@ namespace pythonWrappers {
     m.attr("uses_mpi") = py::bool_(MPIUtil::isUsed);
   }
 
+  void exposeDimensions(py::module_ &m) {
+    m.attr("Dimension") = py::enum_<dimensionsUtil::Dimension>(m, "Dimension")
+                              .value("D3", dimensionsUtil::Dimension::D3)
+                              .value("D2", dimensionsUtil::Dimension::D2);
+  }
+
   void exposeUtilities(py::module_ &m) {
     exposePostProcessingMethods(m);
     exposeMPIClass(m);
+    exposeDimensions(m);
   }
 
 } // namespace pythonWrappers

@@ -6,7 +6,7 @@
 
 namespace dimensionsUtil {
 
-  enum class Dimension { D3, D2 };
+  enum class Dimension { D3, D2, Default = D3 };
 
   class DimensionsHandler {
   public:

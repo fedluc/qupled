@@ -33,6 +33,7 @@ public:
         nThreads(DEFAULT_INT),
         isClassicTheory(DEFAULT_BOOL),
         isQuantumTheory(DEFAULT_BOOL),
+        dimension(dimensionsUtil::Dimension::Default),
         dx(DEFAULT_DOUBLE),
         xmax(DEFAULT_DOUBLE),
         OmegaMax(DEFAULT_DOUBLE),
@@ -42,6 +43,7 @@ public:
   // Setters
   void setCoupling(const double &rs);
   void setDatabaseInfo(const DatabaseInfo &dbInfo);
+  void setDimension(const dimensionsUtil::Dimension &dimension);
   void setDegeneracy(const double &Theta);
   void setInt2DScheme(const std::string &int2DScheme);
   void setIntError(const double &intError);
@@ -56,6 +58,7 @@ public:
   // Getters
   double getCoupling() const { return rs; }
   DatabaseInfo getDatabaseInfo() const { return dbInfo; }
+  dimensionsUtil::Dimension getDimension() const { return dimension; }
   double getDegeneracy() const { return Theta; }
   std::string getInt2DScheme() const { return int2DScheme; }
   double getIntError() const { return intError; }
@@ -68,14 +71,7 @@ public:
   double getWaveVectorGridCutoff() const { return xmax; }
   double getFrequencyCutoff() const { return OmegaMax; }
 
-  // Class to handle dimensions
-  void setDimension(dimensionsUtil::Dimension dim) { dimension = dim; }
-  dimensionsUtil::Dimension getDimension() const { return dimension; }
-
 protected:
-
-  // Default dimensions 3D
-  dimensionsUtil::Dimension dimension = dimensionsUtil::Dimension::D3;
   // Accuracy for the integrals
   double intError;
   // Quantum coupling parameter
@@ -93,6 +89,8 @@ protected:
   std::string theory;
   // Database information
   DatabaseInfo dbInfo;
+  // Default dimensions 3D
+  dimensionsUtil::Dimension dimension;
   // Wave-vector grid resolution
   double dx;
   // Cutoff for the wave-vector grid
