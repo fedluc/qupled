@@ -58,6 +58,9 @@ namespace SpecialFunctions {
   double fermiDirac(const double &x);
   // Cotangent hyperbolic function
   double coth(const double &x);
+  // Elliptic integrals
+  double ellipticK(const double &k);
+  double ellipticE(const double &k);
 
 } // namespace SpecialFunctions
 
@@ -430,16 +433,6 @@ private:
   double x;
   // Solution
   double sol;
-};
-
-class EllipticIntegral {
-
-public:
-
-  // Elliptic integrals
-  static double ellipticK(const double &k);
-  static double ellipticE(const double &k);
-
 };
 
 #endif

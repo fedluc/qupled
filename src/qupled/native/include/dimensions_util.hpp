@@ -1,9 +1,6 @@
 #ifndef DIMENSIONS_UTIL_HPP
 #define DIMENSIONS_UTIL_HPP
 
-#include <functional>
-#include <memory>
-
 namespace dimensionsUtil {
 
   enum class Dimension { D3, D2, Default = D3 };

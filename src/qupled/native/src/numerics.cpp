@@ -40,8 +40,23 @@ double SpecialFunctions::fermiDirac(const double &x) {
 }
 
 double SpecialFunctions::coth(const double &x) {
-  if (x == 0.0) return numUtil::NaN; // Avoid division by zero
+  if (x == 0.0) return numUtil::Inf; 
   return 1.0 / tanh(x);
+}
+
+// Elliptic integrals
+double SpecialFunctions::ellipticK(const double &x) {
+  if (x >= 1.0) return numUtil::Inf;
+  gsl_sf_result ellipticK;
+  callGSLFunction(gsl_sf_ellint_Kcomp_e, x, GSL_PREC_DOUBLE, &ellipticK);
+  return ellipticK.val;
+}
+
+double SpecialFunctions::ellipticE(const double &x) {
+    if (x >= 1.0) return numUtil::Inf;
+  gsl_sf_result ellipticE;
+  callGSLFunction(gsl_sf_ellint_Ecomp_e, x, GSL_PREC_DOUBLE, &ellipticE);
+  return ellipticE.val;
 }
 
 // -----------------------------------------------------------------
@@ -428,20 +443,4 @@ void Integrator2D::compute(const function<double(double)> &func1,
   // Level 1 integration
   itg1.compute(func, param);
   sol = itg1.getSolution();
-}
-
-// -----------------------------------------------------------------
-// Elliptic integrals class
-// -----------------------------------------------------------------
-
-double EllipticIntegral::ellipticK(const double &k) {
-  gsl_sf_result result;
-  int status = gsl_sf_ellint_Kcomp_e(k, GSL_PREC_DOUBLE, &result);
-  return result.val;
-}
-
-double EllipticIntegral::ellipticE(const double &k) {
-  gsl_sf_result result;
-  int status = gsl_sf_ellint_Ecomp_e(k, GSL_PREC_DOUBLE, &result);
-  return result.val;
 }

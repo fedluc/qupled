@@ -4,7 +4,6 @@
 #include "dimensions_util.hpp"
 #include "input.hpp"
 #include <memory>
-#include <vector>
 
 class ChemicalPotential : public dimensionsUtil::DimensionsHandler {
 public:

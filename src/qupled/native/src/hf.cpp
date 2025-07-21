@@ -99,14 +99,15 @@ void HF::computeIdrFinite() {
 
 void HF::computeIdrGround() {
   const size_t nx = idr.size(0);
-  const size_t l = idr.size(1);
+  const size_t nl = idr.size(1);
   for (size_t i = 0; i < nx; ++i) {
-    for (size_t j = 0; j < l; ++j) {
+    for (size_t l = 0; l < nl; ++l) {
       HFUtil::IdrGround idrTmp(wvg[i], l);
       idr(i, l) = idrTmp.get();
     }
   }
 }
+
 // Compute static structure factor
 void HF::computeSsf() {
   (in().getDegeneracy() == 0.0) ? computeSsfGround() : computeSsfFinite();
@@ -118,7 +119,7 @@ void HF::computeSsfFinite() {
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
   for (size_t i = 0; i < wvg.size(); ++i) {
     HFUtil::Ssf ssfTmp(
-       inPtr, wvg[i], in().getDegeneracy(), mu, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr, i);
+       inPtr, wvg[i], mu, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr, i);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -191,7 +192,7 @@ void HFUtil::Idr::compute3D() {
 
 // Compute for 2D systems
 void HFUtil::Idr::compute2D() {
-  const double &Theta = in->getDegeneracy();
+  const double Theta = in->getDegeneracy();
   for (int l = 0; l < in->getNMatsubara(); ++l) {
     auto func = [&](const double &y) -> double {
       return (l == 0) ? integrand2D(y) : integrand2D(y, l);
@@ -209,7 +210,7 @@ void HFUtil::Idr::compute2D() {
 
 // Integrand for frequency = l and wave-vector = x
 double HFUtil::Idr::integrand(const double &y, const int &l) const {
-  const double &Theta = in->getDegeneracy();
+  const double Theta = in->getDegeneracy();
   const double y2 = y * y;
   const double x2 = x * x;
   const double txy = 2 * x * y;
@@ -226,7 +227,7 @@ double HFUtil::Idr::integrand(const double &y, const int &l) const {
 
 // Integrand for frequency = 0 and vector = x
 double HFUtil::Idr::integrand(const double &y) const {
-  const double &Theta = in->getDegeneracy();
+  const double Theta = in->getDegeneracy();
   const double y2 = y * y;
   const double x2 = x * x;
   const double xy = x * y;
@@ -252,7 +253,7 @@ double HFUtil::Idr::integrand(const double &y) const {
 
 // Integrand for frequency = l and wave-vector = x
 double HFUtil::Idr::integrand2D(const double &y, const int &l) const {
-  const double &Theta = in->getDegeneracy();
+  const double Theta = in->getDegeneracy();
   const double y2 = y * y;
   const double x2 = x * x;
   const double x4 = x2 * x2;
@@ -275,7 +276,7 @@ double HFUtil::Idr::integrand2D(const double &y, const int &l) const {
 
 // Integrand for frequency = 0 and vector = x
 double HFUtil::Idr::integrand2D(const double &y) const {
-  const double &Theta = in->getDegeneracy();
+  const double Theta = in->getDegeneracy();
   const double y2 = y * y;
   const double x2 = x * x;
   if (x > 0.0) {
@@ -313,14 +314,14 @@ double HFUtil::IdrGround::get() const {
 // -----------------------------------------------------------------
 
 double HFUtil::Ssf::get() {
-  assert(Theta > 0.0);
+  assert(in->getDegeneracy() > 0.0);
   compute(in->getDimension());
   return res;
 }
 
 // Compute for 3D systems
 void HFUtil::Ssf::compute3D() {
-  assert(Theta > 0.0);
+  assert(in->getDegeneracy() > 0.0);
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(yMin, yMax));
   res = 1.0 + itg->getSolution();
@@ -328,7 +329,8 @@ void HFUtil::Ssf::compute3D() {
 
 // Compute for 2D systems
 void HFUtil::Ssf::compute2D() {
-  assert(Theta > 0.0);
+  const double Theta = in->getDegeneracy();
+  assert(in->getDegeneracy() > 0.0);
   auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
   auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
   itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0, M_PI), itgGrid);
@@ -337,6 +339,7 @@ void HFUtil::Ssf::compute2D() {
 
 // 3D Integrand
 double HFUtil::Ssf::integrand(const double &y) const {
+  const double Theta = in->getDegeneracy();
   double y2 = y * y;
   double ypx = y + x;
   double ymx = y - x;
@@ -352,11 +355,13 @@ double HFUtil::Ssf::integrand(const double &y) const {
 
 // 2D Integrands
 double HFUtil::Ssf::integrand2DOut(const double &y) const {
+  const double Theta = in->getDegeneracy();
   const double y2 = y * y;
   return 2.0 * y / (exp(y2 / Theta - mu) * M_PI + M_PI);
 }
 
 double HFUtil::Ssf::integrand2DIn(const double &p) const {
+  const double &Theta = in->getDegeneracy();
   const double y = itg2->getX();
   const double x2 = x * x;
   const double arg = x2 / (2 * Theta) + x * y / Theta * cos(p);

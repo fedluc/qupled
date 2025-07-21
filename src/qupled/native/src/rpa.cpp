@@ -4,7 +4,6 @@
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "thermo_util.hpp"
-#include "format.hpp"
 #include <cmath>
 
 using namespace std;
@@ -40,33 +39,22 @@ void Rpa::computeSsfHF() {
 
 // Compute static structure factor at finite temperature
 void Rpa::computeSsfFinite() {
-  const double Theta = in().getDegeneracy();
-  const double rs = in().getCoupling();
   const size_t nx = wvg.size();
   for (size_t i = 0; i < nx; ++i) {
-    RpaUtil::Ssf ssfTmp(wvg[i], Theta, rs, ssfHF[i], lfc[i], idr[i], inPtr);
+    RpaUtil::Ssf ssfTmp(wvg[i], ssfHF[i], lfc[i], inPtr, idr[i]);
     ssf[i] = ssfTmp.get();
   }
 }
 
 // Compute static structure factor at zero temperature
 void Rpa::computeSsfGround() {
-  const double rs = in().getCoupling();
-  const double OmegaMax = in().getFrequencyCutoff();
   const size_t nx = wvg.size();
   for (size_t i = 0; i < nx; ++i) {
     const double x = wvg[i];
-    RpaUtil::SsfGround ssfTmp(x, rs, ssfHF[i], lfc[i], OmegaMax, itg);
+    RpaUtil::SsfGround ssfTmp(x, ssfHF[i], lfc[i], itg, inPtr);
     ssf[i] = ssfTmp.get();
   }
 }
-
-double RpaUtil::Ssf::get() {
-  assert(Theta > 0.0);
-  compute(in->getDimension());
-  return res;
-}
-
 
 // Compute static local field correction
 void Rpa::computeLfc() {
@@ -77,65 +65,57 @@ void Rpa::computeLfc() {
 }
 
 // -----------------------------------------------------------------
+// SsfBase class
+// -----------------------------------------------------------------
+
+// Normalized interaction potential
+double RpaUtil::SsfBase::ip() const {
+  const double rs = in->getCoupling();
+  if (in->getDimension() == dimensionsUtil::Dimension::D2) {
+    return sqrt(2.0) * rs / x;
+  } else {
+    return 4.0 * numUtil::lambda * rs / (M_PI * x * x);
+  }
+}
+
+// -----------------------------------------------------------------
 // Ssf class
 // -----------------------------------------------------------------
 
-// // Get at finite temperature for any scheme
-// double RpaUtil::Ssf::get() const {
-//   if (rs == 0.0) return ssfHF;
-//   if (x == 0.0) return 0.0;
-//   const double isStatic = lfc.size() == 1;
-//   double suml = 0.0;
-//   for (size_t l = 0; l < idr.size(); ++l) {
-//     const double &idrl = idr[l];
-//     const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
-//     const double denom = 1.0 + ip * idrl * (1 - lfcl);
-//     const double f = idrl * idrl * (1 - lfcl) / denom;
-//     suml += (l == 0) ? f : 2 * f;
-//   }
-//   return ssfHF - 1.5 * ip * Theta * suml;
-// }
+double RpaUtil::Ssf::get() {
+  assert(in->getDegeneracy() > 0.0);
+  if (x == 0.0) return 0.0;
+  if (in->getCoupling() == 0.0) return ssfHF;
+  compute(in->getDimension());
+  return res;
+}
 
 void RpaUtil::Ssf::compute3D() {
-  if (rs == 0.0) { 
-    res = ssfHF; 
-    return;
-  }
-  if (x == 0.0) { 
-    res = 0.0; 
-    return;
-  }
+  const double Theta = in->getDegeneracy();
   const double isStatic = lfc.size() == 1;
   double suml = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {
     const double &idrl = idr[l];
     const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
-    const double denom = 1.0 + ip * idrl * (1 - lfcl);
+    const double denom = 1.0 + ip() * idrl * (1 - lfcl);
     const double f = idrl * idrl * (1 - lfcl) / denom;
     suml += (l == 0) ? f : 2 * f;
   }
-  res = ssfHF - 1.5 * ip * Theta * suml;
+  res = ssfHF - 1.5 * ip() * Theta * suml;
 }
 
 void RpaUtil::Ssf::compute2D() {
-  if (rs == 0.0) { 
-    res = ssfHF;
-    return; 
-  }
-  if (x == 0.0) { 
-    res = 0.0;
-    return;
-  }
+  const double Theta = in->getDegeneracy();
   const double isStatic = lfc.size() == 1;
   double suml = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {
     const double &idrl = idr[l];
     const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
-    const double denom = 1.0 + ip2D * idrl * (1 - lfcl);
+    const double denom = 1.0 + ip() * idrl * (1 - lfcl);
     const double f = idrl * idrl * (1 - lfcl) / denom;
     suml += (l == 0) ? f : 2 * f;
   }
-  res = ssfHF - ip2D * Theta * suml;
+  res = ssfHF - ip() * Theta * suml;
 }
 
 // -----------------------------------------------------------------
@@ -143,6 +123,8 @@ void RpaUtil::Ssf::compute2D() {
 // -----------------------------------------------------------------
 
 double RpaUtil::SsfGround::get() {
+  const double OmegaMax = in->getFrequencyCutoff();
+  const double rs = in->getCoupling();
   if (x == 0.0) return 0.0;
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
@@ -152,5 +134,5 @@ double RpaUtil::SsfGround::get() {
 
 double RpaUtil::SsfGround::integrand(const double &Omega) const {
   const double idr = HFUtil::IdrGround(x, Omega).get();
-  return idr / (1.0 + ip * idr * (1.0 - lfc[0])) - idr;
+  return idr / (1.0 + ip() * idr * (1.0 - lfc[0])) - idr;
 }

@@ -96,13 +96,7 @@ void Stls::computeSsf() {
 }
 
 // Compute residual error for the stls iterations
-double Stls::computeError() const { 
-  // for (size_t i = 0; i < ssf.size(); ++i) {
-  //   println(formatUtil::format("ssf[{}] = {:.5e}", i, ssf[i]));
-  //   println(formatUtil::format("ssfOld[{}] = {:.5e}", i, ssfOld[i]));
-  // }
-
-  return rms(ssfOld, ssf, false); }
+double Stls::computeError() const { return rms(ssfOld, ssf, false); }
 
 // Update solution during stls iterations
 void Stls::updateSolution() {
@@ -159,6 +153,6 @@ double StlsUtil::Slfc::integrand2D(const double &y) const {
   double xpy = (x + y) / (x * M_PI);
   double argElli = (x + y < 1e-10) ? 0.0 : 2 * sqrt(x * y) / (x + y);
   return - y * (ssf(y) - 1.0)
-         * (EllipticIntegral::ellipticK(argElli) * xmy + 
-            EllipticIntegral::ellipticE(argElli) * xpy);
+         * (SpecialFunctions::ellipticK(argElli) * xmy + 
+            SpecialFunctions::ellipticE(argElli) * xpy);
 }

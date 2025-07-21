@@ -238,14 +238,13 @@ namespace QstlsUtil {
 
     // Constructor for zero temperature calculations
     SsfGround(const double &x_,
-              const double &rs_,
               const double &ssfHF_,
               const double &xMax_,
-              const double &OmegaMax_,
               std::shared_ptr<Interpolator1D> ssfi_,
-              std::shared_ptr<Integrator1D> itg_)
+              std::shared_ptr<Integrator1D> itg_,
+              const std::shared_ptr<const Input> in_)
         : RpaUtil::SsfGround(
-              x_, rs_, ssfHF_, std::span<const double>(), OmegaMax_, itg_),
+              x_, ssfHF_, std::span<const double>(), itg_, in_),
           xMax(xMax_),
           ssfi(ssfi_) {}
     // Get result of integration
