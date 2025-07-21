@@ -95,7 +95,7 @@ void StlsIetUtil::Slfc::compute2D() {
   auto func1 = [&](const double &y) -> double { return integrand1_2D(y); };
   auto func2 = [&](const double &w) -> double { return integrand2_2D(w); };
   itg->compute(func1, func2, Itg2DParam(yMin, yMax, wMin, wMax), itgGrid);
-  res = 1.0 / (M_PI * x) * itg->getSolution() + bf(x);
+  res = 1.0 / (M_PI * x) * itg->getSolution();
 }
 
 
@@ -117,7 +117,7 @@ double StlsIetUtil::Slfc::integrand2(const double &w) const {
 // Level 1 integrand
 double StlsIetUtil::Slfc::integrand1_2D(const double &y) const {
   if (y == 0.0) return 0.0;
-  return (-bf(y) - (ssf(y) - 1.0) * (lfc(y) - 1.0));
+  return ((ssf(y) - 1.0) * (lfc(y) - 1.0));
 }
 
 // Level 2 integrand
