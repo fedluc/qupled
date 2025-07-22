@@ -114,6 +114,7 @@ class Solver:
         scheme = self.native_scheme_cls(native_inputs)
         self.native_scheme_status = scheme.compute()
         self.results.from_native(scheme)
+        self.results.dimension = self.inputs.dimension
 
     def _compute_native_mpi(self):
         """
@@ -247,6 +248,8 @@ class Result:
     """Internal energy"""
     wvg: np.ndarray = None
     """Wave-vector grid"""
+    dimension: str = None 
+    """Dimension of the system"""
 
     def from_native(self, native_scheme: any):
         """
@@ -281,7 +284,7 @@ class Result:
             self.rdf_grid = (
                 rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
             )
-            self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)
+            self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf, self.dimension)
 
 
 @serialize.serializable_dataclass

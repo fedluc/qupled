@@ -4,6 +4,7 @@
 #include <gsl/gsl_sf_fermi_dirac.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_ellint.h>
+#include "gsl/gsl_sf_bessel.h"
 
 using namespace std;
 using namespace GslWrappers;
@@ -57,6 +58,12 @@ double SpecialFunctions::ellipticE(const double &x) {
   gsl_sf_result ellipticE;
   callGSLFunction(gsl_sf_ellint_Ecomp_e, x, GSL_PREC_DOUBLE, &ellipticE);
   return ellipticE.val;
+}
+
+double SpecialFunctions::besselJ0(const double &x) {
+  gsl_sf_result besselJ0;
+  callGSLFunction(gsl_sf_bessel_J0_e, x, &besselJ0);
+  return besselJ0.val;
 }
 
 // -----------------------------------------------------------------

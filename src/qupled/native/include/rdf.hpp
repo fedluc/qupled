@@ -2,12 +2,14 @@
 #define RDF_HPP
 
 #include "numerics.hpp"
+#include "dimensions_util.hpp"
+#include "input.hpp"
 
 // ------------------------------------------------------
 // Class for the radial distribution function calculation
 // ------------------------------------------------------
 
-class Rdf {
+class Rdf : public dimensionsUtil::DimensionsHandler {
 
 public:
 
@@ -16,15 +18,18 @@ public:
       const double &cutoff_,
       std::shared_ptr<Interpolator1D> ssfi_,
       std::shared_ptr<Integrator1D> itg_,
-      std::shared_ptr<Integrator1D> itgf_)
+      std::shared_ptr<Integrator1D> itgf_,
+      const dimensionsUtil::Dimension &dim_)
       : r(r_),
         cutoff(cutoff_),
         itgf(itgf_),
         itg(itg_),
-        ssfi(ssfi_) {}
+        ssfi(ssfi_),
+        dim(dim_),
+        res(numUtil::NaN) {}
 
   // Get result of integration
-  double get() const;
+  double get();
 
 private:
 
@@ -38,45 +43,18 @@ private:
   const std::shared_ptr<Integrator1D> itg;
   // Static structure factor interpolator
   const std::shared_ptr<Interpolator1D> ssfi;
+  // Dimension of the system
+  const dimensionsUtil::Dimension dim;
+  // Result of integration
+  double res;
   // Integrand
   double integrand(const double &y) const;
-  // Compute static structure factor
-  double ssf(const double &y) const;
-};
-
-class Rdf2D {
-
-public:
-
-  // Constructor
-  Rdf2D(const double &r_,
-      const double &cutoff_,
-      std::shared_ptr<Interpolator1D> ssfi_,
-      std::shared_ptr<Integrator1D> itg_)
-      : r(r_),
-        cutoff(cutoff_),
-        itg(itg_),
-        ssfi(ssfi_) {}
-
-  // Get result of integration
-  double get2D() const;
-
-private:
-
-  // Spatial position
-  const double r;
-  // Cutoff in the wave-vector grid
-  const double cutoff;
-  // Fourier Integrator object
-  const std::shared_ptr<Integrator1D> itgf;
-  // Integrator object
-  const std::shared_ptr<Integrator1D> itg;
-  // Static structure factor interpolator
-  const std::shared_ptr<Interpolator1D> ssfi;
-  // Integrand
   double integrand2D(const double &y) const;
   // Compute static structure factor
-  double ssf2D(const double &y) const;
+  double ssf(const double &y) const;
+  // Compute methods
+  void compute2D() override;
+  void compute3D() override;
 };
 
 #endif

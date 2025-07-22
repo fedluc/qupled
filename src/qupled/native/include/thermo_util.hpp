@@ -2,6 +2,8 @@
 #define THERMO_UTIL_HPP
 
 #include <vector>
+#include "dimensions_util.hpp"
+#include <string>
 
 // -----------------------------------------------------------------
 // Utility functions to compute thermodynamic properties
@@ -24,11 +26,8 @@ namespace thermoUtil {
 
   std::vector<double> computeRdf(const std::vector<double> &r,
                                  const std::vector<double> &wvg,
-                                 const std::vector<double> &ssf);
-
-  std::vector<double> computeRdf2D(const std::vector<double> &r,
-                                    const std::vector<double> &wvg,
-                                    const std::vector<double> &ssf);
+                                 const std::vector<double> &ssf,
+                                 const std::string &dimStr);
 
 } // namespace thermoUtil
 

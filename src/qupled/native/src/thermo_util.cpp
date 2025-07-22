@@ -4,6 +4,8 @@
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "rdf.hpp"
+#include "dimensions_util.hpp"
+#include <string>
 #include <cassert>
 
 using namespace std;
@@ -42,40 +44,33 @@ namespace thermoUtil {
     return freeEnergy.get();
   }
 
-  vector<double> computeRdf(const vector<double> &r,
-                            const vector<double> &wvg,
-                            const vector<double> &ssf) {
-    assert(ssf.size() > 0 && wvg.size() > 0);
-    const shared_ptr<Interpolator1D> itp =
-        make_shared<Interpolator1D>(wvg, ssf);
-    const int nr = r.size();
-    vector<double> rdf(nr);
-    const shared_ptr<Integrator1D> itg =
-        make_shared<Integrator1D>(Integrator1D::Type::DEFAULT, 1.0e-6);
-    const shared_ptr<Integrator1D> itgf =
-        make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-6);
-    for (int i = 0; i < nr; ++i) {
-      const Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf);
-      rdf[i] = rdfTmp.get();
-    }
-    return rdf;
-  }
 
-    vector<double> computeRdf2D(const vector<double> &r,
-                            const vector<double> &wvg,
-                            const vector<double> &ssf) {
-    assert(ssf.size() > 0 && wvg.size() > 0);
-    const shared_ptr<Interpolator1D> itp =
-        make_shared<Interpolator1D>(wvg, ssf);
-    const int nr = r.size();
-    vector<double> rdf(nr);
-    const shared_ptr<Integrator1D> itg =
-        make_shared<Integrator1D>(Integrator1D::Type::DEFAULT, 1.0e-6);
-    for (int i = 0; i < nr; ++i) {
-      const Rdf2D rdfTmp2D(r[i], wvg.back(), itp, itg);
-      rdf[i] = rdfTmp2D.get2D();
-    }
-    return rdf;
+  std::vector<double> computeRdf(
+      const std::vector<double> &r,
+      const std::vector<double> &wvg,
+      const std::vector<double> &ssf,
+      const std::string &dimStr
+  ) {
+      dimensionsUtil::Dimension dim;
+      if (dimStr == "D2") {
+          dim = dimensionsUtil::Dimension::D2;
+      } else if (dimStr == "D3") {
+          dim = dimensionsUtil::Dimension::D3;
+      } else {
+          throw std::invalid_argument("Invalid dimension. Must be 'D2' or 'D3'.");
+      }
+      assert(ssf.size() > 0 && wvg.size() > 0);
+      const auto itp = std::make_shared<Interpolator1D>(wvg, ssf);
+      const int nr = r.size();
+      std::vector<double> rdf(nr);
+      const auto itg = std::make_shared<Integrator1D>(Integrator1D::Type::DEFAULT, 1.0e-6);
+      const auto itgf = std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-6);
+      
+      for (int i = 0; i < nr; ++i) {
+          Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf, dim);
+          rdf[i] = rdfTmp.get();
+      }
+      return rdf;
   }
 
 } // namespace thermoUtil

@@ -144,7 +144,18 @@ vector<double> HF::getRdf(const vector<double> &r) const {
     throwError("No data to compute the radial distribution function");
     return vector<double>();
   }
-  return computeRdf(r, wvg, ssf);
+    std::string dimStr;
+  switch (in().getDimension()) {
+    case dimensionsUtil::Dimension::D2:
+      dimStr = "D2";
+      break;
+    case dimensionsUtil::Dimension::D3:
+      dimStr = "D3";
+      break;
+    default:
+      throw std::runtime_error("Invalid dimension enum value");
+  }
+  return computeRdf(r, wvg, ssf, dimStr);
 }
 
 vector<double> HF::getSdr() const {

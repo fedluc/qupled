@@ -59,8 +59,10 @@ namespace SpecialFunctions {
   // Cotangent hyperbolic function
   double coth(const double &x);
   // Elliptic integrals
-  double ellipticK(const double &k);
-  double ellipticE(const double &k);
+  double ellipticK(const double &x);
+  double ellipticE(const double &x);
+  // Bessel function of the first kind
+  double besselJ0(const double &x);
 
 } // namespace SpecialFunctions
 
