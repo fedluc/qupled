@@ -49,16 +49,8 @@ namespace thermoUtil {
       const std::vector<double> &r,
       const std::vector<double> &wvg,
       const std::vector<double> &ssf,
-      const std::string &dimStr
+      const dimensionsUtil::Dimension &dim
   ) {
-      dimensionsUtil::Dimension dim;
-      if (dimStr == "D2") {
-          dim = dimensionsUtil::Dimension::D2;
-      } else if (dimStr == "D3") {
-          dim = dimensionsUtil::Dimension::D3;
-      } else {
-          throw std::invalid_argument("Invalid dimension. Must be 'D2' or 'D3'.");
-      }
       assert(ssf.size() > 0 && wvg.size() > 0);
       const auto itp = std::make_shared<Interpolator1D>(wvg, ssf);
       const int nr = r.size();

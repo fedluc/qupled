@@ -139,25 +139,6 @@ void HF::computeLfc() {
 }
 
 // Getters
-vector<double> HF::getRdf(const vector<double> &r) const {
-  if (wvg.size() < 3 || ssf.size() < 3) {
-    throwError("No data to compute the radial distribution function");
-    return vector<double>();
-  }
-    std::string dimStr;
-  switch (in().getDimension()) {
-    case dimensionsUtil::Dimension::D2:
-      dimStr = "D2";
-      break;
-    case dimensionsUtil::Dimension::D3:
-      dimStr = "D3";
-      break;
-    default:
-      throw std::runtime_error("Invalid dimension enum value");
-  }
-  return computeRdf(r, wvg, ssf, dimStr);
-}
-
 vector<double> HF::getSdr() const {
   const double theta = in().getDegeneracy();
   if (isnan(theta) || theta == 0.0) { return vector<double>(); }

@@ -27,7 +27,7 @@ namespace thermoUtil {
   std::vector<double> computeRdf(const std::vector<double> &r,
                                  const std::vector<double> &wvg,
                                  const std::vector<double> &ssf,
-                                 const std::string &dimStr);
+                                 const dimensionsUtil::Dimension &dim);
 
 } // namespace thermoUtil
 

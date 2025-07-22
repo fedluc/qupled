@@ -35,4 +35,3 @@ def test_hf_compute():
     assert scheme.sdr.size == nx
     assert scheme.lfc.size == nx
     assert scheme.ssf.size == nx
-    assert scheme.rdf(scheme.wvg).size == nx

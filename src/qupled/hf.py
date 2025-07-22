@@ -69,7 +69,7 @@ class Solver:
                 If not provided, a default grid will be used.
         """
         if self.results is not None:
-            self.results.compute_rdf(rdf_grid)
+            self.results.compute_rdf(self.inputs.dimension, rdf_grid)
             self.db_handler.insert_results(
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid},
                 conflict_mode=database.DataBaseHandler.ConflictMode.UPDATE,
@@ -114,7 +114,6 @@ class Solver:
         scheme = self.native_scheme_cls(native_inputs)
         self.native_scheme_status = scheme.compute()
         self.results.from_native(scheme)
-        self.results.dimension = self.inputs.dimension
 
     def _compute_native_mpi(self):
         """
@@ -248,8 +247,6 @@ class Result:
     """Internal energy"""
     wvg: np.ndarray = None
     """Wave-vector grid"""
-    dimension: str = None 
-    """Dimension of the system"""
 
     def from_native(self, native_scheme: any):
         """
@@ -268,7 +265,7 @@ class Result:
                 valid_value = value is not None and not callable(value)
                 setattr(self, attr, value) if valid_value else None
 
-    def compute_rdf(self, rdf_grid: np.ndarray | None = None):
+    def compute_rdf(self, dimension: str, rdf_grid: np.ndarray | None = None):
         """
         Compute the radial distribution function (RDF) for the system.
 
@@ -280,11 +277,12 @@ class Result:
         Returns:
             None: The computed RDF is stored in the `self.rdf` attribute.
         """
+        native_dimension = getattr(native.Dimension, dimension)
         if self.wvg is not None and self.ssf is not None:
             self.rdf_grid = (
                 rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
             )
-            self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf, self.dimension)
+            self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf, native_dimension)
 
 
 @serialize.serializable_dataclass

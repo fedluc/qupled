@@ -17,11 +17,11 @@ using namespace pythonUtil;
 py::array computeRdf(const py::array_t<double> &rIn,
                      const py::array_t<double> &wvgIn,
                      const py::array_t<double> &ssfIn,
-                     const std::string &dimStr) { 
+                     const dimensionsUtil::Dimension &dim) { 
   const std::vector<double> r = toVector(rIn);
   const std::vector<double> wvg = toVector(wvgIn);
   const std::vector<double> ssf = toVector(ssfIn);
-  return toNdArray(thermoUtil::computeRdf(r, wvg, ssf, dimStr)); 
+  return toNdArray(thermoUtil::computeRdf(r, wvg, ssf, dim)); 
 }
 
 double computeInternalEnergy(const py::array_t<double> &wvgIn,
