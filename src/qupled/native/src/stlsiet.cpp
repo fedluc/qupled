@@ -38,8 +38,15 @@ void StlsIet::computeLfc() {
   Stls::computeLfc();
   // Compute the iet contribution to the local field correction
   for (size_t i = 0; i < wvg.size(); ++i) {
-    StlsIetUtil::Slfc lfcTmp(
-        wvg[i], wvg.front(), wvg.back(), ssfItp, lfcItp, bfItp, itgGrid, itg2D, inPtr);
+    StlsIetUtil::Slfc lfcTmp(wvg[i],
+                             wvg.front(),
+                             wvg.back(),
+                             ssfItp,
+                             lfcItp,
+                             bfItp,
+                             itgGrid,
+                             itg2D,
+                             inPtr);
     lfc(i, 0) += lfcTmp.get();
   }
 }
@@ -98,7 +105,6 @@ void StlsIetUtil::Slfc::compute2D() {
   res = 1.0 / (M_PI * x) * itg->getSolution();
 }
 
-
 // Level 1 integrand
 double StlsIetUtil::Slfc::integrand1(const double &y) const {
   if (y == 0.0) return 0.0;
@@ -129,5 +135,5 @@ double StlsIetUtil::Slfc::integrand2_2D(const double &w) const {
   const double arg = y2 - w2 + x2;
   const double arg2 = arg * arg;
   const double sgn = (arg > 0) ? 1.0 : -1.0;
-  return sgn * w * (ssf(w) - 1.0) / sqrt((4 * y2 * x2)/arg2 - 1.0);
+  return sgn * w * (ssf(w) - 1.0) / sqrt((4 * y2 * x2) / arg2 - 1.0);
 }

@@ -123,7 +123,6 @@ namespace HFUtil {
     double integrand2D(const double &y, const int &l) const;
     // Idr integrand for 2D frequency = 0 and wave-vector x
     double integrand2D(const double &y) const;
-
   };
 
   class IdrGround {
@@ -176,6 +175,7 @@ namespace HFUtil {
     double get();
 
   private:
+
     // Input parameters
     const std::shared_ptr<const Input> in;
     // Wave-vector

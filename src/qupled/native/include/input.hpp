@@ -72,6 +72,7 @@ public:
   double getFrequencyCutoff() const { return OmegaMax; }
 
 protected:
+
   // Accuracy for the integrals
   double intError;
   // Quantum coupling parameter

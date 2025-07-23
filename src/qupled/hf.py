@@ -282,7 +282,9 @@ class Result:
             self.rdf_grid = (
                 rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
             )
-            self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf, native_dimension)
+            self.rdf = native.compute_rdf(
+                self.rdf_grid, self.wvg, self.ssf, native_dimension
+            )
 
 
 @serialize.serializable_dataclass

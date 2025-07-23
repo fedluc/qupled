@@ -1,8 +1,8 @@
 #ifndef INTERNAL_ENERGY_HPP
 #define INTERNAL_ENERGY_HPP
 
-#include "numerics.hpp"
 #include "dimensions_util.hpp"
+#include "numerics.hpp"
 #include <cmath>
 
 // -----------------------------------------------------------------

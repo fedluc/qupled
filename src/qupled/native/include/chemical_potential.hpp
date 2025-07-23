@@ -11,6 +11,7 @@ public:
   explicit ChemicalPotential(const std::shared_ptr<const Input> in_)
       : in(in_) {}
   double get() const { return mu; }
+
 private:
 
   const std::shared_ptr<const Input> in;

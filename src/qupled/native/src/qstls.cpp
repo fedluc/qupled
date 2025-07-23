@@ -57,8 +57,7 @@ void Qstls::computeSsfGround() {
   const double xMax = wvg.back();
   auto loopFunc = [&](int i) -> void {
     shared_ptr<Integrator1D> itgTmp = make_shared<Integrator1D>(*itg);
-    QstlsUtil::SsfGround ssfTmp(
-        wvg[i], ssfHF[i], xMax, ssfi, itgTmp, inPtr);
+    QstlsUtil::SsfGround ssfTmp(wvg[i], ssfHF[i], xMax, ssfi, itgTmp, inPtr);
     ssf[i] = ssfTmp.get();
   };
   const auto &loopData = parallelFor(loopFunc, nx, in().getNThreads());
@@ -301,7 +300,7 @@ double QstlsUtil::AdrGround::integrand2(const double &t) const {
 
 double QstlsUtil::SsfGround::get() {
   if (x == 0.0) return 0.0;
-  if (in -> getCoupling() == 0.0) return ssfHF;
+  if (in->getCoupling() == 0.0) return ssfHF;
   const double OmegaMax = in->getFrequencyCutoff();
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(0, OmegaMax));

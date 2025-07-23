@@ -1,9 +1,9 @@
 #ifndef RDF_HPP
 #define RDF_HPP
 
-#include "numerics.hpp"
 #include "dimensions_util.hpp"
 #include "input.hpp"
+#include "numerics.hpp"
 
 // ------------------------------------------------------
 // Class for the radial distribution function calculation

@@ -1,10 +1,10 @@
 #include "numerics.hpp"
+#include "gsl/gsl_sf_bessel.h"
 #include "mpi_util.hpp"
 #include <gsl/gsl_sf_dilog.h>
+#include <gsl/gsl_sf_ellint.h>
 #include <gsl/gsl_sf_fermi_dirac.h>
 #include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_sf_ellint.h>
-#include "gsl/gsl_sf_bessel.h"
 
 using namespace std;
 using namespace GslWrappers;
@@ -41,7 +41,7 @@ double SpecialFunctions::fermiDirac(const double &x) {
 }
 
 double SpecialFunctions::coth(const double &x) {
-  if (x == 0.0) return numUtil::Inf; 
+  if (x == 0.0) return numUtil::Inf;
   return 1.0 / tanh(x);
 }
 
@@ -54,7 +54,7 @@ double SpecialFunctions::ellipticK(const double &x) {
 }
 
 double SpecialFunctions::ellipticE(const double &x) {
-    if (x >= 1.0) return numUtil::Inf;
+  if (x >= 1.0) return numUtil::Inf;
   gsl_sf_result ellipticE;
   callGSLFunction(gsl_sf_ellint_Ecomp_e, x, GSL_PREC_DOUBLE, &ellipticE);
   return ellipticE.val;

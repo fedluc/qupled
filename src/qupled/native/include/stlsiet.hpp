@@ -42,13 +42,12 @@ namespace StlsIetUtil {
   // Classes for the static local field correction
   // -----------------------------------------------------------------
 
-  class Slfc : public StlsUtil::SlfcBase, dimensionsUtil::DimensionsHandler{
+  class Slfc : public StlsUtil::SlfcBase, dimensionsUtil::DimensionsHandler {
 
   public:
 
     // Constructor
-    Slfc(
-         const double &x_,
+    Slfc(const double &x_,
          const double &yMin_,
          const double &yMax_,
          std::shared_ptr<Interpolator1D> ssfi_,
@@ -91,7 +90,6 @@ namespace StlsIetUtil {
     double bf(const double &x_) const;
     void compute2D() override;
     void compute3D() override;
-
   };
 
 } // namespace StlsIetUtil

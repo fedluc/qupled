@@ -1,10 +1,10 @@
 #include "thermo_util.hpp"
+#include "dimensions_util.hpp"
 #include "free_energy.hpp"
 #include "internal_energy.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "rdf.hpp"
-#include "dimensions_util.hpp"
 #include <cassert>
 
 using namespace std;
@@ -44,25 +44,24 @@ namespace thermoUtil {
     return freeEnergy.get();
   }
 
+  std::vector<double> computeRdf(const std::vector<double> &r,
+                                 const std::vector<double> &wvg,
+                                 const std::vector<double> &ssf,
+                                 const dimensionsUtil::Dimension &dim) {
+    assert(ssf.size() > 0 && wvg.size() > 0);
+    const auto itp = std::make_shared<Interpolator1D>(wvg, ssf);
+    const int nr = r.size();
+    std::vector<double> rdf(nr);
+    const auto itg =
+        std::make_shared<Integrator1D>(Integrator1D::Type::DEFAULT, 1.0e-6);
+    const auto itgf =
+        std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-6);
 
-  std::vector<double> computeRdf(
-      const std::vector<double> &r,
-      const std::vector<double> &wvg,
-      const std::vector<double> &ssf,
-      const dimensionsUtil::Dimension &dim
-  ) {
-      assert(ssf.size() > 0 && wvg.size() > 0);
-      const auto itp = std::make_shared<Interpolator1D>(wvg, ssf);
-      const int nr = r.size();
-      std::vector<double> rdf(nr);
-      const auto itg = std::make_shared<Integrator1D>(Integrator1D::Type::DEFAULT, 1.0e-6);
-      const auto itgf = std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-6);
-      
-      for (int i = 0; i < nr; ++i) {
-          Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf, dim);
-          rdf[i] = rdfTmp.get();
-      }
-      return rdf;
+    for (int i = 0; i < nr; ++i) {
+      Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf, dim);
+      rdf[i] = rdfTmp.get();
+    }
+    return rdf;
   }
 
 } // namespace thermoUtil

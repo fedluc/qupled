@@ -1,9 +1,8 @@
 #ifndef THERMO_UTIL_HPP
 #define THERMO_UTIL_HPP
 
-#include <vector>
 #include "dimensions_util.hpp"
-#include "input.hpp"
+#include <vector>
 
 // -----------------------------------------------------------------
 // Utility functions to compute thermodynamic properties

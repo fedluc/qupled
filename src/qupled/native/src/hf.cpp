@@ -119,7 +119,7 @@ void HF::computeSsfFinite() {
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
   for (size_t i = 0; i < wvg.size(); ++i) {
     HFUtil::Ssf ssfTmp(
-       inPtr, wvg[i], mu, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr, i);
+        inPtr, wvg[i], mu, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr, i);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -167,7 +167,8 @@ double HF::getUInt() const {
     throwError("No data to compute the internal energy");
     return numUtil::Inf;
   }
-  return computeInternalEnergy(wvg, ssf, in().getCoupling(), in().getDimension());
+  return computeInternalEnergy(
+      wvg, ssf, in().getCoupling(), in().getDimension());
 }
 
 // -----------------------------------------------------------------
@@ -288,7 +289,6 @@ double HFUtil::Idr::integrand2D(const double &y) const {
     return 0;
   }
 }
-
 
 // -----------------------------------------------------------------
 // IdrGround class

@@ -110,7 +110,9 @@ namespace StlsUtil {
          std::shared_ptr<Integrator1D> itg_,
          const std::shared_ptr<const Input> in_)
         : SlfcBase(x_, yMin_, yMax_, ssfi_),
-          itg(itg_), in(in_), res(numUtil::NaN) {}
+          itg(itg_),
+          in(in_),
+          res(numUtil::NaN) {}
     // Get result of integration
     double get();
 
@@ -126,7 +128,6 @@ namespace StlsUtil {
     double res;
     void compute2D() override;
     void compute3D() override;
-
   };
 
 } // namespace StlsUtil

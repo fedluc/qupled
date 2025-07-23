@@ -152,7 +152,7 @@ double StlsUtil::Slfc::integrand2D(const double &y) const {
   double xmy = (x - y) / (x * M_PI);
   double xpy = (x + y) / (x * M_PI);
   double argElli = (x + y < 1e-10) ? 0.0 : 2 * sqrt(x * y) / (x + y);
-  return - y * (ssf(y) - 1.0)
-         * (SpecialFunctions::ellipticK(argElli) * xmy + 
-            SpecialFunctions::ellipticE(argElli) * xpy);
+  return -y * (ssf(y) - 1.0)
+         * (SpecialFunctions::ellipticK(argElli) * xmy
+            + SpecialFunctions::ellipticE(argElli) * xpy);
 }

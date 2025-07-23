@@ -223,6 +223,7 @@ def test_result_compute_rdf_no_wvg_or_ssf(mocker, results):
     results.compute_rdf("D3")
     native_compute_rdf.assert_not_called()
 
+
 def test_database_info_initialization():
     db_info = hf.DatabaseInfo()
     assert db_info.name == hf.database.DataBaseHandler.DEFAULT_DATABASE_NAME
