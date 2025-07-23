@@ -141,7 +141,17 @@ void HF::computeLfc() {
 // Getters
 vector<double> HF::getSdr() const {
   const double theta = in().getDegeneracy();
+  const dimensionsUtil::Dimension dim = in().getDimension();
   if (isnan(theta) || theta == 0.0) { return vector<double>(); }
+  if (dim == Dimension::D2) {
+    vector<double> sdr(wvg.size(), -theta);
+    const double fact = sqrt(2.0) * in().getCoupling();
+    for (size_t i = 0; i < wvg.size(); ++i) {
+      const double phi0 = idr(i, 0);
+      sdr[i] *= phi0 / (1.0 + fact / wvg[i] * (1.0 - lfc(i, 0)) * phi0);
+    }
+    return sdr;
+  }
   vector<double> sdr(wvg.size(), -1.5 * theta);
   const double fact = 4 * numUtil::lambda * in().getCoupling() / M_PI;
   for (size_t i = 0; i < wvg.size(); ++i) {
@@ -157,7 +167,7 @@ double HF::getUInt() const {
     throwError("No data to compute the internal energy");
     return numUtil::Inf;
   }
-  return computeInternalEnergy(wvg, ssf, in().getCoupling());
+  return computeInternalEnergy(wvg, ssf, in().getCoupling(), in().getDimension());
 }
 
 // -----------------------------------------------------------------

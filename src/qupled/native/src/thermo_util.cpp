@@ -5,7 +5,6 @@
 #include "numerics.hpp"
 #include "rdf.hpp"
 #include "dimensions_util.hpp"
-#include <string>
 #include <cassert>
 
 using namespace std;
@@ -14,11 +13,12 @@ namespace thermoUtil {
 
   double computeInternalEnergy(const vector<double> &wvg,
                                const vector<double> &ssf,
-                               const double &coupling) {
+                               const double &coupling,
+                               const dimensionsUtil::Dimension &dim) {
     const shared_ptr<Interpolator1D> itp =
         make_shared<Interpolator1D>(wvg, ssf);
     const shared_ptr<Integrator1D> itg = make_shared<Integrator1D>(1.0e-6);
-    const InternalEnergy uInt(coupling, wvg.front(), wvg.back(), itp, itg);
+    const InternalEnergy uInt(coupling, wvg.front(), wvg.back(), itp, itg, dim);
     return uInt.get();
   }
 

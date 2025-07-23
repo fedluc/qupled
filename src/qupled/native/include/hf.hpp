@@ -28,7 +28,6 @@ public:
   const Vector2D &getLfc() const { return lfc; }
   const std::vector<double> &getSsf() const { return ssf; }
   const std::vector<double> &getWvg() const { return wvg; }
-  std::vector<double> getRdf(const std::vector<double> &r) const;
   std::vector<double> getSdr() const;
   double getUInt() const;
 

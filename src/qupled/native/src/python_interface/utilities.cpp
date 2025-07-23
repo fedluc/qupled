@@ -26,10 +26,11 @@ py::array computeRdf(const py::array_t<double> &rIn,
 
 double computeInternalEnergy(const py::array_t<double> &wvgIn,
                              const py::array_t<double> &ssfIn,
-                             const double &coupling) {
+                             const double &coupling,
+                             const dimensionsUtil::Dimension &dim) {
   const std::vector<double> wvg = toVector(wvgIn);
   const std::vector<double> ssf = toVector(ssfIn);
-  return thermoUtil::computeInternalEnergy(wvg, ssf, coupling);
+  return thermoUtil::computeInternalEnergy(wvg, ssf, coupling, dim);
 }
 
 double computeFreeEnergy(const py::array_t<double> &gridIn,

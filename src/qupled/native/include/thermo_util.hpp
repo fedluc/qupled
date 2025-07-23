@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "dimensions_util.hpp"
-#include <string>
+#include "input.hpp"
 
 // -----------------------------------------------------------------
 // Utility functions to compute thermodynamic properties
@@ -13,7 +13,8 @@ namespace thermoUtil {
 
   double computeInternalEnergy(const std::vector<double> &wvg,
                                const std::vector<double> &ssf,
-                               const double &coupling);
+                               const double &coupling,
+                               const dimensionsUtil::Dimension &dim);
 
   double computeFreeEnergy(const std::vector<double> &grid,
                            const std::vector<double> &rsu,
