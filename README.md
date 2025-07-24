@@ -10,7 +10,7 @@ Qupled is a Python package designed for calculating the properties of quantum pl
 [![Code Formatting](https://github.com/fedluc/qupled/actions/workflows/formatting.yml/badge.svg)](https://github.com/fedluc/qupled/actions/workflows/formatting.yml)
 [![Docs](https://img.shields.io/readthedocs/qupled/latest.svg?color=blue&style=flat)](https://qupled.readthedocs.io/en/latest/)
 ![PyPI version](https://img.shields.io/pypi/v/qupled.svg?color=blue&label=PyPI&style=flat)
-![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Linux-blue?style=flat-square)
+![OS](https://img.shields.io/badge/OS-macOS%20%7C%20Linux-blue?style=flat)
 
 
 ## Running 
