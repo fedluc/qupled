@@ -63,8 +63,8 @@ QThermoProp::QThermoProp(const std::shared_ptr<const QVSStlsInput> &in_)
     : ThermoPropBase(in_),
       structProp(make_shared<QStructProp>(in_)) {
   if (isZeroDegeneracy) {
-    throwError("Ground state calculations are not available "
-               "for the quantum VS scheme");
+    throwError(
+        "Ground state calculations are not implemented for this scheme.");
   }
   ThermoPropBase::structProp = structProp;
 }

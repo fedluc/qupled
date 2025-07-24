@@ -20,8 +20,6 @@ class Solver(stls.Solver):
         self.results: stls.Result = stls.Result()
 
     def compute(self, inputs: Input):
-        if inputs.dimension == "D2":
-            raise NotImplementedError("2D computation is not supported in this scheme.")
         self.find_fixed_adr_in_database(inputs)
         super().compute(inputs)
 

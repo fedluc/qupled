@@ -17,6 +17,10 @@ StlsIet::StlsIet(const std::shared_ptr<const StlsIetInput> &in_)
       iet(in_, wvg),
       itg2D(std::make_shared<Integrator2D>(ItgType::DEFAULT,
                                            in_->getIntError())) {
+  if (in().getDimension() == dimensionsUtil::Dimension::D2
+      && (in().getTheory() == "STLS-IOI" || in().getTheory() == "STLS-LCT")) {
+    throwError("2D calculations are not implemented for this scheme.");
+  }
   const bool segregatedItg = in().getInt2DScheme() == "segregated";
   if (segregatedItg) { itgGrid = wvg; }
 }

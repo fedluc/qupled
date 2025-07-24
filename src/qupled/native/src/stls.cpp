@@ -151,7 +151,7 @@ double StlsUtil::Slfc::integrand(const double &y) const {
 double StlsUtil::Slfc::integrand2D(const double &y) const {
   double xmy = (x - y) / (x * M_PI);
   double xpy = (x + y) / (x * M_PI);
-  double argElli = (x + y == 0) ? 0.0 : 2 * sqrt(x * y) / (x + y);
+  double argElli = (x + y == 0.0) ? 0.0 : 2 * sqrt(x * y) / (x + y);
   return -y * (ssf(y) - 1.0)
          * (SpecialFunctions::ellipticK(argElli) * xmy
             + SpecialFunctions::ellipticE(argElli) * xpy);

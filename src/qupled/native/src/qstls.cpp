@@ -18,6 +18,9 @@ using Itg2DParam = Integrator2D::Param;
 
 Qstls::Qstls(const std::shared_ptr<const QstlsInput> &in_, const bool verbose_)
     : Stls(in_, verbose_) {
+  if (in().getDimension() == dimensionsUtil::Dimension::D2) {
+    throwError("2D calculations are not implemented for this scheme.");
+  }
   // Set name for the fixed adr output file
   adrFixedDatabaseName = formatUtil::format("{}", in().getTheory());
   // Allocate arrays

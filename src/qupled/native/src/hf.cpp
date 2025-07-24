@@ -19,6 +19,9 @@ HF::HF(const std::shared_ptr<const Input> &in_, const bool verbose_)
       inPtr(std::move(in_)),
       itg(std::make_shared<Integrator1D>(ItgType::DEFAULT,
                                          in_->getIntError())) {
+  if (in().getDegeneracy() == 0.0 && in().getDimension() == Dimension::D2) {
+    throwError("Ground state calculations in 2D are not implemented.");
+  }
   // Assemble the wave-vector grid
   buildWaveVectorGrid();
   // Allocate arrays to the correct size
@@ -54,9 +57,6 @@ void HF::computeStructuralProperties() {
 }
 
 void HF::init() {
-  if (in().getDegeneracy() == 0.0 && in().getDimension() == Dimension::D2) {
-    throw runtime_error("2D Ground state computations are unsupported.");
-  }
   print("Computing chemical potential: ");
   computeChemicalPotential();
   println("Done");
