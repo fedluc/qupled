@@ -78,7 +78,6 @@ namespace HFUtil {
 
   public:
 
-    // Constructor remains unchanged
     Idr(const std::shared_ptr<const Input> in_,
         const double &x_,
         const double &mu_,
@@ -109,11 +108,10 @@ namespace HFUtil {
     const double yMax;
     // Integrator object
     const std::shared_ptr<Integrator1D> itg;
-    // Vector to store results
+    // Vector to store integral results
     std::vector<double> res;
-    // Compute for 3D systems
+    // Compute methods
     void compute3D() override;
-    // Compute for 2D systems
     void compute2D() override;
     // Idr integrand for frequency = l and wave-vector x
     double integrand(const double &y, const int &l) const;

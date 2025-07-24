@@ -82,7 +82,9 @@ namespace StlsIetUtil {
     const std::shared_ptr<Interpolator1D> lfci;
     // Bridge function interpolator
     const std::shared_ptr<Interpolator1D> bfi;
+    // Result of integration
     double res;
+    // Input object
     const std::shared_ptr<const Input> in;
     // Compute static local field correction
     double lfc(const double &x) const;

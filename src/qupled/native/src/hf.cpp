@@ -54,6 +54,9 @@ void HF::computeStructuralProperties() {
 }
 
 void HF::init() {
+  if (in().getDegeneracy() == 0.0 && in().getDimension() == Dimension::D2) {
+    throw runtime_error("2D Ground state computations are unsupported.");
+  }
   print("Computing chemical potential: ");
   computeChemicalPotential();
   println("Done");
@@ -143,6 +146,7 @@ vector<double> HF::getSdr() const {
   const double theta = in().getDegeneracy();
   const dimensionsUtil::Dimension dim = in().getDimension();
   if (isnan(theta) || theta == 0.0) { return vector<double>(); }
+  // Calculate SDR for 2D
   if (dim == Dimension::D2) {
     vector<double> sdr(wvg.size(), -theta);
     const double fact = sqrt(2.0) * in().getCoupling();
@@ -152,6 +156,7 @@ vector<double> HF::getSdr() const {
     }
     return sdr;
   }
+  // Calculate SDR for 3D
   vector<double> sdr(wvg.size(), -1.5 * theta);
   const double fact = 4 * numUtil::lambda * in().getCoupling() / M_PI;
   for (size_t i = 0; i < wvg.size(); ++i) {

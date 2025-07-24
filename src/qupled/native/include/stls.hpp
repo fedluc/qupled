@@ -124,8 +124,9 @@ namespace StlsUtil {
     // Integrand
     double integrand(const double &y) const;
     double integrand2D(const double &y) const;
-    // result of integration
+    // Result of integration
     double res;
+    // Compute methods
     void compute2D() override;
     void compute3D() override;
   };

@@ -29,6 +29,8 @@ class Solver(stls.Solver):
         Args:
             inputs: Input parameters.
         """
+        if inputs.dimension == "D2":
+            raise NotImplementedError("2D computation is not supported in this scheme.")
         self._fill_free_energy_integrand(inputs)
         super().compute(inputs)
 

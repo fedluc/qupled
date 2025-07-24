@@ -93,7 +93,7 @@ namespace RpaUtil {
 
   private:
 
-    // Result of the integration
+    // Result of integration
     double res;
     // Compute methods
     void compute2D() override;

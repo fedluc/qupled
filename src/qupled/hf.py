@@ -54,6 +54,10 @@ class Solver:
             inputs: Input parameters.
         """
         self.inputs = inputs
+        if inputs.dimension == "D2" and inputs.theory in ["STLS-IOI", "STLS-LCT"]:
+            raise NotImplementedError(
+            "2D computation is not supported for STLS-IOI or STLS-LCT theories."
+            )
         self._add_run_to_database()
         self._compute_native()
         self._save()
