@@ -84,7 +84,11 @@ class Solver:
         `self.inputs` with the current `run_id`.
         """
         self.db_handler.insert_run(self.inputs)
-        self.inputs.database_info.run_id = self.run_id
+        self.inputs.database_info = DatabaseInfo(
+            blob_storage=self.db_handler.blob_storage,
+            name=self.db_handler.engine.url.database,
+            run_id=self.run_id,
+        )
 
     def _compute_native(self):
         """
@@ -196,7 +200,7 @@ class Input:
     processes: int = 1
     """Number of MPI processes for parallel calculations. Default =  ``1``"""
     theory: str = "HF"
-    database_info: DatabaseInfo = field(default_factory=lambda: DatabaseInfo())
+    database_info: DatabaseInfo = None
 
     def to_native(self, native_input: any):
         """
@@ -293,7 +297,9 @@ class DatabaseInfo:
     Class used to store the database information passed to the native code.
     """
 
-    name: str = database.DataBaseHandler.DEFAULT_DATABASE_NAME
+    blob_storage: str = None
+    """Directory used to store the blob data"""
+    name: str = None
     """Database name"""
     run_id: int = None
     """ID of the run in the database"""

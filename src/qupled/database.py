@@ -4,11 +4,14 @@ import struct
 from datetime import datetime
 from enum import Enum
 from collections.abc import Callable
+from pathlib import Path
 
 import numpy as np
 import sqlalchemy as sql
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 import blosc2
+
+from . import native
 
 
 class DataBaseHandler:
@@ -18,10 +21,12 @@ class DataBaseHandler:
     and deleting data, as well as managing the database schema."
     """
 
+    BLOB_STORAGE_DIRECTORY = "blob_data"
+    DATABASE_DIRECTORY = "qupled_store"
     DEFAULT_DATABASE_NAME = "qupled.db"
-    RUN_TABLE_NAME = "runs"
     INPUT_TABLE_NAME = "inputs"
     RESULT_TABLE_NAME = "results"
+    RUN_TABLE_NAME = "runs"
 
     class TableKeys(Enum):
         COUPLING = "coupling"
@@ -61,12 +66,23 @@ class DataBaseHandler:
             result_table (sqlalchemy.Table): The table schema for storing result data.
             run_id (int | None): The ID of the current run, or None if no run is active.
         """
-        self.database_name = (
-            database_name if database_name is not None else self.DEFAULT_DATABASE_NAME
+        # Database path
+        database_name = (
+            self.DEFAULT_DATABASE_NAME if database_name is None else database_name
         )
-        self.engine = sql.create_engine(f"sqlite:///{self.database_name}")
-        # Enforce foreign keys in sqlite
+        database_path = Path(self.DATABASE_DIRECTORY) / database_name
+        database_path.parent.mkdir(parents=True, exist_ok=True)
+        # Blob data storage
+        self.blob_storage = (
+            Path(self.DATABASE_DIRECTORY) / self.BLOB_STORAGE_DIRECTORY / database_name
+        )
+        self.blob_storage.mkdir(parents=True, exist_ok=True)
+        self.blob_storage = str(self.blob_storage)
+        # Create database
+        self.engine = sql.create_engine(f"sqlite:///{database_path}")
+        # Set sqlite properties
         DataBaseHandler._set_sqlite_pragma(self.engine)
+        # Create tables
         self.table_metadata = sql.MetaData()
         self.run_table = self._build_run_table()
         self.input_table = self._build_inputs_table()
@@ -252,6 +268,7 @@ class DataBaseHandler:
         Returns:
             None
         """
+        self._delete_blob_data_on_disk(run_id)
         condition = self.run_table.c[self.TableKeys.PRIMARY_KEY.value] == run_id
         statement = sql.delete(self.run_table).where(condition)
         self._execute(statement)
@@ -429,6 +446,9 @@ class DataBaseHandler:
         result = self._execute(statement)
         if run_id := result.inserted_primary_key:
             self.run_id = run_id[0]
+
+    def _delete_blob_data_on_disk(self, run_id: int):
+        native.delete_blob_data_on_disk(self.engine.url.database, run_id)
 
     @staticmethod
     def _set_sqlite_pragma(engine):

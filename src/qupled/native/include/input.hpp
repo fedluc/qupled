@@ -42,7 +42,7 @@ public:
   virtual ~Input() = default;
   // Setters
   void setCoupling(const double &rs);
-  void setDatabaseInfo(const DatabaseInfo &dbInfo);
+  void setDatabaseInfo(const databaseUtil::DatabaseInfo &dbInfo);
   void setDimension(const dimensionsUtil::Dimension &dimension);
   void setDegeneracy(const double &Theta);
   void setInt2DScheme(const std::string &int2DScheme);
@@ -57,7 +57,7 @@ public:
 
   // Getters
   double getCoupling() const { return rs; }
-  DatabaseInfo getDatabaseInfo() const { return dbInfo; }
+  databaseUtil::DatabaseInfo getDatabaseInfo() const { return dbInfo; }
   dimensionsUtil::Dimension getDimension() const { return dimension; }
   double getDegeneracy() const { return Theta; }
   std::string getInt2DScheme() const { return int2DScheme; }
@@ -89,7 +89,7 @@ protected:
   // Theory to be solved
   std::string theory;
   // Database information
-  DatabaseInfo dbInfo;
+  databaseUtil::DatabaseInfo dbInfo;
   // Default dimensions 3D
   dimensionsUtil::Dimension dimension;
   // Wave-vector grid resolution

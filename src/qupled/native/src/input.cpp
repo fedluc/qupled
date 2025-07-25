@@ -4,6 +4,7 @@
 #include <cmath>
 
 using namespace std;
+using namespace databaseUtil;
 using namespace MPIUtil;
 using namespace dimensionsUtil;
 

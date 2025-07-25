@@ -5,8 +5,10 @@
 #include "vector_util.hpp"
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <cstring>
+#include <fstream>
 
 using namespace std;
+using namespace databaseUtil;
 using namespace vecUtil;
 using namespace MPIUtil;
 using ItgParam = Integrator1D::Param;
@@ -111,16 +113,22 @@ void Qstls::writeAdrFixed(const Vector3D &res, const string &name) const {
                                                   QstlsUtil::SQL_TABLE_NAME,
                                                   dbInfo.runTableName);
     db.exec(createTable);
-    // Prepare binary data
-    const void *adrData = static_cast<const void *>(res.data());
-    const int adrSize = static_cast<int>(res.size() * sizeof(double));
-    // Insert data
+    // Write to disk
+    string filename = formatUtil::format(
+        "{}/run_{}_{}.bin", dbInfo.blobStorage, dbInfo.runId, name);
+    ofstream out(filename, std::ios::binary);
+    if (!out) { throwError("Failed to open file for writing: " + filename); }
+    out.write(reinterpret_cast<const char *>(res.data()),
+              res.size() * sizeof(double));
+    out.close();
+
+    // Insert path into DB
     const string insert =
         formatUtil::format(QstlsUtil::SQL_INSERT, QstlsUtil::SQL_TABLE_NAME);
     SQLite::Statement statement(db, insert);
     statement.bind(1, dbInfo.runId);
     statement.bind(2, name);
-    statement.bind(3, adrData, adrSize);
+    statement.bind(3, filename);
     statement.exec();
   } catch (const std::exception &e) {
     throwError("Failed to write to database: " + string(e.what()));
@@ -137,18 +145,71 @@ void Qstls::readAdrFixed(Vector3D &res, const string &name, int runId) const {
     statement.bind(1, runId);
     statement.bind(2, name);
     if (statement.executeStep()) {
-      const void *adrData = statement.getColumn(0).getBlob();
-      int adrBytes = statement.getColumn(0).getBytes();
-      if (static_cast<size_t>(adrBytes) != res.size() * sizeof(double)) {
+      const string filename = statement.getColumn(0).getString();
+      ifstream in(filename, std::ios::binary);
+      if (!in) { throwError("Failed to open file for reading: " + filename); }
+      in.read(reinterpret_cast<char *>(res.data()),
+              res.size() * sizeof(double));
+      if (in.gcount()
+          != static_cast<std::streamsize>(res.size() * sizeof(double))) {
         throwError(
             formatUtil::format("Size mismatch: expected {} bytes, got {} bytes",
                                res.size() * sizeof(double),
-                               adrBytes));
+                               in.gcount()));
       }
-      memcpy(res.data(), adrData, adrBytes);
+      in.close();
     }
   } catch (const std::exception &e) {
     throwError("Failed to read from database: " + string(e.what()));
+  }
+}
+
+// -----------------------------------------------------------------
+// Delete blob data on disk
+// -----------------------------------------------------------------
+
+bool blobDataTableExists(const SQLite::Database &db) {
+  const string select = QstlsUtil::SQL_SELECT_TABLE;
+  SQLite::Statement statement(db, select);
+  statement.bind(1, QstlsUtil::SQL_TABLE_NAME);
+  if (statement.executeStep()) { return statement.getColumn(0).getInt() > 0; }
+  return false;
+}
+
+void QstlsUtil::deleteBlobDataOnDisk(const string &dbName, int runId) {
+  try {
+    // Setup the database connection
+    SQLite::Database db(dbName, SQLite::OPEN_READONLY);
+    // Check if the table exists
+    if (!blobDataTableExists(db)) { return; }
+    // Select the correct run
+    const string select = formatUtil::format(QstlsUtil::SQL_SELECT_RUN_ID,
+                                             QstlsUtil::SQL_TABLE_NAME);
+    SQLite::Statement statement(db, select);
+    statement.bind(1, runId);
+    // Execute and collect file paths
+    std::vector<std::string> filePaths;
+    while (statement.executeStep()) {
+      filePaths.push_back(statement.getColumn(0).getString());
+    }
+    // Delete each file path
+    for (const auto &path : filePaths) {
+      try {
+        if (std::filesystem::remove(path)) {
+          // Successfully deleted
+        } else {
+          std::cerr << "Warning: file not found: " << path << std::endl;
+        }
+      } catch (const std::filesystem::filesystem_error &e) {
+        std::cerr << "Warning: failed to delete " << path << ": " << e.what()
+                  << std::endl;
+      }
+    }
+  } catch (const SQLite::Exception &e) {
+    std::cerr << "SQLite error: " << e.what() << std::endl;
+  } catch (const std::exception &e) {
+    std::cerr << "Unexpected error when deleting database files: " << e.what()
+              << std::endl;
   }
 }
 
