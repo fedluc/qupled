@@ -42,7 +42,7 @@ namespace StlsIetUtil {
   // Classes for the static local field correction
   // -----------------------------------------------------------------
 
-  class Slfc : public StlsUtil::SlfcBase {
+  class Slfc : public StlsUtil::SlfcBase, dimensionsUtil::DimensionsHandler {
 
   public:
 
@@ -54,14 +54,18 @@ namespace StlsIetUtil {
          std::shared_ptr<Interpolator1D> lfci_,
          std::shared_ptr<Interpolator1D> bfi_,
          const std::vector<double> &itgGrid_,
-         std::shared_ptr<Integrator2D> itg_)
+         std::shared_ptr<Integrator2D> itg_,
+         const std::shared_ptr<const Input> in_)
         : SlfcBase(x_, yMin_, yMax_, ssfi_),
           itg(itg_),
           itgGrid(itgGrid_),
           lfci(lfci_),
-          bfi(bfi_) {}
+          bfi(bfi_),
+          res(x_),
+          in(in_) {}
+
     // Get result of integration
-    double get() const;
+    double get();
 
   private:
 
@@ -72,14 +76,22 @@ namespace StlsIetUtil {
     // Integrands
     double integrand1(const double &y) const;
     double integrand2(const double &w) const;
+    double integrand1_2D(const double &y) const;
+    double integrand2_2D(const double &w) const;
     // Static local field correction interpolator
     const std::shared_ptr<Interpolator1D> lfci;
     // Bridge function interpolator
     const std::shared_ptr<Interpolator1D> bfi;
+    // Result of integration
+    double res;
+    // Input object
+    const std::shared_ptr<const Input> in;
     // Compute static local field correction
     double lfc(const double &x) const;
     // Compute bridge function
     double bf(const double &x_) const;
+    void compute2D() override;
+    void compute3D() override;
   };
 
 } // namespace StlsIetUtil

@@ -98,7 +98,7 @@ namespace StlsUtil {
     double ssf(const double &y) const;
   };
 
-  class Slfc : public SlfcBase {
+  class Slfc : public SlfcBase, dimensionsUtil::DimensionsHandler {
 
   public:
 
@@ -107,18 +107,28 @@ namespace StlsUtil {
          const double &yMin_,
          const double &yMax_,
          std::shared_ptr<Interpolator1D> ssfi_,
-         std::shared_ptr<Integrator1D> itg_)
+         std::shared_ptr<Integrator1D> itg_,
+         const std::shared_ptr<const Input> in_)
         : SlfcBase(x_, yMin_, yMax_, ssfi_),
-          itg(itg_) {}
+          itg(itg_),
+          in(in_),
+          res(numUtil::NaN) {}
     // Get result of integration
-    double get() const;
+    double get();
 
   private:
 
     // Integrator object
     const std::shared_ptr<Integrator1D> itg;
+    const std::shared_ptr<const Input> in;
     // Integrand
     double integrand(const double &y) const;
+    double integrand2D(const double &y) const;
+    // Result of integration
+    double res;
+    // Compute methods
+    void compute2D() override;
+    void compute3D() override;
   };
 
 } // namespace StlsUtil

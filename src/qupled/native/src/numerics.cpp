@@ -1,6 +1,8 @@
 #include "numerics.hpp"
+#include "gsl/gsl_sf_bessel.h"
 #include "mpi_util.hpp"
 #include <gsl/gsl_sf_dilog.h>
+#include <gsl/gsl_sf_ellint.h>
 #include <gsl/gsl_sf_fermi_dirac.h>
 #include <gsl/gsl_sf_gamma.h>
 
@@ -36,6 +38,32 @@ double SpecialFunctions::fermiDirac(const double &x) {
   callGSLFunction(gsl_sf_gamma_e, 1.5, &gamma);
   callGSLFunction(gsl_sf_fermi_dirac_half_e, x, &fd);
   return gamma.val * fd.val;
+}
+
+double SpecialFunctions::coth(const double &x) {
+  if (x == 0.0) return numUtil::Inf;
+  return 1.0 / tanh(x);
+}
+
+// Elliptic integrals
+double SpecialFunctions::ellipticK(const double &x) {
+  if (x >= 1.0) return numUtil::Inf;
+  gsl_sf_result ellipticK;
+  callGSLFunction(gsl_sf_ellint_Kcomp_e, x, GSL_PREC_DOUBLE, &ellipticK);
+  return ellipticK.val;
+}
+
+double SpecialFunctions::ellipticE(const double &x) {
+  if (x >= 1.0) return numUtil::Inf;
+  gsl_sf_result ellipticE;
+  callGSLFunction(gsl_sf_ellint_Ecomp_e, x, GSL_PREC_DOUBLE, &ellipticE);
+  return ellipticE.val;
+}
+
+double SpecialFunctions::besselJ0(const double &x) {
+  gsl_sf_result besselJ0;
+  callGSLFunction(gsl_sf_bessel_J0_e, x, &besselJ0);
+  return besselJ0.val;
 }
 
 // -----------------------------------------------------------------

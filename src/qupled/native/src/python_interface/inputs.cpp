@@ -49,7 +49,8 @@ void exposeBaseInputProperties(py::class_<T> &cls) {
       .def_property(
           "cutoff", &T::getWaveVectorGridCutoff, &T::setWaveVectorGridCutoff)
       .def_property(
-          "frequency_cutoff", &T::getFrequencyCutoff, &T::setFrequencyCutoff);
+          "frequency_cutoff", &T::getFrequencyCutoff, &T::setFrequencyCutoff)
+      .def_property("dimension", &T::getDimension, &T::setDimension);
 }
 
 template <typename T>

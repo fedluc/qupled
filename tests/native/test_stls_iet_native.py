@@ -42,4 +42,3 @@ def test_stls_iet_compute():
         assert scheme.lfc.size == nx
         assert scheme.ssf.size == nx
         assert scheme.bf.size == nx
-        assert scheme.rdf(scheme.wvg).size == nx

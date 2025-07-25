@@ -1,4 +1,5 @@
 #include "thermo_util.hpp"
+#include "dimensions_util.hpp"
 #include "free_energy.hpp"
 #include "internal_energy.hpp"
 #include "mpi_util.hpp"
@@ -12,11 +13,12 @@ namespace thermoUtil {
 
   double computeInternalEnergy(const vector<double> &wvg,
                                const vector<double> &ssf,
-                               const double &coupling) {
+                               const double &coupling,
+                               const dimensionsUtil::Dimension &dim) {
     const shared_ptr<Interpolator1D> itp =
         make_shared<Interpolator1D>(wvg, ssf);
     const shared_ptr<Integrator1D> itg = make_shared<Integrator1D>(1.0e-6);
-    const InternalEnergy uInt(coupling, wvg.front(), wvg.back(), itp, itg);
+    const InternalEnergy uInt(coupling, wvg.front(), wvg.back(), itp, itg, dim);
     return uInt.get();
   }
 
@@ -42,20 +44,21 @@ namespace thermoUtil {
     return freeEnergy.get();
   }
 
-  vector<double> computeRdf(const vector<double> &r,
-                            const vector<double> &wvg,
-                            const vector<double> &ssf) {
+  std::vector<double> computeRdf(const std::vector<double> &r,
+                                 const std::vector<double> &wvg,
+                                 const std::vector<double> &ssf,
+                                 const dimensionsUtil::Dimension &dim) {
     assert(ssf.size() > 0 && wvg.size() > 0);
-    const shared_ptr<Interpolator1D> itp =
-        make_shared<Interpolator1D>(wvg, ssf);
+    const auto itp = std::make_shared<Interpolator1D>(wvg, ssf);
     const int nr = r.size();
-    vector<double> rdf(nr);
-    const shared_ptr<Integrator1D> itg =
-        make_shared<Integrator1D>(Integrator1D::Type::DEFAULT, 1.0e-6);
-    const shared_ptr<Integrator1D> itgf =
-        make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-6);
+    std::vector<double> rdf(nr);
+    const auto itg =
+        std::make_shared<Integrator1D>(Integrator1D::Type::DEFAULT, 1.0e-6);
+    const auto itgf =
+        std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-6);
+
     for (int i = 0; i < nr; ++i) {
-      const Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf);
+      Rdf rdfTmp(r[i], wvg.back(), itp, itg, itgf, dim);
       rdf[i] = rdfTmp.get();
     }
     return rdf;

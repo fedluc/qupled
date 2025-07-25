@@ -53,4 +53,3 @@ def test_qstls_iet_compute(database_info):
         assert scheme.sdr.size == nx
         assert scheme.ssf.size == nx
         assert scheme.bf.size == nx
-        assert scheme.rdf(scheme.wvg).size == nx

@@ -1,10 +1,12 @@
 #include "vsstls.hpp"
 #include "input.hpp"
+#include "mpi_util.hpp"
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
 
 using namespace std;
+using namespace MPIUtil;
 
 // -----------------------------------------------------------------
 // VSStls class
@@ -14,6 +16,9 @@ VSStls::VSStls(const std::shared_ptr<const VSStlsInput> &in_)
     : VSBase(),
       Stls(in_, false),
       thermoProp(make_shared<ThermoProp>(in_)) {
+  if (in_->getDimension() == dimensionsUtil::Dimension::D2) {
+    throwError("2D calculations are not implemented for this scheme.");
+  }
   VSBase::thermoProp = thermoProp;
 }
 

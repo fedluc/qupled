@@ -26,8 +26,8 @@ QstlsIet::QstlsIet(const std::shared_ptr<const QstlsIetInput> &in_)
       iet(in_, wvg) {
   // Throw error message for ground state calculations
   if (in().getDegeneracy() == 0.0) {
-    throwError("Ground state calculations are not available "
-               "for the quantum IET schemes");
+    throwError(
+        "Ground state calculations are not implemented for this scheme.");
   }
   // Allocate grid for the 2D integrator
   const bool segregatedItg = in().getInt2DScheme() == "segregated";

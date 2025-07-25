@@ -2,6 +2,7 @@
 #define INPUT_HPP
 
 #include "database.hpp"
+#include "dimensions_util.hpp"
 #include "num_util.hpp"
 #include "vector2D.hpp"
 #include <cassert>
@@ -32,6 +33,7 @@ public:
         nThreads(DEFAULT_INT),
         isClassicTheory(DEFAULT_BOOL),
         isQuantumTheory(DEFAULT_BOOL),
+        dimension(dimensionsUtil::Dimension::Default),
         dx(DEFAULT_DOUBLE),
         xmax(DEFAULT_DOUBLE),
         OmegaMax(DEFAULT_DOUBLE),
@@ -41,6 +43,7 @@ public:
   // Setters
   void setCoupling(const double &rs);
   void setDatabaseInfo(const databaseUtil::DatabaseInfo &dbInfo);
+  void setDimension(const dimensionsUtil::Dimension &dimension);
   void setDegeneracy(const double &Theta);
   void setInt2DScheme(const std::string &int2DScheme);
   void setIntError(const double &intError);
@@ -55,6 +58,7 @@ public:
   // Getters
   double getCoupling() const { return rs; }
   databaseUtil::DatabaseInfo getDatabaseInfo() const { return dbInfo; }
+  dimensionsUtil::Dimension getDimension() const { return dimension; }
   double getDegeneracy() const { return Theta; }
   std::string getInt2DScheme() const { return int2DScheme; }
   double getIntError() const { return intError; }
@@ -86,6 +90,8 @@ protected:
   std::string theory;
   // Database information
   databaseUtil::DatabaseInfo dbInfo;
+  // Default dimensions 3D
+  dimensionsUtil::Dimension dimension;
   // Wave-vector grid resolution
   double dx;
   // Cutoff for the wave-vector grid

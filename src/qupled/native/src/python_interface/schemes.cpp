@@ -61,11 +61,6 @@ py::array getIdr(const T &scheme) {
 }
 
 template <typename T>
-py::array getRdf(const T &scheme, const py::array_t<double> &r) {
-  return toNdArray(scheme.getRdf(toVector(r)));
-}
-
-template <typename T>
 py::array getSdr(const T &scheme) {
   return toNdArray(scheme.getSdr());
 }
@@ -103,7 +98,6 @@ py::array getFreeEnergyGrid(const T &scheme) {
 template <typename T>
 void exposeBaseSchemeProperties(py::class_<T> &cls) {
   cls.def("compute", &T::compute)
-      .def("rdf", &getRdf<T>)
       .def_property_readonly("idr", &getIdr<T>)
       .def_property_readonly("sdr", &getSdr<T>)
       .def_property_readonly("lfc", &getLfc<T>)

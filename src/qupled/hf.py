@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import json
-
 from dataclasses import field
-from pathlib import Path
 
 import numpy as np
 
@@ -72,7 +69,7 @@ class Solver:
                 If not provided, a default grid will be used.
         """
         if self.results is not None:
-            self.results.compute_rdf(rdf_grid)
+            self.results.compute_rdf(self.inputs.dimension, rdf_grid)
             self.db_handler.insert_results(
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid},
                 conflict_mode=database.DataBaseHandler.ConflictMode.UPDATE,
@@ -176,6 +173,8 @@ class Input:
     """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
     cutoff: float = 10.0
     """Cutoff for the wave-vector grid. Default =  ``10.0``"""
+    dimension: str = "D3"
+    """Dimesion of the system."""
     frequency_cutoff: float = 10.0
     """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
     integral_error: float = 1.0e-5
@@ -221,11 +220,12 @@ class Input:
         name = Input.to_native.__name__
         for attr, value in self.__dict__.items():
             if hasattr(native_input, attr) and value is not None:
-                value_to_set = (
-                    tonative()
-                    if callable(tonative := getattr(value, name, None))
-                    else value
-                )
+                if callable(tonative := getattr(value, name, None)):
+                    value_to_set = tonative()
+                elif attr == "dimension":
+                    value_to_set = getattr(native.Dimension, value)
+                else:
+                    value_to_set = value
                 setattr(native_input, attr, value_to_set)
 
 
@@ -269,7 +269,7 @@ class Result:
                 valid_value = value is not None and not callable(value)
                 setattr(self, attr, value) if valid_value else None
 
-    def compute_rdf(self, rdf_grid: np.ndarray | None = None):
+    def compute_rdf(self, dimension: str, rdf_grid: np.ndarray | None = None):
         """
         Compute the radial distribution function (RDF) for the system.
 
@@ -281,11 +281,14 @@ class Result:
         Returns:
             None: The computed RDF is stored in the `self.rdf` attribute.
         """
+        native_dimension = getattr(native.Dimension, dimension)
         if self.wvg is not None and self.ssf is not None:
             self.rdf_grid = (
                 rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
             )
-            self.rdf = native.compute_rdf(self.rdf_grid, self.wvg, self.ssf)
+            self.rdf = native.compute_rdf(
+                self.rdf_grid, self.wvg, self.ssf, native_dimension
+            )
 
 
 @serialize.serializable_dataclass
@@ -317,13 +320,6 @@ class DatabaseInfo:
             if value is not None:
                 setattr(native_database_info, attr, value)
         return native_database_info
-
-    @classmethod
-    def from_dict(cls, d):
-        obj = cls.__new__(cls)
-        for key, value in d.items():
-            setattr(obj, key, value)
-        return obj
 
 
 if __name__ == "__main__":

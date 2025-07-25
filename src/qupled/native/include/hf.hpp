@@ -1,6 +1,7 @@
 #ifndef HF_HPP
 #define HF_HPP
 
+#include "dimensions_util.hpp"
 #include "input.hpp"
 #include "logger.hpp"
 #include "numerics.hpp"
@@ -27,7 +28,6 @@ public:
   const Vector2D &getLfc() const { return lfc; }
   const std::vector<double> &getSsf() const { return ssf; }
   const std::vector<double> &getWvg() const { return wvg; }
-  std::vector<double> getRdf(const std::vector<double> &r) const;
   std::vector<double> getSdr() const;
   double getUInt() const;
 
@@ -74,47 +74,53 @@ private:
 
 namespace HFUtil {
 
-  class Idr {
+  class Idr : public dimensionsUtil::DimensionsHandler {
 
   public:
 
-    // Constructor
-    Idr(const int nl_,
+    Idr(const std::shared_ptr<const Input> in_,
         const double &x_,
-        const double &Theta_,
         const double &mu_,
         const double &yMin_,
         const double &yMax_,
         std::shared_ptr<Integrator1D> itg_)
-        : nl(nl_),
+        : in(in_),
           x(x_),
-          Theta(Theta_),
           mu(mu_),
           yMin(yMin_),
           yMax(yMax_),
-          itg(itg_) {}
+          itg(itg_),
+          res(in_->getNMatsubara()) {}
+
     // Get result of integration
-    std::vector<double> get() const;
+    std::vector<double> get();
 
   private:
 
-    // Number of matsubara frequency
-    const int nl;
+    // Input parameters
+    const std::shared_ptr<const Input> in;
     // Wave-vector
     const double x;
-    // Degeneracy parameter
-    const double Theta;
     // Chemical potential
     const double mu;
     // Integration limits for finite temperature calculations
     const double yMin;
     const double yMax;
+    // Integrator object
+    const std::shared_ptr<Integrator1D> itg;
+    // Vector to store integral results
+    std::vector<double> res;
+    // Compute methods
+    void compute3D() override;
+    void compute2D() override;
     // Idr integrand for frequency = l and wave-vector x
     double integrand(const double &y, const int &l) const;
     // Idr integrand for frequency = 0 and wave-vector x
     double integrand(const double &y) const;
-    // Integrator object
-    const std::shared_ptr<Integrator1D> itg;
+    // Idr integrand for 2D frequency = l and wave-vector x
+    double integrand2D(const double &y, const int &l) const;
+    // Idr integrand for 2D frequency = 0 and wave-vector x
+    double integrand2D(const double &y) const;
   };
 
   class IdrGround {
@@ -136,41 +142,63 @@ namespace HFUtil {
     const double Omega;
   };
 
-  class Ssf {
+  class Ssf : public dimensionsUtil::DimensionsHandler {
 
   public:
 
     // Constructor for finite temperature calculations
-    Ssf(const double &x_,
-        const double &Theta_,
+    Ssf(const std::shared_ptr<const Input> in_,
+        const double &x_,
         const double &mu_,
         const double &yMin_,
         const double &yMax_,
-        std::shared_ptr<Integrator1D> itg_)
-        : x(x_),
-          Theta(Theta_),
+        std::shared_ptr<Integrator1D> itg_,
+        const std::vector<double> &itgGrid_,
+        std::shared_ptr<Integrator2D> itg2_,
+        const Vector2D &idr_,
+        const double &grid_val_)
+        : in(in_),
+          x(x_),
           mu(mu_),
           yMin(yMin_),
           yMax(yMax_),
-          itg(itg_) {}
+          itg(itg_),
+          itgGrid(itgGrid_),
+          itg2(itg2_),
+          idr(idr_),
+          grid_val(grid_val_),
+          res(x_) {}
+
     // Get at any temperature
-    double get() const;
+    double get();
 
   private:
 
+    // Input parameters
+    const std::shared_ptr<const Input> in;
     // Wave-vector
     const double x;
-    // Degeneracy parameter
-    const double Theta;
     // Chemical potential
     const double mu;
     // Integration limits for finite temperature calculations
     const double yMin;
     const double yMax;
+    void compute3D() override;
+    // Compute for 2D systems
+    void compute2D() override;
     // Integrator object
     const std::shared_ptr<Integrator1D> itg;
+    // Grid for 2D integration
+    const std::vector<double> &itgGrid;
+    // Integrator object
+    const std::shared_ptr<Integrator2D> itg2;
+    const Vector2D idr;
+    const double grid_val;
+    double res;
     // Get integrand
     double integrand(const double &y) const;
+    double integrand2DOut(const double &y) const;
+    double integrand2DIn(const double &p) const;
     // Get at zero temperature
     double get0() const;
   };

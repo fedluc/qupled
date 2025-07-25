@@ -181,11 +181,12 @@ def test_save(scheme, results, mocker):
     scheme.db_handler.insert_results.assert_called_once_with(scheme.results.__dict__)
 
 
-def test_compute_rdf_with_default_grid(scheme, results, mocker):
+def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
     compute_rdf = mocker.patch("qupled.hf.Result.compute_rdf")
     scheme.results = results
+    scheme.inputs = inputs
     scheme.compute_rdf()
-    compute_rdf.assert_called_once_with(None)
+    compute_rdf.assert_called_once_with(scheme.inputs.dimension, None)
     scheme.db_handler.insert_results.assert_called_once_with(
         {
             "rdf": scheme.results.rdf,
@@ -195,12 +196,13 @@ def test_compute_rdf_with_default_grid(scheme, results, mocker):
     )
 
 
-def test_compute_rdf_with_custom_grid(scheme, results, mocker):
+def test_compute_rdf_with_custom_grid(scheme, inputs, results, mocker):
     compute_rdf = mocker.patch("qupled.hf.Result.compute_rdf")
     scheme.results = results
+    scheme.inputs = inputs
     rdf_grid = np.array([1, 2, 3])
     scheme.compute_rdf(rdf_grid)
-    compute_rdf.assert_called_once_with(rdf_grid)
+    compute_rdf.assert_called_once_with(scheme.inputs.dimension, rdf_grid)
     scheme.db_handler.insert_results.assert_called_once_with(
         {
             "rdf": scheme.results.rdf,
@@ -262,29 +264,44 @@ def test_result_from_native(mocker, results):
 
 def test_result_compute_rdf_with_default_grid(mocker, results):
     native_compute_rdf = mocker.patch("qupled.native.compute_rdf")
-    results.wvg = np.array([1, 2, 3])
-    results.ssf = np.array([4, 5, 6])
-    native_compute_rdf.return_value = np.array([7, 8, 9])
-    results.compute_rdf()
-    assert results.rdf is not None
-    assert results.rdf_grid is not None
-    native_compute_rdf.assert_called_once()
-    assert np.array_equal(results.rdf, np.array([7, 8, 9]))
-    assert np.array_equal(results.rdf_grid, np.arange(0.0, 10.0, 0.01))
+    mock_dimension = mocker.patch("qupled.native.Dimension")
+    results.wvg = np.array([1.0, 2.0, 3.0])
+    results.ssf = np.array([4.0, 5.0, 6.0])
+    native_compute_rdf.return_value = np.array([7.0, 8.0, 9.0])
+    results.compute_rdf("D3")
+    assert np.allclose(results.rdf_grid, np.arange(0.0, 10.0, 0.01))
+    native_compute_rdf.assert_called_once_with(
+        results.rdf_grid, results.wvg, results.ssf, mock_dimension.D3
+    )
+    assert np.allclose(results.rdf, np.array([7.0, 8.0, 9.0]))
 
 
 def test_result_compute_rdf_with_custom_grid(mocker, results):
     native_compute_rdf = mocker.patch("qupled.native.compute_rdf")
-    rdf_grid = np.array([0, 1, 2])
+    mock_dimension = mocker.patch("qupled.native.Dimension")
+    results.wvg = np.array([1.0, 2.0, 3.0])
+    results.ssf = np.array([4.0, 5.0, 6.0])
+    custom_grid = np.array([0.5, 1.5, 2.5])
+    native_compute_rdf.return_value = np.array([10.0, 11.0, 12.0])
+    results.compute_rdf("D2", custom_grid)
+    assert np.allclose(results.rdf_grid, custom_grid)
+    native_compute_rdf.assert_called_once_with(
+        custom_grid, results.wvg, results.ssf, mock_dimension.D2
+    )
+    assert np.allclose(results.rdf, np.array([10.0, 11.0, 12.0]))
+
+
+def test_result_compute_rdf_no_wvg_or_ssf(mocker, results):
+    # Should not call native.compute_rdf if wvg or ssf is None
+    native_compute_rdf = mocker.patch("qupled.native.compute_rdf")
+    results.wvg = None
+    results.ssf = np.array([1, 2, 3])
+    results.compute_rdf("D3")
+    native_compute_rdf.assert_not_called()
     results.wvg = np.array([1, 2, 3])
-    results.ssf = np.array([4, 5, 6])
-    native_compute_rdf.return_value = np.array([7, 8, 9])
-    results.compute_rdf(rdf_grid)
-    assert results.rdf is not None
-    assert results.rdf_grid is not None
-    native_compute_rdf.assert_called_once()
-    assert np.array_equal(results.rdf, np.array([7, 8, 9]))
-    assert np.array_equal(results.rdf_grid, rdf_grid)
+    results.ssf = None
+    results.compute_rdf("D3")
+    native_compute_rdf.assert_not_called()
 
 
 def test_database_info_initialization():

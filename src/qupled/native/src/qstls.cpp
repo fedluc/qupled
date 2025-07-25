@@ -20,6 +20,9 @@ using Itg2DParam = Integrator2D::Param;
 
 Qstls::Qstls(const std::shared_ptr<const QstlsInput> &in_, const bool verbose_)
     : Stls(in_, verbose_) {
+  if (in().getDimension() == dimensionsUtil::Dimension::D2) {
+    throwError("2D calculations are not implemented for this scheme.");
+  }
   // Set name for the fixed adr output file
   adrFixedDatabaseName = formatUtil::format("{}", in().getTheory());
   // Allocate arrays
@@ -55,14 +58,11 @@ void Qstls::computeLfc() {
 void Qstls::computeSsfGround() {
   const shared_ptr<Interpolator1D> ssfi =
       make_shared<Interpolator1D>(wvg, ssfOld);
-  const double rs = in().getCoupling();
-  const double OmegaMax = in().getFrequencyCutoff();
   const size_t nx = wvg.size();
   const double xMax = wvg.back();
   auto loopFunc = [&](int i) -> void {
     shared_ptr<Integrator1D> itgTmp = make_shared<Integrator1D>(*itg);
-    QstlsUtil::SsfGround ssfTmp(
-        wvg[i], rs, ssfHF[i], xMax, OmegaMax, ssfi, itgTmp);
+    QstlsUtil::SsfGround ssfTmp(wvg[i], ssfHF[i], xMax, ssfi, itgTmp, inPtr);
     ssf[i] = ssfTmp.get();
   };
   const auto &loopData = parallelFor(loopFunc, nx, in().getNThreads());
@@ -364,7 +364,8 @@ double QstlsUtil::AdrGround::integrand2(const double &t) const {
 
 double QstlsUtil::SsfGround::get() {
   if (x == 0.0) return 0.0;
-  if (rs == 0.0) return ssfHF;
+  if (in->getCoupling() == 0.0) return ssfHF;
+  const double OmegaMax = in->getFrequencyCutoff();
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(0, OmegaMax));
   return 1.5 / (M_PI)*itg->getSolution() + ssfHF;
@@ -374,5 +375,5 @@ double QstlsUtil::SsfGround::integrand(const double &Omega) const {
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(itg->getAccuracy());
   const double idr = HFUtil::IdrGround(x, Omega).get();
   const double adr = QstlsUtil::AdrGround(x, Omega, ssfi, xMax, itg2).get();
-  return idr / (1.0 + ip * (idr - adr)) - idr;
+  return idr / (1.0 + ip() * (idr - adr)) - idr;
 }

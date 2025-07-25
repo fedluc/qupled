@@ -1,6 +1,7 @@
 #ifndef INTERNAL_ENERGY_HPP
 #define INTERNAL_ENERGY_HPP
 
+#include "dimensions_util.hpp"
 #include "numerics.hpp"
 #include <cmath>
 
@@ -17,12 +18,14 @@ public:
                  const double &yMin_,
                  const double &yMax_,
                  std::shared_ptr<Interpolator1D> ssfi_,
-                 std::shared_ptr<Integrator1D> itg_)
+                 std::shared_ptr<Integrator1D> itg_,
+                 const dimensionsUtil::Dimension &dim_)
       : rs(rs_),
         yMin(yMin_),
         yMax(yMax_),
         itg(itg_),
-        ssfi(ssfi_) {}
+        ssfi(ssfi_),
+        dim(dim_) {}
 
   // Get result of integration
   double get() const;
@@ -41,6 +44,9 @@ private:
 
   // Static structure factor interpolator
   const std::shared_ptr<Interpolator1D> ssfi;
+
+  // Dimension of the system
+  const dimensionsUtil::Dimension dim;
 
   // Integrand
   double integrand(const double &y) const;

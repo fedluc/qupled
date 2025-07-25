@@ -458,11 +458,13 @@ void CSR::setDThetaData(CSR &csrThetaUp,
 
 double CSR::getInternalEnergy() const {
   const double rs = inRpa().getCoupling();
-  return thermoUtil::computeInternalEnergy(getWvg(), getSsf(), rs);
+  return thermoUtil::computeInternalEnergy(
+      getWvg(), getSsf(), rs, inRpa().getDimension());
 }
 
 double CSR::getFreeEnergyIntegrand() const {
-  return thermoUtil::computeInternalEnergy(getWvg(), getSsf(), 1.0);
+  return thermoUtil::computeInternalEnergy(
+      getWvg(), getSsf(), 1.0, inRpa().getDimension());
 }
 
 Vector2D CSR::getDerivativeContribution() const {
