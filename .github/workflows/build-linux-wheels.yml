@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set build version
-        run: ./devtool update-version 0.0.0.dev
+        run: ./devtool update-version ${{ github.ref_name }}
 
       - name: Set up QEMU (for aarch64 emulation)
         if: matrix.arch == 'aarch64'
