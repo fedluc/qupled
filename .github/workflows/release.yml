@@ -1,7 +1,6 @@
 name: Release
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - 'v*'
@@ -73,4 +72,4 @@ jobs:
           pip3 install --upgrade pip
           pip3 install twine
           twine check dist/*  
-          # twine upload dist/* --non-interactive
+          twine upload dist/* --non-interactive
