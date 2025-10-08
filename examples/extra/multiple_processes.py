@@ -1,11 +1,12 @@
 import qupled.stls as stls
 from qupled.output import DataBase
+from qupled.dimension import Dimension
 
 # Define the object used to solve the scheme
 scheme = stls.Solver()
 
 # Define the input parameters
-inputs = stls.Input(10.0, 1.0, mixing=0.5)
+inputs = stls.Input(10.0, 1.0, mixing=0.2, processes=2, dimension=Dimension._3D)
 
 # Solve scheme
 scheme.compute(inputs)
