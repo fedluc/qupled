@@ -226,3 +226,9 @@ class provides functionality for accessing the data stored in the database.
 
 .. autoclass:: qupled.output.DataBase
     :members:
+
+Dimenions
+---------
+
+.. autoclass:: qupled.dimension.Dimension
+    :members:

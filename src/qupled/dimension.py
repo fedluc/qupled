@@ -4,6 +4,15 @@ from . import native
 
 
 class Dimension(Enum):
+    """
+    An enumerator representing spatial dimensions.
+
+    Values:
+       
+       ``_2D``: Represents a two-dimensional space.
+
+       ``_3D``: Represents a three-dimensional space.
+    """
     _2D = "D2"
     _3D = "D3"
 
