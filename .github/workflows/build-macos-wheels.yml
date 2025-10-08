@@ -13,8 +13,8 @@ jobs:
             runner: macos-latest
             deployment_target: "15.0"
           - arch: x86_64
-            runner: macos-13
-            deployment_target: "13.0"
+            runner: macos-15-intel
+            deployment_target: "15.0"
 
     runs-on: ${{ matrix.runner }}
 
