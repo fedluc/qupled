@@ -149,6 +149,7 @@ double StlsUtil::Slfc::integrand(const double &y) const {
 
 // Integrand 2D
 double StlsUtil::Slfc::integrand2D(const double &y) const {
+  if (x == 0.0 || y == 0.0) { return 0.0; }
   double xmy = (x - y) / (x * M_PI);
   double xpy = (x + y) / (x * M_PI);
   double argElli = (x + y == 0.0) ? 0.0 : 2 * sqrt(x * y) / (x + y);

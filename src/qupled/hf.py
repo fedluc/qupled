@@ -5,6 +5,7 @@ from dataclasses import field
 import numpy as np
 
 from . import database
+from . import dimension
 from . import mpi
 from . import native
 from . import serialize
@@ -173,8 +174,8 @@ class Input:
     """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
     cutoff: float = 10.0
     """Cutoff for the wave-vector grid. Default =  ``10.0``"""
-    dimension: str = "D3"
-    """Dimesionality of the system. Default =  ``'D3'``"""
+    dimension: dimension.Dimension = dimension.Dimension._3D
+    """Dimesionality of the system. Default =  ``'Dimension._3D'``"""
     frequency_cutoff: float = 10.0
     """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
     integral_error: float = 1.0e-5
@@ -222,8 +223,6 @@ class Input:
             if hasattr(native_input, attr) and value is not None:
                 if callable(tonative := getattr(value, name, None)):
                     value_to_set = tonative()
-                elif attr == "dimension":
-                    value_to_set = getattr(native.Dimension, value)
                 else:
                     value_to_set = value
                 setattr(native_input, attr, value_to_set)

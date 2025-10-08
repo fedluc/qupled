@@ -677,6 +677,8 @@ class DataBaseHandler:
             None: If an error occurs during the conversion process.
         """
         try:
+            if hasattr(data, "to_dict") and callable(data.to_dict):
+                return json.dumps(data.to_dict())
             return json.dumps(data)
         except:
             return None

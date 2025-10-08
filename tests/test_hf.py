@@ -3,6 +3,7 @@ import numpy as np
 from unittest.mock import PropertyMock
 
 from qupled.database import DataBaseHandler
+from qupled.dimension import Dimension
 import qupled.hf as hf
 import qupled.native as native
 
@@ -235,7 +236,7 @@ def test_input_initialization():
     assert inputs.processes == 1
     assert inputs.theory == "HF"
     assert inputs.database_info is None
-    assert inputs.dimension == "D3"
+    assert inputs.dimension == Dimension._3D
 
 
 def test_input_to_native(mocker, inputs):

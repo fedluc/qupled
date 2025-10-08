@@ -372,6 +372,7 @@ double HFUtil::Ssf::integrand2DIn(const double &p) const {
   const double y = itg2->getX();
   const double x2 = x * x;
   const double arg = x2 / (2 * Theta) + x * y / Theta * cos(p);
+  if (x == 0.0) { return 0.0; }
   return SpecialFunctions::coth(arg) - (1.0 / arg);
 }
 
