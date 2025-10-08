@@ -10,11 +10,11 @@ inputs = stls.Input(10.0, 1.0, mixing=0.5)
 # Solve scheme
 scheme.compute(inputs)
 
-# Access the internal energy from the output file
+# Access the internal energy from the database
 results = DataBase().read_results(scheme.run_id, names=["uint"])
 print("Internal energy from the output file: ")
 print(results["uint"])
 
-# Compute the internal energy
+# Access the internal energy from the result class
 print("Internal energy from the result class: ")
 print(scheme.results.uint)
