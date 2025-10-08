@@ -174,7 +174,7 @@ class Input:
     cutoff: float = 10.0
     """Cutoff for the wave-vector grid. Default =  ``10.0``"""
     dimension: str = "D3"
-    """Dimesion of the system."""
+    """Dimesionality of the system. Default =  ``'D3'``"""
     frequency_cutoff: float = 10.0
     """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
     integral_error: float = 1.0e-5

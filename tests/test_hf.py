@@ -235,6 +235,7 @@ def test_input_initialization():
     assert inputs.processes == 1
     assert inputs.theory == "HF"
     assert inputs.database_info is None
+    assert inputs.dimension == "D3"
 
 
 def test_input_to_native(mocker, inputs):
