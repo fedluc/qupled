@@ -5,10 +5,10 @@ import shutil
 from pathlib import Path
 
 
-def build(no_mpi, native_only):
-    # Build without MPI
-    if no_mpi:
-        os.environ["USE_MPI"] = "OFF"
+def build(use_mpi, native_only):
+    # Build with MPI
+    if use_mpi:
+        os.environ["USE_MPI"] = "ON"
     # Set environment variable for OpenMP on macOS
     if os.name == "posix" and shutil.which("brew"):
         brew_prefix = subprocess.run(
@@ -147,9 +147,9 @@ def run():
     # Build command
     build_parser = subparsers.add_parser("build", help="Build the qupled package")
     build_parser.add_argument(
-        "--no_mpi",
+        "--use-mpi",
         action="store_true",
-        help="Build without MPI support (default: False).",
+        help="Build with MPI support (default: False).",
     )
     build_parser.add_argument(
         "--native-only",
@@ -182,7 +182,7 @@ def run():
     args = parser.parse_args()
 
     if args.command == "build":
-        build(args.no_mpi, args.native_only)
+        build(args.use_mpi, args.native_only)
     elif args.command == "clean":
         clean()
     elif args.command == "docs":
