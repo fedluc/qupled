@@ -107,10 +107,7 @@ std::vector<VSStlsInput> StructProp::setupCSRInput() {
 
 void StlsCSR::computeLfcStls() {
   Stls::computeLfc();
-  *CSR::lfc = Stls::lfc;
+  if (lfcDerivative.empty()) { lfcDerivative.resize(lfc.size(0), lfc.size(1)); }
 }
 
-void StlsCSR::computeLfc() {
-  Vector2D lfcDerivative = getDerivativeContribution();
-  Stls::lfc.diff(lfcDerivative);
-}
+void StlsCSR::computeLfc() { lfc.diff(lfcDerivative); }

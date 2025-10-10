@@ -188,13 +188,10 @@ void QstlsCSR::init() {
 
 void QstlsCSR::computeLfcStls() {
   Qstls::computeLfc();
-  *CSR::lfc = Qstls::lfc;
+  if (lfcDerivative.empty()) { lfcDerivative.resize(lfc.size(0), lfc.size(1)); }
 }
 
-void QstlsCSR::computeLfc() {
-  Vector2D lfcDerivative = getDerivativeContribution();
-  Qstls::lfc.diff(lfcDerivative);
-}
+void QstlsCSR::computeLfc() { lfc.diff(lfcDerivative); }
 
 double QstlsCSR::getQAdder() const {
   const shared_ptr<Interpolator1D> ssfItp =

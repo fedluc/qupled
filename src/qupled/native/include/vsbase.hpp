@@ -229,13 +229,12 @@ public:
   // Data for the local field correction with modified state point
   struct DerivativeData {
     Derivative type;
-    std::shared_ptr<Vector2D> up;
-    std::shared_ptr<Vector2D> down;
+    const Vector2D *up;
+    const Vector2D *down;
   };
   // Constructor
   CSR()
-      : lfc(std::make_shared<Vector2D>()),
-        alpha(DEFAULT_ALPHA) {}
+      : alpha(DEFAULT_ALPHA) {}
   // Destructor
   virtual ~CSR() = default;
   // Set the data to compute the coupling parameter derivative
@@ -260,6 +259,7 @@ public:
   virtual void initialGuess() = 0;
   virtual void computeLfcStls() = 0;
   virtual void computeLfc() = 0;
+  virtual void computeLfcDerivative();
   virtual void computeSsf() = 0;
   virtual double computeError() = 0;
   virtual void updateSolution() = 0;
@@ -271,8 +271,8 @@ protected:
 
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
-  // local field correction (static or dynamic)
-  std::shared_ptr<Vector2D> lfc;
+  // Derivative contribution to  the local field correction
+  Vector2D lfcDerivative;
   // Free parameter
   double alpha;
   // Data for the local field correction with modified coupling paramter
@@ -282,10 +282,8 @@ protected:
   // Input data
   virtual const VSInput &inVS() const = 0;
   virtual const Input &inRpa() const = 0;
-  // Compute the local field correction with the derivatives contribution
-  Vector2D getDerivativeContribution() const;
   // Helper methods to compute the derivatives
-  double getDerivative(const std::shared_ptr<Vector2D> &f,
+  double getDerivative(const Vector2D &f,
                        const int &l,
                        const size_t &idx,
                        const Derivative &type) const;

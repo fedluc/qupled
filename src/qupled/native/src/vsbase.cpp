@@ -386,6 +386,12 @@ void StructPropBase::doIterations() {
       for (auto &c : csr) {
         c->computeLfcStls();
       }
+
+#pragma omp for
+      for (auto &c : csr) {
+        c->computeLfcDerivative();
+      }
+
 #pragma omp for
       for (size_t i = 0; i < csr.size(); ++i) {
         auto &c = csr[i];
@@ -447,13 +453,14 @@ const vector<double> &StructPropBase::getFreeEnergyIntegrand() const {
 // -----------------------------------------------------------------
 
 void CSR::setDrsData(CSR &csrRsUp, CSR &csrRsDown, const Derivative &dTypeRs) {
-  lfcRs = DerivativeData{dTypeRs, csrRsUp.lfc, csrRsDown.lfc};
+  lfcRs = DerivativeData{dTypeRs, &csrRsUp.getLfc(), &csrRsDown.getLfc()};
 }
 
 void CSR::setDThetaData(CSR &csrThetaUp,
                         CSR &csrThetaDown,
                         const Derivative &dTypeTheta) {
-  lfcTheta = DerivativeData{dTypeTheta, csrThetaUp.lfc, csrThetaDown.lfc};
+  lfcTheta =
+      DerivativeData{dTypeTheta, &csrThetaUp.getLfc(), &csrThetaDown.getLfc()};
 }
 
 double CSR::getInternalEnergy() const {
@@ -467,7 +474,7 @@ double CSR::getFreeEnergyIntegrand() const {
       getWvg(), getSsf(), 1.0, inRpa().getDimension());
 }
 
-Vector2D CSR::getDerivativeContribution() const {
+void CSR::computeLfcDerivative() {
   // Check that alpha has been set to a value that is not the default
   assert(alpha != DEFAULT_ALPHA);
   // Derivative contributions
@@ -476,7 +483,7 @@ Vector2D CSR::getDerivativeContribution() const {
   const double &dx = inRpa().getWaveVectorGridRes();
   const double &drs = inVS().getCouplingResolution();
   const double &dTheta = inVS().getDegeneracyResolution();
-  const Vector2D &lfcData = *lfc;
+  const Vector2D &lfc = getLfc();
   const Vector2D &rsUp = *lfcRs.up;
   const Vector2D &rsDown = *lfcRs.down;
   const Vector2D &thetaUp = *lfcTheta.up;
@@ -486,56 +493,52 @@ Vector2D CSR::getDerivativeContribution() const {
   const double a_dt = alpha * theta / (3.0 * dTheta);
   const vector<double> &wvg = getWvg();
   const double nx = wvg.size();
-  Vector2D out(lfc->size(0), lfc->size(1));
-  for (size_t l = 0; l < lfc->size(1); ++l) {
+  Vector2D &lfcd = lfcDerivative;
+  assert(lfcd.size(0) == lfc.size(0) && lfcd.size(1) == lfc.size(1));
+  for (size_t l = 0; l < lfc.size(1); ++l) {
     // Wave-vector derivative contribution
-    out(0, l) = a_dx * wvg[0] * getDerivative(lfc, l, 0, FORWARD);
+    lfcd(0, l) = a_dx * wvg[0] * getDerivative(lfc, l, 0, FORWARD);
     for (size_t i = 1; i < nx - 1; ++i) {
-      out(i, l) = a_dx * wvg[i] * getDerivative(lfc, l, i, CENTERED);
+      lfcd(i, l) = a_dx * wvg[i] * getDerivative(lfc, l, i, CENTERED);
     }
-    out(nx - 1, l) =
+    lfcd(nx - 1, l) =
         a_dx * wvg[nx - 1] * getDerivative(lfc, l, nx - 1, BACKWARD);
     // Coupling parameter contribution
     if (rs > 0.0) {
       for (size_t i = 0; i < nx; ++i) {
-        out(i, l) += a_drs
-                     * CSR::getDerivative(
-                         lfcData(i, l), rsUp(i, l), rsDown(i, l), lfcRs.type);
+        lfcd(i, l) += a_drs
+                      * CSR::getDerivative(
+                          lfc(i, l), rsUp(i, l), rsDown(i, l), lfcRs.type);
       }
     }
     // Degeneracy parameter contribution
     if (theta > 0.0) {
       for (size_t i = 0; i < nx; ++i) {
-        out(i, l) +=
+        lfcd(i, l) +=
             a_dt
             * CSR::getDerivative(
-                lfcData(i, l), thetaUp(i, l), thetaDown(i, l), lfcTheta.type);
+                lfc(i, l), thetaUp(i, l), thetaDown(i, l), lfcTheta.type);
       }
     }
   }
-  return out;
 }
 
-double CSR::getDerivative(const shared_ptr<Vector2D> &f,
+double CSR::getDerivative(const Vector2D &f,
                           const int &l,
                           const size_t &idx,
                           const Derivative &type) const {
-  const Vector2D &fData = *f;
   switch (type) {
   case BACKWARD:
     assert(idx >= 2);
-    return CSR::getDerivative(
-        fData(idx, l), fData(idx - 1, l), fData(idx - 2, l), type);
+    return CSR::getDerivative(f(idx, l), f(idx - 1, l), f(idx - 2, l), type);
     break;
   case CENTERED:
-    assert(idx >= 1 && idx < fData.size() - 1);
-    return CSR::getDerivative(
-        fData(idx, l), fData(idx + 1, l), fData(idx - 1, l), type);
+    assert(idx >= 1 && idx < f.size() - 1);
+    return CSR::getDerivative(f(idx, l), f(idx + 1, l), f(idx - 1, l), type);
     break;
   case FORWARD:
-    assert(idx < fData.size() - 2);
-    return CSR::getDerivative(
-        fData(idx, l), fData(idx + 1, l), fData(idx + 2, l), type);
+    assert(idx < f.size() - 2);
+    return CSR::getDerivative(f(idx, l), f(idx + 1, l), f(idx + 2, l), type);
     break;
   default:
     assert(false);
