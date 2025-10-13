@@ -293,4 +293,75 @@ protected:
                        const Derivative &type) const;
 };
 
+class CSRNew {
+
+public:
+
+  // Enumerator to denote the numerical schemes used for the derivatives
+  enum Derivative { CENTERED, FORWARD, BACKWARD };
+  // Constructor
+  CSRNew(const bool isMaster_)
+      : isMaster(isMaster_),
+        alpha(DEFAULT_ALPHA) {};
+  // Destructor
+  virtual ~CSRNew() = default;
+  // Set the free parameter
+  void setAlpha(const double &alpha);
+  // Get the free parameter
+  double getAlpha() const { return alpha; }
+  // Get input
+  double getCoupling() const { return inRpa().getCoupling(); }
+  double getDegeneracy() const { return inRpa().getDegeneracy(); }
+  // Compute the internal energy
+  double getInternalEnergy() const;
+  // Compute the free energy integrand
+  double getFreeEnergyIntegrand() const;
+
+protected:
+
+  struct DerivativeData {
+    Derivative type;
+    const Vector2D *up;
+    const Vector2D *down;
+  };
+  // Default value of alpha
+  static constexpr double DEFAULT_ALPHA = numUtil::Inf;
+  static constexpr int NRS = 3;
+  static constexpr int NTHETA = 3;
+  // Auxiliary state points
+  std::vector<std::shared_ptr<CSRNew>> auxStatePoints;
+  // Flag marking if this is the master state point
+  const bool isMaster;
+  // Derivative contribution to  the local field correction
+  Vector2D lfcDerivative;
+  // Free parameter
+  double alpha;
+  // Data for the local field correction with modified coupling paramter
+  DerivativeData lfcRs;
+  // Data for the local field correction with modified degeneracy parameter
+  DerivativeData lfcTheta;
+  // Input data
+  virtual const VSInput &inVS() const = 0;
+  virtual const Input &inRpa() const = 0;
+  // Compute the local field correction
+  void computeLfcDerivative();
+  // Helper methods to compute the derivatives
+  double getDerivative(const Vector2D &f,
+                       const int &l,
+                       const size_t &idx,
+                       const Derivative &type) const;
+  double getDerivative(const double &f0,
+                       const double &f1,
+                       const double &f2,
+                       const Derivative &type) const;
+  // Getters
+  virtual const std::vector<double> &getSsf() const = 0;
+  virtual const std::vector<double> &getWvg() const = 0;
+  virtual const Vector2D &getLfc() const = 0;
+  // Setup derivative data
+  void setupDerivativeData();
+  void setDrsData(CSRNew &up, CSRNew &down, const Derivative &dType);
+  void setDThetaData(CSRNew &up, CSRNew &down, const Derivative &dType);
+};
+
 #endif

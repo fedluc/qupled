@@ -120,4 +120,42 @@ private:
   }
 };
 
+// -----------------------------------------------------------------
+// StlsCSRNew class
+// -----------------------------------------------------------------
+
+class StlsCSRNew : public CSRNew, public Stls {
+
+public:
+
+  // Constructor
+  explicit StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
+                      const bool isMaster_);
+  // Compute static local field correction
+  // void computeLfcStls() override;
+  void computeLfc() override {};
+  // // Publicly esposed private stls methods
+  // // void init() override { Stls::init(); }
+  // // void initialGuess() override { Stls::initialGuess(); }
+  // // void computeSsf() override { Stls::computeSsf(); }
+  // // double computeError() override { return Stls::computeError(); }
+  // // void updateSolution() override { Stls::updateSolution(); }
+  // // Getters
+  const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
+  const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
+  const Vector2D &getLfc() const override { return Stls::getLfc(); }
+
+private:
+
+  // Input parameters
+  const VSInput &inVS() const override {
+    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
+  }
+  const Input &inRpa() const override {
+    return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
+  }
+  // setup the csr vector
+  void setupAuxiliaryStatePoints(const VSStlsInput &in);
+};
+
 #endif

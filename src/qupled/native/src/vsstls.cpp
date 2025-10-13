@@ -105,6 +105,34 @@ std::vector<VSStlsInput> StructProp::setupCSRInput() {
 // StlsCSR class
 // -----------------------------------------------------------------
 
+StlsCSRNew::StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
+                       const bool isMaster_)
+    : CSRNew(isMaster_),
+      Stls(in_, false) {
+  if (isMaster) { setupAuxiliaryStatePoints(*in_); }
+}
+
+void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {
+  const double &drs = in.getCouplingResolution();
+  const double &dTheta = in.getDegeneracyResolution();
+  // If there is a risk of having negative state parameters, shift the
+  // parameters so that rs - drs = 0 and/or theta - dtheta = 0
+  const double rs = std::max(in.getCoupling(), drs);
+  const double theta = std::max(in.getDegeneracy(), dTheta);
+  // Setup auxiliary state points
+  for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
+    for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
+      std::shared_ptr<VSStlsInput> inTmp = std::make_shared<VSStlsInput>(in);
+      inTmp->setDegeneracy(thetaTmp);
+      inTmp->setCoupling(rsTmp);
+      if (thetaTmp != theta || rsTmp != rs) {
+        auxStatePoints.push_back(make_shared<StlsCSRNew>(inTmp, false));
+      }
+    }
+  }
+  assert(auxStatePoints.size() == NRS * NTHETA - 1);
+}
+
 void StlsCSR::computeLfcStls() {
   Stls::computeLfc();
   if (lfcDerivative.empty()) { lfcDerivative.resize(lfc.size(0), lfc.size(1)); }
