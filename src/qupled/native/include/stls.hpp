@@ -36,7 +36,7 @@ protected:
   // Compute static local field correction
   void computeLfc() override;
   // Iterations to solve the stls scheme
-  void initialGuess();
+  virtual void initialGuess();
   virtual bool initialGuessFromInput();
   double computeError() const;
   virtual void updateSolution();

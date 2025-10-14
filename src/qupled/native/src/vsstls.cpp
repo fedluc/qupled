@@ -1,4 +1,5 @@
 #include "vsstls.hpp"
+#include "format.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
@@ -85,6 +86,16 @@ StlsCSRNew::StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
   if (isMaster) { setupAuxiliaryStatePoints(*in_); }
 }
 
+int StlsCSRNew::compute() {
+  int status = Stls::compute();
+  println(formatUtil::format("Alpha = {:.5e}, Residual error "
+                             "(structural properties) = {:.5e}",
+                             alpha,
+                             computeError()));
+  fflush(stdout);
+  return status;
+}
+
 void StlsCSRNew::init() {
   if (!isInitialized) {
     Stls::init();
@@ -93,7 +104,6 @@ void StlsCSRNew::init() {
 }
 
 void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {
-  std::cerr << "calling setupAuxiliaryStatePoints (0)" << std::endl;
   const double &drs = in.getCouplingResolution();
   const double &dTheta = in.getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
@@ -111,13 +121,6 @@ void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {
       }
     }
   }
-  std::cerr << "calling setupAuxiliaryStatePoints (1)" << std::endl;
   assert(auxStatePoints.size() == NRS * NTHETA - 1);
   setupDerivativeData();
-  std::cerr << "calling setupAuxiliaryStatePoints (2)" << std::endl;
-}
-
-void StlsCSRNew::computeLfcStls() {
-  Stls::computeLfc();
-  if (lfcDerivative.empty()) { lfcDerivative.resize(lfc.size(0), lfc.size(1)); }
 }

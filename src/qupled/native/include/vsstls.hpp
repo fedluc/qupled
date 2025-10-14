@@ -92,16 +92,7 @@ public:
   explicit StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
                       const bool isMaster_);
   // Compute static local field correction
-  int compute() override { return Stls::compute(); }
-  void computeLfc() override { CSRNew::computeLfc(); }
-  void computeLfcStls() override;
-  void init() override;
-  // // Publicly esposed private stls methods
-  // // void init() override { Stls::init(); }
-  // // void initialGuess() override { Stls::initialGuess(); }
-  // // void computeSsf() override { Stls::computeSsf(); }
-  // // double computeError() override { return Stls::computeError(); }
-  // // void updateSolution() override { Stls::updateSolution(); }
+  int compute() override;
   // // Getters
   const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
   const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
@@ -122,6 +113,13 @@ private:
   void setupAuxiliaryStatePoints(const VSStlsInput &in);
   // Getters
   Vector2D &getLfc() override { return lfc; }
+  void init() override;
+  void initialGuessStls() override { Stls::initialGuess(); };
+  void computeSsfStls() override { Stls::computeSsf(); };
+  void computeLfc() override { CSRNew::computeLfc(); }
+  void computeSsf() override { CSRNew::computeSsf();};
+  void initialGuess() override { CSRNew::initialGuess(); };
+  void computeLfcStls() override { Stls::computeLfc();};
 };
 
 #endif

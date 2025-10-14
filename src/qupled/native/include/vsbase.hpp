@@ -279,9 +279,13 @@ protected:
   virtual const VSInput &inVS() const = 0;
   virtual const Input &inRpa() const = 0;
   // Compute the local field correction
-  virtual void computeLfcStls() = 0;
   void computeLfcDerivative();
   void computeLfc();
+  void computeSsf();
+  void initialGuess();
+  virtual void computeLfcStls() = 0;
+  virtual void initialGuessStls() = 0;
+  virtual void computeSsfStls() = 0;
   // Helper methods to compute the derivatives
   double getDerivative(const Vector2D &f,
                        const int &l,

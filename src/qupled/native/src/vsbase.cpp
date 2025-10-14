@@ -59,7 +59,6 @@ double VSBase::alphaDifference(const double &alphaTmp) {
 
 ThermoPropBase::ThermoPropBase(const std::shared_ptr<const VSInput> &inPtr_)
     : inPtr(inPtr_) {
-  std::cerr << "calling ThermoPropBase constructor" << std::endl;
   // Check if we are solving for particular state points
   isZeroCoupling = (inRpa().getCoupling() == 0.0);
   isZeroDegeneracy = (inRpa().getDegeneracy() == 0.0);
@@ -68,7 +67,6 @@ ThermoPropBase::ThermoPropBase(const std::shared_ptr<const VSInput> &inPtr_)
   setFxcIntegrand();
   setFxcIdxTargetStatePoint();
   setFxcIdxUnsolvedStatePoint();
-  std::cerr << "done ThermoPropBase constructor" << std::endl;
 }
 
 void ThermoPropBase::setRsGrid() {
@@ -355,7 +353,7 @@ std::vector<double> CSRNew::getAllCouplingParameters() const {
       all.push_back(sp->getCoupling());
     }
     // Ensure that the target state point is in the center
-    std::swap(all[0], all[NRS + 1]);
+    std::rotate(all.begin(), all.begin() + 1, all.begin() + NRS + 2);
   }
   return all;
 }
@@ -368,7 +366,7 @@ std::vector<double> CSRNew::getAllDegeneracyParameters() const {
       all.push_back(sp->getDegeneracy());
     }
     // Ensure that the target state point is in the center
-    std::swap(all[0], all[NRS + 1]);
+    std::rotate(all.begin(), all.begin() + 1, all.begin() + NRS + 2);
   }
   return all;
 }
@@ -381,7 +379,7 @@ std::vector<double> CSRNew::getAllInternalEnergies() const {
       all.push_back(sp->getInternalEnergy());
     }
     // Ensure that the target state point is in the center
-    std::swap(all[0], all[NRS + 1]);
+    std::rotate(all.begin(), all.begin() + 1, all.begin() + NRS + 2);
   }
   return all;
 }
@@ -394,7 +392,7 @@ std::vector<double> CSRNew::getAllFreeEnergyIntegrands() const {
       all.push_back(sp->getFreeEnergyIntegrand());
     }
     // Ensure that the target state point is in the center
-    std::swap(all[0], all[NRS + 1]);
+    std::rotate(all.begin(), all.begin() + 1, all.begin() + NRS + 2);
   }
   return all;
 }
@@ -512,15 +510,9 @@ double CSRNew::getDerivative(const double &f0,
 void CSRNew::setupDerivativeData() {
   if (!isMaster) { return; }
   const auto &asp = auxStatePoints;
-  std::cerr << "calling setupDerivativeData, size = " << asp.size()
-            << std::endl;
-  std::cerr << "calling setupDerivative (1)" << std::endl;
   setDrsData(*asp[4], *asp[3], Derivative::CENTERED);
-  std::cerr << "calling setupDerivative (2)" << std::endl;
   setDThetaData(*asp[1], *asp[6], Derivative::CENTERED);
-  std::cerr << "calling setupDerivative (3)" << std::endl;
   for (size_t i = 0; i < asp.size(); ++i) {
-    std::cerr << "calling setupDerivative (4) - " << i << std::endl;
     switch (i) {
     case 0: // RS_DOWN_THETA_DOWN
       asp[0]->setDrsData(*asp[1], *asp[2], Derivative::FORWARD);
@@ -549,7 +541,6 @@ void CSRNew::setupDerivativeData() {
     }
   }
   for (size_t i = 0; i < asp.size(); ++i) {
-    std::cerr << "calling setupDerivative (5) - " << i << std::endl;
     switch (i) {
     case 0: // RS_DOWN_THETA_DOWN
       asp[0]->setDThetaData(*asp[4], *asp[7], Derivative::FORWARD);
@@ -587,6 +578,20 @@ void CSRNew::setDThetaData(CSRNew &up, CSRNew &down, const Derivative &dType) {
   lfcTheta = DerivativeData{dType, &up.getLfc(), &down.getLfc()};
 }
 
+void CSRNew::initialGuess() {
+  initialGuessStls();
+  for (auto &asp : auxStatePoints) {
+    asp->initialGuessStls();
+  }
+}
+
+void CSRNew::computeSsf() {
+  computeSsfStls();
+  for (auto &asp : auxStatePoints) {
+    asp->computeSsfStls();
+  }
+}
+
 void CSRNew::computeLfc() {
   computeLfcStls();
   for (auto &asp : auxStatePoints) {
@@ -597,7 +602,7 @@ void CSRNew::computeLfc() {
   }
   for (auto &asp : auxStatePoints) {
     if (asp->lfcDerivative.empty()) {
-      lfcDerivative.resize(asp->getLfc().size(0), asp->getLfc().size(1));
+      asp->lfcDerivative.resize(asp->getLfc().size(0), asp->getLfc().size(1));
     }
   }
   computeLfcDerivative();
@@ -609,6 +614,8 @@ void CSRNew::computeLfc() {
     asp->getLfc().diff(asp->lfcDerivative);
   }
 }
+
+
 
 // void StructPropBase::doIterations() {
 // ADD SOMETHING ABOUT NOT INITIALIZING IF ALREADY DONE
