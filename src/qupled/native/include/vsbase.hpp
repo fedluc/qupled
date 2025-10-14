@@ -15,7 +15,7 @@
 
 class ThermoPropBase;
 class StructPropBase;
-class CSR;
+class CSRNew;
 
 // -----------------------------------------------------------------
 // VSBase class
@@ -179,17 +179,21 @@ public:
   // Set free parameter
   void setAlpha(const double &alpha);
   // Get coupling parameters for all the state points
-  const std::vector<double> &getCouplingParameters() const;
+  const std::vector<double> getCouplingParameters() const;
   // Get degeneracy parameters for all the state points
-  const std::vector<double> &getDegeneracyParameters() const;
+  const std::vector<double> getDegeneracyParameters() const;
   // Get internal energy for all the state points
-  const std::vector<double> &getInternalEnergy() const;
+  const std::vector<double> getInternalEnergy() const;
   // Get free energy integrand for all the state points
-  const std::vector<double> &getFreeEnergyIntegrand() const;
+  const std::vector<double> getFreeEnergyIntegrand() const;
+  // Get static structure factor
+  const std::vector<double> &getSsf() const;
+  // Get local field correction
+  const Vector2D &getLfc() const;
   // Get the free parameter
   double getAlpha() const;
   // Get structural properties for output
-  const CSR &getCsr(const Idx &idx) const;
+  const CSRNew &getCsr(const Idx &idx) const;
   // Boolean marking whether the structural properties where computed or not
   bool isComputed() const { return computed; }
 
@@ -198,100 +202,16 @@ protected:
   // Input parameters
   const std::shared_ptr<const IterationInput> inPtr;
   // Vector containing NPOINTS state points to be solved simultaneously
-  std::vector<std::shared_ptr<CSR>> csr;
-  // Flag marking whether the initialization for the stls data is done
-  bool csrIsInitialized;
+  std::shared_ptr<CSRNew> csr;
   // Flag marking whether the structural properties were computed
   bool computed;
-  // Vector used as output parameter in the getters functions
-  mutable std::vector<double> outVector;
   // Access input pointer
   const IterationInput &in() const { return *inPtr; }
-  // Setup dependencies for CSR objects
-  void setupCSRDependencies();
-  // Perform iterations to compute structural properties
-  void doIterations();
-  // Generic getter function to return vector data
-  const std::vector<double> &
-  getBase(std::function<double(const CSR &)> f) const;
 };
 
 // -----------------------------------------------------------------
-// CSR (compressibility-sum-rule) class
+// CSRNew class
 // -----------------------------------------------------------------
-
-class CSR {
-
-public:
-
-  // Enumerator to denote the numerical schemes used for the derivatives
-  enum Derivative { CENTERED, FORWARD, BACKWARD };
-  // Data for the local field correction with modified state point
-  struct DerivativeData {
-    Derivative type;
-    const Vector2D *up;
-    const Vector2D *down;
-  };
-  // Constructor
-  CSR()
-      : alpha(DEFAULT_ALPHA) {}
-  // Destructor
-  virtual ~CSR() = default;
-  // Set the data to compute the coupling parameter derivative
-  void setDrsData(CSR &csrRsUp, CSR &csrRsDown, const Derivative &dTypeRs);
-  // Set the data to compute the degeneracy parameter derivative
-  void setDThetaData(CSR &csrThetaUp,
-                     CSR &csrThetaDown,
-                     const Derivative &dTypeTheta);
-  // Set the free parameter
-  void setAlpha(const double &alpha) { this->alpha = alpha; }
-  // Get the free parameter
-  double getAlpha() const { return alpha; }
-  // Get input
-  double getCoupling() const { return inRpa().getCoupling(); }
-  double getDegeneracy() const { return inRpa().getDegeneracy(); }
-  // Compute the internal energy
-  double getInternalEnergy() const;
-  // Compute the free energy integrand
-  double getFreeEnergyIntegrand() const;
-  // Publicly esposed private scheme methods
-  virtual void init() = 0;
-  virtual void initialGuess() = 0;
-  virtual void computeLfcStls() = 0;
-  virtual void computeLfc() = 0;
-  virtual void computeLfcDerivative();
-  virtual void computeSsf() = 0;
-  virtual double computeError() = 0;
-  virtual void updateSolution() = 0;
-  virtual const std::vector<double> &getSsf() const = 0;
-  virtual const std::vector<double> &getWvg() const = 0;
-  virtual const Vector2D &getLfc() const = 0;
-
-protected:
-
-  // Default value of alpha
-  static constexpr double DEFAULT_ALPHA = numUtil::Inf;
-  // Derivative contribution to  the local field correction
-  Vector2D lfcDerivative;
-  // Free parameter
-  double alpha;
-  // Data for the local field correction with modified coupling paramter
-  DerivativeData lfcRs;
-  // Data for the local field correction with modified degeneracy parameter
-  DerivativeData lfcTheta;
-  // Input data
-  virtual const VSInput &inVS() const = 0;
-  virtual const Input &inRpa() const = 0;
-  // Helper methods to compute the derivatives
-  double getDerivative(const Vector2D &f,
-                       const int &l,
-                       const size_t &idx,
-                       const Derivative &type) const;
-  double getDerivative(const double &f0,
-                       const double &f1,
-                       const double &f2,
-                       const Derivative &type) const;
-};
 
 class CSRNew {
 
@@ -305,8 +225,15 @@ public:
         alpha(DEFAULT_ALPHA) {};
   // Destructor
   virtual ~CSRNew() = default;
+  // Solve the scheme
+  virtual int compute() = 0;
   // Set the free parameter
   void setAlpha(const double &alpha);
+  // Getters
+  virtual const std::vector<double> &getSsf() const = 0;
+  virtual const std::vector<double> &getWvg() const = 0;
+  virtual const Vector2D &getLfc() const = 0;
+  virtual Vector2D &getLfc() = 0;
   // Get the free parameter
   double getAlpha() const { return alpha; }
   // Get input
@@ -316,6 +243,14 @@ public:
   double getInternalEnergy() const;
   // Compute the free energy integrand
   double getFreeEnergyIntegrand() const;
+  // Get coupling parameters for all the state points
+  std::vector<double> getAllCouplingParameters() const;
+  // Get degeneracy parameters for all the state points
+  std::vector<double> getAllDegeneracyParameters() const;
+  // Get internal energy for all the state points
+  std::vector<double> getAllInternalEnergies() const;
+  // Get free energy integrand for all the state points
+  std::vector<double> getAllFreeEnergyIntegrands() const;
 
 protected:
 
@@ -344,7 +279,9 @@ protected:
   virtual const VSInput &inVS() const = 0;
   virtual const Input &inRpa() const = 0;
   // Compute the local field correction
+  virtual void computeLfcStls() = 0;
   void computeLfcDerivative();
+  void computeLfc();
   // Helper methods to compute the derivatives
   double getDerivative(const Vector2D &f,
                        const int &l,
@@ -354,10 +291,6 @@ protected:
                        const double &f1,
                        const double &f2,
                        const Derivative &type) const;
-  // Getters
-  virtual const std::vector<double> &getSsf() const = 0;
-  virtual const std::vector<double> &getWvg() const = 0;
-  virtual const Vector2D &getLfc() const = 0;
   // Setup derivative data
   void setupDerivativeData();
   void setDrsData(CSRNew &up, CSRNew &down, const Derivative &dType);

@@ -54,9 +54,7 @@ void QVSStls::updateSolution() {
   // lfc = thermoProp->getLfc();
 }
 
-void QVSStls::init() { 
-  Rpa::init(); 
-}
+void QVSStls::init() { Rpa::init(); }
 
 // // -----------------------------------------------------------------
 // // QThermoProp class
@@ -132,7 +130,8 @@ void QVSStls::init() {
 //       out.push_back(inTmp);
 //     }
 //   }
-//   // Avoid recomputing the fixed component for the state points with perturbed
+//   // Avoid recomputing the fixed component for the state points with
+//   perturbed
 //   // coupling parameter
 //   if (in().getFixedRunId() == DEFAULT_INT) {
 //     for (const int idx : {RS_THETA_DOWN,
@@ -191,7 +190,8 @@ void QVSStls::init() {
 
 // void QstlsCSR::computeLfcStls() {
 //   Qstls::computeLfc();
-//   if (lfcDerivative.empty()) { lfcDerivative.resize(lfc.size(0), lfc.size(1)); }
+//   if (lfcDerivative.empty()) { lfcDerivative.resize(lfc.size(0),
+//   lfc.size(1)); }
 // }
 
 // void QstlsCSR::computeLfc() { lfc.diff(lfcDerivative); }
@@ -232,7 +232,8 @@ void QVSStls::init() {
 //   double logarg = (w + 2 * q) / (w - 2 * q);
 //   logarg = (logarg < 0.0) ? -logarg : logarg;
 //   if (w == 0.0) { return 1.0 / (12.0 * (exp(q2 / Theta - mu) + 1.0)); };
-//   return q2 / (exp(q2 / Theta - mu) + 1.0) * (q / w * log(logarg) - 1.0) / w2;
+//   return q2 / (exp(q2 / Theta - mu) + 1.0) * (q / w * log(logarg) - 1.0) /
+//   w2;
 // }
 
 // // Numerator integrand2

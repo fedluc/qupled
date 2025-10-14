@@ -54,7 +54,7 @@ void VSStls::updateSolution() {
 void VSStls::init() { Rpa::init(); }
 
 // -----------------------------------------------------------------
-// ThermoPropBase class
+// ThermoProp class
 // -----------------------------------------------------------------
 
 ThermoProp::ThermoProp(const std::shared_ptr<const VSStlsInput> &in_)
@@ -68,37 +68,9 @@ ThermoProp::ThermoProp(const std::shared_ptr<const VSStlsInput> &in_)
 // -----------------------------------------------------------------
 
 StructProp::StructProp(const std::shared_ptr<const VSStlsInput> &in_)
-    : StructPropBase(in_) {
-  setupCSR();
-  setupCSRDependencies();
-}
-
-void StructProp::setupCSR() {
-  std::vector<VSStlsInput> inVector = setupCSRInput();
-  for (const auto &inTmp : inVector) {
-    const auto inPtr = make_shared<const VSStlsInput>(inTmp);
-    csr.push_back(make_shared<StlsCSR>(inPtr));
-  }
-}
-
-std::vector<VSStlsInput> StructProp::setupCSRInput() {
-  const double &drs = in().getCouplingResolution();
-  const double &dTheta = in().getDegeneracyResolution();
-  // If there is a risk of having negative state parameters, shift the
-  // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  const double rs = std::max(in().getCoupling(), drs);
-  const double theta = std::max(in().getDegeneracy(), dTheta);
-  // Setup objects
-  std::vector<VSStlsInput> out;
-  for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
-    for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
-      VSStlsInput inTmp = in();
-      inTmp.setDegeneracy(thetaTmp);
-      inTmp.setCoupling(rsTmp);
-      out.push_back(inTmp);
-    }
-  }
-  return out;
+    : StructPropBase(in_),
+      csr(make_shared<StlsCSRNew>(in_, true)) {
+  StructPropBase::csr = csr;
 }
 
 // -----------------------------------------------------------------
@@ -108,11 +80,20 @@ std::vector<VSStlsInput> StructProp::setupCSRInput() {
 StlsCSRNew::StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
                        const bool isMaster_)
     : CSRNew(isMaster_),
-      Stls(in_, false) {
+      Stls(in_, false),
+      isInitialized(false) {
   if (isMaster) { setupAuxiliaryStatePoints(*in_); }
 }
 
+void StlsCSRNew::init() {
+  if (!isInitialized) {
+    Stls::init();
+    isInitialized = true;
+  }
+}
+
 void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {
+  std::cerr << "calling setupAuxiliaryStatePoints (0)" << std::endl;
   const double &drs = in.getCouplingResolution();
   const double &dTheta = in.getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
@@ -130,12 +111,13 @@ void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {
       }
     }
   }
+  std::cerr << "calling setupAuxiliaryStatePoints (1)" << std::endl;
   assert(auxStatePoints.size() == NRS * NTHETA - 1);
+  setupDerivativeData();
+  std::cerr << "calling setupAuxiliaryStatePoints (2)" << std::endl;
 }
 
-void StlsCSR::computeLfcStls() {
+void StlsCSRNew::computeLfcStls() {
   Stls::computeLfc();
   if (lfcDerivative.empty()) { lfcDerivative.resize(lfc.size(0), lfc.size(1)); }
 }
-
-void StlsCSR::computeLfc() { lfc.diff(lfcDerivative); }

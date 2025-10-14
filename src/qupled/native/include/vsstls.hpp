@@ -9,7 +9,7 @@
 
 class ThermoProp;
 class StructProp;
-class StlsCSR;
+class StlsCSRNew;
 
 // -----------------------------------------------------------------
 // VSStls class
@@ -72,51 +72,11 @@ public:
 
 private:
 
+  // Structural properties
+  std::shared_ptr<StlsCSRNew> csr;
   // Input parameters
   const VSStlsInput &in() const {
     return *StlsUtil::dynamic_pointer_cast<IterationInput, VSStlsInput>(inPtr);
-  }
-  // setup the csr vector
-  std::vector<VSStlsInput> setupCSRInput();
-  void setupCSR();
-  //
-  void doIterations();
-};
-
-// -----------------------------------------------------------------
-// StlsCSR class
-// -----------------------------------------------------------------
-
-class StlsCSR : public CSR, public Stls {
-
-public:
-
-  // Constructor
-  explicit StlsCSR(const std::shared_ptr<const VSStlsInput> &in_)
-      : CSR(),
-        Stls(in_, false) {}
-  // Compute static local field correction
-  void computeLfcStls() override;
-  void computeLfc() override;
-  // Publicly esposed private stls methods
-  void init() override { Stls::init(); }
-  void initialGuess() override { Stls::initialGuess(); }
-  void computeSsf() override { Stls::computeSsf(); }
-  double computeError() override { return Stls::computeError(); }
-  void updateSolution() override { Stls::updateSolution(); }
-  // Getters
-  const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
-  const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
-  const Vector2D &getLfc() const override { return Stls::getLfc(); }
-
-private:
-
-  // Input parameters
-  const VSInput &inVS() const override {
-    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
-  }
-  const Input &inRpa() const override {
-    return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
   }
 };
 
@@ -132,8 +92,10 @@ public:
   explicit StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
                       const bool isMaster_);
   // Compute static local field correction
-  // void computeLfcStls() override;
-  void computeLfc() override {};
+  int compute() override { return Stls::compute(); }
+  void computeLfc() override { CSRNew::computeLfc(); }
+  void computeLfcStls() override;
+  void init() override;
   // // Publicly esposed private stls methods
   // // void init() override { Stls::init(); }
   // // void initialGuess() override { Stls::initialGuess(); }
@@ -147,6 +109,8 @@ public:
 
 private:
 
+  // Flag marking wheter init was already called or not
+  bool isInitialized;
   // Input parameters
   const VSInput &inVS() const override {
     return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
@@ -156,6 +120,8 @@ private:
   }
   // setup the csr vector
   void setupAuxiliaryStatePoints(const VSStlsInput &in);
+  // Getters
+  Vector2D &getLfc() override { return lfc; }
 };
 
 #endif

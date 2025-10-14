@@ -59,6 +59,7 @@ double VSBase::alphaDifference(const double &alphaTmp) {
 
 ThermoPropBase::ThermoPropBase(const std::shared_ptr<const VSInput> &inPtr_)
     : inPtr(inPtr_) {
+  std::cerr << "calling ThermoPropBase constructor" << std::endl;
   // Check if we are solving for particular state points
   isZeroCoupling = (inRpa().getCoupling() == 0.0);
   isZeroDegeneracy = (inRpa().getDegeneracy() == 0.0);
@@ -67,6 +68,7 @@ ThermoPropBase::ThermoPropBase(const std::shared_ptr<const VSInput> &inPtr_)
   setFxcIntegrand();
   setFxcIdxTargetStatePoint();
   setFxcIdxUnsolvedStatePoint();
+  std::cerr << "done ThermoPropBase constructor" << std::endl;
 }
 
 void ThermoPropBase::setRsGrid() {
@@ -181,13 +183,15 @@ void ThermoPropBase::compute() {
 const vector<double> &ThermoPropBase::getSsf() {
   assert(structProp);
   if (!structProp->isComputed()) { structProp->compute(); }
-  return structProp->getCsr(getStructPropIdx()).getSsf();
+  return structProp->getSsf(); // Fix correct index accessing
+  // return structProp->getCsr(getStructPropIdx()).getSsf();
 }
 
 const Vector2D &ThermoPropBase::getLfc() {
   assert(structProp);
   if (!structProp->isComputed()) { structProp->compute(); }
-  return structProp->getCsr(getStructPropIdx()).getLfc();
+  return structProp->getLfc(); // Fix correct index accessing
+  // return structProp->getCsr(getStructPropIdx()).getLfc();
 }
 
 vector<double> ThermoPropBase::getFreeEnergyData() const {
@@ -300,277 +304,99 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
 StructPropBase::StructPropBase(
     const std::shared_ptr<const IterationInput> &inPtr_)
     : inPtr(inPtr_),
-      csrIsInitialized(false),
-      computed(false),
-      outVector(NPOINTS) {}
-
-void StructPropBase::setupCSRDependencies() {
-  for (size_t i = 0; i < csr.size(); ++i) {
-    switch (i) {
-    case RS_DOWN_THETA_DOWN:
-    case RS_DOWN_THETA:
-    case RS_DOWN_THETA_UP:
-      csr[i]->setDrsData(*csr[i + 1], *csr[i + 2], CSR::Derivative::FORWARD);
-      break;
-    case RS_THETA_DOWN:
-    case RS_THETA:
-    case RS_THETA_UP:
-      csr[i]->setDrsData(*csr[i + 1], *csr[i - 1], CSR::Derivative::CENTERED);
-      break;
-    case RS_UP_THETA_DOWN:
-    case RS_UP_THETA:
-    case RS_UP_THETA_UP:
-      csr[i]->setDrsData(*csr[i - 1], *csr[i - 2], CSR::Derivative::BACKWARD);
-      break;
-    }
-  }
-  for (size_t i = 0; i < csr.size(); ++i) {
-    switch (i) {
-    case RS_DOWN_THETA_DOWN:
-    case RS_THETA_DOWN:
-    case RS_UP_THETA_DOWN:
-      csr[i]->setDThetaData(
-          *csr[i + NRS], *csr[i + 2 * NRS], CSR::Derivative::FORWARD);
-      break;
-    case RS_DOWN_THETA:
-    case RS_THETA:
-    case RS_UP_THETA:
-      csr[i]->setDThetaData(
-          *csr[i + NRS], *csr[i - NRS], CSR::Derivative::CENTERED);
-      break;
-    case RS_DOWN_THETA_UP:
-    case RS_THETA_UP:
-    case RS_UP_THETA_UP:
-      csr[i]->setDThetaData(
-          *csr[i - NRS], *csr[i - 2 * NRS], CSR::Derivative::BACKWARD);
-      break;
-    }
-  }
-}
+      computed(false) {}
 
 int StructPropBase::compute() {
-  try {
-    if (!csrIsInitialized) {
-      assert(!csr.empty());
-      for (auto &c : csr) {
-        c->init();
-      }
-      csrIsInitialized = true;
-    }
-    doIterations();
-    computed = true;
-    return 0;
-  } catch (const runtime_error &err) {
-    cerr << err.what() << endl;
-    return 1;
-  }
+  int status = csr->compute();
+  computed = true;
+  return status;
 }
 
-void StructPropBase::doIterations() {
-  const int maxIter = in().getNIter();
-  const int ompThreads = in().getNThreads();
-  const double minErr = in().getErrMin();
-  double err = 1.0;
-  int counter = 0;
-  // Define initial guess
-  for (auto &c : csr) {
-    c->initialGuess();
-  }
-  // Iteration to solve for the structural properties
-  const bool useOMP = ompThreads > 1;
-  while (counter < maxIter + 1 && err > minErr) {
-// Compute new solution and error
-#pragma omp parallel num_threads(ompThreads) if (useOMP)
-    {
-#pragma omp for
-      for (auto &c : csr) {
-        c->computeLfcStls();
-      }
+double StructPropBase::getAlpha() const { return csr->getAlpha(); }
 
-#pragma omp for
-      for (auto &c : csr) {
-        c->computeLfcDerivative();
-      }
+void StructPropBase::setAlpha(const double &alpha) { csr->setAlpha(alpha); }
 
-#pragma omp for
-      for (size_t i = 0; i < csr.size(); ++i) {
-        auto &c = csr[i];
-        c->computeLfc();
-        c->computeSsf();
-        if (i == RS_THETA) { err = c->computeError(); }
-        c->updateSolution();
-      }
-    }
-    counter++;
-  }
-  println(formatUtil::format("Alpha = {:.5e}, Residual error "
-                             "(structural properties) = {:.5e}",
-                             csr[RS_THETA]->getAlpha(),
-                             err));
+const vector<double> StructPropBase::getCouplingParameters() const {
+  return csr->getAllCouplingParameters();
 }
 
-void StructPropBase::setAlpha(const double &alpha) {
-  for (auto &c : csr) {
-    c->setAlpha(alpha);
-  }
+const vector<double> StructPropBase::getDegeneracyParameters() const {
+  return csr->getAllDegeneracyParameters();
 }
 
-const CSR &StructPropBase::getCsr(const Idx &idx) const {
-  assert(!csr.empty());
-  return *csr[idx];
+const vector<double> StructPropBase::getInternalEnergy() const {
+  return csr->getAllInternalEnergies();
 }
 
-double StructPropBase::getAlpha() const {
-  return getCsr(Idx::RS_THETA).getAlpha();
+const vector<double> StructPropBase::getFreeEnergyIntegrand() const {
+  return csr->getAllFreeEnergyIntegrands();
 }
 
-const vector<double> &
-StructPropBase::getBase(function<double(const CSR &)> f) const {
-  for (size_t i = 0; i < csr.size(); ++i) {
-    outVector[i] = f(*csr[i]);
-  }
-  return outVector;
-}
+const vector<double> &StructPropBase::getSsf() const { return csr->getSsf(); }
 
-const vector<double> &StructPropBase::getCouplingParameters() const {
-  return getBase([&](const CSR &c) { return c.getCoupling(); });
-}
-
-const vector<double> &StructPropBase::getDegeneracyParameters() const {
-  return getBase([&](const CSR &c) { return c.getDegeneracy(); });
-}
-
-const vector<double> &StructPropBase::getInternalEnergy() const {
-  return getBase([&](const CSR &c) { return c.getInternalEnergy(); });
-}
-
-const vector<double> &StructPropBase::getFreeEnergyIntegrand() const {
-  return getBase([&](const CSR &c) { return c.getFreeEnergyIntegrand(); });
-}
-
-// -----------------------------------------------------------------
-// CSR class
-// -----------------------------------------------------------------
-
-void CSR::setDrsData(CSR &csrRsUp, CSR &csrRsDown, const Derivative &dTypeRs) {
-  lfcRs = DerivativeData{dTypeRs, &csrRsUp.getLfc(), &csrRsDown.getLfc()};
-}
-
-void CSR::setDThetaData(CSR &csrThetaUp,
-                        CSR &csrThetaDown,
-                        const Derivative &dTypeTheta) {
-  lfcTheta =
-      DerivativeData{dTypeTheta, &csrThetaUp.getLfc(), &csrThetaDown.getLfc()};
-}
-
-double CSR::getInternalEnergy() const {
-  const double rs = inRpa().getCoupling();
-  return thermoUtil::computeInternalEnergy(
-      getWvg(), getSsf(), rs, inRpa().getDimension());
-}
-
-double CSR::getFreeEnergyIntegrand() const {
-  return thermoUtil::computeInternalEnergy(
-      getWvg(), getSsf(), 1.0, inRpa().getDimension());
-}
-
-void CSR::computeLfcDerivative() {
-  // Check that alpha has been set to a value that is not the default
-  assert(alpha != DEFAULT_ALPHA);
-  // Derivative contributions
-  const double &rs = inRpa().getCoupling();
-  const double &theta = inRpa().getDegeneracy();
-  const double &dx = inRpa().getWaveVectorGridRes();
-  const double &drs = inVS().getCouplingResolution();
-  const double &dTheta = inVS().getDegeneracyResolution();
-  const Vector2D &lfc = getLfc();
-  const Vector2D &rsUp = *lfcRs.up;
-  const Vector2D &rsDown = *lfcRs.down;
-  const Vector2D &thetaUp = *lfcTheta.up;
-  const Vector2D &thetaDown = *lfcTheta.down;
-  const double a_drs = alpha * rs / (6.0 * drs);
-  const double a_dx = alpha / (6.0 * dx);
-  const double a_dt = alpha * theta / (3.0 * dTheta);
-  const vector<double> &wvg = getWvg();
-  const double nx = wvg.size();
-  Vector2D &lfcd = lfcDerivative;
-  assert(lfcd.size(0) == lfc.size(0) && lfcd.size(1) == lfc.size(1));
-  for (size_t l = 0; l < lfc.size(1); ++l) {
-    // Wave-vector derivative contribution
-    lfcd(0, l) = a_dx * wvg[0] * getDerivative(lfc, l, 0, FORWARD);
-    for (size_t i = 1; i < nx - 1; ++i) {
-      lfcd(i, l) = a_dx * wvg[i] * getDerivative(lfc, l, i, CENTERED);
-    }
-    lfcd(nx - 1, l) =
-        a_dx * wvg[nx - 1] * getDerivative(lfc, l, nx - 1, BACKWARD);
-    // Coupling parameter contribution
-    if (rs > 0.0) {
-      for (size_t i = 0; i < nx; ++i) {
-        lfcd(i, l) += a_drs
-                      * CSR::getDerivative(
-                          lfc(i, l), rsUp(i, l), rsDown(i, l), lfcRs.type);
-      }
-    }
-    // Degeneracy parameter contribution
-    if (theta > 0.0) {
-      for (size_t i = 0; i < nx; ++i) {
-        lfcd(i, l) +=
-            a_dt
-            * CSR::getDerivative(
-                lfc(i, l), thetaUp(i, l), thetaDown(i, l), lfcTheta.type);
-      }
-    }
-  }
-}
-
-double CSR::getDerivative(const Vector2D &f,
-                          const int &l,
-                          const size_t &idx,
-                          const Derivative &type) const {
-  switch (type) {
-  case BACKWARD:
-    assert(idx >= 2);
-    return CSR::getDerivative(f(idx, l), f(idx - 1, l), f(idx - 2, l), type);
-    break;
-  case CENTERED:
-    assert(idx >= 1 && idx < f.size() - 1);
-    return CSR::getDerivative(f(idx, l), f(idx + 1, l), f(idx - 1, l), type);
-    break;
-  case FORWARD:
-    assert(idx < f.size() - 2);
-    return CSR::getDerivative(f(idx, l), f(idx + 1, l), f(idx + 2, l), type);
-    break;
-  default:
-    assert(false);
-    return -1;
-    break;
-  }
-}
-
-double CSR::getDerivative(const double &f0,
-                          const double &f1,
-                          const double &f2,
-                          const Derivative &type) const {
-  switch (type) {
-  case BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2; break;
-  case CENTERED: return f1 - f2; break;
-  case FORWARD: return -getDerivative(f0, f1, f2, BACKWARD); break;
-  default:
-    assert(false);
-    return -1;
-    break;
-  }
-}
+const Vector2D &StructPropBase::getLfc() const { return csr->getLfc(); }
 
 // -----------------------------------------------------------------
 // CSRNew class
 // -----------------------------------------------------------------
 
-void CSRNew::setAlpha(const double &alpha) {
-  this->alpha = alpha;
+void CSRNew::setAlpha(const double &alpha_) {
+  alpha = alpha_;
   for (auto &sp : auxStatePoints) {
-    sp->setAlpha(alpha);
+    sp->setAlpha(alpha_);
   }
+}
+
+std::vector<double> CSRNew::getAllCouplingParameters() const {
+  vector<double> all;
+  all.push_back(getCoupling());
+  if (isMaster) {
+    for (auto &sp : auxStatePoints) {
+      all.push_back(sp->getCoupling());
+    }
+    // Ensure that the target state point is in the center
+    std::swap(all[0], all[NRS + 1]);
+  }
+  return all;
+}
+
+std::vector<double> CSRNew::getAllDegeneracyParameters() const {
+  vector<double> all;
+  all.push_back(getDegeneracy());
+  if (isMaster) {
+    for (auto &sp : auxStatePoints) {
+      all.push_back(sp->getDegeneracy());
+    }
+    // Ensure that the target state point is in the center
+    std::swap(all[0], all[NRS + 1]);
+  }
+  return all;
+}
+
+std::vector<double> CSRNew::getAllInternalEnergies() const {
+  vector<double> all;
+  all.push_back(getInternalEnergy());
+  if (isMaster) {
+    for (auto &sp : auxStatePoints) {
+      all.push_back(sp->getInternalEnergy());
+    }
+    // Ensure that the target state point is in the center
+    std::swap(all[0], all[NRS + 1]);
+  }
+  return all;
+}
+
+std::vector<double> CSRNew::getAllFreeEnergyIntegrands() const {
+  vector<double> all;
+  all.push_back(getFreeEnergyIntegrand());
+  if (isMaster) {
+    for (auto &sp : auxStatePoints) {
+      all.push_back(sp->getFreeEnergyIntegrand());
+    }
+    // Ensure that the target state point is in the center
+    std::swap(all[0], all[NRS + 1]);
+  }
+  return all;
 }
 
 double CSRNew::getInternalEnergy() const {
@@ -686,43 +512,68 @@ double CSRNew::getDerivative(const double &f0,
 void CSRNew::setupDerivativeData() {
   if (!isMaster) { return; }
   const auto &asp = auxStatePoints;
+  std::cerr << "calling setupDerivativeData, size = " << asp.size()
+            << std::endl;
+  std::cerr << "calling setupDerivative (1)" << std::endl;
   setDrsData(*asp[4], *asp[3], Derivative::CENTERED);
-  setDThetaData(*asp[1], *asp[5], Derivative::CENTERED);
+  std::cerr << "calling setupDerivative (2)" << std::endl;
+  setDThetaData(*asp[1], *asp[6], Derivative::CENTERED);
+  std::cerr << "calling setupDerivative (3)" << std::endl;
   for (size_t i = 0; i < asp.size(); ++i) {
+    std::cerr << "calling setupDerivative (4) - " << i << std::endl;
     switch (i) {
     case 0: // RS_DOWN_THETA_DOWN
-    case 3: // RS_DOWN_THETA:
-    case 5: // RS_DOWN_THETA_UP:
-      asp[i]->setDrsData(*asp[i + 1], *asp[i + 2], Derivative::FORWARD);
+      asp[0]->setDrsData(*asp[1], *asp[2], Derivative::FORWARD);
       break;
-    case 1: // RS_THETA_DOWN:
-    case 6: // RS_THETA_UP:
-      asp[i]->setDrsData(*asp[i + 1], *asp[i - 1], Derivative::CENTERED);
+    case 1: // RS_THETA_DOWN
+      asp[1]->setDrsData(*asp[2], *asp[0], Derivative::CENTERED);
       break;
-    case 2: // RS_UP_THETA_DOWN:
-    case 4: // RS_UP_THETA:
-    case 7: // RS_UP_THETA_UP:
-      asp[i]->setDrsData(*asp[i - 1], *asp[i - 2], Derivative::BACKWARD);
+    case 2: // RS_UP_THETA_DOWN
+      asp[2]->setDrsData(*asp[1], *asp[0], Derivative::BACKWARD);
+      break;
+    case 3: // RS_DOWN_THETA
+      asp[3]->setDrsData(*this, *asp[4], Derivative::FORWARD);
+      break;
+    case 4: // RS_UP_THETA
+      asp[4]->setDrsData(*this, *asp[2], Derivative::BACKWARD);
+      break;
+    case 5: // RS_DOWN_THETA_UP
+      asp[5]->setDrsData(*asp[6], *asp[7], Derivative::FORWARD);
+      break;
+    case 6: // RS_THETA_UP
+      asp[6]->setDrsData(*asp[7], *asp[5], Derivative::CENTERED);
+      break;
+    case 7: // RS_UP_THETA_UP
+      asp[7]->setDrsData(*asp[6], *asp[5], Derivative::BACKWARD);
       break;
     }
   }
   for (size_t i = 0; i < asp.size(); ++i) {
+    std::cerr << "calling setupDerivative (5) - " << i << std::endl;
     switch (i) {
-    case 0: // RS_DOWN_THETA_DOWN:
-    case 1: // RS_THETA_DOWN:
-    case 2: // RS_UP_THETA_DOWN:
-      asp[i]->setDThetaData(
-          *asp[i + NRS], *asp[i + 2 * NRS], Derivative::FORWARD);
+    case 0: // RS_DOWN_THETA_DOWN
+      asp[0]->setDThetaData(*asp[4], *asp[7], Derivative::FORWARD);
       break;
-    case 3: // RS_DOWN_THETA:
-    case 4: // RS_UP_THETA:
-      asp[i]->setDThetaData(*asp[i + NRS], *asp[i - NRS], Derivative::CENTERED);
+    case 1: // RS_THETA_DOWN
+      asp[1]->setDThetaData(*this, *asp[7], Derivative::FORWARD);
       break;
-    case 5: // RS_DOWN_THETA_UP:
-    case 6: // RS_THETA_UP:
-    case 7: // RS_UP_THETA_UP:
-      asp[i]->setDThetaData(
-          *asp[i - NRS], *asp[i - 2 * NRS], Derivative::BACKWARD);
+    case 2: // RS_UP_THETA_DOWN
+      asp[2]->setDThetaData(*asp[5], *asp[7], Derivative::FORWARD);
+      break;
+    case 3: // RS_DOWN_THETA
+      asp[3]->setDThetaData(*asp[6], *asp[0], Derivative::CENTERED);
+      break;
+    case 4: // RS_UP_THETA
+      asp[4]->setDThetaData(*asp[7], *asp[1], Derivative::CENTERED);
+      break;
+    case 5: // RS_DOWN_THETA_UP
+      asp[5]->setDThetaData(*asp[2], *asp[6], Derivative::BACKWARD);
+      break;
+    case 6: // RS_THETA_UP
+      asp[6]->setDThetaData(*this, *asp[3], Derivative::BACKWARD);
+      break;
+    case 7: // RS_UP_THETA_UP
+      asp[7]->setDThetaData(*asp[4], *asp[0], Derivative::BACKWARD);
       break;
     }
   }
@@ -735,3 +586,94 @@ void CSRNew::setDrsData(CSRNew &up, CSRNew &down, const Derivative &dType) {
 void CSRNew::setDThetaData(CSRNew &up, CSRNew &down, const Derivative &dType) {
   lfcTheta = DerivativeData{dType, &up.getLfc(), &down.getLfc()};
 }
+
+void CSRNew::computeLfc() {
+  computeLfcStls();
+  for (auto &asp : auxStatePoints) {
+    asp->computeLfcStls();
+  }
+  if (lfcDerivative.empty()) {
+    lfcDerivative.resize(getLfc().size(0), getLfc().size(1));
+  }
+  for (auto &asp : auxStatePoints) {
+    if (asp->lfcDerivative.empty()) {
+      lfcDerivative.resize(asp->getLfc().size(0), asp->getLfc().size(1));
+    }
+  }
+  computeLfcDerivative();
+  for (auto &asp : auxStatePoints) {
+    asp->computeLfcDerivative();
+  }
+  getLfc().diff(lfcDerivative);
+  for (auto &asp : auxStatePoints) {
+    asp->getLfc().diff(asp->lfcDerivative);
+  }
+}
+
+// void StructPropBase::doIterations() {
+// ADD SOMETHING ABOUT NOT INITIALIZING IF ALREADY DONE
+//   const int maxIter = in().getNIter();
+//   const int ompThreads = in().getNThreads();
+//   const double minErr = in().getErrMin();
+//   double err = 1.0;
+//   int counter = 0;
+//   // Define initial guess
+//   for (auto &c : csr) {
+//     c->initialGuess();
+//   }
+//   // Iteration to solve for the structural properties
+//   const bool useOMP = ompThreads > 1;
+//   while (counter < maxIter + 1 && err > minErr) {
+// // Compute new solution and error
+// #pragma omp parallel num_threads(ompThreads) if (useOMP)
+//     {
+// #pragma omp for
+//       for (auto &c : csr) {
+//         c->computeLfcStls();
+//       }
+
+// #pragma omp for
+//       for (auto &c : csr) {
+//         c->computeLfcDerivative();
+//       }
+
+// #pragma omp for
+//       for (size_t i = 0; i < csr.size(); ++i) {
+//         auto &c = csr[i];
+//         c->computeLfc();
+//         c->computeSsf();
+//         if (i == RS_THETA) { err = c->computeError(); }
+//         c->updateSolution();
+//       }
+//     }
+//     counter++;
+//   }
+//   println(formatUtil::format("Alpha = {:.5e}, Residual error "
+//                              "(structural properties) = {:.5e}",
+//                              csr[RS_THETA]->getAlpha(),
+//                              err));
+// }
+
+// const vector<double> &
+// StructPropBase::getBase(function<double(const CSR &)> f) const {
+//   for (size_t i = 0; i < csr.size(); ++i) {
+//     outVector[i] = f(*csr[i]);
+//   }
+//   return outVector;
+// }
+
+// const vector<double> &StructPropBase::getCouplingParameters() const {
+//   return getBase([&](const CSR &c) { return c.getCoupling(); });
+// }
+
+// const vector<double> &StructPropBase::getDegeneracyParameters() const {
+//   return getBase([&](const CSR &c) { return c.getDegeneracy(); });
+// }
+
+// const vector<double> &StructPropBase::getInternalEnergy() const {
+//   return getBase([&](const CSR &c) { return c.getInternalEnergy(); });
+// }
+
+// const vector<double> &StructPropBase::getFreeEnergyIntegrand() const {
+//   return getBase([&](const CSR &c) { return c.getFreeEnergyIntegrand(); });
+// }

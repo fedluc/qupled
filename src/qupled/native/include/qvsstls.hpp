@@ -81,7 +81,8 @@ private:
 
 //   // Input parameters
 //   const QVSStlsInput &in() const {
-//     return *StlsUtil::dynamic_pointer_cast<IterationInput, QVSStlsInput>(inPtr);
+//     return *StlsUtil::dynamic_pointer_cast<IterationInput,
+//     QVSStlsInput>(inPtr);
 //   }
 //   // Setup dependencies in the CSR objects
 //   std::vector<QVSStlsInput> setupCSRInput();
@@ -110,9 +111,10 @@ private:
 //   // Compute Q
 //   double getQAdder() const;
 //   // Getters
-//   const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
-//   const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
-//   const Vector2D &getLfc() const override { return Qstls::getLfc(); }
+//   const std::vector<double> &getSsf() const override { return
+//   Qstls::getSsf(); } const std::vector<double> &getWvg() const override {
+//   return Qstls::getWvg(); } const Vector2D &getLfc() const override { return
+//   Qstls::getLfc(); }
 
 // private:
 
