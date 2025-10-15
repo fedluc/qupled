@@ -88,11 +88,10 @@ StlsCSRNew::StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
 
 int StlsCSRNew::compute() {
   int status = Stls::compute();
-  println(formatUtil::format("Alpha = {:.5e}, Residual error "
+  std::cerr << formatUtil::format("Alpha = {:.5e}, Residual error "
                              "(structural properties) = {:.5e}",
                              alpha,
-                             computeError()));
-  fflush(stdout);
+                             computeError()) << std::endl;
   return status;
 }
 

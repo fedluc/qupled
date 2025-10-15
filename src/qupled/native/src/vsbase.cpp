@@ -496,22 +496,11 @@ double CSRNew::getDerivative(const double &f0,
   }
 }
 
-// enum StructIdx {
-//   RS_DOWN_THETA_DOWN, 0
-//   RS_THETA_DOWN, 1
-//   RS_UP_THETA_DOWN, 2
-//   RS_DOWN_THETA, 3
-//   RS_UP_THETA, 4
-//   RS_DOWN_THETA_UP, 5
-//   RS_THETA_UP, 6
-//   RS_UP_THETA_UP, 7
-// };
-
 void CSRNew::setupDerivativeData() {
   if (!isMaster) { return; }
   const auto &asp = auxStatePoints;
   setDrsData(*asp[4], *asp[3], Derivative::CENTERED);
-  setDThetaData(*asp[1], *asp[6], Derivative::CENTERED);
+  setDThetaData(*asp[6], *asp[1], Derivative::CENTERED);
   for (size_t i = 0; i < asp.size(); ++i) {
     switch (i) {
     case 0: // RS_DOWN_THETA_DOWN
@@ -540,31 +529,42 @@ void CSRNew::setupDerivativeData() {
       break;
     }
   }
+
+  // enum StructIdx {
+//   RS_DOWN_THETA_DOWN, 0
+//   RS_THETA_DOWN, 1
+//   RS_UP_THETA_DOWN, 2
+//   RS_DOWN_THETA, 3
+//   RS_UP_THETA, 4
+//   RS_DOWN_THETA_UP, 5
+//   RS_THETA_UP, 6
+//   RS_UP_THETA_UP, 7
+// };
   for (size_t i = 0; i < asp.size(); ++i) {
     switch (i) {
     case 0: // RS_DOWN_THETA_DOWN
-      asp[0]->setDThetaData(*asp[4], *asp[7], Derivative::FORWARD);
+      asp[0]->setDThetaData(*asp[3], *asp[5], Derivative::FORWARD);
       break;
     case 1: // RS_THETA_DOWN
-      asp[1]->setDThetaData(*this, *asp[7], Derivative::FORWARD);
+      asp[1]->setDThetaData(*this, *asp[6], Derivative::FORWARD);
       break;
     case 2: // RS_UP_THETA_DOWN
-      asp[2]->setDThetaData(*asp[5], *asp[7], Derivative::FORWARD);
+      asp[2]->setDThetaData(*asp[4], *asp[7], Derivative::FORWARD);
       break;
     case 3: // RS_DOWN_THETA
-      asp[3]->setDThetaData(*asp[6], *asp[0], Derivative::CENTERED);
+      asp[3]->setDThetaData(*asp[5], *asp[0], Derivative::CENTERED);
       break;
     case 4: // RS_UP_THETA
-      asp[4]->setDThetaData(*asp[7], *asp[1], Derivative::CENTERED);
+      asp[4]->setDThetaData(*asp[7], *asp[2], Derivative::CENTERED);
       break;
     case 5: // RS_DOWN_THETA_UP
-      asp[5]->setDThetaData(*asp[2], *asp[6], Derivative::BACKWARD);
+      asp[5]->setDThetaData(*asp[3], *asp[0], Derivative::BACKWARD);
       break;
     case 6: // RS_THETA_UP
-      asp[6]->setDThetaData(*this, *asp[3], Derivative::BACKWARD);
+      asp[6]->setDThetaData(*this, *asp[1], Derivative::BACKWARD);
       break;
     case 7: // RS_UP_THETA_UP
-      asp[7]->setDThetaData(*asp[4], *asp[0], Derivative::BACKWARD);
+      asp[7]->setDThetaData(*asp[4], *asp[2], Derivative::BACKWARD);
       break;
     }
   }
