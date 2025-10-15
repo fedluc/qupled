@@ -117,9 +117,9 @@ private:
   void initialGuessStls() override { Stls::initialGuess(); };
   void computeSsfStls() override { Stls::computeSsf(); };
   void computeLfc() override { CSRNew::computeLfc(); }
-  void computeSsf() override { CSRNew::computeSsf();};
+  void computeSsf() override { CSRNew::computeSsf(); };
   void initialGuess() override { CSRNew::initialGuess(); };
-  void computeLfcStls() override { Stls::computeLfc();};
+  void computeLfcStls() override { Stls::computeLfc(); };
 };
 
 #endif

@@ -615,8 +615,6 @@ void CSRNew::computeLfc() {
   }
 }
 
-
-
 // void StructPropBase::doIterations() {
 // ADD SOMETHING ABOUT NOT INITIALIZING IF ALREADY DONE
 //   const int maxIter = in().getNIter();
