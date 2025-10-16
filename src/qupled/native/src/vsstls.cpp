@@ -81,25 +81,18 @@ StructProp::StructProp(const std::shared_ptr<const VSStlsInput> &in_)
 StlsCSRNew::StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
                        const bool isMaster_)
     : CSRNew(isMaster_),
-      Stls(in_, false),
-      isInitialized(false) {
+      Stls(in_, false) {
   if (isMaster) { setupAuxiliaryStatePoints(*in_); }
 }
 
 int StlsCSRNew::compute() {
   int status = Stls::compute();
   std::cerr << formatUtil::format("Alpha = {:.5e}, Residual error "
-                             "(structural properties) = {:.5e}",
-                             alpha,
-                             computeError()) << std::endl;
+                                  "(structural properties) = {:.5e}",
+                                  alpha,
+                                  computeError())
+            << std::endl;
   return status;
-}
-
-void StlsCSRNew::init() {
-  if (!isInitialized) {
-    Stls::init();
-    isInitialized = true;
-  }
 }
 
 void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {

@@ -241,6 +241,10 @@ vector<double> ThermoPropBase::getInternalEnergyData() const {
   assert(structProp);
   // Internal energy
   const vector<double> uVec = structProp->getInternalEnergy();
+  for (const double val : uVec) {
+    std::cerr << formatUtil::format("Internal energy data: {:.5f}", val)
+              << std::endl;
+  }
   const double u = uVec[SIdx::RS_THETA];
   // Internal energy derivative with respect to the coupling parameter
   double ur;
@@ -531,15 +535,15 @@ void CSRNew::setupDerivativeData() {
   }
 
   // enum StructIdx {
-//   RS_DOWN_THETA_DOWN, 0
-//   RS_THETA_DOWN, 1
-//   RS_UP_THETA_DOWN, 2
-//   RS_DOWN_THETA, 3
-//   RS_UP_THETA, 4
-//   RS_DOWN_THETA_UP, 5
-//   RS_THETA_UP, 6
-//   RS_UP_THETA_UP, 7
-// };
+  //   RS_DOWN_THETA_DOWN, 0
+  //   RS_THETA_DOWN, 1
+  //   RS_UP_THETA_DOWN, 2
+  //   RS_DOWN_THETA, 3
+  //   RS_UP_THETA, 4
+  //   RS_DOWN_THETA_UP, 5
+  //   RS_THETA_UP, 6
+  //   RS_UP_THETA_UP, 7
+  // };
   for (size_t i = 0; i < asp.size(); ++i) {
     switch (i) {
     case 0: // RS_DOWN_THETA_DOWN
@@ -578,6 +582,15 @@ void CSRNew::setDThetaData(CSRNew &up, CSRNew &down, const Derivative &dType) {
   lfcTheta = DerivativeData{dType, &up.getLfc(), &down.getLfc()};
 }
 
+void CSRNew::init() {
+  // if (isInitialized) { return; }
+  initStls();
+  for (auto &asp : auxStatePoints) {
+    asp->initStls();
+  }
+  // isInitialized = true;
+}
+
 void CSRNew::initialGuess() {
   initialGuessStls();
   for (auto &asp : auxStatePoints) {
@@ -612,6 +625,13 @@ void CSRNew::computeLfc() {
   getLfc().diff(lfcDerivative);
   for (auto &asp : auxStatePoints) {
     asp->getLfc().diff(asp->lfcDerivative);
+  }
+}
+
+void CSRNew::updateSolution() {
+  updateSolutionStls();
+  for (auto &asp : auxStatePoints) {
+    asp->updateSolutionStls();
   }
 }
 

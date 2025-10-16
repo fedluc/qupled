@@ -222,6 +222,7 @@ public:
   // Constructor
   CSRNew(const bool isMaster_)
       : isMaster(isMaster_),
+        isInitialized(false),
         alpha(DEFAULT_ALPHA) {};
   // Destructor
   virtual ~CSRNew() = default;
@@ -267,6 +268,8 @@ protected:
   std::vector<std::shared_ptr<CSRNew>> auxStatePoints;
   // Flag marking if this is the master state point
   const bool isMaster;
+  // Flag marking if init was already called
+  bool isInitialized;
   // Derivative contribution to  the local field correction
   Vector2D lfcDerivative;
   // Free parameter
@@ -279,13 +282,17 @@ protected:
   virtual const VSInput &inVS() const = 0;
   virtual const Input &inRpa() const = 0;
   // Compute the local field correction
+  void init();
   void computeLfcDerivative();
   void computeLfc();
   void computeSsf();
   void initialGuess();
+  void updateSolution();
+  virtual void initStls() = 0;
   virtual void computeLfcStls() = 0;
   virtual void initialGuessStls() = 0;
   virtual void computeSsfStls() = 0;
+  virtual void updateSolutionStls() = 0;
   // Helper methods to compute the derivatives
   double getDerivative(const Vector2D &f,
                        const int &l,

@@ -100,8 +100,6 @@ public:
 
 private:
 
-  // Flag marking wheter init was already called or not
-  bool isInitialized;
   // Input parameters
   const VSInput &inVS() const override {
     return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
@@ -113,13 +111,16 @@ private:
   void setupAuxiliaryStatePoints(const VSStlsInput &in);
   // Getters
   Vector2D &getLfc() override { return lfc; }
-  void init() override;
+  void init() override { CSRNew::init(); };
+  void initStls() override { Stls::init(); };
   void initialGuessStls() override { Stls::initialGuess(); };
   void computeSsfStls() override { Stls::computeSsf(); };
   void computeLfc() override { CSRNew::computeLfc(); }
   void computeSsf() override { CSRNew::computeSsf(); };
   void initialGuess() override { CSRNew::initialGuess(); };
+  void updateSolution() override { CSRNew::updateSolution(); };
   void computeLfcStls() override { Stls::computeLfc(); };
+  void updateSolutionStls() override { Stls::updateSolution(); }
 };
 
 #endif
