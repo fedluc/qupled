@@ -85,15 +85,7 @@ StlsCSRNew::StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
   if (isMaster) { setupAuxiliaryStatePoints(*in_); }
 }
 
-int StlsCSRNew::compute() {
-  int status = Stls::compute();
-  std::cerr << formatUtil::format("Alpha = {:.5e}, Residual error "
-                                  "(structural properties) = {:.5e}",
-                                  alpha,
-                                  computeError())
-            << std::endl;
-  return status;
-}
+int StlsCSRNew::compute() { return status = Stls::compute(); }
 
 void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {
   const double &drs = in.getCouplingResolution();

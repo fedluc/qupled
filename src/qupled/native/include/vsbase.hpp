@@ -235,6 +235,7 @@ public:
   virtual const std::vector<double> &getWvg() const = 0;
   virtual const Vector2D &getLfc() const = 0;
   virtual Vector2D &getLfc() = 0;
+  virtual const double &getError() const = 0;
   // Get the free parameter
   double getAlpha() const { return alpha; }
   // Get input

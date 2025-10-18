@@ -97,6 +97,7 @@ public:
   const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
   const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
   const Vector2D &getLfc() const override { return Stls::getLfc(); }
+  const double &getError() const override { return Stls::getError(); }
 
 private:
 

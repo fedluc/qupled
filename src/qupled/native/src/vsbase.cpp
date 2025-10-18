@@ -241,10 +241,6 @@ vector<double> ThermoPropBase::getInternalEnergyData() const {
   assert(structProp);
   // Internal energy
   const vector<double> uVec = structProp->getInternalEnergy();
-  for (const double val : uVec) {
-    std::cerr << formatUtil::format("Internal energy data: {:.5f}", val)
-              << std::endl;
-  }
   const double u = uVec[SIdx::RS_THETA];
   // Internal energy derivative with respect to the coupling parameter
   double ur;
@@ -310,6 +306,10 @@ StructPropBase::StructPropBase(
 
 int StructPropBase::compute() {
   int status = csr->compute();
+  println(formatUtil::format("Alpha = {:.5e}, Residual error "
+                             "(structural properties) = {:.5e}",
+                             csr->getAlpha(),
+                             csr->getError()));
   computed = true;
   return status;
 }
@@ -520,7 +520,7 @@ void CSRNew::setupDerivativeData() {
       asp[3]->setDrsData(*this, *asp[4], Derivative::FORWARD);
       break;
     case 4: // RS_UP_THETA
-      asp[4]->setDrsData(*this, *asp[2], Derivative::BACKWARD);
+      asp[4]->setDrsData(*this, *asp[3], Derivative::BACKWARD);
       break;
     case 5: // RS_DOWN_THETA_UP
       asp[5]->setDrsData(*asp[6], *asp[7], Derivative::FORWARD);
@@ -533,17 +533,6 @@ void CSRNew::setupDerivativeData() {
       break;
     }
   }
-
-  // enum StructIdx {
-  //   RS_DOWN_THETA_DOWN, 0
-  //   RS_THETA_DOWN, 1
-  //   RS_UP_THETA_DOWN, 2
-  //   RS_DOWN_THETA, 3
-  //   RS_UP_THETA, 4
-  //   RS_DOWN_THETA_UP, 5
-  //   RS_THETA_UP, 6
-  //   RS_UP_THETA_UP, 7
-  // };
   for (size_t i = 0; i < asp.size(); ++i) {
     switch (i) {
     case 0: // RS_DOWN_THETA_DOWN
@@ -583,12 +572,12 @@ void CSRNew::setDThetaData(CSRNew &up, CSRNew &down, const Derivative &dType) {
 }
 
 void CSRNew::init() {
-  // if (isInitialized) { return; }
+  if (isInitialized) { return; }
   initStls();
   for (auto &asp : auxStatePoints) {
     asp->initStls();
   }
-  // isInitialized = true;
+  isInitialized = true;
 }
 
 void CSRNew::initialGuess() {
