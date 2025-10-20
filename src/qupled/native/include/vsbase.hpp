@@ -78,7 +78,7 @@ enum StructIdx {
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-class ThermoPropBase {
+class ThermoPropBase : public Logger {
 
 public:
 
@@ -121,7 +121,7 @@ protected:
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
   // Structural properties (this must be set from the derived classes)
-  std::shared_ptr<StructPropBase> structProp;
+  std::shared_ptr<CSRNew> structProp;
   // Grid for thermodyamic integration
   std::vector<double> rsGrid;
   // Free energy integrand for NPOINTS state points
@@ -158,58 +158,6 @@ protected:
 };
 
 // -----------------------------------------------------------------
-// StructPropBase class
-// -----------------------------------------------------------------
-
-class StructPropBase : public Logger {
-
-public:
-
-  // Typedef
-  using Idx = StructIdx;
-  static constexpr int NRS = 3;
-  static constexpr int NTHETA = 3;
-  static constexpr int NPOINTS = NRS * NTHETA;
-  // Constructor
-  explicit StructPropBase(const std::shared_ptr<const IterationInput> &in_);
-  // Destructor
-  virtual ~StructPropBase() = default;
-  // Compute structural properties
-  int compute();
-  // Set free parameter
-  void setAlpha(const double &alpha);
-  // Get coupling parameters for all the state points
-  const std::vector<double> getCouplingParameters() const;
-  // Get degeneracy parameters for all the state points
-  const std::vector<double> getDegeneracyParameters() const;
-  // Get internal energy for all the state points
-  const std::vector<double> getInternalEnergy() const;
-  // Get free energy integrand for all the state points
-  const std::vector<double> getFreeEnergyIntegrand() const;
-  // Get static structure factor
-  const std::vector<double> &getSsf() const;
-  // Get local field correction
-  const Vector2D &getLfc() const;
-  // Get the free parameter
-  double getAlpha() const;
-  // Get structural properties for output
-  const CSRNew &getCsr(const Idx &idx) const;
-  // Boolean marking whether the structural properties where computed or not
-  bool isComputed() const { return computed; }
-
-protected:
-
-  // Input parameters
-  const std::shared_ptr<const IterationInput> inPtr;
-  // Vector containing NPOINTS state points to be solved simultaneously
-  std::shared_ptr<CSRNew> csr;
-  // Flag marking whether the structural properties were computed
-  bool computed;
-  // Access input pointer
-  const IterationInput &in() const { return *inPtr; }
-};
-
-// -----------------------------------------------------------------
 // CSRNew class
 // -----------------------------------------------------------------
 
@@ -229,10 +177,11 @@ public:
   // Set the free parameter
   void setAlpha(const double &alpha);
   // Getters
+  const std::vector<double> &getSsf(const size_t &idx) const;
+  const Vector2D &getLfc(const size_t &idx) const;
   virtual const std::vector<double> &getSsf() const = 0;
   virtual const std::vector<double> &getWvg() const = 0;
   virtual const Vector2D &getLfc() const = 0;
-  virtual Vector2D &getLfc() = 0;
   double getError() const { return computeError(); };
   // Get the free parameter
   double getAlpha() const;
@@ -308,6 +257,8 @@ protected:
   void setupDerivativeData();
   void setDrsData(CSRNew &up, CSRNew &down, const Derivative &dType);
   void setDThetaData(CSRNew &up, CSRNew &down, const Derivative &dType);
+  // Getters
+  virtual Vector2D &getLfc() = 0;
 };
 
 #endif

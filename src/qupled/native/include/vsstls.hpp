@@ -57,27 +57,7 @@ public:
 private:
 
   // Structural properties
-  std::shared_ptr<StructProp> structProp;
-};
-
-// -----------------------------------------------------------------
-// StructProp class
-// -----------------------------------------------------------------
-
-class StructProp : public StructPropBase {
-
-public:
-
-  explicit StructProp(const std::shared_ptr<const VSStlsInput> &in_);
-
-private:
-
-  // Structural properties
-  std::shared_ptr<StlsCSRNew> csr;
-  // Input parameters
-  const VSStlsInput &in() const {
-    return *StlsUtil::dynamic_pointer_cast<IterationInput, VSStlsInput>(inPtr);
-  }
+  std::shared_ptr<StlsCSRNew> structProp;
 };
 
 // -----------------------------------------------------------------
@@ -89,8 +69,10 @@ class StlsCSRNew : public CSRNew, public Stls {
 public:
 
   // Constructor
-  explicit StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
-                      const bool isMaster_);
+  explicit StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_)
+      : StlsCSRNew(in_, true) {}
+  StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
+             const bool isMaster_);
   // Compute static local field correction
   int compute() override;
   // // Getters

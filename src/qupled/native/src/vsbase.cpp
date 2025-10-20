@@ -164,7 +164,11 @@ double ThermoPropBase::getFirstUnsolvedStatePoint() const {
 void ThermoPropBase::compute() {
   assert(structProp);
   structProp->compute();
-  const vector<double> fxciTmp = structProp->getFreeEnergyIntegrand();
+  println(formatUtil::format("Alpha = {:.5e}, Residual error "
+                             "(structural properties) = {:.5e}",
+                             structProp->getAlpha(),
+                             structProp->getError()));
+  const vector<double> fxciTmp = structProp->getAllFreeEnergyIntegrands();
   alpha = structProp->getAlpha();
   const size_t &idx = fxcIdxTargetStatePoint;
   fxcIntegrand[THETA_DOWN][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
@@ -180,23 +184,18 @@ void ThermoPropBase::compute() {
 
 const vector<double> &ThermoPropBase::getSsf() {
   assert(structProp);
-  if (!structProp->isComputed()) { structProp->compute(); }
-  std::cerr << "ThermoPropBase::getSsf() FIX INDEX ACCESSING " << std::endl;
-  return structProp->getSsf(); // Fix correct index accessing
-  // return structProp->getCsr(getStructPropIdx()).getSsf();
+  return structProp->getSsf(getStructPropIdx());
 }
 
 const Vector2D &ThermoPropBase::getLfc() {
   assert(structProp);
-  if (!structProp->isComputed()) { structProp->compute(); }
-  return structProp->getLfc(); // Fix correct index accessing
-  // return structProp->getCsr(getStructPropIdx()).getLfc();
+  return structProp->getLfc(getStructPropIdx());
 }
 
 vector<double> ThermoPropBase::getFreeEnergyData() const {
   assert(structProp);
-  const vector<double> rsVec = structProp->getCouplingParameters();
-  const vector<double> thetaVec = structProp->getDegeneracyParameters();
+  const vector<double> rsVec = structProp->getAllCouplingParameters();
+  const vector<double> thetaVec = structProp->getAllDegeneracyParameters();
   // Free energy
   const double fxc = computeFreeEnergy(SIdx::RS_THETA, true);
   // Free energy derivatives with respect to the coupling parameter
@@ -241,14 +240,14 @@ vector<double> ThermoPropBase::getFreeEnergyData() const {
 vector<double> ThermoPropBase::getInternalEnergyData() const {
   assert(structProp);
   // Internal energy
-  const vector<double> uVec = structProp->getInternalEnergy();
+  const vector<double> uVec = structProp->getAllInternalEnergies();
   const double u = uVec[SIdx::RS_THETA];
   // Internal energy derivative with respect to the coupling parameter
   double ur;
   {
-    const vector<double> rs = structProp->getCouplingParameters();
+    const vector<double> rs = structProp->getAllCouplingParameters();
     const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
-    const vector<double> rsu = structProp->getFreeEnergyIntegrand();
+    const vector<double> rsu = structProp->getAllFreeEnergyIntegrands();
     const double &u0 = rsu[SIdx::RS_UP_THETA];
     const double &u1 = rsu[SIdx::RS_DOWN_THETA];
     ur = (u0 - u1) / (2.0 * drs) - u;
@@ -256,7 +255,7 @@ vector<double> ThermoPropBase::getInternalEnergyData() const {
   // Internal energy derivative with respect to the degeneracy parameter
   double ut;
   {
-    const vector<double> theta = structProp->getDegeneracyParameters();
+    const vector<double> theta = structProp->getAllDegeneracyParameters();
     const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
     const double u0 = uVec[SIdx::RS_THETA_UP];
     const double u1 = uVec[SIdx::RS_THETA_DOWN];
@@ -284,7 +283,7 @@ double ThermoPropBase::computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
     break;
   }
   assert(structProp);
-  const vector<double> &rs = structProp->getCouplingParameters();
+  const vector<double> &rs = structProp->getAllCouplingParameters();
   return thermoUtil::computeFreeEnergy(
       rsGrid, fxcIntegrand[iThermo], rs[iStruct], normalize);
 }
@@ -297,49 +296,6 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
 }
 
 // -----------------------------------------------------------------
-// StructPropBase class
-// -----------------------------------------------------------------
-
-StructPropBase::StructPropBase(
-    const std::shared_ptr<const IterationInput> &inPtr_)
-    : inPtr(inPtr_),
-      computed(false) {}
-
-int StructPropBase::compute() {
-  int status = csr->compute();
-  println(formatUtil::format("Alpha = {:.5e}, Residual error "
-                             "(structural properties) = {:.5e}",
-                             csr->getAlpha(),
-                             csr->getError()));
-  computed = true;
-  return status;
-}
-
-double StructPropBase::getAlpha() const { return csr->getAlpha(); }
-
-void StructPropBase::setAlpha(const double &alpha) { csr->setAlpha(alpha); }
-
-const vector<double> StructPropBase::getCouplingParameters() const {
-  return csr->getAllCouplingParameters();
-}
-
-const vector<double> StructPropBase::getDegeneracyParameters() const {
-  return csr->getAllDegeneracyParameters();
-}
-
-const vector<double> StructPropBase::getInternalEnergy() const {
-  return csr->getAllInternalEnergies();
-}
-
-const vector<double> StructPropBase::getFreeEnergyIntegrand() const {
-  return csr->getAllFreeEnergyIntegrands();
-}
-
-const vector<double> &StructPropBase::getSsf() const { return csr->getSsf(); }
-
-const Vector2D &StructPropBase::getLfc() const { return csr->getLfc(); }
-
-// -----------------------------------------------------------------
 // CSRNew class
 // -----------------------------------------------------------------
 
@@ -347,6 +303,16 @@ const Vector2D &StructPropBase::getLfc() const { return csr->getLfc(); }
 double CSRNew::getAlpha() const {
   if (isManager) { return workers[StructIdx::RS_THETA]->getAlpha(); }
   return alpha;
+}
+
+const std::vector<double> &CSRNew::getSsf(const size_t &idx) const {
+  if (isManager) { return workers[idx]->getSsf(); }
+  return getSsf();
+}
+
+const Vector2D &CSRNew::getLfc(const size_t &idx) const {
+  if (isManager) { return workers[idx]->getLfc(); }
+  return getLfc();
 }
 
 void CSRNew::setAlpha(const double &alpha_) {
@@ -497,91 +463,6 @@ double CSRNew::getDerivative(const double &f0,
 }
 
 void CSRNew::setupDerivativeData() {
-  // if (!isManager) { return; }
-  // for (size_t i = 0; i < workers.size(); ++i) {
-  //   auto worker = workers[i];
-  //   switch (i) {
-  //   case RS_DOWN_THETA_DOWN:
-  //     worker->setDrsData(*workers[RS_THETA_DOWN],
-  //                        *workers[RS_UP_THETA_DOWN],
-  //                        Derivative::FORWARD);
-  //     break;
-  //   case RS_THETA_DOWN:
-  //     worker->setDrsData(*workers[RS_UP_THETA_DOWN],
-  //                        *workers[RS_DOWN_THETA_DOWN],
-  //                        Derivative::CENTERED);
-  //     break;
-  //   case RS_UP_THETA_DOWN:
-  //     worker->setDrsData(*workers[RS_THETA_DOWN],
-  //                        *workers[RS_DOWN_THETA_DOWN],
-  //                        Derivative::BACKWARD);
-  //     break;
-  //   case RS_DOWN_THETA:
-  //     worker->setDrsData(
-  //         *workers[RS_THETA], *workers[RS_UP_THETA], Derivative::FORWARD);
-  //     break;
-  //   case RS_UP_THETA:
-  //     worker->setDrsData(
-  //         *workers[RS_THETA], *workers[RS_DOWN_THETA], Derivative::BACKWARD);
-  //     break;
-  //   case RS_DOWN_THETA_UP:
-  //     worker->setDrsData(
-  //         *workers[RS_THETA_UP], *workers[RS_UP_THETA_UP], Derivative::FORWARD);
-  //     break;
-  //   case RS_THETA_UP:
-  //     worker->setDrsData(*workers[RS_UP_THETA_UP],
-  //                        *workers[RS_DOWN_THETA_UP],
-  //                        Derivative::CENTERED);
-  //     break;
-  //   case RS_UP_THETA_UP:
-  //     worker->setDrsData(*workers[RS_THETA_UP],
-  //                        *workers[RS_DOWN_THETA_UP],
-  //                        Derivative::BACKWARD);
-  //     break;
-  //   }
-  // }
-  // for (size_t i = 0; i < workers.size(); ++i) {
-  //   auto worker = workers[i];
-  //   switch (i) {
-  //   case RS_DOWN_THETA_DOWN:
-  //     worker->setDThetaData(*workers[RS_DOWN_THETA],
-  //                           *workers[RS_DOWN_THETA_UP],
-  //                           Derivative::FORWARD);
-  //     break;
-  //   case RS_THETA_DOWN:
-  //     worker->setDThetaData(
-  //         *workers[RS_THETA], *workers[RS_THETA_UP], Derivative::FORWARD);
-  //     break;
-  //   case RS_UP_THETA_DOWN:
-  //     worker->setDThetaData(
-  //         *workers[RS_UP_THETA], *workers[RS_UP_THETA_UP], Derivative::FORWARD);
-  //     break;
-  //   case RS_DOWN_THETA:
-  //     worker->setDThetaData(*workers[RS_DOWN_THETA_UP],
-  //                           *workers[RS_DOWN_THETA_DOWN],
-  //                           Derivative::CENTERED);
-  //     break;
-  //   case RS_UP_THETA:
-  //     worker->setDThetaData(*workers[RS_UP_THETA_UP],
-  //                           *workers[RS_UP_THETA_DOWN],
-  //                           Derivative::CENTERED);
-  //     break;
-  //   case RS_DOWN_THETA_UP:
-  //     worker->setDThetaData(*workers[RS_DOWN_THETA],
-  //                           *workers[RS_DOWN_THETA_DOWN],
-  //                           Derivative::BACKWARD);
-  //     break;
-  //   case RS_THETA_UP:
-  //     worker->setDThetaData(
-  //         *workers[RS_THETA], *workers[RS_THETA_DOWN], Derivative::BACKWARD);
-  //     break;
-  //   case RS_UP_THETA_UP:
-  //     worker->setDThetaData(*workers[RS_UP_THETA],
-  //                           *workers[RS_UP_THETA_DOWN],
-  //                           Derivative::BACKWARD);
-  //     break;
-  //   }
-  // }
   for (size_t i = 0; i < workers.size(); ++i) {
     auto &worker = *workers[i];
     switch (i) {

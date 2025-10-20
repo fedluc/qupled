@@ -60,18 +60,8 @@ void VSStls::init() { Rpa::init(); }
 
 ThermoProp::ThermoProp(const std::shared_ptr<const VSStlsInput> &in_)
     : ThermoPropBase(in_),
-      structProp(make_shared<StructProp>(in_)) {
+      structProp(make_shared<StlsCSRNew>(in_)) {
   ThermoPropBase::structProp = structProp;
-}
-
-// -----------------------------------------------------------------
-// StructProp class
-// -----------------------------------------------------------------
-
-StructProp::StructProp(const std::shared_ptr<const VSStlsInput> &in_)
-    : StructPropBase(in_),
-      csr(make_shared<StlsCSRNew>(in_, true)) {
-  StructPropBase::csr = csr;
 }
 
 // -----------------------------------------------------------------
