@@ -219,11 +219,9 @@ public:
 
   // Enumerator to denote the numerical schemes used for the derivatives
   enum Derivative { CENTERED, FORWARD, BACKWARD };
-  // Constructor
-  CSRNew(const bool isMaster_)
-      : isMaster(isMaster_),
-        isInitialized(false),
-        alpha(DEFAULT_ALPHA) {};
+  // Constructor (only manager instances can be created from the outside)
+  CSRNew()
+      : CSRNew(true) {}
   // Destructor
   virtual ~CSRNew() = default;
   // Solve the scheme
@@ -235,16 +233,9 @@ public:
   virtual const std::vector<double> &getWvg() const = 0;
   virtual const Vector2D &getLfc() const = 0;
   virtual Vector2D &getLfc() = 0;
-  virtual const double &getError() const = 0;
+  double getError() const { return computeError(); };
   // Get the free parameter
-  double getAlpha() const { return alpha; }
-  // Get input
-  double getCoupling() const { return inRpa().getCoupling(); }
-  double getDegeneracy() const { return inRpa().getDegeneracy(); }
-  // Compute the internal energy
-  double getInternalEnergy() const;
-  // Compute the free energy integrand
-  double getFreeEnergyIntegrand() const;
+  double getAlpha() const;
   // Get coupling parameters for all the state points
   std::vector<double> getAllCouplingParameters() const;
   // Get degeneracy parameters for all the state points
@@ -261,14 +252,19 @@ protected:
     const Vector2D *up;
     const Vector2D *down;
   };
+  // Constructor
+  CSRNew(const bool isManager_)
+      : isManager(isManager_),
+        isInitialized(false),
+        alpha(DEFAULT_ALPHA) {};
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
   static constexpr int NRS = 3;
   static constexpr int NTHETA = 3;
   // Auxiliary state points
-  std::vector<std::shared_ptr<CSRNew>> auxStatePoints;
-  // Flag marking if this is the master state point
-  const bool isMaster;
+  std::vector<std::shared_ptr<CSRNew>> workers;
+  // Flag marking if this is a manager instance or a worker instance
+  const bool isManager;
   // Flag marking if init was already called
   bool isInitialized;
   // Derivative contribution to  the local field correction
@@ -286,14 +282,19 @@ protected:
   void init();
   void computeLfcDerivative();
   void computeLfc();
+  void computeLfcPart1();
+  void computeLfcPart2();
+  void computeLfcPart3();
   void computeSsf();
   void initialGuess();
   void updateSolution();
+  double computeError() const;
   virtual void initStls() = 0;
   virtual void computeLfcStls() = 0;
   virtual void initialGuessStls() = 0;
   virtual void computeSsfStls() = 0;
   virtual void updateSolutionStls() = 0;
+  virtual double computeErrorStls() const = 0;
   // Helper methods to compute the derivatives
   double getDerivative(const Vector2D &f,
                        const int &l,

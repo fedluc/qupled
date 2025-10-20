@@ -97,7 +97,6 @@ public:
   const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
   const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
   const Vector2D &getLfc() const override { return Stls::getLfc(); }
-  const double &getError() const override { return Stls::getError(); }
 
 private:
 
@@ -120,8 +119,10 @@ private:
   void computeSsf() override { CSRNew::computeSsf(); };
   void initialGuess() override { CSRNew::initialGuess(); };
   void updateSolution() override { CSRNew::updateSolution(); };
+  double computeError() const override { return CSRNew::computeError(); }
   void computeLfcStls() override { Stls::computeLfc(); };
   void updateSolutionStls() override { Stls::updateSolution(); }
+  double computeErrorStls() const override { return Stls::computeError(); }
 };
 
 #endif

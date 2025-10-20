@@ -82,10 +82,10 @@ StlsCSRNew::StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
                        const bool isMaster_)
     : CSRNew(isMaster_),
       Stls(in_, false) {
-  if (isMaster) { setupAuxiliaryStatePoints(*in_); }
+  if (isManager) { setupAuxiliaryStatePoints(*in_); }
 }
 
-int StlsCSRNew::compute() { return status = Stls::compute(); }
+int StlsCSRNew::compute() { return Stls::compute(); }
 
 void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {
   const double &drs = in.getCouplingResolution();
@@ -100,11 +100,9 @@ void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {
       std::shared_ptr<VSStlsInput> inTmp = std::make_shared<VSStlsInput>(in);
       inTmp->setDegeneracy(thetaTmp);
       inTmp->setCoupling(rsTmp);
-      if (thetaTmp != theta || rsTmp != rs) {
-        auxStatePoints.push_back(make_shared<StlsCSRNew>(inTmp, false));
-      }
+      workers.push_back(make_shared<StlsCSRNew>(inTmp, false));
     }
   }
-  assert(auxStatePoints.size() == NRS * NTHETA - 1);
+  assert(workers.size() == NRS * NTHETA);
   setupDerivativeData();
 }

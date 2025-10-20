@@ -181,6 +181,7 @@ void ThermoPropBase::compute() {
 const vector<double> &ThermoPropBase::getSsf() {
   assert(structProp);
   if (!structProp->isComputed()) { structProp->compute(); }
+  std::cerr << "ThermoPropBase::getSsf() FIX INDEX ACCESSING " << std::endl;
   return structProp->getSsf(); // Fix correct index accessing
   // return structProp->getCsr(getStructPropIdx()).getSsf();
 }
@@ -342,74 +343,69 @@ const Vector2D &StructPropBase::getLfc() const { return csr->getLfc(); }
 // CSRNew class
 // -----------------------------------------------------------------
 
+// Get the free parameter
+double CSRNew::getAlpha() const {
+  if (isManager) { return workers[StructIdx::RS_THETA]->getAlpha(); }
+  return alpha;
+}
+
 void CSRNew::setAlpha(const double &alpha_) {
-  alpha = alpha_;
-  for (auto &sp : auxStatePoints) {
-    sp->setAlpha(alpha_);
+  if (isManager) {
+    for (auto &worker : workers) {
+      worker->setAlpha(alpha_);
+    }
+  } else {
+    alpha = alpha_;
   }
 }
 
 std::vector<double> CSRNew::getAllCouplingParameters() const {
   vector<double> all;
-  all.push_back(getCoupling());
-  if (isMaster) {
-    for (auto &sp : auxStatePoints) {
-      all.push_back(sp->getCoupling());
+  if (isManager) {
+    for (auto &worker : workers) {
+      all.push_back(worker->inRpa().getCoupling());
     }
-    // Ensure that the target state point is in the center
-    std::rotate(all.begin(), all.begin() + 1, all.begin() + NRS + 2);
   }
   return all;
 }
 
 std::vector<double> CSRNew::getAllDegeneracyParameters() const {
   vector<double> all;
-  all.push_back(getDegeneracy());
-  if (isMaster) {
-    for (auto &sp : auxStatePoints) {
-      all.push_back(sp->getDegeneracy());
+  if (isManager) {
+    for (auto &worker : workers) {
+      all.push_back(worker->inRpa().getDegeneracy());
     }
-    // Ensure that the target state point is in the center
-    std::rotate(all.begin(), all.begin() + 1, all.begin() + NRS + 2);
   }
   return all;
 }
 
 std::vector<double> CSRNew::getAllInternalEnergies() const {
   vector<double> all;
-  all.push_back(getInternalEnergy());
-  if (isMaster) {
-    for (auto &sp : auxStatePoints) {
-      all.push_back(sp->getInternalEnergy());
+  if (isManager) {
+    for (auto &worker : workers) {
+      const auto rs = worker->inRpa().getCoupling();
+      const auto wvg = worker->getWvg();
+      const auto ssf = worker->getSsf();
+      const auto dim = worker->inRpa().getDimension();
+      const double uint = thermoUtil::computeInternalEnergy(wvg, ssf, rs, dim);
+      all.push_back(uint);
     }
-    // Ensure that the target state point is in the center
-    std::rotate(all.begin(), all.begin() + 1, all.begin() + NRS + 2);
   }
   return all;
 }
 
 std::vector<double> CSRNew::getAllFreeEnergyIntegrands() const {
   vector<double> all;
-  all.push_back(getFreeEnergyIntegrand());
-  if (isMaster) {
-    for (auto &sp : auxStatePoints) {
-      all.push_back(sp->getFreeEnergyIntegrand());
+  if (isManager) {
+    for (auto &worker : workers) {
+      const auto wvg = worker->getWvg();
+      const auto ssf = worker->getSsf();
+      const auto dim = worker->inRpa().getDimension();
+      const double uint = thermoUtil::computeInternalEnergy(wvg, ssf, 1.0, dim);
+      all.push_back(uint);
     }
-    // Ensure that the target state point is in the center
-    std::rotate(all.begin(), all.begin() + 1, all.begin() + NRS + 2);
   }
   return all;
-}
-
-double CSRNew::getInternalEnergy() const {
-  const double rs = inRpa().getCoupling();
-  return thermoUtil::computeInternalEnergy(
-      getWvg(), getSsf(), rs, inRpa().getDimension());
-}
-
-double CSRNew::getFreeEnergyIntegrand() const {
-  return thermoUtil::computeInternalEnergy(
-      getWvg(), getSsf(), 1.0, inRpa().getDimension());
 }
 
 void CSRNew::computeLfcDerivative() {
@@ -501,63 +497,131 @@ double CSRNew::getDerivative(const double &f0,
 }
 
 void CSRNew::setupDerivativeData() {
-  if (!isMaster) { return; }
-  const auto &asp = auxStatePoints;
-  setDrsData(*asp[4], *asp[3], Derivative::CENTERED);
-  setDThetaData(*asp[6], *asp[1], Derivative::CENTERED);
-  for (size_t i = 0; i < asp.size(); ++i) {
+  // if (!isManager) { return; }
+  // for (size_t i = 0; i < workers.size(); ++i) {
+  //   auto worker = workers[i];
+  //   switch (i) {
+  //   case RS_DOWN_THETA_DOWN:
+  //     worker->setDrsData(*workers[RS_THETA_DOWN],
+  //                        *workers[RS_UP_THETA_DOWN],
+  //                        Derivative::FORWARD);
+  //     break;
+  //   case RS_THETA_DOWN:
+  //     worker->setDrsData(*workers[RS_UP_THETA_DOWN],
+  //                        *workers[RS_DOWN_THETA_DOWN],
+  //                        Derivative::CENTERED);
+  //     break;
+  //   case RS_UP_THETA_DOWN:
+  //     worker->setDrsData(*workers[RS_THETA_DOWN],
+  //                        *workers[RS_DOWN_THETA_DOWN],
+  //                        Derivative::BACKWARD);
+  //     break;
+  //   case RS_DOWN_THETA:
+  //     worker->setDrsData(
+  //         *workers[RS_THETA], *workers[RS_UP_THETA], Derivative::FORWARD);
+  //     break;
+  //   case RS_UP_THETA:
+  //     worker->setDrsData(
+  //         *workers[RS_THETA], *workers[RS_DOWN_THETA], Derivative::BACKWARD);
+  //     break;
+  //   case RS_DOWN_THETA_UP:
+  //     worker->setDrsData(
+  //         *workers[RS_THETA_UP], *workers[RS_UP_THETA_UP], Derivative::FORWARD);
+  //     break;
+  //   case RS_THETA_UP:
+  //     worker->setDrsData(*workers[RS_UP_THETA_UP],
+  //                        *workers[RS_DOWN_THETA_UP],
+  //                        Derivative::CENTERED);
+  //     break;
+  //   case RS_UP_THETA_UP:
+  //     worker->setDrsData(*workers[RS_THETA_UP],
+  //                        *workers[RS_DOWN_THETA_UP],
+  //                        Derivative::BACKWARD);
+  //     break;
+  //   }
+  // }
+  // for (size_t i = 0; i < workers.size(); ++i) {
+  //   auto worker = workers[i];
+  //   switch (i) {
+  //   case RS_DOWN_THETA_DOWN:
+  //     worker->setDThetaData(*workers[RS_DOWN_THETA],
+  //                           *workers[RS_DOWN_THETA_UP],
+  //                           Derivative::FORWARD);
+  //     break;
+  //   case RS_THETA_DOWN:
+  //     worker->setDThetaData(
+  //         *workers[RS_THETA], *workers[RS_THETA_UP], Derivative::FORWARD);
+  //     break;
+  //   case RS_UP_THETA_DOWN:
+  //     worker->setDThetaData(
+  //         *workers[RS_UP_THETA], *workers[RS_UP_THETA_UP], Derivative::FORWARD);
+  //     break;
+  //   case RS_DOWN_THETA:
+  //     worker->setDThetaData(*workers[RS_DOWN_THETA_UP],
+  //                           *workers[RS_DOWN_THETA_DOWN],
+  //                           Derivative::CENTERED);
+  //     break;
+  //   case RS_UP_THETA:
+  //     worker->setDThetaData(*workers[RS_UP_THETA_UP],
+  //                           *workers[RS_UP_THETA_DOWN],
+  //                           Derivative::CENTERED);
+  //     break;
+  //   case RS_DOWN_THETA_UP:
+  //     worker->setDThetaData(*workers[RS_DOWN_THETA],
+  //                           *workers[RS_DOWN_THETA_DOWN],
+  //                           Derivative::BACKWARD);
+  //     break;
+  //   case RS_THETA_UP:
+  //     worker->setDThetaData(
+  //         *workers[RS_THETA], *workers[RS_THETA_DOWN], Derivative::BACKWARD);
+  //     break;
+  //   case RS_UP_THETA_UP:
+  //     worker->setDThetaData(*workers[RS_UP_THETA],
+  //                           *workers[RS_UP_THETA_DOWN],
+  //                           Derivative::BACKWARD);
+  //     break;
+  //   }
+  // }
+  for (size_t i = 0; i < workers.size(); ++i) {
+    auto &worker = *workers[i];
     switch (i) {
-    case 0: // RS_DOWN_THETA_DOWN
-      asp[0]->setDrsData(*asp[1], *asp[2], Derivative::FORWARD);
+    case RS_DOWN_THETA_DOWN:
+    case RS_DOWN_THETA:
+    case RS_DOWN_THETA_UP:
+      worker.setDrsData(*workers[i + 1], *workers[i + 2], Derivative::FORWARD);
       break;
-    case 1: // RS_THETA_DOWN
-      asp[1]->setDrsData(*asp[2], *asp[0], Derivative::CENTERED);
+    case RS_THETA_DOWN:
+    case RS_THETA:
+    case RS_THETA_UP:
+      worker.setDrsData(*workers[i + 1], *workers[i - 1], Derivative::CENTERED);
       break;
-    case 2: // RS_UP_THETA_DOWN
-      asp[2]->setDrsData(*asp[1], *asp[0], Derivative::BACKWARD);
-      break;
-    case 3: // RS_DOWN_THETA
-      asp[3]->setDrsData(*this, *asp[4], Derivative::FORWARD);
-      break;
-    case 4: // RS_UP_THETA
-      asp[4]->setDrsData(*this, *asp[3], Derivative::BACKWARD);
-      break;
-    case 5: // RS_DOWN_THETA_UP
-      asp[5]->setDrsData(*asp[6], *asp[7], Derivative::FORWARD);
-      break;
-    case 6: // RS_THETA_UP
-      asp[6]->setDrsData(*asp[7], *asp[5], Derivative::CENTERED);
-      break;
-    case 7: // RS_UP_THETA_UP
-      asp[7]->setDrsData(*asp[6], *asp[5], Derivative::BACKWARD);
+    case RS_UP_THETA_DOWN:
+    case RS_UP_THETA:
+    case RS_UP_THETA_UP:
+      worker.setDrsData(*workers[i - 1], *workers[i - 2], Derivative::BACKWARD);
       break;
     }
   }
-  for (size_t i = 0; i < asp.size(); ++i) {
+  for (size_t i = 0; i < workers.size(); ++i) {
+    auto &worker = *workers[i];
     switch (i) {
-    case 0: // RS_DOWN_THETA_DOWN
-      asp[0]->setDThetaData(*asp[3], *asp[5], Derivative::FORWARD);
+    case StructIdx::RS_DOWN_THETA_DOWN:
+    case StructIdx::RS_THETA_DOWN:
+    case StructIdx::RS_UP_THETA_DOWN:
+      worker.setDThetaData(
+          *workers[i + NRS], *workers[i + 2 * NRS], Derivative::FORWARD);
       break;
-    case 1: // RS_THETA_DOWN
-      asp[1]->setDThetaData(*this, *asp[6], Derivative::FORWARD);
+    case StructIdx::RS_DOWN_THETA:
+    case StructIdx::RS_THETA:
+    case StructIdx::RS_UP_THETA:
+      worker.setDThetaData(
+          *workers[i + NRS], *workers[i - NRS], Derivative::CENTERED);
       break;
-    case 2: // RS_UP_THETA_DOWN
-      asp[2]->setDThetaData(*asp[4], *asp[7], Derivative::FORWARD);
-      break;
-    case 3: // RS_DOWN_THETA
-      asp[3]->setDThetaData(*asp[5], *asp[0], Derivative::CENTERED);
-      break;
-    case 4: // RS_UP_THETA
-      asp[4]->setDThetaData(*asp[7], *asp[2], Derivative::CENTERED);
-      break;
-    case 5: // RS_DOWN_THETA_UP
-      asp[5]->setDThetaData(*asp[3], *asp[0], Derivative::BACKWARD);
-      break;
-    case 6: // RS_THETA_UP
-      asp[6]->setDThetaData(*this, *asp[1], Derivative::BACKWARD);
-      break;
-    case 7: // RS_UP_THETA_UP
-      asp[7]->setDThetaData(*asp[4], *asp[2], Derivative::BACKWARD);
+    case StructIdx::RS_DOWN_THETA_UP:
+    case StructIdx::RS_THETA_UP:
+    case StructIdx::RS_UP_THETA_UP:
+      worker.setDThetaData(
+          *workers[i - NRS], *workers[i - 2 * NRS], Derivative::BACKWARD);
       break;
     }
   }
@@ -572,122 +636,87 @@ void CSRNew::setDThetaData(CSRNew &up, CSRNew &down, const Derivative &dType) {
 }
 
 void CSRNew::init() {
-  if (isInitialized) { return; }
-  initStls();
-  for (auto &asp : auxStatePoints) {
-    asp->initStls();
+  if (isManager) {
+    for (auto &worker : workers) {
+      worker->init();
+    }
+  } else {
+    if (isInitialized) { return; }
+    initStls();
+    isInitialized = true;
   }
-  isInitialized = true;
 }
 
 void CSRNew::initialGuess() {
-  initialGuessStls();
-  for (auto &asp : auxStatePoints) {
-    asp->initialGuessStls();
+  if (isManager) {
+    for (auto &worker : workers) {
+      worker->initialGuess();
+    }
+  } else {
+    initialGuessStls();
   }
 }
 
 void CSRNew::computeSsf() {
-  computeSsfStls();
-  for (auto &asp : auxStatePoints) {
-    asp->computeSsfStls();
+  if (isManager) {
+    for (auto &worker : workers) {
+      worker->computeSsf();
+    }
+  } else {
+    computeSsfStls();
   }
 }
 
 void CSRNew::computeLfc() {
-  computeLfcStls();
-  for (auto &asp : auxStatePoints) {
-    asp->computeLfcStls();
-  }
-  if (lfcDerivative.empty()) {
-    lfcDerivative.resize(getLfc().size(0), getLfc().size(1));
-  }
-  for (auto &asp : auxStatePoints) {
-    if (asp->lfcDerivative.empty()) {
-      asp->lfcDerivative.resize(asp->getLfc().size(0), asp->getLfc().size(1));
+  computeLfcPart1();
+  computeLfcPart2();
+  computeLfcPart3();
+}
+
+void CSRNew::computeLfcPart1() {
+  if (isManager) {
+    for (auto &worker : workers) {
+      worker->computeLfcPart1();
+    }
+  } else {
+    computeLfcStls();
+    if (lfcDerivative.empty()) {
+      lfcDerivative.resize(getLfc().size(0), getLfc().size(1));
     }
   }
-  computeLfcDerivative();
-  for (auto &asp : auxStatePoints) {
-    asp->computeLfcDerivative();
+}
+
+void CSRNew::computeLfcPart2() {
+  if (isManager) {
+    for (auto &worker : workers) {
+      worker->computeLfcPart2();
+    }
+  } else {
+    computeLfcDerivative();
   }
-  getLfc().diff(lfcDerivative);
-  for (auto &asp : auxStatePoints) {
-    asp->getLfc().diff(asp->lfcDerivative);
+}
+
+void CSRNew::computeLfcPart3() {
+  if (isManager) {
+    for (auto &worker : workers) {
+      worker->computeLfcPart3();
+    }
+  } else {
+    getLfc().diff(lfcDerivative);
   }
 }
 
 void CSRNew::updateSolution() {
-  updateSolutionStls();
-  for (auto &asp : auxStatePoints) {
-    asp->updateSolutionStls();
+  if (isManager) {
+    for (auto &worker : workers) {
+      worker->updateSolution();
+    }
+  } else {
+    updateSolutionStls();
   }
 }
 
-// void StructPropBase::doIterations() {
-// ADD SOMETHING ABOUT NOT INITIALIZING IF ALREADY DONE
-//   const int maxIter = in().getNIter();
-//   const int ompThreads = in().getNThreads();
-//   const double minErr = in().getErrMin();
-//   double err = 1.0;
-//   int counter = 0;
-//   // Define initial guess
-//   for (auto &c : csr) {
-//     c->initialGuess();
-//   }
-//   // Iteration to solve for the structural properties
-//   const bool useOMP = ompThreads > 1;
-//   while (counter < maxIter + 1 && err > minErr) {
-// // Compute new solution and error
-// #pragma omp parallel num_threads(ompThreads) if (useOMP)
-//     {
-// #pragma omp for
-//       for (auto &c : csr) {
-//         c->computeLfcStls();
-//       }
-
-// #pragma omp for
-//       for (auto &c : csr) {
-//         c->computeLfcDerivative();
-//       }
-
-// #pragma omp for
-//       for (size_t i = 0; i < csr.size(); ++i) {
-//         auto &c = csr[i];
-//         c->computeLfc();
-//         c->computeSsf();
-//         if (i == RS_THETA) { err = c->computeError(); }
-//         c->updateSolution();
-//       }
-//     }
-//     counter++;
-//   }
-//   println(formatUtil::format("Alpha = {:.5e}, Residual error "
-//                              "(structural properties) = {:.5e}",
-//                              csr[RS_THETA]->getAlpha(),
-//                              err));
-// }
-
-// const vector<double> &
-// StructPropBase::getBase(function<double(const CSR &)> f) const {
-//   for (size_t i = 0; i < csr.size(); ++i) {
-//     outVector[i] = f(*csr[i]);
-//   }
-//   return outVector;
-// }
-
-// const vector<double> &StructPropBase::getCouplingParameters() const {
-//   return getBase([&](const CSR &c) { return c.getCoupling(); });
-// }
-
-// const vector<double> &StructPropBase::getDegeneracyParameters() const {
-//   return getBase([&](const CSR &c) { return c.getDegeneracy(); });
-// }
-
-// const vector<double> &StructPropBase::getInternalEnergy() const {
-//   return getBase([&](const CSR &c) { return c.getInternalEnergy(); });
-// }
-
-// const vector<double> &StructPropBase::getFreeEnergyIntegrand() const {
-//   return getBase([&](const CSR &c) { return c.getFreeEnergyIntegrand(); });
-// }
+double CSRNew::computeError() const {
+  if (isManager) { return workers[StructIdx::RS_THETA]->computeError(); }
+  return computeErrorStls();
+}

@@ -38,7 +38,7 @@ protected:
   // Iterations to solve the stls scheme
   virtual void initialGuess();
   virtual bool initialGuessFromInput();
-  double computeError() const;
+  virtual double computeError() const;
   virtual void updateSolution();
 
 private:
