@@ -75,10 +75,11 @@ public:
              const bool isMaster_);
   // Compute static local field correction
   int compute() override;
-  // // Getters
+  // Getters
   const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
   const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
   const Vector2D &getLfc() const override { return Stls::getLfc(); }
+  double getError() const override { return computeError(); }
 
 private:
 
@@ -92,19 +93,12 @@ private:
   // setup the csr vector
   void setupAuxiliaryStatePoints(const VSStlsInput &in);
   // Getters
-  Vector2D &getLfc() override { return lfc; }
-  void init() override { CSRNew::init(); };
-  void initStls() override { Stls::init(); };
-  void initialGuessStls() override { Stls::initialGuess(); };
-  void computeSsfStls() override { Stls::computeSsf(); };
-  void computeLfc() override { CSRNew::computeLfc(); }
-  void computeSsf() override { CSRNew::computeSsf(); };
-  void initialGuess() override { CSRNew::initialGuess(); };
-  void updateSolution() override { CSRNew::updateSolution(); };
-  double computeError() const override { return CSRNew::computeError(); }
-  void computeLfcStls() override { Stls::computeLfc(); };
-  void updateSolutionStls() override { Stls::updateSolution(); }
-  double computeErrorStls() const override { return Stls::computeError(); }
+  void init() override;
+  void computeLfc() override;
+  void computeSsf() override;
+  void initialGuess() override;
+  void updateSolution() override;
+  double computeError() const override;
 };
 
 #endif

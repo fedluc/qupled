@@ -77,6 +77,66 @@ StlsCSRNew::StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
 
 int StlsCSRNew::compute() { return Stls::compute(); }
 
+void StlsCSRNew::init() {
+  auto func = [](CSRNew &base) {
+    auto &self = static_cast<StlsCSRNew &>(base);
+    if (self.isInitialized) return;
+    self.Stls::init();
+    self.isInitialized = true;
+  };
+  method(func);
+}
+
+void StlsCSRNew::initialGuess() {
+  auto func = [](CSRNew &base) {
+    static_cast<StlsCSRNew &>(base).Stls::initialGuess();
+  };
+  method(func);
+}
+
+void StlsCSRNew::computeLfc() {
+  auto func1 = [](CSRNew &base) {
+    auto &self = static_cast<StlsCSRNew &>(base);
+    self.Stls::computeLfc();
+    if (self.lfcDerivative.empty()) {
+      self.lfcDerivative.resize(self.lfc.size(0), self.lfc.size(1));
+    }
+  };
+  method(func1);
+  auto func2 = [](CSRNew &base) {
+    static_cast<StlsCSRNew &>(base).computeLfcDerivative();
+  };
+  method(func2);
+  auto func3 = [](CSRNew &base) {
+    auto &self = static_cast<StlsCSRNew &>(base);
+    self.lfc.diff(self.lfcDerivative);
+  };
+  method(func3);
+}
+
+void StlsCSRNew::computeSsf() {
+  auto func = [](CSRNew &base) {
+    static_cast<StlsCSRNew &>(base).Stls::computeSsf();
+  };
+  method(func);
+}
+
+void StlsCSRNew::updateSolution() {
+  auto func = [](CSRNew &base) {
+    static_cast<StlsCSRNew &>(base).Stls::updateSolution();
+  };
+  method(func);
+}
+
+double StlsCSRNew::computeError() const {
+  if (isManager) {
+    const auto &worker =
+        static_cast<StlsCSRNew &>(*workers[StructIdx::RS_THETA]);
+    return worker.computeError();
+  }
+  return Stls::computeError();
+}
+
 void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {
   const double &drs = in.getCouplingResolution();
   const double &dTheta = in.getDegeneracyResolution();

@@ -179,19 +179,14 @@ public:
   // Getters
   const std::vector<double> &getSsf(const size_t &idx) const;
   const Vector2D &getLfc(const size_t &idx) const;
+  double getAlpha() const;
   virtual const std::vector<double> &getSsf() const = 0;
   virtual const std::vector<double> &getWvg() const = 0;
   virtual const Vector2D &getLfc() const = 0;
-  double getError() const { return computeError(); };
-  // Get the free parameter
-  double getAlpha() const;
-  // Get coupling parameters for all the state points
+  virtual double getError() const = 0;
   std::vector<double> getAllCouplingParameters() const;
-  // Get degeneracy parameters for all the state points
   std::vector<double> getAllDegeneracyParameters() const;
-  // Get internal energy for all the state points
   std::vector<double> getAllInternalEnergies() const;
-  // Get free energy integrand for all the state points
   std::vector<double> getAllFreeEnergyIntegrands() const;
 
 protected:
@@ -227,23 +222,16 @@ protected:
   // Input data
   virtual const VSInput &inVS() const = 0;
   virtual const Input &inRpa() const = 0;
-  // Compute the local field correction
-  void init();
+  // Functions to loop over the workers
+  void method(const std::function<void(CSRNew &)> &workerFunction) {
+    if (isManager) {
+      for (auto &worker : workers)
+        worker->method(workerFunction);
+    } else {
+      workerFunction(*this);
+    }
+  }
   void computeLfcDerivative();
-  void computeLfc();
-  void computeLfcPart1();
-  void computeLfcPart2();
-  void computeLfcPart3();
-  void computeSsf();
-  void initialGuess();
-  void updateSolution();
-  double computeError() const;
-  virtual void initStls() = 0;
-  virtual void computeLfcStls() = 0;
-  virtual void initialGuessStls() = 0;
-  virtual void computeSsfStls() = 0;
-  virtual void updateSolutionStls() = 0;
-  virtual double computeErrorStls() const = 0;
   // Helper methods to compute the derivatives
   double getDerivative(const Vector2D &f,
                        const int &l,
@@ -257,8 +245,6 @@ protected:
   void setupDerivativeData();
   void setDrsData(CSRNew &up, CSRNew &down, const Derivative &dType);
   void setDThetaData(CSRNew &up, CSRNew &down, const Derivative &dType);
-  // Getters
-  virtual Vector2D &getLfc() = 0;
 };
 
 #endif
