@@ -9,6 +9,8 @@ from scipy.integrate import quad
 
 from . import database
 from . import hf
+from .dimension import Dimension
+from .output import DataBase
 
 
 class Solver:
@@ -24,31 +26,34 @@ class Solver:
         scheme_kwargs: Optional[dict] = None,
         database_name: str | None = None,
     ):
-        """
-        Args:
-            scheme_module: module providing Solver and Input (e.g., qupled.stls)
-            scheme_kwargs: kwargs passed to the scheme's Input/Solver (must include 'dimension': 'D2'|'D3')
-            database_name: optional DB name
-        """
         self.scheme_module = scheme_module
-        self.scheme_kwargs = scheme_kwargs or {}
+        self.scheme_kwargs = dict(scheme_kwargs or {})
         self.dbh = database.DataBaseHandler(database_name)
         self.results: Result = Result()
 
     def compute(self, inputs: "Input", N_values: Iterable[int]) -> int:
-        dim = str(inputs.dimension).upper() or "D3"
-        if dim not in {"D2", "D3"}:
-            raise ValueError(f"Unsupported dimension: {inputs.dimension!r}")
+        # Dimension handling via enum (default to 3D)
+        dim_enum: Dimension = (
+            inputs.dimension
+            if isinstance(inputs.dimension, Dimension)
+            else Dimension._3D
+        )
+        is_2d = dim_enum is Dimension._2D
 
-        kw_dim = str(self.scheme_kwargs.get("dimension", "")).upper()
-        if kw_dim and kw_dim != dim:
-            raise ValueError(
-                f"Dimension mismatch: inputs.dimension={inputs.dimension} vs "
-                f"scheme_kwargs['dimension']={kw_dim}"
-            )
+        # If user passed a dimension in scheme_kwargs, ensure consistency
+        kw_dim = self.scheme_kwargs.get("dimension", None)
+        if kw_dim is not None:
+            if not isinstance(kw_dim, Dimension):
+                raise TypeError(
+                    "scheme_kwargs['dimension'] must be a qupled.dimension.Dimension enum."
+                )
+            if kw_dim is not dim_enum:
+                raise ValueError(
+                    f"Dimension mismatch: inputs.dimension={dim_enum} vs scheme_kwargs['dimension']={kw_dim}"
+                )
 
         scheme_kwargs_dim = dict(self.scheme_kwargs)
-        scheme_kwargs_dim.setdefault("dimension", dim)
+        scheme_kwargs_dim["dimension"] = dim_enum
 
         theory_tag = _infer_theory_tag(
             self.scheme_module,
@@ -57,9 +62,10 @@ class Solver:
             **scheme_kwargs_dim,
         )
 
+        # Build rs-grid
         rs_grid = _build_rs_grid(inputs.coupling, inputs.drs)
 
-        # ensure runs (dimension-matching) for each rs in the grid
+        # Ensure runs for every rs on the grid
         run_ids_by_rs: Dict[float, int] = {}
         for rs in rs_grid:
             rid = _ensure_run_for(
@@ -68,32 +74,32 @@ class Solver:
                 theory_tag,
                 float(rs),
                 float(inputs.degeneracy),
-                desired_dim=dim,
+                dim_enum,
                 **scheme_kwargs_dim,
             )
             run_ids_by_rs[float(rs)] = rid
 
         target_run_id = run_ids_by_rs[float(rs_grid[-1])]
 
-        # set lambda per dimension
-        if dim == "D2":
-            lambda_val = 1.0 / np.sqrt(2.0)
-        else:
-            lambda_val = (4.0 / (9.0 * np.pi)) ** (1.0 / 3.0)
+        # Set λ per dimension
+        lambda_val = (
+            (1.0 / np.sqrt(2.0)) if is_2d else (4.0 / (9.0 * np.pi)) ** (1.0 / 3.0)
+        )
 
+        # Interp kind
         interp_kind = "cubic" if len(rs_grid) >= 4 else "linear"
 
-        # precompute continuous term at each rs (N-independent)
+        # Precompute continuous term at each rs (N-independent)
         cont_by_rs: Dict[float, float] = {}
         qcap_by_rs: Dict[float, float] = {}
         for rs in rs_grid:
-            wvg, ssf = _read_wvg_ssf(self.dbh, run_ids_by_rs[float(rs)])
+            wvg, ssf = _read_wvg_ssf(run_ids_by_rs[float(rs)])
             S_interp = _make_S_interp(wvg, ssf)
             qcap = min(inputs.cutoff, float(wvg[-1]))
             qcap_by_rs[float(rs)] = qcap
             cont_by_rs[float(rs)] = (
                 _continuous_term_2d(S_interp, qcap, lambda_val)
-                if dim == "D2"
+                if is_2d
                 else _continuous_term_3d(S_interp, qcap, lambda_val)
             )
 
@@ -105,15 +111,15 @@ class Solver:
             target_rs_uint: Optional[float] = None
 
             for rs in rs_grid:
-                wvg, ssf = _read_wvg_ssf(self.dbh, run_ids_by_rs[float(rs)])
+                wvg, ssf = _read_wvg_ssf(run_ids_by_rs[float(rs)])
                 S_interp = _make_S_interp(wvg, ssf)
                 qcap = qcap_by_rs[float(rs)]
                 continuous = cont_by_rs[float(rs)]
 
-                if dim == "D2":
+                if is_2d:
                     discrete = _discrete_term_2d(N, qcap, S_interp, lambda_val)
                     madelung = _madelung_2d(N)
-                else:  # "D3"
+                else:
                     discrete = _discrete_term_3d(N, qcap, S_interp, lambda_val)
                     madelung = _madelung_3d(N)
 
@@ -128,9 +134,11 @@ class Solver:
             if target_rs_uint is None:
                 raise RuntimeError("Target rs not found in grid")
 
+            # uint FSC at target
             fsc_uint = target_rs_uint / float(inputs.coupling)
             fsc_uint_list.append(float(fsc_uint))
 
+            # fxc FSC: integrate rs*uint(rs) from 0 to target_rs, then divide by rs^2
             rs_grid_np = np.asarray(rs_grid, dtype=float)
             rs_uint_np = np.asarray(rs_uint_vals, dtype=float)
             interp = interp1d(
@@ -142,6 +150,7 @@ class Solver:
             fsc_fxc = integral_val / (float(inputs.coupling) ** 2.0)
             fsc_fxc_list.append(float(fsc_fxc))
 
+        # Write these keys to the scheme's *target* run
         self.dbh.run_id = target_run_id
         self.dbh.insert_results(
             {
@@ -151,6 +160,7 @@ class Solver:
             conflict_mode=database.DataBaseHandler.ConflictMode.UPDATE,
         )
 
+        # Mirror into in-memory Result
         self.results.fsc_uint = np.asarray(fsc_uint_list, dtype=float)
         self.results.fsc_fxc = np.asarray(fsc_fxc_list, dtype=float)
         self.results.run_id = target_run_id
@@ -159,10 +169,6 @@ class Solver:
 
 @dataclass
 class Input(hf.Input):
-    """
-    FSC post-processing inputs. Inherit all standard fields from hf.Input:
-    """
-
     drs: float = 0.1
 
 
@@ -173,7 +179,7 @@ class Result:
     run_id: int | None = None
 
 
-# --------------------------- Internal helpers --------------------------------
+# ============================ Internal helpers =============================
 
 
 def _build_rs_grid(target_rs: float, drs: float) -> np.ndarray:
@@ -194,30 +200,39 @@ def _infer_theory_tag(scheme_module, rs: float, theta: float, **scheme_kwargs) -
     return str(getattr(tmp, "theory", scheme_module.__name__.split(".")[-1].upper()))
 
 
+def _dim_value(dim_enum: Dimension) -> str:
+    """Return '2D' or '3D' from a Dimension enum."""
+    return dim_enum.value
+
+
 def _ensure_run_for(
     dbh: database.DataBaseHandler,
     scheme_module,
     theory: str,
     rs: float,
     theta: float,
-    desired_dim: str,
+    dim_enum: Dimension,
     **scheme_kwargs,
 ) -> int:
-    rid = _find_run_id(dbh, theory, rs, theta, desired_dim)
+    rid = _find_run_id(dbh, theory, rs, theta, dim_enum)
     if rid is not None:
         return rid
-    # Compute run with the provided kwargs
+
+    kw_no_dim = {k: v for k, v in scheme_kwargs.items() if k != "dimension"}
+    inputs = scheme_module.Input(rs, theta, **kw_no_dim)
+    inputs.dimension = dim_enum
     solver = scheme_module.Solver()
-    inputs = scheme_module.Input(rs, theta, **scheme_kwargs)
     solver.compute(inputs)
     if getattr(solver, "run_id", None) is None:
         raise RuntimeError("Scheme solver did not expose run_id after compute().")
-    # confirm dimension matches
-    inp = dbh.get_inputs(int(solver.run_id), names=["dimension"])
-    new_dim = str(inp.get("dimension", "")).upper()
-    if new_dim != desired_dim:
+
+    run_data = DataBase.read_run(int(solver.run_id))
+    run_dim_val = Dimension.from_dict(
+        run_data["inputs"]["dimension"]
+    ).value  # "2D"/"3D"
+    if run_dim_val != _dim_value(dim_enum):
         raise RuntimeError(
-            f"Computed run has dimension {new_dim}, expected {desired_dim}."
+            f"Computed run has dimension {run_dim_val}, expected {_dim_value(dim_enum)}."
         )
     return int(solver.run_id)
 
@@ -227,8 +242,13 @@ def _find_run_id(
     theory: str,
     rs: float,
     theta: float,
-    desired_dim: str,
+    dim_enum: Dimension,
 ) -> Optional[int]:
+    """
+    Find a run that matches theory, (rs, theta) and desired dimension.
+    Uses DataBaseHandler.inspect_runs() to list, then DataBase.read_run() to check inputs.
+    """
+    desired_val = _dim_value(dim_enum)  # "2D" or "3D"
     runs = dbh.inspect_runs()
     candidates = []
     for r in runs:
@@ -241,9 +261,11 @@ def _find_run_id(
             and math.isclose(float(r["degeneracy"]), theta, rel_tol=0, abs_tol=1e-12)
         ):
             continue
-        inp = dbh.get_inputs(int(r["id"]), names=["dimension"])
-        run_dim = str(inp.get("dimension", "D3")).upper()  # default to D3 if missing
-        if run_dim == desired_dim:
+        run_full = DataBase.read_run(int(r["id"]))
+        dim_val = Dimension.from_dict(
+            run_full["inputs"]["dimension"]
+        ).value  # "2D"/"3D"
+        if dim_val == desired_val:
             candidates.append(r)
     if not candidates:
         return None
@@ -251,12 +273,11 @@ def _find_run_id(
     return int(candidates[-1]["id"])
 
 
-def _read_wvg_ssf(
-    dbh: database.DataBaseHandler, run_id: int
-) -> Tuple[np.ndarray, np.ndarray]:
-    out = dbh.get_results(run_id, names=["wvg", "ssf"])
-    wvg = out.get("wvg", None)
-    ssf = out.get("ssf", None)
+def _read_wvg_ssf(run_id: int) -> Tuple[np.ndarray, np.ndarray]:
+    data = DataBase.read_run(int(run_id))
+    res = data.get("results", {})
+    wvg = res.get("wvg", None)
+    ssf = res.get("ssf", None)
     if wvg is None or ssf is None:
         raise ValueError(f"Run {run_id} lacks 'wvg'/'ssf' results required for FSC.")
     return np.asarray(wvg, dtype=float), np.asarray(ssf, dtype=float)
@@ -268,12 +289,11 @@ def _make_S_interp(wvg: np.ndarray, ssf: np.ndarray):
         ssf,
         kind="cubic",
         bounds_error=False,
-        # fill_value=(1.0, ssf[-1]),  # solver should cap q at cutoff; tail shouldn’t be used
         assume_sorted=False,
     )
 
 
-# --------------------------- Continuous terms --------------------------------
+# =========================== Continuous terms ============================
 
 
 def _continuous_term_3d(S_interp, qcap, lambda_val):
@@ -286,20 +306,12 @@ def _continuous_term_2d(S_interp, qcap, lambda_val):
     return val / (2.0 * lambda_val)
 
 
-# --------------------------- Discrete terms --------------------------------
+# ============================ Discrete terms =============================
 
 
 def _discrete_term_3d(N: int, qcap: float, S_interp, lambda_val: float) -> float:
     """
-    The sum over the discrete reciprocal vectors is computed only for
-    positive values of l1,l2,l3 due to the negative values being symmetric, i.e.
-    we care only about the +++ octant. Then checks are made for how many zeros
-    are present in each combination. In the case that only one of
-    the vectors is non-zero (+00) then the resulting value is multiplied by 2,
-    if two are non-zero (++0) then it's multiplied by 4, and if all three are
-    non-zero (+++) then it's multiplied by 8. Additionally, for further speedup
-    we take advantage of NumPy vectorized operations by precomputing the norms
-    for each value of l1, i.e. each 2D slice of the l2,l3 values.
+    Octant sum with multiplicities: +++, ++0, +00.
     """
     arg_const = (8.0 * np.pi / 3.0) ** (1.0 / 3.0) / (N ** (1.0 / 3.0))
     lmax = int(np.ceil(qcap / arg_const / np.sqrt(3.0)))
@@ -357,7 +369,7 @@ def _discrete_term_2d(N: int, qcap: float, S_interp, lambda_val: float) -> float
     return pref * float(np.sum(term))
 
 
-# --------------------------- Madelung terms --------------------------------
+# ============================ Madelung terms =============================
 
 
 def _madelung_3d(N: int) -> float:
