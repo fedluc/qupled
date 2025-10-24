@@ -68,7 +68,7 @@ public:
       : StlsCSRNew(in_, true) {}
   StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
              const bool isMaster_);
-  // Compute static local field correction
+  // Solve the scheme
   int compute() override;
   // Getters
   const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
@@ -86,7 +86,7 @@ private:
     return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
   }
   // setup the csr vector
-  void setupAuxiliaryStatePoints(const VSStlsInput &in);
+  void setupWorkers(const VSStlsInput &in);
   // Getters
   void init() override;
   void computeLfc() override;

@@ -71,7 +71,7 @@ StlsCSRNew::StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
                        const bool isMaster_)
     : CSRNew(isMaster_),
       Stls(in_, false) {
-  if (isManager) { setupAuxiliaryStatePoints(*in_); }
+  if (isManager) { setupWorkers(*in_); }
 }
 
 int StlsCSRNew::compute() { return Stls::compute(); }
@@ -136,7 +136,7 @@ double StlsCSRNew::computeError() const {
   return Stls::computeError();
 }
 
-void StlsCSRNew::setupAuxiliaryStatePoints(const VSStlsInput &in) {
+void StlsCSRNew::setupWorkers(const VSStlsInput &in) {
   const double &drs = in.getCouplingResolution();
   const double &dTheta = in.getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the

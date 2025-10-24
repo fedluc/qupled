@@ -200,7 +200,7 @@ protected:
   CSRNew(const bool isManager_)
       : isManager(isManager_),
         isInitialized(false),
-        alpha(DEFAULT_ALPHA){};
+        alpha(DEFAULT_ALPHA) {};
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
   static constexpr int NRS = 3;
