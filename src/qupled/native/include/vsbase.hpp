@@ -200,7 +200,7 @@ protected:
   CSRNew(const bool isManager_)
       : isManager(isManager_),
         isInitialized(false),
-        alpha(DEFAULT_ALPHA) {};
+        alpha(DEFAULT_ALPHA){};
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
   static constexpr int NRS = 3;
@@ -222,15 +222,12 @@ protected:
   // Input data
   virtual const VSInput &inVS() const = 0;
   virtual const Input &inRpa() const = 0;
-  // Functions to loop over the workers
-  void method(const std::function<void(CSRNew &)> &workerFunction) {
-    if (isManager) {
-      for (auto &worker : workers)
-        worker->method(workerFunction);
-    } else {
-      workerFunction(*this);
-    }
-  }
+  // Call a given function for all workers
+  void forEachWorker(const std::function<void(CSRNew &)> &func);
+  // Collect results from all the workers
+  std::vector<double>
+  collectFromWorkers(const std::function<double(const CSRNew &)> &func) const;
+  // Compute the derivative component of the local field correction
   void computeLfcDerivative();
   // Helper methods to compute the derivatives
   double getDerivative(const Vector2D &f,

@@ -299,7 +299,29 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
 // CSRNew class
 // -----------------------------------------------------------------
 
-// Get the free parameter
+void CSRNew::forEachWorker(const function<void(CSRNew &)> &func) {
+  if (isManager) {
+    for (auto &worker : workers)
+      worker->forEachWorker(func);
+  } else {
+    func(*this);
+  }
+}
+
+vector<double>
+CSRNew::collectFromWorkers(const function<double(const CSRNew &)> &func) const {
+  std::vector<double> results;
+  if (isManager) {
+    for (auto &worker : workers) {
+      auto sub = worker->collectFromWorkers(func);
+      results.insert(results.end(), sub.begin(), sub.end());
+    }
+  } else {
+    results.push_back(func(*this));
+  }
+  return results;
+}
+
 double CSRNew::getAlpha() const {
   if (isManager) { return workers[StructIdx::RS_THETA]->getAlpha(); }
   return alpha;
@@ -326,52 +348,34 @@ void CSRNew::setAlpha(const double &alpha_) {
 }
 
 std::vector<double> CSRNew::getAllCouplingParameters() const {
-  vector<double> all;
-  if (isManager) {
-    for (auto &worker : workers) {
-      all.push_back(worker->inRpa().getCoupling());
-    }
-  }
-  return all;
+  auto func = [](const CSRNew &self) { return self.inRpa().getCoupling(); };
+  return collectFromWorkers(func);
 }
 
 std::vector<double> CSRNew::getAllDegeneracyParameters() const {
-  vector<double> all;
-  if (isManager) {
-    for (auto &worker : workers) {
-      all.push_back(worker->inRpa().getDegeneracy());
-    }
-  }
-  return all;
+  auto func = [](const CSRNew &self) { return self.inRpa().getDegeneracy(); };
+  return collectFromWorkers(func);
 }
 
 std::vector<double> CSRNew::getAllInternalEnergies() const {
-  vector<double> all;
-  if (isManager) {
-    for (auto &worker : workers) {
-      const auto rs = worker->inRpa().getCoupling();
-      const auto wvg = worker->getWvg();
-      const auto ssf = worker->getSsf();
-      const auto dim = worker->inRpa().getDimension();
-      const double uint = thermoUtil::computeInternalEnergy(wvg, ssf, rs, dim);
-      all.push_back(uint);
-    }
-  }
-  return all;
+  auto func = [](const CSRNew &self) {
+    const auto rs = self.inRpa().getCoupling();
+    const auto wvg = self.getWvg();
+    const auto ssf = self.getSsf();
+    const auto dim = self.inRpa().getDimension();
+    return thermoUtil::computeInternalEnergy(wvg, ssf, rs, dim);
+  };
+  return collectFromWorkers(func);
 }
 
 std::vector<double> CSRNew::getAllFreeEnergyIntegrands() const {
-  vector<double> all;
-  if (isManager) {
-    for (auto &worker : workers) {
-      const auto wvg = worker->getWvg();
-      const auto ssf = worker->getSsf();
-      const auto dim = worker->inRpa().getDimension();
-      const double uint = thermoUtil::computeInternalEnergy(wvg, ssf, 1.0, dim);
-      all.push_back(uint);
-    }
-  }
-  return all;
+  auto func = [](const CSRNew &self) {
+    const auto wvg = self.getWvg();
+    const auto ssf = self.getSsf();
+    const auto dim = self.inRpa().getDimension();
+    return thermoUtil::computeInternalEnergy(wvg, ssf, 1.0, dim);
+  };
+  return collectFromWorkers(func);
 }
 
 void CSRNew::computeLfcDerivative() {

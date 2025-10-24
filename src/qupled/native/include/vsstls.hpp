@@ -53,11 +53,6 @@ public:
 
   // Constructor
   explicit ThermoProp(const std::shared_ptr<const VSStlsInput> &in_);
-
-private:
-
-  // Structural properties
-  std::shared_ptr<StlsCSRNew> structProp;
 };
 
 // -----------------------------------------------------------------
