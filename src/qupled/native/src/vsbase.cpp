@@ -66,7 +66,6 @@ ThermoPropBase::ThermoPropBase(const std::shared_ptr<const VSInput> &inPtr_)
   setRsGrid();
   setFxcIntegrand();
   setFxcIdxTargetStatePoint();
-  setFxcIdxUnsolvedStatePoint();
 }
 
 void ThermoPropBase::setRsGrid() {
@@ -120,45 +119,9 @@ void ThermoPropBase::setFxcIdxTargetStatePoint() {
   fxcIdxTargetStatePoint = distance(rsGrid.begin(), it);
 }
 
-void ThermoPropBase::setFxcIdxUnsolvedStatePoint() {
-  const auto &fxciBegin = fxcIntegrand[Idx::THETA].begin();
-  const auto &fxciEnd = fxcIntegrand[Idx::THETA].end();
-  const auto &it = find(fxciBegin, fxciEnd, numUtil::Inf);
-  fxcIdxUnsolvedStatePoint = distance(fxciBegin, it);
-}
-
-void ThermoPropBase::copyFreeEnergyIntegrand(const ThermoPropBase &other) {
-  assert(other.rsGrid[1] - other.rsGrid[0] == rsGrid[1] - rsGrid[0]);
-  const size_t nrs = rsGrid.size();
-  const size_t nrsOther = other.rsGrid.size();
-  for (const auto &theta : {Idx::THETA_DOWN, Idx::THETA, Idx::THETA_UP}) {
-    const auto &fxciBegin = fxcIntegrand[theta].begin();
-    const auto &fxciEnd = fxcIntegrand[theta].end();
-    const auto &it = find(fxciBegin, fxciEnd, numUtil::Inf);
-    size_t i = distance(fxciBegin, it);
-    while (i < nrs && i < nrsOther) {
-      fxcIntegrand[theta][i] = other.fxcIntegrand[theta][i];
-      ++i;
-    }
-  }
-  setFxcIdxUnsolvedStatePoint();
-}
-
 void ThermoPropBase::setAlpha(const double &alpha) {
   assert(structProp);
   structProp->setAlpha(alpha);
-}
-
-bool ThermoPropBase::isFreeEnergyIntegrandIncomplete() const {
-  return fxcIdxUnsolvedStatePoint < fxcIdxTargetStatePoint - 1;
-}
-
-double ThermoPropBase::getFirstUnsolvedStatePoint() const {
-  if (isFreeEnergyIntegrandIncomplete()) {
-    return rsGrid[fxcIdxUnsolvedStatePoint + 1];
-  } else {
-    return numUtil::Inf;
-  }
 }
 
 void ThermoPropBase::compute() {

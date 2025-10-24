@@ -88,12 +88,6 @@ public:
   virtual ~ThermoPropBase() = default;
   // Set the value of the free parameter in the structural properties
   void setAlpha(const double &alpha);
-  // Copy free energy integrand
-  void copyFreeEnergyIntegrand(const ThermoPropBase &other);
-  // Check if there are unsolved state points in the free energy integrand
-  bool isFreeEnergyIntegrandIncomplete() const;
-  // Get the first unsolved state point in the free energy integrand
-  double getFirstUnsolvedStatePoint() const;
   // Compute the thermodynamic properties
   void compute();
   // Get structural properties
@@ -133,8 +127,6 @@ protected:
   bool isZeroDegeneracy;
   // Index of the target state point in the free energy integrand
   size_t fxcIdxTargetStatePoint;
-  // Index of the first unsolved state point in the free energy integrand
-  size_t fxcIdxUnsolvedStatePoint;
   // Access input pointer
   const VSInput &in() const { return *inPtr; }
   // Cast the input member to an Input type
@@ -150,9 +142,6 @@ protected:
   void setFxcIntegrand();
   // Set the index of the target state point in the free energy integrand
   void setFxcIdxTargetStatePoint();
-  // Set the index of the first unsolved state point in the free energy
-  // integrand
-  void setFxcIdxUnsolvedStatePoint();
   // Get index to acces the structural properties
   ThermoPropBase::SIdx getStructPropIdx();
 };
