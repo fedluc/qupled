@@ -11,7 +11,7 @@
 
 class QThermoProp;
 class QStructProp;
-class QstlsCSRNew;
+class QstlsCSR;
 class QAdder;
 
 // -----------------------------------------------------------------
@@ -61,21 +61,21 @@ public:
 
 private:
 
-  std::shared_ptr<QstlsCSRNew> structProp;
+  std::shared_ptr<QstlsCSR> structProp;
 };
 
 // -----------------------------------------------------------------
-// Class to solve one state point
+// QstlsCSR class
 // -----------------------------------------------------------------
 
-class QstlsCSRNew : public CSRNew, public Qstls {
+class QstlsCSR : public CSR, public Qstls {
 
 public:
 
   // Constructor
-  explicit QstlsCSRNew(const std::shared_ptr<const QVSStlsInput> &in_)
-      : QstlsCSRNew(in_, true) {}
-  QstlsCSRNew(const std::shared_ptr<const QVSStlsInput> &in_,
+  explicit QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_)
+      : QstlsCSR(in_, true) {}
+  QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_,
               const bool isMaster_);
   // Solve the scheme
   int compute() override;

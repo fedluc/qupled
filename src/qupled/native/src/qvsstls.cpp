@@ -61,7 +61,7 @@ void QVSStls::init() { Rpa::init(); }
 
 QThermoProp::QThermoProp(const std::shared_ptr<const QVSStlsInput> &in_)
     : ThermoPropBase(in_),
-      structProp(make_shared<QstlsCSRNew>(in_)) {
+      structProp(make_shared<QstlsCSR>(in_)) {
   if (isZeroDegeneracy) {
     throwError(
         "Ground state calculations are not implemented for this scheme.");
@@ -100,9 +100,9 @@ vector<double> QThermoProp::getQData() const {
 // QstlsCSR class
 // -----------------------------------------------------------------
 
-QstlsCSRNew::QstlsCSRNew(const std::shared_ptr<const QVSStlsInput> &in_,
+QstlsCSR::QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_,
                          const bool isMaster_)
-    : CSRNew(isMaster_),
+    : CSR(isMaster_),
       Qstls(in_, false),
       itg2D(std::make_shared<Integrator2D>(ItgType::DEFAULT,
                                            in_->getIntError())) {
@@ -115,11 +115,11 @@ QstlsCSRNew::QstlsCSRNew(const std::shared_ptr<const QVSStlsInput> &in_,
   if (isManager) { setupWorkers(*in_); }
 }
 
-int QstlsCSRNew::compute() { return Qstls::compute(); }
+int QstlsCSR::compute() { return Qstls::compute(); }
 
-void QstlsCSRNew::init() {
-  auto func = [](CSRNew &base) {
-    auto &self = static_cast<QstlsCSRNew &>(base);
+void QstlsCSR::init() {
+  auto func = [](CSR &base) {
+    auto &self = static_cast<QstlsCSR &>(base);
     if (self.isInitialized) return;
     const string &theory = self.inRpa().getTheory();
     switch (self.lfcTheta.type) {
@@ -139,26 +139,26 @@ void QstlsCSRNew::init() {
   forEachWorker(func);
 }
 
-void QstlsCSRNew::initialGuess() {
-  auto func = [](CSRNew &base) {
-    static_cast<QstlsCSRNew &>(base).Qstls::initialGuess();
+void QstlsCSR::initialGuess() {
+  auto func = [](CSR &base) {
+    static_cast<QstlsCSR &>(base).Qstls::initialGuess();
   };
   forEachWorker(func);
 }
 
-void QstlsCSRNew::computeLfc() {
-  auto func1 = [](CSRNew &base) {
-    auto &self = static_cast<QstlsCSRNew &>(base);
+void QstlsCSR::computeLfc() {
+  auto func1 = [](CSR &base) {
+    auto &self = static_cast<QstlsCSR &>(base);
     self.Qstls::computeLfc();
     if (self.lfcDerivative.empty()) {
       self.lfcDerivative.resize(self.lfc.size(0), self.lfc.size(1));
     }
   };
-  auto func2 = [](CSRNew &base) {
-    static_cast<QstlsCSRNew &>(base).computeLfcDerivative();
+  auto func2 = [](CSR &base) {
+    static_cast<QstlsCSR &>(base).computeLfcDerivative();
   };
-  auto func3 = [](CSRNew &base) {
-    auto &self = static_cast<QstlsCSRNew &>(base);
+  auto func3 = [](CSR &base) {
+    auto &self = static_cast<QstlsCSR &>(base);
     self.lfc.diff(self.lfcDerivative);
   };
   forEachWorker(func1);
@@ -166,30 +166,30 @@ void QstlsCSRNew::computeLfc() {
   forEachWorker(func3);
 }
 
-void QstlsCSRNew::computeSsf() {
-  auto func = [](CSRNew &base) {
-    static_cast<QstlsCSRNew &>(base).Qstls::computeSsf();
+void QstlsCSR::computeSsf() {
+  auto func = [](CSR &base) {
+    static_cast<QstlsCSR &>(base).Qstls::computeSsf();
   };
   forEachWorker(func);
 }
 
-void QstlsCSRNew::updateSolution() {
-  auto func = [](CSRNew &base) {
-    static_cast<QstlsCSRNew &>(base).Qstls::updateSolution();
+void QstlsCSR::updateSolution() {
+  auto func = [](CSR &base) {
+    static_cast<QstlsCSR &>(base).Qstls::updateSolution();
   };
   forEachWorker(func);
 }
 
-double QstlsCSRNew::computeError() const {
+double QstlsCSR::computeError() const {
   if (isManager) {
     const auto &worker =
-        static_cast<QstlsCSRNew &>(*workers[StructIdx::RS_THETA]);
+        static_cast<QstlsCSR &>(*workers[StructIdx::RS_THETA]);
     return worker.computeError();
   }
   return Qstls::computeError();
 }
 
-void QstlsCSRNew::setupWorkers(const QVSStlsInput &in) {
+void QstlsCSR::setupWorkers(const QVSStlsInput &in) {
   const double &drs = in.getCouplingResolution();
   const double &dTheta = in.getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
@@ -202,18 +202,18 @@ void QstlsCSRNew::setupWorkers(const QVSStlsInput &in) {
       std::shared_ptr<QVSStlsInput> inTmp = std::make_shared<QVSStlsInput>(in);
       inTmp->setDegeneracy(thetaTmp);
       inTmp->setCoupling(rsTmp);
-      workers.push_back(make_shared<QstlsCSRNew>(inTmp, false));
+      workers.push_back(make_shared<QstlsCSR>(inTmp, false));
     }
   }
   assert(workers.size() == NRS * NTHETA);
   setupDerivativeData();
 }
 
-double QstlsCSRNew::getQAdder(const size_t &idx) const {
+double QstlsCSR::getQAdder(const size_t &idx) const {
   if (isManager) {
-    const CSRNew &baseWorker = *workers[idx];
-    const QstlsCSRNew &thisWorker =
-        static_cast<const QstlsCSRNew &>(baseWorker);
+    const CSR &baseWorker = *workers[idx];
+    const QstlsCSR &thisWorker =
+        static_cast<const QstlsCSR &>(baseWorker);
     return thisWorker.getQAdder(idx);
   }
   const shared_ptr<Interpolator1D> ssfItp =

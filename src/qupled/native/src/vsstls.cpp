@@ -60,25 +60,25 @@ void VSStls::init() { Rpa::init(); }
 
 ThermoProp::ThermoProp(const std::shared_ptr<const VSStlsInput> &in_)
     : ThermoPropBase(in_) {
-  structProp = make_shared<StlsCSRNew>(in_);
+  structProp = make_shared<StlsCSR>(in_);
 }
 
 // -----------------------------------------------------------------
 // StlsCSR class
 // -----------------------------------------------------------------
 
-StlsCSRNew::StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
+StlsCSR::StlsCSR(const std::shared_ptr<const VSStlsInput> &in_,
                        const bool isMaster_)
-    : CSRNew(isMaster_),
+    : CSR(isMaster_),
       Stls(in_, false) {
   if (isManager) { setupWorkers(*in_); }
 }
 
-int StlsCSRNew::compute() { return Stls::compute(); }
+int StlsCSR::compute() { return Stls::compute(); }
 
-void StlsCSRNew::init() {
-  auto func = [](CSRNew &base) {
-    auto &self = static_cast<StlsCSRNew &>(base);
+void StlsCSR::init() {
+  auto func = [](CSR &base) {
+    auto &self = static_cast<StlsCSR &>(base);
     if (self.isInitialized) return;
     self.Stls::init();
     self.isInitialized = true;
@@ -86,26 +86,26 @@ void StlsCSRNew::init() {
   forEachWorker(func);
 }
 
-void StlsCSRNew::initialGuess() {
-  auto func = [](CSRNew &base) {
-    static_cast<StlsCSRNew &>(base).Stls::initialGuess();
+void StlsCSR::initialGuess() {
+  auto func = [](CSR &base) {
+    static_cast<StlsCSR &>(base).Stls::initialGuess();
   };
   forEachWorker(func);
 }
 
-void StlsCSRNew::computeLfc() {
-  auto func1 = [](CSRNew &base) {
-    auto &self = static_cast<StlsCSRNew &>(base);
+void StlsCSR::computeLfc() {
+  auto func1 = [](CSR &base) {
+    auto &self = static_cast<StlsCSR &>(base);
     self.Stls::computeLfc();
     if (self.lfcDerivative.empty()) {
       self.lfcDerivative.resize(self.lfc.size(0), self.lfc.size(1));
     }
   };
-  auto func2 = [](CSRNew &base) {
-    static_cast<StlsCSRNew &>(base).computeLfcDerivative();
+  auto func2 = [](CSR &base) {
+    static_cast<StlsCSR &>(base).computeLfcDerivative();
   };
-  auto func3 = [](CSRNew &base) {
-    auto &self = static_cast<StlsCSRNew &>(base);
+  auto func3 = [](CSR &base) {
+    auto &self = static_cast<StlsCSR &>(base);
     self.lfc.diff(self.lfcDerivative);
   };
   forEachWorker(func1);
@@ -113,30 +113,30 @@ void StlsCSRNew::computeLfc() {
   forEachWorker(func3);
 }
 
-void StlsCSRNew::computeSsf() {
-  auto func = [](CSRNew &base) {
-    static_cast<StlsCSRNew &>(base).Stls::computeSsf();
+void StlsCSR::computeSsf() {
+  auto func = [](CSR &base) {
+    static_cast<StlsCSR &>(base).Stls::computeSsf();
   };
   forEachWorker(func);
 }
 
-void StlsCSRNew::updateSolution() {
-  auto func = [](CSRNew &base) {
-    static_cast<StlsCSRNew &>(base).Stls::updateSolution();
+void StlsCSR::updateSolution() {
+  auto func = [](CSR &base) {
+    static_cast<StlsCSR &>(base).Stls::updateSolution();
   };
   forEachWorker(func);
 }
 
-double StlsCSRNew::computeError() const {
+double StlsCSR::computeError() const {
   if (isManager) {
     const auto &worker =
-        static_cast<StlsCSRNew &>(*workers[StructIdx::RS_THETA]);
+        static_cast<StlsCSR &>(*workers[StructIdx::RS_THETA]);
     return worker.computeError();
   }
   return Stls::computeError();
 }
 
-void StlsCSRNew::setupWorkers(const VSStlsInput &in) {
+void StlsCSR::setupWorkers(const VSStlsInput &in) {
   const double &drs = in.getCouplingResolution();
   const double &dTheta = in.getDegeneracyResolution();
   // If there is a risk of having negative state parameters, shift the
@@ -149,7 +149,7 @@ void StlsCSRNew::setupWorkers(const VSStlsInput &in) {
       std::shared_ptr<VSStlsInput> inTmp = std::make_shared<VSStlsInput>(in);
       inTmp->setDegeneracy(thetaTmp);
       inTmp->setCoupling(rsTmp);
-      workers.push_back(make_shared<StlsCSRNew>(inTmp, false));
+      workers.push_back(make_shared<StlsCSR>(inTmp, false));
     }
   }
   assert(workers.size() == NRS * NTHETA);

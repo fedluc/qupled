@@ -263,169 +263,7 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
 // CSRNew class
 // -----------------------------------------------------------------
 
-void CSRNew::forEachWorker(const function<void(CSRNew &)> &func) {
-  if (isManager) {
-    for (auto &worker : workers)
-      worker->forEachWorker(func);
-  } else {
-    func(*this);
-  }
-}
-
-decltype(auto) CSRNew::invokeWorker(std::size_t idx, auto &&f) const {
-  const CSRNew &target = isManager ? *workers[idx] : *this;
-  return std::invoke(std::forward<decltype(f)>(f), target, idx);
-}
-
-double CSRNew::getAlpha(const size_t &idx) const {
-  auto func = [](const CSRNew &self, const size_t) { return self.alpha; };
-  return invokeWorker(idx, func);
-}
-
-const std::vector<double> &CSRNew::getSsf(const size_t &idx) const {
-  auto func = [](const CSRNew &self, const size_t) { return self.getSsf(); };
-  return invokeWorker(idx, func);
-}
-
-const Vector2D &CSRNew::getLfc(const size_t &idx) const {
-  auto func = [](const CSRNew &self, const size_t) { return self.getLfc(); };
-  return invokeWorker(idx, func);
-}
-
-double CSRNew::getCoupling(const size_t &idx) const {
-  auto func = [](const CSRNew &self, const size_t) {
-    return self.inRpa().getCoupling();
-  };
-  return invokeWorker(idx, func);
-}
-
-double CSRNew::getDegeneracy(const size_t &idx) const {
-  auto func = [](const CSRNew &self, const size_t) {
-    return self.inRpa().getCoupling();
-  };
-  return invokeWorker(idx, func);
-}
-
-double CSRNew::getUInt(const size_t &idx) const {
-  auto func = [](const CSRNew &self, const size_t idx) {
-    const auto rs = self.getCoupling(idx);
-    const auto wvg = self.getWvg();
-    const auto ssf = self.getSsf();
-    const auto dim = self.inRpa().getDimension();
-    return thermoUtil::computeInternalEnergy(wvg, ssf, rs, dim);
-  };
-  return invokeWorker(idx, func);
-}
-
-double CSRNew::getFxcIntegrand(const size_t &idx) const {
-  auto func = [](const CSRNew &self, const size_t) {
-    const auto wvg = self.getWvg();
-    const auto ssf = self.getSsf();
-    const auto dim = self.inRpa().getDimension();
-    return thermoUtil::computeInternalEnergy(wvg, ssf, 1.0, dim);
-  };
-  return invokeWorker(idx, func);
-}
-
-void CSRNew::setAlpha(const double &alpha_) {
-  if (isManager) {
-    for (auto &worker : workers) {
-      worker->setAlpha(alpha_);
-    }
-  } else {
-    alpha = alpha_;
-  }
-}
-
-void CSRNew::computeLfcDerivative() {
-  // Check that alpha has been set to a value that is not the default
-  assert(alpha != DEFAULT_ALPHA);
-  // Derivative contributions
-  const double &rs = inRpa().getCoupling();
-  const double &theta = inRpa().getDegeneracy();
-  const double &dx = inRpa().getWaveVectorGridRes();
-  const double &drs = inVS().getCouplingResolution();
-  const double &dTheta = inVS().getDegeneracyResolution();
-  const Vector2D &lfc = getLfc();
-  const Vector2D &rsUp = *lfcRs.up;
-  const Vector2D &rsDown = *lfcRs.down;
-  const Vector2D &thetaUp = *lfcTheta.up;
-  const Vector2D &thetaDown = *lfcTheta.down;
-  const double a_drs = alpha * rs / (6.0 * drs);
-  const double a_dx = alpha / (6.0 * dx);
-  const double a_dt = alpha * theta / (3.0 * dTheta);
-  const vector<double> &wvg = getWvg();
-  const double nx = wvg.size();
-  Vector2D &lfcd = lfcDerivative;
-  assert(lfcd.size(0) == lfc.size(0) && lfcd.size(1) == lfc.size(1));
-  for (size_t l = 0; l < lfc.size(1); ++l) {
-    // Wave-vector derivative contribution
-    lfcd(0, l) = a_dx * wvg[0] * getDerivative(lfc, l, 0, FORWARD);
-    for (size_t i = 1; i < nx - 1; ++i) {
-      lfcd(i, l) = a_dx * wvg[i] * getDerivative(lfc, l, i, CENTERED);
-    }
-    lfcd(nx - 1, l) =
-        a_dx * wvg[nx - 1] * getDerivative(lfc, l, nx - 1, BACKWARD);
-    // Coupling parameter contribution
-    if (rs > 0.0) {
-      for (size_t i = 0; i < nx; ++i) {
-        lfcd(i, l) +=
-            a_drs
-            * getDerivative(lfc(i, l), rsUp(i, l), rsDown(i, l), lfcRs.type);
-      }
-    }
-    // Degeneracy parameter contribution
-    if (theta > 0.0) {
-      for (size_t i = 0; i < nx; ++i) {
-        lfcd(i, l) +=
-            a_dt
-            * getDerivative(
-                lfc(i, l), thetaUp(i, l), thetaDown(i, l), lfcTheta.type);
-      }
-    }
-  }
-}
-
-double CSRNew::getDerivative(const Vector2D &f,
-                             const int &l,
-                             const size_t &idx,
-                             const Derivative &type) const {
-  switch (type) {
-  case BACKWARD:
-    assert(idx >= 2);
-    return CSRNew::getDerivative(f(idx, l), f(idx - 1, l), f(idx - 2, l), type);
-    break;
-  case CENTERED:
-    assert(idx >= 1 && idx < f.size() - 1);
-    return CSRNew::getDerivative(f(idx, l), f(idx + 1, l), f(idx - 1, l), type);
-    break;
-  case FORWARD:
-    assert(idx < f.size() - 2);
-    return CSRNew::getDerivative(f(idx, l), f(idx + 1, l), f(idx + 2, l), type);
-    break;
-  default:
-    assert(false);
-    return -1;
-    break;
-  }
-}
-
-double CSRNew::getDerivative(const double &f0,
-                             const double &f1,
-                             const double &f2,
-                             const Derivative &type) const {
-  switch (type) {
-  case BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2; break;
-  case CENTERED: return f1 - f2; break;
-  case FORWARD: return -getDerivative(f0, f1, f2, BACKWARD); break;
-  default:
-    assert(false);
-    return -1;
-    break;
-  }
-}
-
-void CSRNew::setupDerivativeData() {
+void CSR::setupDerivativeData() {
   for (size_t i = 0; i < workers.size(); ++i) {
     auto &worker = *workers[i];
     switch (i) {
@@ -477,5 +315,170 @@ void CSRNew::setupDerivativeData() {
                                        &workers[i - 2 * NRS]->getLfc()};
       break;
     }
+  }
+}
+
+void CSR::forEachWorker(const function<void(CSR &)> &func) {
+  if (isManager) {
+    for (auto &worker : workers)
+      worker->forEachWorker(func);
+  } else {
+    func(*this);
+  }
+}
+
+decltype(auto) CSR::invokeWorker(std::size_t idx, auto &&f) const {
+  const CSR &target = isManager ? *workers[idx] : *this;
+  return std::invoke(std::forward<decltype(f)>(f), target, idx);
+}
+
+double CSR::getAlpha(const size_t &idx) const {
+  auto func = [](const CSR &self, const size_t) { return self.alpha; };
+  return invokeWorker(idx, func);
+}
+
+const std::vector<double> &CSR::getSsf(const size_t &idx) const {
+  auto func = [](const CSR &self,
+                 const size_t) -> const std::vector<double> & {
+    return self.getSsf();
+  };
+  return invokeWorker(idx, func);
+}
+
+const Vector2D &CSR::getLfc(const size_t &idx) const {
+  auto func = [](const CSR &self, const size_t) -> const Vector2D & {
+    return self.getLfc();
+  };
+  return invokeWorker(idx, func);
+}
+
+double CSR::getCoupling(const size_t &idx) const {
+  auto func = [](const CSR &self, const size_t) {
+    return self.inRpa().getCoupling();
+  };
+  return invokeWorker(idx, func);
+}
+
+double CSR::getDegeneracy(const size_t &idx) const {
+  auto func = [](const CSR &self, const size_t) {
+    return self.inRpa().getCoupling();
+  };
+  return invokeWorker(idx, func);
+}
+
+double CSR::getUInt(const size_t &idx) const {
+  auto func = [](const CSR &self, const size_t idx) {
+    const auto rs = self.getCoupling(idx);
+    const auto wvg = self.getWvg();
+    const auto ssf = self.getSsf();
+    const auto dim = self.inRpa().getDimension();
+    return thermoUtil::computeInternalEnergy(wvg, ssf, rs, dim);
+  };
+  return invokeWorker(idx, func);
+}
+
+double CSR::getFxcIntegrand(const size_t &idx) const {
+  auto func = [](const CSR &self, const size_t) {
+    const auto wvg = self.getWvg();
+    const auto ssf = self.getSsf();
+    const auto dim = self.inRpa().getDimension();
+    return thermoUtil::computeInternalEnergy(wvg, ssf, 1.0, dim);
+  };
+  return invokeWorker(idx, func);
+}
+
+void CSR::setAlpha(const double &alpha_) {
+  if (isManager) {
+    for (auto &worker : workers) {
+      worker->setAlpha(alpha_);
+    }
+  } else {
+    alpha = alpha_;
+  }
+}
+
+void CSR::computeLfcDerivative() {
+  // Check that alpha has been set to a value that is not the default
+  assert(alpha != DEFAULT_ALPHA);
+  // Derivative contributions
+  const double &rs = inRpa().getCoupling();
+  const double &theta = inRpa().getDegeneracy();
+  const double &dx = inRpa().getWaveVectorGridRes();
+  const double &drs = inVS().getCouplingResolution();
+  const double &dTheta = inVS().getDegeneracyResolution();
+  const Vector2D &lfc = getLfc();
+  const Vector2D &rsUp = *lfcRs.up;
+  const Vector2D &rsDown = *lfcRs.down;
+  const Vector2D &thetaUp = *lfcTheta.up;
+  const Vector2D &thetaDown = *lfcTheta.down;
+  const double a_drs = alpha * rs / (6.0 * drs);
+  const double a_dx = alpha / (6.0 * dx);
+  const double a_dt = alpha * theta / (3.0 * dTheta);
+  const vector<double> &wvg = getWvg();
+  const double nx = wvg.size();
+  Vector2D &lfcd = lfcDerivative;
+  assert(lfcd.size(0) == lfc.size(0) && lfcd.size(1) == lfc.size(1));
+  for (size_t l = 0; l < lfc.size(1); ++l) {
+    // Wave-vector derivative contribution
+    lfcd(0, l) = a_dx * wvg[0] * derivative(lfc, l, 0, FORWARD);
+    for (size_t i = 1; i < nx - 1; ++i) {
+      lfcd(i, l) = a_dx * wvg[i] * derivative(lfc, l, i, CENTERED);
+    }
+    lfcd(nx - 1, l) = a_dx * wvg[nx - 1] * derivative(lfc, l, nx - 1, BACKWARD);
+    // Coupling parameter contribution
+    if (rs > 0.0) {
+      for (size_t i = 0; i < nx; ++i) {
+        lfcd(i, l) +=
+            a_drs * derivative(lfc(i, l), rsUp(i, l), rsDown(i, l), lfcRs.type);
+      }
+    }
+    // Degeneracy parameter contribution
+    if (theta > 0.0) {
+      for (size_t i = 0; i < nx; ++i) {
+        lfcd(i, l) +=
+            a_dt
+            * derivative(
+                lfc(i, l), thetaUp(i, l), thetaDown(i, l), lfcTheta.type);
+      }
+    }
+  }
+}
+
+double CSR::derivative(const Vector2D &f,
+                          const int &l,
+                          const size_t &idx,
+                          const Derivative &type) const {
+  switch (type) {
+  case BACKWARD:
+    assert(idx >= 2);
+    return derivative(f(idx, l), f(idx - 1, l), f(idx - 2, l), type);
+    break;
+  case CENTERED:
+    assert(idx >= 1 && idx < f.size() - 1);
+    return derivative(f(idx, l), f(idx + 1, l), f(idx - 1, l), type);
+    break;
+  case FORWARD:
+    assert(idx < f.size() - 2);
+    return derivative(f(idx, l), f(idx + 1, l), f(idx + 2, l), type);
+    break;
+  default:
+    assert(false);
+    return -1;
+    break;
+  }
+}
+
+double CSR::derivative(const double &f0,
+                          const double &f1,
+                          const double &f2,
+                          const Derivative &type) const {
+  switch (type) {
+  case BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2; break;
+  case CENTERED: return f1 - f2; break;
+  case FORWARD: return -derivative(f0, f1, f2, BACKWARD); break;
+  default:
+    assert(false);
+    return -1;
+    break;
   }
 }

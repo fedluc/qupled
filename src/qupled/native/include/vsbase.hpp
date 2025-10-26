@@ -15,7 +15,7 @@
 
 class ThermoPropBase;
 class StructPropBase;
-class CSRNew;
+class CSR;
 
 // -----------------------------------------------------------------
 // VSBase class
@@ -115,7 +115,7 @@ protected:
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
   // Structural properties (this must be set from the derived classes)
-  std::shared_ptr<CSRNew> structProp;
+  std::shared_ptr<CSR> structProp;
   // Grid for thermodyamic integration
   std::vector<double> rsGrid;
   // Free energy integrand for NPOINTS state points
@@ -147,20 +147,20 @@ protected:
 };
 
 // -----------------------------------------------------------------
-// CSRNew class
+// CSR class
 // -----------------------------------------------------------------
 
-class CSRNew {
+class CSR {
 
 public:
 
   // Enumerator to denote the numerical schemes used for the derivatives
   enum Derivative { CENTERED, FORWARD, BACKWARD };
   // Constructor (only manager instances can be created from the outside)
-  CSRNew()
-      : CSRNew(true) {}
+  CSR()
+      : CSR(true) {}
   // Destructor
-  virtual ~CSRNew() = default;
+  virtual ~CSR() = default;
   // Solve the scheme
   virtual int compute() = 0;
   // Set the free parameter
@@ -187,16 +187,16 @@ protected:
     const Vector2D *down;
   };
   // Constructor
-  CSRNew(const bool isManager_)
+  CSR(const bool isManager_)
       : isManager(isManager_),
         isInitialized(false),
-        alpha(DEFAULT_ALPHA) {};
+        alpha(DEFAULT_ALPHA){};
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
   static constexpr int NRS = 3;
   static constexpr int NTHETA = 3;
   // Workers that solve the dielectric scheme
-  std::vector<std::shared_ptr<CSRNew>> workers;
+  std::vector<std::shared_ptr<CSR>> workers;
   // Flag marking if this is a manager instance or a worker instance
   const bool isManager;
   // Flag marking if init was already called
@@ -212,22 +212,22 @@ protected:
   // Input data
   virtual const VSInput &inVS() const = 0;
   virtual const Input &inRpa() const = 0;
+  // Setup derivative data
+  void setupDerivativeData();
   // Call a given function for all workers
-  void forEachWorker(const std::function<void(CSRNew &)> &func);
+  void forEachWorker(const std::function<void(CSR &)> &func);
   decltype(auto) invokeWorker(std::size_t idx, auto &&f) const;
   // Compute the derivative component of the local field correction
   void computeLfcDerivative();
   // Helper methods to compute the derivatives
-  double getDerivative(const Vector2D &f,
-                       const int &l,
-                       const size_t &idx,
-                       const Derivative &type) const;
-  double getDerivative(const double &f0,
-                       const double &f1,
-                       const double &f2,
-                       const Derivative &type) const;
-  // Setup derivative data
-  void setupDerivativeData();
+  double derivative(const Vector2D &f,
+                    const int &l,
+                    const size_t &idx,
+                    const Derivative &type) const;
+  double derivative(const double &f0,
+                    const double &f1,
+                    const double &f2,
+                    const Derivative &type) const;
 };
 
 #endif

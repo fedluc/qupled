@@ -9,7 +9,7 @@
 
 class ThermoProp;
 class StructProp;
-class StlsCSRNew;
+class StlsCSR;
 
 // -----------------------------------------------------------------
 // VSStls class
@@ -56,17 +56,17 @@ public:
 };
 
 // -----------------------------------------------------------------
-// StlsCSRNew class
+// StlsCSR class
 // -----------------------------------------------------------------
 
-class StlsCSRNew : public CSRNew, public Stls {
+class StlsCSR : public CSR, public Stls {
 
 public:
 
   // Constructor
-  explicit StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_)
-      : StlsCSRNew(in_, true) {}
-  StlsCSRNew(const std::shared_ptr<const VSStlsInput> &in_,
+  explicit StlsCSR(const std::shared_ptr<const VSStlsInput> &in_)
+      : StlsCSR(in_, true) {}
+  StlsCSR(const std::shared_ptr<const VSStlsInput> &in_,
              const bool isMaster_);
   // Solve the scheme
   int compute() override;
