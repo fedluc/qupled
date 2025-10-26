@@ -101,7 +101,7 @@ vector<double> QThermoProp::getQData() const {
 // -----------------------------------------------------------------
 
 QstlsCSR::QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_,
-                         const bool isMaster_)
+                   const bool isMaster_)
     : CSR(isMaster_),
       Qstls(in_, false),
       itg2D(std::make_shared<Integrator2D>(ItgType::DEFAULT,
@@ -180,13 +180,12 @@ void QstlsCSR::updateSolution() {
   forEachWorker(func);
 }
 
-double QstlsCSR::computeError() const {
-  if (isManager) {
-    const auto &worker =
-        static_cast<QstlsCSR &>(*workers[StructIdx::RS_THETA]);
-    return worker.computeError();
-  }
-  return Qstls::computeError();
+double QstlsCSR::computeError(const size_t &idx) const {
+  auto func = [](const CSR &self, const size_t) {
+    auto &d = static_cast<const QstlsCSR &>(self);
+    return d.Stls::computeError();
+  };
+  return withWorker(idx, func);
 }
 
 void QstlsCSR::setupWorkers(const QVSStlsInput &in) {
@@ -212,8 +211,7 @@ void QstlsCSR::setupWorkers(const QVSStlsInput &in) {
 double QstlsCSR::getQAdder(const size_t &idx) const {
   if (isManager) {
     const CSR &baseWorker = *workers[idx];
-    const QstlsCSR &thisWorker =
-        static_cast<const QstlsCSR &>(baseWorker);
+    const QstlsCSR &thisWorker = static_cast<const QstlsCSR &>(baseWorker);
     return thisWorker.getQAdder(idx);
   }
   const shared_ptr<Interpolator1D> ssfItp =

@@ -68,7 +68,7 @@ ThermoProp::ThermoProp(const std::shared_ptr<const VSStlsInput> &in_)
 // -----------------------------------------------------------------
 
 StlsCSR::StlsCSR(const std::shared_ptr<const VSStlsInput> &in_,
-                       const bool isMaster_)
+                 const bool isMaster_)
     : CSR(isMaster_),
       Stls(in_, false) {
   if (isManager) { setupWorkers(*in_); }
@@ -127,13 +127,12 @@ void StlsCSR::updateSolution() {
   forEachWorker(func);
 }
 
-double StlsCSR::computeError() const {
-  if (isManager) {
-    const auto &worker =
-        static_cast<StlsCSR &>(*workers[StructIdx::RS_THETA]);
-    return worker.computeError();
-  }
-  return Stls::computeError();
+double StlsCSR::computeError(const size_t &idx) const {
+  auto func = [](const CSR &self, const size_t) {
+    auto &d = static_cast<const StlsCSR &>(self);
+    return d.Stls::computeError();
+  };
+  return withWorker(idx, func);
 }
 
 void StlsCSR::setupWorkers(const VSStlsInput &in) {

@@ -66,8 +66,7 @@ public:
   // Constructor
   explicit StlsCSR(const std::shared_ptr<const VSStlsInput> &in_)
       : StlsCSR(in_, true) {}
-  StlsCSR(const std::shared_ptr<const VSStlsInput> &in_,
-             const bool isMaster_);
+  StlsCSR(const std::shared_ptr<const VSStlsInput> &in_, const bool isMaster_);
   // Solve the scheme
   int compute() override;
   // Getters
@@ -93,7 +92,10 @@ private:
   void computeSsf() override;
   void initialGuess() override;
   void updateSolution() override;
-  double computeError() const override;
+  double computeError(const size_t &idx) const;
+  double computeError() const override {
+    return computeError(StructIdx::RS_THETA);
+  };
 };
 
 #endif

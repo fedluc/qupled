@@ -214,9 +214,6 @@ protected:
   virtual const Input &inRpa() const = 0;
   // Setup derivative data
   void setupDerivativeData();
-  // Call a given function for all workers
-  void forEachWorker(const std::function<void(CSR &)> &func);
-  decltype(auto) invokeWorker(std::size_t idx, auto &&f) const;
   // Compute the derivative component of the local field correction
   void computeLfcDerivative();
   // Helper methods to compute the derivatives
@@ -228,6 +225,20 @@ protected:
                     const double &f1,
                     const double &f2,
                     const Derivative &type) const;
+  // Convenience methods to handle the workers
+  void forEachWorker(auto &&f) {
+    if (isManager) {
+      for (auto &w : workers)
+        w->forEachWorker(std::forward<decltype(f)>(f));
+    } else {
+      std::invoke(std::forward<decltype(f)>(f), *this);
+    }
+  }
+
+  decltype(auto) withWorker(std::size_t idx, auto &&f) const {
+    const CSR &target = isManager ? *workers[idx] : *this;
+    return std::invoke(std::forward<decltype(f)>(f), target, idx);
+  }
 };
 
 #endif

@@ -318,52 +318,37 @@ void CSR::setupDerivativeData() {
   }
 }
 
-void CSR::forEachWorker(const function<void(CSR &)> &func) {
-  if (isManager) {
-    for (auto &worker : workers)
-      worker->forEachWorker(func);
-  } else {
-    func(*this);
-  }
-}
-
-decltype(auto) CSR::invokeWorker(std::size_t idx, auto &&f) const {
-  const CSR &target = isManager ? *workers[idx] : *this;
-  return std::invoke(std::forward<decltype(f)>(f), target, idx);
-}
-
 double CSR::getAlpha(const size_t &idx) const {
   auto func = [](const CSR &self, const size_t) { return self.alpha; };
-  return invokeWorker(idx, func);
+  return withWorker(idx, func);
 }
 
 const std::vector<double> &CSR::getSsf(const size_t &idx) const {
-  auto func = [](const CSR &self,
-                 const size_t) -> const std::vector<double> & {
+  auto func = [](const CSR &self, const size_t) -> const std::vector<double> & {
     return self.getSsf();
   };
-  return invokeWorker(idx, func);
+  return withWorker(idx, func);
 }
 
 const Vector2D &CSR::getLfc(const size_t &idx) const {
   auto func = [](const CSR &self, const size_t) -> const Vector2D & {
     return self.getLfc();
   };
-  return invokeWorker(idx, func);
+  return withWorker(idx, func);
 }
 
 double CSR::getCoupling(const size_t &idx) const {
   auto func = [](const CSR &self, const size_t) {
     return self.inRpa().getCoupling();
   };
-  return invokeWorker(idx, func);
+  return withWorker(idx, func);
 }
 
 double CSR::getDegeneracy(const size_t &idx) const {
   auto func = [](const CSR &self, const size_t) {
-    return self.inRpa().getCoupling();
+    return self.inRpa().getDegeneracy();
   };
-  return invokeWorker(idx, func);
+  return withWorker(idx, func);
 }
 
 double CSR::getUInt(const size_t &idx) const {
@@ -374,7 +359,7 @@ double CSR::getUInt(const size_t &idx) const {
     const auto dim = self.inRpa().getDimension();
     return thermoUtil::computeInternalEnergy(wvg, ssf, rs, dim);
   };
-  return invokeWorker(idx, func);
+  return withWorker(idx, func);
 }
 
 double CSR::getFxcIntegrand(const size_t &idx) const {
@@ -384,7 +369,7 @@ double CSR::getFxcIntegrand(const size_t &idx) const {
     const auto dim = self.inRpa().getDimension();
     return thermoUtil::computeInternalEnergy(wvg, ssf, 1.0, dim);
   };
-  return invokeWorker(idx, func);
+  return withWorker(idx, func);
 }
 
 void CSR::setAlpha(const double &alpha_) {
@@ -445,9 +430,9 @@ void CSR::computeLfcDerivative() {
 }
 
 double CSR::derivative(const Vector2D &f,
-                          const int &l,
-                          const size_t &idx,
-                          const Derivative &type) const {
+                       const int &l,
+                       const size_t &idx,
+                       const Derivative &type) const {
   switch (type) {
   case BACKWARD:
     assert(idx >= 2);
@@ -469,9 +454,9 @@ double CSR::derivative(const Vector2D &f,
 }
 
 double CSR::derivative(const double &f0,
-                          const double &f1,
-                          const double &f2,
-                          const Derivative &type) const {
+                       const double &f1,
+                       const double &f2,
+                       const Derivative &type) const {
   switch (type) {
   case BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2; break;
   case CENTERED: return f1 - f2; break;
