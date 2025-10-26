@@ -131,18 +131,19 @@ void ThermoPropBase::compute() {
                              "(structural properties) = {:.5e}",
                              structProp->getAlpha(),
                              structProp->getError()));
-  const vector<double> fxciTmp = structProp->getAllFreeEnergyIntegrands();
   alpha = structProp->getAlpha();
   const size_t &idx = fxcIdxTargetStatePoint;
-  fxcIntegrand[THETA_DOWN][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_DOWN];
-  fxcIntegrand[THETA_DOWN][idx] = fxciTmp[SIdx::RS_THETA_DOWN];
-  fxcIntegrand[THETA_DOWN][idx + 1] = fxciTmp[SIdx::RS_UP_THETA_DOWN];
-  fxcIntegrand[THETA][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA];
-  fxcIntegrand[THETA][idx] = fxciTmp[SIdx::RS_THETA];
-  fxcIntegrand[THETA][idx + 1] = fxciTmp[SIdx::RS_UP_THETA];
-  fxcIntegrand[THETA_UP][idx - 1] = fxciTmp[SIdx::RS_DOWN_THETA_UP];
-  fxcIntegrand[THETA_UP][idx] = fxciTmp[SIdx::RS_THETA_UP];
-  fxcIntegrand[THETA_UP][idx + 1] = fxciTmp[SIdx::RS_UP_THETA_UP];
+  auto &fxci = fxcIntegrand;
+  const auto &sp = structProp;
+  fxci[THETA_DOWN][idx - 1] = sp->getFxcIntegrand(SIdx::RS_DOWN_THETA_DOWN);
+  fxci[THETA_DOWN][idx] = sp->getFxcIntegrand(SIdx::RS_THETA_DOWN);
+  fxci[THETA_DOWN][idx + 1] = sp->getFxcIntegrand(SIdx::RS_UP_THETA_DOWN);
+  fxci[THETA][idx - 1] = sp->getFxcIntegrand(SIdx::RS_DOWN_THETA);
+  fxci[THETA][idx] = sp->getFxcIntegrand(SIdx::RS_THETA);
+  fxci[THETA][idx + 1] = sp->getFxcIntegrand(SIdx::RS_UP_THETA);
+  fxci[THETA_UP][idx - 1] = sp->getFxcIntegrand(SIdx::RS_DOWN_THETA_UP);
+  fxci[THETA_UP][idx] = sp->getFxcIntegrand(SIdx::RS_THETA_UP);
+  fxci[THETA_UP][idx + 1] = sp->getFxcIntegrand(SIdx::RS_UP_THETA_UP);
 }
 
 const vector<double> &ThermoPropBase::getSsf() {
@@ -157,16 +158,14 @@ const Vector2D &ThermoPropBase::getLfc() {
 
 vector<double> ThermoPropBase::getFreeEnergyData() const {
   assert(structProp);
-  const vector<double> rsVec = structProp->getAllCouplingParameters();
-  const vector<double> thetaVec = structProp->getAllDegeneracyParameters();
   // Free energy
   const double fxc = computeFreeEnergy(SIdx::RS_THETA, true);
   // Free energy derivatives with respect to the coupling parameter
   double fxcr;
   double fxcrr;
   {
-    const double rs = rsVec[SIdx::RS_THETA];
-    const double drs = rsVec[SIdx::RS_UP_THETA] - rsVec[SIdx::RS_THETA];
+    const double &rs = structProp->getCoupling(SIdx::RS_THETA);
+    const double drs = structProp->getCoupling(SIdx::RS_UP_THETA) - rs;
     const double f0 = computeFreeEnergy(SIdx::RS_UP_THETA, false);
     const double f1 = computeFreeEnergy(SIdx::RS_THETA, false);
     const double f2 = computeFreeEnergy(SIdx::RS_DOWN_THETA, false);
@@ -177,9 +176,9 @@ vector<double> ThermoPropBase::getFreeEnergyData() const {
   double fxct;
   double fxctt;
   {
-    const double theta = thetaVec[SIdx::RS_THETA];
+    const double &theta = structProp->getDegeneracy(SIdx::RS_THETA);
     const double theta2 = theta * theta;
-    const double dt = thetaVec[SIdx::RS_THETA_UP] - thetaVec[SIdx::RS_THETA];
+    const double dt = structProp->getDegeneracy(SIdx::RS_THETA_UP) - theta;
     const double f0 = computeFreeEnergy(SIdx::RS_THETA_UP, true);
     const double f1 = computeFreeEnergy(SIdx::RS_THETA_DOWN, true);
     fxct = theta * (f0 - f1) / (2.0 * dt);
@@ -188,9 +187,11 @@ vector<double> ThermoPropBase::getFreeEnergyData() const {
   // Free energy mixed derivatives
   double fxcrt;
   {
-    const double t_rs = thetaVec[SIdx::RS_THETA] / rsVec[SIdx::RS_THETA];
-    const double drs = rsVec[SIdx::RS_UP_THETA] - rsVec[SIdx::RS_THETA];
-    const double dt = thetaVec[SIdx::RS_THETA_UP] - thetaVec[SIdx::RS_THETA];
+    const double &rs = structProp->getCoupling(SIdx::RS_THETA);
+    const double &theta = structProp->getDegeneracy(SIdx::RS_THETA);
+    const double t_rs = theta / rs;
+    const double drs = structProp->getCoupling(SIdx::RS_UP_THETA) - rs;
+    const double dt = structProp->getDegeneracy(SIdx::RS_THETA_UP) - theta;
     const double f0 = computeFreeEnergy(SIdx::RS_UP_THETA_UP, false);
     const double f1 = computeFreeEnergy(SIdx::RS_UP_THETA_DOWN, false);
     const double f2 = computeFreeEnergy(SIdx::RS_DOWN_THETA_UP, false);
@@ -203,26 +204,25 @@ vector<double> ThermoPropBase::getFreeEnergyData() const {
 vector<double> ThermoPropBase::getInternalEnergyData() const {
   assert(structProp);
   // Internal energy
-  const vector<double> uVec = structProp->getAllInternalEnergies();
-  const double u = uVec[SIdx::RS_THETA];
+  const double u = structProp->getUInt(SIdx::RS_THETA);
   // Internal energy derivative with respect to the coupling parameter
   double ur;
   {
-    const vector<double> rs = structProp->getAllCouplingParameters();
-    const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
-    const vector<double> rsu = structProp->getAllFreeEnergyIntegrands();
-    const double &u0 = rsu[SIdx::RS_UP_THETA];
-    const double &u1 = rsu[SIdx::RS_DOWN_THETA];
+    const double drs = structProp->getCoupling(SIdx::RS_UP_THETA)
+                       - structProp->getCoupling(SIdx::RS_THETA);
+    const size_t &idx = fxcIdxTargetStatePoint;
+    const double &u0 = fxcIntegrand[THETA][idx + 1];
+    const double &u1 = fxcIntegrand[THETA][idx - 1];
     ur = (u0 - u1) / (2.0 * drs) - u;
   }
   // Internal energy derivative with respect to the degeneracy parameter
   double ut;
   {
-    const vector<double> theta = structProp->getAllDegeneracyParameters();
-    const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
-    const double u0 = uVec[SIdx::RS_THETA_UP];
-    const double u1 = uVec[SIdx::RS_THETA_DOWN];
-    ut = theta[SIdx::RS_THETA] * (u0 - u1) / (2.0 * dt);
+    const double &theta = structProp->getDegeneracy(SIdx::RS_THETA);
+    const double dt = structProp->getDegeneracy(SIdx::RS_THETA_UP) - theta;
+    const double u0 = structProp->getUInt(SIdx::RS_THETA_UP);
+    const double u1 = structProp->getUInt(SIdx::RS_THETA_DOWN);
+    ut = theta * (u0 - u1) / (2.0 * dt);
   }
   return vector<double>({u, ur, ut});
 }
@@ -246,9 +246,10 @@ double ThermoPropBase::computeFreeEnergy(const ThermoPropBase::SIdx iStruct,
     break;
   }
   assert(structProp);
-  const vector<double> &rs = structProp->getAllCouplingParameters();
-  return thermoUtil::computeFreeEnergy(
-      rsGrid, fxcIntegrand[iThermo], rs[iStruct], normalize);
+  return thermoUtil::computeFreeEnergy(rsGrid,
+                                       fxcIntegrand[iThermo],
+                                       structProp->getCoupling(iStruct),
+                                       normalize);
 }
 
 ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
@@ -271,33 +272,59 @@ void CSRNew::forEachWorker(const function<void(CSRNew &)> &func) {
   }
 }
 
-vector<double>
-CSRNew::collectFromWorkers(const function<double(const CSRNew &)> &func) const {
-  std::vector<double> results;
-  if (isManager) {
-    for (auto &worker : workers) {
-      auto sub = worker->collectFromWorkers(func);
-      results.insert(results.end(), sub.begin(), sub.end());
-    }
-  } else {
-    results.push_back(func(*this));
-  }
-  return results;
+decltype(auto) CSRNew::invokeWorker(std::size_t idx, auto &&f) const {
+  const CSRNew &target = isManager ? *workers[idx] : *this;
+  return std::invoke(std::forward<decltype(f)>(f), target, idx);
 }
 
-double CSRNew::getAlpha() const {
-  if (isManager) { return workers[StructIdx::RS_THETA]->getAlpha(); }
-  return alpha;
+double CSRNew::getAlpha(const size_t &idx) const {
+  auto func = [](const CSRNew &self, const size_t) { return self.alpha; };
+  return invokeWorker(idx, func);
 }
 
 const std::vector<double> &CSRNew::getSsf(const size_t &idx) const {
-  if (isManager) { return workers[idx]->getSsf(); }
-  return getSsf();
+  auto func = [](const CSRNew &self, const size_t) { return self.getSsf(); };
+  return invokeWorker(idx, func);
 }
 
 const Vector2D &CSRNew::getLfc(const size_t &idx) const {
-  if (isManager) { return workers[idx]->getLfc(); }
-  return getLfc();
+  auto func = [](const CSRNew &self, const size_t) { return self.getLfc(); };
+  return invokeWorker(idx, func);
+}
+
+double CSRNew::getCoupling(const size_t &idx) const {
+  auto func = [](const CSRNew &self, const size_t) {
+    return self.inRpa().getCoupling();
+  };
+  return invokeWorker(idx, func);
+}
+
+double CSRNew::getDegeneracy(const size_t &idx) const {
+  auto func = [](const CSRNew &self, const size_t) {
+    return self.inRpa().getCoupling();
+  };
+  return invokeWorker(idx, func);
+}
+
+double CSRNew::getUInt(const size_t &idx) const {
+  auto func = [](const CSRNew &self, const size_t idx) {
+    const auto rs = self.getCoupling(idx);
+    const auto wvg = self.getWvg();
+    const auto ssf = self.getSsf();
+    const auto dim = self.inRpa().getDimension();
+    return thermoUtil::computeInternalEnergy(wvg, ssf, rs, dim);
+  };
+  return invokeWorker(idx, func);
+}
+
+double CSRNew::getFxcIntegrand(const size_t &idx) const {
+  auto func = [](const CSRNew &self, const size_t) {
+    const auto wvg = self.getWvg();
+    const auto ssf = self.getSsf();
+    const auto dim = self.inRpa().getDimension();
+    return thermoUtil::computeInternalEnergy(wvg, ssf, 1.0, dim);
+  };
+  return invokeWorker(idx, func);
 }
 
 void CSRNew::setAlpha(const double &alpha_) {
@@ -308,37 +335,6 @@ void CSRNew::setAlpha(const double &alpha_) {
   } else {
     alpha = alpha_;
   }
-}
-
-std::vector<double> CSRNew::getAllCouplingParameters() const {
-  auto func = [](const CSRNew &self) { return self.inRpa().getCoupling(); };
-  return collectFromWorkers(func);
-}
-
-std::vector<double> CSRNew::getAllDegeneracyParameters() const {
-  auto func = [](const CSRNew &self) { return self.inRpa().getDegeneracy(); };
-  return collectFromWorkers(func);
-}
-
-std::vector<double> CSRNew::getAllInternalEnergies() const {
-  auto func = [](const CSRNew &self) {
-    const auto rs = self.inRpa().getCoupling();
-    const auto wvg = self.getWvg();
-    const auto ssf = self.getSsf();
-    const auto dim = self.inRpa().getDimension();
-    return thermoUtil::computeInternalEnergy(wvg, ssf, rs, dim);
-  };
-  return collectFromWorkers(func);
-}
-
-std::vector<double> CSRNew::getAllFreeEnergyIntegrands() const {
-  auto func = [](const CSRNew &self) {
-    const auto wvg = self.getWvg();
-    const auto ssf = self.getSsf();
-    const auto dim = self.inRpa().getDimension();
-    return thermoUtil::computeInternalEnergy(wvg, ssf, 1.0, dim);
-  };
-  return collectFromWorkers(func);
 }
 
 void CSRNew::computeLfcDerivative() {
@@ -436,17 +432,23 @@ void CSRNew::setupDerivativeData() {
     case RS_DOWN_THETA_DOWN:
     case RS_DOWN_THETA:
     case RS_DOWN_THETA_UP:
-      worker.setDrsData(*workers[i + 1], *workers[i + 2], Derivative::FORWARD);
+      worker.lfcRs = DerivativeData{Derivative::FORWARD,
+                                    &workers[i + 1]->getLfc(),
+                                    &workers[i + 2]->getLfc()};
       break;
     case RS_THETA_DOWN:
     case RS_THETA:
     case RS_THETA_UP:
-      worker.setDrsData(*workers[i + 1], *workers[i - 1], Derivative::CENTERED);
+      worker.lfcRs = DerivativeData{Derivative::CENTERED,
+                                    &workers[i + 1]->getLfc(),
+                                    &workers[i - 1]->getLfc()};
       break;
     case RS_UP_THETA_DOWN:
     case RS_UP_THETA:
     case RS_UP_THETA_UP:
-      worker.setDrsData(*workers[i - 1], *workers[i - 2], Derivative::BACKWARD);
+      worker.lfcRs = DerivativeData{Derivative::BACKWARD,
+                                    &workers[i - 1]->getLfc(),
+                                    &workers[i - 2]->getLfc()};
       break;
     }
   }
@@ -456,29 +458,24 @@ void CSRNew::setupDerivativeData() {
     case StructIdx::RS_DOWN_THETA_DOWN:
     case StructIdx::RS_THETA_DOWN:
     case StructIdx::RS_UP_THETA_DOWN:
-      worker.setDThetaData(
-          *workers[i + NRS], *workers[i + 2 * NRS], Derivative::FORWARD);
+      worker.lfcTheta = DerivativeData{Derivative::FORWARD,
+                                       &workers[i + NRS]->getLfc(),
+                                       &workers[i + 2 * NRS]->getLfc()};
       break;
     case StructIdx::RS_DOWN_THETA:
     case StructIdx::RS_THETA:
     case StructIdx::RS_UP_THETA:
-      worker.setDThetaData(
-          *workers[i + NRS], *workers[i - NRS], Derivative::CENTERED);
+      worker.lfcTheta = DerivativeData{Derivative::CENTERED,
+                                       &workers[i + NRS]->getLfc(),
+                                       &workers[i - NRS]->getLfc()};
       break;
     case StructIdx::RS_DOWN_THETA_UP:
     case StructIdx::RS_THETA_UP:
     case StructIdx::RS_UP_THETA_UP:
-      worker.setDThetaData(
-          *workers[i - NRS], *workers[i - 2 * NRS], Derivative::BACKWARD);
+      worker.lfcTheta = DerivativeData{Derivative::BACKWARD,
+                                       &workers[i - NRS]->getLfc(),
+                                       &workers[i - 2 * NRS]->getLfc()};
       break;
     }
   }
-}
-
-void CSRNew::setDrsData(CSRNew &up, CSRNew &down, const Derivative &dType) {
-  lfcRs = DerivativeData{dType, &up.getLfc(), &down.getLfc()};
-}
-
-void CSRNew::setDThetaData(CSRNew &up, CSRNew &down, const Derivative &dType) {
-  lfcTheta = DerivativeData{dType, &up.getLfc(), &down.getLfc()};
 }

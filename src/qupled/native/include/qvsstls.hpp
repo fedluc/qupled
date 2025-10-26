@@ -84,7 +84,7 @@ public:
   const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
   const Vector2D &getLfc() const override { return Qstls::getLfc(); }
   double getError() const override { return computeError(); }
-  std::vector<double> getAllQAdders() const;
+  double getQAdder(const size_t &idx) const;
 
 private:
 

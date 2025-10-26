@@ -168,15 +168,16 @@ public:
   // Getters
   const std::vector<double> &getSsf(const size_t &idx) const;
   const Vector2D &getLfc(const size_t &idx) const;
-  double getAlpha() const;
+  double getCoupling(const size_t &idx) const;
+  double getDegeneracy(const size_t &idx) const;
+  double getUInt(const size_t &idx) const;
+  double getFxcIntegrand(const size_t &idx) const;
+  double getAlpha(const size_t &idx) const;
+  double getAlpha() { return getAlpha(StructIdx::RS_THETA); }
   virtual const std::vector<double> &getSsf() const = 0;
   virtual const std::vector<double> &getWvg() const = 0;
   virtual const Vector2D &getLfc() const = 0;
   virtual double getError() const = 0;
-  std::vector<double> getAllCouplingParameters() const;
-  std::vector<double> getAllDegeneracyParameters() const;
-  std::vector<double> getAllInternalEnergies() const;
-  std::vector<double> getAllFreeEnergyIntegrands() const;
 
 protected:
 
@@ -194,7 +195,7 @@ protected:
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
   static constexpr int NRS = 3;
   static constexpr int NTHETA = 3;
-  // Auxiliary state points
+  // Workers that solve the dielectric scheme
   std::vector<std::shared_ptr<CSRNew>> workers;
   // Flag marking if this is a manager instance or a worker instance
   const bool isManager;
@@ -213,9 +214,7 @@ protected:
   virtual const Input &inRpa() const = 0;
   // Call a given function for all workers
   void forEachWorker(const std::function<void(CSRNew &)> &func);
-  // Collect results from all the workers
-  std::vector<double>
-  collectFromWorkers(const std::function<double(const CSRNew &)> &func) const;
+  decltype(auto) invokeWorker(std::size_t idx, auto &&f) const;
   // Compute the derivative component of the local field correction
   void computeLfcDerivative();
   // Helper methods to compute the derivatives
@@ -229,8 +228,6 @@ protected:
                        const Derivative &type) const;
   // Setup derivative data
   void setupDerivativeData();
-  void setDrsData(CSRNew &up, CSRNew &down, const Derivative &dType);
-  void setDThetaData(CSRNew &up, CSRNew &down, const Derivative &dType);
 };
 
 #endif

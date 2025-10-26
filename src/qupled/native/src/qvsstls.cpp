@@ -71,37 +71,30 @@ QThermoProp::QThermoProp(const std::shared_ptr<const QVSStlsInput> &in_)
 
 vector<double> QThermoProp::getQData() const {
   // QAdder
-  const std::vector<double> qVec = structProp->getAllQAdders();
-  const std::vector<double> rs = structProp->getAllCouplingParameters();
-  const double q = qVec[SIdx::RS_THETA] / rs[SIdx::RS_THETA];
+  const double q = structProp->getQAdder(SIdx::RS_THETA)
+                   / structProp->getCoupling(SIdx::RS_THETA);
   // QAdder derivative with respect to the coupling parameter
   double qr;
   {
-    const double drs = rs[SIdx::RS_UP_THETA] - rs[SIdx::RS_THETA];
-    const double &q0 = qVec[SIdx::RS_UP_THETA];
-    const double &q1 = qVec[SIdx::RS_DOWN_THETA];
+    const double drs = structProp->getCoupling(SIdx::RS_UP_THETA)
+                       - structProp->getCoupling(SIdx::RS_THETA);
+    const double &q0 = structProp->getQAdder(SIdx::RS_UP_THETA);
+    const double &q1 = structProp->getQAdder(SIdx::RS_DOWN_THETA);
     qr = (q0 - q1) / (2.0 * drs) - q;
   }
   // QAdder derivative with respect to the degeneracy parameter
   double qt;
   {
-    const std::vector<double> theta = structProp->getAllDegeneracyParameters();
-    const double dt = theta[SIdx::RS_THETA_UP] - theta[SIdx::RS_THETA];
-    const double q0 = qVec[SIdx::RS_THETA_UP] / rs[SIdx::RS_THETA];
-    const double q1 = qVec[SIdx::RS_THETA_DOWN] / rs[SIdx::RS_THETA];
-    qt = theta[SIdx::RS_THETA] * (q0 - q1) / (2.0 * dt);
+    const double &rs = structProp->getCoupling(SIdx::RS_THETA);
+    const double &theta = structProp->getDegeneracy(SIdx::RS_THETA);
+    const double dt = structProp->getDegeneracy(SIdx::RS_THETA_UP)
+                      - structProp->getDegeneracy(SIdx::RS_THETA);
+    const double q0 = structProp->getQAdder(SIdx::RS_THETA_UP) / rs;
+    const double q1 = structProp->getQAdder(SIdx::RS_THETA_DOWN) / rs;
+    qt = theta * (q0 - q1) / (2.0 * dt);
   }
   return vector<double>({q, qr, qt});
 }
-
-// vector<double> QStructProp::getQ() const {
-//   for (size_t i = 0; i < csr.size(); ++i) {
-//     const shared_ptr<QstlsCSR> c =
-//         std::dynamic_pointer_cast<QstlsCSR, CSR>(csr[i]);
-//     outVector[i] = c->getQAdder();
-//   }
-//   return outVector;
-// }
 
 // -----------------------------------------------------------------
 // QstlsCSR class
@@ -216,22 +209,24 @@ void QstlsCSRNew::setupWorkers(const QVSStlsInput &in) {
   setupDerivativeData();
 }
 
-std::vector<double> QstlsCSRNew::getAllQAdders() const {
-  auto func = [](const CSRNew &base) {
-    auto &self = static_cast<const QstlsCSRNew &>(base);
-    const shared_ptr<Interpolator1D> ssfItp =
-        make_shared<Interpolator1D>(self.wvg, self.ssf);
-    QAdder QTmp(self.inRpa().getDegeneracy(),
-                self.mu,
-                self.wvg.front(),
-                self.wvg.back(),
-                self.itgGrid,
-                self.itg,
-                self.itg2D,
-                ssfItp);
-    return QTmp.get();
-  };
-  return collectFromWorkers(func);
+double QstlsCSRNew::getQAdder(const size_t &idx) const {
+  if (isManager) {
+    const CSRNew &baseWorker = *workers[idx];
+    const QstlsCSRNew &thisWorker =
+        static_cast<const QstlsCSRNew &>(baseWorker);
+    return thisWorker.getQAdder(idx);
+  }
+  const shared_ptr<Interpolator1D> ssfItp =
+      make_shared<Interpolator1D>(wvg, ssf);
+  QAdder QTmp(inRpa().getDegeneracy(),
+              mu,
+              wvg.front(),
+              wvg.back(),
+              itgGrid,
+              itg,
+              itg2D,
+              ssfItp);
+  return QTmp.get();
 }
 
 // -----------------------------------------------------------------
