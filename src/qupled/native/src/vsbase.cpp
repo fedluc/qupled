@@ -263,6 +263,20 @@ ThermoPropBase::SIdx ThermoPropBase::getStructPropIdx() {
 // CSRNew class
 // -----------------------------------------------------------------
 
+void CSR::forEachWorker(auto &&f) {
+  if (isManager) {
+    for (auto &w : workers)
+      w->forEachWorker(std::forward<decltype(f)>(f));
+  } else {
+    std::invoke(std::forward<decltype(f)>(f), *this);
+  }
+}
+
+decltype(auto) CSR::withWorker(std::size_t idx, auto &&f) const {
+  const CSR &target = isManager ? *workers[idx] : *this;
+  return std::invoke(std::forward<decltype(f)>(f), target, idx);
+}
+
 void CSR::setupDerivativeData() {
   for (size_t i = 0; i < workers.size(); ++i) {
     auto &worker = *workers[i];
@@ -382,6 +396,73 @@ void CSR::setAlpha(const double &alpha_) {
   }
 }
 
+double CSR::derivative(const Vector2D &f,
+                       const int &l,
+                       const size_t &idx,
+                       const Derivative &type) const {
+  switch (type) {
+  case BACKWARD:
+    assert(idx >= 2);
+    return derivative(f(idx, l), f(idx - 1, l), f(idx - 2, l), type);
+    break;
+  case CENTERED:
+    assert(idx >= 1 && idx < f.size() - 1);
+    return derivative(f(idx, l), f(idx + 1, l), f(idx - 1, l), type);
+    break;
+  case FORWARD:
+    assert(idx < f.size() - 2);
+    return derivative(f(idx, l), f(idx + 1, l), f(idx + 2, l), type);
+    break;
+  default:
+    assert(false);
+    return -1;
+    break;
+  }
+}
+
+double CSR::derivative(const double &f0,
+                       const double &f1,
+                       const double &f2,
+                       const Derivative &type) const {
+  switch (type) {
+  case BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2; break;
+  case CENTERED: return f1 - f2; break;
+  case FORWARD: return -derivative(f0, f1, f2, BACKWARD); break;
+  default:
+    assert(false);
+    return -1;
+    break;
+  }
+}
+
+void CSR::init() {
+  auto func = [](CSR &self) {
+    if (self.isInitialized) return;
+    self.initWorker();
+    self.isInitialized = true;
+  };
+  forEachWorker(func);
+}
+
+void CSR::initialGuess() {
+  auto func = [](CSR &self) { self.initialGuessWorker(); };
+  forEachWorker(func);
+}
+
+void CSR::computeLfc() {
+  auto func1 = [](CSR &self) {
+    self.computeLfcWorker();
+    if (self.lfcDerivative.empty()) {
+      self.lfcDerivative.resize(self.getLfc().size(0), self.getLfc().size(1));
+    }
+  };
+  auto func2 = [](CSR &self) { self.computeLfcDerivative(); };
+  auto func3 = [](CSR &self) { self.getLfc().diff(self.lfcDerivative); };
+  forEachWorker(func1);
+  forEachWorker(func2);
+  forEachWorker(func3);
+}
+
 void CSR::computeLfcDerivative() {
   // Check that alpha has been set to a value that is not the default
   assert(alpha != DEFAULT_ALPHA);
@@ -429,41 +510,19 @@ void CSR::computeLfcDerivative() {
   }
 }
 
-double CSR::derivative(const Vector2D &f,
-                       const int &l,
-                       const size_t &idx,
-                       const Derivative &type) const {
-  switch (type) {
-  case BACKWARD:
-    assert(idx >= 2);
-    return derivative(f(idx, l), f(idx - 1, l), f(idx - 2, l), type);
-    break;
-  case CENTERED:
-    assert(idx >= 1 && idx < f.size() - 1);
-    return derivative(f(idx, l), f(idx + 1, l), f(idx - 1, l), type);
-    break;
-  case FORWARD:
-    assert(idx < f.size() - 2);
-    return derivative(f(idx, l), f(idx + 1, l), f(idx + 2, l), type);
-    break;
-  default:
-    assert(false);
-    return -1;
-    break;
-  }
+void CSR::computeSsf() {
+  auto func = [](CSR &self) { self.computeSsfWorker(); };
+  forEachWorker(func);
 }
 
-double CSR::derivative(const double &f0,
-                       const double &f1,
-                       const double &f2,
-                       const Derivative &type) const {
-  switch (type) {
-  case BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2; break;
-  case CENTERED: return f1 - f2; break;
-  case FORWARD: return -derivative(f0, f1, f2, BACKWARD); break;
-  default:
-    assert(false);
-    return -1;
-    break;
-  }
+void CSR::updateSolution() {
+  auto func = [](CSR &self) { self.updateSolutionWorker(); };
+  forEachWorker(func);
+}
+
+double CSR::computeError(const size_t &idx) const {
+  auto func = [](const CSR &self, const size_t) {
+    return self.computeErrorWorker();
+  };
+  return withWorker(idx, func);
 }

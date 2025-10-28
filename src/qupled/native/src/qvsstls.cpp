@@ -115,97 +115,20 @@ QstlsCSR::QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_,
   if (isManager) { setupWorkers(*in_); }
 }
 
-int QstlsCSR::compute() { return Qstls::compute(); }
-
-void QstlsCSR::init() {
-  auto func = [](CSR &base) {
-    auto &self = static_cast<QstlsCSR &>(base);
-    if (self.isInitialized) return;
-    const string &theory = self.inRpa().getTheory();
-    switch (self.lfcTheta.type) {
-    case CENTERED:
-      self.adrFixedDatabaseName = formatUtil::format("{}_THETA", theory);
-      break;
-    case FORWARD:
-      self.adrFixedDatabaseName = formatUtil::format("{}_THETA_DOWN", theory);
-      break;
-    case BACKWARD:
-      self.adrFixedDatabaseName = formatUtil::format("{}_THETA_UP", theory);
-      break;
-    }
-    self.Qstls::init();
-    self.isInitialized = true;
-  };
-  forEachWorker(func);
-}
-
-void QstlsCSR::initialGuess() {
-  auto func = [](CSR &base) {
-    static_cast<QstlsCSR &>(base).Qstls::initialGuess();
-  };
-  forEachWorker(func);
-}
-
-void QstlsCSR::computeLfc() {
-  auto func1 = [](CSR &base) {
-    auto &self = static_cast<QstlsCSR &>(base);
-    self.Qstls::computeLfc();
-    if (self.lfcDerivative.empty()) {
-      self.lfcDerivative.resize(self.lfc.size(0), self.lfc.size(1));
-    }
-  };
-  auto func2 = [](CSR &base) {
-    static_cast<QstlsCSR &>(base).computeLfcDerivative();
-  };
-  auto func3 = [](CSR &base) {
-    auto &self = static_cast<QstlsCSR &>(base);
-    self.lfc.diff(self.lfcDerivative);
-  };
-  forEachWorker(func1);
-  forEachWorker(func2);
-  forEachWorker(func3);
-}
-
-void QstlsCSR::computeSsf() {
-  auto func = [](CSR &base) {
-    static_cast<QstlsCSR &>(base).Qstls::computeSsf();
-  };
-  forEachWorker(func);
-}
-
-void QstlsCSR::updateSolution() {
-  auto func = [](CSR &base) {
-    static_cast<QstlsCSR &>(base).Qstls::updateSolution();
-  };
-  forEachWorker(func);
-}
-
-double QstlsCSR::computeError(const size_t &idx) const {
-  auto func = [](const CSR &self, const size_t) {
-    auto &d = static_cast<const QstlsCSR &>(self);
-    return d.Stls::computeError();
-  };
-  return withWorker(idx, func);
-}
-
-void QstlsCSR::setupWorkers(const QVSStlsInput &in) {
-  const double &drs = in.getCouplingResolution();
-  const double &dTheta = in.getDegeneracyResolution();
-  // If there is a risk of having negative state parameters, shift the
-  // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  const double rs = std::max(in.getCoupling(), drs);
-  const double theta = std::max(in.getDegeneracy(), dTheta);
-  // Setup auxiliary state points
-  for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
-    for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
-      std::shared_ptr<QVSStlsInput> inTmp = std::make_shared<QVSStlsInput>(in);
-      inTmp->setDegeneracy(thetaTmp);
-      inTmp->setCoupling(rsTmp);
-      workers.push_back(make_shared<QstlsCSR>(inTmp, false));
-    }
+void QstlsCSR::initWorker() {
+  const string &theory = inRpa().getTheory();
+  switch (lfcTheta.type) {
+  case CENTERED:
+    adrFixedDatabaseName = formatUtil::format("{}_THETA", theory);
+    break;
+  case FORWARD:
+    adrFixedDatabaseName = formatUtil::format("{}_THETA_DOWN", theory);
+    break;
+  case BACKWARD:
+    adrFixedDatabaseName = formatUtil::format("{}_THETA_UP", theory);
+    break;
   }
-  assert(workers.size() == NRS * NTHETA);
-  setupDerivativeData();
+  Qstls::init();
 }
 
 double QstlsCSR::getQAdder(const size_t &idx) const {

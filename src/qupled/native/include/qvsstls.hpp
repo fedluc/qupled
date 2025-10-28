@@ -78,12 +78,8 @@ public:
   QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_,
            const bool isMaster_);
   // Solve the scheme
-  int compute() override;
-  // Getters
-  const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
-  const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
-  const Vector2D &getLfc() const override { return Qstls::getLfc(); }
-  double getError() const override { return computeError(); }
+  int compute() override { return Qstls::compute(); };
+  // Getter
   double getQAdder(const size_t &idx) const;
 
 private:
@@ -99,17 +95,27 @@ private:
     return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
   }
   // setup the csr vector
-  void setupWorkers(const QVSStlsInput &in);
+  void setupWorkers(const QVSStlsInput &in) {
+    CSR::setupWorkers<QstlsCSR, QVSStlsInput>(in);
+  }
+  // Methods called by compute
+  void init() override { CSR::init(); };
+  void computeLfc() override { CSR::computeLfc(); };
+  void computeSsf() override { CSR::computeSsf(); };
+  void initialGuess() override { CSR::initialGuess(); };
+  void updateSolution() override { CSR::updateSolution(); };
+  double computeError() const override { return CSR::computeError(); }
+  void initWorker() override;
+  void computeLfcWorker() override { Qstls::computeLfc(); };
+  void computeSsfWorker() override { Qstls::computeSsf(); };
+  void initialGuessWorker() override { Qstls::initialGuess(); };
+  void updateSolutionWorker() override { Qstls::updateSolution(); };
+  double computeErrorWorker() const override { return Qstls::computeError(); };
+  Vector2D &getLfc() override { return lfc; };
   // Getters
-  void init() override;
-  void computeLfc() override;
-  void computeSsf() override;
-  void initialGuess() override;
-  void updateSolution() override;
-  double computeError(const size_t &idx) const;
-  double computeError() const override {
-    return computeError(StructIdx::RS_THETA);
-  };
+  const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
+  const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
+  const Vector2D &getLfc() const override { return Qstls::getLfc(); }
 };
 
 // -----------------------------------------------------------------

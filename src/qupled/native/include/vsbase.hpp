@@ -174,10 +174,7 @@ public:
   double getFxcIntegrand(const size_t &idx) const;
   double getAlpha(const size_t &idx) const;
   double getAlpha() { return getAlpha(StructIdx::RS_THETA); }
-  virtual const std::vector<double> &getSsf() const = 0;
-  virtual const std::vector<double> &getWvg() const = 0;
-  virtual const Vector2D &getLfc() const = 0;
-  virtual double getError() const = 0;
+  double getError() const { return computeError(StructIdx::RS_THETA); }
 
 protected:
 
@@ -212,7 +209,27 @@ protected:
   // Input data
   virtual const VSInput &inVS() const = 0;
   virtual const Input &inRpa() const = 0;
-  // Setup derivative data
+  // Setup workers
+  template <typename Scheme, typename Input>
+  void setupWorkers(const Input &in) {
+    const double &drs = in.getCouplingResolution();
+    const double &dTheta = in.getDegeneracyResolution();
+    // If there is a risk of having negative state parameters, shift the
+    // parameters so that rs - drs = 0 and/or theta - dtheta = 0
+    const double rs = std::max(in.getCoupling(), drs);
+    const double theta = std::max(in.getDegeneracy(), dTheta);
+    // Setup auxiliary state points
+    for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
+      for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
+        std::shared_ptr<Input> inTmp = std::make_shared<Input>(in);
+        inTmp->setDegeneracy(thetaTmp);
+        inTmp->setCoupling(rsTmp);
+        workers.push_back(make_shared<Scheme>(inTmp, false));
+      }
+    }
+    assert(workers.size() == NRS * NTHETA);
+    setupDerivativeData();
+  }
   void setupDerivativeData();
   // Compute the derivative component of the local field correction
   void computeLfcDerivative();
@@ -225,20 +242,28 @@ protected:
                     const double &f1,
                     const double &f2,
                     const Derivative &type) const;
+  // Methods called by compute
+  void init();
+  void computeLfc();
+  void computeSsf();
+  void initialGuess();
+  void updateSolution();
+  double computeError(const size_t &idx) const;
+  double computeError() const { return computeError(StructIdx::RS_THETA); }
+  virtual void initWorker() = 0;
+  virtual void computeLfcWorker() = 0;
+  virtual void computeSsfWorker() = 0;
+  virtual void initialGuessWorker() = 0;
+  virtual void updateSolutionWorker() = 0;
+  virtual double computeErrorWorker() const = 0;
+  virtual Vector2D &getLfc() = 0;
+  // Getters
+  virtual const std::vector<double> &getSsf() const = 0;
+  virtual const std::vector<double> &getWvg() const = 0;
+  virtual const Vector2D &getLfc() const = 0;
   // Convenience methods to handle the workers
-  void forEachWorker(auto &&f) {
-    if (isManager) {
-      for (auto &w : workers)
-        w->forEachWorker(std::forward<decltype(f)>(f));
-    } else {
-      std::invoke(std::forward<decltype(f)>(f), *this);
-    }
-  }
-
-  decltype(auto) withWorker(std::size_t idx, auto &&f) const {
-    const CSR &target = isManager ? *workers[idx] : *this;
-    return std::invoke(std::forward<decltype(f)>(f), target, idx);
-  }
+  void forEachWorker(auto &&f);
+  decltype(auto) withWorker(std::size_t idx, auto &&f) const;
 };
 
 #endif
