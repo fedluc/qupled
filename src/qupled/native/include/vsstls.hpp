@@ -53,34 +53,6 @@ public:
 
   // Constructor
   explicit ThermoProp(const std::shared_ptr<const VSStlsInput> &in_);
-
-private:
-
-  // Structural properties
-  std::shared_ptr<StructProp> structProp;
-};
-
-// -----------------------------------------------------------------
-// StructProp class
-// -----------------------------------------------------------------
-
-class StructProp : public StructPropBase {
-
-public:
-
-  explicit StructProp(const std::shared_ptr<const VSStlsInput> &in_);
-
-private:
-
-  // Input parameters
-  const VSStlsInput &in() const {
-    return *StlsUtil::dynamic_pointer_cast<IterationInput, VSStlsInput>(inPtr);
-  }
-  // setup the csr vector
-  std::vector<VSStlsInput> setupCSRInput();
-  void setupCSR();
-  //
-  void doIterations();
 };
 
 // -----------------------------------------------------------------
@@ -93,21 +65,10 @@ public:
 
   // Constructor
   explicit StlsCSR(const std::shared_ptr<const VSStlsInput> &in_)
-      : CSR(),
-        Stls(in_, false) {}
-  // Compute static local field correction
-  void computeLfcStls() override;
-  void computeLfc() override;
-  // Publicly esposed private stls methods
-  void init() override { Stls::init(); }
-  void initialGuess() override { Stls::initialGuess(); }
-  void computeSsf() override { Stls::computeSsf(); }
-  double computeError() override { return Stls::computeError(); }
-  void updateSolution() override { Stls::updateSolution(); }
-  // Getters
-  const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
-  const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
-  const Vector2D &getLfc() const override { return Stls::getLfc(); }
+      : StlsCSR(in_, true) {}
+  StlsCSR(const std::shared_ptr<const VSStlsInput> &in_, const bool isMaster_);
+  // Solve the scheme
+  int compute() override { return Stls::compute(); };
 
 private:
 
@@ -118,6 +79,28 @@ private:
   const Input &inRpa() const override {
     return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
   }
+  // setup the csr vector
+  void setupWorkers(const VSStlsInput &in) {
+    CSR::setupWorkers<StlsCSR, VSStlsInput>(in);
+  }
+  // Methods called by compute
+  void init() override { CSR::init(); };
+  void computeLfc() override { CSR::computeLfc(); };
+  void computeSsf() override { CSR::computeSsf(); };
+  void initialGuess() override { CSR::initialGuess(); };
+  void updateSolution() override { CSR::updateSolution(); };
+  double computeError() const override { return CSR::computeError(); }
+  void initWorker() override { Stls::init(); };
+  void computeLfcWorker() override { Stls::computeLfc(); };
+  void computeSsfWorker() override { Stls::computeSsf(); };
+  void initialGuessWorker() override { Stls::initialGuess(); };
+  void updateSolutionWorker() override { Stls::updateSolution(); };
+  double computeErrorWorker() const override { return Stls::computeError(); };
+  Vector2D &getLfc() override { return lfc; };
+  // Getters
+  const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
+  const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
+  const Vector2D &getLfc() const override { return Stls::getLfc(); }
 };
 
 #endif

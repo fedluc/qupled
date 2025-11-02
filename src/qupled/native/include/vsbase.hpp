@@ -78,7 +78,7 @@ enum StructIdx {
 // ThermoPropBase class
 // -----------------------------------------------------------------
 
-class ThermoPropBase {
+class ThermoPropBase : public Logger {
 
 public:
 
@@ -88,12 +88,6 @@ public:
   virtual ~ThermoPropBase() = default;
   // Set the value of the free parameter in the structural properties
   void setAlpha(const double &alpha);
-  // Copy free energy integrand
-  void copyFreeEnergyIntegrand(const ThermoPropBase &other);
-  // Check if there are unsolved state points in the free energy integrand
-  bool isFreeEnergyIntegrandIncomplete() const;
-  // Get the first unsolved state point in the free energy integrand
-  double getFirstUnsolvedStatePoint() const;
   // Compute the thermodynamic properties
   void compute();
   // Get structural properties
@@ -121,7 +115,7 @@ protected:
   // Map between struct and thermo indexes
   static constexpr int NPOINTS = 3;
   // Structural properties (this must be set from the derived classes)
-  std::shared_ptr<StructPropBase> structProp;
+  std::shared_ptr<CSR> structProp;
   // Grid for thermodyamic integration
   std::vector<double> rsGrid;
   // Free energy integrand for NPOINTS state points
@@ -133,8 +127,6 @@ protected:
   bool isZeroDegeneracy;
   // Index of the target state point in the free energy integrand
   size_t fxcIdxTargetStatePoint;
-  // Index of the first unsolved state point in the free energy integrand
-  size_t fxcIdxUnsolvedStatePoint;
   // Access input pointer
   const VSInput &in() const { return *inPtr; }
   // Cast the input member to an Input type
@@ -150,74 +142,12 @@ protected:
   void setFxcIntegrand();
   // Set the index of the target state point in the free energy integrand
   void setFxcIdxTargetStatePoint();
-  // Set the index of the first unsolved state point in the free energy
-  // integrand
-  void setFxcIdxUnsolvedStatePoint();
   // Get index to acces the structural properties
   ThermoPropBase::SIdx getStructPropIdx();
 };
 
 // -----------------------------------------------------------------
-// StructPropBase class
-// -----------------------------------------------------------------
-
-class StructPropBase : public Logger {
-
-public:
-
-  // Typedef
-  using Idx = StructIdx;
-  static constexpr int NRS = 3;
-  static constexpr int NTHETA = 3;
-  static constexpr int NPOINTS = NRS * NTHETA;
-  // Constructor
-  explicit StructPropBase(const std::shared_ptr<const IterationInput> &in_);
-  // Destructor
-  virtual ~StructPropBase() = default;
-  // Compute structural properties
-  int compute();
-  // Set free parameter
-  void setAlpha(const double &alpha);
-  // Get coupling parameters for all the state points
-  const std::vector<double> &getCouplingParameters() const;
-  // Get degeneracy parameters for all the state points
-  const std::vector<double> &getDegeneracyParameters() const;
-  // Get internal energy for all the state points
-  const std::vector<double> &getInternalEnergy() const;
-  // Get free energy integrand for all the state points
-  const std::vector<double> &getFreeEnergyIntegrand() const;
-  // Get the free parameter
-  double getAlpha() const;
-  // Get structural properties for output
-  const CSR &getCsr(const Idx &idx) const;
-  // Boolean marking whether the structural properties where computed or not
-  bool isComputed() const { return computed; }
-
-protected:
-
-  // Input parameters
-  const std::shared_ptr<const IterationInput> inPtr;
-  // Vector containing NPOINTS state points to be solved simultaneously
-  std::vector<std::shared_ptr<CSR>> csr;
-  // Flag marking whether the initialization for the stls data is done
-  bool csrIsInitialized;
-  // Flag marking whether the structural properties were computed
-  bool computed;
-  // Vector used as output parameter in the getters functions
-  mutable std::vector<double> outVector;
-  // Access input pointer
-  const IterationInput &in() const { return *inPtr; }
-  // Setup dependencies for CSR objects
-  void setupCSRDependencies();
-  // Perform iterations to compute structural properties
-  void doIterations();
-  // Generic getter function to return vector data
-  const std::vector<double> &
-  getBase(std::function<double(const CSR &)> f) const;
-};
-
-// -----------------------------------------------------------------
-// CSR (compressibility-sum-rule) class
+// CSR class
 // -----------------------------------------------------------------
 
 class CSR {
@@ -226,53 +156,50 @@ public:
 
   // Enumerator to denote the numerical schemes used for the derivatives
   enum Derivative { CENTERED, FORWARD, BACKWARD };
-  // Data for the local field correction with modified state point
-  struct DerivativeData {
-    Derivative type;
-    std::shared_ptr<Vector2D> up;
-    std::shared_ptr<Vector2D> down;
-  };
-  // Constructor
+  // Constructor (only manager instances can be created from the outside)
   CSR()
-      : lfc(std::make_shared<Vector2D>()),
-        alpha(DEFAULT_ALPHA) {}
+      : CSR(true) {}
   // Destructor
   virtual ~CSR() = default;
-  // Set the data to compute the coupling parameter derivative
-  void setDrsData(CSR &csrRsUp, CSR &csrRsDown, const Derivative &dTypeRs);
-  // Set the data to compute the degeneracy parameter derivative
-  void setDThetaData(CSR &csrThetaUp,
-                     CSR &csrThetaDown,
-                     const Derivative &dTypeTheta);
+  // Solve the scheme
+  virtual int compute() = 0;
   // Set the free parameter
-  void setAlpha(const double &alpha) { this->alpha = alpha; }
-  // Get the free parameter
-  double getAlpha() const { return alpha; }
-  // Get input
-  double getCoupling() const { return inRpa().getCoupling(); }
-  double getDegeneracy() const { return inRpa().getDegeneracy(); }
-  // Compute the internal energy
-  double getInternalEnergy() const;
-  // Compute the free energy integrand
-  double getFreeEnergyIntegrand() const;
-  // Publicly esposed private scheme methods
-  virtual void init() = 0;
-  virtual void initialGuess() = 0;
-  virtual void computeLfcStls() = 0;
-  virtual void computeLfc() = 0;
-  virtual void computeSsf() = 0;
-  virtual double computeError() = 0;
-  virtual void updateSolution() = 0;
-  virtual const std::vector<double> &getSsf() const = 0;
-  virtual const std::vector<double> &getWvg() const = 0;
-  virtual const Vector2D &getLfc() const = 0;
+  void setAlpha(const double &alpha);
+  // Getters
+  const std::vector<double> &getSsf(const size_t &idx) const;
+  const Vector2D &getLfc(const size_t &idx) const;
+  double getCoupling(const size_t &idx) const;
+  double getDegeneracy(const size_t &idx) const;
+  double getUInt(const size_t &idx) const;
+  double getFxcIntegrand(const size_t &idx) const;
+  double getAlpha(const size_t &idx) const;
+  double getAlpha() { return getAlpha(StructIdx::RS_THETA); }
+  double getError() const { return computeError(StructIdx::RS_THETA); }
 
 protected:
 
+  struct DerivativeData {
+    Derivative type;
+    const Vector2D *up;
+    const Vector2D *down;
+  };
+  // Constructor
+  CSR(const bool isManager_)
+      : isManager(isManager_),
+        isInitialized(false),
+        alpha(DEFAULT_ALPHA){};
   // Default value of alpha
   static constexpr double DEFAULT_ALPHA = numUtil::Inf;
-  // local field correction (static or dynamic)
-  std::shared_ptr<Vector2D> lfc;
+  static constexpr int NRS = 3;
+  static constexpr int NTHETA = 3;
+  // Workers that solve the dielectric scheme
+  std::vector<std::shared_ptr<CSR>> workers;
+  // Flag marking if this is a manager instance or a worker instance
+  const bool isManager;
+  // Flag marking if init was already called
+  bool isInitialized;
+  // Derivative contribution to  the local field correction
+  Vector2D lfcDerivative;
   // Free parameter
   double alpha;
   // Data for the local field correction with modified coupling paramter
@@ -282,17 +209,61 @@ protected:
   // Input data
   virtual const VSInput &inVS() const = 0;
   virtual const Input &inRpa() const = 0;
-  // Compute the local field correction with the derivatives contribution
-  Vector2D getDerivativeContribution() const;
+  // Setup workers
+  template <typename Scheme, typename Input>
+  void setupWorkers(const Input &in) {
+    const double &drs = in.getCouplingResolution();
+    const double &dTheta = in.getDegeneracyResolution();
+    // If there is a risk of having negative state parameters, shift the
+    // parameters so that rs - drs = 0 and/or theta - dtheta = 0
+    const double rs = std::max(in.getCoupling(), drs);
+    const double theta = std::max(in.getDegeneracy(), dTheta);
+    // Setup auxiliary state points
+    for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
+      for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
+        std::shared_ptr<Input> inTmp = std::make_shared<Input>(in);
+        inTmp->setDegeneracy(thetaTmp);
+        inTmp->setCoupling(rsTmp);
+        workers.push_back(make_shared<Scheme>(inTmp, false));
+      }
+    }
+    assert(workers.size() == NRS * NTHETA);
+    setupDerivativeData();
+  }
+  void setupDerivativeData();
+  // Compute the derivative component of the local field correction
+  void computeLfcDerivative();
   // Helper methods to compute the derivatives
-  double getDerivative(const std::shared_ptr<Vector2D> &f,
-                       const int &l,
-                       const size_t &idx,
-                       const Derivative &type) const;
-  double getDerivative(const double &f0,
-                       const double &f1,
-                       const double &f2,
-                       const Derivative &type) const;
+  double derivative(const Vector2D &f,
+                    const int &l,
+                    const size_t &idx,
+                    const Derivative &type) const;
+  double derivative(const double &f0,
+                    const double &f1,
+                    const double &f2,
+                    const Derivative &type) const;
+  // Methods called by compute
+  void init();
+  void computeLfc();
+  void computeSsf();
+  void initialGuess();
+  void updateSolution();
+  double computeError(const size_t &idx) const;
+  double computeError() const { return computeError(StructIdx::RS_THETA); }
+  virtual void initWorker() = 0;
+  virtual void computeLfcWorker() = 0;
+  virtual void computeSsfWorker() = 0;
+  virtual void initialGuessWorker() = 0;
+  virtual void updateSolutionWorker() = 0;
+  virtual double computeErrorWorker() const = 0;
+  virtual Vector2D &getLfc() = 0;
+  // Getters
+  virtual const std::vector<double> &getSsf() const = 0;
+  virtual const std::vector<double> &getWvg() const = 0;
+  virtual const Vector2D &getLfc() const = 0;
+  // Convenience methods to handle the workers
+  void forEachWorker(auto &&f);
+  decltype(auto) withWorker(std::size_t idx, auto &&f) const;
 };
 
 #endif

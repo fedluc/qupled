@@ -61,35 +61,11 @@ public:
 
 private:
 
-  std::shared_ptr<QStructProp> structProp;
+  std::shared_ptr<QstlsCSR> structProp;
 };
 
 // -----------------------------------------------------------------
-// Class to handle the structural properties
-// -----------------------------------------------------------------
-
-class QStructProp : public StructPropBase {
-
-public:
-
-  // Constructor
-  explicit QStructProp(const std::shared_ptr<const QVSStlsInput> &in_);
-  // Get Q term
-  std::vector<double> getQ() const;
-
-private:
-
-  // Input parameters
-  const QVSStlsInput &in() const {
-    return *StlsUtil::dynamic_pointer_cast<IterationInput, QVSStlsInput>(inPtr);
-  }
-  // Setup dependencies in the CSR objects
-  std::vector<QVSStlsInput> setupCSRInput();
-  void setupCSR();
-};
-
-// -----------------------------------------------------------------
-// Class to solve one state point
+// QstlsCSR class
 // -----------------------------------------------------------------
 
 class QstlsCSR : public CSR, public Qstls {
@@ -97,22 +73,14 @@ class QstlsCSR : public CSR, public Qstls {
 public:
 
   // Constructor
-  explicit QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_);
-  // Compute auxiliary density response
-  void computeLfcStls() override;
-  void computeLfc() override;
-  // Publicly esposed private stls methods
-  void init() override;
-  void initialGuess() override { Qstls::initialGuess(); }
-  void computeSsf() override { Qstls::computeSsf(); }
-  double computeError() override { return Qstls::computeError(); }
-  void updateSolution() override { Qstls::updateSolution(); }
-  // Compute Q
-  double getQAdder() const;
-  // Getters
-  const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
-  const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
-  const Vector2D &getLfc() const override { return Qstls::getLfc(); }
+  explicit QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_)
+      : QstlsCSR(in_, true) {}
+  QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_,
+           const bool isMaster_);
+  // Solve the scheme
+  int compute() override { return Qstls::compute(); };
+  // Getter
+  double getQAdder(const size_t &idx) const;
 
 private:
 
@@ -126,6 +94,28 @@ private:
   const Input &inRpa() const override {
     return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
   }
+  // setup the csr vector
+  void setupWorkers(const QVSStlsInput &in) {
+    CSR::setupWorkers<QstlsCSR, QVSStlsInput>(in);
+  }
+  // Methods called by compute
+  void init() override { CSR::init(); };
+  void computeLfc() override { CSR::computeLfc(); };
+  void computeSsf() override { CSR::computeSsf(); };
+  void initialGuess() override { CSR::initialGuess(); };
+  void updateSolution() override { CSR::updateSolution(); };
+  double computeError() const override { return CSR::computeError(); }
+  void initWorker() override;
+  void computeLfcWorker() override { Qstls::computeLfc(); };
+  void computeSsfWorker() override { Qstls::computeSsf(); };
+  void initialGuessWorker() override { Qstls::initialGuess(); };
+  void updateSolutionWorker() override { Qstls::updateSolution(); };
+  double computeErrorWorker() const override { return Qstls::computeError(); };
+  Vector2D &getLfc() override { return lfc; };
+  // Getters
+  const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
+  const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
+  const Vector2D &getLfc() const override { return Qstls::getLfc(); }
 };
 
 // -----------------------------------------------------------------
