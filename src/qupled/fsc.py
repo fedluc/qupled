@@ -1,7 +1,7 @@
 from __future__ import annotations
 import math
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Tuple, Optional
+from typing import Dict, Iterable, List, Optional
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -13,82 +13,49 @@ from .dimension import Dimension
 from .output import DataBase
 
 
+FLOAT_TOLERANCE = 1e-12
+
+
+class Run:
+
+    def __init__(self, rs, id):
+        self.rs: float = rs
+        self.id: int = id
+
+
 class Solver:
     """
     Post-processing FSC solver. It computes and writes results
     into the *scheme* run at (rs=target_rs, theta, dimension).
     """
 
-    def __init__(
-        self,
-        *,
-        scheme_module,
-        scheme_kwargs: Optional[dict] = None,
-        database_name: str | None = None,
-    ):
-        self.scheme_module = scheme_module
-        self.scheme_kwargs = dict(scheme_kwargs or {})
-        self.dbh = database.DataBaseHandler(database_name)
+    def __init__(self, precision=1_000_000):
+        self.db_handler = database.DataBaseHandler()
+        # Let's postpone specifying the database name to later work when we enable it for
+        # all schemes as well
         self.results: Result = Result()
+        self.solver: hf.Solver | None = None
+        self.inputs: hf.Input | None = None
+        self.drs: float | None = None
+        self.runs: dict[int, Run] = {}
+        self.precision = precision  # Precision to convert floats to integers to populate self.run_ids
 
-    def compute(self, inputs: "Input", N_values: Iterable[int]) -> int:
-        # Dimension handling via enum (default to 3D)
-        dim_enum: Dimension = (
-            inputs.dimension
-            if isinstance(inputs.dimension, Dimension)
-            else Dimension._3D
-        )
-        is_2d = dim_enum is Dimension._2D
-
-        # If user passed a dimension in scheme_kwargs, ensure consistency
-        kw_dim = self.scheme_kwargs.get("dimension", None)
-        if kw_dim is not None:
-            if not isinstance(kw_dim, Dimension):
-                raise TypeError(
-                    "scheme_kwargs['dimension'] must be a qupled.dimension.Dimension enum."
-                )
-            if kw_dim is not dim_enum:
-                raise ValueError(
-                    f"Dimension mismatch: inputs.dimension={dim_enum} vs scheme_kwargs['dimension']={kw_dim}"
-                )
-
-        scheme_kwargs_dim = dict(self.scheme_kwargs)
-        scheme_kwargs_dim["dimension"] = dim_enum
-
-        theory_tag = _infer_theory_tag(
-            self.scheme_module,
-            rs=inputs.coupling,
-            theta=inputs.degeneracy,
-            **scheme_kwargs_dim,
-        )
-
-        # Build rs-grid
-        rs_grid = _build_rs_grid(inputs.coupling, inputs.drs)
-
-        # Ensure runs for every rs on the grid
-        run_ids_by_rs: Dict[float, int] = {}
-        for rs in rs_grid:
-            rid = _ensure_run_for(
-                self.dbh,
-                self.scheme_module,
-                theory_tag,
-                float(rs),
-                float(inputs.degeneracy),
-                dim_enum,
-                **scheme_kwargs_dim,
-            )
-            run_ids_by_rs[float(rs)] = rid
-
-        target_run_id = run_ids_by_rs[float(rs_grid[-1])]
-
+    def compute(
+        self, solver: hf.Solver, inputs: hf.Input, drs: float, N_values: Iterable[int]
+    ) -> int:
+        # Assign member variables
+        self.solver = solver
+        self.inputs = inputs
+        self.drs = drs
+        rs_grid = self._build_rs_grid()
+        self._solve_scheme_for_all_coupling()
         # Set λ per dimension
+        is_2d = inputs.dimension == Dimension._2D
         lambda_val = (
             (1.0 / np.sqrt(2.0)) if is_2d else (4.0 / (9.0 * np.pi)) ** (1.0 / 3.0)
         )
-
         # Interp kind
         interp_kind = "cubic" if len(rs_grid) >= 4 else "linear"
-
         # Precompute continuous term at each rs (N-independent)
         cont_by_rs: Dict[float, float] = {}
         qcap_by_rs: Dict[float, float] = {}
@@ -102,10 +69,8 @@ class Solver:
                 if is_2d
                 else _continuous_term_3d(S_interp, qcap, lambda_val)
             )
-
         fsc_uint_list: List[float] = []
         fsc_fxc_list: List[float] = []
-
         for N in sorted(N_values):
             rs_uint_vals: List[float] = []
             target_rs_uint: Optional[float] = None
@@ -127,7 +92,10 @@ class Solver:
                 rs_uint_vals.append(rs_uint)
 
                 if math.isclose(
-                    float(rs), float(inputs.coupling), rel_tol=0, abs_tol=1e-12
+                    float(rs),
+                    float(inputs.coupling),
+                    rel_tol=0,
+                    abs_tol=FLOAT_TOLERANCE,
                 ):
                     target_rs_uint = rs_uint
 
@@ -151,8 +119,8 @@ class Solver:
             fsc_fxc_list.append(float(fsc_fxc))
 
         # Write these keys to the scheme's *target* run
-        self.dbh.run_id = target_run_id
-        self.dbh.insert_results(
+        self.db_handler.run_id = target_run_id
+        self.db_handler.insert_results(
             {
                 "fsc_uint": np.asarray(fsc_uint_list, dtype=float),
                 "fsc_fxc": np.asarray(fsc_fxc_list, dtype=float),
@@ -166,131 +134,91 @@ class Solver:
         self.results.run_id = target_run_id
         return target_run_id
 
+    def _build_rs_grid(self) -> np.ndarray:
+        if self.drs < self.precision:
+            raise ValueError(f"Invalid drs, it must be at least larger than the precision {self.precision}")
+        target = self.inputs.coupling
+        grid = np.arange(0.0, target + self.drs, self.drs)
+        if len(grid) == 0 or not math.isclose(
+            grid[-1], target, rel_tol=0, abs_tol=FLOAT_TOLERANCE
+        ):
+            grid = np.append(grid, target)
+        if not math.isclose(grid[0], 0.0, rel_tol=0, abs_tol=FLOAT_TOLERANCE):
+            grid = np.insert(grid, 0, 0.0)
+        return grid.astype(float)
 
-@dataclass
-class Input(hf.Input):
-    drs: float = 0.1
+    def _solve_scheme_for_all_coupling(self, rs_grid: list[float]):
+        self._search_results_in_the_database(rs_grid)
+        filtered_rs_grid = [
+            rs
+            for rs in rs_grid
+            if self._key_from_float(rs) not in self.runs
+        ]
+        target_coupling = self.inputs.coupling
+        for rs in filtered_rs_grid:
+            self.inputs.coupling = rs
+            self.solver.compute(self.inputs)
+            key = self._key_from_float(rs)
+            self.runs[key] = Run(rs, self.solver.run_id)
+        self.inputs.coupling = target_coupling
 
+    def _key_from_float(self, x):
+        return int(round(x * self.precision))
+
+    def _search_results_in_the_database(self, rs_grid):
+        runs = self.db_handler.inspect_runs()
+        database_keys = database.DataBaseHandler.TableKeys
+        filtered_runs = [
+            run
+            for run in runs
+            if run[database_keys.COUPLING.value] == self.inputs.coupling
+            and run[database_keys.DEGENERACY.value] == self.inputs.degeneracy
+        ]
+        for rs in rs_grid:
+            # It's better not to use floats as keys in a dictionary
+            key = self._key_from_float(rs)
+            run = next(
+                (
+                    run
+                    for run in filtered_runs
+                    if self._key_from_float(run[database_keys.COUPLING.value]) == key
+                ),
+                None,
+            )
+            if run is None:
+                continue
+            run_id = run[database_keys.PRIMARY_KEY.value]
+            run_inputs = self.db_handler.get_inputs(run_id)
+            if (
+                run_inputs["cutoff"] == self.inputs.cutoff
+                and run_inputs["matsubara"] == self.inputs.matsubara
+                and run_inputs["resolution"] == self.inputs.resolution
+            ):
+                self.runs[key] = Run(rs, run_id)
+
+    def _read_wvg_ssf(run_id: int) -> tuple[np.ndarray, np.ndarray]:
+        data = DataBase.read_run(int(run_id))
+        res = data.get("results", {})
+        wvg = res.get("wvg", None)
+        ssf = res.get("ssf", None)
+        if wvg is None or ssf is None:
+            raise ValueError(f"Malformed results for Run {run_id}.")
+        return np.asarray(wvg, dtype=float), np.asarray(ssf, dtype=float)
+    
+    def _make_S_interp(wvg: np.ndarray, ssf: np.ndarray):
+        return interp1d(
+            wvg,
+            ssf,
+            kind="cubic",
+            bounds_error=False,
+            assume_sorted=False,
+        )
 
 @dataclass
 class Result:
     fsc_uint: np.ndarray | None = None
     fsc_fxc: np.ndarray | None = None
     run_id: int | None = None
-
-
-# ============================ Internal helpers =============================
-
-
-def _build_rs_grid(target_rs: float, drs: float) -> np.ndarray:
-    if drs <= 0:
-        raise ValueError("drs must be > 0")
-    grid = np.arange(0.0, target_rs + drs, drs)
-    if len(grid) == 0 or not math.isclose(
-        grid[-1], target_rs, rel_tol=0, abs_tol=1e-12
-    ):
-        grid = np.append(grid, target_rs)
-    if not math.isclose(grid[0], 0.0, rel_tol=0, abs_tol=1e-15):
-        grid = np.insert(grid, 0, 0.0)
-    return grid.astype(float)
-
-
-def _infer_theory_tag(scheme_module, rs: float, theta: float, **scheme_kwargs) -> str:
-    tmp = scheme_module.Input(rs, theta, **scheme_kwargs)
-    return str(getattr(tmp, "theory", scheme_module.__name__.split(".")[-1].upper()))
-
-
-def _dim_value(dim_enum: Dimension) -> str:
-    """Return '2D' or '3D' from a Dimension enum."""
-    return dim_enum.value
-
-
-def _ensure_run_for(
-    dbh: database.DataBaseHandler,
-    scheme_module,
-    theory: str,
-    rs: float,
-    theta: float,
-    dim_enum: Dimension,
-    **scheme_kwargs,
-) -> int:
-    rid = _find_run_id(dbh, theory, rs, theta, dim_enum)
-    if rid is not None:
-        return rid
-
-    kw_no_dim = {k: v for k, v in scheme_kwargs.items() if k != "dimension"}
-    inputs = scheme_module.Input(rs, theta, **kw_no_dim)
-    inputs.dimension = dim_enum
-    solver = scheme_module.Solver()
-    solver.compute(inputs)
-    if getattr(solver, "run_id", None) is None:
-        raise RuntimeError("Scheme solver did not expose run_id after compute().")
-
-    run_data = DataBase.read_run(int(solver.run_id))
-    run_dim_val = Dimension.from_dict(
-        run_data["inputs"]["dimension"]
-    ).value  # "2D"/"3D"
-    if run_dim_val != _dim_value(dim_enum):
-        raise RuntimeError(
-            f"Computed run has dimension {run_dim_val}, expected {_dim_value(dim_enum)}."
-        )
-    return int(solver.run_id)
-
-
-def _find_run_id(
-    dbh: database.DataBaseHandler,
-    theory: str,
-    rs: float,
-    theta: float,
-    dim_enum: Dimension,
-) -> Optional[int]:
-    """
-    Find a run that matches theory, (rs, theta) and desired dimension.
-    Uses DataBaseHandler.inspect_runs() to list, then DataBase.read_run() to check inputs.
-    """
-    desired_val = _dim_value(dim_enum)  # "2D" or "3D"
-    runs = dbh.inspect_runs()
-    candidates = []
-    for r in runs:
-        if r.get("theory") != theory:
-            continue
-        if "coupling" not in r or "degeneracy" not in r:
-            continue
-        if not (
-            math.isclose(float(r["coupling"]), rs, rel_tol=0, abs_tol=1e-12)
-            and math.isclose(float(r["degeneracy"]), theta, rel_tol=0, abs_tol=1e-12)
-        ):
-            continue
-        run_full = DataBase.read_run(int(r["id"]))
-        dim_val = Dimension.from_dict(
-            run_full["inputs"]["dimension"]
-        ).value  # "2D"/"3D"
-        if dim_val == desired_val:
-            candidates.append(r)
-    if not candidates:
-        return None
-    candidates.sort(key=lambda x: (x.get("date", ""), x.get("time", "")))
-    return int(candidates[-1]["id"])
-
-
-def _read_wvg_ssf(run_id: int) -> Tuple[np.ndarray, np.ndarray]:
-    data = DataBase.read_run(int(run_id))
-    res = data.get("results", {})
-    wvg = res.get("wvg", None)
-    ssf = res.get("ssf", None)
-    if wvg is None or ssf is None:
-        raise ValueError(f"Run {run_id} lacks 'wvg'/'ssf' results required for FSC.")
-    return np.asarray(wvg, dtype=float), np.asarray(ssf, dtype=float)
-
-
-def _make_S_interp(wvg: np.ndarray, ssf: np.ndarray):
-    return interp1d(
-        wvg,
-        ssf,
-        kind="cubic",
-        bounds_error=False,
-        assume_sorted=False,
-    )
 
 
 # =========================== Continuous terms ============================
