@@ -41,83 +41,18 @@ class Solver:
         self.precision = precision  # Precision to convert floats to integers to populate self.run_ids
 
     def compute(
-        self, solver: hf.Solver, inputs: hf.Input, drs: float, N_values: Iterable[int]
+        self,
+        solver: hf.Solver,
+        inputs: hf.Input,
+        drs: float,
+        number_of_particles: list[int],
     ) -> int:
         # Assign member variables
         self.solver = solver
         self.inputs = inputs
         self.drs = drs
-        rs_grid = self._build_rs_grid()
         self._solve_scheme_for_all_coupling()
-        # Set λ per dimension
-        is_2d = inputs.dimension == Dimension._2D
-        lambda_val = (
-            (1.0 / np.sqrt(2.0)) if is_2d else (4.0 / (9.0 * np.pi)) ** (1.0 / 3.0)
-        )
-        # Interp kind
-        interp_kind = "cubic" if len(rs_grid) >= 4 else "linear"
-        # Precompute continuous term at each rs (N-independent)
-        cont_by_rs: Dict[float, float] = {}
-        qcap_by_rs: Dict[float, float] = {}
-        for rs in rs_grid:
-            wvg, ssf = _read_wvg_ssf(run_ids_by_rs[float(rs)])
-            S_interp = _make_S_interp(wvg, ssf)
-            qcap = min(inputs.cutoff, float(wvg[-1]))
-            qcap_by_rs[float(rs)] = qcap
-            cont_by_rs[float(rs)] = (
-                _continuous_term_2d(S_interp, qcap, lambda_val)
-                if is_2d
-                else _continuous_term_3d(S_interp, qcap, lambda_val)
-            )
-        fsc_uint_list: List[float] = []
-        fsc_fxc_list: List[float] = []
-        for N in sorted(N_values):
-            rs_uint_vals: List[float] = []
-            target_rs_uint: Optional[float] = None
-
-            for rs in rs_grid:
-                wvg, ssf = _read_wvg_ssf(run_ids_by_rs[float(rs)])
-                S_interp = _make_S_interp(wvg, ssf)
-                qcap = qcap_by_rs[float(rs)]
-                continuous = cont_by_rs[float(rs)]
-
-                if is_2d:
-                    discrete = _discrete_term_2d(N, qcap, S_interp, lambda_val)
-                    madelung = _madelung_2d(N)
-                else:
-                    discrete = _discrete_term_3d(N, qcap, S_interp, lambda_val)
-                    madelung = _madelung_3d(N)
-
-                rs_uint = continuous - discrete - 0.5 * madelung
-                rs_uint_vals.append(rs_uint)
-
-                if math.isclose(
-                    float(rs),
-                    float(inputs.coupling),
-                    rel_tol=0,
-                    abs_tol=FLOAT_TOLERANCE,
-                ):
-                    target_rs_uint = rs_uint
-
-            if target_rs_uint is None:
-                raise RuntimeError("Target rs not found in grid")
-
-            # uint FSC at target
-            fsc_uint = target_rs_uint / float(inputs.coupling)
-            fsc_uint_list.append(float(fsc_uint))
-
-            # fxc FSC: integrate rs*uint(rs) from 0 to target_rs, then divide by rs^2
-            rs_grid_np = np.asarray(rs_grid, dtype=float)
-            rs_uint_np = np.asarray(rs_uint_vals, dtype=float)
-            interp = interp1d(
-                rs_grid_np, rs_uint_np, kind=interp_kind, fill_value="extrapolate"
-            )
-            integral_val = quad(
-                lambda r: float(interp(r)), 0.0, float(inputs.coupling), limit=200
-            )[0]
-            fsc_fxc = integral_val / (float(inputs.coupling) ** 2.0)
-            fsc_fxc_list.append(float(fsc_fxc))
-
+        self.continuous_contribution.compute(inputs)
         # Write these keys to the scheme's *target* run
         self.db_handler.run_id = target_run_id
         self.db_handler.insert_results(
@@ -136,7 +71,9 @@ class Solver:
 
     def _build_rs_grid(self) -> np.ndarray:
         if self.drs < self.precision:
-            raise ValueError(f"Invalid drs, it must be at least larger than the precision {self.precision}")
+            raise ValueError(
+                f"Invalid drs, it must be at least larger than the precision {self.precision}"
+            )
         target = self.inputs.coupling
         grid = np.arange(0.0, target + self.drs, self.drs)
         if len(grid) == 0 or not math.isclose(
@@ -147,12 +84,11 @@ class Solver:
             grid = np.insert(grid, 0, 0.0)
         return grid.astype(float)
 
-    def _solve_scheme_for_all_coupling(self, rs_grid: list[float]):
+    def _solve_scheme_for_all_coupling(self):
+        rs_grid = self._build_rs_grid()
         self._search_results_in_the_database(rs_grid)
         filtered_rs_grid = [
-            rs
-            for rs in rs_grid
-            if self._key_from_float(rs) not in self.runs
+            rs for rs in rs_grid if self._key_from_float(rs) not in self.runs
         ]
         target_coupling = self.inputs.coupling
         for rs in filtered_rs_grid:
@@ -196,23 +132,6 @@ class Solver:
             ):
                 self.runs[key] = Run(rs, run_id)
 
-    def _read_wvg_ssf(run_id: int) -> tuple[np.ndarray, np.ndarray]:
-        data = DataBase.read_run(int(run_id))
-        res = data.get("results", {})
-        wvg = res.get("wvg", None)
-        ssf = res.get("ssf", None)
-        if wvg is None or ssf is None:
-            raise ValueError(f"Malformed results for Run {run_id}.")
-        return np.asarray(wvg, dtype=float), np.asarray(ssf, dtype=float)
-    
-    def _make_S_interp(wvg: np.ndarray, ssf: np.ndarray):
-        return interp1d(
-            wvg,
-            ssf,
-            kind="cubic",
-            bounds_error=False,
-            assume_sorted=False,
-        )
 
 @dataclass
 class Result:
@@ -221,18 +140,112 @@ class Result:
     run_id: int | None = None
 
 
+class ContinuousContribution:
+
+    def __init__(self):
+        self.results: dict[int, tuple[float, float]] = {}
+        self.is_2D = False
+        self.ssf: None | list[float] = None
+        self.wvg: None | list[float] = None
+
+    def compute(self, runs: dict[float, Run], inputs: hf.Input):
+        if not self.results:
+            self.is_2D = inputs.dimension == Dimension._2D
+            for key, run in runs.items():
+                self._read_wvg_ssf(run.id)
+                ssfi = interp1d(self.wvg, self.ssf, kind="cubic")
+                qcap = min(inputs.cutoff, self.wvg[-1])
+                self.results[key] = qcap, self._compute_result(ssfi, qcap)
+
+    def _compute_result(self, ssfi, qcap) -> float:
+        return (
+            self._compute_2D(ssfi, qcap) if self.is_2D else self._compute_3D(ssfi, qcap)
+        )
+
+    def _compute_result_3D(self, ssfi, qcap) -> float:
+        _lambda = (4.0 / (9.0 * np.pi)) ** (1.0 / 3.0)
+        val = quad(lambda q: float(ssfi(q) - 1.0), 0.0, float(qcap), limit=200)[0]
+        return val / (np.pi * _lambda)
+
+    def _compute_result_2D(self, ssfi, qcap) -> float:
+        _lambda = 1.0 / np.sqrt(2.0)
+        val = quad(lambda q: float(ssfi(q) - 1.0), 0.0, float(qcap), limit=200)[0]
+        return val / (2.0 * _lambda)
+
+    def _read_wvg_ssf(self, run_id: int) -> None:
+        data = DataBase.read_run(int(run_id))
+        res = data.get("results", {})
+        self.wvg = res.get("wvg", None)
+        self.ssf = res.get("ssf", None)
+        if self.wvg is None or self.ssf is None:
+            raise ValueError(f"Malformed results for Run {run_id}.")
+
+
 # =========================== Continuous terms ============================
 
 
-def _continuous_term_3d(S_interp, qcap, lambda_val):
-    val = quad(lambda q: float(S_interp(q) - 1.0), 0.0, float(qcap), limit=200)[0]
-    return val / (np.pi * lambda_val)
+class DiscreteContribution:
 
+    def __init__(self):
+        self.continuous_contribution = ContinuousContribution()
+        self.internal_energy = []
+        self.free_energy = []
 
-def _continuous_term_2d(S_interp, qcap, lambda_val):
-    val = quad(lambda q: float(S_interp(q) - 1.0), 0.0, float(qcap), limit=200)[0]
-    return val / (2.0 * lambda_val)
+    def _compute(
+        self,
+        runs: dict[float, Run],
+        inputs: hf.Input,
+        number_of_particles: list[int],
+    ):
+        self.continuous_contribution.compute(runs, inputs)
+        interp_kind = "cubic" if len(runs) >= 4 else "linear"
+        for N in sorted(number_of_particles):
+            rs_uint_vals = []
+            target_rs_uint: float | None = None
+            for key, run in runs.items():
+                wvg, ssf = self._read_wvg_ssf(run.id)
+                ssfi = interp1d(wvg, ssf, kind="cubic")
+                qcap = qcap_by_rs[float(rs)]
+                continuous = cont_by_rs[float(rs)]
+                if is_2d:
+                    discrete = _discrete_term_2d(N, qcap, S_interp, lambda_val)
+                    madelung = _madelung_2d(N)
+                else:
+                    discrete = _discrete_term_3d(N, qcap, S_interp, lambda_val)
+                    madelung = _madelung_3d(N)
+                rs_uint = continuous - discrete - 0.5 * madelung
+                rs_uint_vals.append(rs_uint)
+                if math.isclose(
+                    float(rs),
+                    float(inputs.coupling),
+                    rel_tol=0,
+                    abs_tol=FLOAT_TOLERANCE,
+                ):
+                    target_rs_uint = rs_uint
+            if target_rs_uint is None:
+                raise RuntimeError("Target rs not found in grid")
+            # uint FSC at target
+            fsc_uint = target_rs_uint / float(inputs.coupling)
+            self.internal_energy.append(float(fsc_uint))
+            # fxc FSC: integrate rs*uint(rs) from 0 to target_rs, then divide by rs^2
+            rs_grid_np = np.asarray(rs_grid, dtype=float)
+            rs_uint_np = np.asarray(rs_uint_vals, dtype=float)
+            interp = interp1d(
+                rs_grid_np, rs_uint_np, kind=interp_kind, fill_value="extrapolate"
+            )
+            integral_val = quad(
+                lambda r: float(interp(r)), 0.0, float(inputs.coupling), limit=200
+            )[0]
+            fsc_fxc = integral_val / (float(inputs.coupling) ** 2.0)
+            self.free_energy.append(float(fsc_fxc))
 
+    def _read_wvg_ssf(self, run_id: int) -> None:
+        data = DataBase.read_run(int(run_id))
+        res = data.get("results", {})
+        self.wvg = res.get("wvg", None)
+        self.ssf = res.get("ssf", None)
+        if self.wvg is None or self.ssf is None:
+            raise ValueError(f"Malformed results for Run {run_id}.")
 
 # ============================ Discrete terms =============================
 
