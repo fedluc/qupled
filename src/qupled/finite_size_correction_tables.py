@@ -4,12 +4,12 @@ import sqlalchemy as sql
 from . import native
 from . import base_tables as base
 
-INPUT_TABLE_NAME = "inputs"
-RESULT_TABLE_NAME = "results"
-RUN_TABLE_NAME = "runs"
+INPUT_TABLE_NAME = "fsc_inputs"
+RESULT_TABLE_NAME = "fsc_results"
+RUN_TABLE_NAME = "fsc_runs"
 
 
-class SchemeTables(base.BaseTables):
+class FiniteSizeCorrectionTables(base.BaseTables):
     """ """
 
     def __init__(self, engine: sql.Engine):
@@ -17,10 +17,10 @@ class SchemeTables(base.BaseTables):
         super().__init__(engine, RUN_TABLE_NAME, INPUT_TABLE_NAME, RESULT_TABLE_NAME)
         self._build_tables()
 
-    def delete_run(self, run_id: int) -> None:
+    def insert_inputs(self, inputs: dict[str, any]):
         """ """
-        native.delete_blob_data_on_disk(self.engine.url.database, run_id)
-        super().delete_run(run_id)
+        inputs.pop("scheme", None)
+        super().insert_inputs(inputs)
 
     def _build_run_table(self):
         """ """
@@ -49,6 +49,11 @@ class SchemeTables(base.BaseTables):
                 nullable=False,
             ),
             sql.Column(
+                base.TableKeys.NUMBER_OF_PARTICLES.value,
+                sql.Integer,
+                nullable=False,
+            ),
+            sql.Column(
                 base.TableKeys.DATE.value,
                 sql.String,
                 nullable=False,
@@ -70,6 +75,7 @@ class SchemeTables(base.BaseTables):
             base.TableKeys.THEORY.value: inputs.theory,
             base.TableKeys.COUPLING.value: inputs.coupling,
             base.TableKeys.DEGENERACY.value: inputs.degeneracy,
+            base.TableKeys.NUMBER_OF_PARTICLES.value: inputs.number_of_particles,
             base.TableKeys.DATE.value: now.date().isoformat(),
             base.TableKeys.TIME.value: now.time().isoformat(),
             base.TableKeys.STATUS.value: status.value,

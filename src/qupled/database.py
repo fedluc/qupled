@@ -3,6 +3,7 @@ from pathlib import Path
 import sqlalchemy as sql
 
 from .scheme_tables import SchemeTables
+from .finite_size_correction_tables import FiniteSizeCorrectionTables
 from .base_tables import ConflictMode, RunStatus
 
 BLOB_STORAGE_DIRECTORY = "blob_data"
@@ -38,6 +39,7 @@ class DataBaseHandler:
         # Create tables
         self.table_metadata = sql.MetaData()
         self.scheme_tables = SchemeTables(self.engine)
+        self.fsc_tables = FiniteSizeCorrectionTables(self.engine)
 
     def insert_scheme_run(self, inputs):
         """ """
@@ -83,6 +85,51 @@ class DataBaseHandler:
     def delete_scheme_run(self, run_id: int) -> None:
         """ """
         self.scheme_tables.delete_run(run_id)
+
+    def insert_fsc_run(self, inputs):
+        """ """
+        self.fsc_tables.insert_run(inputs)
+
+    def insert_fsc_inputs(self, inputs: dict[str, any]):
+        """ """
+        self.fsc_tables.insert_inputs(inputs)
+
+    def insert_fsc_results(
+        self,
+        results: dict[str, any],
+        conflict_mode: ConflictMode = ConflictMode.FAIL,
+    ):
+        """ """
+        self.fsc_tables.insert_results(results, conflict_mode)
+
+    def inspect_fsc_runs(self) -> list[dict[str, any]]:
+        """ """
+        return self.fsc_tables.inspect_runs()
+
+    def update_fsc_run_status(self, status: RunStatus) -> None:
+        """ """
+        self.fsc_tables.update_run_status(status)
+
+    def get_fsc_run(
+        self,
+        run_id: int,
+        input_names: list[str] | None = None,
+        result_names: list[str] | None = None,
+    ) -> dict:
+        """ """
+        return self.fsc_tables.get_run(run_id, input_names, result_names)
+
+    def get_fsc_inputs(self, run_id: int, names: list[str] | None = None) -> dict:
+        """ """
+        return self.fsc_tables.get_inputs(run_id, names)
+
+    def get_fsc_results(self, run_id: int, names: list[str] | None = None) -> dict:
+        """ """
+        return self.fsc_tables.get_results(run_id, names)
+
+    def delete_fsc_run(self, run_id: int) -> None:
+        """ """
+        self.fsc_tables.delete_run(run_id)
 
     @staticmethod
     def _set_sqlite_pragma(engine):

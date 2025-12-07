@@ -1,6 +1,5 @@
 from __future__ import annotations
 import math
-from dataclasses import dataclass
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -8,8 +7,9 @@ from scipy.integrate import quad
 
 from . import database
 from . import hf
+from . import serialize
+from .base_tables import TableKeys
 from .dimension import Dimension
-from .output import DataBase
 
 
 FLOAT_TOLERANCE = 1e-12
@@ -34,48 +34,66 @@ class FiniteSizeCorrection:
         # all schemes as well
         self.results: Result = Result()
         self.solver: hf.Solver | None = None
-        self.inputs: hf.Input | None = None
-        self.drs: float | None = None
+        self.inputs: Input | None = None
         self.runs: dict[int, Run] = {}
-        self.correction = Correction()
+        self.correction = Correction(self.db_handler)
         self.target_run_id: int | None = None
+
+    @property
+    def run_id(self):
+        """
+        Property that retrieves the run ID from the database handler.
+
+        Returns:
+            str: The run ID associated with the current database handler.
+        """
+        return self.db_handler.fsc_tables.run_id
 
     def compute(
         self,
         solver: hf.Solver,
-        inputs: hf.Input,
-        drs: float,
-        number_of_particles: list[int],
+        inputs: Input,
     ) -> int:
-        # Assign member variables
         self.solver = solver
         self.inputs = inputs
-        self.drs = drs
+        self._add_run_to_database()
+        self._compute_correction()
+        self._save()
+
+    def _compute_correction(self) -> int:
         self._solve_scheme_for_all_coupling()
-        self.correction.compute(self.runs, self.inputs, number_of_particles)
+        self.correction.compute(self.runs, self.inputs)
+        self.results = Result(
+            uint=self.correction.internal_energy,
+            fxc=self.correction.free_energy,
+        )
         return self.target_run_id
-        # # Write these keys to the scheme's *target* run
-        # self.db_handler.run_id = self.target_run_id
-        # self.db_handler.insert_results(
-        #     {
-        #         "fsc_uint": np.asarray(self.correction.internal_energy, dtype=float),
-        #         "fsc_fxc": np.asarray(self.correction.free_energy, dtype=float),
-        #     },
-        #     conflict_mode=database.DataBaseHandler.ConflictMode.UPDATE,
-        # )
-        # # Mirror into in-memory Result
-        # self.results.internal_energy = np.asarray(self.correction.internal_energy, dtype=float)
-        # self.results.free_energy = np.asarray(self.correction.free_energy, dtype=float)
-        # self.results.run_id = self.target_run_id
-        # return self.target_run_id
+
+    def _add_run_to_database(self):
+        """ """
+        self.db_handler.insert_fsc_run(
+            self.inputs
+        )  # This can be cause problems when trying to save the scheme entry
+
+    def _save(self):
+        """
+        Saves the current state and results to the database.
+
+        This method updates the run status in the database using the current
+        native scheme status and inserts the results into the database.
+        """
+        run_status = database.RunStatus.SUCCESS  # This should be fixed
+        self.db_handler.update_fsc_run_status(run_status)
+        self.db_handler.insert_fsc_results(self.results.__dict__)
 
     def _build_rs_grid(self) -> np.ndarray:
-        if self.drs <= 0:
+        drs = self.inputs.drs
+        if drs <= 0:
             raise ValueError(
                 f"Invalid coupling resolution, it must be at greater than 0"
             )
-        target = self.inputs.coupling
-        grid = np.arange(0.0, target + self.drs, self.drs)
+        target = self.inputs.scheme.coupling
+        grid = np.arange(0.0, target + drs, drs)
         if len(grid) == 0 or not math.isclose(
             grid[-1], target, rel_tol=0, abs_tol=FLOAT_TOLERANCE
         ):
@@ -85,35 +103,36 @@ class FiniteSizeCorrection:
         return grid.astype(float)
 
     def _solve_scheme_for_all_coupling(self):
+        scheme_input = self.inputs.scheme
         rs_grid = self._build_rs_grid()
         self._search_results_in_the_database(rs_grid)
         filtered_rs_grid = [
             rs for rs in rs_grid if self._key_from_float(rs) not in self.runs
         ]
-        target_coupling = self.inputs.coupling
+        target_coupling = scheme_input.coupling
         for rs in filtered_rs_grid:
             print(f"--- Computing run for rs={rs}")
-            self.inputs.coupling = rs
-            self.solver.compute(self.inputs)
+            scheme_input.coupling = rs
+            self.solver.compute(scheme_input)
             key = self._key_from_float(rs)
             self.runs[key] = Run(rs, self.solver.run_id)
-        self.inputs.coupling = target_coupling
+        scheme_input.coupling = target_coupling
         target_key = self._key_from_float(target_coupling)
         self.target_run_id = self.runs[target_key].id
         print(f"--- Runs completed. Target run ID: {self.target_run_id}")
 
     def _key_from_float(self, x):
-        precision = int(np.abs(np.log10(self.drs)))
+        precision = int(np.abs(np.log10(self.inputs.drs)))
         return int(round(x * 10**precision))
 
     def _search_results_in_the_database(self, rs_grid):
+        inputs_scheme = self.inputs.scheme
         runs = self.db_handler.inspect_scheme_runs()
-        database_keys = database.DataBaseHandler.TableKeys
         filtered_runs = [
             run
             for run in runs
-            if run[database_keys.THEORY.value] == self.inputs.theory
-            and run[database_keys.DEGENERACY.value] == self.inputs.degeneracy
+            if run[TableKeys.THEORY.value] == inputs_scheme.theory
+            and run[TableKeys.DEGENERACY.value] == inputs_scheme.degeneracy
         ]
         for rs in rs_grid:
             # It's better not to use floats as keys in a dictionary
@@ -122,41 +141,56 @@ class FiniteSizeCorrection:
                 (
                     run
                     for run in filtered_runs
-                    if self._key_from_float(run[database_keys.COUPLING.value]) == key
+                    if self._key_from_float(run[TableKeys.COUPLING.value]) == key
                 ),
                 None,
             )
             if run is None:
                 continue
-            run_id = run[database_keys.PRIMARY_KEY.value]
-            run_inputs = self.db_handler.get_scheme_inputs(run_id)
+            run_id = run[TableKeys.PRIMARY_KEY.value]
+            run_inputs = self.db_handler.get_inputs_scheme(run_id)
             if (
-                run_inputs["cutoff"] == self.inputs.cutoff
-                and run_inputs["matsubara"] == self.inputs.matsubara
-                and run_inputs["resolution"] == self.inputs.resolution
+                run_inputs["cutoff"] == inputs_scheme.cutoff
+                and run_inputs["matsubara"] == inputs_scheme.matsubara
+                and run_inputs["resolution"] == inputs_scheme.resolution
             ):
                 self.runs[key] = Run(rs, run_id)
 
 
-@dataclass
+@serialize.serializable_dataclass
+class Input:
+    """
+    Class used to store the inputs for the :obj:`qupled.finite_size_correction.FiniteSizeCorrection` class.
+    """
+
+    number_of_particles: int
+    """Number of particles."""
+    drs: float = 0.1
+    """Coupling parameter resolution. Default = ``0.1``"""
+    scheme: hf.Input = None
+    """Scheme inputs. Default = ``None``"""
+
+
+@serialize.serializable_dataclass
 class Result:
-    internal_energy: np.ndarray | None = None
-    free_energy: np.ndarray | None = None
-    run_id: int | None = None
+    uint: float | None = None
+    """Internal energy"""
+    fxc: np.ndarray | None = None
+    """Free energy"""
 
 
 class Correction:
 
-    def __init__(self):
-        self.continuous = ContinuousCorrection()
+    def __init__(self, db_handler: database.DataBaseHandler):
+        self.db_handler = db_handler
+        self.continuous = ContinuousCorrection(self.db_handler)
         self.internal_energy: float | None = None
         self.free_energy: float | None = None
 
     def compute(
         self,
         runs: dict[float, Run],
-        inputs: hf.Input,
-        number_of_particles: int,
+        inputs: Input,
     ):
         self.continuous.compute(runs, inputs)
         interp_kind = "cubic" if len(runs) >= 4 else "linear"
@@ -166,6 +200,7 @@ class Correction:
         rs_grid.sort()
         rs_uint_vals = []
         target_rs_uint: float | None = None
+        inputs_scheme = inputs.scheme
         for key, run in runs.items():
             continuous = self.continuous.results[key]
             ssfi = interp1d(
@@ -174,13 +209,15 @@ class Correction:
                 kind="cubic",
                 fill_value="extrapolate",
             )
-            discrete = self._compute_result(ssfi, inputs.cutoff, number_of_particles)
-            madelung = self._compute_madelung(number_of_particles)
+            discrete = self._compute_result(
+                ssfi, inputs_scheme.cutoff, inputs.number_of_particles
+            )
+            madelung = self._compute_madelung(inputs.number_of_particles)
             rs_uint = continuous - discrete - 0.5 * madelung
             rs_uint_vals.append(rs_uint)
             if math.isclose(
                 run.rs,
-                inputs.coupling,
+                inputs_scheme.coupling,
                 rel_tol=0,
                 abs_tol=FLOAT_TOLERANCE,
             ):
@@ -188,7 +225,7 @@ class Correction:
         if target_rs_uint is None:
             raise RuntimeError("Target rs not found in grid")
         # uint FSC at target
-        self.internal_energy = target_rs_uint / inputs.coupling
+        self.internal_energy = target_rs_uint / inputs_scheme.coupling
         # fxc FSC: integrate rs*uint(rs) from 0 to target_rs, then divide by rs^2
         rs_grid_np = np.asarray(rs_grid, dtype=float)
         rs_uint_np = np.asarray(rs_uint_vals, dtype=float)
@@ -196,9 +233,9 @@ class Correction:
             rs_grid_np, rs_uint_np, kind=interp_kind, fill_value="extrapolate"
         )
         integral_val = quad(
-            lambda r: float(interp(r)), 0.0, float(inputs.coupling), limit=200
+            lambda r: float(interp(r)), 0.0, float(inputs_scheme.coupling), limit=200
         )[0]
-        self.free_energy = integral_val / (inputs.coupling**2.0)
+        self.free_energy = integral_val / (inputs_scheme.coupling**2.0)
 
     def _compute_result(
         self, ssfi: interp1d, cutoff: float, number_of_particles: int
@@ -278,21 +315,25 @@ class Correction:
 
 class ContinuousCorrection:
 
-    def __init__(self):
+    def __init__(self, db_handler: database.DataBaseHandler):
+        self.db_handler = db_handler
         self.results: dict[int, float] = {}
         self.is_2D = False
         self.ssf: None | list[float] = None
         self.wvg: None | list[float] = None
 
-    def compute(self, runs: dict[float, Run], inputs: hf.Input):
+    def compute(self, runs: dict[float, Run], inputs: Input):
+        inputs_scheme = inputs.scheme
         if not self.results:
-            self.is_2D = inputs.dimension == Dimension._2D
+            self.is_2D = inputs_scheme.dimension == Dimension._2D
             for key, run in runs.items():
                 self._read_wvg_ssf(run.id)
                 ssfi = interp1d(
                     self.wvg, self.ssf, kind="cubic", fill_value="extrapolate"
                 )
-                self.results[key] = self._compute_result(ssfi, cutoff=inputs.cutoff)
+                self.results[key] = self._compute_result(
+                    ssfi, cutoff=inputs_scheme.cutoff
+                )
 
     def _compute_result(self, ssfi: interp1d, cutoff: float) -> float:
         return (
@@ -312,7 +353,7 @@ class ContinuousCorrection:
         return val / (2.0 * _lambda)
 
     def _read_wvg_ssf(self, run_id: int) -> None:
-        data = DataBase.read_run(int(run_id))
+        data = self.db_handler.get_scheme_run(int(run_id))
         res = data.get("results", {})
         self.wvg = res.get("wvg", None)
         self.ssf = res.get("ssf", None)

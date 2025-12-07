@@ -15,6 +15,7 @@ class TableKeys(Enum):
     DATE = "date"
     DEGENERACY = "degeneracy"
     NAME = "name"
+    NUMBER_OF_PARTICLES = "number_of_particles"
     PRIMARY_KEY = "id"
     RUN_ID = "run_id"
     STATUS = "status"
@@ -44,22 +45,7 @@ class BaseTables:
         input_table_name: str,
         result_table_name: str,
     ):
-        """
-        Initializes the DataBaseHandler instance.
-
-        Args:
-            database_name (str | None, optional): The name of the database file. If not provided,
-                the default database name (`DEFAULT_DATABASE_NAME`) will be used.
-
-        Attributes:
-            database_name (str): The name of the database file being used.
-            engine (sqlalchemy.engine.Engine): The SQLAlchemy engine connected to the SQLite database.
-            table_metadata (sqlalchemy.MetaData): Metadata object for managing table schemas.
-            run_table (sqlalchemy.Table): The table schema for storing run information.
-            input_table (sqlalchemy.Table): The table schema for storing input data.
-            result_table (sqlalchemy.Table): The table schema for storing result data.
-            run_id (int | None): The ID of the current run, or None if no run is active.
-        """
+        """ """
         # Set sqlite properties
         self.engine = engine
         # Store table names
@@ -71,37 +57,12 @@ class BaseTables:
         self.run_id: int | None = None
 
     def insert_run(self, inputs):
-        """
-        Inserts a new run into the database by storing the provided inputs and results.
-
-        Args:
-            inputs (object): An object containing the input data for the run.
-                             The attributes of this object will be converted to a dictionary.
-            results (object): An object containing the result data for the run.
-                              The attributes of this object will be converted to a dictionary.
-
-        """
+        """ """
         self._insert_run(inputs, RunStatus.RUNNING)
         self.insert_inputs(inputs.__dict__)
 
     def insert_inputs(self, inputs: dict[str, any]):
-        """
-        Inserts input data into the database for the current run.
-
-        Args:
-            inputs (dict[str, any]): A dictionary containing input data to be inserted.
-                The keys represent column names, and the values represent the data
-                to be stored in the corresponding columns.
-
-        Raises:
-            ValueError: If `run_id` is None, indicating that no run is currently active.
-
-        Notes:
-            - The input data is serialized to JSON format before being inserted into
-              the database.
-            - The insertion is performed using the `_insert_from_dict` method, which
-              maps the input values using the `sql_mapping` function.
-        """
+        """ """
         if self.run_id is not None:
             sql_mapping = lambda value: (self._to_json(value))
             self._insert_data_from_dict(self.input_table, inputs, sql_mapping)
@@ -111,18 +72,7 @@ class BaseTables:
         results: dict[str, any],
         conflict_mode: ConflictMode = ConflictMode.FAIL,
     ):
-        """
-        Inserts the given results into the database table associated with this instance.
-
-        Args:
-            results (dict[str, any]): A dictionary where the keys are column names
-                and the values are the corresponding data to be inserted.
-
-        Notes:
-            - This method requires that `self.run_id` is not None; otherwise, no insertion will occur.
-            - The values in the `results` dictionary are converted to bytes using the `_to_bytes` method
-              before being inserted into the database.
-        """
+        """ """
         if self.run_id is not None:
             sql_mapping = lambda value: (self._to_bytes(value))
             self._insert_data_from_dict(
@@ -130,36 +80,13 @@ class BaseTables:
             )
 
     def inspect_runs(self) -> list[dict[str, any]]:
-        """
-        Retrieve and inspect all runs from the database.
-
-        This method executes a SQL SELECT statement on the `run_table` and retrieves
-        all rows. Each row is converted into a dictionary where the keys are the column
-        names and the values are the corresponding data.
-
-        Returns:
-            list[dict[str, any]]: A list of dictionaries, each representing a row
-            from the `run_table`. The keys in the dictionary correspond to the column
-            names, and the values are the respective data for each column.
-        """
+        """ """
         statement = sql.select(self.run_table)
         rows = self._execute(statement).mappings().all()
         return [{key: row[key] for key in row.keys()} for row in rows]
 
     def update_run_status(self, status: RunStatus) -> None:
-        """
-        Update the status of a run in the database.
-
-        Args:
-            status (RunStatus): The new status to set for the run.
-
-        Returns:
-            None
-
-        Notes:
-            This method updates the status of the run identified by `self.run_id` in the run table.
-            If `self.run_id` is None, no update is performed.
-        """
+        """ """
         if self.run_id is not None:
             statement = (
                 sql.update(self.run_table)
@@ -174,24 +101,7 @@ class BaseTables:
         input_names: list[str] | None = None,
         result_names: list[str] | None = None,
     ) -> dict:
-        """
-        Retrieve a run's data, including its inputs and results, from the database.
-
-        Args:
-            run_id (int): The unique identifier of the run to retrieve.
-            input_names (list[str] | None): A list of input names to filter the inputs
-                associated with the run. If None, all inputs are retrieved.
-            result_names (list[str] | None): A list of result names to filter the results
-                associated with the run. If None, all results are retrieved.
-
-        Returns:
-            dict: A dictionary containing the run's data, inputs, and results. The structure is:
-                {
-                    "RUN_TABLE_NAME": {<run_data>},
-                    "INPUT_TABLE_NAME": [<inputs>],
-                    "RESULT_TABLE_NAME": [<results>]
-                If the run is not found, an empty dictionary is returned.
-        """
+        """ """
         statement = sql.select(self.run_table).where(
             self.run_table.c[TableKeys.PRIMARY_KEY.value] == run_id
         )
@@ -208,56 +118,23 @@ class BaseTables:
         return {}
 
     def get_inputs(self, run_id: int, names: list[str] | None = None) -> dict:
-        """
-        Retrieve input data for a specific run ID from the input table.
-
-        Args:
-            run_id (int): The unique identifier for the run whose inputs are to be retrieved.
-            names (list[str] | None): A list of input names to filter the results. If None, all inputs are retrieved.
-
-        Returns:
-            dict: A dictionary containing the input data, where keys are input names and values are the corresponding data.
-        """
+        """ """
         sql_mapping = lambda value: (self._from_json(value))
         return self._get_data(self.input_table, run_id, names, sql_mapping)
 
     def get_results(self, run_id: int, names: list[str] | None = None) -> dict:
-        """
-        Retrieve results from the database for a specific run ID and optional list of names.
-
-        Args:
-            run_id (int): The unique identifier for the run whose results are to be retrieved.
-            names (list[str] | None): A list of column names to filter the results. If None, all columns are retrieved.
-
-        Returns:
-            dict: A dictionary containing the retrieved results, where the keys are column names and the values
-                  are the corresponding data, processed using the `_from_bytes` method.
-        """
+        """ """
         sql_mapping = lambda value: (self._from_bytes(value))
         return self._get_data(self.result_table, run_id, names, sql_mapping)
 
     def delete_run(self, run_id: int) -> None:
-        """
-        Deletes a run entry from the database based on the provided run ID.
-
-        Args:
-            run_id (int): The unique identifier of the run to be deleted.
-
-        Returns:
-            None
-        """
+        """ """
         condition = self.run_table.c[TableKeys.PRIMARY_KEY.value] == run_id
         statement = sql.delete(self.run_table).where(condition)
         self._execute(statement)
 
     def _build_tables(self):
-        """
-        Builds the necessary tables in the database.
-
-        This method constructs the run, inputs, and results tables by invoking
-        their respective builder methods. Each table is created in the database
-        if it does not already exist.
-        """
+        """ """
         self.run_table = self._build_run_table()
         self.input_table = self._build_inputs_table()
         self.result_table = self._build_results_table()
@@ -267,53 +144,15 @@ class BaseTables:
         raise NotImplementedError("This method should be implemented in a subclass.")
 
     def _build_inputs_table(self) -> sql.Table:
-        """
-        Builds and returns the SQLAlchemy Table object for the inputs table.
-
-        This method constructs a table definition for storing input data, using
-        the predefined table name and a JSON column type.
-
-        Returns:
-            sql.Table: The SQLAlchemy Table object representing the inputs table.
-        """
+        """ """
         return self._build_data_table(self.input_table_name, sql.JSON)
 
     def _build_results_table(self) -> sql.Table:
-        """
-        Constructs and returns the results table for the database.
-
-        This method creates a SQL table with the name specified by
-        `RESULTS_TABLE_NAME` and a column of type `LargeBinary` to store
-        binary data.
-
-        Returns:
-            sql.Table: The constructed results table.
-        """
+        """ """
         return self._build_data_table(self.result_table_name, sql.LargeBinary)
 
     def _build_data_table(self, table_name, sql_data_type) -> sql.Table:
-        """
-        Builds and creates a SQLAlchemy table with the specified name and data type.
-
-        This method defines a table schema with the following columns:
-        - `RUN_ID`: An integer column that acts as a foreign key referencing the primary key
-          of the runs table. It is non-nullable and enforces cascading deletes.
-        - `NAME`: A string column that is non-nullable.
-        - `VALUE`: A column with a data type specified by the `sql_data_type` parameter,
-          which can be nullable.
-
-        The table also includes a composite primary key constraint on the `RUN_ID` and `NAME` columns.
-
-        After defining the table schema, the method creates the table in the database
-        if it does not already exist.
-
-        Args:
-            table_name (str): The name of the table to be created.
-            sql_data_type (sqlalchemy.types.TypeEngine): The SQLAlchemy data type for the `VALUE` column.
-
-        Returns:
-            sqlalchemy.Table: The created SQLAlchemy table object.
-        """
+        """ """
         table = sql.Table(
             table_name,
             self.table_metadata,
@@ -357,17 +196,7 @@ class BaseTables:
         sql_mapping: Callable[[any], any],
         conflict_mode: ConflictMode = ConflictMode.FAIL,
     ) -> None:
-        """
-        Inserts data into a specified table by mapping values through a provided SQL mapping function.
-
-        Args:
-            table (str): The name of the table where the data will be inserted.
-            data (dict[str, any]): A dictionary containing column names as keys and their corresponding values.
-            sql_mapping (Callable[[any], any]): A function that maps input values to their SQL-compatible representations.
-
-        Returns:
-            None
-        """
+        """ """
         for name, value in data.items():
             if mapped_value := sql_mapping(value):
                 self._insert_data(table, name, mapped_value, conflict_mode)
@@ -379,20 +208,7 @@ class BaseTables:
         value: any,
         conflict_mode: ConflictMode = ConflictMode.FAIL,
     ):
-        """
-        Inserts a record into the specified SQL table with the given name and value, handling conflicts according to the specified mode.
-        Args:
-            table (sql.Table): The SQLAlchemy table object where the record will be inserted.
-            name (str): The name/key associated with the value to insert.
-            value (any): The value to be inserted into the table.
-            conflict_mode (ConflictMode, optional): Specifies how to handle conflicts on unique constraints.
-                Defaults to ConflictMode.FAIL. If set to ConflictMode.UPDATE, existing records with the same
-                run_id and name will be updated with the new value.
-        Returns:
-            None
-        Raises:
-            Any exceptions raised by the underlying database execution.
-        """
+        """ """
         data = {
             TableKeys.RUN_ID.value: self.run_id,
             TableKeys.NAME.value: name,
@@ -428,7 +244,6 @@ class BaseTables:
         Returns:
             dict: A dictionary where the keys are the names from the table and the values are the transformed values
                   obtained by applying `sql_mapping` to the corresponding SQL values.
-
         """
         conditions = [table.c[TableKeys.RUN_ID.value] == run_id]
         if names is not None:
