@@ -32,12 +32,12 @@ class DataBaseHandler:
         self.blob_storage.mkdir(parents=True, exist_ok=True)
         self.blob_storage = str(self.blob_storage)
         # Create database
-        self.engine = sql.create_engine(f"sqlite:///{database_path}")
+        engine = sql.create_engine(f"sqlite:///{database_path}")
         # Set sqlite properties
-        DataBaseHandler._set_sqlite_pragma(self.engine)
+        DataBaseHandler._set_sqlite_pragma(engine)
         # Create tables
         self.table_metadata = sql.MetaData()
-        self.scheme_tables = SchemeTables(self.engine)
+        self.scheme_tables = SchemeTables(engine)
 
     def insert_scheme_run(self, inputs):
         """ """
@@ -83,3 +83,28 @@ class DataBaseHandler:
     def delete_scheme_run(self, run_id: int) -> None:
         """ """
         self.scheme_tables.delete_run(run_id)
+
+    @staticmethod
+    def _set_sqlite_pragma(engine):
+        """
+        Configures the SQLite database engine to enforce foreign key constraints.
+
+        This function sets up a listener for the "connect" event on the provided
+        SQLAlchemy engine. When a new database connection is established, it executes
+        the SQLite PRAGMA statement to enable foreign key support.
+
+        Args:
+            engine (sqlalchemy.engine.Engine): The SQLAlchemy engine instance to configure.
+
+        Notes:
+            SQLite does not enforce foreign key constraints by default. This function
+            ensures that foreign key constraints are enabled for all connections made
+            through the provided engine.
+        """
+
+        @sql.event.listens_for(engine, "connect")
+        def _set_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.close()

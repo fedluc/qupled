@@ -3,7 +3,6 @@ import sqlalchemy as sql
 
 from . import native
 from . import base_tables as base
-from . import hf
 
 INPUT_TABLE_NAME = "inputs"
 RESULT_TABLE_NAME = "results"
@@ -30,9 +29,7 @@ class SchemeTables(base.BaseTables):
             result_table (sqlalchemy.Table): The table schema for storing result data.
             run_id (int | None): The ID of the current run, or None if no run is active.
         """
-        super().__init__(
-            self, engine, RUN_TABLE_NAME, INPUT_TABLE_NAME, RESULT_TABLE_NAME
-        )
+        super().__init__(engine, RUN_TABLE_NAME, INPUT_TABLE_NAME, RESULT_TABLE_NAME)
         self._build_tables()
 
     def delete_run(self, run_id: int) -> None:
@@ -108,7 +105,7 @@ class SchemeTables(base.BaseTables):
         self._create_table(table)
         return table
 
-    def _insert_run(self, inputs: hf.Input, status: base.RunStatus):
+    def _insert_run(self, inputs: any, status: base.RunStatus):
         """
         Inserts a new run entry into the database.
 

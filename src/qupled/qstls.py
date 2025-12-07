@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from . import database
 from . import native
 from . import serialize
 from . import stls
+from .base_tables import TableKeys
 
 
 class Solver(stls.Solver):
@@ -40,12 +40,11 @@ class Solver(stls.Solver):
         runs = self.db_handler.inspect_scheme_runs()
         inputs.fixed_run_id = None
         for run in runs:
-            database_keys = database.DataBaseHandler.TableKeys
-            same_degeneracy = run[database_keys.DEGENERACY.value] == inputs.degeneracy
-            same_theory = run[database_keys.THEORY.value] == inputs.theory
+            same_degeneracy = run[TableKeys.DEGENERACY.value] == inputs.degeneracy
+            same_theory = run[TableKeys.THEORY.value] == inputs.theory
             if not same_theory or not same_degeneracy:
                 continue
-            run_id = run[database_keys.PRIMARY_KEY.value]
+            run_id = run[TableKeys.PRIMARY_KEY.value]
             run_inputs = self.db_handler.get_scheme_inputs(run_id)
             if (
                 run_inputs["cutoff"] == inputs.cutoff

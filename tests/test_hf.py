@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from unittest.mock import PropertyMock
 
-from qupled.database import DataBaseHandler
+from qupled.database import ConflictMode, DataBaseHandler, RunStatus
 from qupled.dimension import Dimension
 import qupled.hf as hf
 import qupled.native as native
@@ -26,8 +26,8 @@ def scheme(mocker):
 
 
 def test_native_to_run_status_mapping():
-    assert hf.Solver.NATIVE_TO_RUN_STATUS[0] == DataBaseHandler.RunStatus.SUCCESS
-    assert hf.Solver.NATIVE_TO_RUN_STATUS[1] == DataBaseHandler.RunStatus.FAILED
+    assert hf.Solver.NATIVE_TO_RUN_STATUS[0] == RunStatus.SUCCESS
+    assert hf.Solver.NATIVE_TO_RUN_STATUS[1] == RunStatus.FAILED
     assert len(hf.Solver.NATIVE_TO_RUN_STATUS) == 2
 
 
@@ -64,7 +64,7 @@ def test_add_run_to_database(scheme, mocker):
     )
     scheme.inputs = mocker.Mock()
     scheme._add_run_to_database()
-    scheme.db_handler.insert_run.assert_called_once_with(scheme.inputs)
+    scheme.db_handler.insert_scheme_run.assert_called_once_with(scheme.inputs)
     assert scheme.inputs.database_info.run_id == scheme.run_id
 
 
@@ -174,12 +174,14 @@ def test_save(scheme, results, mocker):
     scheme.results = results
     scheme.native_scheme_status = mocker.Mock()
     scheme._save()
-    scheme.db_handler.update_run_status.assert_called_once_with(
+    scheme.db_handler.update_scheme_run_status.assert_called_once_with(
         hf.Solver.NATIVE_TO_RUN_STATUS.get(
-            scheme.native_scheme_status, DataBaseHandler.RunStatus.FAILED
+            scheme.native_scheme_status, RunStatus.FAILED
         )
     )
-    scheme.db_handler.insert_results.assert_called_once_with(scheme.results.__dict__)
+    scheme.db_handler.insert_scheme_results.assert_called_once_with(
+        scheme.results.__dict__
+    )
 
 
 def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
@@ -188,12 +190,12 @@ def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
     scheme.inputs = inputs
     scheme.compute_rdf()
     compute_rdf.assert_called_once_with(scheme.inputs.dimension, None)
-    scheme.db_handler.insert_results.assert_called_once_with(
+    scheme.db_handler.insert_scheme_results.assert_called_once_with(
         {
             "rdf": scheme.results.rdf,
             "rdf_grid": scheme.results.rdf_grid,
         },
-        conflict_mode=DataBaseHandler.ConflictMode.UPDATE,
+        conflict_mode=ConflictMode.UPDATE,
     )
 
 
@@ -204,12 +206,12 @@ def test_compute_rdf_with_custom_grid(scheme, inputs, results, mocker):
     rdf_grid = np.array([1, 2, 3])
     scheme.compute_rdf(rdf_grid)
     compute_rdf.assert_called_once_with(scheme.inputs.dimension, rdf_grid)
-    scheme.db_handler.insert_results.assert_called_once_with(
+    scheme.db_handler.insert_scheme_results.assert_called_once_with(
         {
             "rdf": scheme.results.rdf,
             "rdf_grid": scheme.results.rdf_grid,
         },
-        conflict_mode=DataBaseHandler.ConflictMode.UPDATE,
+        conflict_mode=ConflictMode.UPDATE,
     )
 
 
@@ -311,7 +313,7 @@ def test_database_info_initialization():
     assert db_info.blob_storage is None
     assert db_info.name is None
     assert db_info.run_id is None
-    assert db_info.run_table_name == hf.database.DataBaseHandler.RUN_TABLE_NAME
+    assert db_info.run_table_name == hf.SCHEME_RUN_TABLE_NAME
 
 
 def test_database_info_to_native(mocker):

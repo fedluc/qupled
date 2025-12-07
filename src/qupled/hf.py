@@ -10,6 +10,7 @@ from . import mpi
 from . import native
 from . import serialize
 from . import timer
+from .scheme_tables import RUN_TABLE_NAME as SCHEME_RUN_TABLE_NAME
 
 
 class Solver:
@@ -19,8 +20,8 @@ class Solver:
 
     # Mapping of native scheme status to run status in the database
     NATIVE_TO_RUN_STATUS = {
-        0: database.DataBaseHandler.RunStatus.SUCCESS,
-        1: database.DataBaseHandler.RunStatus.FAILED,
+        0: database.RunStatus.SUCCESS,
+        1: database.RunStatus.FAILED,
     }
 
     # Native classes used to solve the scheme
@@ -73,7 +74,7 @@ class Solver:
             self.results.compute_rdf(self.inputs.dimension, rdf_grid)
             self.db_handler.insert_scheme_results(
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid},
-                conflict_mode=database.DataBaseHandler.ConflictMode.UPDATE,
+                conflict_mode=database.ConflictMode.UPDATE,
             )
 
     def _add_run_to_database(self):
@@ -154,7 +155,7 @@ class Solver:
         native scheme status and inserts the results into the database.
         """
         run_status = self.NATIVE_TO_RUN_STATUS.get(
-            self.native_scheme_status, database.DataBaseHandler.RunStatus.FAILED
+            self.native_scheme_status, database.RunStatus.FAILED
         )
         self.db_handler.update_scheme_run_status(run_status)
         self.db_handler.insert_scheme_results(self.results.__dict__)
@@ -302,7 +303,7 @@ class DatabaseInfo:
     """Database name"""
     run_id: int = None
     """ID of the run in the database"""
-    run_table_name: str = database.DataBaseHandler.RUN_TABLE_NAME
+    run_table_name: str = SCHEME_RUN_TABLE_NAME
     """Name of the table used to store the runs in the database"""
 
     def to_native(self) -> native.DatabaseInfo:
