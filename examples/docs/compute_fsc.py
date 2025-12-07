@@ -4,7 +4,7 @@ import qupled.fsc as fsc
 
 finite_size_correction = fsc.FiniteSizeCorrection()
 scheme_solver = rpa.Solver()
-scheme_inputs = rpa.Input(rs=1.0, theta=1.0, cutoff=50.0, mixing=0.5)
+scheme_inputs = rpa.Input(coupling=1.0, degeneracy=1.0, cutoff=50.0)
 coupling_resolution = 0.1
 number_of_particles = 100
 run_id = finite_size_correction.compute(

@@ -53,6 +53,7 @@ class FiniteSizeCorrection:
         self.drs = drs
         self._solve_scheme_for_all_coupling()
         self.correction.compute(self.runs, self.inputs, number_of_particles)
+        return self.target_run_id
         # # Write these keys to the scheme's *target* run
         # self.db_handler.run_id = self.target_run_id
         # self.db_handler.insert_results(
@@ -91,6 +92,7 @@ class FiniteSizeCorrection:
         ]
         target_coupling = self.inputs.coupling
         for rs in filtered_rs_grid:
+            print(f"--- Computing run for rs={rs}")
             self.inputs.coupling = rs
             self.solver.compute(self.inputs)
             key = self._key_from_float(rs)
@@ -98,10 +100,11 @@ class FiniteSizeCorrection:
         self.inputs.coupling = target_coupling
         target_key = self._key_from_float(target_coupling)
         self.target_run_id = self.runs[target_key].id
+        print(f"--- Runs completed. Target run ID: {self.target_run_id}")
 
     def _key_from_float(self, x):
         precision = int(np.abs(np.log10(self.drs)))
-        return int(round(x * precision))
+        return int(round(x * 10**precision))
 
     def _search_results_in_the_database(self, rs_grid):
         runs = self.db_handler.inspect_runs()
@@ -164,10 +167,14 @@ class Correction:
         rs_uint_vals = []
         target_rs_uint: float | None = None
         for key, run in runs.items():
-            qcap = self.continuous.results[key][0]
-            continuous = self.continuous.results[key][1]
-            ssfi = interp1d(self.continuous.wvg, self.continuous.ssf, kind="cubic")
-            discrete = self._compute_result(ssfi, qcap, number_of_particles)
+            continuous = self.continuous.results[key]
+            ssfi = interp1d(
+                self.continuous.wvg,
+                self.continuous.ssf,
+                kind="cubic",
+                fill_value="extrapolate",
+            )
+            discrete = self._compute_result(ssfi, inputs.cutoff, number_of_particles)
             madelung = self._compute_madelung(number_of_particles)
             rs_uint = continuous - discrete - 0.5 * madelung
             rs_uint_vals.append(rs_uint)
@@ -193,11 +200,13 @@ class Correction:
         )[0]
         self.free_energy = integral_val / (inputs.coupling**2.0)
 
-    def _compute_result(self, ssfi, qcap, number_of_particles) -> float:
+    def _compute_result(
+        self, ssfi: interp1d, cutoff: float, number_of_particles: int
+    ) -> float:
         return (
-            self._compute_result_2D(ssfi, qcap, number_of_particles)
+            self._compute_result_2D(ssfi, cutoff, number_of_particles)
             if self.continuous.is_2D
-            else self._compute_result_3D(ssfi, qcap, number_of_particles)
+            else self._compute_result_3D(ssfi, cutoff, number_of_particles)
         )
 
     def _compute_result_2D(
@@ -270,7 +279,7 @@ class Correction:
 class ContinuousCorrection:
 
     def __init__(self):
-        self.results: dict[int, tuple[float, float]] = {}
+        self.results: dict[int, float] = {}
         self.is_2D = False
         self.ssf: None | list[float] = None
         self.wvg: None | list[float] = None
@@ -280,25 +289,26 @@ class ContinuousCorrection:
             self.is_2D = inputs.dimension == Dimension._2D
             for key, run in runs.items():
                 self._read_wvg_ssf(run.id)
-                ssfi = interp1d(self.wvg, self.ssf, kind="cubic")
-                qcap = min(inputs.cutoff, self.wvg[-1])
-                self.results[key] = qcap, self._compute_result(ssfi, qcap)
+                ssfi = interp1d(
+                    self.wvg, self.ssf, kind="cubic", fill_value="extrapolate"
+                )
+                self.results[key] = self._compute_result(ssfi, cutoff=inputs.cutoff)
 
-    def _compute_result(self, ssfi, qcap) -> float:
+    def _compute_result(self, ssfi: interp1d, cutoff: float) -> float:
         return (
-            self._compute_result_2D(ssfi, qcap)
+            self._compute_result_2D(ssfi, cutoff)
             if self.is_2D
-            else self._compute_result_3D(ssfi, qcap)
+            else self._compute_result_3D(ssfi, cutoff)
         )
 
-    def _compute_result_3D(self, ssfi, qcap) -> float:
+    def _compute_result_3D(self, ssfi: interp1d, cutoff: float) -> float:
         _lambda = (4.0 / (9.0 * np.pi)) ** (1.0 / 3.0)
-        val = quad(lambda q: float(ssfi(q) - 1.0), 0.0, float(qcap), limit=200)[0]
+        val = quad(lambda q: float(ssfi(q) - 1.0), 0.0, cutoff, limit=200)[0]
         return val / (np.pi * _lambda)
 
-    def _compute_result_2D(self, ssfi, qcap) -> float:
+    def _compute_result_2D(self, ssfi: interp1d, cutoff: float) -> float:
         _lambda = 1.0 / np.sqrt(2.0)
-        val = quad(lambda q: float(ssfi(q) - 1.0), 0.0, float(qcap), limit=200)[0]
+        val = quad(lambda q: float(ssfi(q) - 1.0), 0.0, cutoff, limit=200)[0]
         return val / (2.0 * _lambda)
 
     def _read_wvg_ssf(self, run_id: int) -> None:
