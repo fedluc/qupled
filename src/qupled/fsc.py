@@ -28,7 +28,7 @@ class FiniteSizeCorrection:
     into the *scheme* run at (rs=target_rs, theta, dimension).
     """
 
-    def __init__(self, precision=1_000_000):
+    def __init__(self):
         self.db_handler = database.DataBaseHandler()
         # Let's postpone specifying the database name to later work when we enable it for
         # all schemes as well
@@ -37,9 +37,8 @@ class FiniteSizeCorrection:
         self.inputs: hf.Input | None = None
         self.drs: float | None = None
         self.runs: dict[int, Run] = {}
-        self.precision = precision  # Precision to convert floats to integers to populate self.run_ids
         self.correction = Correction()
-        self.target_run_id = int | None = None
+        self.target_run_id: int | None = None
 
     def compute(
         self,
@@ -54,25 +53,25 @@ class FiniteSizeCorrection:
         self.drs = drs
         self._solve_scheme_for_all_coupling()
         self.correction.compute(self.runs, self.inputs, number_of_particles)
-        # Write these keys to the scheme's *target* run
-        self.db_handler.run_id = self.target_run_id
-        self.db_handler.insert_results(
-            {
-                "fsc_uint": np.asarray(self.correction.internal_energy, dtype=float),
-                "fsc_fxc": np.asarray(self.correction.free_energy, dtype=float),
-            },
-            conflict_mode=database.DataBaseHandler.ConflictMode.UPDATE,
-        )
-        # Mirror into in-memory Result
-        self.results.internal_energy = np.asarray(self.correction.internal_energy, dtype=float)
-        self.results.free_energy = np.asarray(self.correction.free_energy, dtype=float)
-        self.results.run_id = self.target_run_id
-        return self.target_run_id
+        # # Write these keys to the scheme's *target* run
+        # self.db_handler.run_id = self.target_run_id
+        # self.db_handler.insert_results(
+        #     {
+        #         "fsc_uint": np.asarray(self.correction.internal_energy, dtype=float),
+        #         "fsc_fxc": np.asarray(self.correction.free_energy, dtype=float),
+        #     },
+        #     conflict_mode=database.DataBaseHandler.ConflictMode.UPDATE,
+        # )
+        # # Mirror into in-memory Result
+        # self.results.internal_energy = np.asarray(self.correction.internal_energy, dtype=float)
+        # self.results.free_energy = np.asarray(self.correction.free_energy, dtype=float)
+        # self.results.run_id = self.target_run_id
+        # return self.target_run_id
 
     def _build_rs_grid(self) -> np.ndarray:
-        if self.drs < self.precision:
+        if self.drs <= 0:
             raise ValueError(
-                f"Invalid drs, it must be at least larger than the precision {self.precision}"
+                f"Invalid coupling resolution, it must be at greater than 0"
             )
         target = self.inputs.coupling
         grid = np.arange(0.0, target + self.drs, self.drs)
@@ -101,7 +100,8 @@ class FiniteSizeCorrection:
         self.target_run_id = self.runs[target_key].id
 
     def _key_from_float(self, x):
-        return int(round(x * self.precision))
+        precision = int(np.abs(np.log10(self.drs)))
+        return int(round(x * precision))
 
     def _search_results_in_the_database(self, rs_grid):
         runs = self.db_handler.inspect_runs()
@@ -141,18 +141,19 @@ class Result:
     free_energy: np.ndarray | None = None
     run_id: int | None = None
 
+
 class Correction:
 
     def __init__(self):
         self.continuous = ContinuousCorrection()
-        self.internal_energy = []
-        self.free_energy = []
+        self.internal_energy: float | None = None
+        self.free_energy: float | None = None
 
     def compute(
         self,
         runs: dict[float, Run],
         inputs: hf.Input,
-        number_of_particles: list[int],
+        number_of_particles: int,
     ):
         self.continuous.compute(runs, inputs)
         interp_kind = "cubic" if len(runs) >= 4 else "linear"
@@ -160,40 +161,37 @@ class Correction:
         for _, run in runs.items():
             rs_grid.append(run.rs)
         rs_grid.sort()
-        for n_part in sorted(number_of_particles):
-            rs_uint_vals = []
-            target_rs_uint: float | None = None
-            for key, run in runs.items():
-                qcap = self.continuous.results[key][0]
-                continuous = self.continuous.results[key][1]
-                ssfi = interp1d(self.continuous.wvg, self.continuous.ssf, kind="cubic")
-                discrete = self._compute_result(ssfi, qcap)
-                madelung = self._compute_madelung(n_part)
-                rs_uint = continuous - discrete - 0.5 * madelung
-                rs_uint_vals.append(rs_uint)
-                if math.isclose(
-                    run.rs,
-                    inputs.coupling,
-                    rel_tol=0,
-                    abs_tol=FLOAT_TOLERANCE,
-                ):
-                    target_rs_uint = rs_uint
-            if target_rs_uint is None:
-                raise RuntimeError("Target rs not found in grid")
-            # uint FSC at target
-            internal_energy = target_rs_uint / inputs.coupling
-            self.internal_energy.append(internal_energy)
-            # fxc FSC: integrate rs*uint(rs) from 0 to target_rs, then divide by rs^2
-            rs_grid_np = np.asarray(rs_grid, dtype=float)
-            rs_uint_np = np.asarray(rs_uint_vals, dtype=float)
-            interp = interp1d(
-                rs_grid_np, rs_uint_np, kind=interp_kind, fill_value="extrapolate"
-            )
-            integral_val = quad(
-                lambda r: float(interp(r)), 0.0, float(inputs.coupling), limit=200
-            )[0]
-            free_energy = integral_val / (inputs.coupling ** 2.0)
-            self.free_energy.append(free_energy)
+        rs_uint_vals = []
+        target_rs_uint: float | None = None
+        for key, run in runs.items():
+            qcap = self.continuous.results[key][0]
+            continuous = self.continuous.results[key][1]
+            ssfi = interp1d(self.continuous.wvg, self.continuous.ssf, kind="cubic")
+            discrete = self._compute_result(ssfi, qcap, number_of_particles)
+            madelung = self._compute_madelung(number_of_particles)
+            rs_uint = continuous - discrete - 0.5 * madelung
+            rs_uint_vals.append(rs_uint)
+            if math.isclose(
+                run.rs,
+                inputs.coupling,
+                rel_tol=0,
+                abs_tol=FLOAT_TOLERANCE,
+            ):
+                target_rs_uint = rs_uint
+        if target_rs_uint is None:
+            raise RuntimeError("Target rs not found in grid")
+        # uint FSC at target
+        self.internal_energy = target_rs_uint / inputs.coupling
+        # fxc FSC: integrate rs*uint(rs) from 0 to target_rs, then divide by rs^2
+        rs_grid_np = np.asarray(rs_grid, dtype=float)
+        rs_uint_np = np.asarray(rs_uint_vals, dtype=float)
+        interp = interp1d(
+            rs_grid_np, rs_uint_np, kind=interp_kind, fill_value="extrapolate"
+        )
+        integral_val = quad(
+            lambda r: float(interp(r)), 0.0, float(inputs.coupling), limit=200
+        )[0]
+        self.free_energy = integral_val / (inputs.coupling**2.0)
 
     def _compute_result(self, ssfi, qcap, number_of_particles) -> float:
         return (
@@ -202,10 +200,13 @@ class Correction:
             else self._compute_result_3D(ssfi, qcap, number_of_particles)
         )
 
-    def _compute_result_2D(N: int, qcap: float, S_interp, lambda_val: float) -> float:
-        arg_const = np.sqrt(2.0 * np.pi) / np.sqrt(N)
+    def _compute_result_2D(
+        ssfi: interp1d, qcap: float, number_of_particles: int
+    ) -> float:
+        _lambda = 1.0 / np.sqrt(2.0)
+        arg_const = np.sqrt(2.0 * np.pi) / np.sqrt(number_of_particles)
         lmax = int(np.ceil(qcap / arg_const / np.sqrt(2.0)))
-        pref = 1.0 / (np.sqrt(8.0 * np.pi) * lambda_val * np.sqrt(N))
+        pref = 1.0 / (np.sqrt(8.0 * np.pi) * _lambda * np.sqrt(number_of_particles))
         lvals = np.arange(0, lmax + 1, dtype=int)
         L1, L2 = np.meshgrid(lvals, lvals, indexing="ij")
         lnorm = np.sqrt(L1.astype(float) ** 2 + L2.astype(float) ** 2)
@@ -215,12 +216,12 @@ class Correction:
         mult[non_zero == 1] = 2.0  # +0
         q = arg_const * lnorm
         with np.errstate(divide="ignore", invalid="ignore"):
-            term = (S_interp(q) - 1.0) / np.where(lnorm == 0.0, np.inf, lnorm) * mult
+            term = (ssfi(q) - 1.0) / np.where(lnorm == 0.0, np.inf, lnorm) * mult
             term[np.isinf(term) | np.isnan(term)] = 0.0
         return pref * float(np.sum(term))
 
     def _compute_result_3D(
-        self, ssfi: float, qcap: float, number_of_particles: int
+        self, ssfi: interp1d, qcap: float, number_of_particles: int
     ) -> float:
         _lambda = (4.0 / (9.0 * np.pi)) ** (1.0 / 3.0)
         arg_const = (8.0 * np.pi / 3.0) ** (1.0 / 3.0) / (
@@ -264,7 +265,8 @@ class Correction:
             * ((3.0 / (4.0 * np.pi)) ** (1.0 / 3.0))
             * (number_of_particles ** (-1.0 / 3.0))
         )
-    
+
+
 class ContinuousCorrection:
 
     def __init__(self):
