@@ -19,8 +19,9 @@ class FiniteSizeCorrectionTables(base.BaseTables):
 
     def insert_inputs(self, inputs: dict[str, any]):
         """ """
-        inputs.pop("scheme", None)
-        super().insert_inputs(inputs)
+        inputs_local = dict(inputs)
+        inputs_local.pop("scheme", None)
+        super().insert_inputs(inputs_local)
 
     def _build_run_table(self):
         """ """
@@ -70,11 +71,12 @@ class FiniteSizeCorrectionTables(base.BaseTables):
 
     def _insert_run(self, inputs: any, status: base.RunStatus):
         """ """
+        inputs_scheme = inputs.scheme
         now = datetime.now()
         data = {
-            base.TableKeys.THEORY.value: inputs.theory,
-            base.TableKeys.COUPLING.value: inputs.coupling,
-            base.TableKeys.DEGENERACY.value: inputs.degeneracy,
+            base.TableKeys.THEORY.value: inputs_scheme.theory,
+            base.TableKeys.COUPLING.value: inputs_scheme.coupling,
+            base.TableKeys.DEGENERACY.value: inputs_scheme.degeneracy,
             base.TableKeys.NUMBER_OF_PARTICLES.value: inputs.number_of_particles,
             base.TableKeys.DATE.value: now.date().isoformat(),
             base.TableKeys.TIME.value: now.time().isoformat(),

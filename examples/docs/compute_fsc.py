@@ -1,18 +1,15 @@
 from qupled import rpa
 from qupled.output import DataBase
-import qupled.fsc as fsc
+import qupled.finite_size_correction as fsc
 
 finite_size_correction = fsc.FiniteSizeCorrection()
-scheme_solver = rpa.Solver()
-scheme_inputs = rpa.Input(coupling=1.0, degeneracy=1.0, cutoff=50.0)
-coupling_resolution = 0.1
-number_of_particles = 100
-run_id = finite_size_correction.compute(
-    scheme_solver,
-    scheme_inputs,
-    coupling_resolution,
-    number_of_particles,
+solver = rpa.Solver()
+inputs = fsc.Input(
+    scheme = rpa.Input(coupling=1.0, degeneracy=1.0, cutoff=50.0),
+    drs=0.1,
+    number_of_particles=100,
 )
+run_id = finite_size_correction.compute(solver, inputs)
 print(run_id)
 # solver = fsc.Solver(scheme_module=SCHEME, scheme_kwargs=SCHEME_KW)
 # run_id = solver.compute(inputs, N_values=N_VALUES)

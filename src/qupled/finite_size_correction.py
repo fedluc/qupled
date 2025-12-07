@@ -162,7 +162,6 @@ class Input:
     """
     Class used to store the inputs for the :obj:`qupled.finite_size_correction.FiniteSizeCorrection` class.
     """
-
     number_of_particles: int
     """Number of particles."""
     drs: float = 0.1
