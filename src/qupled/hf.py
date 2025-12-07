@@ -71,7 +71,7 @@ class Solver:
         """
         if self.results is not None:
             self.results.compute_rdf(self.inputs.dimension, rdf_grid)
-            self.db_handler.insert_results(
+            self.db_handler.insert_scheme_results(
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid},
                 conflict_mode=database.DataBaseHandler.ConflictMode.UPDATE,
             )
@@ -84,7 +84,7 @@ class Solver:
         using the `db_handler`. It also updates the `database_info` attribute of
         `self.inputs` with the current `run_id`.
         """
-        self.db_handler.insert_run(self.inputs)
+        self.db_handler.insert_scheme_run(self.inputs)
         self.inputs.database_info = DatabaseInfo(
             blob_storage=self.db_handler.blob_storage,
             name=self.db_handler.engine.url.database,
@@ -156,8 +156,8 @@ class Solver:
         run_status = self.NATIVE_TO_RUN_STATUS.get(
             self.native_scheme_status, database.DataBaseHandler.RunStatus.FAILED
         )
-        self.db_handler.update_run_status(run_status)
-        self.db_handler.insert_results(self.results.__dict__)
+        self.db_handler.update_scheme_run_status(run_status)
+        self.db_handler.insert_scheme_results(self.results.__dict__)
 
 
 @serialize.serializable_dataclass

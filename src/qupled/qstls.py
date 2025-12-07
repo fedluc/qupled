@@ -37,7 +37,7 @@ class Solver(stls.Solver):
         Returns:
             None: The method updates the `fixed_run_id` attribute of the `inputs` object if a match is found.
         """
-        runs = self.db_handler.inspect_runs()
+        runs = self.db_handler.inspect_scheme_runs()
         inputs.fixed_run_id = None
         for run in runs:
             database_keys = database.DataBaseHandler.TableKeys
@@ -46,7 +46,7 @@ class Solver(stls.Solver):
             if not same_theory or not same_degeneracy:
                 continue
             run_id = run[database_keys.PRIMARY_KEY.value]
-            run_inputs = self.db_handler.get_inputs(run_id)
+            run_inputs = self.db_handler.get_scheme_inputs(run_id)
             if (
                 run_inputs["cutoff"] == inputs.cutoff
                 and run_inputs["matsubara"] == inputs.matsubara

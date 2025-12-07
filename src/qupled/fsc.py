@@ -107,7 +107,7 @@ class FiniteSizeCorrection:
         return int(round(x * 10**precision))
 
     def _search_results_in_the_database(self, rs_grid):
-        runs = self.db_handler.inspect_runs()
+        runs = self.db_handler.inspect_scheme_runs()
         database_keys = database.DataBaseHandler.TableKeys
         filtered_runs = [
             run
@@ -129,7 +129,7 @@ class FiniteSizeCorrection:
             if run is None:
                 continue
             run_id = run[database_keys.PRIMARY_KEY.value]
-            run_inputs = self.db_handler.get_inputs(run_id)
+            run_inputs = self.db_handler.get_scheme_inputs(run_id)
             if (
                 run_inputs["cutoff"] == self.inputs.cutoff
                 and run_inputs["matsubara"] == self.inputs.matsubara

@@ -45,7 +45,7 @@ def run_example(example_name, expected_internal_energy, expected_error_message=N
 def assert_internal_energy(expected_internal_energy, tolerance=1e-5):
     db_handler = DataBaseHandler()
     for run_id, expected_uint in expected_internal_energy.items():
-        uint = db_handler.get_results(run_id)["uint"]
+        uint = db_handler.get_scheme_results(run_id)["uint"]
         assert abs(uint - expected_uint) < tolerance * abs(expected_uint)
 
 
