@@ -32,12 +32,12 @@ class DataBaseHandler:
         self.blob_storage.mkdir(parents=True, exist_ok=True)
         self.blob_storage = str(self.blob_storage)
         # Create database
-        engine = sql.create_engine(f"sqlite:///{database_path}")
+        self.engine = sql.create_engine(f"sqlite:///{database_path}")
         # Set sqlite properties
-        DataBaseHandler._set_sqlite_pragma(engine)
+        DataBaseHandler._set_sqlite_pragma(self.engine)
         # Create tables
         self.table_metadata = sql.MetaData()
-        self.scheme_tables = SchemeTables(engine)
+        self.scheme_tables = SchemeTables(self.engine)
 
     def insert_scheme_run(self, inputs):
         """ """

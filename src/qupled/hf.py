@@ -45,7 +45,7 @@ class Solver:
         Returns:
             str: The run ID associated with the current database handler.
         """
-        return self.db_handler.run_id
+        return self.db_handler.scheme_tables.run_id
 
     @timer.timer
     def compute(self, inputs: Input):
