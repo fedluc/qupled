@@ -229,7 +229,7 @@ class Correction:
                 )
 
     def _read_wvg_ssf(self, run_id: int) -> tuple[list[float], list[float]]:
-        data = self.db_handler.get_scheme_run(int(run_id))
+        data = self.db_handler.get_scheme_run(run_id)
         res = data.get("results", {})
         wvg = res.get("wvg", None)
         ssf = res.get("ssf", None)
@@ -237,16 +237,18 @@ class Correction:
             raise FiniteSizeCorrectionError(f"Malformed results for Run {run_id}.")
         return wvg, ssf
 
+    def _is_2D(self):
+        return self.inputs.scheme.dimension == Dimension._2D
+
     def _compute_continous(self):
         inputs_scheme = self.inputs.scheme
         if not self.continuous:
-            self.is_2D = inputs_scheme.dimension == Dimension._2D
             cutoff = inputs_scheme.cutoff
             for key, _ in self.runs.items():
                 ssfi = self.ssfi[key]
                 self.continuous[key] = (
                     self._compute_continuous_2D(ssfi, cutoff)
-                    if self.is_2D
+                    if self._is_2D()
                     else self._compute_continuous_3D(ssfi, cutoff)
                 )
 
@@ -270,7 +272,7 @@ class Correction:
             ssfi = self.ssfi[key]
             discrete = (
                 self._compute_discrete_2D(ssfi, cutoff, number_of_particles)
-                if self.continuous.is_2D
+                if self._is_2D()
                 else self._compute_discrete_3D(ssfi, cutoff, number_of_particles)
             )
             madelung = self._compute_madelung(number_of_particles)
@@ -363,7 +365,7 @@ class Correction:
     def _compute_madelung(self, number_of_particles):
         return (
             -3.90026492 * (1.0 / np.sqrt(np.pi)) * (number_of_particles ** (-1.0 / 2.0))
-            if self.continuous.is_2D
+            if self.continuous._is_2D()
             else -2.837297
             * ((3.0 / (4.0 * np.pi)) ** (1.0 / 3.0))
             * (number_of_particles ** (-1.0 / 3.0))
