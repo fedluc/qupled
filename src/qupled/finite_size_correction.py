@@ -78,7 +78,6 @@ class FiniteSizeCorrection:
             print(f"Error during finite size correction computation: {e}")
             self.status = database.RunStatus.FAILED
 
-
     def _add_run_to_database(self):
         """ """
         self.db_handler.insert_fsc_run(self.inputs)
@@ -198,38 +197,84 @@ class Result:
 class Correction:
 
     def __init__(self, db_handler: database.DataBaseHandler):
+        self.continuous = dict[int, list[float]] = {}
         self.db_handler = db_handler
-        self.continuous = ContinuousCorrection(self.db_handler)
-        self.internal_energy: float | None = None
         self.free_energy: float | None = None
+        self.inputs: Input = Input()
+        self.internal_energy: float | None = None
+        self.rs_grid: list[float] = []
+        self.runs: dict[int, Run] = {}
+        self.ssfi = dict[int, list[float]] = {}
 
-    def compute(
-        self,
-        runs: dict[float, Run],
-        inputs: Input,
-    ):
-        self.continuous.compute(runs, inputs)
-        interp_kind = "cubic" if len(runs) >= 4 else "linear"
-        rs_grid = []
-        for _, run in runs.items():
-            rs_grid.append(run.rs)
-        rs_grid.sort()
+    def compute(self, runs: dict[int, Run], inputs: Input):
+        self.runs = runs
+        self.inputs = inputs
+        self._build_rs_grid()
+        self._build_interpolators()
+        self._compute_continous()
+        self._compute_discrete()
+
+    def _build_rs_grid(self):
+        if not self.rs_grid:
+            for _, run in self.runs.items():
+                self.rs_grid.append(run.rs)
+                self.rs_grid.sort()
+
+    def _build_interpolators(self):
+        if not self.ssfi:
+            for key, run in self.runs.items():
+                ssf, wvg = self._read_wvg_ssf(run.id)
+                self.ssfi[key] = interp1d(
+                    wvg, ssf, kind="cubic", fill_value="extrapolate"
+                )
+
+    def _read_wvg_ssf(self, run_id: int) -> tuple[list[float], list[float]]:
+        data = self.db_handler.get_scheme_run(int(run_id))
+        res = data.get("results", {})
+        wvg = res.get("wvg", None)
+        ssf = res.get("ssf", None)
+        if wvg is None or ssf is None:
+            raise FiniteSizeCorrectionError(f"Malformed results for Run {run_id}.")
+        return wvg, ssf
+
+    def _compute_continous(self):
+        inputs_scheme = self.inputs.scheme
+        if not self.continuous:
+            self.is_2D = inputs_scheme.dimension == Dimension._2D
+            cutoff = inputs_scheme.cutoff
+            for key, _ in self.runs.items():
+                ssfi = self.ssfi[key]
+                self.continuous[key] = (
+                    self._compute_continuous_2D(ssfi, cutoff)
+                    if self.is_2D
+                    else self._compute_continuous_3D(ssfi, cutoff)
+                )
+
+    def _compute_continuous_3D(self, ssfi: interp1d, cutoff: float) -> float:
+        _lambda = (4.0 / (9.0 * np.pi)) ** (1.0 / 3.0)
+        val = quad(lambda q: float(ssfi(q) - 1.0), 0.0, cutoff, limit=200)[0]
+        return val / (np.pi * _lambda)
+
+    def _compute_continuous_2D(self, ssfi: interp1d, cutoff: float) -> float:
+        _lambda = 1.0 / np.sqrt(2.0)
+        val = quad(lambda q: float(ssfi(q) - 1.0), 0.0, cutoff, limit=200)[0]
+        return val / (2.0 * _lambda)
+
+    def _compute_discrete(self):
         rs_uint_vals = []
-        target_rs_uint: float | None = None
-        inputs_scheme = inputs.scheme
-        for key, run in runs.items():
-            continuous = self.continuous.results[key]
-            ssfi = interp1d(
-                self.continuous.wvg,
-                self.continuous.ssf,
-                kind="cubic",
-                fill_value="extrapolate",
+        rs_uint_target: float | None = None
+        inputs_scheme = self.inputs.scheme
+        number_of_particles = self.inputs.number_of_particles
+        cutoff = self.inputs.scheme.cutoff
+        for key, run in self.runs.items():
+            ssfi = self.ssfi[key]
+            discrete = (
+                self._compute_discrete_2D(ssfi, cutoff, number_of_particles)
+                if self.continuous.is_2D
+                else self._compute_discrete_3D(ssfi, cutoff, number_of_particles)
             )
-            discrete = self._compute_result(
-                ssfi, inputs_scheme.cutoff, inputs.number_of_particles
-            )
-            madelung = self._compute_madelung(inputs.number_of_particles)
-            rs_uint = continuous - discrete - 0.5 * madelung
+            madelung = self._compute_madelung(number_of_particles)
+            rs_uint = self.continuous[key] - discrete - 0.5 * madelung
             rs_uint_vals.append(rs_uint)
             if math.isclose(
                 run.rs,
@@ -237,32 +282,28 @@ class Correction:
                 rel_tol=0,
                 abs_tol=FLOAT_TOLERANCE,
             ):
-                target_rs_uint = rs_uint
-        if target_rs_uint is None:
-            raise RuntimeError("Target rs not found in grid")
+                rs_uint_target = rs_uint
+        if rs_uint_target is None:
+            raise FiniteSizeCorrectionError(
+                "Target coupling parameter not found in coupling grid"
+            )
+        self._compute_output(rs_uint_vals, rs_uint_target)
+
+    def _compute_output(self, rs_uint, rs_uint_target):
+        interp_kind = "cubic" if len(self.runs) >= 4 else "linear"
+        coupling = self.inputs.scheme.coupling
         # uint FSC at target
-        self.internal_energy = target_rs_uint / inputs_scheme.coupling
+        self.internal_energy = rs_uint_target / coupling
         # fxc FSC: integrate rs*uint(rs) from 0 to target_rs, then divide by rs^2
-        rs_grid_np = np.asarray(rs_grid, dtype=float)
-        rs_uint_np = np.asarray(rs_uint_vals, dtype=float)
+        rs_grid_np = np.asarray(self.rs_grid, dtype=float)
+        rs_uint_np = np.asarray(rs_uint, dtype=float)
         interp = interp1d(
             rs_grid_np, rs_uint_np, kind=interp_kind, fill_value="extrapolate"
         )
-        integral_val = quad(
-            lambda r: float(interp(r)), 0.0, float(inputs_scheme.coupling), limit=200
-        )[0]
-        self.free_energy = integral_val / (inputs_scheme.coupling**2.0)
+        integral_val = quad(lambda r: float(interp(r)), 0.0, coupling, limit=200)[0]
+        self.free_energy = integral_val / (coupling**2.0)
 
-    def _compute_result(
-        self, ssfi: interp1d, cutoff: float, number_of_particles: int
-    ) -> float:
-        return (
-            self._compute_result_2D(ssfi, cutoff, number_of_particles)
-            if self.continuous.is_2D
-            else self._compute_result_3D(ssfi, cutoff, number_of_particles)
-        )
-
-    def _compute_result_2D(
+    def _compute_discrete_2D(
         ssfi: interp1d, qcap: float, number_of_particles: int
     ) -> float:
         _lambda = 1.0 / np.sqrt(2.0)
@@ -282,7 +323,7 @@ class Correction:
             term[np.isinf(term) | np.isnan(term)] = 0.0
         return pref * float(np.sum(term))
 
-    def _compute_result_3D(
+    def _compute_discrete_3D(
         self, ssfi: interp1d, qcap: float, number_of_particles: int
     ) -> float:
         _lambda = (4.0 / (9.0 * np.pi)) ** (1.0 / 3.0)
@@ -327,51 +368,3 @@ class Correction:
             * ((3.0 / (4.0 * np.pi)) ** (1.0 / 3.0))
             * (number_of_particles ** (-1.0 / 3.0))
         )
-
-
-class ContinuousCorrection:
-
-    def __init__(self, db_handler: database.DataBaseHandler):
-        self.db_handler = db_handler
-        self.results: dict[int, float] = {}
-        self.is_2D = False
-        self.ssf: None | list[float] = None
-        self.wvg: None | list[float] = None
-
-    def compute(self, runs: dict[float, Run], inputs: Input):
-        inputs_scheme = inputs.scheme
-        if not self.results:
-            self.is_2D = inputs_scheme.dimension == Dimension._2D
-            for key, run in runs.items():
-                self._read_wvg_ssf(run.id)
-                ssfi = interp1d(
-                    self.wvg, self.ssf, kind="cubic", fill_value="extrapolate"
-                )
-                self.results[key] = self._compute_result(
-                    ssfi, cutoff=inputs_scheme.cutoff
-                )
-
-    def _compute_result(self, ssfi: interp1d, cutoff: float) -> float:
-        return (
-            self._compute_result_2D(ssfi, cutoff)
-            if self.is_2D
-            else self._compute_result_3D(ssfi, cutoff)
-        )
-
-    def _compute_result_3D(self, ssfi: interp1d, cutoff: float) -> float:
-        _lambda = (4.0 / (9.0 * np.pi)) ** (1.0 / 3.0)
-        val = quad(lambda q: float(ssfi(q) - 1.0), 0.0, cutoff, limit=200)[0]
-        return val / (np.pi * _lambda)
-
-    def _compute_result_2D(self, ssfi: interp1d, cutoff: float) -> float:
-        _lambda = 1.0 / np.sqrt(2.0)
-        val = quad(lambda q: float(ssfi(q) - 1.0), 0.0, cutoff, limit=200)[0]
-        return val / (2.0 * _lambda)
-
-    def _read_wvg_ssf(self, run_id: int) -> None:
-        data = self.db_handler.get_scheme_run(int(run_id))
-        res = data.get("results", {})
-        self.wvg = res.get("wvg", None)
-        self.ssf = res.get("ssf", None)
-        if self.wvg is None or self.ssf is None:
-            raise ValueError(f"Malformed results for Run {run_id}.")
