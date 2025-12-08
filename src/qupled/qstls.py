@@ -3,7 +3,7 @@ from __future__ import annotations
 from . import native
 from . import serialize
 from . import stls
-from .base_tables import TableKeys
+from .scheme_tables import BaseTableKeys, TableKeys
 
 
 class Solver(stls.Solver):
@@ -44,7 +44,7 @@ class Solver(stls.Solver):
             same_theory = run[TableKeys.THEORY.value] == inputs.theory
             if not same_theory or not same_degeneracy:
                 continue
-            run_id = run[TableKeys.PRIMARY_KEY.value]
+            run_id = run[BaseTableKeys.PRIMARY_KEY.value]
             run_inputs = self.db_handler.get_scheme_inputs(run_id)
             if (
                 run_inputs["cutoff"] == inputs.cutoff

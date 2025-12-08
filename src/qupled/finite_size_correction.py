@@ -8,8 +8,14 @@ from scipy.integrate import quad
 from . import database
 from . import hf
 from . import serialize
-from .base_tables import TableKeys
+from .scheme_tables import BaseTableKeys, TableKeys
 from .dimension import Dimension
+
+
+class FiniteSizeCorrectionError(Exception):
+    """Custom exception for finite size correction operations."""
+
+    pass
 
 
 FLOAT_TOLERANCE = 1e-12
@@ -30,14 +36,12 @@ class FiniteSizeCorrection:
 
     def __init__(self):
         self.db_handler = database.DataBaseHandler()
-        # Let's postpone specifying the database name to later work when we enable it for
-        # all schemes as well
         self.results: Result = Result()
         self.solver: hf.Solver | None = None
         self.inputs: Input | None = None
         self.runs: dict[int, Run] = {}
-        self.correction = Correction(self.db_handler)
         self.target_run_id: int | None = None
+        self.status: database.RunStatus | None = None
 
     @property
     def run_id(self):
@@ -60,20 +64,24 @@ class FiniteSizeCorrection:
         self._compute_correction()
         self._save()
 
-    def _compute_correction(self) -> int:
-        self._solve_scheme_for_all_coupling()
-        self.correction.compute(self.runs, self.inputs)
-        self.results = Result(
-            uint=self.correction.internal_energy,
-            fxc=self.correction.free_energy,
-        )
-        return self.target_run_id
+    def _compute_correction(self):
+        try:
+            self._solve_scheme_for_all_coupling()
+            correction = Correction(self.db_handler)
+            correction.compute(self.runs, self.inputs)
+            self.results = Result(
+                uint=correction.internal_energy,
+                fxc=correction.free_energy,
+            )
+            self.status = database.RunStatus.SUCCESS
+        except FiniteSizeCorrectionError as e:
+            print(f"Error during finite size correction computation: {e}")
+            self.status = database.RunStatus.FAILED
+
 
     def _add_run_to_database(self):
         """ """
-        self.db_handler.insert_fsc_run(
-            self.inputs
-        )  # This can be cause problems when trying to save the scheme entry
+        self.db_handler.insert_fsc_run(self.inputs)
 
     def _save(self):
         """
@@ -82,14 +90,29 @@ class FiniteSizeCorrection:
         This method updates the run status in the database using the current
         native scheme status and inserts the results into the database.
         """
-        run_status = database.RunStatus.SUCCESS  # This should be fixed
-        self.db_handler.update_fsc_run_status(run_status)
+        self.db_handler.update_fsc_run_status(self.status)
+        self.db_handler.update_fsc_scheme_run_id(self.target_run_id)
         self.db_handler.insert_fsc_results(self.results.__dict__)
+
+    def _solve_scheme_for_all_coupling(self):
+        scheme_input = self.inputs.scheme
+        rs_grid = self._build_rs_grid()
+        self._search_results_in_the_database(rs_grid)
+        filtered_rs_grid = [
+            rs for rs in rs_grid if self._key_from_float(rs) not in self.runs
+        ]
+        target_coupling = scheme_input.coupling
+        for rs in filtered_rs_grid:
+            self._solve_scheme_for_one_coupling(rs)
+        scheme_input.coupling = target_coupling
+        target_key = self._key_from_float(target_coupling)
+        self.target_run_id = self.runs[target_key].id
+        print(f"--- Runs completed. Target run ID: {self.target_run_id}")
 
     def _build_rs_grid(self) -> np.ndarray:
         drs = self.inputs.drs
         if drs <= 0:
-            raise ValueError(
+            raise FiniteSizeCorrectionError(
                 f"Invalid coupling resolution, it must be at greater than 0"
             )
         target = self.inputs.scheme.coupling
@@ -102,24 +125,17 @@ class FiniteSizeCorrection:
             grid = np.insert(grid, 0, 0.0)
         return grid.astype(float)
 
-    def _solve_scheme_for_all_coupling(self):
-        scheme_input = self.inputs.scheme
-        rs_grid = self._build_rs_grid()
-        self._search_results_in_the_database(rs_grid)
-        filtered_rs_grid = [
-            rs for rs in rs_grid if self._key_from_float(rs) not in self.runs
-        ]
-        target_coupling = scheme_input.coupling
-        for rs in filtered_rs_grid:
-            print(f"--- Computing run for rs={rs}")
-            scheme_input.coupling = rs
-            self.solver.compute(scheme_input)
-            key = self._key_from_float(rs)
-            self.runs[key] = Run(rs, self.solver.run_id)
-        scheme_input.coupling = target_coupling
-        target_key = self._key_from_float(target_coupling)
-        self.target_run_id = self.runs[target_key].id
-        print(f"--- Runs completed. Target run ID: {self.target_run_id}")
+    def _solve_scheme_for_one_coupling(self, rs: float) -> None:
+        print(f"--- Computing run for rs={rs}")
+        self.inputs.scheme.coupling = rs
+        self.solver.compute(self.inputs.scheme)
+        run_status = self.solver.get_solver_status()
+        if run_status != database.RunStatus.SUCCESS:
+            raise FiniteSizeCorrectionError(
+                f"Run for rs={rs} failed with status {run_status}"
+            )
+        key = self._key_from_float(rs)
+        self.runs[key] = Run(rs, self.solver.run_id)
 
     def _key_from_float(self, x):
         precision = int(np.abs(np.log10(self.inputs.drs)))
@@ -147,7 +163,7 @@ class FiniteSizeCorrection:
             )
             if run is None:
                 continue
-            run_id = run[TableKeys.PRIMARY_KEY.value]
+            run_id = run[BaseTableKeys.PRIMARY_KEY.value]
             run_inputs = self.db_handler.get_inputs_scheme(run_id)
             if (
                 run_inputs["cutoff"] == inputs_scheme.cutoff
@@ -162,6 +178,7 @@ class Input:
     """
     Class used to store the inputs for the :obj:`qupled.finite_size_correction.FiniteSizeCorrection` class.
     """
+
     number_of_particles: int
     """Number of particles."""
     drs: float = 0.1

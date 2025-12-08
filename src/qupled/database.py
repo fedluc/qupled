@@ -110,6 +110,10 @@ class DataBaseHandler:
         """ """
         self.fsc_tables.update_run_status(status)
 
+    def update_fsc_scheme_run_id(self, scheme_run_id: int) -> None:
+        """ """
+        self.fsc_tables.update_scheme_run_id(scheme_run_id)
+
     def get_fsc_run(
         self,
         run_id: int,

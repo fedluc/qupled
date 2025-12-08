@@ -11,16 +11,10 @@ import blosc2
 
 
 class TableKeys(Enum):
-    COUPLING = "coupling"
-    DATE = "date"
-    DEGENERACY = "degeneracy"
     NAME = "name"
-    NUMBER_OF_PARTICLES = "number_of_particles"
     PRIMARY_KEY = "id"
     RUN_ID = "run_id"
     STATUS = "status"
-    THEORY = "theory"
-    TIME = "time"
     VALUE = "value"
 
 

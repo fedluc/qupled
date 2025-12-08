@@ -1,15 +1,26 @@
 from datetime import datetime
+from enum import Enum
+
 import sqlalchemy as sql
 
-from . import native
-from . import base_tables as base
+from .base_tables import BaseTables, RunStatus, TableKeys as BaseTableKeys
 
 INPUT_TABLE_NAME = "fsc_inputs"
 RESULT_TABLE_NAME = "fsc_results"
 RUN_TABLE_NAME = "fsc_runs"
 
 
-class FiniteSizeCorrectionTables(base.BaseTables):
+class TableKeys(Enum):
+    COUPLING = "coupling"
+    DATE = "date"
+    DEGENERACY = "degeneracy"
+    NUMBER_OF_PARTICLES = "number_of_particles"
+    SCHEME_RUN_ID = "scheme_run_id"
+    THEORY = "theory"
+    TIME = "time"
+
+
+class FiniteSizeCorrectionTables(BaseTables):
     """ """
 
     def __init__(self, engine: sql.Engine):
@@ -29,58 +40,77 @@ class FiniteSizeCorrectionTables(base.BaseTables):
             self.run_table_name,
             self.table_metadata,
             sql.Column(
-                base.TableKeys.PRIMARY_KEY.value,
+                BaseTableKeys.PRIMARY_KEY.value,
                 sql.Integer,
                 primary_key=True,
                 autoincrement=True,
             ),
             sql.Column(
-                base.TableKeys.THEORY.value,
+                TableKeys.THEORY.value,
                 sql.String,
                 nullable=False,
             ),
             sql.Column(
-                base.TableKeys.COUPLING.value,
+                TableKeys.COUPLING.value,
                 sql.Float,
                 nullable=False,
             ),
             sql.Column(
-                base.TableKeys.DEGENERACY.value,
+                TableKeys.DEGENERACY.value,
                 sql.Float,
                 nullable=False,
             ),
             sql.Column(
-                base.TableKeys.NUMBER_OF_PARTICLES.value,
+                TableKeys.NUMBER_OF_PARTICLES.value,
                 sql.Integer,
                 nullable=False,
             ),
             sql.Column(
-                base.TableKeys.DATE.value,
+                TableKeys.SCHEME_RUN_ID.value,
+                sql.String,
+                nullable=True,
+            ),
+            sql.Column(
+                TableKeys.DATE.value,
                 sql.String,
                 nullable=False,
             ),
             sql.Column(
-                base.TableKeys.TIME.value,
+                TableKeys.TIME.value,
                 sql.String,
                 nullable=False,
             ),
-            sql.Column(base.TableKeys.STATUS.value, sql.String, nullable=False),
+            sql.Column(
+                BaseTableKeys.STATUS.value,
+                sql.String,
+                nullable=False,
+            ),
         )
         self._create_table(table)
         return table
 
-    def _insert_run(self, inputs: any, status: base.RunStatus):
+    def update_scheme_run_id(self, scheme_run_id: int) -> None:
+        """ """
+        if self.run_id is not None:
+            statement = (
+                sql.update(self.run_table)
+                .where(self.run_table.c[BaseTableKeys.PRIMARY_KEY.value] == self.run_id)
+                .values({TableKeys.SCHEME_RUN_ID.value: scheme_run_id})
+            )
+            self._execute(statement)
+
+    def _insert_run(self, inputs: any, status: RunStatus):
         """ """
         inputs_scheme = inputs.scheme
         now = datetime.now()
         data = {
-            base.TableKeys.THEORY.value: inputs_scheme.theory,
-            base.TableKeys.COUPLING.value: inputs_scheme.coupling,
-            base.TableKeys.DEGENERACY.value: inputs_scheme.degeneracy,
-            base.TableKeys.NUMBER_OF_PARTICLES.value: inputs.number_of_particles,
-            base.TableKeys.DATE.value: now.date().isoformat(),
-            base.TableKeys.TIME.value: now.time().isoformat(),
-            base.TableKeys.STATUS.value: status.value,
+            TableKeys.THEORY.value: inputs_scheme.theory,
+            TableKeys.COUPLING.value: inputs_scheme.coupling,
+            TableKeys.DEGENERACY.value: inputs_scheme.degeneracy,
+            TableKeys.NUMBER_OF_PARTICLES.value: inputs.number_of_particles,
+            TableKeys.DATE.value: now.date().isoformat(),
+            TableKeys.TIME.value: now.time().isoformat(),
+            BaseTableKeys.STATUS.value: status.value,
         }
         statement = sql.insert(self.run_table).values(data)
         result = self._execute(statement)

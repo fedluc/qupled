@@ -5,7 +5,7 @@ import qupled.finite_size_correction as fsc
 finite_size_correction = fsc.FiniteSizeCorrection()
 solver = rpa.Solver()
 inputs = fsc.Input(
-    scheme = rpa.Input(coupling=1.0, degeneracy=1.0, cutoff=50.0),
+    scheme=rpa.Input(coupling=1.0, degeneracy=1.0, cutoff=50.0),
     drs=0.1,
     number_of_particles=100,
 )

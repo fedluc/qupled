@@ -1,15 +1,25 @@
 from datetime import datetime
+from enum import Enum
+
 import sqlalchemy as sql
 
 from . import native
-from . import base_tables as base
+from .base_tables import BaseTables, RunStatus, TableKeys as BaseTableKeys
 
 INPUT_TABLE_NAME = "inputs"
 RESULT_TABLE_NAME = "results"
 RUN_TABLE_NAME = "runs"
 
 
-class SchemeTables(base.BaseTables):
+class TableKeys(Enum):
+    COUPLING = "coupling"
+    DATE = "date"
+    DEGENERACY = "degeneracy"
+    THEORY = "theory"
+    TIME = "time"
+
+
+class SchemeTables(BaseTables):
     """ """
 
     def __init__(self, engine: sql.Engine):
@@ -28,51 +38,55 @@ class SchemeTables(base.BaseTables):
             self.run_table_name,
             self.table_metadata,
             sql.Column(
-                base.TableKeys.PRIMARY_KEY.value,
+                BaseTableKeys.PRIMARY_KEY.value,
                 sql.Integer,
                 primary_key=True,
                 autoincrement=True,
             ),
             sql.Column(
-                base.TableKeys.THEORY.value,
+                TableKeys.THEORY.value,
                 sql.String,
                 nullable=False,
             ),
             sql.Column(
-                base.TableKeys.COUPLING.value,
+                TableKeys.COUPLING.value,
                 sql.Float,
                 nullable=False,
             ),
             sql.Column(
-                base.TableKeys.DEGENERACY.value,
+                TableKeys.DEGENERACY.value,
                 sql.Float,
                 nullable=False,
             ),
             sql.Column(
-                base.TableKeys.DATE.value,
+                TableKeys.DATE.value,
                 sql.String,
                 nullable=False,
             ),
             sql.Column(
-                base.TableKeys.TIME.value,
+                TableKeys.TIME.value,
                 sql.String,
                 nullable=False,
             ),
-            sql.Column(base.TableKeys.STATUS.value, sql.String, nullable=False),
+            sql.Column(
+                BaseTableKeys.STATUS.value,
+                sql.String,
+                nullable=False,
+            ),
         )
         self._create_table(table)
         return table
 
-    def _insert_run(self, inputs: any, status: base.RunStatus):
+    def _insert_run(self, inputs: any, status: RunStatus):
         """ """
         now = datetime.now()
         data = {
-            base.TableKeys.THEORY.value: inputs.theory,
-            base.TableKeys.COUPLING.value: inputs.coupling,
-            base.TableKeys.DEGENERACY.value: inputs.degeneracy,
-            base.TableKeys.DATE.value: now.date().isoformat(),
-            base.TableKeys.TIME.value: now.time().isoformat(),
-            base.TableKeys.STATUS.value: status.value,
+            TableKeys.THEORY.value: inputs.theory,
+            TableKeys.COUPLING.value: inputs.coupling,
+            TableKeys.DEGENERACY.value: inputs.degeneracy,
+            TableKeys.DATE.value: now.date().isoformat(),
+            TableKeys.TIME.value: now.time().isoformat(),
+            BaseTableKeys.STATUS.value: status.value,
         }
         statement = sql.insert(self.run_table).values(data)
         result = self._execute(statement)

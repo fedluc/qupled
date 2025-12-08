@@ -77,6 +77,17 @@ class Solver:
                 conflict_mode=database.ConflictMode.UPDATE,
             )
 
+    def get_solver_status(self) -> database.RunStatus:
+        """
+        Retrieves the current status of the solver based on the native scheme status.
+
+        Returns:
+            database.RunStatus: The corresponding run status from the database.
+        """
+        return self.NATIVE_TO_RUN_STATUS.get(
+            self.native_scheme_status, database.RunStatus.FAILED
+        )
+
     def _add_run_to_database(self):
         """
         Adds the current run information to the database.
@@ -154,9 +165,7 @@ class Solver:
         This method updates the run status in the database using the current
         native scheme status and inserts the results into the database.
         """
-        run_status = self.NATIVE_TO_RUN_STATUS.get(
-            self.native_scheme_status, database.RunStatus.FAILED
-        )
+        run_status = self.get_solver_status()
         self.db_handler.update_scheme_run_status(run_status)
         self.db_handler.insert_scheme_results(self.results.__dict__)
 
