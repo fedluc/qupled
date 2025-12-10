@@ -1,8 +1,6 @@
 import pytest
 
-import qupled.hf as hf
-import qupled.native as native
-import qupled.rpa as rpa
+from qupled import hf, native, rpa
 
 
 @pytest.fixture

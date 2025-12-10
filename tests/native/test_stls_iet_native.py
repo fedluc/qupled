@@ -1,5 +1,5 @@
 import pytest
-from qupled.native import Stls, StlsIet, StlsIetInput
+from qupled.native import StlsIet, StlsIetInput
 
 
 def test_stls_properties():

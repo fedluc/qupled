@@ -1,9 +1,8 @@
 import pytest
-import sys
 from unittest import mock
 import json
 
-import qupled.mpi as mpi
+from qupled.util import mpi
 
 
 @pytest.fixture
@@ -20,7 +19,7 @@ def mock_shutil_which():
 
 @pytest.fixture
 def mock_native():
-    with mock.patch("qupled.mpi.native") as m:
+    with mock.patch("qupled.util.mpi.native") as m:
         yield m
 
 
@@ -73,7 +72,7 @@ def test_launch_mpi_execution_raises_on_subprocess_error(
 
 def test_write_inputs(tmp_path, mocker):
     test_file = tmp_path / "input.json"
-    mocker.patch("qupled.mpi.INPUT_FILE", test_file)
+    mocker.patch("qupled.util.mpi.INPUT_FILE", test_file)
     mock_inputs = mock.Mock()
     mock_inputs.to_dict.return_value = {"a": 1, "b": 2}
     mpi.write_inputs(mock_inputs)
@@ -85,7 +84,7 @@ def test_write_inputs(tmp_path, mocker):
 
 def test_read_inputs(tmp_path, mocker):
     test_file = tmp_path / "input.json"
-    mocker.patch("qupled.mpi.INPUT_FILE", test_file)
+    mocker.patch("qupled.util.mpi.INPUT_FILE", test_file)
     input_data = {"x": 10, "y": 20}
     with test_file.open("w") as f:
         json.dump(input_data, f)
@@ -98,7 +97,7 @@ def test_read_inputs(tmp_path, mocker):
 
 def test_write_results_writes_file_if_root(tmp_path, mocker):
     test_file = tmp_path / "results.json"
-    mocker.patch("qupled.mpi.RESULT_FILE", test_file)
+    mocker.patch("qupled.util.mpi.RESULT_FILE", test_file)
     mock_scheme = mock.Mock()
     mock_scheme.is_root = True
     mock_ResultCls = mock.Mock()
@@ -116,7 +115,7 @@ def test_write_results_writes_file_if_root(tmp_path, mocker):
 
 def test_write_results_does_nothing_if_not_root(tmp_path, mocker):
     test_file = tmp_path / "results.json"
-    mocker.patch("qupled.mpi.RESULT_FILE", test_file)
+    mocker.patch("qupled.util.mpi.RESULT_FILE", test_file)
     mock_scheme = mock.Mock()
     mock_scheme.is_root = False
     mock_ResultCls = mock.Mock()
@@ -127,7 +126,7 @@ def test_write_results_does_nothing_if_not_root(tmp_path, mocker):
 
 def test_read_results(tmp_path, mocker):
     test_file = tmp_path / "input.json"
-    mocker.patch("qupled.mpi.RESULT_FILE", test_file)
+    mocker.patch("qupled.util.mpi.RESULT_FILE", test_file)
     input_data = {"x": 10, "y": 20}
     with test_file.open("w") as f:
         json.dump(input_data, f)
@@ -140,7 +139,7 @@ def test_read_results(tmp_path, mocker):
 
 def test_write_status_writes_file_if_root(tmp_path, mocker):
     test_file = tmp_path / "status.json"
-    mocker.patch("qupled.mpi.STATUS_FILE", test_file)
+    mocker.patch("qupled.util.mpi.STATUS_FILE", test_file)
     mock_scheme = mock.Mock()
     mock_scheme.is_root = True
     status_data = {"status": "done"}
@@ -152,7 +151,7 @@ def test_write_status_writes_file_if_root(tmp_path, mocker):
 
 def test_write_status_does_nothing_if_not_root(tmp_path, mocker):
     test_file = tmp_path / "status.json"
-    mocker.patch("qupled.mpi.STATUS_FILE", test_file)
+    mocker.patch("qupled.util.mpi.STATUS_FILE", test_file)
     mock_scheme = mock.Mock()
     mock_scheme.is_root = False
     mpi.write_status(mock_scheme, mocker.ANY)
@@ -161,7 +160,7 @@ def test_write_status_does_nothing_if_not_root(tmp_path, mocker):
 
 def test_read_status(tmp_path, mocker):
     test_file = tmp_path / "status.json"
-    mocker.patch("qupled.mpi.STATUS_FILE", test_file)
+    mocker.patch("qupled.util.mpi.STATUS_FILE", test_file)
     status_data = {"status": "ok", "code": 200}
     with test_file.open("w") as f:
         json.dump(status_data, f)
@@ -175,9 +174,9 @@ def test_clean_files_removes_existing_files(tmp_path, mocker):
     status_file = tmp_path / "status.json"
     for f in [input_file, result_file, status_file]:
         f.write_text("test")
-    mocker.patch("qupled.mpi.INPUT_FILE", input_file)
-    mocker.patch("qupled.mpi.RESULT_FILE", result_file)
-    mocker.patch("qupled.mpi.STATUS_FILE", status_file)
+    mocker.patch("qupled.util.mpi.INPUT_FILE", input_file)
+    mocker.patch("qupled.util.mpi.RESULT_FILE", result_file)
+    mocker.patch("qupled.util.mpi.STATUS_FILE", status_file)
     mpi.clean_files()
     assert not input_file.exists()
     assert not result_file.exists()
@@ -191,9 +190,9 @@ def test_clean_files_does_nothing_if_files_do_not_exist(tmp_path, mocker):
     for f in [input_file, result_file, status_file]:
         if f.exists():
             f.unlink()
-    mocker.patch("qupled.mpi.INPUT_FILE", input_file)
-    mocker.patch("qupled.mpi.RESULT_FILE", result_file)
-    mocker.patch("qupled.mpi.STATUS_FILE", status_file)
+    mocker.patch("qupled.util.mpi.INPUT_FILE", input_file)
+    mocker.patch("qupled.util.mpi.RESULT_FILE", result_file)
+    mocker.patch("qupled.util.mpi.STATUS_FILE", status_file)
     mpi.clean_files()
     assert not input_file.exists()
     assert not result_file.exists()

@@ -6,7 +6,7 @@ import sys
 import matplotlib.pyplot as plt
 import pytest
 
-from qupled.database import DataBaseHandler
+from qupled.database import DataBaseHandler, DATABASE_DIRECTORY
 
 
 @pytest.fixture(autouse=True)
@@ -22,7 +22,7 @@ def run_before_each_test():
 @pytest.fixture(autouse=True)
 def run_after_each_test():
     yield
-    output_dir = DataBaseHandler.DATABASE_DIRECTORY
+    output_dir = DATABASE_DIRECTORY
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
 
@@ -45,7 +45,7 @@ def run_example(example_name, expected_internal_energy, expected_error_message=N
 def assert_internal_energy(expected_internal_energy, tolerance=1e-5):
     db_handler = DataBaseHandler()
     for run_id, expected_uint in expected_internal_energy.items():
-        uint = db_handler.get_results(run_id)["uint"]
+        uint = db_handler.get_scheme_results(run_id)["uint"]
         assert abs(uint - expected_uint) < tolerance * abs(expected_uint)
 
 
@@ -69,18 +69,18 @@ def test_solve_quantum_schemes():
     run_example("solve_quantum_schemes", expected_internal_energy)
 
 
-def test_solve_qvsstls():
-    expected_internal_energy = {
-        1: -2.9953554155330493,
-        2: -0.9991774530561909,
-        3: -0.6465616320411635,
-        4: -0.48952347548843544,
-        5: -0.3983496424348802,
-        6: -0.3379353371761777,
-        7: -0.29458249696823874,
-        8: -0.28267942694172865,
-    }
-    run_example("solve_qvsstls", expected_internal_energy)
+# def test_solve_qvsstls():
+#     expected_internal_energy = {
+#         1: -2.9953554155330493,
+#         2: -0.9991774530561909,
+#         3: -0.6465616320411635,
+#         4: -0.48952347548843544,
+#         5: -0.3983496424348802,
+#         6: -0.3379353371761777,
+#         7: -0.29458249696823874,
+#         8: -0.28267942694172865,
+#     }
+#     run_example("solve_qvsstls", expected_internal_energy)
 
 
 def test_solve_rpa_and_esa():

@@ -1,4 +1,5 @@
 #include "vsstls.hpp"
+#include "format.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "numerics.hpp"
@@ -54,63 +55,21 @@ void VSStls::updateSolution() {
 void VSStls::init() { Rpa::init(); }
 
 // -----------------------------------------------------------------
-// ThermoPropBase class
+// ThermoProp class
 // -----------------------------------------------------------------
 
 ThermoProp::ThermoProp(const std::shared_ptr<const VSStlsInput> &in_)
-    : ThermoPropBase(in_),
-      structProp(make_shared<StructProp>(in_)) {
-  ThermoPropBase::structProp = structProp;
-}
-
-// -----------------------------------------------------------------
-// StructProp class
-// -----------------------------------------------------------------
-
-StructProp::StructProp(const std::shared_ptr<const VSStlsInput> &in_)
-    : StructPropBase(in_) {
-  setupCSR();
-  setupCSRDependencies();
-}
-
-void StructProp::setupCSR() {
-  std::vector<VSStlsInput> inVector = setupCSRInput();
-  for (const auto &inTmp : inVector) {
-    const auto inPtr = make_shared<const VSStlsInput>(inTmp);
-    csr.push_back(make_shared<StlsCSR>(inPtr));
-  }
-}
-
-std::vector<VSStlsInput> StructProp::setupCSRInput() {
-  const double &drs = in().getCouplingResolution();
-  const double &dTheta = in().getDegeneracyResolution();
-  // If there is a risk of having negative state parameters, shift the
-  // parameters so that rs - drs = 0 and/or theta - dtheta = 0
-  const double rs = std::max(in().getCoupling(), drs);
-  const double theta = std::max(in().getDegeneracy(), dTheta);
-  // Setup objects
-  std::vector<VSStlsInput> out;
-  for (const double &thetaTmp : {theta - dTheta, theta, theta + dTheta}) {
-    for (const double &rsTmp : {rs - drs, rs, rs + drs}) {
-      VSStlsInput inTmp = in();
-      inTmp.setDegeneracy(thetaTmp);
-      inTmp.setCoupling(rsTmp);
-      out.push_back(inTmp);
-    }
-  }
-  return out;
+    : ThermoPropBase(in_) {
+  structProp = make_shared<StlsCSR>(in_);
 }
 
 // -----------------------------------------------------------------
 // StlsCSR class
 // -----------------------------------------------------------------
 
-void StlsCSR::computeLfcStls() {
-  Stls::computeLfc();
-  *CSR::lfc = Stls::lfc;
-}
-
-void StlsCSR::computeLfc() {
-  Vector2D lfcDerivative = getDerivativeContribution();
-  Stls::lfc.diff(lfcDerivative);
+StlsCSR::StlsCSR(const std::shared_ptr<const VSStlsInput> &in_,
+                 const bool isMaster_)
+    : CSR(isMaster_),
+      Stls(in_, false) {
+  if (isManager) { setupWorkers(*in_); }
 }

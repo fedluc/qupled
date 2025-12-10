@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from . import native
-from . import qstls
-from . import vsstls
-from . import serialize
+from qupled import native, qstls, vsstls
+from qupled.util import serialize
 
 
 class Solver(vsstls.Solver):

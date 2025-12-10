@@ -3,11 +3,8 @@ from __future__ import annotations
 from dataclasses import field
 import numpy as np
 
-from . import hf
-from . import native
-from . import output
-from . import rpa
-from . import serialize
+from qupled import hf, native, output, rpa
+from qupled.util import serialize
 
 
 class Solver(rpa.Solver):

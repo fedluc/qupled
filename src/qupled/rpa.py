@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from . import hf
-from . import native
-from . import serialize
+from qupled import hf, native
+from qupled.util import serialize
 
 
 class Solver(hf.Solver):

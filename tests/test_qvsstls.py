@@ -1,8 +1,6 @@
 import pytest
 
-import qupled.qstls as qstls
-import qupled.qvsstls as qvsstls
-import qupled.vsstls as vsstls
+from qupled import qstls, qvsstls, vsstls
 
 
 @pytest.fixture
