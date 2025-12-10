@@ -1,8 +1,6 @@
 import pytest
 
-import qupled.native as native
-import qupled.qstls as qstls
-import qupled.stls as stls
+from qupled import native, qstls, stls
 from qupled.database.scheme_tables import TableKeys, BaseTableKeys
 
 

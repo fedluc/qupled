@@ -6,11 +6,11 @@ from scipy.interpolate import interp1d
 from scipy.integrate import quad
 
 from qupled import hf
-from qupled import serialize
 from qupled.database.database_handler import DataBaseHandler
 from qupled.database.finite_size_correction_tables import FiniteSizeCorrectionTables
 from qupled.database.scheme_tables import BaseTableKeys, TableKeys, RunStatus
 from qupled.dimension import Dimension
+from qupled.util import serialize
 
 
 class FiniteSizeCorrectionError(Exception):

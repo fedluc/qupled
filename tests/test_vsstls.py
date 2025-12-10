@@ -1,10 +1,7 @@
 import numpy as np
 import pytest
-from qupled.vsstls import Solver, Input
 
-import qupled.native as native
-import qupled.stls as stls
-import qupled.vsstls as vsstls
+from qupled import native, stls, vsstls
 
 
 @pytest.fixture
@@ -71,12 +68,12 @@ def test_get_missing_state_points_with_no_actual_grid(mocker):
         coupling - 0.1 * coupling_resolution,
         3 * coupling_resolution,
     )
-    result = Solver._get_missing_state_points(inputs)
+    result = vsstls.Solver._get_missing_state_points(inputs)
     np.testing.assert_array_equal(result, expected_grid)
 
 
 def test_get_missing_state_points_with_actual_grid(mocker):
-    inputs = mocker.Mock(spec=Input)
+    inputs = mocker.Mock(spec=vsstls.Input)
     coupling = 1.0
     coupling_resolution = 0.1
     inputs.coupling = coupling
@@ -93,7 +90,7 @@ def test_get_missing_state_points_with_actual_grid(mocker):
         np.round(expected_grid, precision),
         np.round(inputs.free_energy_integrand.grid, precision),
     )
-    result = Solver._get_missing_state_points(inputs)
+    result = vsstls.Solver._get_missing_state_points(inputs)
     np.testing.assert_array_equal(result, missing_points)
 
 

@@ -3,7 +3,7 @@ import subprocess
 import shutil
 
 from pathlib import Path
-from . import native
+from qupled import native
 
 # MPI command
 MPI_COMMAND = "mpiexec"

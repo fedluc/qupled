@@ -3,10 +3,8 @@ from __future__ import annotations
 from dataclasses import field
 import numpy as np
 
-from . import native
-from . import output
-from . import stls
-from . import serialize
+from qupled import native, output, stls
+from qupled.util import serialize
 
 
 class Solver(stls.Solver):

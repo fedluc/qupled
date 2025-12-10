@@ -1,8 +1,6 @@
 import numpy as np
-import qupled.hf as hf
-import qupled.native as native
-import qupled.rpa as rpa
-import qupled.stls as stls
+
+from qupled import hf, native, rpa, stls
 
 
 def test_stls_inheritance():

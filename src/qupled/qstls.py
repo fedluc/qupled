@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from qupled import native
-from qupled import serialize
-from qupled import stls
+from qupled import native, stls
 from qupled.database.scheme_tables import BaseTableKeys, TableKeys
+from qupled.util import serialize
 
 
 class Solver(stls.Solver):

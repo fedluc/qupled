@@ -1,6 +1,6 @@
 from enum import Enum
 
-from . import native
+from qupled import native
 
 
 class Dimension(Enum):

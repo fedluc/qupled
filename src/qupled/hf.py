@@ -4,12 +4,7 @@ from dataclasses import field
 
 import numpy as np
 
-
-from qupled import dimension
-from qupled import mpi
 from qupled import native
-from qupled import serialize
-from qupled import timer
 from qupled.database.base_tables import ConflictMode
 from qupled.database.database_handler import DataBaseHandler
 from qupled.database.scheme_tables import (
@@ -17,6 +12,9 @@ from qupled.database.scheme_tables import (
     SchemeTables,
     RUN_TABLE_NAME as SCHEME_RUN_TABLE_NAME,
 )
+from qupled.util import mpi, serialize
+from qupled.util.dimension import Dimension
+from qupled.util.timer import timer
 
 
 class Solver:
@@ -53,7 +51,7 @@ class Solver:
         """
         return self._db_tables.run_id if self._db_tables is not None else None
 
-    @timer.timer
+    @timer
     def compute(self, inputs: Input):
         """
         Solves the scheme and saves the results.
@@ -200,7 +198,7 @@ class Input:
     """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
     cutoff: float = 10.0
     """Cutoff for the wave-vector grid. Default =  ``10.0``"""
-    dimension: dimension.Dimension = dimension.Dimension._3D
+    dimension: Dimension = Dimension._3D
     """Dimesionality of the system. Default =  ``'Dimension._3D'``"""
     frequency_cutoff: float = 10.0
     """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
@@ -294,7 +292,7 @@ class Result:
                 valid_value = value is not None and not callable(value)
                 setattr(self, attr, value) if valid_value else None
 
-    def compute_rdf(self, dimension: str, rdf_grid: np.ndarray | None = None):
+    def compute_rdf(self, dimension: Dimension, rdf_grid: np.ndarray | None = None):
         """
         Compute the radial distribution function (RDF) for the system.
 
