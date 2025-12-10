@@ -1,6 +1,6 @@
 import pytest
 
-from qupled.native import HF, Rpa, Input
+from qupled.native import Rpa, Input
 
 
 def test_rpa_properties():

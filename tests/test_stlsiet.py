@@ -3,7 +3,6 @@ import pytest
 
 import qupled.stls as stls
 import qupled.stlsiet as stlsiet
-from qupled.database import DataBaseHandler
 
 
 def test_stls_iet_inheritance():

@@ -43,7 +43,7 @@ def test_hf_initialization():
 
 def test_run_id(scheme):
     run_id = "run_id"
-    scheme.db_handler.run_id = run_id
+    scheme._db_tables.run_id = run_id
     assert scheme.run_id == run_id
 
 
@@ -58,13 +58,17 @@ def test_compute(scheme, inputs, mocker):
     save.assert_called_once()
 
 
+def test_db_tables(scheme):
+    assert scheme._db_tables is scheme.db_handler.scheme_tables
+
+
 def test_add_run_to_database(scheme, mocker):
     mocker.patch.object(hf.Solver, "run_id", new_callable=PropertyMock).return_value = (
         "mocked-run-id"
     )
     scheme.inputs = mocker.Mock()
     scheme._add_run_to_database()
-    scheme.db_handler.insert_scheme_run.assert_called_once_with(scheme.inputs)
+    scheme._db_tables.insert_run.assert_called_once_with(scheme.inputs)
     assert scheme.inputs.database_info.run_id == scheme.run_id
 
 
@@ -174,14 +178,12 @@ def test_save(scheme, results, mocker):
     scheme.results = results
     scheme.native_scheme_status = mocker.Mock()
     scheme._save()
-    scheme.db_handler.update_scheme_run_status.assert_called_once_with(
+    scheme._db_tables.update_run_status.assert_called_once_with(
         hf.Solver.NATIVE_TO_RUN_STATUS.get(
             scheme.native_scheme_status, RunStatus.FAILED
         )
     )
-    scheme.db_handler.insert_scheme_results.assert_called_once_with(
-        scheme.results.__dict__
-    )
+    scheme._db_tables.insert_results.assert_called_once_with(scheme.results.__dict__)
 
 
 def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
@@ -190,7 +192,7 @@ def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
     scheme.inputs = inputs
     scheme.compute_rdf()
     compute_rdf.assert_called_once_with(scheme.inputs.dimension, None)
-    scheme.db_handler.insert_scheme_results.assert_called_once_with(
+    scheme._db_tables.insert_results.assert_called_once_with(
         {
             "rdf": scheme.results.rdf,
             "rdf_grid": scheme.results.rdf_grid,
@@ -206,7 +208,7 @@ def test_compute_rdf_with_custom_grid(scheme, inputs, results, mocker):
     rdf_grid = np.array([1, 2, 3])
     scheme.compute_rdf(rdf_grid)
     compute_rdf.assert_called_once_with(scheme.inputs.dimension, rdf_grid)
-    scheme.db_handler.insert_scheme_results.assert_called_once_with(
+    scheme._db_tables.insert_results.assert_called_once_with(
         {
             "rdf": scheme.results.rdf,
             "rdf_grid": scheme.results.rdf_grid,
