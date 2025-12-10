@@ -42,7 +42,6 @@ docs = [
 
 [tool.setuptools]
 include-package-data = false
-packages = ["qupled", "qupled.native"]
 package-dir = { "" = "src" }
 
 [tool.cibuildwheel]

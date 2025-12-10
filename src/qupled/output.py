@@ -1,4 +1,4 @@
-from . import database
+from qupled.database.database_handler import DataBaseHandler
 
 
 class DataBase:
@@ -15,7 +15,7 @@ class DataBase:
         Returns:
             A dictionary whose keys are the run ids and values are the corresponding runs information.
         """
-        db_handler = database.DataBaseHandler(database_name)
+        db_handler = DataBaseHandler(database_name)
         return db_handler.scheme_tables.inspect_runs()
 
     # Read runs in the database
@@ -27,18 +27,18 @@ class DataBase:
         result_names: list[str] | None = None,
     ) -> dict:
         """
-        Reads a run from the database.
+        Reads a run from the
 
         Args:
             run_id: The ID of the run to read.
-            database_name: The name of the database. Defaults to None.
+            database_name: The name of the  Defaults to None.
             input_names: A list of input names to retrieve. Defaults to None.
             result_names: A list of result names to retrieve. Defaults to None.
 
         Returns:
             dict: A dictionary containing the run data.
         """
-        db_handler = database.DataBaseHandler(database_name)
+        db_handler = DataBaseHandler(database_name)
         return db_handler.scheme_tables.get_run(run_id, input_names, result_names)
 
     # Read inputs in the database
@@ -56,7 +56,7 @@ class DataBase:
         Returns:
             A dictionary whose keys are the quantities listed in names and values are the corresponding inputs.
         """
-        db_handler = database.DataBaseHandler(database_name)
+        db_handler = DataBaseHandler(database_name)
         return db_handler.scheme_tables.get_inputs(
             run_id, names if names is not None else []
         )
@@ -76,7 +76,7 @@ class DataBase:
         Returns:
             A dictionary whose keys are the quantities listed in names and values are the corresponding results.
         """
-        db_handler = database.DataBaseHandler(database_name)
+        db_handler = DataBaseHandler(database_name)
         return db_handler.scheme_tables.get_results(run_id, names)
 
     # Delete results from the database
@@ -90,5 +90,5 @@ class DataBase:
             database_name: The name of the database to connect to.
                 If None, the default database will be used.
         """
-        db_handler = database.DataBaseHandler(database_name)
+        db_handler = DataBaseHandler(database_name)
         return db_handler.scheme_tables.delete_run(run_id)

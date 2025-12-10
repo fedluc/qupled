@@ -4,13 +4,19 @@ from dataclasses import field
 
 import numpy as np
 
-from . import database
-from . import dimension
-from . import mpi
-from . import native
-from . import serialize
-from . import timer
-from .scheme_tables import RUN_TABLE_NAME as SCHEME_RUN_TABLE_NAME
+
+from qupled import dimension
+from qupled import mpi
+from qupled import native
+from qupled import serialize
+from qupled import timer
+from qupled.database.base_tables import ConflictMode
+from qupled.database.database_handler import DataBaseHandler
+from qupled.database.scheme_tables import (
+    RunStatus,
+    SchemeTables,
+    RUN_TABLE_NAME as SCHEME_RUN_TABLE_NAME,
+)
 
 
 class Solver:
@@ -20,8 +26,8 @@ class Solver:
 
     # Mapping of native scheme status to run status in the database
     NATIVE_TO_RUN_STATUS = {
-        0: database.RunStatus.SUCCESS,
-        1: database.RunStatus.FAILED,
+        0: RunStatus.SUCCESS,
+        1: RunStatus.FAILED,
     }
 
     # Native classes used to solve the scheme
@@ -34,7 +40,7 @@ class Solver:
         self.results: Result = Result()
         """The results obtained by solving the scheme"""
         # Undocumented properties
-        self.db_handler = database.DataBaseHandler()
+        self.db_handler = DataBaseHandler()
         self.native_scheme_status = None
 
     @property
@@ -64,7 +70,7 @@ class Solver:
         """
         Computes the radial distribution function (RDF) using the provided RDF grid.
         If results are available, this method computes the RDF and stores the results
-        in the database.
+        in the
 
         Args:
             rdf_grid: A numpy array representing the RDF grid.
@@ -74,33 +80,33 @@ class Solver:
             self.results.compute_rdf(self.inputs.dimension, rdf_grid)
             self.db_handler.scheme_tables.insert_results(
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid},
-                conflict_mode=database.ConflictMode.UPDATE,
+                conflict_mode=ConflictMode.UPDATE,
             )
 
-    def get_solver_status(self) -> database.RunStatus:
+    def get_solver_status(self) -> RunStatus:
         """
         Retrieves the current status of the solver based on the native scheme status.
 
         Returns:
-            database.RunStatus: The corresponding run status from the database.
+            RunStatus: The corresponding run status from the
         """
         return self.NATIVE_TO_RUN_STATUS.get(
-            self.native_scheme_status, database.RunStatus.FAILED
+            self.native_scheme_status, RunStatus.FAILED
         )
 
     @property
-    def _db_tables(self) -> database.SchemeTables | None:
+    def _db_tables(self) -> SchemeTables | None:
         """
         Retrieves the database tables associated with the current solver.
 
         Returns:
-            database.SchemeTables: The scheme tables from the database handler.
+            SchemeTables: The scheme tables from the database handler.
         """
         return self.db_handler.scheme_tables if self.db_handler is not None else None
 
     def _add_run_to_database(self):
         """
-        Adds the current run information to the database.
+        Adds the current run information to the
 
         This method inserts the run details stored in `self.inputs` into the database
         using the `db_handler`. It also updates the `database_info` attribute of
@@ -170,10 +176,10 @@ class Solver:
 
     def _save(self):
         """
-        Saves the current state and results to the database.
+        Saves the current state and results to the
 
         This method updates the run status in the database using the current
-        native scheme status and inserts the results into the database.
+        native scheme status and inserts the results into the
         """
         run_status = self.get_solver_status()
         self._db_tables.update_run_status(run_status)

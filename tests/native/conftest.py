@@ -1,6 +1,6 @@
 import os
 import pytest
-from qupled.database import DEFAULT_DATABASE_NAME
+from qupled.database.database_handler import DEFAULT_DATABASE_NAME
 
 
 @pytest.fixture(autouse=True)

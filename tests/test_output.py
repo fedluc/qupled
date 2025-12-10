@@ -5,7 +5,7 @@ from qupled.output import DataBase
 
 @pytest.fixture
 def db_handler(mocker):
-    yield mocker.patch("qupled.database.DataBaseHandler")
+    yield mocker.patch("qupled.output.DataBaseHandler")
 
 
 @pytest.fixture

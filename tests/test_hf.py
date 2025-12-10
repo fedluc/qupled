@@ -2,10 +2,11 @@ import pytest
 import numpy as np
 from unittest.mock import PropertyMock
 
-from qupled.database import ConflictMode, DataBaseHandler, RunStatus
-from qupled.dimension import Dimension
 import qupled.hf as hf
 import qupled.native as native
+from qupled.database.base_tables import ConflictMode, RunStatus
+from qupled.database.database_handler import DataBaseHandler
+from qupled.dimension import Dimension
 
 
 @pytest.fixture

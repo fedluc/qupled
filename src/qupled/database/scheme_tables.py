@@ -3,24 +3,27 @@ from enum import Enum
 
 import sqlalchemy as sql
 
-from .base_tables import BaseTables, RunStatus, TableKeys as BaseTableKeys
+from qupled.database.base_tables import (
+    BaseTables,
+    RunStatus,
+    TableKeys as BaseTableKeys,
+)
+from qupled.native import delete_blob_data_on_disk
 
-INPUT_TABLE_NAME = "fsc_inputs"
-RESULT_TABLE_NAME = "fsc_results"
-RUN_TABLE_NAME = "fsc_runs"
+INPUT_TABLE_NAME = "inputs"
+RESULT_TABLE_NAME = "results"
+RUN_TABLE_NAME = "runs"
 
 
 class TableKeys(Enum):
     COUPLING = "coupling"
     DATE = "date"
     DEGENERACY = "degeneracy"
-    NUMBER_OF_PARTICLES = "number_of_particles"
-    SCHEME_RUN_ID = "scheme_run_id"
     THEORY = "theory"
     TIME = "time"
 
 
-class FiniteSizeCorrectionTables(BaseTables):
+class SchemeTables(BaseTables):
     """ """
 
     def __init__(self, engine: sql.Engine):
@@ -28,11 +31,10 @@ class FiniteSizeCorrectionTables(BaseTables):
         super().__init__(engine, RUN_TABLE_NAME, INPUT_TABLE_NAME, RESULT_TABLE_NAME)
         self._build_tables()
 
-    def insert_inputs(self, inputs: dict[str, any]):
+    def delete_run(self, run_id: int) -> None:
         """ """
-        inputs_local = dict(inputs)
-        inputs_local.pop("scheme", None)
-        super().insert_inputs(inputs_local)
+        delete_blob_data_on_disk(self.engine.url.database, run_id)
+        super().delete_run(run_id)
 
     def _build_run_table(self):
         """ """
@@ -61,16 +63,6 @@ class FiniteSizeCorrectionTables(BaseTables):
                 nullable=False,
             ),
             sql.Column(
-                TableKeys.NUMBER_OF_PARTICLES.value,
-                sql.Integer,
-                nullable=False,
-            ),
-            sql.Column(
-                TableKeys.SCHEME_RUN_ID.value,
-                sql.String,
-                nullable=True,
-            ),
-            sql.Column(
                 TableKeys.DATE.value,
                 sql.String,
                 nullable=False,
@@ -89,25 +81,13 @@ class FiniteSizeCorrectionTables(BaseTables):
         self._create_table(table)
         return table
 
-    def update_scheme_run_id(self, scheme_run_id: int) -> None:
-        """ """
-        if self.run_id is not None:
-            statement = (
-                sql.update(self.run_table)
-                .where(self.run_table.c[BaseTableKeys.PRIMARY_KEY.value] == self.run_id)
-                .values({TableKeys.SCHEME_RUN_ID.value: scheme_run_id})
-            )
-            self._execute(statement)
-
     def _insert_run(self, inputs: any, status: RunStatus):
         """ """
-        inputs_scheme = inputs.scheme
         now = datetime.now()
         data = {
-            TableKeys.THEORY.value: inputs_scheme.theory,
-            TableKeys.COUPLING.value: inputs_scheme.coupling,
-            TableKeys.DEGENERACY.value: inputs_scheme.degeneracy,
-            TableKeys.NUMBER_OF_PARTICLES.value: inputs.number_of_particles,
+            TableKeys.THEORY.value: inputs.theory,
+            TableKeys.COUPLING.value: inputs.coupling,
+            TableKeys.DEGENERACY.value: inputs.degeneracy,
             TableKeys.DATE.value: now.date().isoformat(),
             TableKeys.TIME.value: now.time().isoformat(),
             BaseTableKeys.STATUS.value: status.value,

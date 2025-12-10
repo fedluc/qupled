@@ -5,11 +5,12 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.integrate import quad
 
-from . import database
-from . import hf
-from . import serialize
-from .scheme_tables import BaseTableKeys, TableKeys
-from .dimension import Dimension
+from qupled import hf
+from qupled import serialize
+from qupled.database.database_handler import DataBaseHandler
+from qupled.database.finite_size_correction_tables import FiniteSizeCorrectionTables
+from qupled.database.scheme_tables import BaseTableKeys, TableKeys, RunStatus
+from qupled.dimension import Dimension
 
 
 class FiniteSizeCorrectionError(Exception):
@@ -35,13 +36,13 @@ class FiniteSizeCorrection:
     """
 
     def __init__(self):
-        self.db_handler = database.DataBaseHandler()
+        self.db_handler = DataBaseHandler()
         self.results: Result = Result()
         self.solver: hf.Solver | None = None
         self.inputs: Input | None = None
         self.runs: dict[int, Run] = {}
         self.target_run_id: int | None = None
-        self.status: database.RunStatus | None = None
+        self.status: RunStatus | None = None
 
     @property
     def run_id(self):
@@ -61,11 +62,11 @@ class FiniteSizeCorrection:
         self._save()
 
     @property
-    def _db_tables(self) -> database.FiniteSizeCorrectionTables | None:
+    def _db_tables(self) -> FiniteSizeCorrectionTables | None:
         """
         Retrieves the finite size correction tables associated with the current database handler.
         Returns:
-            database.FiniteSizeCorrectionTables: The finite size correction tables from the database handler.
+            FiniteSizeCorrectionTables: The finite size correction tables from the database handler.
         """
         return self.db_handler.fsc_tables if self.db_handler is not None else None
 
@@ -78,10 +79,10 @@ class FiniteSizeCorrection:
                 uint=correction.internal_energy,
                 fxc=correction.free_energy,
             )
-            self.status = database.RunStatus.SUCCESS
+            self.status = RunStatus.SUCCESS
         except FiniteSizeCorrectionError as e:
             print(f"Error during finite size correction computation: {e}")
-            self.status = database.RunStatus.FAILED
+            self.status = RunStatus.FAILED
 
     def _add_run_to_database(self):
         """ """
@@ -89,10 +90,10 @@ class FiniteSizeCorrection:
 
     def _save(self):
         """
-        Saves the current state and results to the database.
+        Saves the current state and results to the
 
         This method updates the run status in the database using the current
-        native scheme status and inserts the results into the database.
+        native scheme status and inserts the results into the
         """
         self._db_tables.update_run_status(self.status)
         self._db_tables.update_scheme_run_id(self.target_run_id)
@@ -134,7 +135,7 @@ class FiniteSizeCorrection:
         self.inputs.scheme.coupling = rs
         self.solver.compute(self.inputs.scheme)
         run_status = self.solver.get_solver_status()
-        if run_status != database.RunStatus.SUCCESS:
+        if run_status != RunStatus.SUCCESS:
             raise FiniteSizeCorrectionError(
                 f"Run for rs={rs} failed with status {run_status}"
             )
@@ -202,7 +203,7 @@ class Result:
 
 class Correction:
 
-    def __init__(self, db_handler: database.DataBaseHandler):
+    def __init__(self, db_handler: DataBaseHandler):
         self.continuous: dict[int, list[float]] = {}
         self.db_handler = db_handler
         self.free_energy: float | None = None

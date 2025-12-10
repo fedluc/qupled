@@ -2,9 +2,8 @@ from pathlib import Path
 
 import sqlalchemy as sql
 
-from .scheme_tables import SchemeTables
-from .finite_size_correction_tables import FiniteSizeCorrectionTables
-from .base_tables import ConflictMode, RunStatus
+from qupled.database.scheme_tables import SchemeTables
+from qupled.database.finite_size_correction_tables import FiniteSizeCorrectionTables
 
 BLOB_STORAGE_DIRECTORY = "blob_data"
 DATABASE_DIRECTORY = "qupled_store"
