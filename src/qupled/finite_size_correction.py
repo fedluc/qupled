@@ -51,18 +51,23 @@ class FiniteSizeCorrection:
         Returns:
             str: The run ID associated with the current database handler.
         """
-        return self.db_handler.fsc_tables.run_id
+        return self._db_tables.run_id if self._db_tables is not None else None
 
-    def compute(
-        self,
-        solver: hf.Solver,
-        inputs: Input,
-    ) -> int:
+    def compute(self, solver: hf.Solver, inputs: Input):
         self.solver = solver
         self.inputs = inputs
         self._add_run_to_database()
         self._compute_correction()
         self._save()
+
+    @property
+    def _db_tables(self) -> database.FiniteSizeCorrectionTables | None:
+        """
+        Retrieves the finite size correction tables associated with the current database handler.
+        Returns:
+            database.FiniteSizeCorrectionTables: The finite size correction tables from the database handler.
+        """
+        return self.db_handler.fsc_tables if self.db_handler is not None else None
 
     def _compute_correction(self):
         try:
@@ -80,7 +85,7 @@ class FiniteSizeCorrection:
 
     def _add_run_to_database(self):
         """ """
-        self.db_handler.insert_fsc_run(self.inputs)
+        self._db_tables.insert_run(self.inputs)
 
     def _save(self):
         """
@@ -89,9 +94,9 @@ class FiniteSizeCorrection:
         This method updates the run status in the database using the current
         native scheme status and inserts the results into the database.
         """
-        self.db_handler.update_fsc_run_status(self.status)
-        self.db_handler.update_fsc_scheme_run_id(self.target_run_id)
-        self.db_handler.insert_fsc_results(self.results.__dict__)
+        self._db_tables.update_run_status(self.status)
+        self._db_tables.update_scheme_run_id(self.target_run_id)
+        self._db_tables.insert_results(self.results.__dict__)
 
     def _solve_scheme_for_all_coupling(self):
         scheme_input = self.inputs.scheme
@@ -142,7 +147,8 @@ class FiniteSizeCorrection:
 
     def _search_results_in_the_database(self, rs_grid):
         inputs_scheme = self.inputs.scheme
-        runs = self.db_handler.inspect_scheme_runs()
+        scheme_tables = self.db_handler.scheme_tables
+        runs = scheme_tables.inspect_runs()
         filtered_runs = [
             run
             for run in runs
@@ -163,7 +169,7 @@ class FiniteSizeCorrection:
             if run is None:
                 continue
             run_id = run[BaseTableKeys.PRIMARY_KEY.value]
-            run_inputs = self.db_handler.get_inputs_scheme(run_id)
+            run_inputs = scheme_tables.get_inputs(run_id)
             if (
                 run_inputs["cutoff"] == inputs_scheme.cutoff
                 and run_inputs["matsubara"] == inputs_scheme.matsubara
@@ -190,21 +196,21 @@ class Input:
 class Result:
     uint: float | None = None
     """Internal energy"""
-    fxc: np.ndarray | None = None
+    fxc: float | None = None
     """Free energy"""
 
 
 class Correction:
 
     def __init__(self, db_handler: database.DataBaseHandler):
-        self.continuous = dict[int, list[float]] = {}
+        self.continuous: dict[int, list[float]] = {}
         self.db_handler = db_handler
         self.free_energy: float | None = None
-        self.inputs: Input = Input()
+        self.inputs: Input | None = None
         self.internal_energy: float | None = None
         self.rs_grid: list[float] = []
         self.runs: dict[int, Run] = {}
-        self.ssfi = dict[int, list[float]] = {}
+        self.ssfi: dict[int, interp1d] = {}
 
     def compute(self, runs: dict[int, Run], inputs: Input):
         self.runs = runs
@@ -223,13 +229,13 @@ class Correction:
     def _build_interpolators(self):
         if not self.ssfi:
             for key, run in self.runs.items():
-                ssf, wvg = self._read_wvg_ssf(run.id)
+                wvg, ssf = self._read_wvg_ssf(run.id)
                 self.ssfi[key] = interp1d(
                     wvg, ssf, kind="cubic", fill_value="extrapolate"
                 )
 
     def _read_wvg_ssf(self, run_id: int) -> tuple[list[float], list[float]]:
-        data = self.db_handler.get_scheme_run(run_id)
+        data = self.db_handler.scheme_tables.get_run(run_id)
         res = data.get("results", {})
         wvg = res.get("wvg", None)
         ssf = res.get("ssf", None)
@@ -365,7 +371,7 @@ class Correction:
     def _compute_madelung(self, number_of_particles):
         return (
             -3.90026492 * (1.0 / np.sqrt(np.pi)) * (number_of_particles ** (-1.0 / 2.0))
-            if self.continuous._is_2D()
+            if self._is_2D()
             else -2.837297
             * ((3.0 / (4.0 * np.pi)) ** (1.0 / 3.0))
             * (number_of_particles ** (-1.0 / 3.0))

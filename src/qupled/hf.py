@@ -45,7 +45,7 @@ class Solver:
         Returns:
             str: The run ID associated with the current database handler.
         """
-        return self.db_handler.scheme_tables.run_id
+        return self._db_tables.run_id if self._db_tables is not None else None
 
     @timer.timer
     def compute(self, inputs: Input):
@@ -72,7 +72,7 @@ class Solver:
         """
         if self.results is not None:
             self.results.compute_rdf(self.inputs.dimension, rdf_grid)
-            self.db_handler.insert_scheme_results(
+            self.db_handler.scheme_tables.insert_results(
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid},
                 conflict_mode=database.ConflictMode.UPDATE,
             )
@@ -88,6 +88,16 @@ class Solver:
             self.native_scheme_status, database.RunStatus.FAILED
         )
 
+    @property
+    def _db_tables(self) -> database.SchemeTables | None:
+        """
+        Retrieves the database tables associated with the current solver.
+
+        Returns:
+            database.SchemeTables: The scheme tables from the database handler.
+        """
+        return self.db_handler.scheme_tables if self.db_handler is not None else None
+
     def _add_run_to_database(self):
         """
         Adds the current run information to the database.
@@ -96,7 +106,7 @@ class Solver:
         using the `db_handler`. It also updates the `database_info` attribute of
         `self.inputs` with the current `run_id`.
         """
-        self.db_handler.insert_scheme_run(self.inputs)
+        self._db_tables.insert_run(self.inputs)
         self.inputs.database_info = DatabaseInfo(
             blob_storage=self.db_handler.blob_storage,
             name=self.db_handler.engine.url.database,
@@ -166,8 +176,8 @@ class Solver:
         native scheme status and inserts the results into the database.
         """
         run_status = self.get_solver_status()
-        self.db_handler.update_scheme_run_status(run_status)
-        self.db_handler.insert_scheme_results(self.results.__dict__)
+        self._db_tables.update_run_status(run_status)
+        self._db_tables.insert_results(self.results.__dict__)
 
 
 @serialize.serializable_dataclass

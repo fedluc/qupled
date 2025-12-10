@@ -16,7 +16,7 @@ class DataBase:
             A dictionary whose keys are the run ids and values are the corresponding runs information.
         """
         db_handler = database.DataBaseHandler(database_name)
-        return db_handler.inspect_scheme_runs()
+        return db_handler.scheme_tables.inspect_runs()
 
     # Read runs in the database
     @staticmethod
@@ -39,7 +39,7 @@ class DataBase:
             dict: A dictionary containing the run data.
         """
         db_handler = database.DataBaseHandler(database_name)
-        return db_handler.get_scheme_run(run_id, input_names, result_names)
+        return db_handler.scheme_tables.get_run(run_id, input_names, result_names)
 
     # Read inputs in the database
     @staticmethod
@@ -57,7 +57,9 @@ class DataBase:
             A dictionary whose keys are the quantities listed in names and values are the corresponding inputs.
         """
         db_handler = database.DataBaseHandler(database_name)
-        return db_handler.get_scheme_inputs(run_id, names if names is not None else [])
+        return db_handler.scheme_tables.get_inputs(
+            run_id, names if names is not None else []
+        )
 
     # Read results in the database
     @staticmethod
@@ -75,7 +77,7 @@ class DataBase:
             A dictionary whose keys are the quantities listed in names and values are the corresponding results.
         """
         db_handler = database.DataBaseHandler(database_name)
-        return db_handler.get_scheme_results(run_id, names)
+        return db_handler.scheme_tables.get_results(run_id, names)
 
     # Delete results from the database
     @staticmethod
@@ -89,4 +91,4 @@ class DataBase:
                 If None, the default database will be used.
         """
         db_handler = database.DataBaseHandler(database_name)
-        return db_handler.delete_scheme_run(run_id)
+        return db_handler.scheme_tables.delete_run(run_id)
