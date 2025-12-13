@@ -92,7 +92,6 @@ def test_build_run_table(mocker, tables_with_mock_build):
 def test_update_scheme_run_id_with_run_id(mocker, tables):
     tables.run_id = mocker.ANY
     scheme_run_id = mocker.ANY
-    status = RunStatus.SUCCESS
     sql_update = mocker.patch("sqlalchemy.update")
     tables.run_table = mocker.MagicMock()
     statement = sql_update.return_value.where.return_value.values.return_value
