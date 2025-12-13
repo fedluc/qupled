@@ -48,6 +48,9 @@ class BaseTables:
         self.result_table_name = result_table_name
         # Create tables
         self.table_metadata = sql.MetaData()
+        self.input_table: sql.Table | None = None
+        self.result_table: sql.Table | None = None
+        self.run_table: sql.Table | None = None
         self.run_id: int | None = None
 
     def insert_run(self, inputs):
