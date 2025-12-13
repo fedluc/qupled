@@ -1,19 +1,13 @@
-import datetime
 import io
 import json
-import os
 import struct
-from pathlib import Path
 
 import blosc2
 import numpy as np
 import pytest
 import sqlalchemy as sql
-from sqlalchemy import inspect
 
 from qupled.database.base_tables import BaseTables, ConflictMode, RunStatus, TableKeys
-
-# Unit tests
 
 
 @pytest.fixture
@@ -220,9 +214,9 @@ def test_delete_run(mocker, tables):
 
 
 def test_build_tables(mocker, tables):
-    mock_run_table = sql.Table(tables.run_table_name, tables.table_metadata)
-    mock_input_table = sql.Table(tables.input_table_name, tables.table_metadata)
-    mock_result_table = sql.Table(tables.result_table_name, tables.table_metadata)
+    mock_run_table = mocker.Mock()
+    mock_input_table = mocker.Mock()
+    mock_result_table = mocker.Mock()
     build_run_table = mocker.patch.object(
         tables, "_build_run_table", return_value=mock_run_table
     )
@@ -251,23 +245,23 @@ def test_build_run_table(tables):
 
 
 def test_build_inputs_table(mocker, tables):
-    mock_input_table = sql.Table(tables.input_table_name, tables.table_metadata)
+    mock_table = mocker.Mock()
     build_data_table = mocker.patch.object(
-        tables, "_build_data_table", return_value=mock_input_table
+        tables, "_build_data_table", return_value=mock_table
     )
     tables._build_inputs_table()
     build_data_table.assert_called_once_with(tables.input_table_name, sql.JSON)
-    assert build_data_table.return_value == mock_input_table
+    assert build_data_table.return_value == mock_table
 
 
 def test_build_results_table(mocker, tables):
-    mock_result_table = sql.Table(tables.result_table_name, tables.table_metadata)
+    mock_table = mocker.Mock()
     build_data_table = mocker.patch.object(
-        tables, "_build_data_table", return_value=mock_result_table
+        tables, "_build_data_table", return_value=mock_table
     )
     tables._build_results_table()
     build_data_table.assert_called_once_with(tables.result_table_name, sql.LargeBinary)
-    assert build_data_table.return_value == mock_result_table
+    assert build_data_table.return_value == mock_table
 
 
 def test_build_data_table(mocker, tables):
@@ -303,7 +297,7 @@ def test_build_data_table(mocker, tables):
 
 
 def test_create_table(mocker, tables):
-    mock_table = mocker.patch("sqlalchemy.Table")
+    mock_table = mocker.Mock()
     create = mocker.patch.object(mock_table, "create")
     tables._create_table(mock_table)
     create.assert_called_once_with(tables.engine, checkfirst=True)
@@ -409,9 +403,7 @@ def test_get_data(mocker, tables):
     sql_mapping = lambda x: x * 2
     actual = tables._get_data(table, run_id, names, sql_mapping)
     expected = {
-        row[TableKeys.NAME.value]: sql_mapping(
-            row[TableKeys.VALUE.value]
-        )
+        row[TableKeys.NAME.value]: sql_mapping(row[TableKeys.VALUE.value])
         for row in db_rows
     }
     assert actual == expected

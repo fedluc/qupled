@@ -38,7 +38,7 @@ class FiniteSizeCorrectionTables(BaseTables):
         inputs_local.pop("scheme", None)
         super().insert_inputs(inputs_local)
 
-    def _build_run_table(self):
+    def _build_run_table(self) -> sql.Table:
         """ """
         table = sql.Table(
             self.run_table_name,
@@ -71,7 +71,7 @@ class FiniteSizeCorrectionTables(BaseTables):
             ),
             sql.Column(
                 TableKeys.SCHEME_RUN_ID.value,
-                sql.String,
+                sql.Integer,
                 nullable=True,
             ),
             sql.Column(
