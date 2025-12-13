@@ -17,11 +17,13 @@ from qupled.database.base_tables import ConflictMode
 
 # Unit tests
 
+
 @pytest.fixture
 def tables():
     engine = sql.create_engine("sqlite:///:memory:")
     tables = SchemeTables(engine)
     yield tables
+
 
 @pytest.fixture
 def tables_with_mock_build(mocker):
@@ -44,6 +46,7 @@ def test_base_tables_initialization(tables):
     assert tables.input_table is not None
     assert tables.result_table is not None
 
+
 def test_build_run_table(mocker, tables_with_mock_build):
     create_table = mocker.patch.object(tables_with_mock_build, "_create_table")
     table = tables_with_mock_build._build_run_table()
@@ -55,7 +58,7 @@ def test_build_run_table(mocker, tables_with_mock_build):
         TableKeys.DEGENERACY.value,
         TableKeys.DATE.value,
         TableKeys.TIME.value,
-        BaseTableKeys.STATUS.value
+        BaseTableKeys.STATUS.value,
     }
     create_table.assert_called_once_with(table)
     assert columns == expected_columns
@@ -73,14 +76,18 @@ def test_build_run_table(mocker, tables_with_mock_build):
     assert not table.c[TableKeys.DATE.value].nullable
     assert not table.c[TableKeys.TIME.value].nullable
 
+
 def test_delete_run(mocker, tables):
     run_id = mocker.ANY
-    delete_blob_data_on_disk = mocker.patch("qupled.database.scheme_tables.delete_blob_data_on_disk")
-    super_delete_run =  mocker.patch("qupled.database.base_tables.BaseTables.delete_run")
+    delete_blob_data_on_disk = mocker.patch(
+        "qupled.database.scheme_tables.delete_blob_data_on_disk"
+    )
+    super_delete_run = mocker.patch("qupled.database.base_tables.BaseTables.delete_run")
     tables.delete_run(run_id)
     delete_blob_data_on_disk.assert_called_once_with(tables.engine.url.database, run_id)
     super_delete_run.assert_called_once_with(run_id)
-    
+
+
 def test_insert_run(mocker, tables):
     run_id = 1
     mock_datetime = mocker.patch("qupled.database.scheme_tables.datetime")
@@ -102,6 +109,7 @@ def test_insert_run(mocker, tables):
 
 
 # Functional tests
+
 
 @pytest.fixture
 def scheme_inputs():
@@ -206,9 +214,7 @@ def test_update_results_allow_update(tables, scheme_inputs, scheme_results):
     tables.insert_results(scheme_results.__dict__)
     new_data = scheme_results.data + np.ones(scheme_results.data.shape)
     scheme_results.data = new_data
-    tables.insert_results(
-        scheme_results.__dict__, conflict_mode=ConflictMode.UPDATE
-    )
+    tables.insert_results(scheme_results.__dict__, conflict_mode=ConflictMode.UPDATE)
     results = tables.get_results(tables.run_id, None)
     assert (results["data"] == new_data).all()
 

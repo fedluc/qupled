@@ -17,11 +17,13 @@ from qupled.database.base_tables import ConflictMode
 
 # Unit tests
 
+
 @pytest.fixture
 def tables():
     engine = sql.create_engine("sqlite:///:memory:")
     tables = FiniteSizeCorrectionTables(engine)
     yield tables
+
 
 @pytest.fixture
 def tables_with_mock_build(mocker):
@@ -67,7 +69,7 @@ def test_build_run_table(mocker, tables_with_mock_build):
         TableKeys.SCHEME_RUN_ID.value,
         TableKeys.DATE.value,
         TableKeys.TIME.value,
-        BaseTableKeys.STATUS.value
+        BaseTableKeys.STATUS.value,
     }
     create_table.assert_called_once_with(table)
     assert columns == expected_columns
@@ -88,6 +90,7 @@ def test_build_run_table(mocker, tables_with_mock_build):
     assert table.c[TableKeys.SCHEME_RUN_ID.value].nullable
     assert not table.c[TableKeys.DATE.value].nullable
     assert not table.c[TableKeys.TIME.value].nullable
+
 
 def test_update_scheme_run_id_with_run_id(mocker, tables):
     tables.run_id = mocker.ANY
@@ -113,9 +116,12 @@ def test_update_scheme_run_id_without_run_id(mocker, tables):
     sql_update.assert_not_called()
     execute.assert_not_called()
 
+
 def test_insert_run(mocker, tables):
     run_id = 1
-    mock_datetime = mocker.patch("qupled.database.finite_size_correction_tables.datetime")
+    mock_datetime = mocker.patch(
+        "qupled.database.finite_size_correction_tables.datetime"
+    )
     mock_datetime.now.return_value = mocker.Mock()
     inputs = mocker.Mock()
     status = mocker.Mock()
@@ -135,6 +141,7 @@ def test_insert_run(mocker, tables):
 
 # Functional tests
 
+
 @pytest.fixture
 def fsc_inputs():
     class SchemeInputs:
@@ -142,6 +149,7 @@ def fsc_inputs():
             self.theory = "theory"
             self.coupling = 1.0
             self.degeneracy = 1.0
+
     class Inputs:
         def __init__(self):
             self.number_of_particles = 1
@@ -242,9 +250,7 @@ def test_update_results_allow_update(tables, fsc_inputs, fsc_results):
     tables.insert_results(fsc_results.__dict__)
     new_data = fsc_results.data + np.ones(fsc_results.data.shape)
     fsc_results.data = new_data
-    tables.insert_results(
-        fsc_results.__dict__, conflict_mode=ConflictMode.UPDATE
-    )
+    tables.insert_results(fsc_results.__dict__, conflict_mode=ConflictMode.UPDATE)
     results = tables.get_results(tables.run_id, None)
     assert (results["data"] == new_data).all()
 
