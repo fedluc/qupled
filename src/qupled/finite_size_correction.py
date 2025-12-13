@@ -9,7 +9,7 @@ from qupled import hf
 from qupled.database.database_handler import DataBaseHandler
 from qupled.database.finite_size_correction_tables import FiniteSizeCorrectionTables
 from qupled.database.scheme_tables import BaseTableKeys, TableKeys, RunStatus
-from qupled.dimension import Dimension
+from qupled.util.dimension import Dimension
 from qupled.util import serialize
 
 
