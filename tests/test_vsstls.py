@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from qupled import native, stls, vsstls
+from qupled import native, output, stls, vsstls
 
 
 @pytest.fixture
@@ -108,6 +108,7 @@ def test_update_input_data(mocker, scheme):
 
 def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
     read_results = mocker.patch("qupled.output.DataBase.read_results")
+    result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     read_results.return_value = {
         "free_energy_grid": mocker.ANY,
@@ -117,12 +118,13 @@ def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
     read_results.assert_called_once_with(
-        run_id, None, ["free_energy_grid", "free_energy_integrand"]
+        result_type, run_id, None, ["free_energy_grid", "free_energy_integrand"]
     )
 
 
 def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
     read_results = mocker.patch("qupled.output.DataBase.read_results")
+    result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     database_name = mocker.ANY
     read_results.return_value = {
@@ -133,7 +135,7 @@ def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
     read_results.assert_called_once_with(
-        run_id, None, ["free_energy_grid", "free_energy_integrand"]
+        result_type, run_id, None, ["free_energy_grid", "free_energy_integrand"]
     )
 
 
