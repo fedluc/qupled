@@ -30,7 +30,10 @@ class ConflictMode(Enum):
 
 
 class BaseTables:
-    """ """
+    """
+    Base class for managing database tables, including run, input, and result tables.
+    Provides methods for inserting, retrieving, and updating data in the database.
+    """
 
     def __init__(
         self,
@@ -39,7 +42,15 @@ class BaseTables:
         input_table_name: str,
         result_table_name: str,
     ):
-        """ """
+        """
+        Initializes the BaseTables instance with the database engine and table names.
+
+        Args:
+            engine (sql.Engine): SQLAlchemy engine for database connection.
+            run_table_name (str): Name of the run table.
+            input_table_name (str): Name of the input table.
+            result_table_name (str): Name of the result table.
+        """
         # Set sqlite properties
         self.engine = engine
         # Store table names
@@ -54,12 +65,22 @@ class BaseTables:
         self.run_id: int | None = None
 
     def insert_run(self, inputs):
-        """ """
+        """
+        Inserts a new run into the database and adds its associated inputs.
+
+        Args:
+            inputs: Input data for the run.
+        """
         self._insert_run(inputs, RunStatus.RUNNING)
         self.insert_inputs(inputs.__dict__)
 
     def insert_inputs(self, inputs: dict[str, any]):
-        """ """
+        """
+        Inserts input data into the input table for the current run.
+
+        Args:
+            inputs (dict[str, any]): Dictionary of input data to insert.
+        """
         if self.run_id is not None:
             sql_mapping = lambda value: (self._to_json(value))
             self._insert_data_from_dict(self.input_table, inputs, sql_mapping)
@@ -69,7 +90,13 @@ class BaseTables:
         results: dict[str, any],
         conflict_mode: ConflictMode = ConflictMode.FAIL,
     ):
-        """ """
+        """
+        Inserts result data into the result table for the current run.
+
+        Args:
+            results (dict[str, any]): Dictionary of result data to insert.
+            conflict_mode (ConflictMode): Conflict resolution mode (default is FAIL).
+        """
         if self.run_id is not None:
             sql_mapping = lambda value: (self._to_bytes(value))
             self._insert_data_from_dict(
@@ -77,13 +104,23 @@ class BaseTables:
             )
 
     def inspect_runs(self) -> list[dict[str, any]]:
-        """ """
+        """
+        Retrieves all runs from the run table.
+
+        Returns:
+            list[dict[str, any]]: List of dictionaries containing run data.
+        """
         statement = sql.select(self.run_table)
         rows = self._execute(statement).mappings().all()
         return [{key: row[key] for key in row.keys()} for row in rows]
 
     def update_run_status(self, status: RunStatus) -> None:
-        """ """
+        """
+        Updates the status of the current run in the run table.
+
+        Args:
+            status (RunStatus): New status to set for the run.
+        """
         if self.run_id is not None:
             statement = (
                 sql.update(self.run_table)
@@ -98,7 +135,17 @@ class BaseTables:
         input_names: list[str] | None = None,
         result_names: list[str] | None = None,
     ) -> dict:
-        """ """
+        """
+        Retrieves data for a specific run, including its inputs and results.
+
+        Args:
+            run_id (int): ID of the run to retrieve.
+            input_names (list[str] | None): Optional list of input names to filter.
+            result_names (list[str] | None): Optional list of result names to filter.
+
+        Returns:
+            dict: Dictionary containing run, input, and result data.
+        """
         statement = sql.select(self.run_table).where(
             self.run_table.c[TableKeys.PRIMARY_KEY.value] == run_id
         )
@@ -115,41 +162,93 @@ class BaseTables:
         return {}
 
     def get_inputs(self, run_id: int, names: list[str] | None = None) -> dict:
-        """ """
+        """
+        Retrieves input data for a specific run.
+
+        Args:
+            run_id (int): ID of the run to retrieve inputs for.
+            names (list[str] | None): Optional list of input names to filter.
+
+        Returns:
+            dict: Dictionary of input data.
+        """
         sql_mapping = lambda value: (self._from_json(value))
         return self._get_data(self.input_table, run_id, names, sql_mapping)
 
     def get_results(self, run_id: int, names: list[str] | None = None) -> dict:
-        """ """
+        """
+        Retrieves result data for a specific run.
+
+        Args:
+            run_id (int): ID of the run to retrieve results for.
+            names (list[str] | None): Optional list of result names to filter.
+
+        Returns:
+            dict: Dictionary of result data.
+        """
         sql_mapping = lambda value: (self._from_bytes(value))
         return self._get_data(self.result_table, run_id, names, sql_mapping)
 
     def delete_run(self, run_id: int) -> None:
-        """ """
+        """
+        Deletes a specific run from the database.
+
+        Args:
+            run_id (int): ID of the run to delete.
+        """
         condition = self.run_table.c[TableKeys.PRIMARY_KEY.value] == run_id
         statement = sql.delete(self.run_table).where(condition)
         self._execute(statement)
 
     def _build_tables(self):
-        """ """
+        """
+        Builds the run, input, and result tables in the database.
+        """
         self.run_table = self._build_run_table()
         self.input_table = self._build_inputs_table()
         self.result_table = self._build_results_table()
 
     def _build_run_table(self) -> sql.Table:
-        """ """
+        """
+        Builds the run table.
+
+        Returns:
+            sql.Table: SQLAlchemy Table object for the run table.
+
+        Raises:
+            NotImplementedError: If not implemented in a subclass.
+        """
         raise NotImplementedError("This method should be implemented in a subclass.")
 
     def _build_inputs_table(self) -> sql.Table:
-        """ """
+        """
+        Builds the input table.
+
+        Returns:
+            sql.Table: SQLAlchemy Table object for the input table.
+        """
         return self._build_data_table(self.input_table_name, sql.JSON)
 
     def _build_results_table(self) -> sql.Table:
-        """ """
+        """
+        Builds the result table.
+
+        Returns:
+            sql.Table: SQLAlchemy Table object for the result table.
+        """
         return self._build_data_table(self.result_table_name, sql.LargeBinary)
 
     def _build_data_table(self, table_name, sql_data_type) -> sql.Table:
-        """ """
+        """
+        Builds a generic data table with the specified name and data type.
+
+        Args:
+            table_name (str): Name of the table to create.
+            sql_data_type: SQLAlchemy data type for the table's value column.
+
+        Returns:
+            sql.Table: SQLAlchemy Table object for the data table.
+        """
         table = sql.Table(
             table_name,
             self.table_metadata,
@@ -180,10 +279,25 @@ class BaseTables:
         return table
 
     def _create_table(self, table: sql.Table):
+        """
+        Creates a table in the database if it does not already exist.
+
+        Args:
+            table (sql.Table): SQLAlchemy Table object to create.
+        """
         table.create(self.engine, checkfirst=True)
 
     def _insert_run(self, inputs: any, status: RunStatus):
-        """ """
+        """
+        Inserts a new run into the run table.
+
+        Args:
+            inputs (any): Input data for the run.
+            status (RunStatus): Status of the run.
+
+        Raises:
+            NotImplementedError: If not implemented in a subclass.
+        """
         raise NotImplementedError("This method should be implemented in a subclass.")
 
     def _insert_data_from_dict(
@@ -193,7 +307,15 @@ class BaseTables:
         sql_mapping: Callable[[any], any],
         conflict_mode: ConflictMode = ConflictMode.FAIL,
     ) -> None:
-        """ """
+        """
+        Inserts data into a table from a dictionary.
+
+        Args:
+            table: SQLAlchemy Table object to insert data into.
+            data (dict[str, any]): Dictionary of data to insert.
+            sql_mapping (Callable[[any], any]): Mapping function to transform values.
+            conflict_mode (ConflictMode): Conflict resolution mode (default is FAIL).
+        """
         for name, value in data.items():
             if mapped_value := sql_mapping(value):
                 self._insert_data(table, name, mapped_value, conflict_mode)
@@ -205,7 +327,15 @@ class BaseTables:
         value: any,
         conflict_mode: ConflictMode = ConflictMode.FAIL,
     ):
-        """ """
+        """
+        Inserts a single data entry into a table.
+
+        Args:
+            table (sql.Table): SQLAlchemy Table object to insert data into.
+            name (str): Name of the data entry.
+            value (any): Value of the data entry.
+            conflict_mode (ConflictMode): Conflict resolution mode (default is FAIL).
+        """
         data = {
             TableKeys.RUN_ID.value: self.run_id,
             TableKeys.NAME.value: name,

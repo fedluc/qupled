@@ -25,21 +25,40 @@ class TableKeys(Enum):
 
 
 class FiniteSizeCorrectionTables(BaseTables):
-    """ """
+    """
+    Handles database operations for finite size correction tables, including
+    run, input, and result tables specific to finite size corrections.
+    """
 
     def __init__(self, engine: sql.Engine):
-        """ """
+        """
+        Initializes the FiniteSizeCorrectionTables instance with the database engine
+        and builds the required tables.
+
+        Args:
+            engine (sql.Engine): SQLAlchemy engine for database connection.
+        """
         super().__init__(engine, RUN_TABLE_NAME, INPUT_TABLE_NAME, RESULT_TABLE_NAME)
         self._build_tables()
 
     def insert_inputs(self, inputs: dict[str, any]):
-        """ """
+        """
+        Inserts input data into the input table, excluding the "scheme" key.
+
+        Args:
+            inputs (dict[str, any]): Dictionary of input data to insert.
+        """
         inputs_local = dict(inputs)
         inputs_local.pop("scheme", None)
         super().insert_inputs(inputs_local)
 
     def _build_run_table(self) -> sql.Table:
-        """ """
+        """
+        Builds the run table for finite size corrections.
+
+        Returns:
+            sql.Table: SQLAlchemy Table object for the run table.
+        """
         table = sql.Table(
             self.run_table_name,
             self.table_metadata,
@@ -94,7 +113,12 @@ class FiniteSizeCorrectionTables(BaseTables):
         return table
 
     def update_scheme_run_id(self, scheme_run_id: int) -> None:
-        """ """
+        """
+        Updates the scheme run ID for the current run in the run table.
+
+        Args:
+            scheme_run_id (int): The scheme run ID to update.
+        """
         if self.run_id is not None:
             statement = (
                 sql.update(self.run_table)
@@ -104,7 +128,13 @@ class FiniteSizeCorrectionTables(BaseTables):
             self._execute(statement)
 
     def _insert_run(self, inputs: any, status: RunStatus):
-        """ """
+        """
+        Inserts a new run into the run table with the provided inputs and status.
+
+        Args:
+            inputs (any): Input data for the run.
+            status (RunStatus): Status of the run.
+        """
         inputs_scheme = inputs.scheme
         now = datetime.now()
         data = {

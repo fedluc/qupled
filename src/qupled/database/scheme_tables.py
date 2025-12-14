@@ -24,20 +24,39 @@ class TableKeys(Enum):
 
 
 class SchemeTables(BaseTables):
-    """ """
+    """
+    Handles database operations for scheme tables, including run, input, and result tables.
+    Provides methods for inserting, retrieving, and deleting data specific to schemes.
+    """
 
     def __init__(self, engine: sql.Engine):
-        """ """
+        """
+        Initializes the SchemeTables instance with the database engine
+        and builds the required tables.
+
+        Args:
+            engine (sql.Engine): SQLAlchemy engine for database connection.
+        """
         super().__init__(engine, RUN_TABLE_NAME, INPUT_TABLE_NAME, RESULT_TABLE_NAME)
         self._build_tables()
 
     def delete_run(self, run_id: int) -> None:
-        """ """
+        """
+        Deletes a specific run from the database and removes associated blob data from disk.
+
+        Args:
+            run_id (int): ID of the run to delete.
+        """
         delete_blob_data_on_disk(self.engine.url.database, run_id)
         super().delete_run(run_id)
 
     def _build_run_table(self):
-        """ """
+        """
+        Builds the run table for schemes.
+
+        Returns:
+            sql.Table: SQLAlchemy Table object for the run table.
+        """
         table = sql.Table(
             self.run_table_name,
             self.table_metadata,
@@ -82,7 +101,13 @@ class SchemeTables(BaseTables):
         return table
 
     def _insert_run(self, inputs: any, status: RunStatus):
-        """ """
+        """
+        Inserts a new run into the run table with the provided inputs and status.
+
+        Args:
+            inputs (any): Input data for the run.
+            status (RunStatus): Status of the run.
+        """
         now = datetime.now()
         data = {
             TableKeys.THEORY.value: inputs.theory,
