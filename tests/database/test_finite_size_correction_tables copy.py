@@ -172,9 +172,9 @@ def fsc_results():
 def test_insert_run_and_get_run_without_results(tables, fsc_inputs):
     tables.insert_run(fsc_inputs)
     run_data = tables.get_run(tables.run_id, None, None)
-    run = run_data[RUN_TABLE_NAME]
-    inputs = run_data[INPUT_TABLE_NAME]
-    results = run_data[RESULT_TABLE_NAME]
+    run = run_data["run"]
+    inputs = run_data["inputs"]
+    results = run_data["results"]
     assert run["theory"] == fsc_inputs.scheme.theory
     assert run["coupling"] == fsc_inputs.scheme.coupling
     assert run["degeneracy"] == fsc_inputs.scheme.degeneracy
@@ -191,9 +191,9 @@ def test_insert_run_and_get_run_with_results(tables, fsc_inputs, fsc_results):
     tables.insert_run(fsc_inputs)
     tables.insert_results(fsc_results.__dict__)
     run_data = tables.get_run(tables.run_id, None, None)
-    run = run_data[RUN_TABLE_NAME]
-    inputs = run_data[INPUT_TABLE_NAME]
-    results = run_data[RESULT_TABLE_NAME]
+    run = run_data["run"]
+    inputs = run_data["inputs"]
+    results = run_data["results"]
     assert run["theory"] == fsc_inputs.scheme.theory
     assert run["coupling"] == fsc_inputs.scheme.coupling
     assert run["degeneracy"] == fsc_inputs.scheme.degeneracy

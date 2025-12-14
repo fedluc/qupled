@@ -143,9 +143,9 @@ def test_get_run_with_existing_run(mocker, tables):
     execute.assert_called_once_with(statement)
     mock_result.mappings.return_value.first.assert_called_once()
     assert run == {
-        "run_table": {"key": "value"},
-        "input_table": inputs,
-        "result_table": results,
+        "run": {"key": "value"},
+        "inputs": inputs,
+        "results": results,
     }
 
 

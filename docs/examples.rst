@@ -69,3 +69,9 @@ that can be employed to speed up the calculations:
 
 .. literalinclude:: ../examples/docs/fixed_adr.py
    :language: python
+
+Finite Size Correction
+----------------------
+
+.. literalinclude:: ../examples/docs/finite_size_correction.py
+   :language: python

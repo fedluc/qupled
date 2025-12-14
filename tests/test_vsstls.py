@@ -49,9 +49,8 @@ def test_fill_free_energy_integrand(mocker, scheme):
     get_missing_state_points.assert_called_once_with(inputs)
     assert compute.call_count == len(missing_state_points)
     assert update_input_data.call_count == len(missing_state_points)
-    for coupling in missing_state_points:
-        compute.assert_any_call(inputs)
-        update_input_data.assert_any_call(inputs)
+    compute.assert_any_call(inputs)
+    update_input_data.assert_any_call(inputs)
     assert inputs.coupling == mocker.ANY
 
 

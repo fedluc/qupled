@@ -33,13 +33,12 @@ def test_database_handler_initialization_with_default_name(db_handler):
     assert isinstance(db_handler.scheme_tables, SchemeTables)
     assert isinstance(db_handler.fsc_tables, FiniteSizeCorrectionTables)
 
+
 def test_database_handler_initialization_with_custom_name():
     database_name = "custom.db"
     expected_database_path = Path(DATABASE_DIRECTORY) / database_name
     expected_blob_storage = (
-        Path(DATABASE_DIRECTORY)
-        / BLOB_STORAGE_DIRECTORY
-        / database_name
+        Path(DATABASE_DIRECTORY) / BLOB_STORAGE_DIRECTORY / database_name
     )
     db_handler = DataBaseHandler(database_name="custom.db")
     assert db_handler.blob_storage == str(expected_blob_storage)
@@ -48,6 +47,7 @@ def test_database_handler_initialization_with_custom_name():
     assert isinstance(db_handler.fsc_tables, FiniteSizeCorrectionTables)
     if os.path.exists(expected_database_path):
         os.remove(expected_database_path)
+
 
 def test_set_sqlite_pragma_valid_engine():
     engine = sql.create_engine("sqlite:///:memory:")

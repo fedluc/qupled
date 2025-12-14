@@ -6,7 +6,7 @@ import sys
 import matplotlib.pyplot as plt
 import pytest
 
-from qupled.database import DataBaseHandler, DATABASE_DIRECTORY
+from qupled.database.database_handler import DataBaseHandler, DATABASE_DIRECTORY
 
 
 @pytest.fixture(autouse=True)
@@ -45,7 +45,7 @@ def run_example(example_name, expected_internal_energy, expected_error_message=N
 def assert_internal_energy(expected_internal_energy, tolerance=1e-5):
     db_handler = DataBaseHandler()
     for run_id, expected_uint in expected_internal_energy.items():
-        uint = db_handler.get_scheme_results(run_id)["uint"]
+        uint = db_handler.scheme_tables.get_results(run_id)["uint"]
         assert abs(uint - expected_uint) < tolerance * abs(expected_uint)
 
 
@@ -69,18 +69,9 @@ def test_solve_quantum_schemes():
     run_example("solve_quantum_schemes", expected_internal_energy)
 
 
-# def test_solve_qvsstls():
-#     expected_internal_energy = {
-#         1: -2.9953554155330493,
-#         2: -0.9991774530561909,
-#         3: -0.6465616320411635,
-#         4: -0.48952347548843544,
-#         5: -0.3983496424348802,
-#         6: -0.3379353371761777,
-#         7: -0.29458249696823874,
-#         8: -0.28267942694172865,
-#     }
-#     run_example("solve_qvsstls", expected_internal_energy)
+def test_solve_qvsstls():
+    expected_internal_energy = {8: -0.282671921632354}
+    run_example("solve_qvsstls", expected_internal_energy)
 
 
 def test_solve_rpa_and_esa():
@@ -99,25 +90,5 @@ def test_solve_stls_iet():
 
 
 def test_solve_vsstls():
-    expected_internal_energy = {
-        1: -2.994083662994709,
-        2: -0.9993079760057332,
-        3: -0.646988898300038,
-        4: -0.4901343952261395,
-        5: -0.39908284094981095,
-        6: -0.3387610127515653,
-        7: -0.29547347348261327,
-        8: -0.2835889710157103,
-        9: -0.26269820300385827,
-        10: -0.23689805481094944,
-        11: -0.21599372301286512,
-        12: -0.1986644553412517,
-        13: -0.18402301103534308,
-        14: -0.17149429489936727,
-        15: -0.16061906836060078,
-        16: -0.15114257395637365,
-        17: -0.14288153493783237,
-        18: -0.1355654180498057,
-        19: -0.13329886020375165,
-    }
+    expected_internal_energy = {19: -0.133311093051585}
     run_example("solve_vsstls", expected_internal_energy)

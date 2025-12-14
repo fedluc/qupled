@@ -155,9 +155,9 @@ class BaseTables:
             inputs = self.get_inputs(run_id, names=input_names)
             results = self.get_results(run_id, names=result_names)
             return {
-                self.run_table_name: run_data,
-                self.input_table_name: inputs,
-                self.result_table_name: results,
+                "run": run_data,
+                "inputs": inputs,
+                "results": results,
             }
         return {}
 

@@ -54,6 +54,12 @@ class FiniteSizeCorrection:
         return self._db_tables.run_id if self._db_tables is not None else None
 
     def compute(self, solver: hf.Solver, inputs: Input):
+        """
+        Compute the finite size correction and store the results in the database.
+
+        Args:
+            inputs: Input parameters.
+        """
         self.solver = solver
         self.inputs = inputs
         self._add_run_to_database()
@@ -119,7 +125,7 @@ class FiniteSizeCorrection:
         scheme_input.coupling = target_coupling
         target_key = self._key_from_float(target_coupling)
         self.target_run_id = self.runs[target_key].id
-        print(f"--- Runs completed. Target run ID: {self.target_run_id}")
+        print(f"--- Runs completed")
 
     def _build_rs_grid(self) -> np.ndarray:
         """

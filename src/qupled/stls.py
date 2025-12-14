@@ -33,7 +33,9 @@ class Solver(rpa.Solver):
             An instance of Guess containing the initial guess data.
         """
         names = ["wvg", "ssf"]
-        data = output.DataBase.read_results(run_id, database_name, names)
+        data = output.DataBase.read_results(
+            output.OutputType.SCHEME, run_id, database_name, names
+        )
         return Guess(data[names[0]], data[names[1]])
 
 

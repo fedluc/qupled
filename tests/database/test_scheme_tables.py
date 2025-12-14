@@ -136,9 +136,9 @@ def scheme_results():
 def test_insert_run_and_get_run_without_results(tables, scheme_inputs):
     tables.insert_run(scheme_inputs)
     run_data = tables.get_run(tables.run_id, None, None)
-    run = run_data[RUN_TABLE_NAME]
-    inputs = run_data[INPUT_TABLE_NAME]
-    results = run_data[RESULT_TABLE_NAME]
+    run = run_data["run"]
+    inputs = run_data["inputs"]
+    results = run_data["results"]
     assert run["theory"] == scheme_inputs.theory
     assert run["coupling"] == scheme_inputs.coupling
     assert run["degeneracy"] == scheme_inputs.degeneracy
@@ -154,9 +154,9 @@ def test_insert_run_and_get_run_with_results(tables, scheme_inputs, scheme_resul
     tables.insert_run(scheme_inputs)
     tables.insert_results(scheme_results.__dict__)
     run_data = tables.get_run(tables.run_id, None, None)
-    run = run_data[RUN_TABLE_NAME]
-    inputs = run_data[INPUT_TABLE_NAME]
-    results = run_data[RESULT_TABLE_NAME]
+    run = run_data["run"]
+    inputs = run_data["inputs"]
+    results = run_data["results"]
     assert run["theory"] == scheme_inputs.theory
     assert run["coupling"] == scheme_inputs.coupling
     assert run["degeneracy"] == scheme_inputs.degeneracy

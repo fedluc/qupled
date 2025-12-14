@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import qupled.rpa as rpa
 import qupled.esa as esa
-from qupled.output import DataBase
+from qupled.output import DataBase, OutputType
 
 # Define an Rpa object to solve the RPA scheme
 print("######### Solving the RPA scheme #########")
@@ -14,8 +14,9 @@ esa_scheme = esa.Solver()
 esa_scheme.compute(esa.Input(10.0, 1.0))
 
 # Retrieve information from the output files
-rpa_data = DataBase.read_run(rpa_scheme.run_id)
-esa_data = DataBase.read_run(esa_scheme.run_id)
+result_type = OutputType.SCHEME
+rpa_data = DataBase.read_run(result_type, rpa_scheme.run_id)
+esa_data = DataBase.read_run(result_type, esa_scheme.run_id)
 rpa_results = rpa_data["results"]
 rpa_inputs = rpa_data["inputs"]
 esa_results = esa_data["results"]
