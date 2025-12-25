@@ -5,10 +5,10 @@ import numpy as np
 from scipy.interpolate import interp1d
 from scipy.integrate import quad
 
-from qupled import hf
 from qupled.database.database_handler import DataBaseHandler
 from qupled.database.finite_size_correction_tables import FiniteSizeCorrectionTables
 from qupled.database.scheme_tables import BaseTableKeys, TableKeys, RunStatus
+from qupled.schemes import hf
 from qupled.util.dimension import Dimension
 from qupled.util import serialize
 

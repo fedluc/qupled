@@ -1,4 +1,4 @@
-import qupled.stlsiet as stlsiet
+from qupled.schemes import stlsiet
 
 # Define the object used to solve the scheme
 scheme = stlsiet.Solver()

@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import field
 import numpy as np
 
-from qupled import hf, native, output, rpa
+from qupled import native
+from qupled.postprocess import output
+from qupled.schemes import hf, rpa
 from qupled.util import serialize
 
 

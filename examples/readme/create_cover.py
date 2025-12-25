@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib import colormaps as cm
 from matplotlib import pyplot as plt
 
-import qupled.qstls as qstls
+from qupled.schemes import qstls
 
 
 class PlotSettings:

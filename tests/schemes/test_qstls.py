@@ -1,7 +1,8 @@
 import pytest
 
-from qupled import native, qstls, stls
+from qupled import native
 from qupled.database.scheme_tables import TableKeys, BaseTableKeys
+from qupled.schemes import qstls, stls
 
 
 @pytest.fixture
@@ -15,7 +16,7 @@ def test_qstls_inheritance():
 
 
 def test_qstls_initialization(mocker, scheme):
-    super_init = mocker.patch("qupled.stls.Solver.__init__")
+    super_init = mocker.patch("qupled.schemes.stls.Solver.__init__")
     scheme = qstls.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stls.Result)
@@ -25,9 +26,9 @@ def test_qstls_initialization(mocker, scheme):
 
 def test_compute(mocker, scheme):
     find_fixed_adr_in_database = mocker.patch(
-        "qupled.qstls.Solver.find_fixed_adr_in_database"
+        "qupled.schemes.qstls.Solver.find_fixed_adr_in_database"
     )
-    super_compute = mocker.patch("qupled.stls.Solver.compute")
+    super_compute = mocker.patch("qupled.schemes.stls.Solver.compute")
     inputs = mocker.ANY
     scheme.compute(inputs)
     find_fixed_adr_in_database.assert_called_once_with(inputs)

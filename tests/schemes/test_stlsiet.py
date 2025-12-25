@@ -1,7 +1,8 @@
 import numpy as np
 import pytest
 
-from qupled import output, stls, stlsiet
+from qupled.schemes import stls, stlsiet
+from qupled.postprocess import output
 
 
 def test_stls_iet_inheritance():
@@ -9,7 +10,7 @@ def test_stls_iet_inheritance():
 
 
 def test_stls_iet_initialization(mocker):
-    super_init = mocker.patch("qupled.stls.Solver.__init__")
+    super_init = mocker.patch("qupled.schemes.stls.Solver.__init__")
     scheme = stlsiet.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stlsiet.Result)
@@ -45,7 +46,7 @@ def test_stls_iet_result_initialization(mocker):
 
 
 def test_get_initial_guess_with_default_database_name(mocker):
-    read_results = mocker.patch("qupled.output.DataBase.read_results")
+    read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     read_results.return_value = {
@@ -63,7 +64,7 @@ def test_get_initial_guess_with_default_database_name(mocker):
 
 
 def test_get_initial_guess_with_custom_database_name(mocker):
-    read_results = mocker.patch("qupled.output.DataBase.read_results")
+    read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
     database_name = mocker.ANY
     run_id = mocker.ANY

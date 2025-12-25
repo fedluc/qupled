@@ -1,11 +1,11 @@
 import pytest
 
-from qupled.output import DataBase
+from qupled.postprocess.output import DataBase
 
 
 @pytest.fixture
 def db_handler(mocker):
-    yield mocker.patch("qupled.output.DataBaseHandler")
+    yield mocker.patch("qupled.postprocess.output.DataBaseHandler")
 
 
 @pytest.fixture

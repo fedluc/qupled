@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 
-from qupled import native, output, stls, vsstls
+from qupled import native
+from qupled.schemes import stls, vsstls
+from qupled.postprocess import output
 
 
 @pytest.fixture
@@ -15,7 +17,7 @@ def test_vsstls_inheritance():
 
 
 def test_vsstls_initialization(mocker):
-    super_init = mocker.patch("qupled.stls.Solver.__init__")
+    super_init = mocker.patch("qupled.schemes.stls.Solver.__init__")
     scheme = vsstls.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, vsstls.Result)
@@ -25,9 +27,9 @@ def test_vsstls_initialization(mocker):
 
 def test_compute(mocker, scheme):
     fill_free_energy_integrand = mocker.patch(
-        "qupled.vsstls.Solver._fill_free_energy_integrand"
+        "qupled.schemes.vsstls.Solver._fill_free_energy_integrand"
     )
-    super_compute = mocker.patch("qupled.stls.Solver.compute")
+    super_compute = mocker.patch("qupled.schemes.stls.Solver.compute")
     inputs = mocker.ANY
     scheme.compute(inputs)
     fill_free_energy_integrand.assert_called_once_with(inputs)
@@ -36,10 +38,10 @@ def test_compute(mocker, scheme):
 
 def test_fill_free_energy_integrand(mocker, scheme):
     get_missing_state_points = mocker.patch(
-        "qupled.vsstls.Solver._get_missing_state_points"
+        "qupled.schemes.vsstls.Solver._get_missing_state_points"
     )
-    compute = mocker.patch("qupled.vsstls.Solver.compute")
-    update_input_data = mocker.patch("qupled.vsstls.Solver._update_input_data")
+    compute = mocker.patch("qupled.schemes.vsstls.Solver.compute")
+    update_input_data = mocker.patch("qupled.schemes.vsstls.Solver._update_input_data")
     inputs = mocker.Mock()
     inputs.coupling = mocker.ANY
     inputs.theory = mocker.ANY
@@ -94,7 +96,9 @@ def test_get_missing_state_points_with_actual_grid(mocker):
 
 
 def test_update_input_data(mocker, scheme):
-    free_energy_integrand_mock = mocker.patch("qupled.vsstls.FreeEnergyIntegrand")
+    free_energy_integrand_mock = mocker.patch(
+        "qupled.schemes.vsstls.FreeEnergyIntegrand"
+    )
     inputs = mocker.Mock()
     scheme.results.free_energy_grid = mocker.ANY
     scheme.results.free_energy_integrand = mocker.ANY
@@ -107,7 +111,7 @@ def test_update_input_data(mocker, scheme):
 
 
 def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
-    read_results = mocker.patch("qupled.output.DataBase.read_results")
+    read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     read_results.return_value = {
@@ -123,7 +127,7 @@ def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
 
 
 def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
-    read_results = mocker.patch("qupled.output.DataBase.read_results")
+    read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     database_name = mocker.ANY
@@ -144,8 +148,8 @@ def test_vsstls_input_inheritance():
 
 
 def test_vsstls_input_initialization(mocker):
-    super_init = mocker.patch("qupled.stls.Input.__init__")
-    free_energy_integrand = mocker.patch("qupled.vsstls.FreeEnergyIntegrand")
+    super_init = mocker.patch("qupled.schemes.stls.Input.__init__")
+    free_energy_integrand = mocker.patch("qupled.schemes.vsstls.FreeEnergyIntegrand")
     coupling = mocker.ANY
     degeneracy = mocker.ANY
     input = vsstls.Input(mocker.ANY, mocker.ANY)

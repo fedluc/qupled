@@ -2,9 +2,10 @@ import pytest
 import numpy as np
 from unittest.mock import PropertyMock
 
-from qupled import hf, native
+from qupled import native
 from qupled.database.base_tables import ConflictMode, RunStatus
 from qupled.database.database_handler import DataBaseHandler
+from qupled.schemes import hf
 from qupled.util.dimension import Dimension
 
 
@@ -95,12 +96,12 @@ def test_compute_native_serial(scheme, inputs, mocker):
     native_inputs_cls = mocker.patch.object(
         scheme, "native_inputs_cls", return_value=native_input
     )
-    to_native = mocker.patch("qupled.hf.Input.to_native")
+    to_native = mocker.patch("qupled.schemes.hf.Input.to_native")
     native_scheme = mocker.Mock()
     native_scheme_cls = mocker.patch.object(
         scheme, "native_scheme_cls", return_value=native_scheme
     )
-    from_native = mocker.patch("qupled.hf.Result.from_native")
+    from_native = mocker.patch("qupled.schemes.hf.Result.from_native")
     native_scheme.compute.return_value = "mocked-status"
     scheme.inputs = inputs
     scheme._compute_native()
@@ -189,7 +190,7 @@ def test_save(scheme, results, mocker):
 
 
 def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
-    compute_rdf = mocker.patch("qupled.hf.Result.compute_rdf")
+    compute_rdf = mocker.patch("qupled.schemes.hf.Result.compute_rdf")
     scheme.results = results
     scheme.inputs = inputs
     scheme.compute_rdf()
@@ -204,7 +205,7 @@ def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
 
 
 def test_compute_rdf_with_custom_grid(scheme, inputs, results, mocker):
-    compute_rdf = mocker.patch("qupled.hf.Result.compute_rdf")
+    compute_rdf = mocker.patch("qupled.schemes.hf.Result.compute_rdf")
     scheme.results = results
     scheme.inputs = inputs
     rdf_grid = np.array([1, 2, 3])

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from qupled import native, qstls, stlsiet
+from qupled import native
+from qupled.schemes import qstls, stlsiet
 from qupled.util import serialize
 
 

@@ -1,6 +1,8 @@
 import numpy as np
 
-from qupled import hf, native, output, rpa, stls
+from qupled import native
+from qupled.postprocess import output
+from qupled.schemes import hf, rpa, stls
 
 
 def test_stls_inheritance():
@@ -8,7 +10,7 @@ def test_stls_inheritance():
 
 
 def test_stls_initialization(mocker):
-    super_init = mocker.patch("qupled.rpa.Solver.__init__")
+    super_init = mocker.patch("qupled.schemes.rpa.Solver.__init__")
     scheme = stls.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stls.Result)
@@ -17,7 +19,7 @@ def test_stls_initialization(mocker):
 
 
 def test_get_initial_guess_with_default_database_name(mocker):
-    read_results = mocker.patch("qupled.output.DataBase.read_results")
+    read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     read_results.return_value = {
@@ -31,7 +33,7 @@ def test_get_initial_guess_with_default_database_name(mocker):
 
 
 def test_get_initial_guess_with_custom_database_name(mocker):
-    read_results = mocker.patch("qupled.output.DataBase.read_results")
+    read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     database_name = mocker.ANY
@@ -52,7 +54,7 @@ def test_stls_input_inheritance():
 
 
 def test_stls_input_initialization(mocker):
-    guess = mocker.patch("qupled.stls.Guess")
+    guess = mocker.patch("qupled.schemes.stls.Guess")
     input = stls.Input(mocker.ANY, mocker.ANY)
     assert input.error == 1.0e-5
     assert input.mixing == 1.0

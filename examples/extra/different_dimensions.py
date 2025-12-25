@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
-import qupled.rpa as rpa
-import qupled.esa as esa
-from qupled.output import DataBase, OutputType
+from qupled.postprocess.output import DataBase, OutputType
 from qupled.util.dimension import Dimension
+from qupled.schemes import rpa
 
 # Define an Rpa object to solve the RPA scheme
 print("######### Solving the RPA scheme in 3D #########")

@@ -1,4 +1,4 @@
-import qupled.stls as stls
+from qupled.schemes import stls
 
 # Define the object used to solve the scheme
 scheme = stls.Solver()
