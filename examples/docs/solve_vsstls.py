@@ -1,4 +1,4 @@
-import qupled.vsstls as vsstls
+from qupled.schemes import vsstls
 
 # Define the object used to solve the scheme
 scheme = vsstls.Solver()

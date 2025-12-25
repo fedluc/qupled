@@ -1,6 +1,7 @@
 import pytest
 
-from qupled import hf, native, rpa
+from qupled import native
+from qupled.schemes import hf, rpa
 
 
 @pytest.fixture
@@ -21,7 +22,7 @@ def scheme(mocker):
 
 
 def test_rpa_initialization(mocker):
-    super_init = mocker.patch("qupled.hf.Solver.__init__")
+    super_init = mocker.patch("qupled.schemes.hf.Solver.__init__")
     scheme = rpa.Solver()
     super_init.assert_called_once()
     assert scheme.native_scheme_cls == native.Rpa

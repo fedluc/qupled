@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from qupled import hf, native
+from qupled import native
+from qupled.schemes import hf
 from qupled.util import serialize
 
 

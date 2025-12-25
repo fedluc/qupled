@@ -3,8 +3,9 @@ from __future__ import annotations
 from dataclasses import field
 import numpy as np
 
-from qupled import native, stls
+from qupled import native
 from qupled.postprocess import output
+from qupled.schemes import stls
 from qupled.util import serialize
 
 

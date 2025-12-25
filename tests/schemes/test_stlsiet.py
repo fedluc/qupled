@@ -1,15 +1,16 @@
 import numpy as np
 import pytest
 
-from qupled import stls, stlsiet
+from qupled.schemes import stls, stlsiet
 from qupled.postprocess import output
+
 
 def test_stls_iet_inheritance():
     assert issubclass(stlsiet.Solver, stls.Solver)
 
 
 def test_stls_iet_initialization(mocker):
-    super_init = mocker.patch("qupled.stls.Solver.__init__")
+    super_init = mocker.patch("qupled.schemes.stls.Solver.__init__")
     scheme = stlsiet.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stlsiet.Result)

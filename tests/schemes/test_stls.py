@@ -1,14 +1,16 @@
 import numpy as np
 
-from qupled import hf, native, rpa, stls
+from qupled import native
 from qupled.postprocess import output
+from qupled.schemes import hf, rpa, stls
+
 
 def test_stls_inheritance():
     assert issubclass(stls.Solver, rpa.Solver)
 
 
 def test_stls_initialization(mocker):
-    super_init = mocker.patch("qupled.rpa.Solver.__init__")
+    super_init = mocker.patch("qupled.schemes.rpa.Solver.__init__")
     scheme = stls.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stls.Result)
@@ -52,7 +54,7 @@ def test_stls_input_inheritance():
 
 
 def test_stls_input_initialization(mocker):
-    guess = mocker.patch("qupled.stls.Guess")
+    guess = mocker.patch("qupled.schemes.stls.Guess")
     input = stls.Input(mocker.ANY, mocker.ANY)
     assert input.error == 1.0e-5
     assert input.mixing == 1.0

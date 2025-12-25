@@ -1,5 +1,5 @@
-import qupled.stls as stls
-from qupled.output import DataBase, OutputType
+from qupled.postprocess.output import DataBase, OutputType
+from qupled.schemes import stls
 from qupled.util.dimension import Dimension
 
 # Define the object used to solve the scheme

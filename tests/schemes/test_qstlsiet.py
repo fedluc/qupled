@@ -1,6 +1,6 @@
 import pytest
 
-from qupled import qstls, qstlsiet, stlsiet
+from qupled.schemes import qstls, qstlsiet, stlsiet
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def test_qstls_iet_inheritance():
 
 
 def test_qstls_iet_initialization(mocker):
-    super_init = mocker.patch("qupled.qstls.Solver.__init__")
+    super_init = mocker.patch("qupled.schemes.qstls.Solver.__init__")
     scheme = qstlsiet.Solver()
     super_init.assert_called_once()
     assert isinstance(scheme.results, stlsiet.Result)

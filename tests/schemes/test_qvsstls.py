@@ -1,6 +1,6 @@
 import pytest
 
-from qupled import qstls, qvsstls, vsstls
+from qupled.schemes import qstls, qvsstls, vsstls
 
 
 @pytest.fixture
@@ -19,9 +19,9 @@ def test_qvsstls_inheritance():
 
 def test_compute(mocker):
     find_fixed_adr_in_database = mocker.patch(
-        "qupled.qstls.Solver.find_fixed_adr_in_database"
+        "qupled.schemes.qstls.Solver.find_fixed_adr_in_database"
     )
-    super_compute = mocker.patch("qupled.vsstls.Solver.compute")
+    super_compute = mocker.patch("qupled.schemes.vsstls.Solver.compute")
     inputs = mocker.ANY
     scheme = qvsstls.Solver()
     scheme.compute(inputs)
@@ -33,7 +33,7 @@ def test_get_free_energy_integrand(mocker):
     run_id = mocker.ANY
     database_name = mocker.ANY
     get_free_energy_integrand = mocker.patch(
-        "qupled.vsstls.Solver.get_free_energy_integrand"
+        "qupled.schemes.vsstls.Solver.get_free_energy_integrand"
     )
     result = qvsstls.Solver.get_free_energy_integrand(run_id, database_name)
     get_free_energy_integrand.assert_called_once_with(run_id, database_name)
