@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from qupled import native, output, stls, vsstls
-
+from qupled import native, stls, vsstls
+from qupled.postprocess import output
 
 @pytest.fixture
 def scheme():
@@ -107,7 +107,7 @@ def test_update_input_data(mocker, scheme):
 
 
 def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
-    read_results = mocker.patch("qupled.output.DataBase.read_results")
+    read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     read_results.return_value = {
@@ -123,7 +123,7 @@ def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
 
 
 def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
-    read_results = mocker.patch("qupled.output.DataBase.read_results")
+    read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     database_name = mocker.ANY

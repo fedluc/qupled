@@ -1,4 +1,5 @@
-from qupled import finite_size_correction as fsc, output, rpa
+from qupled import rpa
+from qupled.postprocess import output, finite_size_correction as fsc
 
 # Define the scheme
 solver = rpa.Solver()
