@@ -1,10 +1,7 @@
 import numpy as np
 import pytest
-from qupled.vsstls import Solver, Input
 
-import qupled.native as native
-import qupled.stls as stls
-import qupled.vsstls as vsstls
+from qupled import native, output, stls, vsstls
 
 
 @pytest.fixture
@@ -52,9 +49,8 @@ def test_fill_free_energy_integrand(mocker, scheme):
     get_missing_state_points.assert_called_once_with(inputs)
     assert compute.call_count == len(missing_state_points)
     assert update_input_data.call_count == len(missing_state_points)
-    for coupling in missing_state_points:
-        compute.assert_any_call(inputs)
-        update_input_data.assert_any_call(inputs)
+    compute.assert_any_call(inputs)
+    update_input_data.assert_any_call(inputs)
     assert inputs.coupling == mocker.ANY
 
 
@@ -71,12 +67,12 @@ def test_get_missing_state_points_with_no_actual_grid(mocker):
         coupling - 0.1 * coupling_resolution,
         3 * coupling_resolution,
     )
-    result = Solver._get_missing_state_points(inputs)
+    result = vsstls.Solver._get_missing_state_points(inputs)
     np.testing.assert_array_equal(result, expected_grid)
 
 
 def test_get_missing_state_points_with_actual_grid(mocker):
-    inputs = mocker.Mock(spec=Input)
+    inputs = mocker.Mock(spec=vsstls.Input)
     coupling = 1.0
     coupling_resolution = 0.1
     inputs.coupling = coupling
@@ -93,7 +89,7 @@ def test_get_missing_state_points_with_actual_grid(mocker):
         np.round(expected_grid, precision),
         np.round(inputs.free_energy_integrand.grid, precision),
     )
-    result = Solver._get_missing_state_points(inputs)
+    result = vsstls.Solver._get_missing_state_points(inputs)
     np.testing.assert_array_equal(result, missing_points)
 
 
@@ -112,6 +108,7 @@ def test_update_input_data(mocker, scheme):
 
 def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
     read_results = mocker.patch("qupled.output.DataBase.read_results")
+    result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     read_results.return_value = {
         "free_energy_grid": mocker.ANY,
@@ -121,12 +118,13 @@ def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
     read_results.assert_called_once_with(
-        run_id, None, ["free_energy_grid", "free_energy_integrand"]
+        result_type, run_id, None, ["free_energy_grid", "free_energy_integrand"]
     )
 
 
 def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
     read_results = mocker.patch("qupled.output.DataBase.read_results")
+    result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     database_name = mocker.ANY
     read_results.return_value = {
@@ -137,7 +135,7 @@ def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
     read_results.assert_called_once_with(
-        run_id, None, ["free_energy_grid", "free_energy_integrand"]
+        result_type, run_id, None, ["free_energy_grid", "free_energy_integrand"]
     )
 
 

@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from . import database
-from . import native
-from . import serialize
-from . import stls
+from qupled import native, stls
+from qupled.database.scheme_tables import BaseTableKeys, TableKeys
+from qupled.util import serialize
 
 
 class Solver(stls.Solver):
@@ -37,16 +36,16 @@ class Solver(stls.Solver):
         Returns:
             None: The method updates the `fixed_run_id` attribute of the `inputs` object if a match is found.
         """
-        runs = self.db_handler.inspect_runs()
+        scheme_tables = self.db_handler.scheme_tables
+        runs = scheme_tables.inspect_runs()
         inputs.fixed_run_id = None
         for run in runs:
-            database_keys = database.DataBaseHandler.TableKeys
-            same_degeneracy = run[database_keys.DEGENERACY.value] == inputs.degeneracy
-            same_theory = run[database_keys.THEORY.value] == inputs.theory
+            same_degeneracy = run[TableKeys.DEGENERACY.value] == inputs.degeneracy
+            same_theory = run[TableKeys.THEORY.value] == inputs.theory
             if not same_theory or not same_degeneracy:
                 continue
-            run_id = run[database_keys.PRIMARY_KEY.value]
-            run_inputs = self.db_handler.get_inputs(run_id)
+            run_id = run[BaseTableKeys.PRIMARY_KEY.value]
+            run_inputs = scheme_tables.get_inputs(run_id)
             if (
                 run_inputs["cutoff"] == inputs.cutoff
                 and run_inputs["matsubara"] == inputs.matsubara

@@ -1,6 +1,6 @@
 import pytest
 
-from qupled.native import ESA, Rpa, Input
+from qupled.native import ESA, Input
 
 
 def test_esa_properties():

@@ -1,9 +1,7 @@
 import pytest
 
-import qupled.native as native
-import qupled.qstls as qstls
-import qupled.stls as stls
-from qupled.database import DataBaseHandler
+from qupled import native, qstls, stls
+from qupled.database.scheme_tables import TableKeys, BaseTableKeys
 
 
 @pytest.fixture
@@ -38,49 +36,46 @@ def test_compute(mocker, scheme):
 
 def test_find_fixed_adr_in_database_match_found(mocker, scheme):
     db_handler_mock = mocker.Mock()
+    scheme_tables = db_handler_mock.scheme_tables
     scheme.db_handler = db_handler_mock
     inputs = qstls.Input(coupling=mocker.ANY, degeneracy=2.0)
     inputs.cutoff = 10
     inputs.matsubara = 128
     inputs.resolution = 0.01
-    database_keys = DataBaseHandler.TableKeys
-    db_handler_mock.inspect_runs.return_value = [
+    scheme_tables.inspect_runs.return_value = [
         {
-            database_keys.DEGENERACY.value: 2.0,
-            database_keys.THEORY.value: mocker.ANY,
-            database_keys.PRIMARY_KEY.value: 1,
+            TableKeys.DEGENERACY.value: 2.0,
+            TableKeys.THEORY.value: mocker.ANY,
+            BaseTableKeys.PRIMARY_KEY.value: 1,
         }
     ]
-    db_handler_mock.get_inputs.return_value = {
-        "cutoff": 10,
-        "matsubara": 128,
-        "resolution": 0.01,
+    scheme_tables.get_inputs.return_value = {
+        "cutoff": inputs.cutoff,
+        "matsubara": inputs.matsubara,
+        "resolution": inputs.resolution,
     }
     scheme.find_fixed_adr_in_database(inputs)
     assert inputs.fixed_run_id == 1
-    db_handler_mock.inspect_runs.assert_called_once()
-    db_handler_mock.get_inputs.assert_called_once_with(1)
+    scheme_tables.inspect_runs.assert_called_once()
+    scheme_tables.get_inputs.assert_called_once_with(1)
 
 
 def test_find_fixed_adr_in_database_no_match(mocker, scheme):
     db_handler_mock = mocker.Mock()
+    scheme_tables = db_handler_mock.scheme_tables
     scheme.db_handler = db_handler_mock
-    inputs = qstls.Input(coupling=mocker.ANY, degeneracy=2.0)
-    inputs.cutoff = 10
-    inputs.matsubara = 128
-    inputs.resolution = 0.01
-    database_keys = DataBaseHandler.TableKeys
-    db_handler_mock.inspect_runs.return_value = [
+    inputs = mocker.Mock()
+    scheme_tables.inspect_runs.return_value = [
         {
-            database_keys.DEGENERACY.value: 3.0,
-            database_keys.THEORY.value: mocker.ANY,
-            database_keys.PRIMARY_KEY.value: mocker.ANY,
+            TableKeys.DEGENERACY.value: 3.0,
+            TableKeys.THEORY.value: mocker.ANY,
+            BaseTableKeys.PRIMARY_KEY.value: mocker.ANY,
         }
     ]
     scheme.find_fixed_adr_in_database(inputs)
     assert inputs.fixed_run_id is None
-    db_handler_mock.inspect_runs.assert_called_once()
-    db_handler_mock.get_inputs.assert_not_called()
+    scheme_tables.inspect_runs.assert_called_once()
+    scheme_tables.get_inputs.assert_not_called()
 
 
 def test_qstls_input_inheritance():

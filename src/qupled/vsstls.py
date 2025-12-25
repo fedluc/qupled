@@ -3,10 +3,8 @@ from __future__ import annotations
 from dataclasses import field
 import numpy as np
 
-from . import native
-from . import output
-from . import serialize
-from . import stls
+from qupled import native, output, stls
+from qupled.util import serialize
 
 
 class Solver(stls.Solver):
@@ -129,7 +127,9 @@ class Solver(stls.Solver):
             and integrand values retrieved from the database.
         """
         names = ["free_energy_grid", "free_energy_integrand"]
-        data = output.DataBase.read_results(run_id, database_name, names)
+        data = output.DataBase.read_results(
+            output.OutputType.SCHEME, run_id, database_name, names
+        )
         return FreeEnergyIntegrand(data[names[0]], data[names[1]])
 
 

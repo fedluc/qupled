@@ -168,7 +168,7 @@ Qstls scheme
 The :obj:`qupled.qstls` module is used to setup and perform all the necessary calculations
 for the solution of the `Qstls scheme <https://journals.aps.org/prb/abstract/10.1103/PhysRevB.48.2037>`_.
 TThe solution parameters are specified with a dedicated class called :obj:`qupled.qstls.Input`.
-After the solution is completed the results are stored in an object :obj:`qupled.qstls.Result` 
+After the solution is completed the results are stored in an object :obj:`qupled.stls.Result` 
 and written to the output database.
 
 .. autoclass:: qupled.qstls.Solver
@@ -187,7 +187,7 @@ The :obj:`qupled.qstlsiet` module is used to setup and perform all the necessary
 for the solution of the `Qstls-IET schemes <https://pubs.aip.org/aip/jcp/article/158/14/141102/
 2877795/Quantum-version-of-the-integral-equation-theory>`_.
 The solution parameters are specified with a dedicated class called :obj:`qupled.qstlsiet.Input`.
-After the solution is completed the results are stored in an object :obj:`qupled.qstlsiet.Result` 
+After the solution is completed the results are stored in an object :obj:`qupled.stlsiet.Result` 
 and written to the output database.
 
 .. autoclass:: qupled.qstlsiet.Solver
@@ -202,10 +202,10 @@ and written to the output database.
 QVSStls scheme
 ~~~~~~~~~~~~~~~~
 
-The :obj:`qupled.quantum.QVSStls` class is used to setup and perform all the necessary calculations
+The :obj:`qupled.qvsstls.QVSStls` class is used to setup and perform all the necessary calculations
 for the solution of the QVStls schemes. The solution parameters are specified with a dedicated class 
 called :obj:`qupled.qvsstls.Input`. After the solution is completed the results are stored in an 
-object :obj:`qupled.qvsstls.Result` and written to the output database.
+object :obj:`qupled.vsstls.Result` and written to the output database.
 
 .. autoclass:: qupled.qvsstls.Solver
     :show-inheritance:
@@ -214,6 +214,24 @@ object :obj:`qupled.qvsstls.Result` and written to the output database.
 
 .. autoclass:: qupled.qvsstls.Input	       
     :show-inheritance:
+    :members:
+
+Finite Size Correction
+----------------------
+
+The :obj:`qupled.finite_size_correction.FiniteSizeCorrection` class is used to setup and perform 
+all the necessary calculations to compute the finite size correction. The solution parameters are 
+specified with a dedicated class called :obj:`qupled.finite_size_correction.Input`. After the 
+solution is completed the results are stored in an object :obj:`qupled.finite_size_correction.Result`
+and written to the output database.
+
+.. autoclass:: qupled.finite_size_correction.FiniteSizeCorrection
+    :members:
+
+.. autoclass:: qupled.finite_size_correction.Input       
+    :members:
+      
+.. autoclass:: qupled.finite_size_correction.Result
     :members:
 
 Output database
@@ -227,8 +245,12 @@ class provides functionality for accessing the data stored in the database.
 .. autoclass:: qupled.output.DataBase
     :members:
 
+.. autoclass:: qupled.output.OutputType
+    :members:
+
 Dimenions
 ---------
 
-.. autoclass:: qupled.dimension.Dimension
+.. autoclass:: qupled.util.dimension.Dimension
     :members:
+

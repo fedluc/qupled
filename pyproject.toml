@@ -22,6 +22,7 @@ dependencies = [
     "matplotlib~=3.7",
     "numpy<2.0",
     "SQLAlchemy~=2.0",
+    "scipy~=1.16",
 ]
 
 [project.optional-dependencies]
@@ -42,7 +43,6 @@ docs = [
 
 [tool.setuptools]
 include-package-data = false
-packages = ["qupled", "qupled.native"]
 package-dir = { "" = "src" }
 
 [tool.cibuildwheel]

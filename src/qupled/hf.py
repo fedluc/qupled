@@ -4,12 +4,17 @@ from dataclasses import field
 
 import numpy as np
 
-from . import database
-from . import dimension
-from . import mpi
-from . import native
-from . import serialize
-from . import timer
+from qupled import native
+from qupled.database.base_tables import ConflictMode
+from qupled.database.database_handler import DataBaseHandler
+from qupled.database.scheme_tables import (
+    RunStatus,
+    SchemeTables,
+    RUN_TABLE_NAME as SCHEME_RUN_TABLE_NAME,
+)
+from qupled.util import mpi, serialize
+from qupled.util.dimension import Dimension
+from qupled.util.timer import timer
 
 
 class Solver:
@@ -19,8 +24,8 @@ class Solver:
 
     # Mapping of native scheme status to run status in the database
     NATIVE_TO_RUN_STATUS = {
-        0: database.DataBaseHandler.RunStatus.SUCCESS,
-        1: database.DataBaseHandler.RunStatus.FAILED,
+        0: RunStatus.SUCCESS,
+        1: RunStatus.FAILED,
     }
 
     # Native classes used to solve the scheme
@@ -33,7 +38,7 @@ class Solver:
         self.results: Result = Result()
         """The results obtained by solving the scheme"""
         # Undocumented properties
-        self.db_handler = database.DataBaseHandler()
+        self.db_handler = DataBaseHandler()
         self.native_scheme_status = None
 
     @property
@@ -44,9 +49,9 @@ class Solver:
         Returns:
             str: The run ID associated with the current database handler.
         """
-        return self.db_handler.run_id
+        return self._db_tables.run_id if self._db_tables is not None else None
 
-    @timer.timer
+    @timer
     def compute(self, inputs: Input):
         """
         Solves the scheme and saves the results.
@@ -63,7 +68,7 @@ class Solver:
         """
         Computes the radial distribution function (RDF) using the provided RDF grid.
         If results are available, this method computes the RDF and stores the results
-        in the database.
+        in the
 
         Args:
             rdf_grid: A numpy array representing the RDF grid.
@@ -71,20 +76,41 @@ class Solver:
         """
         if self.results is not None:
             self.results.compute_rdf(self.inputs.dimension, rdf_grid)
-            self.db_handler.insert_results(
+            self.db_handler.scheme_tables.insert_results(
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid},
-                conflict_mode=database.DataBaseHandler.ConflictMode.UPDATE,
+                conflict_mode=ConflictMode.UPDATE,
             )
+
+    def get_solver_status(self) -> RunStatus:
+        """
+        Retrieves the current status of the solver based on the native scheme status.
+
+        Returns:
+            RunStatus: The corresponding run status from the
+        """
+        return self.NATIVE_TO_RUN_STATUS.get(
+            self.native_scheme_status, RunStatus.FAILED
+        )
+
+    @property
+    def _db_tables(self) -> SchemeTables | None:
+        """
+        Retrieves the database tables associated with the current solver.
+
+        Returns:
+            SchemeTables: The scheme tables from the database handler.
+        """
+        return self.db_handler.scheme_tables if self.db_handler is not None else None
 
     def _add_run_to_database(self):
         """
-        Adds the current run information to the database.
+        Adds the current run information to the
 
         This method inserts the run details stored in `self.inputs` into the database
         using the `db_handler`. It also updates the `database_info` attribute of
         `self.inputs` with the current `run_id`.
         """
-        self.db_handler.insert_run(self.inputs)
+        self._db_tables.insert_run(self.inputs)
         self.inputs.database_info = DatabaseInfo(
             blob_storage=self.db_handler.blob_storage,
             name=self.db_handler.engine.url.database,
@@ -148,16 +174,14 @@ class Solver:
 
     def _save(self):
         """
-        Saves the current state and results to the database.
+        Saves the current state and results to the
 
         This method updates the run status in the database using the current
-        native scheme status and inserts the results into the database.
+        native scheme status and inserts the results into the
         """
-        run_status = self.NATIVE_TO_RUN_STATUS.get(
-            self.native_scheme_status, database.DataBaseHandler.RunStatus.FAILED
-        )
-        self.db_handler.update_run_status(run_status)
-        self.db_handler.insert_results(self.results.__dict__)
+        run_status = self.get_solver_status()
+        self._db_tables.update_run_status(run_status)
+        self._db_tables.insert_results(self.results.__dict__)
 
 
 @serialize.serializable_dataclass
@@ -174,7 +198,7 @@ class Input:
     """Initial guess for the chemical potential. Default = ``[-10, 10]``"""
     cutoff: float = 10.0
     """Cutoff for the wave-vector grid. Default =  ``10.0``"""
-    dimension: dimension.Dimension = dimension.Dimension._3D
+    dimension: Dimension = Dimension._3D
     """Dimesionality of the system. Default =  ``'Dimension._3D'``"""
     frequency_cutoff: float = 10.0
     """Cutoff for the frequency (applies only in the ground state). Default =  ``10.0``"""
@@ -268,7 +292,7 @@ class Result:
                 valid_value = value is not None and not callable(value)
                 setattr(self, attr, value) if valid_value else None
 
-    def compute_rdf(self, dimension: str, rdf_grid: np.ndarray | None = None):
+    def compute_rdf(self, dimension: Dimension, rdf_grid: np.ndarray | None = None):
         """
         Compute the radial distribution function (RDF) for the system.
 
@@ -302,7 +326,7 @@ class DatabaseInfo:
     """Database name"""
     run_id: int = None
     """ID of the run in the database"""
-    run_table_name: str = database.DataBaseHandler.RUN_TABLE_NAME
+    run_table_name: str = SCHEME_RUN_TABLE_NAME
     """Name of the table used to store the runs in the database"""
 
     def to_native(self) -> native.DatabaseInfo:

@@ -1,6 +1,6 @@
 import pytest
 
-from qupled.native import Stls, Rpa, StlsInput
+from qupled.native import Stls, StlsInput
 
 
 def test_stls_properties():

@@ -3,11 +3,8 @@ from __future__ import annotations
 from dataclasses import field
 import numpy as np
 
-from . import hf
-from . import native
-from . import output
-from . import rpa
-from . import serialize
+from qupled import hf, native, output, rpa
+from qupled.util import serialize
 
 
 class Solver(rpa.Solver):
@@ -36,7 +33,9 @@ class Solver(rpa.Solver):
             An instance of Guess containing the initial guess data.
         """
         names = ["wvg", "ssf"]
-        data = output.DataBase.read_results(run_id, database_name, names)
+        data = output.DataBase.read_results(
+            output.OutputType.SCHEME, run_id, database_name, names
+        )
         return Guess(data[names[0]], data[names[1]])
 
 

@@ -1,7 +1,7 @@
 import pytest
 
 from qupled.hf import DatabaseInfo
-from qupled.native import QVSStls, QVSStlsInput, Rpa
+from qupled.native import QVSStls, QVSStlsInput
 
 
 @pytest.fixture

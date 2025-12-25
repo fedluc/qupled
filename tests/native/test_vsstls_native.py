@@ -1,5 +1,5 @@
 import pytest
-from qupled.native import VSStls, VSStlsInput, Rpa
+from qupled.native import VSStls, VSStlsInput
 
 
 def test_vsstls_properties():

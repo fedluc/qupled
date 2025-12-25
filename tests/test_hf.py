@@ -2,10 +2,10 @@ import pytest
 import numpy as np
 from unittest.mock import PropertyMock
 
-from qupled.database import DataBaseHandler
-from qupled.dimension import Dimension
-import qupled.hf as hf
-import qupled.native as native
+from qupled import hf, native
+from qupled.database.base_tables import ConflictMode, RunStatus
+from qupled.database.database_handler import DataBaseHandler
+from qupled.util.dimension import Dimension
 
 
 @pytest.fixture
@@ -26,8 +26,8 @@ def scheme(mocker):
 
 
 def test_native_to_run_status_mapping():
-    assert hf.Solver.NATIVE_TO_RUN_STATUS[0] == DataBaseHandler.RunStatus.SUCCESS
-    assert hf.Solver.NATIVE_TO_RUN_STATUS[1] == DataBaseHandler.RunStatus.FAILED
+    assert hf.Solver.NATIVE_TO_RUN_STATUS[0] == RunStatus.SUCCESS
+    assert hf.Solver.NATIVE_TO_RUN_STATUS[1] == RunStatus.FAILED
     assert len(hf.Solver.NATIVE_TO_RUN_STATUS) == 2
 
 
@@ -43,7 +43,7 @@ def test_hf_initialization():
 
 def test_run_id(scheme):
     run_id = "run_id"
-    scheme.db_handler.run_id = run_id
+    scheme._db_tables.run_id = run_id
     assert scheme.run_id == run_id
 
 
@@ -58,13 +58,17 @@ def test_compute(scheme, inputs, mocker):
     save.assert_called_once()
 
 
+def test_db_tables(scheme):
+    assert scheme._db_tables is scheme.db_handler.scheme_tables
+
+
 def test_add_run_to_database(scheme, mocker):
     mocker.patch.object(hf.Solver, "run_id", new_callable=PropertyMock).return_value = (
         "mocked-run-id"
     )
     scheme.inputs = mocker.Mock()
     scheme._add_run_to_database()
-    scheme.db_handler.insert_run.assert_called_once_with(scheme.inputs)
+    scheme._db_tables.insert_run.assert_called_once_with(scheme.inputs)
     assert scheme.inputs.database_info.run_id == scheme.run_id
 
 
@@ -109,13 +113,15 @@ def test_compute_native_serial(scheme, inputs, mocker):
 
 
 def test_compute_native_mpi_calls_all_mpi_functions(scheme, mocker, inputs):
-    write_inputs = mocker.patch("qupled.mpi.write_inputs")
-    launch_mpi_execution = mocker.patch("qupled.mpi.launch_mpi_execution")
-    read_status = mocker.patch("qupled.mpi.read_status", return_value="mocked-status")
-    read_results = mocker.patch(
-        "qupled.mpi.read_results", return_value="mocked-results"
+    write_inputs = mocker.patch("qupled.util.mpi.write_inputs")
+    launch_mpi_execution = mocker.patch("qupled.util.mpi.launch_mpi_execution")
+    read_status = mocker.patch(
+        "qupled.util.mpi.read_status", return_value="mocked-status"
     )
-    clean_files = mocker.patch("qupled.mpi.clean_files")
+    read_results = mocker.patch(
+        "qupled.util.mpi.read_results", return_value="mocked-results"
+    )
+    clean_files = mocker.patch("qupled.util.mpi.clean_files")
     scheme.inputs = inputs
     scheme.results = None
     scheme._compute_native_mpi()
@@ -129,11 +135,11 @@ def test_compute_native_mpi_calls_all_mpi_functions(scheme, mocker, inputs):
 
 
 def test_compute_native_mpi_with_existing_results_type(scheme, mocker, inputs):
-    mocker.patch("qupled.mpi.write_inputs")
-    mocker.patch("qupled.mpi.launch_mpi_execution")
-    mocker.patch("qupled.mpi.read_status", return_value="status")
-    read_results = mocker.patch("qupled.mpi.read_results", return_value="results")
-    mocker.patch("qupled.mpi.clean_files")
+    mocker.patch("qupled.util.mpi.write_inputs")
+    mocker.patch("qupled.util.mpi.launch_mpi_execution")
+    mocker.patch("qupled.util.mpi.read_status", return_value="status")
+    read_results = mocker.patch("qupled.util.mpi.read_results", return_value="results")
+    mocker.patch("qupled.util.mpi.clean_files")
     scheme.inputs = inputs
     scheme.results = hf.Result()
     scheme._compute_native_mpi()
@@ -149,7 +155,7 @@ def test_run_mpi_worker(mocker):
     mock_status = "mocked-status"
     mock_InputCls = mocker.Mock()
     mock_ResultCls = mocker.Mock()
-    read_inputs = mocker.patch("qupled.mpi.read_inputs", return_value=mock_inputs)
+    read_inputs = mocker.patch("qupled.util.mpi.read_inputs", return_value=mock_inputs)
     native_inputs_cls = mocker.patch.object(
         hf.Solver, "native_inputs_cls", return_value=mock_native_inputs
     )
@@ -158,8 +164,8 @@ def test_run_mpi_worker(mocker):
         hf.Solver, "native_scheme_cls", return_value=mock_scheme
     )
     mock_scheme.compute.return_value = mock_status
-    write_results = mocker.patch("qupled.mpi.write_results")
-    write_status = mocker.patch("qupled.mpi.write_status")
+    write_results = mocker.patch("qupled.util.mpi.write_results")
+    write_status = mocker.patch("qupled.util.mpi.write_status")
     hf.Solver.run_mpi_worker(mock_InputCls, mock_ResultCls)
     read_inputs.assert_called_once_with(mock_InputCls)
     native_inputs_cls.assert_called_once()
@@ -174,12 +180,12 @@ def test_save(scheme, results, mocker):
     scheme.results = results
     scheme.native_scheme_status = mocker.Mock()
     scheme._save()
-    scheme.db_handler.update_run_status.assert_called_once_with(
+    scheme._db_tables.update_run_status.assert_called_once_with(
         hf.Solver.NATIVE_TO_RUN_STATUS.get(
-            scheme.native_scheme_status, DataBaseHandler.RunStatus.FAILED
+            scheme.native_scheme_status, RunStatus.FAILED
         )
     )
-    scheme.db_handler.insert_results.assert_called_once_with(scheme.results.__dict__)
+    scheme._db_tables.insert_results.assert_called_once_with(scheme.results.__dict__)
 
 
 def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
@@ -188,12 +194,12 @@ def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
     scheme.inputs = inputs
     scheme.compute_rdf()
     compute_rdf.assert_called_once_with(scheme.inputs.dimension, None)
-    scheme.db_handler.insert_results.assert_called_once_with(
+    scheme._db_tables.insert_results.assert_called_once_with(
         {
             "rdf": scheme.results.rdf,
             "rdf_grid": scheme.results.rdf_grid,
         },
-        conflict_mode=DataBaseHandler.ConflictMode.UPDATE,
+        conflict_mode=ConflictMode.UPDATE,
     )
 
 
@@ -204,12 +210,12 @@ def test_compute_rdf_with_custom_grid(scheme, inputs, results, mocker):
     rdf_grid = np.array([1, 2, 3])
     scheme.compute_rdf(rdf_grid)
     compute_rdf.assert_called_once_with(scheme.inputs.dimension, rdf_grid)
-    scheme.db_handler.insert_results.assert_called_once_with(
+    scheme._db_tables.insert_results.assert_called_once_with(
         {
             "rdf": scheme.results.rdf,
             "rdf_grid": scheme.results.rdf_grid,
         },
-        conflict_mode=DataBaseHandler.ConflictMode.UPDATE,
+        conflict_mode=ConflictMode.UPDATE,
     )
 
 
@@ -311,7 +317,7 @@ def test_database_info_initialization():
     assert db_info.blob_storage is None
     assert db_info.name is None
     assert db_info.run_id is None
-    assert db_info.run_table_name == hf.database.DataBaseHandler.RUN_TABLE_NAME
+    assert db_info.run_table_name == hf.SCHEME_RUN_TABLE_NAME
 
 
 def test_database_info_to_native(mocker):

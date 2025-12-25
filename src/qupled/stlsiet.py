@@ -3,10 +3,8 @@ from __future__ import annotations
 from dataclasses import field
 import numpy as np
 
-from . import native
-from . import output
-from . import stls
-from . import serialize
+from qupled import native, output, stls
+from qupled.util import serialize
 
 
 class Solver(stls.Solver):
@@ -38,7 +36,9 @@ class Solver(stls.Solver):
             and inputs extracted from the database.
         """
         names = ["wvg", "ssf", "lfc"]
-        results = output.DataBase.read_results(run_id, database_name, names)
+        results = output.DataBase.read_results(
+            output.OutputType.SCHEME, run_id, database_name, names
+        )
         return Guess(
             results[names[0]],
             results[names[1]],
