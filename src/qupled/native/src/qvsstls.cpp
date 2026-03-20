@@ -21,8 +21,6 @@ VSQstlsWorker::VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
                              bool verbose,
                              GridPoint p)
     : Qstls(in, verbose) {
-  // Set adrFixedDatabaseName based on theta offset (mirrors
-  // QstlsCSR::initWorker)
   const string &theory = in->getTheory();
   switch (p.theta) {
   case GridPoint::Theta::DOWN:
@@ -75,10 +73,6 @@ const VSInput &QVSStls::in() const {
 }
 
 const Input &QVSStls::inScheme() const { return *inPtr; }
-
-void QVSStls::init() {
-  // Worker initialisation is deferred to StatePointGrid::compute()
-}
 
 int QVSStls::runGrid() {
   grid.setAlpha(alpha);

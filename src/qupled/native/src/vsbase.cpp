@@ -15,7 +15,6 @@ using namespace GridPoints;
 
 int VSBase::compute() {
   try {
-    init();
     println("Free parameter calculation ...");
     doIterations();
     println("Done");

@@ -29,10 +29,6 @@ const VSInput &VSStls::in() const {
 
 const Input &VSStls::inScheme() const { return *inPtr; }
 
-void VSStls::init() {
-  // Worker initialisation is deferred to StatePointGrid::compute()
-}
-
 int VSStls::runGrid() {
   grid.setAlpha(alpha);
   int status = grid.compute();

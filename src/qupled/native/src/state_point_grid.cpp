@@ -78,8 +78,9 @@ int StatePointGrid<Scheme>::compute() {
     initDone = true;
   }
   // Initial guess
-  for (auto &w : workers)
+  for (auto &w : workers) {
     w->doInitialGuess();
+  }
   // Iteration loop (parameters from the central worker's input)
   const int maxIter = inPtr->getNIter();
   const double minErr = inPtr->getErrMin();
@@ -87,12 +88,14 @@ int StatePointGrid<Scheme>::compute() {
   int counter = 0;
   while (counter < maxIter + 1 && lastError > minErr) {
     computeLfc();
-    for (auto &w : workers)
+    for (auto &w : workers) {
       w->doComputeSsf();
+    }
     ++counter;
     lastError = workers[CENTER.toIndex()]->doComputeError();
-    for (auto &w : workers)
+    for (auto &w : workers) {
       w->doUpdateSolution();
+    }
   }
   return (lastError <= minErr) ? 0 : 1;
 }
@@ -101,8 +104,9 @@ int StatePointGrid<Scheme>::compute() {
 template <typename Scheme>
 void StatePointGrid<Scheme>::computeLfc() {
   // Step 1: base LFC for every worker (must all finish before step 2)
-  for (auto &w : workers)
+  for (auto &w : workers) {
     w->doComputeLfc();
+  }
   // Resize derivative arrays on first call
   for (size_t i = 0; i < N; ++i) {
     const Vector2D &lfc = workers[i]->getLfc();
@@ -113,8 +117,9 @@ void StatePointGrid<Scheme>::computeLfc() {
   // Step 2: compute the alpha-correction derivative for every worker
   computeLfcDerivatives();
   // Step 3: apply correction:  lfc -= lfcDerivative
-  for (size_t i = 0; i < N; ++i)
+  for (size_t i = 0; i < N; ++i) {
     workers[i]->applyLfcDiff(lfcDerivatives[i]);
+  }
 }
 
 template <typename Scheme>

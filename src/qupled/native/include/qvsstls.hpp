@@ -108,7 +108,6 @@ private:
 
   const VSInput &in() const override;
   const Input &inScheme() const override;
-  void init() override;
 
   int runGrid() override;
   double getCoupling(GridPoint p) const override;

@@ -35,7 +35,6 @@ protected:
   // Abstract interface
   virtual const VSInput &in() const = 0;
   virtual const Input &inScheme() const = 0;
-  virtual void init() = 0;
   virtual int runGrid() = 0;
   virtual double getCoupling(GridPoint p) const = 0;
   virtual double getDegeneracy(GridPoint p) const = 0;
