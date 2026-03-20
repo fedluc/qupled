@@ -1,132 +1,51 @@
-#ifndef QVS_HPP
-#define QVS_HPP
+#ifndef QVSSTLS_HPP
+#define QVSSTLS_HPP
 
 #include "input.hpp"
 #include "numerics.hpp"
 #include "qstls.hpp"
-#include "vector2D.hpp"
+#include "state_point_grid.hpp"
 #include "vsbase.hpp"
-#include <cmath>
 #include <memory>
 
-class QThermoProp;
-class QStructProp;
-class QstlsCSR;
-class QAdder;
-
 // -----------------------------------------------------------------
-// Solver for the qVS-STLS scheme
+// VSQstlsWorker: Qstls extended with VS-specific methods for StatePointGrid
 // -----------------------------------------------------------------
 
-class QVSStls : public VSBase, public Qstls {
+class VSQstlsWorker : public Qstls {
 
 public:
 
-  // Constructor from initial data
-  explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in_);
-  // Solve the scheme
-  using VSBase::compute;
+  using InputType = QVSStlsInput;
 
-private:
+  VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
+                bool verbose,
+                GridPoint p);
 
-  // Thermodyanmic properties
-  std::shared_ptr<QThermoProp> thermoProp;
-  // Input parameters
-  const VSInput &in() const override {
-    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
-  }
-  // Initialize
-  void init() override;
-  // Compute free parameter
-  double computeAlpha() override;
-  // Iterations to solve the qvsstls-scheme
-  void updateSolution() override;
-  // Print info
-  void print(const std::string &msg) { VSBase::print(msg); }
-  void println(const std::string &msg) { VSBase::println(msg); }
+  // VS-specific: apply alpha-correction to lfc (called by StatePointGrid step 3)
+  void applyLfcDiff(const Vector2D &v) { lfc.diff(v); }
+
+  // Expose protected Qstls/Stls iteration steps for StatePointGrid orchestration
+  void   doInit()           { Qstls::init(); }
+  void   doInitialGuess()   { Stls::initialGuess(); }
+  void   doComputeLfc()     { Qstls::computeLfc(); }
+  void   doComputeSsf()     { Stls::computeSsf(); }
+  void   doUpdateSolution() { Stls::updateSolution(); }
+  double doComputeError() const { return Stls::computeError(); }
+
+  // Compute quantum Q-adder value using internal mu, wvg, ssf
+  double computeQAdder(const std::shared_ptr<Integrator2D> &itg2D,
+                       const std::vector<double> &itgGrid) const;
 };
 
 // -----------------------------------------------------------------
-// Class to handle the thermodynamic properties
-// -----------------------------------------------------------------
-
-class QThermoProp : public ThermoPropBase {
-
-public:
-
-  // Constructors
-  explicit QThermoProp(const std::shared_ptr<const QVSStlsInput> &in_);
-  // Get internal energy and internal energy derivatives
-  std::vector<double> getQData() const;
-
-private:
-
-  std::shared_ptr<QstlsCSR> structProp;
-};
-
-// -----------------------------------------------------------------
-// QstlsCSR class
-// -----------------------------------------------------------------
-
-class QstlsCSR : public CSR, public Qstls {
-
-public:
-
-  // Constructor
-  explicit QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_)
-      : QstlsCSR(in_, true) {}
-  QstlsCSR(const std::shared_ptr<const QVSStlsInput> &in_,
-           const bool isMaster_);
-  // Solve the scheme
-  int compute() override { return Qstls::compute(); };
-  // Getter
-  double getQAdder(const size_t &idx) const;
-
-private:
-
-  // Integrator for 2D integrals
-  const std::shared_ptr<Integrator2D> itg2D;
-  std::vector<double> itgGrid;
-  // Input parameters
-  const VSInput &inVS() const override {
-    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
-  }
-  const Input &inRpa() const override {
-    return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
-  }
-  // setup the csr vector
-  void setupWorkers(const QVSStlsInput &in) {
-    CSR::setupWorkers<QstlsCSR, QVSStlsInput>(in);
-  }
-  // Methods called by compute
-  void init() override { CSR::init(); };
-  void computeLfc() override { CSR::computeLfc(); };
-  void computeSsf() override { CSR::computeSsf(); };
-  void initialGuess() override { CSR::initialGuess(); };
-  void updateSolution() override { CSR::updateSolution(); };
-  double computeError() const override { return CSR::computeError(); }
-  void initWorker() override;
-  void computeLfcWorker() override { Qstls::computeLfc(); };
-  void computeSsfWorker() override { Qstls::computeSsf(); };
-  void initialGuessWorker() override { Qstls::initialGuess(); };
-  void updateSolutionWorker() override { Qstls::updateSolution(); };
-  double computeErrorWorker() const override { return Qstls::computeError(); };
-  Vector2D &getLfc() override { return lfc; };
-  // Getters
-  const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
-  const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
-  const Vector2D &getLfc() const override { return Qstls::getLfc(); }
-};
-
-// -----------------------------------------------------------------
-// Class to handle the Q-adder in the free parameter expression
+// QAdder: computes the quantum Q-term in the VS free parameter expression
 // -----------------------------------------------------------------
 
 class QAdder {
 
 public:
 
-  // Constructor
   QAdder(const double &Theta_,
          const double &mu_,
          const double &limitMin,
@@ -142,33 +61,66 @@ public:
         itg1(itg1_),
         itg2(itg2_),
         interp(interp_) {}
-  // Get Q-adder
+
   double get() const;
 
 private:
 
-  // Degeneracy parameter
-  const double Theta;
-  // Chemical potential
-  const double mu;
-  // Integration limits
-  const std::pair<double, double> limits;
-  // Grid for 2D integration
-  const std::vector<double> &itgGrid;
-  // Integrator objects
-  const std::shared_ptr<Integrator1D> itg1;
-  const std::shared_ptr<Integrator2D> itg2;
-  // Interpolator 1D class instance
+  const double                      Theta;
+  const double                      mu;
+  const std::pair<double, double>   limits;
+  const std::vector<double>        &itgGrid;
+  const std::shared_ptr<Integrator1D>   itg1;
+  const std::shared_ptr<Integrator2D>   itg2;
   const std::shared_ptr<Interpolator1D> interp;
 
-  // SSF interpolation
   double ssf(const double &y) const;
-  // Integrands
   double integrandDenominator(const double q) const;
   double integrandNumerator1(const double q) const;
   double integrandNumerator2(const double w) const;
-  // Get Integral denominator
-  void getIntDenominator(double &res) const;
+  void   getIntDenominator(double &res) const;
+};
+
+// -----------------------------------------------------------------
+// QVSStls: VS scheme based on Qstls structural properties
+// -----------------------------------------------------------------
+
+class QVSStls : public VSBase {
+
+public:
+
+  explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in);
+  using VSBase::compute;
+
+  // Public interface required by Python bindings
+  const std::vector<double> &getSsf()  const { return ssf; }
+  const Vector2D &            getLfc()  const { return lfc; }
+  const std::vector<double> &getWvg()  const;
+  const Vector2D &            getIdr()  const;
+  std::vector<double>         getSdr()  const;
+  double                      getUInt() const;
+  double                      getError() const;
+
+private:
+
+  std::shared_ptr<const QVSStlsInput> inPtr;
+  StatePointGrid<VSQstlsWorker>       grid;
+  std::shared_ptr<Integrator2D>       itg2D;
+  std::vector<double>                 itgGrid;
+  std::vector<double>                 ssf;
+  Vector2D                            lfc;
+
+  const VSInput &in()       const override;
+  const Input   &inScheme() const override;
+  void init()           override;
+  void updateSolution() override;
+
+  int    runGrid()                               override;
+  double getCoupling(GridPoint p)    const override;
+  double getDegeneracy(GridPoint p)  const override;
+  double getFxcIntegrandValue(GridPoint p) const override;
+  // Returns {Q, Qr, Qt} — quantum Q-term and derivatives
+  std::vector<double> computeQData() override;
 };
 
 #endif

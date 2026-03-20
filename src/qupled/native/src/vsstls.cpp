@@ -1,75 +1,95 @@
 #include "vsstls.hpp"
-#include "format.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
-#include "numerics.hpp"
 #include "thermo_util.hpp"
-#include "vector_util.hpp"
 
 using namespace std;
 using namespace MPIUtil;
+using namespace GridPoints;
 
 // -----------------------------------------------------------------
-// VSStls class
+// VSStls
 // -----------------------------------------------------------------
 
-VSStls::VSStls(const std::shared_ptr<const VSStlsInput> &in_)
+VSStls::VSStls(const std::shared_ptr<const VSStlsInput> &in)
     : VSBase(),
-      Stls(in_, false),
-      thermoProp(make_shared<ThermoProp>(in_)) {
-  if (in_->getDimension() == dimensionsUtil::Dimension::D2) {
+      inPtr(in),
+      grid(in) {
+  if (in->getDimension() == dimensionsUtil::Dimension::D2) {
     throwError("2D calculations are not implemented for this scheme.");
   }
-  VSBase::thermoProp = thermoProp;
+  setRsGrid();
+  setFxcIntegrand();
 }
 
-double VSStls::computeAlpha() {
-  // Compute the free energy integrand
-  thermoProp->compute();
-  // Free energy
-  const vector<double> freeEnergyData = thermoProp->getFreeEnergyData();
-  const double &fxc = freeEnergyData[0];
-  const double &fxcr = freeEnergyData[1];
-  const double &fxcrr = freeEnergyData[2];
-  const double &fxct = freeEnergyData[3];
-  const double &fxctt = freeEnergyData[4];
-  const double &fxcrt = freeEnergyData[5];
-  // Internal energy
-  const vector<double> internalEnergyData = thermoProp->getInternalEnergyData();
-  const double &uint = internalEnergyData[0];
-  const double &uintr = internalEnergyData[1];
-  const double &uintt = internalEnergyData[2];
-  // Alpha
-  double numer = 2.0 * fxc + (4.0 / 3.0) * fxcr - (1.0 / 6.0) * fxcrr
-                 - (2.0 / 3.0) * (fxctt + fxcrt) + (1.0 / 3.0) * fxct;
-  double denom = uint + (1.0 / 3.0) * uintr + (2.0 / 3.0) * uintt;
-  return numer / denom;
+const VSInput &VSStls::in() const {
+  return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
+}
+
+const Input &VSStls::inScheme() const { return *inPtr; }
+
+void VSStls::init() {
+  // Worker initialisation is deferred to StatePointGrid::compute()
 }
 
 void VSStls::updateSolution() {
-  // Update the structural properties used for output
-  lfc = thermoProp->getLfc();
-  ssf = thermoProp->getSsf();
+  const GridPoint out = getOutputGridPoint();
+  ssf = grid.getSsf(out);
+  lfc = grid.getLfc(out);
 }
 
-void VSStls::init() { Rpa::init(); }
-
-// -----------------------------------------------------------------
-// ThermoProp class
-// -----------------------------------------------------------------
-
-ThermoProp::ThermoProp(const std::shared_ptr<const VSStlsInput> &in_)
-    : ThermoPropBase(in_) {
-  structProp = make_shared<StlsCSR>(in_);
+int VSStls::runGrid() {
+  grid.setAlpha(alpha);
+  return grid.compute();
 }
 
-// -----------------------------------------------------------------
-// StlsCSR class
-// -----------------------------------------------------------------
+double VSStls::getCoupling(GridPoint p) const { return grid.getCoupling(p); }
 
-StlsCSR::StlsCSR(const std::shared_ptr<const VSStlsInput> &in_,
-                 const bool isMaster_)
-    : CSR(isMaster_),
-      Stls(in_, false) {
-  if (isManager) { setupWorkers(*in_); }
+double VSStls::getDegeneracy(GridPoint p) const {
+  return grid.getDegeneracy(p);
 }
+
+double VSStls::getFxcIntegrandValue(GridPoint p) const {
+  return grid.getFxcIntegrandValue(p);
+}
+
+vector<double> VSStls::computeQData() {
+  const double u = grid.getUInt(CENTER);
+  // Derivative w.r.t. coupling
+  double ur;
+  {
+    const double drs = grid.getCoupling(RS_UP_THETA)
+                       - grid.getCoupling(CENTER);
+    const double u0 = grid.getFxcIntegrandValue(RS_UP_THETA);
+    const double u1 = grid.getFxcIntegrandValue(RS_DOWN_THETA);
+    ur = (u0 - u1) / (2.0 * drs) - u;
+  }
+  // Derivative w.r.t. degeneracy
+  double ut;
+  {
+    const double theta = grid.getDegeneracy(CENTER);
+    const double dt    = grid.getDegeneracy(RS_THETA_UP) - theta;
+    const double u0    = grid.getUInt(RS_THETA_UP);
+    const double u1    = grid.getUInt(RS_THETA_DOWN);
+    ut = theta * (u0 - u1) / (2.0 * dt);
+  }
+  return {u, ur, ut};
+}
+
+// Delegation to central worker for Python-exposed properties
+
+const vector<double> &VSStls::getWvg() const {
+  return grid.centralWorker().getWvg();
+}
+
+const Vector2D &VSStls::getIdr() const {
+  return grid.centralWorker().getIdr();
+}
+
+vector<double> VSStls::getSdr() const {
+  return grid.centralWorker().getSdr();
+}
+
+double VSStls::getUInt() const { return grid.centralWorker().getUInt(); }
+
+double VSStls::getError() const { return grid.getError(); }

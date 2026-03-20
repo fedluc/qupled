@@ -2,105 +2,75 @@
 #define VSSTLS_HPP
 
 #include "input.hpp"
+#include "state_point_grid.hpp"
 #include "stls.hpp"
 #include "vsbase.hpp"
-#include <limits>
-#include <map>
-
-class ThermoProp;
-class StructProp;
-class StlsCSR;
 
 // -----------------------------------------------------------------
-// VSStls class
+// VSStlsWorker: Stls extended with VS-specific methods for StatePointGrid
 // -----------------------------------------------------------------
 
-class VSStls : public VSBase, public Stls {
+class VSStlsWorker : public Stls {
 
 public:
 
-  // Constructor from initial data
-  explicit VSStls(const std::shared_ptr<const VSStlsInput> &in_);
-  // Solve the scheme
+  using InputType = VSStlsInput;
+
+  VSStlsWorker(const std::shared_ptr<const VSStlsInput> &in,
+               bool verbose,
+               GridPoint /* unused */)
+      : Stls(in, verbose) {}
+
+  // VS-specific: apply alpha-correction to lfc (called by StatePointGrid step 3)
+  void applyLfcDiff(const Vector2D &v) { lfc.diff(v); }
+
+  // Expose protected Stls iteration steps for StatePointGrid orchestration
+  void   doInit()            { Stls::init(); }
+  void   doInitialGuess()    { Stls::initialGuess(); }
+  void   doComputeLfc()      { Stls::computeLfc(); }
+  void   doComputeSsf()      { Stls::computeSsf(); }
+  void   doUpdateSolution()  { Stls::updateSolution(); }
+  double doComputeError() const { return Stls::computeError(); }
+};
+
+// -----------------------------------------------------------------
+// VSStls: VS scheme based on Stls structural properties
+// -----------------------------------------------------------------
+
+class VSStls : public VSBase {
+
+public:
+
+  explicit VSStls(const std::shared_ptr<const VSStlsInput> &in);
   using VSBase::compute;
 
+  // Public interface required by Python bindings
+  const std::vector<double> &getSsf()  const { return ssf; }
+  const Vector2D &            getLfc()  const { return lfc; }
+  const std::vector<double> &getWvg()  const;
+  const Vector2D &            getIdr()  const;
+  std::vector<double>         getSdr()  const;
+  double                      getUInt() const;
+  double                      getError() const;
+
 private:
 
-  // Thermodynamic properties
-  std::shared_ptr<ThermoProp> thermoProp;
-  // Input parameters
-  const VSInput &in() const override {
-    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
-  }
-  // Initialize
-  void init() override;
-  // Compute free parameter
-  double computeAlpha() override;
-  // Iterations to solve the vs-stls scheme
+  std::shared_ptr<const VSStlsInput> inPtr;
+  StatePointGrid<VSStlsWorker>       grid;
+  std::vector<double>                ssf;
+  Vector2D                           lfc;
+
+  const VSInput &in()       const override;
+  const Input   &inScheme() const override;
+  void init()           override;
   void updateSolution() override;
-  // Print info
-  void print(const std::string &msg) { VSBase::print(msg); }
-  void println(const std::string &msg) { VSBase::println(msg); }
-};
 
-// -----------------------------------------------------------------
-// ThermoProp class
-// -----------------------------------------------------------------
-
-class ThermoProp : public ThermoPropBase {
-
-public:
-
-  // Constructor
-  explicit ThermoProp(const std::shared_ptr<const VSStlsInput> &in_);
-};
-
-// -----------------------------------------------------------------
-// StlsCSR class
-// -----------------------------------------------------------------
-
-class StlsCSR : public CSR, public Stls {
-
-public:
-
-  // Constructor
-  explicit StlsCSR(const std::shared_ptr<const VSStlsInput> &in_)
-      : StlsCSR(in_, true) {}
-  StlsCSR(const std::shared_ptr<const VSStlsInput> &in_, const bool isMaster_);
-  // Solve the scheme
-  int compute() override { return Stls::compute(); };
-
-private:
-
-  // Input parameters
-  const VSInput &inVS() const override {
-    return *StlsUtil::dynamic_pointer_cast<Input, VSInput>(inPtr);
-  }
-  const Input &inRpa() const override {
-    return *StlsUtil::dynamic_pointer_cast<Input, Input>(inPtr);
-  }
-  // setup the csr vector
-  void setupWorkers(const VSStlsInput &in) {
-    CSR::setupWorkers<StlsCSR, VSStlsInput>(in);
-  }
-  // Methods called by compute
-  void init() override { CSR::init(); };
-  void computeLfc() override { CSR::computeLfc(); };
-  void computeSsf() override { CSR::computeSsf(); };
-  void initialGuess() override { CSR::initialGuess(); };
-  void updateSolution() override { CSR::updateSolution(); };
-  double computeError() const override { return CSR::computeError(); }
-  void initWorker() override { Stls::init(); };
-  void computeLfcWorker() override { Stls::computeLfc(); };
-  void computeSsfWorker() override { Stls::computeSsf(); };
-  void initialGuessWorker() override { Stls::initialGuess(); };
-  void updateSolutionWorker() override { Stls::updateSolution(); };
-  double computeErrorWorker() const override { return Stls::computeError(); };
-  Vector2D &getLfc() override { return lfc; };
-  // Getters
-  const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
-  const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
-  const Vector2D &getLfc() const override { return Stls::getLfc(); }
+  int    runGrid()                               override;
+  double getCoupling(GridPoint p)    const override;
+  double getDegeneracy(GridPoint p)  const override;
+  double getFxcIntegrandValue(GridPoint p) const override;
+  // Returns {uint, uintr, uintt} — classical limit of the Q-term
+  std::vector<double> computeQData() override;
 };
 
 #endif
