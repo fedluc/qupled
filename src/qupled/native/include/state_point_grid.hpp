@@ -24,21 +24,29 @@ struct GridPoint {
     return static_cast<size_t>((static_cast<int>(theta) + 1) * 3
                                + (static_cast<int>(rs) + 1));
   }
-
 };
 
 // Named constants for all 9 grid points (defined after struct is complete)
 namespace GridPoints {
-  inline constexpr GridPoint RS_DOWN_THETA_DOWN = {GridPoint::Rs::DOWN,   GridPoint::Theta::DOWN};
-  inline constexpr GridPoint RS_THETA_DOWN      = {GridPoint::Rs::CENTER, GridPoint::Theta::DOWN};
-  inline constexpr GridPoint RS_UP_THETA_DOWN   = {GridPoint::Rs::UP,     GridPoint::Theta::DOWN};
-  inline constexpr GridPoint RS_DOWN_THETA      = {GridPoint::Rs::DOWN,   GridPoint::Theta::CENTER};
-  inline constexpr GridPoint CENTER             = {GridPoint::Rs::CENTER, GridPoint::Theta::CENTER};
-  inline constexpr GridPoint RS_UP_THETA        = {GridPoint::Rs::UP,     GridPoint::Theta::CENTER};
-  inline constexpr GridPoint RS_DOWN_THETA_UP   = {GridPoint::Rs::DOWN,   GridPoint::Theta::UP};
-  inline constexpr GridPoint RS_THETA_UP        = {GridPoint::Rs::CENTER, GridPoint::Theta::UP};
-  inline constexpr GridPoint RS_UP_THETA_UP     = {GridPoint::Rs::UP,     GridPoint::Theta::UP};
-}
+  inline constexpr GridPoint RS_DOWN_THETA_DOWN = {GridPoint::Rs::DOWN,
+                                                   GridPoint::Theta::DOWN};
+  inline constexpr GridPoint RS_THETA_DOWN = {GridPoint::Rs::CENTER,
+                                              GridPoint::Theta::DOWN};
+  inline constexpr GridPoint RS_UP_THETA_DOWN = {GridPoint::Rs::UP,
+                                                 GridPoint::Theta::DOWN};
+  inline constexpr GridPoint RS_DOWN_THETA = {GridPoint::Rs::DOWN,
+                                              GridPoint::Theta::CENTER};
+  inline constexpr GridPoint CENTER = {GridPoint::Rs::CENTER,
+                                       GridPoint::Theta::CENTER};
+  inline constexpr GridPoint RS_UP_THETA = {GridPoint::Rs::UP,
+                                            GridPoint::Theta::CENTER};
+  inline constexpr GridPoint RS_DOWN_THETA_UP = {GridPoint::Rs::DOWN,
+                                                 GridPoint::Theta::UP};
+  inline constexpr GridPoint RS_THETA_UP = {GridPoint::Rs::CENTER,
+                                            GridPoint::Theta::UP};
+  inline constexpr GridPoint RS_UP_THETA_UP = {GridPoint::Rs::UP,
+                                               GridPoint::Theta::UP};
+} // namespace GridPoints
 
 // -----------------------------------------------------------------
 // StatePointGrid: owns and coordinates 9 perturbed scheme instances
@@ -61,11 +69,11 @@ public:
 
   // Getters by GridPoint
   const std::vector<double> &getSsf(GridPoint p) const;
-  const Vector2D &           getLfc(GridPoint p) const;
+  const Vector2D &getLfc(GridPoint p) const;
   const std::vector<double> &getWvg(GridPoint p) const;
-  double getCoupling(GridPoint p)          const;
-  double getDegeneracy(GridPoint p)        const;
-  double getUInt(GridPoint p)              const;
+  double getCoupling(GridPoint p) const;
+  double getDegeneracy(GridPoint p) const;
+  double getUInt(GridPoint p) const;
   double getFxcIntegrandValue(GridPoint p) const;
   double getAlpha() const { return alpha; }
   double getError() const { return lastError; }
@@ -79,7 +87,7 @@ private:
 
   struct DerivativeData {
     enum class Type { CENTERED, FORWARD, BACKWARD };
-    Type   type;
+    Type type;
     size_t upIdx;
     size_t downIdx;
   };
@@ -87,27 +95,23 @@ private:
   static constexpr int N = 9;
 
   std::array<std::unique_ptr<Scheme>, N> workers;
-  std::array<Vector2D, N>                lfcDerivatives;
-  std::array<DerivativeData, N>          rsDerivData;
-  std::array<DerivativeData, N>          thetaDerivData;
-  std::array<double, N>                  rsValues;
-  std::array<double, N>                  thetaValues;
-  std::shared_ptr<const InputType>       inPtr;
-  double                                 alpha;
-  double                                 lastError;
-  bool                                   initDone;
+  std::array<Vector2D, N> lfcDerivatives;
+  std::array<DerivativeData, N> rsDerivData;
+  std::array<DerivativeData, N> thetaDerivData;
+  std::array<double, N> rsValues;
+  std::array<double, N> thetaValues;
+  std::shared_ptr<const InputType> inPtr;
+  double alpha;
+  double lastError;
+  bool initDone;
 
-  void   setupDerivativeData();
-  void   computeLfc();
-  void   computeLfcDerivatives();
-  double derivative(const Vector2D &f,
-                    int l,
-                    size_t i,
-                    DerivativeData::Type t) const;
-  double derivative(double f0,
-                    double f1,
-                    double f2,
-                    DerivativeData::Type t) const;
+  void setupDerivativeData();
+  void computeLfc();
+  void computeLfcDerivatives();
+  double
+  derivative(const Vector2D &f, int l, size_t i, DerivativeData::Type t) const;
+  double
+  derivative(double f0, double f1, double f2, DerivativeData::Type t) const;
 };
 
 #endif

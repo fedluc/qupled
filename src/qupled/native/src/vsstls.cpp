@@ -58,8 +58,7 @@ vector<double> VSStls::computeQData() {
   // Derivative w.r.t. coupling
   double ur;
   {
-    const double drs = grid.getCoupling(RS_UP_THETA)
-                       - grid.getCoupling(CENTER);
+    const double drs = grid.getCoupling(RS_UP_THETA) - grid.getCoupling(CENTER);
     const double u0 = grid.getFxcIntegrandValue(RS_UP_THETA);
     const double u1 = grid.getFxcIntegrandValue(RS_DOWN_THETA);
     ur = (u0 - u1) / (2.0 * drs) - u;
@@ -68,9 +67,9 @@ vector<double> VSStls::computeQData() {
   double ut;
   {
     const double theta = grid.getDegeneracy(CENTER);
-    const double dt    = grid.getDegeneracy(RS_THETA_UP) - theta;
-    const double u0    = grid.getUInt(RS_THETA_UP);
-    const double u1    = grid.getUInt(RS_THETA_DOWN);
+    const double dt = grid.getDegeneracy(RS_THETA_UP) - theta;
+    const double u0 = grid.getUInt(RS_THETA_UP);
+    const double u1 = grid.getUInt(RS_THETA_DOWN);
     ut = theta * (u0 - u1) / (2.0 * dt);
   }
   return {u, ur, ut};
@@ -82,13 +81,9 @@ const vector<double> &VSStls::getWvg() const {
   return grid.centralWorker().getWvg();
 }
 
-const Vector2D &VSStls::getIdr() const {
-  return grid.centralWorker().getIdr();
-}
+const Vector2D &VSStls::getIdr() const { return grid.centralWorker().getIdr(); }
 
-vector<double> VSStls::getSdr() const {
-  return grid.centralWorker().getSdr();
-}
+vector<double> VSStls::getSdr() const { return grid.centralWorker().getSdr(); }
 
 double VSStls::getUInt() const { return grid.centralWorker().getUInt(); }
 

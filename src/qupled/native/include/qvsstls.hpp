@@ -22,15 +22,17 @@ public:
                 bool verbose,
                 GridPoint p);
 
-  // VS-specific: apply alpha-correction to lfc (called by StatePointGrid step 3)
+  // VS-specific: apply alpha-correction to lfc (called by StatePointGrid step
+  // 3)
   void applyLfcDiff(const Vector2D &v) { lfc.diff(v); }
 
-  // Expose protected Qstls/Stls iteration steps for StatePointGrid orchestration
-  void   doInit()           { Qstls::init(); }
-  void   doInitialGuess()   { Stls::initialGuess(); }
-  void   doComputeLfc()     { Qstls::computeLfc(); }
-  void   doComputeSsf()     { Stls::computeSsf(); }
-  void   doUpdateSolution() { Stls::updateSolution(); }
+  // Expose protected Qstls/Stls iteration steps for StatePointGrid
+  // orchestration
+  void doInit() { Qstls::init(); }
+  void doInitialGuess() { Stls::initialGuess(); }
+  void doComputeLfc() { Qstls::computeLfc(); }
+  void doComputeSsf() { Stls::computeSsf(); }
+  void doUpdateSolution() { Stls::updateSolution(); }
   double doComputeError() const { return Stls::computeError(); }
 
   // Compute quantum Q-adder value using internal mu, wvg, ssf
@@ -66,19 +68,19 @@ public:
 
 private:
 
-  const double                      Theta;
-  const double                      mu;
-  const std::pair<double, double>   limits;
-  const std::vector<double>        &itgGrid;
-  const std::shared_ptr<Integrator1D>   itg1;
-  const std::shared_ptr<Integrator2D>   itg2;
+  const double Theta;
+  const double mu;
+  const std::pair<double, double> limits;
+  const std::vector<double> &itgGrid;
+  const std::shared_ptr<Integrator1D> itg1;
+  const std::shared_ptr<Integrator2D> itg2;
   const std::shared_ptr<Interpolator1D> interp;
 
   double ssf(const double &y) const;
   double integrandDenominator(const double q) const;
   double integrandNumerator1(const double q) const;
   double integrandNumerator2(const double w) const;
-  void   getIntDenominator(double &res) const;
+  void getIntDenominator(double &res) const;
 };
 
 // -----------------------------------------------------------------
@@ -93,31 +95,31 @@ public:
   using VSBase::compute;
 
   // Public interface required by Python bindings
-  const std::vector<double> &getSsf()  const { return ssf; }
-  const Vector2D &            getLfc()  const { return lfc; }
-  const std::vector<double> &getWvg()  const;
-  const Vector2D &            getIdr()  const;
-  std::vector<double>         getSdr()  const;
-  double                      getUInt() const;
-  double                      getError() const;
+  const std::vector<double> &getSsf() const { return ssf; }
+  const Vector2D &getLfc() const { return lfc; }
+  const std::vector<double> &getWvg() const;
+  const Vector2D &getIdr() const;
+  std::vector<double> getSdr() const;
+  double getUInt() const;
+  double getError() const;
 
 private:
 
   std::shared_ptr<const QVSStlsInput> inPtr;
-  StatePointGrid<VSQstlsWorker>       grid;
-  std::shared_ptr<Integrator2D>       itg2D;
-  std::vector<double>                 itgGrid;
-  std::vector<double>                 ssf;
-  Vector2D                            lfc;
+  StatePointGrid<VSQstlsWorker> grid;
+  std::shared_ptr<Integrator2D> itg2D;
+  std::vector<double> itgGrid;
+  std::vector<double> ssf;
+  Vector2D lfc;
 
-  const VSInput &in()       const override;
-  const Input   &inScheme() const override;
-  void init()           override;
+  const VSInput &in() const override;
+  const Input &inScheme() const override;
+  void init() override;
   void updateSolution() override;
 
-  int    runGrid()                               override;
-  double getCoupling(GridPoint p)    const override;
-  double getDegeneracy(GridPoint p)  const override;
+  int runGrid() override;
+  double getCoupling(GridPoint p) const override;
+  double getDegeneracy(GridPoint p) const override;
   double getFxcIntegrandValue(GridPoint p) const override;
   // Returns {Q, Qr, Qt} — quantum Q-term and derivatives
   std::vector<double> computeQData() override;

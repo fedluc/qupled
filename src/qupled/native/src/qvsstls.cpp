@@ -9,8 +9,8 @@
 using namespace std;
 using namespace MPIUtil;
 using namespace GridPoints;
-using ItgType   = Integrator1D::Type;
-using ItgParam  = Integrator1D::Param;
+using ItgType = Integrator1D::Type;
+using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
 
 // -----------------------------------------------------------------
@@ -21,7 +21,8 @@ VSQstlsWorker::VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
                              bool verbose,
                              GridPoint p)
     : Qstls(in, verbose) {
-  // Set adrFixedDatabaseName based on theta offset (mirrors QstlsCSR::initWorker)
+  // Set adrFixedDatabaseName based on theta offset (mirrors
+  // QstlsCSR::initWorker)
   const string &theory = in->getTheory();
   switch (p.theta) {
   case GridPoint::Theta::DOWN:
@@ -36,9 +37,8 @@ VSQstlsWorker::VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
   }
 }
 
-double VSQstlsWorker::computeQAdder(
-    const std::shared_ptr<Integrator2D> &itg2D,
-    const std::vector<double> &itgGrid) const {
+double VSQstlsWorker::computeQAdder(const std::shared_ptr<Integrator2D> &itg2D,
+                                    const std::vector<double> &itgGrid) const {
   const auto ssfItp = make_shared<Interpolator1D>(wvg, ssf);
   QAdder q(inPtr->getDegeneracy(),
            mu,
@@ -104,13 +104,12 @@ double QVSStls::getFxcIntegrandValue(GridPoint p) const {
 vector<double> QVSStls::computeQData() {
   const double rs = grid.getCoupling(CENTER);
   // Q at the target state point
-  const double q =
-      grid.centralWorker().computeQAdder(itg2D, itgGrid) / rs;
+  const double q = grid.centralWorker().computeQAdder(itg2D, itgGrid) / rs;
   // Derivative w.r.t. coupling
   double qr;
   {
     const double drs = grid.getCoupling(RS_UP_THETA) - rs;
-    const auto getQ  = [&](GridPoint p) {
+    const auto getQ = [&](GridPoint p) {
       return grid.getWorkerAt(p).computeQAdder(itg2D, itgGrid);
     };
     const double q0 = getQ(RS_UP_THETA);
@@ -121,9 +120,11 @@ vector<double> QVSStls::computeQData() {
   double qt;
   {
     const double theta = grid.getDegeneracy(CENTER);
-    const double dt    = grid.getDegeneracy(RS_THETA_UP) - theta;
-    const double q0 = grid.getWorkerAt(RS_THETA_UP).computeQAdder(itg2D, itgGrid) / rs;
-    const double q1 = grid.getWorkerAt(RS_THETA_DOWN).computeQAdder(itg2D, itgGrid) / rs;
+    const double dt = grid.getDegeneracy(RS_THETA_UP) - theta;
+    const double q0 =
+        grid.getWorkerAt(RS_THETA_UP).computeQAdder(itg2D, itgGrid) / rs;
+    const double q1 =
+        grid.getWorkerAt(RS_THETA_DOWN).computeQAdder(itg2D, itgGrid) / rs;
     qt = theta * (q0 - q1) / (2.0 * dt);
   }
   return {q, qr, qt};
@@ -139,9 +140,7 @@ const Vector2D &QVSStls::getIdr() const {
   return grid.centralWorker().getIdr();
 }
 
-vector<double> QVSStls::getSdr() const {
-  return grid.centralWorker().getSdr();
-}
+vector<double> QVSStls::getSdr() const { return grid.centralWorker().getSdr(); }
 
 double QVSStls::getUInt() const { return grid.centralWorker().getUInt(); }
 
@@ -161,8 +160,8 @@ double QAdder::integrandDenominator(const double y) const {
 double QAdder::integrandNumerator1(const double q) const {
   const double w = itg2->getX();
   if (q == 0.0) { return 0.0; }
-  const double w2  = w * w;
-  const double q2  = q * q;
+  const double w2 = w * w;
+  const double q2 = q * q;
   double logarg = (w + 2 * q) / (w - 2 * q);
   logarg = (logarg < 0.0) ? -logarg : logarg;
   if (w == 0.0) { return 1.0 / (12.0 * (exp(q2 / Theta - mu) + 1.0)); }
@@ -182,8 +181,12 @@ void QAdder::getIntDenominator(double &res) const {
 double QAdder::get() const {
   double Denominator;
   getIntDenominator(Denominator);
-  auto func1 = [&](const double &w) -> double { return integrandNumerator2(w); };
-  auto func2 = [&](const double &q) -> double { return integrandNumerator1(q); };
+  auto func1 = [&](const double &w) -> double {
+    return integrandNumerator2(w);
+  };
+  auto func2 = [&](const double &q) -> double {
+    return integrandNumerator1(q);
+  };
   itg2->compute(
       func1,
       func2,
