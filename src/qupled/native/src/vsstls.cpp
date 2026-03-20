@@ -1,4 +1,5 @@
 #include "vsstls.hpp"
+#include "format.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
 #include "thermo_util.hpp"
@@ -32,15 +33,14 @@ void VSStls::init() {
   // Worker initialisation is deferred to StatePointGrid::compute()
 }
 
-void VSStls::updateSolution() {
-  const GridPoint out = getOutputGridPoint();
-  ssf = grid.getSsf(out);
-  lfc = grid.getLfc(out);
-}
-
 int VSStls::runGrid() {
   grid.setAlpha(alpha);
-  return grid.compute();
+  int status = grid.compute();
+  println(formatUtil::format("Alpha = {:.5e}, Residual error "
+                             "(structural properties) = {:.5e}",
+                             grid.getAlpha(),
+                             grid.getError()));
+  return status;
 }
 
 double VSStls::getCoupling(GridPoint p) const { return grid.getCoupling(p); }
@@ -76,6 +76,12 @@ vector<double> VSStls::computeQData() {
 }
 
 // Delegation to central worker for Python-exposed properties
+
+const std::vector<double> &VSStls::getSsf() const {
+  return grid.centralWorker().getSsf();
+}
+
+const Vector2D &VSStls::getLfc() const { return grid.centralWorker().getLfc(); }
 
 const vector<double> &VSStls::getWvg() const {
   return grid.centralWorker().getWvg();

@@ -26,29 +26,22 @@ public:
 
 protected:
 
+  // Free parameter
   double alpha;
+  // Free energy integrand data (indexed by theta, then rs)
   std::vector<double> rsGrid;
-  // fxcIntegrand[0/1/2][rs] = free energy integrand at theta-down/center/up
+  // Free energy integrand values at the 3 theta grid points (DOWN, CENTER, UP)
   std::vector<std::vector<double>> fxcIntegrand;
-
-  // Abstract interface implemented by VSStls / QVSStls
-  virtual const VSInput &in() const = 0; // VS-specific input (alpha, drs, ...)
-  virtual const Input &
-  inScheme() const = 0; // base scheme input (rs, theta, ...)
+  // Abstract interface
+  virtual const VSInput &in() const = 0;
+  virtual const Input &inScheme() const = 0;
   virtual void init() = 0;
-  virtual void updateSolution() = 0;
-
-  // Grid access — implemented by VSStls / QVSStls via their StatePointGrid
   virtual int runGrid() = 0;
   virtual double getCoupling(GridPoint p) const = 0;
   virtual double getDegeneracy(GridPoint p) const = 0;
   virtual double getFxcIntegrandValue(GridPoint p) const = 0;
-  // Returns {Q, Qr, Qt}:
-  //   VSStls  → {uint, uintr, uintt}  (internal energy and derivatives)
-  //   QVSStls → quantum Q-term and derivatives
   virtual std::vector<double> computeQData() = 0;
-
-  // Non-virtual helpers (logic previously in ThermoPropBase)
+  // Non-virtual helpers
   void setRsGrid();
   void setFxcIntegrand();
   void updateFxcIntegrand();
@@ -58,7 +51,6 @@ protected:
 
 private:
 
-  // Unified alpha formula — not virtual
   double computeAlpha();
   void doIterations();
   double alphaDifference(const double &alphaTmp);

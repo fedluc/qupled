@@ -40,7 +40,6 @@ void VSBase::doIterations() {
   rsol.solve(func, in().getAlphaGuess());
   alpha = rsol.getSolution();
   println(formatUtil::format("Free parameter = {:.5f}", alpha));
-  updateSolution();
 }
 
 double VSBase::alphaDifference(const double &alphaTmp) {
@@ -51,8 +50,6 @@ double VSBase::alphaDifference(const double &alphaTmp) {
   return alpha - alphaTheoretical;
 }
 
-// Unified alpha formula. Works for both VSStls and QVSStls because the
-// classical Q-term (internal energy) is a limiting case of the quantum one.
 double VSBase::computeAlpha() {
   const auto fed = getFreeEnergyData();
   const auto qdat = computeQData();
@@ -143,11 +140,10 @@ double VSBase::computeFreeEnergy(GridPoint p, bool normalize) const {
 }
 
 vector<double> VSBase::getFreeEnergyData() const {
-  // Free energy at the target state point (normalised)
+  // Free energy at the target state point
   const double fxc = computeFreeEnergy(CENTER, true);
   const double rs = getCoupling(CENTER);
   const double drs = getCoupling(RS_UP_THETA) - rs;
-
   // Derivatives w.r.t. coupling parameter
   double fxcr, fxcrr;
   {

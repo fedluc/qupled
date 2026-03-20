@@ -80,14 +80,12 @@ void QVSStls::init() {
   // Worker initialisation is deferred to StatePointGrid::compute()
 }
 
-void QVSStls::updateSolution() {
-  const GridPoint out = getOutputGridPoint();
-  ssf = grid.getSsf(out);
-  lfc = grid.getLfc(out);
-}
-
 int QVSStls::runGrid() {
   grid.setAlpha(alpha);
+  println(formatUtil::format("Alpha = {:.5e}, Residual error "
+                             "(structural properties) = {:.5e}",
+                             grid.getAlpha(),
+                             grid.getError()));
   return grid.compute();
 }
 
@@ -131,6 +129,14 @@ vector<double> QVSStls::computeQData() {
 }
 
 // Delegation to central worker for Python-exposed properties
+
+const std::vector<double> &QVSStls::getSsf() const {
+  return grid.centralWorker().getSsf();
+}
+
+const Vector2D &QVSStls::getLfc() const {
+  return grid.centralWorker().getLfc();
+}
 
 const vector<double> &QVSStls::getWvg() const {
   return grid.centralWorker().getWvg();
