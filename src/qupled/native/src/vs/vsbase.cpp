@@ -69,19 +69,19 @@ double VSBase::computeAlpha() {
 }
 
 std::vector<double> VSBase::computeQData() {
-  const double rs  = getCoupling(GridPoints::CENTER);
-  const double q   = computeQRaw(GridPoints::CENTER) / rs;
+  const double rs = getCoupling(GridPoints::CENTER);
+  const double q = computeQRaw(GridPoints::CENTER) / rs;
   const double drs = getCoupling(GridPoints::RS_UP_THETA) - rs;
-  const double qr  = (computeQRaw(GridPoints::RS_UP_THETA)
-                      - computeQRaw(GridPoints::RS_DOWN_THETA))
-                     / (2.0 * drs)
-                     - q;
+  const double qr = (computeQRaw(GridPoints::RS_UP_THETA)
+                     - computeQRaw(GridPoints::RS_DOWN_THETA))
+                        / (2.0 * drs)
+                    - q;
   const double theta = getDegeneracy(GridPoints::CENTER);
-  const double dt    = getDegeneracy(GridPoints::RS_THETA_UP) - theta;
-  const double qt    = theta
-                       * (computeQRaw(GridPoints::RS_THETA_UP) / rs
-                          - computeQRaw(GridPoints::RS_THETA_DOWN) / rs)
-                       / (2.0 * dt);
+  const double dt = getDegeneracy(GridPoints::RS_THETA_UP) - theta;
+  const double qt = theta
+                    * (computeQRaw(GridPoints::RS_THETA_UP) / rs
+                       - computeQRaw(GridPoints::RS_THETA_DOWN) / rs)
+                    / (2.0 * dt);
   return {q, qr, qt};
 }
 
@@ -214,10 +214,10 @@ QAdder QAdder::classical(const std::vector<double> &wvg,
                          const std::vector<double> &ssf,
                          const std::shared_ptr<const Input> &in) {
   QAdder q;
-  q.mode     = Mode::CLASSICAL;
+  q.mode = Mode::CLASSICAL;
   q.classWvg = wvg;
   q.classSsf = ssf;
-  q.classIn  = in;
+  q.classIn = in;
   return q;
 }
 
@@ -230,28 +230,35 @@ QAdder QAdder::quantum(double Theta,
                        std::shared_ptr<Integrator2D> itg2,
                        std::shared_ptr<Interpolator1D> interp) {
   QAdder q;
-  q.mode       = Mode::QUANTUM;
-  q.Theta      = Theta;
-  q.mu         = mu;
-  q.limits     = {limitMin, limitMax};
+  q.mode = Mode::QUANTUM;
+  q.Theta = Theta;
+  q.mu = mu;
+  q.limits = {limitMin, limitMax};
   q.itgGridPtr = &itgGrid;
-  q.itg1       = itg1;
-  q.itg2       = itg2;
-  q.interp     = interp;
+  q.itg1 = itg1;
+  q.itg2 = itg2;
+  q.interp = interp;
   return q;
 }
 
 double QAdder::get() const {
   if (mode == Mode::CLASSICAL) {
-    return thermoUtil::computeInternalEnergy(classWvg, classSsf, 1.0, classIn->getDimension());
+    return thermoUtil::computeInternalEnergy(
+        classWvg, classSsf, 1.0, classIn->getDimension());
   }
   double Denominator;
   getIntDenominator(Denominator);
-  auto func1 = [&](const double &w) -> double { return integrandNumerator2(w); };
-  auto func2 = [&](const double &q) -> double { return integrandNumerator1(q); };
-  itg2->compute(func1, func2,
-                Itg2DParam(limits.first, limits.second, limits.first, limits.second),
-                *itgGridPtr);
+  auto func1 = [&](const double &w) -> double {
+    return integrandNumerator2(w);
+  };
+  auto func2 = [&](const double &q) -> double {
+    return integrandNumerator1(q);
+  };
+  itg2->compute(
+      func1,
+      func2,
+      Itg2DParam(limits.first, limits.second, limits.first, limits.second),
+      *itgGridPtr);
   return 12.0 / (M_PI * numUtil::lambda) * itg2->getSolution() / Denominator;
 }
 

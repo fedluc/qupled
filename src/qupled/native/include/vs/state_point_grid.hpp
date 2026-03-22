@@ -54,6 +54,7 @@ namespace GridPoints {
 
 class IVSWorker {
 public:
+
   virtual ~IVSWorker() = default;
   // Synchronized LFC protocol
   virtual void computeBaseLfc() = 0;
@@ -63,11 +64,11 @@ public:
   virtual const std::vector<double> &getWvg() const = 0;
   virtual const std::vector<double> &getSsf() const = 0;
   // Iteration protocol
-  virtual void   workerInit() = 0;
-  virtual void   workerInitialGuess() = 0;
-  virtual void   workerComputeSsf() = 0;
+  virtual void workerInit() = 0;
+  virtual void workerInitialGuess() = 0;
+  virtual void workerComputeSsf() = 0;
   virtual double workerComputeError() const = 0;
-  virtual void   workerUpdateSolution() = 0;
+  virtual void workerUpdateSolution() = 0;
 };
 
 // -----------------------------------------------------------------
@@ -76,7 +77,8 @@ public:
 
 class StatePointGridBase {
 public:
-  void   setAlpha(double alpha_) { alpha = alpha_; }
+
+  void setAlpha(double alpha_) { alpha = alpha_; }
   double getAlpha() const { return alpha; }
   double getError() const { return lastError; }
   // Getters by GridPoint
@@ -90,6 +92,7 @@ public:
   const IVSWorker &getWorkerAt(GridPoint p) const;
 
 protected:
+
   StatePointGridBase(double drs_,
                      double dTheta_,
                      double dx_,
@@ -97,33 +100,36 @@ protected:
 
   struct DerivativeData {
     enum class Type { CENTERED, FORWARD, BACKWARD };
-    Type   type;
+    Type type;
     size_t upIdx;
     size_t downIdx;
   };
 
   static constexpr int N = 9;
   std::array<std::unique_ptr<IVSWorker>, N> workers;
-  std::array<Vector2D, N>                   lfcDerivatives;
-  std::array<DerivativeData, N>             rsDerivData;
-  std::array<DerivativeData, N>             thetaDerivData;
-  std::array<double, N>                     rsValues;
-  std::array<double, N>                     thetaValues;
-  double                                    alpha;
-  mutable double                            lastError;
-  bool                                      initDone;
-  double                                    drs;
-  double                                    dTheta;
-  double                                    dx;
-  dimensionsUtil::Dimension                 dim;
+  std::array<Vector2D, N> lfcDerivatives;
+  std::array<DerivativeData, N> rsDerivData;
+  std::array<DerivativeData, N> thetaDerivData;
+  std::array<double, N> rsValues;
+  std::array<double, N> thetaValues;
+  double alpha;
+  mutable double lastError;
+  bool initDone;
+  double drs;
+  double dTheta;
+  double dx;
+  dimensionsUtil::Dimension dim;
 
   void setupDerivativeData();
   void computeSynchronizedLfc();
 
 private:
-  void   computeLfcDerivatives();
-  double derivative(const Vector2D &f, int l, size_t i, DerivativeData::Type t) const;
-  double derivative(double f0, double f1, double f2, DerivativeData::Type t) const;
+
+  void computeLfcDerivatives();
+  double
+  derivative(const Vector2D &f, int l, size_t i, DerivativeData::Type t) const;
+  double
+  derivative(double f0, double f1, double f2, DerivativeData::Type t) const;
 };
 
 #endif

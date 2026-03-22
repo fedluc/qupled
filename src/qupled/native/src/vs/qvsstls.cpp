@@ -59,23 +59,24 @@ StatePointGridVSQstls::StatePointGridVSQstls(
                          in->getWaveVectorGridRes(),
                          in->getDimension()),
       Qstls(in, false) {
-  const double drs_    = in->getCouplingResolution();
+  const double drs_ = in->getCouplingResolution();
   const double dTheta_ = in->getDegeneracyResolution();
-  const double rs0     = std::max(in->getCoupling(), drs_);
-  const double theta0  = std::max(in->getDegeneracy(), dTheta_);
-  for (const auto tOff :
-       {GridPoint::Theta::DOWN, GridPoint::Theta::CENTER, GridPoint::Theta::UP}) {
+  const double rs0 = std::max(in->getCoupling(), drs_);
+  const double theta0 = std::max(in->getDegeneracy(), dTheta_);
+  for (const auto tOff : {GridPoint::Theta::DOWN,
+                          GridPoint::Theta::CENTER,
+                          GridPoint::Theta::UP}) {
     const double thetaTmp = theta0 + static_cast<int>(tOff) * dTheta_;
     for (const auto rOff :
          {GridPoint::Rs::DOWN, GridPoint::Rs::CENTER, GridPoint::Rs::UP}) {
       const double rsTmp = rs0 + static_cast<int>(rOff) * drs_;
-      auto         inTmp = std::make_shared<QVSStlsInput>(*in);
+      auto inTmp = std::make_shared<QVSStlsInput>(*in);
       inTmp->setCoupling(rsTmp);
       inTmp->setDegeneracy(thetaTmp);
       const GridPoint gp{rOff, tOff};
-      const size_t    idx = gp.toIndex();
-      rsValues[idx]       = rsTmp;
-      thetaValues[idx]    = thetaTmp;
+      const size_t idx = gp.toIndex();
+      rsValues[idx] = rsTmp;
+      thetaValues[idx] = thetaTmp;
       workers[idx] = std::make_unique<VSQstlsWorker>(inTmp, false, gp);
     }
   }
@@ -89,9 +90,7 @@ void StatePointGridVSQstls::init() {
   initDone = true;
 }
 
-void StatePointGridVSQstls::computeLfc() {
-  computeSynchronizedLfc();
-}
+void StatePointGridVSQstls::computeLfc() { computeSynchronizedLfc(); }
 
 void StatePointGridVSQstls::computeSsf() {
   for (auto &w : workers)
@@ -127,7 +126,9 @@ QVSStls::QVSStls(const std::shared_ptr<const QVSStlsInput> &in)
         "Ground state calculations are not implemented for this scheme.");
   }
   const bool segregatedItg = in->getInt2DScheme() == "segregated";
-  if (segregatedItg) { itgGrid = grid.StatePointGridBase::getWvg(GridPoints::CENTER); }
+  if (segregatedItg) {
+    itgGrid = grid.StatePointGridBase::getWvg(GridPoints::CENTER);
+  }
   setRsGrid();
   setFxcIntegrand();
 }
@@ -175,15 +176,18 @@ const vector<double> &QVSStls::getWvg() const {
 }
 
 const Vector2D &QVSStls::getIdr() const {
-  return dynamic_cast<const Qstls &>(grid.getWorkerAt(GridPoints::CENTER)).getIdr();
+  return dynamic_cast<const Qstls &>(grid.getWorkerAt(GridPoints::CENTER))
+      .getIdr();
 }
 
 vector<double> QVSStls::getSdr() const {
-  return dynamic_cast<const Qstls &>(grid.getWorkerAt(GridPoints::CENTER)).getSdr();
+  return dynamic_cast<const Qstls &>(grid.getWorkerAt(GridPoints::CENTER))
+      .getSdr();
 }
 
 double QVSStls::getUInt() const {
-  return dynamic_cast<const Qstls &>(grid.getWorkerAt(GridPoints::CENTER)).getUInt();
+  return dynamic_cast<const Qstls &>(grid.getWorkerAt(GridPoints::CENTER))
+      .getUInt();
 }
 
 double QVSStls::getError() const { return grid.StatePointGridBase::getError(); }

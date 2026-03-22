@@ -6,10 +6,10 @@
 #include "python_interface/util.hpp"
 #include "qstls.hpp"
 #include "qstlsiet.hpp"
-#include "vs/qvsstls.hpp"
 #include "rpa.hpp"
 #include "stls.hpp"
 #include "stlsiet.hpp"
+#include "vs/qvsstls.hpp"
 #include "vs/vsstls.hpp"
 
 #include <pybind11/numpy.h>

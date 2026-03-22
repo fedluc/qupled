@@ -13,6 +13,7 @@
 
 class QAdder {
 public:
+
   enum class Mode { CLASSICAL, QUANTUM };
 
   static QAdder classical(const std::vector<double> &wvg,
@@ -31,6 +32,7 @@ public:
   double get() const;
 
 private:
+
   QAdder() = default;
 
   Mode mode;
@@ -54,7 +56,7 @@ private:
   double integrandDenominator(const double y) const;
   double integrandNumerator1(const double q) const;
   double integrandNumerator2(const double w) const;
-  void   getIntDenominator(double &res) const;
+  void getIntDenominator(double &res) const;
 };
 
 // -----------------------------------------------------------------

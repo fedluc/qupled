@@ -168,10 +168,8 @@ double StatePointGridBase::getDegeneracy(GridPoint p) const {
 
 double StatePointGridBase::getUInt(GridPoint p) const {
   const size_t i = p.toIndex();
-  return thermoUtil::computeInternalEnergy(workers[i]->getWvg(),
-                                           workers[i]->getSsf(),
-                                           rsValues[i],
-                                           dim);
+  return thermoUtil::computeInternalEnergy(
+      workers[i]->getWvg(), workers[i]->getSsf(), rsValues[i], dim);
 }
 
 double StatePointGridBase::getFxcIntegrandValue(GridPoint p) const {

@@ -19,23 +19,24 @@ StatePointGridVSStls::StatePointGridVSStls(
                          in->getWaveVectorGridRes(),
                          in->getDimension()),
       Stls(in, false) {
-  const double drs_    = in->getCouplingResolution();
+  const double drs_ = in->getCouplingResolution();
   const double dTheta_ = in->getDegeneracyResolution();
-  const double rs0     = std::max(in->getCoupling(), drs_);
-  const double theta0  = std::max(in->getDegeneracy(), dTheta_);
-  for (const auto tOff :
-       {GridPoint::Theta::DOWN, GridPoint::Theta::CENTER, GridPoint::Theta::UP}) {
+  const double rs0 = std::max(in->getCoupling(), drs_);
+  const double theta0 = std::max(in->getDegeneracy(), dTheta_);
+  for (const auto tOff : {GridPoint::Theta::DOWN,
+                          GridPoint::Theta::CENTER,
+                          GridPoint::Theta::UP}) {
     const double thetaTmp = theta0 + static_cast<int>(tOff) * dTheta_;
     for (const auto rOff :
          {GridPoint::Rs::DOWN, GridPoint::Rs::CENTER, GridPoint::Rs::UP}) {
-      const double rsTmp   = rs0 + static_cast<int>(rOff) * drs_;
-      auto         inTmp   = std::make_shared<VSStlsInput>(*in);
+      const double rsTmp = rs0 + static_cast<int>(rOff) * drs_;
+      auto inTmp = std::make_shared<VSStlsInput>(*in);
       inTmp->setCoupling(rsTmp);
       inTmp->setDegeneracy(thetaTmp);
       const GridPoint gp{rOff, tOff};
-      const size_t    idx  = gp.toIndex();
-      rsValues[idx]        = rsTmp;
-      thetaValues[idx]     = thetaTmp;
+      const size_t idx = gp.toIndex();
+      rsValues[idx] = rsTmp;
+      thetaValues[idx] = thetaTmp;
       workers[idx] = std::make_unique<VSStlsWorker>(inTmp, false, gp);
     }
   }
@@ -49,9 +50,7 @@ void StatePointGridVSStls::init() {
   initDone = true;
 }
 
-void StatePointGridVSStls::computeLfc() {
-  computeSynchronizedLfc();
-}
+void StatePointGridVSStls::computeLfc() { computeSynchronizedLfc(); }
 
 void StatePointGridVSStls::computeSsf() {
   for (auto &w : workers)
@@ -115,7 +114,10 @@ double VSStls::getFxcIntegrandValue(GridPoint p) const {
 }
 
 double VSStls::computeQRaw(GridPoint p) const {
-  return QAdder::classical(grid.StatePointGridBase::getWvg(p), grid.StatePointGridBase::getSsf(p), inPtr).get();
+  return QAdder::classical(grid.StatePointGridBase::getWvg(p),
+                           grid.StatePointGridBase::getSsf(p),
+                           inPtr)
+      .get();
 }
 
 const std::vector<double> &VSStls::getSsf() const {
@@ -131,15 +133,18 @@ const vector<double> &VSStls::getWvg() const {
 }
 
 const Vector2D &VSStls::getIdr() const {
-  return dynamic_cast<const Stls &>(grid.getWorkerAt(GridPoints::CENTER)).getIdr();
+  return dynamic_cast<const Stls &>(grid.getWorkerAt(GridPoints::CENTER))
+      .getIdr();
 }
 
 vector<double> VSStls::getSdr() const {
-  return dynamic_cast<const Stls &>(grid.getWorkerAt(GridPoints::CENTER)).getSdr();
+  return dynamic_cast<const Stls &>(grid.getWorkerAt(GridPoints::CENTER))
+      .getSdr();
 }
 
 double VSStls::getUInt() const {
-  return dynamic_cast<const Stls &>(grid.getWorkerAt(GridPoints::CENTER)).getUInt();
+  return dynamic_cast<const Stls &>(grid.getWorkerAt(GridPoints::CENTER))
+      .getUInt();
 }
 
 double VSStls::getError() const { return grid.StatePointGridBase::getError(); }

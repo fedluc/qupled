@@ -14,6 +14,7 @@
 
 class VSQstlsWorker : public IVSWorker, public Qstls {
 public:
+
   using InputType = QVSStlsInput;
 
   VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
@@ -21,17 +22,17 @@ public:
                 GridPoint p);
 
   void applyLfcDiff(const Vector2D &v) override { lfc.diff(v); }
-  void computeBaseLfc()                override { Qstls::computeLfc(); }
+  void computeBaseLfc() override { Qstls::computeLfc(); }
 
-  const Vector2D &            getLfc() const override { return lfc; }
-  const std::vector<double> & getWvg() const override { return wvg; }
-  const std::vector<double> & getSsf() const override { return ssf; }
+  const Vector2D &getLfc() const override { return lfc; }
+  const std::vector<double> &getWvg() const override { return wvg; }
+  const std::vector<double> &getSsf() const override { return ssf; }
 
-  void   workerInit()              override { Qstls::init(); }
-  void   workerInitialGuess()      override { Stls::initialGuess(); }
-  void   workerComputeSsf()        override { Stls::computeSsf(); }
+  void workerInit() override { Qstls::init(); }
+  void workerInitialGuess() override { Stls::initialGuess(); }
+  void workerComputeSsf() override { Stls::computeSsf(); }
   double workerComputeError() const override { return Stls::computeError(); }
-  void   workerUpdateSolution()    override { Stls::updateSolution(); }
+  void workerUpdateSolution() override { Stls::updateSolution(); }
 
   double computeQAdder(const std::shared_ptr<Integrator2D> &itg2D,
                        const std::vector<double> &itgGrid) const;
@@ -43,15 +44,17 @@ public:
 
 class StatePointGridVSQstls : public StatePointGridBase, public Qstls {
 public:
+
   explicit StatePointGridVSQstls(const std::shared_ptr<const QVSStlsInput> &in);
 
 protected:
-  void   init()              override;
-  void   computeLfc()        override;
-  void   computeSsf()        override;
+
+  void init() override;
+  void computeLfc() override;
+  void computeSsf() override;
   double computeError() const override;
-  void   updateSolution()    override;
-  void   initialGuess()      override;
+  void updateSolution() override;
+  void initialGuess() override;
 };
 
 // -----------------------------------------------------------------
@@ -60,31 +63,33 @@ protected:
 
 class QVSStls : public VSBase {
 public:
+
   explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in);
   using VSBase::compute;
 
   const std::vector<double> &getSsf() const;
-  const Vector2D &            getLfc() const;
+  const Vector2D &getLfc() const;
   const std::vector<double> &getWvg() const;
-  const Vector2D &            getIdr() const;
-  std::vector<double>         getSdr() const;
-  double                      getUInt() const;
-  double                      getError() const;
+  const Vector2D &getIdr() const;
+  std::vector<double> getSdr() const;
+  double getUInt() const;
+  double getError() const;
 
 private:
+
   std::shared_ptr<const QVSStlsInput> inPtr;
-  StatePointGridVSQstls               grid;
-  std::shared_ptr<Integrator2D>       itg2D;
-  std::vector<double>                 itgGrid;
+  StatePointGridVSQstls grid;
+  std::shared_ptr<Integrator2D> itg2D;
+  std::vector<double> itgGrid;
 
-  const VSInput &in()       const override;
-  const Input &  inScheme() const override;
+  const VSInput &in() const override;
+  const Input &inScheme() const override;
 
-  int    runGrid()                               override;
-  double getCoupling(GridPoint p)          const override;
-  double getDegeneracy(GridPoint p)        const override;
+  int runGrid() override;
+  double getCoupling(GridPoint p) const override;
+  double getDegeneracy(GridPoint p) const override;
   double getFxcIntegrandValue(GridPoint p) const override;
-  double computeQRaw(GridPoint p)          const override;
+  double computeQRaw(GridPoint p) const override;
 };
 
 #endif
