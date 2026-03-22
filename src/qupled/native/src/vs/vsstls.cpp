@@ -14,10 +14,10 @@ using namespace GridPoints;
 
 StatePointGridVSStls::StatePointGridVSStls(
     const std::shared_ptr<const VSStlsInput> &in)
-    : StatePointGridBase(in->getCouplingResolution(),
-                         in->getDegeneracyResolution(),
-                         in->getWaveVectorGridRes(),
-                         in->getDimension()),
+    : VSMasterBase(in->getCouplingResolution(),
+                   in->getDegeneracyResolution(),
+                   in->getWaveVectorGridRes(),
+                   in->getDimension()),
       Stls(in, false) {
   const double drs_ = in->getCouplingResolution();
   const double dTheta_ = in->getDegeneracyResolution();
@@ -41,35 +41,6 @@ StatePointGridVSStls::StatePointGridVSStls(
     }
   }
   setupDerivativeData();
-}
-
-void StatePointGridVSStls::init() {
-  if (initDone) return;
-  for (auto &w : workers)
-    w->workerInit();
-  initDone = true;
-}
-
-void StatePointGridVSStls::computeLfc() { computeSynchronizedLfc(); }
-
-void StatePointGridVSStls::computeSsf() {
-  for (auto &w : workers)
-    w->workerComputeSsf();
-}
-
-double StatePointGridVSStls::computeError() const {
-  lastError = workers[CENTER.toIndex()]->workerComputeError();
-  return lastError;
-}
-
-void StatePointGridVSStls::updateSolution() {
-  for (auto &w : workers)
-    w->workerUpdateSolution();
-}
-
-void StatePointGridVSStls::initialGuess() {
-  for (auto &w : workers)
-    w->workerInitialGuess();
 }
 
 // -----------------------------------------------------------------
@@ -99,7 +70,7 @@ int VSStls::runGrid() {
   println(formatUtil::format("Alpha = {:.5e}, Residual error "
                              "(structural properties) = {:.5e}",
                              grid.getAlpha(),
-                             grid.StatePointGridBase::getError()));
+                             grid.VSMasterBase::getError()));
   return status;
 }
 
@@ -114,8 +85,8 @@ double VSStls::getFxcIntegrandValue(GridPoint p) const {
 }
 
 double VSStls::computeQRaw(GridPoint p) const {
-  return QAdder::classical(grid.StatePointGridBase::getWvg(p),
-                           grid.StatePointGridBase::getSsf(p),
+  return QAdder::classical(grid.VSMasterBase::getWvg(p),
+                           grid.VSMasterBase::getSsf(p),
                            inPtr)
       .get();
 }
@@ -147,4 +118,4 @@ double VSStls::getUInt() const {
       .getUInt();
 }
 
-double VSStls::getError() const { return grid.StatePointGridBase::getError(); }
+double VSStls::getError() const { return grid.VSMasterBase::getError(); }

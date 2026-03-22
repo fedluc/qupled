@@ -1,4 +1,4 @@
-#include "vs/state_point_grid.hpp"
+#include "vs/vs_master.hpp"
 #include "num_util.hpp"
 #include "thermo_util.hpp"
 #include <cassert>
@@ -7,10 +7,10 @@ using namespace std;
 using namespace GridPoints;
 
 // -----------------------------------------------------------------
-// StatePointGridBase
+// VSMasterBase
 // -----------------------------------------------------------------
 
-StatePointGridBase::StatePointGridBase(double drs_,
+VSMasterBase::VSMasterBase(double drs_,
                                        double dTheta_,
                                        double dx_,
                                        dimensionsUtil::Dimension dim_)
@@ -22,7 +22,7 @@ StatePointGridBase::StatePointGridBase(double drs_,
       dx(dx_),
       dim(dim_) {}
 
-void StatePointGridBase::setupDerivativeData() {
+void VSMasterBase::setupDerivativeData() {
   // rs derivative data (varies along rs axis, theta held fixed)
   for (const auto tOff : {GridPoint::Theta::DOWN,
                           GridPoint::Theta::CENTER,
@@ -46,7 +46,7 @@ void StatePointGridBase::setupDerivativeData() {
   }
 }
 
-void StatePointGridBase::computeSynchronizedLfc() {
+void VSMasterBase::computeSynchronizedLfc() {
   // Step 1: base LFC for every worker (must all finish before step 2)
   for (auto &w : workers) {
     w->computeBaseLfc();
@@ -66,7 +66,7 @@ void StatePointGridBase::computeSynchronizedLfc() {
   }
 }
 
-void StatePointGridBase::computeLfcDerivatives() {
+void VSMasterBase::computeLfcDerivatives() {
   assert(alpha != numUtil::Inf);
 
   for (size_t i = 0; i < N; ++i) {
@@ -114,7 +114,7 @@ void StatePointGridBase::computeLfcDerivatives() {
   }
 }
 
-double StatePointGridBase::derivative(const Vector2D &f,
+double VSMasterBase::derivative(const Vector2D &f,
                                       int l,
                                       size_t i,
                                       DerivativeData::Type t) const {
@@ -132,7 +132,7 @@ double StatePointGridBase::derivative(const Vector2D &f,
   }
 }
 
-double StatePointGridBase::derivative(double f0,
+double VSMasterBase::derivative(double f0,
                                       double f1,
                                       double f2,
                                       DerivativeData::Type t) const {
@@ -146,38 +146,38 @@ double StatePointGridBase::derivative(double f0,
 
 // Getters
 
-const std::vector<double> &StatePointGridBase::getSsf(GridPoint p) const {
+const std::vector<double> &VSMasterBase::getSsf(GridPoint p) const {
   return workers[p.toIndex()]->getSsf();
 }
 
-const Vector2D &StatePointGridBase::getLfc(GridPoint p) const {
+const Vector2D &VSMasterBase::getLfc(GridPoint p) const {
   return workers[p.toIndex()]->getLfc();
 }
 
-const std::vector<double> &StatePointGridBase::getWvg(GridPoint p) const {
+const std::vector<double> &VSMasterBase::getWvg(GridPoint p) const {
   return workers[p.toIndex()]->getWvg();
 }
 
-double StatePointGridBase::getCoupling(GridPoint p) const {
+double VSMasterBase::getCoupling(GridPoint p) const {
   return rsValues[p.toIndex()];
 }
 
-double StatePointGridBase::getDegeneracy(GridPoint p) const {
+double VSMasterBase::getDegeneracy(GridPoint p) const {
   return thetaValues[p.toIndex()];
 }
 
-double StatePointGridBase::getUInt(GridPoint p) const {
+double VSMasterBase::getUInt(GridPoint p) const {
   const size_t i = p.toIndex();
   return thermoUtil::computeInternalEnergy(
       workers[i]->getWvg(), workers[i]->getSsf(), rsValues[i], dim);
 }
 
-double StatePointGridBase::getFxcIntegrandValue(GridPoint p) const {
+double VSMasterBase::getFxcIntegrandValue(GridPoint p) const {
   const size_t i = p.toIndex();
   return thermoUtil::computeInternalEnergy(
       workers[i]->getWvg(), workers[i]->getSsf(), 1.0, dim);
 }
 
-const IVSWorker &StatePointGridBase::getWorkerAt(GridPoint p) const {
+const VSWorkerBase &VSMasterBase::getWorkerAt(GridPoint p) const {
   return *workers[p.toIndex()];
 }

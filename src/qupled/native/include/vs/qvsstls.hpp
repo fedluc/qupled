@@ -4,7 +4,7 @@
 #include "input.hpp"
 #include "numerics.hpp"
 #include "qstls.hpp"
-#include "vs/state_point_grid.hpp"
+#include "vs/vs_master.hpp"
 #include "vs/vsbase.hpp"
 #include <memory>
 
@@ -12,7 +12,7 @@
 // VSQstlsWorker
 // -----------------------------------------------------------------
 
-class VSQstlsWorker : public IVSWorker, public Qstls {
+class VSQstlsWorker : public VSWorkerBase, public Qstls {
 public:
 
   using InputType = QVSStlsInput;
@@ -42,19 +42,19 @@ public:
 // StatePointGridVSQstls
 // -----------------------------------------------------------------
 
-class StatePointGridVSQstls : public StatePointGridBase, public Qstls {
+class StatePointGridVSQstls : public VSMasterBase, public Qstls {
 public:
 
   explicit StatePointGridVSQstls(const std::shared_ptr<const QVSStlsInput> &in);
 
 protected:
 
-  void init() override;
-  void computeLfc() override;
-  void computeSsf() override;
-  double computeError() const override;
-  void updateSolution() override;
-  void initialGuess() override;
+  void   init()               override { masterInit(); }
+  void   computeLfc()         override { masterComputeLfc(); }
+  void   computeSsf()         override { masterComputeSsf(); }
+  double computeError() const override { return masterComputeError(); }
+  void   updateSolution()     override { masterUpdateSolution(); }
+  void   initialGuess()       override { masterInitialGuess(); }
 };
 
 // -----------------------------------------------------------------

@@ -1,5 +1,5 @@
-#ifndef VS_STATE_POINT_GRID_HPP
-#define VS_STATE_POINT_GRID_HPP
+#ifndef VS_VS_MASTER_HPP
+#define VS_VS_MASTER_HPP
 
 #include "dimensions_util.hpp"
 #include "vector2D.hpp"
@@ -49,13 +49,13 @@ namespace GridPoints {
 } // namespace GridPoints
 
 // -----------------------------------------------------------------
-// IVSWorker: abstract interface for all worker objects
+// VSWorkerBase: abstract interface for all worker objects
 // -----------------------------------------------------------------
 
-class IVSWorker {
+class VSWorkerBase {
 public:
 
-  virtual ~IVSWorker() = default;
+  virtual ~VSWorkerBase() = default;
   // Synchronized LFC protocol
   virtual void computeBaseLfc() = 0;
   virtual void applyLfcDiff(const Vector2D &v) = 0;
@@ -72,10 +72,10 @@ public:
 };
 
 // -----------------------------------------------------------------
-// StatePointGridBase: manages 9 workers and derivative bookkeeping
+// VSMasterBase: manages 9 workers and derivative bookkeeping
 // -----------------------------------------------------------------
 
-class StatePointGridBase {
+class VSMasterBase {
 public:
 
   void setAlpha(double alpha_) { alpha = alpha_; }
@@ -89,14 +89,14 @@ public:
   double getDegeneracy(GridPoint p) const;
   double getUInt(GridPoint p) const;
   double getFxcIntegrandValue(GridPoint p) const;
-  const IVSWorker &getWorkerAt(GridPoint p) const;
+  const VSWorkerBase &getWorkerAt(GridPoint p) const;
 
 protected:
 
-  StatePointGridBase(double drs_,
-                     double dTheta_,
-                     double dx_,
-                     dimensionsUtil::Dimension dim_);
+  VSMasterBase(double drs_,
+               double dTheta_,
+               double dx_,
+               dimensionsUtil::Dimension dim_);
 
   struct DerivativeData {
     enum class Type { CENTERED, FORWARD, BACKWARD };
@@ -106,7 +106,7 @@ protected:
   };
 
   static constexpr int N = 9;
-  std::array<std::unique_ptr<IVSWorker>, N> workers;
+  std::array<std::unique_ptr<VSWorkerBase>, N> workers;
   std::array<Vector2D, N> lfcDerivatives;
   std::array<DerivativeData, N> rsDerivData;
   std::array<DerivativeData, N> thetaDerivData;
@@ -122,6 +122,27 @@ protected:
 
   void setupDerivativeData();
   void computeSynchronizedLfc();
+
+  // Non-virtual iteration helpers — subclasses delegate to these
+  void masterInit() {
+    if (initDone) return;
+    for (auto &w : workers) w->workerInit();
+    initDone = true;
+  }
+  void masterComputeLfc() { computeSynchronizedLfc(); }
+  void masterComputeSsf() {
+    for (auto &w : workers) w->workerComputeSsf();
+  }
+  double masterComputeError() const {
+    lastError = workers[GridPoints::CENTER.toIndex()]->workerComputeError();
+    return lastError;
+  }
+  void masterUpdateSolution() {
+    for (auto &w : workers) w->workerUpdateSolution();
+  }
+  void masterInitialGuess() {
+    for (auto &w : workers) w->workerInitialGuess();
+  }
 
 private:
 

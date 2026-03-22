@@ -3,14 +3,14 @@
 
 #include "input.hpp"
 #include "stls.hpp"
-#include "vs/state_point_grid.hpp"
+#include "vs/vs_master.hpp"
 #include "vs/vsbase.hpp"
 
 // -----------------------------------------------------------------
 // VSStlsWorker: implements IVSWorker for STLS-based VS workers
 // -----------------------------------------------------------------
 
-class VSStlsWorker : public IVSWorker, public Stls {
+class VSStlsWorker : public VSWorkerBase, public Stls {
 public:
 
   using InputType = VSStlsInput;
@@ -38,19 +38,19 @@ public:
 // StatePointGridVSStls: manages 9 VSStlsWorkers, inherits Stls loop
 // -----------------------------------------------------------------
 
-class StatePointGridVSStls : public StatePointGridBase, public Stls {
+class StatePointGridVSStls : public VSMasterBase, public Stls {
 public:
 
   explicit StatePointGridVSStls(const std::shared_ptr<const VSStlsInput> &in);
 
 protected:
 
-  void init() override;
-  void computeLfc() override;
-  void computeSsf() override;
-  double computeError() const override;
-  void updateSolution() override;
-  void initialGuess() override;
+  void   init()               override { masterInit(); }
+  void   computeLfc()         override { masterComputeLfc(); }
+  void   computeSsf()         override { masterComputeSsf(); }
+  double computeError() const override { return masterComputeError(); }
+  void   updateSolution()     override { masterUpdateSolution(); }
+  void   initialGuess()       override { masterInitialGuess(); }
 };
 
 // -----------------------------------------------------------------

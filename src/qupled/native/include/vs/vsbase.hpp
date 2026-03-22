@@ -4,7 +4,7 @@
 #include "input.hpp"
 #include "logger.hpp"
 #include "numerics.hpp"
-#include "vs/state_point_grid.hpp"
+#include "vs/vs_master.hpp"
 #include <vector>
 
 // -----------------------------------------------------------------
@@ -32,8 +32,6 @@ public:
   double get() const;
 
 private:
-
-  QAdder() = default;
 
   Mode mode;
 

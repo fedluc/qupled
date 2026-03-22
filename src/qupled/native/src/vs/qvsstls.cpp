@@ -54,10 +54,10 @@ double VSQstlsWorker::computeQAdder(const std::shared_ptr<Integrator2D> &itg2D,
 
 StatePointGridVSQstls::StatePointGridVSQstls(
     const std::shared_ptr<const QVSStlsInput> &in)
-    : StatePointGridBase(in->getCouplingResolution(),
-                         in->getDegeneracyResolution(),
-                         in->getWaveVectorGridRes(),
-                         in->getDimension()),
+    : VSMasterBase(in->getCouplingResolution(),
+                   in->getDegeneracyResolution(),
+                   in->getWaveVectorGridRes(),
+                   in->getDimension()),
       Qstls(in, false) {
   const double drs_ = in->getCouplingResolution();
   const double dTheta_ = in->getDegeneracyResolution();
@@ -83,35 +83,6 @@ StatePointGridVSQstls::StatePointGridVSQstls(
   setupDerivativeData();
 }
 
-void StatePointGridVSQstls::init() {
-  if (initDone) return;
-  for (auto &w : workers)
-    w->workerInit();
-  initDone = true;
-}
-
-void StatePointGridVSQstls::computeLfc() { computeSynchronizedLfc(); }
-
-void StatePointGridVSQstls::computeSsf() {
-  for (auto &w : workers)
-    w->workerComputeSsf();
-}
-
-double StatePointGridVSQstls::computeError() const {
-  lastError = workers[CENTER.toIndex()]->workerComputeError();
-  return lastError;
-}
-
-void StatePointGridVSQstls::updateSolution() {
-  for (auto &w : workers)
-    w->workerUpdateSolution();
-}
-
-void StatePointGridVSQstls::initialGuess() {
-  for (auto &w : workers)
-    w->workerInitialGuess();
-}
-
 // -----------------------------------------------------------------
 // QVSStls
 // -----------------------------------------------------------------
@@ -127,7 +98,7 @@ QVSStls::QVSStls(const std::shared_ptr<const QVSStlsInput> &in)
   }
   const bool segregatedItg = in->getInt2DScheme() == "segregated";
   if (segregatedItg) {
-    itgGrid = grid.StatePointGridBase::getWvg(GridPoints::CENTER);
+    itgGrid = grid.VSMasterBase::getWvg(GridPoints::CENTER);
   }
   setRsGrid();
   setFxcIntegrand();
@@ -144,7 +115,7 @@ int QVSStls::runGrid() {
   println(formatUtil::format("Alpha = {:.5e}, Residual error "
                              "(structural properties) = {:.5e}",
                              grid.getAlpha(),
-                             grid.StatePointGridBase::getError()));
+                             grid.VSMasterBase::getError()));
   return grid.compute();
 }
 
@@ -190,4 +161,4 @@ double QVSStls::getUInt() const {
       .getUInt();
 }
 
-double QVSStls::getError() const { return grid.StatePointGridBase::getError(); }
+double QVSStls::getError() const { return grid.VSMasterBase::getError(); }
