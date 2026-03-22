@@ -1,4 +1,4 @@
-#include "vs/vs_master.hpp"
+#include "vs/vs_master_base.hpp"
 #include "num_util.hpp"
 #include "thermo_util.hpp"
 #include <cassert>

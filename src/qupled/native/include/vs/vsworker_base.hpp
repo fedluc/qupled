@@ -1,5 +1,5 @@
-#ifndef VS_VS_WORKER_BASE_HPP
-#define VS_VS_WORKER_BASE_HPP
+#ifndef VS_VSWORKER_BASE_HPP
+#define VS_VSWORKER_BASE_HPP
 
 #include "vector2D.hpp"
 #include <vector>

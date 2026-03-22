@@ -3,7 +3,7 @@
 
 #include "input.hpp"
 #include "stls.hpp"
-#include "vs/vs_master.hpp"
+#include "vs/vs_master_base.hpp"
 #include "vs/vsbase.hpp"
 
 // -----------------------------------------------------------------

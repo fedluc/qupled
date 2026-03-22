@@ -4,7 +4,7 @@
 #include "input.hpp"
 #include "numerics.hpp"
 #include "qstls.hpp"
-#include "vs/vs_master.hpp"
+#include "vs/vs_master_base.hpp"
 #include "vs/vsbase.hpp"
 #include <memory>
 

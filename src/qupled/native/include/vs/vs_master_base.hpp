@@ -1,9 +1,9 @@
-#ifndef VS_VS_MASTER_HPP
-#define VS_VS_MASTER_HPP
+#ifndef VS_VS_MASTER_BASE_HPP
+#define VS_VS_MASTER_BASE_HPP
 
 #include "dimensions_util.hpp"
 #include "vs/grid_point.hpp"
-#include "vs/vs_worker_base.hpp"
+#include "vs/vsworker_base.hpp"
 #include <array>
 #include <memory>
 #include <vector>
