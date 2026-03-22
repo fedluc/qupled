@@ -49,11 +49,10 @@ double VSQstlsWorker::computeQAdder(const std::shared_ptr<Integrator2D> &itg2D,
 }
 
 // -----------------------------------------------------------------
-// StatePointGridVSQstls
+// VSQstlsMaster
 // -----------------------------------------------------------------
 
-StatePointGridVSQstls::StatePointGridVSQstls(
-    const std::shared_ptr<const QVSStlsInput> &in)
+VSQstlsMaster::VSQstlsMaster(const std::shared_ptr<const QVSStlsInput> &in)
     : VSMasterBase(in->getCouplingResolution(),
                    in->getDegeneracyResolution(),
                    in->getWaveVectorGridRes(),

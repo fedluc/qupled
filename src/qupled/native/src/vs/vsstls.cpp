@@ -9,11 +9,10 @@ using namespace MPIUtil;
 using namespace GridPoints;
 
 // -----------------------------------------------------------------
-// StatePointGridVSStls
+// VSStlsMaster
 // -----------------------------------------------------------------
 
-StatePointGridVSStls::StatePointGridVSStls(
-    const std::shared_ptr<const VSStlsInput> &in)
+VSStlsMaster::VSStlsMaster(const std::shared_ptr<const VSStlsInput> &in)
     : VSMasterBase(in->getCouplingResolution(),
                    in->getDegeneracyResolution(),
                    in->getWaveVectorGridRes(),
@@ -85,9 +84,8 @@ double VSStls::getFxcIntegrandValue(GridPoint p) const {
 }
 
 double VSStls::computeQRaw(GridPoint p) const {
-  return QAdder::classical(grid.VSMasterBase::getWvg(p),
-                           grid.VSMasterBase::getSsf(p),
-                           inPtr)
+  return QAdder::classical(
+             grid.VSMasterBase::getWvg(p), grid.VSMasterBase::getSsf(p), inPtr)
       .get();
 }
 

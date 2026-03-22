@@ -2,74 +2,11 @@
 #define VS_VS_MASTER_HPP
 
 #include "dimensions_util.hpp"
-#include "vector2D.hpp"
+#include "vs/grid_point.hpp"
+#include "vs/vs_worker_base.hpp"
 #include <array>
 #include <memory>
 #include <vector>
-
-// -----------------------------------------------------------------
-// Strong type for addressing a point in the 3x3 state point grid
-// -----------------------------------------------------------------
-
-struct GridPoint {
-
-  enum class Rs { DOWN = -1, CENTER = 0, UP = 1 };
-  enum class Theta { DOWN = -1, CENTER = 0, UP = 1 };
-
-  Rs rs;
-  Theta theta;
-
-  // Maps to flat index 0-8 (theta-outer, rs-inner, matching legacy StructIdx)
-  constexpr size_t toIndex() const {
-    return static_cast<size_t>((static_cast<int>(theta) + 1) * 3
-                               + (static_cast<int>(rs) + 1));
-  }
-};
-
-// Named constants for all 9 grid points (defined after struct is complete)
-namespace GridPoints {
-  inline constexpr GridPoint RS_DOWN_THETA_DOWN = {GridPoint::Rs::DOWN,
-                                                   GridPoint::Theta::DOWN};
-  inline constexpr GridPoint RS_THETA_DOWN = {GridPoint::Rs::CENTER,
-                                              GridPoint::Theta::DOWN};
-  inline constexpr GridPoint RS_UP_THETA_DOWN = {GridPoint::Rs::UP,
-                                                 GridPoint::Theta::DOWN};
-  inline constexpr GridPoint RS_DOWN_THETA = {GridPoint::Rs::DOWN,
-                                              GridPoint::Theta::CENTER};
-  inline constexpr GridPoint CENTER = {GridPoint::Rs::CENTER,
-                                       GridPoint::Theta::CENTER};
-  inline constexpr GridPoint RS_UP_THETA = {GridPoint::Rs::UP,
-                                            GridPoint::Theta::CENTER};
-  inline constexpr GridPoint RS_DOWN_THETA_UP = {GridPoint::Rs::DOWN,
-                                                 GridPoint::Theta::UP};
-  inline constexpr GridPoint RS_THETA_UP = {GridPoint::Rs::CENTER,
-                                            GridPoint::Theta::UP};
-  inline constexpr GridPoint RS_UP_THETA_UP = {GridPoint::Rs::UP,
-                                               GridPoint::Theta::UP};
-} // namespace GridPoints
-
-// -----------------------------------------------------------------
-// VSWorkerBase: abstract interface for all worker objects
-// -----------------------------------------------------------------
-
-class VSWorkerBase {
-public:
-
-  virtual ~VSWorkerBase() = default;
-  // Synchronized LFC protocol
-  virtual void computeBaseLfc() = 0;
-  virtual void applyLfcDiff(const Vector2D &v) = 0;
-  // Getters
-  virtual const Vector2D &getLfc() const = 0;
-  virtual const std::vector<double> &getWvg() const = 0;
-  virtual const std::vector<double> &getSsf() const = 0;
-  // Iteration protocol
-  virtual void workerInit() = 0;
-  virtual void workerInitialGuess() = 0;
-  virtual void workerComputeSsf() = 0;
-  virtual double workerComputeError() const = 0;
-  virtual void workerUpdateSolution() = 0;
-};
 
 // -----------------------------------------------------------------
 // VSMasterBase: manages 9 workers and derivative bookkeeping
@@ -126,22 +63,26 @@ protected:
   // Non-virtual iteration helpers — subclasses delegate to these
   void masterInit() {
     if (initDone) return;
-    for (auto &w : workers) w->workerInit();
+    for (auto &w : workers)
+      w->workerInit();
     initDone = true;
   }
   void masterComputeLfc() { computeSynchronizedLfc(); }
   void masterComputeSsf() {
-    for (auto &w : workers) w->workerComputeSsf();
+    for (auto &w : workers)
+      w->workerComputeSsf();
   }
   double masterComputeError() const {
     lastError = workers[GridPoints::CENTER.toIndex()]->workerComputeError();
     return lastError;
   }
   void masterUpdateSolution() {
-    for (auto &w : workers) w->workerUpdateSolution();
+    for (auto &w : workers)
+      w->workerUpdateSolution();
   }
   void masterInitialGuess() {
-    for (auto &w : workers) w->workerInitialGuess();
+    for (auto &w : workers)
+      w->workerInitialGuess();
   }
 
 private:

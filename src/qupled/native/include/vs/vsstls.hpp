@@ -35,22 +35,22 @@ public:
 };
 
 // -----------------------------------------------------------------
-// StatePointGridVSStls: manages 9 VSStlsWorkers, inherits Stls loop
+// VSStlsMaster: manages 9 VSStlsWorkers, inherits Stls loop
 // -----------------------------------------------------------------
 
-class StatePointGridVSStls : public VSMasterBase, public Stls {
+class VSStlsMaster : public VSMasterBase, public Stls {
 public:
 
-  explicit StatePointGridVSStls(const std::shared_ptr<const VSStlsInput> &in);
+  explicit VSStlsMaster(const std::shared_ptr<const VSStlsInput> &in);
 
 protected:
 
-  void   init()               override { masterInit(); }
-  void   computeLfc()         override { masterComputeLfc(); }
-  void   computeSsf()         override { masterComputeSsf(); }
+  void init() override { masterInit(); }
+  void computeLfc() override { masterComputeLfc(); }
+  void computeSsf() override { masterComputeSsf(); }
   double computeError() const override { return masterComputeError(); }
-  void   updateSolution()     override { masterUpdateSolution(); }
-  void   initialGuess()       override { masterInitialGuess(); }
+  void updateSolution() override { masterUpdateSolution(); }
+  void initialGuess() override { masterInitialGuess(); }
 };
 
 // -----------------------------------------------------------------
@@ -74,7 +74,7 @@ public:
 private:
 
   std::shared_ptr<const VSStlsInput> inPtr;
-  StatePointGridVSStls grid;
+  VSStlsMaster grid;
 
   const VSInput &in() const override;
   const Input &inScheme() const override;

@@ -4,7 +4,7 @@
 #include "input.hpp"
 #include "logger.hpp"
 #include "numerics.hpp"
-#include "vs/vs_master.hpp"
+#include "vs/grid_point.hpp"
 #include <vector>
 
 // -----------------------------------------------------------------

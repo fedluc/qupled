@@ -39,22 +39,22 @@ public:
 };
 
 // -----------------------------------------------------------------
-// StatePointGridVSQstls
+// VSQstlsMaster
 // -----------------------------------------------------------------
 
-class StatePointGridVSQstls : public VSMasterBase, public Qstls {
+class VSQstlsMaster : public VSMasterBase, public Qstls {
 public:
 
-  explicit StatePointGridVSQstls(const std::shared_ptr<const QVSStlsInput> &in);
+  explicit VSQstlsMaster(const std::shared_ptr<const QVSStlsInput> &in);
 
 protected:
 
-  void   init()               override { masterInit(); }
-  void   computeLfc()         override { masterComputeLfc(); }
-  void   computeSsf()         override { masterComputeSsf(); }
+  void init() override { masterInit(); }
+  void computeLfc() override { masterComputeLfc(); }
+  void computeSsf() override { masterComputeSsf(); }
   double computeError() const override { return masterComputeError(); }
-  void   updateSolution()     override { masterUpdateSolution(); }
-  void   initialGuess()       override { masterInitialGuess(); }
+  void updateSolution() override { masterUpdateSolution(); }
+  void initialGuess() override { masterInitialGuess(); }
 };
 
 // -----------------------------------------------------------------
@@ -78,7 +78,7 @@ public:
 private:
 
   std::shared_ptr<const QVSStlsInput> inPtr;
-  StatePointGridVSQstls grid;
+  VSQstlsMaster grid;
   std::shared_ptr<Integrator2D> itg2D;
   std::vector<double> itgGrid;
 
