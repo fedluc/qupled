@@ -27,11 +27,11 @@ public:
   const std::vector<double> &getWvg() const override { return wvg; }
   const std::vector<double> &getSsf() const override { return ssf; }
 
-  void workerInit() override { HF::init(); }
-  void workerInitialGuess() override { Stls::initialGuess(); }
-  void workerComputeSsf() override { Stls::computeSsf(); }
-  double workerComputeError() const override { return Stls::computeError(); }
-  void workerUpdateSolution() override { Stls::updateSolution(); }
+  void init() override { HF::init(); }
+  void initialGuess() override { Stls::initialGuess(); }
+  void computeSsf() override { Stls::computeSsf(); }
+  double computeError() const override { return Stls::computeError(); }
+  void updateSolution() override { Stls::updateSolution(); }
 };
 
 // -----------------------------------------------------------------

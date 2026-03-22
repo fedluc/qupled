@@ -61,29 +61,12 @@ protected:
   void computeSynchronizedLfc();
 
   // Non-virtual iteration helpers — subclasses delegate to these
-  void masterInit() {
-    if (initDone) return;
-    for (auto &w : workers)
-      w->workerInit();
-    initDone = true;
-  }
-  void masterComputeLfc() { computeSynchronizedLfc(); }
-  void masterComputeSsf() {
-    for (auto &w : workers)
-      w->workerComputeSsf();
-  }
-  double masterComputeError() const {
-    lastError = workers[GridPoints::CENTER.toIndex()]->workerComputeError();
-    return lastError;
-  }
-  void masterUpdateSolution() {
-    for (auto &w : workers)
-      w->workerUpdateSolution();
-  }
-  void masterInitialGuess() {
-    for (auto &w : workers)
-      w->workerInitialGuess();
-  }
+  void masterInit();
+  void masterComputeLfc();
+  void masterComputeSsf();
+  double masterComputeError() const;
+  void masterUpdateSolution();
+  void masterInitialGuess();
 
 private:
 

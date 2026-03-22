@@ -144,6 +144,37 @@ double VSMasterBase::derivative(double f0,
   }
 }
 
+// Iteration helpers
+
+void VSMasterBase::masterInit() {
+  if (initDone) return;
+  for (auto &w : workers)
+    w->init();
+  initDone = true;
+}
+
+void VSMasterBase::masterComputeLfc() { computeSynchronizedLfc(); }
+
+void VSMasterBase::masterComputeSsf() {
+  for (auto &w : workers)
+    w->computeSsf();
+}
+
+double VSMasterBase::masterComputeError() const {
+  lastError = workers[CENTER.toIndex()]->computeError();
+  return lastError;
+}
+
+void VSMasterBase::masterUpdateSolution() {
+  for (auto &w : workers)
+    w->updateSolution();
+}
+
+void VSMasterBase::masterInitialGuess() {
+  for (auto &w : workers)
+    w->initialGuess();
+}
+
 // Getters
 
 const std::vector<double> &VSMasterBase::getSsf(GridPoint p) const {

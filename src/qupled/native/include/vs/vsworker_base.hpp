@@ -20,11 +20,11 @@ public:
   virtual const std::vector<double> &getWvg() const = 0;
   virtual const std::vector<double> &getSsf() const = 0;
   // Iteration protocol
-  virtual void workerInit() = 0;
-  virtual void workerInitialGuess() = 0;
-  virtual void workerComputeSsf() = 0;
-  virtual double workerComputeError() const = 0;
-  virtual void workerUpdateSolution() = 0;
+  virtual void init() = 0;
+  virtual void initialGuess() = 0;
+  virtual void computeSsf() = 0;
+  virtual double computeError() const = 0;
+  virtual void updateSolution() = 0;
 };
 
 #endif
