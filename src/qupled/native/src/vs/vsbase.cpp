@@ -1,4 +1,4 @@
-#include "vsbase.hpp"
+#include "vs/vsbase.hpp"
 #include "format.hpp"
 #include "input.hpp"
 #include "mpi_util.hpp"
@@ -8,6 +8,8 @@
 
 using namespace std;
 using namespace GridPoints;
+using ItgParam = Integrator1D::Param;
+using Itg2DParam = Integrator2D::Param;
 
 // -----------------------------------------------------------------
 // VSBase
@@ -64,6 +66,23 @@ double VSBase::computeAlpha() {
                        - (2.0 / 3.0) * (fxctt + fxcrt) + (1.0 / 3.0) * fxct;
   const double denom = Q + (1.0 / 3.0) * Qr + (2.0 / 3.0) * Qt;
   return numer / denom;
+}
+
+std::vector<double> VSBase::computeQData() {
+  const double rs  = getCoupling(GridPoints::CENTER);
+  const double q   = computeQRaw(GridPoints::CENTER) / rs;
+  const double drs = getCoupling(GridPoints::RS_UP_THETA) - rs;
+  const double qr  = (computeQRaw(GridPoints::RS_UP_THETA)
+                      - computeQRaw(GridPoints::RS_DOWN_THETA))
+                     / (2.0 * drs)
+                     - q;
+  const double theta = getDegeneracy(GridPoints::CENTER);
+  const double dt    = getDegeneracy(GridPoints::RS_THETA_UP) - theta;
+  const double qt    = theta
+                       * (computeQRaw(GridPoints::RS_THETA_UP) / rs
+                          - computeQRaw(GridPoints::RS_THETA_DOWN) / rs)
+                       / (2.0 * dt);
+  return {q, qr, qt};
 }
 
 // -----------------------------------------------------------------
@@ -185,4 +204,81 @@ GridPoint VSBase::getOutputGridPoint() const {
   if (!zeroCoupling && zeroDegeneracy) return RS_THETA_DOWN;
   if (zeroCoupling && !zeroDegeneracy) return RS_DOWN_THETA;
   return CENTER;
+}
+
+// -----------------------------------------------------------------
+// QAdder
+// -----------------------------------------------------------------
+
+QAdder QAdder::classical(const std::vector<double> &wvg,
+                         const std::vector<double> &ssf,
+                         const std::shared_ptr<const Input> &in) {
+  QAdder q;
+  q.mode     = Mode::CLASSICAL;
+  q.classWvg = wvg;
+  q.classSsf = ssf;
+  q.classIn  = in;
+  return q;
+}
+
+QAdder QAdder::quantum(double Theta,
+                       double mu,
+                       double limitMin,
+                       double limitMax,
+                       const std::vector<double> &itgGrid,
+                       std::shared_ptr<Integrator1D> itg1,
+                       std::shared_ptr<Integrator2D> itg2,
+                       std::shared_ptr<Interpolator1D> interp) {
+  QAdder q;
+  q.mode       = Mode::QUANTUM;
+  q.Theta      = Theta;
+  q.mu         = mu;
+  q.limits     = {limitMin, limitMax};
+  q.itgGridPtr = &itgGrid;
+  q.itg1       = itg1;
+  q.itg2       = itg2;
+  q.interp     = interp;
+  return q;
+}
+
+double QAdder::get() const {
+  if (mode == Mode::CLASSICAL) {
+    return thermoUtil::computeInternalEnergy(classWvg, classSsf, 1.0, classIn->getDimension());
+  }
+  double Denominator;
+  getIntDenominator(Denominator);
+  auto func1 = [&](const double &w) -> double { return integrandNumerator2(w); };
+  auto func2 = [&](const double &q) -> double { return integrandNumerator1(q); };
+  itg2->compute(func1, func2,
+                Itg2DParam(limits.first, limits.second, limits.first, limits.second),
+                *itgGridPtr);
+  return 12.0 / (M_PI * numUtil::lambda) * itg2->getSolution() / Denominator;
+}
+
+double QAdder::ssf(const double &y) const { return interp->eval(y); }
+
+double QAdder::integrandDenominator(const double y) const {
+  const double y2 = y * y;
+  return 1.0 / (exp(y2 / Theta - mu) + 1.0);
+}
+
+double QAdder::integrandNumerator1(const double q) const {
+  const double w = itg2->getX();
+  if (q == 0.0) { return 0.0; }
+  const double w2 = w * w;
+  const double q2 = q * q;
+  double logarg = (w + 2 * q) / (w - 2 * q);
+  logarg = (logarg < 0.0) ? -logarg : logarg;
+  if (w == 0.0) { return 1.0 / (12.0 * (exp(q2 / Theta - mu) + 1.0)); }
+  return q2 / (exp(q2 / Theta - mu) + 1.0) * (q / w * log(logarg) - 1.0) / w2;
+}
+
+double QAdder::integrandNumerator2(const double w) const {
+  return (ssf(w) - 1.0);
+}
+
+void QAdder::getIntDenominator(double &res) const {
+  auto func = [&](double y) -> double { return integrandDenominator(y); };
+  itg1->compute(func, ItgParam(limits.first, limits.second));
+  res = itg1->getSolution();
 }

@@ -71,10 +71,10 @@ pybind11_add_module(native
 	stlsiet.cpp
 	qstls.cpp
 	qstlsiet.cpp
-	state_point_grid.cpp
-	vsbase.cpp
-	vsstls.cpp
-	qvsstls.cpp
+	vs/state_point_grid.cpp
+	vs/vsbase.cpp
+	vs/vsstls.cpp
+	vs/qvsstls.cpp
 	python_interface/util.cpp
 	python_interface/inputs.cpp
 	python_interface/schemes.cpp
