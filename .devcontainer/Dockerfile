@@ -17,7 +17,8 @@ COPY devtool $SETUP_DIR/devtool
 WORKDIR $SETUP_DIR
 RUN chmod +x devtool && \
     . $PYTHON_VENV_ROOT/bin/activate && \
-    ./devtool install-deps
+    ./devtool install-deps && \
+    chown -R vscode:vscode $PYTHON_VENV_ROOT
 WORKDIR /
 RUN rm -rf $SETUP_DIR
 
