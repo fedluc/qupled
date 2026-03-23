@@ -227,16 +227,26 @@ double VSBase::getFxcIntegrandValue(GridPoint p) const {
   return grid().getFxcIntegrandValue(p);
 }
 
-const std::vector<double> &VSBase::getSsf() const { return grid().getSsf(); }
+const std::vector<double> &VSBase::getSsf() const {
+  return grid().getSsf(getOutputGridPoint());
+}
 
-const Vector2D &VSBase::getLfc() const { return grid().getLfc(); }
+const Vector2D &VSBase::getLfc() const {
+  return grid().getLfc(getOutputGridPoint());
+}
 
-const std::vector<double> &VSBase::getWvg() const { return grid().getWvg(); }
+const std::vector<double> &VSBase::getWvg() const {
+  return grid().getWvg(getOutputGridPoint());
+}
 
-const Vector2D &VSBase::getIdr() const { return grid().getIdr(); }
+const Vector2D &VSBase::getIdr() const {
+  return grid().getIdr(getOutputGridPoint());
+}
 
-std::vector<double> VSBase::getSdr() const { return grid().getSdr(); }
+std::vector<double> VSBase::getSdr() const {
+  return grid().getSdr(getOutputGridPoint());
+}
 
-double VSBase::getUInt() const { return grid().getUInt(); }
+double VSBase::getUInt() const { return grid().getUInt(getOutputGridPoint()); }
 
 double VSBase::getError() const { return grid().getError(); }

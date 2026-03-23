@@ -20,6 +20,8 @@ public:
   virtual std::vector<double> getSdr() const = 0;
   virtual double getUInt() const = 0;
   virtual double getQAdder() const = 0;
+  virtual double getCoupling() const = 0;
+  virtual double getDegeneracy() const = 0;
   // Iteration protocol
   virtual void init() = 0;
   virtual void initialGuess() = 0;

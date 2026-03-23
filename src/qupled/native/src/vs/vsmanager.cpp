@@ -187,12 +187,20 @@ const std::vector<double> &VSManager::getWvg(GridPoint p) const {
   return workers[p.toIndex()]->getWvg();
 }
 
+const Vector2D &VSManager::getIdr(GridPoint p) const {
+  return workers[p.toIndex()]->getIdr();
+}
+
+std::vector<double> VSManager::getSdr(GridPoint p) const {
+  return workers[p.toIndex()]->getSdr();
+}
+
 double VSManager::getCoupling(GridPoint p) const {
-  return rsValues[p.toIndex()];
+  return workers[p.toIndex()]->getCoupling();
 }
 
 double VSManager::getDegeneracy(GridPoint p) const {
-  return thetaValues[p.toIndex()];
+  return workers[p.toIndex()]->getDegeneracy();
 }
 
 double VSManager::getUInt(GridPoint p) const {
@@ -204,33 +212,7 @@ double VSManager::getQAdder(GridPoint p) const {
 }
 
 double VSManager::getFxcIntegrandValue(GridPoint p) const {
-  const size_t i = p.toIndex();
-  return thermoUtil::computeInternalEnergy(
-      workers[i]->getWvg(), workers[i]->getSsf(), 1.0, dim);
+  const auto &ssf = getSsf(p);
+  const auto &wvg = getWvg(p);
+  return thermoUtil::computeInternalEnergy(wvg, ssf, 1.0, dim);
 }
-
-const VSWorker &VSManager::getWorkerAt(GridPoint p) const {
-  return *workers[p.toIndex()];
-}
-
-const std::vector<double> &VSManager::getSsf() const {
-  return getWorkerAt(CENTER).getSsf();
-}
-
-const Vector2D &VSManager::getLfc() const {
-  return getWorkerAt(CENTER).getLfc();
-}
-
-const std::vector<double> &VSManager::getWvg() const {
-  return getWorkerAt(CENTER).getWvg();
-}
-
-const Vector2D &VSManager::getIdr() const {
-  return getWorkerAt(CENTER).getIdr();
-}
-
-std::vector<double> VSManager::getSdr() const {
-  return getWorkerAt(CENTER).getSdr();
-}
-
-double VSManager::getUInt() const { return getWorkerAt(CENTER).getUInt(); }

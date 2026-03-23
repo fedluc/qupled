@@ -24,19 +24,13 @@ public:
   const std::vector<double> &getSsf(GridPoint p) const;
   const Vector2D &getLfc(GridPoint p) const;
   const std::vector<double> &getWvg(GridPoint p) const;
+  const Vector2D &getIdr(GridPoint p) const;
+  std::vector<double> getSdr(GridPoint p) const;
   double getCoupling(GridPoint p) const;
   double getDegeneracy(GridPoint p) const;
   double getUInt(GridPoint p) const;
   double getQAdder(GridPoint p) const;
   double getFxcIntegrandValue(GridPoint p) const;
-  const VSWorker &getWorkerAt(GridPoint p) const;
-  // Convenience getters for central worker (delegate to worker interface)
-  const std::vector<double> &getSsf() const;
-  const Vector2D &getLfc() const;
-  const std::vector<double> &getWvg() const;
-  const Vector2D &getIdr() const;
-  std::vector<double> getSdr() const;
-  double getUInt() const;
 
 protected:
 

@@ -22,6 +22,8 @@ public:
   std::vector<double> getSdr() const override { return Stls::getSdr(); }
   double getUInt() const override { return Stls::getUInt(); }
   double getQAdder() const override { return getUInt(); }
+  double getCoupling() const override { return inPtr->getCoupling(); }
+  double getDegeneracy() const override { return inPtr->getDegeneracy(); }
   void init() override { Stls::init(); }
   void initialGuess() override { Stls::initialGuess(); }
   void computeSsf() override { Stls::computeSsf(); }
