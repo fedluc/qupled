@@ -58,15 +58,14 @@ protected:
   dimensionsUtil::Dimension dim;
 
   void setupDerivativeData();
-  void computeSynchronizedLfc();
 
   // Non-virtual iteration helpers — subclasses delegate to these
-  void masterInit();
-  void masterComputeLfc();
-  void masterComputeSsf();
-  double masterComputeError() const;
-  void masterUpdateSolution();
-  void masterInitialGuess();
+  void init();
+  void computeLfc();
+  void computeSsf();
+  double computeError() const;
+  void updateSolution();
+  void initialGuess();
 
 private:
 

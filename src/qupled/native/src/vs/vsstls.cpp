@@ -36,7 +36,7 @@ VSStlsMaster::VSStlsMaster(const std::shared_ptr<const VSStlsInput> &in)
       const size_t idx = gp.toIndex();
       rsValues[idx] = rsTmp;
       thetaValues[idx] = thetaTmp;
-      workers[idx] = std::make_unique<VSStlsWorker>(inTmp, false, gp);
+      workers[idx] = std::make_unique<VSStlsWorker>(inTmp);
     }
   }
   setupDerivativeData();

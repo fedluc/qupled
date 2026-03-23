@@ -17,9 +17,8 @@ using Itg2DParam = Integrator2D::Param;
 // -----------------------------------------------------------------
 
 VSQstlsWorker::VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
-                             bool verbose,
                              GridPoint p)
-    : Qstls(in, verbose) {
+    : Qstls(in, false) {
   const string &theory = in->getTheory();
   switch (p.theta) {
   case GridPoint::Theta::DOWN:
@@ -76,7 +75,7 @@ VSQstlsMaster::VSQstlsMaster(const std::shared_ptr<const QVSStlsInput> &in)
       const size_t idx = gp.toIndex();
       rsValues[idx] = rsTmp;
       thetaValues[idx] = thetaTmp;
-      workers[idx] = std::make_unique<VSQstlsWorker>(inTmp, false, gp);
+      workers[idx] = std::make_unique<VSQstlsWorker>(inTmp, gp);
     }
   }
   setupDerivativeData();

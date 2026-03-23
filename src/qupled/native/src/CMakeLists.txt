@@ -71,7 +71,7 @@ pybind11_add_module(native
 	stlsiet.cpp
 	qstls.cpp
 	qstlsiet.cpp
-	vs/vs_master_base.cpp
+	vs/vsmaster_base.cpp
 	vs/vsbase.cpp
 	vs/vsstls.cpp
 	vs/qvsstls.cpp

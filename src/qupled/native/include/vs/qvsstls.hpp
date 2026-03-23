@@ -4,8 +4,8 @@
 #include "input.hpp"
 #include "numerics.hpp"
 #include "qstls.hpp"
-#include "vs/vs_master_base.hpp"
 #include "vs/vsbase.hpp"
+#include "vs/vsmaster_base.hpp"
 #include <memory>
 
 // -----------------------------------------------------------------
@@ -18,21 +18,19 @@ public:
   using InputType = QVSStlsInput;
 
   VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
-                bool verbose,
                 GridPoint p);
 
-  void applyLfcDiff(const Vector2D &v) override { lfc.diff(v); }
-  void computeBaseLfc() override { Qstls::computeLfc(); }
-
-  const Vector2D &getLfc() const override { return lfc; }
-  const std::vector<double> &getWvg() const override { return wvg; }
-  const std::vector<double> &getSsf() const override { return ssf; }
+  const Vector2D &getLfc() const override { return Qstls::getLfc(); }
+  const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
+  const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
 
   void init() override { Qstls::init(); }
-  void initialGuess() override { Stls::initialGuess(); }
-  void computeSsf() override { Stls::computeSsf(); }
-  double computeError() const override { return Stls::computeError(); }
-  void updateSolution() override { Stls::updateSolution(); }
+  void initialGuess() override { Qstls::initialGuess(); }
+  void computeSsf() override { Qstls::computeSsf(); }
+  void computeLfc() override { Qstls::computeLfc(); }
+  void applyLfcDiff(const Vector2D &v) override { lfc.diff(v); }
+  double computeError() const override { return Qstls::computeError(); }
+  void updateSolution() override { Qstls::updateSolution(); }
 
   double computeQAdder(const std::shared_ptr<Integrator2D> &itg2D,
                        const std::vector<double> &itgGrid) const;
@@ -49,12 +47,12 @@ public:
 
 protected:
 
-  void init() override { masterInit(); }
-  void computeLfc() override { masterComputeLfc(); }
-  void computeSsf() override { masterComputeSsf(); }
-  double computeError() const override { return masterComputeError(); }
-  void updateSolution() override { masterUpdateSolution(); }
-  void initialGuess() override { masterInitialGuess(); }
+  void init() override { VSMasterBase::init(); }
+  void computeLfc() override { VSMasterBase::computeLfc(); }
+  void computeSsf() override { VSMasterBase::computeSsf(); }
+  double computeError() const override { return VSMasterBase::computeError(); }
+  void updateSolution() override { VSMasterBase::updateSolution(); }
+  void initialGuess() override { VSMasterBase::initialGuess(); }
 };
 
 // -----------------------------------------------------------------

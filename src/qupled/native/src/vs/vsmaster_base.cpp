@@ -1,4 +1,4 @@
-#include "vs/vs_master_base.hpp"
+#include "vs/vsmaster_base.hpp"
 #include "num_util.hpp"
 #include "thermo_util.hpp"
 #include <cassert>
@@ -46,10 +46,10 @@ void VSMasterBase::setupDerivativeData() {
   }
 }
 
-void VSMasterBase::computeSynchronizedLfc() {
+void VSMasterBase::computeLfc() {
   // Step 1: base LFC for every worker (must all finish before step 2)
   for (auto &w : workers) {
-    w->computeBaseLfc();
+    w->computeLfc();
   }
   // Resize derivative arrays on first call
   for (size_t i = 0; i < N; ++i) {
@@ -146,31 +146,29 @@ double VSMasterBase::derivative(double f0,
 
 // Iteration helpers
 
-void VSMasterBase::masterInit() {
+void VSMasterBase::init() {
   if (initDone) return;
   for (auto &w : workers)
     w->init();
   initDone = true;
 }
 
-void VSMasterBase::masterComputeLfc() { computeSynchronizedLfc(); }
-
-void VSMasterBase::masterComputeSsf() {
+void VSMasterBase::computeSsf() {
   for (auto &w : workers)
     w->computeSsf();
 }
 
-double VSMasterBase::masterComputeError() const {
+double VSMasterBase::computeError() const {
   lastError = workers[CENTER.toIndex()]->computeError();
   return lastError;
 }
 
-void VSMasterBase::masterUpdateSolution() {
+void VSMasterBase::updateSolution() {
   for (auto &w : workers)
     w->updateSolution();
 }
 
-void VSMasterBase::masterInitialGuess() {
+void VSMasterBase::initialGuess() {
   for (auto &w : workers)
     w->initialGuess();
 }
