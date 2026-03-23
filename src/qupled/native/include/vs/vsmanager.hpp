@@ -18,6 +18,8 @@ public:
   void setAlpha(double alpha_) { alpha = alpha_; }
   double getAlpha() const { return alpha; }
   double getError() const { return lastError; }
+  // Virtual compute method (implemented by derived classes)
+  virtual int compute() = 0;
   // Getters by GridPoint
   const std::vector<double> &getSsf(GridPoint p) const;
   const Vector2D &getLfc(GridPoint p) const;
@@ -27,6 +29,15 @@ public:
   double getUInt(GridPoint p) const;
   double getFxcIntegrandValue(GridPoint p) const;
   const VSWorker &getWorkerAt(GridPoint p) const;
+  // Convenience getters for central worker (delegate to worker interface)
+  const std::vector<double> &getSsf() const;
+  const Vector2D &getLfc() const;
+  const std::vector<double> &getWvg() const;
+  const Vector2D &getIdr() const;
+  std::vector<double> getSdr() const;
+  double getUInt() const;
+  // Scheme-specific Q computation (pure virtual)
+  virtual double computeQRaw(GridPoint p) const = 0;
 
 protected:
 

@@ -5,6 +5,7 @@
 #include "numerics.hpp"
 #include "thermo_util.hpp"
 #include "vector_util.hpp"
+#include "vs/vsmanager.hpp"
 
 using namespace std;
 using namespace GridPoints;
@@ -205,6 +206,44 @@ GridPoint VSBase::getOutputGridPoint() const {
   if (zeroCoupling && !zeroDegeneracy) return RS_DOWN_THETA;
   return CENTER;
 }
+
+// -----------------------------------------------------------------
+// Grid delegation methods
+// -----------------------------------------------------------------
+
+int VSBase::runGrid() {
+  grid().setAlpha(alpha);
+  int status = grid().compute();
+  println(formatUtil::format("Alpha = {:.5e}, Residual error "
+                             "(structural properties) = {:.5e}",
+                             grid().getAlpha(),
+                             grid().getError()));
+  return status;
+}
+
+double VSBase::getCoupling(GridPoint p) const { return grid().getCoupling(p); }
+
+double VSBase::getDegeneracy(GridPoint p) const {
+  return grid().getDegeneracy(p);
+}
+
+double VSBase::getFxcIntegrandValue(GridPoint p) const {
+  return grid().getFxcIntegrandValue(p);
+}
+
+const std::vector<double> &VSBase::getSsf() const { return grid().getSsf(); }
+
+const Vector2D &VSBase::getLfc() const { return grid().getLfc(); }
+
+const std::vector<double> &VSBase::getWvg() const { return grid().getWvg(); }
+
+const Vector2D &VSBase::getIdr() const { return grid().getIdr(); }
+
+std::vector<double> VSBase::getSdr() const { return grid().getSdr(); }
+
+double VSBase::getUInt() const { return grid().getUInt(); }
+
+double VSBase::getError() const { return grid().getError(); }
 
 // -----------------------------------------------------------------
 // QAdder

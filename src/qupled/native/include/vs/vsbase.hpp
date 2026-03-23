@@ -7,6 +7,9 @@
 #include "vs/grid_point.hpp"
 #include <vector>
 
+// Forward declaration
+class VSManager;
+
 // -----------------------------------------------------------------
 // QAdder: computes the Q-term in the VS free parameter expression
 // -----------------------------------------------------------------
@@ -73,6 +76,14 @@ public:
   double getAlpha() const { return alpha; }
   const std::vector<std::vector<double>> &getFreeEnergyIntegrand() const;
   const std::vector<double> &getFreeEnergyGrid() const;
+  // Public output interface (delegates to grid())
+  const std::vector<double> &getSsf() const;
+  const Vector2D &getLfc() const;
+  const std::vector<double> &getWvg() const;
+  const Vector2D &getIdr() const;
+  std::vector<double> getSdr() const;
+  double getUInt() const;
+  double getError() const;
 
 protected:
 
@@ -85,10 +96,15 @@ protected:
   // Abstract interface
   virtual const VSInput &in() const = 0;
   virtual const Input &inScheme() const = 0;
-  virtual int runGrid() = 0;
-  virtual double getCoupling(GridPoint p) const = 0;
-  virtual double getDegeneracy(GridPoint p) const = 0;
-  virtual double getFxcIntegrandValue(GridPoint p) const = 0;
+  // Virtual grid accessor
+  virtual VSManager &grid() = 0;
+  virtual const VSManager &grid() const = 0;
+  // Grid coordination (non-virtual, uses grid())
+  int runGrid();
+  double getCoupling(GridPoint p) const;
+  double getDegeneracy(GridPoint p) const;
+  double getFxcIntegrandValue(GridPoint p) const;
+  // Scheme-specific Q computation (virtual, overridden by derived classes)
   virtual double computeQRaw(GridPoint p) const = 0;
   // Non-virtual helpers
   void setRsGrid();

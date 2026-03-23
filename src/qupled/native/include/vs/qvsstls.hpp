@@ -22,11 +22,11 @@ public:
   const Vector2D &getLfc() const override { return Qstls::getLfc(); }
   const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
   const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
+  const Vector2D &getIdr() const override { return Qstls::getIdr(); }
+  std::vector<double> getSdr() const override { return Qstls::getSdr(); }
+  double getUInt() const override { return Qstls::getUInt(); }
 
-  void init() override {
-    std::cerr << "Initializing VSQstlsWorker..." << std::endl;
-    Qstls::init();
-  }
+  void init() override { Qstls::init(); }
   void initialGuess() override { Qstls::initialGuess(); }
   void computeSsf() override { Qstls::computeSsf(); }
   void computeLfc() override { Qstls::computeLfc(); }
@@ -53,6 +53,14 @@ public:
   using VSManager::init;
   using VSManager::initialGuess;
   using VSManager::updateSolution;
+
+  // Override from VSManager
+  int compute() override { return Qstls::compute(); }
+  double computeQRaw(GridPoint p) const override;
+
+private:
+  std::shared_ptr<Integrator2D> itg2D;
+  std::vector<double> itgGrid;
 };
 
 // -----------------------------------------------------------------
@@ -65,28 +73,18 @@ public:
   explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in);
   using VSBase::compute;
 
-  const std::vector<double> &getSsf() const;
-  const Vector2D &getLfc() const;
-  const std::vector<double> &getWvg() const;
-  const Vector2D &getIdr() const;
-  std::vector<double> getSdr() const;
-  double getUInt() const;
-  double getError() const;
+protected:
+
+  VSManager &grid() override { return grid_; }
+  const VSManager &grid() const override { return grid_; }
 
 private:
 
   std::shared_ptr<const QVSStlsInput> inPtr;
-  VSQstlsManager grid;
-  std::shared_ptr<Integrator2D> itg2D;
-  std::vector<double> itgGrid;
+  VSQstlsManager grid_;
 
   const VSInput &in() const override;
   const Input &inScheme() const override;
-
-  int runGrid() override;
-  double getCoupling(GridPoint p) const override;
-  double getDegeneracy(GridPoint p) const override;
-  double getFxcIntegrandValue(GridPoint p) const override;
   double computeQRaw(GridPoint p) const override;
 };
 

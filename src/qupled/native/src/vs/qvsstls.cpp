@@ -56,7 +56,8 @@ VSQstlsManager::VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in)
                 in->getDegeneracyResolution(),
                 in->getWaveVectorGridRes(),
                 in->getDimension()),
-      Qstls(in, false) {
+      Qstls(in, false),
+      itg2D(make_shared<Integrator2D>(ItgType::DEFAULT, in->getIntError())) {
   const double drs_ = in->getCouplingResolution();
   const double dTheta_ = in->getDegeneracyResolution();
   const double rs0 = std::max(in->getCoupling(), drs_);
@@ -79,6 +80,14 @@ VSQstlsManager::VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in)
     }
   }
   setupDerivativeData();
+  // Setup integration grid
+  const bool segregatedItg = in->getInt2DScheme() == "segregated";
+  if (segregatedItg) { itgGrid = VSManager::getWvg(GridPoints::CENTER); }
+}
+
+double VSQstlsManager::computeQRaw(GridPoint p) const {
+  const auto &w = dynamic_cast<const VSQstlsWorker &>(getWorkerAt(p));
+  return w.computeQAdder(itg2D, itgGrid);
 }
 
 // -----------------------------------------------------------------
@@ -88,14 +97,11 @@ VSQstlsManager::VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in)
 QVSStls::QVSStls(const std::shared_ptr<const QVSStlsInput> &in)
     : VSBase(),
       inPtr(in),
-      grid(in),
-      itg2D(make_shared<Integrator2D>(ItgType::DEFAULT, in->getIntError())) {
+      grid_(in) {
   if (in->getDegeneracy() == 0.0) {
     throwError(
         "Ground state calculations are not implemented for this scheme.");
   }
-  const bool segregatedItg = in->getInt2DScheme() == "segregated";
-  if (segregatedItg) { itgGrid = grid.VSManager::getWvg(GridPoints::CENTER); }
   setRsGrid();
   setFxcIntegrand();
 }
@@ -106,56 +112,6 @@ const VSInput &QVSStls::in() const {
 
 const Input &QVSStls::inScheme() const { return *inPtr; }
 
-int QVSStls::runGrid() {
-  grid.setAlpha(alpha);
-  int status = grid.compute();
-  println(formatUtil::format("Alpha = {:.5e}, Residual error "
-                             "(structural properties) = {:.5e}",
-                             grid.getAlpha(),
-                             grid.VSManager::getError()));
-  return status;
-}
-
-double QVSStls::getCoupling(GridPoint p) const { return grid.getCoupling(p); }
-
-double QVSStls::getDegeneracy(GridPoint p) const {
-  return grid.getDegeneracy(p);
-}
-
-double QVSStls::getFxcIntegrandValue(GridPoint p) const {
-  return grid.getFxcIntegrandValue(p);
-}
-
 double QVSStls::computeQRaw(GridPoint p) const {
-  const auto &w = dynamic_cast<const VSQstlsWorker &>(grid.getWorkerAt(p));
-  return w.computeQAdder(itg2D, itgGrid);
+  return grid_.computeQRaw(p);
 }
-
-const vector<double> &QVSStls::getSsf() const {
-  return grid.getWorkerAt(GridPoints::CENTER).getSsf();
-}
-
-const Vector2D &QVSStls::getLfc() const {
-  return grid.getWorkerAt(GridPoints::CENTER).getLfc();
-}
-
-const vector<double> &QVSStls::getWvg() const {
-  return grid.getWorkerAt(GridPoints::CENTER).getWvg();
-}
-
-const Vector2D &QVSStls::getIdr() const {
-  return dynamic_cast<const Qstls &>(grid.getWorkerAt(GridPoints::CENTER))
-      .getIdr();
-}
-
-vector<double> QVSStls::getSdr() const {
-  return dynamic_cast<const Qstls &>(grid.getWorkerAt(GridPoints::CENTER))
-      .getSdr();
-}
-
-double QVSStls::getUInt() const {
-  return dynamic_cast<const Qstls &>(grid.getWorkerAt(GridPoints::CENTER))
-      .getUInt();
-}
-
-double QVSStls::getError() const { return grid.VSManager::getError(); }

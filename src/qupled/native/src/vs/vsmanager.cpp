@@ -210,3 +210,27 @@ double VSManager::getFxcIntegrandValue(GridPoint p) const {
 const VSWorker &VSManager::getWorkerAt(GridPoint p) const {
   return *workers[p.toIndex()];
 }
+
+const std::vector<double> &VSManager::getSsf() const {
+  return getWorkerAt(CENTER).getSsf();
+}
+
+const Vector2D &VSManager::getLfc() const {
+  return getWorkerAt(CENTER).getLfc();
+}
+
+const std::vector<double> &VSManager::getWvg() const {
+  return getWorkerAt(CENTER).getWvg();
+}
+
+const Vector2D &VSManager::getIdr() const {
+  return getWorkerAt(CENTER).getIdr();
+}
+
+std::vector<double> VSManager::getSdr() const {
+  return getWorkerAt(CENTER).getSdr();
+}
+
+double VSManager::getUInt() const {
+  return getWorkerAt(CENTER).getUInt();
+}

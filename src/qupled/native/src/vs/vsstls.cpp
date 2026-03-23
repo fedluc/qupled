@@ -17,7 +17,8 @@ VSStlsManager::VSStlsManager(const std::shared_ptr<const VSStlsInput> &in)
                 in->getDegeneracyResolution(),
                 in->getWaveVectorGridRes(),
                 in->getDimension()),
-      Stls(in, false) {
+      Stls(in, false),
+      managerInPtr(in) {
   const double drs_ = in->getCouplingResolution();
   const double dTheta_ = in->getDegeneracyResolution();
   const double rs0 = std::max(in->getCoupling(), drs_);
@@ -42,6 +43,12 @@ VSStlsManager::VSStlsManager(const std::shared_ptr<const VSStlsInput> &in)
   setupDerivativeData();
 }
 
+double VSStlsManager::computeQRaw(GridPoint p) const {
+  return QAdder::classical(
+             VSManager::getWvg(p), VSManager::getSsf(p), managerInPtr)
+      .get();
+}
+
 // -----------------------------------------------------------------
 // VSStls
 // -----------------------------------------------------------------
@@ -49,7 +56,7 @@ VSStlsManager::VSStlsManager(const std::shared_ptr<const VSStlsInput> &in)
 VSStls::VSStls(const std::shared_ptr<const VSStlsInput> &in)
     : VSBase(),
       inPtr(in),
-      grid(in) {
+      grid_(in) {
   if (in->getDimension() == dimensionsUtil::Dimension::D2) {
     throwError("2D calculations are not implemented for this scheme.");
   }
@@ -63,57 +70,6 @@ const VSInput &VSStls::in() const {
 
 const Input &VSStls::inScheme() const { return *inPtr; }
 
-int VSStls::runGrid() {
-  grid.setAlpha(alpha);
-  int status = grid.compute();
-  println(formatUtil::format("Alpha = {:.5e}, Residual error "
-                             "(structural properties) = {:.5e}",
-                             grid.getAlpha(),
-                             grid.VSManager::getError()));
-  return status;
-}
-
-double VSStls::getCoupling(GridPoint p) const { return grid.getCoupling(p); }
-
-double VSStls::getDegeneracy(GridPoint p) const {
-  return grid.getDegeneracy(p);
-}
-
-double VSStls::getFxcIntegrandValue(GridPoint p) const {
-  return grid.getFxcIntegrandValue(p);
-}
-
 double VSStls::computeQRaw(GridPoint p) const {
-  return QAdder::classical(
-             grid.VSManager::getWvg(p), grid.VSManager::getSsf(p), inPtr)
-      .get();
+  return grid_.computeQRaw(p);
 }
-
-const std::vector<double> &VSStls::getSsf() const {
-  return grid.getWorkerAt(GridPoints::CENTER).getSsf();
-}
-
-const Vector2D &VSStls::getLfc() const {
-  return grid.getWorkerAt(GridPoints::CENTER).getLfc();
-}
-
-const vector<double> &VSStls::getWvg() const {
-  return grid.getWorkerAt(GridPoints::CENTER).getWvg();
-}
-
-const Vector2D &VSStls::getIdr() const {
-  return dynamic_cast<const Stls &>(grid.getWorkerAt(GridPoints::CENTER))
-      .getIdr();
-}
-
-vector<double> VSStls::getSdr() const {
-  return dynamic_cast<const Stls &>(grid.getWorkerAt(GridPoints::CENTER))
-      .getSdr();
-}
-
-double VSStls::getUInt() const {
-  return dynamic_cast<const Stls &>(grid.getWorkerAt(GridPoints::CENTER))
-      .getUInt();
-}
-
-double VSStls::getError() const { return grid.VSManager::getError(); }

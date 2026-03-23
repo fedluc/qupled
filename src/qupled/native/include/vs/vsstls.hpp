@@ -18,6 +18,9 @@ public:
   const Vector2D &getLfc() const override { return Stls::getLfc(); }
   const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
   const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
+  const Vector2D &getIdr() const override { return Stls::getIdr(); }
+  std::vector<double> getSdr() const override { return Stls::getSdr(); }
+  double getUInt() const override { return Stls::getUInt(); }
 
   void init() override { Stls::init(); }
   void initialGuess() override { Stls::initialGuess(); }
@@ -43,6 +46,13 @@ public:
   using VSManager::init;
   using VSManager::initialGuess;
   using VSManager::updateSolution;
+
+  // Override from VSManager
+  int compute() override { return Stls::compute(); }
+  double computeQRaw(GridPoint p) const override;
+
+private:
+  std::shared_ptr<const VSStlsInput> managerInPtr;
 };
 
 // -----------------------------------------------------------------
@@ -55,26 +65,18 @@ public:
   explicit VSStls(const std::shared_ptr<const VSStlsInput> &in);
   using VSBase::compute;
 
-  const std::vector<double> &getSsf() const;
-  const Vector2D &getLfc() const;
-  const std::vector<double> &getWvg() const;
-  const Vector2D &getIdr() const;
-  std::vector<double> getSdr() const;
-  double getUInt() const;
-  double getError() const;
+protected:
+
+  VSManager &grid() override { return grid_; }
+  const VSManager &grid() const override { return grid_; }
 
 private:
 
   std::shared_ptr<const VSStlsInput> inPtr;
-  VSStlsManager grid;
+  VSStlsManager grid_;
 
   const VSInput &in() const override;
   const Input &inScheme() const override;
-
-  int runGrid() override;
-  double getCoupling(GridPoint p) const override;
-  double getDegeneracy(GridPoint p) const override;
-  double getFxcIntegrandValue(GridPoint p) const override;
   double computeQRaw(GridPoint p) const override;
 };
 
