@@ -4,7 +4,7 @@
 #include "input.hpp"
 #include "stls.hpp"
 #include "vs/vsbase.hpp"
-#include "vs/vsmaster_base.hpp"
+#include "vs/vsmanager.hpp"
 
 // -----------------------------------------------------------------
 // VSStlsWorker: implements VSWorker for STLS-based VS workers
@@ -37,14 +37,12 @@ public:
 
   explicit VSStlsManager(const std::shared_ptr<const VSStlsInput> &in);
 
-protected:
-
-  void init() override { VSManager::init(); }
-  void computeLfc() override { VSManager::computeLfc(); }
-  void computeSsf() override { VSManager::computeSsf(); }
-  double computeError() const override { return VSManager::computeError(); }
-  void updateSolution() override { VSManager::updateSolution(); }
-  void initialGuess() override { VSManager::initialGuess(); }
+  using VSManager::computeError;
+  using VSManager::computeLfc;
+  using VSManager::computeSsf;
+  using VSManager::init;
+  using VSManager::initialGuess;
+  using VSManager::updateSolution;
 };
 
 // -----------------------------------------------------------------

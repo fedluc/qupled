@@ -53,9 +53,9 @@ double VSQstlsWorker::computeQAdder(const std::shared_ptr<Integrator2D> &itg2D,
 
 VSQstlsManager::VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in)
     : VSManager(in->getCouplingResolution(),
-                   in->getDegeneracyResolution(),
-                   in->getWaveVectorGridRes(),
-                   in->getDimension()),
+                in->getDegeneracyResolution(),
+                in->getWaveVectorGridRes(),
+                in->getDimension()),
       Qstls(in, false) {
   const double drs_ = in->getCouplingResolution();
   const double dTheta_ = in->getDegeneracyResolution();
@@ -95,9 +95,7 @@ QVSStls::QVSStls(const std::shared_ptr<const QVSStlsInput> &in)
         "Ground state calculations are not implemented for this scheme.");
   }
   const bool segregatedItg = in->getInt2DScheme() == "segregated";
-  if (segregatedItg) {
-    itgGrid = grid.VSManager::getWvg(GridPoints::CENTER);
-  }
+  if (segregatedItg) { itgGrid = grid.VSManager::getWvg(GridPoints::CENTER); }
   setRsGrid();
   setFxcIntegrand();
 }

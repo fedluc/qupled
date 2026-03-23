@@ -5,7 +5,7 @@
 #include "numerics.hpp"
 #include "qstls.hpp"
 #include "vs/vsbase.hpp"
-#include "vs/vsmaster_base.hpp"
+#include "vs/vsmanager.hpp"
 #include <memory>
 
 // -----------------------------------------------------------------
@@ -17,14 +17,16 @@ public:
 
   using InputType = QVSStlsInput;
 
-  VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
-                GridPoint p);
+  VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in, GridPoint p);
 
   const Vector2D &getLfc() const override { return Qstls::getLfc(); }
   const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
   const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
 
-  void init() override { std::cerr << "Initializing VSQstlsWorker..." << std::endl; Qstls::init(); }
+  void init() override {
+    std::cerr << "Initializing VSQstlsWorker..." << std::endl;
+    Qstls::init();
+  }
   void initialGuess() override { Qstls::initialGuess(); }
   void computeSsf() override { Qstls::computeSsf(); }
   void computeLfc() override { Qstls::computeLfc(); }
@@ -45,14 +47,12 @@ public:
 
   explicit VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in);
 
-protected:
-
-  void init() override { VSManager::init(); }
-  void computeLfc() override { VSManager::computeLfc(); }
-  void computeSsf() override { VSManager::computeSsf(); }
-  double computeError() const override { return VSManager::computeError(); }
-  void updateSolution() override { VSManager::updateSolution(); }
-  void initialGuess() override { VSManager::initialGuess(); }
+  using VSManager::computeError;
+  using VSManager::computeLfc;
+  using VSManager::computeSsf;
+  using VSManager::init;
+  using VSManager::initialGuess;
+  using VSManager::updateSolution;
 };
 
 // -----------------------------------------------------------------

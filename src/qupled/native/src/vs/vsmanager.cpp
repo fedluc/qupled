@@ -1,4 +1,4 @@
-#include "vs/vsmaster_base.hpp"
+#include "vs/vsmanager.hpp"
 #include "num_util.hpp"
 #include "thermo_util.hpp"
 #include <cassert>
@@ -11,9 +11,9 @@ using namespace GridPoints;
 // -----------------------------------------------------------------
 
 VSManager::VSManager(double drs_,
-                           double dTheta_,
-                           double dx_,
-                           dimensionsUtil::Dimension dim_)
+                     double dTheta_,
+                     double dx_,
+                     dimensionsUtil::Dimension dim_)
     : alpha(numUtil::Inf),
       lastError(numUtil::Inf),
       initDone(false),
@@ -115,9 +115,9 @@ void VSManager::computeLfcDerivatives() {
 }
 
 double VSManager::derivative(const Vector2D &f,
-                                int l,
-                                size_t i,
-                                DerivativeData::Type t) const {
+                             int l,
+                             size_t i,
+                             DerivativeData::Type t) const {
   switch (t) {
   case DerivativeData::Type::BACKWARD:
     assert(i >= 2);
@@ -133,9 +133,9 @@ double VSManager::derivative(const Vector2D &f,
 }
 
 double VSManager::derivative(double f0,
-                                double f1,
-                                double f2,
-                                DerivativeData::Type t) const {
+                             double f1,
+                             double f2,
+                             DerivativeData::Type t) const {
   switch (t) {
   case DerivativeData::Type::BACKWARD: return 3.0 * f0 - 4.0 * f1 + f2;
   case DerivativeData::Type::CENTERED: return f1 - f2;

@@ -14,9 +14,9 @@ using namespace GridPoints;
 
 VSStlsManager::VSStlsManager(const std::shared_ptr<const VSStlsInput> &in)
     : VSManager(in->getCouplingResolution(),
-                   in->getDegeneracyResolution(),
-                   in->getWaveVectorGridRes(),
-                   in->getDimension()),
+                in->getDegeneracyResolution(),
+                in->getWaveVectorGridRes(),
+                in->getDimension()),
       Stls(in, false) {
   const double drs_ = in->getCouplingResolution();
   const double dTheta_ = in->getDegeneracyResolution();
