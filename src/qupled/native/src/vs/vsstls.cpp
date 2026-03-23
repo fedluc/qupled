@@ -43,12 +43,6 @@ VSStlsManager::VSStlsManager(const std::shared_ptr<const VSStlsInput> &in)
   setupDerivativeData();
 }
 
-double VSStlsManager::computeQRaw(GridPoint p) const {
-  return QAdder::classical(
-             VSManager::getWvg(p), VSManager::getSsf(p), managerInPtr)
-      .get();
-}
-
 // -----------------------------------------------------------------
 // VSStls
 // -----------------------------------------------------------------
@@ -69,7 +63,3 @@ const VSInput &VSStls::in() const {
 }
 
 const Input &VSStls::inScheme() const { return *inPtr; }
-
-double VSStls::computeQRaw(GridPoint p) const {
-  return grid_.computeQRaw(p);
-}

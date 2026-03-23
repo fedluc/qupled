@@ -25,7 +25,7 @@ public:
   const Vector2D &getIdr() const override { return Qstls::getIdr(); }
   std::vector<double> getSdr() const override { return Qstls::getSdr(); }
   double getUInt() const override { return Qstls::getUInt(); }
-
+  double getQAdder() const override;
   void init() override { Qstls::init(); }
   void initialGuess() override { Qstls::initialGuess(); }
   void computeSsf() override { Qstls::computeSsf(); }
@@ -56,9 +56,9 @@ public:
 
   // Override from VSManager
   int compute() override { return Qstls::compute(); }
-  double computeQRaw(GridPoint p) const override;
 
 private:
+
   std::shared_ptr<Integrator2D> itg2D;
   std::vector<double> itgGrid;
 };
@@ -73,19 +73,67 @@ public:
   explicit QVSStls(const std::shared_ptr<const QVSStlsInput> &in);
   using VSBase::compute;
 
-protected:
-
-  VSManager &grid() override { return grid_; }
-  const VSManager &grid() const override { return grid_; }
-
 private:
 
   std::shared_ptr<const QVSStlsInput> inPtr;
   VSQstlsManager grid_;
 
+  VSManager &grid() override { return grid_; }
+  const VSManager &grid() const override { return grid_; }
   const VSInput &in() const override;
   const Input &inScheme() const override;
-  double computeQRaw(GridPoint p) const override;
 };
 
+// -----------------------------------------------------------------
+// Class to handle the Q-adder in the free parameter expression
+// -----------------------------------------------------------------
+
+class QAdder {
+
+public:
+
+  // Constructor
+  QAdder(const double &Theta_,
+         const double &mu_,
+         const double &limitMin,
+         const double &limitMax,
+         const std::vector<double> &itgGrid_,
+         std::shared_ptr<Integrator1D> itg1_,
+         std::shared_ptr<Integrator2D> itg2_,
+         std::shared_ptr<Interpolator1D> interp_)
+      : Theta(Theta_),
+        mu(mu_),
+        limits(limitMin, limitMax),
+        itgGrid(itgGrid_),
+        itg1(itg1_),
+        itg2(itg2_),
+        interp(interp_) {}
+  // Get Q-adder
+  double get() const;
+
+private:
+
+  // Degeneracy parameter
+  const double Theta;
+  // Chemical potential
+  const double mu;
+  // Integration limits
+  const std::pair<double, double> limits;
+  // Grid for 2D integration
+  const std::vector<double> &itgGrid;
+  // Integrator objects
+  const std::shared_ptr<Integrator1D> itg1;
+  const std::shared_ptr<Integrator2D> itg2;
+  // Interpolator 1D class instance
+  const std::shared_ptr<Interpolator1D> interp;
+
+  // SSF interpolation
+  double ssf(const double &y) const;
+  // Integrands
+  double integrandDenominator(const double q) const;
+  double integrandNumerator1(const double q) const;
+  double integrandNumerator2(const double w) const;
+  // Get Integral denominator
+  void getIntDenominator(double &res) const;
+};
 #endif

@@ -19,6 +19,7 @@ public:
   virtual const Vector2D &getIdr() const = 0;
   virtual std::vector<double> getSdr() const = 0;
   virtual double getUInt() const = 0;
+  virtual double getQAdder() const = 0;
   // Iteration protocol
   virtual void init() = 0;
   virtual void initialGuess() = 0;

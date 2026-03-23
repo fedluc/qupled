@@ -27,6 +27,7 @@ public:
   double getCoupling(GridPoint p) const;
   double getDegeneracy(GridPoint p) const;
   double getUInt(GridPoint p) const;
+  double getQAdder(GridPoint p) const;
   double getFxcIntegrandValue(GridPoint p) const;
   const VSWorker &getWorkerAt(GridPoint p) const;
   // Convenience getters for central worker (delegate to worker interface)
@@ -36,8 +37,6 @@ public:
   const Vector2D &getIdr() const;
   std::vector<double> getSdr() const;
   double getUInt() const;
-  // Scheme-specific Q computation (pure virtual)
-  virtual double computeQRaw(GridPoint p) const = 0;
 
 protected:
 

@@ -10,6 +10,7 @@ using namespace std;
 using namespace MPIUtil;
 using namespace GridPoints;
 using ItgType = Integrator1D::Type;
+using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
 
 // -----------------------------------------------------------------
@@ -33,17 +34,20 @@ VSQstlsWorker::VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
   }
 }
 
-double VSQstlsWorker::computeQAdder(const std::shared_ptr<Integrator2D> &itg2D,
-                                    const std::vector<double> &itgGrid) const {
+double VSQstlsWorker::getQAdder() const {
+  const bool segregatedItg = inPtr->getInt2DScheme() == "segregated";
+  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  shared_ptr<Integrator2D> itg2D =
+      make_shared<Integrator2D>(inPtr->getIntError());
   const auto ssfItp = make_shared<Interpolator1D>(wvg, ssf);
-  const QAdder q = QAdder::quantum(inPtr->getDegeneracy(),
-                                   mu,
-                                   wvg.front(),
-                                   wvg.back(),
-                                   itgGrid,
-                                   itg,
-                                   itg2D,
-                                   ssfItp);
+  const QAdder q = QAdder(inPtr->getDegeneracy(),
+                          mu,
+                          wvg.front(),
+                          wvg.back(),
+                          itgGrid,
+                          itg,
+                          itg2D,
+                          ssfItp);
   return q.get();
 }
 
@@ -85,11 +89,6 @@ VSQstlsManager::VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in)
   if (segregatedItg) { itgGrid = VSManager::getWvg(GridPoints::CENTER); }
 }
 
-double VSQstlsManager::computeQRaw(GridPoint p) const {
-  const auto &w = dynamic_cast<const VSQstlsWorker &>(getWorkerAt(p));
-  return w.computeQAdder(itg2D, itgGrid);
-}
-
 // -----------------------------------------------------------------
 // QVSStls
 // -----------------------------------------------------------------
@@ -112,6 +111,57 @@ const VSInput &QVSStls::in() const {
 
 const Input &QVSStls::inScheme() const { return *inPtr; }
 
-double QVSStls::computeQRaw(GridPoint p) const {
-  return grid_.computeQRaw(p);
+// -----------------------------------------------------------------
+// QAdder class
+// -----------------------------------------------------------------
+
+// SSF interpolation
+double QAdder::ssf(const double &y) const { return interp->eval(y); }
+
+// Denominator integrand
+double QAdder::integrandDenominator(const double y) const {
+  const double y2 = y * y;
+  return 1.0 / (exp(y2 / Theta - mu) + 1.0);
+}
+
+// Numerator integrand1
+double QAdder::integrandNumerator1(const double q) const {
+  const double w = itg2->getX();
+  if (q == 0.0) { return 0.0; };
+  double w2 = w * w;
+  double q2 = q * q;
+  double logarg = (w + 2 * q) / (w - 2 * q);
+  logarg = (logarg < 0.0) ? -logarg : logarg;
+  if (w == 0.0) { return 1.0 / (12.0 * (exp(q2 / Theta - mu) + 1.0)); };
+  return q2 / (exp(q2 / Theta - mu) + 1.0) * (q / w * log(logarg) - 1.0) / w2;
+}
+
+// Numerator integrand2
+double QAdder::integrandNumerator2(const double w) const {
+  return (ssf(w) - 1.0);
+}
+
+// Denominator integral
+void QAdder::getIntDenominator(double &res) const {
+  auto func = [&](double y) -> double { return integrandDenominator(y); };
+  itg1->compute(func, ItgParam(limits.first, limits.second));
+  res = itg1->getSolution();
+}
+
+// Get total QAdder
+double QAdder::get() const {
+  double Denominator;
+  getIntDenominator(Denominator);
+  auto func1 = [&](const double &w) -> double {
+    return integrandNumerator2(w);
+  };
+  auto func2 = [&](const double &q) -> double {
+    return integrandNumerator1(q);
+  };
+  itg2->compute(
+      func1,
+      func2,
+      Itg2DParam(limits.first, limits.second, limits.first, limits.second),
+      itgGrid);
+  return 12.0 / (M_PI * numUtil::lambda) * itg2->getSolution() / Denominator;
 }

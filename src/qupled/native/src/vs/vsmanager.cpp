@@ -196,9 +196,11 @@ double VSManager::getDegeneracy(GridPoint p) const {
 }
 
 double VSManager::getUInt(GridPoint p) const {
-  const size_t i = p.toIndex();
-  return thermoUtil::computeInternalEnergy(
-      workers[i]->getWvg(), workers[i]->getSsf(), rsValues[i], dim);
+  return workers[p.toIndex()]->getUInt();
+}
+
+double VSManager::getQAdder(GridPoint p) const {
+  return workers[p.toIndex()]->getQAdder();
 }
 
 double VSManager::getFxcIntegrandValue(GridPoint p) const {
@@ -231,6 +233,4 @@ std::vector<double> VSManager::getSdr() const {
   return getWorkerAt(CENTER).getSdr();
 }
 
-double VSManager::getUInt() const {
-  return getWorkerAt(CENTER).getUInt();
-}
+double VSManager::getUInt() const { return getWorkerAt(CENTER).getUInt(); }

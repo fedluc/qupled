@@ -21,7 +21,7 @@ public:
   const Vector2D &getIdr() const override { return Stls::getIdr(); }
   std::vector<double> getSdr() const override { return Stls::getSdr(); }
   double getUInt() const override { return Stls::getUInt(); }
-
+  double getQAdder() const override { return getUInt(); }
   void init() override { Stls::init(); }
   void initialGuess() override { Stls::initialGuess(); }
   void computeSsf() override { Stls::computeSsf(); }
@@ -49,9 +49,10 @@ public:
 
   // Override from VSManager
   int compute() override { return Stls::compute(); }
-  double computeQRaw(GridPoint p) const override;
+  double computeQRaw(GridPoint p) const;
 
 private:
+
   std::shared_ptr<const VSStlsInput> managerInPtr;
 };
 
@@ -65,19 +66,15 @@ public:
   explicit VSStls(const std::shared_ptr<const VSStlsInput> &in);
   using VSBase::compute;
 
-protected:
-
-  VSManager &grid() override { return grid_; }
-  const VSManager &grid() const override { return grid_; }
-
 private:
 
   std::shared_ptr<const VSStlsInput> inPtr;
   VSStlsManager grid_;
 
+  VSManager &grid() override { return grid_; }
+  const VSManager &grid() const override { return grid_; }
   const VSInput &in() const override;
   const Input &inScheme() const override;
-  double computeQRaw(GridPoint p) const override;
 };
 
 #endif
