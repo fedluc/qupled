@@ -7,10 +7,10 @@
 #include "vs/vsmaster_base.hpp"
 
 // -----------------------------------------------------------------
-// VSStlsWorker: implements IVSWorker for STLS-based VS workers
+// VSStlsWorker: implements VSWorker for STLS-based VS workers
 // -----------------------------------------------------------------
 
-class VSStlsWorker : public VSWorkerBase, public Stls {
+class VSStlsWorker : public VSWorker, public Stls {
 public:
 
   VSStlsWorker(const std::shared_ptr<const VSStlsInput> &in)
@@ -29,22 +29,22 @@ public:
 };
 
 // -----------------------------------------------------------------
-// VSStlsMaster: manages 9 VSStlsWorkers, inherits Stls loop
+// VSStlsManager: manages 9 VSStlsWorkers, inherits Stls loop
 // -----------------------------------------------------------------
 
-class VSStlsMaster : public VSMasterBase, public Stls {
+class VSStlsManager : public VSManager, public Stls {
 public:
 
-  explicit VSStlsMaster(const std::shared_ptr<const VSStlsInput> &in);
+  explicit VSStlsManager(const std::shared_ptr<const VSStlsInput> &in);
 
 protected:
 
-  void init() override { VSMasterBase::init(); }
-  void computeLfc() override { VSMasterBase::computeLfc(); }
-  void computeSsf() override { VSMasterBase::computeSsf(); }
-  double computeError() const override { return VSMasterBase::computeError(); }
-  void updateSolution() override { VSMasterBase::updateSolution(); }
-  void initialGuess() override { VSMasterBase::initialGuess(); }
+  void init() override { VSManager::init(); }
+  void computeLfc() override { VSManager::computeLfc(); }
+  void computeSsf() override { VSManager::computeSsf(); }
+  double computeError() const override { return VSManager::computeError(); }
+  void updateSolution() override { VSManager::updateSolution(); }
+  void initialGuess() override { VSManager::initialGuess(); }
 };
 
 // -----------------------------------------------------------------
@@ -68,7 +68,7 @@ public:
 private:
 
   std::shared_ptr<const VSStlsInput> inPtr;
-  VSStlsMaster grid;
+  VSStlsManager grid;
 
   const VSInput &in() const override;
   const Input &inScheme() const override;

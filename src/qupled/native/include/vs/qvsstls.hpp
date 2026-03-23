@@ -12,7 +12,7 @@
 // VSQstlsWorker
 // -----------------------------------------------------------------
 
-class VSQstlsWorker : public VSWorkerBase, public Qstls {
+class VSQstlsWorker : public VSWorker, public Qstls {
 public:
 
   using InputType = QVSStlsInput;
@@ -37,22 +37,22 @@ public:
 };
 
 // -----------------------------------------------------------------
-// VSQstlsMaster
+// VSQstlsManager
 // -----------------------------------------------------------------
 
-class VSQstlsMaster : public VSMasterBase, public Qstls {
+class VSQstlsManager : public VSManager, public Qstls {
 public:
 
-  explicit VSQstlsMaster(const std::shared_ptr<const QVSStlsInput> &in);
+  explicit VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in);
 
 protected:
 
-  void init() override { VSMasterBase::init(); }
-  void computeLfc() override { VSMasterBase::computeLfc(); }
-  void computeSsf() override { VSMasterBase::computeSsf(); }
-  double computeError() const override { return VSMasterBase::computeError(); }
-  void updateSolution() override { VSMasterBase::updateSolution(); }
-  void initialGuess() override { VSMasterBase::initialGuess(); }
+  void init() override { VSManager::init(); }
+  void computeLfc() override { VSManager::computeLfc(); }
+  void computeSsf() override { VSManager::computeSsf(); }
+  double computeError() const override { return VSManager::computeError(); }
+  void updateSolution() override { VSManager::updateSolution(); }
+  void initialGuess() override { VSManager::initialGuess(); }
 };
 
 // -----------------------------------------------------------------
@@ -76,7 +76,7 @@ public:
 private:
 
   std::shared_ptr<const QVSStlsInput> inPtr;
-  VSQstlsMaster grid;
+  VSQstlsManager grid;
   std::shared_ptr<Integrator2D> itg2D;
   std::vector<double> itgGrid;
 

@@ -48,11 +48,11 @@ double VSQstlsWorker::computeQAdder(const std::shared_ptr<Integrator2D> &itg2D,
 }
 
 // -----------------------------------------------------------------
-// VSQstlsMaster
+// VSQstlsManager
 // -----------------------------------------------------------------
 
-VSQstlsMaster::VSQstlsMaster(const std::shared_ptr<const QVSStlsInput> &in)
-    : VSMasterBase(in->getCouplingResolution(),
+VSQstlsManager::VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in)
+    : VSManager(in->getCouplingResolution(),
                    in->getDegeneracyResolution(),
                    in->getWaveVectorGridRes(),
                    in->getDimension()),
@@ -96,7 +96,7 @@ QVSStls::QVSStls(const std::shared_ptr<const QVSStlsInput> &in)
   }
   const bool segregatedItg = in->getInt2DScheme() == "segregated";
   if (segregatedItg) {
-    itgGrid = grid.VSMasterBase::getWvg(GridPoints::CENTER);
+    itgGrid = grid.VSManager::getWvg(GridPoints::CENTER);
   }
   setRsGrid();
   setFxcIntegrand();
@@ -114,7 +114,7 @@ int QVSStls::runGrid() {
   println(formatUtil::format("Alpha = {:.5e}, Residual error "
                              "(structural properties) = {:.5e}",
                              grid.getAlpha(),
-                             grid.VSMasterBase::getError()));
+                             grid.VSManager::getError()));
   return status;
 }
 
@@ -160,4 +160,4 @@ double QVSStls::getUInt() const {
       .getUInt();
 }
 
-double QVSStls::getError() const { return grid.VSMasterBase::getError(); }
+double QVSStls::getError() const { return grid.VSManager::getError(); }

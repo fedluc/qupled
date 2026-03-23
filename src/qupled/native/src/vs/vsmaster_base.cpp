@@ -7,10 +7,10 @@ using namespace std;
 using namespace GridPoints;
 
 // -----------------------------------------------------------------
-// VSMasterBase
+// VSManager
 // -----------------------------------------------------------------
 
-VSMasterBase::VSMasterBase(double drs_,
+VSManager::VSManager(double drs_,
                            double dTheta_,
                            double dx_,
                            dimensionsUtil::Dimension dim_)
@@ -22,7 +22,7 @@ VSMasterBase::VSMasterBase(double drs_,
       dx(dx_),
       dim(dim_) {}
 
-void VSMasterBase::setupDerivativeData() {
+void VSManager::setupDerivativeData() {
   // rs derivative data (varies along rs axis, theta held fixed)
   for (const auto tOff : {GridPoint::Theta::DOWN,
                           GridPoint::Theta::CENTER,
@@ -46,7 +46,7 @@ void VSMasterBase::setupDerivativeData() {
   }
 }
 
-void VSMasterBase::computeLfc() {
+void VSManager::computeLfc() {
   // Step 1: base LFC for every worker (must all finish before step 2)
   for (auto &w : workers) {
     w->computeLfc();
@@ -66,7 +66,7 @@ void VSMasterBase::computeLfc() {
   }
 }
 
-void VSMasterBase::computeLfcDerivatives() {
+void VSManager::computeLfcDerivatives() {
   assert(alpha != numUtil::Inf);
 
   for (size_t i = 0; i < N; ++i) {
@@ -114,7 +114,7 @@ void VSMasterBase::computeLfcDerivatives() {
   }
 }
 
-double VSMasterBase::derivative(const Vector2D &f,
+double VSManager::derivative(const Vector2D &f,
                                 int l,
                                 size_t i,
                                 DerivativeData::Type t) const {
@@ -132,7 +132,7 @@ double VSMasterBase::derivative(const Vector2D &f,
   }
 }
 
-double VSMasterBase::derivative(double f0,
+double VSManager::derivative(double f0,
                                 double f1,
                                 double f2,
                                 DerivativeData::Type t) const {
@@ -146,67 +146,67 @@ double VSMasterBase::derivative(double f0,
 
 // Iteration helpers
 
-void VSMasterBase::init() {
+void VSManager::init() {
   if (initDone) return;
   for (auto &w : workers)
     w->init();
   initDone = true;
 }
 
-void VSMasterBase::computeSsf() {
+void VSManager::computeSsf() {
   for (auto &w : workers)
     w->computeSsf();
 }
 
-double VSMasterBase::computeError() const {
+double VSManager::computeError() const {
   lastError = workers[CENTER.toIndex()]->computeError();
   return lastError;
 }
 
-void VSMasterBase::updateSolution() {
+void VSManager::updateSolution() {
   for (auto &w : workers)
     w->updateSolution();
 }
 
-void VSMasterBase::initialGuess() {
+void VSManager::initialGuess() {
   for (auto &w : workers)
     w->initialGuess();
 }
 
 // Getters
 
-const std::vector<double> &VSMasterBase::getSsf(GridPoint p) const {
+const std::vector<double> &VSManager::getSsf(GridPoint p) const {
   return workers[p.toIndex()]->getSsf();
 }
 
-const Vector2D &VSMasterBase::getLfc(GridPoint p) const {
+const Vector2D &VSManager::getLfc(GridPoint p) const {
   return workers[p.toIndex()]->getLfc();
 }
 
-const std::vector<double> &VSMasterBase::getWvg(GridPoint p) const {
+const std::vector<double> &VSManager::getWvg(GridPoint p) const {
   return workers[p.toIndex()]->getWvg();
 }
 
-double VSMasterBase::getCoupling(GridPoint p) const {
+double VSManager::getCoupling(GridPoint p) const {
   return rsValues[p.toIndex()];
 }
 
-double VSMasterBase::getDegeneracy(GridPoint p) const {
+double VSManager::getDegeneracy(GridPoint p) const {
   return thetaValues[p.toIndex()];
 }
 
-double VSMasterBase::getUInt(GridPoint p) const {
+double VSManager::getUInt(GridPoint p) const {
   const size_t i = p.toIndex();
   return thermoUtil::computeInternalEnergy(
       workers[i]->getWvg(), workers[i]->getSsf(), rsValues[i], dim);
 }
 
-double VSMasterBase::getFxcIntegrandValue(GridPoint p) const {
+double VSManager::getFxcIntegrandValue(GridPoint p) const {
   const size_t i = p.toIndex();
   return thermoUtil::computeInternalEnergy(
       workers[i]->getWvg(), workers[i]->getSsf(), 1.0, dim);
 }
 
-const VSWorkerBase &VSMasterBase::getWorkerAt(GridPoint p) const {
+const VSWorker &VSManager::getWorkerAt(GridPoint p) const {
   return *workers[p.toIndex()];
 }

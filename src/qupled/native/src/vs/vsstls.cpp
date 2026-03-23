@@ -9,11 +9,11 @@ using namespace MPIUtil;
 using namespace GridPoints;
 
 // -----------------------------------------------------------------
-// VSStlsMaster
+// VSStlsManager
 // -----------------------------------------------------------------
 
-VSStlsMaster::VSStlsMaster(const std::shared_ptr<const VSStlsInput> &in)
-    : VSMasterBase(in->getCouplingResolution(),
+VSStlsManager::VSStlsManager(const std::shared_ptr<const VSStlsInput> &in)
+    : VSManager(in->getCouplingResolution(),
                    in->getDegeneracyResolution(),
                    in->getWaveVectorGridRes(),
                    in->getDimension()),
@@ -69,7 +69,7 @@ int VSStls::runGrid() {
   println(formatUtil::format("Alpha = {:.5e}, Residual error "
                              "(structural properties) = {:.5e}",
                              grid.getAlpha(),
-                             grid.VSMasterBase::getError()));
+                             grid.VSManager::getError()));
   return status;
 }
 
@@ -85,7 +85,7 @@ double VSStls::getFxcIntegrandValue(GridPoint p) const {
 
 double VSStls::computeQRaw(GridPoint p) const {
   return QAdder::classical(
-             grid.VSMasterBase::getWvg(p), grid.VSMasterBase::getSsf(p), inPtr)
+             grid.VSManager::getWvg(p), grid.VSManager::getSsf(p), inPtr)
       .get();
 }
 
@@ -116,4 +116,4 @@ double VSStls::getUInt() const {
       .getUInt();
 }
 
-double VSStls::getError() const { return grid.VSMasterBase::getError(); }
+double VSStls::getError() const { return grid.VSManager::getError(); }

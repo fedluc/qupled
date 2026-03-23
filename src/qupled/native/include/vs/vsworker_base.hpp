@@ -5,13 +5,13 @@
 #include <vector>
 
 // -----------------------------------------------------------------
-// VSWorkerBase: abstract interface for all worker objects
+// VSWorker: abstract interface for all worker objects
 // -----------------------------------------------------------------
 
-class VSWorkerBase {
+class VSWorker {
 public:
 
-  virtual ~VSWorkerBase() = default;
+  virtual ~VSWorker() = default;
   // Getters
   virtual const Vector2D &getLfc() const = 0;
   virtual const std::vector<double> &getWvg() const = 0;

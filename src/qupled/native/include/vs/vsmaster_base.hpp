@@ -9,10 +9,10 @@
 #include <vector>
 
 // -----------------------------------------------------------------
-// VSMasterBase: manages 9 workers and derivative bookkeeping
+// VSManager: manages 9 workers and derivative bookkeeping
 // -----------------------------------------------------------------
 
-class VSMasterBase {
+class VSManager {
 public:
 
   void setAlpha(double alpha_) { alpha = alpha_; }
@@ -26,14 +26,14 @@ public:
   double getDegeneracy(GridPoint p) const;
   double getUInt(GridPoint p) const;
   double getFxcIntegrandValue(GridPoint p) const;
-  const VSWorkerBase &getWorkerAt(GridPoint p) const;
+  const VSWorker &getWorkerAt(GridPoint p) const;
 
 protected:
 
-  VSMasterBase(double drs_,
-               double dTheta_,
-               double dx_,
-               dimensionsUtil::Dimension dim_);
+  VSManager(double drs_,
+            double dTheta_,
+            double dx_,
+            dimensionsUtil::Dimension dim_);
 
   struct DerivativeData {
     enum class Type { CENTERED, FORWARD, BACKWARD };
@@ -43,7 +43,7 @@ protected:
   };
 
   static constexpr int N = 9;
-  std::array<std::unique_ptr<VSWorkerBase>, N> workers;
+  std::array<std::unique_ptr<VSWorker>, N> workers;
   std::array<Vector2D, N> lfcDerivatives;
   std::array<DerivativeData, N> rsDerivData;
   std::array<DerivativeData, N> thetaDerivData;
