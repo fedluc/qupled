@@ -24,7 +24,7 @@ public:
   const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
   const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
 
-  void init() override { Qstls::init(); }
+  void init() override { std::cerr << "Initializing VSQstlsWorker..." << std::endl; Qstls::init(); }
   void initialGuess() override { Qstls::initialGuess(); }
   void computeSsf() override { Qstls::computeSsf(); }
   void computeLfc() override { Qstls::computeLfc(); }

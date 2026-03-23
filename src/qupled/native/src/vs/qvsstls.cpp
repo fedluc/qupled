@@ -18,7 +18,7 @@ using Itg2DParam = Integrator2D::Param;
 
 VSQstlsWorker::VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
                              GridPoint p)
-    : Qstls(in, false) {
+    : Qstls(in, true) {
   const string &theory = in->getTheory();
   switch (p.theta) {
   case GridPoint::Theta::DOWN:
@@ -110,11 +110,12 @@ const Input &QVSStls::inScheme() const { return *inPtr; }
 
 int QVSStls::runGrid() {
   grid.setAlpha(alpha);
+  int status = grid.compute();
   println(formatUtil::format("Alpha = {:.5e}, Residual error "
                              "(structural properties) = {:.5e}",
                              grid.getAlpha(),
                              grid.VSMasterBase::getError()));
-  return grid.compute();
+  return status;
 }
 
 double QVSStls::getCoupling(GridPoint p) const { return grid.getCoupling(p); }
