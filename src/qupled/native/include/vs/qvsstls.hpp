@@ -59,8 +59,11 @@ public:
 
 private:
 
+  std::shared_ptr<const QVSStlsInput> managerInPtr_;
   std::shared_ptr<Integrator2D> itg2D;
   std::vector<double> itgGrid;
+  const VSInput &inVS() const override { return *managerInPtr_; }
+  const Input &inScheme() const override { return *managerInPtr_; }
 };
 
 // -----------------------------------------------------------------

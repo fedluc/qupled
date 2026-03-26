@@ -10,17 +10,6 @@ using namespace GridPoints;
 // VSManager
 // -----------------------------------------------------------------
 
-VSManager::VSManager(double drs_,
-                     double dTheta_,
-                     double dx_,
-                     dimensionsUtil::Dimension dim_)
-    : alpha(numUtil::Inf),
-      initDone(false),
-      drs(drs_),
-      dTheta(dTheta_),
-      dx(dx_),
-      dim(dim_) {}
-
 void VSManager::setupDerivativeData() {
   // rs derivative data (varies along rs axis, theta held fixed)
   for (const auto tOff : {GridPoint::Theta::DOWN,
@@ -76,9 +65,12 @@ void VSManager::computeLfcDerivatives() {
     const Vector2D &rsDownLfc = workers[rsDerivData[i].downIdx]->getLfc();
     const Vector2D &tUpLfc = workers[thetaDerivData[i].upIdx]->getLfc();
     const Vector2D &tDownLfc = workers[thetaDerivData[i].downIdx]->getLfc();
-    const double a_dx = alpha / (6.0 * dx);
-    const double a_drs = (rs > 0.0) ? alpha * rs / (6.0 * drs) : 0.0;
-    const double a_dt = (theta > 0.0) ? alpha * theta / (3.0 * dTheta) : 0.0;
+    const double a_dx = alpha / (6.0 * inScheme().getWaveVectorGridRes());
+    const double a_drs =
+        (rs > 0.0) ? alpha * rs / (6.0 * inVS().getCouplingResolution()) : 0.0;
+    const double a_dt =
+        (theta > 0.0) ? alpha * theta / (3.0 * inVS().getDegeneracyResolution())
+                      : 0.0;
     const vector<double> &wvg = workers[i]->getWvg();
     const size_t nx = wvg.size();
     Vector2D &lfcd = lfcDerivatives[i];
@@ -216,5 +208,6 @@ double VSManager::getQAdder(GridPoint p) const {
 double VSManager::getFxcIntegrandValue(GridPoint p) const {
   const auto &ssf = getSsf(p);
   const auto &wvg = getWvg(p);
-  return thermoUtil::computeInternalEnergy(wvg, ssf, 1.0, dim);
+  return thermoUtil::computeInternalEnergy(
+      wvg, ssf, 1.0, inScheme().getDimension());
 }

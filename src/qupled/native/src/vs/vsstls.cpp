@@ -13,10 +13,7 @@ using namespace GridPoints;
 // -----------------------------------------------------------------
 
 VSStlsManager::VSStlsManager(const std::shared_ptr<const VSStlsInput> &in)
-    : VSManager(in->getCouplingResolution(),
-                in->getDegeneracyResolution(),
-                in->getWaveVectorGridRes(),
-                in->getDimension()),
+    : VSManager(),
       Stls(in, false),
       managerInPtr(in) {
   const double drs_ = in->getCouplingResolution();

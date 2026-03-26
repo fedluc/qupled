@@ -53,11 +53,12 @@ public:
   double computeError() const override { return VSManager::computeError(); }
   void updateSolution() override { VSManager::updateSolution(); }
   int compute() override { return Stls::compute(); }
-  double computeQRaw(GridPoint p) const;
 
 private:
 
   std::shared_ptr<const VSStlsInput> managerInPtr;
+  const VSInput &inVS() const override { return *managerInPtr; }
+  const Input &inScheme() const override { return *managerInPtr; }
 };
 
 // -----------------------------------------------------------------

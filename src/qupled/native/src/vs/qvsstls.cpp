@@ -56,11 +56,9 @@ double VSQstlsWorker::getQAdder() const {
 // -----------------------------------------------------------------
 
 VSQstlsManager::VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in)
-    : VSManager(in->getCouplingResolution(),
-                in->getDegeneracyResolution(),
-                in->getWaveVectorGridRes(),
-                in->getDimension()),
+    : VSManager(),
       Qstls(in, false),
+      managerInPtr_(in),
       itg2D(make_shared<Integrator2D>(ItgType::DEFAULT, in->getIntError())) {
   const double drs_ = in->getCouplingResolution();
   const double dTheta_ = in->getDegeneracyResolution();

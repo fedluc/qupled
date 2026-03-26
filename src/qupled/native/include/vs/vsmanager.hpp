@@ -1,7 +1,7 @@
 #ifndef VS_VSMANAGER_HPP
 #define VS_VSMANAGER_HPP
 
-#include "dimensions_util.hpp"
+#include "input.hpp"
 #include "vs/grid_point.hpp"
 #include "vs/vsworker.hpp"
 #include <array>
@@ -34,10 +34,9 @@ public:
 
 protected:
 
-  VSManager(double drs_,
-            double dTheta_,
-            double dx_,
-            dimensionsUtil::Dimension dim_);
+  explicit VSManager()
+      : alpha(numUtil::Inf),
+        initDone(false) {}
 
   struct DerivativeData {
     enum class Type { CENTERED, FORWARD, BACKWARD };
@@ -55,10 +54,6 @@ protected:
   std::array<double, N> thetaValues;
   double alpha;
   bool initDone;
-  double drs;
-  double dTheta;
-  double dx;
-  dimensionsUtil::Dimension dim;
 
   void setupDerivativeData();
 
@@ -69,6 +64,10 @@ protected:
   double computeError() const;
   void updateSolution();
   void initialGuess();
+
+  // Input access (implemented by derived classes)
+  virtual const VSInput &inVS() const = 0;
+  virtual const Input &inScheme() const = 0;
 
 private:
 
