@@ -19,7 +19,7 @@ using Itg2DParam = Integrator2D::Param;
 
 VSQstlsWorker::VSQstlsWorker(const std::shared_ptr<const QVSStlsInput> &in,
                              GridPoint p)
-    : Qstls(in, true) {
+    : Qstls(in, false) {
   const string &theory = in->getTheory();
   switch (p.theta) {
   case GridPoint::Theta::DOWN:
@@ -76,6 +76,9 @@ VSQstlsManager::VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in)
       auto inTmp = std::make_shared<QVSStlsInput>(*in);
       inTmp->setCoupling(rsTmp);
       inTmp->setDegeneracy(thetaTmp);
+      if (rOff != GridPoint::Rs::DOWN) {
+        inTmp->setFixedRunId(in->getDatabaseInfo().runId);
+      }
       const GridPoint gp{rOff, tOff};
       const size_t idx = gp.toIndex();
       rsValues[idx] = rsTmp;
