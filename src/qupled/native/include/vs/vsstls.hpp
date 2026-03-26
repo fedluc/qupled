@@ -3,6 +3,7 @@
 
 #include "input.hpp"
 #include "stls.hpp"
+#include "thermo_util.hpp"
 #include "vs/vsbase.hpp"
 #include "vs/vsmanager.hpp"
 
@@ -21,7 +22,10 @@ public:
   const Vector2D &getIdr() const override { return Stls::getIdr(); }
   std::vector<double> getSdr() const override { return Stls::getSdr(); }
   double getUInt() const override { return Stls::getUInt(); }
-  double getQAdder() const override { return getUInt(); }
+  double getQAdder() const override {
+    return thermoUtil::computeInternalEnergy(
+        wvg, ssf, 1.0, inPtr->getDimension());
+  }
   double getCoupling() const override { return inPtr->getCoupling(); }
   double getDegeneracy() const override { return inPtr->getDegeneracy(); }
   void init() override { Stls::init(); }

@@ -147,14 +147,16 @@ double VSManager::derivative(double f0,
 
 void VSManager::init() {
   if (initDone) return;
-  for (auto &w : workers)
+  for (auto &w : workers) {
     w->init();
+  }
   initDone = true;
 }
 
 void VSManager::computeSsf() {
-  for (auto &w : workers)
+  for (auto &w : workers) {
     w->computeSsf();
+  }
 }
 
 double VSManager::computeError() const {
@@ -162,13 +164,15 @@ double VSManager::computeError() const {
 }
 
 void VSManager::updateSolution() {
-  for (auto &w : workers)
+  for (auto &w : workers) {
     w->updateSolution();
+  }
 }
 
 void VSManager::initialGuess() {
-  for (auto &w : workers)
+  for (auto &w : workers) {
     w->initialGuess();
+  }
 }
 
 // Getters
