@@ -49,14 +49,12 @@ public:
 
   explicit VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in);
 
-  using VSManager::computeError;
-  using VSManager::computeLfc;
-  using VSManager::computeSsf;
-  using VSManager::init;
-  using VSManager::initialGuess;
-  using VSManager::updateSolution;
-
-  // Override from VSManager
+  void init() override { VSManager::init(); }
+  void initialGuess() override { VSManager::initialGuess(); }
+  void computeSsf() override { VSManager::computeSsf(); }
+  void computeLfc() override { VSManager::computeLfc(); }
+  double computeError() const override { return VSManager::computeError(); }
+  void updateSolution() override { VSManager::updateSolution(); }
   int compute() override { return Qstls::compute(); }
 
 private:

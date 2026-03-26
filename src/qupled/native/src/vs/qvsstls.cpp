@@ -112,7 +112,7 @@ const VSInput &QVSStls::in() const {
 const Input &QVSStls::inScheme() const { return *inPtr; }
 
 // -----------------------------------------------------------------
-// QAdder class
+// QAdder
 // -----------------------------------------------------------------
 
 // SSF interpolation

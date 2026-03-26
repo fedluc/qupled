@@ -17,7 +17,7 @@ public:
 
   void setAlpha(double alpha_) { alpha = alpha_; }
   double getAlpha() const { return alpha; }
-  double getError() const { return lastError; }
+  double getError() const { return computeError(); }
   // Virtual compute method (implemented by derived classes)
   virtual int compute() = 0;
   // Getters by GridPoint
@@ -54,7 +54,6 @@ protected:
   std::array<double, N> rsValues;
   std::array<double, N> thetaValues;
   double alpha;
-  mutable double lastError;
   bool initDone;
   double drs;
   double dTheta;

@@ -15,7 +15,6 @@ VSManager::VSManager(double drs_,
                      double dx_,
                      dimensionsUtil::Dimension dim_)
     : alpha(numUtil::Inf),
-      lastError(numUtil::Inf),
       initDone(false),
       drs(drs_),
       dTheta(dTheta_),
@@ -159,8 +158,7 @@ void VSManager::computeSsf() {
 }
 
 double VSManager::computeError() const {
-  lastError = workers[CENTER.toIndex()]->computeError();
-  return lastError;
+  return workers[CENTER.toIndex()]->computeError();
 }
 
 void VSManager::updateSolution() {

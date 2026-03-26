@@ -13,7 +13,7 @@ using ItgParam = Integrator1D::Param;
 using Itg2DParam = Integrator2D::Param;
 
 // -----------------------------------------------------------------
-// VSBase
+// VSBase class
 // -----------------------------------------------------------------
 
 int VSBase::compute() {
@@ -203,10 +203,6 @@ GridPoint VSBase::getOutputGridPoint() const {
   return CENTER;
 }
 
-// -----------------------------------------------------------------
-// Grid delegation methods
-// -----------------------------------------------------------------
-
 int VSBase::runGrid() {
   grid().setAlpha(alpha);
   int status = grid().compute();
@@ -226,6 +222,8 @@ double VSBase::getDegeneracy(GridPoint p) const {
 double VSBase::getFxcIntegrandValue(GridPoint p) const {
   return grid().getFxcIntegrandValue(p);
 }
+
+double VSBase::getQAdder(GridPoint p) const { return grid().getQAdder(p); }
 
 const std::vector<double> &VSBase::getSsf() const {
   return grid().getSsf(getOutputGridPoint());
