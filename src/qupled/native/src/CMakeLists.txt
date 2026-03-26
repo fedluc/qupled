@@ -93,7 +93,7 @@ target_link_libraries(native PUBLIC
 	GSL::gsl
 	GSL::gslcblas
 	SQLiteCpp
-	SQLite::SQLite3
+	SQLite3::SQLite3
 )
 if(USE_MPI)
 	target_link_libraries(native PUBLIC MPI::MPI_CXX)
