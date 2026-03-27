@@ -1,5 +1,7 @@
 black
+breathe
 build
+sphinxcontrib-mermaid
 cibuildwheel
 pytest
 pytest-mock

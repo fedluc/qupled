@@ -67,6 +67,9 @@ def format_code():
 
 
 def docs():
+    script_dir = Path(__file__).resolve().parent
+    subprocess.run(["python3", str(script_dir / "generate_diagrams.py")], check=True)
+    subprocess.run(["doxygen", "Doxyfile"], cwd="docs", check=True)
     subprocess.run(["sphinx-build", "-b", "html", "docs", str(Path("docs", "_build"))])
 
 
@@ -76,6 +79,7 @@ def clean():
         Path("dist-native-only"),
         Path("src", "qupled.egg-info"),
         Path("docs", "_build"),
+        Path("docs", "_generated"),
     ]
     for folder in folders_to_clean:
         if folder.exists():

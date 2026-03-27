@@ -10,6 +10,7 @@ Makefile
 dist
 dist-native-only
 docs/_build
+docs/_generated
 qupled.egg-info
 wheelhouse
 snap

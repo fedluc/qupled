@@ -1,5 +1,5 @@
-The package
-===========
+Python API
+==========
 
 **qupled** is a hybrid Python/C++ package designed to simulate and analyze dielectric response 
 schemes, both classical and quantum. **Python** orchestrates the workflow: setting up simulations, 
@@ -253,4 +253,17 @@ Dimenions
 
 .. autoclass:: qupled.util.dimension.Dimension
     :members:
+
+Class hierarchy
+---------------
+
+Solver classes
+~~~~~~~~~~~~~~
+
+.. graphviz:: _generated/python_solvers.dot
+
+Input classes
+~~~~~~~~~~~~~
+
+.. graphviz:: _generated/python_inputs.dot
 

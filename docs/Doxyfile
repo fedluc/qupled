@@ -1,0 +1,33 @@
+PROJECT_NAME           = "qupled"
+PROJECT_BRIEF          = "C++ native library for dielectric scheme calculations"
+
+# Input / output
+INPUT                  = ../src/qupled/native/include
+RECURSIVE              = YES
+FILE_PATTERNS          = *.hpp
+OUTPUT_DIRECTORY       = _build/doxygen
+STRIP_FROM_PATH        = ../src/qupled/native/include
+
+# Output formats: XML is read by Breathe; HTML provides standalone C++ docs with graphs
+GENERATE_XML           = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+
+# Extract all documented and undocumented members
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+
+# Graphs via Graphviz
+HAVE_DOT               = YES
+COLLABORATION_GRAPH    = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+MAX_DOT_GRAPH_DEPTH    = 3
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+
+# Improve output quality
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES

@@ -6,7 +6,7 @@ Welcome to qupled's documentation!
    :caption: Contents:
 
    introduction
-   qupled
+   package
    examples
    contribute
    
