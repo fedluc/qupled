@@ -12,9 +12,15 @@ author = "Federico Lucco Castello"
 
 # -- Path to modules ---------------------------------------------------------
 import os
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join("..", "src")))
+
+# -- Run Doxygen before Breathe reads the XML --------------------------------
+_docs_dir = os.path.dirname(os.path.abspath(__file__))
+os.makedirs(os.path.join(_docs_dir, "_build", "doxygen"), exist_ok=True)
+subprocess.run(["doxygen", "Doxyfile"], cwd=_docs_dir, check=True)
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
