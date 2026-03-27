@@ -166,7 +166,7 @@ def test_insert_run_and_get_run_with_results(tables, scheme_inputs, scheme_resul
     assert inputs["theory"] == scheme_inputs.theory
     assert inputs["coupling"] == scheme_inputs.coupling
     assert inputs["degeneracy"] == scheme_inputs.degeneracy
-    assert (results["data"] == scheme_results.data).all()
+    assert np.array_equal(results["data"], scheme_results.data, equal_nan=True)
 
 
 def test_insert_run_and_get_inputs(tables, scheme_inputs):
@@ -181,7 +181,7 @@ def test_insert_run_and_get_results(tables, scheme_inputs, scheme_results):
     tables.insert_run(scheme_inputs)
     tables.insert_results(scheme_results.__dict__)
     results = tables.get_results(tables.run_id, None)
-    assert (results["data"] == scheme_results.data).all()
+    assert np.array_equal(results["data"], scheme_results.data, equal_nan=True)
 
 
 def test_insert_inputs_without_run(tables, scheme_inputs):
@@ -216,7 +216,7 @@ def test_update_results_allow_update(tables, scheme_inputs, scheme_results):
     scheme_results.data = new_data
     tables.insert_results(scheme_results.__dict__, conflict_mode=ConflictMode.UPDATE)
     results = tables.get_results(tables.run_id, None)
-    assert (results["data"] == new_data).all()
+    assert np.array_equal(results["data"], new_data, equal_nan=True)
 
 
 def test_get_non_existing_run(tables, scheme_inputs):

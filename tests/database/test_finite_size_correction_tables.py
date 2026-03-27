@@ -204,7 +204,7 @@ def test_insert_run_and_get_run_with_results(tables, fsc_inputs, fsc_results):
     assert run["status"] == RunStatus.RUNNING.value
     assert inputs["number_of_particles"] == fsc_inputs.number_of_particles
     assert "scheme" not in inputs
-    assert (results["data"] == fsc_results.data).all()
+    assert np.array_equal(results["data"], fsc_results.data, equal_nan=True)
 
 
 def test_insert_run_and_get_inputs(tables, fsc_inputs):
@@ -217,7 +217,7 @@ def test_insert_run_and_get_results(tables, fsc_inputs, fsc_results):
     tables.insert_run(fsc_inputs)
     tables.insert_results(fsc_results.__dict__)
     results = tables.get_results(tables.run_id, None)
-    assert (results["data"] == fsc_results.data).all()
+    assert np.array_equal(results["data"], fsc_results.data, equal_nan=True)
 
 
 def test_insert_inputs_without_run(tables, fsc_inputs):
@@ -252,7 +252,7 @@ def test_update_results_allow_update(tables, fsc_inputs, fsc_results):
     fsc_results.data = new_data
     tables.insert_results(fsc_results.__dict__, conflict_mode=ConflictMode.UPDATE)
     results = tables.get_results(tables.run_id, None)
-    assert (results["data"] == new_data).all()
+    assert np.array_equal(results["data"], new_data, equal_nan=True)
 
 
 def test_get_non_existing_run(tables, fsc_inputs):
