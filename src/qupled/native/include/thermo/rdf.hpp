@@ -1,8 +1,8 @@
 #ifndef RDF_HPP
 #define RDF_HPP
 
-#include "util/dimensions_util.hpp"
 #include "schemes/input.hpp"
+#include "util/dimensions_util.hpp"
 #include "util/numerics.hpp"
 
 // ------------------------------------------------------

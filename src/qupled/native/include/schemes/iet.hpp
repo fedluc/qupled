@@ -2,9 +2,9 @@
 #define IET_HPP
 
 #include "schemes/input.hpp"
+#include "schemes/stls.hpp"
 #include "util/logger.hpp"
 #include "util/numerics.hpp"
-#include "schemes/stls.hpp"
 #include "util/vector2D.hpp"
 
 // -----------------------------------------------------------------

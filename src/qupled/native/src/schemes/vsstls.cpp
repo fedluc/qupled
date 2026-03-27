@@ -1,8 +1,8 @@
 #include "schemes/vsstls.hpp"
-#include "util/format.hpp"
 #include "schemes/input.hpp"
-#include "util/mpi_util.hpp"
 #include "thermo/thermo_util.hpp"
+#include "util/format.hpp"
+#include "util/mpi_util.hpp"
 
 using namespace std;
 using namespace MPIUtil;

@@ -2,9 +2,9 @@
 #define STLS_HPP
 
 #include "schemes/input.hpp"
+#include "schemes/rpa.hpp"
 #include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
-#include "schemes/rpa.hpp"
 #include <cmath>
 #include <vector>
 

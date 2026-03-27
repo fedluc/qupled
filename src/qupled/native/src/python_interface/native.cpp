@@ -1,7 +1,7 @@
-#include "util/mpi_util.hpp"
 #include "python_interface/inputs.hpp"
 #include "python_interface/schemes.hpp"
 #include "python_interface/utilities.hpp"
+#include "util/mpi_util.hpp"
 
 #include <cstdlib>
 #include <gsl/gsl_errno.h>

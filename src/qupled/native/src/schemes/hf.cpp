@@ -1,9 +1,9 @@
 #include "schemes/hf.hpp"
-#include "thermo/chemical_potential.hpp"
 #include "schemes/input.hpp"
+#include "thermo/chemical_potential.hpp"
+#include "thermo/thermo_util.hpp"
 #include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
-#include "thermo/thermo_util.hpp"
 
 using namespace std;
 using namespace dimensionsUtil;

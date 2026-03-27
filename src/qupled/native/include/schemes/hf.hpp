@@ -1,8 +1,8 @@
 #ifndef HF_HPP
 #define HF_HPP
 
-#include "util/dimensions_util.hpp"
 #include "schemes/input.hpp"
+#include "util/dimensions_util.hpp"
 #include "util/logger.hpp"
 #include "util/numerics.hpp"
 #include <vector>

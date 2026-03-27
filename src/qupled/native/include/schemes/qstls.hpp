@@ -2,8 +2,8 @@
 #define QSTLS_HPP
 
 #include "schemes/input.hpp"
-#include "util/numerics.hpp"
 #include "schemes/stls.hpp"
+#include "util/numerics.hpp"
 #include "util/vector2D.hpp"
 #include "util/vector3D.hpp"
 #include <map>

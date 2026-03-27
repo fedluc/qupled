@@ -2,8 +2,8 @@
 #define VS_QVSSTLS_HPP
 
 #include "schemes/input.hpp"
-#include "util/numerics.hpp"
 #include "schemes/qstls.hpp"
+#include "util/numerics.hpp"
 #include "vs/vsbase.hpp"
 #include "vs/vsmanager.hpp"
 #include <memory>

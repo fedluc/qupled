@@ -1,6 +1,6 @@
 #include "schemes/esa.hpp"
-#include "util/dual.hpp"
 #include "schemes/input.hpp"
+#include "util/dual.hpp"
 #include "util/num_util.hpp"
 #include "util/numerics.hpp"
 

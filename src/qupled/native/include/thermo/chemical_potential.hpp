@@ -1,8 +1,8 @@
 #ifndef CHEMICALPOTENTIAL_HPP
 #define CHEMICALPOTENTIAL_HPP
 
-#include "util/dimensions_util.hpp"
 #include "schemes/input.hpp"
+#include "util/dimensions_util.hpp"
 #include <memory>
 
 class ChemicalPotential : public dimensionsUtil::DimensionsHandler {

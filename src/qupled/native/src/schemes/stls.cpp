@@ -1,6 +1,6 @@
 #include "schemes/stls.hpp"
-#include "util/format.hpp"
 #include "schemes/input.hpp"
+#include "util/format.hpp"
 #include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
 #include "util/vector_util.hpp"
