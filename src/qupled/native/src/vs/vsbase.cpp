@@ -1,10 +1,10 @@
 #include "vs/vsbase.hpp"
-#include "format.hpp"
-#include "input.hpp"
-#include "mpi_util.hpp"
-#include "numerics.hpp"
-#include "thermo_util.hpp"
-#include "vector_util.hpp"
+#include "schemes/input.hpp"
+#include "thermo/thermo_util.hpp"
+#include "util/format.hpp"
+#include "util/mpi_util.hpp"
+#include "util/numerics.hpp"
+#include "util/vector_util.hpp"
 #include "vs/vsmanager.hpp"
 
 using namespace std;

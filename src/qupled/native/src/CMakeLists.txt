@@ -48,33 +48,34 @@ add_compile_options(-Wall -Wextra -Wpedantic -O3)
 
 # Source code
 pybind11_add_module(native
-	logger.cpp
-	database.cpp
-	numerics.cpp
-	vector2D.cpp
-	vector3D.cpp
-	internal_energy.cpp
-	free_energy.cpp
-	rdf.cpp
-	mpi_util.cpp
-	num_util.cpp
-	vector_util.cpp
-	thermo_util.cpp
-	dimensions_util.cpp
-	input.cpp
-	chemical_potential.cpp
-	hf.cpp
-	rpa.cpp
-	esa.cpp
-	stls.cpp
-	iet.cpp
-	stlsiet.cpp
-	qstls.cpp
-	qstlsiet.cpp
+	util/logger.cpp
+	util/database.cpp
+	util/numerics.cpp
+	util/vector2D.cpp
+	util/vector3D.cpp
+	util/mpi_util.cpp
+	util/num_util.cpp
+	util/vector_util.cpp
+	util/dimensions_util.cpp
+	thermo/internal_energy.cpp
+	thermo/free_energy.cpp
+	thermo/rdf.cpp
+	thermo/thermo_util.cpp
+	thermo/chemical_potential.cpp
 	vs/vsmanager.cpp
 	vs/vsbase.cpp
-	vs/vsstls.cpp
-	vs/qvsstls.cpp
+	schemes/input.cpp
+	schemes/hf.cpp
+	schemes/rpa.cpp
+	schemes/esa.cpp
+	schemes/stls.cpp
+	schemes/iet.cpp
+	schemes/stlsiet.cpp
+	schemes/qstls.cpp
+	schemes/qstlsiet.cpp
+	schemes/vsstls.cpp
+	schemes/qvsstls.cpp
+
 	python_interface/util.cpp
 	python_interface/inputs.cpp
 	python_interface/schemes.cpp

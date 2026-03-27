@@ -1,7 +1,7 @@
 #ifndef VS_VSMANAGER_HPP
 #define VS_VSMANAGER_HPP
 
-#include "input.hpp"
+#include "schemes/input.hpp"
 #include "vs/grid_point.hpp"
 #include "vs/vsworker.hpp"
 #include <array>

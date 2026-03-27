@@ -1,5 +1,5 @@
-#include "input.hpp"
 #include "python_interface/util.hpp"
+#include "schemes/input.hpp"
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 

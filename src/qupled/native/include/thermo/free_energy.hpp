@@ -1,0 +1,45 @@
+#ifndef FREE_ENERGY_HPP
+#define FREE_ENERGY_HPP
+
+#include "util/numerics.hpp"
+
+// -----------------------------------------------------------------
+// Class for free energy calculation
+// -----------------------------------------------------------------
+
+class FreeEnergy {
+
+public:
+
+  // Constructor
+  FreeEnergy(const double &rs_,
+             std::shared_ptr<Interpolator1D> rsui_,
+             std::shared_ptr<Integrator1D> itg_,
+             const bool normalize_)
+      : rs(rs_),
+        itg(itg_),
+        rsui(rsui_),
+        normalize(normalize_) {}
+
+  // Get result of integration
+  double get() const;
+
+private:
+
+  // Coupling parameter
+  const double rs;
+
+  // Integrator object
+  const std::shared_ptr<Integrator1D> itg;
+
+  // Integrand interpolator (the integrand is given by rs * u)
+  const std::shared_ptr<Interpolator1D> rsui;
+
+  // Integrand
+  double integrand(const double y) const;
+
+  // Flag marking whether the free energy should be normalized with rs^2
+  const bool normalize;
+};
+
+#endif
