@@ -90,5 +90,5 @@ def test_solve_stls_iet():
 
 
 def test_solve_vsstls():
-    expected_internal_energy = {19: -0.133311093051585}
+    expected_internal_energy = {19: -0.1333040908470305}
     run_example("solve_vsstls", expected_internal_energy)

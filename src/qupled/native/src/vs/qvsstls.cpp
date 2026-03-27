@@ -74,8 +74,8 @@ VSQstlsManager::VSQstlsManager(const std::shared_ptr<const QVSStlsInput> &in)
       auto inTmp = std::make_shared<QVSStlsInput>(*in);
       inTmp->setCoupling(rsTmp);
       inTmp->setDegeneracy(thetaTmp);
-      if (rOff != GridPoint::Rs::DOWN) {
-        inTmp->setFixedRunId(in->getDatabaseInfo().runId);
+      if (rOff != GridPoint::Rs::DOWN && in->getFixedRunId() == DEFAULT_INT) {
+        inTmp->setFixedRunId(in->getFixedRunId());
       }
       const GridPoint gp{rOff, tOff};
       const size_t idx = gp.toIndex();
