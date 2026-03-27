@@ -33,32 +33,72 @@ for _mod in _MOCKS:
 
 sys.path.insert(0, str(ROOT / "src"))
 
-from qupled.schemes import hf, rpa, esa, stls, stlsiet, vsstls, qstls, qstlsiet, qvsstls  # noqa: E402
+from qupled.schemes import (
+    hf,
+    rpa,
+    esa,
+    stls,
+    stlsiet,
+    vsstls,
+    qstls,
+    qstlsiet,
+    qvsstls,
+)  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Python class lists
 # ---------------------------------------------------------------------------
 PYTHON_SOLVERS = [
-    hf.Solver, rpa.Solver, esa.Solver, stls.Solver,
-    stlsiet.Solver, vsstls.Solver, qstls.Solver, qstlsiet.Solver, qvsstls.Solver,
+    hf.Solver,
+    rpa.Solver,
+    esa.Solver,
+    stls.Solver,
+    stlsiet.Solver,
+    vsstls.Solver,
+    qstls.Solver,
+    qstlsiet.Solver,
+    qvsstls.Solver,
 ]
 PYTHON_INPUTS = [
-    hf.Input, rpa.Input, esa.Input, stls.Input,
-    stlsiet.Input, vsstls.Input, qstls.Input, qstlsiet.Input, qvsstls.Input,
+    hf.Input,
+    rpa.Input,
+    esa.Input,
+    stls.Input,
+    stlsiet.Input,
+    vsstls.Input,
+    qstls.Input,
+    qstlsiet.Input,
+    qvsstls.Input,
 ]
 
 # ---------------------------------------------------------------------------
 # C++ class lists (names only — parsed from headers)
 # ---------------------------------------------------------------------------
 CPP_SOLVERS = {
-    "Logger", "HF", "Rpa", "ESA", "Stls", "StlsIet",
-    "Qstls", "QstlsIet", "VSBase", "VSStls", "QVSStls",
+    "Logger",
+    "HF",
+    "Rpa",
+    "ESA",
+    "Stls",
+    "StlsIet",
+    "Qstls",
+    "QstlsIet",
+    "VSBase",
+    "VSStls",
+    "QVSStls",
 }
 CPP_INPUTS = {
-    "Input", "IterationInput",
-    "StlsInput", "StlsIetInput", "QstlsInput", "QstlsIetInput",
-    "VSInput", "QuantumInput", "IetInput",
-    "VSStlsInput", "QVSStlsInput",
+    "Input",
+    "IterationInput",
+    "StlsInput",
+    "StlsIetInput",
+    "QstlsInput",
+    "QstlsIetInput",
+    "VSInput",
+    "QuantumInput",
+    "IetInput",
+    "VSStlsInput",
+    "QVSStlsInput",
 }
 CPP_MIXIN_CLASSES = {"VSInput", "QuantumInput", "IetInput"}
 
@@ -109,7 +149,9 @@ def _parse_cpp_inheritance():
     for hpp in INCLUDE_DIR.rglob("*.hpp"):
         for match in pattern.finditer(hpp.read_text()):
             cls = match.group(1)
-            parents = re.findall(r"(?:public|private|protected)\s+(\w+)", match.group(2))
+            parents = re.findall(
+                r"(?:public|private|protected)\s+(\w+)", match.group(2)
+            )
             inheritance[cls] = parents
     return inheritance
 
