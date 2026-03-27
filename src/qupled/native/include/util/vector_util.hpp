@@ -3,43 +3,89 @@
 
 #include <vector>
 
-// ------------------------------------------------------------------
-// Utility functions to manipulate vectors from the standard library
-// ------------------------------------------------------------------
-
+/**
+ * @brief Free-function utilities for element-wise operations on @c
+ * std::vector<double>.
+ *
+ * All binary functions require the two input vectors to have the same length
+ * and return a new vector of that length.
+ */
 namespace vecUtil {
 
-  // Element-wise sum between two vectors
+  /**
+   * @brief Compute the element-wise sum of two vectors.
+   * @param v1 First operand.
+   * @param v2 Second operand (same length as @p v1).
+   * @return Vector @f$v_1 + v_2@f$.
+   */
   std::vector<double> sum(const std::vector<double> &v1,
                           const std::vector<double> &v2);
 
-  // Element-wise difference between two vectors
+  /**
+   * @brief Compute the element-wise difference @f$v_1 - v_2@f$.
+   * @param v1 Minuend.
+   * @param v2 Subtrahend (same length as @p v1).
+   * @return Vector @f$v_1 - v_2@f$.
+   */
   std::vector<double> diff(const std::vector<double> &v1,
                            const std::vector<double> &v2);
 
-  // Element-wise multiplication of two vectors
+  /**
+   * @brief Compute the element-wise product @f$v_1 \cdot v_2@f$.
+   * @param v1 First operand.
+   * @param v2 Second operand (same length as @p v1).
+   * @return Vector @f$v_1 \odot v_2@f$.
+   */
   std::vector<double> mult(const std::vector<double> &v1,
                            const std::vector<double> &v2);
 
-  // Element-wise division of two vectors
+  /**
+   * @brief Compute the element-wise quotient @f$v_1 / v_2@f$.
+   * @param v1 Dividend.
+   * @param v2 Divisor (same length as @p v1; no zero-division check).
+   * @return Vector @f$v_1 \oslash v_2@f$.
+   */
   std::vector<double> div(const std::vector<double> &v1,
                           const std::vector<double> &v2);
 
-  // Element-wise multiplication of a vector and a scalar
+  /**
+   * @brief Scale a vector by a scalar.
+   * @param v Vector to scale.
+   * @param a Scalar factor.
+   * @return Vector @f$a \cdot v@f$.
+   */
   std::vector<double> mult(const std::vector<double> &v, const double a);
 
-  // Linear combination of two vectors
+  /**
+   * @brief Compute the linear combination @f$a \cdot v_1 + b \cdot v_2@f$.
+   * @param v1 First vector.
+   * @param a  Coefficient for @p v1.
+   * @param v2 Second vector (same length as @p v1).
+   * @param b  Coefficient for @p v2.
+   * @return Linear combination vector.
+   */
   std::vector<double> linearCombination(const std::vector<double> &v1,
                                         const double a,
                                         const std::vector<double> &v2,
                                         const double b);
 
-  // Root mean square difference between two vectors
+  /**
+   * @brief Compute the root-mean-square difference between two vectors.
+   * @param v1        First vector.
+   * @param v2        Second vector (same length as @p v1).
+   * @param normalize If true, divide the RMS by the RMS of @p v1 (relative
+   * error).
+   * @return RMS (or relative RMS) difference.
+   */
   double rms(const std::vector<double> &v1,
              const std::vector<double> &v2,
              const bool normalize);
 
-  // Fill vector with constant values
+  /**
+   * @brief Fill every element of @p v with the constant @p num.
+   * @param v   Vector to fill (modified in place).
+   * @param num Fill value.
+   */
   void fill(std::vector<double> &v, const double &num);
 
 } // namespace vecUtil

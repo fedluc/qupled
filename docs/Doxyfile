@@ -27,6 +27,10 @@ MAX_DOT_GRAPH_DEPTH    = 3
 DOT_IMAGE_FORMAT       = svg
 INTERACTIVE_SVG        = YES
 
+# Use MathJax for formula rendering (avoids requiring a local LaTeX installation)
+USE_MATHJAX            = YES
+MATHJAX_VERSION        = MathJax_3
+
 # Improve output quality
 QUIET                  = YES
 WARNINGS               = YES

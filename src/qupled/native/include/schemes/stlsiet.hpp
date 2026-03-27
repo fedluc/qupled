@@ -4,49 +4,83 @@
 #include "schemes/iet.hpp"
 #include "schemes/stls.hpp"
 
-// -----------------------------------------------------------------
-// Solver for the STLS-IET scheme
-// -----------------------------------------------------------------
-
+/**
+ * @brief Solver for the STLS-IET dielectric scheme.
+ *
+ * Combines the STLS iterative solver with an IET bridge function. The static
+ * local field correction includes both the STLS exchange-correlation term and
+ * a bridge-function contribution computed by the @p Iet helper. Convergence
+ * is driven by the same iterative mixing as for plain STLS.
+ */
 class StlsIet : public Stls {
 
 public:
 
-  // Constructors
+  /**
+   * @brief Construct the STLS-IET solver.
+   * @param in_ Shared pointer to the STLS-IET input parameters.
+   */
   explicit StlsIet(const std::shared_ptr<const StlsIetInput> &in_);
-  // Getters
+
+  /**
+   * @brief Return the bridge function values over the wave-vector grid.
+   * @return Constant reference to the bridge function array.
+   */
   const std::vector<double> &getBf() const { return iet.getBf(); }
 
 private:
 
-  // Iet extension
+  /** @brief IET helper that computes the bridge function. */
   Iet iet;
-  // Integrator for 2D integrals
+  /** @brief 2D integrator for the SLFC double integral. */
   const std::shared_ptr<Integrator2D> itg2D;
+  /** @brief Quadrature grid for the 2D integral. */
   std::vector<double> itgGrid;
-  // Input parameters
+
+  /** @brief Access the input as a @p StlsIetInput reference. */
   const StlsIetInput &in() const {
     return *StlsUtil::dynamic_pointer_cast<Input, StlsIetInput>(inPtr);
   }
-  // Initialize basic properties
+
+  /** @brief Initialize wave-vector grid, chemical potential, and bridge
+   * function. */
   void init() override;
-  // Compute static local field correction
+
+  /** @brief Compute the STLS-IET static local field correction. */
   void computeLfc() override;
-  // Read initital guess from input
+
+  /**
+   * @brief Attempt to load the initial LFC guess from the input parameters.
+   * @return True if a valid guess was found, false otherwise.
+   */
   bool initialGuessFromInput() override;
 };
 
+/** @brief Internal helpers for the STLS-IET static local field correction. */
 namespace StlsIetUtil {
 
-  // -----------------------------------------------------------------
-  // Classes for the static local field correction
-  // -----------------------------------------------------------------
-
+  /**
+   * @brief Computes the STLS-IET static local field correction.
+   *
+   * Evaluates the SLFC integral that combines the standard STLS exchange-
+   * correlation term with a bridge-function contribution via a 2D quadrature.
+   */
   class Slfc : public StlsUtil::SlfcBase, dimensionsUtil::DimensionsHandler {
 
   public:
 
-    // Constructor
+    /**
+     * @brief Construct for a STLS-IET SLFC calculation.
+     * @param x_        Wave-vector value.
+     * @param yMin_     Lower integration limit.
+     * @param yMax_     Upper integration limit.
+     * @param ssfi_     Shared pointer to an SSF interpolator.
+     * @param lfci_     Shared pointer to an LFC interpolator.
+     * @param bfi_      Shared pointer to a bridge-function interpolator.
+     * @param itgGrid_  Grid for 2D integration.
+     * @param itg_      Shared pointer to a 2D integrator.
+     * @param in_       Shared pointer to the input parameters.
+     */
     Slfc(const double &x_,
          const double &yMin_,
          const double &yMax_,
@@ -64,31 +98,57 @@ namespace StlsIetUtil {
           res(x_),
           in(in_) {}
 
-    // Get result of integration
+    /**
+     * @brief Compute and return the SLFC at the current wave-vector.
+     * @return SLFC value including the bridge-function contribution.
+     */
     double get();
 
   private:
 
-    // Integrator object
+    /** @brief 2D numerical integrator. */
     const std::shared_ptr<Integrator2D> itg;
-    // Grid for 2D integration
+    /** @brief Grid for 2D integration. */
     const std::vector<double> itgGrid;
-    // Integrands
+    /**
+     * @brief 3D outer integrand over auxiliary momentum @p y.
+     * @param y Outer integration variable.
+     */
     double integrand1(const double &y) const;
+    /**
+     * @brief 3D inner integrand over auxiliary momentum @p w.
+     * @param w Inner integration variable.
+     */
     double integrand2(const double &w) const;
+    /**
+     * @brief 2D outer integrand over auxiliary momentum @p y.
+     * @param y Outer integration variable.
+     */
     double integrand1_2D(const double &y) const;
+    /**
+     * @brief 2D inner integrand over auxiliary momentum @p w.
+     * @param w Inner integration variable.
+     */
     double integrand2_2D(const double &w) const;
-    // Static local field correction interpolator
+    /** @brief Interpolator for the static local field correction. */
     const std::shared_ptr<Interpolator1D> lfci;
-    // Bridge function interpolator
+    /** @brief Interpolator for the bridge function. */
     const std::shared_ptr<Interpolator1D> bfi;
-    // Result of integration
+    /** @brief Result of the SLFC integration. */
     double res;
-    // Input object
+    /** @brief Input parameters. */
     const std::shared_ptr<const Input> in;
-    // Compute static local field correction
+    /**
+     * @brief Evaluate the interpolated LFC at wave-vector @p x.
+     * @param x Wave-vector value.
+     * @return Interpolated LFC value.
+     */
     double lfc(const double &x) const;
-    // Compute bridge function
+    /**
+     * @brief Evaluate the interpolated bridge function at wave-vector @p x_.
+     * @param x_ Wave-vector value.
+     * @return Interpolated bridge function value.
+     */
     double bf(const double &x_) const;
     void compute2D() override;
     void compute3D() override;
