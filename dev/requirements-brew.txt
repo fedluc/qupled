@@ -1,5 +1,7 @@
 brew "clang-format"
 brew "cmake"
+brew "doxygen"
+brew "graphviz"
 brew "gsl"
 brew "libomp"
 brew "open-mpi"

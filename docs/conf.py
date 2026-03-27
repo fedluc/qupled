@@ -19,7 +19,17 @@ sys.path.insert(0, os.path.abspath(os.path.join("..", "src")))
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.napoleon", "sphinx.ext.autodoc", "sphinx.ext.mathjax"]
+extensions = [
+    "sphinx.ext.napoleon",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.graphviz",
+    "breathe",
+    "sphinxcontrib.mermaid",
+]
+
+breathe_projects = {"qupled": "_build/doxygen/xml"}
+breathe_default_project = "qupled"
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 autodoc_member_order = "bysource"

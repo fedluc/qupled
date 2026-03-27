@@ -1,5 +1,7 @@
 clang-format
 cmake
+doxygen
+graphviz
 libopenmpi-dev
 libgsl-dev
 libomp-dev
