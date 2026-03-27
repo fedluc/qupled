@@ -1,4 +1,5 @@
 from qupled.schemes import vsstls
+from qupled.database.database_handler import DataBaseHandler
 
 # Define the object used to solve the scheme
 scheme = vsstls.Solver()
@@ -19,3 +20,7 @@ inputs.free_energy_integrand = fxci
 
 # Compute
 scheme.compute(inputs)
+
+
+db_handler = DataBaseHandler()
+print(db_handler.scheme_tables.get_results(scheme.run_id)["uint"])

@@ -50,7 +50,6 @@ void HF::computeStructuralProperties() {
   print("Computing static local field correction: ");
   computeLfc();
   println("Done");
-
   print("Computing static structure factor: ");
   computeSsf();
   println("Done");

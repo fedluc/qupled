@@ -71,9 +71,10 @@ pybind11_add_module(native
 	stlsiet.cpp
 	qstls.cpp
 	qstlsiet.cpp
-	vsbase.cpp
-	vsstls.cpp
-	qvsstls.cpp
+	vs/vsmanager.cpp
+	vs/vsbase.cpp
+	vs/vsstls.cpp
+	vs/qvsstls.cpp
 	python_interface/util.cpp
 	python_interface/inputs.cpp
 	python_interface/schemes.cpp
@@ -92,7 +93,7 @@ target_link_libraries(native PUBLIC
 	GSL::gsl
 	GSL::gslcblas
 	SQLiteCpp
-	SQLite::SQLite3
+	SQLite3::SQLite3
 )
 if(USE_MPI)
 	target_link_libraries(native PUBLIC MPI::MPI_CXX)
