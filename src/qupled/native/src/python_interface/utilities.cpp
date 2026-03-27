@@ -1,9 +1,9 @@
 #include "python_interface/utilities.hpp"
-#include "database.hpp"
-#include "dimensions_util.hpp"
-#include "mpi_util.hpp"
+#include "util/database.hpp"
+#include "util/dimensions_util.hpp"
+#include "util/mpi_util.hpp"
 #include "python_interface/util.hpp"
-#include "thermo_util.hpp"
+#include "thermo/thermo_util.hpp"
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>

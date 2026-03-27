@@ -1,4 +1,4 @@
-#include "mpi_util.hpp"
+#include "util/mpi_util.hpp"
 #include "python_interface/inputs.hpp"
 #include "python_interface/schemes.hpp"
 #include "python_interface/utilities.hpp"

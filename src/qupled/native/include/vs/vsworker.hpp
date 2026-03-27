@@ -1,7 +1,7 @@
 #ifndef VS_VSWORKER_HPP
 #define VS_VSWORKER_HPP
 
-#include "vector2D.hpp"
+#include "util/vector2D.hpp"
 #include <vector>
 
 // -----------------------------------------------------------------

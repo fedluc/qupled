@@ -1,8 +1,8 @@
 #ifndef PYTHON_INTERFACE_UTIL_HPP
 #define PYTHON_INTERFACE_UTIL_HPP
 
-#include "vector2D.hpp"
-#include "vector3D.hpp"
+#include "util/vector2D.hpp"
+#include "util/vector3D.hpp"
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <vector>

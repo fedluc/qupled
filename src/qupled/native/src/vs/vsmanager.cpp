@@ -1,6 +1,6 @@
 #include "vs/vsmanager.hpp"
-#include "num_util.hpp"
-#include "thermo_util.hpp"
+#include "util/num_util.hpp"
+#include "thermo/thermo_util.hpp"
 #include <cassert>
 
 using namespace std;

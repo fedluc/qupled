@@ -1,9 +1,9 @@
 #ifndef VS_VSBASE_HPP
 #define VS_VSBASE_HPP
 
-#include "input.hpp"
-#include "logger.hpp"
-#include "numerics.hpp"
+#include "schemes/input.hpp"
+#include "util/logger.hpp"
+#include "util/numerics.hpp"
 #include "vs/grid_point.hpp"
 #include <vector>
 
