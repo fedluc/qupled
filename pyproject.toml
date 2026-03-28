@@ -20,7 +20,7 @@ classifiers = [
 dependencies = [
     "blosc2~=3.2",
     "matplotlib~=3.7",
-    "numpy<2.0",
+    "numpy~=2.4",
     "SQLAlchemy~=2.0",
     "scipy~=1.16",
 ]
