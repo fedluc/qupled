@@ -10,19 +10,19 @@ jobs:
   build-sdist:
     uses: ./.github/workflows/build-sdist.yml
     with:
-      version: ${{ github.event_name == 'pull_request' && '0.0.0.dev0' || github.ref_name }}
+      version: ${{ github.event_name == 'pull_request' && 'v0.0.0-test' || github.ref_name }}
 
   build-linux-wheels:
     uses: ./.github/workflows/build-linux-wheels.yml
     needs: build-sdist
     with:
-      version: ${{ github.event_name == 'pull_request' && '0.0.0.dev0' || github.ref_name }}
+      version: ${{ github.event_name == 'pull_request' && 'v0.0.0-test' || github.ref_name }}
 
   build-macos-wheels:
     uses: ./.github/workflows/build-macos-wheels.yml
     needs: build-sdist
     with:
-      version: ${{ github.event_name == 'pull_request' && '0.0.0.dev0' || github.ref_name }}
+      version: ${{ github.event_name == 'pull_request' && 'v0.0.0-test' || github.ref_name }}
 
   publish:
     name: Publish to PyPI
