@@ -2,6 +2,10 @@ name: Build Linux Wheels
 
 on:
   workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
 
 jobs:
 
@@ -18,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set build version
-        run: ./devtool update-version ${{ github.ref_name }}
+        run: ./devtool update-version ${{ inputs.version }}
 
       - name: Set up QEMU (for aarch64 emulation)
         if: matrix.arch == 'aarch64'
