@@ -287,9 +287,7 @@ namespace HFUtil {
         const double &yMax_,
         std::shared_ptr<Integrator1D> itg_,
         const std::vector<double> &itgGrid_,
-        std::shared_ptr<Integrator2D> itg2_,
-        const Vector2D &idr_,
-        const double &grid_val_)
+        std::shared_ptr<Integrator2D> itg2_)
         : in(in_),
           x(x_),
           mu(mu_),
@@ -298,8 +296,6 @@ namespace HFUtil {
           itg(itg_),
           itgGrid(itgGrid_),
           itg2(itg2_),
-          idr(idr_),
-          grid_val(grid_val_),
           res(x_) {}
 
     /**
@@ -328,10 +324,6 @@ namespace HFUtil {
     const std::vector<double> &itgGrid;
     /** @brief 2D numerical integrator. */
     const std::shared_ptr<Integrator2D> itg2;
-    /** @brief Ideal density response array. */
-    const Vector2D idr;
-    /** @brief Wave-vector grid value at the current point. */
-    const double grid_val;
     /** @brief Result of the SSF computation. */
     double res;
     /**
@@ -349,11 +341,6 @@ namespace HFUtil {
      * @param p Inner integration variable.
      */
     double integrand2DIn(const double &p) const;
-    /**
-     * @brief Analytic zero-temperature contribution.
-     * @return SSF value from the ground-state expression.
-     */
-    double get0() const;
   };
 
   /**
