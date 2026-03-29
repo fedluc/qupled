@@ -11,7 +11,8 @@
  * @brief Solver for the Hartree-Fock (HF) dielectric scheme.
  *
  * Base class for all dielectric scheme solvers. Computes the ideal density
- * response (IDR), the static structure factor (SSF), and the local field
+ * response (IDR), the imaginary-time correlation function (ITCF), the static
+ * structure factor (SSF, obtained as ITCF at tau=0), and the local field
  * correction (LFC) on a wave-vector grid. Derived classes override the
  * virtual compute methods to implement higher-level approximations.
  */
@@ -256,52 +257,42 @@ namespace HFUtil {
   };
 
   /**
-   * @brief Computes the Hartree-Fock static structure factor at finite
-   * temperature.
+   * @brief Computes the Hartree-Fock imaginary-time correlation function (ITCF)
+   * at finite temperature.
    *
-   * Evaluates the SSF at wave-vector @p x_ by integrating over the auxiliary
-   * momentum, using the ideal density response and a 2D integrator for the
-   * exchange-correlation contribution.
+   * Evaluates F_HF(x, tau) via a single 1D integral over the auxiliary
+   * momentum. The SSF is recovered as the special case tau = 0.
    */
-  class Ssf : public dimensionsUtil::DimensionsHandler {
+  class Itcf {
 
   public:
 
     /**
-     * @brief Construct for a finite-temperature SSF calculation.
-     * @param in_        Shared pointer to the input parameters.
-     * @param x_         Wave-vector value.
-     * @param mu_        Chemical potential.
-     * @param yMin_      Lower integration limit.
-     * @param yMax_      Upper integration limit.
-     * @param itg_       Shared pointer to a 1D integrator.
-     * @param itgGrid_   Grid for 2D integration.
-     * @param itg2_      Shared pointer to a 2D integrator.
-     * @param idr_       Ideal density response array.
-     * @param grid_val_  Wave-vector grid value at the current point.
+     * @brief Construct for a finite-temperature ITCF calculation.
+     * @param in_    Shared pointer to the input parameters.
+     * @param x_     Wave-vector value.
+     * @param mu_    Chemical potential.
+     * @param tau_   Imaginary time in [0, 1] (normalised by beta).
+     * @param yMin_  Lower integration limit.
+     * @param yMax_  Upper integration limit.
+     * @param itg_   Shared pointer to a 1D integrator.
      */
-    Ssf(const std::shared_ptr<const Input> in_,
-        const double &x_,
-        const double &mu_,
-        const double &yMin_,
-        const double &yMax_,
-        std::shared_ptr<Integrator1D> itg_,
-        const std::vector<double> &itgGrid_,
-        std::shared_ptr<Integrator2D> itg2_)
+    Itcf(const std::shared_ptr<const Input> in_,
+         const double &x_,
+         const double &mu_,
+         const double &tau_,
+         const double &yMin_,
+         const double &yMax_,
+         std::shared_ptr<Integrator1D> itg_)
         : in(in_),
           x(x_),
           mu(mu_),
+          tau(tau_),
           yMin(yMin_),
           yMax(yMax_),
-          itg(itg_),
-          itgGrid(itgGrid_),
-          itg2(itg2_),
-          res(x_) {}
+          itg(itg_) {}
 
-    /**
-     * @brief Compute and return the HF static structure factor.
-     * @return SSF value at the current wave-vector.
-     */
+    /** @brief Compute and return the HF ITCF value. */
     double get();
 
   private:
@@ -312,35 +303,20 @@ namespace HFUtil {
     const double x;
     /** @brief Chemical potential. */
     const double mu;
+    /** @brief Normalised imaginary time in [0, 1]. */
+    const double tau;
     /** @brief Lower integration limit. */
     const double yMin;
     /** @brief Upper integration limit. */
     const double yMax;
-    void compute3D() override;
-    void compute2D() override;
     /** @brief 1D numerical integrator. */
     const std::shared_ptr<Integrator1D> itg;
-    /** @brief Grid for 2D integration. */
-    const std::vector<double> &itgGrid;
-    /** @brief 2D numerical integrator. */
-    const std::shared_ptr<Integrator2D> itg2;
-    /** @brief Result of the SSF computation. */
-    double res;
+
     /**
      * @brief 3D integrand over auxiliary momentum @p y.
      * @param y Auxiliary momentum variable.
      */
     double integrand(const double &y) const;
-    /**
-     * @brief Outer 2D integrand over auxiliary momentum @p y.
-     * @param y Outer integration variable.
-     */
-    double integrand2DOut(const double &y) const;
-    /**
-     * @brief Inner 2D integrand over auxiliary momentum @p p.
-     * @param p Inner integration variable.
-     */
-    double integrand2DIn(const double &p) const;
   };
 
   /**

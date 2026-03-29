@@ -41,8 +41,8 @@ void Rpa::computeSsfHF() {
 void Rpa::computeSsfFinite() {
   const size_t nx = wvg.size();
   for (size_t i = 0; i < nx; ++i) {
-    RpaUtil::Ssf ssfTmp(wvg[i], ssfHF[i], lfc[i], inPtr, idr[i]);
-    ssf[i] = ssfTmp.get();
+    RpaUtil::Itcf itcfTmp(wvg[i], ssfHF[i], lfc[i], inPtr, idr[i], 0.0);
+    ssf[i] = itcfTmp.get();
   }
 }
 
@@ -79,10 +79,10 @@ double RpaUtil::SsfBase::ip() const {
 }
 
 // -----------------------------------------------------------------
-// Ssf class
+// Itcf class
 // -----------------------------------------------------------------
 
-double RpaUtil::Ssf::get() {
+double RpaUtil::Itcf::get() {
   assert(in->getDegeneracy() > 0.0);
   if (x == 0.0) return 0.0;
   if (in->getCoupling() == 0.0) return ssfHF;
@@ -90,32 +90,23 @@ double RpaUtil::Ssf::get() {
   return res;
 }
 
-void RpaUtil::Ssf::compute3D() {
+void RpaUtil::Itcf::compute3D() {
   const double Theta = in->getDegeneracy();
-  const double isStatic = lfc.size() == 1;
+  const bool isStatic = lfc.size() == 1;
   double suml = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {
     const double &idrl = idr[l];
     const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
-    const double denom = 1.0 + ip() * idrl * (1 - lfcl);
-    const double f = idrl * idrl * (1 - lfcl) / denom;
-    suml += (l == 0) ? f : 2 * f;
+    const double denom = 1.0 + ip() * idrl * (1.0 - lfcl);
+    const double f = idrl * idrl * (1.0 - lfcl) / denom;
+    const double cosTerm = (l == 0) ? 1.0 : cos(2.0 * M_PI * l * tau);
+    suml += (l == 0) ? f : 2.0 * f * cosTerm;
   }
   res = ssfHF - 1.5 * ip() * Theta * suml;
 }
 
-void RpaUtil::Ssf::compute2D() {
-  const double Theta = in->getDegeneracy();
-  const double isStatic = lfc.size() == 1;
-  double suml = 0.0;
-  for (size_t l = 0; l < idr.size(); ++l) {
-    const double &idrl = idr[l];
-    const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
-    const double denom = 1.0 + ip() * idrl * (1 - lfcl);
-    const double f = idrl * idrl * (1 - lfcl) / denom;
-    suml += (l == 0) ? f : 2 * f;
-  }
-  res = ssfHF - ip() * Theta * suml;
+void RpaUtil::Itcf::compute2D() {
+  throwError("RpaUtil::Itcf is only implemented for 3D systems.");
 }
 
 // -----------------------------------------------------------------

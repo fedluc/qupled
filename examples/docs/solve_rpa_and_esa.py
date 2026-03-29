@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 from qupled.postprocess.output import DataBase, OutputType
-from qupled.schemes import esa, rpa
+from qupled.schemes import esa, rpa, hf
 
 # Define an Rpa object to solve the RPA scheme
 print("######### Solving the RPA scheme #########")
-rpa_scheme = rpa.Solver()
-rpa_scheme.compute(rpa.Input(10.0, 1.0))
+rpa_scheme = hf.Solver()
+rpa_scheme.compute(hf.Input(10.0, 1.0))
 
 # Define an ESA object to solve the ESA scheme
 print("######### Solving the ESA scheme #########")

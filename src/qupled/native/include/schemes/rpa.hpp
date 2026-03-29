@@ -12,8 +12,10 @@
  * @brief Solver for the Random Phase Approximation (RPA) dielectric scheme.
  *
  * Extends the Hartree-Fock (HF) base class to compute the static structure
- * factor within the RPA, both at finite temperature and at zero temperature
- * (ground state).
+ * factor (SSF) and the imaginary-time correlation function (ITCF) within the
+ * RPA. The SSF is obtained as the special case ITCF(tau=0). Finite-temperature
+ * and zero-temperature (ground state) regimes are both supported; the ITCF is
+ * only implemented for 3D finite-temperature systems.
  */
 class Rpa : public HF {
 
@@ -99,46 +101,51 @@ namespace RpaUtil {
   };
 
   /**
-   * @brief Computes the finite-temperature RPA static structure factor.
+   * @brief Computes the finite-temperature RPA imaginary-time correlation
+   * function (ITCF).
    *
-   * Integrates over Matsubara frequencies using the ideal density response.
+   * Evaluates F(x, tau) = F_HF(x, tau) minus the Matsubara correction sum
+   * weighted by cos(2*pi*l*tau). The SSF is recovered as the special case
+   * tau = 0.
    */
-  class Ssf : public SsfBase, dimensionsUtil::DimensionsHandler {
+  class Itcf : public SsfBase, dimensionsUtil::DimensionsHandler {
 
   public:
 
     /**
-     * @brief Construct for a finite-temperature calculation.
-     * @param x_     Wave-vector value.
-     * @param ssfHF_ Hartree-Fock static structure factor at this wave-vector.
-     * @param lfc_   Span over the local field correction array.
-     * @param in_    Shared pointer to the input parameters.
-     * @param idr_   Span over the ideal density response array.
+     * @brief Construct for a finite-temperature ITCF calculation.
+     * @param x_      Wave-vector value.
+     * @param itcfHF_ HF imaginary-time correlation function at this wave-vector.
+     * @param lfc_    Span over the local field correction array.
+     * @param in_     Shared pointer to the input parameters.
+     * @param idr_    Span over the ideal density response array.
+     * @param tau_    Imaginary time in [0, 1] (normalised by beta).
      */
-    Ssf(const double &x_,
-        const double &ssfHF_,
-        std::span<const double> lfc_,
-        const std::shared_ptr<const Input> in_,
-        std::span<const double> idr_)
-        : SsfBase(x_, ssfHF_, lfc_, in_),
+    Itcf(const double &x_,
+         const double &itcfHF_,
+         std::span<const double> lfc_,
+         const std::shared_ptr<const Input> in_,
+         std::span<const double> idr_,
+         const double &tau_)
+        : SsfBase(x_, itcfHF_, lfc_, in_),
           idr(idr_),
+          tau(tau_),
           res(numUtil::NaN) {}
 
-    /** @brief Compute and return the static structure factor. */
+    /** @brief Compute and return the RPA ITCF value. */
     double get();
-
-  protected:
-
-    /** @brief Ideal density response values over Matsubara frequencies. */
-    const std::span<const double> idr;
 
   private:
 
-    /** @brief Stores the result of the frequency summation. */
+    /** @brief Ideal density response values over Matsubara frequencies. */
+    const std::span<const double> idr;
+    /** @brief Normalised imaginary time in [0, 1]. */
+    const double tau;
+    /** @brief Stores the result of the Matsubara summation. */
     double res;
 
-    void compute2D() override;
     void compute3D() override;
+    void compute2D() override;
   };
 
   /**
