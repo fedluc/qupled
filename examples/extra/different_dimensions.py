@@ -6,12 +6,12 @@ from qupled.schemes import rpa
 # Define an Rpa object to solve the RPA scheme
 print("######### Solving the RPA scheme in 3D #########")
 rpa3D_scheme = rpa.Solver()
-rpa3D_scheme.compute(rpa.Input(10.0, 1.0, dimension=Dimension._3D))
+rpa3D_scheme.compute(rpa.Input(1.0, 1.0, dimension=Dimension._3D))
 
 # Define an ESA object to solve the ESA scheme
 print("######### Solving the RPA scheme in 2D #########")
 rpa2D_scheme = rpa.Solver()
-rpa2D_scheme.compute(rpa.Input(10.0, 1.0, dimension=Dimension._2D))
+rpa2D_scheme.compute(rpa.Input(1.0, 1.0, dimension=Dimension._2D))
 
 # Retrieve information from the output files
 rpa3D_data = DataBase.read_run(OutputType.SCHEME, rpa3D_scheme.run_id)
