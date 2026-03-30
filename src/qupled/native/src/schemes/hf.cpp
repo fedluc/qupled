@@ -121,7 +121,7 @@ void HF::computeSsfFinite() {
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
   for (size_t i = 0; i < wvg.size(); ++i) {
     HFUtil::Ssf ssfTmp(
-        inPtr, wvg[i], mu, wvg.front(), wvg.back(), itg, itgGrid, itg2);
+        inPtr, wvg[i], mu, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr, i);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -335,11 +335,12 @@ void HFUtil::Ssf::compute3D() {
 
 // Compute for 2D systems
 void HFUtil::Ssf::compute2D() {
+  const double Theta = in->getDegeneracy();
   assert(in->getDegeneracy() > 0.0);
   auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
   auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
   itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0, M_PI), itgGrid);
-  res = itg2->getSolution();
+  res = itg2->getSolution() + Theta * idr(grid_val, 0);
 }
 
 // 3D Integrand
@@ -369,9 +370,9 @@ double HFUtil::Ssf::integrand2DIn(const double &p) const {
   const double &Theta = in->getDegeneracy();
   const double y = itg2->getX();
   const double x2 = x * x;
-  const double arg = x2 / (2 * Theta) - x * y / Theta * cos(p);
+  const double arg = x2 / (2 * Theta) + x * y / Theta * cos(p);
   if (x == 0.0) { return 0.0; }
-  return SpecialFunctions::coth(arg);
+  return SpecialFunctions::coth(arg) - (1.0 / arg);
 }
 
 // -----------------------------------------------------------------
