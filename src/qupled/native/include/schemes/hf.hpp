@@ -265,7 +265,7 @@ namespace HFUtil {
    * uses a 2D integral (over y and angle p) plus the IDR contribution.
    * The SSF is recovered as the special case tau = 0.
    */
-  class Itcf {
+  class Itcf : public dimensionsUtil::DimensionsHandler {
 
   public:
 
@@ -301,13 +301,11 @@ namespace HFUtil {
           itg(itg_),
           itgGrid(itgGrid_),
           itg2(itg2_),
-          idr0(idr0_) {}
+          idr0(idr0_),
+          res(numUtil::NaN) {}
 
     /**
      * @brief Compute and return the HF ITCF value.
-     *
-     * For 2D systems, returns the 2D integral result plus Theta * idr0.
-     * For 3D systems, returns 1 (or 0 for intermediate tau) plus the 1D integral.
      * @return ITCF value at the current wave-vector and imaginary time.
      */
     double get();
@@ -334,7 +332,11 @@ namespace HFUtil {
     const std::shared_ptr<Integrator2D> itg2;
     /** @brief Ideal density response at l=0 for the current wave-vector. */
     const double idr0;
+    /** @brief Stores the ITCF result. */
+    double res;
 
+    void compute3D() override;
+    void compute2D() override;
     /**
      * @brief 3D integrand over auxiliary momentum @p y.
      * @param y Auxiliary momentum variable.

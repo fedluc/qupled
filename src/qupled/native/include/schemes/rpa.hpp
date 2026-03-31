@@ -147,6 +147,11 @@ namespace RpaUtil {
 
     void compute3D() override;
     void compute2D() override;
+    /**
+     * @brief Compute the Matsubara frequency summation.
+     * @return Sum over Matsubara frequencies weighted by cos(2*pi*l*tau).
+     */
+    double computeMatsubaraSummation() const;
   };
 
   /**

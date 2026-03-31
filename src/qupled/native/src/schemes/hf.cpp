@@ -321,17 +321,23 @@ double HFUtil::IdrGround::get() const {
 
 double HFUtil::Itcf::get() {
   assert(in->getDegeneracy() > 0.0);
-  if (in->getDimension() == dimensionsUtil::Dimension::D2) {
-    const double Theta = in->getDegeneracy();
-    auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
-    auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
-    itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0.0, M_PI), itgGrid);
-    return itg2->getSolution() + Theta * idr0;
-  }
+  compute(in->getDimension());
+  return res;
+}
+
+void HFUtil::Itcf::compute3D() {
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(yMin, yMax));
   const double asymptoticLimit = (tau == 0.0 || tau == 1.0) ? 1.0 : 0.0;
-  return asymptoticLimit + itg->getSolution();
+  res = asymptoticLimit + itg->getSolution();
+}
+
+void HFUtil::Itcf::compute2D() {
+  const double Theta = in->getDegeneracy();
+  auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
+  auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
+  itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0.0, M_PI), itgGrid);
+  res = itg2->getSolution() + Theta * idr0;
 }
 
 double HFUtil::Itcf::integrand(const double &y) const {
