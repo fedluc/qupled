@@ -115,7 +115,8 @@ namespace RpaUtil {
     /**
      * @brief Construct for a finite-temperature ITCF calculation.
      * @param x_      Wave-vector value.
-     * @param itcfHF_ HF imaginary-time correlation function at this wave-vector.
+     * @param itcfHF_ HF imaginary-time correlation function at this
+     * wave-vector.
      * @param lfc_    Span over the local field correction array.
      * @param in_     Shared pointer to the input parameters.
      * @param idr_    Span over the ideal density response array.
