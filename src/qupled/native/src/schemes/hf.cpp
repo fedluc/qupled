@@ -120,8 +120,16 @@ void HF::computeSsfFinite() {
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
   for (size_t i = 0; i < wvg.size(); ++i) {
-    HFUtil::Itcf itcfTmp(
-        inPtr, wvg[i], mu, 0.0, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr(i, 0));
+    HFUtil::Itcf itcfTmp(inPtr,
+                         wvg[i],
+                         mu,
+                         0.0,
+                         wvg.front(),
+                         wvg.back(),
+                         itg,
+                         itgGrid,
+                         itg2,
+                         idr(i, 0));
     ssf[i] = itcfTmp.get();
   }
 }

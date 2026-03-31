@@ -280,7 +280,8 @@ namespace HFUtil {
      * @param itg_      Shared pointer to a 1D integrator.
      * @param itgGrid_  Wave-vector grid for segregated 2D integration.
      * @param itg2_     Shared pointer to a 2D integrator (used in 2D only).
-     * @param idr0_     Ideal density response at l=0 for the current wave-vector.
+     * @param idr0_     Ideal density response at l=0 for the current
+     * wave-vector.
      */
     Itcf(const std::shared_ptr<const Input> in_,
          const double &x_,
@@ -359,12 +360,14 @@ namespace HFUtil {
      * @brief Outer 2D integrand over auxiliary momentum @p y.
      *
      * At tau = 0 or 1 returns 2y/(exp(y^2/Theta - mu)*pi + pi) (Fermi factor).
-     * At other imaginary times returns cosh(xy/Theta*(tau-1/2)) / sinh(xy/(2*Theta)).
+     * At other imaginary times returns cosh(xy/Theta*(tau-1/2)) /
+     * sinh(xy/(2*Theta)).
      * @param y Outer integration variable.
      */
     double integrand2DOut(const double &y) const;
     /**
-     * @brief Inner 2D integrand (angle) over @p p: coth(arg) - 1/arg, where arg = x^2/(2Theta) + xy/Theta*cos(p).
+     * @brief Inner 2D integrand (angle) over @p p: coth(arg) - 1/arg, where arg
+     * = x^2/(2Theta) + xy/Theta*cos(p).
      * @param p Inner integration variable (angle).
      */
     double integrand2DIn(const double &p) const;
