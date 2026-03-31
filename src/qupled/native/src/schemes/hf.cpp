@@ -121,7 +121,7 @@ void HF::computeSsfFinite() {
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
   for (size_t i = 0; i < wvg.size(); ++i) {
     HFUtil::Itcf itcfTmp(
-        inPtr, wvg[i], mu, 0.0, wvg.front(), wvg.back(), itg, itgGrid, itg2);
+        inPtr, wvg[i], mu, 0.0, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr(i, 0));
     ssf[i] = itcfTmp.get();
   }
 }
@@ -322,10 +322,11 @@ double HFUtil::IdrGround::get() const {
 double HFUtil::Itcf::get() {
   assert(in->getDegeneracy() > 0.0);
   if (in->getDimension() == dimensionsUtil::Dimension::D2) {
+    const double Theta = in->getDegeneracy();
     auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
     auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
-    itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0.0, 2.0 * M_PI), itgGrid);
-    return itg2->getSolution();
+    itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0.0, M_PI), itgGrid);
+    return itg2->getSolution() + Theta * idr0;
   }
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(yMin, yMax));
@@ -369,9 +370,10 @@ double HFUtil::Itcf::integrand2DOut(const double &y) const {
 double HFUtil::Itcf::integrand2DIn(const double &p) const {
   const double Theta = in->getDegeneracy();
   const double y = itg2->getX();
-  const double arg = x * x / (2.0 * Theta) - x * y / Theta * cos(p);
+  const double x2 = x * x;
+  const double arg = x2 / (2.0 * Theta) + x * y / Theta * cos(p);
   if (x == 0.0) return 0.0;
-  return SpecialFunctions::coth(arg);
+  return SpecialFunctions::coth(arg) - (1.0 / arg);
 }
 
 // -----------------------------------------------------------------

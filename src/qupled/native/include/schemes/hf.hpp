@@ -260,8 +260,10 @@ namespace HFUtil {
    * @brief Computes the Hartree-Fock imaginary-time correlation function (ITCF)
    * at finite temperature.
    *
-   * Evaluates F_HF(x, tau) via a single 1D integral over the auxiliary
-   * momentum. The SSF is recovered as the special case tau = 0.
+   * Evaluates F_HF(x, tau) via numerical integration over the auxiliary
+   * momentum. For 3D systems, uses a single 1D integral. For 2D systems,
+   * uses a 2D integral (over y and angle p) plus the IDR contribution.
+   * The SSF is recovered as the special case tau = 0.
    */
   class Itcf {
 
@@ -278,6 +280,7 @@ namespace HFUtil {
      * @param itg_      Shared pointer to a 1D integrator.
      * @param itgGrid_  Wave-vector grid for segregated 2D integration.
      * @param itg2_     Shared pointer to a 2D integrator (used in 2D only).
+     * @param idr0_     Ideal density response at l=0 for the current wave-vector.
      */
     Itcf(const std::shared_ptr<const Input> in_,
          const double &x_,
@@ -287,7 +290,8 @@ namespace HFUtil {
          const double &yMax_,
          std::shared_ptr<Integrator1D> itg_,
          const std::vector<double> &itgGrid_,
-         std::shared_ptr<Integrator2D> itg2_)
+         std::shared_ptr<Integrator2D> itg2_,
+         const double &idr0_)
         : in(in_),
           x(x_),
           mu(mu_),
@@ -296,9 +300,16 @@ namespace HFUtil {
           yMax(yMax_),
           itg(itg_),
           itgGrid(itgGrid_),
-          itg2(itg2_) {}
+          itg2(itg2_),
+          idr0(idr0_) {}
 
-    /** @brief Compute and return the HF ITCF value. */
+    /**
+     * @brief Compute and return the HF ITCF value.
+     *
+     * For 2D systems, returns the 2D integral result plus Theta * idr0.
+     * For 3D systems, returns 1 (or 0 for intermediate tau) plus the 1D integral.
+     * @return ITCF value at the current wave-vector and imaginary time.
+     */
     double get();
 
   private:
@@ -321,6 +332,8 @@ namespace HFUtil {
     const std::vector<double> &itgGrid;
     /** @brief 2D numerical integrator (used in 2D only). */
     const std::shared_ptr<Integrator2D> itg2;
+    /** @brief Ideal density response at l=0 for the current wave-vector. */
+    const double idr0;
 
     /**
      * @brief 3D integrand over auxiliary momentum @p y.
@@ -330,13 +343,13 @@ namespace HFUtil {
     /**
      * @brief Outer 2D integrand over auxiliary momentum @p y.
      *
-     * At tau = 0 or 1 returns the Fermi factor to recover the SSF. At other
-     * imaginary times returns cosh(xy/Theta*(tau-1/2)) / sinh(xy/(2*Theta)).
+     * At tau = 0 or 1 returns 2y/(exp(y^2/Theta - mu)*pi + pi) (Fermi factor).
+     * At other imaginary times returns cosh(xy/Theta*(tau-1/2)) / sinh(xy/(2*Theta)).
      * @param y Outer integration variable.
      */
     double integrand2DOut(const double &y) const;
     /**
-     * @brief Inner 2D integrand (angle) over @p p: coth(x^2/(2Theta) - xy/Theta*cos(p)).
+     * @brief Inner 2D integrand (angle) over @p p: coth(arg) - 1/arg, where arg = x^2/(2Theta) + xy/Theta*cos(p).
      * @param p Inner integration variable (angle).
      */
     double integrand2DIn(const double &p) const;
