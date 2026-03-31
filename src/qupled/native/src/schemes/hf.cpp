@@ -116,8 +116,12 @@ void HF::computeSsf() {
 }
 
 void HF::computeSsfFinite() {
+  const bool segregatedItg = in().getInt2DScheme() == "segregated";
+  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
   for (size_t i = 0; i < wvg.size(); ++i) {
-    HFUtil::Itcf itcfTmp(inPtr, wvg[i], mu, 0.0, wvg.front(), wvg.back(), itg);
+    HFUtil::Itcf itcfTmp(
+        inPtr, wvg[i], mu, 0.0, wvg.front(), wvg.back(), itg, itgGrid, itg2);
     ssf[i] = itcfTmp.get();
   }
 }
@@ -317,6 +321,12 @@ double HFUtil::IdrGround::get() const {
 
 double HFUtil::Itcf::get() {
   assert(in->getDegeneracy() > 0.0);
+  if (in->getDimension() == dimensionsUtil::Dimension::D2) {
+    auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
+    auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
+    itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0.0, 2.0 * M_PI), itgGrid);
+    return itg2->getSolution();
+  }
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(yMin, yMax));
   const double asymptoticLimit = (tau == 0.0 || tau == 1.0) ? 1.0 : 0.0;
@@ -344,6 +354,24 @@ double HFUtil::Itcf::integrand(const double &y) const {
   }
   return -3.0 * y2
          / ((1.0 + exp(y2 / Theta - mu)) * (1.0 + exp(y2 / Theta - mu)));
+}
+
+double HFUtil::Itcf::integrand2DOut(const double &y) const {
+  const double Theta = in->getDegeneracy();
+  if (tau == 0.0 || tau == 1.0) {
+    return 2.0 * y / (exp(y * y / Theta - mu) * M_PI + M_PI);
+  }
+  const double halfArg = x * y / (2.0 * Theta);
+  const double tauArg = x * y / Theta * (tau - 0.5);
+  return cosh(tauArg) / sinh(halfArg);
+}
+
+double HFUtil::Itcf::integrand2DIn(const double &p) const {
+  const double Theta = in->getDegeneracy();
+  const double y = itg2->getX();
+  const double arg = x * x / (2.0 * Theta) - x * y / Theta * cos(p);
+  if (x == 0.0) return 0.0;
+  return SpecialFunctions::coth(arg);
 }
 
 // -----------------------------------------------------------------

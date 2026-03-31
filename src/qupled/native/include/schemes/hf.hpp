@@ -269,13 +269,15 @@ namespace HFUtil {
 
     /**
      * @brief Construct for a finite-temperature ITCF calculation.
-     * @param in_    Shared pointer to the input parameters.
-     * @param x_     Wave-vector value.
-     * @param mu_    Chemical potential.
-     * @param tau_   Imaginary time in [0, 1] (normalised by beta).
-     * @param yMin_  Lower integration limit.
-     * @param yMax_  Upper integration limit.
-     * @param itg_   Shared pointer to a 1D integrator.
+     * @param in_       Shared pointer to the input parameters.
+     * @param x_        Wave-vector value.
+     * @param mu_       Chemical potential.
+     * @param tau_      Imaginary time in [0, 1] (normalised by beta).
+     * @param yMin_     Lower integration limit.
+     * @param yMax_     Upper integration limit.
+     * @param itg_      Shared pointer to a 1D integrator.
+     * @param itgGrid_  Wave-vector grid for segregated 2D integration.
+     * @param itg2_     Shared pointer to a 2D integrator (used in 2D only).
      */
     Itcf(const std::shared_ptr<const Input> in_,
          const double &x_,
@@ -283,14 +285,18 @@ namespace HFUtil {
          const double &tau_,
          const double &yMin_,
          const double &yMax_,
-         std::shared_ptr<Integrator1D> itg_)
+         std::shared_ptr<Integrator1D> itg_,
+         const std::vector<double> &itgGrid_,
+         std::shared_ptr<Integrator2D> itg2_)
         : in(in_),
           x(x_),
           mu(mu_),
           tau(tau_),
           yMin(yMin_),
           yMax(yMax_),
-          itg(itg_) {}
+          itg(itg_),
+          itgGrid(itgGrid_),
+          itg2(itg2_) {}
 
     /** @brief Compute and return the HF ITCF value. */
     double get();
@@ -311,12 +317,29 @@ namespace HFUtil {
     const double yMax;
     /** @brief 1D numerical integrator. */
     const std::shared_ptr<Integrator1D> itg;
+    /** @brief Wave-vector grid for segregated 2D integration. */
+    const std::vector<double> &itgGrid;
+    /** @brief 2D numerical integrator (used in 2D only). */
+    const std::shared_ptr<Integrator2D> itg2;
 
     /**
      * @brief 3D integrand over auxiliary momentum @p y.
      * @param y Auxiliary momentum variable.
      */
     double integrand(const double &y) const;
+    /**
+     * @brief Outer 2D integrand over auxiliary momentum @p y.
+     *
+     * At tau = 0 or 1 returns the Fermi factor to recover the SSF. At other
+     * imaginary times returns cosh(xy/Theta*(tau-1/2)) / sinh(xy/(2*Theta)).
+     * @param y Outer integration variable.
+     */
+    double integrand2DOut(const double &y) const;
+    /**
+     * @brief Inner 2D integrand (angle) over @p p: coth(x^2/(2Theta) - xy/Theta*cos(p)).
+     * @param p Inner integration variable (angle).
+     */
+    double integrand2DIn(const double &p) const;
   };
 
   /**
