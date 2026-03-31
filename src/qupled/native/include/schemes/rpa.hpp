@@ -145,7 +145,19 @@ namespace RpaUtil {
     /** @brief Stores the result of the Matsubara summation. */
     double res;
 
+    /**
+     * @brief Compute the ITCF for 3D systems.
+     *
+     * Evaluates F(x, tau) = F_HF(x, tau) - 1.5 * v(x) * Theta * sum_l,
+     * where sum_l is the Matsubara frequency summation.
+     */
     void compute3D() override;
+    /**
+     * @brief Compute the ITCF for 2D systems.
+     *
+     * Evaluates F(x, tau) = F_HF(x, tau) - v(x) * Theta * sum_l,
+     * where sum_l is the Matsubara frequency summation.
+     */
     void compute2D() override;
     /**
      * @brief Compute the Matsubara frequency summation.

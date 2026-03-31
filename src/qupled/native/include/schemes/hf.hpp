@@ -335,7 +335,20 @@ namespace HFUtil {
     /** @brief Stores the ITCF result. */
     double res;
 
+    /**
+     * @brief Compute the ITCF for 3D systems.
+     *
+     * Evaluates the ITCF via 1D integration over the auxiliary momentum.
+     * Returns the asymptotic limit (1 for tau=0 or tau=1, 0 otherwise)
+     * plus the integral contribution.
+     */
     void compute3D() override;
+    /**
+     * @brief Compute the ITCF for 2D systems.
+     *
+     * Evaluates the ITCF via 2D integration (over y and angle p) plus
+     * the ideal density response contribution Theta * idr0.
+     */
     void compute2D() override;
     /**
      * @brief 3D integrand over auxiliary momentum @p y.
