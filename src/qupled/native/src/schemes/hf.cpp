@@ -39,6 +39,9 @@ int HF::compute() {
     println("Structural properties calculation ...");
     computeStructuralProperties();
     println("Done");
+    print("Computing imaginary-time correlation function: ");
+    computeItcf();
+    println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;
@@ -144,6 +147,41 @@ void HF::computeLfc() {
   assert(lfc.size() == wvg.size());
   for (auto &s : lfc) {
     s = 1;
+  }
+}
+
+void HF::computeItcf() {
+  // Only compute ITCF for finite temperature
+  if (in().getDegeneracy() == 0.0) { return; }
+
+  // Define tau values: 0, 0.1, 0.2, 0.3, 0.4, 0.5
+  const vector<double> tauValues = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
+  const size_t nx = wvg.size();
+  const size_t ntau = tauValues.size();
+
+  // Allocate ITCF storage
+  itcf.resize(nx, ntau);
+
+  // Set up integration parameters
+  const bool segregatedItg = in().getInt2DScheme() == "segregated";
+  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
+  shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
+
+  // Compute ITCF for each wave-vector and tau value
+  for (size_t i = 0; i < nx; ++i) {
+    for (size_t j = 0; j < ntau; ++j) {
+      HFUtil::Itcf itcfTmp(inPtr,
+                           wvg[i],
+                           mu,
+                           tauValues[j],
+                           wvg.front(),
+                           wvg.back(),
+                           itg,
+                           itgGrid,
+                           itg2,
+                           idr(i, 0));
+      itcf(i, j) = itcfTmp.get();
+    }
   }
 }
 

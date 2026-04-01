@@ -260,6 +260,8 @@ class Result:
 
     idr: np.ndarray = None
     """Ideal density response"""
+    itcf: np.ndarray = None
+    """Imaginary-time correlation function"""
     lfc: np.ndarray = None
     """Local field correction"""
     rdf: np.ndarray = None

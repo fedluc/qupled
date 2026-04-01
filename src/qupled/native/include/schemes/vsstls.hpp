@@ -28,6 +28,7 @@ public:
   const Vector2D &getLfc() const override { return Stls::getLfc(); }
   const std::vector<double> &getWvg() const override { return Stls::getWvg(); }
   const std::vector<double> &getSsf() const override { return Stls::getSsf(); }
+  const Vector2D &getItcf() const override { return Stls::getItcf(); }
   const Vector2D &getIdr() const override { return Stls::getIdr(); }
   std::vector<double> getSdr() const override { return Stls::getSdr(); }
   double getUInt() const override { return Stls::getUInt(); }

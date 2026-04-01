@@ -173,6 +173,10 @@ const std::vector<double> &VSManager::getSsf(GridPoint p) const {
   return workers[p.toIndex()]->getSsf();
 }
 
+const Vector2D &VSManager::getItcf(GridPoint p) const {
+  return workers[p.toIndex()]->getItcf();
+}
+
 const Vector2D &VSManager::getLfc(GridPoint p) const {
   return workers[p.toIndex()]->getLfc();
 }

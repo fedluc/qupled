@@ -49,6 +49,10 @@ protected:
   /** @brief Compute the static structure factor at zero temperature. */
   void computeSsfGround() override;
 
+  /** @brief Compute the imaginary-time correlation function (ITCF) at specified
+   * tau values. */
+  void computeItcf() override;
+
 private:
 
   /** @brief Compute the Hartree-Fock static structure factor. */

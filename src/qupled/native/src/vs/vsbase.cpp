@@ -229,6 +229,10 @@ const std::vector<double> &VSBase::getSsf() const {
   return grid().getSsf(getOutputGridPoint());
 }
 
+const Vector2D &VSBase::getItcf() const {
+  return grid().getItcf(getOutputGridPoint());
+}
+
 const Vector2D &VSBase::getLfc() const {
   return grid().getLfc(getOutputGridPoint());
 }

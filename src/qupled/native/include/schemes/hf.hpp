@@ -53,6 +53,9 @@ public:
   /** @brief Return the static structure factor over the wave-vector grid. */
   const std::vector<double> &getSsf() const { return ssf; }
 
+  /** @brief Return the imaginary-time correlation function (ITCF) grid. */
+  const Vector2D &getItcf() const { return itcf; }
+
   /** @brief Return the wave-vector grid. */
   const std::vector<double> &getWvg() const { return wvg; }
 
@@ -90,6 +93,10 @@ protected:
   /** @brief Static structure factor over the wave-vector grid. */
   std::vector<double> ssf;
 
+  /** @brief Imaginary-time correlation function (rows = wave-vectors, columns =
+   * tau values). */
+  Vector2D itcf;
+
   /** @brief Chemical potential (in units of the thermal energy). */
   double mu;
 
@@ -113,6 +120,10 @@ protected:
   /** @brief Compute the static structure factor at zero temperature (ground
    * state). */
   virtual void computeSsfGround();
+
+  /** @brief Compute the imaginary-time correlation function (ITCF) at specified
+   * tau values. Must be called after computeStructuralProperties(). */
+  virtual void computeItcf();
 
   /** @brief Compute the local field correction (zero for bare HF). */
   virtual void computeLfc();
