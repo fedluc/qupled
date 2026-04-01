@@ -257,13 +257,110 @@ namespace HFUtil {
   };
 
   /**
+   * @brief Computes the Hartree-Fock static structure factor at finite
+   * temperature.
+   *
+   * Evaluates F_HF(x, 0) via numerical integration over the auxiliary
+   * momentum. For 3D systems, uses a single 1D integral. For 2D systems,
+   * uses a 2D integral (over y and angle p) plus the IDR contribution.
+   */
+  class Ssf : public dimensionsUtil::DimensionsHandler {
+
+  public:
+
+    /**
+     * @brief Construct for a finite-temperature SSF calculation.
+     * @param in_        Shared pointer to the input parameters.
+     * @param x_         Wave-vector value.
+     * @param mu_        Chemical potential.
+     * @param yMin_      Lower integration limit.
+     * @param yMax_      Upper integration limit.
+     * @param itg_       Shared pointer to a 1D integrator.
+     * @param itgGrid_   Grid for 2D integration.
+     * @param itg2_      Shared pointer to a 2D integrator.
+     * @param idr_       Ideal density response array.
+     * @param grid_val_  Wave-vector grid value at the current point.
+     */
+    Ssf(const std::shared_ptr<const Input> in_,
+        const double &x_,
+        const double &mu_,
+        const double &yMin_,
+        const double &yMax_,
+        std::shared_ptr<Integrator1D> itg_,
+        const std::vector<double> &itgGrid_,
+        std::shared_ptr<Integrator2D> itg2_,
+        const Vector2D &idr_,
+        const double &grid_val_)
+        : in(in_),
+          x(x_),
+          mu(mu_),
+          yMin(yMin_),
+          yMax(yMax_),
+          itg(itg_),
+          itgGrid(itgGrid_),
+          itg2(itg2_),
+          idr(idr_),
+          grid_val(grid_val_),
+          res(x_) {}
+
+    /**
+     * @brief Compute and return the HF static structure factor.
+     * @return SSF value at the current wave-vector.
+     */
+    double get();
+
+  private:
+
+    /** @brief Input parameters. */
+    const std::shared_ptr<const Input> in;
+    /** @brief Wave-vector. */
+    const double x;
+    /** @brief Chemical potential. */
+    const double mu;
+    /** @brief Lower integration limit. */
+    const double yMin;
+    /** @brief Upper integration limit. */
+    const double yMax;
+    /** @brief 1D numerical integrator. */
+    const std::shared_ptr<Integrator1D> itg;
+    /** @brief Grid for 2D integration. */
+    const std::vector<double> &itgGrid;
+    /** @brief 2D numerical integrator. */
+    const std::shared_ptr<Integrator2D> itg2;
+    /** @brief Ideal density response array. */
+    const Vector2D idr;
+    /** @brief Wave-vector grid value at the current point. */
+    const double grid_val;
+    /** @brief Result of the SSF computation. */
+    double res;
+
+    void compute3D() override;
+    void compute2D() override;
+    /**
+     * @brief 3D integrand over auxiliary momentum @p y.
+     * @param y Auxiliary momentum variable.
+     */
+    double integrand(const double &y) const;
+    /**
+     * @brief Outer 2D integrand over auxiliary momentum @p y.
+     * @param y Outer integration variable.
+     */
+    double integrand2DOut(const double &y) const;
+    /**
+     * @brief Inner 2D integrand (angle) over @p p.
+     * @param p Inner integration variable (angle).
+     */
+    double integrand2DIn(const double &p) const;
+  };
+
+  /**
    * @brief Computes the Hartree-Fock imaginary-time correlation function (ITCF)
    * at finite temperature.
    *
    * Evaluates F_HF(x, tau) via numerical integration over the auxiliary
    * momentum. For 3D systems, uses a single 1D integral. For 2D systems,
    * uses a 2D integral (over y and angle p) plus the IDR contribution.
-   * The SSF is recovered as the special case tau = 0.
+   * The SSF is recovered as the special case tau = 0 by delegating to the Ssf class.
    */
   class Itcf : public dimensionsUtil::DimensionsHandler {
 

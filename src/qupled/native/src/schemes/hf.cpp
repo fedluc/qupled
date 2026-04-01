@@ -120,9 +120,9 @@ void HF::computeSsfFinite() {
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
   for (size_t i = 0; i < wvg.size(); ++i) {
-    HFUtil::Itcf itcfTmp(
-        inPtr, wvg[i], mu, 0.0, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr(i, 0));
-    ssf[i] = itcfTmp.get();
+    HFUtil::Ssf ssfTmp(
+        inPtr, wvg[i], mu, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr, i);
+    ssf[i] = ssfTmp.get();
   }
 }
 
@@ -313,6 +313,66 @@ double HFUtil::IdrGround::get() const {
       0.5 * Omega * (atan(x2ptx / Omega) - atan(x2mtx / Omega));
   if (x > 0.0) { return (part1 - part2 + x) / tx; }
   return 0;
+}
+
+// -----------------------------------------------------------------
+// HF Ssf class
+// -----------------------------------------------------------------
+
+double HFUtil::Ssf::get() {
+  assert(in->getDegeneracy() > 0.0);
+  compute(in->getDimension());
+  return res;
+}
+
+// Compute for 3D systems
+void HFUtil::Ssf::compute3D() {
+  assert(in->getDegeneracy() > 0.0);
+  auto func = [&](const double &y) -> double { return integrand(y); };
+  itg->compute(func, ItgParam(yMin, yMax));
+  res = 1.0 + itg->getSolution();
+}
+
+// Compute for 2D systems
+void HFUtil::Ssf::compute2D() {
+  const double Theta = in->getDegeneracy();
+  assert(in->getDegeneracy() > 0.0);
+  auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
+  auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
+  itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0, M_PI), itgGrid);
+  res = itg2->getSolution() + Theta * idr(grid_val, 0);
+}
+
+// 3D Integrand
+double HFUtil::Ssf::integrand(const double &y) const {
+  const double Theta = in->getDegeneracy();
+  double y2 = y * y;
+  double ypx = y + x;
+  double ymx = y - x;
+  if (x > 0.0) {
+    return -3.0 * Theta / (4.0 * x) * y / (exp(y2 / Theta - mu) + 1.0)
+           * log((1 + exp(mu - ymx * ymx / Theta))
+                 / (1 + exp(mu - ypx * ypx / Theta)));
+  } else {
+    return -3.0 * y2
+           / ((1.0 + exp(y2 / Theta - mu)) * (1.0 + exp(y2 / Theta - mu)));
+  }
+}
+
+// 2D Integrands
+double HFUtil::Ssf::integrand2DOut(const double &y) const {
+  const double Theta = in->getDegeneracy();
+  const double y2 = y * y;
+  return 2.0 * y / (exp(y2 / Theta - mu) * M_PI + M_PI);
+}
+
+double HFUtil::Ssf::integrand2DIn(const double &p) const {
+  const double &Theta = in->getDegeneracy();
+  const double y = itg2->getX();
+  const double x2 = x * x;
+  const double arg = x2 / (2 * Theta) + x * y / Theta * cos(p);
+  if (x == 0.0) { return 0.0; }
+  return SpecialFunctions::coth(arg) - (1.0 / arg);
 }
 
 // -----------------------------------------------------------------

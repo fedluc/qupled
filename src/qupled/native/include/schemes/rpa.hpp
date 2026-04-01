@@ -101,12 +101,55 @@ namespace RpaUtil {
   };
 
   /**
+   * @brief Computes the finite-temperature RPA static structure factor.
+   *
+   * Integrates over Matsubara frequencies using the ideal density response.
+   */
+  class Ssf : public SsfBase, dimensionsUtil::DimensionsHandler {
+
+  public:
+
+    /**
+     * @brief Construct for a finite-temperature calculation.
+     * @param x_     Wave-vector value.
+     * @param ssfHF_ Hartree-Fock static structure factor at this wave-vector.
+     * @param lfc_   Span over the local field correction array.
+     * @param in_    Shared pointer to the input parameters.
+     * @param idr_   Span over the ideal density response array.
+     */
+    Ssf(const double &x_,
+        const double &ssfHF_,
+        std::span<const double> lfc_,
+        const std::shared_ptr<const Input> in_,
+        std::span<const double> idr_)
+        : SsfBase(x_, ssfHF_, lfc_, in_),
+          idr(idr_),
+          res(numUtil::NaN) {}
+
+    /** @brief Compute and return the static structure factor. */
+    double get();
+
+  protected:
+
+    /** @brief Ideal density response values over Matsubara frequencies. */
+    const std::span<const double> idr;
+
+  private:
+
+    /** @brief Stores the result of the frequency summation. */
+    double res;
+
+    void compute2D() override;
+    void compute3D() override;
+  };
+
+  /**
    * @brief Computes the finite-temperature RPA imaginary-time correlation
    * function (ITCF).
    *
    * Evaluates F(x, tau) = F_HF(x, tau) minus the Matsubara correction sum
    * weighted by cos(2*pi*l*tau). The SSF is recovered as the special case
-   * tau = 0.
+   * tau = 0 by delegating to the Ssf class.
    */
   class Itcf : public SsfBase, dimensionsUtil::DimensionsHandler {
 

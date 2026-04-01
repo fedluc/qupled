@@ -41,8 +41,8 @@ void Rpa::computeSsfHF() {
 void Rpa::computeSsfFinite() {
   const size_t nx = wvg.size();
   for (size_t i = 0; i < nx; ++i) {
-    RpaUtil::Itcf itcfTmp(wvg[i], ssfHF[i], lfc[i], inPtr, idr[i], 0.0);
-    ssf[i] = itcfTmp.get();
+    RpaUtil::Ssf ssfTmp(wvg[i], ssfHF[i], lfc[i], inPtr, idr[i]);
+    ssf[i] = ssfTmp.get();
   }
 }
 
@@ -76,6 +76,46 @@ double RpaUtil::SsfBase::ip() const {
   } else {
     return 4.0 * numUtil::lambda * rs / (M_PI * x * x);
   }
+}
+
+// -----------------------------------------------------------------
+// Ssf class
+// -----------------------------------------------------------------
+
+double RpaUtil::Ssf::get() {
+  assert(in->getDegeneracy() > 0.0);
+  if (x == 0.0) return 0.0;
+  if (in->getCoupling() == 0.0) return ssfHF;
+  compute(in->getDimension());
+  return res;
+}
+
+void RpaUtil::Ssf::compute3D() {
+  const double Theta = in->getDegeneracy();
+  const double isStatic = lfc.size() == 1;
+  double suml = 0.0;
+  for (size_t l = 0; l < idr.size(); ++l) {
+    const double &idrl = idr[l];
+    const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
+    const double denom = 1.0 + ip() * idrl * (1 - lfcl);
+    const double f = idrl * idrl * (1 - lfcl) / denom;
+    suml += (l == 0) ? f : 2 * f;
+  }
+  res = ssfHF - 1.5 * ip() * Theta * suml;
+}
+
+void RpaUtil::Ssf::compute2D() {
+  const double Theta = in->getDegeneracy();
+  const double isStatic = lfc.size() == 1;
+  double suml = 0.0;
+  for (size_t l = 0; l < idr.size(); ++l) {
+    const double &idrl = idr[l];
+    const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
+    const double denom = 1.0 + ip() * idrl * (1 - lfcl);
+    const double f = idrl * idrl * (1 - lfcl) / denom;
+    suml += (l == 0) ? f : 2 * f;
+  }
+  res = ssfHF - ip() * Theta * suml;
 }
 
 // -----------------------------------------------------------------
