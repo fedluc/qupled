@@ -464,8 +464,7 @@ double HFUtil::Itcf::integrand(const double &y) const {
     const double logRatio = log((1.0 + exp(logNum)) / (1.0 + exp(logDen)));
     return 3.0 * Theta / 8.0 * cosh(tauArg) / sinh(halfArg) * logRatio;
   }
-  return -3.0 * y2
-         / ((1.0 + exp(y2 / Theta - mu)) * (1.0 + exp(y2 / Theta - mu)));
+  return 1.5 * Theta / (1.0 + exp(y2 / Theta - mu));
 }
 
 double HFUtil::Itcf::integrand2DOut(const double &y) const {
