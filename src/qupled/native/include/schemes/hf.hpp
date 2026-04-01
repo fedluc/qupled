@@ -11,8 +11,7 @@
  * @brief Solver for the Hartree-Fock (HF) dielectric scheme.
  *
  * Base class for all dielectric scheme solvers. Computes the ideal density
- * response (IDR), the imaginary-time correlation function (ITCF), the static
- * structure factor (SSF, obtained as ITCF at tau=0), and the local field
+ * response (IDR), the static structure factor (SSF), and the local field
  * correction (LFC) on a wave-vector grid. Derived classes override the
  * virtual compute methods to implement higher-level approximations.
  */
@@ -138,7 +137,8 @@ private:
   void computeIdrGround();
 };
 
-/** @brief Internal helpers for the Hartree-Fock ideal density response and SSF.
+/** @brief Internal helpers for the Hartree-Fock ideal density response, SSF,
+ * and ITCF.
  */
 namespace HFUtil {
 
@@ -360,7 +360,8 @@ namespace HFUtil {
    * Evaluates F_HF(x, tau) via numerical integration over the auxiliary
    * momentum. For 3D systems, uses a single 1D integral. For 2D systems,
    * uses a 2D integral (over y and angle p) plus the IDR contribution.
-   * The SSF is recovered as the special case tau = 0 by delegating to the Ssf class.
+   * The SSF is recovered as the special case tau = 0 by delegating to the Ssf
+   * class.
    */
   class Itcf : public dimensionsUtil::DimensionsHandler {
 
@@ -368,16 +369,17 @@ namespace HFUtil {
 
     /**
      * @brief Construct for a finite-temperature ITCF calculation.
-     * @param in_       Shared pointer to the input parameters.
-     * @param x_        Wave-vector value.
-     * @param mu_       Chemical potential.
-     * @param tau_      Imaginary time in [0, 1] (normalised by beta).
-     * @param yMin_     Lower integration limit.
-     * @param yMax_     Upper integration limit.
-     * @param itg_      Shared pointer to a 1D integrator.
-     * @param itgGrid_  Wave-vector grid for segregated 2D integration.
-     * @param itg2_     Shared pointer to a 2D integrator (used in 2D only).
-     * @param idr0_     Ideal density response at l=0 for the current wave-vector.
+     * @param in_        Shared pointer to the input parameters.
+     * @param x_         Wave-vector value.
+     * @param mu_        Chemical potential.
+     * @param tau_       Imaginary time in [0, 1] (normalised by beta).
+     * @param yMin_      Lower integration limit.
+     * @param yMax_      Upper integration limit.
+     * @param itg_       Shared pointer to a 1D integrator.
+     * @param itgGrid_   Grid for 2D integration.
+     * @param itg2_      Shared pointer to a 2D integrator (used in 2D only).
+     * @param idr_       Ideal density response array.
+     * @param grid_val_  Wave-vector grid value at the current point.
      */
     Itcf(const std::shared_ptr<const Input> in_,
          const double &x_,
@@ -388,7 +390,8 @@ namespace HFUtil {
          std::shared_ptr<Integrator1D> itg_,
          const std::vector<double> &itgGrid_,
          std::shared_ptr<Integrator2D> itg2_,
-         const double &idr0_)
+         const Vector2D &idr_,
+         const double &grid_val_)
         : in(in_),
           x(x_),
           mu(mu_),
@@ -398,7 +401,8 @@ namespace HFUtil {
           itg(itg_),
           itgGrid(itgGrid_),
           itg2(itg2_),
-          idr0(idr0_),
+          idr(idr_),
+          grid_val(grid_val_),
           res(numUtil::NaN) {}
 
     /**
@@ -423,12 +427,14 @@ namespace HFUtil {
     const double yMax;
     /** @brief 1D numerical integrator. */
     const std::shared_ptr<Integrator1D> itg;
-    /** @brief Wave-vector grid for segregated 2D integration. */
+    /** @brief Grid for 2D integration. */
     const std::vector<double> &itgGrid;
     /** @brief 2D numerical integrator (used in 2D only). */
     const std::shared_ptr<Integrator2D> itg2;
-    /** @brief Ideal density response at l=0 for the current wave-vector. */
-    const double idr0;
+    /** @brief Ideal density response array. */
+    const Vector2D idr;
+    /** @brief Wave-vector grid value at the current point. */
+    const double grid_val;
     /** @brief Stores the ITCF result. */
     double res;
 
@@ -436,32 +442,37 @@ namespace HFUtil {
      * @brief Compute the ITCF for 3D systems.
      *
      * Evaluates the ITCF via 1D integration over the auxiliary momentum.
-     * Returns the asymptotic limit (1 for tau=0 or tau=1, 0 otherwise)
-     * plus the integral contribution.
+     * Returns the asymptotic limit (1 for tau=1, 0 otherwise) plus the
+     * integral contribution. Note: tau=0 is handled by delegating to Ssf.
      */
     void compute3D() override;
     /**
      * @brief Compute the ITCF for 2D systems.
      *
      * Evaluates the ITCF via 2D integration (over y and angle p) plus
-     * the ideal density response contribution Theta * idr0.
+     * the ideal density response contribution Theta * idr(grid_val, 0).
+     * Note: tau=0 is handled by delegating to Ssf.
      */
     void compute2D() override;
     /**
      * @brief 3D integrand over auxiliary momentum @p y.
+     *
+     * Evaluates the ITCF integrand for 3D systems at the specified tau.
      * @param y Auxiliary momentum variable.
      */
     double integrand(const double &y) const;
     /**
      * @brief Outer 2D integrand over auxiliary momentum @p y.
      *
-     * At tau = 0 or 1 returns 2y/(exp(y^2/Theta - mu)*pi + pi) (Fermi factor).
-     * At other imaginary times returns cosh(xy/Theta*(tau-1/2)) / sinh(xy/(2*Theta)).
+     * Evaluates cosh(xy/Theta*(tau-1/2)) / sinh(xy/(2*Theta)) for the ITCF
+     * calculation in 2D systems.
      * @param y Outer integration variable.
      */
     double integrand2DOut(const double &y) const;
     /**
-     * @brief Inner 2D integrand (angle) over @p p: coth(arg) - 1/arg, where arg = x^2/(2Theta) + xy/Theta*cos(p).
+     * @brief Inner 2D integrand (angle) over @p p.
+     *
+     * Evaluates coth(arg) - 1/arg, where arg = x^2/(2Theta) + xy/Theta*cos(p).
      * @param p Inner integration variable (angle).
      */
     double integrand2DIn(const double &p) const;

@@ -126,6 +126,11 @@ double RpaUtil::Itcf::get() {
   assert(in->getDegeneracy() > 0.0);
   if (x == 0.0) return 0.0;
   if (in->getCoupling() == 0.0) return ssfHF;
+  // For tau = 0, delegate to the Ssf calculation
+  if (tau == 0.0) {
+    RpaUtil::Ssf ssfCalc(x, ssfHF, lfc, in, idr);
+    return ssfCalc.get();
+  }
   compute(in->getDimension());
   return res;
 }

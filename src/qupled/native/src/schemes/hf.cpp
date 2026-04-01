@@ -381,6 +381,12 @@ double HFUtil::Ssf::integrand2DIn(const double &p) const {
 
 double HFUtil::Itcf::get() {
   assert(in->getDegeneracy() > 0.0);
+  // For tau = 0, delegate to the Ssf calculation
+  if (tau == 0.0) {
+    HFUtil::Ssf ssfCalc(
+        in, x, mu, yMin, yMax, itg, itgGrid, itg2, idr, grid_val);
+    return ssfCalc.get();
+  }
   compute(in->getDimension());
   return res;
 }
@@ -388,8 +394,7 @@ double HFUtil::Itcf::get() {
 void HFUtil::Itcf::compute3D() {
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(yMin, yMax));
-  const double asymptoticLimit = (tau == 0.0 || tau == 1.0) ? 1.0 : 0.0;
-  res = asymptoticLimit + itg->getSolution();
+  return itg->getSolution();
 }
 
 void HFUtil::Itcf::compute2D() {
@@ -397,7 +402,7 @@ void HFUtil::Itcf::compute2D() {
   auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
   auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
   itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0.0, M_PI), itgGrid);
-  res = itg2->getSolution() + Theta * idr0;
+  res = itg2->getSolution() + Theta * idr(grid_val, 0);
 }
 
 double HFUtil::Itcf::integrand(const double &y) const {
@@ -412,11 +417,6 @@ double HFUtil::Itcf::integrand(const double &y) const {
     const double logNum = mu - ymx * ymx / (4.0 * Theta);
     const double logDen = mu - ypx * ypx / (4.0 * Theta);
     const double logRatio = log((1.0 + exp(logNum)) / (1.0 + exp(logDen)));
-    if (tau == 0.0 || tau == 1.0) {
-      return -3.0 * Theta / (4.0 * x) * y / (exp(y2 / Theta - mu) + 1.0)
-             * log((1 + exp(mu - ymx * ymx / Theta))
-                   / (1 + exp(mu - ypx * ypx / Theta)));
-    }
     return 3.0 * Theta / 8.0 * cosh(tauArg) / sinh(halfArg) * logRatio;
   }
   return -3.0 * y2
@@ -425,9 +425,6 @@ double HFUtil::Itcf::integrand(const double &y) const {
 
 double HFUtil::Itcf::integrand2DOut(const double &y) const {
   const double Theta = in->getDegeneracy();
-  if (tau == 0.0 || tau == 1.0) {
-    return 2.0 * y / (exp(y * y / Theta - mu) * M_PI + M_PI);
-  }
   const double halfArg = x * y / (2.0 * Theta);
   const double tauArg = x * y / Theta * (tau - 0.5);
   return cosh(tauArg) / sinh(halfArg);

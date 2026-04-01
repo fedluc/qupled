@@ -12,10 +12,10 @@
  * @brief Solver for the Random Phase Approximation (RPA) dielectric scheme.
  *
  * Extends the Hartree-Fock (HF) base class to compute the static structure
- * factor (SSF) and the imaginary-time correlation function (ITCF) within the
- * RPA. The SSF is obtained as the special case ITCF(tau=0). Finite-temperature
- * and zero-temperature (ground state) regimes are both supported; the ITCF is
- * only implemented for 3D finite-temperature systems.
+ * factor (SSF) within the RPA. Both finite-temperature and zero-temperature
+ * (ground state) regimes are supported. Helper classes for computing the
+ * imaginary-time correlation function (ITCF) at arbitrary tau are available
+ * in the RpaUtil namespace; the SSF corresponds to ITCF evaluated at tau=0.
  */
 class Rpa : public HF {
 
@@ -58,20 +58,22 @@ private:
   void computeLfc() override;
 };
 
-/** @brief Internal helpers for the RPA static structure factor computation. */
+/** @brief Internal helpers for the RPA static structure factor and ITCF
+ * computation. */
 namespace RpaUtil {
 
   /**
-   * @brief Base class holding shared state for static structure factor helpers.
+   * @brief Base class holding shared state for SSF and ITCF helpers.
    */
   class SsfBase {
 
   protected:
 
     /**
-     * @brief Construct the base with the quantities needed for SSF evaluation.
+     * @brief Construct the base with the quantities needed for SSF/ITCF
+     * evaluation.
      * @param x_     Wave-vector value.
-     * @param ssfHF_ Hartree-Fock static structure factor at this wave-vector.
+     * @param ssfHF_ Hartree-Fock SSF or ITCF contribution at this wave-vector.
      * @param lfc_   Span over the local field correction array.
      * @param in_    Shared pointer to the input parameters.
      */
@@ -87,7 +89,7 @@ namespace RpaUtil {
     /** @brief Wave-vector value. */
     const double x;
 
-    /** @brief Hartree-Fock contribution to the static structure factor. */
+    /** @brief Hartree-Fock contribution (SSF or ITCF). */
     const double ssfHF;
 
     /** @brief Local field correction values. */
@@ -158,8 +160,8 @@ namespace RpaUtil {
     /**
      * @brief Construct for a finite-temperature ITCF calculation.
      * @param x_      Wave-vector value.
-     * @param itcfHF_ HF imaginary-time correlation function at this
-     * wave-vector.
+     * @param itcfHF_ HF imaginary-time correlation function at this wave-vector
+     *                and imaginary time tau.
      * @param lfc_    Span over the local field correction array.
      * @param in_     Shared pointer to the input parameters.
      * @param idr_    Span over the ideal density response array.
