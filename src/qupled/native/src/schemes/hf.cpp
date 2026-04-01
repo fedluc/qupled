@@ -120,8 +120,15 @@ void HF::computeSsfFinite() {
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
   for (size_t i = 0; i < wvg.size(); ++i) {
-    HFUtil::Ssf ssfTmp(
-        inPtr, wvg[i], mu, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr, i);
+    HFUtil::Ssf ssfTmp(inPtr,
+                       wvg[i],
+                       mu,
+                       wvg.front(),
+                       wvg.back(),
+                       itg,
+                       itgGrid,
+                       itg2,
+                       idr(i, 0));
     ssf[i] = ssfTmp.get();
   }
 }
@@ -340,7 +347,7 @@ void HFUtil::Ssf::compute2D() {
   auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
   auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
   itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0, M_PI), itgGrid);
-  res = itg2->getSolution() + Theta * idr(grid_val, 0);
+  res = itg2->getSolution() + Theta * idr0;
 }
 
 // 3D Integrand
@@ -383,8 +390,7 @@ double HFUtil::Itcf::get() {
   assert(in->getDegeneracy() > 0.0);
   // For tau = 0, delegate to the Ssf calculation
   if (tau == 0.0) {
-    HFUtil::Ssf ssfCalc(
-        in, x, mu, yMin, yMax, itg, itgGrid, itg2, idr, grid_val);
+    HFUtil::Ssf ssfCalc(in, x, mu, yMin, yMax, itg, itgGrid, itg2, idr0);
     return ssfCalc.get();
   }
   compute(in->getDimension());
@@ -394,7 +400,8 @@ double HFUtil::Itcf::get() {
 void HFUtil::Itcf::compute3D() {
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(yMin, yMax));
-  return itg->getSolution();
+  const double asymptoticLimit = (tau == 1.0) ? 1.0 : 0.0;
+  res = asymptoticLimit + itg->getSolution();
 }
 
 void HFUtil::Itcf::compute2D() {
@@ -402,7 +409,7 @@ void HFUtil::Itcf::compute2D() {
   auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
   auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
   itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0.0, M_PI), itgGrid);
-  res = itg2->getSolution() + Theta * idr(grid_val, 0);
+  res = itg2->getSolution() + Theta * idr0;
 }
 
 double HFUtil::Itcf::integrand(const double &y) const {

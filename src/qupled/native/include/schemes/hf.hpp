@@ -278,8 +278,8 @@ namespace HFUtil {
      * @param itg_       Shared pointer to a 1D integrator.
      * @param itgGrid_   Grid for 2D integration.
      * @param itg2_      Shared pointer to a 2D integrator.
-     * @param idr_       Ideal density response array.
-     * @param grid_val_  Wave-vector grid value at the current point.
+     * @param idr0_      Ideal density response at l=0 for the current
+     * wave-vector.
      */
     Ssf(const std::shared_ptr<const Input> in_,
         const double &x_,
@@ -289,8 +289,7 @@ namespace HFUtil {
         std::shared_ptr<Integrator1D> itg_,
         const std::vector<double> &itgGrid_,
         std::shared_ptr<Integrator2D> itg2_,
-        const Vector2D &idr_,
-        const double &grid_val_)
+        const double &idr0_)
         : in(in_),
           x(x_),
           mu(mu_),
@@ -299,8 +298,7 @@ namespace HFUtil {
           itg(itg_),
           itgGrid(itgGrid_),
           itg2(itg2_),
-          idr(idr_),
-          grid_val(grid_val_),
+          idr0(idr0_),
           res(x_) {}
 
     /**
@@ -327,10 +325,8 @@ namespace HFUtil {
     const std::vector<double> &itgGrid;
     /** @brief 2D numerical integrator. */
     const std::shared_ptr<Integrator2D> itg2;
-    /** @brief Ideal density response array. */
-    const Vector2D idr;
-    /** @brief Wave-vector grid value at the current point. */
-    const double grid_val;
+    /** @brief Ideal density response at l=0 for the current wave-vector. */
+    const double idr0;
     /** @brief Result of the SSF computation. */
     double res;
 
@@ -378,8 +374,8 @@ namespace HFUtil {
      * @param itg_       Shared pointer to a 1D integrator.
      * @param itgGrid_   Grid for 2D integration.
      * @param itg2_      Shared pointer to a 2D integrator (used in 2D only).
-     * @param idr_       Ideal density response array.
-     * @param grid_val_  Wave-vector grid value at the current point.
+     * @param idr0_      Ideal density response at l=0 for the current
+     * wave-vector.
      */
     Itcf(const std::shared_ptr<const Input> in_,
          const double &x_,
@@ -390,8 +386,7 @@ namespace HFUtil {
          std::shared_ptr<Integrator1D> itg_,
          const std::vector<double> &itgGrid_,
          std::shared_ptr<Integrator2D> itg2_,
-         const Vector2D &idr_,
-         const double &grid_val_)
+         const double &idr0_)
         : in(in_),
           x(x_),
           mu(mu_),
@@ -401,8 +396,7 @@ namespace HFUtil {
           itg(itg_),
           itgGrid(itgGrid_),
           itg2(itg2_),
-          idr(idr_),
-          grid_val(grid_val_),
+          idr0(idr0_),
           res(numUtil::NaN) {}
 
     /**
@@ -431,10 +425,8 @@ namespace HFUtil {
     const std::vector<double> &itgGrid;
     /** @brief 2D numerical integrator (used in 2D only). */
     const std::shared_ptr<Integrator2D> itg2;
-    /** @brief Ideal density response array. */
-    const Vector2D idr;
-    /** @brief Wave-vector grid value at the current point. */
-    const double grid_val;
+    /** @brief Ideal density response at l=0 for the current wave-vector. */
+    const double idr0;
     /** @brief Stores the ITCF result. */
     double res;
 
