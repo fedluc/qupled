@@ -6,7 +6,7 @@ from qupled.schemes import rpa, hf, stls
 
 # Define an Rpa object to solve the RPA scheme
 solver = stls.Solver()
-solver.compute(stls.Input(1.0, 1.0, dimension=Dimension._2D))
+solver.compute(stls.Input(1.0, 1.0, dimension=Dimension._3D))
 solver.compute_itcf()
 
 # Retrieve information from the output files
@@ -22,4 +22,4 @@ for i in range(nl):
         results["itcf"][:, i],
         color=color,
     )
-plt.savefig("output.png")
+plt.show()

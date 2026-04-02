@@ -72,7 +72,7 @@ namespace thermoUtil {
                                      const Vector2D &idr) {
     // Validate input sizes
     if (wvg.size() != idr.size(0)) {
-      MPIUtil::throwError("Wave-vector grid and IDR array sizes must match");
+      MPIUtil::throwError("Input array sizes must match");
     }
     if (wvg.empty() || tauValues.empty()) { return Vector2D(); }
     using ItgType = Integrator1D::Type;
@@ -104,8 +104,7 @@ namespace thermoUtil {
                        const Vector2D &lfc) {
     // Validate input sizes
     if (wvg.size() != idr.size(0) || wvg.size() != lfc.size(0)) {
-      MPIUtil::throwError(
-          "Wave-vector grid, IDR, and LFC array sizes must match");
+      MPIUtil::throwError("Input array sizes must match");
     }
     if (wvg.empty() || tauValues.empty()) { return Vector2D(); }
     Vector2D result = computeItcfNonInteracting(in, wvg, tauValues, mu, idr);
