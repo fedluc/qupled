@@ -13,9 +13,8 @@
  *
  * Extends the Hartree-Fock (HF) base class to compute the static structure
  * factor (SSF) within the RPA. Both finite-temperature and zero-temperature
- * (ground state) regimes are supported. Helper classes for computing the
- * imaginary-time correlation function (ITCF) at arbitrary tau are available
- * in the RpaUtil namespace; the SSF corresponds to ITCF evaluated at tau=0.
+ * (ground state) regimes are supported. Helper classes for the SSF
+ * computation are provided in the RpaUtil namespace.
  */
 class Rpa : public HF {
 
@@ -62,17 +61,16 @@ private:
 namespace RpaUtil {
 
   /**
-   * @brief Base class holding shared state for SSF and ITCF helpers.
+   * @brief Base class holding shared state for SSF helpers.
    */
   class SsfBase {
 
   protected:
 
     /**
-     * @brief Construct the base with the quantities needed for SSF/ITCF
-     * evaluation.
+     * @brief Construct the base with the quantities needed for SSF evaluation.
      * @param x_     Wave-vector value.
-     * @param ssfHF_ Hartree-Fock SSF or ITCF contribution at this wave-vector.
+     * @param ssfHF_ Hartree-Fock SSF at this wave-vector.
      * @param lfc_   Span over the local field correction array.
      * @param in_    Shared pointer to the input parameters.
      */
@@ -88,7 +86,7 @@ namespace RpaUtil {
     /** @brief Wave-vector value. */
     const double x;
 
-    /** @brief Hartree-Fock contribution (SSF or ITCF). */
+    /** @brief Hartree-Fock SSF. */
     const double ssfHF;
 
     /** @brief Local field correction values. */
