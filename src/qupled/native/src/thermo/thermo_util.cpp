@@ -70,25 +70,16 @@ namespace thermoUtil {
                                      const std::vector<double> &tauValues,
                                      const double mu,
                                      const Vector2D &idr) {
-    // Only compute ITCF for finite temperature
-    if (in->getDegeneracy() == 0.0) { return Vector2D(); }
-
     // Validate input sizes
     if (wvg.size() != idr.size(0)) {
       MPIUtil::throwError("Wave-vector grid and IDR array sizes must match");
     }
     if (wvg.empty() || tauValues.empty()) { return Vector2D(); }
-
-    // Create integrator with the input error tolerance
     using ItgType = Integrator1D::Type;
     auto itg = make_shared<Integrator1D>(ItgType::DEFAULT, in->getIntError());
-
-    // Allocate result array
     const size_t nx = wvg.size();
     const size_t ntau = tauValues.size();
     Vector2D result(nx, ntau);
-
-    // Compute ITCF for each wave-vector and tau value
     for (size_t i = 0; i < nx; ++i) {
       for (size_t j = 0; j < ntau; ++j) {
         ItcfNonInteracting itcfTmp(in,
@@ -102,7 +93,6 @@ namespace thermoUtil {
         result(i, j) = itcfTmp.get();
       }
     }
-
     return result;
   }
 
@@ -112,20 +102,13 @@ namespace thermoUtil {
                        const double mu,
                        const Vector2D &idr,
                        const Vector2D &lfc) {
-    // Only compute ITCF for finite temperature
-    if (in->getDegeneracy() == 0.0) { return Vector2D(); }
-
     // Validate input sizes
     if (wvg.size() != idr.size(0) || wvg.size() != lfc.size(0)) {
       MPIUtil::throwError(
           "Wave-vector grid, IDR, and LFC array sizes must match");
     }
     if (wvg.empty() || tauValues.empty()) { return Vector2D(); }
-
-    // First compute HF ITCF
     Vector2D result = computeItcfNonInteracting(in, wvg, tauValues, mu, idr);
-
-    // Apply RPA correction for each wave-vector and tau value
     const size_t nx = wvg.size();
     const size_t ntau = tauValues.size();
     for (size_t i = 0; i < nx; ++i) {
@@ -134,7 +117,6 @@ namespace thermoUtil {
         result(i, j) = itcfTmp.get();
       }
     }
-
     return result;
   }
 

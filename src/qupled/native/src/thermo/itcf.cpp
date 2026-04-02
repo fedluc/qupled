@@ -1,6 +1,7 @@
 #include "thermo/itcf.hpp"
 #include "schemes/hf.hpp"
 #include "schemes/rpa.hpp"
+#include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
 #include <cassert>
 #include <cmath>
@@ -30,7 +31,13 @@ namespace thermoUtil {
         yMax(yMax_),
         itg(itg_),
         idr0(idr0_),
-        res(numUtil::NaN) {}
+        res(numUtil::NaN) {
+    // Throw error message for ground state calculations
+    if (in->getDegeneracy() == 0.0) {
+      MPIUtil::throwError("Ground state calculations of the imaginary-time "
+                          "correlation function are not implemented.");
+    }
+  }
 
   double ItcfNonInteracting::get() {
     assert(in->getDegeneracy() > 0.0);
@@ -125,7 +132,12 @@ namespace thermoUtil {
         in(in_),
         idr(idr_),
         tau(tau_),
-        res(numUtil::NaN) {}
+        res(numUtil::NaN) {
+    if (in->getDegeneracy() == 0.0) {
+      MPIUtil::throwError("Ground state calculations of the imaginary-time "
+                          "correlation function are not implemented.");
+    }
+  }
 
   double Itcf::get() {
     assert(in->getDegeneracy() > 0.0);
