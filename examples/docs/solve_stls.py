@@ -1,18 +1,17 @@
 from qupled.postprocess.output import DataBase, OutputType
 from qupled.schemes import stls
 
-# Define the object used to solve the scheme
+# Define teh scheme
 scheme = stls.Solver()
 
 # Define the input parameters
 inputs = stls.Input(10.0, 1.0, mixing=0.5)
 
-# Solve scheme
+# Solve the scheme
 scheme.compute(inputs)
 
 # Access the internal energy from the database
-result_type = OutputType.SCHEME
-results = DataBase.read_results(result_type, scheme.run_id, names=["uint"])
+results = DataBase.read_results(scheme.run_id, names=["uint"])
 print("Internal energy from the output file: ")
 print(results["uint"])
 

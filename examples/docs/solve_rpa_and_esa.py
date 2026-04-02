@@ -1,27 +1,25 @@
 import matplotlib.pyplot as plt
-from qupled.postprocess.output import DataBase, OutputType
+from qupled.postprocess.output import DataBase
 from qupled.schemes import esa, rpa
 
-# Define an Rpa object to solve the RPA scheme
-print("######### Solving the RPA scheme #########")
-rpa_scheme = rpa.Solver()
-rpa_scheme.compute(rpa.Input(10.0, 1.0))
+# Solve two schemes: RPA and ESA
+scheme = rpa.Solver()
+scheme.compute(rpa.Input(10.0, 1.0))
+run_id_rpa = scheme.run_id
 
-# Define an ESA object to solve the ESA scheme
-print("######### Solving the ESA scheme #########")
-esa_scheme = esa.Solver()
-esa_scheme.compute(esa.Input(10.0, 1.0))
+scheme = esa.Solver()
+scheme.compute(esa.Input(10.0, 1.0))
+run_id_esa = scheme.run_id
 
-# Retrieve information from the output files
-result_type = OutputType.SCHEME
-rpa_data = DataBase.read_run(result_type, rpa_scheme.run_id)
-esa_data = DataBase.read_run(result_type, esa_scheme.run_id)
+# Retrieve information from the database
+rpa_data = DataBase.read_run(run_id_rpa)
+esa_data = DataBase.read_run(run_id_esa)
 rpa_results = rpa_data["results"]
 rpa_inputs = rpa_data["inputs"]
 esa_results = esa_data["results"]
 esa_inputs = esa_data["inputs"]
 
-# Compare the results for the from the two schemes in a plot
+# Plot the static structure factor for the two schemes
 plt.plot(rpa_results["wvg"], rpa_results["ssf"], color="b", label=rpa_inputs["theory"])
 plt.plot(esa_results["wvg"], esa_results["ssf"], color="r", label=esa_inputs["theory"])
 plt.legend(loc="lower right")
