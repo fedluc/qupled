@@ -120,7 +120,6 @@ def test_update_input_data(mocker, scheme):
 @pytest.mark.unit
 def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
     read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
-    result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     read_results.return_value = {
         "free_energy_grid": mocker.ANY,
@@ -129,15 +128,12 @@ def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
     fxci = vsstls.Solver.get_free_energy_integrand(run_id)
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
-    read_results.assert_called_once_with(
-        result_type, run_id, None, ["free_energy_grid", "free_energy_integrand"]
-    )
+    read_results.assert_called_once_with(run_id, database_name=None, names=["free_energy_grid", "free_energy_integrand"])
 
 
 @pytest.mark.unit
 def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
     read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
-    result_type = output.OutputType.SCHEME
     run_id = mocker.ANY
     database_name = mocker.ANY
     read_results.return_value = {
@@ -147,9 +143,7 @@ def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
     fxci = vsstls.Solver.get_free_energy_integrand(run_id, database_name)
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
-    read_results.assert_called_once_with(
-        result_type, run_id, None, ["free_energy_grid", "free_energy_integrand"]
-    )
+    read_results.assert_called_once_with(run_id, database_name=database_name, names=["free_energy_grid", "free_energy_integrand"])
 
 
 @pytest.mark.unit
