@@ -110,6 +110,13 @@ public:
   double getUInt(GridPoint p) const;
 
   /**
+   * @brief Return the chemical potential at a given grid point.
+   * @param p Grid point identifier.
+   * @return Chemical potential (in units of the thermal energy).
+   */
+  double getChemicalPotential(GridPoint p) const;
+
+  /**
    * @brief Return the free-energy integrand contribution (Q-adder) at a grid
    * point.
    * @param p Grid point identifier.

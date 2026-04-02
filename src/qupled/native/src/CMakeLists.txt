@@ -60,6 +60,7 @@ pybind11_add_module(native
 	thermo/internal_energy.cpp
 	thermo/free_energy.cpp
 	thermo/rdf.cpp
+	thermo/itcf.cpp
 	thermo/thermo_util.cpp
 	thermo/chemical_potential.cpp
 	vs/vsmanager.cpp

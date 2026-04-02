@@ -254,6 +254,7 @@ def test_input_to_native(mocker, inputs):
 
 
 def test_result_initialization(results):
+    assert results.chemical_potential is None
     assert results.idr is None
     assert results.rdf is None
     assert results.rdf_grid is None

@@ -201,6 +201,10 @@ double VSManager::getUInt(GridPoint p) const {
   return workers[p.toIndex()]->getUInt();
 }
 
+double VSManager::getChemicalPotential(GridPoint p) const {
+  return workers[p.toIndex()]->getChemicalPotential();
+}
+
 double VSManager::getQAdder(GridPoint p) const {
   return workers[p.toIndex()]->getQAdder();
 }

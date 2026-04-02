@@ -31,6 +31,9 @@ public:
   const Vector2D &getIdr() const override { return Stls::getIdr(); }
   std::vector<double> getSdr() const override { return Stls::getSdr(); }
   double getUInt() const override { return Stls::getUInt(); }
+  double getChemicalPotential() const override {
+    return Stls::getChemicalPotential();
+  }
 
   /**
    * @brief Compute the Q-adder contribution (interaction energy at rs = 1).

@@ -35,6 +35,9 @@ public:
   const Vector2D &getIdr() const override { return Qstls::getIdr(); }
   std::vector<double> getSdr() const override { return Qstls::getSdr(); }
   double getUInt() const override { return Qstls::getUInt(); }
+  double getChemicalPotential() const override {
+    return Qstls::getChemicalPotential();
+  }
 
   /**
    * @brief Compute the Q-adder contribution for the quantum VS free-energy

@@ -56,6 +56,13 @@ public:
   /** @brief Return the wave-vector grid. */
   const std::vector<double> &getWvg() const { return wvg; }
 
+
+  /**
+   * @brief Return the chemical potential.
+   * @return Chemical potential (in units of the thermal energy).
+   */
+  double getChemicalPotential() const { return mu; }
+
   /**
    * @brief Compute and return the static density response.
    * @return Vector of static density response values over the wave-vector grid.

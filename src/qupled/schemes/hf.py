@@ -257,7 +257,9 @@ class Result:
     """
     Class used to store the results for the :obj:`qupled.hf.HF` class.
     """
-
+    
+    chemical_potential: float = None
+    """Chemical potential"""
     idr: np.ndarray = None
     """Ideal density response"""
     itcf: np.ndarray = None
@@ -314,6 +316,26 @@ class Result:
             self.rdf = native.compute_rdf(
                 self.rdf_grid, self.wvg, self.ssf, native_dimension
             )
+
+    # def compute_itcf(self, input: Input, tau: np.ndarray | None = None):
+    #     """
+    #     Compute the imaginary-time correlation function (ITCF) for the system.
+
+    #     Args:
+    #         tau (np.ndarray | None, optional): A 1D array specifying the imaginary-time points
+    #             at which the ITCF is computed. If None, a default grid ranging from 0.0
+    #             to 10.0 with a step size of 0.01 is used.
+
+    #     Returns:
+    #         None: The computed ITCF is stored in the `self.itcf` attribute.
+    #     """
+    #     if self.wvg is not None and self.lfc is not None:
+    #         self.tau = (
+    #             tau if tau is not None else np.arange(0.0, 0.5, 0.1)
+    #         )
+    #         self.itcf = native.compute_itcf_non_interacting(
+    #             input.to_native(), self.wvg, self.tau, self.idr
+    #         )
 
 
 @serialize.serializable_dataclass

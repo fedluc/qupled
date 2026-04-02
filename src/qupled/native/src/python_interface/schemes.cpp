@@ -104,6 +104,7 @@ void exposeBaseSchemeProperties(py::class_<T> &cls) {
       .def_property_readonly("ssf", &getSsf<T>)
       .def_property_readonly("uint", &T::getUInt)
       .def_property_readonly("wvg", &getWvg<T>)
+      .def_property_readonly("chemical_potential", &T::getChemicalPotential)
       .def_readonly("is_root", &T::isRoot);
 }
 
