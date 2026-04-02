@@ -130,7 +130,7 @@ class Solver(stls.Solver):
         """
         names = ["free_energy_grid", "free_energy_integrand"]
         data = output.DataBase.read_results(
-            output.OutputType.SCHEME, run_id, database_name, names
+            run_id, database_name=database_name, names=names
         )
         return FreeEnergyIntegrand(data[names[0]], data[names[1]])
 

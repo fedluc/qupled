@@ -125,7 +125,6 @@ class FiniteSizeCorrection:
         scheme_input.coupling = target_coupling
         target_key = self._key_from_float(target_coupling)
         self.target_run_id = self.runs[target_key].id
-        print(f"--- Runs completed")
 
     def _build_rs_grid(self) -> np.ndarray:
         """

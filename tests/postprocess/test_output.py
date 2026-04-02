@@ -59,7 +59,7 @@ def test_read_run_fsc(fsc_tables, db_handler):
 @pytest.mark.unit
 def test_read_inputs_scheme(scheme_tables, db_handler):
     scheme_tables.get_inputs.return_value = {"input1": "data1"}
-    result = DataBase.read_inputs(OutputType.SCHEME, 1, "test_db", ["input1"])
+    result = DataBase.read_inputs(1, OutputType.SCHEME, "test_db", ["input1"])
     assert result == {"input1": "data1"}
     db_handler.assert_called_once_with("test_db")
     scheme_tables.get_inputs.assert_called_once_with(1, ["input1"])
@@ -69,7 +69,7 @@ def test_read_inputs_scheme(scheme_tables, db_handler):
 def test_read_inputs_fsc(fsc_tables, db_handler):
     fsc_tables.get_inputs.return_value = {"input1": "data1"}
     result = DataBase.read_inputs(
-        OutputType.FINITE_SIZE_CORRECTION, 1, "test_db", ["input1"]
+        1, OutputType.FINITE_SIZE_CORRECTION, "test_db", ["input1"]
     )
     assert result == {"input1": "data1"}
     db_handler.assert_called_once_with("test_db")
@@ -79,7 +79,7 @@ def test_read_inputs_fsc(fsc_tables, db_handler):
 @pytest.mark.unit
 def test_read_results_scheme(scheme_tables, db_handler):
     scheme_tables.get_results.return_value = {"result1": "data1"}
-    result = DataBase.read_results(OutputType.SCHEME, 1, "test_db", ["result1"])
+    result = DataBase.read_results(1, OutputType.SCHEME, "test_db", ["result1"])
     assert result == {"result1": "data1"}
     db_handler.assert_called_once_with("test_db")
     scheme_tables.get_results.assert_called_once_with(1, ["result1"])
@@ -89,7 +89,7 @@ def test_read_results_scheme(scheme_tables, db_handler):
 def test_read_results_fsc(fsc_tables, db_handler):
     fsc_tables.get_results.return_value = {"result1": "data1"}
     result = DataBase.read_results(
-        OutputType.FINITE_SIZE_CORRECTION, 1, "test_db", ["result1"]
+        1, OutputType.FINITE_SIZE_CORRECTION, "test_db", ["result1"]
     )
     assert result == {"result1": "data1"}
     db_handler.assert_called_once_with("test_db")
@@ -98,13 +98,13 @@ def test_read_results_fsc(fsc_tables, db_handler):
 
 @pytest.mark.unit
 def test_delete_run_scheme(scheme_tables, db_handler):
-    DataBase.delete_run(OutputType.SCHEME, 1, "test_db")
+    DataBase.delete_run(1, OutputType.SCHEME, "test_db")
     db_handler.assert_called_once_with("test_db")
     scheme_tables.delete_run.assert_called_once_with(1)
 
 
 @pytest.mark.unit
 def test_delete_run_fsc(fsc_tables, db_handler):
-    DataBase.delete_run(OutputType.FINITE_SIZE_CORRECTION, 1, "test_db")
+    DataBase.delete_run(1, OutputType.FINITE_SIZE_CORRECTION, "test_db")
     db_handler.assert_called_once_with("test_db")
     fsc_tables.delete_run.assert_called_once_with(1)

@@ -28,7 +28,7 @@ class DataBase:
         Reads runs from the database and returns the content in the form of a dictionary.
 
         Args:
-            type: The type of output to inspect.
+            type: The type of output to inspect. Defaults to OutputType.SCHEME.
             database_name: Name of the database to read from. Defaults to None.
 
         Returns:
@@ -54,8 +54,8 @@ class DataBase:
         Reads a specific run from the database.
 
         Args:
-            type: The type of output to read.
             run_id: The ID of the run to read.
+            type: The type of output to read. Defaults to OutputType.SCHEME.
             database_name: The name of the database to read from. Defaults to None.
             input_names: A list of input names to retrieve. Defaults to None.
             result_names: A list of result names to retrieve. Defaults to None.
@@ -73,8 +73,8 @@ class DataBase:
 
     @staticmethod
     def read_inputs(
-        type: OutputType,
         run_id: int,
+        type: OutputType = OutputType.SCHEME,
         database_name: str | None = None,
         names: list[str] | None = None,
     ) -> dict:
@@ -82,8 +82,8 @@ class DataBase:
         Reads inputs from the database and returns the content in the form of a dictionary.
 
         Args:
-            type: The type of output to read inputs for.
             run_id: Identifier of the run to read inputs for.
+            type: The type of output to read inputs for. Defaults to OutputType.SCHEME.
             database_name: Name of the database to read from. Defaults to None.
             names: A list of quantities to read. Defaults to None, which reads all available quantities.
 
@@ -100,8 +100,8 @@ class DataBase:
 
     @staticmethod
     def read_results(
-        type: OutputType,
         run_id: int,
+        type: OutputType = OutputType.SCHEME,
         database_name: str | None = None,
         names: list[str] | None = None,
     ) -> dict:
@@ -110,7 +110,7 @@ class DataBase:
 
         Args:
             type: The type of output to read results for.
-            run_id: Identifier of the run to read results for.
+            run_id: Identifier of the run to read results for. Defaults to OutputType.SCHEME.
             database_name: Name of the database to read from. Defaults to None.
             names: A list of quantities to read. Defaults to None, which reads all available quantities.
 
@@ -127,13 +127,17 @@ class DataBase:
 
     # Delete results from the database
     @staticmethod
-    def delete_run(type: OutputType, run_id: int, database_name: str | None = None):
+    def delete_run(
+        run_id: int,
+        type: OutputType = OutputType.SCHEME,
+        database_name: str | None = None,
+    ):
         """
         Deletes a run entry from the database based on the provided run ID.
 
         Args:
-            type: The type of output to delete.
             run_id: The unique identifier of the run to be deleted.
+            type: The type of output to delete. Defaults to OutputType.SCHEME.
             database_name: The name of the database to connect to. Defaults to None.
         """
         db_handler = DataBaseHandler(database_name)

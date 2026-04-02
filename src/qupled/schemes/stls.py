@@ -36,7 +36,7 @@ class Solver(rpa.Solver):
         """
         names = ["wvg", "ssf"]
         data = output.DataBase.read_results(
-            output.OutputType.SCHEME, run_id, database_name, names
+            run_id, database_name=database_name, names=names
         )
         return Guess(data[names[0]], data[names[1]])
 

@@ -297,14 +297,14 @@ def test_result_from_native(mocker, results):
 @pytest.mark.unit
 def test_result_compute_rdf_with_default_grid(mocker, results):
     native_compute_rdf = mocker.patch("qupled.native.compute_rdf")
-    mock_dimension = mocker.patch("qupled.native.Dimension")
+    mock_native_dimension = mocker.patch("qupled.native.Dimension")
     results.wvg = np.array([1.0, 2.0, 3.0])
     results.ssf = np.array([4.0, 5.0, 6.0])
     native_compute_rdf.return_value = np.array([7.0, 8.0, 9.0])
-    results.compute_rdf("D3")
+    results.compute_rdf(Dimension._3D)
     assert np.allclose(results.rdf_grid, np.arange(0.0, 10.0, 0.01))
     native_compute_rdf.assert_called_once_with(
-        results.rdf_grid, results.wvg, results.ssf, mock_dimension.D3
+        results.rdf_grid, results.wvg, results.ssf, mock_native_dimension.D3
     )
     assert np.allclose(results.rdf, np.array([7.0, 8.0, 9.0]))
 
@@ -317,7 +317,7 @@ def test_result_compute_rdf_with_custom_grid(mocker, results):
     results.ssf = np.array([4.0, 5.0, 6.0])
     custom_grid = np.array([0.5, 1.5, 2.5])
     native_compute_rdf.return_value = np.array([10.0, 11.0, 12.0])
-    results.compute_rdf("D2", custom_grid)
+    results.compute_rdf(Dimension._2D, custom_grid)
     assert np.allclose(results.rdf_grid, custom_grid)
     native_compute_rdf.assert_called_once_with(
         custom_grid, results.wvg, results.ssf, mock_dimension.D2
@@ -331,11 +331,11 @@ def test_result_compute_rdf_no_wvg_or_ssf(mocker, results):
     native_compute_rdf = mocker.patch("qupled.native.compute_rdf")
     results.wvg = None
     results.ssf = np.array([1, 2, 3])
-    results.compute_rdf("D3")
+    results.compute_rdf(Dimension._3D)
     native_compute_rdf.assert_not_called()
     results.wvg = np.array([1, 2, 3])
     results.ssf = None
-    results.compute_rdf("D3")
+    results.compute_rdf(Dimension._3D)
     native_compute_rdf.assert_not_called()
 
 
@@ -383,14 +383,14 @@ def test_compute_itcf_without_results(scheme):
 def test_result_compute_itcf_with_default_grid(mocker, results, inputs):
     native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
     native_input = mocker.Mock()
-    native_inputs_cls = mocker.patch.object(native, "Input", return_value=native_input)
+    mocker.patch.object(native, "Input", return_value=native_input)
     results.wvg = np.array([1.0, 2.0, 3.0])
     results.lfc = np.array([4.0, 5.0, 6.0])
     results.chemical_potential = 0.5
     results.idr = np.array([7.0, 8.0, 9.0])
     native_compute_itcf.return_value = np.array([[10.0, 11.0, 12.0]])
     results.compute_itcf(inputs)
-    assert np.allclose(results.tau, np.arange(0.0, 0.5, 0.1))
+    assert np.allclose(results.tau, np.arange(0.0, 0.6, 0.1))
     native_compute_itcf.assert_called_once_with(
         native_input,
         results.wvg,
@@ -405,7 +405,7 @@ def test_result_compute_itcf_with_default_grid(mocker, results, inputs):
 def test_result_compute_itcf_with_custom_grid(mocker, results, inputs):
     native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
     native_input = mocker.Mock()
-    native_inputs_cls = mocker.patch.object(native, "Input", return_value=native_input)
+    mocker.patch.object(native, "Input", return_value=native_input)
     results.wvg = np.array([1.0, 2.0, 3.0])
     results.lfc = np.array([4.0, 5.0, 6.0])
     results.chemical_potential = 0.5

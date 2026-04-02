@@ -53,10 +53,6 @@ def test(marker):
         run_tox(marker)
 
 
-def examples():
-    run_tox("examples")
-
-
 def format_code():
     subprocess.run(["black", "."], check=True)
     native_files_folder = Path("src", "qupled", "native")
@@ -181,7 +177,6 @@ def run():
     # Other commands
     subparsers.add_parser("clean", help="Clean up build artifacts")
     subparsers.add_parser("docs", help="Generate documentation")
-    subparsers.add_parser("examples", help="Run tests for the examples")
     subparsers.add_parser("format", help="Format the source code")
     subparsers.add_parser("install", help="Install the qupled package")
     subparsers.add_parser("install-deps", help="Install system dependencies")
@@ -194,8 +189,6 @@ def run():
         clean()
     elif args.command == "docs":
         docs()
-    elif args.command == "examples":
-        examples()
     elif args.command == "format":
         format_code()
     elif args.command == "install":
