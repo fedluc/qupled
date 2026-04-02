@@ -53,16 +53,6 @@ public:
   /** @brief Return the static structure factor over the wave-vector grid. */
   const std::vector<double> &getSsf() const { return ssf; }
 
-  /**
-   * @brief Return the imaginary-time correlation function (ITCF) grid.
-   *
-   * @note The ITCF is not computed automatically during the main compute()
-   * pipeline. To compute ITCF values, use the standalone utility functions
-   * thermoUtil::computeItcfNonInteracting() or thermoUtil::computeItcf().
-   * This getter returns an empty array unless ITCF has been computed separately.
-   */
-  const Vector2D &getItcf() const { return itcf; }
-
   /** @brief Return the wave-vector grid. */
   const std::vector<double> &getWvg() const { return wvg; }
 
@@ -99,10 +89,6 @@ protected:
 
   /** @brief Static structure factor over the wave-vector grid. */
   std::vector<double> ssf;
-
-  /** @brief Imaginary-time correlation function (rows = wave-vectors, columns =
-   * tau values). */
-  Vector2D itcf;
 
   /** @brief Chemical potential (in units of the thermal energy). */
   double mu;

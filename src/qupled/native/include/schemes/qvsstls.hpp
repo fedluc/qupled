@@ -32,7 +32,6 @@ public:
   const Vector2D &getLfc() const override { return Qstls::getLfc(); }
   const std::vector<double> &getWvg() const override { return Qstls::getWvg(); }
   const std::vector<double> &getSsf() const override { return Qstls::getSsf(); }
-  const Vector2D &getItcf() const override { return Qstls::getItcf(); }
   const Vector2D &getIdr() const override { return Qstls::getIdr(); }
   std::vector<double> getSdr() const override { return Qstls::getSdr(); }
   double getUInt() const override { return Qstls::getUInt(); }

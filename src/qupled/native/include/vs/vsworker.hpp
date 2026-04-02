@@ -31,9 +31,6 @@ public:
   /** @brief Return the static structure factor over the wave-vector grid. */
   virtual const std::vector<double> &getSsf() const = 0;
 
-  /** @brief Return the imaginary-time correlation function grid. */
-  virtual const Vector2D &getItcf() const = 0;
-
   /** @brief Return the ideal density response. */
   virtual const Vector2D &getIdr() const = 0;
 

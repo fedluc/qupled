@@ -60,13 +60,6 @@ public:
   const std::vector<double> &getSsf(GridPoint p) const;
 
   /**
-   * @brief Return the ITCF at a given grid point.
-   * @param p Grid point identifier.
-   * @return Constant reference to the ITCF array.
-   */
-  const Vector2D &getItcf(GridPoint p) const;
-
-  /**
    * @brief Return the LFC at a given grid point.
    * @param p Grid point identifier.
    * @return Constant reference to the LFC array.

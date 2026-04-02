@@ -76,11 +76,6 @@ py::array getSsf(const T &scheme) {
 }
 
 template <typename T>
-py::array getItcf(const T &scheme) {
-  return toNdArray2D(scheme.getItcf());
-}
-
-template <typename T>
 py::array getWvg(const T &scheme) {
   return toNdArray(scheme.getWvg());
 }
@@ -113,11 +108,6 @@ void exposeBaseSchemeProperties(py::class_<T> &cls) {
 }
 
 template <typename T>
-void exposeItcfProperty(py::class_<T> &cls) {
-  cls.def_property_readonly("itcf", &getItcf<T>);
-}
-
-template <typename T>
 void exposeIterativeSchemeProperties(py::class_<T> &cls) {
   exposeBaseSchemeProperties(cls);
   cls.def_property_readonly("error", &T::getError);
@@ -128,7 +118,6 @@ void exposeBaseSchemeClass(py::module_ &m, const std::string &className) {
   auto cls =
       py::class_<TScheme>(m, className.c_str()).def(py::init<const TInput &>());
   exposeBaseSchemeProperties(cls);
-  exposeItcfProperty(cls);
 }
 
 template <typename TScheme, typename TInput>
@@ -136,7 +125,6 @@ void exposeIterativeSchemeClass(py::module_ &m, const std::string &className) {
   auto cls =
       py::class_<TScheme>(m, className.c_str()).def(py::init<const TInput &>());
   exposeIterativeSchemeProperties(cls);
-  exposeItcfProperty(cls);
 }
 
 template <typename TScheme, typename TInput>
@@ -144,7 +132,6 @@ void exposeIetSchemeClass(py::module_ &m, const std::string &className) {
   auto cls =
       py::class_<TScheme>(m, className.c_str()).def(py::init<const TInput &>());
   exposeIterativeSchemeProperties(cls);
-  exposeItcfProperty(cls);
   cls.def_property_readonly("bf", &getBf<TScheme>);
 }
 
@@ -153,7 +140,6 @@ void exposeVSSchemeClass(py::module_ &m, const std::string &className) {
   auto cls =
       py::class_<TScheme>(m, className.c_str()).def(py::init<const TInput &>());
   exposeIterativeSchemeProperties(cls);
-  exposeItcfProperty(cls);
   cls.def_property_readonly("alpha", &TScheme::getAlpha)
       .def_property_readonly("free_energy_integrand",
                              &getFreeEnergyIntegrand<TScheme>)

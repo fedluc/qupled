@@ -69,12 +69,6 @@ public:
   const std::vector<double> &getSsf() const;
 
   /**
-   * @brief Return the ITCF at the central (target) grid point.
-   * @return Constant reference to the ITCF array.
-   */
-  const Vector2D &getItcf() const;
-
-  /**
    * @brief Return the LFC at the central (target) grid point.
    * @return Constant reference to the LFC array.
    */
