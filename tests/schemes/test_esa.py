@@ -1,5 +1,5 @@
 from qupled import native
-from qupled.schemes import esa, hf
+from qupled.schemes import esa, hf, rpa
 
 
 def test_esa_inheritance():

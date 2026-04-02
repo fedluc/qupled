@@ -256,11 +256,13 @@ def test_input_to_native(mocker, inputs):
 def test_result_initialization(results):
     assert results.chemical_potential is None
     assert results.idr is None
+    assert results.itcf is None
     assert results.rdf is None
     assert results.rdf_grid is None
     assert results.sdr is None
     assert results.lfc is None
     assert results.ssf is None
+    assert results.tau is None
     assert results.uint is None
     assert results.wvg is None
 
@@ -312,6 +314,99 @@ def test_result_compute_rdf_no_wvg_or_ssf(mocker, results):
     results.ssf = None
     results.compute_rdf("D3")
     native_compute_rdf.assert_not_called()
+
+
+def test_compute_itcf_with_default_grid(scheme, inputs, results, mocker):
+    compute_itcf = mocker.patch("qupled.schemes.hf.Result.compute_itcf")
+    scheme.results = results
+    scheme.inputs = inputs
+    scheme.compute_itcf()
+    compute_itcf.assert_called_once_with(scheme.inputs, None)
+    scheme._db_tables.insert_results.assert_called_once_with(
+        {
+            "itcf": scheme.results.itcf,
+            "tau": scheme.results.tau,
+        },
+        conflict_mode=ConflictMode.UPDATE,
+    )
+
+
+def test_compute_itcf_with_custom_grid(scheme, inputs, results, mocker):
+    compute_itcf = mocker.patch("qupled.schemes.hf.Result.compute_itcf")
+    scheme.results = results
+    scheme.inputs = inputs
+    tau = np.array([0.0, 0.1, 0.2])
+    scheme.compute_itcf(tau)
+    compute_itcf.assert_called_once_with(scheme.inputs, tau)
+    scheme._db_tables.insert_results.assert_called_once_with(
+        {
+            "itcf": scheme.results.itcf,
+            "tau": scheme.results.tau,
+        },
+        conflict_mode=ConflictMode.UPDATE,
+    )
+
+
+def test_compute_itcf_without_results(scheme):
+    scheme.results = None
+    scheme.compute_itcf()
+    scheme.db_handler.insert_results.assert_not_called()
+
+
+def test_result_compute_itcf_with_default_grid(mocker, results, inputs):
+    native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
+    native_input = mocker.Mock()
+    native_inputs_cls = mocker.patch.object(native, "Input", return_value=native_input)
+    results.wvg = np.array([1.0, 2.0, 3.0])
+    results.lfc = np.array([4.0, 5.0, 6.0])
+    results.chemical_potential = 0.5
+    results.idr = np.array([7.0, 8.0, 9.0])
+    native_compute_itcf.return_value = np.array([[10.0, 11.0, 12.0]])
+    results.compute_itcf(inputs)
+    assert np.allclose(results.tau, np.arange(0.0, 0.5, 0.1))
+    native_compute_itcf.assert_called_once_with(
+        native_input,
+        results.wvg,
+        results.tau,
+        results.chemical_potential,
+        results.idr,
+    )
+    assert np.allclose(results.itcf, np.array([[10.0, 11.0, 12.0]]))
+
+
+def test_result_compute_itcf_with_custom_grid(mocker, results, inputs):
+    native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
+    native_input = mocker.Mock()
+    native_inputs_cls = mocker.patch.object(native, "Input", return_value=native_input)
+    results.wvg = np.array([1.0, 2.0, 3.0])
+    results.lfc = np.array([4.0, 5.0, 6.0])
+    results.chemical_potential = 0.5
+    results.idr = np.array([7.0, 8.0, 9.0])
+    custom_tau = np.array([0.0, 0.2, 0.4])
+    native_compute_itcf.return_value = np.array([[13.0, 14.0, 15.0]])
+    results.compute_itcf(inputs, custom_tau)
+    assert np.allclose(results.tau, custom_tau)
+    native_compute_itcf.assert_called_once_with(
+        native_input,
+        results.wvg,
+        custom_tau,
+        results.chemical_potential,
+        results.idr,
+    )
+    assert np.allclose(results.itcf, np.array([[13.0, 14.0, 15.0]]))
+
+
+def test_result_compute_itcf_no_wvg_or_lfc(mocker, results, inputs):
+    # Should not call native.compute_itcf_non_interacting if wvg or lfc is None
+    native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
+    results.wvg = None
+    results.lfc = np.array([1, 2, 3])
+    results.compute_itcf(inputs)
+    native_compute_itcf.assert_not_called()
+    results.wvg = np.array([1, 2, 3])
+    results.lfc = None
+    results.compute_itcf(inputs)
+    native_compute_itcf.assert_not_called()
 
 
 def test_database_info_initialization():
