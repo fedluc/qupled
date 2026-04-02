@@ -89,8 +89,8 @@ namespace thermoUtil {
       const double ypx = y + x;
       const double eta1 = mu - ymx * ymx / (4.0 * Theta);
       const double eta2 = mu - ypx * ypx / (4.0 * Theta);
-      const double fdDiff = SpecialFunctions::fermiDiracm12(eta1) -
-                            SpecialFunctions::fermiDiracm12(eta2);
+      const double fdDiff = SpecialFunctions::fermiDiracm12(eta1)
+                            - SpecialFunctions::fermiDiracm12(eta2);
       return 0.5 * sqrt(Theta) * cosh(tauArg) / sinh(halfArg) * fdDiff / M_PI;
     }
     return 0.0;

@@ -149,7 +149,6 @@ void HF::computeLfc() {
   }
 }
 
-
 // Getters
 vector<double> HF::getSdr() const {
   const double theta = in().getDegeneracy();
@@ -384,7 +383,6 @@ double HFUtil::Ssf::integrand2DIn(const double &p) const {
   if (x == 0.0) { return 0.0; }
   return SpecialFunctions::coth(arg) - (1.0 / arg);
 }
-
 
 // -----------------------------------------------------------------
 // SsfHFGround class

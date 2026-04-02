@@ -5,8 +5,9 @@ from qupled.util.dimension import Dimension
 from qupled.schemes import rpa, hf, stls
 
 # Define an Rpa object to solve the RPA scheme
-solver = rpa.Solver()
-solver.compute(rpa.Input(1.0, 1.0, dimension=Dimension._2D))
+solver = hf.Solver()
+solver.compute(hf.Input(1.0, 1.0, dimension=Dimension._2D))
+solver.compute_itcf()
 
 # Retrieve information from the output files
 results = DataBase.read_results(OutputType.SCHEME, solver.run_id)

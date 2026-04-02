@@ -67,8 +67,6 @@ class Solver:
     def compute_rdf(self, rdf_grid: np.ndarray = None):
         """
         Computes the radial distribution function (RDF) using the provided RDF grid.
-        If results are available, this method computes the RDF and stores the results
-        in the
 
         Args:
             rdf_grid: A numpy array representing the RDF grid.
@@ -78,6 +76,21 @@ class Solver:
             self.results.compute_rdf(self.inputs.dimension, rdf_grid)
             self.db_handler.scheme_tables.insert_results(
                 {"rdf": self.results.rdf, "rdf_grid": self.results.rdf_grid},
+                conflict_mode=ConflictMode.UPDATE,
+            )
+
+    def compute_itcf(self, tau: np.ndarray | None = None):
+        """
+        Computes the imaginary-time correlation function (ITCF) using the provided imaginary-time grid.
+
+        Args:
+            tau: A numpy array representing the imaginary-time grid.
+                If not provided, a default grid will be used.
+        """
+        if self.results is not None:
+            self.results.compute_itcf(self.inputs, tau)
+            self.db_handler.scheme_tables.insert_results(
+                {"itcf": self.results.itcf, "tau": self.results.tau},
                 conflict_mode=ConflictMode.UPDATE,
             )
 
@@ -257,7 +270,7 @@ class Result:
     """
     Class used to store the results for the :obj:`qupled.hf.HF` class.
     """
-    
+
     chemical_potential: float = None
     """Chemical potential"""
     idr: np.ndarray = None
@@ -274,6 +287,8 @@ class Result:
     """Static density response"""
     ssf: np.ndarray = None
     """Static structure factor"""
+    tau: np.ndarray = None
+    """Imaginary-time grid"""
     uint: float = None
     """Internal energy"""
     wvg: np.ndarray = None
@@ -317,25 +332,25 @@ class Result:
                 self.rdf_grid, self.wvg, self.ssf, native_dimension
             )
 
-    # def compute_itcf(self, input: Input, tau: np.ndarray | None = None):
-    #     """
-    #     Compute the imaginary-time correlation function (ITCF) for the system.
+    def compute_itcf(self, inputs: Input, tau: np.ndarray | None = None):
+        """
+        Compute the imaginary-time correlation function (ITCF) for the system.
 
-    #     Args:
-    #         tau (np.ndarray | None, optional): A 1D array specifying the imaginary-time points
-    #             at which the ITCF is computed. If None, a default grid ranging from 0.0
-    #             to 10.0 with a step size of 0.01 is used.
+        Args:
+            tau (np.ndarray | None, optional): A 1D array specifying the imaginary-time points
+                at which the ITCF is computed. If None, a default grid ranging from 0.0
+                to 10.0 with a step size of 0.01 is used.
 
-    #     Returns:
-    #         None: The computed ITCF is stored in the `self.itcf` attribute.
-    #     """
-    #     if self.wvg is not None and self.lfc is not None:
-    #         self.tau = (
-    #             tau if tau is not None else np.arange(0.0, 0.5, 0.1)
-    #         )
-    #         self.itcf = native.compute_itcf_non_interacting(
-    #             input.to_native(), self.wvg, self.tau, self.idr
-    #         )
+        Returns:
+            None: The computed ITCF is stored in the `self.itcf` attribute.
+        """
+        if self.wvg is not None and self.lfc is not None:
+            self.tau = tau if tau is not None else np.arange(0.0, 0.5, 0.1)
+            native_inputs = native.Input()
+            inputs.to_native(native_inputs)
+            self.itcf = native.compute_itcf_non_interacting(
+                native_inputs, self.wvg, self.tau, self.chemical_potential, self.idr
+            )
 
 
 @serialize.serializable_dataclass

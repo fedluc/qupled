@@ -97,8 +97,8 @@ namespace thermoUtil {
    * @param mu         Chemical potential.
    * @param idr        Ideal density response (rows = wave-vectors, columns =
    *                   Matsubara frequencies).
-   * @return 2D vector containing ITCF values (rows = wave-vectors, columns = tau
-   *         values).
+   * @return 2D vector containing ITCF values (rows = wave-vectors, columns =
+   * tau values).
    */
   Vector2D computeItcfNonInteracting(const std::shared_ptr<const Input> &in,
                                      const std::vector<double> &wvg,
@@ -120,8 +120,8 @@ namespace thermoUtil {
    *                   Matsubara frequencies).
    * @param lfc        Local field correction (rows = wave-vectors, columns =
    *                   Matsubara frequencies or 1 for static LFC).
-   * @return 2D vector containing ITCF values (rows = wave-vectors, columns = tau
-   *         values).
+   * @return 2D vector containing ITCF values (rows = wave-vectors, columns =
+   * tau values).
    */
   Vector2D computeItcf(const std::shared_ptr<const Input> &in,
                        const std::vector<double> &wvg,

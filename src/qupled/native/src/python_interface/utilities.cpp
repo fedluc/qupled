@@ -65,8 +65,8 @@ py::array computeItcf(const Input &in,
   const std::vector<double> tauValues = toVector(tauValuesIn);
   const Vector2D idr = toVector2D(idrIn);
   const Vector2D lfc = toVector2D(lfcIn);
-  return toNdArray2D(
-      thermoUtil::computeItcf(std::make_shared<Input>(in), wvg, tauValues, mu, idr, lfc));
+  return toNdArray2D(thermoUtil::computeItcf(
+      std::make_shared<Input>(in), wvg, tauValues, mu, idr, lfc));
 }
 
 // -----------------------------------------------------------------
@@ -83,10 +83,11 @@ namespace pythonWrappers {
     m.def("compute_free_energy", &computeFreeEnergy, "Compute the free energy");
     m.def("compute_itcf_non_interacting",
           &computeItcfNonInteracting,
-          "Compute the non-interacting (Hartree-Fock) imaginary-time correlation function");
+          "Compute the non-interacting (Hartree-Fock) imaginary-time "
+          "correlation function");
     m.def("compute_itcf",
           &computeItcf,
-          "Compute the imaginary-time correlation function" );
+          "Compute the imaginary-time correlation function");
   }
 
   void exposeMPIClass(py::module_ &m) {

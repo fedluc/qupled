@@ -116,7 +116,6 @@ double RpaUtil::Ssf::computeMatsubaraSummation() const {
   return suml;
 }
 
-
 // -----------------------------------------------------------------
 // SsfGround class
 // -----------------------------------------------------------------
