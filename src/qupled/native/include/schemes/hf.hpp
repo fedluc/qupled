@@ -57,6 +57,12 @@ public:
   const std::vector<double> &getWvg() const { return wvg; }
 
   /**
+   * @brief Return the chemical potential.
+   * @return Chemical potential (in units of the thermal energy).
+   */
+  double getChemicalPotential() const { return mu; }
+
+  /**
    * @brief Compute and return the static density response.
    * @return Vector of static density response values over the wave-vector grid.
    */
@@ -113,6 +119,8 @@ protected:
   /** @brief Compute the static structure factor at zero temperature (ground
    * state). */
   virtual void computeSsfGround();
+
+protected:
 
   /** @brief Compute the local field correction (zero for bare HF). */
   virtual void computeLfc();
@@ -259,9 +267,9 @@ namespace HFUtil {
    * @brief Computes the Hartree-Fock static structure factor at finite
    * temperature.
    *
-   * Evaluates the SSF at wave-vector @p x_ by integrating over the auxiliary
-   * momentum, using the ideal density response and a 2D integrator for the
-   * exchange-correlation contribution.
+   * Evaluates F_HF(x, 0) via numerical integration over the auxiliary
+   * momentum. For 3D systems, uses a single 1D integral. For 2D systems,
+   * uses a 2D integral (over y and angle p) plus the IDR contribution.
    */
   class Ssf : public dimensionsUtil::DimensionsHandler {
 
@@ -277,8 +285,8 @@ namespace HFUtil {
      * @param itg_       Shared pointer to a 1D integrator.
      * @param itgGrid_   Grid for 2D integration.
      * @param itg2_      Shared pointer to a 2D integrator.
-     * @param idr_       Ideal density response array.
-     * @param grid_val_  Wave-vector grid value at the current point.
+     * @param idr0_      Ideal density response at l=0 for the current
+     * wave-vector.
      */
     Ssf(const std::shared_ptr<const Input> in_,
         const double &x_,
@@ -288,8 +296,7 @@ namespace HFUtil {
         std::shared_ptr<Integrator1D> itg_,
         const std::vector<double> &itgGrid_,
         std::shared_ptr<Integrator2D> itg2_,
-        const Vector2D &idr_,
-        const double &grid_val_)
+        const double &idr0_)
         : in(in_),
           x(x_),
           mu(mu_),
@@ -298,8 +305,7 @@ namespace HFUtil {
           itg(itg_),
           itgGrid(itgGrid_),
           itg2(itg2_),
-          idr(idr_),
-          grid_val(grid_val_),
+          idr0(idr0_),
           res(x_) {}
 
     /**
@@ -320,20 +326,19 @@ namespace HFUtil {
     const double yMin;
     /** @brief Upper integration limit. */
     const double yMax;
-    void compute3D() override;
-    void compute2D() override;
     /** @brief 1D numerical integrator. */
     const std::shared_ptr<Integrator1D> itg;
     /** @brief Grid for 2D integration. */
     const std::vector<double> &itgGrid;
     /** @brief 2D numerical integrator. */
     const std::shared_ptr<Integrator2D> itg2;
-    /** @brief Ideal density response array. */
-    const Vector2D idr;
-    /** @brief Wave-vector grid value at the current point. */
-    const double grid_val;
+    /** @brief Ideal density response at l=0 for the current wave-vector. */
+    const double idr0;
     /** @brief Result of the SSF computation. */
     double res;
+
+    void compute3D() override;
+    void compute2D() override;
     /**
      * @brief 3D integrand over auxiliary momentum @p y.
      * @param y Auxiliary momentum variable.
@@ -345,15 +350,10 @@ namespace HFUtil {
      */
     double integrand2DOut(const double &y) const;
     /**
-     * @brief Inner 2D integrand over auxiliary momentum @p p.
-     * @param p Inner integration variable.
+     * @brief Inner 2D integrand (angle) over @p p.
+     * @param p Inner integration variable (angle).
      */
     double integrand2DIn(const double &p) const;
-    /**
-     * @brief Analytic zero-temperature contribution.
-     * @return SSF value from the ground-state expression.
-     */
-    double get0() const;
   };
 
   /**

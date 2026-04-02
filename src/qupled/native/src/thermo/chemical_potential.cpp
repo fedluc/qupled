@@ -20,5 +20,5 @@ void ChemicalPotential::compute2D() {
 
 double ChemicalPotential::normalizationCondition(const double &mu) const {
   const double &Theta = in->getDegeneracy();
-  return SpecialFunctions::fermiDirac(mu) - 2.0 / (3.0 * pow(Theta, 1.5));
+  return SpecialFunctions::fermiDirac12(mu) - 2.0 / (3.0 * pow(Theta, 1.5));
 }

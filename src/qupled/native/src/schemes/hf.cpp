@@ -1,6 +1,7 @@
 #include "schemes/hf.hpp"
 #include "schemes/input.hpp"
 #include "thermo/chemical_potential.hpp"
+#include "thermo/itcf.hpp"
 #include "thermo/thermo_util.hpp"
 #include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
@@ -9,6 +10,7 @@ using namespace std;
 using namespace dimensionsUtil;
 using namespace thermoUtil;
 using namespace MPIUtil;
+using namespace SpecialFunctions;
 using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
 using Itg2DParam = Integrator2D::Param;
@@ -120,8 +122,15 @@ void HF::computeSsfFinite() {
   const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
   shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
   for (size_t i = 0; i < wvg.size(); ++i) {
-    HFUtil::Ssf ssfTmp(
-        inPtr, wvg[i], mu, wvg.front(), wvg.back(), itg, itgGrid, itg2, idr, i);
+    HFUtil::Ssf ssfTmp(inPtr,
+                       wvg[i],
+                       mu,
+                       wvg.front(),
+                       wvg.back(),
+                       itg,
+                       itgGrid,
+                       itg2,
+                       idr(i, 0));
     ssf[i] = ssfTmp.get();
   }
 }
@@ -316,7 +325,7 @@ double HFUtil::IdrGround::get() const {
 }
 
 // -----------------------------------------------------------------
-// SsfHF class
+// HF Ssf class
 // -----------------------------------------------------------------
 
 double HFUtil::Ssf::get() {
@@ -340,7 +349,7 @@ void HFUtil::Ssf::compute2D() {
   auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
   auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
   itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0, M_PI), itgGrid);
-  res = itg2->getSolution() + Theta * idr(grid_val, 0);
+  res = itg2->getSolution() + Theta * idr0;
 }
 
 // 3D Integrand

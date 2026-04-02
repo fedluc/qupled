@@ -24,6 +24,7 @@ def test_qvsstls_properties():
         hasattr(scheme, "uint")
     assert excinfo.value.args[0] == "No data to compute the internal energy"
     assert hasattr(scheme, "wvg")
+    assert hasattr(scheme, "chemical_potential")
     assert hasattr(scheme, "error")
     assert hasattr(scheme, "free_energy_integrand")
     assert hasattr(scheme, "free_energy_grid")
@@ -59,3 +60,6 @@ def test_qvsstls_compute(database_info):
     assert scheme.idr.shape[1] == inputs.matsubara
     assert scheme.sdr.size == nx
     assert scheme.ssf.size == nx
+    assert isinstance(scheme.chemical_potential, float)
+    assert scheme.chemical_potential >= inputs.chemical_potential[0]
+    assert scheme.chemical_potential <= inputs.chemical_potential[1]

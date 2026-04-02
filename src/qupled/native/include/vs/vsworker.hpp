@@ -47,6 +47,12 @@ public:
   virtual double getUInt() const = 0;
 
   /**
+   * @brief Return the chemical potential.
+   * @return Chemical potential (in units of the thermal energy).
+   */
+  virtual double getChemicalPotential() const = 0;
+
+  /**
    * @brief Return the free-energy integrand contribution (Q-adder).
    * @return Q-adder value at this grid point.
    */

@@ -64,7 +64,7 @@ def test_stls_input_initialization(mocker):
 
 
 def test_stls_result_inheritance():
-    assert issubclass(stls.Result, hf.Result)
+    assert issubclass(stls.Result, rpa.Result)
 
 
 def test_stls_result_initialization(mocker):

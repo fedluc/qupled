@@ -247,4 +247,8 @@ std::vector<double> VSBase::getSdr() const {
 
 double VSBase::getUInt() const { return grid().getUInt(getOutputGridPoint()); }
 
+double VSBase::getChemicalPotential() const {
+  return grid().getChemicalPotential(getOutputGridPoint());
+}
+
 double VSBase::getError() const { return grid().getError(); }

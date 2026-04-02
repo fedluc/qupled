@@ -13,6 +13,7 @@ def test_stls_properties():
         hasattr(scheme, "uint")
     assert excinfo.value.args[0] == "No data to compute the internal energy"
     assert hasattr(scheme, "wvg")
+    assert hasattr(scheme, "chemical_potential")
     assert hasattr(scheme, "error")
 
 
@@ -39,3 +40,6 @@ def test_stls_compute():
     assert scheme.sdr.size == nx
     assert scheme.lfc.size == nx
     assert scheme.ssf.size == nx
+    assert isinstance(scheme.chemical_potential, float)
+    assert scheme.chemical_potential >= inputs.chemical_potential[0]
+    assert scheme.chemical_potential <= inputs.chemical_potential[1]

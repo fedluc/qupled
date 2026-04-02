@@ -12,8 +12,9 @@
  * @brief Solver for the Random Phase Approximation (RPA) dielectric scheme.
  *
  * Extends the Hartree-Fock (HF) base class to compute the static structure
- * factor within the RPA, both at finite temperature and at zero temperature
- * (ground state).
+ * factor (SSF) within the RPA. Both finite-temperature and zero-temperature
+ * (ground state) regimes are supported. Helper classes for the SSF
+ * computation are provided in the RpaUtil namespace.
  */
 class Rpa : public HF {
 
@@ -60,7 +61,7 @@ private:
 namespace RpaUtil {
 
   /**
-   * @brief Base class holding shared state for static structure factor helpers.
+   * @brief Base class holding shared state for SSF helpers.
    */
   class SsfBase {
 
@@ -69,7 +70,7 @@ namespace RpaUtil {
     /**
      * @brief Construct the base with the quantities needed for SSF evaluation.
      * @param x_     Wave-vector value.
-     * @param ssfHF_ Hartree-Fock static structure factor at this wave-vector.
+     * @param ssfHF_ Hartree-Fock SSF at this wave-vector.
      * @param lfc_   Span over the local field correction array.
      * @param in_    Shared pointer to the input parameters.
      */
@@ -85,7 +86,7 @@ namespace RpaUtil {
     /** @brief Wave-vector value. */
     const double x;
 
-    /** @brief Hartree-Fock contribution to the static structure factor. */
+    /** @brief Hartree-Fock SSF. */
     const double ssfHF;
 
     /** @brief Local field correction values. */
@@ -139,6 +140,11 @@ namespace RpaUtil {
 
     void compute2D() override;
     void compute3D() override;
+    /**
+     * @brief Compute the Matsubara frequency summation for SSF.
+     * @return Sum over Matsubara frequencies (unweighted, for tau=0).
+     */
+    double computeMatsubaraSummation() const;
   };
 
   /**

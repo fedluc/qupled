@@ -1,6 +1,7 @@
 #include "schemes/rpa.hpp"
 #include "schemes/input.hpp"
 #include "thermo/chemical_potential.hpp"
+#include "thermo/itcf.hpp"
 #include "thermo/thermo_util.hpp"
 #include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
@@ -92,21 +93,18 @@ double RpaUtil::Ssf::get() {
 
 void RpaUtil::Ssf::compute3D() {
   const double Theta = in->getDegeneracy();
-  const double isStatic = lfc.size() == 1;
-  double suml = 0.0;
-  for (size_t l = 0; l < idr.size(); ++l) {
-    const double &idrl = idr[l];
-    const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
-    const double denom = 1.0 + ip() * idrl * (1 - lfcl);
-    const double f = idrl * idrl * (1 - lfcl) / denom;
-    suml += (l == 0) ? f : 2 * f;
-  }
+  const double suml = computeMatsubaraSummation();
   res = ssfHF - 1.5 * ip() * Theta * suml;
 }
 
 void RpaUtil::Ssf::compute2D() {
   const double Theta = in->getDegeneracy();
-  const double isStatic = lfc.size() == 1;
+  const double suml = computeMatsubaraSummation();
+  res = ssfHF - ip() * Theta * suml;
+}
+
+double RpaUtil::Ssf::computeMatsubaraSummation() const {
+  const bool isStatic = lfc.size() == 1;
   double suml = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {
     const double &idrl = idr[l];
@@ -115,7 +113,7 @@ void RpaUtil::Ssf::compute2D() {
     const double f = idrl * idrl * (1 - lfcl) / denom;
     suml += (l == 0) ? f : 2 * f;
   }
-  res = ssfHF - ip() * Theta * suml;
+  return suml;
 }
 
 // -----------------------------------------------------------------

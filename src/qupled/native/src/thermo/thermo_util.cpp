@@ -1,6 +1,7 @@
 #include "thermo/thermo_util.hpp"
 #include "thermo/free_energy.hpp"
 #include "thermo/internal_energy.hpp"
+#include "thermo/itcf.hpp"
 #include "thermo/rdf.hpp"
 #include "util/dimensions_util.hpp"
 #include "util/mpi_util.hpp"
@@ -62,6 +63,60 @@ namespace thermoUtil {
       rdf[i] = rdfTmp.get();
     }
     return rdf;
+  }
+
+  Vector2D computeItcfNonInteracting(const std::shared_ptr<const Input> &in,
+                                     const std::vector<double> &wvg,
+                                     const std::vector<double> &tauValues,
+                                     const double mu,
+                                     const Vector2D &idr) {
+    // Validate input sizes
+    if (wvg.size() != idr.size(0)) {
+      MPIUtil::throwError("Input array sizes must match");
+    }
+    if (wvg.empty() || tauValues.empty()) { return Vector2D(); }
+    using ItgType = Integrator1D::Type;
+    auto itg = make_shared<Integrator1D>(ItgType::DEFAULT, in->getIntError());
+    const size_t nx = wvg.size();
+    const size_t ntau = tauValues.size();
+    Vector2D result(nx, ntau);
+    for (size_t i = 0; i < nx; ++i) {
+      for (size_t j = 0; j < ntau; ++j) {
+        ItcfNonInteracting itcfTmp(wvg[i],
+                                   in,
+                                   tauValues[j],
+                                   mu,
+                                   wvg.front(),
+                                   wvg.back(),
+                                   itg,
+                                   idr(i, 0));
+        result(i, j) = itcfTmp.get();
+      }
+    }
+    return result;
+  }
+
+  Vector2D computeItcf(const std::shared_ptr<const Input> &in,
+                       const std::vector<double> &wvg,
+                       const std::vector<double> &tauValues,
+                       const double mu,
+                       const Vector2D &idr,
+                       const Vector2D &lfc) {
+    // Validate input sizes
+    if (wvg.size() != idr.size(0) || wvg.size() != lfc.size(0)) {
+      MPIUtil::throwError("Input array sizes must match");
+    }
+    if (wvg.empty() || tauValues.empty()) { return Vector2D(); }
+    Vector2D result = computeItcfNonInteracting(in, wvg, tauValues, mu, idr);
+    const size_t nx = wvg.size();
+    const size_t ntau = tauValues.size();
+    for (size_t i = 0; i < nx; ++i) {
+      for (size_t j = 0; j < ntau; ++j) {
+        Itcf itcfTmp(wvg[i], in, tauValues[j], result(i, j), lfc[i], idr[i]);
+        result(i, j) = itcfTmp.get();
+      }
+    }
+    return result;
   }
 
 } // namespace thermoUtil

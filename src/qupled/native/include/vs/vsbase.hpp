@@ -100,6 +100,12 @@ public:
   double getUInt() const;
 
   /**
+   * @brief Return the chemical potential at the central grid point.
+   * @return Chemical potential (in units of the thermal energy).
+   */
+  double getChemicalPotential() const;
+
+  /**
    * @brief Return the convergence error from the last iteration.
    * @return RMS difference between successive SSF iterates.
    */

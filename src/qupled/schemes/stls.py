@@ -59,7 +59,7 @@ class Input(rpa.Input):
 
 
 @serialize.serializable_dataclass
-class Result(hf.Result):
+class Result(rpa.Result):
     """
     Class used to store the results for the :obj:`qupled.stls.Stls` class.
     """
