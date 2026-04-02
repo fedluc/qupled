@@ -9,6 +9,7 @@ using namespace std;
 using namespace dimensionsUtil;
 using namespace thermoUtil;
 using namespace MPIUtil;
+using namespace SpecialFunctions;
 using ItgParam = Integrator1D::Param;
 using ItgType = Integrator1D::Type;
 using Itg2DParam = Integrator2D::Param;
@@ -153,21 +154,10 @@ void HF::computeLfc() {
 void HF::computeItcf() {
   // Only compute ITCF for finite temperature
   if (in().getDegeneracy() == 0.0) { return; }
-
-  // Define tau values: 0, 0.1, 0.2, 0.3, 0.4, 0.5
   const vector<double> tauValues = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
   const size_t nx = wvg.size();
   const size_t ntau = tauValues.size();
-
-  // Allocate ITCF storage
   itcf.resize(nx, ntau);
-
-  // Set up integration parameters
-  const bool segregatedItg = in().getInt2DScheme() == "segregated";
-  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
-  shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
-
-  // Compute ITCF for each wave-vector and tau value
   for (size_t i = 0; i < nx; ++i) {
     for (size_t j = 0; j < ntau; ++j) {
       HFUtil::Itcf itcfTmp(inPtr,
@@ -177,8 +167,6 @@ void HF::computeItcf() {
                            wvg.front(),
                            wvg.back(),
                            itg,
-                           itgGrid,
-                           itg2,
                            idr(i, 0));
       itcf(i, j) = itcfTmp.get();
     }
@@ -428,7 +416,8 @@ double HFUtil::Itcf::get() {
   assert(in->getDegeneracy() > 0.0);
   // For tau = 0, delegate to the Ssf calculation
   if (tau == 0.0) {
-    HFUtil::Ssf ssfCalc(in, x, mu, yMin, yMax, itg, itgGrid, itg2, idr0);
+    shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in->getIntError());
+    HFUtil::Ssf ssfCalc(in, x, mu, yMin, yMax, itg, vector<double>(), itg2, idr0);
     return ssfCalc.get();
   }
   compute(in->getDimension());
@@ -438,16 +427,18 @@ double HFUtil::Itcf::get() {
 void HFUtil::Itcf::compute3D() {
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(yMin, yMax));
-  const double asymptoticLimit = (tau == 1.0) ? 1.0 : 0.0;
-  res = asymptoticLimit + itg->getSolution();
+  res = itg->getSolution();
 }
 
 void HFUtil::Itcf::compute2D() {
-  const double Theta = in->getDegeneracy();
-  auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
-  auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
-  itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0.0, M_PI), itgGrid);
-  res = itg2->getSolution() + Theta * idr0;
+  if (x > 0.0) {
+    auto func = [&](const double &y) -> double { return integrand2D(y); };
+    itg->compute(func, ItgParam(yMin, yMax));
+    res = itg->getSolution();
+  } else {
+    const double Theta = in->getDegeneracy();
+    res = Theta * (1.0 - exp(-1.0 / Theta));
+  }
 }
 
 double HFUtil::Itcf::integrand(const double &y) const {
@@ -467,20 +458,20 @@ double HFUtil::Itcf::integrand(const double &y) const {
   return 1.5 * Theta / (1.0 + exp(y2 / Theta - mu));
 }
 
-double HFUtil::Itcf::integrand2DOut(const double &y) const {
+double HFUtil::Itcf::integrand2D(const double &y) const {
   const double Theta = in->getDegeneracy();
-  const double halfArg = x * y / (2.0 * Theta);
-  const double tauArg = x * y / Theta * (tau - 0.5);
-  return cosh(tauArg) / sinh(halfArg);
-}
-
-double HFUtil::Itcf::integrand2DIn(const double &p) const {
-  const double Theta = in->getDegeneracy();
-  const double y = itg2->getX();
-  const double x2 = x * x;
-  const double arg = x2 / (2.0 * Theta) + x * y / Theta * cos(p);
-  if (x == 0.0) return 0.0;
-  return SpecialFunctions::coth(arg) - (1.0 / arg);
+  if (x > 0.0) {
+    const double halfArg = x * y / (2.0 * Theta);
+    const double tauArg = x * y / Theta * (tau - 0.5);
+    const double ymx = y - x;
+    const double ypx = y + x;
+    const double eta1 = mu - ymx * ymx / (4.0 * Theta);
+    const double eta2 = mu - ypx * ypx / (4.0 * Theta);
+    const double fdDiff = SpecialFunctions::fermiDiracm12(eta1)
+                          - SpecialFunctions::fermiDiracm12(eta2);
+    return 0.5 * sqrt(Theta) * cosh(tauArg) / sinh(halfArg) * fdDiff / M_PI;
+  }
+  return 0.0;
 }
 
 // -----------------------------------------------------------------

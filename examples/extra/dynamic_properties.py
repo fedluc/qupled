@@ -5,8 +5,8 @@ from qupled.util.dimension import Dimension
 from qupled.schemes import rpa, hf, stls
 
 # Define an Rpa object to solve the RPA scheme
-solver = stls.Solver()
-solver.compute(stls.Input(1.0, 1.0, dimension=Dimension._3D))
+solver = rpa.Solver()
+solver.compute(rpa.Input(1.0, 1.0, dimension=Dimension._2D))
 
 # Retrieve information from the output files
 results = DataBase.read_results(OutputType.SCHEME, solver.run_id)
@@ -21,4 +21,4 @@ for i in range(nl):
         results["itcf"][:, i],
         color=color,
     )
-plt.show()
+plt.savefig("output.png")

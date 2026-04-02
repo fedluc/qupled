@@ -88,11 +88,18 @@ namespace GslWrappers {
 namespace SpecialFunctions {
 
   /**
-   * @brief Fermi–Dirac occupation function.
-   * @param x Reduced energy @f$(E - \mu)/k_B T@f$.
-   * @return @f$1/(e^x + 1)@f$.
+   * @brief Fermi–Dirac integral of order 1/2.
+   * @param x Argument.
+   * @return @f$F_{1/2}(x) = \frac{1}{\Gamma(3/2)} \int_0^\infty \frac{t^{1/2}}{e^{t-x} + 1} dt@f$.
    */
-  double fermiDirac(const double &x);
+  double fermiDirac12(const double &x);
+
+  /**
+   * @brief Fermi–Dirac integral of order -1/2.
+   * @param x Argument.
+   * @return @f$F_{-1/2}(x) = \frac{1}{\Gamma(1/2)} \int_0^\infty \frac{t^{-1/2}}{e^{t-x} + 1} dt@f$.
+   */
+  double fermiDiracm12(const double &x);
 
   /**
    * @brief Hyperbolic cotangent.

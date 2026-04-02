@@ -58,41 +58,15 @@ void Rpa::computeSsfGround() {
 
 // Compute imaginary-time correlation function (ITCF)
 void Rpa::computeItcf() {
-  // Only compute ITCF for finite temperature
   if (in().getDegeneracy() == 0.0) { return; }
-
-  // Define tau values: 0, 0.1, 0.2, 0.3, 0.4, 0.5
   const vector<double> tauValues = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
   const size_t nx = wvg.size();
   const size_t ntau = tauValues.size();
-
-  // Allocate ITCF storage
-  itcf.resize(nx, ntau);
-
-  // Set up integration parameters for HF ITCF calculation
-  const bool segregatedItg = in().getInt2DScheme() == "segregated";
-  const vector<double> itgGrid = (segregatedItg) ? wvg : vector<double>();
-  shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in().getIntError());
-
-  // Compute ITCF for each wave-vector and tau value
+  HF::computeItcf();
   for (size_t i = 0; i < nx; ++i) {
     for (size_t j = 0; j < ntau; ++j) {
-      // First compute HF ITCF at this wave-vector and tau
-      HFUtil::Itcf itcfHFTmp(inPtr,
-                             wvg[i],
-                             mu,
-                             tauValues[j],
-                             wvg.front(),
-                             wvg.back(),
-                             itg,
-                             itgGrid,
-                             itg2,
-                             idr(i, 0));
-      const double itcfHF = itcfHFTmp.get();
-
-      // Then compute RPA ITCF using the HF ITCF
       RpaUtil::Itcf itcfTmp(
-          wvg[i], itcfHF, lfc[i], inPtr, idr[i], tauValues[j]);
+          wvg[i], itcf(i, j), lfc[i], inPtr, idr[i], tauValues[j]);
       itcf(i, j) = itcfTmp.get();
     }
   }

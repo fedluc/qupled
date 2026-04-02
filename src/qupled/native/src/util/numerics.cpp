@@ -33,10 +33,17 @@ void GslWrappers::callGSLAlloc(Ptr &ptr, Func &&gslFunction, Args &&...args) {
 // Wrappers to GSL special functions
 // -----------------------------------------------------------------
 
-double SpecialFunctions::fermiDirac(const double &x) {
+double SpecialFunctions::fermiDirac12(const double &x) {
   gsl_sf_result gamma, fd;
   callGSLFunction(gsl_sf_gamma_e, 1.5, &gamma);
   callGSLFunction(gsl_sf_fermi_dirac_half_e, x, &fd);
+  return gamma.val * fd.val;
+}
+
+double SpecialFunctions::fermiDiracm12(const double &x) {
+  gsl_sf_result gamma, fd;
+  callGSLFunction(gsl_sf_gamma_e, 0.5, &gamma);
+  callGSLFunction(gsl_sf_fermi_dirac_mhalf_e, x, &fd);
   return gamma.val * fd.val;
 }
 

@@ -383,8 +383,6 @@ namespace HFUtil {
      * @param yMin_      Lower integration limit.
      * @param yMax_      Upper integration limit.
      * @param itg_       Shared pointer to a 1D integrator.
-     * @param itgGrid_   Grid for 2D integration.
-     * @param itg2_      Shared pointer to a 2D integrator (used in 2D only).
      * @param idr0_      Ideal density response at l=0 for the current
      * wave-vector.
      */
@@ -395,8 +393,6 @@ namespace HFUtil {
          const double &yMin_,
          const double &yMax_,
          std::shared_ptr<Integrator1D> itg_,
-         const std::vector<double> &itgGrid_,
-         std::shared_ptr<Integrator2D> itg2_,
          const double &idr0_)
         : in(in_),
           x(x_),
@@ -405,8 +401,6 @@ namespace HFUtil {
           yMin(yMin_),
           yMax(yMax_),
           itg(itg_),
-          itgGrid(itgGrid_),
-          itg2(itg2_),
           idr0(idr0_),
           res(numUtil::NaN) {}
 
@@ -432,10 +426,6 @@ namespace HFUtil {
     const double yMax;
     /** @brief 1D numerical integrator. */
     const std::shared_ptr<Integrator1D> itg;
-    /** @brief Grid for 2D integration. */
-    const std::vector<double> &itgGrid;
-    /** @brief 2D numerical integrator (used in 2D only). */
-    const std::shared_ptr<Integrator2D> itg2;
     /** @brief Ideal density response at l=0 for the current wave-vector. */
     const double idr0;
     /** @brief Stores the ITCF result. */
@@ -445,15 +435,13 @@ namespace HFUtil {
      * @brief Compute the ITCF for 3D systems.
      *
      * Evaluates the ITCF via 1D integration over the auxiliary momentum.
-     * Returns the asymptotic limit (1 for tau=1, 0 otherwise) plus the
-     * integral contribution. Note: tau=0 is handled by delegating to Ssf.
+     * Note: tau=0 is handled by delegating to Ssf.
      */
     void compute3D() override;
     /**
      * @brief Compute the ITCF for 2D systems.
      *
-     * Evaluates the ITCF via 2D integration (over y and angle p) plus
-     * the ideal density response contribution Theta * idr(grid_val, 0).
+     * Evaluates the ITCF via 1D integration over the auxiliary momentum.
      * Note: tau=0 is handled by delegating to Ssf.
      */
     void compute2D() override;
@@ -465,20 +453,12 @@ namespace HFUtil {
      */
     double integrand(const double &y) const;
     /**
-     * @brief Outer 2D integrand over auxiliary momentum @p y.
+     * @brief 2D integrand over auxiliary momentum @p y.
      *
-     * Evaluates cosh(xy/Theta*(tau-1/2)) / sinh(xy/(2*Theta)) for the ITCF
-     * calculation in 2D systems.
+     * Evaluates the ITCF integrand for 2D systems at the specified tau.
      * @param y Outer integration variable.
      */
-    double integrand2DOut(const double &y) const;
-    /**
-     * @brief Inner 2D integrand (angle) over @p p.
-     *
-     * Evaluates coth(arg) - 1/arg, where arg = x^2/(2Theta) + xy/Theta*cos(p).
-     * @param p Inner integration variable (angle).
-     */
-    double integrand2DIn(const double &p) const;
+    double integrand2D(const double &y) const;
   };
 
   /**
