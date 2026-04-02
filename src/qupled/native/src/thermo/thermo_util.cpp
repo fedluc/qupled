@@ -82,10 +82,10 @@ namespace thermoUtil {
     Vector2D result(nx, ntau);
     for (size_t i = 0; i < nx; ++i) {
       for (size_t j = 0; j < ntau; ++j) {
-        ItcfNonInteracting itcfTmp(in,
-                                   wvg[i],
-                                   mu,
+        ItcfNonInteracting itcfTmp(wvg[i],
+                                   in,
                                    tauValues[j],
+                                   mu,
                                    wvg.front(),
                                    wvg.back(),
                                    itg,
@@ -112,7 +112,7 @@ namespace thermoUtil {
     const size_t ntau = tauValues.size();
     for (size_t i = 0; i < nx; ++i) {
       for (size_t j = 0; j < ntau; ++j) {
-        Itcf itcfTmp(wvg[i], result(i, j), lfc[i], in, idr[i], tauValues[j]);
+        Itcf itcfTmp(wvg[i], in, tauValues[j], result(i, j), lfc[i], idr[i]);
         result(i, j) = itcfTmp.get();
       }
     }

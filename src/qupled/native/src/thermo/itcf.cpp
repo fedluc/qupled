@@ -15,18 +15,16 @@ namespace thermoUtil {
   // ItcfNonInteracting class
   // -----------------------------------------------------------------
 
-  ItcfNonInteracting::ItcfNonInteracting(const shared_ptr<const Input> in_,
-                                         const double &x_,
-                                         const double &mu_,
+  ItcfNonInteracting::ItcfNonInteracting(const double &x_,
+                                         const shared_ptr<const Input> in_,
                                          const double &tau_,
+                                         const double &mu_,
                                          const double &yMin_,
                                          const double &yMax_,
                                          shared_ptr<Integrator1D> itg_,
                                          const double &idr0_)
-      : in(in_),
-        x(x_),
+      : ItcfBase(x_, in_, tau_),
         mu(mu_),
-        tau(tau_),
         yMin(yMin_),
         yMax(yMax_),
         itg(itg_),
@@ -104,10 +102,10 @@ namespace thermoUtil {
   }
 
   // -----------------------------------------------------------------
-  // ItcfHelper class
+  // ItcfBase class
   // -----------------------------------------------------------------
 
-  double ItcfHelper::ip() const {
+  double ItcfBase::ip() const {
     const double rs = in->getCoupling();
     if (in->getDimension() == dimensionsUtil::Dimension::D2) {
       return sqrt(2.0) * rs / x;
@@ -121,17 +119,15 @@ namespace thermoUtil {
   // -----------------------------------------------------------------
 
   Itcf::Itcf(const double &x_,
+             const shared_ptr<const Input> in_,
+             const double &tau_,
              const double &itcfHF_,
              span<const double> lfc_,
-             const shared_ptr<const Input> in_,
-             span<const double> idr_,
-             const double &tau_)
-      : x(x_),
+             span<const double> idr_)
+      : ItcfBase(x_, in_, tau_),
         itcfHF(itcfHF_),
         lfc(lfc_),
-        in(in_),
         idr(idr_),
-        tau(tau_),
         res(numUtil::NaN) {
     if (in->getDegeneracy() == 0.0) {
       MPIUtil::throwError("Ground state calculations of the imaginary-time "
@@ -155,25 +151,22 @@ namespace thermoUtil {
   void Itcf::compute3D() {
     const double Theta = in->getDegeneracy();
     const double suml = computeMatsubaraSummation();
-    const ItcfHelper helper(in, x);
-    res = itcfHF - 1.5 * helper.ip() * Theta * suml;
+    res = itcfHF - 1.5 * ip() * Theta * suml;
   }
 
   void Itcf::compute2D() {
     const double Theta = in->getDegeneracy();
     const double suml = computeMatsubaraSummation();
-    const ItcfHelper helper(in, x);
-    res = itcfHF - helper.ip() * Theta * suml;
+    res = itcfHF - ip() * Theta * suml;
   }
 
   double Itcf::computeMatsubaraSummation() const {
     const bool isStatic = lfc.size() == 1;
-    const ItcfHelper helper(in, x);
     double suml = 0.0;
     for (size_t l = 0; l < idr.size(); ++l) {
       const double &idrl = idr[l];
       const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
-      const double denom = 1.0 + helper.ip() * idrl * (1.0 - lfcl);
+      const double denom = 1.0 + ip() * idrl * (1.0 - lfcl);
       const double f = idrl * idrl * (1.0 - lfcl) / denom;
       const double cosTerm = (l == 0) ? 1.0 : cos(2.0 * M_PI * l * tau);
       suml += (l == 0) ? f : 2.0 * f * cosTerm;
