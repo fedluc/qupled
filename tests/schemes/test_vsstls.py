@@ -128,7 +128,9 @@ def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
     fxci = vsstls.Solver.get_free_energy_integrand(run_id)
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
-    read_results.assert_called_once_with(run_id, database_name=None, names=["free_energy_grid", "free_energy_integrand"])
+    read_results.assert_called_once_with(
+        run_id, database_name=None, names=["free_energy_grid", "free_energy_integrand"]
+    )
 
 
 @pytest.mark.unit
@@ -143,7 +145,11 @@ def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
     fxci = vsstls.Solver.get_free_energy_integrand(run_id, database_name)
     assert fxci.grid == read_results.return_value["free_energy_grid"]
     assert fxci.integrand == read_results.return_value["free_energy_integrand"]
-    read_results.assert_called_once_with(run_id, database_name=database_name, names=["free_energy_grid", "free_energy_integrand"])
+    read_results.assert_called_once_with(
+        run_id,
+        database_name=database_name,
+        names=["free_energy_grid", "free_energy_integrand"],
+    )
 
 
 @pytest.mark.unit

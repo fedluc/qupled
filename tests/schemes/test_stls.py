@@ -32,7 +32,9 @@ def test_get_initial_guess_with_default_database_name(mocker):
     guess = stls.Solver.get_initial_guess(run_id)
     assert np.array_equal(guess.wvg, read_results.return_value["wvg"])
     assert np.array_equal(guess.ssf, read_results.return_value["ssf"])
-    read_results.assert_called_once_with(run_id, database_name=None, names=["wvg", "ssf"])
+    read_results.assert_called_once_with(
+        run_id, database_name=None, names=["wvg", "ssf"]
+    )
 
 
 @pytest.mark.unit
@@ -47,7 +49,9 @@ def test_get_initial_guess_with_custom_database_name(mocker):
     guess = stls.Solver.get_initial_guess(run_id, database_name)
     assert np.array_equal(guess.wvg, read_results.return_value["wvg"])
     assert np.array_equal(guess.ssf, read_results.return_value["ssf"])
-    read_results.assert_called_once_with(run_id, database_name=database_name, names=["wvg", "ssf"])
+    read_results.assert_called_once_with(
+        run_id, database_name=database_name, names=["wvg", "ssf"]
+    )
 
 
 @pytest.mark.unit
