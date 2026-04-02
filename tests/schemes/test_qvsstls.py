@@ -13,10 +13,12 @@ def scheme():
     return qvsstls.Solver()
 
 
+@pytest.mark.unit
 def test_qvsstls_inheritance():
     assert issubclass(qvsstls.Solver, vsstls.Solver)
 
 
+@pytest.mark.unit
 def test_compute(mocker):
     find_fixed_adr_in_database = mocker.patch(
         "qupled.schemes.qstls.Solver.find_fixed_adr_in_database"
@@ -29,6 +31,7 @@ def test_compute(mocker):
     super_compute.assert_called_once_with(inputs)
 
 
+@pytest.mark.unit
 def test_get_free_energy_integrand(mocker):
     run_id = mocker.ANY
     database_name = mocker.ANY
@@ -40,10 +43,12 @@ def test_get_free_energy_integrand(mocker):
     assert result == get_free_energy_integrand.return_value
 
 
+@pytest.mark.unit
 def test_qvsstls_input_inheritance():
     assert issubclass(qvsstls.Input, (qstls.Input, vsstls.Input))
 
 
+@pytest.mark.unit
 def test_qvsstls_input_initialization_valid_theory(mocker):
     input = qvsstls.Input(mocker.ANY, mocker.ANY)
     assert input.theory == "QVSSTLS"

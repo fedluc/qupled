@@ -3,6 +3,7 @@ import pytest
 from qupled.native import Stls, StlsInput
 
 
+@pytest.mark.unit
 def test_stls_properties():
     scheme = Stls(StlsInput())
     assert hasattr(scheme, "idr")
@@ -17,6 +18,7 @@ def test_stls_properties():
     assert hasattr(scheme, "error")
 
 
+@pytest.mark.native
 def test_stls_compute():
     inputs = StlsInput()
     inputs.coupling = 1.0

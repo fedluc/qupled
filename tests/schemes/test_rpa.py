@@ -22,6 +22,7 @@ def scheme(mocker):
     return scheme
 
 
+@pytest.mark.unit
 def test_rpa_initialization(mocker):
     super_init = mocker.patch("qupled.schemes.hf.Solver.__init__")
     scheme = rpa.Solver()
@@ -29,23 +30,50 @@ def test_rpa_initialization(mocker):
     assert scheme.native_scheme_cls == native.Rpa
 
 
+@pytest.mark.unit
 def test_rpa_input_inheritance():
     assert issubclass(rpa.Input, hf.Input)
 
 
+@pytest.mark.unit
 def test_rpa_input_initialization(mocker):
     input = rpa.Input(mocker.ANY, mocker.ANY)
     assert input.theory == "RPA"
 
 
+@pytest.mark.unit
 def test_rpa_result_inheritance():
     assert issubclass(rpa.Result, hf.Result)
 
 
+@pytest.mark.unit
+def test_result_compute_itcf_with_default_grid(mocker, results, inputs):
+    native_compute_itcf = mocker.patch("qupled.native.compute_itcf")
+    native_input = mocker.Mock()
+    mocker.patch.object(native, "Input", return_value=native_input)
+    results.wvg = np.array([1.0, 2.0, 3.0])
+    results.lfc = np.array([4.0, 5.0, 6.0])
+    results.chemical_potential = 0.5
+    results.idr = np.array([7.0, 8.0, 9.0])
+    native_compute_itcf.return_value = np.array([[10.0, 11.0, 12.0]])
+    results.compute_itcf(inputs)
+    assert np.allclose(results.tau, np.arange(0.0, 0.6, 0.1))
+    native_compute_itcf.assert_called_once_with(
+        native_input,
+        results.wvg,
+        results.tau,
+        results.chemical_potential,
+        results.idr,
+        results.lfc,
+    )
+    assert np.allclose(results.itcf, np.array([[10.0, 11.0, 12.0]]))
+
+
+@pytest.mark.unit
 def test_rpa_result_compute_itcf(mocker, results, inputs):
     native_compute_itcf = mocker.patch("qupled.native.compute_itcf")
     native_input = mocker.Mock()
-    native_inputs_cls = mocker.patch.object(native, "Input", return_value=native_input)
+    mocker.patch.object(native, "Input", return_value=native_input)
     results.wvg = np.array([1.0, 2.0, 3.0])
     results.lfc = np.array([4.0, 5.0, 6.0])
     results.chemical_potential = 0.5

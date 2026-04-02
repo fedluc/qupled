@@ -12,5 +12,5 @@ scheme.compute(inputs)
 # Create a custom initial guess from the output files of the previous run
 inputs.guess = scheme.get_initial_guess(scheme.run_id)
 
-# Solve the scheme again with the new initial guess and coupling parameter
+# Solve the scheme again with the new initial guess
 scheme.compute(inputs)

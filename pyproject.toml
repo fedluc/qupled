@@ -41,6 +41,13 @@ docs = [
     "sphinxcontrib-serializinghtml~=2.0.0"
 ]
 
+[tool.pytest.ini_options]
+markers = [
+    "unit: fast, mocked unit tests",
+    "native: tests for the C++ native bindings (slower than unit, no full pipeline)",
+    "integration: full end-to-end integration tests",
+]
+
 [tool.setuptools]
 include-package-data = false
 package-dir = { "" = "src" }

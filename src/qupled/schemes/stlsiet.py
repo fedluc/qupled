@@ -39,7 +39,7 @@ class Solver(stls.Solver):
         """
         names = ["wvg", "ssf", "lfc"]
         results = output.DataBase.read_results(
-            output.OutputType.SCHEME, run_id, database_name, names
+            run_id, database_name=database_name, names=names
         )
         return Guess(
             results[names[0]],

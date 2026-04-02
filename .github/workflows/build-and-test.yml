@@ -3,10 +3,10 @@ name: Build & Test
 on:
   push:
     branches:
-      - master
+      - '**'
+    tags-ignore:
+      - 'v*'
   pull_request:
-    branches:
-      - master
 
 env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
@@ -34,8 +34,14 @@ jobs:
         pip3 install build setuptools
         ./devtool build
 
-    - name: Tests
+    - name: Run unit tests
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install tox
-        ./devtool test
+        ./devtool test unit
+
+    - name: Run native tests
+      if: github.event_name == 'pull_request'
+      run: |
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        ./devtool test native

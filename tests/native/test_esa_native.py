@@ -3,6 +3,7 @@ import pytest
 from qupled.native import ESA, Input
 
 
+@pytest.mark.unit
 def test_esa_properties():
     scheme = ESA(Input())
     assert hasattr(scheme, "idr")
@@ -16,6 +17,7 @@ def test_esa_properties():
     assert hasattr(scheme, "chemical_potential")
 
 
+@pytest.mark.native
 def test_esa_compute():
     inputs = Input()
     inputs.coupling = 1.0

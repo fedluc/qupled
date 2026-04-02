@@ -11,6 +11,7 @@ def database_info():
     return dbInfo.to_native()
 
 
+@pytest.mark.unit
 def test_qstls_properties():
     scheme = Qstls(QstlsInput())
     assert hasattr(scheme, "idr")
@@ -25,6 +26,7 @@ def test_qstls_properties():
     assert hasattr(scheme, "error")
 
 
+@pytest.mark.native
 def test_qstls_compute(database_info):
     inputs = QstlsInput()
     inputs.coupling = 1.0

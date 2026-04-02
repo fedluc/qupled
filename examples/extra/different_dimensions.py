@@ -14,8 +14,8 @@ rpa2D_scheme = rpa.Solver()
 rpa2D_scheme.compute(rpa.Input(10.0, 1.0, dimension=Dimension._2D))
 
 # Retrieve information from the output files
-rpa3D_data = DataBase.read_run(OutputType.SCHEME, rpa3D_scheme.run_id)
-rpa2D_data = DataBase.read_run(OutputType.SCHEME, rpa2D_scheme.run_id)
+rpa3D_data = DataBase.read_run(rpa3D_scheme.run_id)
+rpa2D_data = DataBase.read_run(rpa2D_scheme.run_id)
 rpa3D_results = rpa3D_data["results"]
 rpa3D_inputs = rpa3D_data["inputs"]
 rpa2D_results = rpa2D_data["results"]

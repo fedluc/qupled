@@ -17,6 +17,7 @@ def tables():
     yield tables
 
 
+@pytest.mark.unit
 def test_base_tables_initialization(tables):
     assert tables.engine is not None
     assert tables.run_table_name == "run_table"
@@ -29,6 +30,7 @@ def test_base_tables_initialization(tables):
     assert tables.run_id is None
 
 
+@pytest.mark.unit
 def test_insert_run(mocker, tables):
     insert_run = mocker.patch.object(tables, "_insert_run")
     insert_inputs = mocker.patch.object(tables, "insert_inputs")
@@ -38,6 +40,7 @@ def test_insert_run(mocker, tables):
     insert_inputs.assert_called_once_with(inputs.__dict__)
 
 
+@pytest.mark.unit
 def test_insert_inputs(mocker, tables):
     tables.run_id = mocker.ANY
     insert_data_from_dict = mocker.patch.object(tables, "_insert_data_from_dict")
@@ -53,6 +56,7 @@ def test_insert_inputs(mocker, tables):
     assert called_mapper(123) == "json(123)"
 
 
+@pytest.mark.unit
 def test_insert_inputs_without_run_id(mocker, tables):
     insert_from_dict = mocker.patch.object(tables, "_insert_data_from_dict")
     mocker.patch.object(tables, "_to_json", side_effect=lambda x: f"json({x})")
@@ -60,6 +64,7 @@ def test_insert_inputs_without_run_id(mocker, tables):
     insert_from_dict.assert_not_called()
 
 
+@pytest.mark.unit
 def test_insert_results(mocker, tables):
     tables.run_id = mocker.ANY
     insert_from_dict = mocker.patch.object(tables, "_insert_data_from_dict")
@@ -78,6 +83,7 @@ def test_insert_results(mocker, tables):
     assert called_conflict_mode == ConflictMode.FAIL
 
 
+@pytest.mark.unit
 def test_insert_results_without_run_id(mocker, tables):
     insert_from_dict = mocker.patch.object(tables, "_insert_data_from_dict")
     mocker.patch.object(tables, "_to_json", side_effect=lambda x: f"json({x})")
@@ -85,6 +91,7 @@ def test_insert_results_without_run_id(mocker, tables):
     insert_from_dict.assert_not_called()
 
 
+@pytest.mark.unit
 def test_inspect_runs(mocker, tables):
     sql_select = mocker.patch("sqlalchemy.select")
     mock_runs = [{"id": 1, "status": "done"}, {"id": 2, "status": "failed"}]
@@ -98,6 +105,7 @@ def test_inspect_runs(mocker, tables):
     assert runs == mock_runs
 
 
+@pytest.mark.unit
 def test_update_run_status_with_run_id(mocker, tables):
     tables.run_id = 1
     status = RunStatus.SUCCESS
@@ -113,6 +121,7 @@ def test_update_run_status_with_run_id(mocker, tables):
     execute.assert_called_once_with(statement)
 
 
+@pytest.mark.unit
 def test_update_run_status_without_run_id(mocker, tables):
     tables.run_id = None
     status = 0
@@ -123,6 +132,7 @@ def test_update_run_status_without_run_id(mocker, tables):
     execute.assert_not_called()
 
 
+@pytest.mark.unit
 def test_get_run_with_existing_run(mocker, tables):
     run_id = 1
     sql_select = mocker.patch("sqlalchemy.select")
@@ -149,6 +159,7 @@ def test_get_run_with_existing_run(mocker, tables):
     }
 
 
+@pytest.mark.unit
 def test_get_run_with_non_existing_run(mocker, tables):
     run_id = 1
     sql_select = mocker.patch("sqlalchemy.select")
@@ -165,6 +176,7 @@ def test_get_run_with_non_existing_run(mocker, tables):
     assert run == {}
 
 
+@pytest.mark.unit
 def test_get_inputs(mocker, tables):
     run_id = 1
     names = ["name"]
@@ -183,6 +195,7 @@ def test_get_inputs(mocker, tables):
     assert inputs == expected_inputs
 
 
+@pytest.mark.unit
 def test_get_results(mocker, tables):
     run_id = 1
     names = ["name"]
@@ -201,6 +214,7 @@ def test_get_results(mocker, tables):
     assert results == expected_results
 
 
+@pytest.mark.unit
 def test_delete_run(mocker, tables):
     run_id = 1
     tables.run_table = mocker.MagicMock()
@@ -213,6 +227,7 @@ def test_delete_run(mocker, tables):
     execute.assert_called_once_with(statement)
 
 
+@pytest.mark.unit
 def test_build_tables(mocker, tables):
     mock_run_table = mocker.Mock()
     mock_input_table = mocker.Mock()
@@ -238,12 +253,14 @@ def test_build_tables(mocker, tables):
     assert tables.result_table == mock_result_table
 
 
+@pytest.mark.unit
 def test_build_run_table(tables):
     with pytest.raises(NotImplementedError) as excinfo:
         tables._build_run_table()
     assert excinfo.value.args[0] == "This method should be implemented in a subclass."
 
 
+@pytest.mark.unit
 def test_build_inputs_table(mocker, tables):
     mock_table = mocker.Mock()
     build_data_table = mocker.patch.object(
@@ -254,6 +271,7 @@ def test_build_inputs_table(mocker, tables):
     assert build_data_table.return_value == mock_table
 
 
+@pytest.mark.unit
 def test_build_results_table(mocker, tables):
     mock_table = mocker.Mock()
     build_data_table = mocker.patch.object(
@@ -264,6 +282,7 @@ def test_build_results_table(mocker, tables):
     assert build_data_table.return_value == mock_table
 
 
+@pytest.mark.unit
 def test_build_data_table(mocker, tables):
     tables.run_table = sql.Table(
         tables.run_table_name,
@@ -296,6 +315,7 @@ def test_build_data_table(mocker, tables):
     assert table.c[TableKeys.VALUE.value].nullable
 
 
+@pytest.mark.unit
 def test_create_table(mocker, tables):
     mock_table = mocker.Mock()
     create = mocker.patch.object(mock_table, "create")
@@ -303,12 +323,14 @@ def test_create_table(mocker, tables):
     create.assert_called_once_with(tables.engine, checkfirst=True)
 
 
+@pytest.mark.unit
 def test_insert_run(mocker, tables):
     with pytest.raises(NotImplementedError) as excinfo:
         tables._insert_run(mocker.ANY, mocker.ANY)
     assert excinfo.value.args[0] == "This method should be implemented in a subclass."
 
 
+@pytest.mark.unit
 def test_insert_data_from_dict_with_valid_data(mocker, tables):
     table = mocker.ANY
     data = {"key1": "value1", "key2": "value2"}
@@ -325,6 +347,7 @@ def test_insert_data_from_dict_with_valid_data(mocker, tables):
     assert insert_data.call_count == 2
 
 
+@pytest.mark.unit
 def test_insert_data_from_dict_with_empty_data(mocker, tables):
     data = {}
     sql_mapping = mocker.Mock()
@@ -334,6 +357,7 @@ def test_insert_data_from_dict_with_empty_data(mocker, tables):
     insert_data.assert_not_called()
 
 
+@pytest.mark.unit
 def test_insert_data_with_conflict_mode_fail(mocker, tables):
     table = mocker.ANY
     name = "test_name"
@@ -356,6 +380,7 @@ def test_insert_data_with_conflict_mode_fail(mocker, tables):
     execute.assert_called_once_with(statement)
 
 
+@pytest.mark.unit
 def test_insert_data_with_conflict_mode_update(mocker, tables):
     table = mocker.ANY
     name = "test_name"
@@ -386,6 +411,7 @@ def test_insert_data_with_conflict_mode_update(mocker, tables):
     execute.assert_called_once_with(statement)
 
 
+@pytest.mark.unit
 def test_get_data(mocker, tables):
     run_id = 1
     names = ["a", "b"]
@@ -412,6 +438,7 @@ def test_get_data(mocker, tables):
     tables._execute.assert_called_once_with(statement)
 
 
+@pytest.mark.unit
 def test_execute(mocker, tables):
     statement = mocker.ANY
     connection = mocker.Mock()
@@ -424,12 +451,14 @@ def test_execute(mocker, tables):
     assert result == result
 
 
+@pytest.mark.unit
 def test_to_bytes_with_float(tables):
     value = 3.14
     expected = struct.pack("d", value)
     assert tables._to_bytes(value) == expected
 
 
+@pytest.mark.unit
 def test_to_bytes_with_numpy_array(tables):
     array = np.array([1.0, 2.0, 3.0])
     result = tables._to_bytes(array)
@@ -439,16 +468,19 @@ def test_to_bytes_with_numpy_array(tables):
     assert np.array_equal(loaded, array)
 
 
+@pytest.mark.unit
 def test_to_bytes_with_invalid_type(tables):
     assert tables._to_bytes("invalid") is None
 
 
+@pytest.mark.unit
 def test_from_bytes_with_float_bytes(tables):
     value = 42.0
     packed = struct.pack("d", value)
     assert tables._from_bytes(packed) == value
 
 
+@pytest.mark.unit
 def test_from_bytes_with_numpy_bytes(tables):
     array = np.array([[1, 2], [3, 4]])
     arr_bytes = io.BytesIO()
@@ -458,15 +490,18 @@ def test_from_bytes_with_numpy_bytes(tables):
     np.testing.assert_array_equal(result, array)
 
 
+@pytest.mark.unit
 def test_from_bytes_with_invalid_bytes(tables):
     assert tables._from_bytes(b"not valid") is None
 
 
+@pytest.mark.unit
 def test_to_json_valid_data(tables):
     data = {"a": 1, "b": 2}
     assert tables._to_json(data) == json.dumps(data)
 
 
+@pytest.mark.unit
 def test_to_json_invalid_data(tables):
     class NotSerializable:
         pass
@@ -474,10 +509,12 @@ def test_to_json_invalid_data(tables):
     assert tables._to_json(NotSerializable()) is None
 
 
+@pytest.mark.unit
 def test_from_json_valid_data(tables):
     json_str = '{"x": 10, "y": 20}'
     assert tables._from_json(json_str) == json.loads(json_str)
 
 
+@pytest.mark.unit
 def test_from_json_invalid_data(tables):
     assert tables._from_json("not a valid json") is None

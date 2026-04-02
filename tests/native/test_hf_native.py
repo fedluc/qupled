@@ -3,6 +3,7 @@ import pytest
 from qupled.native import HF, Input
 
 
+@pytest.mark.unit
 def test_hf_properties():
     scheme = HF(Input())
     assert hasattr(scheme, "idr")
@@ -16,6 +17,7 @@ def test_hf_properties():
     assert hasattr(scheme, "chemical_potential")
 
 
+@pytest.mark.native
 def test_hf_compute():
     inputs = Input()
     inputs.coupling = 1.0

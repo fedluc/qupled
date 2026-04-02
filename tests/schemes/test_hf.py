@@ -26,12 +26,14 @@ def scheme(mocker):
     return scheme
 
 
+@pytest.mark.unit
 def test_native_to_run_status_mapping():
     assert hf.Solver.NATIVE_TO_RUN_STATUS[0] == RunStatus.SUCCESS
     assert hf.Solver.NATIVE_TO_RUN_STATUS[1] == RunStatus.FAILED
     assert len(hf.Solver.NATIVE_TO_RUN_STATUS) == 2
 
 
+@pytest.mark.unit
 def test_hf_initialization():
     scheme = hf.Solver()
     assert scheme.inputs is None
@@ -42,12 +44,14 @@ def test_hf_initialization():
     assert scheme.native_scheme_status is None
 
 
+@pytest.mark.unit
 def test_run_id(scheme):
     run_id = "run_id"
     scheme._db_tables.run_id = run_id
     assert scheme.run_id == run_id
 
 
+@pytest.mark.unit
 def test_compute(scheme, inputs, mocker):
     add_run_to_database = mocker.patch.object(scheme, "_add_run_to_database")
     compute_native = mocker.patch.object(scheme, "_compute_native")
@@ -59,10 +63,12 @@ def test_compute(scheme, inputs, mocker):
     save.assert_called_once()
 
 
+@pytest.mark.unit
 def test_db_tables(scheme):
     assert scheme._db_tables is scheme.db_handler.scheme_tables
 
 
+@pytest.mark.unit
 def test_add_run_to_database(scheme, mocker):
     mocker.patch.object(hf.Solver, "run_id", new_callable=PropertyMock).return_value = (
         "mocked-run-id"
@@ -73,6 +79,7 @@ def test_add_run_to_database(scheme, mocker):
     assert scheme.inputs.database_info.run_id == scheme.run_id
 
 
+@pytest.mark.unit
 def test_compute_native_with_mpi(scheme, mocker):
     mocker.patch("qupled.native.uses_mpi", True)
     scheme._compute_native_mpi = mocker.Mock()
@@ -82,6 +89,7 @@ def test_compute_native_with_mpi(scheme, mocker):
     scheme._compute_native_serial.assert_not_called()
 
 
+@pytest.mark.unit
 def test_compute_native_serial(scheme, mocker):
     mocker.patch("qupled.native.uses_mpi", False)
     scheme._compute_native_mpi = mocker.Mock()
@@ -91,6 +99,7 @@ def test_compute_native_serial(scheme, mocker):
     scheme._compute_native_mpi.assert_not_called()
 
 
+@pytest.mark.unit
 def test_compute_native_serial(scheme, inputs, mocker):
     native_input = mocker.Mock()
     native_inputs_cls = mocker.patch.object(
@@ -113,6 +122,7 @@ def test_compute_native_serial(scheme, inputs, mocker):
     from_native.assert_called_once_with(native_scheme)
 
 
+@pytest.mark.unit
 def test_compute_native_mpi_calls_all_mpi_functions(scheme, mocker, inputs):
     write_inputs = mocker.patch("qupled.util.mpi.write_inputs")
     launch_mpi_execution = mocker.patch("qupled.util.mpi.launch_mpi_execution")
@@ -135,6 +145,7 @@ def test_compute_native_mpi_calls_all_mpi_functions(scheme, mocker, inputs):
     assert scheme.results == "mocked-results"
 
 
+@pytest.mark.unit
 def test_compute_native_mpi_with_existing_results_type(scheme, mocker, inputs):
     mocker.patch("qupled.util.mpi.write_inputs")
     mocker.patch("qupled.util.mpi.launch_mpi_execution")
@@ -149,6 +160,7 @@ def test_compute_native_mpi_with_existing_results_type(scheme, mocker, inputs):
     assert scheme.native_scheme_status == "status"
 
 
+@pytest.mark.unit
 def test_run_mpi_worker(mocker):
     mock_inputs = mocker.Mock()
     mock_native_inputs = mocker.Mock()
@@ -177,6 +189,7 @@ def test_run_mpi_worker(mocker):
     write_status.assert_called_once_with(mock_scheme, mock_status)
 
 
+@pytest.mark.unit
 def test_save(scheme, results, mocker):
     scheme.results = results
     scheme.native_scheme_status = mocker.Mock()
@@ -189,6 +202,7 @@ def test_save(scheme, results, mocker):
     scheme._db_tables.insert_results.assert_called_once_with(scheme.results.__dict__)
 
 
+@pytest.mark.unit
 def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
     compute_rdf = mocker.patch("qupled.schemes.hf.Result.compute_rdf")
     scheme.results = results
@@ -204,6 +218,7 @@ def test_compute_rdf_with_default_grid(scheme, inputs, results, mocker):
     )
 
 
+@pytest.mark.unit
 def test_compute_rdf_with_custom_grid(scheme, inputs, results, mocker):
     compute_rdf = mocker.patch("qupled.schemes.hf.Result.compute_rdf")
     scheme.results = results
@@ -220,12 +235,14 @@ def test_compute_rdf_with_custom_grid(scheme, inputs, results, mocker):
     )
 
 
+@pytest.mark.unit
 def test_compute_rdf_without_results(scheme):
     scheme.results = None
     scheme.compute_rdf()
     scheme.db_handler.insert_results.assert_not_called()
 
 
+@pytest.mark.unit
 def test_input_initialization():
     coupling = 1.0
     degeneracy = 2.0
@@ -246,6 +263,7 @@ def test_input_initialization():
     assert inputs.dimension == Dimension._3D
 
 
+@pytest.mark.unit
 def test_input_to_native(mocker, inputs):
     native_input = mocker.Mock()
     inputs.to_native(native_input)
@@ -253,6 +271,7 @@ def test_input_to_native(mocker, inputs):
     assert native_input.degeneracy == 2.0
 
 
+@pytest.mark.unit
 def test_result_initialization(results):
     assert results.chemical_potential is None
     assert results.idr is None
@@ -267,6 +286,7 @@ def test_result_initialization(results):
     assert results.wvg is None
 
 
+@pytest.mark.unit
 def test_result_from_native(mocker, results):
     native_scheme = mocker.Mock()
     native_scheme.idr = np.array([1, 2, 3])
@@ -274,20 +294,22 @@ def test_result_from_native(mocker, results):
     assert np.array_equal(results.idr, np.array([1, 2, 3]))
 
 
+@pytest.mark.unit
 def test_result_compute_rdf_with_default_grid(mocker, results):
     native_compute_rdf = mocker.patch("qupled.native.compute_rdf")
-    mock_dimension = mocker.patch("qupled.native.Dimension")
+    mock_native_dimension = mocker.patch("qupled.native.Dimension")
     results.wvg = np.array([1.0, 2.0, 3.0])
     results.ssf = np.array([4.0, 5.0, 6.0])
     native_compute_rdf.return_value = np.array([7.0, 8.0, 9.0])
-    results.compute_rdf("D3")
+    results.compute_rdf(Dimension._3D)
     assert np.allclose(results.rdf_grid, np.arange(0.0, 10.0, 0.01))
     native_compute_rdf.assert_called_once_with(
-        results.rdf_grid, results.wvg, results.ssf, mock_dimension.D3
+        results.rdf_grid, results.wvg, results.ssf, mock_native_dimension.D3
     )
     assert np.allclose(results.rdf, np.array([7.0, 8.0, 9.0]))
 
 
+@pytest.mark.unit
 def test_result_compute_rdf_with_custom_grid(mocker, results):
     native_compute_rdf = mocker.patch("qupled.native.compute_rdf")
     mock_dimension = mocker.patch("qupled.native.Dimension")
@@ -295,7 +317,7 @@ def test_result_compute_rdf_with_custom_grid(mocker, results):
     results.ssf = np.array([4.0, 5.0, 6.0])
     custom_grid = np.array([0.5, 1.5, 2.5])
     native_compute_rdf.return_value = np.array([10.0, 11.0, 12.0])
-    results.compute_rdf("D2", custom_grid)
+    results.compute_rdf(Dimension._2D, custom_grid)
     assert np.allclose(results.rdf_grid, custom_grid)
     native_compute_rdf.assert_called_once_with(
         custom_grid, results.wvg, results.ssf, mock_dimension.D2
@@ -303,19 +325,21 @@ def test_result_compute_rdf_with_custom_grid(mocker, results):
     assert np.allclose(results.rdf, np.array([10.0, 11.0, 12.0]))
 
 
+@pytest.mark.unit
 def test_result_compute_rdf_no_wvg_or_ssf(mocker, results):
     # Should not call native.compute_rdf if wvg or ssf is None
     native_compute_rdf = mocker.patch("qupled.native.compute_rdf")
     results.wvg = None
     results.ssf = np.array([1, 2, 3])
-    results.compute_rdf("D3")
+    results.compute_rdf(Dimension._3D)
     native_compute_rdf.assert_not_called()
     results.wvg = np.array([1, 2, 3])
     results.ssf = None
-    results.compute_rdf("D3")
+    results.compute_rdf(Dimension._3D)
     native_compute_rdf.assert_not_called()
 
 
+@pytest.mark.unit
 def test_compute_itcf_with_default_grid(scheme, inputs, results, mocker):
     compute_itcf = mocker.patch("qupled.schemes.hf.Result.compute_itcf")
     scheme.results = results
@@ -331,6 +355,7 @@ def test_compute_itcf_with_default_grid(scheme, inputs, results, mocker):
     )
 
 
+@pytest.mark.unit
 def test_compute_itcf_with_custom_grid(scheme, inputs, results, mocker):
     compute_itcf = mocker.patch("qupled.schemes.hf.Result.compute_itcf")
     scheme.results = results
@@ -347,23 +372,25 @@ def test_compute_itcf_with_custom_grid(scheme, inputs, results, mocker):
     )
 
 
+@pytest.mark.unit
 def test_compute_itcf_without_results(scheme):
     scheme.results = None
     scheme.compute_itcf()
     scheme.db_handler.insert_results.assert_not_called()
 
 
+@pytest.mark.unit
 def test_result_compute_itcf_with_default_grid(mocker, results, inputs):
     native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
     native_input = mocker.Mock()
-    native_inputs_cls = mocker.patch.object(native, "Input", return_value=native_input)
+    mocker.patch.object(native, "Input", return_value=native_input)
     results.wvg = np.array([1.0, 2.0, 3.0])
     results.lfc = np.array([4.0, 5.0, 6.0])
     results.chemical_potential = 0.5
     results.idr = np.array([7.0, 8.0, 9.0])
     native_compute_itcf.return_value = np.array([[10.0, 11.0, 12.0]])
     results.compute_itcf(inputs)
-    assert np.allclose(results.tau, np.arange(0.0, 0.5, 0.1))
+    assert np.allclose(results.tau, np.arange(0.0, 0.6, 0.1))
     native_compute_itcf.assert_called_once_with(
         native_input,
         results.wvg,
@@ -374,10 +401,11 @@ def test_result_compute_itcf_with_default_grid(mocker, results, inputs):
     assert np.allclose(results.itcf, np.array([[10.0, 11.0, 12.0]]))
 
 
+@pytest.mark.unit
 def test_result_compute_itcf_with_custom_grid(mocker, results, inputs):
     native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
     native_input = mocker.Mock()
-    native_inputs_cls = mocker.patch.object(native, "Input", return_value=native_input)
+    mocker.patch.object(native, "Input", return_value=native_input)
     results.wvg = np.array([1.0, 2.0, 3.0])
     results.lfc = np.array([4.0, 5.0, 6.0])
     results.chemical_potential = 0.5
@@ -396,6 +424,7 @@ def test_result_compute_itcf_with_custom_grid(mocker, results, inputs):
     assert np.allclose(results.itcf, np.array([[13.0, 14.0, 15.0]]))
 
 
+@pytest.mark.unit
 def test_result_compute_itcf_no_wvg_or_lfc(mocker, results, inputs):
     # Should not call native.compute_itcf_non_interacting if wvg or lfc is None
     native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
@@ -409,6 +438,7 @@ def test_result_compute_itcf_no_wvg_or_lfc(mocker, results, inputs):
     native_compute_itcf.assert_not_called()
 
 
+@pytest.mark.unit
 def test_database_info_initialization():
     db_info = hf.DatabaseInfo()
     assert db_info.blob_storage is None
@@ -417,6 +447,7 @@ def test_database_info_initialization():
     assert db_info.run_table_name == hf.SCHEME_RUN_TABLE_NAME
 
 
+@pytest.mark.unit
 def test_database_info_to_native(mocker):
     native_db_info = mocker.patch("qupled.native.DatabaseInfo")
     db_info = hf.DatabaseInfo()

@@ -3,6 +3,7 @@ import pytest
 from qupled.native import Rpa, Input
 
 
+@pytest.mark.unit
 def test_rpa_properties():
     scheme = Rpa(Input())
     assert hasattr(scheme, "idr")
@@ -16,6 +17,7 @@ def test_rpa_properties():
     assert hasattr(scheme, "chemical_potential")
 
 
+@pytest.mark.native
 def test_rpa_compute():
     inputs = Input()
     inputs.coupling = 1.0

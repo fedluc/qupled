@@ -323,7 +323,7 @@ class Result:
         Returns:
             None: The computed RDF is stored in the `self.rdf` attribute.
         """
-        native_dimension = getattr(native.Dimension, dimension)
+        native_dimension = getattr(native.Dimension, dimension.value)
         if self.wvg is not None and self.ssf is not None:
             self.rdf_grid = (
                 rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
@@ -345,7 +345,7 @@ class Result:
             None: The computed ITCF is stored in the `self.itcf` attribute.
         """
         if self.wvg is not None and self.lfc is not None:
-            self.tau = tau if tau is not None else np.arange(0.0, 0.5, 0.1)
+            self.tau = tau if tau is not None else np.arange(0.0, 0.6, 0.1)
             native_inputs = native.Input()
             inputs.to_native(native_inputs)
             self.itcf = native.compute_itcf_non_interacting(

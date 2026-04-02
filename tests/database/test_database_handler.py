@@ -23,6 +23,7 @@ def db_handler():
         os.remove(database_url)
 
 
+@pytest.mark.unit
 def test_database_handler_initialization_with_default_name(db_handler):
     expected_database_path = Path(DATABASE_DIRECTORY) / DEFAULT_DATABASE_NAME
     expected_blob_storage = (
@@ -34,6 +35,7 @@ def test_database_handler_initialization_with_default_name(db_handler):
     assert isinstance(db_handler.fsc_tables, FiniteSizeCorrectionTables)
 
 
+@pytest.mark.unit
 def test_database_handler_initialization_with_custom_name():
     database_name = "custom.db"
     expected_database_path = Path(DATABASE_DIRECTORY) / database_name
@@ -49,6 +51,7 @@ def test_database_handler_initialization_with_custom_name():
         os.remove(expected_database_path)
 
 
+@pytest.mark.unit
 def test_set_sqlite_pragma_valid_engine():
     engine = sql.create_engine("sqlite:///:memory:")
     DataBaseHandler._set_sqlite_pragma(engine)
@@ -57,6 +60,7 @@ def test_set_sqlite_pragma_valid_engine():
         assert result[0] == 1
 
 
+@pytest.mark.unit
 def test_set_sqlite_pragma_invalid_engine():
     invalid_engine = None
     with pytest.raises(sql.exc.InvalidRequestError):

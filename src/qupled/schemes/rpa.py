@@ -48,7 +48,7 @@ class Result(hf.Result):
             None: The computed ITCF is stored in the `self.itcf` attribute.
         """
         if self.wvg is not None and self.lfc is not None:
-            self.tau = tau if tau is not None else np.arange(0.0, 0.5, 0.1)
+            self.tau = tau if tau is not None else np.arange(0.0, 0.6, 0.1)
             native_inputs = native.Input()
             inputs.to_native(native_inputs)
             self.itcf = native.compute_itcf(

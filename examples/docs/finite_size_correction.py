@@ -17,21 +17,24 @@ for number_of_particles in [10, 100, 1000]:
     finite_size_correction.compute(solver, fsc_inputs)
     run_ids.append(finite_size_correction.run_id)
 
-# Analyze outputs
+# Fetch and print the results
+col1, col2, col3 = 21, 27, 26
+header = f"│ {'Number of Particles':>{col1}} │ {'uint correction':>{col2}} │ {'fxc correction':>{col3}} │"
+top = f"┌{'─' * (col1 + 2)}┬{'─' * (col2 + 2)}┬{'─' * (col3 + 2)}┐"
+mid = f"├{'─' * (col1 + 2)}┼{'─' * (col2 + 2)}┼{'─' * (col3 + 2)}┤"
+bot = f"└{'─' * (col1 + 2)}┴{'─' * (col2 + 2)}┴{'─' * (col3 + 2)}┘"
+print("\nFinite Size Correction Results:")
+print(top)
+print(header)
+print(mid)
 for run_id in run_ids:
-    # Fetch finite size correction results
     run_data = output.DataBase.read_run(
-        output.OutputType.FINITE_SIZE_CORRECTION, run_id
+        run_id, type=output.OutputType.FINITE_SIZE_CORRECTION
     )
     run = run_data["run"]
     results = run_data["results"]
     inputs = run_data["inputs"]
-    # Fetch scheme results
-    scheme_result = output.DataBase.read_results(
-        output.OutputType.SCHEME, run["scheme_run_id"]
+    print(
+        f"│ {inputs['number_of_particles']:>{col1}} │ {results['uint']:>{col2}.6e} │ {results['fxc']:>{col3}.6e} │"
     )
-    # Print summary
-    print("--------------------------------")
-    print("Finite Size Correction Results:")
-    print(f"Number of Particles: {inputs['number_of_particles']}")
-    print(f"Corrections: uint = {results['uint']:.6e}, fxc = {results['fxc']:.6e}")
+print(bot)
