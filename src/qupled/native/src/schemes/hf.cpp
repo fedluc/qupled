@@ -1,6 +1,7 @@
 #include "schemes/hf.hpp"
 #include "schemes/input.hpp"
 #include "thermo/chemical_potential.hpp"
+#include "thermo/itcf.hpp"
 #include "thermo/thermo_util.hpp"
 #include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
@@ -39,9 +40,6 @@ int HF::compute() {
     init();
     println("Structural properties calculation ...");
     computeStructuralProperties();
-    println("Done");
-    print("Computing imaginary-time correlation function: ");
-    computeItcf();
     println("Done");
     return 0;
   } catch (const runtime_error &err) {
@@ -151,27 +149,6 @@ void HF::computeLfc() {
   }
 }
 
-void HF::computeItcf() {
-  // Only compute ITCF for finite temperature
-  if (in().getDegeneracy() == 0.0) { return; }
-  const vector<double> tauValues = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
-  const size_t nx = wvg.size();
-  const size_t ntau = tauValues.size();
-  itcf.resize(nx, ntau);
-  for (size_t i = 0; i < nx; ++i) {
-    for (size_t j = 0; j < ntau; ++j) {
-      HFUtil::Itcf itcfTmp(inPtr,
-                           wvg[i],
-                           mu,
-                           tauValues[j],
-                           wvg.front(),
-                           wvg.back(),
-                           itg,
-                           idr(i, 0));
-      itcf(i, j) = itcfTmp.get();
-    }
-  }
-}
 
 // Getters
 vector<double> HF::getSdr() const {
@@ -408,71 +385,6 @@ double HFUtil::Ssf::integrand2DIn(const double &p) const {
   return SpecialFunctions::coth(arg) - (1.0 / arg);
 }
 
-// -----------------------------------------------------------------
-// HF Itcf class
-// -----------------------------------------------------------------
-
-double HFUtil::Itcf::get() {
-  assert(in->getDegeneracy() > 0.0);
-  // For tau = 0, delegate to the Ssf calculation
-  if (tau == 0.0) {
-    shared_ptr<Integrator2D> itg2 = make_shared<Integrator2D>(in->getIntError());
-    HFUtil::Ssf ssfCalc(in, x, mu, yMin, yMax, itg, vector<double>(), itg2, idr0);
-    return ssfCalc.get();
-  }
-  compute(in->getDimension());
-  return res;
-}
-
-void HFUtil::Itcf::compute3D() {
-  auto func = [&](const double &y) -> double { return integrand(y); };
-  itg->compute(func, ItgParam(yMin, yMax));
-  res = itg->getSolution();
-}
-
-void HFUtil::Itcf::compute2D() {
-  if (x > 0.0) {
-    auto func = [&](const double &y) -> double { return integrand2D(y); };
-    itg->compute(func, ItgParam(yMin, yMax));
-    res = itg->getSolution();
-  } else {
-    const double Theta = in->getDegeneracy();
-    res = Theta * (1.0 - exp(-1.0 / Theta));
-  }
-}
-
-double HFUtil::Itcf::integrand(const double &y) const {
-  const double Theta = in->getDegeneracy();
-  const double y2 = y * y;
-  if (x > 0.0) {
-    const double xy = x * y;
-    const double halfArg = xy / (2.0 * Theta);
-    const double tauArg = xy / Theta * (tau - 0.5);
-    const double ymx = y - x;
-    const double ypx = y + x;
-    const double logNum = mu - ymx * ymx / (4.0 * Theta);
-    const double logDen = mu - ypx * ypx / (4.0 * Theta);
-    const double logRatio = log((1.0 + exp(logNum)) / (1.0 + exp(logDen)));
-    return 3.0 * Theta / 8.0 * cosh(tauArg) / sinh(halfArg) * logRatio;
-  }
-  return 1.5 * Theta / (1.0 + exp(y2 / Theta - mu));
-}
-
-double HFUtil::Itcf::integrand2D(const double &y) const {
-  const double Theta = in->getDegeneracy();
-  if (x > 0.0) {
-    const double halfArg = x * y / (2.0 * Theta);
-    const double tauArg = x * y / Theta * (tau - 0.5);
-    const double ymx = y - x;
-    const double ypx = y + x;
-    const double eta1 = mu - ymx * ymx / (4.0 * Theta);
-    const double eta2 = mu - ypx * ypx / (4.0 * Theta);
-    const double fdDiff = SpecialFunctions::fermiDiracm12(eta1)
-                          - SpecialFunctions::fermiDiracm12(eta2);
-    return 0.5 * sqrt(Theta) * cosh(tauArg) / sinh(halfArg) * fdDiff / M_PI;
-  }
-  return 0.0;
-}
 
 // -----------------------------------------------------------------
 // SsfHFGround class

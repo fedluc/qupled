@@ -2,7 +2,12 @@
 #define THERMO_UTIL_HPP
 
 #include "util/dimensions_util.hpp"
+#include "util/vector2D.hpp"
+#include <memory>
 #include <vector>
+
+// Forward declarations
+class Input;
 
 /**
  * @brief High-level utility functions for computing thermodynamic properties.
@@ -78,6 +83,52 @@ namespace thermoUtil {
                                  const std::vector<double> &wvg,
                                  const std::vector<double> &ssf,
                                  const dimensionsUtil::Dimension &dim);
+
+  /**
+   * @brief Compute the non-interacting (Hartree-Fock) imaginary-time
+   * correlation function.
+   *
+   * Evaluates the HF ITCF for the given wave-vector grid and imaginary-time
+   * values using only the ideal density response (no interactions).
+   *
+   * @param in         Shared pointer to the input parameters.
+   * @param wvg        Wave-vector grid.
+   * @param tauValues  Imaginary time values in [0, 1] (normalised by beta).
+   * @param mu         Chemical potential.
+   * @param idr        Ideal density response (rows = wave-vectors, columns =
+   *                   Matsubara frequencies).
+   * @return 2D vector containing ITCF values (rows = wave-vectors, columns = tau
+   *         values).
+   */
+  Vector2D computeItcfNonInteracting(const std::shared_ptr<const Input> &in,
+                                     const std::vector<double> &wvg,
+                                     const std::vector<double> &tauValues,
+                                     const double mu,
+                                     const Vector2D &idr);
+
+  /**
+   * @brief Compute the RPA imaginary-time correlation function.
+   *
+   * Evaluates the RPA ITCF by first computing the HF contribution and then
+   * applying RPA corrections using the local field correction.
+   *
+   * @param in         Shared pointer to the input parameters.
+   * @param wvg        Wave-vector grid.
+   * @param tauValues  Imaginary time values in [0, 1] (normalised by beta).
+   * @param mu         Chemical potential.
+   * @param idr        Ideal density response (rows = wave-vectors, columns =
+   *                   Matsubara frequencies).
+   * @param lfc        Local field correction (rows = wave-vectors, columns =
+   *                   Matsubara frequencies or 1 for static LFC).
+   * @return 2D vector containing ITCF values (rows = wave-vectors, columns = tau
+   *         values).
+   */
+  Vector2D computeItcf(const std::shared_ptr<const Input> &in,
+                       const std::vector<double> &wvg,
+                       const std::vector<double> &tauValues,
+                       const double mu,
+                       const Vector2D &idr,
+                       const Vector2D &lfc);
 
 } // namespace thermoUtil
 

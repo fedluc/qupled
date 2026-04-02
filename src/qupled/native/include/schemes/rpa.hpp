@@ -49,10 +49,6 @@ protected:
   /** @brief Compute the static structure factor at zero temperature. */
   void computeSsfGround() override;
 
-  /** @brief Compute the imaginary-time correlation function (ITCF) at specified
-   * tau values. */
-  void computeItcf() override;
-
 private:
 
   /** @brief Compute the Hartree-Fock static structure factor. */
@@ -62,8 +58,7 @@ private:
   void computeLfc() override;
 };
 
-/** @brief Internal helpers for the RPA static structure factor and ITCF
- * computation. */
+/** @brief Internal helpers for the RPA static structure factor computation. */
 namespace RpaUtil {
 
   /**
@@ -150,72 +145,6 @@ namespace RpaUtil {
     /**
      * @brief Compute the Matsubara frequency summation for SSF.
      * @return Sum over Matsubara frequencies (unweighted, for tau=0).
-     */
-    double computeMatsubaraSummation() const;
-  };
-
-  /**
-   * @brief Computes the finite-temperature RPA imaginary-time correlation
-   * function (ITCF).
-   *
-   * Evaluates F(x, tau) = F_HF(x, tau) minus the Matsubara correction sum
-   * weighted by cos(2*pi*l*tau). The SSF is recovered as the special case
-   * tau = 0 by delegating to the Ssf class.
-   */
-  class Itcf : public SsfBase, dimensionsUtil::DimensionsHandler {
-
-  public:
-
-    /**
-     * @brief Construct for a finite-temperature ITCF calculation.
-     * @param x_      Wave-vector value.
-     * @param itcfHF_ HF imaginary-time correlation function at this wave-vector
-     *                and imaginary time tau.
-     * @param lfc_    Span over the local field correction array.
-     * @param in_     Shared pointer to the input parameters.
-     * @param idr_    Span over the ideal density response array.
-     * @param tau_    Imaginary time in [0, 1] (normalised by beta).
-     */
-    Itcf(const double &x_,
-         const double &itcfHF_,
-         std::span<const double> lfc_,
-         const std::shared_ptr<const Input> in_,
-         std::span<const double> idr_,
-         const double &tau_)
-        : SsfBase(x_, itcfHF_, lfc_, in_),
-          idr(idr_),
-          tau(tau_),
-          res(numUtil::NaN) {}
-
-    /** @brief Compute and return the RPA ITCF value. */
-    double get();
-
-  private:
-
-    /** @brief Ideal density response values over Matsubara frequencies. */
-    const std::span<const double> idr;
-    /** @brief Normalised imaginary time in [0, 1]. */
-    const double tau;
-    /** @brief Stores the result of the Matsubara summation. */
-    double res;
-
-    /**
-     * @brief Compute the ITCF for 3D systems.
-     *
-     * Evaluates F(x, tau) = F_HF(x, tau) - 1.5 * v(x) * Theta * sum_l,
-     * where sum_l is the Matsubara frequency summation.
-     */
-    void compute3D() override;
-    /**
-     * @brief Compute the ITCF for 2D systems.
-     *
-     * Evaluates F(x, tau) = F_HF(x, tau) - v(x) * Theta * sum_l,
-     * where sum_l is the Matsubara frequency summation.
-     */
-    void compute2D() override;
-    /**
-     * @brief Compute the Matsubara frequency summation.
-     * @return Sum over Matsubara frequencies weighted by cos(2*pi*l*tau).
      */
     double computeMatsubaraSummation() const;
   };

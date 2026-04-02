@@ -1,5 +1,6 @@
 #include "python_interface/utilities.hpp"
 #include "python_interface/util.hpp"
+#include "schemes/input.hpp"
 #include "thermo/thermo_util.hpp"
 #include "util/database.hpp"
 #include "util/dimensions_util.hpp"
@@ -42,6 +43,32 @@ double computeFreeEnergy(const py::array_t<double> &gridIn,
   return thermoUtil::computeFreeEnergy(grid, rsu, coupling);
 }
 
+py::array computeItcfNonInteracting(const Input &in,
+                                    const py::array_t<double> &wvgIn,
+                                    const py::array_t<double> &tauValuesIn,
+                                    const double mu,
+                                    const py::array_t<double> &idrIn) {
+  const std::vector<double> wvg = toVector(wvgIn);
+  const std::vector<double> tauValues = toVector(tauValuesIn);
+  const Vector2D idr = toVector2D(idrIn);
+  return toNdArray2D(thermoUtil::computeItcfNonInteracting(
+      std::make_shared<Input>(in), wvg, tauValues, mu, idr));
+}
+
+py::array computeItcf(const Input &in,
+                      const py::array_t<double> &wvgIn,
+                      const py::array_t<double> &tauValuesIn,
+                      const double mu,
+                      const py::array_t<double> &idrIn,
+                      const py::array_t<double> &lfcIn) {
+  const std::vector<double> wvg = toVector(wvgIn);
+  const std::vector<double> tauValues = toVector(tauValuesIn);
+  const Vector2D idr = toVector2D(idrIn);
+  const Vector2D lfc = toVector2D(lfcIn);
+  return toNdArray2D(
+      thermoUtil::computeItcf(std::make_shared<Input>(in), wvg, tauValues, mu, idr, lfc));
+}
+
 // -----------------------------------------------------------------
 // All utilities exposed to Python
 // -----------------------------------------------------------------
@@ -52,8 +79,14 @@ namespace pythonWrappers {
     m.def("compute_rdf", &computeRdf, "Compute radial distribution function");
     m.def("compute_internal_energy",
           &computeInternalEnergy,
-          "Compute internal energy");
-    m.def("compute_free_energy", &computeFreeEnergy, "Compute free energy");
+          "Compute the internal energy");
+    m.def("compute_free_energy", &computeFreeEnergy, "Compute the free energy");
+    m.def("compute_itcf_non_interacting",
+          &computeItcfNonInteracting,
+          "Compute the non-interacting (Hartree-Fock) imaginary-time correlation function");
+    m.def("compute_itcf",
+          &computeItcf,
+          "Compute the imaginary-time correlation function" );
   }
 
   void exposeMPIClass(py::module_ &m) {

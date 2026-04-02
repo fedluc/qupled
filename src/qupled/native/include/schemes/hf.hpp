@@ -53,7 +53,14 @@ public:
   /** @brief Return the static structure factor over the wave-vector grid. */
   const std::vector<double> &getSsf() const { return ssf; }
 
-  /** @brief Return the imaginary-time correlation function (ITCF) grid. */
+  /**
+   * @brief Return the imaginary-time correlation function (ITCF) grid.
+   *
+   * @note The ITCF is not computed automatically during the main compute()
+   * pipeline. To compute ITCF values, use the standalone utility functions
+   * thermoUtil::computeItcfNonInteracting() or thermoUtil::computeItcf().
+   * This getter returns an empty array unless ITCF has been computed separately.
+   */
   const Vector2D &getItcf() const { return itcf; }
 
   /** @brief Return the wave-vector grid. */
@@ -121,9 +128,7 @@ protected:
    * state). */
   virtual void computeSsfGround();
 
-  /** @brief Compute the imaginary-time correlation function (ITCF) at specified
-   * tau values. Must be called after computeStructuralProperties(). */
-  virtual void computeItcf();
+protected:
 
   /** @brief Compute the local field correction (zero for bare HF). */
   virtual void computeLfc();
@@ -148,8 +153,7 @@ private:
   void computeIdrGround();
 };
 
-/** @brief Internal helpers for the Hartree-Fock ideal density response, SSF,
- * and ITCF.
+/** @brief Internal helpers for the Hartree-Fock ideal density response and SSF.
  */
 namespace HFUtil {
 
@@ -358,107 +362,6 @@ namespace HFUtil {
      * @param p Inner integration variable (angle).
      */
     double integrand2DIn(const double &p) const;
-  };
-
-  /**
-   * @brief Computes the Hartree-Fock imaginary-time correlation function (ITCF)
-   * at finite temperature.
-   *
-   * Evaluates F_HF(x, tau) via numerical integration over the auxiliary
-   * momentum. For 3D systems, uses a single 1D integral. For 2D systems,
-   * uses a 2D integral (over y and angle p) plus the IDR contribution.
-   * The SSF is recovered as the special case tau = 0 by delegating to the Ssf
-   * class.
-   */
-  class Itcf : public dimensionsUtil::DimensionsHandler {
-
-  public:
-
-    /**
-     * @brief Construct for a finite-temperature ITCF calculation.
-     * @param in_        Shared pointer to the input parameters.
-     * @param x_         Wave-vector value.
-     * @param mu_        Chemical potential.
-     * @param tau_       Imaginary time in [0, 1] (normalised by beta).
-     * @param yMin_      Lower integration limit.
-     * @param yMax_      Upper integration limit.
-     * @param itg_       Shared pointer to a 1D integrator.
-     * @param idr0_      Ideal density response at l=0 for the current
-     * wave-vector.
-     */
-    Itcf(const std::shared_ptr<const Input> in_,
-         const double &x_,
-         const double &mu_,
-         const double &tau_,
-         const double &yMin_,
-         const double &yMax_,
-         std::shared_ptr<Integrator1D> itg_,
-         const double &idr0_)
-        : in(in_),
-          x(x_),
-          mu(mu_),
-          tau(tau_),
-          yMin(yMin_),
-          yMax(yMax_),
-          itg(itg_),
-          idr0(idr0_),
-          res(numUtil::NaN) {}
-
-    /**
-     * @brief Compute and return the HF ITCF value.
-     * @return ITCF value at the current wave-vector and imaginary time.
-     */
-    double get();
-
-  private:
-
-    /** @brief Input parameters. */
-    const std::shared_ptr<const Input> in;
-    /** @brief Wave-vector. */
-    const double x;
-    /** @brief Chemical potential. */
-    const double mu;
-    /** @brief Normalised imaginary time in [0, 1]. */
-    const double tau;
-    /** @brief Lower integration limit. */
-    const double yMin;
-    /** @brief Upper integration limit. */
-    const double yMax;
-    /** @brief 1D numerical integrator. */
-    const std::shared_ptr<Integrator1D> itg;
-    /** @brief Ideal density response at l=0 for the current wave-vector. */
-    const double idr0;
-    /** @brief Stores the ITCF result. */
-    double res;
-
-    /**
-     * @brief Compute the ITCF for 3D systems.
-     *
-     * Evaluates the ITCF via 1D integration over the auxiliary momentum.
-     * Note: tau=0 is handled by delegating to Ssf.
-     */
-    void compute3D() override;
-    /**
-     * @brief Compute the ITCF for 2D systems.
-     *
-     * Evaluates the ITCF via 1D integration over the auxiliary momentum.
-     * Note: tau=0 is handled by delegating to Ssf.
-     */
-    void compute2D() override;
-    /**
-     * @brief 3D integrand over auxiliary momentum @p y.
-     *
-     * Evaluates the ITCF integrand for 3D systems at the specified tau.
-     * @param y Auxiliary momentum variable.
-     */
-    double integrand(const double &y) const;
-    /**
-     * @brief 2D integrand over auxiliary momentum @p y.
-     *
-     * Evaluates the ITCF integrand for 2D systems at the specified tau.
-     * @param y Outer integration variable.
-     */
-    double integrand2D(const double &y) const;
   };
 
   /**

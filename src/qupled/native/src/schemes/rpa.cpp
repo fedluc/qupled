@@ -1,6 +1,7 @@
 #include "schemes/rpa.hpp"
 #include "schemes/input.hpp"
 #include "thermo/chemical_potential.hpp"
+#include "thermo/itcf.hpp"
 #include "thermo/thermo_util.hpp"
 #include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
@@ -53,22 +54,6 @@ void Rpa::computeSsfGround() {
     const double x = wvg[i];
     RpaUtil::SsfGround ssfTmp(x, ssfHF[i], lfc[i], itg, inPtr);
     ssf[i] = ssfTmp.get();
-  }
-}
-
-// Compute imaginary-time correlation function (ITCF)
-void Rpa::computeItcf() {
-  if (in().getDegeneracy() == 0.0) { return; }
-  const vector<double> tauValues = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
-  const size_t nx = wvg.size();
-  const size_t ntau = tauValues.size();
-  HF::computeItcf();
-  for (size_t i = 0; i < nx; ++i) {
-    for (size_t j = 0; j < ntau; ++j) {
-      RpaUtil::Itcf itcfTmp(
-          wvg[i], itcf(i, j), lfc[i], inPtr, idr[i], tauValues[j]);
-      itcf(i, j) = itcfTmp.get();
-    }
   }
 }
 
@@ -131,48 +116,6 @@ double RpaUtil::Ssf::computeMatsubaraSummation() const {
   return suml;
 }
 
-// -----------------------------------------------------------------
-// Itcf class
-// -----------------------------------------------------------------
-
-double RpaUtil::Itcf::get() {
-  assert(in->getDegeneracy() > 0.0);
-  if (x == 0.0) return 0.0;
-  if (in->getCoupling() == 0.0) return ssfHF;
-  // For tau = 0, delegate to the Ssf calculation
-  if (tau == 0.0) {
-    RpaUtil::Ssf ssfCalc(x, ssfHF, lfc, in, idr);
-    return ssfCalc.get();
-  }
-  compute(in->getDimension());
-  return res;
-}
-
-void RpaUtil::Itcf::compute3D() {
-  const double Theta = in->getDegeneracy();
-  const double suml = computeMatsubaraSummation();
-  res = ssfHF - 1.5 * ip() * Theta * suml;
-}
-
-void RpaUtil::Itcf::compute2D() {
-  const double Theta = in->getDegeneracy();
-  const double suml = computeMatsubaraSummation();
-  res = ssfHF - ip() * Theta * suml;
-}
-
-double RpaUtil::Itcf::computeMatsubaraSummation() const {
-  const bool isStatic = lfc.size() == 1;
-  double suml = 0.0;
-  for (size_t l = 0; l < idr.size(); ++l) {
-    const double &idrl = idr[l];
-    const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
-    const double denom = 1.0 + ip() * idrl * (1.0 - lfcl);
-    const double f = idrl * idrl * (1.0 - lfcl) / denom;
-    const double cosTerm = (l == 0) ? 1.0 : cos(2.0 * M_PI * l * tau);
-    suml += (l == 0) ? f : 2.0 * f * cosTerm;
-  }
-  return suml;
-}
 
 // -----------------------------------------------------------------
 // SsfGround class
