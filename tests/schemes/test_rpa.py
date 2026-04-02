@@ -22,6 +22,7 @@ def scheme(mocker):
     return scheme
 
 
+@pytest.mark.unit
 def test_rpa_initialization(mocker):
     super_init = mocker.patch("qupled.schemes.hf.Solver.__init__")
     scheme = rpa.Solver()
@@ -29,19 +30,23 @@ def test_rpa_initialization(mocker):
     assert scheme.native_scheme_cls == native.Rpa
 
 
+@pytest.mark.unit
 def test_rpa_input_inheritance():
     assert issubclass(rpa.Input, hf.Input)
 
 
+@pytest.mark.unit
 def test_rpa_input_initialization(mocker):
     input = rpa.Input(mocker.ANY, mocker.ANY)
     assert input.theory == "RPA"
 
 
+@pytest.mark.unit
 def test_rpa_result_inheritance():
     assert issubclass(rpa.Result, hf.Result)
 
 
+@pytest.mark.unit
 def test_rpa_result_compute_itcf(mocker, results, inputs):
     native_compute_itcf = mocker.patch("qupled.native.compute_itcf")
     native_input = mocker.Mock()

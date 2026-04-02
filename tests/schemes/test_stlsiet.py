@@ -5,10 +5,12 @@ from qupled.schemes import stls, stlsiet
 from qupled.postprocess import output
 
 
+@pytest.mark.unit
 def test_stls_iet_inheritance():
     assert issubclass(stlsiet.Solver, stls.Solver)
 
 
+@pytest.mark.unit
 def test_stls_iet_initialization(mocker):
     super_init = mocker.patch("qupled.schemes.stls.Solver.__init__")
     scheme = stlsiet.Solver()
@@ -16,35 +18,42 @@ def test_stls_iet_initialization(mocker):
     assert isinstance(scheme.results, stlsiet.Result)
 
 
+@pytest.mark.unit
 def test_stls_iet_input_inheritance():
     assert issubclass(stlsiet.Input, stls.Input)
 
 
+@pytest.mark.unit
 def test_stls_iet_input_initialization_valid_theory(mocker):
     theory = "STLS-HNC"
     input = stlsiet.Input(mocker.ANY, mocker.ANY, theory=theory)
     assert input.theory == theory
 
 
+@pytest.mark.unit
 def test_stls_iet_input_initialization_invalid_theory():
     with pytest.raises(ValueError):
         stlsiet.Input(1.0, 1.0, "INVALID-THEORY")
 
 
+@pytest.mark.unit
 def test_stls_iet_input_initialization_default_theory():
     with pytest.raises(ValueError):
         stlsiet.Input(1.0, 1.0)
 
 
+@pytest.mark.unit
 def test_stls_iet_result_inheritance():
     assert issubclass(stlsiet.Result, stls.Result)
 
 
+@pytest.mark.unit
 def test_stls_iet_result_initialization(mocker):
     results = stlsiet.Result()
     assert results.bf is None
 
 
+@pytest.mark.unit
 def test_get_initial_guess_with_default_database_name(mocker):
     read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
@@ -63,6 +72,7 @@ def test_get_initial_guess_with_default_database_name(mocker):
     )
 
 
+@pytest.mark.unit
 def test_get_initial_guess_with_custom_database_name(mocker):
     read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME

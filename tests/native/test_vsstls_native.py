@@ -2,6 +2,7 @@ import pytest
 from qupled.native import VSStls, VSStlsInput
 
 
+@pytest.mark.unit
 def test_vsstls_properties():
     inputs = VSStlsInput()
     inputs.coupling = 1.0
@@ -21,6 +22,7 @@ def test_vsstls_properties():
     assert hasattr(scheme, "free_energy_grid")
 
 
+@pytest.mark.native
 def test_vsstls_compute():
     inputs = VSStlsInput()
     inputs.coupling = 0.1

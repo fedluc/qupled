@@ -33,10 +33,12 @@ def tables_with_mock_build(mocker):
     yield tables
 
 
+@pytest.mark.unit
 def test_inheritance():
     assert issubclass(SchemeTables, BaseTables)
 
 
+@pytest.mark.unit
 def test_base_tables_initialization(tables):
     assert tables.engine is not None
     assert tables.run_table_name == RUN_TABLE_NAME
@@ -47,6 +49,7 @@ def test_base_tables_initialization(tables):
     assert tables.result_table is not None
 
 
+@pytest.mark.unit
 def test_build_run_table(mocker, tables_with_mock_build):
     create_table = mocker.patch.object(tables_with_mock_build, "_create_table")
     table = tables_with_mock_build._build_run_table()
@@ -77,6 +80,7 @@ def test_build_run_table(mocker, tables_with_mock_build):
     assert not table.c[TableKeys.TIME.value].nullable
 
 
+@pytest.mark.unit
 def test_delete_run(mocker, tables):
     run_id = mocker.ANY
     delete_blob_data_on_disk = mocker.patch(
@@ -88,6 +92,7 @@ def test_delete_run(mocker, tables):
     super_delete_run.assert_called_once_with(run_id)
 
 
+@pytest.mark.unit
 def test_insert_run(mocker, tables):
     run_id = 1
     mock_datetime = mocker.patch("qupled.database.scheme_tables.datetime")
@@ -133,6 +138,7 @@ def scheme_results():
     yield results
 
 
+@pytest.mark.unit
 def test_insert_run_and_get_run_without_results(tables, scheme_inputs):
     tables.insert_run(scheme_inputs)
     run_data = tables.get_run(tables.run_id, None, None)
@@ -150,6 +156,7 @@ def test_insert_run_and_get_run_without_results(tables, scheme_inputs):
     assert results == {}
 
 
+@pytest.mark.unit
 def test_insert_run_and_get_run_with_results(tables, scheme_inputs, scheme_results):
     tables.insert_run(scheme_inputs)
     tables.insert_results(scheme_results.__dict__)
@@ -169,6 +176,7 @@ def test_insert_run_and_get_run_with_results(tables, scheme_inputs, scheme_resul
     assert np.array_equal(results["data"], scheme_results.data, equal_nan=True)
 
 
+@pytest.mark.unit
 def test_insert_run_and_get_inputs(tables, scheme_inputs):
     tables.insert_run(scheme_inputs)
     inputs = tables.get_inputs(tables.run_id, None)
@@ -177,6 +185,7 @@ def test_insert_run_and_get_inputs(tables, scheme_inputs):
     assert inputs["degeneracy"] == scheme_inputs.degeneracy
 
 
+@pytest.mark.unit
 def test_insert_run_and_get_results(tables, scheme_inputs, scheme_results):
     tables.insert_run(scheme_inputs)
     tables.insert_results(scheme_results.__dict__)
@@ -184,24 +193,28 @@ def test_insert_run_and_get_results(tables, scheme_inputs, scheme_results):
     assert np.array_equal(results["data"], scheme_results.data, equal_nan=True)
 
 
+@pytest.mark.unit
 def test_insert_inputs_without_run(tables, scheme_inputs):
     tables.insert_inputs(scheme_inputs.__dict__)
     inputs = tables.get_inputs(tables.run_id, None)
     assert inputs == {}
 
 
+@pytest.mark.unit
 def test_insert_results_without_run(tables, scheme_results):
     tables.insert_results(scheme_results.__dict__)
     results = tables.get_results(tables.run_id, None)
     assert results == {}
 
 
+@pytest.mark.unit
 def test_update_inputs_integrity_error(tables, scheme_inputs):
     tables.insert_run(scheme_inputs)
     with pytest.raises(sql.exc.IntegrityError):
         tables.insert_inputs(scheme_inputs.__dict__)
 
 
+@pytest.mark.unit
 def test_update_results_default(tables, scheme_inputs, scheme_results):
     tables.insert_run(scheme_inputs)
     tables.insert_results(scheme_results.__dict__)
@@ -209,6 +222,7 @@ def test_update_results_default(tables, scheme_inputs, scheme_results):
         tables.insert_results(scheme_results.__dict__)
 
 
+@pytest.mark.unit
 def test_update_results_allow_update(tables, scheme_inputs, scheme_results):
     tables.insert_run(scheme_inputs)
     tables.insert_results(scheme_results.__dict__)
@@ -219,24 +233,28 @@ def test_update_results_allow_update(tables, scheme_inputs, scheme_results):
     assert np.array_equal(results["data"], new_data, equal_nan=True)
 
 
+@pytest.mark.unit
 def test_get_non_existing_run(tables, scheme_inputs):
     tables.insert_run(scheme_inputs)
     run_data = tables.get_run(tables.run_id + 1, None, None)
     assert run_data == {}
 
 
+@pytest.mark.unit
 def test_get_non_existing_inputs(tables, scheme_inputs):
     tables.insert_run(scheme_inputs)
     inputs = tables.get_inputs(tables.run_id + 1, None)
     assert inputs == {}
 
 
+@pytest.mark.unit
 def test_get_non_existing_results(tables, scheme_inputs):
     tables.insert_run(scheme_inputs)
     results = tables.get_results(tables.run_id + 1, None)
     assert results == {}
 
 
+@pytest.mark.unit
 def test_insert_run_with_results_and_delete_run(tables, scheme_inputs, scheme_results):
     tables.insert_run(scheme_inputs)
     tables.insert_results(scheme_results.__dict__)

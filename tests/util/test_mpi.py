@@ -23,6 +23,7 @@ def mock_native():
         yield m
 
 
+@pytest.mark.unit
 def test_launch_mpi_execution_calls_mpi(
     mock_subprocess_run, mock_shutil_which, mock_native, mocker
 ):
@@ -34,6 +35,7 @@ def test_launch_mpi_execution_calls_mpi(
     )
 
 
+@pytest.mark.unit
 def test_launch_mpi_execution_serial_if_no_mpi(
     mock_subprocess_run, mock_shutil_which, mock_native, capsys
 ):
@@ -47,6 +49,7 @@ def test_launch_mpi_execution_serial_if_no_mpi(
     assert "WARNING: Could not call MPI" in captured.out
 
 
+@pytest.mark.unit
 def test_launch_mpi_execution_serial_if_native_disabled(
     mock_subprocess_run, mock_shutil_which, mock_native, capsys, mocker
 ):
@@ -60,6 +63,7 @@ def test_launch_mpi_execution_serial_if_native_disabled(
     assert "WARNING: Could not call MPI" in captured.out
 
 
+@pytest.mark.unit
 def test_launch_mpi_execution_raises_on_subprocess_error(
     mock_subprocess_run, mock_shutil_which, mock_native, mocker
 ):
@@ -70,6 +74,7 @@ def test_launch_mpi_execution_raises_on_subprocess_error(
         mpi.launch_mpi_execution("some_module", 2)
 
 
+@pytest.mark.unit
 def test_write_inputs(tmp_path, mocker):
     test_file = tmp_path / "input.json"
     mocker.patch("qupled.util.mpi.INPUT_FILE", test_file)
@@ -82,6 +87,7 @@ def test_write_inputs(tmp_path, mocker):
     mock_inputs.to_dict.assert_called_once()
 
 
+@pytest.mark.unit
 def test_read_inputs(tmp_path, mocker):
     test_file = tmp_path / "input.json"
     mocker.patch("qupled.util.mpi.INPUT_FILE", test_file)
@@ -95,6 +101,7 @@ def test_read_inputs(tmp_path, mocker):
     assert result == "mocked_instance"
 
 
+@pytest.mark.unit
 def test_write_results_writes_file_if_root(tmp_path, mocker):
     test_file = tmp_path / "results.json"
     mocker.patch("qupled.util.mpi.RESULT_FILE", test_file)
@@ -113,6 +120,7 @@ def test_write_results_writes_file_if_root(tmp_path, mocker):
     mock_results_instance.to_dict.assert_called_once()
 
 
+@pytest.mark.unit
 def test_write_results_does_nothing_if_not_root(tmp_path, mocker):
     test_file = tmp_path / "results.json"
     mocker.patch("qupled.util.mpi.RESULT_FILE", test_file)
@@ -124,6 +132,7 @@ def test_write_results_does_nothing_if_not_root(tmp_path, mocker):
     mock_ResultCls.assert_not_called()
 
 
+@pytest.mark.unit
 def test_read_results(tmp_path, mocker):
     test_file = tmp_path / "input.json"
     mocker.patch("qupled.util.mpi.RESULT_FILE", test_file)
@@ -137,6 +146,7 @@ def test_read_results(tmp_path, mocker):
     assert result == "mocked_instance"
 
 
+@pytest.mark.unit
 def test_write_status_writes_file_if_root(tmp_path, mocker):
     test_file = tmp_path / "status.json"
     mocker.patch("qupled.util.mpi.STATUS_FILE", test_file)
@@ -149,6 +159,7 @@ def test_write_status_writes_file_if_root(tmp_path, mocker):
     assert data == status_data
 
 
+@pytest.mark.unit
 def test_write_status_does_nothing_if_not_root(tmp_path, mocker):
     test_file = tmp_path / "status.json"
     mocker.patch("qupled.util.mpi.STATUS_FILE", test_file)
@@ -158,6 +169,7 @@ def test_write_status_does_nothing_if_not_root(tmp_path, mocker):
     assert not test_file.exists()
 
 
+@pytest.mark.unit
 def test_read_status(tmp_path, mocker):
     test_file = tmp_path / "status.json"
     mocker.patch("qupled.util.mpi.STATUS_FILE", test_file)
@@ -168,6 +180,7 @@ def test_read_status(tmp_path, mocker):
     assert result == status_data
 
 
+@pytest.mark.unit
 def test_clean_files_removes_existing_files(tmp_path, mocker):
     input_file = tmp_path / "input.json"
     result_file = tmp_path / "results.json"
@@ -183,6 +196,7 @@ def test_clean_files_removes_existing_files(tmp_path, mocker):
     assert not status_file.exists()
 
 
+@pytest.mark.unit
 def test_clean_files_does_nothing_if_files_do_not_exist(tmp_path, mocker):
     input_file = tmp_path / "input.json"
     result_file = tmp_path / "results.json"

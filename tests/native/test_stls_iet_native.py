@@ -2,6 +2,7 @@ import pytest
 from qupled.native import StlsIet, StlsIetInput
 
 
+@pytest.mark.unit
 def test_stls_properties():
     scheme = StlsIet(StlsIetInput())
     assert hasattr(scheme, "idr")
@@ -17,6 +18,7 @@ def test_stls_properties():
     assert hasattr(scheme, "bf")
 
 
+@pytest.mark.native
 def test_stls_iet_compute():
     iet_schemes = {"STLS-HNC", "STLS-IOI", "STLS-LCT"}
     for scheme_name in iet_schemes:

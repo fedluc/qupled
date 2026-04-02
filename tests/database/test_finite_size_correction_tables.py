@@ -33,10 +33,12 @@ def tables_with_mock_build(mocker):
     yield tables
 
 
+@pytest.mark.unit
 def test_inheritance():
     assert issubclass(FiniteSizeCorrectionTables, BaseTables)
 
 
+@pytest.mark.unit
 def test_base_tables_initialization(tables):
     assert tables.engine is not None
     assert tables.run_table_name == RUN_TABLE_NAME
@@ -47,6 +49,7 @@ def test_base_tables_initialization(tables):
     assert tables.result_table is not None
 
 
+@pytest.mark.unit
 def test_insert_inputs(mocker, tables):
     super_insert_inputs = mocker.patch(
         "qupled.database.base_tables.BaseTables.insert_inputs"
@@ -56,6 +59,7 @@ def test_insert_inputs(mocker, tables):
     super_insert_inputs.assert_called_once_with({})
 
 
+@pytest.mark.unit
 def test_build_run_table(mocker, tables_with_mock_build):
     create_table = mocker.patch.object(tables_with_mock_build, "_create_table")
     table = tables_with_mock_build._build_run_table()
@@ -92,6 +96,7 @@ def test_build_run_table(mocker, tables_with_mock_build):
     assert not table.c[TableKeys.TIME.value].nullable
 
 
+@pytest.mark.unit
 def test_update_scheme_run_id_with_run_id(mocker, tables):
     tables.run_id = mocker.ANY
     scheme_run_id = mocker.ANY
@@ -107,6 +112,7 @@ def test_update_scheme_run_id_with_run_id(mocker, tables):
     execute.assert_called_once_with(statement)
 
 
+@pytest.mark.unit
 def test_update_scheme_run_id_without_run_id(mocker, tables):
     tables.run_id = None
     status = 0
@@ -117,6 +123,7 @@ def test_update_scheme_run_id_without_run_id(mocker, tables):
     execute.assert_not_called()
 
 
+@pytest.mark.unit
 def test_insert_run(mocker, tables):
     run_id = 1
     mock_datetime = mocker.patch(
@@ -169,6 +176,7 @@ def fsc_results():
     yield results
 
 
+@pytest.mark.unit
 def test_insert_run_and_get_run_without_results(tables, fsc_inputs):
     tables.insert_run(fsc_inputs)
     run_data = tables.get_run(tables.run_id, None, None)
@@ -187,6 +195,7 @@ def test_insert_run_and_get_run_without_results(tables, fsc_inputs):
     assert results == {}
 
 
+@pytest.mark.unit
 def test_insert_run_and_get_run_with_results(tables, fsc_inputs, fsc_results):
     tables.insert_run(fsc_inputs)
     tables.insert_results(fsc_results.__dict__)
@@ -207,12 +216,14 @@ def test_insert_run_and_get_run_with_results(tables, fsc_inputs, fsc_results):
     assert np.array_equal(results["data"], fsc_results.data, equal_nan=True)
 
 
+@pytest.mark.unit
 def test_insert_run_and_get_inputs(tables, fsc_inputs):
     tables.insert_run(fsc_inputs)
     inputs = tables.get_inputs(tables.run_id, None)
     assert inputs["number_of_particles"] == fsc_inputs.number_of_particles
 
 
+@pytest.mark.unit
 def test_insert_run_and_get_results(tables, fsc_inputs, fsc_results):
     tables.insert_run(fsc_inputs)
     tables.insert_results(fsc_results.__dict__)
@@ -220,24 +231,28 @@ def test_insert_run_and_get_results(tables, fsc_inputs, fsc_results):
     assert np.array_equal(results["data"], fsc_results.data, equal_nan=True)
 
 
+@pytest.mark.unit
 def test_insert_inputs_without_run(tables, fsc_inputs):
     tables.insert_inputs(fsc_inputs.__dict__)
     inputs = tables.get_inputs(tables.run_id, None)
     assert inputs == {}
 
 
+@pytest.mark.unit
 def test_insert_results_without_run(tables, fsc_results):
     tables.insert_results(fsc_results.__dict__)
     results = tables.get_results(tables.run_id, None)
     assert results == {}
 
 
+@pytest.mark.unit
 def test_update_inputs_integrity_error(tables, fsc_inputs):
     tables.insert_run(fsc_inputs)
     with pytest.raises(sql.exc.IntegrityError):
         tables.insert_inputs(fsc_inputs.__dict__)
 
 
+@pytest.mark.unit
 def test_update_results_default(tables, fsc_inputs, fsc_results):
     tables.insert_run(fsc_inputs)
     tables.insert_results(fsc_results.__dict__)
@@ -245,6 +260,7 @@ def test_update_results_default(tables, fsc_inputs, fsc_results):
         tables.insert_results(fsc_results.__dict__)
 
 
+@pytest.mark.unit
 def test_update_results_allow_update(tables, fsc_inputs, fsc_results):
     tables.insert_run(fsc_inputs)
     tables.insert_results(fsc_results.__dict__)
@@ -255,24 +271,28 @@ def test_update_results_allow_update(tables, fsc_inputs, fsc_results):
     assert np.array_equal(results["data"], new_data, equal_nan=True)
 
 
+@pytest.mark.unit
 def test_get_non_existing_run(tables, fsc_inputs):
     tables.insert_run(fsc_inputs)
     run_data = tables.get_run(tables.run_id + 1, None, None)
     assert run_data == {}
 
 
+@pytest.mark.unit
 def test_get_non_existing_inputs(tables, fsc_inputs):
     tables.insert_run(fsc_inputs)
     inputs = tables.get_inputs(tables.run_id + 1, None)
     assert inputs == {}
 
 
+@pytest.mark.unit
 def test_get_non_existing_results(tables, fsc_inputs):
     tables.insert_run(fsc_inputs)
     results = tables.get_results(tables.run_id + 1, None)
     assert results == {}
 
 
+@pytest.mark.unit
 def test_insert_run_with_results_and_delete_run(tables, fsc_inputs, fsc_results):
     tables.insert_run(fsc_inputs)
     tables.insert_results(fsc_results.__dict__)

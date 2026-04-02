@@ -11,10 +11,12 @@ def scheme():
     return scheme
 
 
+@pytest.mark.unit
 def test_qstls_inheritance():
     assert issubclass(qstls.Solver, stls.Solver)
 
 
+@pytest.mark.unit
 def test_qstls_initialization(mocker, scheme):
     super_init = mocker.patch("qupled.schemes.stls.Solver.__init__")
     scheme = qstls.Solver()
@@ -24,6 +26,7 @@ def test_qstls_initialization(mocker, scheme):
     assert scheme.native_inputs_cls == native.QstlsInput
 
 
+@pytest.mark.unit
 def test_compute(mocker, scheme):
     find_fixed_adr_in_database = mocker.patch(
         "qupled.schemes.qstls.Solver.find_fixed_adr_in_database"
@@ -35,6 +38,7 @@ def test_compute(mocker, scheme):
     super_compute.assert_called_once_with(inputs)
 
 
+@pytest.mark.unit
 def test_find_fixed_adr_in_database_match_found(mocker, scheme):
     db_handler_mock = mocker.Mock()
     scheme_tables = db_handler_mock.scheme_tables
@@ -61,6 +65,7 @@ def test_find_fixed_adr_in_database_match_found(mocker, scheme):
     scheme_tables.get_inputs.assert_called_once_with(1)
 
 
+@pytest.mark.unit
 def test_find_fixed_adr_in_database_no_match(mocker, scheme):
     db_handler_mock = mocker.Mock()
     scheme_tables = db_handler_mock.scheme_tables
@@ -79,10 +84,12 @@ def test_find_fixed_adr_in_database_no_match(mocker, scheme):
     scheme_tables.get_inputs.assert_not_called()
 
 
+@pytest.mark.unit
 def test_qstls_input_inheritance():
     assert issubclass(qstls.Input, stls.Input)
 
 
+@pytest.mark.unit
 def test_qstls_input_initialization(mocker):
     input = qstls.Input(mocker.ANY, mocker.ANY)
     assert input.theory == "QSTLS"

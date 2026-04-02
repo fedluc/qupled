@@ -46,11 +46,11 @@ def run_tox(environment):
         subprocess.run(["tox", "-e", environment], check=True)
 
 
-def test(no_native):
-    if no_native:
-        run_tox("no_native")
-    else:
+def test(marker):
+    if marker is None:
         run_tox("test")
+    else:
+        run_tox(marker)
 
 
 def examples():
@@ -165,9 +165,11 @@ def run():
     # Test command
     test_parser = subparsers.add_parser("test", help="Run tests")
     test_parser.add_argument(
-        "--no-native",
-        action="store_true",
-        help="Exclude the tests for the native classes (default: False).",
+        "marker",
+        nargs="?",
+        choices=["unit", "native", "integration"],
+        default=None,
+        help="Run only tests with this marker (default: run all tests).",
     )
 
     # Update version command
@@ -199,7 +201,7 @@ def run():
     elif args.command == "install":
         install()
     elif args.command == "test":
-        test(args.no_native)
+        test(args.marker)
     elif args.command == "install-deps":
         install_dependencies()
     elif args.command == "update-version":

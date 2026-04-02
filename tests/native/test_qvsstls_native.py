@@ -11,6 +11,7 @@ def database_info():
     return dbInfo.to_native()
 
 
+@pytest.mark.unit
 def test_qvsstls_properties():
     inputs = QVSStlsInput()
     inputs.coupling = 1.0
@@ -30,6 +31,7 @@ def test_qvsstls_properties():
     assert hasattr(scheme, "free_energy_grid")
 
 
+@pytest.mark.native
 def test_qvsstls_compute(database_info):
     inputs = QVSStlsInput()
     inputs.coupling = 0.1

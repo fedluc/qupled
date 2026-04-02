@@ -1,14 +1,17 @@
 import numpy as np
+import pytest
 
 from qupled import native
 from qupled.postprocess import output
 from qupled.schemes import hf, rpa, stls
 
 
+@pytest.mark.unit
 def test_stls_inheritance():
     assert issubclass(stls.Solver, rpa.Solver)
 
 
+@pytest.mark.unit
 def test_stls_initialization(mocker):
     super_init = mocker.patch("qupled.schemes.rpa.Solver.__init__")
     scheme = stls.Solver()
@@ -18,6 +21,7 @@ def test_stls_initialization(mocker):
     assert scheme.native_inputs_cls == native.StlsInput
 
 
+@pytest.mark.unit
 def test_get_initial_guess_with_default_database_name(mocker):
     read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
@@ -32,6 +36,7 @@ def test_get_initial_guess_with_default_database_name(mocker):
     read_results.assert_called_once_with(result_type, run_id, None, ["wvg", "ssf"])
 
 
+@pytest.mark.unit
 def test_get_initial_guess_with_custom_database_name(mocker):
     read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
@@ -49,10 +54,12 @@ def test_get_initial_guess_with_custom_database_name(mocker):
     )
 
 
+@pytest.mark.unit
 def test_stls_input_inheritance():
     assert issubclass(stls.Input, rpa.Input)
 
 
+@pytest.mark.unit
 def test_stls_input_initialization(mocker):
     guess = mocker.patch("qupled.schemes.stls.Guess")
     input = stls.Input(mocker.ANY, mocker.ANY)
@@ -63,15 +70,18 @@ def test_stls_input_initialization(mocker):
     assert input.theory == "STLS"
 
 
+@pytest.mark.unit
 def test_stls_result_inheritance():
     assert issubclass(stls.Result, rpa.Result)
 
 
+@pytest.mark.unit
 def test_stls_result_initialization(mocker):
     results = stls.Result()
     assert results.error is None
 
 
+@pytest.mark.unit
 def test_stls_guess_initialization(mocker):
     wvg = mocker.ANY
     ssf = mocker.ANY
@@ -80,12 +90,14 @@ def test_stls_guess_initialization(mocker):
     assert guess.ssf == ssf
 
 
+@pytest.mark.unit
 def test_stls_guess_initialization_defaults():
     guess = stls.Guess()
     assert guess.wvg is None
     assert guess.ssf is None
 
 
+@pytest.mark.unit
 def test_guess_to_native(mocker):
     guess = mocker.patch("qupled.native.Guess")
     native_guess = mocker.ANY

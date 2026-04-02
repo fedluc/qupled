@@ -11,6 +11,7 @@ def database_info():
     return dbInfo.to_native()
 
 
+@pytest.mark.unit
 def test_qstls_properties():
     scheme = QstlsIet(QstlsIetInput())
     assert hasattr(scheme, "idr")
@@ -26,6 +27,7 @@ def test_qstls_properties():
     assert hasattr(scheme, "bf")
 
 
+@pytest.mark.native
 def test_qstls_iet_compute(database_info):
     iet_schemes = {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}
     for scheme_name in iet_schemes:

@@ -12,10 +12,12 @@ def scheme():
     return scheme
 
 
+@pytest.mark.unit
 def test_vsstls_inheritance():
     assert issubclass(vsstls.Solver, stls.Solver)
 
 
+@pytest.mark.unit
 def test_vsstls_initialization(mocker):
     super_init = mocker.patch("qupled.schemes.stls.Solver.__init__")
     scheme = vsstls.Solver()
@@ -25,6 +27,7 @@ def test_vsstls_initialization(mocker):
     assert scheme.native_inputs_cls == native.VSStlsInput
 
 
+@pytest.mark.unit
 def test_compute(mocker, scheme):
     fill_free_energy_integrand = mocker.patch(
         "qupled.schemes.vsstls.Solver._fill_free_energy_integrand"
@@ -36,6 +39,7 @@ def test_compute(mocker, scheme):
     super_compute.assert_called_once_with(inputs)
 
 
+@pytest.mark.unit
 def test_fill_free_energy_integrand(mocker, scheme):
     get_missing_state_points = mocker.patch(
         "qupled.schemes.vsstls.Solver._get_missing_state_points"
@@ -56,6 +60,7 @@ def test_fill_free_energy_integrand(mocker, scheme):
     assert inputs.coupling == mocker.ANY
 
 
+@pytest.mark.unit
 def test_get_missing_state_points_with_no_actual_grid(mocker):
     inputs = mocker.Mock()
     coupling = 1.0
@@ -73,6 +78,7 @@ def test_get_missing_state_points_with_no_actual_grid(mocker):
     np.testing.assert_array_equal(result, expected_grid)
 
 
+@pytest.mark.unit
 def test_get_missing_state_points_with_actual_grid(mocker):
     inputs = mocker.Mock(spec=vsstls.Input)
     coupling = 1.0
@@ -95,6 +101,7 @@ def test_get_missing_state_points_with_actual_grid(mocker):
     np.testing.assert_array_equal(result, missing_points)
 
 
+@pytest.mark.unit
 def test_update_input_data(mocker, scheme):
     free_energy_integrand_mock = mocker.patch(
         "qupled.schemes.vsstls.FreeEnergyIntegrand"
@@ -110,6 +117,7 @@ def test_update_input_data(mocker, scheme):
     assert inputs.free_energy_integrand == free_energy_integrand_mock.return_value
 
 
+@pytest.mark.unit
 def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
     read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
@@ -126,6 +134,7 @@ def test_get_free_energy_ingtegrand_with_default_database_name(mocker):
     )
 
 
+@pytest.mark.unit
 def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
     read_results = mocker.patch("qupled.postprocess.output.DataBase.read_results")
     result_type = output.OutputType.SCHEME
@@ -143,10 +152,12 @@ def test_get_free_energy_ingtegrand_with_custom_database_name(mocker):
     )
 
 
+@pytest.mark.unit
 def test_vsstls_input_inheritance():
     assert issubclass(vsstls.Input, stls.Input)
 
 
+@pytest.mark.unit
 def test_vsstls_input_initialization(mocker):
     super_init = mocker.patch("qupled.schemes.stls.Input.__init__")
     free_energy_integrand = mocker.patch("qupled.schemes.vsstls.FreeEnergyIntegrand")
@@ -162,10 +173,12 @@ def test_vsstls_input_initialization(mocker):
     assert input.theory == "VSSTLS"
 
 
+@pytest.mark.unit
 def test_vsstls_result_inheritance():
     assert issubclass(vsstls.Result, vsstls.Result)
 
 
+@pytest.mark.unit
 def test_vsstls_result_initialization(mocker):
     stls_results = vsstls.Result()
     assert stls_results.free_energy_grid is None
@@ -173,6 +186,7 @@ def test_vsstls_result_initialization(mocker):
     assert stls_results.alpha is None
 
 
+@pytest.mark.unit
 def test_free_energy_integrand_initialization(mocker):
     grid = mocker.ANY
     integrand = mocker.ANY
@@ -181,12 +195,14 @@ def test_free_energy_integrand_initialization(mocker):
     assert fxci.integrand == integrand
 
 
+@pytest.mark.unit
 def test_free_energy_integrand_initialization_defaults():
     fxci = vsstls.FreeEnergyIntegrand()
     assert fxci.grid is None
     assert fxci.integrand is None
 
 
+@pytest.mark.unit
 def test_free_energy_integrand_to_native(mocker):
     FreeEnergyIntegrand = mocker.patch("qupled.native.FreeEnergyIntegrand")
     native_fxci = mocker.ANY
