@@ -56,5 +56,5 @@ package-dir = { "" = "src" }
 manylinux-x86_64-image = "ghcr.io/fedluc/qupled/qupled_manylinux_x86_64"
 manylinux-aarch64-image = "ghcr.io/fedluc/qupled/qupled_manylinux_aarch64"
 environment = "USE_MPI=OFF"
-test-command = "pytest {project}/tests --ignore={project}/tests/native"
+test-command = "pytest {project}/tests -m unit"
 before-test = "pip install pytest pytest-mock"
