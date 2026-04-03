@@ -1,4 +1,5 @@
 from enum import Enum
+from qupled.database.base_tables import RunData
 from qupled.database.database_handler import DataBaseHandler
 
 
@@ -49,7 +50,7 @@ class DataBase:
         database_name: str | None = None,
         input_names: list[str] | None = None,
         result_names: list[str] | None = None,
-    ) -> dict:
+    ) -> RunData | None:
         """
         Reads a specific run from the database.
 
@@ -61,7 +62,7 @@ class DataBase:
             result_names: A list of result names to retrieve. Defaults to None.
 
         Returns:
-            dict: A dictionary containing the run data.
+            RunData: Object containing the run data, or None if not found.
         """
         db_handler = DataBaseHandler(database_name)
         if type == OutputType.SCHEME:

@@ -14,34 +14,30 @@ rpa2D_scheme = rpa.Solver()
 rpa2D_scheme.compute(rpa.Input(10.0, 1.0, dimension=Dimension._2D))
 
 # Retrieve information from the output files
-rpa3D_data = DataBase.read_run(rpa3D_scheme.run_id)
-rpa2D_data = DataBase.read_run(rpa2D_scheme.run_id)
-rpa3D_results = rpa3D_data["results"]
-rpa3D_inputs = rpa3D_data["inputs"]
-rpa2D_results = rpa2D_data["results"]
-rpa2D_inputs = rpa2D_data["inputs"]
+run_3D = DataBase.read_run(rpa3D_scheme.run_id)
+run_2D = DataBase.read_run(rpa2D_scheme.run_id)
 
 # Compare the results for the from the two schemes in a plot
 plt.plot(
-    rpa3D_results["wvg"],
-    rpa3D_results["ssf"],
+    run_3D.results["wvg"],
+    run_3D.results["ssf"],
     color="b",
-    label=Dimension.from_dict(rpa3D_inputs["dimension"]).value,
+    label=Dimension.from_dict(run_3D.inputs["dimension"]).value,
 )
 plt.plot(
-    rpa2D_results["wvg"],
-    rpa2D_results["ssf"],
+    run_2D.results["wvg"],
+    run_2D.results["ssf"],
     color="r",
-    label=Dimension.from_dict(rpa2D_inputs["dimension"]).value,
+    label=Dimension.from_dict(run_2D.inputs["dimension"]).value,
 )
 plt.legend(loc="lower right")
 plt.xlabel("Wave vector")
 plt.ylabel("Static structure factor")
 plt.title(
     "State point : (coupling = "
-    + str(rpa3D_inputs["coupling"])
+    + str(run_3D.inputs["coupling"])
     + ", degeneracy = "
-    + str(rpa3D_inputs["degeneracy"])
+    + str(run_3D.inputs["degeneracy"])
     + ")"
 )
 plt.show()
