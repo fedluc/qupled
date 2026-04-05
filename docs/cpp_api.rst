@@ -111,16 +111,3 @@ Utility Classes
 
 .. doxygenfile:: util/format.hpp
    :project: qupled
-
-Class Hierarchy
----------------
-
-Solver classes
-~~~~~~~~~~~~~~
-
-.. graphviz:: _generated/cpp_solvers.dot
-
-Input classes
-~~~~~~~~~~~~~
-
-.. graphviz:: _generated/cpp_inputs.dot
