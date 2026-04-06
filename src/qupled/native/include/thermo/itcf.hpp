@@ -115,12 +115,20 @@ namespace thermoUtil {
      */
     void compute2D() override;
     /**
+     * @brief Compute the ITCF for 3D systems at zero temperature.
+     */
+    void compute3DGround();
+    /**
+     * @brief Compute the ITCF for 3D systems at finite temperature.
+     */
+    void compute3DFinite();
+    /**
      * @brief 3D integrand over auxiliary momentum @p y.
      *
      * Evaluates the ITCF integrand for 3D systems at the specified tau.
      * @param y Auxiliary momentum variable.
      */
-    double integrand(const double &y) const;
+    double integrand3D(const double &y) const;
     /**
      * @brief 2D integrand over auxiliary momentum @p y.
      *

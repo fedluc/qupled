@@ -44,30 +44,21 @@ namespace thermoUtil {
         idr0(idr0_),
         res(numUtil::NaN) {
     // Throw error message for ground state calculations
-    if (in->getDegeneracy() == 0.0) {
-      MPIUtil::throwError("Ground state calculations of the imaginary-time "
-                          "correlation function are not implemented.");
+    if (in->getDegeneracy() == 0.0
+        && in->getDimension() == dimensionsUtil::Dimension::D2) {
+      MPIUtil::throwError(
+          "Ground state calculations of the imaginary-time "
+          "correlation function in two dimensions are not implemented.");
     }
   }
 
   double ItcfNonInteracting::get() {
-    assert(in->getDegeneracy() > 0.0);
-    // For tau = 0, delegate to the Ssf calculation
-    if (tau == 0.0) {
-      shared_ptr<Integrator2D> itg2 =
-          make_shared<Integrator2D>(in->getIntError());
-      HFUtil::Ssf ssfCalc(
-          in, x, mu, yMin, yMax, itg, vector<double>(), itg2, idr0);
-      return ssfCalc.get();
-    }
     compute(in->getDimension());
     return res;
   }
 
   void ItcfNonInteracting::compute3D() {
-    auto func = [&](const double &y) -> double { return integrand(y); };
-    itg->compute(func, ItgParam(yMin, yMax));
-    res = itg->getSolution();
+    (in->getDegeneracy() == 0.0) ? compute3DGround() : compute3DFinite();
   }
 
   void ItcfNonInteracting::compute2D() {
@@ -81,7 +72,44 @@ namespace thermoUtil {
     }
   }
 
-  double ItcfNonInteracting::integrand(const double &y) const {
+  void ItcfNonInteracting::compute3DFinite() {
+    // For tau = 0, delegate to the Ssf calculation
+    if (tau == 0.0) {
+      shared_ptr<Integrator2D> itg2 =
+          make_shared<Integrator2D>(in->getIntError());
+      HFUtil::Ssf ssf(in, x, mu, yMin, yMax, itg, vector<double>(), itg2, idr0);
+      res = ssf.get();
+      return;
+    }
+    auto func = [&](const double &y) -> double { return integrand3D(y); };
+    itg->compute(func, ItgParam(yMin, yMax));
+    res = itg->getSolution();
+  }
+
+  void ItcfNonInteracting::compute3DGround() {
+    // For tau = 0, delegate to the Ssf calculation
+    if (tau == 0.0) {
+      HFUtil::SsfGround ssf(x);
+      res = ssf.get();
+      return;
+    }
+    const double xt = x * tau;
+    const double xt3 = xt * xt * xt;
+    const double fact = 3.0 / 16.0 / xt3;
+    const double txtp1 = 2.0 * xt + 1.0;
+    const double xtxm2 = xt * (x - 2.0);
+    if (x == 0.0) {
+      res = 0.0;
+    } else if (x < 2.0) {
+      const double x2t2 = 2.0 * x * xt;
+      res = fact * (x2t2 - exp(xtxm2) * (1.0 - exp(-x2t2)) * txtp1);
+    } else {
+      const double em4xt = exp(-4.0 * xt);
+      res = fact * exp(-xtxm2) * (txtp1 * em4xt + 2.0 * xt - 1.0);
+    }
+  }
+
+  double ItcfNonInteracting::integrand3D(const double &y) const {
     const double Theta = in->getDegeneracy();
     const double y2 = y * y;
     if (x > 0.0) {
