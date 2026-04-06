@@ -197,10 +197,24 @@ namespace thermoUtil {
      */
     void compute2D() override;
     /**
+     * @brief Compute the ITCF for 3D systems at zero temperature.
+     */
+    void compute3DGround();
+    /**
+     * @brief Compute the ITCF for 3D systems at finite temperature.
+     */
+    void compute3DFinite();
+    /**
      * @brief Compute the Matsubara frequency summation.
      * @return Sum over Matsubara frequencies weighted by cos(2*pi*l*tau).
      */
     double computeMatsubaraSummation() const;
+    /**
+     * @brief Integrand for the zero-temperature frequency integral.
+     * @param Omega Real frequency value.
+     * @return Value of the integrand at @p Omega.
+     */
+    double integrandGround(const double &Omega) const;
   };
 
 } // namespace thermoUtil

@@ -62,6 +62,14 @@ namespace thermoUtil {
   }
 
   void ItcfNonInteracting::compute2D() {
+    // For tau = 0, delegate to the Ssf calculation
+    if (tau == 0.0) {
+      shared_ptr<Integrator2D> itg2 =
+          make_shared<Integrator2D>(in->getIntError());
+      HFUtil::Ssf ssf(in, x, mu, yMin, yMax, itg, vector<double>(), itg2, idr0);
+      res = ssf.get();
+      return;
+    }
     if (x > 0.0) {
       auto func = [&](const double &y) -> double { return integrand2D(y); };
       itg->compute(func, ItgParam(yMin, yMax));
@@ -158,35 +166,60 @@ namespace thermoUtil {
         lfc(lfc_),
         idr(idr_),
         res(numUtil::NaN) {
-    if (in->getDegeneracy() == 0.0) {
+    if (in->getDegeneracy() == 0.0
+        && in->getDimension() == dimensionsUtil::Dimension::D2) {
       MPIUtil::throwError("Ground state calculations of the imaginary-time "
                           "correlation function are not implemented.");
     }
   }
 
   double Itcf::get() {
-    assert(in->getDegeneracy() > 0.0);
     if (x == 0.0) return 0.0;
     if (in->getCoupling() == 0.0) return itcfHF;
-    // For tau = 0, delegate to the Ssf calculation
-    if (tau == 0.0) {
-      RpaUtil::Ssf ssfCalc(x, itcfHF, lfc, in, idr);
-      return ssfCalc.get();
-    }
     compute(in->getDimension());
     return res;
   }
 
   void Itcf::compute3D() {
+    (in->getDegeneracy() == 0.0) ? compute3DGround() : compute3DFinite();
+  }
+
+  void Itcf::compute2D() {
+    // For tau = 0, delegate to the Ssf calculation
+    if (tau == 0.0) {
+      RpaUtil::Ssf ssf(x, itcfHF, lfc, in, idr);
+      res = ssf.get();
+      return;
+    }
+    const double Theta = in->getDegeneracy();
+    const double suml = computeMatsubaraSummation();
+    res = itcfHF - ip() * Theta * suml;
+  }
+
+  void Itcf::compute3DFinite() {
+    // For tau = 0, delegate to the Ssf calculation
+    if (tau == 0.0) {
+      RpaUtil::Ssf ssf(x, itcfHF, lfc, in, idr);
+      res = ssf.get();
+      return;
+    }
     const double Theta = in->getDegeneracy();
     const double suml = computeMatsubaraSummation();
     res = itcfHF - 1.5 * ip() * Theta * suml;
   }
 
-  void Itcf::compute2D() {
-    const double Theta = in->getDegeneracy();
-    const double suml = computeMatsubaraSummation();
-    res = itcfHF - ip() * Theta * suml;
+  void Itcf::compute3DGround() {
+    // For tau = 0, delegate to the Ssf calculation
+    auto itg = std::make_shared<Integrator1D>(in->getIntError());
+    if (tau == 0.0) {
+      RpaUtil::SsfGround ssf(x, itcfHF, lfc, itg, in);
+      res = ssf.get();
+      return;
+    }
+    const double OmegaMax = in->getFrequencyCutoff();
+    auto func = [&](const double &y) -> double { return integrandGround(y); };
+    itg->compute(func, ItgParam(0, OmegaMax));
+    res = 1.5 / (M_PI)*itg->getSolution() + itcfHF;
   }
 
   double Itcf::computeMatsubaraSummation() const {
@@ -202,6 +235,11 @@ namespace thermoUtil {
       suml += (l == 0) ? f : 2.0 * f * cosTerm;
     }
     return suml;
+  }
+
+  double Itcf::integrandGround(const double &Omega) const {
+    const double idr = HFUtil::IdrGround(x, Omega).get();
+    return (idr / (1.0 + ip() * idr * (1.0 - lfc[0])) - idr) * exp(-Omega * tau);
   }
 
 } // namespace thermoUtil
