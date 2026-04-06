@@ -24,7 +24,7 @@ namespace thermoUtil {
      * @brief Construct the base with quantities needed for ITCF evaluation.
      * @param x_   Wave-vector value.
      * @param in_  Shared pointer to the input parameters.
-     * @param tau_ Imaginary time in [0, 1] (normalised by beta).
+     * @param tau_ imaginary time.
      */
     ItcfBase(const double &x_,
              const std::shared_ptr<const Input> in_,
@@ -39,7 +39,7 @@ namespace thermoUtil {
     /** @brief Input parameters. */
     const std::shared_ptr<const Input> in;
 
-    /** @brief Normalised imaginary time in [0, 1]. */
+    /** @brief Imaginary time. */
     const double tau;
 
     /** @brief Normalized interaction potential at the current wave-vector. */
@@ -65,7 +65,7 @@ namespace thermoUtil {
      * calculation.
      * @param x_     Wave-vector value.
      * @param in_    Shared pointer to the input parameters.
-     * @param tau_   Imaginary time in [0, 1] (normalised by beta).
+     * @param tau_   Imaginary time.
      * @param mu_    Chemical potential.
      * @param yMin_  Lower integration limit.
      * @param yMax_  Upper integration limit.
@@ -135,8 +135,9 @@ namespace thermoUtil {
    * temperature.
    *
    * Evaluates F(x, tau) = F_HF(x, tau) minus the Matsubara correction sum
-   * weighted by cos(2*pi*l*tau). The SSF is recovered as the special case
-   * tau = 0.
+   * weighted by cos(2*pi*l*tau*Theta), where tau is the imaginary time
+   * and Theta is the degeneracy parameter. The SSF is recovered as the special
+   * case tau = 0.
    */
   class Itcf : public ItcfBase, public dimensionsUtil::DimensionsHandler {
 
@@ -146,7 +147,7 @@ namespace thermoUtil {
      * @brief Construct for a finite-temperature RPA ITCF calculation.
      * @param x_      Wave-vector value.
      * @param in_     Shared pointer to the input parameters.
-     * @param tau_    Imaginary time in [0, 1] (normalised by beta).
+     * @param tau_    Imaginary time.
      * @param itcfHF_ HF imaginary-time correlation function at this wave-vector
      *                and imaginary time tau.
      * @param lfc_    Span over the local field correction array.

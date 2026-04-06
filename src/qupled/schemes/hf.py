@@ -316,41 +316,84 @@ class Result:
         Compute the radial distribution function (RDF) for the system.
 
         Args:
+            dimension: Dimensionality of the system.
             rdf_grid (np.ndarray | None, optional): A 1D array specifying the grid points
                 at which the RDF is computed. If None, a default grid ranging from 0.0
                 to 10.0 with a step size of 0.01 is used.
 
+        Raises:
+            ValueError: If the wave-vector grid (wvg) or the static structure factor (ssf)
+                is not available.
+
         Returns:
-            None: The computed RDF is stored in the `self.rdf` attribute.
+            None: The computed RDF is stored in the `self.rdf` and `self.rdf_grid` attributes.
         """
+        if self.wvg is None or self.ssf is None:
+            raise ValueError(
+                "Both wave-vector grid (wvg) and static structure factor (ssf) must be available to compute the radial distribution function."
+            )
         native_dimension = getattr(native.Dimension, dimension.value)
-        if self.wvg is not None and self.ssf is not None:
-            self.rdf_grid = (
-                rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
-            )
-            self.rdf = native.compute_rdf(
-                self.rdf_grid, self.wvg, self.ssf, native_dimension
-            )
+        self.rdf_grid = rdf_grid if rdf_grid is not None else np.arange(0.0, 10.0, 0.01)
+        self.rdf = native.compute_rdf(
+            self.rdf_grid, self.wvg, self.ssf, native_dimension
+        )
 
     def compute_itcf(self, inputs: Input, tau: np.ndarray | None = None):
         """
         Compute the imaginary-time correlation function (ITCF) for the system.
 
+        The imaginary-time grid is in absolute units [0, 1/theta], where theta is
+        the degeneracy parameter. For ground-state calculations (theta = 0), tau is
+        unbounded and defaults to np.arange(0.0, 10.1, 0.1). For finite-temperature
+        calculations, tau is clipped to [0, 1/theta] and defaults to
+        np.arange(0.0, 1.1, 0.1) / theta.
+
         Args:
-            tau (np.ndarray | None, optional): A 1D array specifying the imaginary-time points
-                at which the ITCF is computed. If None, a default grid ranging from 0.0
-                to 10.0 with a step size of 0.01 is used.
+            inputs: Input parameters used for the ITCF computation.
+            tau (np.ndarray | None, optional): A 1D array of imaginary-time points in
+                absolute units [0, 1/theta]. If None, a default grid is generated based
+                on the degeneracy parameter.
+
+        Raises:
+            ValueError: If the wave-vector grid (wvg) or the local field correction (lfc)
+                is not available.
 
         Returns:
-            None: The computed ITCF is stored in the `self.itcf` attribute.
+            None: The computed ITCF and imaginary-time grid are stored in the `self.itcf`
+                and `self.tau` attributes respectively.
         """
-        if self.wvg is not None and self.lfc is not None:
-            self.tau = tau if tau is not None else np.arange(0.0, 0.6, 0.1)
-            native_inputs = native.Input()
-            inputs.to_native(native_inputs)
-            self.itcf = native.compute_itcf_non_interacting(
-                native_inputs, self.wvg, self.tau, self.chemical_potential, self.idr
+        if self.wvg is None or self.lfc is None:
+            raise ValueError(
+                "Both wave-vector grid (wvg) and local field correction (lfc) must be available to compute the imaginary-time correlation function."
             )
+        theta = inputs.degeneracy
+        is_ground_state = theta == 0.0
+        if tau is None:
+            self.tau = (
+                np.arange(0.0, 10.1, 0.1)
+                if is_ground_state
+                else np.arange(0.0, 1.1, 0.1) * 1.0 / theta
+            )
+        else:
+            self.tau = tau if is_ground_state else [x for x in tau if x <= 1.0 / theta]
+        self.itcf = self._invoke_native_itcf(inputs)
+
+    def _invoke_native_itcf(self, inputs: Input):
+        """
+        Invoke the native non-interacting computation of the imaginary-time
+        correlation function (ITCF).
+
+        Args:
+            inputs: Input parameters for the ITCF computation.
+
+        Returns:
+            np.ndarray: The computed non-interacting ITCF values.
+        """
+        native_inputs = native.Input()
+        inputs.to_native(native_inputs)
+        return native.compute_itcf_non_interacting(
+            native_inputs, self.wvg, self.tau, self.chemical_potential, self.idr
+        )
 
 
 @serialize.serializable_dataclass

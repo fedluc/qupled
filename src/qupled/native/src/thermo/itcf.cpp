@@ -12,6 +12,19 @@ using ItgParam = Integrator1D::Param;
 namespace thermoUtil {
 
   // -----------------------------------------------------------------
+  // ItcfBase class
+  // -----------------------------------------------------------------
+
+  double ItcfBase::ip() const {
+    const double rs = in->getCoupling();
+    if (in->getDimension() == dimensionsUtil::Dimension::D2) {
+      return sqrt(2.0) * rs / x;
+    } else {
+      return 4.0 * numUtil::lambda * rs / (M_PI * x * x);
+    }
+  }
+
+  // -----------------------------------------------------------------
   // ItcfNonInteracting class
   // -----------------------------------------------------------------
 
@@ -74,7 +87,7 @@ namespace thermoUtil {
     if (x > 0.0) {
       const double xy = x * y;
       const double halfArg = xy / (2.0 * Theta);
-      const double tauArg = xy / Theta * (tau - 0.5);
+      const double tauArg = xy * tau - halfArg;
       const double ymx = y - x;
       const double ypx = y + x;
       const double logNum = mu - ymx * ymx / (4.0 * Theta);
@@ -88,8 +101,9 @@ namespace thermoUtil {
   double ItcfNonInteracting::integrand2D(const double &y) const {
     const double Theta = in->getDegeneracy();
     if (x > 0.0) {
-      const double halfArg = x * y / (2.0 * Theta);
-      const double tauArg = x * y / Theta * (tau - 0.5);
+      const double xy = x * y;
+      const double halfArg = xy / (2.0 * Theta);
+      const double tauArg = xy * tau - halfArg;
       const double ymx = y - x;
       const double ypx = y + x;
       const double eta1 = mu - ymx * ymx / (4.0 * Theta);
@@ -99,19 +113,6 @@ namespace thermoUtil {
       return 0.5 * sqrt(Theta) * cosh(tauArg) / sinh(halfArg) * fdDiff / M_PI;
     }
     return 0.0;
-  }
-
-  // -----------------------------------------------------------------
-  // ItcfBase class
-  // -----------------------------------------------------------------
-
-  double ItcfBase::ip() const {
-    const double rs = in->getCoupling();
-    if (in->getDimension() == dimensionsUtil::Dimension::D2) {
-      return sqrt(2.0) * rs / x;
-    } else {
-      return 4.0 * numUtil::lambda * rs / (M_PI * x * x);
-    }
   }
 
   // -----------------------------------------------------------------
@@ -162,13 +163,14 @@ namespace thermoUtil {
 
   double Itcf::computeMatsubaraSummation() const {
     const bool isStatic = lfc.size() == 1;
+    const double &Theta = in->getDegeneracy();
     double suml = 0.0;
     for (size_t l = 0; l < idr.size(); ++l) {
       const double &idrl = idr[l];
       const double &lfcl = (isStatic) ? lfc[0] : lfc[l];
       const double denom = 1.0 + ip() * idrl * (1.0 - lfcl);
       const double f = idrl * idrl * (1.0 - lfcl) / denom;
-      const double cosTerm = (l == 0) ? 1.0 : cos(2.0 * M_PI * l * tau);
+      const double cosTerm = (l == 0) ? 1.0 : cos(2.0 * M_PI * l * tau * Theta);
       suml += (l == 0) ? f : 2.0 * f * cosTerm;
     }
     return suml;

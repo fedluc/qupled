@@ -1,10 +1,9 @@
 import numpy as np
 
-from qupled import native
 from qupled.database.base_tables import ConflictMode
 from qupled.database.database_handler import DataBaseHandler
 from qupled.postprocess.output import DataBase, OutputType
-from qupled.schemes import hf
+from qupled.schemes import hf, rpa
 from qupled.util.dimension import Dimension
 
 
@@ -32,7 +31,7 @@ class CorrelationFunctions:
             result_names=["wvg", "ssf"],
         )
         dimension = Dimension.from_dict(data.inputs["dimension"])
-        result = hf.Result(wvg=data.results["wvg"], ssf=data.results["ssf"])
+        result = hf.Result.from_dict(data.results)
         result.compute_rdf(dimension, rdf_grid)
         db_handler = DataBaseHandler(self.database_name)
         db_handler.scheme_tables.run_id = run_id
@@ -49,10 +48,15 @@ class CorrelationFunctions:
         For HF runs, uses the non-interacting formula; all other theories use the
         interacting formula.
 
+        The imaginary-time grid is in absolute units [0, 1/theta]. If tau is not provided,
+        a default grid is generated based on the degeneracy parameter of the run (see
+        :meth:`qupled.schemes.hf.Result.compute_itcf` for details). For finite-temperature
+        runs, tau values exceeding 1/theta are silently discarded.
+
         Args:
             run_id: The ID of the scheme run.
-            tau: Imaginary-time grid points at which to evaluate the ITCF.
-                If not provided, defaults to np.arange(0.0, 0.6, 0.1).
+            tau: Imaginary-time grid points in absolute units [0, 1/theta] at which to
+                evaluate the ITCF. If not provided, a default grid is used.
         """
         data = DataBase.read_run(
             run_id,
@@ -61,30 +65,14 @@ class CorrelationFunctions:
             result_names=["wvg", "idr", "chemical_potential", "lfc"],
         )
         inputs = hf.Input.from_dict(data.inputs)
-        native_inputs = native.Input()
-        inputs.to_native(native_inputs)
-        results = data.results
-        tau = tau if tau is not None else np.arange(0.0, 0.6, 0.1)
         if data.run["theory"] == "HF":
-            itcf = native.compute_itcf_non_interacting(
-                native_inputs,
-                results["wvg"],
-                tau,
-                results["chemical_potential"],
-                results["idr"],
-            )
+            results = hf.Result.from_dict(data.results)
         else:
-            itcf = native.compute_itcf(
-                native_inputs,
-                results["wvg"],
-                tau,
-                results["chemical_potential"],
-                results["idr"],
-                results["lfc"],
-            )
+            results = rpa.Result.from_dict(data.results)
+        results.compute_itcf(inputs, tau)
         db_handler = DataBaseHandler(self.database_name)
         db_handler.scheme_tables.run_id = run_id
         db_handler.scheme_tables.insert_results(
-            {"itcf": itcf, "tau": tau},
+            {"itcf": results.itcf, "tau": results.tau},
             conflict_mode=ConflictMode.UPDATE,
         )

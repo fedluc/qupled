@@ -35,30 +35,27 @@ class Result(hf.Result):
     Class used to store the results for the :obj:`qupled.rpa.Solver` class.
     """
 
-    def compute_itcf(self, inputs: Input, tau: np.ndarray | None = None):
+    def _invoke_native_itcf(self, inputs: Input):
         """
-        Compute the imaginary-time correlation function (ITCF) for the system.
+        Invoke the native interacting computation of the imaginary-time
+        correlation function (ITCF).
 
         Args:
-            tau (np.ndarray | None, optional): A 1D array specifying the imaginary-time points
-                at which the ITCF is computed. If None, a default grid ranging from 0.0
-                to 10.0 with a step size of 0.01 is used.
+            inputs: Input parameters for the ITCF computation.
 
         Returns:
-            None: The computed ITCF is stored in the `self.itcf` attribute.
+            np.ndarray: The computed interacting ITCF values.
         """
-        if self.wvg is not None and self.lfc is not None:
-            self.tau = tau if tau is not None else np.arange(0.0, 0.6, 0.1)
-            native_inputs = native.Input()
-            inputs.to_native(native_inputs)
-            self.itcf = native.compute_itcf(
-                native_inputs,
-                self.wvg,
-                self.tau,
-                self.chemical_potential,
-                self.idr,
-                self.lfc,
-            )
+        native_inputs = native.Input()
+        inputs.to_native(native_inputs)
+        return native.compute_itcf(
+            native_inputs,
+            self.wvg,
+            self.tau,
+            self.chemical_potential,
+            self.idr,
+            self.lfc,
+        )
 
 
 if __name__ == "__main__":
