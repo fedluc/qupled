@@ -380,19 +380,24 @@ class Result:
 
     def _invoke_native_itcf(self, inputs: Input):
         """
-        Invoke the native non-interacting computation of the imaginary-time
-        correlation function (ITCF).
+        Invoke the native computation of the imaginary-time correlation function
+        (ITCF).
 
         Args:
             inputs: Input parameters for the ITCF computation.
 
         Returns:
-            np.ndarray: The computed non-interacting ITCF values.
+            np.ndarray: The computed ITCF values.
         """
         native_inputs = native.Input()
         inputs.to_native(native_inputs)
-        return native.compute_itcf_non_interacting(
-            native_inputs, self.wvg, self.tau, self.chemical_potential, self.idr
+        return native.compute_itcf(
+            native_inputs,
+            self.wvg,
+            self.tau,
+            self.chemical_potential,
+            self.idr,
+            self.lfc,
         )
 
 

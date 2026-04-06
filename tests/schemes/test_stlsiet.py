@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from qupled.schemes import stls, stlsiet
-from qupled.postprocess import output
 
 
 @pytest.mark.unit

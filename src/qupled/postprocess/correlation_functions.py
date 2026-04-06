@@ -3,7 +3,7 @@ import numpy as np
 from qupled.database.base_tables import ConflictMode
 from qupled.database.database_handler import DataBaseHandler
 from qupled.postprocess.output import DataBase, OutputType
-from qupled.schemes import hf, rpa
+from qupled.schemes import hf
 from qupled.util.dimension import Dimension
 
 
@@ -65,10 +65,7 @@ class CorrelationFunctions:
             result_names=["wvg", "idr", "chemical_potential", "lfc"],
         )
         inputs = hf.Input.from_dict(data.inputs)
-        if data.run["theory"] == "HF":
-            results = hf.Result.from_dict(data.results)
-        else:
-            results = rpa.Result.from_dict(data.results)
+        results = hf.Result.from_dict(data.results)
         results.compute_itcf(inputs, tau)
         db_handler = DataBaseHandler(self.database_name)
         db_handler.scheme_tables.run_id = run_id

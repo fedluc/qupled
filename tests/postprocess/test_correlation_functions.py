@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 
 from qupled.postprocess.correlation_functions import CorrelationFunctions
-from qupled.schemes import hf, rpa
 
 
 @pytest.fixture
@@ -106,7 +105,7 @@ def test_compute_itcf_rpa_theory(mocker, cf, read_run, db_handler, scheme_tables
     mock_results.itcf = np.array([[3.0, 4.0]])
     mock_results.tau = np.array([0.0, 0.2])
     mocker.patch("qupled.schemes.hf.Input.from_dict", return_value=mocker.Mock())
-    mocker.patch("qupled.schemes.rpa.Result.from_dict", return_value=mock_results)
+    mocker.patch("qupled.schemes.hf.Result.from_dict", return_value=mock_results)
     cf.compute_itcf(run_id=2)
     mock_results.compute_itcf.assert_called_once()
     scheme_tables.insert_results.assert_called_once_with(

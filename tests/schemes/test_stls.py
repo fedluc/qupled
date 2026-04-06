@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from qupled import native
-from qupled.postprocess import output
 from qupled.schemes import hf, rpa, stls
 
 
@@ -72,7 +71,7 @@ def test_stls_input_initialization(mocker):
 
 @pytest.mark.unit
 def test_stls_result_inheritance():
-    assert issubclass(stls.Result, rpa.Result)
+    assert issubclass(stls.Result, hf.Result)
 
 
 @pytest.mark.unit

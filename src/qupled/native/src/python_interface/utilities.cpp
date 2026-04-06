@@ -43,18 +43,6 @@ double computeFreeEnergy(const py::array_t<double> &gridIn,
   return thermoUtil::computeFreeEnergy(grid, rsu, coupling);
 }
 
-py::array computeItcfNonInteracting(const Input &in,
-                                    const py::array_t<double> &wvgIn,
-                                    const py::array_t<double> &tauValuesIn,
-                                    const double mu,
-                                    const py::array_t<double> &idrIn) {
-  const std::vector<double> wvg = toVector(wvgIn);
-  const std::vector<double> tauValues = toVector(tauValuesIn);
-  const Vector2D idr = toVector2D(idrIn);
-  return toNdArray2D(thermoUtil::computeItcfNonInteracting(
-      std::make_shared<Input>(in), wvg, tauValues, mu, idr));
-}
-
 py::array computeItcf(const Input &in,
                       const py::array_t<double> &wvgIn,
                       const py::array_t<double> &tauValuesIn,
@@ -81,10 +69,6 @@ namespace pythonWrappers {
           &computeInternalEnergy,
           "Compute the internal energy");
     m.def("compute_free_energy", &computeFreeEnergy, "Compute the free energy");
-    m.def("compute_itcf_non_interacting",
-          &computeItcfNonInteracting,
-          "Compute the non-interacting (Hartree-Fock) imaginary-time "
-          "correlation function");
     m.def("compute_itcf",
           &computeItcf,
           "Compute the imaginary-time correlation function");

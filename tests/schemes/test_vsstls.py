@@ -3,7 +3,6 @@ import pytest
 
 from qupled import native
 from qupled.schemes import stls, vsstls
-from qupled.postprocess import output
 
 
 @pytest.fixture

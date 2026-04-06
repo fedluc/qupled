@@ -384,7 +384,7 @@ def test_compute_itcf_without_results(scheme):
 @pytest.mark.unit
 def test_result_compute_itcf_with_default_grid(mocker, results, inputs):
     # inputs.degeneracy = 2.0, so default tau = np.arange(0.0, 1.1, 0.1) / 2.0
-    native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
+    native_compute_itcf = mocker.patch("qupled.native.compute_itcf")
     native_input = mocker.Mock()
     mocker.patch.object(native, "Input", return_value=native_input)
     results.wvg = np.array([1.0, 2.0, 3.0])
@@ -400,6 +400,7 @@ def test_result_compute_itcf_with_default_grid(mocker, results, inputs):
         results.tau,
         results.chemical_potential,
         results.idr,
+        results.lfc,
     )
     assert np.allclose(results.itcf, np.array([[10.0, 11.0, 12.0]]))
 
@@ -407,7 +408,7 @@ def test_result_compute_itcf_with_default_grid(mocker, results, inputs):
 @pytest.mark.unit
 def test_result_compute_itcf_with_custom_grid(mocker, results, inputs):
     # inputs.degeneracy = 2.0; all custom_tau values are <= 1/2.0, so none filtered
-    native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
+    native_compute_itcf = mocker.patch("qupled.native.compute_itcf")
     native_input = mocker.Mock()
     mocker.patch.object(native, "Input", return_value=native_input)
     results.wvg = np.array([1.0, 2.0, 3.0])
@@ -424,6 +425,7 @@ def test_result_compute_itcf_with_custom_grid(mocker, results, inputs):
         results.tau,
         results.chemical_potential,
         results.idr,
+        results.lfc,
     )
     assert np.allclose(results.itcf, np.array([[13.0, 14.0, 15.0]]))
 
@@ -447,7 +449,7 @@ def test_result_compute_itcf_missing_lfc_raises(results, inputs):
 @pytest.mark.unit
 def test_result_compute_itcf_tau_clipped_to_beta(mocker, results, inputs):
     # tau values above 1/theta should be discarded (theta=2.0, beta=0.5)
-    mocker.patch("qupled.native.compute_itcf_non_interacting")
+    mocker.patch("qupled.native.compute_itcf")
     mocker.patch.object(native, "Input")
     results.wvg = np.array([1.0, 2.0, 3.0])
     results.lfc = np.array([4.0, 5.0, 6.0])
@@ -460,10 +462,11 @@ def test_result_compute_itcf_tau_clipped_to_beta(mocker, results, inputs):
 
 @pytest.mark.unit
 def test_result_invoke_native_itcf(mocker, results, inputs):
-    native_compute_itcf = mocker.patch("qupled.native.compute_itcf_non_interacting")
+    native_compute_itcf = mocker.patch("qupled.native.compute_itcf")
     native_input = mocker.Mock()
     mocker.patch.object(native, "Input", return_value=native_input)
     results.wvg = np.array([1.0, 2.0, 3.0])
+    results.lfc = np.array([4.0, 5.0, 6.0])
     results.tau = np.array([0.0, 0.1, 0.2])
     results.chemical_potential = 0.5
     results.idr = np.array([7.0, 8.0, 9.0])
@@ -476,6 +479,7 @@ def test_result_invoke_native_itcf(mocker, results, inputs):
         results.tau,
         results.chemical_potential,
         results.idr,
+        results.lfc,
     )
     assert np.allclose(result, expected)
 
