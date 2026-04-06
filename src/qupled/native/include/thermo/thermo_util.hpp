@@ -107,10 +107,12 @@ namespace thermoUtil {
                                      const Vector2D &idr);
 
   /**
-   * @brief Compute the RPA imaginary-time correlation function.
+   * @brief Compute the imaginary-time correlation function.
    *
-   * Evaluates the RPA ITCF by first computing the HF contribution and then
-   * applying RPA corrections using the local field correction.
+   * First computes the non-interacting (HF) contribution. For HF theory
+   * (@p in->getTheory() == "HF") the result is returned immediately. For all
+   * other theories the interacting correction is applied using the local field
+   * correction.
    *
    * @param in         Shared pointer to the input parameters.
    * @param wvg        Wave-vector grid.
@@ -119,7 +121,8 @@ namespace thermoUtil {
    * @param idr        Ideal density response (rows = wave-vectors, columns =
    *                   Matsubara frequencies).
    * @param lfc        Local field correction (rows = wave-vectors, columns =
-   *                   Matsubara frequencies or 1 for static LFC).
+   *                   Matsubara frequencies or 1 for static LFC). Ignored for
+   *                   HF theory.
    * @return 2D vector containing ITCF values (rows = wave-vectors, columns =
    * tau values).
    */

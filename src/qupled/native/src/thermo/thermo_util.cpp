@@ -65,16 +65,31 @@ namespace thermoUtil {
     return rdf;
   }
 
-  Vector2D computeItcfNonInteracting(const std::shared_ptr<const Input> &in,
-                                     const std::vector<double> &wvg,
-                                     const std::vector<double> &tauValues,
-                                     const double mu,
-                                     const Vector2D &idr) {
-    // Validate input sizes
+  Vector2D
+  computeItcfNonInteractingGround(const std::shared_ptr<const Input> &in,
+                                  const std::vector<double> &wvg,
+                                  const std::vector<double> &tauValues) {
+    const size_t nx = wvg.size();
+    const size_t ntau = tauValues.size();
+    Vector2D result(nx, ntau);
+    for (size_t i = 0; i < nx; ++i) {
+      for (size_t j = 0; j < ntau; ++j) {
+        ItcfNonInteractingGround itcfTmp(wvg[i], in, tauValues[j]);
+        result(i, j) = itcfTmp.get();
+      }
+    }
+    return result;
+  }
+
+  Vector2D
+  computeItcfNonInteractingFinite(const std::shared_ptr<const Input> &in,
+                                  const std::vector<double> &wvg,
+                                  const std::vector<double> &tauValues,
+                                  const double mu,
+                                  const Vector2D &idr) {
     if (wvg.size() != idr.size(0)) {
       MPIUtil::throwError("Input array sizes must match");
     }
-    if (wvg.empty() || tauValues.empty()) { return Vector2D(); }
     using ItgType = Integrator1D::Type;
     auto itg = make_shared<Integrator1D>(ItgType::DEFAULT, in->getIntError());
     const size_t nx = wvg.size();
@@ -96,18 +111,43 @@ namespace thermoUtil {
     return result;
   }
 
-  Vector2D computeItcf(const std::shared_ptr<const Input> &in,
-                       const std::vector<double> &wvg,
-                       const std::vector<double> &tauValues,
-                       const double mu,
-                       const Vector2D &idr,
-                       const Vector2D &lfc) {
-    // Validate input sizes
-    if (wvg.size() != idr.size(0) || wvg.size() != lfc.size(0)) {
+  Vector2D computeItcfNonInteracting(const std::shared_ptr<const Input> &in,
+                                     const std::vector<double> &wvg,
+                                     const std::vector<double> &tauValues,
+                                     const double mu,
+                                     const Vector2D &idr) {
+    if (wvg.empty() || tauValues.empty()) { return Vector2D(); }
+    if (in->getDegeneracy() == 0.0) {
+      return computeItcfNonInteractingGround(in, wvg, tauValues);
+    }
+    return computeItcfNonInteractingFinite(in, wvg, tauValues, mu, idr);
+  }
+
+  void applyItcfGroundCorrection(const std::shared_ptr<const Input> &in,
+                                 const std::vector<double> &wvg,
+                                 const std::vector<double> &tauValues,
+                                 const Vector2D &lfc,
+                                 Vector2D &result) {
+    auto itg = make_shared<Integrator1D>(in->getIntError());
+    const size_t nx = wvg.size();
+    const size_t ntau = tauValues.size();
+    for (size_t i = 0; i < nx; ++i) {
+      for (size_t j = 0; j < ntau; ++j) {
+        ItcfGround itcfTmp(wvg[i], in, tauValues[j], result(i, j), lfc[i], itg);
+        result(i, j) = itcfTmp.get();
+      }
+    }
+  }
+
+  void applyItcfFiniteCorrection(const std::shared_ptr<const Input> &in,
+                                 const std::vector<double> &wvg,
+                                 const std::vector<double> &tauValues,
+                                 const Vector2D &idr,
+                                 const Vector2D &lfc,
+                                 Vector2D &result) {
+    if (wvg.size() != idr.size(0)) {
       MPIUtil::throwError("Input array sizes must match");
     }
-    if (wvg.empty() || tauValues.empty()) { return Vector2D(); }
-    Vector2D result = computeItcfNonInteracting(in, wvg, tauValues, mu, idr);
     const size_t nx = wvg.size();
     const size_t ntau = tauValues.size();
     for (size_t i = 0; i < nx; ++i) {
@@ -115,6 +155,25 @@ namespace thermoUtil {
         Itcf itcfTmp(wvg[i], in, tauValues[j], result(i, j), lfc[i], idr[i]);
         result(i, j) = itcfTmp.get();
       }
+    }
+  }
+
+  Vector2D computeItcf(const std::shared_ptr<const Input> &in,
+                       const std::vector<double> &wvg,
+                       const std::vector<double> &tauValues,
+                       const double mu,
+                       const Vector2D &idr,
+                       const Vector2D &lfc) {
+    if (wvg.empty() || tauValues.empty()) { return Vector2D(); }
+    Vector2D result = computeItcfNonInteracting(in, wvg, tauValues, mu, idr);
+    if (in->getTheory() == "HF") { return result; }
+    if (wvg.size() != lfc.size(0)) {
+      MPIUtil::throwError("Input array sizes must match");
+    }
+    if (in->getDegeneracy() == 0.0) {
+      applyItcfGroundCorrection(in, wvg, tauValues, lfc, result);
+    } else {
+      applyItcfFiniteCorrection(in, wvg, tauValues, idr, lfc, result);
     }
     return result;
   }

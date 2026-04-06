@@ -1,7 +1,7 @@
 import pytest
 
 from qupled import native
-from qupled.schemes import esa, hf, rpa
+from qupled.schemes import esa, hf
 
 
 @pytest.mark.unit

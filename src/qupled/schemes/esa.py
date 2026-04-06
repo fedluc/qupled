@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from qupled import native
-from qupled.schemes import hf, rpa
+from qupled.schemes import hf
 from qupled.util import serialize
 
 
@@ -15,7 +15,7 @@ class Solver(hf.Solver):
 
     def __init__(self):
         super().__init__()
-        self.results: rpa.Result = rpa.Result()
+        self.results: hf.Result = hf.Result()
         # Undocumented properties
         self.native_scheme_cls = native.ESA
 
@@ -30,4 +30,4 @@ class Input(hf.Input):
 
 
 if __name__ == "__main__":
-    Solver.run_mpi_worker(Input, rpa.Result)
+    Solver.run_mpi_worker(Input, hf.Result)
