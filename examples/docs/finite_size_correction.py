@@ -31,10 +31,8 @@ for run_id in run_ids:
     run_data = output.DataBase.read_run(
         run_id, type=output.OutputType.FINITE_SIZE_CORRECTION
     )
-    run = run_data["run"]
-    results = run_data["results"]
-    inputs = run_data["inputs"]
-    print(
-        f"│ {inputs['number_of_particles']:>{col1}} │ {results['uint']:>{col2}.6e} │ {results['fxc']:>{col3}.6e} │"
-    )
+    number_of_particles = run_data.inputs["number_of_particles"]
+    uint = run_data.results["uint"]
+    fxc = run_data.results["fxc"]
+    print(f"│ {number_of_particles:>{col1}} │ {uint:>{col2}.6e} │ {fxc:>{col3}.6e} │")
 print(bot)

@@ -1,6 +1,7 @@
 import io
 import json
 import struct
+from dataclasses import dataclass
 from enum import Enum
 from collections.abc import Callable
 
@@ -27,6 +28,13 @@ class RunStatus(Enum):
 class ConflictMode(Enum):
     FAIL = "FAIL"
     UPDATE = "UPDATE"
+
+
+@dataclass
+class RunData:
+    run: dict
+    inputs: dict
+    results: dict
 
 
 class BaseTables:
@@ -134,7 +142,7 @@ class BaseTables:
         run_id: int,
         input_names: list[str] | None = None,
         result_names: list[str] | None = None,
-    ) -> dict:
+    ) -> RunData | None:
         """
         Retrieves data for a specific run, including its inputs and results.
 
@@ -144,22 +152,21 @@ class BaseTables:
             result_names (list[str] | None): Optional list of result names to filter.
 
         Returns:
-            dict: Dictionary containing run, input, and result data.
+            RunData: Object containing run, input, and result data, or None if not found.
         """
         statement = sql.select(self.run_table).where(
             self.run_table.c[TableKeys.PRIMARY_KEY.value] == run_id
         )
         result = self._execute(statement).mappings().first()
-        if result is not None:
-            run_data = {key: result[key] for key in result.keys()}
-            inputs = self.get_inputs(run_id, names=input_names)
-            results = self.get_results(run_id, names=result_names)
-            return {
-                "run": run_data,
-                "inputs": inputs,
-                "results": results,
-            }
-        return {}
+        return (
+            RunData(
+                run={key: result[key] for key in result.keys()},
+                inputs=self.get_inputs(run_id, names=input_names),
+                results=self.get_results(run_id, names=result_names),
+            )
+            if result is not None
+            else None
+        )
 
     def get_inputs(self, run_id: int, names: list[str] | None = None) -> dict:
         """

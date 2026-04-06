@@ -152,11 +152,9 @@ def test_get_run_with_existing_run(mocker, tables):
     get_results.assert_called_once_with(run_id, names=None)
     execute.assert_called_once_with(statement)
     mock_result.mappings.return_value.first.assert_called_once()
-    assert run == {
-        "run": {"key": "value"},
-        "inputs": inputs,
-        "results": results,
-    }
+    assert run.run == {"key": "value"}
+    assert run.inputs == inputs
+    assert run.results == results
 
 
 @pytest.mark.unit
@@ -173,7 +171,7 @@ def test_get_run_with_non_existing_run(mocker, tables):
     sql_select.assert_called_once_with(tables.run_table)
     execute.assert_called_once_with(statement)
     mock_result.mappings.return_value.first.assert_called_once()
-    assert run == {}
+    assert run is None
 
 
 @pytest.mark.unit

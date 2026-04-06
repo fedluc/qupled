@@ -180,19 +180,16 @@ def fsc_results():
 def test_insert_run_and_get_run_without_results(tables, fsc_inputs):
     tables.insert_run(fsc_inputs)
     run_data = tables.get_run(tables.run_id, None, None)
-    run = run_data["run"]
-    inputs = run_data["inputs"]
-    results = run_data["results"]
-    assert run["theory"] == fsc_inputs.scheme.theory
-    assert run["coupling"] == fsc_inputs.scheme.coupling
-    assert run["degeneracy"] == fsc_inputs.scheme.degeneracy
-    assert run["number_of_particles"] == fsc_inputs.number_of_particles
-    assert run["scheme_run_id"] is None
-    assert isinstance(run["date"], str)
-    assert isinstance(run["time"], str)
-    assert inputs["number_of_particles"] == fsc_inputs.number_of_particles
-    assert "scheme" not in inputs
-    assert results == {}
+    assert run_data.run["theory"] == fsc_inputs.scheme.theory
+    assert run_data.run["coupling"] == fsc_inputs.scheme.coupling
+    assert run_data.run["degeneracy"] == fsc_inputs.scheme.degeneracy
+    assert run_data.run["number_of_particles"] == fsc_inputs.number_of_particles
+    assert run_data.run["scheme_run_id"] is None
+    assert isinstance(run_data.run["date"], str)
+    assert isinstance(run_data.run["time"], str)
+    assert run_data.inputs["number_of_particles"] == fsc_inputs.number_of_particles
+    assert "scheme" not in run_data.inputs
+    assert run_data.results == {}
 
 
 @pytest.mark.unit
@@ -200,20 +197,17 @@ def test_insert_run_and_get_run_with_results(tables, fsc_inputs, fsc_results):
     tables.insert_run(fsc_inputs)
     tables.insert_results(fsc_results.__dict__)
     run_data = tables.get_run(tables.run_id, None, None)
-    run = run_data["run"]
-    inputs = run_data["inputs"]
-    results = run_data["results"]
-    assert run["theory"] == fsc_inputs.scheme.theory
-    assert run["coupling"] == fsc_inputs.scheme.coupling
-    assert run["degeneracy"] == fsc_inputs.scheme.degeneracy
-    assert run["number_of_particles"] == fsc_inputs.number_of_particles
-    assert run["scheme_run_id"] is None
-    assert isinstance(run["date"], str)
-    assert isinstance(run["time"], str)
-    assert run["status"] == RunStatus.RUNNING.value
-    assert inputs["number_of_particles"] == fsc_inputs.number_of_particles
-    assert "scheme" not in inputs
-    assert np.array_equal(results["data"], fsc_results.data, equal_nan=True)
+    assert run_data.run["theory"] == fsc_inputs.scheme.theory
+    assert run_data.run["coupling"] == fsc_inputs.scheme.coupling
+    assert run_data.run["degeneracy"] == fsc_inputs.scheme.degeneracy
+    assert run_data.run["number_of_particles"] == fsc_inputs.number_of_particles
+    assert run_data.run["scheme_run_id"] is None
+    assert isinstance(run_data.run["date"], str)
+    assert isinstance(run_data.run["time"], str)
+    assert run_data.run["status"] == RunStatus.RUNNING.value
+    assert run_data.inputs["number_of_particles"] == fsc_inputs.number_of_particles
+    assert "scheme" not in run_data.inputs
+    assert np.array_equal(run_data.results["data"], fsc_results.data, equal_nan=True)
 
 
 @pytest.mark.unit
@@ -275,7 +269,7 @@ def test_update_results_allow_update(tables, fsc_inputs, fsc_results):
 def test_get_non_existing_run(tables, fsc_inputs):
     tables.insert_run(fsc_inputs)
     run_data = tables.get_run(tables.run_id + 1, None, None)
-    assert run_data == {}
+    assert run_data is None
 
 
 @pytest.mark.unit
@@ -297,7 +291,7 @@ def test_insert_run_with_results_and_delete_run(tables, fsc_inputs, fsc_results)
     tables.insert_run(fsc_inputs)
     tables.insert_results(fsc_results.__dict__)
     run_data = tables.get_run(tables.run_id, None, None)
-    assert run_data != {}
+    assert run_data is not None
     tables.delete_run(tables.run_id)
     run_data = tables.get_run(tables.run_id, None, None)
-    assert run_data == {}
+    assert run_data is None

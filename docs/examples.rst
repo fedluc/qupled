@@ -38,8 +38,8 @@ Post-process the results
 Apart from the implmented schemes, qupled also includes a set of post-processing tools that can be 
 used to further analyze the results of the calculations and extract valuable information about the system.
 
-Compute additioanl quantities
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Compute additional quantities from an existing object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example shows how the post-processing tools can be used to compute the radial distribution function 
 and the imaginary-time correlation function, two quantities that are not directly computed in the 
@@ -48,12 +48,23 @@ iterative calculations but that can be easily obtained from the results of the c
 .. literalinclude:: ../examples/docs/post_processing.py
    :language: python
 
+Compute additional quantities from the database
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The post-processing tools can also be used to compute additional quantities by reading the necessary data 
+from the database. This is particularly useful when revisiting previous calculations that were stored without
+computing the additional quantities. This example shows how to compute the  radial distribution function
+starting from run results stored in the database.
+
+.. literalinclude:: ../examples/docs/correlation_functions.py
+   :language: python
+
 Finite Size Correction
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Qupled also includes a module that can be used to compute the finite size correction to the free energy. 
 This example shows how to use this module to compute the finite size correction 
-for a 3D system at :math:`r_s=5` and :math:`\\theta=1`.
+for a 3D system at :math:`r_s=5` and :math:`\Theta=1`.
 
 .. literalinclude:: ../examples/docs/finite_size_correction.py
    :language: python

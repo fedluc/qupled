@@ -142,18 +142,15 @@ def scheme_results():
 def test_insert_run_and_get_run_without_results(tables, scheme_inputs):
     tables.insert_run(scheme_inputs)
     run_data = tables.get_run(tables.run_id, None, None)
-    run = run_data["run"]
-    inputs = run_data["inputs"]
-    results = run_data["results"]
-    assert run["theory"] == scheme_inputs.theory
-    assert run["coupling"] == scheme_inputs.coupling
-    assert run["degeneracy"] == scheme_inputs.degeneracy
-    assert isinstance(run["date"], str)
-    assert isinstance(run["time"], str)
-    assert inputs["theory"] == scheme_inputs.theory
-    assert inputs["coupling"] == scheme_inputs.coupling
-    assert inputs["degeneracy"] == scheme_inputs.degeneracy
-    assert results == {}
+    assert run_data.run["theory"] == scheme_inputs.theory
+    assert run_data.run["coupling"] == scheme_inputs.coupling
+    assert run_data.run["degeneracy"] == scheme_inputs.degeneracy
+    assert isinstance(run_data.run["date"], str)
+    assert isinstance(run_data.run["time"], str)
+    assert run_data.inputs["theory"] == scheme_inputs.theory
+    assert run_data.inputs["coupling"] == scheme_inputs.coupling
+    assert run_data.inputs["degeneracy"] == scheme_inputs.degeneracy
+    assert run_data.results == {}
 
 
 @pytest.mark.unit
@@ -161,19 +158,16 @@ def test_insert_run_and_get_run_with_results(tables, scheme_inputs, scheme_resul
     tables.insert_run(scheme_inputs)
     tables.insert_results(scheme_results.__dict__)
     run_data = tables.get_run(tables.run_id, None, None)
-    run = run_data["run"]
-    inputs = run_data["inputs"]
-    results = run_data["results"]
-    assert run["theory"] == scheme_inputs.theory
-    assert run["coupling"] == scheme_inputs.coupling
-    assert run["degeneracy"] == scheme_inputs.degeneracy
-    assert isinstance(run["date"], str)
-    assert isinstance(run["time"], str)
-    assert run["status"] == RunStatus.RUNNING.value
-    assert inputs["theory"] == scheme_inputs.theory
-    assert inputs["coupling"] == scheme_inputs.coupling
-    assert inputs["degeneracy"] == scheme_inputs.degeneracy
-    assert np.array_equal(results["data"], scheme_results.data, equal_nan=True)
+    assert run_data.run["theory"] == scheme_inputs.theory
+    assert run_data.run["coupling"] == scheme_inputs.coupling
+    assert run_data.run["degeneracy"] == scheme_inputs.degeneracy
+    assert isinstance(run_data.run["date"], str)
+    assert isinstance(run_data.run["time"], str)
+    assert run_data.run["status"] == RunStatus.RUNNING.value
+    assert run_data.inputs["theory"] == scheme_inputs.theory
+    assert run_data.inputs["coupling"] == scheme_inputs.coupling
+    assert run_data.inputs["degeneracy"] == scheme_inputs.degeneracy
+    assert np.array_equal(run_data.results["data"], scheme_results.data, equal_nan=True)
 
 
 @pytest.mark.unit
@@ -237,7 +231,7 @@ def test_update_results_allow_update(tables, scheme_inputs, scheme_results):
 def test_get_non_existing_run(tables, scheme_inputs):
     tables.insert_run(scheme_inputs)
     run_data = tables.get_run(tables.run_id + 1, None, None)
-    assert run_data == {}
+    assert run_data is None
 
 
 @pytest.mark.unit
@@ -259,7 +253,7 @@ def test_insert_run_with_results_and_delete_run(tables, scheme_inputs, scheme_re
     tables.insert_run(scheme_inputs)
     tables.insert_results(scheme_results.__dict__)
     run_data = tables.get_run(tables.run_id, None, None)
-    assert run_data != {}
+    assert run_data is not None
     tables.delete_run(tables.run_id)
     run_data = tables.get_run(tables.run_id, None, None)
-    assert run_data == {}
+    assert run_data is None
