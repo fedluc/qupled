@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
+from qupled.util.dimension import Dimension
 from qupled.postprocess.correlation_functions import CorrelationFunctions
 from qupled.postprocess.output import DataBase
 from qupled.schemes import stls
 
 # Solve an STLS scheme
 scheme = stls.Solver()
-scheme.compute(stls.Input(10.0, 1.0, mixing=0.7))
+scheme.compute(stls.Input(2.0, 1.0, dimension=Dimension._2D))
 run_id = scheme.run_id
 
 # After solving, the RDF is not yet in the database

@@ -45,9 +45,6 @@ class CorrelationFunctions:
         Compute the imaginary-time correlation function (ITCF) for an existing scheme run
         and save it back to the database.
 
-        For HF runs, uses the non-interacting formula; all other theories use the
-        interacting formula.
-
         The imaginary-time grid is in absolute units [0, 1/theta]. If tau is not provided,
         a default grid is generated based on the degeneracy parameter of the run (see
         :meth:`qupled.schemes.hf.Result.compute_itcf` for details). For finite-temperature
