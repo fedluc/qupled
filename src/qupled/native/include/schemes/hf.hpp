@@ -236,7 +236,7 @@ namespace HFUtil {
    * Uses the analytic zero-temperature Lindhard function evaluated at
    * real frequency @p Omega_ and wave-vector @p x_.
    */
-  class IdrGround {
+  class IdrGround : public dimensionsUtil::DimensionsHandler {
 
   public:
 
@@ -247,13 +247,14 @@ namespace HFUtil {
      */
     IdrGround(const double &x_, const double &Omega_)
         : x(x_),
-          Omega(Omega_) {}
+          Omega(Omega_),
+          itg(Integrator1D(Integrator1D::Type::DEFAULT, 1e-6)) {}
 
     /**
      * @brief Compute and return the ground-state IDR.
      * @return Analytic IDR value at (@p x_, @p Omega_).
      */
-    double get() const;
+    double get();
 
   private:
 
@@ -261,6 +262,17 @@ namespace HFUtil {
     const double x;
     /** @brief Real frequency. */
     const double Omega;
+    /** @brief 1D numerical integrator. */
+    const Integrator1D itg;
+    /** @brief Result of the ground-state IDR computation. */
+    double res;
+    void compute3D() override;
+    void compute2D() override;
+    /**
+     * @brief 2D integrand.
+     * @param y Auxiliary momentum variable.
+     */
+    double integrand2D(const double &y) const;
   };
 
   /**
@@ -336,7 +348,6 @@ namespace HFUtil {
     const double idr0;
     /** @brief Result of the SSF computation. */
     double res;
-
     void compute3D() override;
     void compute2D() override;
     /**

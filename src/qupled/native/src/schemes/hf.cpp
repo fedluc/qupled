@@ -307,21 +307,61 @@ double HFUtil::Idr::integrand2D(const double &y) const {
 // IdrGround class
 // -----------------------------------------------------------------
 
-// Get
-double HFUtil::IdrGround::get() const {
+double HFUtil::IdrGround::get() {
+  assert(in->getDegeneracy() == 0.0);
+  compute(in->getDimension());
+  return res;
+};
+
+// Compute for 3D systems
+void HFUtil::IdrGround::compute3D() {
+  if (x == 0.0) {
+    res = 0.0;
+  } else {
+    const double x2 = x * x;
+    const double Omega2 = Omega * Omega;
+    const double tx = 2.0 * x;
+    const double x2ptx = x2 + tx;
+    const double x2mtx = x2 - tx;
+    const double x2ptx2 = x2ptx * x2ptx;
+    const double x2mtx2 = x2mtx * x2mtx;
+    const double logarg = (x2ptx2 + Omega2) / (x2mtx2 + Omega2);
+    const double part1 = (0.5 - x2 / 8.0 + Omega2 / (8.0 * x2)) * log(logarg);
+    const double part2 =
+        0.5 * Omega * (atan(x2ptx / Omega) - atan(x2mtx / Omega));
+    res = (part1 - part2 + x) / tx;
+  }
+}
+
+// Compute for 2D systems
+void HFUtil::IdrGround::compute2D() {
+  const double Theta = in->getDegeneracy();
+  auto func = [&](const double &y) -> double { integrand2D(y); };
+  const auto itgParam = ItgParam(0.0, 1.0);
+  itg->compute(func, itgParam);
+  res = itg->getSolution();
+}
+
+// Integrand for frequency = l and wave-vector = x
+double HFUtil::IdrGround::integrand2D(const double &y) const {
+  const double Theta = in->getDegeneracy();
+  const double y2 = y * y;
   const double x2 = x * x;
-  const double Omega2 = Omega * Omega;
-  const double tx = 2.0 * x;
-  const double x2ptx = x2 + tx;
-  const double x2mtx = x2 - tx;
-  const double x2ptx2 = x2ptx * x2ptx;
-  const double x2mtx2 = x2mtx * x2mtx;
-  const double logarg = (x2ptx2 + Omega2) / (x2mtx2 + Omega2);
-  const double part1 = (0.5 - x2 / 8.0 + Omega2 / (8.0 * x2)) * log(logarg);
-  const double part2 =
-      0.5 * Omega * (atan(x2ptx / Omega) - atan(x2mtx / Omega));
-  if (x > 0.0) { return (part1 - part2 + x) / tx; }
-  return 0;
+  const double x4 = x2 * x2;
+  const double Omega2_4 = Omega * Omega / 4.0;
+  const double exp1 = x4 / 4.0 - x2 * y2 - Omega2_4;
+  double phi;
+  if (exp1 > 0.0) {
+    phi = atan(x2 * Omega2_4 / exp1) / 2.0;
+  } else {
+    phi = M_PI / 2.0 - atan(x2 * Omega2_4 / exp1) / 2.0;
+  }
+  if (x > 0.0) {
+    return 2.0 * y * 2.0 * abs(cos(phi))
+           / pow((exp1 * exp1 + x4 * Omega2_4), 0.25);
+  } else {
+    return 0.0;
+  }
 }
 
 // -----------------------------------------------------------------
