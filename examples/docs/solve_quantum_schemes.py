@@ -1,4 +1,4 @@
-from qupled.schemes import qstls, qstlsiet
+from qupled.schemes import qstls
 
 # Define a Qstls object to solve the QSTLS scheme
 scheme = qstls.Solver()

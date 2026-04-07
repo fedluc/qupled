@@ -65,7 +65,8 @@ namespace thermoUtil {
     return rdf;
   }
 
-  Vector2D computeItcfNonInteractingGround(const std::shared_ptr<const Input> &in,
+  Vector2D
+  computeItcfNonInteractingGround(const std::shared_ptr<const Input> &in,
                                   const std::vector<double> &wvg,
                                   const std::vector<double> &tauValues) {
     const size_t nx = wvg.size();
@@ -80,7 +81,8 @@ namespace thermoUtil {
     return result;
   }
 
-  Vector2D computeItcfNonInteractingFinite(const std::shared_ptr<const Input> &in,
+  Vector2D
+  computeItcfNonInteractingFinite(const std::shared_ptr<const Input> &in,
                                   const std::vector<double> &wvg,
                                   const std::vector<double> &tauValues,
                                   const double mu,

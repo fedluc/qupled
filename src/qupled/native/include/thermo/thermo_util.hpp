@@ -84,7 +84,6 @@ namespace thermoUtil {
                                  const std::vector<double> &ssf,
                                  const dimensionsUtil::Dimension &dim);
 
-
   /**
    * @brief Compute the imaginary-time correlation function.
    *

@@ -302,10 +302,9 @@ class Correction:
         Returns:
             tuple[list[float], list[float]]: Wavevector and structure factor data.
         """
-        data = self.db_handler.scheme_tables.get_run(run_id)
-        res = data.get("results", {})
-        wvg = res.get("wvg", None)
-        ssf = res.get("ssf", None)
+        results = self.db_handler.scheme_tables.get_results(run_id)
+        wvg = results.get("wvg", None)
+        ssf = results.get("ssf", None)
         if wvg is None or ssf is None:
             raise FiniteSizeCorrectionError(f"Malformed results for Run {run_id}.")
         return wvg, ssf
