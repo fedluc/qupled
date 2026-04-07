@@ -35,8 +35,8 @@ in order to plot the static structure factor for two different schemes.
 Post-process the results
 ------------------------
 
-Apart from the implmented schemes, qupled also includes a set of post-processing tools that can be 
-used to further analyze the results of the calculations and extract valuable information about the system.
+Qupled also includes a set of post-processing tools that can be  used to further analyze the results of 
+the calculations and extract valuable information about the system.
 
 Compute additional quantities from an existing object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
