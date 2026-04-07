@@ -84,27 +84,6 @@ namespace thermoUtil {
                                  const std::vector<double> &ssf,
                                  const dimensionsUtil::Dimension &dim);
 
-  /**
-   * @brief Compute the non-interacting (Hartree-Fock) imaginary-time
-   * correlation function.
-   *
-   * Evaluates the HF ITCF for the given wave-vector grid and imaginary-time
-   * values using only the ideal density response (no interactions).
-   *
-   * @param in         Shared pointer to the input parameters.
-   * @param wvg        Wave-vector grid.
-   * @param tauValues  Imaginary time values in [0, 1] (normalised by beta).
-   * @param mu         Chemical potential.
-   * @param idr        Ideal density response (rows = wave-vectors, columns =
-   *                   Matsubara frequencies).
-   * @return 2D vector containing ITCF values (rows = wave-vectors, columns =
-   * tau values).
-   */
-  Vector2D computeItcfNonInteracting(const std::shared_ptr<const Input> &in,
-                                     const std::vector<double> &wvg,
-                                     const std::vector<double> &tauValues,
-                                     const double mu,
-                                     const Vector2D &idr);
 
   /**
    * @brief Compute the imaginary-time correlation function.

@@ -65,8 +65,7 @@ namespace thermoUtil {
     return rdf;
   }
 
-  Vector2D
-  computeItcfNonInteractingGround(const std::shared_ptr<const Input> &in,
+  Vector2D computeItcfNonInteractingGround(const std::shared_ptr<const Input> &in,
                                   const std::vector<double> &wvg,
                                   const std::vector<double> &tauValues) {
     const size_t nx = wvg.size();
@@ -81,15 +80,11 @@ namespace thermoUtil {
     return result;
   }
 
-  Vector2D
-  computeItcfNonInteractingFinite(const std::shared_ptr<const Input> &in,
+  Vector2D computeItcfNonInteractingFinite(const std::shared_ptr<const Input> &in,
                                   const std::vector<double> &wvg,
                                   const std::vector<double> &tauValues,
                                   const double mu,
                                   const Vector2D &idr) {
-    if (wvg.size() != idr.size(0)) {
-      MPIUtil::throwError("Input array sizes must match");
-    }
     using ItgType = Integrator1D::Type;
     auto itg = make_shared<Integrator1D>(ItgType::DEFAULT, in->getIntError());
     const size_t nx = wvg.size();
@@ -145,9 +140,6 @@ namespace thermoUtil {
                                  const Vector2D &idr,
                                  const Vector2D &lfc,
                                  Vector2D &result) {
-    if (wvg.size() != idr.size(0)) {
-      MPIUtil::throwError("Input array sizes must match");
-    }
     const size_t nx = wvg.size();
     const size_t ntau = tauValues.size();
     for (size_t i = 0; i < nx; ++i) {
