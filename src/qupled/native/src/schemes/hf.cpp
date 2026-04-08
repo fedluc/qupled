@@ -321,7 +321,7 @@ double HFUtil::IdrGround::get() const {
   const double part2 =
       0.5 * Omega * (atan(x2ptx / Omega) - atan(x2mtx / Omega));
   if (x > 0.0) { return (part1 - part2 + x) / tx; }
-  return 0;
+  return (Omega == 0.0) ? 1.0 : 0.0;
 }
 
 // -----------------------------------------------------------------
