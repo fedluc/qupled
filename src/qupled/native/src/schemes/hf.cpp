@@ -21,9 +21,6 @@ HF::HF(const std::shared_ptr<const Input> &in_, const bool verbose_)
       inPtr(std::move(in_)),
       itg(std::make_shared<Integrator1D>(ItgType::DEFAULT,
                                          in_->getIntError())) {
-  if (in().getDegeneracy() == 0.0 && in().getDimension() == Dimension::D2) {
-    throwError("Ground state calculations in 2D are not implemented.");
-  }
   // Assemble the wave-vector grid
   buildWaveVectorGrid();
   // Allocate arrays to the correct size
@@ -38,9 +35,9 @@ HF::HF(const std::shared_ptr<const Input> &in_, const bool verbose_)
 int HF::compute() {
   try {
     init();
-    println("Structural properties calculation ...");
-    computeStructuralProperties();
-    println("Done");
+    // println("Structural properties calculation ...");
+    // computeStructuralProperties();
+    // println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;
@@ -106,7 +103,7 @@ void HF::computeIdrGround() {
   const size_t nl = idr.size(1);
   for (size_t i = 0; i < nx; ++i) {
     for (size_t l = 0; l < nl; ++l) {
-      HFUtil::IdrGround idrTmp(wvg[i], l);
+      HFUtil::IdrGround idrTmp(inPtr, wvg[i], l);
       idr(i, l) = idrTmp.get();
     }
   }
@@ -335,16 +332,19 @@ void HFUtil::IdrGround::compute3D() {
 
 // Compute for 2D systems
 void HFUtil::IdrGround::compute2D() {
-  const double Theta = in->getDegeneracy();
-  auto func = [&](const double &y) -> double { integrand2D(y); };
-  const auto itgParam = ItgParam(0.0, 1.0);
-  itg->compute(func, itgParam);
-  res = itg->getSolution();
+  if (Omega == 0.0) {
+    res = (x > 2.0) ? (1.0 - sqrt(x * x - 4.0) / x) : 1.0;
+  } else {
+    auto func = [&](const double &y) -> double { return integrand2D(y); };
+    const auto itgParam = ItgParam(0.0, 1.0);
+    itg->compute(func, itgParam);
+    res = itg->getSolution();
+  }
 }
 
-// Integrand for frequency = l and wave-vector = x
+// Integrand for finite frequency
 double HFUtil::IdrGround::integrand2D(const double &y) const {
-  const double Theta = in->getDegeneracy();
+  assert(Omega >= 0.0);
   const double y2 = y * y;
   const double x2 = x * x;
   const double x4 = x2 * x2;
@@ -357,8 +357,7 @@ double HFUtil::IdrGround::integrand2D(const double &y) const {
     phi = M_PI / 2.0 - atan(x2 * Omega2_4 / exp1) / 2.0;
   }
   if (x > 0.0) {
-    return 2.0 * y * 2.0 * abs(cos(phi))
-           / pow((exp1 * exp1 + x4 * Omega2_4), 0.25);
+    return 2.0 * y * abs(cos(phi)) / pow((exp1 * exp1 + x4 * Omega2_4), 0.25);
   } else {
     return 0.0;
   }

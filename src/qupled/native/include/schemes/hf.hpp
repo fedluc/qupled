@@ -245,10 +245,14 @@ namespace HFUtil {
      * @param x_     Wave-vector value.
      * @param Omega_ Real frequency value.
      */
-    IdrGround(const double &x_, const double &Omega_)
-        : x(x_),
+    IdrGround(const std::shared_ptr<const Input> in_,
+              const double &x_,
+              const double &Omega_)
+        : in(in_),
+          x(x_),
           Omega(Omega_),
-          itg(Integrator1D(Integrator1D::Type::DEFAULT, 1e-6)) {}
+          itg(std::make_shared<Integrator1D>(Integrator1D::Type::DEFAULT,
+                                             1e-6)) {}
 
     /**
      * @brief Compute and return the ground-state IDR.
@@ -258,12 +262,14 @@ namespace HFUtil {
 
   private:
 
+    /** @brief Input parameters. */
+    const std::shared_ptr<const Input> in;
     /** @brief Wave-vector. */
     const double x;
     /** @brief Real frequency. */
     const double Omega;
     /** @brief 1D numerical integrator. */
-    const Integrator1D itg;
+    const std::shared_ptr<Integrator1D> itg;
     /** @brief Result of the ground-state IDR computation. */
     double res;
     void compute3D() override;

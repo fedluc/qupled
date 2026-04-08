@@ -242,7 +242,7 @@ namespace thermoUtil {
   }
 
   double ItcfGround::integrand(const double &Omega) const {
-    const double idr = HFUtil::IdrGround(x, Omega).get();
+    const double idr = HFUtil::IdrGround(in, x, Omega).get();
     return (idr / (1.0 + ip() * idr * (1.0 - lfc[0])) - idr)
            * exp(-Omega * tau);
   }
