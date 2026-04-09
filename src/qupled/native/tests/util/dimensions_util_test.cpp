@@ -16,15 +16,30 @@ private:
 };
 } // namespace
 
-TEST(DimensionsUtilTest, DispatchesTo2DAnd3DImplementations) {
+TEST(DimensionsUtilTest, DispatchesD2To2DImplementation) {
   FakeDimensionsHandler handler;
 
   handler.compute(dimensionsUtil::Dimension::D2);
+
   EXPECT_EQ(handler.d2_calls, 1);
   EXPECT_EQ(handler.d3_calls, 0);
+}
+
+TEST(DimensionsUtilTest, DispatchesD3To3DImplementation) {
+  FakeDimensionsHandler handler;
 
   handler.compute(dimensionsUtil::Dimension::D3);
-  EXPECT_EQ(handler.d2_calls, 1);
+
+  EXPECT_EQ(handler.d2_calls, 0);
+  EXPECT_EQ(handler.d3_calls, 1);
+}
+
+TEST(DimensionsUtilTest, DispatchesDefaultDimensionTo3DImplementation) {
+  FakeDimensionsHandler handler;
+
+  handler.compute(dimensionsUtil::Dimension::Default);
+
+  EXPECT_EQ(handler.d2_calls, 0);
   EXPECT_EQ(handler.d3_calls, 1);
 }
 
