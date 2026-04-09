@@ -1,8 +1,5 @@
 # ------------------------------------------------------------
 # Top-level entry point for the native build.
-#
-# This file intentionally stays small and delegates implementation
-# details to module files under `cmake/`.
 # ------------------------------------------------------------
 
 # CMake and project metadata

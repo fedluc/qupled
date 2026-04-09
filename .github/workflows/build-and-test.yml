@@ -39,6 +39,7 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install tox
         ./devtool test unit
+        ./devtool test native-cpp
 
     - name: Run native tests
       if: github.event_name == 'pull_request'
