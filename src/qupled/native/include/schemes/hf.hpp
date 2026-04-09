@@ -232,16 +232,6 @@ namespace HFUtil {
 
   /**
    * @brief Computes the ideal density response at zero temperature.
-   *
-
-   * * Uses analytic zero-temperature Lindhard expressions evaluated at
-   *
-   * wave-vector @p x_ and frequency parameter @p Omega_.
-   *
-   *
-   * Normalization convention (both 2D and 3D):
-   * @f$\tilde\chi =
-   * -(2E_F/(3n))\chi@f$.
    */
   class IdrGround : public dimensionsUtil::DimensionsHandler {
 

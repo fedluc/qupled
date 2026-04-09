@@ -178,9 +178,6 @@ namespace thermoUtil {
 
     /**
      * @brief 2D inner angular integrand for ground-state ITCF.
-     *
-     * Returns zero when the particle-hole phase-space condition is not met,
-     * i.e. when y^2 + x^2 + 2xy cos(phi) - 1 < 0.
      * @param p Angular variable phi.
      */
     double integrand2DIn(const double &p) const;
@@ -239,8 +236,6 @@ namespace thermoUtil {
     void compute3D() override;
     /**
      * @brief Compute the ITCF for 2D systems.
-     *
-     * Same implementation as 3D under the unified normalization.
      */
     void compute2D() override;
     /**
