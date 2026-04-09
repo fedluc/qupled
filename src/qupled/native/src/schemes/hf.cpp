@@ -5,6 +5,7 @@
 #include "thermo/thermo_util.hpp"
 #include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
+#include <complex>
 
 using namespace std;
 using namespace dimensionsUtil;
@@ -101,9 +102,10 @@ void HF::computeIdrFinite() {
 void HF::computeIdrGround() {
   const size_t nx = idr.size(0);
   const size_t nl = idr.size(1);
+  const auto dim = in().getDimension();
   for (size_t i = 0; i < nx; ++i) {
     for (size_t l = 0; l < nl; ++l) {
-      HFUtil::IdrGround idrTmp(inPtr, wvg[i], l);
+      HFUtil::IdrGround idrTmp(dim, wvg[i], l);
       idr(i, l) = idrTmp.get();
     }
   }
@@ -133,8 +135,9 @@ void HF::computeSsfFinite() {
 }
 
 void HF::computeSsfGround() {
+  const auto dim = in().getDimension();
   for (size_t i = 0; i < wvg.size(); ++i) {
-    HFUtil::SsfGround ssfTmp(inPtr, wvg[i], itg);
+    HFUtil::SsfGround ssfTmp(dim, wvg[i]);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -305,8 +308,7 @@ double HFUtil::Idr::integrand2D(const double &y) const {
 // -----------------------------------------------------------------
 
 double HFUtil::IdrGround::get() {
-  assert(in->getDegeneracy() == 0.0);
-  compute(in->getDimension());
+  compute(dim);
   return res;
 };
 
@@ -332,36 +334,15 @@ void HFUtil::IdrGround::compute3D() {
 
 // Compute for 2D systems
 void HFUtil::IdrGround::compute2D() {
-  if (Omega == 0.0) {
-    res = (x > 2.0) ? (1.0 - sqrt(x * x - 4.0) / x) : 1.0;
-  } else {
-    auto func = [&](const double &y) -> double { return integrand2D(y); };
-    const auto itgParam = ItgParam(0.0, 1.0);
-    itg->compute(func, itgParam);
-    res = itg->getSolution();
+  if (x == 0.0) {
+    res = (Omega == 0.0) ? 1.0 : 0.0;
+    return;
   }
-}
-
-// Integrand for finite frequency
-double HFUtil::IdrGround::integrand2D(const double &y) const {
   assert(Omega >= 0.0);
-  const double y2 = y * y;
   const double x2 = x * x;
-  const double x4 = x2 * x2;
-  const double Omega_2 = Omega / 2.0;
-  const double Omega2_4 = Omega_2 * Omega_2;
-  const double exp1 = x4 / 4.0 - x2 * y2 - Omega2_4;
-  double phi;
-  if (exp1 > 0.0) {
-    phi = atan(x2 * Omega_2 / exp1) / 2.0;
-  } else {
-    phi = M_PI / 2.0 - atan(x2 * Omega_2 / exp1) / 2.0;
-  }
-  if (x > 0.0) {
-    return 2.0 * y * abs(cos(phi)) / pow((exp1 * exp1 + x4 * Omega2_4), 0.25);
-  } else {
-    return 0.0;
-  }
+  const complex<double> z(x2, Omega);
+  const complex<double> rad = z * z - 4.0 * x2;
+  res = 1.0 - real(sqrt(rad)) / x2;
 }
 
 // -----------------------------------------------------------------
@@ -429,14 +410,13 @@ double HFUtil::Ssf::integrand2DIn(const double &p) const {
 // -----------------------------------------------------------------
 
 double HFUtil::SsfGround::get() {
-  assert(in->getDegeneracy() == 0.0);
-  compute(in->getDimension());
+  compute(dim);
   std::cerr << "Ground-state SSF at x=" << x << ": " << res << std::endl;
   return res;
 }
 
 void HFUtil::SsfGround::compute3D() {
-  if (x < 2.0) {
+  if (x <= 2.0) {
     res = (x / 16.0) * (12.0 - x * x);
   } else {
     res = 1.0;
@@ -448,17 +428,10 @@ void HFUtil::SsfGround::compute2D() {
     res = 0.0;
     return;
   }
-  if (x > 2.0) {
+  if (x >= 2.0) {
     res = 1.0;
     return;
   }
-  const double OmegaMax = 1e4; // in->getFrequencyCutoff();
-  auto func = [&](const double &Omega) -> double { return integrand2D(Omega); };
-  itg->compute(func, ItgParam(0, OmegaMax));
-  res = itg->getSolution() / M_PI;
-}
-
-double HFUtil::SsfGround::integrand2D(const double &Omega) const {
-  const double idr = HFUtil::IdrGround(in, x, Omega).get();
-  return idr;
+  const double x2 = x * x;
+  res = 1.0 - 2.0 / M_PI * acos(x / 2.0) + x * sqrt(4.0 - x2) / (2.0 * M_PI);
 }

@@ -233,8 +233,12 @@ namespace HFUtil {
   /**
    * @brief Computes the ideal density response at zero temperature.
    *
-   * Uses the analytic zero-temperature Lindhard function evaluated at
-   * real frequency @p Omega_ and wave-vector @p x_.
+   * Uses analytic zero-temperature Lindhard expressions evaluated at
+   * wave-vector @p x_ and frequency parameter @p Omega_.
+   *
+   * Normalization convention:
+   * - 2D:  @f$\tilde\chi = -(E_F/n)\chi@f$
+   * - 3D:  @f$\tilde\chi = -(2E_F/(3n))\chi@f$
    */
   class IdrGround : public dimensionsUtil::DimensionsHandler {
 
@@ -242,17 +246,16 @@ namespace HFUtil {
 
     /**
      * @brief Construct for a ground-state IDR calculation.
+     * @param dim_   Dimensionality (2D or 3D).
      * @param x_     Wave-vector value.
-     * @param Omega_ Real frequency value.
+     * @param Omega_ Frequency parameter.
      */
-    IdrGround(const std::shared_ptr<const Input> in_,
+    IdrGround(const dimensionsUtil::Dimension dim_,
               const double &x_,
               const double &Omega_)
-        : in(in_),
+        : dim(dim_),
           x(x_),
-          Omega(Omega_),
-          itg(std::make_shared<Integrator1D>(Integrator1D::Type::DEFAULT,
-                                             1e-6)) {}
+          Omega(Omega_) {}
 
     /**
      * @brief Compute and return the ground-state IDR.
@@ -262,23 +265,16 @@ namespace HFUtil {
 
   private:
 
-    /** @brief Input parameters. */
-    const std::shared_ptr<const Input> in;
+    /** @brief Dimensionality. */
+    const dimensionsUtil::Dimension dim;
     /** @brief Wave-vector. */
     const double x;
-    /** @brief Real frequency. */
+    /** @brief Frequency parameter. */
     const double Omega;
-    /** @brief 1D numerical integrator. */
-    const std::shared_ptr<Integrator1D> itg;
     /** @brief Result of the ground-state IDR computation. */
     double res;
     void compute3D() override;
     void compute2D() override;
-    /**
-     * @brief 2D integrand.
-     * @param y Auxiliary momentum variable.
-     */
-    double integrand2D(const double &y) const;
   };
 
   /**
@@ -377,8 +373,7 @@ namespace HFUtil {
    * @brief Computes the Hartree-Fock static structure factor at zero
    * temperature.
    *
-   * Uses the analytic 3D ground-state expression and a 2D
-   * real-frequency integration.
+   * Uses analytic ground-state expressions in both 2D and 3D.
    */
   class SsfGround : public dimensionsUtil::DimensionsHandler {
 
@@ -386,16 +381,12 @@ namespace HFUtil {
 
     /**
      * @brief Construct for a zero-temperature SSF calculation.
-     * @param in_ Shared pointer to the input parameters.
-     * @param x_  Wave-vector value.
-     * @param itg_ Shared pointer to a 1D integrator.
+     * @param dim_ Dimensionality (2D or 3D).
+     * @param x_   Wave-vector value.
      */
-    SsfGround(const std::shared_ptr<const Input> in_,
-              const double &x_,
-              std::shared_ptr<Integrator1D> itg_)
-        : in(in_),
+    SsfGround(const dimensionsUtil::Dimension dim_, const double &x_)
+        : dim(dim_),
           x(x_),
-          itg(itg_),
           res(numUtil::NaN) {}
 
     /**
@@ -406,21 +397,14 @@ namespace HFUtil {
 
   private:
 
-    /** @brief Input parameters. */
-    const std::shared_ptr<const Input> in;
+    /** @brief Dimensionality. */
+    const dimensionsUtil::Dimension dim;
     /** @brief Wave-vector. */
     const double x;
-    /** @brief 1D numerical integrator. */
-    const std::shared_ptr<Integrator1D> itg;
     /** @brief Result of the ground-state SSF computation. */
     double res;
     void compute3D() override;
     void compute2D() override;
-    /**
-     * @brief 2D integrand over real frequency @p Omega.
-     * @param Omega Real frequency value.
-     */
-    double integrand2D(const double &Omega) const;
   };
 
 } // namespace HFUtil

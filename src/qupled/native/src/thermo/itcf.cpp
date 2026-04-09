@@ -132,9 +132,7 @@ namespace thermoUtil {
 
   double ItcfNonInteractingGround::get() const {
     if (tau == 0.0) {
-      auto itg = make_shared<Integrator1D>(Integrator1D::Type::DEFAULT,
-                                           in->getIntError());
-      HFUtil::SsfGround ssf(in, x, itg);
+      HFUtil::SsfGround ssf(in->getDimension(), x);
       return ssf.get();
     }
     const double xt = x * tau;
@@ -244,7 +242,7 @@ namespace thermoUtil {
   }
 
   double ItcfGround::integrand(const double &Omega) const {
-    const double idr = HFUtil::IdrGround(in, x, Omega).get();
+    const double idr = HFUtil::IdrGround(in->getDimension(), x, Omega).get();
     return (idr / (1.0 + ip() * idr * (1.0 - lfc[0])) - idr)
            * exp(-Omega * tau);
   }
