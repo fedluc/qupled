@@ -40,6 +40,13 @@ Source companions in `src/qupled/native/src/schemes/*.cpp` are covered via publi
 - Group assertions only when they describe one inseparable behavior and share expensive setup.
 - For expensive solver setup, keep granular assertions but reuse local fixtures/helpers to avoid duplication.
 
+## Constructor coverage strategy
+
+- Add dedicated constructor tests whenever constructors enforce constraints, allocate key state, or initialize required invariants.
+- For each such class, include at least one `RejectsInvalid...` and one `AcceptsValid...` constructor test.
+- Add constructor-initialization tests for observable post-construction state (e.g., array/grid sizes) when meaningful.
+- Keep constructor tests independent from `compute()` tests so construction failures are diagnosed directly.
+
 ## What to do with private methods
 
 Recommended policy:

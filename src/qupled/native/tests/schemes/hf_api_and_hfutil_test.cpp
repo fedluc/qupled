@@ -7,6 +7,20 @@
 #include "fixtures/input_builders.hpp"
 #include "schemes/hf.hpp"
 
+TEST(HfApiAndUtilTest, ConstructorInitializesGridAndStorageShapes) {
+  auto in =
+      testFixtures::makeBaseInput("HF", dimensionsUtil::Dimension::D3, 1.0, 0.8, 3);
+
+  HF hf(in, false);
+
+  EXPECT_FALSE(hf.getWvg().empty());
+  EXPECT_EQ(hf.getSsf().size(), hf.getWvg().size());
+  EXPECT_EQ(hf.getIdr().size(0), hf.getWvg().size());
+  EXPECT_EQ(hf.getIdr().size(1), static_cast<size_t>(in->getNMatsubara()));
+  EXPECT_EQ(hf.getLfc().size(0), hf.getWvg().size());
+  EXPECT_EQ(hf.getLfc().size(1), 1u);
+}
+
 TEST(HfApiAndUtilTest, ComputeFiniteStateExposesExpectedShapes) {
   auto finite = testFixtures::makeBaseInput(
       "HF", dimensionsUtil::Dimension::D3, 1.0, 0.8, 3);

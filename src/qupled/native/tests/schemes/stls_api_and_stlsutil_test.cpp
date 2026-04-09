@@ -8,6 +8,13 @@
 #include "fixtures/input_builders.hpp"
 #include "schemes/stls.hpp"
 
+TEST(StlsApiAndUtilTest, ConstructorAcceptsValidInput) {
+  auto in =
+      testFixtures::makeStlsInput("STLS", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
+
+  EXPECT_NO_THROW((Stls(in, false)));
+}
+
 TEST(StlsApiAndUtilTest, ComputeSupportsDefaultAndUserProvidedGuess) {
   auto inDefault = testFixtures::makeStlsInput(
       "STLS", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);

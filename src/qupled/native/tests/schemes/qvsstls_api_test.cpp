@@ -14,6 +14,10 @@ TEST(QvsStlsApiTest, ConstructorGuardsAndManagerContracts) {
       "QVSSTLS", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
   EXPECT_THROW((QVSStls(ground)), std::runtime_error);
 
+  auto finiteSolverInput = testFixtures::makeQVSStlsInput(
+      "QVSSTLS", dimensionsUtil::Dimension::D3, 1.0, 0.8, 2);
+  EXPECT_NO_THROW((QVSStls(finiteSolverInput)));
+
   auto finite = testFixtures::makeQVSStlsInput(
       "QVSSTLS", dimensionsUtil::Dimension::D3, 1.0, 0.8, 2);
   VSQstlsManager mgr(finite);

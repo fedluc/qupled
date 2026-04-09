@@ -7,6 +7,18 @@
 #include "fixtures/input_builders.hpp"
 #include "schemes/rpa.hpp"
 
+TEST(RpaApiAndUtilTest, ConstructorInitializesInheritedStorageShapes) {
+  auto in =
+      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 1.0, 0.8, 3);
+
+  Rpa rpa(in, false);
+
+  EXPECT_FALSE(rpa.getWvg().empty());
+  EXPECT_EQ(rpa.getSsf().size(), rpa.getWvg().size());
+  EXPECT_EQ(rpa.getIdr().size(0), rpa.getWvg().size());
+  EXPECT_EQ(rpa.getIdr().size(1), static_cast<size_t>(in->getNMatsubara()));
+}
+
 TEST(RpaApiAndUtilTest, ComputeFiniteStateBranch) {
   auto finite = testFixtures::makeBaseInput(
       "RPA", dimensionsUtil::Dimension::D3, 1.0, 0.8, 3);

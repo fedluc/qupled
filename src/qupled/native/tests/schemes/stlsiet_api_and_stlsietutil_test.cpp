@@ -8,11 +8,19 @@
 #include "fixtures/input_builders.hpp"
 #include "schemes/stlsiet.hpp"
 
-TEST(StlsIetApiAndUtilTest, ConstructorGuardsAndComputePath) {
+TEST(StlsIetApiAndUtilTest, ConstructorRejectsUnsupported2DIoiConfiguration) {
   auto inBad = testFixtures::makeStlsIetInput(
       "STLS-IOI", "sqrt", dimensionsUtil::Dimension::D2, 1.0, 0.7, 2);
   EXPECT_THROW((StlsIet(inBad)), std::runtime_error);
+}
 
+TEST(StlsIetApiAndUtilTest, ConstructorAcceptsSupportedFiniteConfiguration) {
+  auto inOk = testFixtures::makeStlsIetInput(
+      "STLS-HNC", "sqrt", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
+  EXPECT_NO_THROW((StlsIet(inOk)));
+}
+
+TEST(StlsIetApiAndUtilTest, ComputePathProducesBridgeFunctionGrid) {
   auto inOk = testFixtures::makeStlsIetInput(
       "STLS-HNC", "sqrt", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
   StlsIet solver(inOk);

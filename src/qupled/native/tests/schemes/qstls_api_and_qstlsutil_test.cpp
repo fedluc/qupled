@@ -13,10 +13,26 @@
 #include "fixtures/temp_paths.hpp"
 #include "schemes/qstls.hpp"
 
-TEST(QstlsApiAndUtilTest, ConstructorGuardAndFiniteComputePath) {
+TEST(QstlsApiAndUtilTest, ConstructorRejectsUnsupported2DConfiguration) {
   auto in2d =
       testFixtures::makeQstlsInput("QSTLS", dimensionsUtil::Dimension::D2, 1.0, 0.7, 2);
   EXPECT_THROW((Qstls(in2d, false)), std::runtime_error);
+}
+
+TEST(QstlsApiAndUtilTest, ConstructorInitializesAdrFixedStorageShape) {
+  auto inFinite =
+      testFixtures::makeQstlsInput("QSTLS", dimensionsUtil::Dimension::D3, 1.0, 0.8, 1);
+
+  Qstls solver(inFinite, false);
+  const auto nx = solver.getWvg().size();
+  const auto nl = static_cast<size_t>(inFinite->getNMatsubara());
+
+  EXPECT_EQ(solver.getAdrFixed().size(0), nx);
+  EXPECT_EQ(solver.getAdrFixed().size(1), nl);
+  EXPECT_EQ(solver.getAdrFixed().size(2), nx);
+}
+
+TEST(QstlsApiAndUtilTest, FiniteComputePathSucceedsWithConfiguredDatabase) {
 
   testFixtures::ScopedTempDir tmp("qupled_qstls_compute_");
   const auto dbPath = (tmp.path() / "qstls.sqlite").string();
