@@ -1,140 +1,11 @@
-import os
 import argparse
-import subprocess
-import shutil
-from pathlib import Path
 
-
-def build(use_mpi, native_only):
-    # Build with MPI
-    if use_mpi:
-        os.environ["USE_MPI"] = "ON"
-    # Set environment variable for OpenMP on macOS
-    if os.name == "posix" and shutil.which("brew"):
-        brew_prefix = subprocess.run(
-            ["brew", "--prefix"], capture_output=True, text=True
-        ).stdout.strip()
-        os.environ["OpenMP_ROOT"] = str(Path(brew_prefix, "opt", "libomp"))
-    if native_only:
-        build_folder = "dist-native-only"
-        if not os.path.exists(build_folder):
-            os.makedirs(build_folder)
-        os.chdir(build_folder)
-        subprocess.run(["cmake", "../src/qupled/native/src"], check=True)
-        subprocess.run(["cmake", "--build", "."], check=True)
-    else:
-        subprocess.run(["python3", "-m", "build"], check=True)
-    print("Build completed.")
-
-
-def get_wheel_file():
-    wheel_file = list(Path().rglob("qupled*.whl"))
-    if not wheel_file:
-        print("No .whl files found. Ensure the package is built first.")
-        return None
-    else:
-        return str(wheel_file[0])
-
-
-def run_tox(environment):
-    tox_path = Path(".tox")
-    if tox_path.exists():
-        shutil.rmtree(tox_path)
-    wheel_file = get_wheel_file()
-    if wheel_file is not None:
-        os.environ["WHEEL_FILE"] = wheel_file
-        subprocess.run(["tox", "-e", environment], check=True)
-
-
-def test(marker):
-    if marker is None:
-        run_tox("test")
-    else:
-        run_tox(marker)
-
-
-def format_code():
-    subprocess.run(["black", "."], check=True)
-    native_files_folder = Path("src", "qupled", "native")
-    cpp_files = list(native_files_folder.rglob("*.cpp"))
-    hpp_files = list(native_files_folder.rglob("*.hpp"))
-    for f in cpp_files + hpp_files:
-        subprocess.run(["clang-format", "--style=file", "-i", str(f)], check=True)
-
-
-def docs():
-    script_dir = Path(__file__).resolve().parent
-    subprocess.run(["python3", str(script_dir / "generate_diagrams.py")], check=True)
-    Path("docs", "_build", "doxygen").mkdir(parents=True, exist_ok=True)
-    subprocess.run(["doxygen", "Doxyfile"], cwd="docs", check=True)
-    subprocess.run(["sphinx-build", "-b", "html", "docs", str(Path("docs", "_build"))])
-
-
-def clean():
-    folders_to_clean = [
-        Path("dist"),
-        Path("dist-native-only"),
-        Path("src", "qupled.egg-info"),
-        Path("docs", "_build"),
-        Path("docs", "_generated"),
-    ]
-    for folder in folders_to_clean:
-        if folder.exists():
-            print(f"Removing folder: {folder}")
-            shutil.rmtree(folder)
-
-
-def install():
-    wheel_file = get_wheel_file()
-    if wheel_file is not None:
-        subprocess.run(["pip", "uninstall", "-y", wheel_file], check=True)
-        subprocess.run(["pip", "install", wheel_file], check=True)
-
-
-def install_dependencies():
-    print("Installing dependencies...")
-    script_dir = Path(__file__).resolve().parent
-    pip_requirements = script_dir / "requirements-pip.txt"
-    if os.name == "posix":
-        if shutil.which("apt-get"):
-            _install_with_apt(script_dir / "requirements-apt.txt")
-        elif shutil.which("brew"):
-            _install_with_brew(script_dir / "requirements-brew.txt")
-        else:
-            print("Unsupported package manager. Please install dependencies manually.")
-    else:
-        print("Unsupported operating system. Please install dependencies manually.")
-    subprocess.run(["pip", "install", "-r", str(pip_requirements)], check=True)
-
-
-def _install_with_apt(apt_requirements):
-    subprocess.run(["sudo", "apt-get", "update"], check=True)
-    with apt_requirements.open("r") as apt_file:
-        subprocess.run(
-            ["xargs", "sudo", "apt-get", "install", "-y"],
-            stdin=apt_file,
-            check=True,
-        )
-
-
-def _install_with_brew(brew_requirements):
-    subprocess.run(["brew", "update"], check=True)
-    subprocess.run(["brew", "bundle", f"--file={brew_requirements}"], check=True)
-
-
-def update_version(build_version):
-    pyproject_file = Path("pyproject.toml")
-    if not pyproject_file.exists():
-        return
-    with pyproject_file.open("r") as file:
-        content = file.readlines()
-    with pyproject_file.open("w") as file:
-        for line in content:
-            if line.startswith("version = "):
-                file.write(f'version = "{build_version}"')
-                file.write("\n")
-            else:
-                file.write(line)
+from .build import build
+from .testing import test
+from .install import install, install_dependencies
+from .formatting import format_code
+from .docs import docs
+from .maintenance import clean, update_version
 
 
 def run():
@@ -157,13 +28,18 @@ def run():
         action="store_true",
         help="Build only native code in C++ (default: False).",
     )
+    build_parser.add_argument(
+        "--native-tests",
+        action="store_true",
+        help="Enable BUILD_NATIVE_TESTS to build native C++ gtest targets.",
+    )
 
     # Test command
     test_parser = subparsers.add_parser("test", help="Run tests")
     test_parser.add_argument(
         "marker",
         nargs="?",
-        choices=["unit", "native", "integration"],
+        choices=["unit", "native", "integration", "native-cpp"],
         default=None,
         help="Run only tests with this marker (default: run all tests).",
     )
@@ -184,7 +60,7 @@ def run():
     args = parser.parse_args()
 
     if args.command == "build":
-        build(args.use_mpi, args.native_only)
+        build(args.use_mpi, args.native_only, args.native_tests)
     elif args.command == "clean":
         clean()
     elif args.command == "docs":

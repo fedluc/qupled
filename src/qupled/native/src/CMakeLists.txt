@@ -29,6 +29,7 @@ endif()
 
 # Setup MPI environment
 option(USE_MPI "Compile with MPI support" ON)
+option(BUILD_NATIVE_TESTS "Build native C++ unit tests with GoogleTest" OFF)
 if(USE_MPI)
 	set(MPI_CXX_SKIP_MPICXX TRUE)
 	find_package(MPI REQUIRED)
@@ -42,12 +43,29 @@ find_package(GSL REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(SQLiteCpp REQUIRED)
 
-# Set compiler flags
-set(CMAKE_CXX_STANDARD 20)
-add_compile_options(-Wall -Wextra -Wpedantic -O3)
+# Resolve SQLite targets across different CMake/package variants.
+if(TARGET SQLite::SQLite3)
+	set(SQLITE3_LINK_LIB SQLite::SQLite3)
+elseif(TARGET SQLite3::SQLite3)
+	set(SQLITE3_LINK_LIB SQLite3::SQLite3)
+elseif(SQLite3_LIBRARIES)
+	set(SQLITE3_LINK_LIB ${SQLite3_LIBRARIES})
+else()
+	message(FATAL_ERROR "Could not resolve a SQLite3 link target/library")
+endif()
+
+if(TARGET SQLiteCpp::SQLiteCpp)
+	set(SQLITECPP_LINK_LIB SQLiteCpp::SQLiteCpp)
+elseif(TARGET SQLiteCpp)
+	set(SQLITECPP_LINK_LIB SQLiteCpp)
+elseif(SQLiteCpp_LIBRARIES)
+	set(SQLITECPP_LINK_LIB ${SQLiteCpp_LIBRARIES})
+else()
+	message(FATAL_ERROR "Could not resolve a SQLiteCpp link target/library")
+endif()
 
 # Source code
-pybind11_add_module(native
+set(NATIVE_SOURCES
 	util/logger.cpp
 	util/database.cpp
 	util/numerics.cpp
@@ -84,24 +102,70 @@ pybind11_add_module(native
 	python_interface/native.cpp
 )
 
+pybind11_add_module(native ${NATIVE_SOURCES})
+
 # Include directories
-target_include_directories(native PUBLIC
+target_include_directories(native PRIVATE
 	../include
 )
 
+target_compile_features(native PRIVATE cxx_std_20)
+target_compile_options(native PRIVATE -Wall -Wextra -Wpedantic -O3)
+
 # Link external libraries
-target_link_libraries(native PUBLIC
+target_link_libraries(native PRIVATE
 	OpenMP::OpenMP_CXX
 	GSL::gsl
 	GSL::gslcblas
-	SQLiteCpp
-	SQLite3::SQLite3
+	${SQLITECPP_LINK_LIB}
+	${SQLITE3_LINK_LIB}
 )
 if(USE_MPI)
-	target_link_libraries(native PUBLIC MPI::MPI_CXX)
+	target_link_libraries(native PRIVATE MPI::MPI_CXX)
 endif()
 if(APPLE)
-	target_link_libraries(native PUBLIC fmt::fmt)
+	target_link_libraries(native PRIVATE fmt::fmt)
+endif()
+
+# Native C++ unit tests
+if(BUILD_NATIVE_TESTS)
+	include(CTest)
+	enable_testing()
+
+	find_package(GTest CONFIG QUIET)
+	if(NOT GTest_FOUND)
+		FetchContent_Declare(
+		  googletest
+		  GIT_REPOSITORY https://github.com/google/googletest.git
+		  GIT_TAG v1.14.0
+		)
+		FetchContent_MakeAvailable(googletest)
+	endif()
+
+	add_executable(native_tests
+		../tests/dual_test.cpp
+		../tests/num_util_test.cpp
+		../tests/vector_util_test.cpp
+		util/num_util.cpp
+		util/vector_util.cpp
+	)
+
+	target_include_directories(native_tests PRIVATE
+		../include
+	)
+
+	target_compile_features(native_tests PRIVATE cxx_std_20)
+	target_compile_options(native_tests PRIVATE -Wall -Wextra -Wpedantic -O3)
+
+	target_link_libraries(native_tests PRIVATE
+		GTest::gtest_main
+		OpenMP::OpenMP_CXX
+		GSL::gsl
+		GSL::gslcblas
+	)
+
+	include(GoogleTest)
+	gtest_discover_tests(native_tests)
 endif()
 
 # Install
