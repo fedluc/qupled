@@ -264,19 +264,13 @@ double HFUtil::Idr::integrand2D(const double &y, const int &l) const {
   const double Theta = in->getDegeneracy();
   const double y2 = y * y;
   const double x2 = x * x;
-  const double x4 = x2 * x2;
   const double plT = M_PI * l * Theta;
-  const double plT2 = plT * plT;
-  const double exp1 = x4 / 4.0 - x2 * y2 - plT2;
-  double phi;
-  if (exp1 > 0.0) {
-    phi = atan(x2 * plT / exp1) / 2.0;
-  } else {
-    phi = M_PI / 2.0 - atan(x2 * plT / exp1) / 2.0;
-  }
+  const double x4 = x2 * x2;
+  const double exp1 = x4 / 4.0 - x2 * y2 - plT * plT;
   if (x > 0.0) {
-    return y / (exp(y2 / Theta - mu) + 1.0) * 2.0 * abs(cos(phi))
-           / pow((exp1 * exp1 + x4 * plT2), 0.25);
+    const complex<double> z(exp1, x2 * plT);
+    const double kernel = 2.0 * real(1.0 / sqrt(z));
+    return y / (exp(y2 / Theta - mu) + 1.0) * kernel;
   } else {
     return 0;
   }

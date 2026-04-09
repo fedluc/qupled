@@ -91,13 +91,9 @@ double RpaUtil::Ssf::get() {
   return res;
 }
 
-void RpaUtil::Ssf::compute3D() {
-  res = computeMatsubaraSummation();
-}
+void RpaUtil::Ssf::compute3D() { res = computeMatsubaraSummation(); }
 
-void RpaUtil::Ssf::compute2D() {
-  res = computeMatsubaraSummation();
-}
+void RpaUtil::Ssf::compute2D() { res = computeMatsubaraSummation(); }
 
 double RpaUtil::Ssf::computeMatsubaraSummation() const {
   const bool isStatic = lfc.size() == 1;

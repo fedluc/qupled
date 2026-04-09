@@ -204,13 +204,9 @@ namespace thermoUtil {
     return res;
   }
 
-  void Itcf::compute3D() {
-    res = computeMatsubaraSummation();
-  }
+  void Itcf::compute3D() { res = computeMatsubaraSummation(); }
 
-  void Itcf::compute2D() {
-    res = computeMatsubaraSummation();
-  }
+  void Itcf::compute2D() { res = computeMatsubaraSummation(); }
 
   double Itcf::computeMatsubaraSummation() const {
     const bool isStatic = lfc.size() == 1;
