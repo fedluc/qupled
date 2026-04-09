@@ -134,10 +134,13 @@ namespace thermoUtil {
    * @brief Computes the non-interacting (Hartree-Fock) imaginary-time
    * correlation function at zero temperature.
    *
-   * Evaluates F_HF(x, tau) via an analytic formula for 3D systems.
+   * Evaluates F_HF(x, tau) via an analytic formula in 3D and a 2D
+   * k-space integral in 2D with constant limits y in [0, 1], phi in [0, pi],
+   * and a Heaviside factor in the angular integrand.
    * The SSF is recovered as the special case tau = 0.
    */
-  class ItcfNonInteractingGround : public ItcfBase {
+  class ItcfNonInteractingGround : public ItcfBase,
+                                   public dimensionsUtil::DimensionsHandler {
 
   public:
 
@@ -146,16 +149,38 @@ namespace thermoUtil {
      * @param x_   Wave-vector value.
      * @param in_  Shared pointer to the input parameters.
      * @param tau_ Imaginary time.
+     * @param itg2_ Shared pointer to a 2D integrator used by the 2D branch.
      */
     ItcfNonInteractingGround(const double &x_,
                              const std::shared_ptr<const Input> in_,
-                             const double &tau_);
+                             const double &tau_,
+                             std::shared_ptr<Integrator2D> itg2_);
 
     /**
      * @brief Compute and return the non-interacting ground-state ITCF value.
      * @return ITCF value at the current wave-vector and imaginary time.
      */
-    double get() const;
+    double get();
+
+  private:
+
+    /** @brief 2D numerical integrator for the 2D ground-state branch. */
+    const std::shared_ptr<Integrator2D> itg2;
+
+    /** @brief Stores the ITCF result. */
+    double res;
+
+    /** @brief Compute the ITCF for 3D systems. */
+    void compute3D() override;
+
+    /** @brief Compute the ITCF for 2D systems. */
+    void compute2D() override;
+
+    /**
+     * @brief 2D inner angular integrand for ground-state ITCF.
+     * @param p Angular variable phi.
+     */
+    double integrand2DIn(const double &p) const;
   };
 
   /**
@@ -211,14 +236,11 @@ namespace thermoUtil {
     void compute3D() override;
     /**
      * @brief Compute the ITCF for 2D systems.
-     *
-     * Evaluates F(x, tau) = F_HF(x, tau) - v(x) * Theta * sum_l,
-     * where sum_l is the Matsubara frequency summation.
      */
     void compute2D() override;
     /**
-     * @brief Compute the Matsubara frequency summation.
-     * @return Sum over Matsubara frequencies weighted by cos(2*pi*l*tau).
+     * @brief Compute the finite-temperature ITCF from Matsubara terms.
+     * @return ITCF value at the current wave-vector and imaginary time.
      */
     double computeMatsubaraSummation() const;
   };

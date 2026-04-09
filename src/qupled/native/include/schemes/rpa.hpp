@@ -141,8 +141,10 @@ namespace RpaUtil {
     void compute2D() override;
     void compute3D() override;
     /**
-     * @brief Compute the Matsubara frequency summation for SSF.
-     * @return Sum over Matsubara frequencies (unweighted, for tau=0).
+     * @brief Compute the finite-temperature RPA SSF from Matsubara
+     * terms.
+     * @return Static structure factor at the current
+     * wave-vector.
      */
     double computeMatsubaraSummation() const;
   };

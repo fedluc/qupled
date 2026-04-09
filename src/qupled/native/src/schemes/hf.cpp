@@ -5,6 +5,7 @@
 #include "thermo/thermo_util.hpp"
 #include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
+#include <complex>
 
 using namespace std;
 using namespace dimensionsUtil;
@@ -21,9 +22,6 @@ HF::HF(const std::shared_ptr<const Input> &in_, const bool verbose_)
       inPtr(std::move(in_)),
       itg(std::make_shared<Integrator1D>(ItgType::DEFAULT,
                                          in_->getIntError())) {
-  if (in().getDegeneracy() == 0.0 && in().getDimension() == Dimension::D2) {
-    throwError("Ground state calculations in 2D are not implemented.");
-  }
   // Assemble the wave-vector grid
   buildWaveVectorGrid();
   // Allocate arrays to the correct size
@@ -104,9 +102,10 @@ void HF::computeIdrFinite() {
 void HF::computeIdrGround() {
   const size_t nx = idr.size(0);
   const size_t nl = idr.size(1);
+  const auto dim = in().getDimension();
   for (size_t i = 0; i < nx; ++i) {
     for (size_t l = 0; l < nl; ++l) {
-      HFUtil::IdrGround idrTmp(wvg[i], l);
+      HFUtil::IdrGround idrTmp(dim, wvg[i], l);
       idr(i, l) = idrTmp.get();
     }
   }
@@ -136,8 +135,9 @@ void HF::computeSsfFinite() {
 }
 
 void HF::computeSsfGround() {
+  const auto dim = in().getDimension();
   for (size_t i = 0; i < wvg.size(); ++i) {
-    HFUtil::SsfGround ssfTmp(wvg[i]);
+    HFUtil::SsfGround ssfTmp(dim, wvg[i]);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -154,23 +154,14 @@ vector<double> HF::getSdr() const {
   const double theta = in().getDegeneracy();
   const dimensionsUtil::Dimension dim = in().getDimension();
   if (isnan(theta) || theta == 0.0) { return vector<double>(); }
-  // Calculate SDR for 2D
-  if (dim == Dimension::D2) {
-    vector<double> sdr(wvg.size(), -theta);
-    const double fact = sqrt(2.0) * in().getCoupling();
-    for (size_t i = 0; i < wvg.size(); ++i) {
-      const double phi0 = idr(i, 0);
-      sdr[i] *= phi0 / (1.0 + fact / wvg[i] * (1.0 - lfc(i, 0)) * phi0);
-    }
-    return sdr;
-  }
-  // Calculate SDR for 3D
   vector<double> sdr(wvg.size(), -1.5 * theta);
-  const double fact = 4 * numUtil::lambda * in().getCoupling() / M_PI;
   for (size_t i = 0; i < wvg.size(); ++i) {
-    const double x2 = wvg[i] * wvg[i];
+    const double fact = (dim == Dimension::D2)
+                            ? 1.5 * sqrt(2.0) * in().getCoupling() / wvg[i]
+                            : 4 * numUtil::lambda * in().getCoupling()
+                                  / (M_PI * wvg[i] * wvg[i]);
     const double phi0 = idr(i, 0);
-    sdr[i] *= phi0 / (1.0 + fact / x2 * (1.0 - lfc(i, 0)) * phi0);
+    sdr[i] *= phi0 / (1.0 + fact * (1.0 - lfc(i, 0)) * phi0);
   }
   return sdr;
 }
@@ -209,6 +200,7 @@ void HFUtil::Idr::compute3D() {
 // Compute for 2D systems
 void HFUtil::Idr::compute2D() {
   const double Theta = in->getDegeneracy();
+  const double norm = 2.0 / 3.0;
   for (int l = 0; l < in->getNMatsubara(); ++l) {
     auto func = [&](const double &y) -> double {
       return (l == 0) ? integrand2D(y) : integrand2D(y, l);
@@ -217,9 +209,9 @@ void HFUtil::Idr::compute2D() {
     const auto itgParam = ItgParam(yMin, upperLimit);
     itg->compute(func, itgParam);
     if (l == 0) {
-      res[l] = 1.0 - exp(-1.0 / Theta) - itg->getSolution();
+      res[l] = norm * (1.0 - exp(-1.0 / Theta) - itg->getSolution());
     } else {
-      res[l] = itg->getSolution();
+      res[l] = norm * itg->getSolution();
     }
   }
 }
@@ -272,19 +264,13 @@ double HFUtil::Idr::integrand2D(const double &y, const int &l) const {
   const double Theta = in->getDegeneracy();
   const double y2 = y * y;
   const double x2 = x * x;
-  const double x4 = x2 * x2;
   const double plT = M_PI * l * Theta;
-  const double plT2 = plT * plT;
-  const double exp1 = x4 / 4.0 - x2 * y2 - plT2;
-  double phi;
-  if (exp1 > 0.0) {
-    phi = atan(x2 * plT / exp1) / 2.0;
-  } else {
-    phi = M_PI / 2.0 - atan(x2 * plT / exp1) / 2.0;
-  }
+  const double x4 = x2 * x2;
+  const double exp1 = x4 / 4.0 - x2 * y2 - plT * plT;
   if (x > 0.0) {
-    return y / (exp(y2 / Theta - mu) + 1.0) * 2.0 * abs(cos(phi))
-           / pow((exp1 * exp1 + x4 * plT2), 0.25);
+    const complex<double> z(exp1, x2 * plT);
+    const double kernel = 2.0 * real(1.0 / sqrt(z));
+    return y / (exp(y2 / Theta - mu) + 1.0) * kernel;
   } else {
     return 0;
   }
@@ -307,21 +293,42 @@ double HFUtil::Idr::integrand2D(const double &y) const {
 // IdrGround class
 // -----------------------------------------------------------------
 
-// Get
-double HFUtil::IdrGround::get() const {
+double HFUtil::IdrGround::get() {
+  compute(dim);
+  return res;
+};
+
+// Compute for 3D systems
+void HFUtil::IdrGround::compute3D() {
+  if (x == 0.0) {
+    res = (Omega == 0.0) ? 1.0 : 0.0;
+  } else {
+    const double x2 = x * x;
+    const double Omega2 = Omega * Omega;
+    const double tx = 2.0 * x;
+    const double x2ptx = x2 + tx;
+    const double x2mtx = x2 - tx;
+    const double x2ptx2 = x2ptx * x2ptx;
+    const double x2mtx2 = x2mtx * x2mtx;
+    const double logarg = (x2ptx2 + Omega2) / (x2mtx2 + Omega2);
+    const double part1 = (0.5 - x2 / 8.0 + Omega2 / (8.0 * x2)) * log(logarg);
+    const double part2 =
+        0.5 * Omega * (atan(x2ptx / Omega) - atan(x2mtx / Omega));
+    res = (part1 - part2 + x) / tx;
+  }
+}
+
+// Compute for 2D systems
+void HFUtil::IdrGround::compute2D() {
+  const double norm = 2.0 / 3.0;
+  if (x == 0.0) {
+    res = (Omega == 0.0) ? norm : 0.0;
+    return;
+  }
   const double x2 = x * x;
-  const double Omega2 = Omega * Omega;
-  const double tx = 2.0 * x;
-  const double x2ptx = x2 + tx;
-  const double x2mtx = x2 - tx;
-  const double x2ptx2 = x2ptx * x2ptx;
-  const double x2mtx2 = x2mtx * x2mtx;
-  const double logarg = (x2ptx2 + Omega2) / (x2mtx2 + Omega2);
-  const double part1 = (0.5 - x2 / 8.0 + Omega2 / (8.0 * x2)) * log(logarg);
-  const double part2 =
-      0.5 * Omega * (atan(x2ptx / Omega) - atan(x2mtx / Omega));
-  if (x > 0.0) { return (part1 - part2 + x) / tx; }
-  return (Omega == 0.0) ? 1.0 : 0.0;
+  const complex<double> z(x2, Omega);
+  const complex<double> rad = z * z - 4.0 * x2;
+  res = norm * (1.0 - real(sqrt(rad)) / x2);
 }
 
 // -----------------------------------------------------------------
@@ -349,7 +356,7 @@ void HFUtil::Ssf::compute2D() {
   auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
   auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
   itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0, M_PI), itgGrid);
-  res = itg2->getSolution() + Theta * idr0;
+  res = itg2->getSolution() + 1.5 * Theta * idr0;
 }
 
 // 3D Integrand
@@ -388,11 +395,28 @@ double HFUtil::Ssf::integrand2DIn(const double &p) const {
 // SsfHFGround class
 // -----------------------------------------------------------------
 
-// Static structure factor at zero temperature
-double HFUtil::SsfGround::get() const {
-  if (x < 2.0) {
-    return (x / 16.0) * (12.0 - x * x);
+double HFUtil::SsfGround::get() {
+  compute(dim);
+  return res;
+}
+
+void HFUtil::SsfGround::compute3D() {
+  if (x <= 2.0) {
+    res = (x / 16.0) * (12.0 - x * x);
   } else {
-    return 1.0;
+    res = 1.0;
   }
+}
+
+void HFUtil::SsfGround::compute2D() {
+  if (x == 0.0) {
+    res = 0.0;
+    return;
+  }
+  if (x >= 2.0) {
+    res = 1.0;
+    return;
+  }
+  const double x2 = x * x;
+  res = 1.0 - 2.0 / M_PI * acos(x / 2.0) + x * sqrt(4.0 - x2) / (2.0 * M_PI);
 }

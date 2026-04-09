@@ -232,35 +232,44 @@ namespace HFUtil {
 
   /**
    * @brief Computes the ideal density response at zero temperature.
-   *
-   * Uses the analytic zero-temperature Lindhard function evaluated at
-   * real frequency @p Omega_ and wave-vector @p x_.
    */
-  class IdrGround {
+  class IdrGround : public dimensionsUtil::DimensionsHandler {
 
   public:
 
     /**
      * @brief Construct for a ground-state IDR calculation.
-     * @param x_     Wave-vector value.
-     * @param Omega_ Real frequency value.
+     *
+     * @param dim_   Dimensionality (2D or 3D).
+     * @param x_     Wave-vector
+     * value.
+     * @param Omega_ Frequency parameter.
      */
-    IdrGround(const double &x_, const double &Omega_)
-        : x(x_),
+    IdrGround(const dimensionsUtil::Dimension dim_,
+              const double &x_,
+              const double &Omega_)
+        : dim(dim_),
+          x(x_),
           Omega(Omega_) {}
 
     /**
      * @brief Compute and return the ground-state IDR.
      * @return Analytic IDR value at (@p x_, @p Omega_).
      */
-    double get() const;
+    double get();
 
   private:
 
+    /** @brief Dimensionality. */
+    const dimensionsUtil::Dimension dim;
     /** @brief Wave-vector. */
     const double x;
-    /** @brief Real frequency. */
+    /** @brief Frequency parameter. */
     const double Omega;
+    /** @brief Result of the ground-state IDR computation. */
+    double res;
+    void compute3D() override;
+    void compute2D() override;
   };
 
   /**
@@ -336,7 +345,6 @@ namespace HFUtil {
     const double idr0;
     /** @brief Result of the SSF computation. */
     double res;
-
     void compute3D() override;
     void compute2D() override;
     /**
@@ -360,29 +368,40 @@ namespace HFUtil {
    * @brief Computes the Hartree-Fock static structure factor at zero
    * temperature.
    *
-   * Uses the analytic ground-state expression for the HF SSF.
+   * Uses analytic ground-state expressions in both 2D and 3D.
    */
-  class SsfGround {
+  class SsfGround : public dimensionsUtil::DimensionsHandler {
 
   public:
 
     /**
      * @brief Construct for a zero-temperature SSF calculation.
-     * @param x_ Wave-vector value.
+     *
+     * @param dim_ Dimensionality (2D or 3D).
+     * @param x_   Wave-vector
+     * value.
      */
-    explicit SsfGround(const double &x_)
-        : x(x_) {}
+    SsfGround(const dimensionsUtil::Dimension dim_, const double &x_)
+        : dim(dim_),
+          x(x_),
+          res(numUtil::NaN) {}
 
     /**
      * @brief Compute and return the ground-state HF static structure factor.
-     * @return Analytic SSF value at @p x_.
+     * @return Ground-state SSF value at @p x_.
      */
-    double get() const;
+    double get();
 
   private:
 
+    /** @brief Dimensionality. */
+    const dimensionsUtil::Dimension dim;
     /** @brief Wave-vector. */
     const double x;
+    /** @brief Result of the ground-state SSF computation. */
+    double res;
+    void compute3D() override;
+    void compute2D() override;
   };
 
 } // namespace HFUtil

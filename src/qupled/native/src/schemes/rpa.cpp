@@ -73,7 +73,7 @@ void Rpa::computeLfc() {
 double RpaUtil::SsfBase::ip() const {
   const double rs = in->getCoupling();
   if (in->getDimension() == dimensionsUtil::Dimension::D2) {
-    return sqrt(2.0) * rs / x;
+    return 1.5 * sqrt(2.0) * rs / x;
   } else {
     return 4.0 * numUtil::lambda * rs / (M_PI * x * x);
   }
@@ -91,20 +91,13 @@ double RpaUtil::Ssf::get() {
   return res;
 }
 
-void RpaUtil::Ssf::compute3D() {
-  const double Theta = in->getDegeneracy();
-  const double suml = computeMatsubaraSummation();
-  res = ssfHF - 1.5 * ip() * Theta * suml;
-}
+void RpaUtil::Ssf::compute3D() { res = computeMatsubaraSummation(); }
 
-void RpaUtil::Ssf::compute2D() {
-  const double Theta = in->getDegeneracy();
-  const double suml = computeMatsubaraSummation();
-  res = ssfHF - ip() * Theta * suml;
-}
+void RpaUtil::Ssf::compute2D() { res = computeMatsubaraSummation(); }
 
 double RpaUtil::Ssf::computeMatsubaraSummation() const {
   const bool isStatic = lfc.size() == 1;
+  const double Theta = in->getDegeneracy();
   double suml = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {
     const double &idrl = idr[l];
@@ -113,7 +106,7 @@ double RpaUtil::Ssf::computeMatsubaraSummation() const {
     const double f = idrl * idrl * (1 - lfcl) / denom;
     suml += (l == 0) ? f : 2 * f;
   }
-  return suml;
+  return ssfHF - 1.5 * ip() * Theta * suml;
 }
 
 // -----------------------------------------------------------------
@@ -127,10 +120,11 @@ double RpaUtil::SsfGround::get() {
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(0, OmegaMax));
-  return 1.5 / (M_PI)*itg->getSolution() + ssfHF;
+  const double pref = 1.5 / M_PI;
+  return pref * itg->getSolution() + ssfHF;
 }
 
 double RpaUtil::SsfGround::integrand(const double &Omega) const {
-  const double idr = HFUtil::IdrGround(x, Omega).get();
+  const double idr = HFUtil::IdrGround(in->getDimension(), x, Omega).get();
   return idr / (1.0 + ip() * idr * (1.0 - lfc[0])) - idr;
 }

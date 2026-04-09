@@ -69,12 +69,13 @@ namespace thermoUtil {
   computeItcfNonInteractingGround(const std::shared_ptr<const Input> &in,
                                   const std::vector<double> &wvg,
                                   const std::vector<double> &tauValues) {
+    auto itg2 = make_shared<Integrator2D>(in->getIntError());
     const size_t nx = wvg.size();
     const size_t ntau = tauValues.size();
     Vector2D result(nx, ntau);
     for (size_t i = 0; i < nx; ++i) {
       for (size_t j = 0; j < ntau; ++j) {
-        ItcfNonInteractingGround itcfTmp(wvg[i], in, tauValues[j]);
+        ItcfNonInteractingGround itcfTmp(wvg[i], in, tauValues[j], itg2);
         result(i, j) = itcfTmp.get();
       }
     }
