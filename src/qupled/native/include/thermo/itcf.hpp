@@ -240,13 +240,12 @@ namespace thermoUtil {
     /**
      * @brief Compute the ITCF for 2D systems.
      *
-     * Evaluates F(x, tau) = F_HF(x, tau) - v(x) * Theta * sum_l,
-     * where sum_l is the Matsubara frequency summation.
+     * Same implementation as 3D under the unified normalization.
      */
     void compute2D() override;
     /**
-     * @brief Compute the Matsubara frequency summation.
-     * @return Sum over Matsubara frequencies weighted by cos(2*pi*l*tau).
+     * @brief Compute the finite-temperature ITCF from Matsubara terms.
+     * @return ITCF value at the current wave-vector and imaginary time.
      */
     double computeMatsubaraSummation() const;
   };

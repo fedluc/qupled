@@ -92,19 +92,16 @@ double RpaUtil::Ssf::get() {
 }
 
 void RpaUtil::Ssf::compute3D() {
-  const double Theta = in->getDegeneracy();
-  const double suml = computeMatsubaraSummation();
-  res = ssfHF - 1.5 * ip() * Theta * suml;
+  res = computeMatsubaraSummation();
 }
 
 void RpaUtil::Ssf::compute2D() {
-  const double Theta = in->getDegeneracy();
-  const double suml = computeMatsubaraSummation();
-  res = ssfHF - 1.5 * ip() * Theta * suml;
+  res = computeMatsubaraSummation();
 }
 
 double RpaUtil::Ssf::computeMatsubaraSummation() const {
   const bool isStatic = lfc.size() == 1;
+  const double Theta = in->getDegeneracy();
   double suml = 0.0;
   for (size_t l = 0; l < idr.size(); ++l) {
     const double &idrl = idr[l];
@@ -113,7 +110,7 @@ double RpaUtil::Ssf::computeMatsubaraSummation() const {
     const double f = idrl * idrl * (1 - lfcl) / denom;
     suml += (l == 0) ? f : 2 * f;
   }
-  return suml;
+  return ssfHF - 1.5 * ip() * Theta * suml;
 }
 
 // -----------------------------------------------------------------

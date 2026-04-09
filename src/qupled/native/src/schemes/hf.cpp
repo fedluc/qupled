@@ -154,23 +154,14 @@ vector<double> HF::getSdr() const {
   const double theta = in().getDegeneracy();
   const dimensionsUtil::Dimension dim = in().getDimension();
   if (isnan(theta) || theta == 0.0) { return vector<double>(); }
-  // Calculate SDR for 2D
-  if (dim == Dimension::D2) {
-    vector<double> sdr(wvg.size(), -1.5 * theta);
-    const double fact = 1.5 * sqrt(2.0) * in().getCoupling();
-    for (size_t i = 0; i < wvg.size(); ++i) {
-      const double phi0 = idr(i, 0);
-      sdr[i] *= phi0 / (1.0 + fact / wvg[i] * (1.0 - lfc(i, 0)) * phi0);
-    }
-    return sdr;
-  }
-  // Calculate SDR for 3D
   vector<double> sdr(wvg.size(), -1.5 * theta);
-  const double fact = 4 * numUtil::lambda * in().getCoupling() / M_PI;
   for (size_t i = 0; i < wvg.size(); ++i) {
-    const double x2 = wvg[i] * wvg[i];
+    const double fact = (dim == Dimension::D2)
+                            ? 1.5 * sqrt(2.0) * in().getCoupling() / wvg[i]
+                            : 4 * numUtil::lambda * in().getCoupling()
+                                  / (M_PI * wvg[i] * wvg[i]);
     const double phi0 = idr(i, 0);
-    sdr[i] *= phi0 / (1.0 + fact / x2 * (1.0 - lfc(i, 0)) * phi0);
+    sdr[i] *= phi0 / (1.0 + fact * (1.0 - lfc(i, 0)) * phi0);
   }
   return sdr;
 }

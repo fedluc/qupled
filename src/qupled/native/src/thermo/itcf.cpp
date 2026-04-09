@@ -196,32 +196,20 @@ namespace thermoUtil {
   double Itcf::get() {
     if (x == 0.0) return 0.0;
     if (in->getCoupling() == 0.0) return itcfHF;
+    if (tau == 0.0) {
+      RpaUtil::Ssf ssf(x, itcfHF, lfc, in, idr);
+      return ssf.get();
+    }
     compute(in->getDimension());
     return res;
   }
 
   void Itcf::compute3D() {
-    // For tau = 0, delegate to the Ssf calculation
-    if (tau == 0.0) {
-      RpaUtil::Ssf ssf(x, itcfHF, lfc, in, idr);
-      res = ssf.get();
-      return;
-    }
-    const double Theta = in->getDegeneracy();
-    const double suml = computeMatsubaraSummation();
-    res = itcfHF - 1.5 * ip() * Theta * suml;
+    res = computeMatsubaraSummation();
   }
 
   void Itcf::compute2D() {
-    // For tau = 0, delegate to the Ssf calculation
-    if (tau == 0.0) {
-      RpaUtil::Ssf ssf(x, itcfHF, lfc, in, idr);
-      res = ssf.get();
-      return;
-    }
-    const double Theta = in->getDegeneracy();
-    const double suml = computeMatsubaraSummation();
-    res = itcfHF - 1.5 * ip() * Theta * suml;
+    res = computeMatsubaraSummation();
   }
 
   double Itcf::computeMatsubaraSummation() const {
@@ -236,7 +224,7 @@ namespace thermoUtil {
       const double cosTerm = (l == 0) ? 1.0 : cos(2.0 * M_PI * l * tau * Theta);
       suml += (l == 0) ? f : 2.0 * f * cosTerm;
     }
-    return suml;
+    return itcfHF - 1.5 * ip() * Theta * suml;
   }
 
   // -----------------------------------------------------------------
