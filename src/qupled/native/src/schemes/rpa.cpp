@@ -127,7 +127,10 @@ double RpaUtil::SsfGround::get() {
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(0, OmegaMax));
-  return 1.5 / (M_PI)*itg->getSolution() + ssfHF;
+  const double pref = (in->getDimension() == dimensionsUtil::Dimension::D2)
+                          ? 1.0 / M_PI
+                          : 1.5 / M_PI;
+  return pref * itg->getSolution() + ssfHF;
 }
 
 double RpaUtil::SsfGround::integrand(const double &Omega) const {

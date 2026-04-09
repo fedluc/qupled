@@ -264,7 +264,10 @@ namespace thermoUtil {
     const double OmegaMax = in->getFrequencyCutoff();
     auto func = [&](const double &Omega) -> double { return integrand(Omega); };
     itg->compute(func, ItgParam(0, OmegaMax));
-    return 1.5 / M_PI * itg->getSolution() + itcfHF;
+    const double pref = (in->getDimension() == dimensionsUtil::Dimension::D2)
+                            ? 1.0 / M_PI
+                            : 1.5 / M_PI;
+    return pref * itg->getSolution() + itcfHF;
   }
 
   double ItcfGround::integrand(const double &Omega) const {
