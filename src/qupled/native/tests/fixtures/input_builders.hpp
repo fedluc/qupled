@@ -25,6 +25,7 @@ inline void configureBaseInput(Input &in,
   in.setFrequencyCutoff(20.0);
   in.setNThreads(1);
   in.setInt2DScheme("full");
+  in.setChemicalPotentialGuess({-10.0, 10.0});
 }
 
 inline std::shared_ptr<Input> makeBaseInput(
@@ -35,6 +36,42 @@ inline std::shared_ptr<Input> makeBaseInput(
     const int nMatsubara = 4) {
   auto in = std::make_shared<Input>();
   configureBaseInput(*in, theory, dim, coupling, degeneracy, nMatsubara);
+  return in;
+}
+
+inline void configureIterationInput(IterationInput &in,
+                                    const std::string &theory,
+                                    const dimensionsUtil::Dimension dim,
+                                    const double coupling,
+                                    const double degeneracy,
+                                    const int nMatsubara = 2) {
+  configureBaseInput(in, theory, dim, coupling, degeneracy, nMatsubara);
+  in.setErrMin(1.0e-4);
+  in.setNIter(2);
+  in.setMixingParameter(0.5);
+}
+
+inline std::shared_ptr<StlsInput> makeStlsInput(
+    const std::string &theory = "STLS",
+    const dimensionsUtil::Dimension dim = dimensionsUtil::Dimension::D3,
+    const double coupling = 1.0,
+    const double degeneracy = 0.7,
+    const int nMatsubara = 2) {
+  auto in = std::make_shared<StlsInput>();
+  configureIterationInput(*in, theory, dim, coupling, degeneracy, nMatsubara);
+  return in;
+}
+
+inline std::shared_ptr<StlsIetInput> makeStlsIetInput(
+    const std::string &theory = "STLS-HNC",
+    const std::string &mapping = "sqrt",
+    const dimensionsUtil::Dimension dim = dimensionsUtil::Dimension::D3,
+    const double coupling = 1.0,
+    const double degeneracy = 0.7,
+    const int nMatsubara = 2) {
+  auto in = std::make_shared<StlsIetInput>();
+  configureIterationInput(*in, theory, dim, coupling, degeneracy, nMatsubara);
+  in->setMapping(mapping);
   return in;
 }
 

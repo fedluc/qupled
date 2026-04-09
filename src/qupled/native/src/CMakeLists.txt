@@ -164,6 +164,10 @@ if(BUILD_NATIVE_TESTS)
 		thermo/itcf.cpp
 		thermo/thermo_util.cpp
 		thermo/chemical_potential.cpp
+		schemes/iet.cpp
+		schemes/stls.cpp
+		schemes/stlsiet.cpp
+		schemes/esa.cpp
 	)
 
 	target_include_directories(native_test_support PRIVATE

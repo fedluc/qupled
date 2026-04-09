@@ -146,6 +146,10 @@ Coverage direction:
   - at least one key error path
   - one invariant assertion on output shape/value sanity
 
+Status:
+
+- Completed for `HF`, `RPA`, `STLS`, `STLS-IET`, and `ESA` in `tests/schemes/schemes_phase2_test.cpp`.
+
 ## Phase 3 - Quantum and persistence-heavy schemes
 
 - Add isolated tests for `Qstls`, `QstlsIet`, `QVSStls` with temp db/files.
