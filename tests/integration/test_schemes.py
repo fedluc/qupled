@@ -187,9 +187,14 @@ def test_solve_vsstls():
     # Assert
     assert_internal_energy(expected_internal_energy)
 
+
 @pytest.mark.integration
 def test_solve_2D_ground():
-    expected_internal_energy = {1: -0.060018666228726536, 2: -0.1607977129720737, 3: -0.09514934062352233}
+    expected_internal_energy = {
+        1: -0.060018666228726536,
+        2: -0.1607977129720737,
+        3: -0.09514934062352233,
+    }
     from qupled.schemes import rpa, stls, hf
     from qupled.util.dimension import Dimension
 
@@ -205,7 +210,11 @@ def test_solve_2D_ground():
 
 @pytest.mark.integration
 def test_solve_2D_finite_temperature():
-    expected_internal_energy = {1: -0.03831335655062619, 2: -0.18725913760698018, 3: -0.09591039535710567}
+    expected_internal_energy = {
+        1: -0.03831335655062619,
+        2: -0.18725913760698018,
+        3: -0.09591039535710567,
+    }
     from qupled.schemes import rpa, stls, hf
     from qupled.util.dimension import Dimension
 
