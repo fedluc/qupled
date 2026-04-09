@@ -6,6 +6,10 @@ Build extensive, maintainable coverage for all classes in `src/qupled/native/inc
 
 This plan follows the same structure and discipline used for schemes tests and is intended to be reused in future sessions.
 
+Shared reference:
+
+- `src/qupled/native/tests/CPP_TEST_GUIDELINES.md`
+
 ## Scope
 
 Headers in scope:

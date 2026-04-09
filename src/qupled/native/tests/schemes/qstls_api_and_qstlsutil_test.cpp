@@ -56,14 +56,19 @@ TEST(QstlsApiAndUtilTest, FiniteComputePathSucceedsWithConfiguredDatabase) {
   EXPECT_EQ(solver.getSsf().size(), solver.getWvg().size());
 }
 
-TEST(QstlsApiAndUtilTest, UtilityAdrAndSsfGroundSupportEdgeInputs) {
+TEST(QstlsApiAndUtilTest, AdrGroundReturnsZeroAtXZero) {
   const std::vector<double> wvg{0.0, 0.5, 1.0, 1.5, 2.0};
   const std::vector<double> ssf{0.0, 0.5, 0.9, 1.0, 1.0};
   auto ssfi = std::make_shared<Interpolator1D>(wvg, ssf);
   auto itg2 = std::make_shared<Integrator2D>(1.0e-6);
   QstlsUtil::AdrGround adr0(0.0, 1.0, ssfi, 2.0, itg2);
   EXPECT_DOUBLE_EQ(adr0.get(), 0.0);
+}
 
+TEST(QstlsApiAndUtilTest, SsfGroundUsesZeroCouplingFallback) {
+  const std::vector<double> wvg{0.0, 0.5, 1.0, 1.5, 2.0};
+  const std::vector<double> ssf{0.0, 0.5, 0.9, 1.0, 1.0};
+  auto ssfi = std::make_shared<Interpolator1D>(wvg, ssf);
   auto in =
       testFixtures::makeBaseInput("QSTLS", dimensionsUtil::Dimension::D3, 0.0, 0.0, 2);
   auto itg1 = std::make_shared<Integrator1D>(1.0e-8);

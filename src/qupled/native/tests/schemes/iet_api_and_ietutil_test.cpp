@@ -43,7 +43,7 @@ TEST(IetApiAndUtilTest, BridgeFunctionRejectsLctOutsideSupportedRange) {
   EXPECT_THROW(lctOutOfRange.get(), std::runtime_error);
 }
 
-TEST(IetApiAndUtilTest, IetObjectInitAndGuessInterpolationPaths) {
+TEST(IetApiAndUtilTest, IetInitProducesBridgeFunctionGrid) {
   auto in = testFixtures::makeStlsIetInput(
       "STLS-HNC", "sqrt", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
   Guess guess;
@@ -60,6 +60,23 @@ TEST(IetApiAndUtilTest, IetObjectInitAndGuessInterpolationPaths) {
   Iet iet(in, wvg);
   iet.init();
   EXPECT_EQ(iet.getBf().size(), wvg.size());
+}
+
+TEST(IetApiAndUtilTest, InitialGuessFromInputInterpolatesToSolverGrid) {
+  auto in = testFixtures::makeStlsIetInput(
+      "STLS-HNC", "sqrt", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
+  Guess guess;
+  guess.wvg = {0.0, 0.5, 1.0};
+  guess.ssf = {0.0, 0.6, 1.0};
+  guess.lfc = Vector2D(3, 2);
+  for (int i = 0; i < 3; ++i) {
+    guess.lfc(i, 0) = 0.1 * i;
+    guess.lfc(i, 1) = 0.2 * i;
+  }
+  in->setGuess(guess);
+
+  const std::vector<double> wvg{0.0, 0.5, 1.0, 1.5};
+  Iet iet(in, wvg);
 
   Vector2D lfc(static_cast<int>(wvg.size()), 2);
   EXPECT_TRUE(iet.initialGuessFromInput(lfc));

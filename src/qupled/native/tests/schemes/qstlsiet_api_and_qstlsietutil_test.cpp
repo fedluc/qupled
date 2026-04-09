@@ -7,17 +7,19 @@
 #include "fixtures/input_builders.hpp"
 #include "schemes/qstlsiet.hpp"
 
-TEST(QstlsIetApiAndUtilTest, ConstructorConstraintsAreEnforced) {
+TEST(QstlsIetApiAndUtilTest, ConstructorRejectsGroundStateConfiguration) {
   auto ground = testFixtures::makeQstlsIetInput(
       "QSTLS-HNC", "sqrt", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
   EXPECT_THROW((QstlsIet(ground)), std::runtime_error);
+}
 
+TEST(QstlsIetApiAndUtilTest, ConstructorAcceptsFiniteConfiguration) {
   auto finite = testFixtures::makeQstlsIetInput(
       "QSTLS-HNC", "sqrt", dimensionsUtil::Dimension::D3, 1.0, 0.8, 2);
   EXPECT_NO_THROW((QstlsIet(finite)));
 }
 
-TEST(QstlsIetApiAndUtilTest, AdrIetAndAdrFixedIetHandleXZeroSpecialCase) {
+TEST(QstlsIetApiAndUtilTest, AdrIetReturnsZeroAtXZero) {
   const std::vector<double> wvg{0.0, 0.5, 1.0};
   const std::vector<double> ssf{0.0, 0.7, 1.0};
   const std::vector<double> lfc{0.0, 0.1, 0.2};
@@ -39,7 +41,10 @@ TEST(QstlsIetApiAndUtilTest, AdrIetAndAdrFixedIetHandleXZeroSpecialCase) {
   adrIet.get(wvg, fixed, res);
   EXPECT_DOUBLE_EQ(res(0, 0), 0.0);
   EXPECT_DOUBLE_EQ(res(0, 1), 0.0);
+}
 
+TEST(QstlsIetApiAndUtilTest, AdrFixedIetReturnsZeroAtXZero) {
+  const std::vector<double> wvg{0.0, 0.5, 1.0};
   auto itg1 = std::make_shared<Integrator1D>(1.0e-8);
   Vector3D fixedIet(2, 3, 3);
   fixedIet.fill(1, 1.0);

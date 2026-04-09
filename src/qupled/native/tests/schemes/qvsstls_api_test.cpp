@@ -9,15 +9,19 @@
 #include "schemes/qvsstls.hpp"
 #include "vs/grid_point.hpp"
 
-TEST(QvsStlsApiTest, ConstructorGuardsAndManagerContracts) {
+TEST(QvsStlsApiTest, ConstructorRejectsGroundStateConfiguration) {
   auto ground = testFixtures::makeQVSStlsInput(
       "QVSSTLS", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
   EXPECT_THROW((QVSStls(ground)), std::runtime_error);
+}
 
+TEST(QvsStlsApiTest, ConstructorAcceptsFiniteConfiguration) {
   auto finiteSolverInput = testFixtures::makeQVSStlsInput(
       "QVSSTLS", dimensionsUtil::Dimension::D3, 1.0, 0.8, 2);
   EXPECT_NO_THROW((QVSStls(finiteSolverInput)));
+}
 
+TEST(QvsStlsApiTest, ManagerExposesGridContracts) {
   auto finite = testFixtures::makeQVSStlsInput(
       "QVSSTLS", dimensionsUtil::Dimension::D3, 1.0, 0.8, 2);
   VSQstlsManager mgr(finite);
