@@ -181,6 +181,13 @@ Status:
 - Remove overlaps/duplication, standardize naming and fixture usage.
 - Optionally add coverage reporting target if desired.
 
+Status:
+
+- Full suite passes in container with:
+  - `./devtool build --native-only --native-tests`
+  - `./devtool test native-cpp`
+- Current result after phases 0-4 additions: `58/58` passing tests.
+
 ## Proposed test folder structure
 
 - `src/qupled/native/tests/util/*_test.cpp`
