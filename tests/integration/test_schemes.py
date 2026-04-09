@@ -186,3 +186,34 @@ def test_solve_vsstls():
     scheme.compute(inputs)
     # Assert
     assert_internal_energy(expected_internal_energy)
+
+@pytest.mark.integration
+def test_solve_2D_ground():
+    expected_internal_energy = {1: -0.060018666228726536, 2: -0.1607977129720737, 3: -0.09514934062352233}
+    from qupled.schemes import rpa, stls, hf
+    from qupled.util.dimension import Dimension
+
+    solver = hf.Solver()
+    solver.compute(hf.Input(10.0, 0.0, dimension=Dimension._2D))
+    solver = rpa.Solver()
+    solver.compute(rpa.Input(10.0, 0.0, dimension=Dimension._2D))
+    solver = stls.Solver()
+    solver.compute(stls.Input(10.0, 0.0, dimension=Dimension._2D, mixing=0.4))
+    # Assert
+    assert_internal_energy(expected_internal_energy)
+
+
+@pytest.mark.integration
+def test_solve_2D_finite_temperature():
+    expected_internal_energy = {1: -0.03831335655062619, 2: -0.18725913760698018, 3: -0.09591039535710567}
+    from qupled.schemes import rpa, stls, hf
+    from qupled.util.dimension import Dimension
+
+    solver = hf.Solver()
+    solver.compute(hf.Input(10.0, 1.0, dimension=Dimension._2D))
+    solver = rpa.Solver()
+    solver.compute(rpa.Input(10.0, 1.0, dimension=Dimension._2D))
+    solver = stls.Solver()
+    solver.compute(stls.Input(10.0, 1.0, dimension=Dimension._2D, mixing=0.3))
+    # Assert
+    assert_internal_energy(expected_internal_energy)
