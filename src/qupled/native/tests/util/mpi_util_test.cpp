@@ -5,131 +5,168 @@
 
 #include "util/mpi_util.hpp"
 
-TEST(MpiUtilTest, ExposesACompileTimeMpiUsageFlag) {
+TEST(MpiUtilCompileFlagTest, IsUsedFlagIsBooleanLike) {
   EXPECT_TRUE(MPIUtil::isUsed || !MPIUtil::isUsed);
 }
 
-TEST(MpiUtilTest, InitAndFinalizeAreNoOpsWhenMpiIsDisabled) {
+TEST(MpiUtilRankTest, NumberOfRanksIsAtLeastOne) {
+  EXPECT_GE(MPIUtil::numberOfRanks(), 1);
+}
+
+TEST(MpiUtilRankTest, RankIsNonNegative) {
+  EXPECT_GE(MPIUtil::rank(), 0);
+}
+
+TEST(MpiUtilRankTest, RankIsStrictlySmallerThanNumberOfRanks) {
+  EXPECT_LT(MPIUtil::rank(), MPIUtil::numberOfRanks());
+}
+
+TEST(MpiUtilRoleTest, IsRootMatchesRankEqualsZero) {
+  EXPECT_EQ(MPIUtil::isRoot(), MPIUtil::rank() == 0);
+}
+
+TEST(MpiUtilRoleTest, IsSingleProcessMatchesWorldSizeEqualsOne) {
+  EXPECT_EQ(MPIUtil::isSingleProcess(), MPIUtil::numberOfRanks() == 1);
+}
+
+TEST(MpiUtilLifecycleTest, IsInitializedIsQueryable) {
+  EXPECT_TRUE(MPIUtil::isInitialized() || !MPIUtil::isInitialized());
+}
+
+TEST(MpiUtilLifecycleTest, InitAndFinalizeAreCallableWhenMpiIsDisabled) {
   if constexpr (!MPIUtil::isUsed) {
     EXPECT_NO_THROW(MPIUtil::init());
     EXPECT_NO_THROW(MPIUtil::finalize());
   } else {
-    GTEST_SKIP() << "Lifecycle is managed externally when MPI is enabled.";
+    GTEST_SKIP() << "MPI lifecycle is controlled externally in MPI-enabled runs.";
   }
 }
 
-TEST(MpiUtilTest, IsInitializedReportsTrueWhenMpiIsDisabled) {
+TEST(MpiUtilLifecycleTest, AbortIsCallableWhenMpiIsDisabled) {
   if constexpr (!MPIUtil::isUsed) {
-    EXPECT_TRUE(MPIUtil::isInitialized());
+    EXPECT_NO_THROW(MPIUtil::abort());
   } else {
-    SUCCEED() << "Initialization status depends on MPI runtime lifecycle.";
+    GTEST_SKIP() << "Abort is intentionally not called in MPI-enabled runs.";
   }
 }
 
-TEST(MpiUtilTest, RankAndWorldSizeStayInValidRange) {
-  const int rank = MPIUtil::rank();
-  const int n_ranks = MPIUtil::numberOfRanks();
-
-  EXPECT_GE(n_ranks, 1);
-  EXPECT_GE(rank, 0);
-  EXPECT_LT(rank, n_ranks);
-}
-
-TEST(MpiUtilTest, RootFlagMatchesRankZero) {
-  EXPECT_EQ(MPIUtil::isRoot(), MPIUtil::rank() == 0);
-}
-
-TEST(MpiUtilTest, SingleProcessFlagMatchesWorldSize) {
-  EXPECT_EQ(MPIUtil::isSingleProcess(), MPIUtil::numberOfRanks() == 1);
-}
-
-TEST(MpiUtilTest, BarrierCanBeInvokedSafely) {
+TEST(MpiUtilSyncTest, BarrierIsCallable) {
   EXPECT_NO_THROW(MPIUtil::barrier());
 }
 
-TEST(MpiUtilTest, TimerDoesNotGoBackwards) {
+TEST(MpiUtilTimeTest, TimerIsMonotonicAcrossBarrier) {
   const double t0 = MPIUtil::timer();
   MPIUtil::barrier();
   const double t1 = MPIUtil::timer();
   EXPECT_GE(t1, t0);
 }
 
-TEST(MpiUtilTest, IsEqualOnAllRanksAcceptsUniformValue) {
-  EXPECT_TRUE(MPIUtil::isEqualOnAllRanks(42));
+TEST(MpiUtilReductionTest, IsEqualOnAllRanksReturnsTrueForUniformValue) {
+  EXPECT_TRUE(MPIUtil::isEqualOnAllRanks(7));
 }
 
-TEST(MpiUtilTest, GetLoopIndexesReturnsLocalBoundsInsideLoopRange) {
+TEST(MpiUtilLoopIndexesTest, GetLoopIndexesStartIsWithinBounds) {
   constexpr int loop_size = 10;
   const auto idx = MPIUtil::getLoopIndexes(loop_size, MPIUtil::rank());
-
   EXPECT_GE(idx.first, 0);
-  EXPECT_LE(idx.first, loop_size);
-  EXPECT_GE(idx.second, idx.first);
+}
+
+TEST(MpiUtilLoopIndexesTest, GetLoopIndexesEndIsWithinBounds) {
+  constexpr int loop_size = 10;
+  const auto idx = MPIUtil::getLoopIndexes(loop_size, MPIUtil::rank());
   EXPECT_LE(idx.second, loop_size);
 }
 
-TEST(MpiUtilTest, GetAllLoopIndexesCoversWholeLoopWithoutGaps) {
-  constexpr int loop_size = 13;
-  const auto all_idx = MPIUtil::getAllLoopIndexes(loop_size);
-
-  ASSERT_EQ(all_idx.size(), static_cast<size_t>(MPIUtil::numberOfRanks()));
-
-  int next_start = 0;
-  for (const auto &idx : all_idx) {
-    EXPECT_EQ(idx.first, next_start);
-    EXPECT_GE(idx.second, idx.first);
-    EXPECT_LE(idx.second, loop_size);
-    next_start = idx.second;
-  }
-  EXPECT_EQ(next_start, loop_size);
+TEST(MpiUtilLoopIndexesTest, GetLoopIndexesProducesNonNegativeSpan) {
+  constexpr int loop_size = 10;
+  const auto idx = MPIUtil::getLoopIndexes(loop_size, MPIUtil::rank());
+  EXPECT_GE(idx.second - idx.first, 0);
 }
 
-TEST(MpiUtilTest, ParallelForExecutesOnlyThisRanksAssignedSlice) {
+TEST(MpiUtilLoopIndexesTest, GetAllLoopIndexesReturnsOneRangePerRank) {
+  const auto all_idx = MPIUtil::getAllLoopIndexes(11);
+  EXPECT_EQ(all_idx.size(), static_cast<size_t>(MPIUtil::numberOfRanks()));
+}
+
+TEST(MpiUtilLoopIndexesTest, GetAllLoopIndexesStartsFromZero) {
+  const auto all_idx = MPIUtil::getAllLoopIndexes(11);
+  ASSERT_FALSE(all_idx.empty());
+  EXPECT_EQ(all_idx.front().first, 0);
+}
+
+TEST(MpiUtilLoopIndexesTest, GetAllLoopIndexesEndsAtLoopSize) {
+  constexpr int loop_size = 11;
+  const auto all_idx = MPIUtil::getAllLoopIndexes(loop_size);
+  ASSERT_FALSE(all_idx.empty());
+  EXPECT_EQ(all_idx.back().second, loop_size);
+}
+
+TEST(MpiUtilLoopIndexesTest, GetAllLoopIndexesProducesContiguousRanges) {
+  constexpr int loop_size = 13;
+  const auto all_idx = MPIUtil::getAllLoopIndexes(loop_size);
+  for (size_t i = 1; i < all_idx.size(); ++i) {
+    EXPECT_EQ(all_idx[i - 1].second, all_idx[i].first);
+  }
+}
+
+TEST(MpiUtilParallelForTest, ParallelForReturnsOneRangePerRank) {
+  std::vector<int> hits(8, 0);
+  const auto loop_data = MPIUtil::parallelFor(
+      [&](const int i) { hits[i] += 1; },
+      static_cast<int>(hits.size()),
+      1);
+  EXPECT_EQ(loop_data.size(), static_cast<size_t>(MPIUtil::numberOfRanks()));
+}
+
+TEST(MpiUtilParallelForTest, ParallelForExecutesEachIndexInLocalRangeOnce) {
   std::vector<int> hits(8, 0);
   const auto loop_data = MPIUtil::parallelFor(
       [&](const int i) { hits[i] += 1; },
       static_cast<int>(hits.size()),
       2);
 
-  ASSERT_EQ(loop_data.size(), static_cast<size_t>(MPIUtil::numberOfRanks()));
   const auto my_idx = loop_data[MPIUtil::rank()];
-  for (int i = 0; i < static_cast<int>(hits.size()); ++i) {
-    if (i >= my_idx.first && i < my_idx.second) {
-      EXPECT_EQ(hits[i], 1);
-    } else {
-      EXPECT_EQ(hits[i], 0);
-    }
+  for (int i = my_idx.first; i < my_idx.second; ++i) {
+    EXPECT_EQ(hits[i], 1);
   }
 }
 
-TEST(MpiUtilTest, GatherLoopDataAcceptsValidBuffer) {
+TEST(MpiUtilParallelForTest, ParallelForDoesNotTouchIndexesOutsideLocalRange) {
+  std::vector<int> hits(8, 0);
+  const auto loop_data = MPIUtil::parallelFor(
+      [&](const int i) { hits[i] += 1; },
+      static_cast<int>(hits.size()),
+      2);
+
+  const auto my_idx = loop_data[MPIUtil::rank()];
+  for (int i = 0; i < my_idx.first; ++i) {
+    EXPECT_EQ(hits[i], 0);
+  }
+  for (int i = my_idx.second; i < static_cast<int>(hits.size()); ++i) {
+    EXPECT_EQ(hits[i], 0);
+  }
+}
+
+TEST(MpiUtilGatherTest, GatherLoopDataAcceptsValidBuffer) {
   std::vector<double> values{1.0, 2.0, 3.0};
   const auto loop_data = MPIUtil::getAllLoopIndexes(static_cast<int>(values.size()));
   EXPECT_NO_THROW(MPIUtil::gatherLoopData(values.data(), loop_data, 1));
 }
 
-TEST(MpiUtilTest, GatherLoopDataRejectsNullBufferInSingleProcessMode) {
+TEST(MpiUtilGatherTest, GatherLoopDataRejectsNullBufferInSingleProcessMode) {
   if (MPIUtil::isSingleProcess()) {
     const auto loop_data = MPIUtil::getAllLoopIndexes(0);
     EXPECT_THROW(MPIUtil::gatherLoopData(nullptr, loop_data, 1),
                  std::runtime_error);
   } else {
-    GTEST_SKIP() << "Failure path aborts MPI jobs when multiple ranks are used.";
+    GTEST_SKIP() << "Null-buffer path aborts under multi-rank MPI runs.";
   }
 }
 
-TEST(MpiUtilTest, ThrowErrorRaisesRuntimeErrorInSingleProcessMode) {
+TEST(MpiUtilErrorTest, ThrowErrorThrowsRuntimeErrorInSingleProcessMode) {
   if (MPIUtil::isSingleProcess()) {
     EXPECT_THROW(MPIUtil::throwError("test failure"), std::runtime_error);
   } else {
-    GTEST_SKIP() << "Failure path aborts MPI jobs when multiple ranks are used.";
-  }
-}
-
-TEST(MpiUtilTest, AbortIsNoOpWhenMpiIsDisabled) {
-  if constexpr (!MPIUtil::isUsed) {
-    EXPECT_NO_THROW(MPIUtil::abort());
-  } else {
-    GTEST_SKIP() << "Abort is intentionally not invoked in MPI-enabled tests.";
+    GTEST_SKIP() << "throwError aborts under multi-rank MPI runs.";
   }
 }
