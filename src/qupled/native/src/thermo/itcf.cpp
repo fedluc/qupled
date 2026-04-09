@@ -1,13 +1,13 @@
 #include "thermo/itcf.hpp"
 #include "schemes/hf.hpp"
 #include "schemes/rpa.hpp"
-#include "util/mpi_util.hpp"
 #include "util/numerics.hpp"
 #include <cassert>
 #include <cmath>
 
 using namespace std;
 using ItgParam = Integrator1D::Param;
+using Itg2DParam = Integrator2D::Param;
 
 namespace thermoUtil {
 
@@ -121,34 +121,60 @@ namespace thermoUtil {
   // -----------------------------------------------------------------
 
   ItcfNonInteractingGround::ItcfNonInteractingGround(
-      const double &x_, const shared_ptr<const Input> in_, const double &tau_)
-      : ItcfBase(x_, in_, tau_) {
-    if (in->getDimension() == dimensionsUtil::Dimension::D2) {
-      MPIUtil::throwError(
-          "Ground state calculations of the imaginary-time "
-          "correlation function in two dimensions are not implemented.");
-    }
-  }
+      const double &x_,
+      const shared_ptr<const Input> in_,
+      const double &tau_,
+      shared_ptr<Integrator2D> itg2_)
+      : ItcfBase(x_, in_, tau_),
+        itg2(itg2_),
+        res(numUtil::NaN) {}
 
-  double ItcfNonInteractingGround::get() const {
+  double ItcfNonInteractingGround::get() {
     if (tau == 0.0) {
       HFUtil::SsfGround ssf(in->getDimension(), x);
       return ssf.get();
     }
+    compute(in->getDimension());
+    return res;
+  }
+
+  void ItcfNonInteractingGround::compute3D() {
     const double xt = x * tau;
     const double xt3 = xt * xt * xt;
     const double fact = 3.0 / 16.0 / xt3;
     const double txtp1 = 2.0 * xt + 1.0;
     const double xtxm2 = xt * (x - 2.0);
     if (x == 0.0) {
-      return 0.0;
+      res = 0.0;
     } else if (x < 2.0) {
       const double x2t2 = 2.0 * x * xt;
-      return fact * (x2t2 - exp(xtxm2) * (1.0 - exp(-x2t2)) * txtp1);
+      res = fact * (x2t2 - exp(xtxm2) * (1.0 - exp(-x2t2)) * txtp1);
     } else {
       const double em4xt = exp(-4.0 * xt);
-      return fact * exp(-xtxm2) * (txtp1 * em4xt + 2.0 * xt - 1.0);
+      res = fact * exp(-xtxm2) * (txtp1 * em4xt + 2.0 * xt - 1.0);
     }
+  }
+
+  void ItcfNonInteractingGround::compute2D() {
+    if (x == 0.0) {
+      res = 0.0;
+      return;
+    }
+    assert(itg2 != nullptr);
+    auto func1 = [&](const double &y) -> double { return y; };
+    auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
+    auto param = Itg2DParam(0.0, 1.0, 0.0, M_PI);
+    itg2->compute(func1, func2, param, vector<double>());
+    res = exp(-x * x * tau) / M_PI * itg2->getSolution();
+  }
+
+  double ItcfNonInteractingGround::integrand2DIn(const double &p) const {
+    const double y = itg2->getX();
+    const double xy = x * y;
+    // Heaviside support: keep only particle-hole allowed region.
+    const double hsArg = y * y + x * x + 2.0 * xy * cos(p) - 1.0;
+    if (hsArg < 0.0) return 0.0;
+    return exp(-2.0 * xy * tau * cos(p));
   }
 
   // -----------------------------------------------------------------

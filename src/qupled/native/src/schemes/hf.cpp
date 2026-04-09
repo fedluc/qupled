@@ -338,7 +338,6 @@ void HFUtil::IdrGround::compute2D() {
     res = (Omega == 0.0) ? 1.0 : 0.0;
     return;
   }
-  assert(Omega >= 0.0);
   const double x2 = x * x;
   const complex<double> z(x2, Omega);
   const complex<double> rad = z * z - 4.0 * x2;
@@ -411,7 +410,6 @@ double HFUtil::Ssf::integrand2DIn(const double &p) const {
 
 double HFUtil::SsfGround::get() {
   compute(dim);
-  std::cerr << "Ground-state SSF at x=" << x << ": " << res << std::endl;
   return res;
 }
 
