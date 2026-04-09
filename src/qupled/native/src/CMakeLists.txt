@@ -142,16 +142,50 @@ if(BUILD_NATIVE_TESTS)
 		FetchContent_MakeAvailable(googletest)
 	endif()
 
-	add_executable(native_tests
-		../tests/dual_test.cpp
-		../tests/num_util_test.cpp
-		../tests/vector_util_test.cpp
+	file(GLOB_RECURSE NATIVE_TEST_FILES CONFIGURE_DEPENDS
+		../tests/*.cpp
+	)
+
+	add_library(native_test_support STATIC
+		util/logger.cpp
+		util/numerics.cpp
+		util/vector2D.cpp
+		util/vector3D.cpp
+		util/mpi_util.cpp
 		util/num_util.cpp
 		util/vector_util.cpp
+		util/dimensions_util.cpp
+		schemes/input.cpp
+		schemes/hf.cpp
+		schemes/rpa.cpp
+		thermo/free_energy.cpp
+		thermo/internal_energy.cpp
+		thermo/rdf.cpp
+		thermo/itcf.cpp
+		thermo/thermo_util.cpp
+		thermo/chemical_potential.cpp
+	)
+
+	target_include_directories(native_test_support PRIVATE
+		../include
+	)
+
+	target_compile_features(native_test_support PRIVATE cxx_std_20)
+	target_compile_options(native_test_support PRIVATE -Wall -Wextra -Wpedantic -O3)
+
+	target_link_libraries(native_test_support PRIVATE
+		OpenMP::OpenMP_CXX
+		GSL::gsl
+		GSL::gslcblas
+	)
+
+	add_executable(native_tests
+		${NATIVE_TEST_FILES}
 	)
 
 	target_include_directories(native_tests PRIVATE
 		../include
+		../tests
 	)
 
 	target_compile_features(native_tests PRIVATE cxx_std_20)
@@ -159,6 +193,7 @@ if(BUILD_NATIVE_TESTS)
 
 	target_link_libraries(native_tests PRIVATE
 		GTest::gtest_main
+		native_test_support
 		OpenMP::OpenMP_CXX
 		GSL::gsl
 		GSL::gslcblas

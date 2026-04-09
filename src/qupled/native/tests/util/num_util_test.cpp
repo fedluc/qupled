@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+
 #include "util/num_util.hpp"
 
 TEST(NumUtilTest, IsZeroUsesToleranceWindow) {
@@ -21,4 +23,10 @@ TEST(NumUtilTest, LargerThanUsesRelativeTolerance) {
 
   EXPECT_FALSE(numUtil::largerThan(x, y_within_tol));
   EXPECT_TRUE(numUtil::largerThan(x, y_beyond_tol));
+}
+
+TEST(NumUtilTest, LambdaConstantsRemainSelfConsistent) {
+  EXPECT_NEAR(numUtil::lambda * numUtil::lambda * numUtil::lambda,
+              numUtil::lambda3,
+              1.0e-15);
 }
