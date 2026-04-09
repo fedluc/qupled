@@ -73,7 +73,7 @@ void Rpa::computeLfc() {
 double RpaUtil::SsfBase::ip() const {
   const double rs = in->getCoupling();
   if (in->getDimension() == dimensionsUtil::Dimension::D2) {
-    return sqrt(2.0) * rs / x;
+    return 1.5 * sqrt(2.0) * rs / x;
   } else {
     return 4.0 * numUtil::lambda * rs / (M_PI * x * x);
   }
@@ -100,7 +100,7 @@ void RpaUtil::Ssf::compute3D() {
 void RpaUtil::Ssf::compute2D() {
   const double Theta = in->getDegeneracy();
   const double suml = computeMatsubaraSummation();
-  res = ssfHF - ip() * Theta * suml;
+  res = ssfHF - 1.5 * ip() * Theta * suml;
 }
 
 double RpaUtil::Ssf::computeMatsubaraSummation() const {
@@ -127,9 +127,7 @@ double RpaUtil::SsfGround::get() {
   if (rs == 0.0) return ssfHF;
   auto func = [&](const double &y) -> double { return integrand(y); };
   itg->compute(func, ItgParam(0, OmegaMax));
-  const double pref = (in->getDimension() == dimensionsUtil::Dimension::D2)
-                          ? 1.0 / M_PI
-                          : 1.5 / M_PI;
+  const double pref = 1.5 / M_PI;
   return pref * itg->getSolution() + ssfHF;
 }
 

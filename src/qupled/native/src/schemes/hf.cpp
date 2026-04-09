@@ -156,8 +156,8 @@ vector<double> HF::getSdr() const {
   if (isnan(theta) || theta == 0.0) { return vector<double>(); }
   // Calculate SDR for 2D
   if (dim == Dimension::D2) {
-    vector<double> sdr(wvg.size(), -theta);
-    const double fact = sqrt(2.0) * in().getCoupling();
+    vector<double> sdr(wvg.size(), -1.5 * theta);
+    const double fact = 1.5 * sqrt(2.0) * in().getCoupling();
     for (size_t i = 0; i < wvg.size(); ++i) {
       const double phi0 = idr(i, 0);
       sdr[i] *= phi0 / (1.0 + fact / wvg[i] * (1.0 - lfc(i, 0)) * phi0);
@@ -209,6 +209,7 @@ void HFUtil::Idr::compute3D() {
 // Compute for 2D systems
 void HFUtil::Idr::compute2D() {
   const double Theta = in->getDegeneracy();
+  const double norm = 2.0 / 3.0;
   for (int l = 0; l < in->getNMatsubara(); ++l) {
     auto func = [&](const double &y) -> double {
       return (l == 0) ? integrand2D(y) : integrand2D(y, l);
@@ -217,9 +218,9 @@ void HFUtil::Idr::compute2D() {
     const auto itgParam = ItgParam(yMin, upperLimit);
     itg->compute(func, itgParam);
     if (l == 0) {
-      res[l] = 1.0 - exp(-1.0 / Theta) - itg->getSolution();
+      res[l] = norm * (1.0 - exp(-1.0 / Theta) - itg->getSolution());
     } else {
-      res[l] = itg->getSolution();
+      res[l] = norm * itg->getSolution();
     }
   }
 }
@@ -334,14 +335,15 @@ void HFUtil::IdrGround::compute3D() {
 
 // Compute for 2D systems
 void HFUtil::IdrGround::compute2D() {
+  const double norm = 2.0 / 3.0;
   if (x == 0.0) {
-    res = (Omega == 0.0) ? 1.0 : 0.0;
+    res = (Omega == 0.0) ? norm : 0.0;
     return;
   }
   const double x2 = x * x;
   const complex<double> z(x2, Omega);
   const complex<double> rad = z * z - 4.0 * x2;
-  res = 1.0 - real(sqrt(rad)) / x2;
+  res = norm * (1.0 - real(sqrt(rad)) / x2);
 }
 
 // -----------------------------------------------------------------
@@ -369,7 +371,7 @@ void HFUtil::Ssf::compute2D() {
   auto func1 = [&](const double &y) -> double { return integrand2DOut(y); };
   auto func2 = [&](const double &p) -> double { return integrand2DIn(p); };
   itg2->compute(func1, func2, Itg2DParam(yMin, yMax, 0, M_PI), itgGrid);
-  res = itg2->getSolution() + Theta * idr0;
+  res = itg2->getSolution() + 1.5 * Theta * idr0;
 }
 
 // 3D Integrand

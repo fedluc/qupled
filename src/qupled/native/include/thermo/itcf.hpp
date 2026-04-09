@@ -255,9 +255,8 @@ namespace thermoUtil {
    * @brief Computes the RPA imaginary-time correlation function at zero
    * temperature.
    *
-   * Evaluates F(x, tau) = F_HF(x, tau) + C_d * integral over real
-   * frequencies of the RPA correction weighted by exp(-Omega*tau), with
-   * C_d = 1/pi in 2D and C_d = 3/(2pi) in 3D.
+   * Evaluates F(x, tau) = F_HF(x, tau) + (3/2pi) * integral over real
+   * frequencies of the RPA correction weighted by exp(-Omega*tau).
    * The SSF is recovered as the special case tau = 0.
    */
   class ItcfGround : public ItcfBase {
