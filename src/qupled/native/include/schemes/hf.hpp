@@ -239,10 +239,9 @@ namespace HFUtil {
    * wave-vector @p x_ and frequency parameter @p Omega_.
    *
    *
-   * Normalization convention:
-   * - 2D:  @f$\tilde\chi = -(E_F/n)\chi@f$
-   *
-   * - 3D:  @f$\tilde\chi = -(2E_F/(3n))\chi@f$
+   * Normalization convention (both 2D and 3D):
+   * @f$\tilde\chi =
+   * -(2E_F/(3n))\chi@f$.
    */
   class IdrGround : public dimensionsUtil::DimensionsHandler {
 
@@ -250,10 +249,10 @@ namespace HFUtil {
 
     /**
      * @brief Construct for a ground-state IDR calculation.
-     * @param dim_
-     * Dimensionality (2D or 3D).
-     * @param x_     Wave-vector value.
      *
+     * @param dim_   Dimensionality (2D or 3D).
+     * @param x_     Wave-vector
+     * value.
      * @param Omega_ Frequency parameter.
      */
     IdrGround(const dimensionsUtil::Dimension dim_,
@@ -387,10 +386,11 @@ namespace HFUtil {
 
     /**
      * @brief Construct for a zero-temperature SSF calculation.
-     * @param
-     * dim_ Dimensionality (2D or 3D).
-     * @param x_   Wave-vector value.
- */
+     *
+     * @param dim_ Dimensionality (2D or 3D).
+     * @param x_   Wave-vector
+     * value.
+     */
     SsfGround(const dimensionsUtil::Dimension dim_, const double &x_)
         : dim(dim_),
           x(x_),

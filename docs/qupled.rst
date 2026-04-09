@@ -4,8 +4,8 @@ Python API
 **qupled** is a hybrid Python/C++ package designed to simulate and analyze dielectric response 
 schemes, both classical and quantum. **Python** orchestrates the workflow: setting up simulations, 
 managing input/output, and storing results in an SQLite database. **C++** performs the heavy 
-numerical computations, accessed via the 
-`Boost.Python <https://www.boost.org/doc/libs/1_80_0/libs/python/doc/html/index.html>`_ bindings.
+numerical computations, accessed via
+`pybind11 <https://pybind11.readthedocs.io/>`_ bindings.
 
 To run a simulation, users configure input parameters through Python classes 
 (e.g., :obj:`qupled.schemes.hf.Input`) and launch the computation using the corresponding solver 
@@ -253,4 +253,3 @@ Dimenions
 
 .. autoclass:: qupled.util.dimension.Dimension
     :members:
-

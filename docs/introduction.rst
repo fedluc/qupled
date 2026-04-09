@@ -155,4 +155,7 @@ is the Fermi energy and :math:`h` is Planck's constant.
 Limitations
 -----------
 
-Ground state (zero temperature) calculations are not available for the QSTLS-IET and QVS schemes.
+* Quantum schemes are currently only available for 3D systems; 2D calculations
+  are not implemented for QSTLS, QSTLS-IET, and QVS.
+* Ground state (zero temperature) calculations are not available for the
+  QSTLS-IET and QVS schemes.
