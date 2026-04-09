@@ -35,9 +35,9 @@ HF::HF(const std::shared_ptr<const Input> &in_, const bool verbose_)
 int HF::compute() {
   try {
     init();
-    // println("Structural properties calculation ...");
-    // computeStructuralProperties();
-    // println("Done");
+    println("Structural properties calculation ...");
+    computeStructuralProperties();
+    println("Done");
     return 0;
   } catch (const runtime_error &err) {
     cerr << err.what() << endl;
@@ -134,7 +134,7 @@ void HF::computeSsfFinite() {
 
 void HF::computeSsfGround() {
   for (size_t i = 0; i < wvg.size(); ++i) {
-    HFUtil::SsfGround ssfTmp(wvg[i]);
+    HFUtil::SsfGround ssfTmp(inPtr, wvg[i], itg);
     ssf[i] = ssfTmp.get();
   }
 }
@@ -348,13 +348,14 @@ double HFUtil::IdrGround::integrand2D(const double &y) const {
   const double y2 = y * y;
   const double x2 = x * x;
   const double x4 = x2 * x2;
-  const double Omega2_4 = Omega * Omega / 4.0;
+  const double Omega_2 = Omega / 2.0;
+  const double Omega2_4 = Omega_2 * Omega_2;
   const double exp1 = x4 / 4.0 - x2 * y2 - Omega2_4;
   double phi;
   if (exp1 > 0.0) {
-    phi = atan(x2 * Omega2_4 / exp1) / 2.0;
+    phi = atan(x2 * Omega_2 / exp1) / 2.0;
   } else {
-    phi = M_PI / 2.0 - atan(x2 * Omega2_4 / exp1) / 2.0;
+    phi = M_PI / 2.0 - atan(x2 * Omega_2 / exp1) / 2.0;
   }
   if (x > 0.0) {
     return 2.0 * y * abs(cos(phi)) / pow((exp1 * exp1 + x4 * Omega2_4), 0.25);
@@ -427,11 +428,37 @@ double HFUtil::Ssf::integrand2DIn(const double &p) const {
 // SsfHFGround class
 // -----------------------------------------------------------------
 
-// Static structure factor at zero temperature
-double HFUtil::SsfGround::get() const {
+double HFUtil::SsfGround::get() {
+  assert(in->getDegeneracy() == 0.0);
+  compute(in->getDimension());
+  std::cerr << "Ground-state SSF at x=" << x << ": " << res << std::endl;
+  return res;
+}
+
+void HFUtil::SsfGround::compute3D() {
   if (x < 2.0) {
-    return (x / 16.0) * (12.0 - x * x);
+    res = (x / 16.0) * (12.0 - x * x);
   } else {
-    return 1.0;
+    res = 1.0;
   }
+}
+
+void HFUtil::SsfGround::compute2D() {
+  if (x == 0.0) {
+    res = 0.0;
+    return;
+  }
+  if (x > 2.0) {
+    res = 1.0;
+    return;
+  }
+  const double OmegaMax = 1e4; // in->getFrequencyCutoff();
+  auto func = [&](const double &Omega) -> double { return integrand2D(Omega); };
+  itg->compute(func, ItgParam(0, OmegaMax));
+  res = itg->getSolution() / M_PI;
+}
+
+double HFUtil::SsfGround::integrand2D(const double &Omega) const {
+  const double idr = HFUtil::IdrGround(in, x, Omega).get();
+  return idr;
 }

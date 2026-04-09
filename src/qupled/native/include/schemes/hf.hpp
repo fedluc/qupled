@@ -377,29 +377,50 @@ namespace HFUtil {
    * @brief Computes the Hartree-Fock static structure factor at zero
    * temperature.
    *
-   * Uses the analytic ground-state expression for the HF SSF.
+   * Uses the analytic 3D ground-state expression and a 2D
+   * real-frequency integration.
    */
-  class SsfGround {
+  class SsfGround : public dimensionsUtil::DimensionsHandler {
 
   public:
 
     /**
      * @brief Construct for a zero-temperature SSF calculation.
-     * @param x_ Wave-vector value.
+     * @param in_ Shared pointer to the input parameters.
+     * @param x_  Wave-vector value.
+     * @param itg_ Shared pointer to a 1D integrator.
      */
-    explicit SsfGround(const double &x_)
-        : x(x_) {}
+    SsfGround(const std::shared_ptr<const Input> in_,
+              const double &x_,
+              std::shared_ptr<Integrator1D> itg_)
+        : in(in_),
+          x(x_),
+          itg(itg_),
+          res(numUtil::NaN) {}
 
     /**
      * @brief Compute and return the ground-state HF static structure factor.
-     * @return Analytic SSF value at @p x_.
+     * @return Ground-state SSF value at @p x_.
      */
-    double get() const;
+    double get();
 
   private:
 
+    /** @brief Input parameters. */
+    const std::shared_ptr<const Input> in;
     /** @brief Wave-vector. */
     const double x;
+    /** @brief 1D numerical integrator. */
+    const std::shared_ptr<Integrator1D> itg;
+    /** @brief Result of the ground-state SSF computation. */
+    double res;
+    void compute3D() override;
+    void compute2D() override;
+    /**
+     * @brief 2D integrand over real frequency @p Omega.
+     * @param Omega Real frequency value.
+     */
+    double integrand2D(const double &Omega) const;
   };
 
 } // namespace HFUtil
