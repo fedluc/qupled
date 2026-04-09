@@ -173,6 +173,7 @@ if(BUILD_NATIVE_TESTS)
 		schemes/esa.cpp
 		schemes/qstls.cpp
 		schemes/qstlsiet.cpp
+		schemes/vsstls.cpp
 		schemes/qvsstls.cpp
 	)
 
