@@ -5,15 +5,17 @@
 #include "util/dimensions_util.hpp"
 
 namespace {
-class FakeDimensionsHandler : public dimensionsUtil::DimensionsHandler {
-public:
-  int compute2d_calls = 0;
-  int compute3d_calls = 0;
+  class FakeDimensionsHandler : public dimensionsUtil::DimensionsHandler {
+  public:
 
-private:
-  void compute2D() override { ++compute2d_calls; }
-  void compute3D() override { ++compute3d_calls; }
-};
+    int compute2d_calls = 0;
+    int compute3d_calls = 0;
+
+  private:
+
+    void compute2D() override { ++compute2d_calls; }
+    void compute3D() override { ++compute3d_calls; }
+  };
 } // namespace
 
 TEST(DimensionsUtilTest, DispatchesD2To2DImplementation) {

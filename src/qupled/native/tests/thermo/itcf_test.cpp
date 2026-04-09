@@ -8,24 +8,23 @@
 #include "thermo/itcf.hpp"
 
 TEST(ItcfTest, NonInteractingFiniteReturnsExpectedXZeroFormulaIn2D) {
-  auto in =
-      testFixtures::makeBaseInput("HF", dimensionsUtil::Dimension::D2, 1.0, 0.7, 3);
+  auto in = testFixtures::makeBaseInput(
+      "HF", dimensionsUtil::Dimension::D2, 1.0, 0.7, 3);
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
 
-  thermoUtil::ItcfNonInteracting itcf(
-      0.0, in, 0.2, 0.0, 0.0, 2.0, itg, 0.0);
+  thermoUtil::ItcfNonInteracting itcf(0.0, in, 0.2, 0.0, 0.0, 2.0, itg, 0.0);
 
-  const double expected = in->getDegeneracy() * (1.0 - std::exp(-1.0 / in->getDegeneracy()));
+  const double expected =
+      in->getDegeneracy() * (1.0 - std::exp(-1.0 / in->getDegeneracy()));
   EXPECT_NEAR(itcf.get(), expected, 1.0e-12);
 }
 
 TEST(ItcfTest, NonInteractingFiniteDelegatesTauZeroToStaticStructureFactor) {
-  auto in =
-      testFixtures::makeBaseInput("HF", dimensionsUtil::Dimension::D3, 1.0, 0.7, 3);
+  auto in = testFixtures::makeBaseInput(
+      "HF", dimensionsUtil::Dimension::D3, 1.0, 0.7, 3);
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
 
-  thermoUtil::ItcfNonInteracting itcf(
-      0.0, in, 0.0, 0.0, 0.0, 2.0, itg, 0.0);
+  thermoUtil::ItcfNonInteracting itcf(0.0, in, 0.0, 0.0, 0.0, 2.0, itg, 0.0);
 
   const double v = itcf.get();
   EXPECT_TRUE(std::isfinite(v));
@@ -33,8 +32,8 @@ TEST(ItcfTest, NonInteractingFiniteDelegatesTauZeroToStaticStructureFactor) {
 }
 
 TEST(ItcfTest, NonInteractingGroundTauZeroMatchesSsfGroundReference) {
-  auto in3d =
-      testFixtures::makeBaseInput("HF", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
+  auto in3d = testFixtures::makeBaseInput(
+      "HF", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
   auto itg2 = std::make_shared<Integrator2D>(1.0e-6);
 
   thermoUtil::ItcfNonInteractingGround tauZero(1.0, in3d, 0.0, itg2);
@@ -42,8 +41,8 @@ TEST(ItcfTest, NonInteractingGroundTauZeroMatchesSsfGroundReference) {
 }
 
 TEST(ItcfTest, NonInteractingGroundReturnsZeroAtXZero) {
-  auto in3d =
-      testFixtures::makeBaseInput("HF", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
+  auto in3d = testFixtures::makeBaseInput(
+      "HF", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
   auto itg2 = std::make_shared<Integrator2D>(1.0e-6);
 
   thermoUtil::ItcfNonInteractingGround xZero(0.0, in3d, 0.2, itg2);
@@ -51,8 +50,8 @@ TEST(ItcfTest, NonInteractingGroundReturnsZeroAtXZero) {
 }
 
 TEST(ItcfTest, InteractingFiniteReturnsZeroAtXZero) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 1.0, 0.7, 3);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 1.0, 0.7, 3);
   const std::vector<double> idr{0.4, 0.2, 0.1};
   const std::vector<double> lfc{0.1};
 
@@ -61,8 +60,8 @@ TEST(ItcfTest, InteractingFiniteReturnsZeroAtXZero) {
 }
 
 TEST(ItcfTest, InteractingFiniteReturnsHartreeFockValueAtZeroCoupling) {
-  auto inZeroCoupling =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 0.0, 0.7, 3);
+  auto inZeroCoupling = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 0.0, 0.7, 3);
   const std::vector<double> idr{0.4, 0.2, 0.1};
   const std::vector<double> lfc{0.1};
   thermoUtil::Itcf couplingZero(1.0, inZeroCoupling, 0.3, 0.5, lfc, idr);
@@ -70,8 +69,8 @@ TEST(ItcfTest, InteractingFiniteReturnsHartreeFockValueAtZeroCoupling) {
 }
 
 TEST(ItcfTest, InteractingFiniteTauZeroBranchReturnsFiniteValue) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 1.0, 0.7, 3);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 1.0, 0.7, 3);
   const std::vector<double> idr{0.4, 0.2, 0.1};
   const std::vector<double> lfc{0.1};
   thermoUtil::Itcf tauZero(1.0, in, 0.0, 0.8, lfc, idr);
@@ -79,8 +78,8 @@ TEST(ItcfTest, InteractingFiniteTauZeroBranchReturnsFiniteValue) {
 }
 
 TEST(ItcfTest, InteractingFiniteTauPositiveBranchReturnsFiniteValue) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 1.0, 0.7, 3);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 1.0, 0.7, 3);
   const std::vector<double> idr{0.4, 0.2, 0.1};
   const std::vector<double> lfc{0.1};
   thermoUtil::Itcf finiteTau(1.0, in, 0.3, 0.8, lfc, idr);
@@ -88,8 +87,8 @@ TEST(ItcfTest, InteractingFiniteTauPositiveBranchReturnsFiniteValue) {
 }
 
 TEST(ItcfTest, InteractingGroundReturnsZeroAtXZero) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
   const std::vector<double> lfc{0.1};
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
 
@@ -98,8 +97,8 @@ TEST(ItcfTest, InteractingGroundReturnsZeroAtXZero) {
 }
 
 TEST(ItcfTest, InteractingGroundReturnsHartreeFockValueAtZeroCoupling) {
-  auto inZeroCoupling =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 0.0, 0.0, 2);
+  auto inZeroCoupling = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 0.0, 0.0, 2);
   const std::vector<double> lfc{0.1};
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
   thermoUtil::ItcfGround couplingZero(1.0, inZeroCoupling, 0.3, 0.5, lfc, itg);
@@ -107,8 +106,8 @@ TEST(ItcfTest, InteractingGroundReturnsHartreeFockValueAtZeroCoupling) {
 }
 
 TEST(ItcfTest, InteractingGroundTauZeroBranchReturnsFiniteValue) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
   const std::vector<double> lfc{0.1};
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
   thermoUtil::ItcfGround tauZero(1.0, in, 0.0, 0.8, lfc, itg);
@@ -116,8 +115,8 @@ TEST(ItcfTest, InteractingGroundTauZeroBranchReturnsFiniteValue) {
 }
 
 TEST(ItcfTest, InteractingGroundTauPositiveBranchReturnsFiniteValue) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
   const std::vector<double> lfc{0.1};
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
   thermoUtil::ItcfGround finiteTau(1.0, in, 0.3, 0.8, lfc, itg);

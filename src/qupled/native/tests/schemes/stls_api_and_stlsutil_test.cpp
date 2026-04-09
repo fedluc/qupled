@@ -9,8 +9,8 @@
 #include "schemes/stls.hpp"
 
 TEST(StlsApiAndUtilTest, ConstructorAcceptsValidInput) {
-  auto in =
-      testFixtures::makeStlsInput("STLS", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
+  auto in = testFixtures::makeStlsInput(
+      "STLS", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
 
   EXPECT_NO_THROW((Stls(in, false)));
 }
@@ -57,8 +57,8 @@ TEST(StlsApiAndUtilTest, SlfcUtilityReturnsZeroAtXZeroIn3D) {
   auto ssfi = std::make_shared<Interpolator1D>(wvg, ssf);
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
 
-  auto in3 =
-      testFixtures::makeBaseInput("STLS", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
+  auto in3 = testFixtures::makeBaseInput(
+      "STLS", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
 
   StlsUtil::Slfc g0_3d(0.0, 0.0, 2.0, ssfi, itg, in3);
   EXPECT_DOUBLE_EQ(g0_3d.get(), 0.0);
@@ -70,8 +70,8 @@ TEST(StlsApiAndUtilTest, SlfcUtilityReturnsZeroAtXZeroIn2D) {
   auto ssfi = std::make_shared<Interpolator1D>(wvg, ssf);
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
 
-  auto in2 =
-      testFixtures::makeBaseInput("STLS", dimensionsUtil::Dimension::D2, 1.0, 0.7, 2);
+  auto in2 = testFixtures::makeBaseInput(
+      "STLS", dimensionsUtil::Dimension::D2, 1.0, 0.7, 2);
   StlsUtil::Slfc g0_2d(0.0, 0.0, 2.0, ssfi, itg, in2);
   EXPECT_DOUBLE_EQ(g0_2d.get(), 0.0);
 }
@@ -82,8 +82,8 @@ TEST(StlsApiAndUtilTest, SlfcUtilityReturnsFiniteValueAtNonzeroXIn3D) {
   auto ssfi = std::make_shared<Interpolator1D>(wvg, ssf);
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
 
-  auto in3 =
-      testFixtures::makeBaseInput("STLS", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
+  auto in3 = testFixtures::makeBaseInput(
+      "STLS", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
   StlsUtil::Slfc gx_3d(1.0, 0.0, 2.0, ssfi, itg, in3);
   EXPECT_TRUE(std::isfinite(gx_3d.get()));
 }

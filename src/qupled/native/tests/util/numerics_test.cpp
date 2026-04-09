@@ -12,7 +12,8 @@ TEST(NumericsTest, SpecialFunctionsHandleBasicReferenceValues) {
   EXPECT_NEAR(SpecialFunctions::besselJ0(0.0), 1.0, 1.0e-12);
   EXPECT_TRUE(std::isinf(SpecialFunctions::ellipticK(1.0)));
   EXPECT_TRUE(std::isinf(SpecialFunctions::ellipticE(1.0)));
-  EXPECT_GT(SpecialFunctions::fermiDirac12(1.0), SpecialFunctions::fermiDirac12(0.0));
+  EXPECT_GT(SpecialFunctions::fermiDirac12(1.0),
+            SpecialFunctions::fermiDirac12(0.0));
   EXPECT_GT(SpecialFunctions::fermiDiracm12(1.0),
             SpecialFunctions::fermiDiracm12(0.0));
 }
@@ -77,16 +78,18 @@ TEST(NumericsTest, RootSolversReportInvalidOrNonConvergedSetups) {
 
 TEST(NumericsTest, Integrator1DComputesSimpleReferenceIntegrals) {
   Integrator1D itg_default(1.0e-8);
-  itg_default.compute([](double x) { return x; }, Integrator1D::Param(0.0, 1.0));
+  itg_default.compute([](double x) { return x; },
+                      Integrator1D::Param(0.0, 1.0));
   EXPECT_NEAR(itg_default.getSolution(), 0.5, 1.0e-6);
 
   Integrator1D itg_singular(Integrator1D::Type::SINGULAR, 1.0e-8);
-  itg_singular.compute(
-      [](double x) { return 1.0 / std::sqrt(x); }, Integrator1D::Param(0.0, 1.0));
+  itg_singular.compute([](double x) { return 1.0 / std::sqrt(x); },
+                       Integrator1D::Param(0.0, 1.0));
   EXPECT_NEAR(itg_singular.getSolution(), 2.0, 1.0e-5);
 
   Integrator1D itg_fourier(Integrator1D::Type::FOURIER, 1.0e-6);
-  EXPECT_THROW(itg_fourier.compute([](double x) { return x; }, Integrator1D::Param(0.0, 1.0)),
+  EXPECT_THROW(itg_fourier.compute([](double x) { return x; },
+                                   Integrator1D::Param(0.0, 1.0)),
                std::runtime_error);
 }
 

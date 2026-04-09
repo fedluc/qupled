@@ -7,8 +7,8 @@
 #include "util/dual.hpp"
 
 TEST(EsaApiAndUtilTest, EsaComputeProducesFiniteLocalFieldCorrection) {
-  auto in =
-      testFixtures::makeBaseInput("ESA", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
+  auto in = testFixtures::makeBaseInput(
+      "ESA", dimensionsUtil::Dimension::D3, 1.0, 0.7, 2);
   ESA esa(in);
   EXPECT_EQ(esa.compute(), 0);
   EXPECT_EQ(esa.getLfc().size(0), static_cast<int>(esa.getWvg().size()));

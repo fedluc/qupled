@@ -13,9 +13,7 @@ TEST(MpiUtilRankTest, NumberOfRanksIsAtLeastOne) {
   EXPECT_GE(MPIUtil::numberOfRanks(), 1);
 }
 
-TEST(MpiUtilRankTest, RankIsNonNegative) {
-  EXPECT_GE(MPIUtil::rank(), 0);
-}
+TEST(MpiUtilRankTest, RankIsNonNegative) { EXPECT_GE(MPIUtil::rank(), 0); }
 
 TEST(MpiUtilRankTest, RankIsStrictlySmallerThanNumberOfRanks) {
   EXPECT_LT(MPIUtil::rank(), MPIUtil::numberOfRanks());
@@ -38,7 +36,8 @@ TEST(MpiUtilLifecycleTest, InitAndFinalizeAreCallableWhenMpiIsDisabled) {
     EXPECT_NO_THROW(MPIUtil::init());
     EXPECT_NO_THROW(MPIUtil::finalize());
   } else {
-    GTEST_SKIP() << "MPI lifecycle is controlled externally in MPI-enabled runs.";
+    GTEST_SKIP()
+        << "MPI lifecycle is controlled externally in MPI-enabled runs.";
   }
 }
 
@@ -112,18 +111,14 @@ TEST(MpiUtilLoopIndexesTest, GetAllLoopIndexesProducesContiguousRanges) {
 TEST(MpiUtilParallelForTest, ParallelForReturnsOneRangePerRank) {
   std::vector<int> hits(8, 0);
   const auto loop_data = MPIUtil::parallelFor(
-      [&](const int i) { hits[i] += 1; },
-      static_cast<int>(hits.size()),
-      1);
+      [&](const int i) { hits[i] += 1; }, static_cast<int>(hits.size()), 1);
   EXPECT_EQ(loop_data.size(), static_cast<size_t>(MPIUtil::numberOfRanks()));
 }
 
 TEST(MpiUtilParallelForTest, ParallelForExecutesEachIndexInLocalRangeOnce) {
   std::vector<int> hits(8, 0);
   const auto loop_data = MPIUtil::parallelFor(
-      [&](const int i) { hits[i] += 1; },
-      static_cast<int>(hits.size()),
-      2);
+      [&](const int i) { hits[i] += 1; }, static_cast<int>(hits.size()), 2);
 
   const auto my_idx = loop_data[MPIUtil::rank()];
   for (int i = my_idx.first; i < my_idx.second; ++i) {
@@ -134,9 +129,7 @@ TEST(MpiUtilParallelForTest, ParallelForExecutesEachIndexInLocalRangeOnce) {
 TEST(MpiUtilParallelForTest, ParallelForDoesNotTouchIndexesOutsideLocalRange) {
   std::vector<int> hits(8, 0);
   const auto loop_data = MPIUtil::parallelFor(
-      [&](const int i) { hits[i] += 1; },
-      static_cast<int>(hits.size()),
-      2);
+      [&](const int i) { hits[i] += 1; }, static_cast<int>(hits.size()), 2);
 
   const auto my_idx = loop_data[MPIUtil::rank()];
   for (int i = 0; i < my_idx.first; ++i) {
@@ -149,7 +142,8 @@ TEST(MpiUtilParallelForTest, ParallelForDoesNotTouchIndexesOutsideLocalRange) {
 
 TEST(MpiUtilGatherTest, GatherLoopDataAcceptsValidBuffer) {
   std::vector<double> values{1.0, 2.0, 3.0};
-  const auto loop_data = MPIUtil::getAllLoopIndexes(static_cast<int>(values.size()));
+  const auto loop_data =
+      MPIUtil::getAllLoopIndexes(static_cast<int>(values.size()));
   EXPECT_NO_THROW(MPIUtil::gatherLoopData(values.data(), loop_data, 1));
 }
 

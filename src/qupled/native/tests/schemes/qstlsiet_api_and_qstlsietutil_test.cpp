@@ -36,8 +36,7 @@ TEST(QstlsIetApiAndUtilTest, AdrIetReturnsZeroAtXZero) {
   Vector2D res(3, 2);
   res.fill(0, 1.0);
 
-  QstlsIetUtil::AdrIet adrIet(
-      0.8, 0.0, 2.0, 0.0, ssfi, lfci, bfi, {}, itg2);
+  QstlsIetUtil::AdrIet adrIet(0.8, 0.0, 2.0, 0.0, ssfi, lfci, bfi, {}, itg2);
   adrIet.get(wvg, fixed, res);
   EXPECT_DOUBLE_EQ(res(0, 0), 0.0);
   EXPECT_DOUBLE_EQ(res(0, 1), 0.0);

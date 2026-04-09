@@ -27,7 +27,8 @@ TEST(QvsStlsApiTest, ManagerExposesGridContracts) {
   VSQstlsManager mgr(finite);
   mgr.setAlpha(0.4);
   EXPECT_DOUBLE_EQ(mgr.getAlpha(), 0.4);
-  EXPECT_FALSE(static_cast<const VSManager &>(mgr).getWvg(GridPoints::CENTER).empty());
+  EXPECT_FALSE(
+      static_cast<const VSManager &>(mgr).getWvg(GridPoints::CENTER).empty());
 }
 
 TEST(QvsStlsApiTest, QAdderKeepsUnitStructureFactorBaselineNearZero) {

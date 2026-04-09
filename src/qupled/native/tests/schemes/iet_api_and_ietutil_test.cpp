@@ -9,35 +9,41 @@
 #include "schemes/iet.hpp"
 
 TEST(IetApiAndUtilTest, BridgeFunctionReturnsZeroForHncTheory) {
-  auto itg = std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-8);
+  auto itg =
+      std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-8);
 
   IetUtil::BridgeFunction hnc("STLS-HNC", "sqrt", 1.0, 0.7, 1.0, itg);
   EXPECT_DOUBLE_EQ(hnc.get(), 0.0);
 }
 
 TEST(IetApiAndUtilTest, BridgeFunctionRejectsUnknownTheory) {
-  auto itg = std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-8);
+  auto itg =
+      std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-8);
 
   IetUtil::BridgeFunction invalidTheory("BAD", "sqrt", 1.0, 0.7, 1.0, itg);
   EXPECT_THROW(invalidTheory.get(), std::runtime_error);
 }
 
 TEST(IetApiAndUtilTest, BridgeFunctionRejectsStandardMappingAtGroundState) {
-  auto itg = std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-8);
+  auto itg =
+      std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-8);
 
-  IetUtil::BridgeFunction badStandardGround("STLS-IOI", "standard", 1.0, 0.0, 1.0, itg);
+  IetUtil::BridgeFunction badStandardGround(
+      "STLS-IOI", "standard", 1.0, 0.0, 1.0, itg);
   EXPECT_THROW(badStandardGround.get(), std::runtime_error);
 }
 
 TEST(IetApiAndUtilTest, BridgeFunctionRejectsIoiOutsideSupportedRange) {
-  auto itg = std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-8);
+  auto itg =
+      std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-8);
 
   IetUtil::BridgeFunction ioiOutOfRange("STLS-IOI", "sqrt", 0.2, 1.0, 1.0, itg);
   EXPECT_THROW(ioiOutOfRange.get(), std::runtime_error);
 }
 
 TEST(IetApiAndUtilTest, BridgeFunctionRejectsLctOutsideSupportedRange) {
-  auto itg = std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-8);
+  auto itg =
+      std::make_shared<Integrator1D>(Integrator1D::Type::FOURIER, 1.0e-8);
 
   IetUtil::BridgeFunction lctOutOfRange("STLS-LCT", "sqrt", 0.2, 1.0, 1.0, itg);
   EXPECT_THROW(lctOutOfRange.get(), std::runtime_error);

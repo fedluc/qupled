@@ -7,14 +7,15 @@
 #include "util/logger.hpp"
 
 namespace {
-class TestLogger : public Logger {
-public:
-  explicit TestLogger(bool verbose)
-      : Logger(verbose) {}
+  class TestLogger : public Logger {
+  public:
 
-  void log(const std::string &msg) const { print(msg); }
-  void logLine(const std::string &msg) const { println(msg); }
-};
+    explicit TestLogger(bool verbose)
+        : Logger(verbose) {}
+
+    void log(const std::string &msg) const { print(msg); }
+    void logLine(const std::string &msg) const { println(msg); }
+  };
 } // namespace
 
 TEST(LoggerTest, PrintAndPrintlnWriteToStdoutWhenVerbose) {

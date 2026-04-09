@@ -48,6 +48,8 @@ TEST(VsStlsApiTest, ManagerAndWorkerApiExposeGridContracts) {
   EXPECT_DOUBLE_EQ(mgr.getAlpha(), 0.5);
   const auto &asVsManager = static_cast<const VSManager &>(mgr);
   EXPECT_FALSE(asVsManager.getWvg(GridPoints::CENTER).empty());
-  EXPECT_DOUBLE_EQ(asVsManager.getCoupling(GridPoints::CENTER), in->getCoupling());
-  EXPECT_DOUBLE_EQ(asVsManager.getDegeneracy(GridPoints::CENTER), in->getDegeneracy());
+  EXPECT_DOUBLE_EQ(asVsManager.getCoupling(GridPoints::CENTER),
+                   in->getCoupling());
+  EXPECT_DOUBLE_EQ(asVsManager.getDegeneracy(GridPoints::CENTER),
+                   in->getDegeneracy());
 }

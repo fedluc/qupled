@@ -8,8 +8,8 @@
 #include "schemes/hf.hpp"
 
 TEST(HfApiAndUtilTest, ConstructorInitializesGridAndStorageShapes) {
-  auto in =
-      testFixtures::makeBaseInput("HF", dimensionsUtil::Dimension::D3, 1.0, 0.8, 3);
+  auto in = testFixtures::makeBaseInput(
+      "HF", dimensionsUtil::Dimension::D3, 1.0, 0.8, 3);
 
   HF hf(in, false);
 
@@ -28,15 +28,16 @@ TEST(HfApiAndUtilTest, ComputeFiniteStateExposesExpectedShapes) {
   EXPECT_EQ(hfFinite.compute(), 0);
   EXPECT_FALSE(hfFinite.getWvg().empty());
   EXPECT_EQ(hfFinite.getSsf().size(), hfFinite.getWvg().size());
-  EXPECT_EQ(hfFinite.getIdr().size(0), static_cast<int>(hfFinite.getWvg().size()));
+  EXPECT_EQ(hfFinite.getIdr().size(0),
+            static_cast<int>(hfFinite.getWvg().size()));
   EXPECT_FALSE(hfFinite.getSdr().empty());
   EXPECT_TRUE(std::isfinite(hfFinite.getUInt()));
   EXPECT_TRUE(std::isfinite(hfFinite.getChemicalPotential()));
 }
 
 TEST(HfApiAndUtilTest, ComputeGroundStateExposesExpectedShapes) {
-  auto ground =
-      testFixtures::makeBaseInput("HF", dimensionsUtil::Dimension::D2, 1.0, 0.0, 2);
+  auto ground = testFixtures::makeBaseInput(
+      "HF", dimensionsUtil::Dimension::D2, 1.0, 0.0, 2);
   HF hfGround(ground, false);
   EXPECT_EQ(hfGround.compute(), 0);
   EXPECT_EQ(hfGround.getSsf().size(), hfGround.getWvg().size());
@@ -44,23 +45,30 @@ TEST(HfApiAndUtilTest, ComputeGroundStateExposesExpectedShapes) {
 }
 
 TEST(HfApiAndUtilTest, IdrGroundMatchesKnownAnalyticLimits) {
-  EXPECT_DOUBLE_EQ(HFUtil::IdrGround(dimensionsUtil::Dimension::D3, 0.0, 0.0).get(), 1.0);
-  EXPECT_DOUBLE_EQ(HFUtil::IdrGround(dimensionsUtil::Dimension::D3, 0.0, 1.0).get(), 0.0);
-  EXPECT_DOUBLE_EQ(HFUtil::IdrGround(dimensionsUtil::Dimension::D2, 0.0, 0.0).get(),
-                   2.0 / 3.0);
+  EXPECT_DOUBLE_EQ(
+      HFUtil::IdrGround(dimensionsUtil::Dimension::D3, 0.0, 0.0).get(), 1.0);
+  EXPECT_DOUBLE_EQ(
+      HFUtil::IdrGround(dimensionsUtil::Dimension::D3, 0.0, 1.0).get(), 0.0);
+  EXPECT_DOUBLE_EQ(
+      HFUtil::IdrGround(dimensionsUtil::Dimension::D2, 0.0, 0.0).get(),
+      2.0 / 3.0);
 }
 
 TEST(HfApiAndUtilTest, SsfGroundMatchesKnownAnalyticLimits) {
-  EXPECT_NEAR(HFUtil::SsfGround(dimensionsUtil::Dimension::D3, 1.0).get(), 11.0 / 16.0,
+  EXPECT_NEAR(HFUtil::SsfGround(dimensionsUtil::Dimension::D3, 1.0).get(),
+              11.0 / 16.0,
               1.0e-12);
-  EXPECT_DOUBLE_EQ(HFUtil::SsfGround(dimensionsUtil::Dimension::D3, 3.0).get(), 1.0);
-  EXPECT_DOUBLE_EQ(HFUtil::SsfGround(dimensionsUtil::Dimension::D2, 0.0).get(), 0.0);
-  EXPECT_DOUBLE_EQ(HFUtil::SsfGround(dimensionsUtil::Dimension::D2, 3.0).get(), 1.0);
+  EXPECT_DOUBLE_EQ(HFUtil::SsfGround(dimensionsUtil::Dimension::D3, 3.0).get(),
+                   1.0);
+  EXPECT_DOUBLE_EQ(HFUtil::SsfGround(dimensionsUtil::Dimension::D2, 0.0).get(),
+                   0.0);
+  EXPECT_DOUBLE_EQ(HFUtil::SsfGround(dimensionsUtil::Dimension::D2, 3.0).get(),
+                   1.0);
 }
 
 TEST(HfApiAndUtilTest, FiniteTemperatureUtilityObjectsReturnFiniteValues) {
-  auto in =
-      testFixtures::makeBaseInput("HF", dimensionsUtil::Dimension::D3, 1.0, 0.7, 3);
+  auto in = testFixtures::makeBaseInput(
+      "HF", dimensionsUtil::Dimension::D3, 1.0, 0.7, 3);
   auto itg1 = std::make_shared<Integrator1D>(1.0e-8);
   auto itg2 = std::make_shared<Integrator2D>(1.0e-6);
 

@@ -8,8 +8,8 @@
 #include "schemes/rpa.hpp"
 
 TEST(RpaApiAndUtilTest, ConstructorInitializesInheritedStorageShapes) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 1.0, 0.8, 3);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 1.0, 0.8, 3);
 
   Rpa rpa(in, false);
 
@@ -28,16 +28,16 @@ TEST(RpaApiAndUtilTest, ComputeFiniteStateBranch) {
 }
 
 TEST(RpaApiAndUtilTest, ComputeGroundStateBranch) {
-  auto ground =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
+  auto ground = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 1.0, 0.0, 2);
   Rpa rpaGround(ground, false);
   EXPECT_EQ(rpaGround.compute(), 0);
   EXPECT_EQ(rpaGround.getSsf().size(), rpaGround.getWvg().size());
 }
 
 TEST(RpaApiAndUtilTest, UtilitySsfReturnsExpectedEdgeBehavior) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 0.0, 0.7, 3);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 0.0, 0.7, 3);
   const std::vector<double> idr{0.3, 0.2, 0.1};
   const std::vector<double> lfcStatic{0.0};
 
@@ -46,8 +46,8 @@ TEST(RpaApiAndUtilTest, UtilitySsfReturnsExpectedEdgeBehavior) {
 }
 
 TEST(RpaApiAndUtilTest, UtilitySsfReturnsStaticBranchExpectedValue) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 0.0, 0.7, 3);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 0.0, 0.7, 3);
   const std::vector<double> idr{0.3, 0.2, 0.1};
   const std::vector<double> lfcStatic{0.0};
 
@@ -56,8 +56,8 @@ TEST(RpaApiAndUtilTest, UtilitySsfReturnsStaticBranchExpectedValue) {
 }
 
 TEST(RpaApiAndUtilTest, UtilitySsfReturnsDynamicBranchExpectedValue) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 0.0, 0.7, 3);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 0.0, 0.7, 3);
   const std::vector<double> idr{0.3, 0.2, 0.1};
   const std::vector<double> lfcDynamic{0.0, 0.0, 0.0};
 
@@ -66,8 +66,8 @@ TEST(RpaApiAndUtilTest, UtilitySsfReturnsDynamicBranchExpectedValue) {
 }
 
 TEST(RpaApiAndUtilTest, UtilitySsfGroundReturnsZeroAtXZero) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 0.0, 0.0, 2);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 0.0, 0.0, 2);
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
   const std::vector<double> lfc{0.0};
 
@@ -76,8 +76,8 @@ TEST(RpaApiAndUtilTest, UtilitySsfGroundReturnsZeroAtXZero) {
 }
 
 TEST(RpaApiAndUtilTest, UtilitySsfGroundUsesZeroCouplingFallback) {
-  auto in =
-      testFixtures::makeBaseInput("RPA", dimensionsUtil::Dimension::D3, 0.0, 0.0, 2);
+  auto in = testFixtures::makeBaseInput(
+      "RPA", dimensionsUtil::Dimension::D3, 0.0, 0.0, 2);
   auto itg = std::make_shared<Integrator1D>(1.0e-8);
   const std::vector<double> lfc{0.0};
 

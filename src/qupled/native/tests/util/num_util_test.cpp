@@ -61,9 +61,7 @@ TEST(NumUtilConstantsTest, InfIsInfinite) {
   EXPECT_TRUE(std::isinf(numUtil::Inf));
 }
 
-TEST(NumUtilConstantsTest, NaNIsNan) {
-  EXPECT_TRUE(std::isnan(numUtil::NaN));
-}
+TEST(NumUtilConstantsTest, NaNIsNan) { EXPECT_TRUE(std::isnan(numUtil::NaN)); }
 
 TEST(NumUtilConstantsTest, LambdaCubedMatchesLambda3Constant) {
   EXPECT_NEAR(numUtil::lambda * numUtil::lambda * numUtil::lambda,

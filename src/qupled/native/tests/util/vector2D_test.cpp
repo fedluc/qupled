@@ -5,7 +5,8 @@
 #include "util/vector2D.hpp"
 
 TEST(Vector2DTest, ConstructsFromNestedAndFlatVectors) {
-  const Vector2D nested(std::vector<std::vector<double>>{{1.0, 2.0}, {3.0, 4.0}});
+  const Vector2D nested(
+      std::vector<std::vector<double>>{{1.0, 2.0}, {3.0, 4.0}});
   EXPECT_EQ(nested.size(), 4u);
   EXPECT_EQ(nested.size(0), 2u);
   EXPECT_EQ(nested.size(1), 2u);
@@ -37,7 +38,8 @@ TEST(Vector2DTest, RowSpanAndFillOperationsMutateExpectedEntries) {
 
 TEST(Vector2DTest, ElementWiseArithmeticAndLinearCombinationWork) {
   Vector2D left(std::vector<std::vector<double>>{{1.0, 2.0}, {3.0, 4.0}});
-  const Vector2D right(std::vector<std::vector<double>>{{5.0, 6.0}, {7.0, 8.0}});
+  const Vector2D right(
+      std::vector<std::vector<double>>{{5.0, 6.0}, {7.0, 8.0}});
 
   left.sum(right);
   EXPECT_DOUBLE_EQ(left(0, 0), 6.0);

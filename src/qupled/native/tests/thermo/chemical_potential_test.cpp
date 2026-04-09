@@ -27,8 +27,7 @@ TEST(ChemicalPotentialTest, Computes3DRootWithSmallResidual) {
   ChemicalPotential cp(in);
   cp.compute(dimensionsUtil::Dimension::D3);
 
-  const double residual =
-      SpecialFunctions::fermiDirac12(cp.get())
-      - 2.0 / (3.0 * std::pow(in->getDegeneracy(), 1.5));
+  const double residual = SpecialFunctions::fermiDirac12(cp.get())
+                          - 2.0 / (3.0 * std::pow(in->getDegeneracy(), 1.5));
   EXPECT_NEAR(residual, 0.0, 1.0e-8);
 }
