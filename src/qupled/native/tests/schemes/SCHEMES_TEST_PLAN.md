@@ -32,6 +32,14 @@ Source companions in `src/qupled/native/src/schemes/*.cpp` are covered via publi
 - Assert both correctness and shape/invariant contracts.
 - Validate error paths as rigorously as success paths.
 
+## Test granularity strategy
+
+- Default to one test per behavior (pytest-style), even in C++.
+- Prefer one test per public method branch (success, invalid input, boundary case).
+- Keep each test focused on a single failure reason for faster diagnosis.
+- Group assertions only when they describe one inseparable behavior and share expensive setup.
+- For expensive solver setup, keep granular assertions but reuse local fixtures/helpers to avoid duplication.
+
 ## What to do with private methods
 
 Recommended policy:
