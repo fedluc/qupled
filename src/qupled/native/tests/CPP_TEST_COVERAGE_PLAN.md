@@ -168,6 +168,13 @@ Status:
 - Add `VSManager`/`VSBase` unit tests with fake workers.
 - Add pybind smoke/conversion tests.
 
+Status:
+
+- Added `tests/vs/vs_manager_test.cpp` with a fake-worker manager harness to verify:
+  - derivative-stencil metadata setup
+  - synchronized `computeLfc()` and `applyLfcDiff()` execution across all 3x3 grid points
+- Python binding smoke/conversion tests are pending and planned under `tests/python_interface`.
+
 ## Phase 5 - Coverage gate and cleanup
 
 - Run full suite via `./devtool build --native-only --native-tests` and `./devtool test native-cpp`.
