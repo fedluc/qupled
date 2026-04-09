@@ -313,7 +313,7 @@ double HFUtil::IdrGround::get() {
 // Compute for 3D systems
 void HFUtil::IdrGround::compute3D() {
   if (x == 0.0) {
-    res = 0.0;
+    res = (Omega == 0.0) ? 1.0 : 0.0;
   } else {
     const double x2 = x * x;
     const double Omega2 = Omega * Omega;
