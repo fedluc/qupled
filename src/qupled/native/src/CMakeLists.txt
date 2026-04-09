@@ -164,10 +164,16 @@ if(BUILD_NATIVE_TESTS)
 		thermo/itcf.cpp
 		thermo/thermo_util.cpp
 		thermo/chemical_potential.cpp
+		util/database.cpp
+		vs/vsmanager.cpp
+		vs/vsbase.cpp
 		schemes/iet.cpp
 		schemes/stls.cpp
 		schemes/stlsiet.cpp
 		schemes/esa.cpp
+		schemes/qstls.cpp
+		schemes/qstlsiet.cpp
+		schemes/qvsstls.cpp
 	)
 
 	target_include_directories(native_test_support PRIVATE
@@ -181,6 +187,8 @@ if(BUILD_NATIVE_TESTS)
 		OpenMP::OpenMP_CXX
 		GSL::gsl
 		GSL::gslcblas
+		${SQLITECPP_LINK_LIB}
+		${SQLITE3_LINK_LIB}
 	)
 
 	add_executable(native_tests

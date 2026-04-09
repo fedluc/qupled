@@ -75,6 +75,46 @@ inline std::shared_ptr<StlsIetInput> makeStlsIetInput(
   return in;
 }
 
+inline std::shared_ptr<QstlsInput> makeQstlsInput(
+    const std::string &theory = "QSTLS",
+    const dimensionsUtil::Dimension dim = dimensionsUtil::Dimension::D3,
+    const double coupling = 1.0,
+    const double degeneracy = 0.7,
+    const int nMatsubara = 2) {
+  auto in = std::make_shared<QstlsInput>();
+  configureIterationInput(*in, theory, dim, coupling, degeneracy, nMatsubara);
+  return in;
+}
+
+inline std::shared_ptr<QstlsIetInput> makeQstlsIetInput(
+    const std::string &theory = "QSTLS-HNC",
+    const std::string &mapping = "sqrt",
+    const dimensionsUtil::Dimension dim = dimensionsUtil::Dimension::D3,
+    const double coupling = 1.0,
+    const double degeneracy = 0.7,
+    const int nMatsubara = 2) {
+  auto in = std::make_shared<QstlsIetInput>();
+  configureIterationInput(*in, theory, dim, coupling, degeneracy, nMatsubara);
+  in->setMapping(mapping);
+  return in;
+}
+
+inline std::shared_ptr<QVSStlsInput> makeQVSStlsInput(
+    const std::string &theory = "QVSSTLS",
+    const dimensionsUtil::Dimension dim = dimensionsUtil::Dimension::D3,
+    const double coupling = 1.0,
+    const double degeneracy = 0.7,
+    const int nMatsubara = 2) {
+  auto in = std::make_shared<QVSStlsInput>();
+  configureIterationInput(*in, theory, dim, coupling, degeneracy, nMatsubara);
+  in->setCouplingResolution(0.5);
+  in->setDegeneracyResolution(0.2);
+  in->setAlphaGuess({0.2, 0.8});
+  in->setErrMinAlpha(1.0e-4);
+  in->setNIterAlpha(5);
+  return in;
+}
+
 } // namespace testFixtures
 
 #endif

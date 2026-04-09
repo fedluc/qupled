@@ -156,6 +156,13 @@ Status:
 - Verify database interaction branches and roundtrip correctness.
 - Keep computational grids tiny to avoid slow/fragile tests.
 
+Status:
+
+- Added `tests/schemes/schemes_phase3_quantum_test.cpp` with:
+  - constructor guard tests for qSTLS/qSTLS-IET/QVS-STLS invalid configurations
+  - filesystem cleanup test for `QstlsUtil::deleteBlobDataOnDisk`
+  - deterministic `QAdder` invariant check (`S(q)=1` => near-zero output)
+
 ## Phase 4 - VS orchestration and bindings
 
 - Add `VSManager`/`VSBase` unit tests with fake workers.
