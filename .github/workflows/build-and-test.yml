@@ -46,7 +46,7 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         ./devtool test native
 
-  cpp_tests:
+  cpp_tests_with_mpi:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -61,7 +61,27 @@ jobs:
         ./devtool install-deps
         python3 -m venv ${PYTHON_VENV_ROOT}
 
-    - name: Run cpp tests
+    - name: Run cpp tests with MPI
+      run: |
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        ./devtool test cpp --use-mpi
+
+  cpp_tests_without_mpi:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        ./devtool install-deps
+        python3 -m venv ${PYTHON_VENV_ROOT}
+
+    - name: Run cpp tests without MPI
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
         ./devtool test cpp

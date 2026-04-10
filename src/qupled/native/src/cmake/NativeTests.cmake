@@ -41,6 +41,10 @@ native_link_common_deps(native_test_support)
 native_link_sqlite_deps(native_test_support)
 native_link_platform_deps(native_test_support)
 
+if(USE_MPI)
+	target_link_libraries(native_test_support PRIVATE MPI::MPI_CXX)
+endif()
+
 # Unit test executable (all discovered tests).
 add_executable(native_tests
 	${NATIVE_TEST_FILES}
@@ -59,6 +63,10 @@ target_link_libraries(native_tests PRIVATE
 )
 native_link_common_deps(native_tests)
 native_link_platform_deps(native_tests)
+
+if(USE_MPI)
+	target_link_libraries(native_tests PRIVATE MPI::MPI_CXX)
+endif()
 
 include(GoogleTest)
 # Register each GoogleTest case with CTest for `ctest` execution.

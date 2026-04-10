@@ -18,18 +18,20 @@ def run_tox(environment):
         subprocess.run(["tox", "-e", environment], check=True)
 
 
-def run_native_cpp_tests():
-    build_native_test_target()
+def run_native_cpp_tests(use_mpi):
+    build_native_test_target(use_mpi=use_mpi)
     subprocess.run(
         ["ctest", "--output-on-failure"], cwd=NATIVE_TEST_BUILD_DIR, check=True
     )
 
 
-def test(marker):
+def test(marker, use_mpi):
+    cpp_use_mpi = False if use_mpi is None else use_mpi
+
     if marker is None:
         run_tox("test")
-        run_native_cpp_tests()
+        run_native_cpp_tests(use_mpi=cpp_use_mpi)
     elif marker == "cpp":
-        run_native_cpp_tests()
+        run_native_cpp_tests(use_mpi=cpp_use_mpi)
     else:
         run_tox(marker)

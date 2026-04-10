@@ -1,6 +1,7 @@
 #ifdef USE_MPI
+#define OMPI_SKIP_MPICXX 1 // Disable OpenMPI C++ bindings
+#define MPICH_SKIP_MPICXX 1 // Disable MPICH C++ bindings
 #include <mpi.h>
-#define OMPI_SKIP_MPICXX 1 // Disable MPI-C++ bindings
 #endif
 
 #include "util/num_util.hpp"

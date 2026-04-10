@@ -38,6 +38,13 @@ def run():
         default=None,
         help="Run only tests with this marker (default: run all tests).",
     )
+    test_parser.add_argument(
+        "--use-mpi",
+        dest="use_mpi",
+        action="store_true",
+        default=False,
+        help="Run cpp tests with MPI enabled.",
+    )
 
     # Update version command
     version_parser = subparsers.add_parser(
@@ -65,7 +72,7 @@ def run():
     elif args.command == "install":
         install()
     elif args.command == "test":
-        test(args.marker)
+        test(args.marker, args.use_mpi)
     elif args.command == "install-deps":
         install_dependencies()
     elif args.command == "update-version":
