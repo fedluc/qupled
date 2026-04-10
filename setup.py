@@ -9,6 +9,7 @@ setup(
             source_dir="src/qupled/native/src",
             cmake_configure_options=[
                 f"-DUSE_MPI={os.environ.get('USE_MPI', 'OFF')}",
+                f"-DBUILD_NATIVE_TESTS={os.environ.get('BUILD_NATIVE_TESTS', 'OFF')}",
             ],
         )
     ],

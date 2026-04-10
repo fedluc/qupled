@@ -48,6 +48,33 @@ To manually ensure the correct formatting is applied, run:
 
    ./devtool format
 
+Testing
+-------
+
+Before opening a pull request, run the test suite for the area you changed.
+
+For Python tests:
+
+.. code-block:: console
+
+   ./devtool test unit
+   ./devtool test native
+   ./devtool test integration
+
+For C++ tests:
+
+.. code-block:: console
+
+   ./devtool test cpp
+
+MPI is disabled by default for ``cpp`` tests; pass ``--use-mpi`` to enable it.
+
+To run everything in one shot:
+
+.. code-block:: console
+
+   ./devtool test
+
 Documentation
 -------------
 

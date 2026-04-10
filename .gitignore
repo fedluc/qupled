@@ -7,8 +7,7 @@
 .venv
 .tox
 Makefile
-dist
-dist-native-only
+dist*/
 docs/_build
 docs/_generated
 qupled.egg-info
