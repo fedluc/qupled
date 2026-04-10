@@ -65,11 +65,8 @@ For C++ tests:
 
 .. code-block:: console
 
-   ./devtool test cpp --use-mpi
    ./devtool test cpp
 
-The ``cpp`` test command builds the ``native_tests`` target before running
-``ctest``. CMake performs incremental builds, so unchanged targets are reused.
 MPI is disabled by default for ``cpp`` tests; pass ``--use-mpi`` to enable it.
 
 To run everything in one shot:
