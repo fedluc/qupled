@@ -39,7 +39,7 @@ def run():
     test_parser.add_argument(
         "marker",
         nargs="?",
-        choices=["unit", "native", "integration", "native-cpp"],
+        choices=["unit", "native", "integration", "cpp"],
         default=None,
         help="Run only tests with this marker (default: run all tests).",
     )

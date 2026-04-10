@@ -12,7 +12,7 @@ env:
   PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
 
 jobs:
-  build_and_test:
+  python_tests:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -27,7 +27,7 @@ jobs:
         ./devtool install-deps
         python3 -m venv ${PYTHON_VENV_ROOT}
 
-    - name: Build
+    - name: Build package
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install --upgrade pip
@@ -39,10 +39,34 @@ jobs:
         source ${PYTHON_VENV_ROOT}/bin/activate
         pip3 install tox
         ./devtool test unit
-        ./devtool test native-cpp
 
     - name: Run native tests
       if: github.event_name == 'pull_request'
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
         ./devtool test native
+
+  cpp_tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        ./devtool install-deps
+        python3 -m venv ${PYTHON_VENV_ROOT}
+
+    - name: Build cpp tests
+      run: |
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        ./devtool build --native-only --native-tests
+
+    - name: Run cpp tests
+      run: |
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        ./devtool test cpp

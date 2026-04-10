@@ -29,7 +29,7 @@ def test(marker):
     if marker is None:
         run_tox("test")
         run_native_cpp_tests()
-    elif marker == "native-cpp":
+    elif marker == "cpp":
         run_native_cpp_tests()
     else:
         run_tox(marker)
