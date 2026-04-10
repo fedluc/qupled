@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from .build import NATIVE_BUILD_DIR, build_native
+from .build import NATIVE_BUILD_DIR, build_native_test_target
 from .common import get_wheel_file
 
 
@@ -19,9 +19,7 @@ def run_tox(environment):
 
 
 def run_native_cpp_tests():
-    ctest_file = NATIVE_BUILD_DIR / "CTestTestfile.cmake"
-    if not ctest_file.exists():
-        build_native(native_tests=True)
+    build_native_test_target()
     subprocess.run(["ctest", "--output-on-failure"], cwd=NATIVE_BUILD_DIR, check=True)
 
 

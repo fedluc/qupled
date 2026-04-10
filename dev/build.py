@@ -48,4 +48,25 @@ def build_native(native_tests):
         cwd=NATIVE_BUILD_DIR,
         check=True,
     )
-    subprocess.run(["cmake", "--build", "."], cwd=NATIVE_BUILD_DIR, check=True)
+    subprocess.run(
+        ["cmake", "--build", ".", "--parallel"], cwd=NATIVE_BUILD_DIR, check=True
+    )
+
+
+def build_native_test_target():
+    configure_openmp_root_for_macos()
+    NATIVE_BUILD_DIR.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        [
+            "cmake",
+            str(NATIVE_SOURCE_DIR.resolve()),
+            "-DBUILD_NATIVE_TESTS=ON",
+        ],
+        cwd=NATIVE_BUILD_DIR,
+        check=True,
+    )
+    subprocess.run(
+        ["cmake", "--build", ".", "--target", "native_tests", "--parallel"],
+        cwd=NATIVE_BUILD_DIR,
+        check=True,
+    )
