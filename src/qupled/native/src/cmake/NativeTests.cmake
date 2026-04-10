@@ -39,6 +39,7 @@ target_include_directories(native_test_support PRIVATE
 native_apply_common_compile_settings(native_test_support)
 native_link_common_deps(native_test_support)
 native_link_sqlite_deps(native_test_support)
+native_link_platform_deps(native_test_support)
 
 # Unit test executable (all discovered tests).
 add_executable(native_tests
@@ -57,6 +58,7 @@ target_link_libraries(native_tests PRIVATE
 	native_test_support
 )
 native_link_common_deps(native_tests)
+native_link_platform_deps(native_tests)
 
 include(GoogleTest)
 # Register each GoogleTest case with CTest for `ctest` execution.

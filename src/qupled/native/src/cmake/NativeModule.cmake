@@ -17,13 +17,9 @@ target_include_directories(native PRIVATE
 native_apply_common_compile_settings(native)
 native_link_common_deps(native)
 native_link_sqlite_deps(native)
+native_link_platform_deps(native)
 
 # Optional MPI linkage (only when USE_MPI is enabled).
 if(USE_MPI)
 	target_link_libraries(native PRIVATE MPI::MPI_CXX)
-endif()
-
-# Apple-only formatting dependency.
-if(APPLE)
-	target_link_libraries(native PRIVATE fmt::fmt)
 endif()

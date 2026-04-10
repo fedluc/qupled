@@ -27,3 +27,10 @@ function(native_link_sqlite_deps target)
 		${SQLITE3_LINK_LIB}
 	)
 endfunction()
+
+# Link platform-specific dependencies.
+function(native_link_platform_deps target)
+	if(APPLE)
+		target_link_libraries(${target} PRIVATE fmt::fmt)
+	endif()
+endfunction()
