@@ -28,11 +28,6 @@ def run():
         action="store_true",
         help="Build only native code in C++ (default: False).",
     )
-    build_parser.add_argument(
-        "--native-tests",
-        action="store_true",
-        help="Enable BUILD_NATIVE_TESTS to build native C++ gtest targets.",
-    )
 
     # Test command
     test_parser = subparsers.add_parser("test", help="Run tests")
@@ -60,7 +55,7 @@ def run():
     args = parser.parse_args()
 
     if args.command == "build":
-        build(args.use_mpi, args.native_only, args.native_tests)
+        build(args.use_mpi, args.native_only)
     elif args.command == "clean":
         clean()
     elif args.command == "docs":

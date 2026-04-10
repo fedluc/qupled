@@ -3,7 +3,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from .build import NATIVE_BUILD_DIR, build_native_test_target
+from .build import NATIVE_TEST_BUILD_DIR, build_native_test_target
 from .common import get_wheel_file
 
 
@@ -20,7 +20,9 @@ def run_tox(environment):
 
 def run_native_cpp_tests():
     build_native_test_target()
-    subprocess.run(["ctest", "--output-on-failure"], cwd=NATIVE_BUILD_DIR, check=True)
+    subprocess.run(
+        ["ctest", "--output-on-failure"], cwd=NATIVE_TEST_BUILD_DIR, check=True
+    )
 
 
 def test(marker):

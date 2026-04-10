@@ -61,11 +61,6 @@ jobs:
         ./devtool install-deps
         python3 -m venv ${PYTHON_VENV_ROOT}
 
-    - name: Build cpp tests
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        ./devtool build --native-only --native-tests
-
     - name: Run cpp tests
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate

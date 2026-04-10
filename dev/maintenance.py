@@ -5,6 +5,8 @@ from pathlib import Path
 def clean():
     folders_to_clean = [
         Path("dist"),
+        Path("dist-native"),
+        Path("dist-native-tests"),
         Path("dist-native-only"),
         Path("src", "qupled.egg-info"),
         Path("docs", "_build"),
