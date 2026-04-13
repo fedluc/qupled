@@ -9,7 +9,7 @@ on:
   pull_request:
 
 env:
-  PYTHON_VENV_ROOT: ${{ github.workspace }}/python-venv
+  PYTHON_VENV_ROOT: ${{ runner.temp }}/qupled-python-venv
 
 jobs:
   python_tests:

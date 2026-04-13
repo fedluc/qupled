@@ -52,6 +52,15 @@ markers = [
 minimum-version = "build-system.requires"
 cmake.version = ">=3.28"
 cmake.source-dir = "src/qupled/native/src"
+sdist.exclude = [
+    ".venv/**",
+    "python-venv/**",
+    "dist/**",
+    "dist-native/**",
+    "dist-native-tests/**",
+    "wheelhouse/**",
+    "tmp/**",
+]
 wheel.packages = ["src/qupled"]
 wheel.install-dir = "qupled"
 
