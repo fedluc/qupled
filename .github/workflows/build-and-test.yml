@@ -24,20 +24,18 @@ jobs:
 
     - name: Install dependencies
       run: |
-        ./devtool install-deps
         python3 -m venv ${PYTHON_VENV_ROOT}
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        ./devtool install-deps
 
     - name: Build package
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
-        pip3 install --upgrade pip
-        pip3 install build setuptools
         ./devtool build
 
     - name: Run unit tests
       run: |
         source ${PYTHON_VENV_ROOT}/bin/activate
-        pip3 install tox
         ./devtool test unit
 
     - name: Run native tests
@@ -58,8 +56,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        ./devtool install-deps
         python3 -m venv ${PYTHON_VENV_ROOT}
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        ./devtool install-deps
 
     - name: Run cpp tests with MPI
       run: |
@@ -78,8 +77,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        ./devtool install-deps
         python3 -m venv ${PYTHON_VENV_ROOT}
+        source ${PYTHON_VENV_ROOT}/bin/activate
+        ./devtool install-deps
 
     - name: Run cpp tests without MPI
       run: |
