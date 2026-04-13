@@ -4,31 +4,23 @@ on:
   push:
     tags:
       - 'v*'
-  pull_request:
 
 jobs:
   build-sdist:
     uses: ./.github/workflows/build-sdist.yml
-    with:
-      build_version: ${{ github.event_name == 'pull_request' && '0.0.0.dev999' || github.ref_name }}
 
   build-linux-wheels:
     uses: ./.github/workflows/build-linux-wheels.yml
     needs: build-sdist
-    with:
-      build_version: ${{ github.event_name == 'pull_request' && '0.0.0.dev999' || github.ref_name }}
   
   build-macos-wheels:
     uses: ./.github/workflows/build-macos-wheels.yml
     needs: build-sdist
-    with:
-      build_version: ${{ github.event_name == 'pull_request' && '0.0.0.dev999' || github.ref_name }}
 
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
     needs: [build-sdist, build-linux-wheels, build-macos-wheels]
-    if: false
 
     steps:
       - name: Prepare dist folder
