@@ -1,11 +1,10 @@
 black
 breathe
 build
-sphinxcontrib-mermaid
 cibuildwheel
 pytest
 pytest-mock
-setuptools
+scikit-build-core>=0.12
 Sphinx
 sphinx-rtd-theme
 sphinxcontrib-applehelp
@@ -13,6 +12,7 @@ sphinxcontrib-devhelp
 sphinxcontrib-htmlhelp
 sphinxcontrib-jquery
 sphinxcontrib-jsmath
+sphinxcontrib-mermaid
 sphinxcontrib-qthelp
 sphinxcontrib-serializinghtml
 tox

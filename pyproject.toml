@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "cmake-build-extension"]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.12", "wheel"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "qupled"
@@ -48,13 +48,30 @@ markers = [
     "integration: full end-to-end integration tests",
 ]
 
-[tool.setuptools]
-include-package-data = false
-package-dir = { "" = "src" }
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+cmake.version = ">=3.28"
+cmake.source-dir = "src/qupled/native/src"
+sdist.exclude = [
+    ".venv/**",
+    "python-venv/**",
+    "dist/**",
+    "dist-native/**",
+    "dist-native-tests/**",
+    "wheelhouse/**",
+    "tmp/**",
+]
+wheel.packages = ["src/qupled"]
+wheel.install-dir = "qupled"
+
+[tool.scikit-build.cmake.define]
+USE_MPI = { env = "USE_MPI", default = "OFF" }
+BUILD_NATIVE_TESTS = { env = "BUILD_NATIVE_TESTS", default = "OFF" }
 
 [tool.cibuildwheel]
 manylinux-x86_64-image = "ghcr.io/fedluc/qupled/qupled_manylinux_x86_64"
 manylinux-aarch64-image = "ghcr.io/fedluc/qupled/qupled_manylinux_aarch64"
+build-frontend = "build"
 environment = "USE_MPI=OFF"
 test-command = "pytest {project}/tests -m unit"
 before-test = "pip install pytest pytest-mock"
