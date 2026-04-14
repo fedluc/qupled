@@ -1,0 +1,113 @@
+project:
+  name: qupled
+
+build:
+  default: python
+  cpp:
+    backend: cmake
+    source_dir: src/qupled/native/src
+    build_dir: dist-native
+    configure_args:
+      - -DBUILD_NATIVE_TESTS=OFF
+      - -DUSE_MPI=OFF
+  python:
+    backend: python-build
+    env:
+      BUILD_NATIVE_TESTS: "OFF"
+      USE_MPI: "OFF"
+
+test:
+  default: python
+  runners:
+    unit:
+      backend: pytest
+      path: tests
+      marker: unit
+      hooks:
+        pre:
+          - ["pip3", "install", "."]
+    native:
+      backend: pytest
+      path: tests
+      marker: native
+      hooks:
+        pre:
+          - ["pip3", "install", "."]
+    cpp:
+      backend: ctest
+      source_dir: src/qupled/native/src
+      build_dir: dist-native-tests
+      configure_args:
+        - -DBUILD_NATIVE_TESTS=ON
+        - -DUSE_MPI=OFF
+      target: native_tests
+
+format:
+  default: all
+  targets:
+    python:
+      backend: black
+      paths:
+        - .
+    cpp:
+      backend: clang-format
+      args:
+        - --style=file
+      paths:
+        - src/qupled/native/include/*/*.hpp
+        - src/qupled/native/src/*/*.cpp
+        - src/qupled/native/tests/*/*.cpp
+
+docs:
+  targets:
+    html:
+      backend: sphinx
+      source_dir: docs
+      build_dir: docs/_build
+      builder: html
+      hooks:
+        pre:
+          - ["python3", "dev/generate_diagrams.py"]
+
+deploy:
+  targets:
+    pypi:
+      backend: twine
+      artifacts:
+        - dist/*
+      repository: pypi
+
+clean:
+  paths:
+    - .tox
+    - build
+    - dist
+    - dist-native
+    - dist-native-mpi
+    - dist-native-tests
+    - dist-native-tests-mpi
+    - docs/_build
+    - docs/_generated
+    - qupled.db
+    - qupled_store
+    - src/qupled.egg-info
+
+profiles:
+  mpi:
+    build:
+      cpp:
+        build_dir: dist-native-mpi
+        configure_args:
+          - -DBUILD_NATIVE_TESTS=OFF
+          - -DUSE_MPI=ON
+      python:
+        env:
+          BUILD_NATIVE_TESTS: "OFF"
+          USE_MPI: "ON"
+    test:
+      runners:
+        cpp:
+          build_dir: dist-native-tests-mpi
+          configure_args:
+            - -DBUILD_NATIVE_TESTS=ON
+            - -DUSE_MPI=ON
