@@ -28,10 +28,10 @@ jobs:
         run: |
           sudo apt update
           sudo apt-get install clang-format
-          uv sync --group dev
+          uv sync --only-group dev
 
       - name: Check Python formatting
-        run: uv run --group dev black --check .
+        run: .venv/bin/black --check .
           
       - name: Check C++ formatting
         run: | 

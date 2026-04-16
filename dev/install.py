@@ -14,7 +14,7 @@ from .uv import (
 def install():
     wheel_file = get_wheel_file()
     if wheel_file is not None:
-        sync_local_environment()
+        sync_local_environment(skip_project_install=True)
         python_path = get_project_python()
         subprocess.run(
             ["uv", "pip", "uninstall", "--python", python_path, "qupled"],
@@ -38,9 +38,7 @@ def install_dependencies():
     else:
         print("Unsupported operating system. Please install dependencies manually.")
     try:
-        sync_local_environment(
-            skip_project_install=os.environ.get("DEVTOOL_SKIP_PROJECT_INSTALL") == "1"
-        )
+        sync_local_environment(skip_project_install=True)
     except RuntimeError as exc:
         print(exc)
         print_uv_install_instructions()
