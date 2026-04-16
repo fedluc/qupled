@@ -56,5 +56,10 @@ def _install_with_apt(apt_requirements):
 
 
 def _install_with_brew(brew_requirements):
-    subprocess.run(["brew", "update"], check=True)
-    subprocess.run(["brew", "bundle", f"--file={brew_requirements}"], check=True)
+    brew_env = os.environ.copy()
+    brew_env.setdefault("HOMEBREW_NO_AUTO_UPDATE", "1")
+    subprocess.run(
+        ["brew", "bundle", "--no-upgrade", f"--file={brew_requirements}"],
+        check=True,
+        env=brew_env,
+    )
