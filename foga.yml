@@ -12,27 +12,31 @@ build:
       - -DUSE_MPI=OFF
   python:
     backend: python-build
+    launcher: [uv, run, --project, ., --group, dev]
     env:
       BUILD_NATIVE_TESTS: "OFF"
       USE_MPI: "OFF"
 
 test:
-  default: python
+  default: all
   runners:
     unit:
       backend: pytest
+      launcher: [uv, run, --project, ., --extra, test]
       path: tests
       marker: unit
       args:
         - -v
     native:
       backend: pytest
+      launcher: [uv, run, --project, ., --extra, test]
       path: tests
       marker: native
       args:
         - -v
     integration:
       backend: pytest
+      launcher: [uv, run, --project, ., --extra, test]
       path: tests
       marker: integration
       args:
@@ -51,6 +55,7 @@ format:
   targets:
     python:
       backend: black
+      launcher: [uv, run, --project, ., --group, dev]
       paths:
         - .
     cpp:
@@ -58,9 +63,8 @@ format:
       args:
         - --style=file
       paths:
-        - src/qupled/native/include/*/*.hpp
-        - src/qupled/native/src/*/*.cpp
-        - src/qupled/native/tests/*/*.cpp
+        - src/qupled/native/**/*.hpp
+        - src/qupled/native/**/*.cpp
 
 docs:
   targets:
@@ -75,18 +79,27 @@ docs:
 
 install:
   targets:
+    dev-python:
+      backend: uv
+      packages:
+        - black
+        - build
+        - pytest~=8.0
+        - pytest-mock~=3.12
+        - breathe
+        - Sphinx
+        - sphinx-rtd-theme~=1.1.1
+        - sphinxcontrib-mermaid
     package:
-      backend: pip
+      backend: uv
+      args:
+        - --link-mode=copy
       path: .
-      env:
-        BUILD_NATIVE_TESTS: "OFF"
-        USE_MPI: "OFF"
-    external-apt:
+    apt-get:
       backend: apt-get
       args:
         - --yes
-      launcher:
-        - sudo
+      launcher: [sudo]
       packages:
         - clang-format
         - cmake
@@ -102,8 +115,10 @@ install:
       hooks:
         pre:
           - ["sudo", "apt-get", "update"]
-    external-brew:
+    brew:
       backend: brew
+      env:
+        HOMEBREW_NO_AUTO_UPDATE: "1"
       packages:
         - clang-format
         - cmake
@@ -126,7 +141,6 @@ deploy:
 
 clean:
   paths:
-    - .tox
     - build
     - dist
     - dist-native
@@ -138,6 +152,7 @@ clean:
     - qupled.db
     - qupled_store
     - src/qupled.egg-info
+    - wheelhouse
 
 profiles:
   mpi:
@@ -158,9 +173,29 @@ profiles:
           configure_args:
             - -DBUILD_NATIVE_TESTS=ON
             - -DUSE_MPI=ON
-    install:
-      targets:
-        package:
+  macos-homebrew-arm64:
+    build:
+      cpp:
+        env:
+          OpenMP_ROOT: /opt/homebrew/opt/libomp
+      python:
+        env:
+          OpenMP_ROOT: /opt/homebrew/opt/libomp
+    test:
+      runners:
+        cpp:
           env:
-            BUILD_NATIVE_TESTS: "OFF"
-            USE_MPI: "ON"
+            OpenMP_ROOT: /opt/homebrew/opt/libomp
+  macos-homebrew-intel:
+    build:
+      cpp:
+        env:
+          OpenMP_ROOT: /usr/local/opt/libomp
+      python:
+        env:
+          OpenMP_ROOT: /usr/local/opt/libomp
+    test:
+      runners:
+        cpp:
+          env:
+            OpenMP_ROOT: /usr/local/opt/libomp
