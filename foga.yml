@@ -23,16 +23,20 @@ test:
       backend: pytest
       path: tests
       marker: unit
-      hooks:
-        pre:
-          - ["pip3", "install", "."]
+      args:
+        - -v
     native:
       backend: pytest
       path: tests
       marker: native
-      hooks:
-        pre:
-          - ["pip3", "install", "."]
+      args:
+        - -v
+    integration:
+      backend: pytest
+      path: tests
+      marker: integration
+      args:
+        - -v
     cpp:
       backend: ctest
       source_dir: src/qupled/native/src
@@ -68,6 +72,49 @@ docs:
       hooks:
         pre:
           - ["python3", "dev/generate_diagrams.py"]
+
+install:
+  targets:
+    package:
+      backend: pip
+      path: .
+      env:
+        BUILD_NATIVE_TESTS: "OFF"
+        USE_MPI: "OFF"
+    external-apt:
+      backend: apt-get
+      args:
+        - --yes
+      launcher:
+        - sudo
+      packages:
+        - clang-format
+        - cmake
+        - doxygen
+        - graphviz
+        - libopenmpi-dev
+        - libgsl-dev
+        - libgtest-dev
+        - libomp-dev
+        - python3-dev
+        - libsqlite3-dev
+        - libsqlitecpp-dev
+      hooks:
+        pre:
+          - ["sudo", "apt-get", "update"]
+    external-brew:
+      backend: brew
+      packages:
+        - clang-format
+        - cmake
+        - doxygen
+        - graphviz
+        - gsl
+        - googletest
+        - libomp
+        - open-mpi
+        - sqlite
+        - sqlitecpp
 
 deploy:
   targets:
@@ -111,3 +158,9 @@ profiles:
           configure_args:
             - -DBUILD_NATIVE_TESTS=ON
             - -DUSE_MPI=ON
+    install:
+      targets:
+        package:
+          env:
+            BUILD_NATIVE_TESTS: "OFF"
+            USE_MPI: "ON"

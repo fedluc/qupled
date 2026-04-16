@@ -12,5 +12,9 @@
         "ms-python.vscode-pylance"
       ]
     }
-  }
+  },
+  "postCreateCommand": ". /workspaces/qupled_venv/bin/activate && \
+                        pip install foga && \
+                        foga install --target external-apt && \
+                        foga install --target package"
 }

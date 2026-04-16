@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
 ENV PYTHON_VENV_ROOT=/workspaces/qupled_venv
 ENV UV_PROJECT_ENVIRONMENT=$PYTHON_VENV_ROOT
+ENV PATH="${PYTHON_VENV_ROOT}/bin:${PATH}"
 
 # Copy project files, set permissions, and install dependencies
 ENV SETUP_DIR=/setup_dir
@@ -22,3 +23,4 @@ RUN chmod +x devtool && \
     chown -R vscode:vscode $PYTHON_VENV_ROOT
 WORKDIR /
 RUN rm -rf $SETUP_DIR
+RUN echo "source $PYTHON_VENV_ROOT/bin/activate" >> /etc/bash.bashrc
