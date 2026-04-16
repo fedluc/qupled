@@ -41,7 +41,6 @@ docs = [
 dev = [
     "black",
     "build",
-    "tox",
 ]
 release = [
     "cibuildwheel",

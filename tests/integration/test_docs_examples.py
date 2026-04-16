@@ -1,7 +1,7 @@
 import importlib
-import os
 import shutil
 import sys
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pytest
@@ -11,7 +11,7 @@ from qupled.database.database_handler import DATABASE_DIRECTORY
 
 @pytest.fixture(autouse=True)
 def run_before_each_test():
-    examples_dir = os.path.abspath("docs")
+    examples_dir = str(Path(__file__).resolve().parents[2] / "examples" / "docs")
     if examples_dir not in sys.path:
         sys.path.insert(0, examples_dir)
     yield
@@ -23,7 +23,7 @@ def run_before_each_test():
 def run_after_each_test():
     yield
     output_dir = DATABASE_DIRECTORY
-    if os.path.exists(output_dir):
+    if Path(output_dir).exists():
         shutil.rmtree(output_dir)
 
 
