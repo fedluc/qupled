@@ -5,7 +5,7 @@ from .testing import test
 from .install import install, install_dependencies
 from .formatting import format_code
 from .docs import docs
-from .maintenance import clean, update_version
+from .maintenance import clean
 
 
 def run():
@@ -46,12 +46,6 @@ def run():
         help="Run cpp tests with MPI enabled.",
     )
 
-    # Update version command
-    version_parser = subparsers.add_parser(
-        "update-version", help="Update package version"
-    )
-    version_parser.add_argument("build_version", help="The new version number.")
-
     # Other commands
     subparsers.add_parser("clean", help="Clean up build artifacts")
     subparsers.add_parser("docs", help="Generate documentation")
@@ -78,8 +72,6 @@ def run():
         test(args.marker, args.use_mpi)
     elif args.command == "install-deps":
         install_dependencies()
-    elif args.command == "update-version":
-        update_version(args.build_version)
     else:
         parser.print_help()
 

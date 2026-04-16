@@ -21,9 +21,8 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-
-      - name: Set build version
-        run: ./devtool update-version ${{ github.ref_name }}
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5

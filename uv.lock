@@ -1620,7 +1620,6 @@ wheels = [
 
 [[package]]
 name = "qupled"
-version = "0.0.0.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "blosc2" },

@@ -12,7 +12,7 @@ build:
       - -DUSE_MPI=OFF
   python:
     backend: python-build
-    launcher: [uv, run, --project, ., --group, dev]
+    launcher: [uv, run, --link-mode=copy]
     env:
       BUILD_NATIVE_TESTS: "OFF"
       USE_MPI: "OFF"
@@ -22,21 +22,21 @@ test:
   runners:
     unit:
       backend: pytest
-      launcher: [uv, run, --project, ., --extra, test]
+      launcher: [uv, run, --link-mode=copy]
       path: tests
       marker: unit
       args:
         - -v
     native:
       backend: pytest
-      launcher: [uv, run, --project, ., --extra, test]
+      launcher: [uv, run, --link-mode=copy]
       path: tests
       marker: native
       args:
         - -v
     integration:
       backend: pytest
-      launcher: [uv, run, --project, ., --extra, test]
+      launcher: [uv, run, --link-mode=copy]
       path: tests
       marker: integration
       args:
@@ -55,7 +55,7 @@ format:
   targets:
     python:
       backend: black
-      launcher: [uv, run, --project, ., --group, dev]
+      launcher: [uv, run, --link-mode=copy]
       paths:
         - .
     cpp:
@@ -81,15 +81,16 @@ install:
   targets:
     dev-python:
       backend: uv
+      args:
+        - -r
+        - pyproject.toml
+        - --extra
+        - test
+        - --extra
+        - docs
+        - --group
       packages:
-        - black
-        - build
-        - pytest~=8.0
-        - pytest-mock~=3.12
-        - breathe
-        - Sphinx
-        - sphinx-rtd-theme~=1.1.1
-        - sphinxcontrib-mermaid
+        - dev
     package:
       backend: uv
       args:
