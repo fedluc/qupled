@@ -73,10 +73,13 @@ jobs:
           mv temp-linux-wheels-*/* dist/ || true
           mv temp-macos-wheels-*/* dist/ || true
 
+      - name: Install release tooling
+        run: uv sync --only-group release
+
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          uv run --group release twine check dist/*
-          uv run --group release twine upload dist/* --non-interactive
+          .venv/bin/twine check dist/*
+          .venv/bin/twine upload dist/* --non-interactive

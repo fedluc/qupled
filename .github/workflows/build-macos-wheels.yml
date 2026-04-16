@@ -41,8 +41,11 @@ jobs:
           BREW_PREFIX=$(brew --prefix)
           echo "OpenMP_ROOT=$BREW_PREFIX/opt/libomp" >> $GITHUB_ENV
 
+      - name: Install release tooling
+        run: uv sync --only-group release
+
       - name: Build wheels with cibuildwheel
-        run: uv run --group release cibuildwheel --output-dir wheelhouse
+        run: .venv/bin/cibuildwheel --output-dir wheelhouse
         env:
           CIBW_PLATFORM: macos
           CIBW_ARCHS_MACOS: ${{ matrix.arch }}

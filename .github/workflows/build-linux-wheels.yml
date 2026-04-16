@@ -39,8 +39,11 @@ jobs:
         run: |
           docker pull --platform linux/${{ matrix.arch }} ghcr.io/fedluc/qupled/qupled_manylinux_${{ matrix.arch }}
 
+      - name: Install release tooling
+        run: uv sync --only-group release
+
       - name: Build wheels using cibuildwheel
-        run: uv run --group release cibuildwheel --output-dir wheelhouse
+        run: .venv/bin/cibuildwheel --output-dir wheelhouse
         env:
           CIBW_PLATFORM: linux
           CIBW_ARCHS: ${{ matrix.arch }}
