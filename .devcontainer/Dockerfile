@@ -22,6 +22,3 @@ RUN chmod +x devtool && \
     chown -R vscode:vscode $PYTHON_VENV_ROOT
 WORKDIR /
 RUN rm -rf $SETUP_DIR
-
-# Automatically activate the Python environment on container start
-RUN echo "source $PYTHON_VENV_ROOT/bin/activate" >> /etc/bash.bashrc
