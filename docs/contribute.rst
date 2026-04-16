@@ -25,15 +25,23 @@ There are two options for setting up your development environment:
 
 2. **The DIY Option: Manual Setup**
 
-   If you prefer to set up the environment manually, start by installing the required Python 
-   packages with the following command:
+   If you prefer to set up the environment manually, install `uv <https://docs.astral.sh/uv/>`_
+   first and then bootstrap the project environment with:
 
    .. code-block:: console
 
-      pip install -r dev/requirements.txt
+      ./devtool install-deps
 
-   Additionally, ensure that you have all the necessary :ref:`external dependencies <external_dependencies>` 
-   installed.
+   This installs the required system packages and syncs the Python dependencies from
+   ``pyproject.toml`` into the local ``.venv``. If you want to sync the Python environment
+   manually, run:
+
+   .. code-block:: console
+
+      uv sync --group dev --extra test --extra docs
+
+   Additionally, ensure that you have all the necessary
+   :ref:`external dependencies <external_dependencies>` installed.
 
 Formatting
 ----------

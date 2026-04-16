@@ -14,22 +14,24 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Install dependencies
         run: |
-          pip3 install --upgrade pip
-          pip3 install black # Install Black for Python formatting
           sudo apt update
           sudo apt-get install clang-format
+          uv sync --group dev
 
       - name: Check Python formatting
-        run: black --check .
+        run: uv run --group dev black --check .
           
       - name: Check C++ formatting
         run: | 

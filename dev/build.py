@@ -3,6 +3,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from .uv import run_uv_tool
+
 NATIVE_BUILD_DIR = Path("dist-native")
 NATIVE_TEST_BUILD_DIR = Path("dist-native-tests")
 NATIVE_SOURCE_DIR = Path("src", "qupled", "native", "src")
@@ -57,7 +59,11 @@ def _build_python_package(use_mpi):
     build_env["USE_MPI"] = _to_cmake_bool(use_mpi)
     build_env["BUILD_NATIVE_TESTS"] = "OFF"
 
-    subprocess.run(["python3", "-m", "build"], check=True, env=build_env)
+    run_uv_tool(
+        ["python", "-m", "build"],
+        groups=["dev"],
+        env=build_env,
+    )
 
 
 def build_native(native_tests, use_mpi):
