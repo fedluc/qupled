@@ -7,10 +7,6 @@ on:
     tags-ignore:
       - 'v*'
   pull_request:
-
-env:
-  PYTHON_VENV_ROOT: /tmp/qupled-python-venv
-
 jobs:
   python_tests:
     runs-on: ${{ matrix.os }}
@@ -20,29 +16,28 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
 
     - name: Install dependencies
-      run: |
-        python3 -m venv ${PYTHON_VENV_ROOT}
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        ./devtool install-deps
+      run: ./devtool install-deps
 
     - name: Build package
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        ./devtool build
+      run: ./devtool build
 
     - name: Run unit tests
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        ./devtool test unit
+      run: ./devtool test unit
 
     - name: Run native tests
       if: github.event_name == 'pull_request'
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        ./devtool test native
+      run: ./devtool test native
 
   cpp_tests_with_mpi:
     runs-on: ${{ matrix.os }}
@@ -52,18 +47,21 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
 
     - name: Install dependencies
-      run: |
-        python3 -m venv ${PYTHON_VENV_ROOT}
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        ./devtool install-deps
+      run: ./devtool install-deps
 
     - name: Run cpp tests with MPI
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        ./devtool test cpp --use-mpi
+      run: ./devtool test cpp --use-mpi
 
   cpp_tests_without_mpi:
     runs-on: ${{ matrix.os }}
@@ -73,15 +71,18 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
 
     - name: Install dependencies
-      run: |
-        python3 -m venv ${PYTHON_VENV_ROOT}
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        ./devtool install-deps
+      run: ./devtool install-deps
 
     - name: Run cpp tests without MPI
-      run: |
-        source ${PYTHON_VENV_ROOT}/bin/activate
-        ./devtool test cpp
+      run: ./devtool test cpp

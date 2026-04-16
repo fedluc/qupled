@@ -23,6 +23,17 @@ jobs:
     needs: [build-sdist, build-linux-wheels, build-macos-wheels]
 
     steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Prepare dist folder
         run: mkdir -p dist
 
@@ -62,14 +73,13 @@ jobs:
           mv temp-linux-wheels-*/* dist/ || true
           mv temp-macos-wheels-*/* dist/ || true
 
+      - name: Install release tooling
+        run: uv sync --only-group release
+
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          python3 -m venv .venv
-          source .venv/bin/activate
-          pip3 install --upgrade pip
-          pip3 install twine
-          twine check dist/*  
-          twine upload dist/* --non-interactive
+          .venv/bin/twine check dist/*
+          .venv/bin/twine upload dist/* --non-interactive

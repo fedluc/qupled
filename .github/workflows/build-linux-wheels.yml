@@ -17,6 +17,14 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Set build version
         run: ./devtool update-version ${{ github.ref_name }}
 
@@ -31,10 +39,11 @@ jobs:
         run: |
           docker pull --platform linux/${{ matrix.arch }} ghcr.io/fedluc/qupled/qupled_manylinux_${{ matrix.arch }}
 
+      - name: Install release tooling
+        run: uv sync --only-group release
+
       - name: Build wheels using cibuildwheel
-        uses: pypa/cibuildwheel@v2.16.5
-        with:
-          output-dir: wheelhouse
+        run: .venv/bin/cibuildwheel --output-dir wheelhouse
         env:
           CIBW_PLATFORM: linux
           CIBW_ARCHS: ${{ matrix.arch }}

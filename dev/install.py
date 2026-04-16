@@ -4,19 +4,30 @@ import subprocess
 from pathlib import Path
 
 from .common import get_wheel_file
+from .uv import (
+    get_project_python,
+    print_uv_install_instructions,
+    sync_local_environment,
+)
 
 
 def install():
     wheel_file = get_wheel_file()
     if wheel_file is not None:
-        subprocess.run(["pip", "uninstall", "-y", wheel_file], check=True)
-        subprocess.run(["pip", "install", wheel_file], check=True)
+        sync_local_environment(skip_project_install=True)
+        python_path = get_project_python()
+        subprocess.run(
+            ["uv", "pip", "uninstall", "--python", python_path, "qupled"],
+            check=False,
+        )
+        subprocess.run(
+            ["uv", "pip", "install", "--python", python_path, wheel_file], check=True
+        )
 
 
 def install_dependencies():
     print("Installing dependencies...")
     script_dir = Path(__file__).resolve().parent
-    pip_requirements = script_dir / "requirements-pip.txt"
     if os.name == "posix":
         if shutil.which("apt-get"):
             _install_with_apt(script_dir / "requirements-apt.txt")
@@ -26,7 +37,12 @@ def install_dependencies():
             print("Unsupported package manager. Please install dependencies manually.")
     else:
         print("Unsupported operating system. Please install dependencies manually.")
-    subprocess.run(["pip", "install", "-r", str(pip_requirements)], check=True)
+    try:
+        sync_local_environment(skip_project_install=True)
+    except RuntimeError as exc:
+        print(exc)
+        print_uv_install_instructions()
+        raise SystemExit(1) from exc
 
 
 def _install_with_apt(apt_requirements):

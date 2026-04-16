@@ -62,6 +62,7 @@ Then Install the :ref:`external_dependencies` with
 
 .. code-block:: console
 
+   curl -LsSf https://astral.sh/uv/install.sh | sh
    ./devtool install-deps
 
 and finally build, test and install qupled with

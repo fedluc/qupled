@@ -57,7 +57,10 @@ def run():
     subparsers.add_parser("docs", help="Generate documentation")
     subparsers.add_parser("format", help="Format the source code")
     subparsers.add_parser("install", help="Install the qupled package")
-    subparsers.add_parser("install-deps", help="Install system dependencies")
+    subparsers.add_parser(
+        "install-deps",
+        help="Install system dependencies and sync Python dependencies with uv",
+    )
 
     args = parser.parse_args()
 
