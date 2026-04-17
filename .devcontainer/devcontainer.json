@@ -1,8 +1,10 @@
 {
   "name": "Development Container",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    }
   },
   "customizations": {
     "vscode": {
@@ -12,5 +14,7 @@
         "ms-python.vscode-pylance"
       ]
     }
-  }
+  },
+  "postCreateCommand": ".devcontainer/post_create.sh",
+  "postStartCommand": ". .venv/bin/activate"
 }

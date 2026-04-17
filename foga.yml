@@ -1,0 +1,169 @@
+project:
+  name: qupled
+
+build:
+  default: python
+  cpp:
+    backend: cmake
+    source_dir: src/qupled/native/src
+    build_dir: dist-native
+    configure_args:
+      - -DBUILD_NATIVE_TESTS=OFF
+      - -DUSE_MPI=OFF
+  python:
+    backend: python-build
+    launcher: [uv, run, --link-mode=copy]
+    env:
+      BUILD_NATIVE_TESTS: "OFF"
+      USE_MPI: "OFF"
+
+test:
+  default: all
+  runners:
+    unit:
+      backend: pytest
+      launcher: [uv, run, --link-mode=copy]
+      path: tests
+      marker: unit
+      args:
+        - -v
+    native:
+      backend: pytest
+      launcher: [uv, run, --link-mode=copy]
+      path: tests
+      marker: native
+      args:
+        - -v
+    integration:
+      backend: pytest
+      launcher: [uv, run, --link-mode=copy]
+      path: tests
+      marker: integration
+      args:
+        - -v
+    cpp:
+      backend: ctest
+      source_dir: src/qupled/native/src
+      build_dir: dist-native-tests
+      configure_args:
+        - -DBUILD_NATIVE_TESTS=ON
+        - -DUSE_MPI=OFF
+      target: native_tests
+
+format:
+  default: all
+  targets:
+    python:
+      backend: black
+      launcher: [uv, run, --link-mode=copy]
+      paths:
+        - .
+    cpp:
+      backend: clang-format
+      args:
+        - --style=file
+      paths:
+        - src/qupled/native/**/*.hpp
+        - src/qupled/native/**/*.cpp
+
+docs:
+  targets:
+    html:
+      backend: sphinx
+      source_dir: docs
+      build_dir: docs/_build
+      builder: html
+      hooks:
+        pre:
+          - ["python3", "docs/generate_diagrams.py"]
+
+install:
+  targets:
+    dev-env:
+      backend: uv
+      groups:
+        - dev
+      extras:
+        - test
+        - docs
+      install_project: false
+      args:
+        - --link-mode=copy
+    apt-get:
+      backend: apt-get
+      args:
+        - --yes
+      launcher: [sudo]
+      packages:
+        - clang-format
+        - cmake
+        - doxygen
+        - graphviz
+        - libopenmpi-dev
+        - libgsl-dev
+        - libgtest-dev
+        - libomp-dev
+        - python3-dev
+        - libsqlite3-dev
+        - libsqlitecpp-dev
+      hooks:
+        pre:
+          - ["sudo", "apt-get", "update"]
+    brew:
+      backend: brew
+      env:
+        HOMEBREW_NO_AUTO_UPDATE: "1"
+      packages:
+        - clang-format
+        - cmake
+        - doxygen
+        - graphviz
+        - gsl
+        - googletest
+        - libomp
+        - open-mpi
+        - sqlite
+        - sqlitecpp
+
+deploy:
+  targets:
+    pypi:
+      backend: twine
+      artifacts:
+        - dist/*
+      repository: pypi
+
+clean:
+  paths:
+    - build
+    - dist
+    - dist-native
+    - dist-native-mpi
+    - dist-native-tests
+    - dist-native-tests-mpi
+    - docs/_build
+    - docs/_generated
+    - qupled.db
+    - qupled_store
+    - src/qupled.egg-info
+    - wheelhouse
+
+profiles:
+  mpi:
+    build:
+      cpp:
+        build_dir: dist-native-mpi
+        configure_args:
+          - -DBUILD_NATIVE_TESTS=OFF
+          - -DUSE_MPI=ON
+      python:
+        env:
+          BUILD_NATIVE_TESTS: "OFF"
+          USE_MPI: "ON"
+    test:
+      runners:
+        cpp:
+          build_dir: dist-native-tests-mpi
+          configure_args:
+            - -DBUILD_NATIVE_TESTS=ON
+            - -DUSE_MPI=ON

@@ -12,11 +12,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            install_target: brew
+          - os: ubuntu-latest
+            install_target: apt-get
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -26,24 +32,31 @@ jobs:
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
 
-    - name: Install dependencies
-      run: ./devtool install-deps
+    - name: Sync Python dependencies
+      run: uv sync --group dev --extra test --no-install-project
+
+    - name: Install system dependencies
+      run: .venv/bin/foga install --target "${{ matrix.install_target }}"
 
     - name: Build package
-      run: ./devtool build
+      run: .venv/bin/foga build
 
     - name: Run unit tests
-      run: ./devtool test unit
+      run: .venv/bin/foga test --runner unit
 
     - name: Run native tests
       if: github.event_name == 'pull_request'
-      run: ./devtool test native
+      run: .venv/bin/foga test --runner native
 
   cpp_tests_with_mpi:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            install_target: brew
+          - os: ubuntu-latest
+            install_target: apt-get
 
     steps:
     - name: Checkout repository
@@ -57,17 +70,24 @@ jobs:
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
 
-    - name: Install dependencies
-      run: ./devtool install-deps
+    - name: Sync Python dependencies
+      run: uv sync --group dev --extra test --no-install-project
+
+    - name: Install system dependencies
+      run: .venv/bin/foga install --target "${{ matrix.install_target }}"
 
     - name: Run cpp tests with MPI
-      run: ./devtool test cpp --use-mpi
+      run: .venv/bin/foga test cpp --runner cpp --profile mpi
 
   cpp_tests_without_mpi:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
+        include:
+          - os: macos-latest
+            install_target: brew
+          - os: ubuntu-latest
+            install_target: apt-get
 
     steps:
     - name: Checkout repository
@@ -81,8 +101,11 @@ jobs:
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
 
-    - name: Install dependencies
-      run: ./devtool install-deps
+    - name: Sync Python dependencies
+      run: uv sync --group dev --extra test --no-install-project
+
+    - name: Install system dependencies
+      run: .venv/bin/foga install --target "${{ matrix.install_target }}"
 
     - name: Run cpp tests without MPI
-      run: ./devtool test cpp
+      run: .venv/bin/foga test cpp --runner cpp

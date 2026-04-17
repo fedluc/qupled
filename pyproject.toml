@@ -1,10 +1,10 @@
 [build-system]
-requires = ["scikit-build-core>=0.12", "wheel"]
+requires = ["scikit-build-core>=0.12", "setuptools-scm[toml]>=8", "wheel"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "qupled"
-version = "0.0.0.dev"
+dynamic = ["version"]
 description = "qupled: a package to investigate quantum plasmas via the dielectric formalism"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -41,6 +41,7 @@ docs = [
 dev = [
     "black",
     "build",
+    "foga~=0.3.3",
 ]
 release = [
     "cibuildwheel",
@@ -56,6 +57,7 @@ markers = [
 
 [tool.scikit-build]
 minimum-version = "build-system.requires"
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 cmake.version = ">=3.28"
 cmake.source-dir = "src/qupled/native/src"
 sdist.exclude = [
@@ -69,6 +71,10 @@ sdist.exclude = [
 ]
 wheel.packages = ["src/qupled"]
 wheel.install-dir = "qupled"
+
+[tool.setuptools_scm]
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"
 
 [tool.scikit-build.cmake.define]
 USE_MPI = { env = "USE_MPI", default = "OFF" }

@@ -21,9 +21,8 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
-
-      - name: Set build version
-        run: ./devtool update-version ${{ github.ref_name }}
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -33,16 +32,11 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
 
+      - name: Sync Python dependencies
+        run: uv sync --group dev --group release --no-install-project
+
       - name: Install build dependencies
-        run: ./devtool install-deps
-
-      - name: Set OpenMP_ROOT
-        run: |
-          BREW_PREFIX=$(brew --prefix)
-          echo "OpenMP_ROOT=$BREW_PREFIX/opt/libomp" >> $GITHUB_ENV
-
-      - name: Install release tooling
-        run: uv sync --only-group release
+        run: .venv/bin/foga install --target brew
 
       - name: Build wheels with cibuildwheel
         run: .venv/bin/cibuildwheel --output-dir wheelhouse

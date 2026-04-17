@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -24,9 +26,6 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
-
-      - name: Set build version
-        run: ./devtool update-version ${{ github.ref_name }}
 
       - name: Set up QEMU (for aarch64 emulation)
         if: matrix.arch == 'aarch64'

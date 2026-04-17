@@ -26,19 +26,32 @@ There are two options for setting up your development environment:
 2. **The DIY Option: Manual Setup**
 
    If you prefer to set up the environment manually, install `uv <https://docs.astral.sh/uv/>`_
-   first and then bootstrap the project environment with:
+   first and bootstrap ``foga`` with:
 
    .. code-block:: console
 
-      ./devtool install-deps
+      uv sync --group dev --no-install-project
 
-   This installs the required system packages and syncs the Python dependencies from
-   ``pyproject.toml`` into the local ``.venv``. If you want to sync the Python environment
-   manually, run:
+   Then use ``foga`` to install the required system dependencies:
 
    .. code-block:: console
 
-      uv sync --group dev --extra test --extra docs
+      .venv/bin/foga install --target apt-get   # Ubuntu or Debian-based systems
+      .venv/bin/foga install --target brew      # macOS
+
+   and sync the full Python development environment:
+
+   .. code-block:: console
+
+      .venv/bin/foga install --target dev-env
+
+   This keeps ``uv`` as the bootstrap layer and lets ``foga`` own the project-specific
+   environment setup. After that, use ``foga`` for the repository workflows:
+
+   .. code-block:: console
+
+      foga build
+      foga test --runner unit
 
    Additionally, ensure that you have all the necessary
    :ref:`external dependencies <external_dependencies>` installed.
@@ -54,7 +67,7 @@ To manually ensure the correct formatting is applied, run:
 
 .. code-block:: console
 
-   ./devtool format
+   foga format
 
 Testing
 -------
@@ -65,23 +78,27 @@ For Python tests:
 
 .. code-block:: console
 
-   ./devtool test unit
-   ./devtool test native
-   ./devtool test integration
+   foga test --runner unit
+   foga test --runner native
+   foga test --runner integration
 
 For C++ tests:
 
 .. code-block:: console
 
-   ./devtool test cpp
+   foga test cpp --runner cpp
 
-MPI is disabled by default for ``cpp`` tests; pass ``--use-mpi`` to enable it.
+MPI is disabled by default for ``cpp`` tests; use the ``mpi`` profile to enable it.
+
+.. code-block:: console
+
+   foga test cpp --runner cpp --profile mpi
 
 To run everything in one shot:
 
 .. code-block:: console
 
-   ./devtool test
+   foga test
 
 Documentation
 -------------
@@ -91,6 +108,6 @@ Once you've made your changes, you can verify and build the documentation using:
 
 .. code-block:: console
 
-   ./devtool docs
+   foga docs
 
 The generated output can be viewed by opening ``docs/_build/index.html`` in your browser.

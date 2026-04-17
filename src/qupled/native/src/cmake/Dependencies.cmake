@@ -43,6 +43,36 @@ if(USE_MPI)
 	set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
 endif()
 
+# On macOS, Homebrew's libomp install is not discovered reliably unless CMake
+# is pointed at the package prefix. Prefer an explicit user-provided setting,
+# otherwise resolve the Homebrew location automatically.
+if(APPLE AND NOT OpenMP_ROOT AND NOT DEFINED ENV{OpenMP_ROOT})
+	find_program(BREW_EXECUTABLE brew)
+	if(BREW_EXECUTABLE)
+		execute_process(
+			COMMAND ${BREW_EXECUTABLE} --prefix libomp
+			OUTPUT_VARIABLE HOMEBREW_LIBOMP_PREFIX
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+			ERROR_QUIET
+			RESULT_VARIABLE HOMEBREW_LIBOMP_RESULT
+		)
+		if(HOMEBREW_LIBOMP_RESULT EQUAL 0 AND EXISTS "${HOMEBREW_LIBOMP_PREFIX}")
+			set(OpenMP_ROOT "${HOMEBREW_LIBOMP_PREFIX}")
+			message(STATUS "Using Homebrew libomp from ${OpenMP_ROOT}")
+		endif()
+	endif()
+
+	if(NOT OpenMP_ROOT)
+		foreach(OPENMP_PREFIX /opt/homebrew/opt/libomp /usr/local/opt/libomp)
+			if(EXISTS "${OPENMP_PREFIX}")
+				set(OpenMP_ROOT "${OPENMP_PREFIX}")
+				message(STATUS "Using fallback libomp path ${OpenMP_ROOT}")
+				break()
+			endif()
+		endforeach()
+	endif()
+endif()
+
 # Core dependencies shared by production and test-support targets.
 find_package(OpenMP REQUIRED)
 find_package(GSL REQUIRED)
