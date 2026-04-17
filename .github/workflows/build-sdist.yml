@@ -26,6 +26,9 @@ jobs:
       - name: Install build tooling
         run: uv sync --only-group dev
 
+      - name: Remove stray compiled extension artifacts
+        run: find src/qupled -maxdepth 1 -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.pyd' \) -delete
+
       - name: Build sdist
         run: .venv/bin/python -m build --sdist --outdir dist
 
