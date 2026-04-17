@@ -38,9 +38,6 @@ jobs:
       - name: Install build dependencies
         run: .venv/bin/foga install --target brew
 
-      - name: Remove stray compiled extension artifacts
-        run: find src/qupled -maxdepth 1 -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.pyd' \) -delete
-
       - name: Build wheels with cibuildwheel
         run: .venv/bin/cibuildwheel --output-dir wheelhouse
         env:
