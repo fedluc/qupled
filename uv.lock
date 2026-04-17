@@ -508,15 +508,15 @@ wheels = [
 
 [[package]]
 name = "foga"
-version = "0.3.2"
+version = "0.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyyaml" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/28/a0/ae54974a59a3af6d5f8354a659711189af7e1f309da208c496824dc06aa5/foga-0.3.2.tar.gz", hash = "sha256:69e02f1485c269c347ed25bef467728ca749cdb837929cf9b1a364cc896729d0", size = 66190, upload-time = "2026-04-16T07:28:35.105Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c3/b2/ca8d9afd773848cb4d419de1328c842bb6132798c4503e089eb08ef259b4/foga-0.3.3.tar.gz", hash = "sha256:d4c5cf9b3d8199650d6d4eadd7fb406b37cacf54ef6f8b1a166e625c35ff89b4", size = 67344, upload-time = "2026-04-17T08:36:48.308Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/09/837f31db4fd366a3604740d874498fa49f53ad435e67d79feceb8892a126/foga-0.3.2-py3-none-any.whl", hash = "sha256:2eb90b11e94403d405e79a62a5b9beca8fdca1cd6a4906e3388e6bb2ad362890", size = 51015, upload-time = "2026-04-16T07:28:33.939Z" },
+    { url = "https://files.pythonhosted.org/packages/12/6d/934263bd38397c035118d21ac5093f0c8e22b7875480371a4b7a5878d7c3/foga-0.3.3-py3-none-any.whl", hash = "sha256:60032ddbb8e74837a7d702b71bee01e9aa28d7d0135a50de2189dda6f01ec414", size = 51476, upload-time = "2026-04-17T08:36:47.119Z" },
 ]
 
 [[package]]
@@ -1694,7 +1694,7 @@ provides-extras = ["test", "docs"]
 dev = [
     { name = "black" },
     { name = "build" },
-    { name = "foga", specifier = "~=0.3" },
+    { name = "foga", specifier = "~=0.3.3" },
 ]
 release = [
     { name = "cibuildwheel" },

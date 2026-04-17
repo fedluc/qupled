@@ -63,15 +63,19 @@ Then Install the :ref:`external_dependencies` with
 .. code-block:: console
 
    curl -LsSf https://astral.sh/uv/install.sh | sh
-   ./devtool install-deps
+   uv sync --group dev --no-install-project
+   .venv/bin/foga install --target dev-env
 
-and finally build, test and install qupled with
+and then run build and test commands through ``foga``:
 
 .. code-block:: console
 
-   ./devtool build
-   ./devtool test
-   ./devtool install
+   foga build
+   foga test
+
+If you want to run an example or an ad-hoc script during development, prefer
+``uv run`` so the project uses the synced environment without requiring an extra
+package installation step.
 
 .. _external_dependencies:
 

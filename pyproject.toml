@@ -41,7 +41,7 @@ docs = [
 dev = [
     "black",
     "build",
-    "foga~=0.3",
+    "foga~=0.3.3",
 ]
 release = [
     "cibuildwheel",

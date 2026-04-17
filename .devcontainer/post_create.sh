@@ -10,15 +10,10 @@ if ! command -v uv >/dev/null 2>&1; then
   curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="${HOME}/.local/bin" sh
 fi
 
-# Create the repository-local virtual environment used by the devcontainer.
-uv venv .venv --allow-existing
-
-# Install foga into that environment so the bootstrap commands below can use it.
-uv pip install --python .venv/bin/python foga
-
-# Activate the environment for the remaining setup steps.
-. .venv/bin/activate
+# Sync the repository-local environment used by the devcontainer.
+uv sync --group dev --no-install-project
 
 # Install required system packages for native builds and docs generation.
+. .venv/bin/activate
 foga install --target apt-get
-foga install --target dev-python
+foga install --target dev-env

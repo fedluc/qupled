@@ -79,23 +79,16 @@ docs:
 
 install:
   targets:
-    dev-python:
+    dev-env:
       backend: uv
-      args:
-        - -r
-        - pyproject.toml
-        - --extra
-        - test
-        - --extra
-        - docs
-        - --group
-      packages:
+      groups:
         - dev
-    package:
-      backend: uv
+      extras:
+        - test
+        - docs
+      install_project: false
       args:
         - --link-mode=copy
-      path: .
     apt-get:
       backend: apt-get
       args:
