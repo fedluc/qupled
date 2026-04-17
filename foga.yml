@@ -75,7 +75,7 @@ docs:
       builder: html
       hooks:
         pre:
-          - ["python3", "dev/generate_diagrams.py"]
+          - ["python3", "docs/generate_diagrams.py"]
 
 install:
   targets:

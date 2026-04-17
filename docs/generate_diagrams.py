@@ -33,17 +33,17 @@ for _mod in _MOCKS:
 
 sys.path.insert(0, str(ROOT / "src"))
 
-from qupled.schemes import (
-    hf,
-    rpa,
+from qupled.schemes import (  # noqa: E402
     esa,
-    stls,
-    stlsiet,
-    vsstls,
+    hf,
     qstls,
     qstlsiet,
     qvsstls,
-)  # noqa: E402
+    rpa,
+    stls,
+    stlsiet,
+    vsstls,
+)
 
 # ---------------------------------------------------------------------------
 # Python class lists
@@ -72,7 +72,7 @@ PYTHON_INPUTS = [
 ]
 
 # ---------------------------------------------------------------------------
-# C++ class lists (names only — parsed from headers)
+# C++ class lists (names only - parsed from headers)
 # ---------------------------------------------------------------------------
 CPP_SOLVERS = {
     "Logger",
