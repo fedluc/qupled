@@ -1,3 +1,0 @@
-interface:
-  display_name: "Foga Config Authoring"
-  short_description: "Inspect a repo and translate its workflows into foga.yml"
