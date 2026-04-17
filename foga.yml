@@ -79,23 +79,7 @@ docs:
 
 install:
   targets:
-<<<<<<< HEAD
     dev-env:
-=======
-    dev-python:
-      backend: uv
-      args:
-        - -r
-        - pyproject.toml
-        - --extra
-        - test
-        - --extra
-        - docs
-        - --group
-      packages:
-        - dev
-    package:
->>>>>>> da00119 (switched to dynamic versioning via scm)
       backend: uv
       groups:
         - dev
