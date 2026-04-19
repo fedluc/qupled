@@ -86,4 +86,4 @@ manylinux-aarch64-image = "ghcr.io/fedluc/qupled/qupled_manylinux_aarch64"
 build-frontend = "build"
 environment = "USE_MPI=OFF"
 test-command = "pytest {project}/tests -m unit"
-before-test = "pip install '.[test]'"
+test-extras = ["test"]
