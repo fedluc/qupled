@@ -32,18 +32,24 @@ There are two options for setting up your development environment:
 
       uv sync --group dev --no-install-project
 
+   If your shell has not activated the repository-local environment already, activate it with:
+
+   .. code-block:: console
+
+      . .venv/bin/activate
+
    Then use ``foga`` to install the required system dependencies:
 
    .. code-block:: console
 
-      .venv/bin/foga install --target apt-get   # Ubuntu or Debian-based systems
-      .venv/bin/foga install --target brew      # macOS
+      foga install --target apt-get   # Ubuntu or Debian-based systems
+      foga install --target brew      # macOS
 
    and sync the full Python development environment:
 
    .. code-block:: console
 
-      .venv/bin/foga install --target dev-env
+      foga install --target dev-env
 
    This keeps ``uv`` as the bootstrap layer and lets ``foga`` own the project-specific
    environment setup. After that, use ``foga`` for the repository workflows:
