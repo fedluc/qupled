@@ -75,3 +75,21 @@ Finite Size Correction
 
 .. literalinclude:: ../examples/docs/finite_size_correction.py
    :language: python
+
+QSTLS-PIMC: SSF and LFC
+-----------------------
+
+.. literalinclude:: ../examples/docs/solve_qstls_pimc.py
+   :language: python
+
+QSTLS-PIMC: Switching and f0(y)
+-------------------------------
+
+.. literalinclude:: ../examples/docs/qstls_pimc_distribution.py
+   :language: python
+
+ITCF From Quantum Schemes
+-------------------------
+
+.. literalinclude:: ../examples/docs/plot_itcf_rs10.py
+   :language: python

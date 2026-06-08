@@ -74,6 +74,14 @@ void exposeIetInputProperties(py::class_<T> &cls) {
 }
 
 template <typename T>
+void exposePimcInputProperties(py::class_<T> &cls) {
+  cls.def_property("pimc_eta", &T::getPimcEta, &T::setPimcEta)
+      .def_property("pimc_y_sec", &T::getPimcYSec, &T::setPimcYSec)
+      .def_property(
+          "pimc_a_cutoff", &T::getPimcACutoff, &T::setPimcACutoff);
+}
+
+template <typename T>
 void exposeVSInputProperties(py::class_<T> &cls) {
   cls.def_property("error_alpha", &T::getErrMinAlpha, &T::setErrMinAlpha)
       .def_property("iterations_alpha", &T::getNIterAlpha, &T::setNIterAlpha)
@@ -89,6 +97,16 @@ void exposeVSInputProperties(py::class_<T> &cls) {
                     &T::setFreeEnergyIntegrand);
 }
 
+template <typename T>
+void exposeVEInputProperties(py::class_<T> &cls) {
+  cls.def_property("coupling_resolution",
+                   &T::getCouplingResolution,
+                   &T::setCouplingResolution)
+      .def_property("free_energy_integrand",
+                    &T::getFreeEnergyIntegrand,
+                    &T::setFreeEnergyIntegrand);
+}
+
 void exposeInputClass(py::module_ &m) {
   auto cls = py::class_<Input>(m, "Input");
   cls.def(py::init<>());
@@ -99,6 +117,27 @@ void exposeStlsInputClass(py::module_ &m) {
   auto cls = py::class_<StlsInput>(m, "StlsInput");
   cls.def(py::init<>());
   exposeIterativeInputProperties(cls);
+}
+
+namespace pythonRdfInput {
+  py::array getGrid(const RecStlsInput &in) { return toNdArray(in.getRdfGrid()); }
+  py::array getValues(const RecStlsInput &in) { return toNdArray(in.getRdf()); }
+
+  void setGrid(RecStlsInput &in, const py::array_t<double> &grid) {
+    in.setRdfGrid(toVector(grid));
+  }
+
+  void setValues(RecStlsInput &in, const py::array_t<double> &values) {
+    in.setRdf(toVector(values));
+  }
+} // namespace pythonRdfInput
+
+void exposeRecStlsInputClass(py::module_ &m) {
+  auto cls = py::class_<RecStlsInput>(m, "RecStlsInput");
+  cls.def(py::init<>());
+  exposeBaseInputProperties(cls);
+  cls.def_property("rdf_grid", pythonRdfInput::getGrid, pythonRdfInput::setGrid)
+      .def_property("rdf", pythonRdfInput::getValues, pythonRdfInput::setValues);
 }
 
 void exposeStlsIetInputClass(py::module_ &m) {
@@ -121,6 +160,13 @@ void exposeQstlsInputClass(py::module_ &m) {
   exposeQuantumInputProperties(cls);
 }
 
+void exposeQstlsPimcInputClass(py::module_ &m) {
+  auto cls = py::class_<QstlsPimcInput>(m, "QstlsPimcInput");
+  cls.def(py::init<>());
+  exposeQuantumInputProperties(cls);
+  exposePimcInputProperties(cls);
+}
+
 void exposeQstlsIetInputClass(py::module_ &m) {
   auto cls = py::class_<QstlsIetInput>(m, "QstlsIetInput");
   cls.def(py::init<>());
@@ -133,6 +179,21 @@ void exposeQVSStlsInputClass(py::module_ &m) {
   cls.def(py::init<>());
   exposeQuantumInputProperties(cls);
   exposeVSInputProperties(cls);
+}
+
+void exposeQVSStlsF0InputClass(py::module_ &m) {
+  auto cls = py::class_<QVSStlsF0Input>(m, "QVSStlsF0Input");
+  cls.def(py::init<>());
+  exposeQuantumInputProperties(cls);
+  exposePimcInputProperties(cls);
+  exposeVSInputProperties(cls);
+}
+
+void exposeVEInputClass(py::module_ &m) {
+  auto cls = py::class_<VEInput>(m, "VEInput");
+  cls.def(py::init<>());
+  exposeQuantumInputProperties(cls);
+  exposeVEInputProperties(cls);
 }
 
 // -----------------------------------------------------------------
@@ -235,12 +296,16 @@ namespace pythonWrappers {
 
   void exposeInputs(py::module_ &m) {
     exposeInputClass(m);
+    exposeRecStlsInputClass(m);
     exposeStlsInputClass(m);
     exposeStlsIetInputClass(m);
     exposeVSStlsInputClass(m);
     exposeQstlsInputClass(m);
+    exposeQstlsPimcInputClass(m);
     exposeQstlsIetInputClass(m);
     exposeQVSStlsInputClass(m);
+    exposeQVSStlsF0InputClass(m);
+    exposeVEInputClass(m);
     exposeDatabaseInfoClass(m);
     exposeGuessClass(m);
     exposeFreeEnergyIntegrandClass(m);

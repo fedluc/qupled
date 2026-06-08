@@ -36,9 +36,17 @@ void Input::setDegeneracy(const double &Theta_) {
 
 void Input::setTheory(const string &theory_) {
   const vector<string> cTheories = {
-      "HF", "RPA", "ESA", "STLS", "STLS-HNC", "STLS-IOI", "STLS-LCT", "VSSTLS"};
+      "HF", "RPA", "ESA", "STLS", "STLS-HNC", "STLS-SHNC", "STLS-IOI", "STLS-LCT", "VSSTLS", "REC-STLS"};
   const vector<string> qTheories = {
-      "QSTLS", "QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT", "QVSSTLS"};
+      "QSTLS",
+      "VE",
+      "QSTLS-F0",
+      "QSTLS-PIMC",
+      "QSTLS-HNC",
+      "QSTLS-IOI",
+      "QSTLS-LCT",
+      "QVSSTLS",
+      "QVSSTLS-F0"};
   isClassicTheory = count(cTheories.begin(), cTheories.end(), theory_) != 0;
   isQuantumTheory = count(qTheories.begin(), qTheories.end(), theory_) != 0;
   if (!isClassicTheory && !isQuantumTheory) {
@@ -105,11 +113,71 @@ void IterationInput::setGuess(const Guess &guess) {
 }
 
 // -----------------------------------------------------------------
+// RecStlsInput class
+// -----------------------------------------------------------------
+
+void RecStlsInput::setRdf(const vector<double> &rdf) {
+  this->rdf.values = rdf;
+  validateRdf();
+}
+
+void RecStlsInput::setRdfGrid(const vector<double> &rdfGrid) {
+  this->rdf.grid = rdfGrid;
+  validateRdf();
+}
+
+void RecStlsInput::validateRdf() const {
+  if (rdf.grid.empty() || rdf.values.empty()) { return; }
+  if (rdf.grid.size() != rdf.values.size()) {
+    throwError("The reconstructed RDF input is inconsistent");
+  }
+  if (rdf.grid.front() != 0.0) {
+    throwError("The reconstructed RDF grid must start at zero");
+  }
+  if (rdf.grid.front() < 0.0) {
+    throwError("The reconstructed RDF grid must be non-negative");
+  }
+  if (!is_sorted(rdf.grid.begin(), rdf.grid.end())) {
+    throwError("The reconstructed RDF grid must be sorted");
+  }
+  for (size_t i = 1; i < rdf.grid.size(); ++i) {
+    if (rdf.grid[i] <= rdf.grid[i - 1]) {
+      throwError("The reconstructed RDF grid must be strictly increasing");
+    }
+  }
+}
+
+// -----------------------------------------------------------------
 // QuantumInput class
 // -----------------------------------------------------------------
 
 void QuantumInput::setFixedRunId(const int &fixedRunId) {
   this->fixedRunId = fixedRunId;
+}
+
+// -----------------------------------------------------------------
+// QstlsPimcInput class
+// -----------------------------------------------------------------
+
+void QstlsPimcInput::setPimcEta(const double &eta) {
+  if (eta <= 0.0) {
+    throwError("The PIMC switching parameter eta must be larger than zero");
+  }
+  this->pimcEta = eta;
+}
+
+void QstlsPimcInput::setPimcYSec(const double &ySec) {
+  if (ySec <= 0.0) {
+    throwError("The PIMC switching parameter y_sec must be larger than zero");
+  }
+  this->pimcYSec = ySec;
+}
+
+void QstlsPimcInput::setPimcACutoff(const double &aCutoff) {
+  if (aCutoff < 0.0) {
+    throwError("The PIMC switching cutoff must be zero or positive");
+  }
+  this->pimcACutoff = aCutoff;
 }
 
 // -----------------------------------------------------------------

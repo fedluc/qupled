@@ -1,12 +1,15 @@
 *.DS_Store
 *.db*
+*.so
 *.vscode
 *#
 *~
 *__pycache__
+.codex
 .venv
 .tox
 Makefile
+Momentum_UEG_*.txt
 dist
 dist-native-only
 docs/_build

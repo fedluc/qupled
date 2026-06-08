@@ -31,6 +31,7 @@ void Iet::computeBf() {
                                   in().getMapping(),
                                   inRpa().getCoupling(),
                                   inRpa().getDegeneracy(),
+                                  inRpa().getDimension(),
                                   wvg[i],
                                   itgF);
     bf[i] = bfTmp.get();
@@ -73,6 +74,7 @@ bool Iet::initialGuessFromInput(Vector2D &lfc) {
 
 double IetUtil::BridgeFunction::get() const {
   if (theory == "STLS-HNC" || theory == "QSTLS-HNC") { return hnc(); }
+  if (theory == "STLS-SHNC") { return shnc(); }
   if (theory == "STLS-IOI" || theory == "QSTLS-IOI") { return ioi(); }
   if (theory == "STLS-LCT" || theory == "QSTLS-LCT") { return lct(); }
   throwError("Unknown theory to compute the bridge function term");
@@ -90,6 +92,17 @@ double IetUtil::BridgeFunction::couplingParameter() const {
 }
 
 double IetUtil::BridgeFunction::hnc() const { return 0.0; }
+
+double IetUtil::BridgeFunction::shnc() const {
+  if (dimension != dimensionsUtil::Dimension::D2) {
+    throwError("The scaled-HNC dielectric scheme is only implemented in 2D.");
+  }
+  if (Theta <= 0.0) {
+    throwError("The scaled-HNC dielectric scheme requires Theta > 0.");
+  }
+  const double Gamma = rs / Theta;
+  return -0.17013 * sqrt(Gamma) + 0.00572 * Gamma;
+}
 
 double IetUtil::BridgeFunction::ioi() const {
   const double l2 = lambda * lambda;

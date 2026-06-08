@@ -66,14 +66,19 @@ pybind11_add_module(native
 	hf.cpp
 	rpa.cpp
 	esa.cpp
+	recstls.cpp
 	stls.cpp
 	iet.cpp
 	stlsiet.cpp
 	qstls.cpp
+	ve.cpp
+	qstlspimc.cpp
+	qstlsf0.cpp
 	qstlsiet.cpp
 	vsbase.cpp
 	vsstls.cpp
 	qvsstls.cpp
+	qvsstlsf0.cpp
 	python_interface/util.cpp
 	python_interface/inputs.cpp
 	python_interface/schemes.cpp

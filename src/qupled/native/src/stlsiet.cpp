@@ -17,6 +17,14 @@ StlsIet::StlsIet(const std::shared_ptr<const StlsIetInput> &in_)
       iet(in_, wvg),
       itg2D(std::make_shared<Integrator2D>(ItgType::DEFAULT,
                                            in_->getIntError())) {
+  if (in().getTheory() == "STLS-SHNC") {
+    if (in().getDimension() != dimensionsUtil::Dimension::D2) {
+      throwError("2D calculations are required for the STLS-SHNC scheme.");
+    }
+    if (in().getDegeneracy() <= 0.0) {
+      throwError("The STLS-SHNC scheme requires Theta > 0.");
+    }
+  }
   if (in().getDimension() == dimensionsUtil::Dimension::D2
       && (in().getTheory() == "STLS-IOI" || in().getTheory() == "STLS-LCT")) {
     throwError("2D calculations are not implemented for this scheme.");
@@ -40,6 +48,10 @@ void StlsIet::computeLfc() {
       make_shared<Interpolator1D>(wvg, getBf());
   // Compute the stls constribution to the local field correction
   Stls::computeLfc();
+  vector<double> lfcStls(wvg.size());
+  for (size_t i = 0; i < wvg.size(); ++i) {
+    lfcStls[i] = lfc(i, 0);
+  }
   // Compute the iet contribution to the local field correction
   for (size_t i = 0; i < wvg.size(); ++i) {
     StlsIetUtil::Slfc lfcTmp(wvg[i],
@@ -51,7 +63,12 @@ void StlsIet::computeLfc() {
                              itgGrid,
                              itg2D,
                              inPtr);
-    lfc(i, 0) += lfcTmp.get();
+    const double nonlinear = lfcTmp.get();
+    lfc(i, 0) += nonlinear;
+    if (in().getTheory() == "STLS-SHNC") {
+      const double alpha = getBf()[i];
+      lfc(i, 0) += alpha * (1.0 - lfcStls[i]);
+    }
   }
 }
 

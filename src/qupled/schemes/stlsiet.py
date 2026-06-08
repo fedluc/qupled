@@ -52,7 +52,7 @@ class Solver(stls.Solver):
 class Input(stls.Input):
     """
     Class used to manage the input for the :obj:`qupled.stlsiet.StlsIet` class.
-    Accepted theories: ``STLS-HNC``, ``STLS-IOI`` and ``STLS-LCT``.
+    Accepted theories: ``STLS-HNC``, ``STLS-SHNC``, ``STLS-IOI`` and ``STLS-LCT``.
     """
 
     mapping: str = "standard"
@@ -72,7 +72,7 @@ class Input(stls.Input):
         mapping diverges). Default = ``standard``.
         """
     guess: Guess = field(default_factory=lambda: Guess())
-    allowed_theories = {"STLS-HNC", "STLS-IOI", "STLS-LCT"}
+    allowed_theories = {"STLS-HNC", "STLS-SHNC", "STLS-IOI", "STLS-LCT"}
 
     def __post_init__(self):
         if self.is_default_theory():

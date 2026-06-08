@@ -115,6 +115,11 @@ struct Guess {
   Vector2D lfc;
 };
 
+struct RdfInput {
+  std::vector<double> grid;
+  std::vector<double> values;
+};
+
 class IterationInput : public Input {
 
 public:
@@ -155,6 +160,9 @@ class QuantumInput {
 
 public:
 
+  // Constructor
+  explicit QuantumInput()
+      : fixedRunId(DEFAULT_INT) {}
   // Setters
   void setFixedRunId(const int &fixedRunId);
   // Getters
@@ -202,6 +210,26 @@ public:
 };
 
 // -----------------------------------------------------------------
+// Class to handle input for reconstruction-driven STLS schemes
+// -----------------------------------------------------------------
+
+class RecStlsInput : public Input {
+
+public:
+
+  explicit RecStlsInput() = default;
+  void setRdf(const std::vector<double> &rdf);
+  void setRdfGrid(const std::vector<double> &rdfGrid);
+  std::vector<double> getRdf() const { return rdf.values; }
+  std::vector<double> getRdfGrid() const { return rdf.grid; }
+
+private:
+
+  void validateRdf() const;
+  RdfInput rdf;
+};
+
+// -----------------------------------------------------------------
 // Class to handle input for the STLS-IET schemes
 // -----------------------------------------------------------------
 
@@ -223,6 +251,36 @@ public:
 
   // Constructors
   explicit QstlsInput() = default;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the QSTLS-PIMC scheme
+// -----------------------------------------------------------------
+
+class QstlsPimcInput : public QstlsInput {
+
+public:
+
+  // Constructors
+  explicit QstlsPimcInput()
+      : pimcEta(DEFAULT_DOUBLE),
+        pimcYSec(DEFAULT_DOUBLE),
+        pimcACutoff(DEFAULT_DOUBLE) {}
+  // Setters
+  void setPimcEta(const double &eta);
+  void setPimcYSec(const double &ySec);
+  void setPimcACutoff(const double &aCutoff);
+  // Getters
+  double getPimcEta() const { return pimcEta; }
+  double getPimcYSec() const { return pimcYSec; }
+  double getPimcACutoff() const { return pimcACutoff; }
+
+private:
+
+  // Switching parameters for A(y)
+  double pimcEta;
+  double pimcYSec;
+  double pimcACutoff;
 };
 
 // -----------------------------------------------------------------
@@ -311,6 +369,30 @@ public:
 
   // Constructors
   explicit QVSStlsInput() = default;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the QVSStls-F0 scheme
+// -----------------------------------------------------------------
+
+class QVSStlsF0Input : public VSInput, public QstlsPimcInput {
+
+public:
+
+  // Constructors
+  explicit QVSStlsF0Input() = default;
+};
+
+// -----------------------------------------------------------------
+// Class to handle input for the viscoelastic qSTLS scheme
+// -----------------------------------------------------------------
+
+class VEInput : public VSInput, public QstlsInput {
+
+public:
+
+  // Constructors
+  explicit VEInput() = default;
 };
 
 #endif

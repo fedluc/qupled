@@ -58,12 +58,14 @@ namespace IetUtil {
                    const std::string &mapping_,
                    const double &rs_,
                    const double &Theta_,
+                   const dimensionsUtil::Dimension &dimension_,
                    const double &x_,
                    std::shared_ptr<Integrator1D> itg_)
         : theory(theory_),
           mapping(mapping_),
           rs(rs_),
           Theta(Theta_),
+          dimension(dimension_),
           x(x_),
           itg(itg_) {}
     // Get result of the integration
@@ -79,6 +81,8 @@ namespace IetUtil {
     const double rs;
     // Degeneracy parameter
     const double Theta;
+    // System dimension
+    const dimensionsUtil::Dimension dimension;
     // Wave vector
     const double x;
     // Integrator object
@@ -87,6 +91,8 @@ namespace IetUtil {
     const double lambda = pow(4.0 / (9.0 * M_PI), 1.0 / 3.0);
     // Hypernetted-chain bridge function
     double hnc() const;
+    // Scaled hypernetted-chain bridge function
+    double shnc() const;
     // Ichimaru bridge function
     double ioi() const;
     // Lucco Castello and Tolias bridge function
