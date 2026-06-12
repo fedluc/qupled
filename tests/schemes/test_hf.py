@@ -80,20 +80,33 @@ def test_add_run_to_database(scheme, mocker):
 
 
 @pytest.mark.unit
-def test_compute_native_with_mpi(scheme, mocker):
+def test_compute_native_with_mpi_and_multiple_processes(scheme, mocker):
     mocker.patch("qupled.native.uses_mpi", True)
     scheme._compute_native_mpi = mocker.Mock()
     scheme._compute_native_serial = mocker.Mock()
+    scheme.inputs = hf.Input(coupling=1.0, degeneracy=2.0, processes=2)
     scheme._compute_native()
     scheme._compute_native_mpi.assert_called_once()
     scheme._compute_native_serial.assert_not_called()
 
 
 @pytest.mark.unit
-def test_compute_native_serial(scheme, mocker):
+def test_compute_native_with_mpi_and_one_process_uses_serial(scheme, inputs, mocker):
+    mocker.patch("qupled.native.uses_mpi", True)
+    scheme._compute_native_mpi = mocker.Mock()
+    scheme._compute_native_serial = mocker.Mock()
+    scheme.inputs = inputs
+    scheme._compute_native()
+    scheme._compute_native_serial.assert_called_once()
+    scheme._compute_native_mpi.assert_not_called()
+
+
+@pytest.mark.unit
+def test_compute_native_without_mpi_uses_serial(scheme, mocker):
     mocker.patch("qupled.native.uses_mpi", False)
     scheme._compute_native_mpi = mocker.Mock()
     scheme._compute_native_serial = mocker.Mock()
+    scheme.inputs = hf.Input(coupling=1.0, degeneracy=2.0, processes=2)
     scheme._compute_native()
     scheme._compute_native_serial.assert_called_once()
     scheme._compute_native_mpi.assert_not_called()

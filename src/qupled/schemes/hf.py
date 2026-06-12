@@ -138,7 +138,7 @@ class Solver:
         is greater than one. If both conditions are met, runs the computation in parallel; otherwise,
         runs it in serial mode.
         """
-        if native.uses_mpi:
+        if native.uses_mpi and self.inputs.processes > 1:
             self._compute_native_mpi()
         else:
             self._compute_native_serial()
