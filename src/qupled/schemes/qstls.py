@@ -67,5 +67,6 @@ class Input(stls.Input):
     theory: str = "QSTLS"
 
 
-if __name__ == "__main__":
-    Solver.run_mpi_worker(Input, stls.Result)
+# Input and result classes used by the centralized MPI worker.
+Solver.mpi_input_cls = Input
+Solver.mpi_result_cls = stls.Result

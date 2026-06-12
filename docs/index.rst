@@ -6,6 +6,7 @@ Welcome to qupled's documentation!
    :caption: Contents:
 
    introduction
+   external_dependencies
    package
    examples
    contribute

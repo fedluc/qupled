@@ -26,3 +26,9 @@ def test_esa_input_inheritance():
 def test_esa_input_initialization(mocker):
     input = esa.Input(mocker.ANY, mocker.ANY)
     assert input.theory == "ESA"
+
+
+@pytest.mark.unit
+def test_esa_mpi_worker_metadata():
+    assert esa.Solver.mpi_input_cls is esa.Input
+    assert esa.Solver.mpi_result_cls is hf.Result

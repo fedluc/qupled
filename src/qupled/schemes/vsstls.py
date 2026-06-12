@@ -55,16 +55,20 @@ class Solver(stls.Solver):
         target_coupling = inputs.coupling
         missing_state_points = self._get_missing_state_points(inputs)
         do_subcall = len(missing_state_points) > 0
-        for coupling in missing_state_points:
-            print("---------------------------------------------------------------")
-            print(f"Subcall: solving {inputs.theory} scheme for rs = {coupling:.5f}")
-            inputs.coupling = coupling
-            self.compute(inputs)
-            self._update_input_data(inputs)
-        if do_subcall:
-            print("---------------------------------------------------------------")
-            print("Subcalls completed.")
-        inputs.coupling = target_coupling
+        try:
+            for coupling in missing_state_points:
+                print("---------------------------------------------------------------")
+                print(
+                    f"Subcall: solving {inputs.theory} scheme for rs = {coupling:.5f}"
+                )
+                inputs.coupling = coupling
+                self.compute(inputs)
+                self._update_input_data(inputs)
+            if do_subcall:
+                print("---------------------------------------------------------------")
+                print("Subcalls completed.")
+        finally:
+            inputs.coupling = target_coupling
 
     @staticmethod
     def _get_missing_state_points(inputs: Input) -> np.ndarray:
@@ -203,5 +207,6 @@ class FreeEnergyIntegrand:
         return native_guess
 
 
-if __name__ == "__main__":
-    Solver.run_mpi_worker(Input, Result)
+# Input and result classes used by the centralized MPI worker.
+Solver.mpi_input_cls = Input
+Solver.mpi_result_cls = Result

@@ -93,3 +93,9 @@ def test_qstls_input_inheritance():
 def test_qstls_input_initialization(mocker):
     input = qstls.Input(mocker.ANY, mocker.ANY)
     assert input.theory == "QSTLS"
+
+
+@pytest.mark.unit
+def test_qstls_mpi_worker_metadata():
+    assert qstls.Solver.mpi_input_cls is qstls.Input
+    assert qstls.Solver.mpi_result_cls is stls.Result

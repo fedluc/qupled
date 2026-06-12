@@ -35,5 +35,6 @@ class Input(stlsiet.Input, qstls.Input):
     allowed_theories = {"QSTLS-HNC", "QSTLS-IOI", "QSTLS-LCT"}
 
 
-if __name__ == "__main__":
-    Solver.run_mpi_worker(Input, stlsiet.Result)
+# Input and result classes used by the centralized MPI worker.
+Solver.mpi_input_cls = Input
+Solver.mpi_result_cls = stlsiet.Result

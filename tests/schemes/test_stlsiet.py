@@ -87,3 +87,9 @@ def test_get_initial_guess_with_custom_database_name(mocker):
     read_results.assert_called_once_with(
         run_id, database_name=database_name, names=["wvg", "ssf", "lfc"]
     )
+
+
+@pytest.mark.unit
+def test_stls_iet_mpi_worker_metadata():
+    assert stlsiet.Solver.mpi_input_cls is stlsiet.Input
+    assert stlsiet.Solver.mpi_result_cls is stlsiet.Result

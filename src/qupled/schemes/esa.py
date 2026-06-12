@@ -29,5 +29,6 @@ class Input(hf.Input):
     theory: str = "ESA"
 
 
-if __name__ == "__main__":
-    Solver.run_mpi_worker(Input, hf.Result)
+# Input and result classes used by the centralized MPI worker.
+Solver.mpi_input_cls = Input
+Solver.mpi_result_cls = hf.Result

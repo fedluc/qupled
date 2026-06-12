@@ -108,3 +108,9 @@ def test_guess_to_native(mocker):
     assert result == native_guess
     assert result.wvg == wvg
     assert result.ssf == ssf
+
+
+@pytest.mark.unit
+def test_stls_mpi_worker_metadata():
+    assert stls.Solver.mpi_input_cls is stls.Input
+    assert stls.Solver.mpi_result_cls is stls.Result
