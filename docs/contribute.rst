@@ -31,7 +31,6 @@ There are two options for setting up your development environment:
    .. code-block:: console
 
       uv sync --group dev --no-install-project
-      source .venv/bin/activate
 
    If your shell has not activated the repository-local environment already, activate it with:
 
