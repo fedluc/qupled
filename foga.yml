@@ -81,6 +81,12 @@ install:
   targets:
     qupled:
       backend: uv
+      args:
+        - --link-mode=copy
+        - --reinstall-package
+        - qupled
+    qupled-dev:
+      backend: uv
       groups:
         - dev
       extras:
@@ -88,6 +94,8 @@ install:
         - docs
       args:
         - --link-mode=copy
+        - --reinstall-package
+        - qupled
     dev-env:
       backend: uv
       groups:
@@ -176,3 +184,13 @@ profiles:
           configure_args:
             - -DBUILD_NATIVE_TESTS=ON
             - -DUSE_MPI=ON
+    install:
+      targets:
+        qupled:
+          env:
+            BUILD_NATIVE_TESTS: "OFF"
+            USE_MPI: "ON"
+        qupled-dev:
+          env:
+            BUILD_NATIVE_TESTS: "OFF"
+            USE_MPI: "ON"

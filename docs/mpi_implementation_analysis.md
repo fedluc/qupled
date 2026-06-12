@@ -72,7 +72,7 @@ the public user-facing interface.
 4. ~~Use `sys.executable` for subprocesses.~~
 5. ~~Use a per-run temporary directory, pass paths explicitly via CLI args or
    environment variables, and clean it up with `try/finally`.~~
-6. Write one atomic output file, or write result/status files through temporary
+6. ~~Write one atomic output file, or write result/status files through temporary
    files followed by `Path.replace()`.
 7. Rework dataclass deserialization so it calls `cls(**converted_values)` after
    recursive conversion. That preserves default handling and validation.

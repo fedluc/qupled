@@ -31,6 +31,7 @@ There are two options for setting up your development environment:
    .. code-block:: console
 
       uv sync --group dev --no-install-project
+      source .venv/bin/activate
 
    If your shell has not activated the repository-local environment already, activate it with:
 
@@ -59,11 +60,40 @@ There are two options for setting up your development environment:
       foga build
       foga test --runner unit
 
-   Additionally, ensure that you have all the necessary
-   :ref:`external dependencies <external_dependencies>` installed.
 
-Formatting
-----------
+Install
+-------
+
+Use the ``qupled-dev`` install target when you want the package installed in
+the active development environment. This calls a package build under the hood.
+
+.. code-block:: console
+
+   foga install --target qupled-dev
+
+Add ``--profile mpi`` to install with MPI support. The ``qupled-dev`` install
+target keeps the development group and test/docs extras installed. To verify the
+active extension:
+
+.. code-block:: console
+
+   python -c "from qupled import native; print(native.__file__); print(native.uses_mpi)"
+
+Build
+-----
+
+Use ``foga build`` as a standalone build check or when you want build artifacts,
+such as wheels in ``dist``. You do not need to run it before installing the
+package.
+
+.. code-block:: console
+
+   foga build
+
+Add ``--profile mpi`` to build with MPI support.
+
+Format
+------
 
 To maintain consistent code formatting across the C++ and Python codebases, we use
 `clang-format <https://clang.llvm.org/docs/ClangFormat.html>`_ and
@@ -75,8 +105,8 @@ To manually ensure the correct formatting is applied, run:
 
    foga format
 
-Testing
--------
+Test
+----
 
 Before opening a pull request, run the test suite for the area you changed.
 

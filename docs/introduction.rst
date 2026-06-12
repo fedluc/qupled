@@ -58,26 +58,15 @@ Start by cloning the respository
    cd qupled
 
 
-Then Install the :ref:`external_dependencies` with
+Then install the :ref:`external_dependencies` for your platform and install
+the package with
 
 .. code-block:: console
 
    curl -LsSf https://astral.sh/uv/install.sh | sh
-   uv sync --group dev --no-install-project
-   .venv/bin/foga install --target dev-env
+   uvx foga install --target qupled
 
-and then run build and test commands through ``foga``:
-
-.. code-block:: console
-
-   foga build
-   foga test
-
-Finally install the package with
-
-.. code-block:: console
-
-   foga install --target qupled
+Add ``--profile mpi`` to install with MPI support.
 
 .. _external_dependencies:
 
