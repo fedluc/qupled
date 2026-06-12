@@ -17,8 +17,9 @@ solver.compute(inputs)
 ```
 
 The MPI subprocess protocol is private plumbing. `hf.Solver._compute_native_mpi`
-writes `input.json`, launches `mpiexec -n N python -m <scheme-module>`, then
-reads `status.json` and `results.json`. Each scheme module has an
+writes `input.json`, launches
+`mpiexec -n N <sys.executable> -m <scheme-module>`, then reads
+`status.json` and `results.json`. Each scheme module has an
 `if __name__ == "__main__"` block that calls `Solver.run_mpi_worker(...)` with
 the appropriate input and result classes.
 
@@ -41,9 +42,9 @@ dataclass. They do not recommend direct use of commands such as
   `hf.Solver._compute_native()` currently takes the MPI path whenever the native
   extension was built with MPI, even when `processes == 1`. The docstring says
   it should require more than one process.~~
-- The subprocess command uses the literal `"python"` instead of
+- ~~The subprocess command uses the literal `"python"` instead of
   `sys.executable`, which can invoke the wrong interpreter in virtualenvs,
-  editable installs, CI, or HPC modules.
+  editable installs, CI, or HPC modules.~~
 - The file protocol uses fixed names in the current working directory:
   `input.json`, `results.json`, and `status.json`. Concurrent runs, stale files,
   interrupted runs, or nested solver calls can collide.
@@ -67,9 +68,7 @@ dataclass. They do not recommend direct use of commands such as
 3. Replace the per-scheme `python -m qupled.schemes.<scheme>` worker entry
    points with one centralized private worker module, for example
    `python -m qupled.util.mpi_worker --solver qupled.schemes.hf:Solver ...`.
-   Scheme-level `if __name__ == "__main__"` blocks can remain temporarily as
-   compatibility shims.
-4. Use `sys.executable` for subprocesses.
+4. ~~Use `sys.executable` for subprocesses.~~
 5. Use a per-run temporary directory, pass paths explicitly via CLI args or
    environment variables, and clean it up with `try/finally`.
 6. Write one atomic output file, or write result/status files through temporary

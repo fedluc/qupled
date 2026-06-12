@@ -1,6 +1,8 @@
-import pytest
-from unittest import mock
 import json
+import sys
+from unittest import mock
+
+import pytest
 
 from qupled.util import mpi
 
@@ -31,7 +33,7 @@ def test_launch_mpi_execution_calls_mpi(
     mock_native.uses_mpi = True
     mpi.launch_mpi_execution("some_module", 4)
     mock_subprocess_run.assert_called_once_with(
-        ["mpiexec", "-n", "4", "python", "-m", "some_module"], check=True
+        ["mpiexec", "-n", "4", sys.executable, "-m", "some_module"], check=True
     )
 
 
@@ -43,7 +45,7 @@ def test_launch_mpi_execution_serial_if_no_mpi(
     mock_native.uses_mpi = True
     mpi.launch_mpi_execution("some_module", 2)
     mock_subprocess_run.assert_called_once_with(
-        ["python", "-m", "some_module"], check=True
+        [sys.executable, "-m", "some_module"], check=True
     )
     captured = capsys.readouterr()
     assert "WARNING: Could not call MPI" in captured.out
@@ -57,7 +59,7 @@ def test_launch_mpi_execution_serial_if_native_disabled(
     mock_native.uses_mpi = False
     mpi.launch_mpi_execution("some_module", 3)
     mock_subprocess_run.assert_called_once_with(
-        ["python", "-m", "some_module"], check=True
+        [sys.executable, "-m", "some_module"], check=True
     )
     captured = capsys.readouterr()
     assert "WARNING: Could not call MPI" in captured.out

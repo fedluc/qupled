@@ -1,6 +1,7 @@
 import json
-import subprocess
 import shutil
+import subprocess
+import sys
 
 from pathlib import Path
 from qupled import native
@@ -33,11 +34,11 @@ def launch_mpi_execution(module, nproc):
     call_mpi = shutil.which(MPI_COMMAND) is not None and native.uses_mpi
     if call_mpi:
         subprocess.run(
-            [MPI_COMMAND, "-n", str(nproc), "python", "-m", module], check=True
+            [MPI_COMMAND, "-n", str(nproc), sys.executable, "-m", module], check=True
         )
     else:
         print("WARNING: Could not call MPI, defaulting to serial execution.")
-        subprocess.run(["python", "-m", module], check=True)
+        subprocess.run([sys.executable, "-m", module], check=True)
 
 
 def write_inputs(inputs):
