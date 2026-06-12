@@ -34,83 +34,38 @@ Qupled can be installed as a pip package by running
 
    pip install qupled
 
-This will also install all the python packages that are necessary for running the package.
-
-Install with MPI support
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you need to use qupled with MPI support, first install the  :ref:`external_dependencies` and then run
-
-.. code-block:: console
-
-   USE_MPI=ON pip install --no-binary=:all: qupled
-
+This will also install the Python packages that are necessary for running
+qupled. Depending on your platform and installation method, you may also need
+the :ref:`runtime_dependencies`.
 
 Install from source
 ~~~~~~~~~~~~~~~~~~~
 
-If you want full control over your qupled installation, you can install it also directly from the source.
-Start by cloning the respository
+If you want full control over your qupled installation, clone the repository:
 
 .. code-block:: console
 
    git clone https://github.com/fedluc/qupled.git
    cd qupled
 
-
-Then install the :ref:`external_dependencies` for your platform and install
-the package with
+Then install the :ref:`source_build_dependencies` for your platform. Once they
+are available, install the package from the repository root:
 
 .. code-block:: console
 
    curl -LsSf https://astral.sh/uv/install.sh | sh
    uvx foga install --target qupled
 
-Add ``--profile mpi`` to install with MPI support.
+Install with MPI support
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _external_dependencies:
-
-External dependencies
-~~~~~~~~~~~~~~~~~~~~~
-
-Installing qupled may require compiling some C++ code, depending on the platform and installation method.
-The following dependencies must be met before attempting to build the C++ part of qupled
-
-  - `CMake <https://cmake.org/download/>`_
-  - `GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
-  - `OpenMP <https://en.wikipedia.org/wiki/OpenMP>`_
-  - `SQLiteCpp <https://github.com/SRombauts/SQLiteCpp>`_
-  - `Open-MPI <https://www.open-mpi.org/software/ompi/v5.0/>`_ (only if you want MPI support)
-
-The installation of these dependencies can be done in different ways depending on the platform you are using.
-For example, on Ubuntu, Debian-based and macOS systems, you can use the following commands:
-
-**Ubuntu or Debian-based systems**
+MPI support is built from source. After installing the
+:ref:`source_build_dependencies`, including the MPI dependencies, run from the
+repository root:
 
 .. code-block:: console
 
-   sudo apt-get install -y cmake libopenmpi-dev libgsl-dev libomp-dev python3-dev libsqlite3-dev libsqlitecpp-dev
-
-**Fedora or Red Hat-based system**
-
-.. code-block:: console
-
-   sudo dnf install -y cmake openmpi openmpi-devel gsl-devel sqlite-devel
-   cd /tmp
-   git clone https://github.com/SRombauts/SQLiteCpp.git
-   cd SQLiteCpp
-   mkdir build && cd build
-   cmake ..
-   make -j$(nproc)
-   make install
-   ldconfig
-   cd / && rm -rf /tmp/SQLiteCpp
-
-**macOS**
-
-.. code-block:: console
-
-   brew install cmake gsl libomp openmpi sqlite sqlitecpp
+   uvx foga install --target qupled --profile mpi
 
 Architecture
 ------------
