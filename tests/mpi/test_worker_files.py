@@ -48,6 +48,21 @@ def test_write_inputs(worker_files):
 
 
 @pytest.mark.unit
+def test_write_inputs_replaces_existing_file(worker_files):
+    worker_files.input_file.write_text('{"old": true}')
+    mock_inputs = mock.Mock()
+    mock_inputs.to_dict.return_value = {"new": True}
+    worker_files.write_inputs(mock_inputs)
+    with worker_files.input_file.open() as f:
+        data = json.load(f)
+    assert data == {"new": True}
+    assert (
+        list(worker_files.directory.glob(f".{worker_files.input_file.name}.*.tmp"))
+        == []
+    )
+
+
+@pytest.mark.unit
 def test_read_inputs(worker_files):
     input_data = {"x": 10, "y": 20}
     with worker_files.input_file.open("w") as f:

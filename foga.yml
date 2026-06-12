@@ -79,6 +79,15 @@ docs:
 
 install:
   targets:
+    qupled:
+      backend: uv
+      groups:
+        - dev
+      extras:
+        - test
+        - docs
+      args:
+        - --link-mode=copy
     dev-env:
       backend: uv
       groups:

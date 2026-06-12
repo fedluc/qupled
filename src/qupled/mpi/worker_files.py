@@ -63,8 +63,7 @@ class WorkerFiles:
         Args:
             inputs: Serializable input object for the solver run.
         """
-        with self.input_file.open("w") as f:
-            json.dump(inputs.to_dict(), f)
+        self._write_json_atomically(self.input_file, inputs.to_dict())
 
     def read_inputs(self, input_cls):
         """Read input data from the MPI worker input file.

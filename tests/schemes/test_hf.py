@@ -137,82 +137,42 @@ def test_compute_native_serial(scheme, inputs, mocker):
 
 @pytest.mark.unit
 def test_compute_native_mpi_calls_runtime(scheme, mocker, inputs):
-    worker_files = mocker.Mock()
-    worker_files.read_status.return_value = "mocked-status"
-    worker_files.read_results.return_value = "mocked-results"
-    worker_files_cls = mocker.patch(
-        "qupled.schemes.hf.WorkerFiles", return_value=worker_files
+    run_solver = mocker.patch(
+        "qupled.mpi.runtime.run_solver",
+        return_value=("mocked-status", "mocked-results"),
     )
-    launch_mpi_execution = mocker.patch("qupled.mpi.runtime.launch_mpi_execution")
     scheme.inputs = inputs
     scheme.results = None
     scheme._compute_native_mpi()
-    worker_files_cls.assert_called_once_with()
-    worker_files.write_inputs.assert_called_once_with(inputs)
-    launch_mpi_execution.assert_called_once_with(
-        type(scheme), inputs.processes, worker_files
+    run_solver.assert_called_once_with(
+        type(scheme), inputs, inputs.processes, type(None)
     )
-    worker_files.read_status.assert_called_once_with()
-    worker_files.read_results.assert_called_once_with(type(None))
-    worker_files.cleanup.assert_called_once_with()
     assert scheme.native_scheme_status == "mocked-status"
     assert scheme.results == "mocked-results"
 
 
 @pytest.mark.unit
 def test_compute_native_mpi_with_existing_results_type(scheme, mocker, inputs):
-    worker_files = mocker.Mock()
-    worker_files.read_status.return_value = "status"
-    worker_files.read_results.return_value = "results"
-    mocker.patch("qupled.schemes.hf.WorkerFiles", return_value=worker_files)
-    mocker.patch("qupled.mpi.runtime.launch_mpi_execution")
+    run_solver = mocker.patch(
+        "qupled.mpi.runtime.run_solver", return_value=("status", "results")
+    )
     scheme.inputs = inputs
     scheme.results = hf.Result()
     scheme._compute_native_mpi()
-    worker_files.read_results.assert_called_once_with(hf.Result)
-    worker_files.cleanup.assert_called_once_with()
+    run_solver.assert_called_once_with(
+        type(scheme), inputs, inputs.processes, hf.Result
+    )
     assert scheme.results == "results"
     assert scheme.native_scheme_status == "status"
 
 
 @pytest.mark.unit
-def test_compute_native_mpi_cleans_up_on_failure(scheme, mocker, inputs):
-    worker_files = mocker.Mock()
-    mocker.patch("qupled.schemes.hf.WorkerFiles", return_value=worker_files)
-    launch_mpi_execution = mocker.patch("qupled.mpi.runtime.launch_mpi_execution")
-    launch_mpi_execution.side_effect = RuntimeError
+def test_compute_native_mpi_propagates_runtime_failure(scheme, mocker, inputs):
+    run_solver = mocker.patch("qupled.mpi.runtime.run_solver")
+    run_solver.side_effect = RuntimeError
     scheme.inputs = inputs
     with pytest.raises(RuntimeError):
         scheme._compute_native_mpi()
-    worker_files.cleanup.assert_called_once_with()
-
-
-@pytest.mark.unit
-def test_run_mpi_worker(mocker):
-    mock_inputs = mocker.Mock()
-    mock_native_inputs = mocker.Mock()
-    mock_scheme = mocker.Mock()
-    mock_status = "mocked-status"
-    mock_InputCls = mocker.Mock()
-    mock_ResultCls = mocker.Mock()
-    worker_files = mocker.Mock()
-    worker_files.read_inputs.return_value = mock_inputs
-    native_inputs_cls = mocker.patch.object(
-        hf.Solver, "native_inputs_cls", return_value=mock_native_inputs
-    )
-    to_native = mocker.patch.object(mock_inputs, "to_native")
-    native_scheme_cls = mocker.patch.object(
-        hf.Solver, "native_scheme_cls", return_value=mock_scheme
-    )
-    mock_scheme.compute.return_value = mock_status
-    hf.Solver.run_mpi_worker(mock_InputCls, mock_ResultCls, worker_files)
-    worker_files.read_inputs.assert_called_once_with(mock_InputCls)
-    native_inputs_cls.assert_called_once()
-    to_native.assert_called_once_with(mock_native_inputs)
-    native_scheme_cls.assert_called_once_with(mock_native_inputs)
-    mock_scheme.compute.assert_called_once()
-    worker_files.write_results.assert_called_once_with(mock_scheme, mock_ResultCls)
-    worker_files.write_status.assert_called_once_with(mock_scheme, mock_status)
 
 
 @pytest.mark.unit

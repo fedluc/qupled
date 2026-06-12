@@ -32,7 +32,25 @@ def _load_object(reference: str):
     return obj
 
 
-def run_solver_worker(solver_reference: str, worker_files: WorkerFiles):
+def _run_solver_worker(solver_cls, input_cls, result_cls, worker_files: WorkerFiles):
+    """Run a native solver inside an MPI worker process.
+
+    Args:
+        solver_cls: Solver class to execute.
+        input_cls: Serializable input class used to reconstruct inputs.
+        result_cls: Serializable result class used to convert native results.
+        worker_files: Files used to exchange data with the parent process.
+    """
+    inputs = worker_files.read_inputs(input_cls)
+    native_inputs = solver_cls.native_inputs_cls()
+    inputs.to_native(native_inputs)
+    scheme = solver_cls.native_scheme_cls(native_inputs)
+    status = scheme.compute()
+    worker_files.write_results(scheme, result_cls)
+    worker_files.write_status(scheme, status)
+
+
+def run_worker(solver_reference: str, worker_files: WorkerFiles):
     """Run the MPI worker for a solver reference.
 
     Args:
@@ -50,7 +68,7 @@ def run_solver_worker(solver_reference: str, worker_files: WorkerFiles):
             f"{solver_reference} must define mpi_input_cls and mpi_result_cls."
         )
 
-    solver_cls.run_mpi_worker(input_cls, result_cls, worker_files)
+    _run_solver_worker(solver_cls, input_cls, result_cls, worker_files)
 
 
 def main(argv: Sequence[str] | None = None):
@@ -72,7 +90,7 @@ def main(argv: Sequence[str] | None = None):
         help="Directory containing private MPI worker input/output files.",
     )
     args = parser.parse_args(argv)
-    run_solver_worker(args.solver, WorkerFiles(args.worker_directory))
+    run_worker(args.solver, WorkerFiles(args.worker_directory))
 
 
 if __name__ == "__main__":

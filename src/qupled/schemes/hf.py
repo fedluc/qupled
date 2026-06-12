@@ -6,7 +6,6 @@ import numpy as np
 
 from qupled import native
 from qupled.mpi import runtime as mpi_runtime
-from qupled.mpi.worker_files import WorkerFiles
 from qupled.database.base_tables import ConflictMode
 from qupled.database.database_handler import DataBaseHandler
 from qupled.database.scheme_tables import (
@@ -162,32 +161,10 @@ class Solver:
         self.results.from_native(scheme)
 
     def _compute_native_mpi(self):
-        """
-        Executes a native MPI computation workflow.
-
-        This method uses `WorkerFiles` to own the temporary worker directory
-        and cleanup.
-        """
-        mpi_worker_files = WorkerFiles()
-        try:
-            mpi_worker_files.write_inputs(self.inputs)
-            mpi_runtime.launch_mpi_execution(
-                type(self), self.inputs.processes, mpi_worker_files
-            )
-            self.native_scheme_status = mpi_worker_files.read_status()
-            self.results = mpi_worker_files.read_results(type(self.results))
-        finally:
-            mpi_worker_files.cleanup()
-
-    @classmethod
-    def run_mpi_worker(cls, InputCls, ResultCls, worker_files: WorkerFiles):
-        inputs = worker_files.read_inputs(InputCls)
-        native_inputs = cls.native_inputs_cls()
-        inputs.to_native(native_inputs)
-        scheme = cls.native_scheme_cls(native_inputs)
-        status = scheme.compute()
-        worker_files.write_results(scheme, ResultCls)
-        worker_files.write_status(scheme, status)
+        """Executes a native MPI computation workflow."""
+        self.native_scheme_status, self.results = mpi_runtime.run_solver(
+            type(self), self.inputs, self.inputs.processes, type(self.results)
+        )
 
     def _save(self):
         """

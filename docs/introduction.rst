@@ -73,9 +73,11 @@ and then run build and test commands through ``foga``:
    foga build
    foga test
 
-If you want to run an example or an ad-hoc script during development, prefer
-``uv run`` so the project uses the synced environment without requiring an extra
-package installation step.
+Finally install the package with
+
+.. code-block:: console
+
+   foga install --target qupled
 
 .. _external_dependencies:
 
