@@ -104,5 +104,6 @@ class Guess(stls.Guess):
     """ Local field correction. Default = ``None``"""
 
 
-if __name__ == "__main__":
-    Solver.run_mpi_worker(Input, Result)
+# Input and result classes used by the centralized MPI worker.
+Solver.mpi_input_cls = Input
+Solver.mpi_result_cls = Result

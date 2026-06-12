@@ -33,3 +33,9 @@ def test_rpa_input_inheritance():
 def test_rpa_input_initialization(mocker):
     input = rpa.Input(mocker.ANY, mocker.ANY)
     assert input.theory == "RPA"
+
+
+@pytest.mark.unit
+def test_rpa_mpi_worker_metadata():
+    assert rpa.Solver.mpi_input_cls is rpa.Input
+    assert rpa.Solver.mpi_result_cls is hf.Result

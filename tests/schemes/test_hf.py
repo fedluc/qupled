@@ -137,20 +137,20 @@ def test_compute_native_serial(scheme, inputs, mocker):
 
 @pytest.mark.unit
 def test_compute_native_mpi_calls_all_mpi_functions(scheme, mocker, inputs):
-    write_inputs = mocker.patch("qupled.util.mpi.write_inputs")
-    launch_mpi_execution = mocker.patch("qupled.util.mpi.launch_mpi_execution")
+    write_inputs = mocker.patch("qupled.mpi.runtime.write_inputs")
+    launch_mpi_execution = mocker.patch("qupled.mpi.runtime.launch_mpi_execution")
     read_status = mocker.patch(
-        "qupled.util.mpi.read_status", return_value="mocked-status"
+        "qupled.mpi.runtime.read_status", return_value="mocked-status"
     )
     read_results = mocker.patch(
-        "qupled.util.mpi.read_results", return_value="mocked-results"
+        "qupled.mpi.runtime.read_results", return_value="mocked-results"
     )
-    clean_files = mocker.patch("qupled.util.mpi.clean_files")
+    clean_files = mocker.patch("qupled.mpi.runtime.clean_files")
     scheme.inputs = inputs
     scheme.results = None
     scheme._compute_native_mpi()
     write_inputs.assert_called_once_with(inputs)
-    launch_mpi_execution.assert_called_once_with(scheme.__module__, inputs.processes)
+    launch_mpi_execution.assert_called_once_with(type(scheme), inputs.processes)
     read_status.assert_called_once()
     read_results.assert_called_once_with(type(None))
     clean_files.assert_called_once()
@@ -160,11 +160,13 @@ def test_compute_native_mpi_calls_all_mpi_functions(scheme, mocker, inputs):
 
 @pytest.mark.unit
 def test_compute_native_mpi_with_existing_results_type(scheme, mocker, inputs):
-    mocker.patch("qupled.util.mpi.write_inputs")
-    mocker.patch("qupled.util.mpi.launch_mpi_execution")
-    mocker.patch("qupled.util.mpi.read_status", return_value="status")
-    read_results = mocker.patch("qupled.util.mpi.read_results", return_value="results")
-    mocker.patch("qupled.util.mpi.clean_files")
+    mocker.patch("qupled.mpi.runtime.write_inputs")
+    mocker.patch("qupled.mpi.runtime.launch_mpi_execution")
+    mocker.patch("qupled.mpi.runtime.read_status", return_value="status")
+    read_results = mocker.patch(
+        "qupled.mpi.runtime.read_results", return_value="results"
+    )
+    mocker.patch("qupled.mpi.runtime.clean_files")
     scheme.inputs = inputs
     scheme.results = hf.Result()
     scheme._compute_native_mpi()
@@ -181,7 +183,9 @@ def test_run_mpi_worker(mocker):
     mock_status = "mocked-status"
     mock_InputCls = mocker.Mock()
     mock_ResultCls = mocker.Mock()
-    read_inputs = mocker.patch("qupled.util.mpi.read_inputs", return_value=mock_inputs)
+    read_inputs = mocker.patch(
+        "qupled.mpi.runtime.read_inputs", return_value=mock_inputs
+    )
     native_inputs_cls = mocker.patch.object(
         hf.Solver, "native_inputs_cls", return_value=mock_native_inputs
     )
@@ -190,8 +194,8 @@ def test_run_mpi_worker(mocker):
         hf.Solver, "native_scheme_cls", return_value=mock_scheme
     )
     mock_scheme.compute.return_value = mock_status
-    write_results = mocker.patch("qupled.util.mpi.write_results")
-    write_status = mocker.patch("qupled.util.mpi.write_status")
+    write_results = mocker.patch("qupled.mpi.runtime.write_results")
+    write_status = mocker.patch("qupled.mpi.runtime.write_status")
     hf.Solver.run_mpi_worker(mock_InputCls, mock_ResultCls)
     read_inputs.assert_called_once_with(mock_InputCls)
     native_inputs_cls.assert_called_once()
@@ -520,3 +524,9 @@ def test_database_info_to_native(mocker):
     assert native_instance.name == "test_db"
     assert native_instance.run_id == 123
     assert native_instance.run_table_name == "test_table"
+
+
+@pytest.mark.unit
+def test_hf_mpi_worker_metadata():
+    assert hf.Solver.mpi_input_cls is hf.Input
+    assert hf.Solver.mpi_result_cls is hf.Result

@@ -18,14 +18,13 @@ solver.compute(inputs)
 
 The MPI subprocess protocol is private plumbing. `hf.Solver._compute_native_mpi`
 writes `input.json`, launches
-`mpiexec -n N <sys.executable> -m <scheme-module>`, then reads
-`status.json` and `results.json`. Each scheme module has an
-`if __name__ == "__main__"` block that calls `Solver.run_mpi_worker(...)` with
-the appropriate input and result classes.
+`mpiexec -n N <sys.executable> -m qupled.mpi.worker --solver <scheme>:Solver`,
+then reads `status.json` and `results.json`. The centralized worker imports
+the solver class and uses its configured MPI input and result classes.
 
 The authored docs and examples recommend setting `processes` on the input
-dataclass. They do not recommend direct use of commands such as
-`python -m qupled.schemes.hf`.
+dataclass. The centralized worker command remains private and is not part of
+the public user-facing interface.
 
 ### Strengths
 
@@ -65,9 +64,9 @@ dataclass. They do not recommend direct use of commands such as
    by `solver.compute(inputs)`.
 2. ~~Select MPI only when both conditions are true:
    `native.uses_mpi and inputs.processes > 1`.~~
-3. Replace the per-scheme `python -m qupled.schemes.<scheme>` worker entry
+3. ~~Replace the per-scheme `python -m qupled.schemes.<scheme>` worker entry
    points with one centralized private worker module, for example
-   `python -m qupled.util.mpi_worker --solver qupled.schemes.hf:Solver ...`.
+   `python -m qupled.mpi.worker --solver qupled.schemes.hf:Solver ...`.~~
 4. ~~Use `sys.executable` for subprocesses.~~
 5. Use a per-run temporary directory, pass paths explicitly via CLI args or
    environment variables, and clean it up with `try/finally`.

@@ -52,3 +52,9 @@ def test_qvsstls_input_inheritance():
 def test_qvsstls_input_initialization_valid_theory(mocker):
     input = qvsstls.Input(mocker.ANY, mocker.ANY)
     assert input.theory == "QVSSTLS"
+
+
+@pytest.mark.unit
+def test_qvsstls_mpi_worker_metadata():
+    assert qvsstls.Solver.mpi_input_cls is qvsstls.Input
+    assert qvsstls.Solver.mpi_result_cls is vsstls.Result

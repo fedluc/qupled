@@ -5,6 +5,7 @@ from dataclasses import field
 import numpy as np
 
 from qupled import native
+from qupled.mpi import runtime as mpi_runtime
 from qupled.database.base_tables import ConflictMode
 from qupled.database.database_handler import DataBaseHandler
 from qupled.database.scheme_tables import (
@@ -12,7 +13,7 @@ from qupled.database.scheme_tables import (
     SchemeTables,
     RUN_TABLE_NAME as SCHEME_RUN_TABLE_NAME,
 )
-from qupled.util import mpi, serialize
+from qupled.util import serialize
 from qupled.util.dimension import Dimension
 from qupled.util.timer import timer
 
@@ -164,26 +165,26 @@ class Solver:
         Executes a native MPI computation workflow.
 
         This method performs the following steps:
-        1. Writes the necessary input files for the MPI computation using `mpi.write_inputs`.
-        2. Launches the MPI execution by calling `mpi.launch_mpi_execution` with the current module and the specified number of processes.
-        3. Reads the computation results using `mpi.read_results` and assigns them to `self.results`.
-        4. Cleans up any temporary files generated during the computation with `mpi.clean_files`.
+        1. Writes the necessary input files for the MPI computation using `mpi_runtime.write_inputs`.
+        2. Launches the MPI execution by calling `mpi_runtime.launch_mpi_execution` with the current solver class and process count.
+        3. Reads the computation results using `mpi_runtime.read_results` and assigns them to `self.results`.
+        4. Cleans up any temporary files generated during the computation with `mpi_runtime.clean_files`.
         """
-        mpi.write_inputs(self.inputs)
-        mpi.launch_mpi_execution(self.__module__, self.inputs.processes)
-        self.native_scheme_status = mpi.read_status()
-        self.results = mpi.read_results(type(self.results))
-        mpi.clean_files()
+        mpi_runtime.write_inputs(self.inputs)
+        mpi_runtime.launch_mpi_execution(type(self), self.inputs.processes)
+        self.native_scheme_status = mpi_runtime.read_status()
+        self.results = mpi_runtime.read_results(type(self.results))
+        mpi_runtime.clean_files()
 
     @classmethod
     def run_mpi_worker(cls, InputCls, ResultCls):
-        inputs = mpi.read_inputs(InputCls)
+        inputs = mpi_runtime.read_inputs(InputCls)
         native_inputs = cls.native_inputs_cls()
         inputs.to_native(native_inputs)
         scheme = cls.native_scheme_cls(native_inputs)
         status = scheme.compute()
-        mpi.write_results(scheme, ResultCls)
-        mpi.write_status(scheme, status)
+        mpi_runtime.write_results(scheme, ResultCls)
+        mpi_runtime.write_status(scheme, status)
 
     def _save(self):
         """
@@ -432,5 +433,6 @@ class DatabaseInfo:
         return native_database_info
 
 
-if __name__ == "__main__":
-    Solver.run_mpi_worker(Input, Result)
+# Input and result classes used by the centralized MPI worker.
+Solver.mpi_input_cls = Input
+Solver.mpi_result_cls = Result

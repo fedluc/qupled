@@ -213,3 +213,9 @@ def test_free_energy_integrand_to_native(mocker):
     assert result == native_fxci
     assert result.grid == grid
     assert result.integrand == integrand
+
+
+@pytest.mark.unit
+def test_vsstls_mpi_worker_metadata():
+    assert vsstls.Solver.mpi_input_cls is vsstls.Input
+    assert vsstls.Solver.mpi_result_cls is vsstls.Result

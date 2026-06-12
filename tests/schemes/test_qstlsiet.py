@@ -48,3 +48,9 @@ def test_qstls_iet_input_initialization_invalid_theory():
 def test_qstls_iet_input_initialization_default_theory():
     with pytest.raises(ValueError):
         qstlsiet.Input(1.0, 1.0)
+
+
+@pytest.mark.unit
+def test_qstls_iet_mpi_worker_metadata():
+    assert qstlsiet.Solver.mpi_input_cls is qstlsiet.Input
+    assert qstlsiet.Solver.mpi_result_cls is stlsiet.Result
