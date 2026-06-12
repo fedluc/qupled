@@ -58,7 +58,9 @@ class Solver(stls.Solver):
         try:
             for coupling in missing_state_points:
                 print("---------------------------------------------------------------")
-                print(f"Subcall: solving {inputs.theory} scheme for rs = {coupling:.5f}")
+                print(
+                    f"Subcall: solving {inputs.theory} scheme for rs = {coupling:.5f}"
+                )
                 inputs.coupling = coupling
                 self.compute(inputs)
                 self._update_input_data(inputs)

@@ -69,9 +69,7 @@ def test_fill_free_energy_integrand_restores_coupling_on_failure(mocker, scheme)
         "qupled.schemes.vsstls.Solver.compute",
         side_effect=RuntimeError("subcall failed"),
     )
-    update_input_data = mocker.patch(
-        "qupled.schemes.vsstls.Solver._update_input_data"
-    )
+    update_input_data = mocker.patch("qupled.schemes.vsstls.Solver._update_input_data")
     inputs = mocker.Mock()
     inputs.coupling = 1.0
     inputs.theory = "VSSTLS"
