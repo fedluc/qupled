@@ -15,11 +15,25 @@ These libraries must be available when importing and running ``qupled.native``:
   - `GNU Scientific Library <https://www.gnu.org/software/gsl/>`_
   - `OpenMP <https://www.openmp.org/>`_
   - `SQLite <https://www.sqlite.org/>`_
+  - `SQLiteCpp <https://github.com/SRombauts/SQLiteCpp>`_
   - `Open MPI <https://www.open-mpi.org/>`_ (only for MPI-enabled installs)
 
 Package names for these runtime libraries vary by operating system and
 release. If you need to install them manually, use your system package manager
 to install the packages that provide the libraries listed above.
+
+Common package-manager commands look like:
+
+.. code-block:: console
+
+   sudo apt-get update
+   sudo apt-get install -y libgsl-dev libomp-dev libsqlite3-dev libsqlitecpp-dev
+   sudo apt-get install -y openmpi-bin libopenmpi-dev  # only for MPI-enabled installs
+
+.. code-block:: console
+
+   brew install gsl libomp sqlite sqlitecpp
+   brew install open-mpi  # only for MPI-enabled installs
 
 .. _source_build_dependencies:
 

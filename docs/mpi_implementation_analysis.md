@@ -51,14 +51,14 @@ the public user-facing interface.
   interrupted runs, or nested solver calls can collide.~~
 - ~~Cleanup happens only after all reads succeed. A failed subprocess or failed
   result read leaves the fixed temporary files behind.~~
-- Result and status are written as separate non-atomic JSON files. A crash can
-  leave partial output or mismatched status/results.
-- Input reconstruction uses `serializable_dataclass.from_dict`, which constructs
+- ~~Result and status are written as separate non-atomic JSON files. A crash can
+  leave partial output or mismatched status/results.~~
+- ~~Input reconstruction uses `serializable_dataclass.from_dict`, which constructs
   objects with `cls.__new__(cls)`. That bypasses dataclass initialization,
-  default factories, and `__post_init__` validation in MPI workers.
-- VS-type schemes mutate shared input objects during subcalls and restore state
+  default factories, and `__post_init__` validation in MPI workers.~~
+- ~~VS-type schemes mutate shared input objects during subcalls and restore state
   only on success. A subprocess failure can leave `inputs.coupling` or related
-  precomputation fields mutated.
+  precomputation fields mutated.~~
 
 ### Recommendations
 
@@ -73,10 +73,26 @@ the public user-facing interface.
 5. ~~Use a per-run temporary directory, pass paths explicitly via CLI args or
    environment variables, and clean it up with `try/finally`.~~
 6. ~~Write one atomic output file, or write result/status files through temporary
-   files followed by `Path.replace()`.
-7. Rework dataclass deserialization so it calls `cls(**converted_values)` after
-   recursive conversion. That preserves default handling and validation.
-8. Use `try/finally` around VS precomputation state mutation.
+   files followed by `Path.replace()`.~~
+7. ~~Rework dataclass deserialization so it calls `cls(**converted_values)` after
+   recursive conversion. That preserves default handling and validation.~~
+8. ~~Use `try/finally` around VS precomputation state mutation.~~
+
+### Remaining Python-Side Follow-Ups
+
+- Add structured worker failure reporting. The worker should catch failures
+  around deserialization, native input conversion, scheme construction, and
+  `compute()`, then write a root-rank failure output when possible.
+- Decide whether the result and status protocol should become one output
+  envelope. Atomic writes prevent partial JSON files, but one combined output
+  would make status, results, and any future error message impossible to
+  mismatch.
+- Decide whether missing `mpiexec` or a non-MPI native build should raise when
+  `processes > 1` instead of printing a warning and running the worker serially.
+- Consider making the MPI launcher configurable for HPC environments that use
+  `srun`, `mpirun`, or launcher-specific flags instead of plain `mpiexec -n`.
+- Add a real MPI smoke test, guarded by `native.uses_mpi` and launcher
+  availability, to complement the current mocked subprocess and worker tests.
 
 ## Native C++ MPI and Error Handling
 
