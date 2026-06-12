@@ -3,6 +3,9 @@ from __future__ import annotations
 import argparse
 import importlib
 from collections.abc import Sequence
+from pathlib import Path
+
+from qupled.mpi.worker_files import WorkerFiles
 
 
 def _load_object(reference: str):
@@ -29,11 +32,12 @@ def _load_object(reference: str):
     return obj
 
 
-def run_solver_worker(solver_reference: str):
+def run_solver_worker(solver_reference: str, worker_files: WorkerFiles):
     """Run the MPI worker for a solver reference.
 
     Args:
         solver_reference: Solver reference in ``module:qualname`` format.
+        worker_files: Worker files for this MPI worker process.
 
     Raises:
         ValueError: If the solver does not define MPI input/result metadata.
@@ -46,7 +50,7 @@ def run_solver_worker(solver_reference: str):
             f"{solver_reference} must define mpi_input_cls and mpi_result_cls."
         )
 
-    solver_cls.run_mpi_worker(input_cls, result_cls)
+    solver_cls.run_mpi_worker(input_cls, result_cls, worker_files)
 
 
 def main(argv: Sequence[str] | None = None):
@@ -61,8 +65,14 @@ def main(argv: Sequence[str] | None = None):
         required=True,
         help="Solver class reference in 'module:qualname' format.",
     )
+    parser.add_argument(
+        "--worker-directory",
+        required=True,
+        type=Path,
+        help="Directory containing private MPI worker input/output files.",
+    )
     args = parser.parse_args(argv)
-    run_solver_worker(args.solver)
+    run_solver_worker(args.solver, WorkerFiles(args.worker_directory))
 
 
 if __name__ == "__main__":

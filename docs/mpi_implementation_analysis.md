@@ -17,10 +17,12 @@ solver.compute(inputs)
 ```
 
 The MPI subprocess protocol is private plumbing. `hf.Solver._compute_native_mpi`
-writes `input.json`, launches
+creates a per-run temporary directory, writes `input.json`, launches
 `mpiexec -n N <sys.executable> -m qupled.mpi.worker --solver <scheme>:Solver`,
-then reads `status.json` and `results.json`. The centralized worker imports
-the solver class and uses its configured MPI input and result classes.
+and passes the worker directory through a private `--worker-directory` CLI
+argument. It then reads `status.json` and `results.json`, and cleans up the
+temporary directory in a `finally` block. The centralized worker imports the solver class and uses its
+configured MPI input and result classes.
 
 The authored docs and examples recommend setting `processes` on the input
 dataclass. The centralized worker command remains private and is not part of
@@ -44,11 +46,11 @@ the public user-facing interface.
 - ~~The subprocess command uses the literal `"python"` instead of
   `sys.executable`, which can invoke the wrong interpreter in virtualenvs,
   editable installs, CI, or HPC modules.~~
-- The file protocol uses fixed names in the current working directory:
+- ~~The file protocol uses fixed names in the current working directory:
   `input.json`, `results.json`, and `status.json`. Concurrent runs, stale files,
-  interrupted runs, or nested solver calls can collide.
-- Cleanup happens only after all reads succeed. A failed subprocess or failed
-  result read leaves the fixed temporary files behind.
+  interrupted runs, or nested solver calls can collide.~~
+- ~~Cleanup happens only after all reads succeed. A failed subprocess or failed
+  result read leaves the fixed temporary files behind.~~
 - Result and status are written as separate non-atomic JSON files. A crash can
   leave partial output or mismatched status/results.
 - Input reconstruction uses `serializable_dataclass.from_dict`, which constructs
@@ -68,8 +70,8 @@ the public user-facing interface.
    points with one centralized private worker module, for example
    `python -m qupled.mpi.worker --solver qupled.schemes.hf:Solver ...`.~~
 4. ~~Use `sys.executable` for subprocesses.~~
-5. Use a per-run temporary directory, pass paths explicitly via CLI args or
-   environment variables, and clean it up with `try/finally`.
+5. ~~Use a per-run temporary directory, pass paths explicitly via CLI args or
+   environment variables, and clean it up with `try/finally`.~~
 6. Write one atomic output file, or write result/status files through temporary
    files followed by `Path.replace()`.
 7. Rework dataclass deserialization so it calls `cls(**converted_values)` after

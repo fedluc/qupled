@@ -6,6 +6,7 @@ import numpy as np
 
 from qupled import native
 from qupled.mpi import runtime as mpi_runtime
+from qupled.mpi.worker_files import WorkerFiles
 from qupled.database.base_tables import ConflictMode
 from qupled.database.database_handler import DataBaseHandler
 from qupled.database.scheme_tables import (
@@ -164,27 +165,29 @@ class Solver:
         """
         Executes a native MPI computation workflow.
 
-        This method performs the following steps:
-        1. Writes the necessary input files for the MPI computation using `mpi_runtime.write_inputs`.
-        2. Launches the MPI execution by calling `mpi_runtime.launch_mpi_execution` with the current solver class and process count.
-        3. Reads the computation results using `mpi_runtime.read_results` and assigns them to `self.results`.
-        4. Cleans up any temporary files generated during the computation with `mpi_runtime.clean_files`.
+        This method uses `WorkerFiles` to own the temporary worker directory
+        and cleanup.
         """
-        mpi_runtime.write_inputs(self.inputs)
-        mpi_runtime.launch_mpi_execution(type(self), self.inputs.processes)
-        self.native_scheme_status = mpi_runtime.read_status()
-        self.results = mpi_runtime.read_results(type(self.results))
-        mpi_runtime.clean_files()
+        mpi_worker_files = WorkerFiles()
+        try:
+            mpi_worker_files.write_inputs(self.inputs)
+            mpi_runtime.launch_mpi_execution(
+                type(self), self.inputs.processes, mpi_worker_files
+            )
+            self.native_scheme_status = mpi_worker_files.read_status()
+            self.results = mpi_worker_files.read_results(type(self.results))
+        finally:
+            mpi_worker_files.cleanup()
 
     @classmethod
-    def run_mpi_worker(cls, InputCls, ResultCls):
-        inputs = mpi_runtime.read_inputs(InputCls)
+    def run_mpi_worker(cls, InputCls, ResultCls, worker_files: WorkerFiles):
+        inputs = worker_files.read_inputs(InputCls)
         native_inputs = cls.native_inputs_cls()
         inputs.to_native(native_inputs)
         scheme = cls.native_scheme_cls(native_inputs)
         status = scheme.compute()
-        mpi_runtime.write_results(scheme, ResultCls)
-        mpi_runtime.write_status(scheme, status)
+        worker_files.write_results(scheme, ResultCls)
+        worker_files.write_status(scheme, status)
 
     def _save(self):
         """
