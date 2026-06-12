@@ -77,6 +77,25 @@ def test_write_results_writes_file_if_root(worker_files):
 
 
 @pytest.mark.unit
+def test_write_results_replaces_existing_file(worker_files):
+    worker_files.result_file.write_text('{"old": true}')
+    mock_scheme = mock.Mock()
+    mock_scheme.is_root = True
+    mock_ResultCls = mock.Mock()
+    mock_results_instance = mock.Mock()
+    mock_ResultCls.return_value = mock_results_instance
+    mock_results_instance.to_dict.return_value = {"new": True}
+    worker_files.write_results(mock_scheme, mock_ResultCls)
+    with worker_files.result_file.open() as f:
+        data = json.load(f)
+    assert data == {"new": True}
+    assert (
+        list(worker_files.directory.glob(f".{worker_files.result_file.name}.*.tmp"))
+        == []
+    )
+
+
+@pytest.mark.unit
 def test_write_results_does_nothing_if_not_root(worker_files):
     mock_scheme = mock.Mock()
     mock_scheme.is_root = False
@@ -107,6 +126,21 @@ def test_write_status_writes_file_if_root(worker_files):
     with worker_files.status_file.open() as f:
         data = json.load(f)
     assert data == status_data
+
+
+@pytest.mark.unit
+def test_write_status_replaces_existing_file(worker_files):
+    worker_files.status_file.write_text('{"old": true}')
+    mock_scheme = mock.Mock()
+    mock_scheme.is_root = True
+    worker_files.write_status(mock_scheme, {"new": True})
+    with worker_files.status_file.open() as f:
+        data = json.load(f)
+    assert data == {"new": True}
+    assert (
+        list(worker_files.directory.glob(f".{worker_files.status_file.name}.*.tmp"))
+        == []
+    )
 
 
 @pytest.mark.unit

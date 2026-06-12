@@ -33,6 +33,30 @@ class WorkerFiles:
         if self._owns_directory and self.directory.exists():
             shutil.rmtree(self.directory)
 
+    def _write_json_atomically(self, target_file: Path, data):
+        """Write JSON data through a temporary file and atomic replace.
+
+        Args:
+            target_file: Final JSON file path.
+            data: JSON-serializable data to write.
+        """
+        temp_file = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                "w",
+                delete=False,
+                dir=target_file.parent,
+                prefix=f".{target_file.name}.",
+                suffix=".tmp",
+            ) as f:
+                temp_file = Path(f.name)
+                json.dump(data, f)
+            temp_file.replace(target_file)
+        except Exception:
+            if temp_file is not None and temp_file.exists():
+                temp_file.unlink()
+            raise
+
     def write_inputs(self, inputs):
         """Write input data to the MPI worker input file.
 
@@ -65,8 +89,7 @@ class WorkerFiles:
         if scheme.is_root:
             results = result_cls()
             results.from_native(scheme)
-            with self.result_file.open("w") as f:
-                json.dump(results.to_dict(), f)
+            self._write_json_atomically(self.result_file, results.to_dict())
 
     def read_results(self, result_cls):
         """Read solver results from the MPI worker result file.
@@ -89,8 +112,7 @@ class WorkerFiles:
             status: Solver status to serialize.
         """
         if scheme.is_root:
-            with self.status_file.open("w") as f:
-                json.dump(status, f)
+            self._write_json_atomically(self.status_file, status)
 
     def read_status(self):
         """Read solver status from the MPI worker status file.
