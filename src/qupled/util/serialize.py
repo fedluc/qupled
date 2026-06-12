@@ -21,8 +21,8 @@ def serializable_dataclass(cls):
 
     @classmethod
     def from_dict(cls, d):
-        obj = cls.__new__(cls)
         annotations = get_type_hints(cls)
+        converted_values = {}
         for key, value in d.items():
             expected_type = annotations.get(key)
             from_dict_fn = getattr(expected_type, "from_dict", None)
@@ -31,12 +31,12 @@ def serializable_dataclass(cls):
             )
             call_from_dict = callable(from_dict_fn) and isinstance(value, dict)
             if convert_to_np_array:
-                setattr(obj, key, np.array(value))
+                converted_values[key] = np.array(value)
             elif call_from_dict:
-                setattr(obj, key, from_dict_fn(value))
+                converted_values[key] = from_dict_fn(value)
             else:
-                setattr(obj, key, value)
-        return obj
+                converted_values[key] = value
+        return cls(**converted_values)
 
     cls.to_dict = to_dict
     cls.from_dict = from_dict
