@@ -60,6 +60,30 @@ def test_fill_free_energy_integrand(mocker, scheme):
 
 
 @pytest.mark.unit
+def test_fill_free_energy_integrand_restores_coupling_on_failure(mocker, scheme):
+    mocker.patch(
+        "qupled.schemes.vsstls.Solver._get_missing_state_points",
+        return_value=[0.1],
+    )
+    mocker.patch(
+        "qupled.schemes.vsstls.Solver.compute",
+        side_effect=RuntimeError("subcall failed"),
+    )
+    update_input_data = mocker.patch(
+        "qupled.schemes.vsstls.Solver._update_input_data"
+    )
+    inputs = mocker.Mock()
+    inputs.coupling = 1.0
+    inputs.theory = "VSSTLS"
+
+    with pytest.raises(RuntimeError, match="subcall failed"):
+        scheme._fill_free_energy_integrand(inputs)
+
+    assert inputs.coupling == 1.0
+    update_input_data.assert_not_called()
+
+
+@pytest.mark.unit
 def test_get_missing_state_points_with_no_actual_grid(mocker):
     inputs = mocker.Mock()
     coupling = 1.0
