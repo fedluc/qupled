@@ -85,5 +85,8 @@ manylinux-x86_64-image = "ghcr.io/fedluc/qupled/qupled_manylinux_x86_64"
 manylinux-aarch64-image = "ghcr.io/fedluc/qupled/qupled_manylinux_aarch64"
 build-frontend = "build"
 environment = "USE_MPI=OFF"
+# Skip free-threaded Python 3.14 builds until the ecosystem (e.g. matplotlib)
+# has stable cp314t wheels.
+skip = "cp314t-*"
 test-command = "pytest {project}/tests -m unit"
 test-extras = ["test"]
