@@ -1,7 +1,12 @@
 import pytest
 import numpy as np
 
-from qupled.postprocess.correlation_functions import compute_rdf, compute_itcf
+from qupled.postprocess.correlation_functions import (
+    compute_dsf,
+    compute_itcf,
+    compute_itcf_from_dsf,
+    compute_rdf,
+)
 
 
 @pytest.fixture
@@ -168,3 +173,44 @@ def test_compute_itcf_stores_results_from_result_object(
     stored = scheme_tables.insert_results.call_args[0][0]
     assert np.allclose(stored["itcf"], mock_results.itcf)
     assert np.allclose(stored["tau"], mock_results.tau)
+
+
+@pytest.mark.unit
+def test_compute_dsf_stores_results(mocker, read_run, scheme_tables):
+    mock_data = mocker.Mock(inputs={}, results={})
+    read_run.return_value = mock_data
+    mock_results = mocker.Mock(dsf=np.array([[1.0]]), frequency=np.array([0.0]))
+    mocker.patch("qupled.schemes.hf.Input.from_dict", return_value=mocker.Mock())
+    mocker.patch("qupled.schemes.hf.Result.from_dict", return_value=mock_results)
+
+    compute_dsf(run_id=7)
+
+    mock_results.compute_dsf.assert_called_once()
+    stored = scheme_tables.insert_results.call_args[0][0]
+    assert np.allclose(stored["dsf"], mock_results.dsf)
+    assert np.allclose(stored["frequency"], mock_results.frequency)
+
+
+@pytest.mark.unit
+def test_compute_itcf_from_dsf_stores_results(mocker, read_run, scheme_tables):
+    mock_data = mocker.Mock(inputs={}, results={})
+    read_run.return_value = mock_data
+    mock_results = mocker.Mock(
+        itcf_from_dsf=np.array([[1.0]]),
+        tau=np.array([0.0]),
+        ssf_from_dsf=np.array([0.9]),
+        delta_ssf_from_dsf=np.array([-0.1]),
+    )
+    mocker.patch("qupled.schemes.hf.Input.from_dict", return_value=mocker.Mock())
+    mocker.patch("qupled.schemes.hf.Result.from_dict", return_value=mock_results)
+
+    compute_itcf_from_dsf(run_id=8)
+
+    mock_results.compute_itcf_from_dsf.assert_called_once()
+    stored = scheme_tables.insert_results.call_args[0][0]
+    assert np.allclose(stored["itcf_from_dsf"], mock_results.itcf_from_dsf)
+    assert np.allclose(stored["tau"], mock_results.tau)
+    assert np.allclose(stored["ssf_from_dsf"], mock_results.ssf_from_dsf)
+    assert np.allclose(
+        stored["delta_ssf_from_dsf"], mock_results.delta_ssf_from_dsf
+    )

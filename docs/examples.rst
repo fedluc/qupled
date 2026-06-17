@@ -48,6 +48,20 @@ iterative calculations but that can be easily obtained from the results of the c
 .. literalinclude:: ../examples/docs/post_processing.py
    :language: python
 
+Compute the dynamic structure factor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For finite-temperature, three-dimensional schemes with a static local-field correction,
+qupled can compute the dynamic structure factor on a real-frequency grid. The result can
+also be transformed to the imaginary-time correlation function. The following
+example plots the DSF for one wave vector and compares the ITCF reconstructed
+from the DSF with the directly computed Matsubara result. The DSF-to-ITCF
+transform uses peak-aware quadrature for collective modes that are narrower
+than the supplied frequency spacing.
+
+.. literalinclude:: ../examples/docs/dynamic_structure_factor.py
+   :language: python
+
 Compute additional quantities from the database
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

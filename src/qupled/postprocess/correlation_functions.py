@@ -69,3 +69,69 @@ def compute_itcf(
         {"itcf": results.itcf, "tau": results.tau},
         conflict_mode=ConflictMode.UPDATE,
     )
+
+
+def compute_dsf(
+    run_id: int,
+    frequency: np.ndarray | None = None,
+    database_name: str | None = None,
+) -> None:
+    """
+    Compute the dynamic structure factor for an existing static-scheme run and
+    save it back to the database.
+
+    Args:
+        run_id: The ID of the scheme run.
+        frequency: Non-negative real-frequency grid. If not provided, a default
+            grid is generated from the run inputs.
+        database_name: Name of the database to read from.
+    """
+    data = DataBase.read_run(
+        run_id,
+        type=OutputType.SCHEME,
+        database_name=database_name,
+        result_names=["wvg", "chemical_potential", "lfc"],
+    )
+    inputs = hf.Input.from_dict(data.inputs)
+    results = hf.Result.from_dict(data.results)
+    results.compute_dsf(inputs, frequency)
+    db_handler = DataBaseHandler(database_name)
+    db_handler.scheme_tables.run_id = run_id
+    db_handler.scheme_tables.insert_results(
+        {"dsf": results.dsf, "frequency": results.frequency},
+        conflict_mode=ConflictMode.UPDATE,
+    )
+
+
+def compute_itcf_from_dsf(
+    run_id: int, tau: np.ndarray | None = None, database_name: str | None = None
+) -> None:
+    """
+    Compute the imaginary-time correlation function from a stored dynamic
+    structure factor and save it back to the database.
+
+    Args:
+        run_id: The ID of the scheme run.
+        tau: Imaginary-time grid in absolute units [0, 1/theta].
+        database_name: Name of the database to read from.
+    """
+    data = DataBase.read_run(
+        run_id,
+        type=OutputType.SCHEME,
+        database_name=database_name,
+        result_names=["frequency", "dsf", "ssf"],
+    )
+    inputs = hf.Input.from_dict(data.inputs)
+    results = hf.Result.from_dict(data.results)
+    results.compute_itcf_from_dsf(inputs, tau)
+    db_handler = DataBaseHandler(database_name)
+    db_handler.scheme_tables.run_id = run_id
+    db_handler.scheme_tables.insert_results(
+        {
+            "itcf_from_dsf": results.itcf_from_dsf,
+            "tau": results.tau,
+            "ssf_from_dsf": results.ssf_from_dsf,
+            "delta_ssf_from_dsf": results.delta_ssf_from_dsf,
+        },
+        conflict_mode=ConflictMode.UPDATE,
+    )

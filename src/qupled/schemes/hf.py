@@ -94,6 +94,41 @@ class Solver:
                 conflict_mode=ConflictMode.UPDATE,
             )
 
+    def compute_dsf(self, frequency: np.ndarray | None = None):
+        """
+        Computes the dynamic structure factor on a real-frequency grid.
+
+        Args:
+            frequency: Non-negative real-frequency grid. If not provided, a
+                grid using the input resolution and frequency cutoff is used.
+        """
+        if self.results is not None:
+            self.results.compute_dsf(self.inputs, frequency)
+            self.db_handler.scheme_tables.insert_results(
+                {"dsf": self.results.dsf, "frequency": self.results.frequency},
+                conflict_mode=ConflictMode.UPDATE,
+            )
+
+    def compute_itcf_from_dsf(self, tau: np.ndarray | None = None):
+        """
+        Computes the imaginary-time correlation function from the current
+        dynamic structure factor.
+
+        Args:
+            tau: Imaginary-time grid in absolute units [0, 1/theta].
+        """
+        if self.results is not None:
+            self.results.compute_itcf_from_dsf(self.inputs, tau)
+            self.db_handler.scheme_tables.insert_results(
+                {
+                    "itcf_from_dsf": self.results.itcf_from_dsf,
+                    "tau": self.results.tau,
+                    "ssf_from_dsf": self.results.ssf_from_dsf,
+                    "delta_ssf_from_dsf": self.results.delta_ssf_from_dsf,
+                },
+                conflict_mode=ConflictMode.UPDATE,
+            )
+
     def get_solver_status(self) -> RunStatus:
         """
         Retrieves the current status of the solver based on the native scheme status.
@@ -273,10 +308,20 @@ class Result:
 
     chemical_potential: float = None
     """Chemical potential"""
+    dsf: np.ndarray = None
+    """Dynamic structure factor"""
+    frequency: np.ndarray = None
+    """Real-frequency grid"""
     idr: np.ndarray = None
     """Ideal density response"""
     itcf: np.ndarray = None
     """Imaginary-time correlation function"""
+    itcf_from_dsf: np.ndarray = None
+    """Imaginary-time correlation function reconstructed from the DSF"""
+    ssf_from_dsf: np.ndarray = None
+    """Static structure factor obtained by integrating the DSF"""
+    delta_ssf_from_dsf: np.ndarray = None
+    """Difference between the DSF-derived and directly computed SSF"""
     lfc: np.ndarray = None
     """Local field correction"""
     rdf: np.ndarray = None
@@ -377,6 +422,79 @@ class Result:
         else:
             self.tau = tau if is_ground_state else [x for x in tau if x <= 1.0 / theta]
         self.itcf = self._invoke_native_itcf(inputs)
+
+    def compute_dsf(self, inputs: Input, frequency: np.ndarray | None = None):
+        """
+        Compute the finite-temperature 3D dynamic structure factor for a
+        static local-field correction.
+
+        Args:
+            inputs: Input parameters used for the scheme calculation.
+            frequency: Non-negative real-frequency grid. If None, a grid using
+                ``inputs.resolution`` and ``inputs.frequency_cutoff`` is used.
+        """
+        if self.wvg is None or self.lfc is None or self.chemical_potential is None:
+            raise ValueError(
+                "Wave-vector grid, local field correction, and chemical potential "
+                "must be available to compute the dynamic structure factor."
+            )
+        if frequency is None:
+            self.frequency = np.arange(
+                0.0,
+                inputs.frequency_cutoff + 0.5 * inputs.resolution,
+                inputs.resolution,
+            )
+        else:
+            self.frequency = np.asarray(frequency)
+
+        native_inputs = native.Input()
+        inputs.to_native(native_inputs)
+        self.dsf = native.compute_dsf(
+            native_inputs,
+            self.wvg,
+            self.frequency,
+            self.chemical_potential,
+            self.lfc,
+        )
+
+    def compute_itcf_from_dsf(self, inputs: Input, tau: np.ndarray | None = None):
+        """
+        Compute the imaginary-time correlation function from the current
+        dynamic structure factor.
+
+        Args:
+            inputs: Input parameters used for the scheme calculation.
+            tau: Imaginary-time grid in absolute units [0, 1/theta]. If None,
+                eleven evenly spaced points over [0, 1/theta] are used.
+        """
+        if self.frequency is None or self.dsf is None:
+            raise ValueError(
+                "Frequency grid and dynamic structure factor must be available "
+                "to compute the imaginary-time correlation function."
+            )
+        theta = inputs.degeneracy
+        if theta <= 0.0:
+            raise ValueError(
+                "The dynamic structure factor transform requires finite temperature."
+            )
+        self.tau = np.linspace(0.0, 1.0 / theta, 11) if tau is None else np.asarray(tau)
+        transform_tau = np.concatenate(([0.0], self.tau))
+        native_inputs = native.Input()
+        inputs.to_native(native_inputs)
+        transformed = native.compute_itcf_from_dsf_adaptive(
+            native_inputs,
+            self.wvg,
+            self.frequency,
+            transform_tau,
+            self.chemical_potential,
+            self.lfc,
+            self.dsf,
+        )
+        self.ssf_from_dsf = transformed[:, 0]
+        self.itcf_from_dsf = transformed[:, 1:]
+        self.delta_ssf_from_dsf = (
+            None if self.ssf is None else self.ssf_from_dsf - self.ssf
+        )
 
     def _invoke_native_itcf(self, inputs: Input):
         """

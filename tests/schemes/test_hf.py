@@ -243,6 +243,69 @@ def test_compute_rdf_without_results(scheme):
 
 
 @pytest.mark.unit
+def test_compute_dsf_stores_results(scheme, inputs, results, mocker):
+    compute_dsf = mocker.patch("qupled.schemes.hf.Result.compute_dsf")
+    scheme.results = results
+    scheme.inputs = inputs
+    scheme.results.dsf = np.array([[1.0]])
+    scheme.results.frequency = np.array([0.0])
+
+    scheme.compute_dsf(np.array([0.0]))
+
+    compute_dsf.assert_called_once()
+    scheme._db_tables.insert_results.assert_called_once_with(
+        {"dsf": scheme.results.dsf, "frequency": scheme.results.frequency},
+        conflict_mode=ConflictMode.UPDATE,
+    )
+
+
+@pytest.mark.unit
+def test_result_compute_dsf_invokes_native_with_default_grid(mocker, inputs, results):
+    results.wvg = np.array([1.0])
+    results.lfc = np.array([[0.0]])
+    results.chemical_potential = 0.2
+    native_compute_dsf = mocker.patch(
+        "qupled.native.compute_dsf", return_value=np.array([[0.5]])
+    )
+
+    results.compute_dsf(inputs)
+
+    assert results.frequency[0] == 0.0
+    assert results.frequency[-1] == inputs.frequency_cutoff
+    native_compute_dsf.assert_called_once()
+    assert np.allclose(results.dsf, [[0.5]])
+
+
+@pytest.mark.unit
+def test_result_compute_itcf_from_dsf_invokes_native(mocker, inputs, results):
+    results.frequency = np.array([0.0, 1.0])
+    results.dsf = np.array([[0.5, 0.2]])
+    results.ssf = np.array([0.8])
+    results.wvg = np.array([0.5])
+    results.lfc = np.array([[0.0]])
+    results.chemical_potential = 0.2
+    native_compute_itcf = mocker.patch(
+        "qupled.native.compute_itcf_from_dsf_adaptive",
+        return_value=np.array([[0.6, 0.7, 0.7]]),
+    )
+    tau = np.array([0.0, 1.0 / inputs.degeneracy])
+
+    results.compute_itcf_from_dsf(inputs, tau)
+
+    args = native_compute_itcf.call_args.args
+    assert isinstance(args[0], native.Input)
+    assert np.allclose(args[1], results.wvg)
+    assert np.allclose(args[2], results.frequency)
+    assert np.allclose(args[3], np.array([0.0, *results.tau]))
+    assert args[4] == results.chemical_potential
+    assert np.allclose(args[5], results.lfc)
+    assert np.allclose(args[6], results.dsf)
+    assert np.allclose(results.itcf_from_dsf, [[0.7, 0.7]])
+    assert np.allclose(results.ssf_from_dsf, [0.6])
+    assert np.allclose(results.delta_ssf_from_dsf, [-0.2])
+
+
+@pytest.mark.unit
 def test_input_initialization():
     coupling = 1.0
     degeneracy = 2.0

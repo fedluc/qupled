@@ -20,6 +20,9 @@ set(NATIVE_CORE_SOURCES
 	thermo/free_energy.cpp
 	thermo/rdf.cpp
 	thermo/itcf.cpp
+	thermo/dsf_integration.cpp
+	thermo/dsf_moments.cpp
+	thermo/dynamic_structure_factor.cpp
 	thermo/thermo_util.cpp
 	thermo/chemical_potential.cpp
 	vs/vsmanager.cpp
